@@ -9,9 +9,11 @@ __v0_jsx-dev-runtime.ts
 # Environment variables
 .env*.local
 
-# Common ignores
+# Build output / Cloudflare artifacts
 node_modules
-.next/
-out/
 .DS_Store
+.next/
 .wrangler/
+out/
+.open-next/
+.dev.vars
