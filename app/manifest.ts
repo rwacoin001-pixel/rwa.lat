@@ -6,10 +6,11 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'RWA.LAT',
     description: 'One USDT wallet. Global opportunities. AI-guided decisions.',
     start_url: '/',
+    scope: '/',
     display: 'standalone',
     orientation: 'portrait',
-    background_color: '#090B10',
-    theme_color: '#090B10',
+    background_color: '#000000',
+    theme_color: '#000000',
     categories: ['finance', 'productivity'],
     icons: [
       { src: '/rwa-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
