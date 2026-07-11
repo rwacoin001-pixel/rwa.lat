@@ -9,6 +9,7 @@
     "start:prod": "node dist/main.js",
     "lint": "tsc --noEmit",
     "test": "jest --runInBand",
+    "test:integration": "jest --runInBand test/identity-schema.integration.spec.ts",
     "db:migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "db:migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
     "db:migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts"
