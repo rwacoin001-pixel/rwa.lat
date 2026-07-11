@@ -22,3 +22,8 @@ out/
 .dev.vars
 tmp/
 *.tsbuildinfo
+
+# Debug dumps (never commit)
+*.log
+dump.css
+page_dump.html

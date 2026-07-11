@@ -39,9 +39,9 @@
 | ID | 工作项 | 状态 | 负责人 | 依赖 | 验收结果 |
 |---|---|---|---|---|---|
 | FE-001 | H5/PWA 应用外壳、深色视觉系统、3D 场景 | 原型完成 | Codex | 无 | 现有首页、投资、钱包、详情等可交互原型可运行 |
-| FE-002 | 正式路由拆分：`/home`、`/invest`、`/portfolio`、`/wallet`、`/ai`、`/profile` | 待审核 | Codex | GOV-003 | 已建立集中路由映射和动态路由；生产构建通过。详见 `docs/task-notes/FE-002.md` |
+| FE-002 | 正式路由拆分：`/home`、`/invest`、`/portfolio`、`/wallet`、`/ai`、`/profile` | 完成 | Codex | GOV-003 | 已建立集中路由映射和动态路由；生产构建通过。详见 `docs/task-notes/FE-002.md` |
 | FE-003 | 可复用应用骨架组件：`Brand`、`TopBar`、`BottomDock`、`DetailHeader` | 原型完成 | Codex | FE-002 | 路由拆分后仍只使用一套固定 Logo 和导航组件 |
-| FE-004 | 设计 token、字体、响应式断点与可访问性基础 | 待审核 | Codex | FE-002 | Token 导出、跳过链接、焦点与触控基础已补齐；构建与响应式验证通过。详见 `docs/task-notes/FE-004.md` |
+| FE-004 | 设计 token、字体、响应式断点与可访问性基础 | 完成 | Codex | FE-002 | Token 导出、跳过链接、焦点与触控基础已补齐；构建与响应式验证通过。详见 `docs/task-notes/FE-004.md` |
 | FE-005 | 国际化与 RTL：7 种语言、金额/日期/时区 | 待完成 | Codex | FE-002 | 无硬编码业务文案；阿拉伯语布局与格式真机验收 |
 | FE-006 | 登录、注册、会话、访客浏览、账户恢复页面 | 待完成 | Codex | API-002、API-003 | 访客与登录用户权限不同；能回到原操作路径 |
 | FE-007 | KYC、资格、补件、审核中、拒绝与受限页面 | 原型完成 | Codex | API-004 | 所有状态由服务端驱动；可返回原订单草稿 |
@@ -58,7 +58,7 @@
 
 | ID | 工作项 | 状态 | 负责人 | 依赖 | 验收结果 |
 |---|---|---|---|---|---|
-| API-001 | 创建 `apps/api`、NestJS 模块骨架、OpenAPI、统一错误格式 | 待审核 | Codex | GOV-001 | Nest API、版本化健康检查、OpenAPI、请求 ID、验证与统一错误格式已可运行。详见 `docs/task-notes/API-001.md` |
+| API-001 | 创建 `apps/api`、NestJS 模块骨架、OpenAPI、统一错误格式 | 完成 | Codex | GOV-001 | Nest API、版本化健康检查、OpenAPI、请求 ID、验证与统一错误格式已可运行。详见 `docs/task-notes/API-001.md` |
 | API-002 | 身份与账户：用户、邮箱、OAuth、钱包签名挑战 | 待完成 | Claude Code | API-001、DB-001 | nonce、会话、绑定冲突与恢复均有测试 |
 | API-003 | 会话、双重验证、Passkey、设备与安全事件 | 待完成 | Claude Code | API-002 | 设备信任、会话撤销、敏感操作重验和审计生效 |
 | API-004 | KYC、资格、地域、制裁与风险规则服务 | 待完成 | Claude Code | API-002、DB-002、PARTNER-001 | 用户、资产和订单均由同一资格服务判定 |
@@ -76,8 +76,8 @@
 
 | ID | 工作项 | 状态 | 负责人 | 依赖 | 验收结果 |
 |---|---|---|---|---|---|
-| DB-001 | PostgreSQL、迁移框架、连接池、开发/测试数据库 | 待审核 | Codex | API-001 | PostgreSQL 16 实库已完成 `run → revert → run`、幂等复跑与开发/测试双库隔离验收；见 `docs/task-notes/DB-001.md` |
-| DB-002 | 用户、身份、会话、设备、KYC、资格、风险和审计模型 | 待完成 | Claude Code | DB-001 | 主键、唯一约束、状态机和敏感字段加密策略明确 |
+| DB-001 | PostgreSQL、迁移框架、连接池、开发/测试数据库 | 完成 | Codex | API-001 | PostgreSQL 16 实库已完成 `run → revert → run`、幂等复跑与开发/测试双库隔离验收；见 `docs/task-notes/DB-001.md` |
+| DB-002 | 用户、身份、会话、设备、KYC、资格、风险和审计模型 | 完成 | Codex | DB-001 | 11 个核心表、约束/索引、不可变审计、共享状态词典与密文/HMAC 策略已通过 PostgreSQL 集成测试；见 `docs/task-notes/DB-002.md` |
 | DB-003 | 钱包、链交易、充值、提现、转账、账本账户、分录与余额快照 | 待完成 | Claude Code | DB-001 | 金额使用精确 decimal/最小单位；禁止浮点数 |
 | DB-004 | 资产、产品、文件、报价、订单、执行、持仓、收益与结算模型 | 待完成 | Claude Code | DB-001 | 四类资产可共用核心状态模型；产品配置可版本化 |
 | DB-005 | 通知、工单、邀请、订阅、费用、奖励和偏好模型 | 待完成 | Claude Code | DB-001 | 具备归因、版本、撤销和审计字段 |

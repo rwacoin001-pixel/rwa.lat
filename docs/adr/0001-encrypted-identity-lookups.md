@@ -1,0 +1,3 @@
+# Encrypt sensitive identity data and query by keyed hashes
+
+RWA.LAT stores recoverable identity values as application-encrypted ciphertext with a key version, while equality lookups and uniqueness use non-reversible keyed hashes. This avoids plaintext email, wallet, OAuth, KYC identifiers, and legal-identity attributes in PostgreSQL without losing deterministic conflict detection; key material remains outside the database. JSON evidence and audit fields may contain only redacted references, reason codes, and non-sensitive operational context—never raw identity attributes—and changing this representation later would require a sensitive-data migration.
