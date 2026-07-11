@@ -75,6 +75,11 @@ const opportunityArtwork: Record<AssetSceneKind, string> = {
   'solar-dome': '/media/opportunity-source/rwa.png',
 }
 
+const opportunityVideo: Partial<Record<AssetSceneKind, string>> = {
+  compute: '/media/opportunities/compute.mp4',
+  solar: '/media/opportunities/rwa.mp4',
+}
+
 const productAsset: Record<Exclude<InvestCategory, 'All'>, OrderAsset> = {
   Compute: 'compute',
   RWA: 'rwa',
@@ -149,6 +154,12 @@ function OrbitBadge({ className, icon: Icon, label, value }: { className: string
   return <div className={`orbit-label ${className}`}><span className="orbit-label__icon"><Icon size={13} strokeWidth={2.7} /></span><span className="orbit-label__copy">{label}<b>{value}</b></span></div>
 }
 
+function OpportunityMedia({ kind }: { kind: AssetSceneKind }) {
+  const video = opportunityVideo[kind]
+  if (video) return <span className="opportunity-media"><video src={video} poster={opportunityArtwork[kind]} autoPlay muted loop playsInline preload="metadata" aria-hidden="true" /></span>
+  return <span className="opportunity-media"><img src={opportunityArtwork[kind]} alt="" /></span>
+}
+
 function HomeScreen({ go, notify }: { go: (screen: Screen) => void; notify: (message: string) => void }) {
   return (
     <section className="screen home-screen">
@@ -189,7 +200,7 @@ function HomeScreen({ go, notify }: { go: (screen: Screen) => void; notify: (mes
       <div className="opportunity-grid">
         {products.map((product) => (
           <button key={product.category} type="button" className="opportunity-card glass" onClick={() => go(detailRoute(productAsset[product.category]))}>
-            <span className="opportunity-media"><img src={opportunityArtwork[product.kind]} alt="" /></span>
+            <OpportunityMedia kind={product.kind} />
             <b>{product.category === 'Compute' ? 'AI Compute' : product.category === 'Prediction' ? 'Prediction' : product.category}</b>
           </button>
         ))}
@@ -240,7 +251,7 @@ function MetricCard({ icon: Icon, main, label, accent = false }: { icon: typeof 
 
 function RwaDetailScreen({ go, notify, openOrder }: { go: (screen: Screen) => void; notify: (message: string) => void; openOrder: (asset: OrderAsset) => void }) {
   return (
-    <section className="screen detail-screen">
+    <section className="screen detail-screen has-fixed-cta">
       <div className="detail-topbar">
         <button className="round-control" type="button" aria-label="Back" onClick={() => go('invest')}><ArrowLeft size={23} /></button>
         <Brand compact />
@@ -377,7 +388,7 @@ function AssetDetailScreen({ asset, go, openOrder, notify }: { asset: Exclude<Or
       : { scene: 'prediction' as AssetSceneKind, overline: 'PREDICTION INTELLIGENCE', title: 'Fed Rate Cut', location: 'Resolution: FOMC decision', yield: '68¢', yieldLabel: 'YES probability', term: 'Aug 20', minimum: '10 USDT', risk: 'High', narrative: 'Express a view on the next US Federal Reserve rate decision with USDT-settled event contracts.', bullets: ['Real-time probability and volume', 'Clearly defined resolution criteria', 'Loss limited to your position size'] }
 
   return (
-    <section className="screen asset-detail-screen">
+    <section className="screen asset-detail-screen has-fixed-cta">
       <DetailHeader go={go} back="invest" />
       <div className="asset-detail-hero"><AssetScene kind={detail.scene} /></div>
       <div className="asset-detail-copy">
@@ -401,7 +412,7 @@ function OrderReviewScreen({ asset, go, amount, setAmount }: { asset: OrderAsset
   const expected = asset === 'compute' ? '18.2% projected APY' : asset === 'rwa' ? '12.0% projected yield' : asset === 'stocks' ? 'AI Score 92' : '68¢ current YES price'
   const fee = Math.max(1.5, amount * .008)
   return (
-    <section className="screen order-review-screen">
+    <section className="screen order-review-screen has-fixed-cta">
       <DetailHeader go={go} back={detailRoute(asset)} title="Review order" />
       <div className="order-asset glass"><span className="order-asset__icon">{asset === 'compute' ? <Cpu size={23} /> : asset === 'rwa' ? <Landmark size={23} /> : asset === 'stocks' ? <TrendingUp size={23} /> : <Sparkles size={23} />}</span><div><b>{product}</b><small>{expected}</small></div><ChevronRight size={20} /></div>
       <div className="amount-panel glass"><span>Investment amount</span><div><input aria-label="Investment amount" inputMode="decimal" value={amount} onChange={(event) => setAmount(Math.max(0, Number(event.target.value) || 0))} /><b>USDT</b></div><small>Available balance: 12,540.20 USDT</small><div className="amount-presets">{[100, 500, 1000, 5000].map((value) => <button key={value} type="button" onClick={() => setAmount(value)}>{value.toLocaleString()}</button>)}</div></div>
@@ -417,7 +428,7 @@ function LockKeyholeIcon() { return <KeyRound size={21} /> }
 function OrderSuccessScreen({ asset, go }: { asset: OrderAsset; go: (screen: Screen) => void }) {
   const product = asset === 'compute' ? 'H100 Compute Unit' : asset === 'rwa' ? 'Solar Income Project' : asset === 'stocks' ? 'NVIDIA Exposure' : 'Fed Rate Cut · YES'
   return (
-    <section className="screen success-screen">
+    <section className="screen success-screen has-fixed-cta">
       <div className="success-orb"><CircleCheck size={38} /></div>
       <p>ALLOCATION CONFIRMED</p><h1>Your position is reserved.</h1><span>{product} will appear in Portfolio after settlement.</span>
       <div className="success-receipt glass"><span><small>Order reference</small><b>RWA-240713-9284</b></span><span><small>Settled with</small><b>USDT Wallet</b></span><span><small>Next update</small><b>In 2–5 minutes</b></span></div>
@@ -434,7 +445,7 @@ function WalletFlowScreen({ mode, go, notify }: { mode: 'deposit' | 'withdraw' |
       ? { title: 'Withdraw USDT', subtitle: 'Confirm the destination and network before you submit.', action: 'Review withdrawal' }
       : { title: 'Transfer USDT', subtitle: 'Instantly send USDT to another verified RWA.LAT user.', action: 'Review transfer' }
   return (
-    <section className="screen wallet-flow-screen">
+    <section className="screen wallet-flow-screen has-fixed-cta">
       <DetailHeader go={go} back="wallet" title={copy.title} />
       {mode === 'deposit' ? <><div className="network-selector"><button className="is-selected" type="button"><b>TRON</b><small>Low network cost</small><Check size={18} /></button><button type="button"><b>Ethereum</b><small>ERC-20</small></button><button type="button"><b>Arbitrum</b><small>Fast settlement</small></button></div><div className="qr-card glass"><div className="qr-grid" /><p>TRON USDT deposit address</p><b>TQx7d6k4...r1vZp</b><button type="button" onClick={() => notify('Deposit address copied')}><Copy size={18} />Copy address</button></div></> : <div className="wallet-form glass"><label>{mode === 'withdraw' ? 'Destination wallet' : 'Recipient'}<input placeholder={mode === 'withdraw' ? 'Paste a USDT address' : 'Email, username or wallet address'} /></label><label>Amount<input inputMode="decimal" placeholder="0.00" /><span>USDT</span></label><div className="form-balance">Available <b>12,540.20 USDT</b></div></div>}
       <div className="flow-note"><ShieldCheck size={18} /><span>{copy.subtitle}</span></div>
@@ -464,7 +475,7 @@ function PositionDetailScreen({ go, openOrder }: { go: (screen: Screen) => void;
 
 function AiPlanScreen({ go, openOrder }: { go: (screen: Screen) => void; openOrder: (asset: OrderAsset) => void }) {
   const rows = [['AI Compute', '40%', 'compute'], ['RWA income', '30%', 'rwa'], ['Global stocks', '20%', 'stocks'], ['USDT reserve', '10%', 'prediction']] as const
-  return <section className="screen ai-plan-screen"><DetailHeader go={go} back="ai" title="AI allocation plan" /><div className="plan-intro"><span><Sparkles size={24} /></span><p>10,000 USDT plan</p><h1>Yield first. Liquid by design.</h1><small>Generated from your risk score, current exposure and live opportunity data.</small></div><div className="plan-allocation glass">{rows.map(([name, percent, asset], index) => <button key={name} type="button" onClick={() => openOrder(asset)}><i className={`allocation-dot allocation-dot--${index}`} /><span><b>{name}</b><small>{index === 0 ? 'GPU infrastructure' : index === 1 ? 'Cash-flow assets' : index === 2 ? 'Growth exposure' : 'Liquidity buffer'}</small></span><strong>{percent}</strong><ChevronRight size={18} /></button>)}</div><div className="ai-evidence glass"><p><b>Why this mix</b><small>Compute demand is improving, RWA income lowers volatility, and USDT reserve protects execution flexibility.</small></p><TrendingUp size={22} /></div><button className="flow-cta" type="button" onClick={() => openOrder('compute')}>Review first allocation <ArrowRight size={20} /></button></section>
+  return <section className="screen ai-plan-screen has-fixed-cta"><DetailHeader go={go} back="ai" title="AI allocation plan" /><div className="plan-intro"><span><Sparkles size={24} /></span><p>10,000 USDT plan</p><h1>Yield first. Liquid by design.</h1><small>Generated from your risk score, current exposure and live opportunity data.</small></div><div className="plan-allocation glass">{rows.map(([name, percent, asset], index) => <button key={name} type="button" onClick={() => openOrder(asset)}><i className={`allocation-dot allocation-dot--${index}`} /><span><b>{name}</b><small>{index === 0 ? 'GPU infrastructure' : index === 1 ? 'Cash-flow assets' : index === 2 ? 'Growth exposure' : 'Liquidity buffer'}</small></span><strong>{percent}</strong><ChevronRight size={18} /></button>)}</div><div className="ai-evidence glass"><p><b>Why this mix</b><small>Compute demand is improving, RWA income lowers volatility, and USDT reserve protects execution flexibility.</small></p><TrendingUp size={22} /></div><button className="flow-cta" type="button" onClick={() => openOrder('compute')}>Review first allocation <ArrowRight size={20} /></button></section>
 }
 
 function NotificationsScreen({ go }: { go: (screen: Screen) => void }) {
@@ -482,7 +493,7 @@ function AccountFlowScreen({ kind, go, notify }: { kind: 'kyc' | 'security' | 'r
     settings: { title: 'Settings', icon: Settings, overline: 'PREFERENCES', heading: 'Make the app yours.', body: 'Control language, notifications and your preferred security prompts.', action: 'Save preferences' },
   }[kind]
   const Icon = config.icon
-  return <section className="screen account-flow-screen"><DetailHeader go={go} back="profile" title={config.title} /><div className="account-flow-hero"><span><Icon size={30} /></span><p>{config.overline}</p><h1>{config.heading}</h1><small>{config.body}</small></div>{kind === 'security' && <div className="setting-stack glass"><button type="button"><KeyRound size={20} /><span><b>Passkey</b><small>Enabled on this device</small></span><CircleCheck size={19} /></button><button type="button"><Bot size={20} /><span><b>Biometric approval</b><small>Required for investments</small></span><CircleCheck size={19} /></button><button type="button"><Clock3 size={20} /><span><b>Device alerts</b><small>Three active sessions</small></span><ChevronRight size={19} /></button></div>}{kind === 'kyc' && <div className="kyc-steps glass"><span className="is-complete"><Check size={17} />Identity verified</span><span className="is-complete"><Check size={17} />Risk profile completed</span><span><Clock3 size={17} />Address refresh due in 2027</span></div>}{kind === 'referral' && <div className="referral-code glass"><small>Your invitation code</small><b>RWA-KEPLER-92</b><span>Reward credit earned: <strong>84.20 USDT</strong></span></div>}{kind === 'settings' && <div className="setting-stack glass"><button type="button"><Network size={20} /><span><b>Language</b><small>English</small></span><ChevronRight size={19} /></button><button type="button"><Bell size={20} /><span><b>Market notifications</b><small>Signals and settlement alerts</small></span><Check size={19} /></button><button type="button"><Upload size={20} /><span><b>Fiat entry</b><small>Coming soon</small></span><ChevronRight size={19} /></button></div>}<button className="flow-cta" type="button" onClick={() => notify(`${config.title} opened`)}>{config.action}<ArrowRight size={20} /></button></section>
+  return <section className="screen account-flow-screen has-fixed-cta"><DetailHeader go={go} back="profile" title={config.title} /><div className="account-flow-hero"><span><Icon size={30} /></span><p>{config.overline}</p><h1>{config.heading}</h1><small>{config.body}</small></div>{kind === 'security' && <div className="setting-stack glass"><button type="button"><KeyRound size={20} /><span><b>Passkey</b><small>Enabled on this device</small></span><CircleCheck size={19} /></button><button type="button"><Bot size={20} /><span><b>Biometric approval</b><small>Required for investments</small></span><CircleCheck size={19} /></button><button type="button"><Clock3 size={20} /><span><b>Device alerts</b><small>Three active sessions</small></span><ChevronRight size={19} /></button></div>}{kind === 'kyc' && <div className="kyc-steps glass"><span className="is-complete"><Check size={17} />Identity verified</span><span className="is-complete"><Check size={17} />Risk profile completed</span><span><Clock3 size={17} />Address refresh due in 2027</span></div>}{kind === 'referral' && <div className="referral-code glass"><small>Your invitation code</small><b>RWA-KEPLER-92</b><span>Reward credit earned: <strong>84.20 USDT</strong></span></div>}{kind === 'settings' && <div className="setting-stack glass"><button type="button"><Network size={20} /><span><b>Language</b><small>English</small></span><ChevronRight size={19} /></button><button type="button"><Bell size={20} /><span><b>Market notifications</b><small>Signals and settlement alerts</small></span><Check size={19} /></button><button type="button"><Upload size={20} /><span><b>Fiat entry</b><small>Coming soon</small></span><ChevronRight size={19} /></button></div>}<button className="flow-cta" type="button" onClick={() => notify(`${config.title} opened`)}>{config.action}<ArrowRight size={20} /></button></section>
 }
 
 export default function RwaH5() {
