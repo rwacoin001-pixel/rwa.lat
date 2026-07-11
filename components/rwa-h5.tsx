@@ -494,7 +494,71 @@ function AccountFlowScreen({ kind, go, notify }: { kind: 'kyc' | 'security' | 'r
     settings: { title: 'Settings', icon: Settings, overline: 'PREFERENCES', heading: 'Make the app yours.', body: 'Control language, notifications and your preferred security prompts.', action: 'Save preferences' },
   }[kind]
   const Icon = config.icon
-  return <section className="screen account-flow-screen has-fixed-cta"><DetailHeader go={go} back="profile" title={config.title} /><div className="account-flow-hero"><span><Icon size={30} /></span><p>{config.overline}</p><h1>{config.heading}</h1><small>{config.body}</small></div>{kind === 'security' && <div className="setting-stack glass"><button type="button"><KeyRound size={20} /><span><b>Passkey</b><small>Enabled on this device</small></span><CircleCheck size={19} /></button><button type="button"><Bot size={20} /><span><b>Biometric approval</b><small>Required for investments</small></span><CircleCheck size={19} /></button><button type="button"><Clock3 size={20} /><span><b>Device alerts</b><small>Three active sessions</small></span><ChevronRight size={19} /></button></div>}{kind === 'kyc' && <div className="kyc-steps glass"><span className="is-complete"><Check size={17} />Identity verified</span><span className="is-complete"><Check size={17} />Risk profile completed</span><span><Clock3 size={17} />Address refresh due in 2027</span></div>}{kind === 'referral' && <div className="referral-code glass"><small>Your invitation code</small><b>RWA-KEPLER-92</b><span>Reward credit earned: <strong>84.20 USDT</strong></span></div>}{kind === 'settings' && <div className="setting-stack glass"><button type="button"><Network size={20} /><span><b>Language</b><small>English</small></span><ChevronRight size={19} /></button><button type="button"><Bell size={20} /><span><b>Market notifications</b><small>Signals and settlement alerts</small></span><Check size={19} /></button><button type="button"><Upload size={20} /><span><b>Fiat entry</b><small>Coming soon</small></span><ChevronRight size={19} /></button></div>}<button className="flow-cta" type="button" onClick={() => notify(`${config.title} opened`)}>{config.action}<ArrowRight size={20} /></button></section>
+  return (
+    <section className="screen account-flow-screen has-fixed-cta">
+      <DetailHeader go={go} back="profile" title={config.title} />
+      <div className="account-flow-hero">
+        <span><Icon size={30} /></span>
+        <p>{config.overline}</p>
+        <h1>{config.heading}</h1>
+        <small>{config.body}</small>
+      </div>
+
+      {kind === 'security' && (
+        <div className="setting-stack glass">
+          <button type="button"><KeyRound size={20} /><span><b>Passkey</b><small>Enabled on this device</small></span><CircleCheck size={19} /></button>
+          <button type="button"><Bot size={20} /><span><b>Biometric approval</b><small>Required for investments and withdrawals</small></span><CircleCheck size={19} /></button>
+          <button type="button"><Clock3 size={20} /><span><b>Device alerts</b><small>Three active sessions</small></span><ChevronRight size={19} /></button>
+        </div>
+      )}
+
+      {kind === 'kyc' && (
+        <div className="kyc-steps glass">
+          <span className="is-complete"><Check size={17} />Identity verified</span>
+          <span className="is-complete"><Check size={17} />Risk profile completed</span>
+          <span className="is-complete"><Check size={17} />USDT wallet approved</span>
+          <span><Clock3 size={17} />Address refresh due in 2027</span>
+        </div>
+      )}
+
+      {kind === 'referral' && (
+        <>
+          <div className="referral-code glass"><small>Your invitation code</small><b>RWA-KEPLER-92</b><span>Reward credit earned: <strong>84.20 USDT</strong></span></div>
+          <div className="reward-grid">
+            <span><small>Invited</small><b>12</b></span>
+            <span><small>Verified</small><b>7</b></span>
+            <span><small>Pending</small><b>3</b></span>
+          </div>
+        </>
+      )}
+
+      {kind === 'records' && (
+        <div className="record-stack glass">
+          <button type="button"><ReceiptText size={20} /><span><b>RWA subscription</b><small>Solar Income Project · 500.00 USDT</small></span><strong>Settled</strong></button>
+          <button type="button"><Cpu size={20} /><span><b>Compute revenue</b><small>H100 #23892 · Daily settlement</small></span><strong className="mint">+12.40</strong></button>
+          <button type="button"><CircleDollarSign size={20} /><span><b>Wallet deposit</b><small>TRON USDT · TQx7...8vZp</small></span><strong className="mint">+2,000</strong></button>
+        </div>
+      )}
+
+      {kind === 'support' && (
+        <div className="support-stack">
+          <button className="support-card glass" type="button"><MessageCircle size={22} /><span><b>AI support</b><small>Get an immediate answer for wallet, KYC and order questions.</small></span><ChevronRight size={19} /></button>
+          <button className="support-card glass" type="button"><ScanLine size={22} /><span><b>Dispute an order</b><small>Attach an order reference and track the case in app.</small></span><ChevronRight size={19} /></button>
+          <button className="support-card glass" type="button"><Headphones size={22} /><span><b>Human review</b><small>Priority support for withdrawal and settlement issues.</small></span><ChevronRight size={19} /></button>
+        </div>
+      )}
+
+      {kind === 'settings' && (
+        <div className="setting-stack glass">
+          <button type="button"><Network size={20} /><span><b>Language</b><small>English · 中文 · Español · Français</small></span><ChevronRight size={19} /></button>
+          <button type="button"><Bell size={20} /><span><b>Market notifications</b><small>Signals, order states and settlement alerts</small></span><Check size={19} /></button>
+          <button type="button"><Upload size={20} /><span><b>Fiat entry</b><small>Reserved for card and bank transfer</small></span><ChevronRight size={19} /></button>
+        </div>
+      )}
+
+      <button className="flow-cta" type="button" onClick={() => notify(`${config.title} opened`)}>{config.action}<ArrowRight size={20} /></button>
+    </section>
+  )
 }
 
 export default function RwaH5() {
