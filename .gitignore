@@ -10,6 +10,10 @@ __v0_jsx-dev-runtime.ts
 .env
 .env.test
 .env*.local
+deploy/production.env
+.secrets/
+client_secret_*.json
+*.credentials.json
 
 # Build output / Cloudflare artifacts
 node_modules
@@ -27,3 +31,6 @@ tmp/
 *.log
 dump.css
 page_dump.html
+
+# Windows reserved-name artifacts
+**/nul

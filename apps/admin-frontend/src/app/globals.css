@@ -1,0 +1,93 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 0%;
+    --foreground: 248 250 248;
+    --muted: 12 16 20;
+    --muted-foreground: 146 154 166;
+    --border: 255 255 255 / 0.12;
+    --ring: 47 230 191;
+  }
+
+  * {
+    @apply border-white/10;
+  }
+
+  body {
+    @apply bg-black text-white antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  html {
+    @apply scroll-smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply bg-white/5 backdrop-blur-[24px] border border-white/10 shadow-glass;
+  }
+
+  .glass-strong {
+    @apply bg-white/10 backdrop-blur-[24px] border border-white/20 shadow-glass;
+  }
+
+  .hairline {
+    @apply border-white/10;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .animate-in {
+    animation: animateIn 0.3s ease-out forwards;
+  }
+
+  @keyframes animateIn {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@layer base {
+  ::selection {
+    @apply bg-mint/30 text-white;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-mint ring-offset-2 ring-offset-black;
+  }
+}

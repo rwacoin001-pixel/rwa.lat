@@ -1,0 +1,23 @@
+{
+  "source_type": "existing_vector",
+  "source": "components/rwa-h5.tsx",
+  "raster_reference": "public/brand/rwa-lat-logo-simple-v1.png",
+  "iou": null,
+  "iou_note": "Not applicable: the production header already used minimal SVG primitives, which were preserved directly rather than reconstructed from pixels.",
+  "smoothness_gate": "PASS",
+  "structure_gate": "PASS",
+  "parts": [
+    "brand-mark",
+    "brand-ring",
+    "brand-axis",
+    "brand-node",
+    "brand-wordmark",
+    "brand-letter-r",
+    "brand-letter-w",
+    "brand-letter-a1",
+    "brand-letter-dot",
+    "brand-letter-l",
+    "brand-letter-a2",
+    "brand-letter-t"
+  ]
+}

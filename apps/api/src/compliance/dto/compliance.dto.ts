@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, Length } from 'class-validator'
+import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator'
 
 export class StartKycDto {
   @IsString()
@@ -42,6 +42,9 @@ export class EvaluateEligibilityDto {
 }
 
 export class OpenRiskFlagDto {
+  @IsUUID()
+  userId!: string
+
   @IsString()
   @Length(2, 64)
   category!: string

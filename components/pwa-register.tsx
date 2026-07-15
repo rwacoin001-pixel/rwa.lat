@@ -13,7 +13,7 @@ export default function PwaRegister() {
       return
     }
 
-    void navigator.serviceWorker.register('/sw.js').then((registration) => registration.update())
+    void navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' }).catch(() => undefined)
   }, [])
 
   return null

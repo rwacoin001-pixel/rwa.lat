@@ -28,6 +28,29 @@ const COMPLIANCE_ERROR_CODES = Object.freeze({
   PROVIDER_ERROR: 'COMPLIANCE_PROVIDER_ERROR',
 })
 
+const WALLET_ERROR_CODES = Object.freeze({
+  NETWORK_UNSUPPORTED: 'WALLET_NETWORK_UNSUPPORTED',
+  WALLET_UNAVAILABLE: 'WALLET_UNAVAILABLE',
+  ADDRESS_NOT_FOUND: 'WALLET_ADDRESS_NOT_FOUND',
+  ADDRESS_INVALID: 'WALLET_ADDRESS_INVALID',
+  AMOUNT_INVALID: 'WALLET_AMOUNT_INVALID',
+  AMOUNT_BELOW_MINIMUM: 'WALLET_AMOUNT_BELOW_MINIMUM',
+  INSUFFICIENT_BALANCE: 'WALLET_INSUFFICIENT_BALANCE',
+  IDEMPOTENCY_KEY_REQUIRED: 'WALLET_IDEMPOTENCY_KEY_REQUIRED',
+  EXECUTION_DISABLED: 'WALLET_EXECUTION_DISABLED',
+  CALLBACK_SIGNATURE_INVALID: 'WALLET_CALLBACK_SIGNATURE_INVALID',
+  CALLBACK_STALE: 'WALLET_CALLBACK_STALE',
+  CALLBACK_PAYLOAD_INVALID: 'WALLET_CALLBACK_PAYLOAD_INVALID',
+})
+
+const LEDGER_ERROR_CODES = Object.freeze({
+  WITHDRAWAL_NOT_FOUND: 'LEDGER_WITHDRAWAL_NOT_FOUND',
+  WITHDRAWAL_STATE_INVALID: 'LEDGER_WITHDRAWAL_STATE_INVALID',
+  CHAIN_TRANSACTION_UNCONFIRMED: 'LEDGER_CHAIN_TRANSACTION_UNCONFIRMED',
+  ACCOUNT_NOT_FOUND: 'LEDGER_ACCOUNT_NOT_FOUND',
+  RECONCILIATION_INPUT_INVALID: 'LEDGER_RECONCILIATION_INPUT_INVALID',
+})
+
 const states = (...values) => Object.freeze(values)
 const IDENTITY_STATES = Object.freeze({
   user: states('active', 'restricted', 'suspended', 'closed'),
@@ -40,9 +63,24 @@ const IDENTITY_STATES = Object.freeze({
   screeningCase: states('pending', 'clear', 'potential_match', 'confirmed_match', 'dismissed'),
 })
 
+const FINANCE_STATES = Object.freeze({
+  custodyWallet: states('provisioning', 'active', 'restricted', 'closed'),
+  walletAddress: states('active', 'disabled', 'quarantined'),
+  chainTransaction: states('detected', 'confirming', 'confirmed', 'failed', 'reorged'),
+  deposit: states('detected', 'confirming', 'credited', 'rejected', 'manual_review'),
+  withdrawal: states(
+    'requested', '2fa_verified', 'risk_review', 'approved', 'signing',
+    'broadcast', 'confirming', 'completed', 'rejected', 'failed', 'cancelled',
+  ),
+  internalTransfer: states('requested', 'risk_review', 'posted', 'rejected', 'reversed'),
+})
+
 module.exports = {
   API_ERROR_CODES,
   SECURITY_ERROR_CODES,
   COMPLIANCE_ERROR_CODES,
+  WALLET_ERROR_CODES,
+  LEDGER_ERROR_CODES,
   IDENTITY_STATES,
+  FINANCE_STATES,
 }

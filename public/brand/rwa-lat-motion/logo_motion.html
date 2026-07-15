@@ -1,0 +1,606 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RWA.LAT Header Logo Motion</title>
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #05070D;
+      --surface: #f5f5f3;
+      --border: rgba(0,0,0,0.08);
+      --text-primary: #0d0d0d;
+      --text-secondary: #777;
+      --text-tertiary: #aaa;
+      --accent: #e64036;
+      --speed-progress: 9%;
+    }
+
+    html, body {
+      min-height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 2rem;
+    }
+
+    #logo-root {
+      width: min(92vw, 135.8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: visible;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #logo-root svg {
+      width: 100%;
+      height: auto;
+      display: block;
+      overflow: visible;
+      text-rendering: geometricPrecision;
+    }
+
+    .atomic-motions {
+      display: flex;
+      gap: 1.5rem;
+      align-items: flex-end;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .atom {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .atom-stage {
+      width: 74px;
+      height: 74px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .atom-stage img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      transition: transform 260ms cubic-bezier(0.34,1.56,0.64,1);
+      transform-origin: center;
+    }
+
+    .atom-label {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      white-space: nowrap;
+    }
+
+    .principles {
+      max-width: 760px;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .pill {
+      font-size: 11px;
+      line-height: 1;
+      padding: 5px 10px;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .pill.active {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    button {
+      font: 12px/1.2 inherit;
+      letter-spacing: 0.04em;
+      padding: 8px 18px;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    button.primary {
+      color: var(--bg);
+      background: var(--text-primary);
+      border-color: var(--text-primary);
+    }
+
+    .speed-control {
+      width: min(340px, 80vw);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border: 0.5px solid var(--border);
+      border-radius: 999px;
+      color: var(--text-secondary);
+    }
+
+    .speed-caption,
+    .speed-value {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .speed-value {
+      min-width: 46px;
+      text-align: right;
+      color: var(--text-primary);
+      text-transform: none;
+      font-variant-numeric: tabular-nums;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      min-width: 120px;
+      height: 24px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      cursor: grab;
+      accent-color: var(--accent);
+    }
+
+    input[type="range"]::-webkit-slider-runnable-track {
+      height: 3px;
+      border-radius: 999px;
+      background: linear-gradient(to right, var(--accent) 0%, var(--accent) var(--speed-progress), var(--border) var(--speed-progress), var(--border) 100%);
+    }
+
+    input[type="range"]::-webkit-slider-thumb {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      margin-top: -6.5px;
+      border-radius: 50%;
+      border: 2px solid var(--bg);
+      background: var(--accent);
+      box-shadow: 0 1px 6px rgba(0,0,0,0.18);
+    }
+
+    .footer {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+      line-height: 1.7;
+    }
+
+    .p2m-chromeless .atomic-motions,
+    .p2m-chromeless .principles,
+    .p2m-chromeless .controls,
+    .p2m-chromeless .footer {
+      display: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation: none !important;
+        transition: none !important;
+      }
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      :root {
+        --p2m-duration: 920ms;
+        --p2m-ease-enter: cubic-bezier(0, 0, 0.2, 1);
+        --p2m-ease-settle: cubic-bezier(0.4, 0, 0.2, 1);
+        --surface: #12171d;
+        --border: rgba(255, 255, 255, 0.12);
+        --text-primary: #f7f9fc;
+        --text-secondary: #9aa5af;
+        --text-tertiary: #68737f;
+        --accent: #2fe6bf;
+      }
+
+      #brand-axis {
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-dasharray: 1 1.2;
+        vector-effect: non-scaling-stroke;
+      }
+
+      #brand-ring {
+        transform-box: fill-box;
+        transform-origin: center;
+        vector-effect: non-scaling-stroke;
+        animation: p2m-ring-reveal var(--p2m-duration) linear both;
+      }
+
+      #brand-axis {
+        animation: p2m-axis-reveal var(--p2m-duration) linear both;
+      }
+
+      #brand-node {
+        transform-box: fill-box;
+        transform-origin: center;
+        filter: drop-shadow(0 0 6px #2fe6bf);
+        animation: p2m-node-arrive var(--p2m-duration) linear both;
+      }
+
+      #brand-wordmark text {
+        transform-box: fill-box;
+        transform-origin: center;
+      }
+
+      #brand-letter-r { animation: p2m-letter-r var(--p2m-duration) linear both; }
+      #brand-letter-w { animation: p2m-letter-w var(--p2m-duration) linear both; }
+      #brand-letter-a1 { animation: p2m-letter-a1 var(--p2m-duration) linear both; }
+      #brand-letter-dot { animation: p2m-letter-dot var(--p2m-duration) linear both; }
+      #brand-letter-l { animation: p2m-letter-l var(--p2m-duration) linear both; }
+      #brand-letter-a2 { animation: p2m-letter-a2 var(--p2m-duration) linear both; }
+      #brand-letter-t { animation: p2m-letter-t var(--p2m-duration) linear both; }
+
+      @keyframes p2m-ring-reveal {
+        0%, 16% { opacity: 0; transform: scale(0.92); }
+        17% { opacity: 0; transform: scale(0.92); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+        58%, 100% { opacity: 1; transform: scale(1); }
+      }
+
+      @keyframes p2m-axis-reveal {
+        0%, 28% { opacity: 0; stroke-dashoffset: 1.1; }
+        29% { opacity: 1; stroke-dashoffset: 1.1; animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        65%, 100% { opacity: 1; stroke-dashoffset: 0; }
+      }
+
+      @keyframes p2m-node-arrive {
+        0%, 55% { opacity: 0; transform: translate(-7px, 4px) scale(0.72); }
+        56% { opacity: 0; transform: translate(-7px, 4px) scale(0.72); animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+        83%, 100% { opacity: 1; transform: translate(0, 0) scale(1); }
+      }
+
+      @keyframes p2m-letter-r {
+        0%, 39% { opacity: 0; transform: translateY(6px); }
+        40% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        72%, 100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes p2m-letter-w {
+        0%, 44% { opacity: 0; transform: translateY(6px); }
+        45% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        76%, 100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes p2m-letter-a1 {
+        0%, 49% { opacity: 0; transform: translateY(6px); }
+        50% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        80%, 100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes p2m-letter-dot {
+        0%, 54% { opacity: 0; transform: translateY(5px) scale(0.8); }
+        55% { opacity: 0; transform: translateY(5px) scale(0.8); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        84%, 100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+
+      @keyframes p2m-letter-l {
+        0%, 59% { opacity: 0; transform: translateY(6px); }
+        60% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        88%, 100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes p2m-letter-a2 {
+        0%, 64% { opacity: 0; transform: translateY(6px); }
+        65% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        92%, 100% { opacity: 1; transform: translateY(0); }
+      }
+
+      @keyframes p2m-letter-t {
+        0%, 69% { opacity: 0; transform: translateY(6px); }
+        70% { opacity: 0; transform: translateY(6px); animation-timing-function: cubic-bezier(0, 0, 0.2, 1); }
+        97%, 100% { opacity: 1; transform: translateY(0); }
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="logo-root" aria-label="Animated logo" data-p2m-duration="920"></main>
+
+  <section class="atomic-motions" aria-label="Atomic motion studies">
+    <div class="atom" data-atom="hover"><div class="atom-stage"></div><span class="atom-label">Hover</span></div>
+    <div class="atom" data-atom="pulse"><div class="atom-stage"></div><span class="atom-label">Pulse</span></div>
+    <div class="atom" data-atom="arc"><div class="atom-stage"></div><span class="atom-label">Arc</span></div>
+    <div class="atom" data-atom="press"><div class="atom-stage"></div><span class="atom-label">Press</span></div>
+  </section>
+
+  <div class="principles" id="principlesRow">
+    <span class="pill" data-p="squashstretch">Squash &amp; stretch</span>
+    <span class="pill" data-p="anticipation">Anticipation</span>
+    <span class="pill" data-p="staging">Staging</span>
+    <span class="pill" data-p="followthrough">Follow through</span>
+    <span class="pill" data-p="overlap">Overlapping</span>
+    <span class="pill" data-p="slowinout">Slow in / out</span>
+    <span class="pill" data-p="arc">Arc</span>
+    <span class="pill" data-p="secondary">Secondary action</span>
+    <span class="pill" data-p="timing">Timing</span>
+    <span class="pill" data-p="appeal">Appeal</span>
+  </div>
+
+  <div class="controls">
+    <button class="primary" id="btnReplay" type="button">Replay</button>
+    <button id="btnSlow" type="button">Slow motion</button>
+    <label class="speed-control" for="speedSlider">
+      <span class="speed-caption">Speed</span>
+      <input id="speedSlider" type="range" min="0.25" max="2.5" step="0.05" value="0.45" aria-label="Animation speed">
+      <span class="speed-value" id="speedValue">0.45x</span>
+    </label>
+  </div>
+
+  <p class="footer">Click the main logo to replay | Drag speed | Try atomic motions</p>
+
+  <script>
+    const SVG_NS = "http://www.w3.org/2000/svg";
+    const LOGO = {"tag":"svg","attrs":{"width":"194","height":"56","viewBox":"0 0 194 56","fill":"none","role":"img","aria-labelledby":"logo-title"},"children":[{"tag":"title","attrs":{"id":"logo-title"},"children":[],"text":"RWA.LAT"},{"tag":"g","attrs":{"id":"brand-mark"},"children":[{"tag":"circle","attrs":{"id":"brand-ring","cx":"28","cy":"28","r":"20.5","pathLength":"1","stroke":"#F7F9FC","stroke-width":"2.8"},"children":[]},{"tag":"path","attrs":{"id":"brand-axis","d":"M7.5 28H46.5","pathLength":"1","stroke":"#F7F9FC","stroke-width":"3.6","stroke-linecap":"round"},"children":[]},{"tag":"circle","attrs":{"id":"brand-node","cx":"47","cy":"28","r":"3.6","fill":"#2FE6BF","stroke":"#F6FFFF","stroke-width":"2.1"},"children":[]}]},{"tag":"g","attrs":{"id":"brand-wordmark","fill":"#F7F9FC","font-family":"Inter, 'SF Pro Display', 'Segoe UI', Arial, sans-serif","font-size":"19","font-weight":"480"},"children":[{"tag":"text","attrs":{"id":"brand-letter-r","x":"67","y":"34"},"children":[],"text":"R"},{"tag":"text","attrs":{"id":"brand-letter-w","x":"86","y":"34"},"children":[],"text":"W"},{"tag":"text","attrs":{"id":"brand-letter-a1","x":"111","y":"34"},"children":[],"text":"A"},{"tag":"text","attrs":{"id":"brand-letter-dot","x":"132","y":"34"},"children":[],"text":"."},{"tag":"text","attrs":{"id":"brand-letter-l","x":"144","y":"34"},"children":[],"text":"L"},{"tag":"text","attrs":{"id":"brand-letter-a2","x":"163","y":"34"},"children":[],"text":"A"},{"tag":"text","attrs":{"id":"brand-letter-t","x":"185","y":"34"},"children":[],"text":"T"}]}]};
+    const SVG_TEXT = "<svg width=\"194\" height=\"56\" viewBox=\"0 0 194 56\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\" role=\"img\" aria-labelledby=\"logo-title\"><style>:root,svg{--bg:#ffffff;--surface:#f5f5f3;--text-primary:#0d0d0d;--text-secondary:#777;--text-tertiary:#aaa;--logo-wordmark:#363e47;--accent:#e64036;--red:#e64036;--red-bright:#ff493f;}<\/style>\n  <title id=\"logo-title\">RWA.LAT<\/title>\n  <g id=\"brand-mark\">\n    <circle id=\"brand-ring\" cx=\"28\" cy=\"28\" r=\"20.5\" pathLength=\"1\" stroke=\"#F7F9FC\" stroke-width=\"2.8\"/>\n    <path id=\"brand-axis\" d=\"M7.5 28H46.5\" pathLength=\"1\" stroke=\"#F7F9FC\" stroke-width=\"3.6\" stroke-linecap=\"round\"/>\n    <circle id=\"brand-node\" cx=\"47\" cy=\"28\" r=\"3.6\" fill=\"#2FE6BF\" stroke=\"#F6FFFF\" stroke-width=\"2.1\"/>\n  <\/g>\n  <g id=\"brand-wordmark\" fill=\"#F7F9FC\" font-family=\"Inter, 'SF Pro Display', 'Segoe UI', Arial, sans-serif\" font-size=\"19\" font-weight=\"480\">\n    <text id=\"brand-letter-r\" x=\"67\" y=\"34\">R<\/text>\n    <text id=\"brand-letter-w\" x=\"86\" y=\"34\">W<\/text>\n    <text id=\"brand-letter-a1\" x=\"111\" y=\"34\">A<\/text>\n    <text id=\"brand-letter-dot\" x=\"132\" y=\"34\">.<\/text>\n    <text id=\"brand-letter-l\" x=\"144\" y=\"34\">L<\/text>\n    <text id=\"brand-letter-a2\" x=\"163\" y=\"34\">A<\/text>\n    <text id=\"brand-letter-t\" x=\"185\" y=\"34\">T<\/text>\n  <\/g>\n<\/svg>\n";
+    const SVG_URI = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(SVG_TEXT);
+    const DURATION = 920;
+
+    let playbackRate = 0.45;
+    let pulseRaf = null;
+    let arcRaf = null;
+    window.__p2mReady = false;
+
+    function createSvgNode(node) {
+      const element = document.createElementNS(SVG_NS, node.tag);
+      for (const [name, value] of Object.entries(node.attrs || {})) {
+        element.setAttribute(name, value);
+      }
+      if (node.text) {
+        element.appendChild(document.createTextNode(node.text));
+      }
+      for (const child of node.children || []) {
+        element.appendChild(createSvgNode(child));
+      }
+      return element;
+    }
+
+    function heroAnimations() {
+      const root = document.getElementById("logo-root");
+      if (root.getAnimations) return root.getAnimations({ subtree: true });
+      return document.getAnimations().filter(animation => {
+        const target = animation.effect && animation.effect.target;
+        return target && root.contains(target);
+      });
+    }
+
+    function applyPlaybackRate() {
+      for (const animation of heroAnimations()) {
+        if (animation.updatePlaybackRate) animation.updatePlaybackRate(playbackRate);
+        else animation.playbackRate = playbackRate;
+      }
+    }
+
+    function renderHero() {
+      const root = document.getElementById("logo-root");
+      root.replaceChildren(createSvgNode(LOGO));
+      const svg = root.querySelector("svg");
+      if (svg) {
+        svg.removeAttribute("width");
+        svg.removeAttribute("height");
+        svg.style.width = "100%";
+        svg.style.height = "auto";
+        svg.style.overflow = "visible";
+      }
+      requestAnimationFrame(() => requestAnimationFrame(applyPlaybackRate));
+    }
+
+    function flashPills(...names) {
+      document.querySelectorAll(".pill").forEach(pill => pill.classList.remove("active"));
+      names.forEach(name => {
+        const pill = document.querySelector(`[data-p="${name}"]`);
+        if (pill) pill.classList.add("active");
+      });
+    }
+
+    function cyclePrinciples() {
+      const phases = [
+        ["staging", "timing"],
+        ["anticipation", "squashstretch"],
+        ["arc", "slowinout"],
+        ["overlap", "followthrough"],
+        ["appeal"]
+      ];
+      let i = 0;
+      flashPills(...phases[0]);
+      return setInterval(() => {
+        i = (i + 1) % phases.length;
+        flashPills(...phases[i]);
+      }, Math.max(240, DURATION / phases.length / Math.max(playbackRate, 0.25)));
+    }
+
+    let pillTimer = null;
+    function replayMain() {
+      clearInterval(pillTimer);
+      renderHero();
+      pillTimer = cyclePrinciples();
+      setTimeout(() => {
+        clearInterval(pillTimer);
+        document.querySelectorAll(".pill").forEach(pill => pill.classList.remove("active"));
+      }, DURATION / Math.max(playbackRate, 0.25) + 600);
+    }
+
+    function formatSpeed(rate) {
+      return `${rate.toFixed(2)}x`;
+    }
+
+    function updateSpeedUI() {
+      const slider = document.getElementById("speedSlider");
+      const value = Number(slider.value);
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      const progress = ((value - min) / (max - min)) * 100;
+      document.getElementById("speedValue").textContent = formatSpeed(value);
+      slider.style.setProperty("--speed-progress", `${progress}%`);
+      const slow = value <= 0.251;
+      const btnSlow = document.getElementById("btnSlow");
+      btnSlow.textContent = slow ? "Normal speed" : "Slow motion";
+      btnSlow.style.background = slow ? "var(--surface)" : "";
+      btnSlow.style.borderColor = slow ? "var(--text-secondary)" : "";
+    }
+
+    function setPlaybackRate(rate, replay = false) {
+      const slider = document.getElementById("speedSlider");
+      const min = Number(slider.min);
+      const max = Number(slider.max);
+      playbackRate = Math.min(max, Math.max(min, Number(rate)));
+      slider.value = String(playbackRate);
+      updateSpeedUI();
+      applyPlaybackRate();
+      if (replay) replayMain();
+    }
+
+    function setupAtomImages() {
+      document.querySelectorAll(".atom-stage").forEach(stage => {
+        const img = new Image();
+        img.src = SVG_URI;
+        img.alt = "";
+        stage.appendChild(img);
+      });
+    }
+
+    function setupAtoms() {
+      const hover = document.querySelector('[data-atom="hover"] img');
+      const pulse = document.querySelector('[data-atom="pulse"] img');
+      const arc = document.querySelector('[data-atom="arc"] img');
+      const press = document.querySelector('[data-atom="press"] img');
+
+      hover.parentElement.addEventListener("mouseenter", () => {
+        flashPills("squashstretch", "appeal");
+        hover.style.transform = "scale(1.08) rotate(-1.5deg)";
+      });
+      hover.parentElement.addEventListener("mouseleave", () => {
+        hover.style.transform = "scale(1)";
+      });
+
+      function pulseTick(ts) {
+        const p = (Math.sin(ts / 900) + 1) / 2;
+        pulse.style.transform = `scale(${1 + 0.1 * p})`;
+        pulseRaf = requestAnimationFrame(pulseTick);
+      }
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        pulseRaf = requestAnimationFrame(pulseTick);
+      }
+
+      let arcAngle = -14;
+      let arcVel = 0;
+      function arcTick() {
+        arcVel += (0 - arcAngle) * 0.08;
+        arcVel *= 0.86;
+        arcAngle += arcVel;
+        arc.style.transform = `rotate(${arcAngle}deg)`;
+        arcRaf = requestAnimationFrame(arcTick);
+      }
+      arc.parentElement.addEventListener("mouseenter", () => {
+        flashPills("arc", "anticipation", "appeal");
+        cancelAnimationFrame(arcRaf);
+        arcAngle = 28;
+        arcVel = 0;
+        arcTick();
+      });
+      arc.parentElement.addEventListener("mouseleave", () => {
+        arcAngle = 0;
+      });
+
+      press.parentElement.addEventListener("mousedown", () => {
+        flashPills("squashstretch", "anticipation");
+        press.style.transform = "scaleX(1.10) scaleY(0.88)";
+      });
+      ["mouseup", "mouseleave"].forEach(ev => {
+        press.parentElement.addEventListener(ev, () => {
+          press.style.transform = "scale(1)";
+        });
+      });
+    }
+
+    function applyQaMode() {
+      const params = new URLSearchParams(location.search);
+      const seekMs = params.get("t");
+      const staticMode = params.get("static");
+      if (seekMs === null && staticMode === null) {
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          applyPlaybackRate();
+          window.__p2mReady = true;
+        }));
+        return;
+      }
+
+      document.documentElement.classList.add("p2m-chromeless");
+      cancelAnimationFrame(pulseRaf);
+      cancelAnimationFrame(arcRaf);
+      requestAnimationFrame(() => requestAnimationFrame(() => {
+        for (const animation of heroAnimations()) {
+          if (staticMode !== null) {
+            try {
+              animation.finish();
+            } catch (err) {
+              animation.cancel();
+            }
+          } else {
+            animation.pause();
+            animation.currentTime = Number(seekMs);
+          }
+        }
+        window.__p2mReady = true;
+      }));
+    }
+
+    document.getElementById("btnReplay").addEventListener("click", replayMain);
+    document.getElementById("logo-root").addEventListener("click", replayMain);
+    document.getElementById("speedSlider").addEventListener("input", event => {
+      setPlaybackRate(event.target.value, false);
+    });
+    document.getElementById("btnSlow").addEventListener("click", () => {
+      const slow = Number(document.getElementById("speedSlider").value) <= 0.251;
+      setPlaybackRate(slow ? 0.45 : 0.25, true);
+    });
+
+    setupAtomImages();
+    setupAtoms();
+    setPlaybackRate(0.45, false);
+    renderHero();
+    applyQaMode();
+  </script>
+</body>
+</html>

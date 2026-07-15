@@ -3,15 +3,22 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3030",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "dev:all": "bash dev-all.sh",
+    "dev:all:stop": "bash dev-all.sh stop",
+    "verify:demo": "node scripts/verify-demo.mjs",
+    "preview:cloudflare": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
+    "deploy:cloudflare": "opennextjs-cloudflare build && opennextjs-cloudflare deploy",
+    "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",
     "@react-three/drei": "^10.7.7",
     "@react-three/fiber": "^9.6.1",
+    "@rwa-lat/api-client": "workspace:*",
     "@vercel/analytics": "1.6.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -26,6 +33,7 @@
     "tw-animate-css": "^1.4.0"
   },
   "devDependencies": {
+    "@opennextjs/cloudflare": "1.20.1",
     "@tailwindcss/postcss": "^4.2.0",
     "@types/node": "^24",
     "@types/react": "^19",
@@ -36,9 +44,5 @@
     "typescript": "5.7.3",
     "wrangler": "^4.110.0"
   },
-  "pnpm": {
-    "overrides": {
-      "hono": "4.12.25"
-    }
-  }
+  "packageManager": "pnpm@11.8.0+sha512.c1f5e7c4cb241c8f174b743851d82f42b802324afc8b0f116b96adb15aa06664948dde36960a3ba1079ba5b4b29dd0140135b94b5b5f5263592249d68e555f26"
 }

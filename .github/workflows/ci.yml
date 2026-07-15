@@ -1,0 +1,130 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CI: 'true'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  core-api:
+    name: Core API static and unit gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir apps/api run verify:migration-contract
+      - run: pnpm --dir apps/api run lint
+      - run: pnpm --dir apps/api run test:unit:low-memory
+      - run: pnpm --dir apps/api run build:low-memory
+
+  database:
+    name: PostgreSQL migration and integration gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: rwa
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: rwa_lat_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rwa -d rwa_lat_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+    env:
+      NODE_ENV: test
+      APP_ENV: test
+      TEST_DATABASE_URL: postgresql://rwa:ci-only-password@127.0.0.1:5432/rwa_lat_test
+      ADMIN_DATABASE_URL: postgresql://rwa:ci-only-password@127.0.0.1:5432/rwa_lat_test
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir apps/api run verify:migration-rehearsal
+      - run: pnpm --dir apps/api run test:database:low-memory
+      - run: pnpm --dir apps/admin run test
+        env:
+          NODE_OPTIONS: --max-old-space-size=1024
+      - run: pnpm --dir apps/admin run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=1024
+
+  frontends:
+    name: H5 and Admin frontend production builds
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --dir packages/api-client run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=768
+      - run: pnpm run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=4096
+      - run: pnpm --dir apps/admin-frontend run type-check
+        env:
+          NODE_OPTIONS: --max-old-space-size=1024
+      - run: pnpm --dir apps/admin-frontend run build
+        env:
+          NODE_OPTIONS: --max-old-space-size=3072
+
+  supply-chain:
+    name: Dependency audit and SBOM
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.8.0
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Block high and critical production dependency advisories
+        run: pnpm audit --prod --audit-level high
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0
+        with:
+          format: cyclonedx-json
+          output-file: rwa-lat-sbom.cdx.json
+          artifact-name: rwa-lat-sbom.cdx.json
+          upload-artifact-retention: 30

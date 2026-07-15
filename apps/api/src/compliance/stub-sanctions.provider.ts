@@ -6,6 +6,7 @@ import type { SanctionsProvider, ScreeningResult } from './sanctions-provider.in
 @Injectable()
 export class StubSanctionsProvider implements SanctionsProvider {
   readonly name = 'stub'
+  readonly mode = 'stub' as const
   private readonly blocklist: Set<string>
 
   constructor(config: ConfigService) {

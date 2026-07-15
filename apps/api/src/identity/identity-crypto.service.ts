@@ -5,7 +5,6 @@ import { keccak_256 } from '@noble/hashes/sha3'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { IDENTITY_ERROR_CODES } from './identity.errors'
 
-const KEY_VERSION = 1
 const NONCE_TTL_MS = 5 * 60 * 1000
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
 
@@ -17,18 +16,18 @@ interface ChallengeRecord {
 @Injectable()
 export class IdentityCrypto {
   private readonly hmacKey: Buffer
-  private readonly encKey: Buffer
+  private readonly encKeys: Map<number, Buffer>
+  private readonly activeEncKeyVersion: number
   private readonly challenges = new Map<string, ChallengeRecord>()
 
   constructor(private readonly config: ConfigService) {
     this.hmacKey = Buffer.from(this.config.getOrThrow<string>('IDENTITY_HMAC_KEY'), 'hex')
-    this.encKey = Buffer.from(this.config.getOrThrow<string>('IDENTITY_ENC_KEY'), 'hex')
     if (this.hmacKey.length !== 32) {
       throw new Error('IDENTITY_HMAC_KEY must be 32 bytes (64 hex characters)')
     }
-    if (this.encKey.length !== 32) {
-      throw new Error('IDENTITY_ENC_KEY must be 32 bytes (64 hex characters)')
-    }
+    const keyring = readEncryptionKeyring(this.config)
+    this.encKeys = keyring.keys
+    this.activeEncKeyVersion = keyring.activeVersion
   }
 
   /** Stable lookup hash for an identifier (email or provider subject). Case-insensitive. */
@@ -47,19 +46,35 @@ export class IdentityCrypto {
 
   encrypt(plain: string): { ciphertext: Buffer; keyVersion: number } {
     const iv = randomBytes(12)
-    const cipher = createCipheriv('aes-256-gcm', this.encKey, iv)
+    const cipher = createCipheriv('aes-256-gcm', this.encKeys.get(this.activeEncKeyVersion)!, iv)
     const enc = Buffer.concat([cipher.update(plain, 'utf8'), cipher.final()])
     const tag = cipher.getAuthTag()
-    return { ciphertext: Buffer.concat([iv, tag, enc]), keyVersion: KEY_VERSION }
+    return { ciphertext: Buffer.concat([iv, tag, enc]), keyVersion: this.activeEncKeyVersion }
   }
 
-  decrypt(blob: Buffer): string {
+  decrypt(blob: Buffer, keyVersion?: number): string {
     const iv = blob.subarray(0, 12)
     const tag = blob.subarray(12, 28)
     const enc = blob.subarray(28)
-    const decipher = createDecipheriv('aes-256-gcm', this.encKey, iv)
-    decipher.setAuthTag(tag)
-    return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8')
+    const versions = keyVersion === undefined
+      ? [this.activeEncKeyVersion, ...[...this.encKeys.keys()].filter((version) => version !== this.activeEncKeyVersion)]
+      : [keyVersion]
+    let lastError: unknown
+    for (const version of versions) {
+      const key = this.encKeys.get(version)
+      if (!key) {
+        lastError = new Error(`Identity encryption key version ${version} is unavailable`)
+        continue
+      }
+      try {
+        const decipher = createDecipheriv('aes-256-gcm', key, iv)
+        decipher.setAuthTag(tag)
+        return Buffer.concat([decipher.update(enc), decipher.final()]).toString('utf8')
+      } catch (error) {
+        lastError = error
+      }
+    }
+    throw lastError instanceof Error ? lastError : new Error('Identity ciphertext could not be decrypted')
   }
 
   generateSessionToken(): string {
@@ -187,4 +202,36 @@ export class IdentityCrypto {
       return false
     }
   }
+}
+
+function readEncryptionKeyring(config: ConfigService): { keys: Map<number, Buffer>; activeVersion: number } {
+  const optionalConfig = config as ConfigService & { get?: (key: string) => string | undefined }
+  const encoded = optionalConfig.get?.('IDENTITY_ENC_KEYS_JSON')?.trim()
+  if (!encoded) {
+    const key = Buffer.from(config.getOrThrow<string>('IDENTITY_ENC_KEY'), 'hex')
+    if (key.length !== 32) throw new Error('IDENTITY_ENC_KEY must be 32 bytes (64 hex characters)')
+    return { keys: new Map([[1, key]]), activeVersion: 1 }
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(encoded)
+  } catch {
+    throw new Error('IDENTITY_ENC_KEYS_JSON must be a JSON object keyed by positive integer versions')
+  }
+  if (!parsed || Array.isArray(parsed) || typeof parsed !== 'object') {
+    throw new Error('IDENTITY_ENC_KEYS_JSON must be a JSON object keyed by positive integer versions')
+  }
+  const keys = new Map<number, Buffer>()
+  for (const [rawVersion, rawKey] of Object.entries(parsed)) {
+    if (!/^[1-9]\d*$/.test(rawVersion) || typeof rawKey !== 'string' || !/^[a-fA-F0-9]{64}$/.test(rawKey)) {
+      throw new Error('IDENTITY_ENC_KEYS_JSON contains an invalid version or AES-256 key')
+    }
+    keys.set(Number(rawVersion), Buffer.from(rawKey, 'hex'))
+  }
+  const activeVersion = Number(optionalConfig.get?.('IDENTITY_ACTIVE_KEY_VERSION'))
+  if (!Number.isSafeInteger(activeVersion) || !keys.has(activeVersion)) {
+    throw new Error('IDENTITY_ACTIVE_KEY_VERSION must select a key present in IDENTITY_ENC_KEYS_JSON')
+  }
+  return { keys, activeVersion }
 }

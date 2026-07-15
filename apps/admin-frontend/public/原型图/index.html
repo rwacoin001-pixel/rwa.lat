@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RWA.LAT 后台运营端 - 原型图总览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  :root {
+    --bg: #000000;
+    --glass: rgba(12,16,20,.62);
+    --glass-border: rgba(255,255,255,.08);
+    --mint: #2FE6BF;
+    --text: #E8E8E8;
+    --muted: #888;
+    --card-w: 280px;
+  }
+  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 100vh; overflow-x: hidden; }
+  .header { position: sticky; top: 0; z-index: 100; background: rgba(0,0,0,.85); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.02em; }
+  .header .meta { font-size: 13px; color: var(--muted); }
+  .container { display: grid; grid-template-columns: 240px 1fr; min-height: calc(100vh - 57px); }
+  .sidebar { background: rgba(8,10,12,.6); border-right: 1px solid var(--glass-border); padding: 20px 0; position: sticky; top: 57px; height: calc(100vh - 57px); overflow-y: auto; }
+  .sidebar-section { margin-bottom: 20px; }
+  .sidebar-section h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--mint); margin: 0 20px 8px; }
+  .sidebar a { display: block; padding: 8px 20px; font-size: 13px; color: var(--muted); text-decoration: none; transition: all .15s; border-left: 2px solid transparent; }
+  .sidebar a:hover { color: var(--text); background: rgba(255,255,255,.04); border-left-color: var(--mint); }
+  .sidebar a.active { color: var(--mint); border-left-color: var(--mint); background: rgba(47,230,191,.06); }
+  .main { padding: 32px; overflow-y: auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--card-w), 1fr)); gap: 16px; }
+  .card { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; transition: all .2s; cursor: pointer; }
+  .card:hover { border-color: var(--mint); transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.4); }
+  .card-icon { width: 44px; height: 44px; border-radius: 10px; background: rgba(47,230,191,.12); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; font-size: 20px; }
+  .card h3 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .card p { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .card .tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+  .card .tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(255,255,255,.06); color: var(--muted); }
+  .card .tag.mint { background: rgba(47,230,191,.12); color: var(--mint); }
+  .section-title { font-size: 18px; font-weight: 700; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .section-title .num { font-size: 12px; color: var(--mint); background: rgba(47,230,191,.1); padding: 2px 8px; border-radius: 4px; }
+  .section-divider { height: 1px; background: var(--glass-border); margin: 32px 0; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 20px; }
+  .stat .label { font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+  .stat .value { font-size: 28px; font-weight: 700; }
+  .stat .value.mint { color: var(--mint); }
+  .wireframe { background: var(--glass); border: 1px solid var(--glass-border); border-radius: 12px; padding: 0; margin-bottom: 24px; overflow: hidden; }
+  .wireframe-header { padding: 16px 20px; border-bottom: 1px solid var(--glass-border); display: flex; align-items: center; justify-content: space-between; }
+  .wireframe-header h4 { font-size: 14px; font-weight: 600; }
+  .wireframe-header .route { font-family: monospace; font-size: 12px; color: var(--mint); }
+  .wireframe-body { padding: 20px; }
+  .wf-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+  .wf-stat { background: rgba(255,255,255,.03); border: 1px solid var(--glass-border); border-radius: 8px; padding: 12px; }
+  .wf-stat .l { font-size: 10px; color: var(--muted); }
+  .wf-stat .v { font-size: 18px; font-weight: 600; }
+  .wf-table { width: 100%; border-collapse: collapse; }
+  .wf-table th { text-align: left; font-size: 11px; color: var(--muted); padding: 8px 12px; border-bottom: 1px solid var(--glass-border); }
+  .wf-table td { font-size: 12px; padding: 8px 12px; border-bottom: 1px solid rgba(255,255,255,.03); }
+  .wf-table tr:hover td { background: rgba(255,255,255,.02); }
+  .wf-bar { height: 32px; background: rgba(255,255,255,.04); border-radius: 6px; display: flex; align-items: center; padding: 0 12px; font-size: 12px; color: var(--muted); margin-bottom: 8px; }
+  .wf-bar .pill { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: rgba(47,230,191,.12); color: var(--mint); margin-right: 8px; }
+  .badge { display: inline-block; font-size: 10px; padding: 2px 8px; border-radius: 4px; font-weight: 500; }
+  .badge-green { background: rgba(47,230,191,.15); color: var(--mint); }
+  .badge-blue { background: rgba(59,130,246,.15); color: #60a5fa; }
+  .badge-red { background: rgba(239,68,68,.15); color: #f87171; }
+  .badge-amber { background: rgba(251,191,36,.15); color: #fbbf24; }
+  .badge-gray { background: rgba(156,163,175,.15); color: #9ca3af; }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>RWA.LAT 后台运营端 · 原型图总览</h1>
+  <div class="meta">32 页面 · Glassmorphism · Next.js 14 · <span style="color:var(--mint)">Build PASSED</span></div>
+</div>
+<div class="container">
+  <div class="sidebar">
+    <div class="sidebar-section"><h3>ADMIN-001 骨架</h3>
+      <a href="#login">登录</a><a href="#dashboard">工作台</a>
+    </div>
+    <div class="sidebar-section"><h3>ADMIN-002 用户</h3>
+      <a href="#users">用户管理</a><a href="#kyc">KYC 审核</a><a href="#eligibility">资格规则</a><a href="#risk">风控规则</a><a href="#appeals">申诉管理</a><a href="#regions">地域策略</a>
+    </div>
+    <div class="sidebar-section"><h3>ADMIN-003 资金</h3>
+      <a href="#wallets">钱包管理</a><a href="#withdrawals">提现审批</a><a href="#collections">归集管理</a><a href="#networks">网络状态</a><a href="#ledger">账本明细</a><a href="#reconciliation">对账管理</a>
+    </div>
+    <div class="sidebar-section"><h3>ADMIN-004 资产</h3>
+      <a href="#assets">资产管理</a><a href="#providers">供应方管理</a><a href="#files">文件管理</a><a href="#listings">上架管理</a><a href="#pricing">价格管理</a><a href="#polymarket">Polymarket</a>
+    </div>
+    <div class="sidebar-section"><h3>ADMIN-005 运营</h3>
+      <a href="#orders">订单管理</a><a href="#settlements">结算管理</a><a href="#yields">收益管理</a><a href="#disputes">争议管理</a><a href="#support">客服工单</a><a href="#ai-ops">AI 运营</a><a href="#audit">审计日志</a>
+    </div>
+  </div>
+  <div class="main">
+    <div class="stats">
+      <div class="stat"><div class="label">总页面数</div><div class="value mint">32</div></div>
+      <div class="stat"><div class="label">模块</div><div class="value">5</div></div>
+      <div class="stat"><div class="label">Build</div><div class="value mint">PASSED</div></div>
+      <div class="stat"><div class="label">First Load JS</div><div class="value">87.2 kB</div></div>
+    </div>
+
+    <!-- ADMIN-001 -->
+    <div class="section-title" id="admin-001">ADMIN-001 骨架/登录/RBAC <span class="num">3 页面</span></div>
+    <div class="grid">
+      <div class="card" id="login"><div class="card-icon">🔐</div><h3>登录</h3><p>Glass UI 登录表单、JWT cookie 认证、表单验证、错误提示</p><div class="tags"><span class="tag mint">/login</span><span class="tag">POST /api/auth/login</span></div></div>
+      <div class="card" id="dashboard"><div class="card-icon">📊</div><h3>工作台</h3><p>实时统计卡片、活动流、系统健康、待办列表</p><div class="tags"><span class="tag mint">/dashboard</span><span class="tag">5 统计卡</span><span class="tag">实时活动流</span></div></div>
+      <div class="card"><div class="card-icon">⚡</div><h3>登录 API</h3><p>Next.js Route Handler，JWT 生成/验证，cookie 设置</p><div class="tags"><span class="tag mint">/api/auth/login</span><span class="tag">POST</span></div></div>
+    </div>
+    <div class="section-divider"></div>
+
+    <!-- ADMIN-002 -->
+    <div class="section-title" id="admin-002">ADMIN-002 用户/合规 <span class="num">6 页面</span></div>
+    <div class="grid">
+      <div class="card" id="users"><div class="card-icon">👤</div><h3>用户管理</h3><p>搜索/筛选、KYC 状态、风险等级、钱包余额、操作菜单</p><div class="tags"><span class="tag mint">/users</span><span class="tag">7 列</span><span class="tag">dropdown</span></div></div>
+      <div class="card" id="kyc"><div class="card-icon">🪪</div><h3>KYC 审核</h3><p>待审/通过/拒绝/补件、风险标记、优先级、批量操作</p><div class="tags"><span class="tag mint">/kyc</span><span class="tag">4状态</span></div></div>
+      <div class="card" id="eligibility"><div class="card-icon">✅</div><h3>资格规则</h3><p>规则类型/动作/优先级、启用状态、CRUD</p><div class="tags"><span class="tag mint">/eligibility</span></div></div>
+      <div class="card" id="risk"><div class="card-icon">⚠️</div><h3>风控规则</h3><p>5大类(交易/行为/地域/身份/合规)、严重程度、触发统计</p><div class="tags"><span class="tag mint">/risk</span><span class="tag">5分类</span></div></div>
+      <div class="card" id="appeals"><div class="card-icon">📢</div><h3>申诉管理</h3><p>5类申诉、4状态流、优先级、统计卡片</p><div class="tags"><span class="tag mint">/appeals</span></div></div>
+      <div class="card" id="regions"><div class="card-icon">🌍</div><h3>地域策略</h3><p>准入状态、KYC 要求、投资额度、AML 分、制裁名单</p><div class="tags"><span class="tag mint">/regions</span></div></div>
+    </div>
+    <div class="section-divider"></div>
+
+    <!-- ADMIN-003 -->
+    <div class="section-title" id="admin-003">ADMIN-003 资金/链上 <span class="num">6 页面</span></div>
+    <div class="grid">
+      <div class="card" id="wallets"><div class="card-icon">👛</div><h3>钱包管理</h3><p>7链支持、4类型(充值/提现/归集/运营)、冻结/解冻</p><div class="tags"><span class="tag mint">/wallets</span><span class="tag">7链</span></div></div>
+      <div class="card" id="withdrawals"><div class="card-icon">💸</div><h3>提现审批</h3><p>8状态流转、双人审批、风险等级、链上广播</p><div class="tags"><span class="tag mint">/withdrawals</span><span class="tag">双审</span></div></div>
+      <div class="card" id="collections"><div class="card-icon">📦</div><h3>归集管理</h3><p>阈值/定时/手动触发、链上 TX、失败重试</p><div class="tags"><span class="tag mint">/collections</span></div></div>
+      <div class="card" id="networks"><div class="card-icon">🌐</div><h3>网络状态</h3><p>7链实时监控、区块同步、Gas、成功率、自动刷新</p><div class="tags"><span class="tag mint">/networks</span><span class="tag">实时</span></div></div>
+      <div class="card" id="ledger"><div class="card-icon">📒</div><h3>账本明细</h3><p>7类型流水、余额变动、审计日志、CSV 导出</p><div class="tags"><span class="tag mint">/ledger</span></div></div>
+      <div class="card" id="reconciliation"><div class="card-icon">⚖️</div><h3>对账管理</h3><p>链上 vs 数据库余额、差异类型、复核流程</p><div class="tags"><span class="tag mint">/reconciliation</span></div></div>
+    </div>
+    <div class="section-divider"></div>
+
+    <!-- ADMIN-004 -->
+    <div class="section-title" id="admin-004">ADMIN-004 资产/上架 <span class="num">6 页面</span></div>
+    <div class="grid">
+      <div class="card" id="assets"><div class="card-icon">🏠</div><h3>资产管理</h3><p>5类RWA(房产/债券/股权/商品/基金)、市值、冻结/下架</p><div class="tags"><span class="tag mint">/assets</span></div></div>
+      <div class="card" id="providers"><div class="card-icon">🏢</div><h3>供应方管理</h3><p>4类型(机构/个人/政府/基金管理人)、许可证、KYC验证</p><div class="tags"><span class="tag mint">/providers</span></div></div>
+      <div class="card" id="files"><div class="card-icon">📄</div><h3>文件管理</h3><p>6类(法律/审计/合规/合同/证书/披露)、IPFS 存证</p><div class="tags"><span class="tag mint">/files</span><span class="tag">IPFS</span></div></div>
+      <div class="card" id="listings"><div class="card-icon">📋</div><h3>上架管理</h3><p>3类型(一级/二级/募资)、投资范围、收益、锁定期</p><div class="tags"><span class="tag mint">/listings</span></div></div>
+      <div class="card" id="pricing"><div class="card-icon">💲</div><h3>价格管理</h3><p>4来源(Oracle/Chainlink/API/手动)、24h涨跌、交易量</p><div class="tags"><span class="tag mint">/pricing</span></div></div>
+      <div class="card" id="polymarket"><div class="card-icon">📈</div><h3>Polymarket</h3><p>预测市场、YES/NO、流动性、交易量、结算</p><div class="tags"><span class="tag mint">/polymarket</span></div></div>
+    </div>
+    <div class="section-divider"></div>
+
+    <!-- ADMIN-005 -->
+    <div class="section-title" id="admin-005">ADMIN-005 运营/审计 <span class="num">7 页面</span></div>
+    <div class="grid">
+      <div class="card" id="orders"><div class="card-icon">🛒</div><h3>订单管理</h3><p>买入/卖出、5状态、链上 TX、取消</p><div class="tags"><span class="tag mint">/orders</span></div></div>
+      <div class="card" id="settlements"><div class="card-icon">结算</div><h3>结算管理</h3><p>4类型(交易/收益/赎回/手续费)、Gas、链上确认</p><div class="tags"><span class="tag mint">/settlements</span></div></div>
+      <div class="card" id="yields"><div class="card-icon">💰</div><h3>收益管理</h3><p>4类(质押/分红/利息/资本利得)、自动发放</p><div class="tags"><span class="tag mint">/yields</span></div></div>
+      <div class="card" id="disputes"><div class="card-icon">⚡</div><h3>争议管理</h3><p>5类争议、4状态、4优先级、分配/升级</p><div class="tags"><span class="tag mint">/disputes</span></div></div>
+      <div class="card" id="support"><div class="card-icon">🎧</div><h3>客服工单</h3><p>5类(账户/交易/KYC/技术/其他)、分配、解决</p><div class="tags"><span class="tag mint">/support</span></div></div>
+      <div class="card" id="ai-ops"><div class="card-icon">🤖</div><h3>AI 运营</h3><p>5类AI任务、模型管理、Token 成本、重试</p><div class="tags"><span class="tag mint">/ai-ops</span></div></div>
+      <div class="card" id="audit"><div class="card-icon">🛡️</div><h3>审计日志</h3><p>7操作类型、模块筛选、IP追踪、导出</p><div class="tags"><span class="tag mint">/audit</span></div></div>
+    </div>
+
+    <div class="section-divider"></div>
+
+    <!-- Wireframe Example: Users Page -->
+    <div class="section-title">线框图示例 - 用户管理</div>
+    <div class="wireframe">
+      <div class="wireframe-header"><h4>用户管理</h4><span class="route">/users</span></div>
+      <div class="wireframe-body">
+        <div class="wf-stats">
+          <div class="wf-stat"><div class="l">总用户</div><div class="v">12,450</div></div>
+          <div class="wf-stat"><div class="l">活跃</div><div class="v" style="color:var(--mint)">8,920</div></div>
+          <div class="wf-stat"><div class="l">冻结</div><div class="v" style="color:#f87171">23</div></div>
+          <div class="wf-stat"><div class="l">KYC 待审</div><div class="v" style="color:#fbbf24">156</div></div>
+        </div>
+        <div class="wf-bar"><span class="pill">搜索</span> 搜索地址、用户名、邮箱...</div>
+        <div class="wf-bar"><span class="pill">筛选</span> KYC状态 | 风险等级 | 账户状态</div>
+        <table class="wf-table">
+          <thead><tr><th>ID</th><th>用户名</th><th>邮箱</th><th>KYC</th><th>风险</th><th>状态</th><th>余额(USD)</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>u001</td><td>张三</td><td>zhang@example.com</td><td><span class="badge badge-green">已通过</span></td><td><span class="badge badge-green">低</span></td><td><span class="badge badge-green">活跃</span></td><td>$245,000</td><td>⋮</td></tr>
+            <tr><td>u002</td><td>李四</td><td>li@example.com</td><td><span class="badge badge-green">已通过</span></td><td><span class="badge badge-amber">中</span></td><td><span class="badge badge-green">活跃</span></td><td>$980,000</td><td>⋮</td></tr>
+            <tr><td>u003</td><td>王五</td><td>wang@example.com</td><td><span class="badge badge-amber">待审</span></td><td><span class="badge badge-green">低</span></td><td><span class="badge badge-amber">待审</span></td><td>$0</td><td>⋮</td></tr>
+            <tr><td>u004</td><td>赵六</td><td>zhao@example.com</td><td><span class="badge badge-red">拒绝</span></td><td><span class="badge badge-red">极高</span></td><td><span class="badge badge-red">冻结</span></td><td>$0</td><td>⋮</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Wireframe Example: Withdrawals -->
+    <div class="section-title">线框图示例 - 提现审批</div>
+    <div class="wireframe">
+      <div class="wireframe-header"><h4>提现审批</h4><span class="route">/withdrawals</span></div>
+      <div class="wireframe-body">
+        <div class="wf-stats">
+          <div class="wf-stat"><div class="l">待处理</div><div class="v" style="color:#fbbf24">5</div></div>
+          <div class="wf-stat"><div class="l">审核中</div><div class="v" style="color:#60a5fa">3</div></div>
+          <div class="wf-stat"><div class="l">紧急</div><div class="v" style="color:#f87171">2</div></div>
+          <div class="wf-stat"><div class="l">今日金额</div><div class="v" style="color:var(--mint)">$685K</div></div>
+        </div>
+        <table class="wf-table">
+          <thead><tr><th>ID</th><th>用户</th><th>链</th><th>金额</th><th>目的地</th><th>优先级</th><th>风险</th><th>状态</th><th>双审</th><th>操作</th></tr></thead>
+          <tbody>
+            <tr><td>wd001</td><td>张三</td><td><span class="badge badge-gray">ETH</span></td><td>$50,000</td><td>0xabcd...1234</td><td><span class="badge badge-amber">高</span></td><td><span class="badge badge-amber">中</span></td><td><span class="badge badge-amber">待处理</span></td><td><span class="badge badge-blue">双审</span></td><td>⋮</td></tr>
+            <tr><td>wd002</td><td>李四</td><td><span class="badge badge-gray">Polygon</span></td><td>$100,000</td><td>0x5678...9012</td><td><span class="badge badge-red">紧急</span></td><td><span class="badge badge-red">高</span></td><td><span class="badge badge-blue">审核中</span></td><td><span class="badge badge-blue">双审</span></td><td>⋮</td></tr>
+            <tr><td>wd003</td><td>王五</td><td><span class="badge badge-gray">BSC</span></td><td>$10,000</td><td>0x9999...0000</td><td><span class="badge badge-blue">普通</span></td><td><span class="badge badge-green">低</span></td><td><span class="badge badge-green">已批准</span></td><td>-</td><td>⋮</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Wireframe Example: Networks -->
+    <div class="section-title">线框图示例 - 网络状态</div>
+    <div class="wireframe">
+      <div class="wireframe-header"><h4>网络状态监控</h4><span class="route">/networks</span></div>
+      <div class="wireframe-body">
+        <div class="wf-stats">
+          <div class="wf-stat"><div class="l">健康链</div><div class="v" style="color:var(--mint)">6</div></div>
+          <div class="wf-stat"><div class="l">降级</div><div class="v" style="color:#fbbf24">1</div></div>
+          <div class="wf-stat"><div class="l">平均成功率</div><div class="v" style="color:var(--mint)">99.5%</div></div>
+          <div class="wf-stat"><div class="l">日交易量</div><div class="v">$35.1M</div></div>
+        </div>
+        <table class="wf-table">
+          <thead><tr><th>链</th><th>状态</th><th>最新区块</th><th>出块</th><th>Gas</th><th>待处理</th><th>成功率</th><th>确认时间</th></thead>
+          <tbody>
+            <tr><td>Ξ Ethereum</td><td><span class="badge badge-green">健康</span></td><td>18,901,234</td><td>12s</td><td>25 Gwei</td><td>45,000</td><td><span class="badge badge-green">99.2%</span></td><td>15s</td></tr>
+            <tr><td>M Polygon</td><td><span class="badge badge-green">健康</span></td><td>56,789</td><td>2s</td><td>30 Gwei</td><td>12,000</td><td><span class="badge badge-green">99.8%</span></td><td>4s</td></tr>
+            <tr><td>B BSC</td><td><span class="badge badge-amber">降级</span></td><td>34,567</td><td>3s</td><td>5 Gwei</td><td>8,000</td><td><span class="badge badge-amber">98.5%</span></td><td>5s</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Wireframe Example: Audit -->
+    <div class="section-title">线框图示例 - 审计日志</div>
+    <div class="wireframe">
+      <div class="wireframe-header"><h4>审计日志</h4><span class="route">/audit</span></div>
+      <div class="wireframe-body">
+        <div class="wf-stats">
+          <div class="wf-stat"><div class="l">总日志</div><div class="v">1,250</div></div>
+          <div class="wf-stat"><div class="l">登录次数</div><div class="v" style="color:#60a5fa">320</div></div>
+          <div class="wf-stat"><div class="l">配置变更</div><div class="v" style="color:#fbbf24">15</div></div>
+          <div class="wf-stat"><div class="l">数据导出</div><div class="v" style="color:#a78bfa">8</div></div>
+        </div>
+        <table class="wf-table">
+          <thead><tr><th>操作</th><th>模块</th><th>操作人</th><th>IP</th><th>详情</th><th>时间</th></tr></thead>
+          <tbody>
+            <tr><td><span class="badge badge-green">登录</span></td><td>auth</td><td>超级管理员</td><td>192.168.1.1</td><td>登录后台管理系统</td><td>12:00:00</td></tr>
+            <tr><td><span class="badge badge-blue">更新</span></td><td>kyc</td><td>超级管理员</td><td>192.168.1.1</td><td>审核通过用户张三的KYC</td><td>11:30:00</td></tr>
+            <tr><td><span class="badge badge-amber">配置变更</span></td><td>risk</td><td>风险管理员</td><td>192.168.1.2</td><td>修改风控规则阈值</td><td>10:15:00</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>

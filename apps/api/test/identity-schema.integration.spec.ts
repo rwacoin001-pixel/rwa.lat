@@ -42,6 +42,23 @@ describeDatabase('identity and compliance schema', () => {
     ).rejects.toMatchObject({ code: '23505' })
   })
 
+  it('stores OAuth PKCE state as a one-time hashed database record', async () => {
+    const stateHash = Buffer.from(`oauth-state-${Date.now()}`)
+    await dataSource.query(
+      `INSERT INTO app.oauth_authorization_flows
+        (provider, state_hash, code_verifier_ciphertext, encryption_key_version, redirect_uri, expires_at)
+       VALUES ('google', $1, $2, 1, 'https://app.rwa.lat/auth/callback/google', now() + interval '10 minutes')`,
+      [stateHash, Buffer.from('encrypted-verifier')],
+    )
+
+    await expect(dataSource.query(
+      `INSERT INTO app.oauth_authorization_flows
+        (provider, state_hash, code_verifier_ciphertext, encryption_key_version, redirect_uri, expires_at)
+       VALUES ('google', $1, $2, 1, 'https://app.rwa.lat/auth/callback/google', now() + interval '10 minutes')`,
+      [stateHash, Buffer.from('another-verifier')],
+    )).rejects.toMatchObject({ code: '23505' })
+  })
+
   it('keeps KYC status separate from the versioned eligibility decision', async () => {
     const [user] = await dataSource.query(`INSERT INTO app.users DEFAULT VALUES RETURNING id`)
     await dataSource.query(
@@ -136,7 +153,7 @@ describeDatabase('identity and compliance schema', () => {
     ).rejects.toMatchObject({ code: '55000' })
   })
 
-  it('does not allow a versioned eligibility decision to be rewritten', async () => {
+  it('allows an eligibility decision to be refreshed under the same policy scope', async () => {
     const [user] = await dataSource.query(`INSERT INTO app.users DEFAULT VALUES RETURNING id`)
     const [profile] = await dataSource.query(
       `INSERT INTO app.eligibility_profiles (user_id, policy_version, product_scope, decision)
@@ -144,9 +161,9 @@ describeDatabase('identity and compliance schema', () => {
       [user.id],
     )
 
-    await expect(
-      dataSource.query(`UPDATE app.eligibility_profiles SET decision = 'eligible' WHERE id = $1`, [profile.id]),
-    ).rejects.toMatchObject({ code: '55000' })
+    await dataSource.query(`UPDATE app.eligibility_profiles SET decision = 'eligible' WHERE id = $1`, [profile.id])
+    const [updated] = await dataSource.query(`SELECT decision FROM app.eligibility_profiles WHERE id = $1`, [profile.id])
+    expect(updated.decision).toBe('eligible')
   })
 
   it('does not allow audit records to be changed or deleted', async () => {

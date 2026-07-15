@@ -1,0 +1,17 @@
+packages:
+  - apps/*
+  - packages/*
+
+allowBuilds:
+  '@scarf/scarf': set this to true or false
+  esbuild: true
+  msw: set this to true or false
+  protobufjs: set this to true or false
+  sharp: set this to true or false
+  unrs-resolver: set this to true or false
+  workerd: set this to true or false
+
+# Kept in sync with pnpm-lock.yaml. pnpm 11 reads workspace-wide overrides
+# from this file rather than the deprecated package.json "pnpm" field.
+overrides:
+  hono: 4.12.25

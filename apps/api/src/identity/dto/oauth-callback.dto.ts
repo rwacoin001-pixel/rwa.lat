@@ -1,23 +1,19 @@
-import { IsIn, IsOptional, IsString, Length } from 'class-validator'
+import { IsOptional, IsString, Length, MaxLength } from 'class-validator'
 import { DeviceDto } from './wallet.dto'
 
 export class OAuthCallbackDto {
-  @IsIn(['google', 'x'])
-  provider!: 'google' | 'x'
-
   @IsString()
   @Length(1, 255)
-  subject!: string
+  code!: string
+
+  @IsString()
+  @Length(16, 512)
+  state!: string
 
   @IsOptional()
   @IsString()
-  @Length(1, 80)
-  displayName?: string
-
-  @IsOptional()
-  @IsString()
-  @Length(2, 3)
-  locale?: string
+  @MaxLength(2048)
+  redirectUri?: string
 
   @IsOptional()
   device?: DeviceDto

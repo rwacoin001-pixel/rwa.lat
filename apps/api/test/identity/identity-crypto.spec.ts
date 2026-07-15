@@ -2,14 +2,17 @@ import { IdentityCrypto } from '../../src/identity/identity-crypto.service'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { keccak_256 } from '@noble/hashes/sha3'
 
-function makeCrypto(): IdentityCrypto {
+function makeCrypto(values: Record<string, string> = {}): IdentityCrypto {
+  const configured = {
+    IDENTITY_HMAC_KEY: 'a'.repeat(64),
+    IDENTITY_ENC_KEY: 'b'.repeat(64),
+    ...values,
+  }
   const cfg: any = {
-    getOrThrow: (k: string) =>
-      k === 'IDENTITY_HMAC_KEY' || k === 'IDENTITY_ENC_KEY'
-        ? 'a'.repeat(64)
-        : (() => {
-            throw new Error(`unknown config ${k}`)
-          })(),
+    get: (k: string) => configured[k as keyof typeof configured],
+    getOrThrow: (k: string) => configured[k as keyof typeof configured] ?? (() => {
+      throw new Error(`unknown config ${k}`)
+    })(),
   }
   return new IdentityCrypto(cfg)
 }
@@ -37,8 +40,23 @@ describe('IdentityCrypto', () => {
   })
 
   it('encrypt / decrypt round-trips', () => {
-    const { ciphertext } = crypto.encrypt('hello@x.com')
+    const { ciphertext, keyVersion } = crypto.encrypt('hello@x.com')
+    expect(keyVersion).toBe(1)
     expect(crypto.decrypt(ciphertext)).toBe('hello@x.com')
+  })
+
+  it('writes with the active encryption key while retaining old-key decryption', () => {
+    const oldCrypto = makeCrypto({ IDENTITY_ENC_KEY: '1'.repeat(64) })
+    const old = oldCrypto.encrypt('rotated-secret')
+    const rotated = makeCrypto({
+      IDENTITY_ENC_KEYS_JSON: JSON.stringify({ 1: '1'.repeat(64), 2: '2'.repeat(64) }),
+      IDENTITY_ACTIVE_KEY_VERSION: '2',
+    })
+    const current = rotated.encrypt('current-secret')
+
+    expect(current.keyVersion).toBe(2)
+    expect(rotated.decrypt(old.ciphertext, old.keyVersion)).toBe('rotated-secret')
+    expect(rotated.decrypt(current.ciphertext, current.keyVersion)).toBe('current-secret')
   })
 
   it('signState / verifyState round-trips and rejects tampering', () => {

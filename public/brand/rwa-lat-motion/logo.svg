@@ -1,0 +1,17 @@
+<svg width="194" height="56" viewBox="0 0 194 56" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="logo-title">
+  <title id="logo-title">RWA.LAT</title>
+  <g id="brand-mark">
+    <circle id="brand-ring" cx="28" cy="28" r="20.5" pathLength="1" stroke="#F7F9FC" stroke-width="2.8"/>
+    <path id="brand-axis" d="M7.5 28H46.5" pathLength="1" stroke="#F7F9FC" stroke-width="3.6" stroke-linecap="round"/>
+    <circle id="brand-node" cx="47" cy="28" r="3.6" fill="#2FE6BF" stroke="#F6FFFF" stroke-width="2.1"/>
+  </g>
+  <g id="brand-wordmark" fill="#F7F9FC" font-family="Inter, 'SF Pro Display', 'Segoe UI', Arial, sans-serif" font-size="19" font-weight="480">
+    <text id="brand-letter-r" x="67" y="34">R</text>
+    <text id="brand-letter-w" x="86" y="34">W</text>
+    <text id="brand-letter-a1" x="111" y="34">A</text>
+    <text id="brand-letter-dot" x="132" y="34">.</text>
+    <text id="brand-letter-l" x="144" y="34">L</text>
+    <text id="brand-letter-a2" x="163" y="34">A</text>
+    <text id="brand-letter-t" x="185" y="34">T</text>
+  </g>
+</svg>

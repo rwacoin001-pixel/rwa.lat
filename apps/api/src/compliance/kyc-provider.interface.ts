@@ -16,6 +16,7 @@ export interface KycProviderCase {
  */
 export interface KycProvider {
   readonly name: string
+  readonly mode: 'stub' | 'live'
   submitCase(input: { userId: string; payload: Record<string, unknown> }): Promise<KycSubmissionResult>
   getCase(ref: string): Promise<KycProviderCase>
 }

@@ -44,6 +44,10 @@ export class ComplianceService {
     config: ConfigService,
   ) {
     this.policyVersion = config.get<string>('POLICY_VERSION') ?? '2026.1'
+    const financialMode = config.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
+    if (financialMode && (this.kycProvider.mode !== 'live' || this.sanctionsProvider.mode !== 'live')) {
+      throw new Error('Financial production requires live KYC and sanctions provider implementations; stub providers are forbidden')
+    }
   }
 
   // ---- KYC 生命周期 ----

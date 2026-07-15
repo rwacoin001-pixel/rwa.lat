@@ -1,0 +1,242 @@
+{
+  "duration_ms": 920,
+  "easing_verdict": "PASS: dash offsets depart from linear window fractions and settle smoothly.",
+  "final_frame_contract": {
+    "same_pipeline_diff_pixels": 0,
+    "max_channel_delta": 0,
+    "verdict": "PASS"
+  },
+  "probes": [
+    {
+      "t_ms": 200,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0.577258px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 0,
+        "dashoffset": "1.1px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(0.72, 0, 0, 0.72, -7, 4)"
+      },
+      "r": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      },
+      "w": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      },
+      "tLetter": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      }
+    },
+    {
+      "t_ms": 320,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0.0911945px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 1,
+        "dashoffset": "0.626662px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(0.72, 0, 0, 0.72, -7, 4)"
+      },
+      "r": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      },
+      "w": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      },
+      "tLetter": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      }
+    },
+    {
+      "t_ms": 420,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0.0168725px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 1,
+        "dashoffset": "0.208443px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(0.72, 0, 0, 0.72, -7, 4)"
+      },
+      "r": {
+        "opacity": 0.459653,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 3.24208)"
+      },
+      "w": {
+        "opacity": 0.0829748,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 5.50215)"
+      },
+      "tLetter": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      }
+    },
+    {
+      "t_ms": 520,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0.00142172px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 1,
+        "dashoffset": "0.0347225px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 0.11632,
+        "dashoffset": "0px",
+        "transform": "matrix(0.752569, 0, 0, 0.752569, -6.18576, 3.53472)"
+      },
+      "r": {
+        "opacity": 0.850828,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0.895035)"
+      },
+      "w": {
+        "opacity": 0.726975,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 1.63815)"
+      },
+      "tLetter": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      }
+    },
+    {
+      "t_ms": 620,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 0.948701,
+        "dashoffset": "0px",
+        "transform": "matrix(0.985636, 0, 0, 0.985636, -0.359094, 0.205197)"
+      },
+      "r": {
+        "opacity": 0.988615,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0.0683107)"
+      },
+      "w": {
+        "opacity": 0.955332,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0.26801)"
+      },
+      "tLetter": {
+        "opacity": 0,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 6)"
+      }
+    },
+    {
+      "t_ms": 760,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, -2.33953e-06, 1.33688e-06)"
+      },
+      "r": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "w": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "tLetter": {
+        "opacity": 0.814066,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 1.1156)"
+      }
+    },
+    {
+      "t_ms": 920,
+      "ring": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "none"
+      },
+      "axis": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "none"
+      },
+      "node": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "r": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "w": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      },
+      "tLetter": {
+        "opacity": 1,
+        "dashoffset": "0px",
+        "transform": "matrix(1, 0, 0, 1, 0, 0)"
+      }
+    }
+  ]
+}

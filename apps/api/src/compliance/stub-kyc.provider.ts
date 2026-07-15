@@ -5,6 +5,7 @@ import type { KycProvider, KycProviderCase, KycSubmissionResult } from './kyc-pr
 @Injectable()
 export class StubKycProvider implements KycProvider {
   readonly name = 'stub'
+  readonly mode = 'stub' as const
 
   async submitCase(input: { userId: string; payload: Record<string, unknown> }): Promise<KycSubmissionResult> {
     return { providerCaseRef: `stub:${input.userId}:${randomUUID()}`, status: 'submitted' }

@@ -1,4 +1,5 @@
 import { RegionPolicy } from '../../src/compliance/region-policy'
+import { ComplianceService } from '../../src/compliance/compliance.service'
 import { StubKycProvider } from '../../src/compliance/stub-kyc.provider'
 import { StubSanctionsProvider } from '../../src/compliance/stub-sanctions.provider'
 
@@ -14,6 +15,26 @@ class RegionPolicyStub {
 }
 
 describe('PARTNER-001 桩适配器（类型化占位）', () => {
+  it('资金生产模式拒绝实际注入的 Stub KYC/制裁适配器', () => {
+    const kyc = new StubKycProvider()
+    const sanctions = new StubSanctionsProvider({ get: () => '' } as never)
+    const config = {
+      get: (key: string) => key === 'PRODUCTION_FINANCIAL_FEATURES_ENABLED' ? 'true' : undefined,
+    }
+
+    expect(() => new ComplianceService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      kyc,
+      sanctions,
+      {} as never,
+      {} as never,
+      config as never,
+    )).toThrow(/live KYC and sanctions provider implementations/)
+  })
+
   it('StubKycProvider 返回提交引用且不发起外部调用', async () => {
     const p = new StubKycProvider()
     const res = await p.submitCase({ userId: 'u1', payload: {} })

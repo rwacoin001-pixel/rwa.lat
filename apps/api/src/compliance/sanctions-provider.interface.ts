@@ -12,6 +12,7 @@ export interface ScreeningResult {
  */
 export interface SanctionsProvider {
   readonly name: string
+  readonly mode: 'stub' | 'live'
   screen(input: {
     userId: string
     kind: ScreeningKind

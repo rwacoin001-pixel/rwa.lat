@@ -1,9 +1,10 @@
-import { Body, Controller, Param, Post } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Param, Post } from '@nestjs/common'
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { IdentityService } from './identity.service'
 import { RegisterEmailDto } from './dto/register-email.dto'
 import { VerifyEmailDto } from './dto/verify-email.dto'
 import { RecoverDto } from './dto/recover.dto'
+import { RecoverConfirmDto } from './dto/recover-confirm.dto'
 import { OAuthCallbackDto } from './dto/oauth-callback.dto'
 import { WalletChallengeDto, WalletVerifyDto } from './dto/wallet.dto'
 
@@ -16,15 +17,14 @@ export class IdentityController {
   @ApiOperation({ summary: 'Register a new account with an email address' })
   @ApiCreatedResponse({ description: 'Account created; email verification required.' })
   async registerEmail(@Body() dto: RegisterEmailDto) {
-    const result = await this.identity.registerEmail(dto.email, dto.locale)
-    return { userId: result.userId, verificationToken: result.verificationToken }
+    return this.identity.registerEmail(dto.email, dto.locale)
   }
 
   @Post('verify-email')
   @ApiOperation({ summary: 'Verify an email using the verification token' })
   @ApiOkResponse({ description: 'Email verified.' })
   async verifyEmail(@Body() dto: VerifyEmailDto) {
-    return this.identity.verifyEmail(dto.token)
+    return this.identity.verifyEmail(dto.token, dto.device)
   }
 
   @Post('wallet/challenge')
@@ -42,21 +42,22 @@ export class IdentityController {
   }
 
   @Post('oauth/:provider')
-  @ApiOperation({ summary: 'Sign in or bind via Google / X OAuth subject' })
-  @ApiOkResponse({ description: 'OAuth identity resolved; session issued.' })
+  @ApiOperation({ summary: 'Exchange a verified Google / X authorization code' })
+  @ApiOkResponse({ description: 'OAuth identity resolved after server-side provider verification.' })
   async oauth(@Param('provider') provider: string, @Body() dto: OAuthCallbackDto) {
-    if (dto.provider !== provider) {
-      return this.identity.oauthLogin(dto.provider, dto.subject, {
-        displayName: dto.displayName,
-        locale: dto.locale,
-        device: dto.device,
-      })
+    if (provider !== 'google' && provider !== 'x') {
+      throw new BadRequestException('Unsupported OAuth provider')
     }
-    return this.identity.oauthLogin(provider as 'google' | 'x', dto.subject, {
-      displayName: dto.displayName,
-      locale: dto.locale,
-      device: dto.device,
-    })
+    return this.identity.exchangeOAuthCode(provider, dto.code, dto.state, dto.redirectUri, dto.device)
+  }
+
+  @Post('oauth/:provider/start')
+  @ApiOperation({ summary: 'Create a server-bound Google / X OAuth authorization URL with PKCE' })
+  async oauthStart(@Param('provider') provider: string) {
+    if (provider !== 'google' && provider !== 'x') {
+      throw new BadRequestException('Unsupported OAuth provider')
+    }
+    return this.identity.beginOAuth(provider)
   }
 
   @Post('recover')
@@ -66,10 +67,32 @@ export class IdentityController {
     return this.identity.recover(dto.email)
   }
 
+  @Post('recover/confirm')
+  @ApiOperation({ summary: 'Consume a recovery link token and issue a controlled session' })
+  async confirmRecovery(@Body() dto: RecoverConfirmDto) {
+    return this.identity.confirmRecovery(dto.token, dto.device)
+  }
+
   @Post('logout')
   @ApiOperation({ summary: 'Revoke the current session' })
   @ApiOkResponse({ description: 'Session revoked.' })
   async logout(@Body() body: { sessionId: string; token: string }) {
     return this.identity.revokeSession(body.sessionId, body.token)
+  }
+
+  // ─── Demo Auth ───
+
+  @Post('demo/register')
+  @ApiOperation({ summary: 'Demo registration with auto-verified email (no verification required)' })
+  @ApiOkResponse({ description: 'Demo user created; verified.' })
+  async demoRegister(@Body() dto: RegisterEmailDto) {
+    return this.identity.demoRegister(dto.email, dto.locale)
+  }
+
+  @Post('demo/login')
+  @ApiOperation({ summary: 'Demo login with fixed credentials (no verification required)' })
+  @ApiOkResponse({ description: 'Demo session issued.' })
+  async demoLogin(@Body() dto: { email: string; type?: 'user' | 'admin' }) {
+    return this.identity.demoLogin(dto.email, dto.type)
   }
 }

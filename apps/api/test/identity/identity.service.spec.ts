@@ -1,6 +1,7 @@
-import { ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common'
+import { ConflictException, NotFoundException, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { getRepositoryToken } from '@nestjs/typeorm'
+import { ConfigService } from '@nestjs/config'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { IdentityService } from '../../src/identity/identity.service'
@@ -9,6 +10,9 @@ import { User } from '../../src/identity/user.entity'
 import { LoginIdentity } from '../../src/identity/login-identity.entity'
 import { Device } from '../../src/identity/device.entity'
 import { Session } from '../../src/identity/session.entity'
+import { IdentityOneTimeToken } from '../../src/identity/identity-one-time-token.entity'
+import { IdentityDeliveryService } from '../../src/identity/identity-delivery.service'
+import { OAuthProviderService } from '../../src/identity/oauth-provider.service'
 
 function makeCrypto(): IdentityCrypto {
   const cfg: any = {
@@ -37,6 +41,17 @@ class Repo {
       ) || null
     )
   }
+  async update(where: any, patch: any) {
+    const rows = this.data.filter((d) =>
+      Object.entries(where).every(([key, value]) => {
+        if (value && typeof value === 'object' && value.constructor?.name === 'FindOperator') return d[key] == null
+        const current = d[key]
+        return current && current.equals ? current.equals(value as any) : current === value
+      }),
+    )
+    for (const row of rows) Object.assign(row, patch)
+    return { affected: rows.length }
+  }
 }
 
 function deriveAddress(priv: Uint8Array): string {
@@ -60,6 +75,9 @@ describe('IdentityService', () => {
   let logins: Repo
   let devices: Repo
   let sessions: Repo
+  let oneTimeTokens: Repo
+  let delivery: { sendOneTimeLink: jest.Mock; lastDemoToken: jest.Mock }
+  let oauthProvider: { begin: jest.Mock; exchange: jest.Mock }
   let crypto: IdentityCrypto
 
   beforeEach(async () => {
@@ -67,6 +85,15 @@ describe('IdentityService', () => {
     logins = new Repo()
     devices = new Repo()
     sessions = new Repo()
+    oneTimeTokens = new Repo()
+    delivery = {
+      sendOneTimeLink: jest.fn(),
+      lastDemoToken: jest.fn(),
+    }
+    oauthProvider = {
+      begin: jest.fn(),
+      exchange: jest.fn().mockRejectedValue(new ServiceUnavailableException()),
+    }
     crypto = makeCrypto()
     const moduleRef = await Test.createTestingModule({
       providers: [
@@ -75,17 +102,23 @@ describe('IdentityService', () => {
         { provide: getRepositoryToken(LoginIdentity), useValue: logins },
         { provide: getRepositoryToken(Device), useValue: devices },
         { provide: getRepositoryToken(Session), useValue: sessions },
+        { provide: getRepositoryToken(IdentityOneTimeToken), useValue: oneTimeTokens },
         { provide: IdentityCrypto, useValue: crypto },
+        { provide: IdentityDeliveryService, useValue: delivery },
+        { provide: OAuthProviderService, useValue: oauthProvider },
+        { provide: ConfigService, useValue: { get: () => 'demo' } },
       ],
     }).compile()
     svc = moduleRef.get(IdentityService)
   })
 
-  it('registerEmail creates a pending user + identity', async () => {
+  it('registerEmail creates a pending user + identity and sends a non-returned one-time token', async () => {
     const r = await svc.registerEmail('a@b.com')
-    expect(r.userId).toBeDefined()
+    expect(r).toEqual({ accepted: true })
     expect(logins.data).toHaveLength(1)
     expect(logins.data[0].state).toBe('pending')
+    expect(oneTimeTokens.data).toHaveLength(1)
+    expect(delivery.sendOneTimeLink).toHaveBeenCalledWith(expect.objectContaining({ purpose: 'email_verification' }))
   })
 
   it('registerEmail conflicts when the email is already verified', async () => {
@@ -95,11 +128,14 @@ describe('IdentityService', () => {
   })
 
   it('verifyEmail flips a pending identity to verified', async () => {
-    const r = await svc.registerEmail('a@b.com')
-    const token = crypto.signState(`${r.userId}:a@b.com`)
+    await svc.registerEmail('a@b.com')
+    const token = 'email-token'
+    oneTimeTokens.data[0].tokenHash = crypto.hashToken(token)
     const v = await svc.verifyEmail(token)
     expect(v.verified).toBe(true)
+    expect(v.token).toHaveLength(64)
     expect(logins.data[0].state).toBe('verified')
+    await expect(svc.verifyEmail(token)).rejects.toBeInstanceOf(UnauthorizedException)
   })
 
   it('wallet verify opens a session for a valid signature', async () => {
@@ -121,16 +157,32 @@ describe('IdentityService', () => {
     ).rejects.toBeInstanceOf(UnauthorizedException)
   })
 
-  it('recover returns a token for a verified email and hides unknowns', async () => {
-    const r = await svc.registerEmail('a@b.com')
-    const token = crypto.signState(`${r.userId}:a@b.com`)
+  it('never accepts a browser-declared OAuth subject when no verified provider adapter is configured', async () => {
+    await expect(svc.exchangeOAuthCode('google', 'untrusted-code', 'state-value-with-minimum-length')).rejects.toBeInstanceOf(ServiceUnavailableException)
+  })
+
+  it('creates an OAuth identity only from the server-verified provider subject', async () => {
+    oauthProvider.exchange.mockResolvedValue({ subject: 'verified-google-subject', displayName: 'User' })
+
+    const result = await svc.exchangeOAuthCode('google', 'provider-code', 'state-value-with-minimum-length')
+
+    expect(result.token).toHaveLength(64)
+    expect(logins.data[0]).toMatchObject({ kind: 'google', state: 'verified' })
+    expect(oauthProvider.exchange).toHaveBeenCalledWith(
+      'google', 'provider-code', 'state-value-with-minimum-length', undefined,
+    )
+  })
+
+  it('recover uses an indistinguishable response and only dispatches a token for a verified email', async () => {
+    await svc.registerEmail('a@b.com')
+    const token = 'verify-token'
+    oneTimeTokens.data[0].tokenHash = crypto.hashToken(token)
     await svc.verifyEmail(token)
     const known = await svc.recover('a@b.com')
-    expect(known.delivered).toBe(true)
-    expect(known.recoveryToken).toBeTruthy()
+    expect(known).toEqual({ accepted: true })
+    expect(delivery.sendOneTimeLink).toHaveBeenLastCalledWith(expect.objectContaining({ purpose: 'account_recovery' }))
     const unknown = await svc.recover('nobody@x.com')
-    expect(unknown.delivered).toBe(false)
-    expect(unknown.recoveryToken).toBeNull()
+    expect(unknown).toEqual({ accepted: true })
   })
 
   it('revokeSession revokes an active session', async () => {

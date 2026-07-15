@@ -39,3 +39,33 @@ _Avoid_: Rejection, ban
 **Audit Record**:
 An immutable record of a sensitive read, decision, or state-changing action.
 _Avoid_: Application log
+
+## Wallet and Ledger Language
+
+**Custody Wallet**:
+A provider-backed wallet container associated with a User. It holds an encrypted provider reference but is not the source of truth for the User's spendable balance.
+_Avoid_: Ledger account, balance
+
+**Chain Transaction**:
+An observed transaction on a supported blockchain, identified by network and transaction hash. Its confirmations are external evidence, not a ledger posting by themselves.
+_Avoid_: Deposit, withdrawal, ledger transaction
+
+**Ledger Account**:
+A single-purpose accounting bucket for one asset and decimal scale, such as User Available or Platform Settlement.
+_Avoid_: Custody wallet, blockchain address
+
+**Ledger Transaction**:
+An immutable, idempotent accounting voucher that groups balanced Ledger Entries and references the business operation that caused them.
+_Avoid_: Chain transaction, mutable workflow state
+
+**Ledger Entry**:
+An immutable debit or credit in the asset's smallest integer unit. Entries are corrected with a new reversal or adjustment transaction, never edited in place.
+_Avoid_: Floating-point amount, balance
+
+**Balance Projection**:
+The row-locked current balance derived transactionally from Ledger Entries and used to prevent concurrent overspending. It is a rebuildable cache, not the accounting source of truth.
+_Avoid_: Ledger entry, external custody balance
+
+**Balance Snapshot**:
+An immutable account balance recorded after a specific Ledger Entry for audit and historical reconstruction.
+_Avoid_: Mutable current balance

@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   formatDetection: { telephone: false },
   icons: {
     icon: [{ url: '/rwa-mark.svg', type: 'image/svg+xml' }],
-    apple: [{ url: '/rwa-mark.svg', sizes: 'any', type: 'image/svg+xml' }],
+    apple: [{ url: '/rwa-mark-180.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
     title: 'RWA.LAT — Invest with intelligence.',

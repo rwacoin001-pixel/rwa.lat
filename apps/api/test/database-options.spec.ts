@@ -1,4 +1,5 @@
 import { buildDatabaseOptions } from '../src/database/database-options'
+import { shouldApplyDemoSeed } from '../src/database/demo-seed-policy'
 
 describe('database configuration', () => {
   it('uses the dedicated test database and a bounded connection pool', () => {
@@ -12,6 +13,10 @@ describe('database configuration', () => {
     expect(options.url).toBe('postgresql://rwa:rwa@localhost:5432/rwa_lat_test')
     expect(options.extra).toMatchObject({ max: 6 })
     expect(options.synchronize).toBe(false)
+    expect(options.entities).toEqual(expect.arrayContaining([
+      expect.stringContaining('*.entity.{js,ts}'),
+      expect.stringContaining('*.entities.{js,ts}'),
+    ]))
   })
 
   it('refuses to use the development database when the test URL is missing', () => {
@@ -71,5 +76,17 @@ describe('database configuration', () => {
     const options = buildDatabaseOptions({ APP_ENV: appEnvironment, [key]: url })
 
     expect(options.url).toBe(url)
+  })
+
+  it('forbids Demo seed data in staging and production', () => {
+    expect(shouldApplyDemoSeed({ APP_ENV: 'production' })).toBe(false)
+    expect(shouldApplyDemoSeed({ APP_ENV: 'staging' })).toBe(false)
+    expect(shouldApplyDemoSeed({ NODE_ENV: 'production' })).toBe(false)
+  })
+
+  it('allows Demo seed data only in development, test and demo environments', () => {
+    expect(shouldApplyDemoSeed({ APP_ENV: 'development' })).toBe(true)
+    expect(shouldApplyDemoSeed({ NODE_ENV: 'test', APP_ENV: 'production' })).toBe(true)
+    expect(shouldApplyDemoSeed({ APP_ENV: 'demo' })).toBe(true)
   })
 })

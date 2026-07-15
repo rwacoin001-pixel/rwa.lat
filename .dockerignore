@@ -1,0 +1,16 @@
+.git
+.github
+.next
+**/.next
+**/dist
+**/node_modules
+node_modules
+out
+tmp
+.env
+.env.*
+!.env.example
+**/production.env
+*.log
+*.tsbuildinfo
+docs

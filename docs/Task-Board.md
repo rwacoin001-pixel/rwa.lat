@@ -1,8 +1,44 @@
 # RWA.LAT 开发任务表
 
+## 2026-07-15 financial production hardening update
+
+| ID | Status | Evidence |
+|---|---|---|
+| API-005 / DB-003 | Pending review | Encrypted withdrawal address book, cooldown, trusted-device age gate, transaction/24h limits, distinct dual-admin approval, leased async execution queue, idempotent broadcast contract, signed callbacks and a two-admin runtime funds switch are implemented. Real custody remains externally blocked. See `docs/task-notes/FINANCIAL-PRODUCTION-2026-07-15.md`. |
+| API-007 / API-013 | Pending review | Controlled ledger adjustments and signed custody balance snapshots are implemented; reconciliation differences only open cases and never mutate balances. Real PostgreSQL concurrency rehearsal remains external. |
+| INFRA-001 | In progress | Identity/Admin keyrings, SMTP delivery, Google/X authorization-code + PKCE adapters, S3 bucket mapping and compiled runtime capability gates are implemented. Secret Manager IAM, provider credentials and production rehearsal remain external. |
+| INFRA-005 | In progress | Low-memory Core/Admin production images, hardened Compose, one-shot migration service and Locked/Live release script are implemented. This machine has no Docker/cloud CLI or authenticated GitHub deployment session, so remote release remains external. |
+
+## 2026-07-15 delivery pipeline update
+
+| ID | Status | Evidence |
+|---|---|---|
+| INFRA-005 | In progress | Remote CI definitions, low-memory test/build paths, migration contract and rollback rehearsal, dependency review/audit, CycloneDX SBOM, Demo-seed production isolation and rollback runbook are implemented. Local gates pass; first GitHub run, branch protection, PostgreSQL and hosting credentials remain external. See `docs/task-notes/INFRA-005.md`. |
+
+## 2026-07-15 object-storage security update
+
+| ID | Status | Evidence |
+|---|---|---|
+| INFRA-003 | Pending review | Migration/entity alignment, exact size/SHA-256 upload binding, bucket policies, signed scan results, quarantine/download gate, user-owned attachment routes and fail-closed production configuration are implemented. Storage tests 8/8; real PostgreSQL/S3/KMS/scanner rehearsal remains external. See `docs/task-notes/INFRA-003.md`. |
+
+## 2026-07-15 Polymarket backend update
+
+| ID | Status | Evidence |
+|---|---|---|
+| DB-006 | Pending review | Seven-table market/token/order/event/settlement/reconciliation schema and immutable event evidence are implemented. PostgreSQL migration tests are defined but await `TEST_DATABASE_URL`; see `docs/task-notes/DB-006.md`. |
+| API-009 | In progress | Gamma keyset + public CLOB V2 read adapter, persisted sync/freshness and fail-closed trading gate are implemented. User-signed trading, production WebSocket credentials, partner settlement and reconciliation remain external/integration work; see `docs/task-notes/API-009.md`. |
+
+## 2026-07-15 security remediation update
+
+| ID | Status | Evidence |
+|---|---|---|
+| SEC-001 | Pending review | Server-side revocable admin sessions, mandatory production Admin MFA, method-level Core/Admin RBAC, server-verified callbacks, protected metrics, bounded ingress/timeouts and removal of browser-supplied trust assertions. Core: 24 suites / 139 tests; Admin: 2 suites / 8 tests; builds pass and audit has zero high/critical findings. See `docs/task-notes/SEC-001.md`. |
+| ROUTE-001 | Pending review | Core/Admin prefix is fixed to `v1`, controller route metadata is checked, BFF upstream is `/v1`, and duplicate route smoke tests pass. See `docs/task-notes/ROUTE-001.md`. |
+| AUTH-001 | Blocked | Browser token/subject exposure is removed and unconfigured auth fails closed. Final integration requires PostgreSQL plus approved Google/X and email-provider configuration; see `docs/task-notes/AUTH-001.md`. |
+
 **更新时间：** 2026-07-12
 **执行原则：** 前端原型完成不等于生产完成；任何资金、订单、身份或权限能力均须以前后端、数据库、审计与测试同时完成为准。  
-**当前代码基线：** Next.js PWA 高保真原型与 NestJS API 已在正式仓库；PostgreSQL 迁移、身份/账户数据模型、邮箱/OAuth/钱包签名身份闭环已实现。Polymarket Gamma/CLOB 只读行情适配已接入并完成真实数据验证；真实合作方、资金、订单、KYC 提交与 Polymarket 交易执行仍未形成生产闭环，不得按生产能力宣称。
+**当前代码基线：** Next.js PWA 高保真原型与 NestJS API 已在正式仓库；PostgreSQL 迁移、身份/账户数据模型、SMTP 邮件发送及 Google/X 服务器端授权码 + PKCE 适配代码已实现，真实供应商凭据仍待注入和联调。Polymarket Gamma/CLOB 只读行情适配已接入并完成真实数据验证；真实合作方、资金、订单、KYC 提交与 Polymarket 交易执行仍未形成生产闭环，不得按生产能力宣称。
 
 ## 状态说明
 
@@ -62,15 +98,15 @@
 | API-002 | 身份与账户：用户、邮箱、OAuth、钱包签名挑战 | 完成 | Hermes | API-001、DB-001 | nonce、会话、绑定冲突与恢复均有测试 |
 | API-003 | 会话、双重验证、Passkey、设备与安全事件 | 进行中 | Codex | API-002 | 已补安全因子列表、TOTP/Passkey step-up 撤销、恢复码清理与审计；类型检查、38 项测试和构建通过。真实 PostgreSQL 与正式域名 WebAuthn 验收仍待完成，详见 `docs/task-notes/API-003-FACTOR-MANAGEMENT.md` |
 | API-004 | KYC、资格、地域、制裁与风险规则服务 | 完成 | Hermes | API-002、DB-002、PARTNER-001 | 用户、资产和订单均由同一资格服务判定；KYC/制裁/地域/风险规则与统一资格评估已实现，单元验证通过。详见 `docs/task-notes/API-004.md` |
-| API-005 | 钱包适配、地址、余额、充值、提现、转账 | 待完成 | Claude Code | API-002、DB-003、PARTNER-003 | 资金状态机、网络差异、回调签名和重试可用 |
-| API-006 | 资产目录、披露文件、价格和数据新鲜度 | 待完成 | Claude Code | DB-004 | 四类资产统一读取模型；数据过期不能下单 |
-| API-007 | 总账与对账服务 | 待完成 | Claude Code | DB-003、API-005 | 双式记账；余额变化可追溯；差异创建案件而非直接改余额 |
-| API-008 | 报价、余额锁定、订单、执行、结算和争议状态机 | 待完成 | Claude Code | API-004、API-005、API-006、API-007 | `Idempotency-Key` 有效；断线后订单继续处理 |
+| API-005 | 钱包适配、地址、余额、充值、提现、转账 | 部分完成 | Codex | API-002、DB-003、PARTNER-003 | 本地 Demo 已实库验收充值、内部转账和提现完成，余额/锁定余额/账本同步；真实托管、广播、白名单/筛查、异步执行仍待伙伴与生产环境。详见 `docs/task-notes/API-005.md` |
+| API-006 | 资产目录、披露文件、价格和数据新鲜度 | 待审核 | Claude Code | DB-004 | 四类资产统一读取模型；数据过期不能下单 |
+| API-007 | 总账与对账服务 | 部分完成 | Codex | DB-003、API-005 | 精确余额、不可变凭证、提现结算/退款、签名托管余额快照及差异案件已可用；真实供应商日终文件格式和联调仍待伙伴输入。 |
+| API-008 | 报价、余额锁定、订单、执行、结算和争议状态机 | 待审核 | Codex | API-004、API-005、API-006、API-007 | 已完成本地四类订单的幂等锁款、成交、持仓、收益、预测结算、赎回及客服争议时间线；全链路验收与 146 项测试通过。详见 `docs/task-notes/API-008.md` |
 | API-009 | Polymarket Adapter：市场同步、内外订单映射、状态回传、结算与对账 | 进行中 | Codex + Claude Code | API-006、API-008、PARTNER-002 | Gamma/CLOB 只读市场、订单簿与价格历史已接入；真实订单映射、状态回传、结算与对账未启用 |
-| API-010 | 持仓、收益、价格快照、历史表现和赎回 | 待完成 | Claude Code | API-007、API-008 | 前端组合金额可追溯到不可变凭证 |
-| API-011 | AI 编排：结构化建议、证据、来源、数据时点、安全拒绝与成本记录 | 待完成 | Claude Code | API-004、API-006、API-010 | AI 只能提出建议，无权执行资金操作 |
-| API-012 | 通知、工单、邀请、订阅与偏好设置 | 待完成 | Claude Code | API-002、DB-005 | 用户可查询状态；敏感附件进入受控对象存储 |
-| API-013 | 后台 RBAC、审批、审计导出与管理 API | 待完成 | Claude Code | API-003、API-004、API-007、API-008 | 角色最小权限、双人审批和审计不可绕过 |
+| API-010 | 持仓、收益、价格快照、历史表现和赎回 | 待审核 | Hermes | API-007、API-008 | 已接入服务端订单持仓、收益分配与 Demo 赎回完成；持仓/钱包/账本在全链路验收中一致。真实链上退出与生产审批仍待完成。详见 `docs/task-notes/API-010.md` |
+| API-011 | AI 编排：结构化建议、证据、来源、数据时点、安全拒绝与成本记录 | 待审核 | Claude Code | API-004、API-006、API-010 | AI 只能提出建议，无权执行资金操作 |
+| API-012 | 通知、工单、邀请、订阅与偏好设置 | 待审核 | Codex | API-002、DB-005 | 已实现会话归属的工单/争议时间线、正式后台工单 RBAC、扫描后附件 UUID 引用、推荐奖励、营销偏好和通知全读；真实 S3/KMS/扫描器联调待外部环境。详见 `docs/task-notes/API-012.md`。 |
+| API-013 | 后台 RBAC、审批、审计导出与管理 API | 待审核 | Hermes | API-003、API-004、API-007、API-008 | Core 管理写接口与独立 Admin 读取接口均使用可撤销会话和方法级最小权限；审批保持四眼约束，权限不足返回 403。真实 PostgreSQL 权限撤销/审计联调待测试库。详见 `docs/task-notes/API-013.md`。 |
 
 ## 3. 数据库与数据治理
 
@@ -78,11 +114,11 @@
 |---|---|---|---|---|---|
 | DB-001 | PostgreSQL、迁移框架、连接池、开发/测试数据库 | 完成 | Codex | API-001 | PostgreSQL 16 实库已完成 `run → revert → run`、幂等复跑与开发/测试双库隔离验收；见 `docs/task-notes/DB-001.md` |
 | DB-002 | 用户、身份、会话、设备、KYC、资格、风险和审计模型 | 完成 | Codex | DB-001 | 11 个核心表、约束/索引、不可变审计、共享状态词典与密文/HMAC 策略已通过 PostgreSQL 集成测试；见 `docs/task-notes/DB-002.md` |
-| DB-003 | 钱包、链交易、充值、提现、转账、账本账户、分录与余额快照 | 待完成 | Claude Code | DB-001 | 金额使用精确 decimal/最小单位；禁止浮点数 |
-| DB-004 | 资产、产品、文件、报价、订单、执行、持仓、收益与结算模型 | 待完成 | Claude Code | DB-001 | 四类资产可共用核心状态模型；产品配置可版本化 |
-| DB-005 | 通知、工单、邀请、订阅、费用、奖励和偏好模型 | 待完成 | Claude Code | DB-001 | 具备归因、版本、撤销和审计字段 |
-| DB-006 | Polymarket 市场映射、外部订单映射、同步水位、回调事件、对账案件 | 待完成 | Claude Code | DB-004、PARTNER-002 | 内外 ID 唯一映射、回调去重、可重放、可对账 |
-| DB-007 | 数据保留、加密、脱敏、备份、恢复演练与删除流程 | 待完成 | Claude Code | DB-001 | 符合隐私策略；恢复演练留存记录 |
+| DB-003 | 钱包、链交易、充值、提现、转账、账本账户、分录与余额快照 | 进行中 | Codex | DB-001 | 已建立最小单位整数金额、双式分录延迟校验、并发防透支余额投影、不可变快照和资金状态表；类型检查、38 项测试与构建通过。真实 PostgreSQL 迁移/回滚及 5 项实库不变量测试待具备测试库后执行，详见 `docs/task-notes/DB-003.md` |
+| DB-004 | 资产、产品、文件、报价、订单、执行、持仓、收益与结算模型 | 待审核 | Claude Code | DB-001 | 四类资产可共用核心状态模型；产品配置可版本化 |
+| DB-005 | 通知、工单、邀请、订阅、费用、奖励和偏好模型 | 待审核 | Claude Code | DB-001 | 具备归因、版本、撤销和审计字段 |
+| DB-006 | Polymarket 市场映射、外部订单映射、同步水位、回调事件、对账案件 | 待审核 | Codex | DB-004、PARTNER-002 | 七表迁移、唯一映射、同步水位、事件去重、结算与对账证据已实现；真实 PostgreSQL 迁移测试等待 `TEST_DATABASE_URL`。详见 `docs/task-notes/DB-006.md` |
+| DB-007 | 数据保留、加密、脱敏、备份、恢复演练与删除流程 | 待审核 | Hermes | DB-001 | 加密复用 IdentityCrypto AES-256-GCM；脱敏纯函数 8/8 + 删除请求状态机/备份演练 5/5 全绿；新建 backup_drills+data_deletion_requests 两表。详见 docs/task-notes/DB-007.md |
 
 ## 4. 后台运营端
 
@@ -99,11 +135,11 @@
 
 | ID | 工作项 | 状态 | 负责人 | 依赖 | 验收结果 |
 |---|---|---|---|---|---|
-| INFRA-001 | 环境变量、密钥管理、开发/测试/生产环境隔离 | 待完成 | Claude Code | API-001 | 无密钥入库；环境权限分离 |
-| INFRA-002 | Redis、任务队列、死信队列和回调消费 | 待完成 | Claude Code | API-001 | 外部回调可重放、乱序处理和失败告警 |
-| INFRA-003 | 对象存储：KYC/产品文件/工单附件 | 待完成 | Claude Code | API-004、API-012 | 临时访问、病毒扫描、权限和保留策略生效 |
-| INFRA-004 | 日志、指标、链路追踪、报警和事故开关 | 待完成 | Claude Code | API-001 | 能定位资金、订单、KYC 和合作方异常 |
-| INFRA-005 | CI/CD、类型检查、迁移、部署、回滚与 SBOM | 部分完成 | Codex + Claude Code | API-001、FE-002 | 本地生产构建和 Demo 自动冒烟已稳定；远程 CI、部署、迁移、回滚与 SBOM 仍待完成。详见 `docs/task-notes/INFRA-005.md` |
+| INFRA-001 | 环境变量、密钥管理、开发/测试/生产环境隔离 | 部分完成 | Codex | API-001 | 已增加生产启动门禁：核心域名/CORS/数据库/Passkey/身份密钥缺失即失败，金融总开关要求正式供应商、地区白名单与 Webhook 密钥；真实 Secret Manager、权限分离和轮换演练仍待完成，详见 `docs/task-notes/INFRA-001.md` |
+| INFRA-002 | Redis、任务队列、死信队列和回调消费 | 待审核 | Hermes | API-001 | 基于 PG 实现任务队列（SKIP LOCKED 领取、幂等入队、指数退避重试、死信标记、回调去重消费）；无新依赖；单元 8/8 全绿。详见 docs/task-notes/INFRA-002.md |
+| INFRA-003 | 对象存储：KYC/产品文件/工单附件 | 待审核 | Codex | API-004、API-012 | 已实现 S3 预签名、大小/MIME/SHA-256 绑定、KMS 门禁、签名扫描回调、隔离下载和用户附件归属；真实 S3/KMS/扫描器演练待外部环境。详见 `docs/task-notes/INFRA-003.md` |
+| INFRA-004 | 日志、指标、链路追踪、报警和事故开关 | 待审核 | Hermes | API-001 | Winston JSON 日志 + Prometheus 指标（HTTP/DB/业务）+ OpenTelemetry 追踪（Jaeger/OTLP）+ 阈值告警邮件；nest build 通过。详见 docs/task-notes/INFRA-004.md |
+| INFRA-005 | CI/CD、类型检查、迁移、部署、回滚与 SBOM | 进行中 | Codex | API-001、FE-002 | GitHub CI、低内存门禁、迁移回滚脚本、依赖审查和 CycloneDX SBOM 已实现；首次远程运行、分支保护、托管数据库与发布演练待外部权限。详见 `docs/task-notes/INFRA-005.md` |
 | INFRA-006 | PWA 更新、离线、深链接、推送和 Flutter 端计划 | 部分完成 | Codex | FE-002、API-012 | 当前有 manifest/service worker；正式更新策略与移动端尚未实现 |
 
 ## 6. 测试与质量
@@ -111,7 +147,7 @@
 | ID | 工作项 | 状态 | 负责人 | 依赖 | 验收结果 |
 |---|---|---|---|---|---|
 | QA-001 | 单元、集成、端到端和视觉回归测试基线 | 部分完成 | Codex + Reasonix | FE-002、API-001 | 已新增关键页面、只读 Polymarket 与无效路由的自动化冒烟验证；组件、端到端操作与视觉回归仍待补齐。详见 `docs/task-notes/QA-001.md` |
-| QA-002 | 登录、KYC、资格、资金和订单状态机测试 | 待完成 | Reasonix | API-002 至 API-008 | 覆盖失败、重复提交、超时、人工审核与恢复 |
+| QA-002 | 登录、KYC、资格、资金和订单状态机测试 | 待审核 | Codex | API-002 至 API-008 | 全链路脚本已覆盖注册、KYC、入金、四类订单、收益、结算、赎回、转账和提现；Core Jest 29 suites / 146 tests 通过。生产失败注入与伙伴回调演练仍待完成。 |
 | QA-003 | Polymarket 同步、订单、结算、撤市与 API 中断演练 | 待完成 | Reasonix | API-009 | 内外订单不重复扣款；只读降级正确 |
 | QA-004 | 账本不变量、对账、费用、精度和收益计算测试 | 待完成 | Reasonix | API-007、API-010 | 余额、分录和外部凭证一致 |
 | QA-005 | 多语言、RTL、可访问性、性能与真机测试 | 待完成 | Reasonix | FE-004、FE-005 | Android 12-15 与主流屏幕通过关键路径验收 |

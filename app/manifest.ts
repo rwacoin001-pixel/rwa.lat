@@ -14,6 +14,7 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['finance', 'productivity'],
     icons: [
       { src: '/rwa-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
+      { src: '/rwa-mark-180.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
     ],
   }
 }

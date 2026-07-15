@@ -64,7 +64,10 @@ export function buildDatabaseOptions(env: DatabaseEnvironment): PostgresDataSour
     synchronize: false,
     migrationsRun: false,
     migrationsTableName: 'schema_migrations',
-    entities: [join(__dirname, '..', '**', '*.entity.{js,ts}')],
+    entities: [
+      join(__dirname, '..', '**', '*.entity.{js,ts}'),
+      join(__dirname, '..', '**', '*.entities.{js,ts}'),
+    ],
     migrations: [join(__dirname, 'migrations', '*.{js,ts}')],
     extra: {
       max: poolMax,
