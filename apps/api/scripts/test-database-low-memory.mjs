@@ -26,10 +26,21 @@ for (const suite of suites) {
   const result = spawnSync(
     process.execPath,
     ['--max-old-space-size=768', jestBin, '--runInBand', '--runTestsByPath', suite],
-    { cwd: process.cwd(), env, stdio: 'inherit' },
+    { cwd: process.cwd(), env, encoding: 'utf8', maxBuffer: 2 * 1024 * 1024 },
   )
+  if (result.stdout) process.stdout.write(result.stdout)
+  if (result.stderr) process.stderr.write(result.stderr)
   if (result.error) throw result.error
-  if (result.status !== 0) process.exit(result.status ?? 1)
+  if (result.status !== 0) {
+    const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`
+    const tail = output.split(/\r?\n/).filter(Boolean).slice(-80).join('\n')
+    if (process.env.GITHUB_ACTIONS === 'true') {
+      const escaped = tail.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')
+      console.error(`::error file=${suite},title=Database suite failed::${escaped}`)
+    }
+    console.error(`Database suite failed: ${suite}`)
+    process.exit(result.status ?? 1)
+  }
 }
 
 console.log(`Low-memory database verification passed: ${suites.length} suites.`)
