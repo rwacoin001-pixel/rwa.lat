@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useState, useEffect } from 'react'
+import AnimatedBrand from './animated-brand'
 
 const navLinks = [
   { label: 'Product', href: '#product' },
@@ -47,10 +48,10 @@ export default function Navbar() {
         {/* Logo */}
         <a
           href="#"
-          className="mr-3 px-3 py-1.5 text-sm font-bold tracking-widest text-white uppercase"
-          style={{ letterSpacing: '0.15em' }}
+          className="mr-3 flex min-h-8 items-center px-3"
+          aria-label="RWA.LAT home"
         >
-          RWA.LAT
+          <AnimatedBrand compact />
         </a>
 
         {/* Divider */}

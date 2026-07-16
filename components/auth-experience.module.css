@@ -87,10 +87,14 @@
 .root .primaryLight { min-height: 62px; color: #06110f; border-color: rgba(255,255,255,.96); background: rgba(247,252,251,.97); box-shadow: inset 0 1px #fff, inset 0 -9px 17px rgba(166,205,200,.22), 0 0 22px rgba(47,230,191,.32), 0 14px 35px rgba(0,0,0,.52); text-shadow: none; }
 .root .primaryLight span, .root .primaryLight svg { position: relative; z-index: 2; color: #06110f; stroke: currentColor; opacity: 1; }
 .secondaryButton { min-height: 58px; border-color: rgba(218,239,255,.5); background: rgba(5,8,12,.5); }
+.welcomeActions .glassButton { border-color: rgba(209,241,245,.48); background: linear-gradient(180deg, rgba(116,167,177,.18), rgba(9,18,24,.42)); box-shadow: inset 0 1px rgba(255,255,255,.3), inset 0 -15px 25px rgba(0,0,0,.2), 0 14px 34px rgba(0,0,0,.48), 0 0 20px rgba(47,230,191,.08); -webkit-backdrop-filter: blur(34px) saturate(155%); backdrop-filter: blur(34px) saturate(155%); }
+.welcomeActions .primaryLight { color: #edfffb; border-color: rgba(116,255,226,.84); background: linear-gradient(180deg, rgba(35,142,122,.42), rgba(8,64,55,.32)); box-shadow: inset 0 1px rgba(255,255,255,.4), inset 0 -16px 26px rgba(0,0,0,.2), 0 0 22px rgba(47,230,191,.34), 0 14px 34px rgba(0,0,0,.5); }
+.welcomeActions .primaryLight span, .welcomeActions .primaryLight svg { color: #edfffb; stroke: currentColor; }
 
 .authHeader { height: 70px; position: relative; z-index: 15; display: grid; grid-template-columns: 48px 1fr 48px; align-items: center; justify-items: center; }
 .backButton { width: 46px; height: 46px; display: grid; place-items: center; border: 1px solid rgba(218,239,255,.35); border-radius: 50%; background: rgba(8,12,16,.55); box-shadow: inset 0 1px rgba(255,255,255,.09), 0 9px 24px rgba(0,0,0,.42); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 .headerSpacer { width: 48px; }
+.headerBrandSpacer { width: 1px; height: 1px; }
 .headerLanguage { width: 46px; height: 46px; position: relative; display: grid; place-items: center; border: 1px solid rgba(218,239,255,.3); border-radius: 50%; color: var(--auth-ice); background: rgba(8,12,16,.55); box-shadow: inset 0 1px rgba(255,255,255,.09), 0 9px 24px rgba(0,0,0,.34); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
 .headerLanguage select { position: absolute; inset: 0; width: 100%; opacity: 0; cursor: pointer; }
 
@@ -98,8 +102,17 @@
 .signInArc::before { content: ''; position: absolute; inset: 33px; border: 1px solid rgba(197,227,247,.045); border-radius: 50%; }
 .signInArc i { position: absolute; top: 48%; right: -4px; width: 9px; height: 9px; border-radius: 50%; background: var(--auth-mint); box-shadow: 0 0 14px var(--auth-mint); animation: dotPulse 2.6s ease-in-out infinite; }
 .signInArc b { position: absolute; width: 7px; height: 7px; top: 5%; left: 30%; border-radius: 50%; background: rgba(197,227,247,.76); box-shadow: 0 0 10px rgba(197,227,247,.55); }
+.mode_register { min-height: max(100dvh, 930px); }
+.registerArc { width: 405px; height: 270px; position: absolute; z-index: 0; top: 20px; left: 50%; overflow: hidden; pointer-events: none; transform: translateX(-50%); }
+.registerArc img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; mix-blend-mode: screen; }
+.registerArcBase { opacity: .19; filter: saturate(.85) brightness(.72); }
+.registerArcSweep { opacity: .95; filter: saturate(1.25) brightness(1.28) drop-shadow(0 0 8px rgba(47,230,191,.42)); clip-path: inset(0 100% 0 0); animation: registerArcSweep 4.6s cubic-bezier(.4,0,.2,1) infinite; }
+.registerBrandStack { position: relative; z-index: 4; display: grid; justify-items: center; gap: 2px; margin-top: 8px; color: #f7f9fc; }
+.registerBrandStack > div { filter: drop-shadow(0 4px 14px rgba(0,0,0,.66)) drop-shadow(0 0 9px rgba(47,230,191,.12)); }
+.registerBrandStack > span { margin-right: -.36em; font-size: 20px; font-weight: 420; letter-spacing: .36em; line-height: 1; }
 .mode_login .authHeader, .mode_register .authHeader { height: 58px; }
 .signInCopy { position: relative; z-index: 3; margin: 32px 0 26px; text-align: center; }
+.registerSignInCopy { margin: 18px 0 23px; }
 .signInCopy h1 { margin: 0; font-size: clamp(27px, 7.4vw, 34px); line-height: 1.1; letter-spacing: -.035em; font-weight: 680; }
 .signInCopy p { margin: 10px 0 0; color: var(--auth-muted); font-size: 15px; }
 .authForm { position: relative; z-index: 5; display: grid; gap: 11px; width: 100%; max-width: 360px; margin: 0 auto; }
@@ -121,6 +134,8 @@
 
 .emailButton { min-height: 59px; border-color: rgba(96,255,220,.84); background: rgba(10,91,76,.52); box-shadow: inset 0 1px rgba(255,255,255,.2), inset 0 -14px 27px rgba(0,0,0,.28), 0 0 18px rgba(47,230,191,.25), 0 14px 30px rgba(0,0,0,.4); }
 .providerButton { min-height: 55px; border-color: rgba(218,239,255,.42); background: rgba(11,15,20,.58); }
+.mode_register .field, .mode_register .providerButton { border-color: rgba(210,230,239,.4); background: rgba(12,17,23,.5); box-shadow: inset 0 1px rgba(255,255,255,.13), inset 0 -12px 22px rgba(0,0,0,.17), 0 13px 29px rgba(0,0,0,.34); -webkit-backdrop-filter: blur(28px) saturate(145%); backdrop-filter: blur(28px) saturate(145%); }
+.mode_register .emailButton { background: linear-gradient(180deg, rgba(28,132,112,.55), rgba(6,74,62,.46)); -webkit-backdrop-filter: blur(28px) saturate(155%); backdrop-filter: blur(28px) saturate(155%); }
 .providerMark { width: 22px; height: 22px; flex: none; }
 .xMark { display: grid; place-items: center; color: #fff; font-family: Arial, sans-serif; font-size: 25px; line-height: 1; }
 .inviteToggle { min-height: 37px; display: flex; align-items: center; justify-content: center; gap: 9px; border: 0; background: transparent; color: var(--auth-muted); font-size: 12px; }
@@ -206,6 +221,7 @@
 .visuallyHidden { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; margin: -1px !important; overflow: hidden !important; clip: rect(0,0,0,0) !important; white-space: nowrap !important; border: 0 !important; }
 
 @keyframes liquidSweep { 0%, 58% { left: -80%; opacity: 0; } 66% { opacity: .85; } 88%, 100% { left: 130%; opacity: 0; } }
+@keyframes registerArcSweep { 0%, 12% { clip-path: inset(0 100% 0 0); opacity: .25; } 68%, 84% { clip-path: inset(0 0 0 0); opacity: 1; } 100% { clip-path: inset(0 0 0 0); opacity: .42; } }
 @keyframes assetFloat { 50% { transform: translateY(-7px) rotate(1.5deg); filter: brightness(1.08); } }
 @keyframes sphereFloat { 50% { transform: translate(-50%, calc(-50% - 6px)); } }
 @keyframes dotPulse { 50% { opacity: .35; transform: scale(.72); } }

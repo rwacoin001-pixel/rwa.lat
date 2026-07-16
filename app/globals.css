@@ -219,13 +219,7 @@ svg.lucide { stroke-width: 2.15px; }
 .context-topbar__title b { overflow: hidden; display: block; color: var(--ink); font-size: 17px; font-weight: 620; letter-spacing: -.025em; text-overflow: ellipsis; white-space: nowrap; }
 .context-topbar__title small { overflow: hidden; display: block; color: var(--faint); font-size: 9px; font-weight: 580; letter-spacing: .05em; text-overflow: ellipsis; text-transform: uppercase; white-space: nowrap; }
 .brand { display: inline-flex; align-items: center; gap: 9px; color: #fff; font-size: 20px; letter-spacing: .15em; font-weight: 480; white-space: nowrap; }
-.brand svg { width: 48px; height: 48px; overflow: visible; filter: drop-shadow(0 3px 8px rgba(0,0,0,.45)); }
-.brand svg circle, .brand svg path { fill: none; stroke: currentColor; stroke-linecap: round; stroke-linejoin: round; }
-.brand svg .brand-outline { stroke-width: 2.8; }
-.brand svg .brand-axis { stroke-width: 3.6; }
-.brand svg .brand-node { fill: var(--mint); stroke: #f6ffff; stroke-width: 2.1; filter: drop-shadow(0 0 6px var(--mint)); }
 .brand--compact { font-size: 17px; gap: 8px; }
-.brand--compact svg { width: 40px; height: 40px; }
 .round-control, .profile-orb {
   display: grid; place-items: center; border: 1px solid rgba(255,255,255,.2); color: var(--ink);
   background: rgba(10,13,16,.68); box-shadow: inset 0 1px rgba(255,255,255,.08), 0 9px 24px rgba(0,0,0,.45);

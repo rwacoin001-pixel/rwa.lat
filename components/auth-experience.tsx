@@ -113,7 +113,7 @@ function WelcomeExperience({ go, notify, onGuest }: Pick<AuthExperienceProps, 'g
         <AssetToken className={styles.assetMarket} src="/media/generated/project-assets/markets-collection-v1.png" imageClass={styles.assetCropMarket} />
         <span className={styles.heroSphere}>
           <span className={styles.sphereHighlight} />
-          <AnimatedBrand compact />
+          <AnimatedBrand markOnly />
         </span>
         <span className={styles.heroPedestal}><i /><b /></span>
       </div>
@@ -135,11 +135,11 @@ function WelcomeExperience({ go, notify, onGuest }: Pick<AuthExperienceProps, 'g
   )
 }
 
-function AuthHeader({ onBack, backLabel }: { onBack?: () => void; backLabel: string }) {
+function AuthHeader({ onBack, backLabel, showBrand = true }: { onBack?: () => void; backLabel: string; showBrand?: boolean }) {
   return (
     <div className={styles.authHeader}>
       {onBack ? <button className={styles.backButton} type="button" aria-label={backLabel} onClick={onBack}><ArrowLeft size={24} /></button> : <span className={styles.headerSpacer} />}
-      <AnimatedBrand compact />
+      {showBrand ? <AnimatedBrand compact /> : <span className={styles.headerBrandSpacer} aria-hidden="true" />}
       <LanguageMenu />
     </div>
   )
@@ -204,10 +204,22 @@ function SignInExperience({ mode, go, notify, onAuthenticated }: AuthExperienceP
 
   return (
     <AuthShell mode={mode}>
-      <div className={styles.signInArc} aria-hidden="true"><i /><b /></div>
-      <AuthHeader onBack={() => go('welcome')} backLabel={copy.back} />
+      {mode === 'register' ? (
+        <span className={styles.registerArc} aria-hidden="true">
+          <img className={styles.registerArcBase} src="/media/generated/auth/register-arc-light-v1.webp" alt="" />
+          <img className={styles.registerArcSweep} src="/media/generated/auth/register-arc-light-v1.webp" alt="" />
+        </span>
+      ) : <div className={styles.signInArc} aria-hidden="true"><i /><b /></div>}
+      <AuthHeader onBack={() => go('welcome')} backLabel={copy.back} showBrand={mode !== 'register'} />
 
-      <div className={styles.signInCopy}>
+      {mode === 'register' && (
+        <div className={styles.registerBrandStack} aria-label="RWA.LAT">
+          <AnimatedBrand markOnly />
+          <span>RWA.LAT</span>
+        </div>
+      )}
+
+      <div className={`${styles.signInCopy} ${mode === 'register' ? styles.registerSignInCopy : ''}`}>
         <h1>{mode === 'login' ? t('auth.login') : t('auth.register')}</h1>
         <p>{mode === 'login' ? copy.loginBody : copy.registerBody}</p>
       </div>

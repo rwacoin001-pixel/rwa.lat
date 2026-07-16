@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import AnimatedBrand from './animated-brand'
 
 export default function IntroSequence() {
   const [show, setShow] = useState(true)
@@ -74,12 +75,7 @@ export default function IntroSequence() {
             animate={{ opacity: [0, 1, 1], y: 0 }}
             transition={{ duration: 1.2, delay: 1.2 }}
           >
-            <span
-              className="text-sm font-semibold tracking-[0.4em]"
-              style={{ color: 'rgba(255,255,255,0.85)' }}
-            >
-              RWA.LAT
-            </span>
+            <AnimatedBrand markOnly />
             <div className="relative h-px w-32 overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
               <motion.div
                 className="absolute inset-y-0 left-0"

@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useRef, useEffect } from 'react'
+import AnimatedBrand from './animated-brand'
 
 function ParticleField() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -204,27 +205,15 @@ export default function CTASection() {
           viewport={{ once: true, margin: '-15%' }}
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
-          <span
-            className="font-bold leading-none tracking-tighter whitespace-nowrap"
+          <motion.img
+            src="/media/brand/rwa-logo-v2.svg"
+            alt=""
+            aria-hidden="true"
+            className="block h-auto"
             style={{
-              fontSize: 'clamp(3.5rem, 21vw, 20rem)',
-              color: '#2EE88E',
-              letterSpacing: '-0.04em',
+              width: 'clamp(12rem, 42vw, 42rem)',
+              filter: 'drop-shadow(0 0 50px rgba(47,230,191,.14))',
             }}
-          >
-            RWA.LAT
-          </span>
-          <motion.span
-            className="inline-block shrink-0"
-            style={{
-              width: 'clamp(1rem, 5vw, 4.5rem)',
-              height: 'clamp(1rem, 5vw, 4.5rem)',
-              background: '#2EE88E',
-              transform: 'rotate(45deg)',
-              marginLeft: 'clamp(0.5rem, 2vw, 2rem)',
-            }}
-            animate={{ rotate: [45, 135, 45] }}
-            transition={{ duration: 8, repeat: Infinity, ease: 'easeInOut' }}
           />
         </motion.div>
       </section>
@@ -235,8 +224,8 @@ export default function CTASection() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-10 mb-12">
             {/* Brand */}
             <div>
-              <div className="text-base font-bold tracking-widest text-white uppercase mb-3">
-                RWA.LAT
+              <div className="mb-3">
+                <AnimatedBrand compact />
               </div>
               <p className="text-xs leading-relaxed" style={{ color: 'rgba(255,255,255,0.35)' }}>
                 AI-powered investment intelligence for the next generation of investors.
