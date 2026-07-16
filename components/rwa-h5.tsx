@@ -196,7 +196,7 @@ function productFeeRate(product: DemoProduct) {
   return 0.008
 }
 
-function HomeScreen({ go, notify, openProduct, isGuest }: { go: (screen: Screen) => void; notify: (message: string) => void; openProduct: (product: DemoProduct) => void; isGuest: boolean }) {
+function HomeScreen({ go, notify, openProduct, isGuest, products, featured }: { go: (screen: Screen) => void; notify: (message: string) => void; openProduct: (product: DemoProduct) => void; isGuest: boolean; products: DemoProduct[]; featured: DemoProduct[] }) {
   const { locale, t } = useI18n()
   const copy = screenCopy[locale].home
   const portfolioText = rwaH5Copy[locale].portfolio
@@ -295,7 +295,7 @@ function HomeScreen({ go, notify, openProduct, isGuest }: { go: (screen: Screen)
   )
 }
 
-function InvestScreen({ go, notify, openProduct, openPrediction }: { go: (screen: Screen) => void; notify: (message: string) => void; openProduct: (product: DemoProduct) => void; openPrediction: (market: PredictionMarket) => void }) {
+function InvestScreen({ go, notify, openProduct, openPrediction, products }: { go: (screen: Screen) => void; notify: (message: string) => void; openProduct: (product: DemoProduct) => void; openPrediction: (market: PredictionMarket) => void; products: DemoProduct[] }) {
   const { locale, t } = useI18n()
   const copy = screenCopy[locale].invest
   const [category, setCategory] = useState<InvestCategory>('All')
@@ -1125,8 +1125,8 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
   const [orderAsset, setOrderAsset] = useState<OrderAsset>('compute')
   const [orderAmount, setOrderAmount] = useState(1000)
   const [walletFlowMode, setWalletFlowMode] = useState<'deposit' | 'withdraw' | 'transfer'>('deposit')
-  const [selectedProduct, setSelectedProduct] = useState<DemoProduct>(products[0])
   const [products, setProducts] = useState<DemoProduct[]>(fallbackProducts)
+  const [selectedProduct, setSelectedProduct] = useState<DemoProduct>(fallbackProducts[0])
   const [featured, setFeatured] = useState<DemoProduct[]>(fallbackFeatured)
   useEffect(() => {
     setSessionMode(window.localStorage.getItem('rwa-session-mode') === 'authenticated' ? 'authenticated' : 'guest')
@@ -1327,8 +1327,8 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
         {screen === 'register' && <AuthExperience mode="register" go={go} notify={notify} onAuthenticated={setAuthenticated} />}
         {screen === 'verify-email' && <AuthExperience mode="verify-email" go={go} notify={notify} />}
         {screen === 'recovery' && <AuthExperience mode="recovery" go={go} notify={notify} />}
-        {screen === 'home' && <HomeScreen go={go} notify={notify} openProduct={openProduct} isGuest={sessionMode === 'guest'} />}
-        {screen === 'invest' && <InvestScreen go={go} notify={notify} openProduct={openProduct} openPrediction={openPrediction} />}
+        {screen === 'home' && <HomeScreen go={go} notify={notify} openProduct={openProduct} isGuest={sessionMode === 'guest'} products={products} featured={featured} />}
+        {screen === 'invest' && <InvestScreen go={go} notify={notify} openProduct={openProduct} openPrediction={openPrediction} products={products} />}
         {screen === 'portfolio' && <PortfolioScreen go={go} notify={notify} />}
         {screen === 'wallet' && <WalletScreen go={go} notify={notify} openWalletFlow={openWalletFlow} />}
         {screen === 'rwa-detail' && <RwaDetailScreen product={selectedProduct.category === 'RWA' ? localizedSelectedProduct : localizeProduct(products.find((product) => product.category === 'RWA')!, locale)} go={go} notify={notify} openOrder={openOrder} />}
