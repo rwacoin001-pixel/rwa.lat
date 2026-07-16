@@ -62,7 +62,7 @@
 }
 
 .brand.compact.homeMotion .lockup {
-  width: 70px;
+  width: 52px;
 }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -95,5 +95,5 @@
     width: 94px;
   }
   .brand.markOnly .lockup { width: 104px; }
-  .brand.compact.homeMotion .lockup { width: 66px; }
+  .brand.compact.homeMotion .lockup { width: 50px; }
 }

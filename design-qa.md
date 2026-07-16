@@ -72,4 +72,26 @@ The focused crop confirms that the home mark changed from approximately 104 px t
 - No actionable P0, P1, or P2 visual mismatch remains for the requested scope.
 - P3: the register arc can appear faint at the beginning of its animation cycle; the later sampled phase reaches 0.82 opacity and the left-to-right sweep remains clearly visible.
 
+## Home logo size follow-up (2026-07-17)
+
+- Visual source of truth: `design-audit/home-logo-2026-07-17/01-live-before.png` (the currently deployed `/home` view at the time of review).
+- Implementation screenshot: `design-audit/home-logo-2026-07-17/02-local-after.png`.
+- Focused same-image comparison: `design-audit/home-logo-2026-07-17/03-before-after-comparison.png`.
+- Viewport and state: 1280 x 720, Simplified Chinese, `/home`, top of page, equivalent production-build state.
+
+### Follow-up comparison history
+
+1. **P2 — The 70 px home mark still competed with the three action controls.**
+   - Fix: reduced only the home top-bar lockup from 70 px to 52 px (50 px on narrow screens). No other logo placement or page spacing changed.
+   - Result: the measured rendered width is 51.93 px at 1280 x 720; the mark now acts as a restrained brand anchor while the action controls remain primary.
+2. **Motion fidelity check.**
+   - The existing 0.72 s reveal and 4.8 s float/aura animations remain active. Transform and filter values changed between two samples 900 ms apart, confirming that the smaller mark is still animated.
+3. **Runtime and build check.**
+   - The low-memory production build completed with a 1024 MB heap and one worker. The browser produced no errors; the only console entry is the expected warning that the undeployed API falls back to the demo catalog.
+
+### Follow-up findings
+
+- No actionable P0, P1, or P2 visual mismatch remains for the home-logo scope.
+- The 52 px asset remains crisp because it is the existing production SVG, not a raster replacement.
+
 final result: passed
