@@ -57,6 +57,10 @@ jobs:
       APP_ENV: test
       TEST_DATABASE_URL: postgresql://rwa:ci-only-password@127.0.0.1:5432/rwa_lat_test
       ADMIN_DATABASE_URL: postgresql://rwa:ci-only-password@127.0.0.1:5432/rwa_lat_test
+      AUTH_ADAPTER: demo
+      PUBLIC_APP_URL: http://localhost:3030
+      IDENTITY_HMAC_KEY: '1111111111111111111111111111111111111111111111111111111111111111'
+      IDENTITY_ENC_KEY: '2222222222222222222222222222222222222222222222222222222222222222'
     steps:
       - uses: actions/checkout@v6
       - uses: pnpm/action-setup@v4
