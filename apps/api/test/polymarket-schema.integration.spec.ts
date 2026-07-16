@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { buildDatabaseOptions } from '../src/database/database-options'
 
@@ -38,9 +38,9 @@ describeDatabase('Polymarket integration schema', () => {
     const [event] = await dataSource.query(
       `INSERT INTO app.polymarket_external_events
         (channel, external_event_key, event_type, occurred_at, payload, payload_sha256)
-       VALUES ('user', $1, 'order', now(), '{"status":"live"}', digest('evidence', 'sha256'))
+       VALUES ('user', $1, 'order', now(), '{"status":"live"}', $2)
        RETURNING id`,
-      [eventKey],
+      [eventKey, createHash('sha256').update('evidence').digest()],
     )
     await dataSource.query(
       `UPDATE app.polymarket_external_events
