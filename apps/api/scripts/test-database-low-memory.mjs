@@ -39,8 +39,15 @@ function reportFailure(suite, output) {
   console.error(`Database suite failed: ${suite}`)
 }
 
+function reportProgress(suite, state) {
+  if (process.env.GITHUB_ACTIONS === 'true') {
+    console.log(`::notice file=${suite},title=Database suite ${state}::${suite}`)
+  }
+}
+
 for (const suite of suites) {
   console.log(`Running database suite: ${suite}`)
+  reportProgress(suite, 'started')
   const result = spawnSync(
     process.execPath,
     ['--max-old-space-size=768', jestBin, '--runInBand', '--runTestsByPath', suite],
@@ -57,6 +64,7 @@ for (const suite of suites) {
     reportFailure(suite, output)
     process.exit(result.status ?? 1)
   }
+  reportProgress(suite, 'passed')
 }
 
 console.log(`Low-memory database verification passed: ${suites.length} suites.`)
