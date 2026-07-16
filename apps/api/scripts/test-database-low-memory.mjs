@@ -26,16 +26,21 @@ const env = { ...process.env, NODE_ENV: 'test', APP_ENV: 'test' }
 function reportFailure(suite, output) {
   const clean = output.replace(/\u001b\[[0-9;]*m/g, '')
   const tail = clean.split(/\r?\n/).filter(Boolean).slice(-100).join('\n')
-  if (process.env.GITHUB_STEP_SUMMARY) {
-    appendFileSync(
-      process.env.GITHUB_STEP_SUMMARY,
-      `## Database suite failed: \`${suite}\`\n\n\`\`\`text\n${tail}\n\`\`\`\n`,
-    )
-  }
   if (process.env.GITHUB_ACTIONS === 'true') {
     const escaped = tail.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')
     writeSync(2, `::error file=${suite},title=Database suite failed::${escaped}\n`)
   }
+  if (process.env.GITHUB_STEP_SUMMARY) {
+    try {
+      appendFileSync(
+        process.env.GITHUB_STEP_SUMMARY,
+        `## Database suite failed: \`${suite}\`\n\n\`\`\`text\n${tail}\n\`\`\`\n`,
+      )
+    } catch (error) {
+      writeSync(2, `Could not write the database failure summary: ${error.message}\n`)
+    }
+  }
+  if (tail) writeSync(2, `${tail}\n`)
   writeSync(2, `Database suite failed: ${suite}\n`)
 }
 
@@ -53,8 +58,6 @@ for (const [index, suite] of suites.entries()) {
     ['--max-old-space-size=768', jestBin, '--runInBand', '--runTestsByPath', suite],
     { cwd: process.cwd(), env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
   )
-  if (result.stdout) process.stdout.write(result.stdout)
-  if (result.stderr) process.stderr.write(result.stderr)
   if (result.error) {
     reportFailure(suite, result.error.stack ?? result.error.message)
     process.exit(1)
@@ -64,6 +67,8 @@ for (const [index, suite] of suites.entries()) {
     reportFailure(suite, output)
     process.exit(result.status ?? 1)
   }
+  if (result.stdout) writeSync(1, result.stdout)
+  if (result.stderr) writeSync(2, result.stderr)
 }
 
 console.log(`Low-memory database verification passed: ${suites.length} suites.`)
