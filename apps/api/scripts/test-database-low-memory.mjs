@@ -45,9 +45,9 @@ function reportProgress(suite, state) {
   }
 }
 
-for (const suite of suites) {
+for (const [index, suite] of suites.entries()) {
   writeSync(1, `Running database suite: ${suite}\n`)
-  reportProgress(suite, 'started')
+  if (index >= 5) reportProgress(suite, 'started')
   const result = spawnSync(
     process.execPath,
     ['--max-old-space-size=768', jestBin, '--runInBand', '--runTestsByPath', suite],
@@ -64,7 +64,6 @@ for (const suite of suites) {
     reportFailure(suite, output)
     process.exit(result.status ?? 1)
   }
-  reportProgress(suite, 'passed')
 }
 
 console.log(`Low-memory database verification passed: ${suites.length} suites.`)
