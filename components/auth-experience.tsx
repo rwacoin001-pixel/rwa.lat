@@ -57,10 +57,11 @@ type FaceParticle = {
 }
 
 function faceWidthAt(y: number) {
-  if (y < -.65) return .67 + ((y + 1) / .35) * .18
-  if (y < .12) return .85 + ((y + .65) / .77) * .06
-  if (y < .7) return .91 - ((y - .12) / .58) * .29
-  return .62 - ((y - .7) / .3) * .48
+  if (y < -.68) return .72 + ((y + 1) / .32) * .14
+  if (y < .1) return .86 + ((y + .68) / .78) * .05
+  if (y < .62) return .91 - ((y - .1) / .52) * .19
+  if (y < .9) return .72 - ((y - .62) / .28) * .18
+  return .54 - ((y - .9) / .1) * .05
 }
 
 const faceParticles: FaceParticle[] = (() => {
@@ -105,7 +106,7 @@ const faceParticles: FaceParticle[] = (() => {
   }))
   addCurve(15, (progress) => ({
     x: -.34 + progress * .68,
-    y: .58 + Math.sin(progress * Math.PI) * .055,
+    y: .53 + Math.sin(progress * Math.PI) * .055,
     z: .48,
     feature: true,
   }))
@@ -571,7 +572,7 @@ function ParticleFace({ scanning }: { scanning: boolean }) {
           index,
           depth,
           px: 90 + rotatedX * 61 * perspective,
-          py: 108 + rotatedY * 84 * perspective,
+          py: 108 + rotatedY * 75 * perspective,
         }
       }).sort((first, second) => first.depth - second.depth)
 
