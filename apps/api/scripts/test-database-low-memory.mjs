@@ -1,5 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import { appendFileSync } from 'node:fs'
+import { appendFileSync, writeSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL is required.')
@@ -34,19 +34,19 @@ function reportFailure(suite, output) {
   }
   if (process.env.GITHUB_ACTIONS === 'true') {
     const escaped = tail.replaceAll('%', '%25').replaceAll('\r', '%0D').replaceAll('\n', '%0A')
-    console.error(`::error file=${suite},title=Database suite failed::${escaped}`)
+    writeSync(2, `::error file=${suite},title=Database suite failed::${escaped}\n`)
   }
-  console.error(`Database suite failed: ${suite}`)
+  writeSync(2, `Database suite failed: ${suite}\n`)
 }
 
 function reportProgress(suite, state) {
   if (process.env.GITHUB_ACTIONS === 'true') {
-    console.log(`::notice file=${suite},title=Database suite ${state}::${suite}`)
+    writeSync(1, `::notice file=${suite},title=Database suite ${state}::${suite}\n`)
   }
 }
 
 for (const suite of suites) {
-  console.log(`Running database suite: ${suite}`)
+  writeSync(1, `Running database suite: ${suite}\n`)
   reportProgress(suite, 'started')
   const result = spawnSync(
     process.execPath,
