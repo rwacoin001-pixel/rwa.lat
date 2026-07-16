@@ -457,6 +457,7 @@ function DigitalFace() {
   return (
     <span className={styles.particleFace} aria-hidden="true">
       <img className={styles.digitalHead} src="/media/kyc-digital-head.webp?v=wireframe" alt="" draggable={false} />
+      <img className={`${styles.digitalHead} ${styles.digitalHeadScan}`} src="/media/kyc-digital-head.webp?v=wireframe" alt="" draggable={false} />
     </span>
   )
 }
