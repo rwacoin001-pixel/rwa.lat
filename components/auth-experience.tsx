@@ -29,6 +29,7 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { useI18n } from '@/lib/i18n'
 import { authFlowCopy, authText, type AuthFlowCopy } from '@/lib/auth-flow-copy'
+import AnimatedBrand from './animated-brand'
 import LanguageMenu from './language-menu'
 import styles from './auth-experience.module.css'
 
@@ -48,34 +49,6 @@ type KycStage = 'intro' | 'document' | 'face' | 'eligibility' | 'complete'
 const delay = (milliseconds: number) => new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds))
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-function BrandMark({ wordmark = false, large = false }: { wordmark?: boolean; large?: boolean }) {
-  return (
-    <span className={`${styles.brand} ${large ? styles.brandLarge : ''}`} aria-label="RWA.LAT">
-      <svg className={styles.brandMark} viewBox="0 0 64 64" aria-hidden="true">
-        <circle cx="31.5" cy="31.5" r="25" />
-        <path d="M6.5 31.5h50M33.8 31.5c10.8 0 18.5 7.4 18.5 18.3" />
-        <path d="m52.2 48.2-10.4 10.4" />
-        <circle className={styles.brandNode} cx="56.5" cy="31.5" r="4.4" />
-      </svg>
-      {wordmark && <span className={styles.wordmark}>RWA.LAT</span>}
-    </span>
-  )
-}
-
-function StatusBar() {
-  return (
-    <div className={styles.statusBar} aria-hidden="true">
-      <span className={styles.statusTime}>9:41</span>
-      <span className={styles.dynamicIsland}><i /></span>
-      <span className={styles.systemStatus}>
-        <span className={styles.cellular}><i /><i /><i /><i /></span>
-        <span className={styles.wifi}><i /></span>
-        <span className={styles.battery}><i /></span>
-      </span>
-    </div>
-  )
-}
-
 function Spinner() {
   return <LoaderCircle className={styles.spinner} size={21} aria-hidden="true" />
 }
@@ -83,7 +56,6 @@ function Spinner() {
 function AuthShell({ children, mode }: { children: React.ReactNode; mode: AuthExperienceMode }) {
   return (
     <section className={`${styles.root} ${styles[`mode_${mode}`]}`} data-auth-mode={mode}>
-      <StatusBar />
       <div className={styles.starfield} aria-hidden="true"><i /><i /><i /><i /><i /><i /></div>
       {children}
       <span className={styles.homeIndicator} aria-hidden="true" />
@@ -141,6 +113,7 @@ function WelcomeExperience({ go, notify, onGuest }: Pick<AuthExperienceProps, 'g
         <AssetToken className={styles.assetMarket} src="/media/generated/project-assets/markets-collection-v1.png" imageClass={styles.assetCropMarket} />
         <span className={styles.heroSphere}>
           <span className={styles.sphereHighlight} />
+          <AnimatedBrand compact />
         </span>
         <span className={styles.heroPedestal}><i /><b /></span>
       </div>
@@ -166,7 +139,7 @@ function AuthHeader({ onBack, backLabel }: { onBack?: () => void; backLabel: str
   return (
     <div className={styles.authHeader}>
       {onBack ? <button className={styles.backButton} type="button" aria-label={backLabel} onClick={onBack}><ArrowLeft size={24} /></button> : <span className={styles.headerSpacer} />}
-      <BrandMark wordmark />
+      <AnimatedBrand compact />
       <LanguageMenu />
     </div>
   )
@@ -233,11 +206,6 @@ function SignInExperience({ mode, go, notify, onAuthenticated }: AuthExperienceP
     <AuthShell mode={mode}>
       <div className={styles.signInArc} aria-hidden="true"><i /><b /></div>
       <AuthHeader onBack={() => go('welcome')} backLabel={copy.back} />
-
-      <div className={styles.loginBrand}>
-        <BrandMark large />
-        <span>RWA.LAT</span>
-      </div>
 
       <div className={styles.signInCopy}>
         <h1>{mode === 'login' ? t('auth.login') : t('auth.register')}</h1>
