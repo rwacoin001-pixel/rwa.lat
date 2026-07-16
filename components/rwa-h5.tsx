@@ -129,7 +129,7 @@ function TopBar({ onProfile, onNotifications, context }: { onProfile: () => void
   return (
     <header className="topbar">
       <div className="topbar__inner">
-        {context ? <div className="context-topbar__title"><span><context.Icon size={20} /></span><div><b>{context.title}</b>{context.meta && <small>{context.meta}</small>}</div></div> : <AnimatedBrand />}
+        {context ? <div className="context-topbar__title"><span><context.Icon size={20} /></span><div><b>{context.title}</b>{context.meta && <small>{context.meta}</small>}</div></div> : <AnimatedBrand compact homeMotion />}
         <div className="topbar-actions">
           <LanguageMenu />
           <button className="round-control notification-control" type="button" aria-label={action.label} onClick={action.onClick}>

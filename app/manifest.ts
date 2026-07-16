@@ -6,6 +6,7 @@ export default function manifest(): MetadataRoute.Manifest {
     short_name: 'RWA.LAT',
     description: 'One USDT wallet. Global opportunities. AI-guided decisions.',
     start_url: '/',
+    id: '/',
     scope: '/',
     display: 'standalone',
     orientation: 'portrait',
@@ -13,8 +14,10 @@ export default function manifest(): MetadataRoute.Manifest {
     theme_color: '#000000',
     categories: ['finance', 'productivity'],
     icons: [
+      { src: '/icons/rwa-pwa-v2-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+      { src: '/icons/rwa-pwa-v2-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+      { src: '/icons/rwa-pwa-v2-maskable-512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
       { src: '/rwa-mark.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' },
-      { src: '/rwa-mark-180.png', sizes: '180x180', type: 'image/png', purpose: 'any' },
     ],
   }
 }

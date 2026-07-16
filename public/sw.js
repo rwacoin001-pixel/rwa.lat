@@ -1,5 +1,15 @@
-const CACHE_NAME = 'rwa-lat-offline-v3'
-const OFFLINE_ASSETS = ['/offline.html', '/rwa-mark.svg', '/rwa-mark-180.png', '/welcome', '/home', '/invest', '/trust']
+const CACHE_NAME = 'rwa-lat-offline-v4'
+const OFFLINE_ASSETS = [
+  '/offline.html',
+  '/rwa-mark.svg',
+  '/icons/rwa-pwa-v2-192.png',
+  '/icons/rwa-pwa-v2-512.png',
+  '/icons/rwa-pwa-v2-maskable-512.png',
+  '/welcome',
+  '/home',
+  '/invest',
+  '/trust',
+]
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_ASSETS)))

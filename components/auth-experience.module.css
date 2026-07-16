@@ -102,17 +102,17 @@
 .signInArc::before { content: ''; position: absolute; inset: 33px; border: 1px solid rgba(197,227,247,.045); border-radius: 50%; }
 .signInArc i { position: absolute; top: 48%; right: -4px; width: 9px; height: 9px; border-radius: 50%; background: var(--auth-mint); box-shadow: 0 0 14px var(--auth-mint); animation: dotPulse 2.6s ease-in-out infinite; }
 .signInArc b { position: absolute; width: 7px; height: 7px; top: 5%; left: 30%; border-radius: 50%; background: rgba(197,227,247,.76); box-shadow: 0 0 10px rgba(197,227,247,.55); }
-.mode_register { min-height: max(100dvh, 930px); }
-.registerArc { width: 405px; height: 270px; position: absolute; z-index: 0; top: 20px; left: 50%; overflow: hidden; pointer-events: none; transform: translateX(-50%); }
+.mode_register { min-height: max(100dvh, 990px); }
+.registerArc { width: 405px; height: 270px; position: absolute; z-index: 0; top: 46px; left: 50%; overflow: hidden; pointer-events: none; transform: translateX(-50%); }
 .registerArc img { width: 100%; height: 100%; position: absolute; inset: 0; object-fit: cover; mix-blend-mode: screen; }
 .registerArcBase { opacity: .19; filter: saturate(.85) brightness(.72); }
 .registerArcSweep { opacity: .95; filter: saturate(1.25) brightness(1.28) drop-shadow(0 0 8px rgba(47,230,191,.42)); clip-path: inset(0 100% 0 0); animation: registerArcSweep 4.6s cubic-bezier(.4,0,.2,1) infinite; }
-.registerBrandStack { position: relative; z-index: 4; display: grid; justify-items: center; gap: 2px; margin-top: 8px; color: #f7f9fc; }
+.registerBrandStack { position: relative; z-index: 4; display: grid; justify-items: center; gap: 5px; margin-top: 31px; color: #f7f9fc; }
 .registerBrandStack > div { filter: drop-shadow(0 4px 14px rgba(0,0,0,.66)) drop-shadow(0 0 9px rgba(47,230,191,.12)); }
 .registerBrandStack > span { margin-right: -.36em; font-size: 20px; font-weight: 420; letter-spacing: .36em; line-height: 1; }
 .mode_login .authHeader, .mode_register .authHeader { height: 58px; }
 .signInCopy { position: relative; z-index: 3; margin: 32px 0 26px; text-align: center; }
-.registerSignInCopy { margin: 18px 0 23px; }
+.registerSignInCopy { margin: 24px 0 26px; }
 .signInCopy h1 { margin: 0; font-size: clamp(27px, 7.4vw, 34px); line-height: 1.1; letter-spacing: -.035em; font-weight: 680; }
 .signInCopy p { margin: 10px 0 0; color: var(--auth-muted); font-size: 15px; }
 .authForm { position: relative; z-index: 5; display: grid; gap: 11px; width: 100%; max-width: 360px; margin: 0 auto; }
@@ -145,12 +145,9 @@
 .authFooterLinks button { padding: 4px; border: 0; background: transparent; color: var(--auth-mint); }
 .spinner { flex: none; animation: spin .8s linear infinite; }
 
-.verifyIllustration { width: 184px; height: 184px; position: relative; display: grid; place-items: center; margin: 38px auto 27px; }
-.verifyOrbit { position: absolute; inset: 0; border: 1px solid rgba(197,227,247,.18); border-radius: 50%; animation: orbitTurn 16s linear infinite; }
-.verifyOrbit::before { content: ''; position: absolute; inset: 22px; border: 1px solid rgba(47,230,191,.16); border-radius: 50%; }
-.verifyOrbit i { position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--auth-ice); box-shadow: 0 0 9px currentColor; }.verifyOrbit i:nth-child(1) { top: 21px; left: 29px; }.verifyOrbit i:nth-child(2) { right: -2px; top: 84px; background: var(--auth-mint); }.verifyOrbit i:nth-child(3) { left: 51px; bottom: 2px; }
-.mailOrb { width: 94px; height: 94px; position: relative; display: grid; place-items: center; border: 1px solid rgba(218,239,255,.55); border-radius: 31px; color: #edffff; background: rgba(15,40,40,.48); box-shadow: inset 0 1px rgba(255,255,255,.2), inset -12px -15px 24px rgba(0,0,0,.34), 0 0 32px rgba(47,230,191,.14); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); transform: rotate(-7deg); }
-.mailOrb > svg { transform: rotate(7deg); }.mailOrb i { position: absolute; right: 12px; bottom: 13px; width: 11px; height: 11px; border: 2px solid #efffff; border-radius: 50%; background: var(--auth-mint); box-shadow: 0 0 11px var(--auth-mint); }
+.verifyIllustration { width: 214px; height: 188px; position: relative; display: grid; place-items: center; margin: 26px auto 24px; }
+.verifyIllustration::before { content: ''; position: absolute; z-index: -1; width: 142px; height: 68px; left: 50%; bottom: 21px; border-radius: 50%; background: rgba(47,230,191,.14); filter: blur(29px); transform: translateX(-50%); }
+.metalMailAsset { width: 210px; height: 210px; display: block; object-fit: contain; mix-blend-mode: screen; filter: contrast(1.08) saturate(.82) brightness(1.05) drop-shadow(0 15px 21px rgba(0,0,0,.7)) drop-shadow(0 0 15px rgba(47,230,191,.12)); -webkit-mask-image: radial-gradient(ellipse 49% 39% at 50% 50%, #000 56%, rgba(0,0,0,.92) 68%, transparent 100%); mask-image: radial-gradient(ellipse 49% 39% at 50% 50%, #000 56%, rgba(0,0,0,.92) 68%, transparent 100%); transform: rotate(-2deg); }
 .flowCopy { position: relative; z-index: 2; margin: 0 auto 25px; max-width: 352px; text-align: center; }
 .flowCopy > p { margin: 0 0 9px; color: var(--auth-mint); font-size: 9px; letter-spacing: .16em; font-weight: 720; }
 .flowCopy h1 { margin: 0; font-size: 32px; line-height: 1.08; letter-spacing: -.045em; }

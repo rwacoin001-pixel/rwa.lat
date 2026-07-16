@@ -359,10 +359,9 @@ function VerifyEmailExperience({ go, notify }: Pick<AuthExperienceProps, 'go' | 
 
   return (
     <AuthShell mode="verify-email">
-      <AuthHeader onBack={() => go('register')} backLabel={copy.back} />
+      <AuthHeader onBack={() => go('register')} backLabel={copy.back} showBrand={false} />
       <div className={styles.verifyIllustration} aria-hidden="true">
-        <span className={styles.mailOrb}><Mail size={39} /><i /></span>
-        <span className={styles.verifyOrbit}><i /><i /><i /></span>
+        <img className={styles.metalMailAsset} src="/media/generated/auth/verify-email-metal-envelope-v1.webp" alt="" />
       </div>
       <div className={styles.flowCopy}>
         <p>{copy.secureSetup}</p>
@@ -534,7 +533,7 @@ function KycExperience({ go, notify }: Pick<AuthExperienceProps, 'go' | 'notify'
 
   return (
     <AuthShell mode="kyc">
-      <AuthHeader onBack={() => stage === 'intro' ? go('profile') : setStage(stage === 'document' ? 'intro' : stage === 'face' ? 'document' : 'face')} backLabel={copy.back} />
+      <AuthHeader onBack={() => stage === 'intro' ? go('profile') : setStage(stage === 'document' ? 'intro' : stage === 'face' ? 'document' : 'face')} backLabel={copy.back} showBrand={false} />
       <div className={styles.kycCopy}>
         <h1>{stage === 'complete' ? copy.identityVerified : copy.verifyIdentity}</h1>
         <p>{stage === 'complete' ? copy.investorReady : copy.firstInvestmentRequired}</p>
