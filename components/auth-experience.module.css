@@ -191,8 +191,13 @@
 .passportChip { position: absolute; width: 38px; height: 29px; left: 70px; bottom: 44px; display: grid; grid-template-columns: 1fr 1fr; gap: 2px; padding: 4px; border: 1px solid #f8d98f; border-radius: 5px; background: #c9a95f; box-shadow: inset 0 1px rgba(255,255,255,.6), 0 4px 8px rgba(0,0,0,.45); }
 .passportChip i { border: 1px solid rgba(73,50,18,.58); border-radius: 1px; }
 .passportTitle { position: absolute; left: 59px; bottom: 17px; color: rgba(220,229,234,.42); font-size: 7px; letter-spacing: .24em; }
-.faceMesh { position: absolute; z-index: 4; width: 151px; height: 185px; top: 48px; right: 22px; overflow: visible; filter: drop-shadow(0 0 10px rgba(47,230,191,.22)); }
-.faceOutline, .meshLines path, .faceFeature { fill: none; stroke: rgba(104,223,205,.49); stroke-width: .9; }.meshLines { opacity: .33; }.faceFeature { stroke: rgba(222,244,244,.72); stroke-width: 1.2; }
+.particleFace { width: 164px; height: 201px; position: absolute; z-index: 4; top: 39px; right: 14px; isolation: isolate; perspective: 520px; filter: drop-shadow(0 0 12px rgba(47,230,191,.25)); }
+.particleFace::before { content: ''; position: absolute; z-index: -2; inset: 17% 10% 8%; border-radius: 50%; background: radial-gradient(ellipse, rgba(47,230,191,.1), rgba(47,230,191,.025) 47%, transparent 72%); filter: blur(9px); animation: particleAura 4.8s ease-in-out infinite; }
+.particleCanvas { width: 100%; height: 100%; display: block; transform-origin: 50% 55%; animation: particleFaceFloat 6.8s ease-in-out infinite; }
+.particleHalo { width: 130px; height: 44px; position: absolute; z-index: -1; left: 17px; top: 79px; border: 1px solid rgba(94,255,224,.18); border-radius: 50%; box-shadow: 0 0 18px rgba(47,230,191,.08), inset 0 0 16px rgba(47,230,191,.06); transform: rotateX(72deg) rotateZ(-8deg); animation: particleOrbit 9s linear infinite; }
+.particleAxis { width: 1px; height: 174px; position: absolute; z-index: -1; top: 15px; left: 50%; opacity: .25; background: linear-gradient(transparent, rgba(94,255,224,.62) 45%, rgba(94,255,224,.15), transparent); box-shadow: 0 0 9px rgba(47,230,191,.4); transform: translateX(-50%); }
+.isScanning .particleCanvas { filter: brightness(1.2) saturate(1.15); }
+.isScanning .particleHalo { border-color: rgba(94,255,224,.42); box-shadow: 0 0 23px rgba(47,230,191,.2), inset 0 0 17px rgba(47,230,191,.1); animation-duration: 3.2s; }
 .scanCorners { position: absolute; z-index: 6; top: 52px; right: 16px; width: 157px; height: 171px; }
 .scanCorners i { position: absolute; width: 24px; height: 24px; border-color: #f2ffff; border-style: solid; filter: drop-shadow(0 0 6px rgba(47,230,191,.3)); }.scanCorners i:nth-child(1) { left: 0; top: 0; border-width: 2px 0 0 2px; border-radius: 7px 0 0; }.scanCorners i:nth-child(2) { right: 0; top: 0; border-width: 2px 2px 0 0; border-radius: 0 7px 0 0; }.scanCorners i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 2px 2px; border-radius: 0 0 0 7px; }.scanCorners i:nth-child(4) { right: 0; bottom: 0; border-width: 0 2px 2px 0; border-radius: 0 0 7px; }
 .scanBeam { position: absolute; z-index: 7; width: 185px; height: 1px; top: 150px; right: 3px; background: #5dffe0; box-shadow: 0 0 7px #2fe6bf, 0 0 18px rgba(47,230,191,.72); opacity: .7; }
@@ -232,6 +237,9 @@
 @keyframes orbitTurn { to { transform: rotate(360deg); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes scanBeam { 0%, 100% { top: 72px; opacity: .35; } 50% { top: 210px; opacity: 1; } }
+@keyframes particleFaceFloat { 0%, 100% { transform: translateY(2px) scale(.985); } 50% { transform: translateY(-4px) scale(1.015); } }
+@keyframes particleAura { 0%, 100% { opacity: .48; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.08); } }
+@keyframes particleOrbit { to { transform: rotateX(72deg) rotateZ(352deg); } }
 
 @media (max-width: 390px) {
   .root { width: calc(100% + 32px); margin-left: -16px; margin-right: -16px; padding-left: 20px; padding-right: 20px; }
@@ -239,7 +247,7 @@
   .heroSphere { width: 174px; height: 174px; }.heroPedestal { width: 258px; height: 96px; }.assetToken { transform: scale(.9); }.assetCompute { left: 2%; }.assetProperty { right: -1%; }.assetTreasury { left: -2%; }.assetMarket { right: -1%; }
   .welcomeCopy h1 { font-size: 32px; }.welcomeCopy p { font-size: 13px; }.welcomeActions { margin-top: 22px; padding: 0 5px; }
   .loginBrand { margin-top: 14px; }.signInCopy { margin-top: 18px; margin-bottom: 20px; }.authForm { gap: 9px; }.glassButton { min-height: 53px; }.emailButton { min-height: 57px; }
-  .kycVisual { margin-left: -12px; margin-right: -12px; }.passport { left: 30px; }.faceMesh { right: 11px; }.scanCorners { right: 6px; }
+  .kycVisual { margin-left: -12px; margin-right: -12px; }.passport { left: 30px; }.particleFace { right: 3px; }.scanCorners { right: 6px; }
 }
 
 @media (max-height: 790px) and (min-width: 391px) {

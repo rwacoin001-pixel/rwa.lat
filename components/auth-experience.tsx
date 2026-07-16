@@ -48,6 +48,81 @@ type KycStage = 'intro' | 'document' | 'face' | 'eligibility' | 'complete'
 const delay = (milliseconds: number) => new Promise<void>((resolve) => window.setTimeout(resolve, milliseconds))
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+type FaceParticle = {
+  x: number
+  y: number
+  z: number
+  feature?: boolean
+  halo?: boolean
+}
+
+function faceWidthAt(y: number) {
+  if (y < -.65) return .67 + ((y + 1) / .35) * .18
+  if (y < .12) return .85 + ((y + .65) / .77) * .06
+  if (y < .7) return .91 - ((y - .12) / .58) * .29
+  return .62 - ((y - .7) / .3) * .48
+}
+
+const faceParticles: FaceParticle[] = (() => {
+  const particles: FaceParticle[] = []
+
+  for (let row = 0; row <= 22; row += 1) {
+    const y = -1 + (row / 22) * 2
+    const halfWidth = faceWidthAt(y)
+    const columns = 10 + (row % 3)
+
+    for (let column = 0; column <= columns; column += 1) {
+      const normalizedX = -1 + (column / columns) * 2
+      const x = normalizedX * halfWidth
+      const surface = Math.sqrt(Math.max(0, 1 - normalizedX * normalizedX))
+      const nose = Math.abs(x) < .17 && y > -.2 && y < .5
+        ? .24 * (1 - Math.abs(x) / .17) * (1 - Math.abs(y - .16) / .38)
+        : 0
+      const eyeSocket = y > -.34 && y < -.08 && Math.abs(Math.abs(x) - .34) < .17 ? -.08 : 0
+      const cheek = y > -.02 && y < .42 && Math.abs(Math.abs(x) - .48) < .22 ? .07 : 0
+
+      particles.push({ x, y, z: surface * .5 + nose + eyeSocket + cheek })
+    }
+  }
+
+  const addCurve = (count: number, point: (progress: number) => FaceParticle) => {
+    for (let index = 0; index < count; index += 1) particles.push(point(index / (count - 1)))
+  }
+
+  addCurve(11, (progress) => {
+    const x = -.58 + progress * .5
+    return { x, y: -.2 - Math.sin(progress * Math.PI) * .055, z: .55, feature: true }
+  })
+  addCurve(11, (progress) => {
+    const x = .08 + progress * .5
+    return { x, y: -.2 - Math.sin(progress * Math.PI) * .055, z: .55, feature: true }
+  })
+  addCurve(13, (progress) => ({
+    x: Math.sin(progress * Math.PI * 1.3) * .045,
+    y: -.08 + progress * .53,
+    z: .69 - Math.abs(progress - .7) * .12,
+    feature: true,
+  }))
+  addCurve(15, (progress) => ({
+    x: -.34 + progress * .68,
+    y: .58 + Math.sin(progress * Math.PI) * .055,
+    z: .48,
+    feature: true,
+  }))
+
+  for (let index = 0; index < 26; index += 1) {
+    const angle = (index / 26) * Math.PI * 2
+    particles.push({
+      x: Math.cos(angle) * (1.02 + (index % 4) * .035),
+      y: Math.sin(angle) * 1.08,
+      z: -.08 + (index % 5) * .025,
+      halo: true,
+    })
+  }
+
+  return particles
+})()
+
 function BrandMark({ wordmark = false, large = false }: { wordmark?: boolean; large?: boolean }) {
   return (
     <span className={`${styles.brand} ${large ? styles.brandLarge : ''}`} aria-label="RWA.LAT">
@@ -453,6 +528,96 @@ function RecoveryExperience({ go, notify }: Pick<AuthExperienceProps, 'go' | 'no
   )
 }
 
+function ParticleFace({ scanning }: { scanning: boolean }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    const context = canvas?.getContext('2d')
+    if (!canvas || !context) return
+
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const width = 180
+    const height = 220
+    const pixelRatio = Math.min(window.devicePixelRatio || 1, 2)
+    let animationFrame = 0
+
+    canvas.width = Math.round(width * pixelRatio)
+    canvas.height = Math.round(height * pixelRatio)
+    context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0)
+
+    const render = (time: number) => {
+      context.clearRect(0, 0, width, height)
+
+      const motionTime = reduceMotion ? 0 : time
+      const yaw = -.08 + Math.sin(motionTime * .00042) * .23
+      const pitch = Math.cos(motionTime * .00031) * .045
+      const breathe = 1 + Math.sin(motionTime * .00115) * .012
+      const cosYaw = Math.cos(yaw)
+      const sinYaw = Math.sin(yaw)
+      const cosPitch = Math.cos(pitch)
+      const sinPitch = Math.sin(pitch)
+      const scanY = scanning ? 30 + ((motionTime * .085) % 164) : 112 + Math.sin(motionTime * .00075) * 48
+
+      const projected = faceParticles.map((particle, index) => {
+        const rotatedX = particle.x * cosYaw + particle.z * sinYaw
+        const yawDepth = -particle.x * sinYaw + particle.z * cosYaw
+        const rotatedY = particle.y * cosPitch - yawDepth * sinPitch
+        const depth = particle.y * sinPitch + yawDepth * cosPitch
+        const perspective = 1 + depth * .15
+
+        return {
+          ...particle,
+          index,
+          depth,
+          px: 90 + rotatedX * 61 * perspective,
+          py: 108 + rotatedY * 84 * perspective,
+        }
+      }).sort((first, second) => first.depth - second.depth)
+
+      for (const particle of projected) {
+        const depthLight = Math.max(0, Math.min(1, (particle.depth + .18) / .82))
+        const scanLight = Math.max(0, 1 - Math.abs(particle.py - scanY) / 17)
+        const pulse = reduceMotion ? 0 : Math.sin(motionTime * .0021 + particle.index * .71) * .13
+        const featureBoost = particle.feature ? .3 : 0
+        const alpha = particle.halo
+          ? .16 + scanLight * .16
+          : Math.min(.96, .28 + depthLight * .43 + featureBoost + scanLight * .34 + pulse)
+        const radius = particle.halo
+          ? .58
+          : (.55 + depthLight * .7 + (particle.feature ? .32 : 0) + scanLight * .28) * breathe
+
+        context.beginPath()
+        context.arc(particle.px, particle.py, Math.max(.4, radius), 0, Math.PI * 2)
+        context.fillStyle = particle.feature
+          ? `rgba(224, 255, 250, ${alpha})`
+          : `rgba(${76 + Math.round(depthLight * 48)}, ${194 + Math.round(depthLight * 50)}, ${178 + Math.round(depthLight * 51)}, ${alpha})`
+        context.fill()
+
+        if ((particle.feature || scanLight > .72) && !particle.halo) {
+          context.beginPath()
+          context.arc(particle.px, particle.py, radius * 2.7, 0, Math.PI * 2)
+          context.fillStyle = `rgba(47, 230, 191, ${Math.min(.17, alpha * .16)})`
+          context.fill()
+        }
+      }
+
+      if (!reduceMotion) animationFrame = window.requestAnimationFrame(render)
+    }
+
+    render(0)
+    return () => window.cancelAnimationFrame(animationFrame)
+  }, [scanning])
+
+  return (
+    <span className={styles.particleFace} aria-hidden="true">
+      <i className={styles.particleHalo} />
+      <i className={styles.particleAxis} />
+      <canvas ref={canvasRef} className={styles.particleCanvas} />
+    </span>
+  )
+}
+
 function PassportAndFace({ activeStage, scanning, copy }: { activeStage: number; scanning: boolean; copy: AuthFlowCopy }) {
   return (
     <div className={`${styles.kycVisual} ${scanning ? styles.isScanning : ''}`} aria-label={copy.kycIllustration}>
@@ -463,16 +628,7 @@ function PassportAndFace({ activeStage, scanning, copy }: { activeStage: number;
         <span className={styles.passportChip}><i /><i /><i /><i /></span>
         <span className={styles.passportTitle}>PASSPORT</span>
       </span>
-      <svg className={styles.faceMesh} viewBox="0 0 180 220" aria-hidden="true">
-        <defs><clipPath id="auth-face-clip"><path d="M91 18c48 0 67 39 62 87-3 38-21 84-62 99-41-15-60-61-62-99-4-48 15-87 62-87Z" /></clipPath></defs>
-        <path className={styles.faceOutline} d="M91 18c48 0 67 39 62 87-3 38-21 84-62 99-41-15-60-61-62-99-4-48 15-87 62-87Z" />
-        <g clipPath="url(#auth-face-clip)" className={styles.meshLines}>
-          {Array.from({ length: 11 }, (_, index) => <path key={`h-${index}`} d={`M14 ${36 + index * 15}h154`} />)}
-          {Array.from({ length: 9 }, (_, index) => <path key={`v-${index}`} d={`M${31 + index * 15} 10v205`} />)}
-          <path d="M16 108 91 18l73 90-73 96Z" /><path d="m32 60 121 103M151 59 31 165" />
-        </g>
-        <path className={styles.faceFeature} d="M54 100c12-8 24-8 35 0M102 100c13-8 25-8 36 0M91 103l-7 35 15 2M67 159c14 11 34 11 48 0" />
-      </svg>
+      <ParticleFace scanning={scanning} />
       <span className={styles.scanCorners} aria-hidden="true"><i /><i /><i /><i /></span>
       <span className={styles.scanBeam} aria-hidden="true" />
       <span className={styles.visualStageBadge}>{activeStage === 1 ? copy.documentEncryption : activeStage === 2 ? copy.livenessAnalysis : copy.eligibilityDecision}</span>
