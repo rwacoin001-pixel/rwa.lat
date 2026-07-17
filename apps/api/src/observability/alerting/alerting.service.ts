@@ -1,4 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common'
+import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import * as nodemailer from 'nodemailer'
 
@@ -24,11 +24,12 @@ export interface Alert {
 }
 
 @Injectable()
-export class AlertingService implements OnModuleInit {
+export class AlertingService implements OnModuleInit, OnModuleDestroy {
   private readonly rules: AlertRule[] = []
   private readonly alerts: Alert[] = []
   private readonly lastFired = new Map<string, number>()
   private emailTransporter?: nodemailer.Transporter
+  private evaluationTimer: NodeJS.Timeout | null = null
 
   constructor(private readonly config: ConfigService) {}
 
@@ -70,7 +71,14 @@ export class AlertingService implements OnModuleInit {
     })
 
     // Check rules every 30s
-    setInterval(() => this.evaluateRules(), 30_000)
+    this.evaluationTimer = setInterval(() => void this.evaluateRules(), 30_000)
+    this.evaluationTimer.unref()
+  }
+
+  onModuleDestroy(): void {
+    if (this.evaluationTimer) clearInterval(this.evaluationTimer)
+    this.evaluationTimer = null
+    this.emailTransporter?.close()
   }
 
   registerRule(rule: AlertRule): void {
