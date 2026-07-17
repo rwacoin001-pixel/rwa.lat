@@ -52,6 +52,7 @@ describe('API-012 user-ops integration (PG)', () => {
     ds.getRepository(Reward),
     ds.getRepository(TicketMessage),
     ds.getRepository(TicketEvent),
+    { assertCleanAttachmentIds: jest.fn().mockResolvedValue([]) } as any,
   )
 
   it('ticket create -> list -> close lifecycle', async () => {
