@@ -1,10 +1,7 @@
 import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from '@nestjs/common'
-import { InjectRepository } from '@nestjs/typeorm'
 import type { Request } from 'express'
-import { Repository } from 'typeorm'
-import { IdentityCrypto } from '../identity/identity-crypto.service'
-import { Session } from '../identity/session.entity'
 import { SECURITY_ERROR_CODES } from './security.errors'
+import { SessionAuthService } from './session-auth.service'
 
 export interface AuthenticatedRequest extends Request {
   auth: {
@@ -17,10 +14,7 @@ export interface AuthenticatedRequest extends Request {
 
 @Injectable()
 export class SessionAuthGuard implements CanActivate {
-  constructor(
-    @InjectRepository(Session) private readonly sessions: Repository<Session>,
-    private readonly crypto: IdentityCrypto,
-  ) {}
+  constructor(private readonly sessions: SessionAuthService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthenticatedRequest>()
@@ -33,28 +27,7 @@ export class SessionAuthGuard implements CanActivate {
       })
     }
 
-    const session = await this.sessions.findOne({
-      where: { tokenHash: this.crypto.hashToken(token), state: 'active' },
-    })
-    if (!session) {
-      throw new UnauthorizedException({
-        code: SECURITY_ERROR_CODES.AUTHENTICATION_REQUIRED,
-        message: 'The session is not active.',
-      })
-    }
-    if (session.expiresAt <= new Date()) {
-      session.state = 'expired'
-      session.revokeReason = 'expired'
-      await this.sessions.save(session)
-      throw new UnauthorizedException({
-        code: SECURITY_ERROR_CODES.SESSION_EXPIRED,
-        message: 'The session has expired.',
-      })
-    }
-
-    session.lastSeenAt = new Date()
-    await this.sessions.save(session)
-    request.auth = { userId: session.userId, sessionId: session.id, deviceId: session.deviceId }
+    request.auth = await this.sessions.authenticate(token)
     return true
   }
 }

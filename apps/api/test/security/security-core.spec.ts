@@ -1,6 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common'
 import { IdentityCrypto } from '../../src/identity/identity-crypto.service'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../../src/security/session-auth.guard'
+import { SessionAuthService } from '../../src/security/session-auth.service'
 import { SecurityService, type SecurityActor } from '../../src/security/security.service'
 
 function crypto() {
@@ -33,7 +34,7 @@ describe('Security core', () => {
       findOne: jest.fn().mockResolvedValue(session),
       save: jest.fn().mockResolvedValue(session),
     }
-    const guard = new SessionAuthGuard(sessions as any, identityCrypto)
+    const guard = new SessionAuthGuard(new SessionAuthService(sessions as any, identityCrypto))
     const request = {
       header: (name: string) => (name === 'authorization' ? `Bearer ${token}` : undefined),
     } as AuthenticatedRequest
