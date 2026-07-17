@@ -36,7 +36,7 @@ describe('API-013 admin RBAC HTTP (Pg + guard)', () => {
       ds.getRepository(AdminUser).create({ id: ADMIN_B, email: 'b@admin.test', roleId: role.id }),
     ])
     await ds.getRepository(AdminRolePermission).save(
-      ds.getRepository(AdminRolePermission).create({ roleId: role.id, permission: 'redemption:approve' }),
+      ds.getRepository(AdminRolePermission).create({ roleId: role.id, permission: 'approvals.manage' }),
     )
     await ds.query(
       `INSERT INTO app.admin_sessions (admin_user_id, token_hash, expires_at)
