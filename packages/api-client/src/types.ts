@@ -104,31 +104,12 @@ export interface KycCase {
 }
 
 export interface SubmitKycRequest {
-  provider: string
-  documentType: 'id_card' | 'passport' | 'drivers_license'
-  documentFront: string // base64
-  documentBack?: string // base64
-  selfie: string // base64
-  address: {
-    country: string
-    region: string
-    city: string
-    street: string
-    postalCode: string
-  }
-  personalInfo: {
-    firstName: string
-    lastName: string
-    dateOfBirth: string // ISO date
-    nationality: string
-    documentNumber: string
-  }
+  language?: string
 }
 
 export interface SubmitKycResponse {
-  caseId: string
-  status: KycState
-  estimatedReviewTime: string
+  case: KycCase
+  verificationUrl: string
 }
 
 // ─── Wallet / Networks ───

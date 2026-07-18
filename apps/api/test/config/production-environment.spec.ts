@@ -104,6 +104,27 @@ describe('production environment validation', () => {
     }))).toMatchObject({ OBJECT_STORAGE_ENABLED: 'true' })
   })
 
+  it('requires the official Didit endpoint and complete hosted-verification settings', () => {
+    expect(() => validateEnvironment(production({ KYC_PROVIDER: 'didit' }))).toThrow(/DIDIT_API_KEY/)
+
+    const didit = {
+      KYC_PROVIDER: 'didit',
+      DIDIT_API_KEY: 'didit-api-key-from-secret-manager',
+      DIDIT_WORKFLOW_ID: '00000000-0000-4000-8000-000000000001',
+      DIDIT_WEBHOOK_SECRET: 'didit-webhook-secret-from-secret-manager',
+      DIDIT_CALLBACK_URL: 'https://rwa.lat/profile/kyc/callback',
+    }
+    expect(validateEnvironment(production(didit))).toMatchObject({ KYC_PROVIDER: 'didit' })
+    expect(() => validateEnvironment(production({
+      ...didit,
+      DIDIT_API_BASE_URL: 'https://proxy.example.com',
+    }))).toThrow(/DIDIT_API_BASE_URL/)
+    expect(() => validateEnvironment(production({
+      ...didit,
+      DIDIT_CALLBACK_URL: 'https://localhost/profile/kyc/callback',
+    }))).toThrow(/non-local/)
+  })
+
   it('rejects financial production with stub partners or unrestricted regions', () => {
     expect(() => validateEnvironment(production({
       PRODUCTION_FINANCIAL_FEATURES_ENABLED: 'true',

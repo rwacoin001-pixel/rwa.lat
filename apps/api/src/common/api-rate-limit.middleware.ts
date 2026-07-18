@@ -56,7 +56,7 @@ const RULES: RateLimitRule[] = [
     name: 'partner-callback',
     limit: 300,
     windowMs: MINUTE,
-    matches: (method, path) => method === 'POST' && /^\/v1\/(job-queue\/callbacks|wallet\/callbacks\/custody\/(deposits|withdrawals)|ledger\/callbacks\/custody\/reconciliations)$/.test(path),
+    matches: (method, path) => method === 'POST' && /^\/v1\/(job-queue\/callbacks|compliance\/kyc\/webhooks\/didit|wallet\/callbacks\/custody\/(deposits|withdrawals)|ledger\/callbacks\/custody\/reconciliations)$/.test(path),
   },
 ]
 

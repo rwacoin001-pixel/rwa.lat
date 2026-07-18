@@ -7,7 +7,9 @@ const batches = [
   [
     'test/catalog/catalog.service.spec.ts',
     'test/compliance/compliance-core.spec.ts',
+    'test/compliance/compliance-didit.spec.ts',
     'test/compliance/compliance-partner.spec.ts',
+    'test/compliance/kyc/real-didit-kyc.provider.spec.ts',
     'test/config/production-environment.spec.ts',
     'test/config/production-runtime-capabilities.spec.ts',
   ],

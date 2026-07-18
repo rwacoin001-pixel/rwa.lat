@@ -1,4 +1,12 @@
-import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common'
+import {
+  BadRequestException,
+  ConflictException,
+  Inject,
+  Injectable,
+  NotFoundException,
+  ServiceUnavailableException,
+  UnauthorizedException,
+} from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
@@ -53,7 +61,18 @@ export class ComplianceService {
   // ---- KYC 生命周期 ----
 
   async startKyc(userId: string, provider: string): Promise<KycCase> {
-    const open = await this.kycRepo.findOne({ where: { userId, state: 'not_started' } })
+    if (this.kycProvider.mode === 'live') {
+      throw new BadRequestException('Use the hosted KYC session endpoint for a live provider')
+    }
+    if (provider.trim().toLowerCase() !== this.kycProvider.name) {
+      throw new BadRequestException('The requested KYC provider is not enabled')
+    }
+    const open = await this.kycRepo.findOne({
+      where: [
+        { userId, state: 'not_started' },
+        { userId, state: 'in_progress' },
+      ],
+    })
     if (open) return open
     const kyc = this.kycRepo.create({
       id: randomUUID(),
@@ -68,6 +87,9 @@ export class ComplianceService {
   }
 
   async submitKyc(userId: string, providerCaseRef: string): Promise<KycCase> {
+    if (this.kycProvider.mode === 'live') {
+      throw new BadRequestException('Provider case references cannot be submitted by clients in live KYC mode')
+    }
     const kyc = await this.kycRepo.findOne({ where: { userId, state: 'in_progress' } })
     if (!kyc) throw notFound(COMPLIANCE_ERROR_CODES.KYC_CASE_NOT_FOUND, '没有进行中的 KYC 案件')
     const { ciphertext, keyVersion } = this.crypto.encrypt(providerCaseRef)
@@ -77,6 +99,101 @@ export class ComplianceService {
     kyc.encryptionKeyVersion = keyVersion
     kyc.submittedAt = new Date()
     return this.kycRepo.save(kyc)
+  }
+
+  async createHostedKycSession(userId: string, payload: Record<string, unknown>) {
+    if (this.kycProvider.mode !== 'live') {
+      throw new ServiceUnavailableException('A hosted KYC provider is not configured')
+    }
+    const latest = await this.getKycStatus(userId)
+    if (latest?.state === 'approved') {
+      throw new ConflictException('KYC is already approved')
+    }
+
+    const submission = await this.kycProvider.submitCase({ userId, payload })
+    if (!submission.verificationUrl) {
+      throw new ServiceUnavailableException('The KYC provider did not return a hosted verification URL')
+    }
+    const encrypted = this.crypto.encrypt(submission.providerCaseRef)
+    const kyc = latest
+      && latest.provider === this.kycProvider.name
+      && ['in_progress', 'submitted', 'needs_information'].includes(latest.state)
+      ? latest
+      : this.kycRepo.create({ id: randomUUID(), userId })
+    kyc.state = 'submitted'
+    kyc.provider = this.kycProvider.name
+    kyc.providerCaseHash = this.crypto.hmac(submission.providerCaseRef)
+    kyc.providerCaseCiphertext = encrypted.ciphertext
+    kyc.encryptionKeyVersion = encrypted.keyVersion
+    kyc.reasonCode = null
+    kyc.submittedAt = kyc.submittedAt ?? new Date()
+    kyc.decidedAt = null
+    kyc.expiresAt = null
+    const saved = await this.kycRepo.save(kyc)
+    return { case: saved, verificationUrl: submission.verificationUrl }
+  }
+
+  async receiveDiditWebhook(input: {
+    body: unknown
+    signatureV2: string | undefined
+    timestamp: string | undefined
+    isTest: boolean
+  }) {
+    if (this.kycProvider.name !== 'didit' || !this.kycProvider.verifyWebhook || !this.kycProvider.mapStatus) {
+      throw new ServiceUnavailableException('Didit webhook processing is not enabled')
+    }
+    let event
+    try {
+      event = this.kycProvider.verifyWebhook({
+        body: input.body,
+        signatureV2: input.signatureV2 ?? '',
+        timestamp: input.timestamp ?? '',
+      })
+    } catch {
+      throw new UnauthorizedException('Didit webhook authentication failed')
+    }
+
+    if (input.isTest || !['status.updated', 'data.updated'].includes(event.webhookType)) {
+      return { accepted: true, updated: false }
+    }
+    const kyc = await this.kycRepo.findOne({
+      where: {
+        provider: this.kycProvider.name,
+        providerCaseHash: this.crypto.hmac(event.sessionId),
+      },
+    })
+    if (!kyc || ['approved', 'rejected', 'expired'].includes(kyc.state)) {
+      return { accepted: true, updated: false }
+    }
+
+    const providerCase = this.kycProvider.mapStatus(event.status)
+    if (providerCase.state === kyc.state) return { accepted: true, updated: false }
+    kyc.state = providerCase.state
+    kyc.reasonCode = providerCase.reason?.slice(0, 128) ?? null
+    if (providerCase.state === 'approved' || providerCase.state === 'rejected') {
+      kyc.decidedAt = new Date()
+    }
+    await this.kycRepo.save(kyc)
+    if (providerCase.state === 'approved' || providerCase.state === 'rejected') {
+      await this.evaluateEligibility(kyc.userId, 'default')
+    }
+    return { accepted: true, updated: true }
+  }
+
+  toPublicKycCase(kyc: KycCase | null) {
+    if (!kyc) return null
+    return {
+      id: kyc.id,
+      userId: kyc.userId,
+      state: kyc.state,
+      provider: kyc.provider,
+      reasonCode: kyc.reasonCode,
+      submittedAt: kyc.submittedAt,
+      decidedAt: kyc.decidedAt,
+      expiresAt: kyc.expiresAt,
+      createdAt: kyc.createdAt,
+      updatedAt: kyc.updatedAt,
+    }
   }
 
   async decideKyc(caseId: string, decision: 'approved' | 'rejected', reasonCode?: string): Promise<KycCase> {

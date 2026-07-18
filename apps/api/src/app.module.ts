@@ -6,7 +6,7 @@ import { ComplianceModule } from './compliance/compliance.module'
 import { IdentityModule } from './identity/identity.module'
 import { SecurityModule } from './security/security.module'
 import { WalletModule } from './wallet/wallet.module'
-import { validateEnvironment } from './config/production-environment'
+import { validateApplicationEnvironment } from './config/production-environment'
 import { LedgerModule } from './ledger/ledger.module'
 import { CatalogModule } from './catalog/catalog.module'
 import { NotificationModule } from './notification/notification.module'
@@ -25,7 +25,7 @@ import { PolymarketModule } from './polymarket/polymarket.module'
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: process.env.NODE_ENV === 'test' ? ['.env.test', '.env'] : ['.env'],
-      validate: validateEnvironment,
+      validate: validateApplicationEnvironment,
     }),
     DatabaseModule,
     HealthModule,

@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, IsUUID, Length } from 'class-validator'
+import { IsIn, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator'
 
 export class StartKycDto {
   @IsString()
@@ -10,6 +10,13 @@ export class SubmitKycDto {
   @IsString()
   @Length(2, 256)
   providerCaseRef!: string
+}
+
+export class CreateHostedKycSessionDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/^[a-z]{2}(?:-[A-Z]{2})?$/)
+  language?: string
 }
 
 export class DecideKycDto {

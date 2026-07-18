@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { ConfigModule, ConfigService } from '@nestjs/config'
 import { IdentityModule } from '../identity/identity.module'
 import { Session } from '../identity/session.entity'
 import { SecurityModule } from '../security/security.module'
@@ -15,6 +16,7 @@ import { RegionPolicy } from './region-policy'
 import type { KycProvider } from './kyc-provider.interface'
 import type { SanctionsProvider } from './sanctions-provider.interface'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
+import { RealDiditKycProvider } from './kyc/providers/real-didit-kyc.provider'
 
 @Module({
   imports: [
@@ -22,12 +24,27 @@ import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
     IdentityModule,
     SecurityModule,
     AdminRbacModule,
+    ConfigModule,
   ],
   controllers: [ComplianceController],
   providers: [
     ComplianceService,
     RegionPolicy,
-    { provide: 'KycProvider', useClass: StubKycProvider },
+    {
+      provide: 'KycProvider',
+      useFactory: (configService: ConfigService) => {
+        const provider = (configService.get<string>('KYC_PROVIDER') ?? 'stub').trim().toLowerCase()
+        if (provider === 'didit') {
+          return new RealDiditKycProvider(configService)
+        }
+        const financialMode = configService.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
+        if (['', 'stub', 'demo'].includes(provider) && !financialMode) {
+          return new StubKycProvider()
+        }
+        throw new Error(`Unsupported or unsafe KYC_PROVIDER: ${provider || '<empty>'}`)
+      },
+      inject: [ConfigService],
+    },
     { provide: 'SanctionsProvider', useClass: StubSanctionsProvider },
   ],
   exports: [ComplianceService],

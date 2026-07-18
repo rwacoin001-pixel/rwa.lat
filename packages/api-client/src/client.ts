@@ -184,12 +184,12 @@ export class ApiClient {
   // ─── KYC ───
 
   async submitKyc(data: SubmitKycRequest): Promise<SubmitKycResponse> {
-    const response = await this.client.post<SubmitKycResponse>('/v1/compliance/kyc', data)
+    const response = await this.client.post<SubmitKycResponse>('/v1/compliance/kyc/session', data)
     return response.data
   }
 
-  async getKycStatus(): Promise<KycCase> {
-    const response = await this.client.get<KycCase>('/v1/compliance/kyc')
+  async getKycStatus(): Promise<KycCase | null> {
+    const response = await this.client.get<KycCase | null>('/v1/compliance/kyc/status')
     return response.data
   }
 

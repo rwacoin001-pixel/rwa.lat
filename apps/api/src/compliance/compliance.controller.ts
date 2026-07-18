@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Put, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Headers, HttpCode, HttpStatus, Param, Post, Put, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import { SessionAuthGuard } from '../security/session-auth.guard'
@@ -10,6 +10,7 @@ import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.servic
 import { ComplianceService } from './compliance.service'
 import {
   DecideKycDto,
+  CreateHostedKycSessionDto,
   EvaluateEligibilityDto,
   OpenRiskFlagDto,
   ResolveRiskFlagDto,
@@ -29,15 +30,42 @@ export class ComplianceController {
   @Post('kyc/start')
   @ApiBearerAuth()
   @UseGuards(SessionAuthGuard)
-  startKyc(@CurrentAuth() actor: SecurityActor, @Body() dto: StartKycDto) {
-    return this.service.startKyc(actor.userId, dto.provider)
+  async startKyc(@CurrentAuth() actor: SecurityActor, @Body() dto: StartKycDto) {
+    return this.service.toPublicKycCase(await this.service.startKyc(actor.userId, dto.provider))
   }
 
   @Post('kyc/submit')
   @ApiBearerAuth()
   @UseGuards(SessionAuthGuard)
-  submitKyc(@CurrentAuth() actor: SecurityActor, @Body() dto: SubmitKycDto) {
-    return this.service.submitKyc(actor.userId, dto.providerCaseRef)
+  async submitKyc(@CurrentAuth() actor: SecurityActor, @Body() dto: SubmitKycDto) {
+    return this.service.toPublicKycCase(await this.service.submitKyc(actor.userId, dto.providerCaseRef))
+  }
+
+  @Post('kyc/session')
+  @ApiBearerAuth()
+  @UseGuards(SessionAuthGuard)
+  async createHostedKycSession(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateHostedKycSessionDto) {
+    const result = await this.service.createHostedKycSession(actor.userId, { language: dto.language })
+    return {
+      case: this.service.toPublicKycCase(result.case),
+      verificationUrl: result.verificationUrl,
+    }
+  }
+
+  @Post('kyc/webhooks/didit')
+  @HttpCode(HttpStatus.OK)
+  receiveDiditWebhook(
+    @Headers('x-signature-v2') signatureV2: string | undefined,
+    @Headers('x-timestamp') timestamp: string | undefined,
+    @Headers('x-didit-test-webhook') testWebhook: string | undefined,
+    @Body() body: unknown,
+  ) {
+    return this.service.receiveDiditWebhook({
+      body,
+      signatureV2,
+      timestamp,
+      isTest: testWebhook?.toLowerCase() === 'true',
+    })
   }
 
   @Post('kyc/:caseId/decision')
@@ -45,14 +73,14 @@ export class ComplianceController {
   @UseGuards(AdminSessionGuard)
   async decideKyc(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('caseId') caseId: string, @Body() dto: DecideKycDto) {
     await this.rbac.assertPermission(admin.id, 'compliance.manage')
-    return this.service.decideKyc(caseId, dto.decision, dto.reasonCode)
+    return this.service.toPublicKycCase(await this.service.decideKyc(caseId, dto.decision, dto.reasonCode))
   }
 
   @Get('kyc/status')
   @ApiBearerAuth()
   @UseGuards(SessionAuthGuard)
-  kycStatus(@CurrentAuth() actor: SecurityActor) {
-    return this.service.getKycStatus(actor.userId)
+  async kycStatus(@CurrentAuth() actor: SecurityActor) {
+    return this.service.toPublicKycCase(await this.service.getKycStatus(actor.userId))
   }
 
   @Post('screening')

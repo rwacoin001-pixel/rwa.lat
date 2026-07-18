@@ -1,3 +1,5 @@
+import { validateProductionRuntimeCapabilities } from './production-runtime-capabilities'
+
 type Environment = Record<string, unknown>
 
 const REQUIRED_PRODUCTION_VALUES = [
@@ -41,6 +43,7 @@ export function validateEnvironment(input: Environment): Environment {
   if (read(input, 'POLYMARKET_GAMMA_URL')) assertHttps(input, 'POLYMARKET_GAMMA_URL')
   if (read(input, 'POLYMARKET_CLOB_URL')) assertHttps(input, 'POLYMARKET_CLOB_URL')
   assertObjectStorage(input)
+  assertDidit(input)
 
   const financialFeatures = read(input, 'PRODUCTION_FINANCIAL_FEATURES_ENABLED')
   if (financialFeatures !== 'true' && financialFeatures !== 'false') {
@@ -86,6 +89,10 @@ export function validateEnvironment(input: Environment): Environment {
   }
 
   return input
+}
+
+export function validateApplicationEnvironment(input: Environment): Environment {
+  return validateProductionRuntimeCapabilities(validateEnvironment(input))
 }
 
 function read(input: Environment, key: string): string {
@@ -204,6 +211,31 @@ function assertObjectStorage(input: Environment) {
     requireValue(input, 'S3_ACCESS_KEY', 8)
     requireValue(input, 'S3_SECRET_KEY', 24)
   }
+}
+
+function assertDidit(input: Environment) {
+  if (read(input, 'KYC_PROVIDER').toLowerCase() !== 'didit') return
+  requireValue(input, 'DIDIT_API_KEY', 16)
+  requireValue(input, 'DIDIT_WORKFLOW_ID', 1)
+  requireValue(input, 'DIDIT_WEBHOOK_SECRET', 16)
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(read(input, 'DIDIT_WORKFLOW_ID'))) {
+    throw new Error('DIDIT_WORKFLOW_ID must be a UUID')
+  }
+  const baseUrl = read(input, 'DIDIT_API_BASE_URL') || 'https://verification.didit.me'
+  if (baseUrl.replace(/\/$/, '') !== 'https://verification.didit.me') {
+    throw new Error('DIDIT_API_BASE_URL must be https://verification.didit.me in production')
+  }
+  assertHttps(input, 'DIDIT_CALLBACK_URL')
+  const callbackHost = new URL(read(input, 'DIDIT_CALLBACK_URL')).hostname
+  if (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(callbackHost)) {
+    throw new Error('DIDIT_CALLBACK_URL must use a non-local production host')
+  }
+  const timeout = read(input, 'DIDIT_API_TIMEOUT_MS')
+  if (timeout) requireInteger(input, 'DIDIT_API_TIMEOUT_MS', 1_000, 30_000)
+  const retries = read(input, 'DIDIT_API_MAX_RETRIES')
+  if (retries) requireInteger(input, 'DIDIT_API_MAX_RETRIES', 0, 3)
+  const retryDelay = read(input, 'DIDIT_API_RETRY_BASE_DELAY_MS')
+  if (retryDelay) requireInteger(input, 'DIDIT_API_RETRY_BASE_DELAY_MS', 100, 5_000)
 }
 
 function assertEmailDelivery(input: Environment) {

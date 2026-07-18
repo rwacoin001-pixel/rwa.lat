@@ -4,7 +4,7 @@ type Environment = Record<string, unknown>
 // when the corresponding reviewed implementation is actually wired into the
 // Nest modules; environment variable names alone cannot claim live capability.
 export const INSTALLED_PRODUCTION_CAPABILITIES: Record<'kyc' | 'sanctions' | 'custody', 'stub' | 'live'> = {
-  kyc: 'stub',
+  kyc: 'live',
   sanctions: 'stub',
   custody: 'stub',
 }
