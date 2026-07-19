@@ -69,9 +69,15 @@ describe('production environment validation', () => {
     expect(() => validateEnvironment(production({ TRUST_PROXY_HOPS: 'true' }))).toThrow(/TRUST_PROXY_HOPS/)
   })
 
-  it('requires a production SMTP delivery adapter with TLS-capable explicit authentication', () => {
+  it('requires a reviewed SMTP or Resend production delivery adapter', () => {
     expect(() => validateEnvironment(production({ EMAIL_PROVIDER: '' }))).toThrow(/EMAIL_PROVIDER/)
     expect(() => validateEnvironment(production({ SMTP_AUTH_MODE: 'plain', SMTP_PASSWORD: 'short' }))).toThrow(/SMTP_PASSWORD/)
+    expect(() => validateEnvironment(production({ EMAIL_PROVIDER: 'resend', RESEND_API_KEY: 'invalid' }))).toThrow(/RESEND_API_KEY/)
+    expect(validateEnvironment(production({
+      EMAIL_PROVIDER: 'resend',
+      RESEND_API_KEY: `re_${'a'.repeat(32)}`,
+      RESEND_HTTP_TIMEOUT_MS: '10000',
+    }))).toMatchObject({ EMAIL_PROVIDER: 'resend' })
     expect(() => validateEnvironment(production({ AUTH_ADAPTER: 'demo' }))).toThrow(/AUTH_ADAPTER/)
   })
 

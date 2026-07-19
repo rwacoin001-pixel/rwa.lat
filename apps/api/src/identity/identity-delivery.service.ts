@@ -1,23 +1,23 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common'
+import { Injectable, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { createTransport, type Transporter } from 'nodemailer'
+import { EmailDeliveryClient } from '../common/email-delivery.client'
 import type { IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
 
 @Injectable()
-export class IdentityDeliveryService {
+export class IdentityDeliveryService implements OnModuleDestroy {
   private readonly demoOutbox = new Map<string, string>()
   private readonly demoMode: boolean
-  private readonly transporter: Transporter | null
+  private readonly delivery: EmailDeliveryClient
   private readonly publicAppUrl: string
-  private readonly fromAddress: string
-  private readonly fromName: string
 
   constructor(private readonly config: ConfigService) {
     this.demoMode = config.get<string>('AUTH_ADAPTER') === 'demo'
     this.publicAppUrl = config.get<string>('PUBLIC_APP_URL') ?? ''
-    this.fromAddress = config.get<string>('EMAIL_FROM') ?? ''
-    this.fromName = config.get<string>('EMAIL_FROM_NAME') ?? 'RWA.LAT'
-    this.transporter = this.createSmtpTransport()
+    this.delivery = new EmailDeliveryClient(config)
+  }
+
+  onModuleDestroy(): void {
+    this.delivery.close()
   }
 
   async sendOneTimeLink(input: { email: string; purpose: IdentityOneTimeTokenPurpose; token: string }): Promise<void> {
@@ -25,7 +25,7 @@ export class IdentityDeliveryService {
       this.demoOutbox.set(this.key(input.email, input.purpose), input.token)
       return
     }
-    if (!this.transporter || !this.publicAppUrl || !this.fromAddress) {
+    if (!this.delivery.configured || !this.publicAppUrl) {
       throw new ServiceUnavailableException({
         code: 'AUTH_DELIVERY_NOT_CONFIGURED',
         message: 'Account email delivery is not configured.',
@@ -36,8 +36,7 @@ export class IdentityDeliveryService {
     const subject = verification ? 'Verify your RWA.LAT account' : 'Recover your RWA.LAT account'
     const action = verification ? 'Verify account' : 'Recover account'
     try {
-      await this.transporter.sendMail({
-        from: { name: this.fromName, address: this.fromAddress },
+      await this.delivery.send({
         to: input.email,
         subject,
         text: `${action}: ${link}`,
@@ -67,32 +66,6 @@ export class IdentityDeliveryService {
     return link.toString()
   }
 
-  private createSmtpTransport(): Transporter | null {
-    if (this.demoMode || this.config.get<string>('EMAIL_PROVIDER') !== 'smtp') return null
-    const secure = this.config.get<string>('SMTP_SECURE') === 'true'
-    const authMode = this.config.get<string>('SMTP_AUTH_MODE') ?? 'plain'
-    const port = Number(this.config.get<string>('SMTP_PORT') ?? (secure ? '465' : '587'))
-    return createTransport({
-      host: this.config.get<string>('SMTP_HOST'),
-      port,
-      secure,
-      requireTLS: !secure,
-      connectionTimeout: readPositiveInteger(this.config.get<string>('SMTP_CONNECTION_TIMEOUT_MS'), 10_000),
-      greetingTimeout: readPositiveInteger(this.config.get<string>('SMTP_GREETING_TIMEOUT_MS'), 10_000),
-      socketTimeout: readPositiveInteger(this.config.get<string>('SMTP_SOCKET_TIMEOUT_MS'), 20_000),
-      auth: authMode === 'plain' ? {
-        user: this.config.get<string>('SMTP_USER'),
-        pass: this.config.get<string>('SMTP_PASSWORD'),
-      } : undefined,
-      tls: { rejectUnauthorized: true },
-    })
-  }
-}
-
-function readPositiveInteger(value: string | undefined, fallback: number): number {
-  if (!value || !/^\d+$/.test(value)) return fallback
-  const parsed = Number(value)
-  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback
 }
 
 function escapeHtml(value: string): string {

@@ -239,18 +239,28 @@ function assertDidit(input: Environment) {
 }
 
 function assertEmailDelivery(input: Environment) {
-  if (read(input, 'EMAIL_PROVIDER') !== 'smtp') {
-    throw new Error('EMAIL_PROVIDER=smtp is required until another reviewed production delivery adapter is installed')
+  const provider = read(input, 'EMAIL_PROVIDER')
+  if (provider !== 'smtp' && provider !== 'resend') {
+    throw new Error('EMAIL_PROVIDER must be smtp or resend in production')
   }
-  requireValue(input, 'SMTP_HOST')
-  requireInteger(input, 'SMTP_PORT', 1, 65_535)
-  const secure = read(input, 'SMTP_SECURE')
-  if (secure !== 'true' && secure !== 'false') throw new Error('SMTP_SECURE must be explicitly true or false')
-  const authMode = read(input, 'SMTP_AUTH_MODE')
-  if (authMode !== 'plain' && authMode !== 'none') throw new Error('SMTP_AUTH_MODE must be plain or none')
-  if (authMode === 'plain') {
-    requireValue(input, 'SMTP_USER')
-    requireValue(input, 'SMTP_PASSWORD', 16)
+  if (provider === 'smtp') {
+    requireValue(input, 'SMTP_HOST')
+    requireInteger(input, 'SMTP_PORT', 1, 65_535)
+    const secure = read(input, 'SMTP_SECURE')
+    if (secure !== 'true' && secure !== 'false') throw new Error('SMTP_SECURE must be explicitly true or false')
+    const authMode = read(input, 'SMTP_AUTH_MODE')
+    if (authMode !== 'plain' && authMode !== 'none') throw new Error('SMTP_AUTH_MODE must be plain or none')
+    if (authMode === 'plain') {
+      requireValue(input, 'SMTP_USER')
+      requireValue(input, 'SMTP_PASSWORD', 16)
+    }
+  } else {
+    const apiKey = read(input, 'RESEND_API_KEY')
+    if (!/^re_[A-Za-z0-9_-]{16,}$/.test(apiKey)) {
+      throw new Error('RESEND_API_KEY must be a valid production Resend API key')
+    }
+    const timeout = read(input, 'RESEND_HTTP_TIMEOUT_MS')
+    if (timeout) requireInteger(input, 'RESEND_HTTP_TIMEOUT_MS', 1_000, 30_000)
   }
   const from = read(input, 'EMAIL_FROM')
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from)) throw new Error('EMAIL_FROM must be a valid production sender address')

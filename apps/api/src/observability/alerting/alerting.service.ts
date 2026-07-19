@@ -1,6 +1,6 @@
 import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import * as nodemailer from 'nodemailer'
+import { EmailDeliveryClient } from '../../common/email-delivery.client'
 
 export interface AlertRule {
   name: string
@@ -28,23 +28,15 @@ export class AlertingService implements OnModuleInit, OnModuleDestroy {
   private readonly rules: AlertRule[] = []
   private readonly alerts: Alert[] = []
   private readonly lastFired = new Map<string, number>()
-  private emailTransporter?: nodemailer.Transporter
+  private emailDelivery?: EmailDeliveryClient
   private evaluationTimer: NodeJS.Timeout | null = null
 
   constructor(private readonly config: ConfigService) {}
 
   onModuleInit(): void {
-    if (this.config.get('SMTP_HOST')) {
-      this.emailTransporter = nodemailer.createTransport({
-        host: this.config.get('SMTP_HOST'),
-        port: this.config.get('SMTP_PORT') ?? 587,
-        secure: this.config.get('SMTP_SECURE') === 'true',
-        auth: {
-          user: this.config.get('SMTP_USER'),
-          pass: this.config.get('SMTP_PASSWORD'),
-        },
-      })
-    }
+    const emailDelivery = new EmailDeliveryClient(this.config)
+    if (emailDelivery.configured) this.emailDelivery = emailDelivery
+    else emailDelivery.close()
 
     // Default alert rules
     this.registerRule({
@@ -78,7 +70,7 @@ export class AlertingService implements OnModuleInit, OnModuleDestroy {
   onModuleDestroy(): void {
     if (this.evaluationTimer) clearInterval(this.evaluationTimer)
     this.evaluationTimer = null
-    this.emailTransporter?.close()
+    this.emailDelivery?.close()
   }
 
   registerRule(rule: AlertRule): void {
@@ -125,22 +117,22 @@ export class AlertingService implements OnModuleInit, OnModuleDestroy {
 
     console.warn(`[ALERT ${rule.severity.toUpperCase()}] ${alert.message}`)
 
-    if (this.emailTransporter && rule.severity === 'critical') {
+    if (this.emailDelivery && rule.severity === 'critical') {
       await this.sendEmailAlert(alert)
     }
   }
 
   private async sendEmailAlert(alert: Alert): Promise<void> {
-    if (!this.emailTransporter) return
+    const recipient = this.config.get<string>('ALERT_TO_EMAIL')
+    if (!this.emailDelivery || !recipient) return
     try {
-      await this.emailTransporter.sendMail({
-        from: this.config.get('ALERT_FROM_EMAIL') ?? 'alerts@rwa-lat.com',
-        to: this.config.get('ALERT_TO_EMAIL') ?? 'ops@rwa-lat.com',
+      await this.emailDelivery.send({
+        to: recipient,
         subject: `[${alert.severity.toUpperCase()}] ${alert.ruleName}`,
         text: `${alert.message}\n\nTime: ${alert.timestamp.toISOString()}\nValue: ${alert.value}\nThreshold: ${alert.threshold}`,
       })
-    } catch (e) {
-      console.error('Failed to send alert email:', e)
+    } catch {
+      console.error('Failed to send alert email')
     }
   }
 

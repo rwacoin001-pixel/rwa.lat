@@ -1,0 +1,89 @@
+services:
+  - type: web
+    name: rwa-lat-api
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/rwacoin001-pixel/rwa.lat
+    branch: main
+    dockerContext: .
+    dockerfilePath: ./deploy/Dockerfile.api
+    autoDeployTrigger: off
+    healthCheckPath: /v1/health/ready
+    maxShutdownDelaySeconds: 30
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=384
+      - key: DATABASE_POOL_MAX
+        value: "2"
+      - key: DATABASE_CONNECTION_TIMEOUT_MS
+        value: "5000"
+      - key: DATABASE_IDLE_TIMEOUT_MS
+        value: "30000"
+      - key: PRODUCTION_DATABASE_URL
+        sync: false
+      - key: PUBLIC_API_URL
+        value: https://api.rwa.lat
+      - key: PUBLIC_APP_URL
+        value: https://rwa.lat
+      - key: CORS_ORIGINS
+        value: https://rwa.lat,https://www.rwa.lat
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: PASSKEY_RP_ID
+        value: rwa.lat
+      - key: PASSKEY_ORIGIN
+        value: https://rwa.lat
+      - key: PASSKEY_RP_NAME
+        value: RWA.LAT
+      - key: AUTH_ADAPTER
+        value: production
+      - key: IDENTITY_HMAC_KEY
+        sync: false
+      - key: IDENTITY_ENC_KEY
+        sync: false
+      - key: METRICS_BEARER_TOKEN
+        sync: false
+      - key: EMAIL_PROVIDER
+        value: resend
+      - key: EMAIL_FROM
+        value: no-reply@rwa.lat
+      - key: EMAIL_FROM_NAME
+        value: RWA.LAT
+      - key: RESEND_API_KEY
+        sync: false
+      - key: RESEND_HTTP_TIMEOUT_MS
+        value: "10000"
+      - key: GOOGLE_OAUTH_ENABLED
+        value: "false"
+      - key: X_OAUTH_ENABLED
+        value: "false"
+      - key: PRODUCTION_FINANCIAL_FEATURES_ENABLED
+        value: "false"
+      - key: WALLET_EXECUTION_ENABLED
+        value: "false"
+      - key: WALLET_EXECUTION_WORKER_ENABLED
+        value: "false"
+      - key: POLYMARKET_TRADING_ENABLED
+        value: "false"
+      - key: DEMO_OPERATIONS_ENABLED
+        value: "false"
+      - key: DEMO_WALLET_CREDIT_ENABLED
+        value: "false"
+      - key: KYC_PROVIDER
+        value: stub
+      - key: SANCTIONS_PROVIDER
+        value: stub
+      - key: WALLET_CUSTODY_ADAPTER
+        value: stub
+      - key: OBJECT_STORAGE_ENABLED
+        value: "false"
+      - key: OTEL_SERVICE_NAME
+        value: rwa-lat-core
+      - key: LOG_LEVEL
+        value: info
