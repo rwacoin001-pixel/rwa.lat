@@ -1,5 +1,6 @@
 import { spawnSync } from 'node:child_process'
 import { readFileSync, readdirSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { resolve } from 'node:path'
 
 if (process.env.NODE_ENV !== 'test') {
@@ -20,7 +21,8 @@ const latestSource = readFileSync(resolve(migrationDir, latestFile), 'utf8')
 const latestClass = /export class (\w+)/.exec(latestSource)?.[1]
 if (!latestClass) throw new Error(`Cannot find migration class in ${latestFile}.`)
 
-const cli = resolve('node_modules/typeorm/cli-ts-node-commonjs.js')
+const require = createRequire(import.meta.url)
+const cli = require.resolve('typeorm/cli-ts-node-commonjs.js')
 const env = { ...process.env, NODE_ENV: 'test', APP_ENV: 'test', NODE_OPTIONS: '--max-old-space-size=768' }
 
 function typeorm(command) {

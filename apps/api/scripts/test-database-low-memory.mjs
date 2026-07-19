@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process'
 import { appendFileSync, writeSync } from 'node:fs'
-import { resolve } from 'node:path'
+import { createRequire } from 'node:module'
+import { dirname, resolve } from 'node:path'
 
 if (!process.env.TEST_DATABASE_URL) throw new Error('TEST_DATABASE_URL is required.')
 
@@ -20,7 +21,8 @@ const suites = [
   'test/portfolio/portfolio.integration.spec.ts',
 ]
 
-const jestBin = resolve('node_modules/jest/bin/jest.js')
+const require = createRequire(import.meta.url)
+const jestBin = resolve(dirname(require.resolve('jest/package.json')), 'bin/jest.js')
 const env = { ...process.env, NODE_ENV: 'test', APP_ENV: 'test' }
 
 function reportFailure(suite, output) {
