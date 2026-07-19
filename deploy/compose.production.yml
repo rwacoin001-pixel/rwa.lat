@@ -53,7 +53,9 @@ services:
     env_file:
       - path: ${RWA_ENV_FILE:-./production.env}
         required: true
-    command: ["pnpm", "--dir", "apps/api", "db:migration:run:prod"]
+    # Invoke TypeORM directly so the read-only runtime never needs to create a
+    # per-user Corepack cache or download pnpm during a production migration.
+    command: ["node", "apps/api/node_modules/typeorm/cli.js", "migration:run", "-d", "apps/api/dist/database/data-source.js"]
     read_only: true
     tmpfs:
       - /tmp:rw,noexec,nosuid,size=32m
@@ -63,4 +65,3 @@ services:
       - no-new-privileges:true
     mem_limit: 512m
     profiles: ["release"]
-
