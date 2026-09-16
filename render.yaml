@@ -10,7 +10,6 @@ services:
     dockerfilePath: ./deploy/Dockerfile.api
     autoDeployTrigger: off
     healthCheckPath: /v1/health/ready
-    maxShutdownDelaySeconds: 30
     numInstances: 1
     envVars:
       - key: NODE_ENV
@@ -85,5 +84,47 @@ services:
         value: "false"
       - key: OTEL_SERVICE_NAME
         value: rwa-lat-core
+      - key: LOG_LEVEL
+        value: info
+
+  - type: web
+    name: rwa-lat-admin
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/rwacoin001-pixel/rwa.lat
+    branch: main
+    dockerContext: .
+    dockerfilePath: ./deploy/Dockerfile.admin
+    autoDeployTrigger: off
+    healthCheckPath: /v1/admin/health
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_ENV
+        value: production
+      - key: NODE_OPTIONS
+        value: --max-old-space-size=384
+      - key: DATABASE_POOL_MAX
+        value: "2"
+      - key: DATABASE_CONNECTION_TIMEOUT_MS
+        value: "5000"
+      - key: DATABASE_IDLE_TIMEOUT_MS
+        value: "30000"
+      - key: ADMIN_DATABASE_URL
+        sync: false
+      - key: PUBLIC_ADMIN_API_URL
+        value: https://admin-api.rwa.lat
+      - key: ADMIN_CORS_ORIGINS
+        value: https://admin.rwa.lat
+      - key: TRUST_PROXY_HOPS
+        value: "1"
+      - key: ADMIN_MFA_REQUIRED
+        value: "true"
+      - key: ADMIN_MFA_ENCRYPTION_KEY
+        sync: false
+      - key: OTEL_SERVICE_NAME
+        value: rwa-lat-admin
       - key: LOG_LEVEL
         value: info
