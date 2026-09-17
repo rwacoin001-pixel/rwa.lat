@@ -75,7 +75,15 @@ services:
       - key: DEMO_WALLET_CREDIT_ENABLED
         value: "false"
       - key: KYC_PROVIDER
-        value: stub
+        value: didit
+      - key: DIDIT_API_KEY
+        sync: false
+      - key: DIDIT_WORKFLOW_ID
+        value: e31ff861-0416-4956-b2b5-37c654d8b45c
+      - key: DIDIT_WEBHOOK_SECRET
+        sync: false
+      - key: DIDIT_CALLBACK_URL
+        value: https://rwa.lat/profile/kyc?status=complete
       - key: SANCTIONS_PROVIDER
         value: disabled
       - key: WALLET_CUSTODY_ADAPTER
