@@ -113,7 +113,11 @@ export class ObjectStorageService {
       ChecksumSHA256: checksumBase64,
       ...(this.kmsKeyId ? { ServerSideEncryption: 'aws:kms' as const, SSEKMSKeyId: this.kmsKeyId } : {}),
     })
-    const presignedUrl = await getSignedUrl(s3, cmd, { expiresIn: ttl })
+    // B2/S3 兼容性：要求校验和头参与签名（unhoistable），否则 B2 拒绝该头且校验和不存档。
+    const presignedUrl = await getSignedUrl(s3, cmd, {
+      expiresIn: ttl,
+      unhoistableHeaders: new Set(['x-amz-checksum-sha256']),
+    })
     const p = this.presigned.create({
       objectId: obj.id,
       bucket: input.bucket,

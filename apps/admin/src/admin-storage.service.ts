@@ -185,7 +185,12 @@ export class AdminStorageService implements OnModuleDestroy {
     })
     let presignedUrl: string
     try {
-      presignedUrl = await getSignedUrl(s3, cmd, { expiresIn: UPLOAD_TTL_SEC })
+      // B2/S3 兼容性：显式要求 x-amz-checksum-sha256 参与签名（而非被 SDK 提升为查询参数），
+      // 否则 B2 会拒绝浏览器发送的校验和头，且对象校验和无法存档/校验。
+      presignedUrl = await getSignedUrl(s3, cmd, {
+        expiresIn: UPLOAD_TTL_SEC,
+        unhoistableHeaders: new Set(['x-amz-checksum-sha256']),
+      })
     } catch (error) {
       await this.query(`DELETE FROM app.object_storage_objects WHERE id = $1`, [objectId])
       throw new ServiceUnavailableException(`无法生成预签名上传地址：${error instanceof Error ? error.message : 'unknown error'}`)
