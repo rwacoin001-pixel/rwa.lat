@@ -57,6 +57,7 @@ export class AdminStorageService implements OnModuleDestroy {
   private readonly enabled: boolean
   private readonly scanMode: string
   private readonly bucketMap: Record<string, string>
+  private readonly configError: string | null
 
   constructor(
     private readonly adminDb: DataSource,
@@ -75,16 +76,24 @@ export class AdminStorageService implements OnModuleDestroy {
     this.scanMode = (config.get<string>('OBJECT_STORAGE_SCAN_MODE') ?? 'external').trim() || 'external'
     this.bucketMap = parseBucketMap(config.get<string>('S3_BUCKET_MAP_JSON'))
     if (!this.enabled) {
+      this.configError = null
       this.s3 = null
       return
     }
+    const region = config.get<string>('S3_REGION')?.trim()
+    const accessKeyId = config.get<string>('S3_ACCESS_KEY')?.trim()
+    const secretAccessKey = config.get<string>('S3_SECRET_KEY')?.trim()
+    if (!region || !accessKeyId || !secretAccessKey) {
+      this.configError =
+        '对象存储已标记启用，但 S3_REGION / S3_ACCESS_KEY / S3_SECRET_KEY 未配置完整，存储功能暂不可用（请在 Render 补齐环境变量后重新部署）。'
+      this.s3 = null
+      return
+    }
+    this.configError = null
     this.s3 = new S3Client({
-      region: config.getOrThrow<string>('S3_REGION'),
+      region,
       endpoint: config.get<string>('S3_ENDPOINT') || undefined,
-      credentials: {
-        accessKeyId: config.get<string>('S3_ACCESS_KEY') ?? '',
-        secretAccessKey: config.get<string>('S3_SECRET_KEY') ?? '',
-      },
+      credentials: { accessKeyId, secretAccessKey },
       forcePathStyle: config.get<string>('S3_FORCE_PATH_STYLE') === 'true',
     })
   }
@@ -107,7 +116,10 @@ export class AdminStorageService implements OnModuleDestroy {
       externalEndpoint: Boolean(this.config.get<string>('S3_ENDPOINT')?.trim()),
       buckets,
       uploadFlow: 'presigned_put_checksum_scan',
-      message: this.enabled
+      configError: this.configError,
+      message: this.configError
+        ? this.configError
+        : this.enabled
         ? this.scanMode === 'internal-basic'
           ? '对象存储已启用：预签名直传 + 内置基础校验（魔数/大小/校验和）。接入外部杀毒服务后可切换为 external 模式。'
           : '对象存储已启用：预签名直传，等待外部扫描服务回调后可用于下载。'
@@ -423,7 +435,9 @@ export class AdminStorageService implements OnModuleDestroy {
 
   private requireClient(): S3Client {
     if (!this.enabled || !this.s3) {
-      throw new ServiceUnavailableException('对象存储未启用：请先配置 S3/R2 并设置 OBJECT_STORAGE_ENABLED=true')
+      throw new ServiceUnavailableException(
+        this.configError ?? '对象存储未启用：请先配置 S3/R2 并设置 OBJECT_STORAGE_ENABLED=true',
+      )
     }
     return this.s3
   }
