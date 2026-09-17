@@ -30,6 +30,7 @@ import { WalletLedgerBridge } from './wallet-ledger.bridge'
 import { LedgerService } from '../ledger/ledger.service'
 import { WalletNetworkRegistry } from './wallet-network.registry'
 import { FundsOperationalSwitchService } from './funds-operational-switch.service'
+import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import {
   ChainTransaction,
   CustodyWallet,
@@ -79,6 +80,7 @@ export class WalletService {
     private readonly crypto: IdentityCrypto,
     private readonly security: SecurityService,
     private readonly fundsSwitch: FundsOperationalSwitchService,
+    private readonly operations: OperationalCapabilityService,
     config: ConfigService,
   ) {
     this.executionRequested = config.get<string>('WALLET_EXECUTION_ENABLED') === 'true'
@@ -299,6 +301,10 @@ export class WalletService {
 
   async createWithdrawal(actor: SecurityActor, dto: CreateWithdrawalDto, idempotencyKey: string, requestId: string) {
     this.assertIdempotencyKey(idempotencyKey)
+    await this.operations.assertEnabled(
+      OPERATIONAL_SWITCH_KEYS.withdrawals,
+      'New withdrawal requests are currently paused by the operator.',
+    )
     this.assertExecutionEnabled()
     if (!this.canDemoExecute()) this.security.assertRecentStepUp(actor, dto.reauthentication ?? '')
     if (this.financialMode) await this.assertEligibleDevice(actor)
@@ -645,6 +651,7 @@ export class WalletService {
     dto: DepositCallbackDto,
   ) {
     this.webhookVerifier.verify(eventId, timestamp, signature, dto)
+    const depositCreditingEnabled = await this.operations.isEnabled(OPERATIONAL_SWITCH_KEYS.deposits)
     const network = this.networkRegistry.get(dto.network)
     this.assertAtomicAmount(dto.atomicAmount)
     this.assertAddress(dto.network, dto.destinationAddress)
@@ -686,7 +693,7 @@ export class WalletService {
       } else if (dto.riskDecision !== 'clear') {
         deposit.state = 'manual_review'
         deposit.reasonCode = dto.riskDecision === 'blocked' ? 'address_risk_blocked' : 'address_risk_review'
-      } else if (confirmed && !this.canCreditDeposit()) {
+      } else if (confirmed && (!depositCreditingEnabled || !this.canCreditDeposit())) {
         deposit.state = 'manual_review'
         deposit.reasonCode = 'deposit_crediting_disabled'
       } else {
@@ -695,7 +702,7 @@ export class WalletService {
       }
       deposit = await this.deposits.save(deposit)
     }
-    if (confirmed && dto.riskDecision === 'clear' && deposit.state === 'confirming' && this.canCreditDeposit()) {
+    if (confirmed && dto.riskDecision === 'clear' && deposit.state === 'confirming' && depositCreditingEnabled && this.canCreditDeposit()) {
       await this.ledger.creditDeposit(deposit.id, deposit.userId, dto.network, deposit.atomicAmount, eventId)
       deposit = await this.deposits.findOneOrFail({ where: { id: deposit.id } })
     }
@@ -916,3 +923,4 @@ function readPositiveInteger(value: string | undefined, fallback: number): numbe
 function readOptionalAtomic(value: string | undefined): string | null {
   return value && /^[1-9]\d{0,77}$/.test(value) ? value : null
 }
+
