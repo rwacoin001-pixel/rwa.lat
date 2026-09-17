@@ -88,3 +88,4 @@ export class CreateAdminControlPlane1783797000000 implements MigrationInterface 
     `)
   }
 }
+

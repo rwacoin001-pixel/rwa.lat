@@ -116,3 +116,4 @@ function assertMfaKeyring(input: Environment) {
     throw new Error('ADMIN_MFA_ACTIVE_KEY_VERSION must select a key present in ADMIN_MFA_KEYS_JSON')
   }
 }
+

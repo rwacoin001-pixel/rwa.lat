@@ -90,3 +90,4 @@ export type OperationalSwitch = { key: string; label: string; description: strin
 export type StorageStatus = { enabled: boolean; bucket: string; uploadFlow: string; message: string }
 export type TreasuryAddress = { id: string; network: string; assetCode: string; purpose: string; label: string; address: string; memo: string | null; state: string; updatedAt: string }
 export type TreasuryAddressInput = { network: 'tron' | 'ethereum' | 'arbitrum'; assetCode: string; purpose: 'deposit' | 'withdrawal' | 'collection' | 'operational'; label: string; address: string; memo?: string; state?: 'active' | 'inactive' }
+

@@ -923,3 +923,4 @@ function readPositiveInteger(value: string | undefined, fallback: number): numbe
 function readOptionalAtomic(value: string | undefined): string | null {
   return value && /^[1-9]\d{0,77}$/.test(value) ? value : null
 }
+

@@ -67,3 +67,4 @@ import {
   exports: [WalletService],
 })
 export class WalletModule {}
+

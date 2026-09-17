@@ -6,3 +6,4 @@ import { OperationalCapabilityService } from './operational-capability.service'
   exports: [OperationalCapabilityService],
 })
 export class OperationsModule {}
+

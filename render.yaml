@@ -160,3 +160,4 @@ services:
         value: "3000"
       - key: ADMIN_API_URL
         value: https://admin-api.rwa.lat/v1
+

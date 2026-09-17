@@ -264,3 +264,4 @@ export class TreasuryAddressInputDto {
   @IsIn(['active', 'inactive'])
   state?: 'active' | 'inactive'
 }
+

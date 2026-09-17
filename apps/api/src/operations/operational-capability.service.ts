@@ -49,3 +49,4 @@ export class OperationalCapabilityService {
     return this.config.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
   }
 }
+
