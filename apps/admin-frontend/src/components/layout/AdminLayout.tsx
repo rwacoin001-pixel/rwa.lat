@@ -42,11 +42,7 @@ export function AdminLayout({ children }: ChildrenProp) {
           <div className="flex h-16 items-center justify-between">
             {/* Brand */}
             <Link href="/dashboard" className="flex items-center gap-2 text-xl font-semibold" aria-label="RWA.LAT Admin">
-              <svg className="w-7 h-7" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-                <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" />
-                <line x1="16" y1="4" x2="16" y2="28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                <circle cx="16" cy="16" r="3" fill="#2FE6BF" />
-              </svg>
+              <img src="/media/brand/rwa-logo-v2.svg" alt="" aria-hidden="true" className="h-7 w-11 object-contain" />
               <span className="font-semibold tracking-tight">RWA.LAT Admin</span>
             </Link>
 
