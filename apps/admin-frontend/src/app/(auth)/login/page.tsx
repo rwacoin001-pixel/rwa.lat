@@ -53,11 +53,7 @@ export default function LoginPage() {
         {/* Brand Header */}
         <div className="text-center mb-8">
           <Link href="/login" className="inline-flex items-center gap-2 text-xl font-semibold" aria-label="RWA.LAT Admin">
-            <svg className="w-8 h-8" viewBox="0 0 32 32" fill="none" aria-hidden="true">
-              <circle cx="16" cy="16" r="14" stroke="currentColor" strokeWidth="2" />
-              <line x1="16" y1="4" x2="16" y2="28" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-              <circle cx="16" cy="16" r="3" fill="#2FE6BF" />
-            </svg>
+            <img src="/media/brand/rwa-logo-v2.svg" alt="" aria-hidden="true" className="h-8 w-12 object-contain" />
             <span className="font-semibold tracking-tight">RWA.LAT Admin</span>
           </Link>
           <p className="text-muted-foreground mt-2">后台运营管理系统</p>
@@ -74,7 +70,7 @@ export default function LoginPage() {
               <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
               </svg>
-              <span>登录失败，请重试</span>
+              <span>{error}</span>
             </div>
           )}
 
@@ -170,3 +166,4 @@ export default function LoginPage() {
     </div>
   );
 }
+
