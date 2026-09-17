@@ -12,6 +12,8 @@
     "build:low-memory": "node --max-old-space-size=768 node_modules/@nestjs/cli/bin/nest.js build"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.500.0",
+    "@aws-sdk/s3-request-presigner": "^3.500.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",

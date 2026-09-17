@@ -185,6 +185,7 @@ export class AdminControlService implements OnModuleDestroy {
   async createProduct(input: CreateProductDto, adminId: string) {
     await this.assertAssetClass(input.assetClassId)
     this.assertAtomicRange(input.minOrderAtomicAmount, input.maxOrderAtomicAmount)
+    this.validateProductContent(input)
     const id = randomUUID()
     await this.query(`
       INSERT INTO app.products (
@@ -221,6 +222,7 @@ export class AdminControlService implements OnModuleDestroy {
       input.minOrderAtomicAmount ?? this.asString(current.minOrderAtomicAmount),
       input.maxOrderAtomicAmount ?? this.asString(current.maxOrderAtomicAmount),
     )
+    this.validateProductContent(input)
 
     const patch: ProductPatch = {}
     const add = (key: keyof UpdateProductDto, column: string, value: unknown) => {
@@ -428,6 +430,87 @@ export class AdminControlService implements OnModuleDestroy {
   private async assertAssetClass(id: string) {
     const rows = await this.query(`SELECT id FROM app.asset_classes WHERE id = $1 AND state = 'active'`, [id])
     if (!rows.length) throw new ConflictException('An active asset class is required')
+  }
+
+  private validateProductContent(input: {
+    yieldTerms?: Record<string, unknown>
+    riskDisclosure?: Record<string, unknown>
+    mediaRefs?: string[]
+  }) {
+    if (input.yieldTerms !== undefined) this.validateYieldTerms(input.yieldTerms)
+    if (input.mediaRefs !== undefined) this.validateMediaRefs(input.mediaRefs)
+  }
+
+  private validateYieldTerms(terms: Record<string, unknown>) {
+    const fail = (message: string): never => {
+      throw new ConflictException(message)
+    }
+    if (terms.rateType !== undefined && !['fixed', 'floating', 'tiered', 'profit_share'].includes(String(terms.rateType))) {
+      fail('利率类型不合法（fixed / floating / tiered / profit_share）')
+    }
+    for (const key of ['annualRateBps', 'spreadBps', 'floorBps', 'capBps', 'investorShareBps']) {
+      const value = terms[key]
+      if (value === undefined || value === null) continue
+      if (typeof value !== 'number' || !Number.isInteger(value) || value < 0 || value > 20_000) {
+        fail(`${key} 需为 0-20000 的整数基点（bps）`)
+      }
+    }
+    if (terms.termDays !== undefined) {
+      const days = terms.termDays
+      if (typeof days !== 'number' || !Number.isInteger(days) || days < 1 || days > 3650) fail('期限（天）需为 1-3650 的整数')
+    }
+    if (terms.payoutFrequency !== undefined && !['daily', 'weekly', 'monthly', 'quarterly', 'semiannual', 'annual', 'at_maturity'].includes(String(terms.payoutFrequency))) {
+      fail('付息频率不合法')
+    }
+    if (terms.payoutMode !== undefined && !['interest', 'principal_plus_interest', 'profit_share'].includes(String(terms.payoutMode))) {
+      fail('付息方式不合法')
+    }
+    if (terms.tiers !== undefined) {
+      const tiers = terms.tiers as unknown
+      if (!Array.isArray(tiers) || tiers.length > 10) {
+        throw new ConflictException('分档利率最多 10 档')
+      }
+      for (const tier of tiers) {
+        if (!tier || typeof tier !== 'object') throw new ConflictException('分档数据不合法')
+        const t = tier as Record<string, unknown>
+        const min = Number(t.minAmount)
+        if (!Number.isFinite(min) || min < 0) fail('分档起始金额不合法')
+        if (t.maxAmount !== undefined && t.maxAmount !== null && String(t.maxAmount) !== '') {
+          const max = Number(t.maxAmount)
+          if (!Number.isFinite(max) || max <= min) fail('分档上限必须大于起始金额')
+        }
+        const rate = t.annualRateBps
+        if (rate !== undefined && (typeof rate !== 'number' || rate < 0 || rate > 20_000)) fail('分档利率需为 0-20000 基点')
+      }
+    }
+    if (terms.fees !== undefined) {
+      const fees = terms.fees as Record<string, unknown>
+      if (!fees || typeof fees !== 'object') fail('费用配置不合法')
+      for (const key of ['subscriptionBps', 'managementAnnualBps', 'performanceBps', 'redemptionBps']) {
+        const value = fees[key]
+        if (value === undefined || value === null) continue
+        if (typeof value !== 'number' || value < 0 || value > 5_000) fail(`费率 ${key} 需为 0-5000 基点`)
+      }
+    }
+    if (terms.earlyRedemption !== undefined) {
+      const er = terms.earlyRedemption as Record<string, unknown>
+      if (!er || typeof er !== 'object') fail('提前退出配置不合法')
+      if (er.penaltyBps !== undefined && er.penaltyBps !== null) {
+        if (typeof er.penaltyBps !== 'number' || er.penaltyBps < 0 || er.penaltyBps > 5_000) fail('提前退出违约金需为 0-5000 基点')
+      }
+      if (er.lockDays !== undefined && er.lockDays !== null) {
+        if (typeof er.lockDays !== 'number' || er.lockDays < 0 || er.lockDays > 3650) fail('锁定天数需为 0-3650')
+      }
+    }
+  }
+
+  private validateMediaRefs(refs: string[]) {
+    if (refs.length > 30) throw new ConflictException('媒体引用最多 30 个')
+    for (const ref of refs) {
+      if (typeof ref !== 'string' || ref.length > 520 || !/^(rwa-kyc|rwa-assets|rwa-attachments)\//.test(ref)) {
+        throw new ConflictException('媒体引用格式不合法（应为 存储桶/对象键 形式）')
+      }
+    }
   }
 
   private assertAtomicRange(minimum?: string, maximum?: string) {

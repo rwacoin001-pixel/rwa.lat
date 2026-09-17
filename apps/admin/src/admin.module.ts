@@ -11,6 +11,8 @@ import { validateAdminEnvironment } from './production-environment'
 import { AdminPermissionGuard } from './admin-permission.guard'
 import { AdminControlController } from './admin-control.controller'
 import { AdminControlService } from './admin-control.service'
+import { AdminStorageController } from './admin-storage.controller'
+import { AdminStorageService } from './admin-storage.service'
 
 @Module({
   imports: [
@@ -25,8 +27,8 @@ import { AdminControlService } from './admin-control.service'
       logging: false,
     }),
   ],
-  controllers: [AdminController, AdminAuthController, AdminControlController],
-  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService],
+  controllers: [AdminController, AdminAuthController, AdminControlController, AdminStorageController],
+  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService, AdminStorageService],
 })
 export class AdminModule {
   static forTest(dataSource: DataSource): DynamicModule {
@@ -43,4 +45,3 @@ export class AdminModule {
     }
   }
 }
-
