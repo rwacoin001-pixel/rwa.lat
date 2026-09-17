@@ -8,6 +8,7 @@ import { Session } from '../identity/session.entity'
 import { Device } from '../identity/device.entity'
 import { AuditLog } from '../security/audit-log.entity'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
+import { OperationsModule } from '../operations/operations.module'
 import { StubCustodyAdapter } from './stub-custody.adapter'
 import { CustodyWebhookVerifier } from './custody-webhook.verifier'
 import { AdminFundsOperationsController, AdminWalletController, DemoWalletController, WalletCallbackController, WalletController, WalletPublicController } from './wallet.controller'
@@ -36,6 +37,7 @@ import {
     LedgerModule,
     JobQueueModule,
     AdminRbacModule,
+    OperationsModule,
     TypeOrmModule.forFeature([
       CustodyWallet,
       WalletAddress,
@@ -65,3 +67,4 @@ import {
   exports: [WalletService],
 })
 export class WalletModule {}
+
