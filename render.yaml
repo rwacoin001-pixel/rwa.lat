@@ -114,6 +114,8 @@ services:
         value: "30000"
       - key: ADMIN_DATABASE_URL
         sync: false
+      - key: CORE_DATABASE_URL
+        sync: false
       - key: PUBLIC_ADMIN_API_URL
         value: https://admin-api.rwa.lat
       - key: ADMIN_CORS_ORIGINS
@@ -124,7 +126,37 @@ services:
         value: "true"
       - key: ADMIN_MFA_ENCRYPTION_KEY
         sync: false
+      - key: ADMIN_LIVE_OPERATIONS_ENABLED
+        value: "false"
+      - key: CORE_PRODUCTION_FINANCIAL_FEATURES_ENABLED
+        value: "false"
+      - key: CORE_WALLET_EXECUTION_ENABLED
+        value: "false"
+      - key: CORE_POLYMARKET_TRADING_ENABLED
+        value: "false"
+      - key: OBJECT_STORAGE_ENABLED
+        value: "false"
       - key: OTEL_SERVICE_NAME
         value: rwa-lat-admin
       - key: LOG_LEVEL
         value: info
+
+  - type: web
+    name: rwa-lat-admin-frontend
+    runtime: docker
+    plan: free
+    region: singapore
+    repo: https://github.com/rwacoin001-pixel/rwa.lat
+    branch: main
+    dockerContext: .
+    dockerfilePath: ./deploy/Dockerfile.admin-frontend
+    autoDeployTrigger: off
+    healthCheckPath: /login
+    numInstances: 1
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "3000"
+      - key: ADMIN_API_URL
+        value: https://admin-api.rwa.lat/v1

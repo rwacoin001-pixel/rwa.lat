@@ -14,6 +14,7 @@ export function validateAdminEnvironment(input: Environment): Environment {
 
   assertHttps(input, 'PUBLIC_ADMIN_API_URL')
   assertProductionDatabase(read(input, 'ADMIN_DATABASE_URL'))
+  if (read(input, 'CORE_DATABASE_URL')) assertProductionDatabase(read(input, 'CORE_DATABASE_URL'), 'CORE_DATABASE_URL')
   assertCorsOrigins(read(input, 'ADMIN_CORS_ORIGINS'))
   assertTrustProxyHops(read(input, 'TRUST_PROXY_HOPS'))
   assertMfaKeyring(input)
@@ -38,18 +39,18 @@ function assertHttps(input: Environment, key: string) {
   if (url.protocol !== 'https:') throw new Error(`${key} must use HTTPS in production`)
 }
 
-function assertProductionDatabase(value: string) {
+function assertProductionDatabase(value: string, key = 'ADMIN_DATABASE_URL') {
   let url: URL
   try {
     url = new URL(value)
   } catch {
-    throw new Error('ADMIN_DATABASE_URL must be a valid PostgreSQL URL')
+    throw new Error(`${key} must be a valid PostgreSQL URL`)
   }
   if (url.protocol !== 'postgres:' && url.protocol !== 'postgresql:') {
-    throw new Error('ADMIN_DATABASE_URL must use PostgreSQL')
+    throw new Error(`${key} must use PostgreSQL`)
   }
   if (!url.pathname.slice(1).endsWith('_production')) {
-    throw new Error('ADMIN_DATABASE_URL database name must end with _production')
+    throw new Error(`${key} database name must end with _production`)
   }
 }
 
