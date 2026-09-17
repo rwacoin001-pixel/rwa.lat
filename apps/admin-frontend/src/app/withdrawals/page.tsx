@@ -355,6 +355,49 @@ export default function WithdrawalsPage() {
               </div>
             </div>
             <div className="flex gap-2">
+              {funds?.pending?.length ? (
+                <>
+                  <Button
+                    className="flex items-center gap-2"
+                    disabled={busy}
+                    onClick={async () => {
+                      const target = funds.pending[0];
+                      if (!target) return;
+                      if (!confirm(`批准恢复申请 ${target.changeId} 吗？（需由发起人以外的管理员操作）`)) return;
+                      try {
+                        await callAction(`/api/admin/operations/funds/withdrawal-execution/resume-requests/${target.id}/approve`, { method: 'PUT' });
+                        alert('已批准，提现执行恢复启用');
+                        await fetchFunds();
+                      } catch (err) {
+                        alert(err instanceof Error ? err.message : '批准失败');
+                      }
+                    }}
+                  >
+                    <Play className="w-4 h-4" />
+                    批准恢复
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                    disabled={busy}
+                    onClick={async () => {
+                      const target = funds.pending[0];
+                      if (!target) return;
+                      if (!confirm(`拒绝恢复申请 ${target.changeId} 吗？`)) return;
+                      try {
+                        await callAction(`/api/admin/operations/funds/withdrawal-execution/resume-requests/${target.id}/reject`, { method: 'PUT' });
+                        alert('已拒绝该恢复申请');
+                        await fetchFunds();
+                      } catch (err) {
+                        alert(err instanceof Error ? err.message : '操作失败');
+                      }
+                    }}
+                  >
+                    <XCircle className="w-4 h-4" />
+                    拒绝恢复
+                  </Button>
+                </>
+              ) : null}
               <Button variant="outline" className="flex items-center gap-2" onClick={pauseFunds} disabled={busy || !funds?.current?.enabled}>
                 <Pause className="w-4 h-4" />
                 紧急暂停
