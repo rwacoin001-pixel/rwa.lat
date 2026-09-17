@@ -13,6 +13,8 @@ import { AdminControlController } from './admin-control.controller'
 import { AdminControlService } from './admin-control.service'
 import { AdminStorageController } from './admin-storage.controller'
 import { AdminStorageService } from './admin-storage.service'
+import { AdminFundsOpsController, AdminWalletOpsController } from './admin-wallet-ops.controller'
+import { AdminWalletOpsService } from './admin-wallet-ops.service'
 
 @Module({
   imports: [
@@ -27,8 +29,8 @@ import { AdminStorageService } from './admin-storage.service'
       logging: false,
     }),
   ],
-  controllers: [AdminController, AdminAuthController, AdminControlController, AdminStorageController],
-  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService, AdminStorageService],
+  controllers: [AdminController, AdminAuthController, AdminControlController, AdminStorageController, AdminWalletOpsController, AdminFundsOpsController],
+  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService, AdminStorageService, AdminWalletOpsService],
 })
 export class AdminModule {
   static forTest(dataSource: DataSource): DynamicModule {

@@ -15,6 +15,12 @@ export function validateAdminEnvironment(input: Environment): Environment {
   assertHttps(input, 'PUBLIC_ADMIN_API_URL')
   assertProductionDatabase(read(input, 'ADMIN_DATABASE_URL'))
   if (read(input, 'CORE_DATABASE_URL')) assertProductionDatabase(read(input, 'CORE_DATABASE_URL'), 'CORE_DATABASE_URL')
+  if (read(input, 'CORE_API_URL')) {
+    assertHttps(input, 'CORE_API_URL')
+    if (read(input, 'ADMIN_SERVICE_TOKEN').length < 32) {
+      throw new Error('ADMIN_SERVICE_TOKEN must contain at least 32 characters when CORE_API_URL is configured')
+    }
+  }
   assertCorsOrigins(read(input, 'ADMIN_CORS_ORIGINS'))
   assertTrustProxyHops(read(input, 'TRUST_PROXY_HOPS'))
   assertMfaKeyring(input)

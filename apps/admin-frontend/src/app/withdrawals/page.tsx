@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -9,48 +9,55 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/ui/pagination';
-import { Search, Filter, Eye, MoreHorizontal, AlertTriangle, CheckCircle, XCircle, Clock, DollarSign, ArrowRight } from 'lucide-react';
+import { Search, Filter, Eye, MoreHorizontal, AlertTriangle, CheckCircle, XCircle, Clock, DollarSign, Copy, RefreshCw, Play, Pause, ShieldCheck } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+
+type UiStatus = 'pending' | 'reviewing' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
 interface Withdrawal {
   id: string;
   userId: string;
-  userName: string;
-  userEmail: string;
-  chain: 'ethereum' | 'polygon' | 'bsc' | 'arbitrum' | 'optimism' | 'tron' | 'solana';
+  chain: string;
   asset: string;
   amount: string;
   amountUsd: string;
   fee: string;
   feeUsd: string;
   destinationAddress: string;
-  destinationTag?: string;
-  status: 'pending' | 'reviewing' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: UiStatus;
   priority: 'normal' | 'high' | 'urgent';
   riskLevel: 'low' | 'medium' | 'high' | 'critical';
   requestedAt: string;
   reviewedAt?: string;
-  reviewedBy?: string;
   completedAt?: string;
   txHash?: string;
-  rejectionReason?: string;
+  reasonCode?: string | null;
+  approvals: number;
+  approvalsRequired: number;
   requiresDualApproval: boolean;
-  approver1?: string;
-  approver2?: string;
+  rawState: string;
+}
+
+interface FundsSwitchState {
+  enabled: boolean;
+  reason: string | null;
+  updatedAt: string | null;
+}
+
+interface FundsSwitchView {
+  current: FundsSwitchState | null;
+  pending: Array<{ id: string; changeId: string; requestedAt: string; reason: string }>;
+  environmentAllowsExecution: boolean;
 }
 
 const CHAIN_LABELS: Record<string, string> = {
-  ethereum: 'Ethereum',
-  polygon: 'Polygon',
-  bsc: 'BSC',
-  arbitrum: 'Arbitrum',
-  optimism: 'Optimism',
   tron: 'TRON',
-  solana: 'Solana',
+  ethereum: 'Ethereum',
+  arbitrum: 'Arbitrum',
 };
 
-const STATUS_LABELS: Record<string, string> = {
+const STATUS_LABELS: Record<UiStatus, string> = {
   pending: '待处理',
   reviewing: '审核中',
   approved: '已批准',
@@ -61,7 +68,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: '已取消',
 };
 
-const STATUS_STYLES: Record<string, string> = {
+const STATUS_STYLES: Record<UiStatus, string> = {
   pending: 'bg-amber-500/20 text-amber-600',
   reviewing: 'bg-blue-500/20 text-blue-600',
   approved: 'bg-mint/20 text-mint',
@@ -72,16 +79,29 @@ const STATUS_STYLES: Record<string, string> = {
   cancelled: 'bg-gray-500/20 text-slate-500',
 };
 
-const PRIORITY_STYLES: Record<string, string> = {
-  normal: 'bg-blue-500/20 text-blue-600',
-  high: 'bg-amber-500/20 text-amber-600',
-  urgent: 'bg-red-500/20 text-red-600',
+const DB_TO_UI: Record<string, UiStatus> = {
+  requested: 'pending',
+  '2fa_verified': 'pending',
+  risk_review: 'reviewing',
+  approved: 'approved',
+  signing: 'processing',
+  broadcast: 'processing',
+  confirming: 'processing',
+  completed: 'completed',
+  rejected: 'rejected',
+  failed: 'failed',
+  cancelled: 'cancelled',
 };
 
-const PRIORITY_LABELS: Record<string, string> = {
-  normal: '普通',
-  high: '高',
-  urgent: '紧急',
+const UI_TO_DB: Record<UiStatus, string[]> = {
+  pending: ['requested', '2fa_verified'],
+  reviewing: ['risk_review'],
+  approved: ['approved'],
+  processing: ['signing', 'broadcast', 'confirming'],
+  completed: ['completed'],
+  rejected: ['rejected'],
+  failed: ['failed'],
+  cancelled: ['cancelled'],
 };
 
 const RISK_STYLES: Record<string, string> = {
@@ -91,98 +111,214 @@ const RISK_STYLES: Record<string, string> = {
   critical: 'bg-red-500/20 text-red-600',
 };
 
+function formatAtomic(atomic: string, decimals = 6): string {
+  try {
+    const value = BigInt(atomic || '0');
+    const base = BigInt(10) ** BigInt(decimals);
+    const whole = value / base;
+    const frac = (value % base).toString().padStart(decimals, '0').replace(/0+$/, '');
+    return frac ? `${whole}.${frac}` : whole.toString();
+  } catch {
+    return atomic;
+  }
+}
+
+function mapWithdrawal(raw: Record<string, any>): Withdrawal {
+  const snapshot = (raw.policySnapshot || {}) as Record<string, unknown>;
+  const approvalsRequired = Number(snapshot.approvalsRequired ?? 0);
+  const amount = formatAtomic(String(raw.atomicAmount || '0'));
+  const fee = formatAtomic(String(raw.feeAtomicAmount || '0'));
+  const uiStatus = DB_TO_UI[String(raw.state)] ?? 'pending';
+  return {
+    id: String(raw.id),
+    userId: String(raw.userId),
+    chain: String(raw.network),
+    asset: 'USDT',
+    amount,
+    amountUsd: `$${amount}`,
+    fee,
+    feeUsd: `$${fee}`,
+    destinationAddress: String(raw.destination || ''),
+    status: uiStatus,
+    priority: uiStatus === 'reviewing' && approvalsRequired > 0 && Number(raw.approvals ?? 0) === 0 ? 'high' : 'normal',
+    riskLevel: approvalsRequired >= 2 ? 'medium' : 'low',
+    requestedAt: String(raw.requestedAt || ''),
+    reviewedAt: raw.approvedAt ? String(raw.approvedAt) : undefined,
+    completedAt: raw.completedAt ? String(raw.completedAt) : undefined,
+    txHash: raw.transactionHash ? String(raw.transactionHash) : undefined,
+    reasonCode: raw.reasonCode ?? null,
+    approvals: Number(raw.approvals ?? 0),
+    approvalsRequired,
+    requiresDualApproval: approvalsRequired >= 2,
+    rawState: String(raw.state),
+  };
+}
+
 export default function WithdrawalsPage() {
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [priorityFilter, setPriorityFilter] = useState('');
-  const [riskFilter, setRiskFilter] = useState('');
   const [chainFilter, setChainFilter] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
+  const [funds, setFunds] = useState<FundsSwitchView | null>(null);
 
   useEffect(() => {
     fetchWithdrawals();
-  }, [currentPage, pageSize, search, statusFilter, priorityFilter, riskFilter, chainFilter]);
+    fetchFunds();
+  }, []);
 
   const fetchWithdrawals = async () => {
     setLoading(true);
+    setError('');
     try {
-      const params = new URLSearchParams({
-        page: String(currentPage),
-        limit: String(pageSize),
-        search,
-        ...(statusFilter && { status: statusFilter }),
-        ...(priorityFilter && { priority: priorityFilter }),
-        ...(riskFilter && { riskLevel: riskFilter }),
-        ...(chainFilter && { chain: chainFilter }),
-      });
-
-      const res = await fetch(`/api/admin/withdrawals?${params}`, {
-        credentials: 'include',
-      });
-
-      if (!res.ok) throw new Error('获取提现列表失败');
-      
+      const res = await fetch('/api/admin/wallet/withdrawals?limit=200', { credentials: 'include' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || `获取提现列表失败 (HTTP ${res.status})`);
+      }
       const data = await res.json();
-      setWithdrawals(data.items || []);
-      setTotalCount(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / pageSize));
+      const rows = Array.isArray(data) ? data : data.items || [];
+      setWithdrawals(rows.map(mapWithdrawal));
     } catch (err) {
-      console.error('Failed to fetch withdrawals:', err);
-      // Fallback mock data
-      setWithdrawals([
-        { id: '1', userId: 'u1', userName: '张三', userEmail: 'zhang@example.com', chain: 'ethereum', asset: 'USDT', amount: '50,000', amountUsd: '$50,000', fee: '20', feeUsd: '$20', destinationAddress: '0xabcd...1234', status: 'pending', priority: 'high', riskLevel: 'medium', requestedAt: '2024-12-01 10:30', requiresDualApproval: true },
-        { id: '2', userId: 'u2', userName: '李四', userEmail: 'li@example.com', chain: 'polygon', asset: 'USDC', amount: '100,000', amountUsd: '$100,000', fee: '5', feeUsd: '$5', destinationAddress: '0x5678...9012', status: 'reviewing', priority: 'urgent', riskLevel: 'high', requestedAt: '2024-12-01 09:15', reviewedAt: '2024-12-01 09:20', reviewedBy: 'admin1', requiresDualApproval: true, approver1: 'admin1' },
-        { id: '3', userId: 'u3', userName: '王五', userEmail: 'wang@example.com', chain: 'bsc', asset: 'USDT', amount: '10,000', amountUsd: '$10,000', fee: '1', feeUsd: '$1', destinationAddress: '0x9999...0000', status: 'approved', priority: 'normal', riskLevel: 'low', requestedAt: '2024-11-30 15:00', reviewedAt: '2024-11-30 15:05', reviewedBy: 'admin2', completedAt: '2024-11-30 15:10', txHash: '0xabc...def', requiresDualApproval: false },
-        { id: '4', userId: 'u4', userName: '赵六', userEmail: 'zhao@example.com', chain: 'arbitrum', asset: 'USDT', amount: '500,000', amountUsd: '$500,000', fee: '50', feeUsd: '$50', destinationAddress: '0x1111...2222', status: 'rejected', priority: 'urgent', riskLevel: 'critical', requestedAt: '2024-11-29 14:00', reviewedAt: '2024-11-29 14:30', reviewedBy: 'admin1', rejectionReason: '风控模型命中洗钱模式', requiresDualApproval: true },
-        { id: '5', userId: 'u5', userName: '钱七', userEmail: 'qian@example.com', chain: 'solana', asset: 'USDC', amount: '25,000', amountUsd: '$25,000', fee: '10', feeUsd: '$10', destinationAddress: 'SoL...3333', status: 'completed', priority: 'normal', riskLevel: 'low', requestedAt: '2024-11-28 11:00', reviewedAt: '2024-11-28 11:05', reviewedBy: 'admin2', completedAt: '2024-11-28 11:10', txHash: 'SoLTx...777', requiresDualApproval: false },
-      ]);
-      setTotalCount(5);
-      setTotalPages(1);
+      setWithdrawals([]);
+      setError(err instanceof Error ? err.message : '获取提现列表失败');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    fetchWithdrawals();
-  };
-
-  const handleAction = (action: string, withdrawal: Withdrawal) => {
-    switch (action) {
-      case 'view':
-        window.open(`/withdrawals/${withdrawal.id}`, '_blank');
-        break;
-      case 'approve':
-        if (confirm(`确定批准提现 ${withdrawal.id} 吗？`)) {
-          // TODO: API call
-        }
-        break;
-      case 'reject': {
-        const reason = prompt('请输入拒绝原因：');
-        if (reason) {
-          // TODO: API call
-        }
-        break;
-      }
-      case 'process':
-        if (confirm(`确定开始处理提现 ${withdrawal.id} 吗？`)) {
-          // TODO: API call
-        }
-        break;
-      case 'escalate':
-        if (confirm(`确定升级处理提现 ${withdrawal.id} 吗？`)) {
-          // TODO: API call
-        }
-        break;
+  const fetchFunds = async () => {
+    try {
+      const res = await fetch('/api/admin/operations/funds/withdrawal-execution', { credentials: 'include' });
+      if (!res.ok) return setFunds(null);
+      const data = await res.json();
+      setFunds({
+        current: data.current
+          ? { enabled: Boolean(data.current.enabled), reason: data.current.reason ?? null, updatedAt: data.current.updatedAt ?? null }
+          : null,
+        pending: Array.isArray(data.pending) ? data.pending : [],
+        environmentAllowsExecution: Boolean(data.environmentAllowsExecution),
+      });
+    } catch {
+      setFunds(null);
     }
   };
+
+  const filtered = useMemo(() => {
+    const keyword = search.trim().toLowerCase();
+    return withdrawals.filter((row) => {
+      if (statusFilter && !UI_TO_DB[statusFilter as UiStatus]?.includes(row.rawState)) return false;
+      if (chainFilter && row.chain !== chainFilter) return false;
+      if (!keyword) return true;
+      return (
+        row.id.toLowerCase().includes(keyword) ||
+        row.userId.toLowerCase().includes(keyword) ||
+        row.destinationAddress.toLowerCase().includes(keyword) ||
+        (row.txHash || '').toLowerCase().includes(keyword)
+      );
+    });
+  }, [withdrawals, search, statusFilter, chainFilter]);
+
+  const totalCount = filtered.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+  const paged = useMemo(
+    () => filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize),
+    [filtered, currentPage, pageSize],
+  );
+
+  const callAction = async (path: string, init?: RequestInit) => {
+    setBusy(true);
+    try {
+      const res = await fetch(path, { credentials: 'include', ...init });
+      const body = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(body?.message || `操作失败 (HTTP ${res.status})`);
+      return body;
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleAction = async (action: string, withdrawal: Withdrawal) => {
+    try {
+      switch (action) {
+        case 'view':
+          await navigator.clipboard.writeText(withdrawal.destinationAddress).catch(() => undefined);
+          alert(`提现 ${withdrawal.id.slice(0, 8)}\n用户: ${withdrawal.userId}\n金额: ${withdrawal.amount} USDT\n目的地址（已复制）: ${withdrawal.destinationAddress}\n状态: ${withdrawal.rawState}\n审批: ${withdrawal.approvals}/${withdrawal.approvalsRequired || 1}${withdrawal.reasonCode ? `\n原因: ${withdrawal.reasonCode}` : ''}`);
+          break;
+        case 'approve': {
+          if (!confirm(`确定批准提现 ${withdrawal.id.slice(0, 8)} 吗？\n批准人数达到要求后进入执行队列。`)) return;
+          const result = await callAction(`/api/admin/wallet/withdrawals/${withdrawal.id}/approve`, {
+            method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}),
+          });
+          alert(result?.state === 'approved' ? '审批已满足，提现进入执行队列' : `已记录审批 ${result?.approvalCount ?? ''}/${result?.approvalsRequired ?? ''}，还需其他管理员批准`);
+          await fetchWithdrawals();
+          break;
+        }
+        case 'reject': {
+          const reason = prompt('请输入拒绝原因：');
+          if (!reason) return;
+          await callAction(`/api/admin/wallet/withdrawals/${withdrawal.id}/reject`, {
+            method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reasonCode: reason }),
+          });
+          alert('已拒绝并退回锁定资金');
+          await fetchWithdrawals();
+          break;
+        }
+        case 'process': {
+          if (!confirm(`确定执行提现 ${withdrawal.id.slice(0, 8)} 吗？\n将调用热钱包签名并广播到链上。`)) return;
+          await callAction(`/api/admin/wallet/withdrawals/${withdrawal.id}/execute`, { method: 'POST' });
+          alert('已提交链上广播');
+          await fetchWithdrawals();
+          break;
+        }
+        case 'tx':
+          if (withdrawal.txHash) {
+            window.open(`https://tronscan.org/#/transaction/${withdrawal.txHash}`, '_blank');
+          }
+          break;
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '操作失败');
+    }
+  };
+
+  const pauseFunds = async () => {
+    const reason = prompt('暂停提现执行的原因：');
+    if (!reason) return;
+    try {
+      await callAction('/api/admin/operations/funds/withdrawal-execution/pause', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ reason }),
+      });
+      alert('提现执行已暂停');
+      await fetchFunds();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '暂停失败');
+    }
+  };
+
+  const requestResume = async () => {
+    const changeId = prompt('变更单号（审计记录用，字母数字）：');
+    if (!changeId) return;
+    const reason = prompt('申请恢复的原因：');
+    if (!reason) return;
+    try {
+      await callAction('/api/admin/operations/funds/withdrawal-execution/resume-requests', {
+        method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ changeId, reason }),
+      });
+      alert('已提交恢复申请，需由另一位管理员批准后生效');
+      await fetchFunds();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '提交失败');
+    }
+  };
+
+  const todayAmount = withdrawals
+    .filter((w) => w.requestedAt && new Date(w.requestedAt).toDateString() === new Date().toDateString())
+    .reduce((sum, w) => sum + Number(w.amount), 0);
 
   return (
     <AdminLayout>
@@ -191,13 +327,53 @@ export default function WithdrawalsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight">提现审批</h1>
-            <p className="text-muted-foreground mt-1">大额提现双人审批、风控拦截、链上广播全流程</p>
+            <p className="text-muted-foreground mt-1">手动托管模式：白名单用户自动打款，其余双人审批后热钱包签名广播</p>
           </div>
-          <Button className="flex items-center gap-2" onClick={() => setCurrentPage(1)}>
-            <Clock className="w-4 h-4" />
-            刷新
-          </Button>
+          <div className="flex gap-2">
+            <Button variant="outline" className="flex items-center gap-2" onClick={() => { fetchWithdrawals(); fetchFunds(); }} disabled={busy}>
+              <RefreshCw className="w-4 h-4" />
+              刷新
+            </Button>
+          </div>
         </div>
+
+        {/* Funds Execution Switch */}
+        <Card className="glass-strong">
+          <CardContent className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className={cn('w-5 h-5', funds?.current?.enabled ? 'text-mint' : 'text-amber-600')} />
+              <div>
+                <p className="text-sm font-medium">
+                  提现执行开关：
+                  {funds?.current ? (funds.current.enabled ? '执行中' : '已暂停') : '未配置'}
+                  {funds && !funds.environmentAllowsExecution && '（环境变量未开启资金执行）'}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {funds?.current?.updatedAt ? `最近变更: ${new Date(funds.current.updatedAt).toLocaleString('zh-CN')}` : ''}
+                  {funds?.pending?.length ? ` ｜ 待批准恢复申请: ${funds.pending.length}` : ''}
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex items-center gap-2" onClick={pauseFunds} disabled={busy || !funds?.current?.enabled}>
+                <Pause className="w-4 h-4" />
+                紧急暂停
+              </Button>
+              <Button className="flex items-center gap-2" onClick={requestResume} disabled={busy || !funds?.current || funds.current.enabled}>
+                <Play className="w-4 h-4" />
+                申请恢复
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {error && (
+          <Card className="glass-strong border-amber-500/40">
+            <CardContent className="p-4 text-sm text-amber-600">
+              提现数据加载失败：{error}（确认核心服务已配置 CORE_API_URL / ADMIN_SERVICE_TOKEN）
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats Cards */}
         <div className="grid gap-4 md:grid-cols-6">
@@ -205,19 +381,8 @@ export default function WithdrawalsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">待处理</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-600">{withdrawals.filter(w => w.status === 'pending').length}</p>
-                </div>
-                <Clock className="w-10 h-10 text-amber-600/50" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-strong">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
                   <p className="text-sm text-muted-foreground">审核中</p>
-                  <p className="text-2xl font-bold mt-1 text-blue-600">{withdrawals.filter(w => w.status === 'reviewing').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{withdrawals.filter((w) => w.status === 'reviewing').length}</p>
                 </div>
                 <Clock className="w-10 h-10 text-blue-600/50" />
               </div>
@@ -227,10 +392,21 @@ export default function WithdrawalsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">紧急优先级</p>
-                  <p className="text-2xl font-bold mt-1 text-red-600">{withdrawals.filter(w => w.priority === 'urgent').length}</p>
+                  <p className="text-sm text-muted-foreground">已批准待执行</p>
+                  <p className="text-2xl font-bold mt-1 text-mint">{withdrawals.filter((w) => w.status === 'approved').length}</p>
                 </div>
-                <AlertTriangle className="w-10 h-10 text-red-600/50" />
+                <CheckCircle className="w-10 h-10 text-mint/50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-strong">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">链上处理中</p>
+                  <p className="text-2xl font-bold mt-1 text-purple-400">{withdrawals.filter((w) => w.status === 'processing').length}</p>
+                </div>
+                <Clock className="w-10 h-10 text-purple-400/50" />
               </div>
             </CardContent>
           </Card>
@@ -239,7 +415,7 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">需双人审批</p>
-                  <p className="text-2xl font-bold mt-1 text-purple-400">{withdrawals.filter(w => w.requiresDualApproval).length}</p>
+                  <p className="text-2xl font-bold mt-1 text-purple-400">{withdrawals.filter((w) => w.requiresDualApproval && w.status === 'reviewing').length}</p>
                 </div>
                 <DollarSign className="w-10 h-10 text-purple-400/50" />
               </div>
@@ -249,12 +425,10 @@ export default function WithdrawalsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">今日金额(USD)</p>
-                  <p className="text-2xl font-bold mt-1 text-sky-600">
-                    {withdrawals.filter(w => new Date(w.requestedAt).toDateString() === new Date().toDateString()).reduce((sum, w) => sum + parseFloat(w.amountUsd.replace(/[$,]/g, '')), 0).toLocaleString()}
-                  </p>
+                  <p className="text-sm text-muted-foreground">今日申请 (USDT)</p>
+                  <p className="text-2xl font-bold mt-1 text-sky-600">{todayAmount.toLocaleString()}</p>
                 </div>
-                <ArrowRight className="w-10 h-10 text-sky-600/50" />
+                <AlertTriangle className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -262,10 +436,10 @@ export default function WithdrawalsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">高风险拦截</p>
-                  <p className="text-2xl font-bold mt-1 text-red-600">{withdrawals.filter(w => w.riskLevel === 'critical' || w.riskLevel === 'high').length}</p>
+                  <p className="text-sm text-muted-foreground">已完成</p>
+                  <p className="text-2xl font-bold mt-1">{withdrawals.filter((w) => w.status === 'completed').length}</p>
                 </div>
-                <AlertTriangle className="w-10 h-10 text-red-600/50" />
+                <CheckCircle className="w-10 h-10 text-mint/50" />
               </div>
             </CardContent>
           </Card>
@@ -274,69 +448,39 @@ export default function WithdrawalsPage() {
         {/* Filters & Search */}
         <Card className="glass-strong">
           <CardContent className="p-6">
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
+            <form onSubmit={(e) => { e.preventDefault(); setCurrentPage(1); }} className="flex flex-col sm:flex-row gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="搜索用户、地址、TXID..."
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
                   className="pl-10"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(e as any)}
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setCurrentPage(1); }}>
                 <SelectTrigger className="w-full sm:w-32">
                   <SelectValue placeholder="状态" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="pending">待处理</SelectItem>
                   <SelectItem value="reviewing">审核中</SelectItem>
                   <SelectItem value="approved">已批准</SelectItem>
-                  <SelectItem value="rejected">已拒绝</SelectItem>
                   <SelectItem value="processing">处理中</SelectItem>
                   <SelectItem value="completed">已完成</SelectItem>
+                  <SelectItem value="rejected">已拒绝</SelectItem>
                   <SelectItem value="failed">失败</SelectItem>
-                  <SelectItem value="cancelled">已取消</SelectItem>
                 </SelectContent>
               </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-full sm:w-28">
-                  <SelectValue placeholder="优先级" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="normal">普通</SelectItem>
-                  <SelectItem value="high">高</SelectItem>
-                  <SelectItem value="urgent">紧急</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={riskFilter} onValueChange={setRiskFilter}>
-                <SelectTrigger className="w-full sm:w-28">
-                  <SelectValue placeholder="风险等级" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="low">低</SelectItem>
-                  <SelectItem value="medium">中</SelectItem>
-                  <SelectItem value="high">高</SelectItem>
-                  <SelectItem value="critical">极高</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={chainFilter} onValueChange={setChainFilter}>
+              <Select value={chainFilter} onValueChange={(v) => { setChainFilter(v); setCurrentPage(1); }}>
                 <SelectTrigger className="w-full sm:w-32">
                   <SelectValue placeholder="链" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="ethereum">Ethereum</SelectItem>
-                  <SelectItem value="polygon">Polygon</SelectItem>
-                  <SelectItem value="bsc">BSC</SelectItem>
-                  <SelectItem value="arbitrum">Arbitrum</SelectItem>
-                  <SelectItem value="optimism">Optimism</SelectItem>
                   <SelectItem value="tron">TRON</SelectItem>
-                  <SelectItem value="solana">Solana</SelectItem>
+                  <SelectItem value="ethereum">Ethereum</SelectItem>
+                  <SelectItem value="arbitrum">Arbitrum</SelectItem>
                 </SelectContent>
               </Select>
               <Button type="submit" className="flex items-center gap-2">
@@ -371,7 +515,7 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-center h-64">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint" />
               </div>
-            ) : withdrawals.length === 0 ? (
+            ) : paged.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
                 <DollarSign className="w-12 h-12 mb-4 opacity-50" />
                 <p>暂无提现记录</p>
@@ -381,48 +525,42 @@ export default function WithdrawalsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-12">ID</TableHead>
+                      <TableHead className="w-24">ID</TableHead>
                       <TableHead>用户</TableHead>
                       <TableHead className="w-20">链</TableHead>
-                      <TableHead className="w-24">资产/金额</TableHead>
-                      <TableHead className="w-28">目的地址</TableHead>
-                      <TableHead className="w-24">优先级</TableHead>
-                      <TableHead className="w-24">风险</TableHead>
+                      <TableHead className="w-28">金额</TableHead>
+                      <TableHead>目的地址</TableHead>
+                      <TableHead className="w-28">审批</TableHead>
                       <TableHead className="w-24">状态</TableHead>
                       <TableHead className="w-32">时间</TableHead>
                       <TableHead className="w-24">操作</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {withdrawals.map((w) => (
+                    {paged.map((w) => (
                       <TableRow key={w.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {w.id.slice(0, 8)}...
                         </TableCell>
                         <TableCell>
-                          <div>
-                            <p className="font-medium">{w.userName}</p>
-                            <p className="text-sm text-muted-foreground">{w.userEmail}</p>
-                          </div>
+                          <p className="font-mono text-xs">用户 {w.userId.slice(0, 8)}</p>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{CHAIN_LABELS[w.chain]}</Badge>
+                          <Badge variant="outline">{CHAIN_LABELS[w.chain] ?? w.chain}</Badge>
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
                             <p className="font-mono tabular-nums font-medium">{w.amount} {w.asset}</p>
-                            <p className="text-muted-foreground">{w.amountUsd}</p>
-                            <p className="text-xs text-muted-foreground">手续费: {w.fee} ({w.feeUsd})</p>
+                            <p className="text-xs text-muted-foreground">手续费: {w.fee}</p>
                           </div>
                         </TableCell>
-                        <TableCell className="font-mono text-xs max-w-[160px] truncate">
-                          {w.destinationAddress}
-                          {w.destinationTag && <span className="text-muted-foreground ml-1">Tag: {w.destinationTag}</span>}
+                        <TableCell className="font-mono text-xs max-w-[200px] truncate" title={w.destinationAddress}>
+                          {w.destinationAddress.slice(0, 10)}...{w.destinationAddress.slice(-8)}
                         </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn(PRIORITY_STYLES[w.priority])}>
-                            {PRIORITY_LABELS[w.priority]}
-                          </Badge>
+                        <TableCell className="text-sm">
+                          <span className={cn(w.requiresDualApproval ? 'text-purple-400' : 'text-muted-foreground')}>
+                            {w.approvals}/{w.approvalsRequired || 1}
+                          </span>
                           {w.requiresDualApproval && (
                             <span className="ml-1 inline-flex items-center gap-1 text-xs text-purple-400">
                               <span className="w-2 h-2 rounded-full bg-purple-400" />
@@ -431,20 +569,12 @@ export default function WithdrawalsPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn(RISK_STYLES[w.riskLevel])}>
-                            {w.riskLevel}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
                           <Badge variant="outline" className={cn(STATUS_STYLES[w.status])}>
                             {STATUS_LABELS[w.status]}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
-                          <p>{new Date(w.requestedAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                          {w.reviewedAt && (
-                            <p className="text-xs text-blue-600">审核: {new Date(w.reviewedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
-                          )}
+                          <p>{w.requestedAt ? new Date(w.requestedAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—'}</p>
                           {w.completedAt && (
                             <p className="text-xs text-mint">完成: {new Date(w.completedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
                           )}
@@ -461,8 +591,13 @@ export default function WithdrawalsPage() {
                                 <Eye className="w-4 h-4 mr-2" />
                                 查看详情
                               </DropdownMenuItem>
-                              {w.status === 'pending' && (
+                              <DropdownMenuItem onClick={() => navigator.clipboard.writeText(w.destinationAddress)}>
+                                <Copy className="w-4 h-4 mr-2" />
+                                复制地址
+                              </DropdownMenuItem>
+                              {w.status === 'reviewing' && (
                                 <>
+                                  <DropdownMenuSeparator />
                                   <DropdownMenuItem onClick={() => handleAction('approve', w)} className="text-mint">
                                     <CheckCircle className="w-4 h-4 mr-2" />
                                     批准
@@ -471,23 +606,16 @@ export default function WithdrawalsPage() {
                                     <XCircle className="w-4 h-4 mr-2" />
                                     拒绝
                                   </DropdownMenuItem>
-                                  <DropdownMenuSeparator />
                                 </>
                               )}
                               {w.status === 'approved' && (
-                                <DropdownMenuItem onClick={() => handleAction('process', w)}>
-                                  <ArrowRight className="w-4 h-4 mr-2" />
-                                  开始处理
-                                </DropdownMenuItem>
-                              )}
-                              {w.status === 'reviewing' && (
-                                <DropdownMenuItem onClick={() => handleAction('escalate', w)} className="text-amber-600">
-                                  <AlertTriangle className="w-4 h-4 mr-2" />
-                                  升级处理
+                                <DropdownMenuItem onClick={() => handleAction('process', w)} className="text-mint">
+                                  <Play className="w-4 h-4 mr-2" />
+                                  执行打款
                                 </DropdownMenuItem>
                               )}
                               {w.txHash && (
-                                <DropdownMenuItem onClick={() => window.open(`/tx/${w.txHash}`, '_blank')}>
+                                <DropdownMenuItem onClick={() => handleAction('tx', w)}>
                                   查看链上交易
                                 </DropdownMenuItem>
                               )}
