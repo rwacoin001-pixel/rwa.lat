@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { Home, TrendingUp, Wallet, Settings, LogOut, User, Shield, Menu, Bell } from 'lucide-react'
+import { Home, TrendingUp, Wallet, Settings, LogOut, User, Shield, Menu, Bell, SlidersHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -20,7 +20,8 @@ import { SheetClose } from '@/components/ui/sheet'
 const navigation = [
   { name: '工作台', href: '/dashboard', icon: Home },
   { name: '资产管理', href: '/assets', icon: TrendingUp },
-  { name: '钱包财资', href: '/wallet', icon: Wallet },
+  { name: '运营控制', href: '/control', icon: SlidersHorizontal },
+  { name: '钱包财资', href: '/wallets', icon: Wallet },
   { name: '设置', href: '/settings', icon: Settings },
 ]
 
@@ -218,3 +219,4 @@ export function AdminLayout({ children }: ChildrenProp) {
     </div>
   );
 }
+
