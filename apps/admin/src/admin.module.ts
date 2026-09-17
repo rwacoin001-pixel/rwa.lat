@@ -9,6 +9,8 @@ import { AdminAuthService } from './admin-auth.service'
 import { AdminSessionGuard } from './admin-session.guard'
 import { validateAdminEnvironment } from './production-environment'
 import { AdminPermissionGuard } from './admin-permission.guard'
+import { AdminControlController } from './admin-control.controller'
+import { AdminControlService } from './admin-control.service'
 
 @Module({
   imports: [
@@ -23,8 +25,8 @@ import { AdminPermissionGuard } from './admin-permission.guard'
       logging: false,
     }),
   ],
-  controllers: [AdminController, AdminAuthController],
-  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard],
+  controllers: [AdminController, AdminAuthController, AdminControlController],
+  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService],
 })
 export class AdminModule {
   static forTest(dataSource: DataSource): DynamicModule {
@@ -41,3 +43,4 @@ export class AdminModule {
     }
   }
 }
+
