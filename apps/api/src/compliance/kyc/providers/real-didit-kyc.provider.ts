@@ -120,12 +120,18 @@ export class RealDiditKycProvider implements KycProvider {
       throw new DiditWebhookVerificationError()
     }
 
-    const eventId = readBoundedString(input.body.event_id, 128)
     const webhookType = readBoundedString(input.body.webhook_type, 128)
-    const sessionId = readBoundedString(input.body.session_id, 128)
     const status = readBoundedString(input.body.status, 64)
+    const rawSessionId = readBoundedString(input.body.session_id, 128)
+    if (rawSessionId && !isUuid(rawSessionId)) throw new DiditWebhookVerificationError()
+    const sessionId = rawSessionId
+    // Console "Try Webhook" test deliveries omit event_id (real events include
+    // it). Synthesize a stable identifier so audit trails stay meaningful
+    // without weakening the signature or timestamp checks.
+    const eventId = readBoundedString(input.body.event_id, 128)
+      || `didit-${sessionId || 'unknown'}-${String(input.body.timestamp ?? 'na')}`
     const workflowId = optionalBoundedString(input.body.workflow_id, 128)
-    if (!eventId || !webhookType || !isUuid(sessionId) || !status) throw new DiditWebhookVerificationError()
+    if (!webhookType || !status) throw new DiditWebhookVerificationError()
     return { eventId, webhookType, sessionId, status, workflowId }
   }
 
