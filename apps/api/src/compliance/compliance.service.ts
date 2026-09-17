@@ -53,8 +53,8 @@ export class ComplianceService {
   ) {
     this.policyVersion = config.get<string>('POLICY_VERSION') ?? '2026.1'
     const financialMode = config.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
-    if (financialMode && (this.kycProvider.mode !== 'live' || this.sanctionsProvider.mode !== 'live')) {
-      throw new Error('Financial production requires live KYC and sanctions provider implementations; stub providers are forbidden')
+    if (financialMode && (this.kycProvider.mode !== 'live' || !['live', 'disabled'].includes(this.sanctionsProvider.mode))) {
+      throw new Error('Financial production requires a live KYC provider and a live or explicitly disabled sanctions provider; stub providers are forbidden')
     }
   }
 

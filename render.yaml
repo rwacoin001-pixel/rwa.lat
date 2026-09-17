@@ -77,7 +77,7 @@ services:
       - key: KYC_PROVIDER
         value: stub
       - key: SANCTIONS_PROVIDER
-        value: stub
+        value: disabled
       - key: WALLET_CUSTODY_ADAPTER
         value: stub
       - key: OBJECT_STORAGE_ENABLED

@@ -2,6 +2,7 @@ import { RegionPolicy } from '../../src/compliance/region-policy'
 import { ComplianceService } from '../../src/compliance/compliance.service'
 import { StubKycProvider } from '../../src/compliance/stub-kyc.provider'
 import { StubSanctionsProvider } from '../../src/compliance/stub-sanctions.provider'
+import { DisabledSanctionsProvider } from '../../src/compliance/disabled-sanctions.provider'
 
 // 用真实 RegionPolicy 但注入最小 config
 class RegionPolicyStub {
@@ -32,7 +33,7 @@ describe('PARTNER-001 桩适配器（类型化占位）', () => {
       {} as never,
       {} as never,
       config as never,
-    )).toThrow(/live KYC and sanctions provider implementations/)
+    )).toThrow(/stub providers are forbidden/)
   })
 
   it('StubKycProvider 返回提交引用且不发起外部调用', async () => {
@@ -50,6 +51,31 @@ describe('PARTNER-001 桩适配器（类型化占位）', () => {
     const blocked = new StubSanctionsProvider({ get: () => '0xbanned' } as never)
     const r2 = await blocked.screen({ userId: 'u1', kind: 'sanctions', identifiers: { walletAddress: '0xbanned' } })
     expect(r2.state).toBe('confirmed_match')
+  })
+
+  it('DisabledSanctionsProvider 一律放行并如实标注关闭原因', async () => {
+    const p = new DisabledSanctionsProvider()
+    const res = await p.screen({ userId: 'u1', kind: 'sanctions', identifiers: { walletAddress: '0xanything' } })
+    expect(res.state).toBe('clear')
+    expect(res.reason).toBe('screening_disabled_by_operator')
+    expect(p.mode).toBe('disabled')
+  })
+
+  it('资金生产模式接受操作方显式关闭的制裁适配器', () => {
+    const config = {
+      get: (key: string) => key === 'PRODUCTION_FINANCIAL_FEATURES_ENABLED' ? 'true' : undefined,
+    }
+    expect(() => new ComplianceService(
+      {} as never,
+      {} as never,
+      {} as never,
+      {} as never,
+      { name: 'didit', mode: 'live' } as never,
+      new DisabledSanctionsProvider(),
+      {} as never,
+      {} as never,
+      config as never,
+    )).not.toThrow()
   })
 })
 

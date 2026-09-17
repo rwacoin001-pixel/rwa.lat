@@ -12,6 +12,7 @@ import { RiskFlag } from './risk-flag.entity'
 import { ScreeningCase } from './screening-case.entity'
 import { StubKycProvider } from './stub-kyc.provider'
 import { StubSanctionsProvider } from './stub-sanctions.provider'
+import { DisabledSanctionsProvider } from './disabled-sanctions.provider'
 import { RegionPolicy } from './region-policy'
 import type { KycProvider } from './kyc-provider.interface'
 import type { SanctionsProvider } from './sanctions-provider.interface'
@@ -45,7 +46,21 @@ import { RealDiditKycProvider } from './kyc/providers/real-didit-kyc.provider'
       },
       inject: [ConfigService],
     },
-    { provide: 'SanctionsProvider', useClass: StubSanctionsProvider },
+    {
+      provide: 'SanctionsProvider',
+      useFactory: (configService: ConfigService) => {
+        const provider = (configService.get<string>('SANCTIONS_PROVIDER') ?? 'stub').trim().toLowerCase()
+        if (provider === 'disabled') {
+          return new DisabledSanctionsProvider()
+        }
+        const financialMode = configService.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
+        if (['', 'stub', 'demo'].includes(provider) && !financialMode) {
+          return new StubSanctionsProvider(configService)
+        }
+        throw new Error(`Unsupported or unsafe SANCTIONS_PROVIDER: ${provider || '<empty>'}`)
+      },
+      inject: [ConfigService],
+    },
   ],
   exports: [ComplianceService],
 })

@@ -12,7 +12,12 @@ export interface ScreeningResult {
  */
 export interface SanctionsProvider {
   readonly name: string
-  readonly mode: 'stub' | 'live'
+  /**
+   * 'stub' — 占位实现（仅演示模式可用）；
+   * 'live' — 真实供应商适配器；
+   * 'disabled' — 操作方显式关闭筛查（一律放行，案件记录如实标注原因）。
+   */
+  readonly mode: 'stub' | 'live' | 'disabled'
   screen(input: {
     userId: string
     kind: ScreeningKind
