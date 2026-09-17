@@ -12,12 +12,16 @@ export const INSTALLED_PRODUCTION_CAPABILITIES: Record<'kyc' | 'sanctions' | 'cu
   kyc: 'live',
   // 2026-09-18: 操作方决策完全绕过制裁/PEP 筛查（ScreeningCase 如实记录关闭原因）。
   sanctions: 'disabled',
-  custody: 'stub',
+  // 2026-09-18: 手动托管模式（自持密钥 + 操作员地址池 + TronGrid 监听/广播）已接入模块。
+  custody: 'manual',
 }
 
-export function validateProductionRuntimeCapabilities(input: Environment): Environment {
+export function validateProductionRuntimeCapabilities(
+  input: Environment,
+  manifest: Record<'kyc' | 'sanctions' | 'custody', ProductionCapabilityMode> = INSTALLED_PRODUCTION_CAPABILITIES,
+): Environment {
   if (input.APP_ENV !== 'production' || input.PRODUCTION_FINANCIAL_FEATURES_ENABLED !== 'true') return input
-  const unavailable = Object.entries(INSTALLED_PRODUCTION_CAPABILITIES)
+  const unavailable = Object.entries(manifest)
     .filter(([, mode]) => mode === 'stub')
     .map(([name]) => name)
   if (unavailable.length) {

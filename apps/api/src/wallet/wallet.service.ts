@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
-import { In, Repository } from 'typeorm'
+import { FindOptionsWhere, In, Repository } from 'typeorm'
 import { Device } from '../identity/device.entity'
 import { IdentityCrypto } from '../identity/identity-crypto.service'
 import { AuditLog } from '../security/audit-log.entity'
@@ -30,6 +30,7 @@ import { WalletLedgerBridge } from './wallet-ledger.bridge'
 import { LedgerService } from '../ledger/ledger.service'
 import { WalletNetworkRegistry } from './wallet-network.registry'
 import { FundsOperationalSwitchService } from './funds-operational-switch.service'
+import { WithdrawalWhitelistService } from './manual/withdrawal-whitelist.service'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import {
   ChainTransaction,
@@ -43,6 +44,7 @@ import {
   WithdrawalAddressBookEntry,
   WithdrawalApprovalDecision,
   type WalletNetwork,
+  type DepositState,
   type WithdrawalState,
 } from './wallet.entities'
 
@@ -80,6 +82,7 @@ export class WalletService {
     private readonly crypto: IdentityCrypto,
     private readonly security: SecurityService,
     private readonly fundsSwitch: FundsOperationalSwitchService,
+    private readonly whitelist: WithdrawalWhitelistService,
     private readonly operations: OperationalCapabilityService,
     config: ConfigService,
   ) {
@@ -95,8 +98,8 @@ export class WalletService {
     this.executionLeaseSeconds = readPositiveInteger(config.get<string>('WITHDRAWAL_EXECUTION_LEASE_SECONDS'), 120)
     this.perTransactionLimitAtomic = readOptionalAtomic(config.get<string>('WITHDRAWAL_PER_TRANSACTION_LIMIT_ATOMIC'))
     this.dailyLimitAtomic = readOptionalAtomic(config.get<string>('WITHDRAWAL_DAILY_LIMIT_ATOMIC'))
-    if (this.financialMode && this.custody.mode !== 'live') {
-      throw new Error('Financial production cannot start until a live CustodyAdapter implementation is installed')
+    if (this.financialMode && !['live', 'manual'].includes(this.custody.mode)) {
+      throw new Error('Financial production cannot start until a reviewed live or manual CustodyAdapter implementation is installed')
     }
   }
 
@@ -338,9 +341,11 @@ export class WalletService {
     }
     const encrypted = this.crypto.encrypt(destination)
     const id = randomUUID()
-    const state: Extract<WithdrawalState, 'risk_review' | 'approved'> = this.financialMode || screening.decision !== 'clear'
-      ? 'risk_review'
-      : 'approved'
+    const autoApprove = this.financialMode && screening.decision === 'clear'
+      && await this.whitelist.isActive(actor.userId, dto.network)
+    const state: Extract<WithdrawalState, 'risk_review' | 'approved'> = this.financialMode
+      ? (autoApprove ? 'approved' : 'risk_review')
+      : (screening.decision !== 'clear' ? 'risk_review' : 'approved')
     const policySnapshot = {
       version: 1,
       financialMode: this.financialMode,
@@ -348,8 +353,9 @@ export class WalletService {
       newDeviceCooldownSeconds: this.newDeviceCooldownSeconds,
       perTransactionLimitAtomic: this.perTransactionLimitAtomic,
       dailyLimitAtomic: this.dailyLimitAtomic,
-      approvalsRequired: this.financialMode ? this.approvalsRequired : 0,
+      approvalsRequired: this.financialMode && !autoApprove ? this.approvalsRequired : 0,
       screeningDecision: screening.decision,
+      autoApprovedByWhitelist: autoApprove,
     }
     const result = await this.ledger.createWithdrawalWithLock({
       id, userId: actor.userId, walletId: wallet.id, network: dto.network,
@@ -360,7 +366,8 @@ export class WalletService {
       policySnapshot,
       perTransactionLimitAtomic: this.perTransactionLimitAtomic,
       dailyLimitAtomic: this.dailyLimitAtomic,
-      reasonCode: screening.reasonCode ?? (this.financialMode ? 'awaiting_admin_approvals' : null), requestId,
+      enqueueExecution: autoApprove,
+      reasonCode: screening.reasonCode ?? (this.financialMode && !autoApprove ? 'awaiting_admin_approvals' : null), requestId,
     })
     const withdrawal = await this.withdrawals.findOne({ where: { id: result.id, userId: actor.userId } })
     if (!withdrawal) throw new ServiceUnavailableException({ code: WALLET_ERROR_CODES.WALLET_UNAVAILABLE, message: 'Withdrawal state could not be read after creation.' })
@@ -400,6 +407,7 @@ export class WalletService {
       feeAtomicAmount: withdrawal.feeAtomicAmount,
       state: withdrawal.state,
       reasonCode: withdrawal.reasonCode,
+      destination: this.crypto.decrypt(withdrawal.destinationCiphertext, withdrawal.encryptionKeyVersion),
       requestedAt: withdrawal.requestedAt,
       approvals: await this.withdrawalApprovals.count({
         where: { withdrawalId: withdrawal.id, decision: 'approved' },
@@ -407,6 +415,79 @@ export class WalletService {
       approvalsRequired: this.financialMode ? this.approvalsRequired : 1,
       policySnapshot: withdrawal.policySnapshot,
     })))
+  }
+
+  async listRecentWithdrawals(limit = 100, state?: string) {
+    const safeLimit = Number.isInteger(limit) ? Math.min(Math.max(limit, 1), 200) : 100
+    const where: FindOptionsWhere<Withdrawal> = {}
+    if (state) where.state = state as WithdrawalState
+    const rows = await this.withdrawals.find({ where, order: { requestedAt: 'DESC' }, take: safeLimit })
+    const decisions = rows.length
+      ? await this.withdrawalApprovals.find({ where: { withdrawalId: In(rows.map((row) => row.id)), decision: 'approved' } })
+      : []
+    const approvalCounts = new Map<string, number>()
+    for (const decision of decisions) {
+      approvalCounts.set(decision.withdrawalId, (approvalCounts.get(decision.withdrawalId) ?? 0) + 1)
+    }
+    const chainIds = rows.map((row) => row.chainTransactionId).filter((id): id is string => Boolean(id))
+    const chainRows = chainIds.length
+      ? await this.chainTransactions.find({ where: { id: In(chainIds) } })
+      : []
+    const chainById = new Map(chainRows.map((chain) => [chain.id, chain]))
+    return rows.map((withdrawal) => ({
+      id: withdrawal.id,
+      userId: withdrawal.userId,
+      network: withdrawal.network,
+      assetCode: withdrawal.assetCode,
+      atomicAmount: withdrawal.atomicAmount,
+      feeAtomicAmount: withdrawal.feeAtomicAmount,
+      state: withdrawal.state,
+      reasonCode: withdrawal.reasonCode,
+      addressBookEntryId: withdrawal.addressBookEntryId,
+      destination: this.crypto.decrypt(withdrawal.destinationCiphertext, withdrawal.encryptionKeyVersion),
+      requestedAt: withdrawal.requestedAt,
+      approvedAt: withdrawal.approvedAt,
+      completedAt: withdrawal.completedAt,
+      chainTransactionId: withdrawal.chainTransactionId,
+      transactionHash: withdrawal.chainTransactionId ? chainById.get(withdrawal.chainTransactionId)?.transactionHash ?? null : null,
+      approvals: approvalCounts.get(withdrawal.id) ?? 0,
+      policySnapshot: withdrawal.policySnapshot,
+    }))
+  }
+
+  async listRecentDeposits(limit = 100, state?: string) {
+    const safeLimit = Number.isInteger(limit) ? Math.min(Math.max(limit, 1), 200) : 100
+    const where: FindOptionsWhere<Deposit> = {}
+    if (state) where.state = state as DepositState
+    const rows = await this.deposits.find({ where, order: { detectedAt: 'DESC' }, take: safeLimit })
+    const chainRows = rows.length
+      ? await this.chainTransactions.find({ where: { id: In(rows.map((row) => row.chainTransactionId)) } })
+      : []
+    const chainById = new Map(chainRows.map((chain) => [chain.id, chain]))
+    const addressRows = rows.length
+      ? await this.addresses.find({ where: { id: In(rows.map((row) => row.walletAddressId)) } })
+      : []
+    const addressById = new Map(addressRows.map((address) => [address.id, address]))
+    return rows.map((deposit) => {
+      const chain = chainById.get(deposit.chainTransactionId)
+      const address = addressById.get(deposit.walletAddressId)
+      return {
+        id: deposit.id,
+        userId: deposit.userId,
+        state: deposit.state,
+        assetCode: deposit.assetCode,
+        atomicAmount: deposit.atomicAmount,
+        requiredConfirmations: deposit.requiredConfirmations,
+        confirmations: chain?.confirmationCount ?? 0,
+        transactionHash: chain?.transactionHash ?? null,
+        blockNumber: chain?.blockNumber ?? null,
+        network: chain?.network ?? null,
+        address: address ? this.crypto.decrypt(address.addressCiphertext, address.encryptionKeyVersion) : null,
+        reasonCode: deposit.reasonCode,
+        detectedAt: deposit.detectedAt,
+        creditedAt: deposit.creditedAt,
+      }
+    })
   }
 
   async decideWithdrawal(
@@ -495,14 +576,18 @@ export class WalletService {
       return this.withdrawalResponse(withdrawal, false)
     }
     if (this.financialMode) {
-      const approvalCount = await this.withdrawalApprovals.count({
-        where: { withdrawalId, decision: 'approved' },
-      })
-      if (approvalCount < this.approvalsRequired) {
-        throw new ConflictException({
-          code: WALLET_ERROR_CODES.WITHDRAWAL_APPROVALS_INCOMPLETE,
-          message: 'The required distinct administrator approvals have not been recorded.',
+      const snapshot = (withdrawal.policySnapshot ?? {}) as Record<string, unknown>
+      const autoApprovedByWhitelist = snapshot.autoApprovedByWhitelist === true
+      if (!autoApprovedByWhitelist) {
+        const approvalCount = await this.withdrawalApprovals.count({
+          where: { withdrawalId, decision: 'approved' },
         })
+        if (approvalCount < this.approvalsRequired) {
+          throw new ConflictException({
+            code: WALLET_ERROR_CODES.WITHDRAWAL_APPROVALS_INCOMPLETE,
+            message: 'The required distinct administrator approvals have not been recorded.',
+          })
+        }
       }
     }
     const claimed = await this.ledger.claimWithdrawalExecution(withdrawalId, this.executionLeaseSeconds)
@@ -513,12 +598,15 @@ export class WalletService {
       })
     }
     try {
+      const destination = this.crypto.decrypt(claimed.destinationCiphertext)
+      const rescued = await this.rescueAmbiguousBroadcast(claimed, destination, actor, requestId)
+      if (rescued) return rescued
       const result = await this.custody.broadcastWithdrawal({
         withdrawalId: claimed.id,
         network: claimed.network,
         assetCode: claimed.assetCode,
         atomicAmount: claimed.atomicAmount,
-        destination: this.crypto.decrypt(claimed.destinationCiphertext),
+        destination,
       })
       const persisted = await this.ledger.recordWithdrawalBroadcast({
         withdrawalId: claimed.id,
@@ -539,6 +627,49 @@ export class WalletService {
     }
   }
 
+  /**
+   * Idempotency rescue for retried executions: if a prior attempt of this same
+   * withdrawal may have reached the network before its result was recorded, an
+   * unrecorded matching candidate is adopted instead of broadcasting again.
+   * Rescue lookup failures propagate (fail closed) so the retry is deferred
+   * rather than risking a second transfer.
+   */
+  private async rescueAmbiguousBroadcast(
+    claimed: { id: string; network: WalletNetwork; atomicAmount: string; executionAttemptCount: number },
+    destination: string,
+    actor: { type: 'admin' | 'service'; id: string },
+    requestId: string,
+  ) {
+    if (claimed.executionAttemptCount <= 1 || !this.custody.findRecentBroadcast) return null
+    const candidates = await this.custody.findRecentBroadcast({
+      network: claimed.network,
+      destination,
+      atomicAmount: claimed.atomicAmount,
+    })
+    for (const candidate of candidates) {
+      if (candidate.receiptResult && candidate.receiptResult !== 'SUCCESS') continue
+      const recorded = await this.chainTransactions.findOne({
+        where: { network: claimed.network, transactionHash: candidate.transactionHash },
+      })
+      if (recorded) continue
+      const persisted = await this.ledger.recordWithdrawalBroadcast({
+        withdrawalId: claimed.id,
+        network: claimed.network,
+        transactionHash: candidate.transactionHash,
+        providerReferenceHash: this.crypto.hmac(`tron:${candidate.transactionHash}`).toString('hex'),
+        requestId,
+      })
+      await this.auditExecutionActor(actor, requestId, 'wallet.withdrawal.broadcast_rescued', claimed.id, {
+        chainTransactionId: persisted.chainTransactionId,
+        transactionHash: candidate.transactionHash,
+        executionAttemptCount: claimed.executionAttemptCount,
+      })
+      const updated = await this.withdrawals.findOneOrFail({ where: { id: claimed.id } })
+      return this.withdrawalResponse(updated, false)
+    }
+    return null
+  }
+
   async processWithdrawalCallback(
     eventId: string,
     timestamp: string,
@@ -546,14 +677,29 @@ export class WalletService {
     dto: WithdrawalCallbackDto,
   ) {
     this.webhookVerifier.verify(eventId, timestamp, signature, dto)
-    const withdrawal = await this.withdrawals.findOne({ where: { id: dto.withdrawalId, network: dto.network } })
+    return this.applyWithdrawalStatusFromChain(eventId, dto)
+  }
+
+  async applyWithdrawalStatusFromChain(
+    eventId: string,
+    input: {
+      withdrawalId: string
+      network: WalletNetwork
+      transactionHash: string
+      confirmations: number
+      state: 'broadcast' | 'confirming' | 'confirmed' | 'failed'
+      blockNumber?: string
+      reasonCode?: string
+    },
+  ) {
+    const withdrawal = await this.withdrawals.findOne({ where: { id: input.withdrawalId, network: input.network } })
     if (!withdrawal) {
       throw new NotFoundException({ code: WALLET_ERROR_CODES.WALLET_UNAVAILABLE, message: 'Withdrawal was not found.' })
     }
     if (withdrawal.state === 'completed') {
       return { accepted: true, duplicate: true, withdrawal: this.withdrawalResponse(withdrawal, false) }
     }
-    if (dto.state === 'failed') {
+    if (input.state === 'failed') {
       if (!['broadcast', 'confirming', 'signing'].includes(withdrawal.state)) {
         throw new ConflictException({
           code: WALLET_ERROR_CODES.WITHDRAWAL_STATE_INVALID,
@@ -562,7 +708,7 @@ export class WalletService {
       }
       await this.ledgerService.refundWithdrawal(
         withdrawal.id,
-        dto.reasonCode ?? 'custody_withdrawal_failed',
+        input.reasonCode ?? 'custody_withdrawal_failed',
         eventId,
       )
       const failed = await this.withdrawals.findOneOrFail({ where: { id: withdrawal.id } })
@@ -570,7 +716,7 @@ export class WalletService {
     }
 
     let chain = await this.chainTransactions.findOne({
-      where: { network: dto.network, transactionHash: dto.transactionHash },
+      where: { network: input.network, transactionHash: input.transactionHash },
     })
     if (withdrawal.chainTransactionId && chain && withdrawal.chainTransactionId !== chain.id) {
       throw new ConflictException({
@@ -578,29 +724,29 @@ export class WalletService {
         message: 'Callback transaction does not match the withdrawal broadcast record.',
       })
     }
-    const network = this.networkRegistry.get(dto.network)
-    const confirmed = dto.state === 'confirmed' || dto.confirmations >= network.requiredConfirmations
+    const network = this.networkRegistry.get(input.network)
+    const confirmed = input.state === 'confirmed' || input.confirmations >= network.requiredConfirmations
     if (!chain) {
       chain = this.chainTransactions.create({
         id: randomUUID(),
-        network: dto.network,
-        transactionHash: dto.transactionHash,
+        network: input.network,
+        transactionHash: input.transactionHash,
         state: confirmed ? 'confirmed' : 'confirming',
-        blockNumber: dto.blockNumber ?? null,
-        confirmationCount: dto.confirmations,
+        blockNumber: input.blockNumber ?? null,
+        confirmationCount: input.confirmations,
         confirmedAt: confirmed ? new Date() : null,
         rawReference: { eventId, direction: 'withdrawal', withdrawalId: withdrawal.id },
       })
     } else {
-      chain.confirmationCount = Math.max(chain.confirmationCount, dto.confirmations)
-      chain.blockNumber ??= dto.blockNumber ?? null
+      chain.confirmationCount = Math.max(chain.confirmationCount, input.confirmations)
+      chain.blockNumber ??= input.blockNumber ?? null
       chain.state = confirmed ? 'confirmed' : 'confirming'
       if (confirmed) chain.confirmedAt ??= new Date()
       chain.rawReference = { ...chain.rawReference, latestEventId: eventId }
     }
     chain = await this.chainTransactions.save(chain)
     withdrawal.chainTransactionId = chain.id
-    withdrawal.state = confirmed ? 'confirming' : dto.state === 'broadcast' ? 'broadcast' : 'confirming'
+    withdrawal.state = confirmed ? 'confirming' : input.state === 'broadcast' ? 'broadcast' : 'confirming'
     withdrawal.reasonCode = null
     await this.withdrawals.save(withdrawal)
     if (confirmed) await this.ledgerService.settleWithdrawal(withdrawal.id, chain.id, eventId)
@@ -651,59 +797,79 @@ export class WalletService {
     dto: DepositCallbackDto,
   ) {
     this.webhookVerifier.verify(eventId, timestamp, signature, dto)
+    return this.recordDepositObservation({ ...dto, eventId })
+  }
+
+  /**
+   * Shared deposit pipeline for provider callbacks and the local chain watcher.
+   * Idempotent per (chain transaction, output index); credits only when the
+   * transfer is confirmed, screening is clear, and crediting is enabled.
+   */
+  async recordDepositObservation(input: {
+    network: WalletNetwork
+    transactionHash: string
+    destinationAddress: string
+    atomicAmount: string
+    confirmations: number
+    outputIndex?: number
+    blockNumber?: string
+    riskDecision: 'clear' | 'manual_review' | 'blocked'
+    eventId: string
+  }) {
+    const eventId = input.eventId
     const depositCreditingEnabled = await this.operations.isEnabled(OPERATIONAL_SWITCH_KEYS.deposits)
-    const network = this.networkRegistry.get(dto.network)
-    this.assertAtomicAmount(dto.atomicAmount)
-    this.assertAddress(dto.network, dto.destinationAddress)
+    const network = this.networkRegistry.get(input.network)
+    this.assertAtomicAmount(input.atomicAmount)
+    this.assertAddress(input.network, input.destinationAddress)
     const address = await this.addresses.findOne({
-      where: { network: dto.network, addressHash: this.crypto.hmac(this.normalizeAddress(dto.network, dto.destinationAddress)), assetCode: 'USDT', state: 'active' },
+      where: { network: input.network, addressHash: this.crypto.hmac(this.normalizeAddress(input.network, input.destinationAddress)), assetCode: 'USDT', state: 'active' },
     })
-    if (!address) throw new NotFoundException({ code: WALLET_ERROR_CODES.ADDRESS_NOT_FOUND, message: 'Callback destination is not a recognized active deposit address.' })
-    let chain = await this.chainTransactions.findOne({ where: { network: dto.network, transactionHash: dto.transactionHash } })
-    const confirmed = dto.confirmations >= network.requiredConfirmations
+    if (!address) throw new NotFoundException({ code: WALLET_ERROR_CODES.ADDRESS_NOT_FOUND, message: 'Observed destination is not a recognized active deposit address.' })
+    let chain = await this.chainTransactions.findOne({ where: { network: input.network, transactionHash: input.transactionHash } })
+    const confirmed = input.confirmations >= network.requiredConfirmations
     if (!chain) {
       chain = this.chainTransactions.create({
-        id: randomUUID(), network: dto.network, transactionHash: dto.transactionHash,
-        state: confirmed ? 'confirmed' : 'confirming', blockNumber: dto.blockNumber ?? null,
-        confirmationCount: dto.confirmations, confirmedAt: confirmed ? new Date() : null,
+        id: randomUUID(), network: input.network, transactionHash: input.transactionHash,
+        state: confirmed ? 'confirmed' : 'confirming', blockNumber: input.blockNumber ?? null,
+        confirmationCount: input.confirmations, confirmedAt: confirmed ? new Date() : null,
         rawReference: { eventId },
       })
     } else {
-      chain.confirmationCount = Math.max(chain.confirmationCount, dto.confirmations)
-      chain.blockNumber = chain.blockNumber ?? dto.blockNumber ?? null
+      chain.confirmationCount = Math.max(chain.confirmationCount, input.confirmations)
+      chain.blockNumber = chain.blockNumber ?? input.blockNumber ?? null
       if (confirmed) {
         chain.state = 'confirmed'
         chain.confirmedAt ??= new Date()
       }
     }
     chain = await this.chainTransactions.save(chain)
-    const outputIndex = dto.outputIndex ?? 0
+    const outputIndex = input.outputIndex ?? 0
     let deposit = await this.deposits.findOne({ where: { chainTransactionId: chain.id, outputIndex, assetCode: 'USDT' } })
     if (!deposit) {
       deposit = await this.deposits.save(this.deposits.create({
         id: randomUUID(), userId: address.userId, walletAddressId: address.id, chainTransactionId: chain.id,
-        outputIndex, assetCode: 'USDT', assetDecimals: 6, atomicAmount: dto.atomicAmount,
+        outputIndex, assetCode: 'USDT', assetDecimals: 6, atomicAmount: input.atomicAmount,
         requiredConfirmations: network.requiredConfirmations, state: 'detected', reasonCode: null, creditedAt: null,
       }))
     }
     if (deposit.state !== 'credited' && deposit.state !== 'rejected') {
-      if (BigInt(dto.atomicAmount) < BigInt(network.minimumDepositAtomic)) {
+      if (BigInt(input.atomicAmount) < BigInt(network.minimumDepositAtomic)) {
         deposit.state = 'manual_review'
         deposit.reasonCode = 'below_minimum_deposit'
-      } else if (dto.riskDecision !== 'clear') {
+      } else if (input.riskDecision !== 'clear') {
         deposit.state = 'manual_review'
-        deposit.reasonCode = dto.riskDecision === 'blocked' ? 'address_risk_blocked' : 'address_risk_review'
+        deposit.reasonCode = input.riskDecision === 'blocked' ? 'address_risk_blocked' : 'address_risk_review'
       } else if (confirmed && (!depositCreditingEnabled || !this.canCreditDeposit())) {
         deposit.state = 'manual_review'
         deposit.reasonCode = 'deposit_crediting_disabled'
       } else {
-        deposit.state = dto.confirmations > 0 ? 'confirming' : 'detected'
+        deposit.state = input.confirmations > 0 ? 'confirming' : 'detected'
         deposit.reasonCode = null
       }
       deposit = await this.deposits.save(deposit)
     }
-    if (confirmed && dto.riskDecision === 'clear' && deposit.state === 'confirming' && depositCreditingEnabled && this.canCreditDeposit()) {
-      await this.ledger.creditDeposit(deposit.id, deposit.userId, dto.network, deposit.atomicAmount, eventId)
+    if (confirmed && input.riskDecision === 'clear' && deposit.state === 'confirming' && depositCreditingEnabled && this.canCreditDeposit()) {
+      await this.ledger.creditDeposit(deposit.id, deposit.userId, input.network, deposit.atomicAmount, eventId)
       deposit = await this.deposits.findOneOrFail({ where: { id: deposit.id } })
     }
     return {
@@ -796,7 +962,7 @@ export class WalletService {
   }
 
   private canExecute() {
-    return this.executionRequested && this.custody.mode === 'live'
+    return this.executionRequested && (this.custody.mode === 'live' || this.custody.mode === 'manual')
   }
 
   private canCreditDeposit() {

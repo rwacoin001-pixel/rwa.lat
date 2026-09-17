@@ -66,6 +66,8 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
   }
   const security = { assertRecentStepUp: jest.fn() }
   const fundsSwitch = { isWithdrawalExecutionEnabled: jest.fn().mockResolvedValue(true) }
+  const whitelist = { isActive: jest.fn().mockResolvedValue(false) }
+  const operations = { isEnabled: jest.fn().mockResolvedValue(true), assertEnabled: jest.fn() }
   const service = new WalletService(
     wallets as never,
     addresses as never,
@@ -87,11 +89,13 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
     crypto as never,
     security as never,
     fundsSwitch as never,
+    whitelist as never,
+    operations as never,
     config as unknown as ConfigService,
   )
   return {
     service, wallets, addresses, chains, deposits, withdrawals, transfers, accounts, balances,
-    withdrawalAddresses, withdrawalApprovals, devices, auditLogs, ledger, security, fundsSwitch, secret,
+    withdrawalAddresses, withdrawalApprovals, devices, auditLogs, ledger, security, fundsSwitch, whitelist, operations, secret,
   }
 }
 
@@ -162,7 +166,7 @@ describe('WalletService', () => {
   })
 
   it('refuses to start financial mode when the installed custody adapter is still a stub', () => {
-    expect(() => buildService({ financial: true })).toThrow(/live CustodyAdapter/)
+    expect(() => buildService({ financial: true })).toThrow(/CustodyAdapter/)
   })
 
   it('requires an aged trusted device and an active address-book entry in financial mode', async () => {

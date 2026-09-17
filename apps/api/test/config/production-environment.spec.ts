@@ -179,4 +179,42 @@ describe('production environment validation', () => {
     expect(() => validateEnvironment(production({ ...base, WALLET_EXECUTION_WORKER_ENABLED: 'false' }))).toThrow(/WORKER_ENABLED/)
     expect(() => validateEnvironment(production({ ...base, WALLET_EXECUTION_QUEUE_LEASE_SECONDS: '60' }))).toThrow(/QUEUE_LEASE_SECONDS/)
   })
+
+  it('requires TRON hot wallet, contracts and bounds for manual custody financial production', () => {
+    const manualBase = {
+      PRODUCTION_FINANCIAL_FEATURES_ENABLED: 'true',
+      KYC_PROVIDER: 'live-kyc',
+      SANCTIONS_PROVIDER: 'live-sanctions',
+      WALLET_CUSTODY_ADAPTER: 'manual',
+      WALLET_WEBHOOK_SECRET: 's'.repeat(32),
+      WALLET_EXECUTION_ENABLED: 'true',
+      WALLET_EXECUTION_WORKER_ENABLED: 'true',
+      ALLOWED_REGIONS: 'SG,BR',
+      WITHDRAWAL_ADDRESS_COOLDOWN_SECONDS: '86400',
+      WITHDRAWAL_NEW_DEVICE_COOLDOWN_SECONDS: '86400',
+      WITHDRAWAL_PER_TRANSACTION_LIMIT_ATOMIC: '1000000000',
+      WITHDRAWAL_DAILY_LIMIT_ATOMIC: '5000000000',
+      WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: '2',
+      WITHDRAWAL_EXECUTION_LEASE_SECONDS: '120',
+      WALLET_EXECUTION_QUEUE_LEASE_SECONDS: '300',
+      WALLET_EXECUTION_WORKER_POLL_MS: '5000',
+      TRON_HOT_WALLET_PRIVATE_KEY: 'a'.repeat(64),
+      TRON_USDT_CONTRACT: 'TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t',
+      TRON_WITHDRAWAL_FEE_LIMIT_SUN: '100000000',
+      TRON_BROADCAST_RESCUE_WINDOW_MINUTES: '120',
+    }
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      TRON_HOT_WALLET_PRIVATE_KEY: '',
+    }))).toThrow(/TRON_HOT_WALLET_PRIVATE_KEY/)
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      TRON_API_BASE_URL: 'http://api.trongrid.io',
+    }))).toThrow(/TRON_API_BASE_URL/)
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      TRON_BROADCAST_RESCUE_WINDOW_MINUTES: '5',
+    }))).toThrow(/TRON_BROADCAST_RESCUE_WINDOW_MINUTES/)
+    expect(validateEnvironment(production(manualBase))).toMatchObject({ WALLET_CUSTODY_ADAPTER: 'manual' })
+  })
 })

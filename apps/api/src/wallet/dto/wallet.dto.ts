@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, MaxLength, Min, MinLength, ValidateIf } from 'class-validator'
+import { IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator'
 import type { WalletNetwork } from '../wallet.entities'
 
 const networks: WalletNetwork[] = ['tron', 'ethereum', 'arbitrum']
@@ -157,4 +157,65 @@ export class RequestFundsResumeDto extends PauseFundsExecutionDto {
   @IsString()
   @Matches(/^[A-Za-z0-9][A-Za-z0-9._:-]{2,119}$/)
   changeId!: string
+}
+
+export class GenerateDepositPoolDto {
+  @IsIn(networks)
+  network!: WalletNetwork
+
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  count!: number
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  label?: string
+}
+
+export class ImportDepositPoolAddressDto {
+  @IsIn(networks)
+  network!: WalletNetwork
+
+  @IsString()
+  @MinLength(26)
+  @MaxLength(64)
+  address!: string
+
+  @IsOptional()
+  @Matches(/^[0-9a-fA-F]{64}$/)
+  privateKey?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(120)
+  label?: string
+}
+
+export class DisableDepositPoolAddressDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  reason?: string
+}
+
+export class AddWithdrawalWhitelistDto {
+  @IsUUID()
+  userId!: string
+
+  @IsIn(networks)
+  network!: WalletNetwork
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  note?: string
+}
+
+export class RevokeWithdrawalWhitelistDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(240)
+  reason?: string
 }

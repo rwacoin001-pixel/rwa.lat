@@ -87,7 +87,29 @@ services:
       - key: SANCTIONS_PROVIDER
         value: disabled
       - key: WALLET_CUSTODY_ADAPTER
-        value: stub
+        value: manual
+      - key: ADMIN_SERVICE_TOKEN
+        sync: false
+      - key: TRON_API_BASE_URL
+        value: https://api.trongrid.io
+      - key: TRON_API_KEY
+        sync: false
+      - key: TRON_USDT_CONTRACT
+        value: TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t
+      - key: TRON_HOT_WALLET_PRIVATE_KEY
+        sync: false
+      - key: TRON_WITHDRAWAL_FEE_LIMIT_SUN
+        value: "100000000"
+      - key: TRON_BROADCAST_RESCUE_WINDOW_MINUTES
+        value: "120"
+      - key: WALLET_CHAIN_WATCHER_ENABLED
+        value: "false"
+      - key: WALLET_CHAIN_WATCHER_POLL_MS
+        value: "120000"
+      - key: WALLET_CHAIN_WATCHER_DEPOSIT_BATCH
+        value: "8"
+      - key: WALLET_CHAIN_WATCHER_CONFIRMATION_BATCH
+        value: "25"
       - key: OBJECT_STORAGE_ENABLED
         value: "false"
       - key: OTEL_SERVICE_NAME
@@ -123,6 +145,10 @@ services:
       - key: ADMIN_DATABASE_URL
         sync: false
       - key: CORE_DATABASE_URL
+        sync: false
+      - key: CORE_API_URL
+        value: https://api.rwa.lat/v1
+      - key: ADMIN_SERVICE_TOKEN
         sync: false
       - key: PUBLIC_ADMIN_API_URL
         value: https://admin-api.rwa.lat

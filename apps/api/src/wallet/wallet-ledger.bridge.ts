@@ -22,6 +22,8 @@ interface CreateWithdrawalInput {
   state: Extract<WithdrawalState, '2fa_verified' | 'risk_review' | 'approved'>
   reasonCode: string | null
   requestId: string
+  /** Enqueue the execution job in the same transaction (whitelist auto-approval path). */
+  enqueueExecution?: boolean
 }
 
 interface CreateTransferInput {
@@ -160,6 +162,15 @@ export class WalletLedgerBridge {
         network: input.network,
         state: input.state,
       })
+      if (input.enqueueExecution && input.state === 'approved') {
+        await runner.query(
+          `INSERT INTO app.job_queue
+            (queue_name, payload, dedup_key, max_attempts)
+           VALUES ('wallet-withdrawal-execution', $1::jsonb, $2, 10)
+           ON CONFLICT (dedup_key) DO NOTHING`,
+          [JSON.stringify({ withdrawalId: input.id }), `withdrawal-execution:${input.id}`],
+        )
+      }
       await runner.commitTransaction()
       return { id: input.id, created: true }
     } catch (error) {

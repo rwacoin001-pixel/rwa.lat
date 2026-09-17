@@ -27,9 +27,15 @@ export interface BroadcastWithdrawalResult {
   transactionHash: string
 }
 
+export interface RecentBroadcastCandidate {
+  transactionHash: string
+  /** 'SUCCESS' | 'FAILED' | another receipt result, or null while indeterminate. */
+  receiptResult: string | null
+}
+
 export interface CustodyAdapter {
   readonly name: string
-  readonly mode: 'stub' | 'live'
+  readonly mode: 'stub' | 'live' | 'manual'
   provisionWallet(userId: string): Promise<ProvisionedWallet>
   provisionAddress(providerWalletReference: string, network: WalletNetwork, assetCode: string): Promise<ProvisionedAddress>
   screenAddress(network: WalletNetwork, address: string): Promise<AddressScreeningResult>
@@ -39,4 +45,10 @@ export interface CustodyAdapter {
    * can never create a second on-chain transfer.
    */
   broadcastWithdrawal(request: BroadcastWithdrawalRequest): Promise<BroadcastWithdrawalResult>
+  /**
+   * Optional idempotency rescue for retried executions: recent broadcasts that
+   * may have left the process before being recorded. The service filters these
+   * candidates against recorded chain transactions before trusting one.
+   */
+  findRecentBroadcast?(input: { network: WalletNetwork; destination: string; atomicAmount: string }): Promise<RecentBroadcastCandidate[]>
 }

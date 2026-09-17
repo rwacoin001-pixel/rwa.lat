@@ -58,6 +58,22 @@ export function validateEnvironment(input: Environment): Environment {
     requireNonStub(input, 'SANCTIONS_PROVIDER')
     requireNonStub(input, 'WALLET_CUSTODY_ADAPTER')
     requireValue(input, 'WALLET_WEBHOOK_SECRET', 32)
+    if (read(input, 'WALLET_CUSTODY_ADAPTER').toLowerCase() === 'manual') {
+      const hotWalletKey = read(input, 'TRON_HOT_WALLET_PRIVATE_KEY')
+      if (!/^[0-9a-fA-F]{64}$/.test(hotWalletKey) || /^0+$/.test(hotWalletKey)) {
+        throw new Error('TRON_HOT_WALLET_PRIVATE_KEY must be a non-placeholder 32-byte hex key for manual custody')
+      }
+      requireValue(input, 'TRON_USDT_CONTRACT', 26)
+      if (read(input, 'TRON_API_BASE_URL')) assertHttps(input, 'TRON_API_BASE_URL')
+      requireInteger(input, 'TRON_WITHDRAWAL_FEE_LIMIT_SUN', 1_000_000, 1_000_000_000)
+      requireInteger(input, 'TRON_BROADCAST_RESCUE_WINDOW_MINUTES', 10, 1_440)
+      const watcherPoll = read(input, 'WALLET_CHAIN_WATCHER_POLL_MS')
+      if (watcherPoll) requireInteger(input, 'WALLET_CHAIN_WATCHER_POLL_MS', 15_000, 900_000)
+      const watcherDepositBatch = read(input, 'WALLET_CHAIN_WATCHER_DEPOSIT_BATCH')
+      if (watcherDepositBatch) requireInteger(input, 'WALLET_CHAIN_WATCHER_DEPOSIT_BATCH', 1, 50)
+      const watcherConfirmationBatch = read(input, 'WALLET_CHAIN_WATCHER_CONFIRMATION_BATCH')
+      if (watcherConfirmationBatch) requireInteger(input, 'WALLET_CHAIN_WATCHER_CONFIRMATION_BATCH', 1, 100)
+    }
     if (read(input, 'WALLET_EXECUTION_ENABLED') !== 'true') {
       throw new Error('WALLET_EXECUTION_ENABLED=true is required when production financial features are enabled')
     }
