@@ -6,13 +6,15 @@ import { IdentityModule } from '../identity/identity.module'
 import { Session } from '../identity/session.entity'
 import { NotificationModule } from '../notification/notification.module'
 import { SecurityModule } from '../security/security.module'
+import { OperationsModule } from '../operations/operations.module'
 import { DemoOrdersController, OrdersController } from './orders.controller'
 import { OrdersService } from './orders.service'
 
 @Module({
-  imports: [CatalogModule, ComplianceModule, IdentityModule, NotificationModule, SecurityModule, TypeOrmModule.forFeature([Session])],
+  imports: [CatalogModule, ComplianceModule, IdentityModule, NotificationModule, SecurityModule, OperationsModule, TypeOrmModule.forFeature([Session])],
   controllers: [OrdersController, DemoOrdersController],
   providers: [OrdersService],
   exports: [OrdersService],
 })
 export class OrdersModule {}
+
