@@ -53,11 +53,11 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  processing: 'bg-blue-500/20 text-blue-400',
+  pending: 'bg-amber-500/20 text-amber-600',
+  processing: 'bg-blue-500/20 text-blue-600',
   completed: 'bg-mint/20 text-mint',
-  failed: 'bg-red-500/20 text-red-400',
-  cancelled: 'bg-gray-500/20 text-gray-400',
+  failed: 'bg-red-500/20 text-red-600',
+  cancelled: 'bg-gray-500/20 text-slate-500',
 };
 
 const TRIGGER_LABELS: Record<string, string> = {
@@ -180,9 +180,9 @@ export default function CollectionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">待处理</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-400">{collections.filter(c => c.status === 'pending').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{collections.filter(c => c.status === 'pending').length}</p>
                 </div>
-                <Clock className="w-10 h-10 text-amber-400/50" />
+                <Clock className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -191,9 +191,9 @@ export default function CollectionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">处理中</p>
-                  <p className="text-2xl font-bold mt-1 text-blue-400">{collections.filter(c => c.status === 'processing').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{collections.filter(c => c.status === 'processing').length}</p>
                 </div>
-                <RefreshCw className="w-10 h-10 text-blue-400/50" />
+                <RefreshCw className="w-10 h-10 text-blue-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -213,9 +213,9 @@ export default function CollectionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">失败</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{collections.filter(c => c.status === 'failed').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{collections.filter(c => c.status === 'failed').length}</p>
                 </div>
-                <XCircle className="w-10 h-10 text-red-400/50" />
+                <XCircle className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -224,11 +224,11 @@ export default function CollectionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">归集总额(USD)</p>
-                  <p className="text-2xl font-bold mt-1 text-cyan-400">
+                  <p className="text-2xl font-bold mt-1 text-sky-600">
                     {collections.filter(c => c.status === 'completed').reduce((sum, c) => sum + parseFloat(c.amountUsd.replace(/[$,]/g, '')), 0).toLocaleString()}
                   </p>
                 </div>
-                <ArrowRight className="w-10 h-10 text-cyan-400/50" />
+                <ArrowRight className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -341,7 +341,7 @@ export default function CollectionsPage() {
                   </TableHeader>
                   <TableBody>
                     {collections.map((c) => (
-                      <TableRow key={c.id} className="hover:bg-white/5">
+                      <TableRow key={c.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-xs max-w-[160px] truncate">
                           {c.sourceAddress}
                         </TableCell>
@@ -364,7 +364,7 @@ export default function CollectionsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-blue-500/20 text-blue-400">
+                          <Badge variant="outline" className="bg-blue-500/20 text-blue-600">
                             {TRIGGER_LABELS[c.triggeredBy]}
                           </Badge>
                           {c.thresholdAmount && (
@@ -377,7 +377,7 @@ export default function CollectionsPage() {
                             <p className="text-xs text-mint">完成: {new Date(c.completedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
                           )}
                           {c.error && (
-                            <p className="text-xs text-red-400">错误: {c.error}</p>
+                            <p className="text-xs text-red-600">错误: {c.error}</p>
                           )}
                         </TableCell>
                         <TableCell>
@@ -421,7 +421,7 @@ export default function CollectionsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

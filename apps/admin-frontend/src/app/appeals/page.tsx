@@ -47,18 +47,18 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  under_review: 'bg-blue-500/20 text-blue-400',
+  pending: 'bg-amber-500/20 text-amber-600',
+  under_review: 'bg-blue-500/20 text-blue-600',
   approved: 'bg-mint/20 text-mint',
-  rejected: 'bg-red-500/20 text-red-400',
+  rejected: 'bg-red-500/20 text-red-600',
   escalated: 'bg-purple-500/20 text-purple-400',
 };
 
 const PRIORITY_STYLES: Record<string, string> = {
-  low: 'bg-green-500/20 text-green-400',
-  normal: 'bg-blue-500/20 text-blue-400',
-  high: 'bg-amber-500/20 text-amber-400',
-  urgent: 'bg-red-500/20 text-red-400',
+  low: 'bg-green-500/20 text-emerald-600',
+  normal: 'bg-blue-500/20 text-blue-600',
+  high: 'bg-amber-500/20 text-amber-600',
+  urgent: 'bg-red-500/20 text-red-600',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -179,7 +179,7 @@ export default function AppealsPage() {
                   <p className="text-sm text-muted-foreground">待处理</p>
                   <p className="text-2xl font-bold mt-1">{appeals.filter(a => a.status === 'pending').length}</p>
                 </div>
-                <Clock className="w-10 h-10 text-amber-400/50" />
+                <Clock className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -190,7 +190,7 @@ export default function AppealsPage() {
                   <p className="text-sm text-muted-foreground">审核中</p>
                   <p className="text-2xl font-bold mt-1">{appeals.filter(a => a.status === 'under_review').length}</p>
                 </div>
-                <MessageSquare className="w-10 h-10 text-blue-400/50" />
+                <MessageSquare className="w-10 h-10 text-blue-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -199,9 +199,9 @@ export default function AppealsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">紧急申诉</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{appeals.filter(a => a.priority === 'urgent').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{appeals.filter(a => a.priority === 'urgent').length}</p>
                 </div>
-                <AlertTriangle className="w-10 h-10 text-red-400/50" />
+                <AlertTriangle className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -221,9 +221,9 @@ export default function AppealsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">已驳回</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{appeals.filter(a => a.status === 'rejected').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{appeals.filter(a => a.status === 'rejected').length}</p>
                 </div>
-                <XCircle className="w-10 h-10 text-red-400/50" />
+                <XCircle className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -335,7 +335,7 @@ export default function AppealsPage() {
                   </TableHeader>
                   <TableBody>
                     {appeals.map((appeal) => (
-                      <TableRow key={appeal.id} className="hover:bg-white/5">
+                      <TableRow key={appeal.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {appeal.id.slice(0, 8)}...
                         </TableCell>
@@ -409,7 +409,7 @@ export default function AppealsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

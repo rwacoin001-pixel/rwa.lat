@@ -49,9 +49,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   matched: 'bg-mint/20 text-mint',
-  mismatch: 'bg-red-500/20 text-red-400',
-  pending_review: 'bg-amber-500/20 text-amber-400',
-  resolved: 'bg-blue-500/20 text-blue-400',
+  mismatch: 'bg-red-500/20 text-red-600',
+  pending_review: 'bg-amber-500/20 text-amber-600',
+  resolved: 'bg-blue-500/20 text-blue-600',
 };
 
 const DISCREPANCY_LABELS: Record<string, string> = {
@@ -188,9 +188,9 @@ export default function ReconciliationPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">不平账/待复核</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{mismatchCount}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{mismatchCount}</p>
                 </div>
-                <XCircle className="w-10 h-10 text-red-400/50" />
+                <XCircle className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -201,7 +201,7 @@ export default function ReconciliationPage() {
                   <p className="text-sm text-muted-foreground">总对账记录</p>
                   <p className="text-2xl font-bold mt-1">{totalCount}</p>
                 </div>
-                <FileText className="w-10 h-10 text-cyan-400/50" />
+                <FileText className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -317,7 +317,7 @@ export default function ReconciliationPage() {
                   </TableHeader>
                   <TableBody>
                     {reconciliations.map((rec) => (
-                      <TableRow key={rec.id} className="hover:bg-white/5">
+                      <TableRow key={rec.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-medium">
                           {new Date(rec.date).toLocaleDateString('zh-CN')}
                         </TableCell>
@@ -328,7 +328,7 @@ export default function ReconciliationPage() {
                         <TableCell className="font-mono tabular-nums">{rec.onChainBalance}</TableCell>
                         <TableCell className="font-mono tabular-nums">{rec.offChainBalance}</TableCell>
                         <TableCell>
-                          <span className={cn('font-mono tabular-nums font-medium', parseFloat(rec.difference) === 0 ? 'text-mint' : parseFloat(rec.difference) > 0 ? 'text-amber-400' : 'text-red-400')}>
+                          <span className={cn('font-mono tabular-nums font-medium', parseFloat(rec.difference) === 0 ? 'text-mint' : parseFloat(rec.difference) > 0 ? 'text-amber-600' : 'text-red-600')}>
                             {rec.difference}
                           </span>
                         </TableCell>
@@ -339,7 +339,7 @@ export default function ReconciliationPage() {
                         </TableCell>
                         <TableCell>
                           {rec.discrepancyType ? (
-                            <Badge variant="outline" className="bg-amber-500/20 text-amber-400">
+                            <Badge variant="outline" className="bg-amber-500/20 text-amber-600">
                               {DISCREPANCY_LABELS[rec.discrepancyType]}
                             </Badge>
                           ) : (
@@ -400,7 +400,7 @@ export default function ReconciliationPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -4,25 +4,31 @@
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 248 250 248;
-    --muted: 12 16 20;
-    --muted-foreground: 146 154 166;
-    --border: 255 255 255 / 0.12;
-    --ring: 47 230 191;
+    --background: 228 60% 96%;
+    --foreground: 231 50% 18%;
+    --muted: 228 45% 93%;
+    --muted-foreground: 230 16% 50%;
+    --border: 228 42% 88%;
+    --ring: 233 93% 67%;
   }
 
   * {
-    @apply border-white/10;
-  }
-
-  body {
-    @apply bg-black text-white antialiased;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    @apply border-ink/[0.07];
   }
 
   html {
     @apply scroll-smooth;
+  }
+
+  body {
+    @apply text-ink antialiased;
+    background-color: #eef1fb;
+    background-image:
+      radial-gradient(52% 42% at 12% 4%, rgba(122, 148, 255, 0.30) 0%, rgba(122, 148, 255, 0) 100%),
+      radial-gradient(46% 38% at 88% 2%, rgba(167, 139, 250, 0.24) 0%, rgba(167, 139, 250, 0) 100%),
+      linear-gradient(160deg, #e9edfb 0%, #eef1fb 48%, #e7ebfa 100%);
+    background-attachment: fixed;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -39,15 +45,15 @@
 
 @layer utilities {
   .glass {
-    @apply bg-white/5 backdrop-blur-[24px] border border-white/10 shadow-glass;
+    @apply border border-white/60 bg-white/50 shadow-glass backdrop-blur-[28px];
   }
 
   .glass-strong {
-    @apply bg-white/10 backdrop-blur-[24px] border border-white/20 shadow-glass;
+    @apply border border-white/70 bg-white/70 shadow-glass backdrop-blur-[28px];
   }
 
   .hairline {
-    @apply border-white/10;
+    @apply border-ink/[0.08];
   }
 
   .text-balance {
@@ -80,14 +86,32 @@
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
+
+  .pill {
+    @apply inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium;
+  }
 }
 
 @layer base {
   ::selection {
-    @apply bg-mint/30 text-white;
+    @apply bg-mint/25 text-ink;
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-mint ring-offset-2 ring-offset-black;
+    @apply outline-none ring-2 ring-mint ring-offset-2 ring-offset-white;
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(20, 24, 48, 0.18);
+    border-radius: 9999px;
+    border: 3px solid transparent;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
   }
 }

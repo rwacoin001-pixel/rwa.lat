@@ -68,10 +68,10 @@ function DataTable<T>({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <div className="rounded-lg border border-white/10 bg-glass-strong p-4">
-          <div className="h-10 w-full animate-pulse rounded bg-white/5" />
-          <div className="h-10 w-full animate-pulse rounded bg-white/5 mt-4" />
-          <div className="h-10 w-full animate-pulse rounded bg-white/5 mt-4" />
+        <div className="rounded-lg border border-ink/[0.07] bg-glass-strong p-4">
+          <div className="h-10 w-full animate-pulse rounded bg-ink/[0.04]" />
+          <div className="h-10 w-full animate-pulse rounded bg-ink/[0.04] mt-4" />
+          <div className="h-10 w-full animate-pulse rounded bg-ink/[0.04] mt-4" />
         </div>
       </div>
     );
@@ -111,7 +111,7 @@ function DataTable<T>({
       </div>
 
       {/* Table */}
-      <div className="rounded-lg border border-white/10 bg-glass-strong overflow-hidden">
+      <div className="rounded-lg border border-ink/[0.07] bg-glass-strong overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -146,7 +146,7 @@ function DataTable<T>({
                 <TableRow
                   key={getRowKey(row)}
                   className={cn(
-                    "transition-colors hover:bg-white/5",
+                    "transition-colors hover:bg-ink/[0.05]",
                     onRowClick && "cursor-pointer"
                   )}
                   onClick={() => onRowClick?.(row)}

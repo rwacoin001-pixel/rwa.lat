@@ -36,10 +36,10 @@ const CATEGORY_LABELS: Record<string, string> = {
 };
 
 const SEVERITY_STYLES: Record<string, string> = {
-  low: 'bg-green-500/20 text-green-400',
-  medium: 'bg-amber-500/20 text-amber-400',
+  low: 'bg-green-500/20 text-emerald-600',
+  medium: 'bg-amber-500/20 text-amber-600',
   high: 'bg-orange-500/20 text-orange-400',
-  critical: 'bg-red-500/20 text-red-400',
+  critical: 'bg-red-500/20 text-red-600',
 };
 
 const SEVERITY_LABELS: Record<string, string> = {
@@ -174,7 +174,7 @@ export default function RiskPage() {
                   <p className="text-sm text-muted-foreground">总触发次数(24h)</p>
                   <p className="text-2xl font-bold mt-1">{rules.reduce((sum, r) => sum + r.triggerCount, 0).toLocaleString()}</p>
                 </div>
-                <TrendingUp className="w-10 h-10 text-amber-400/50" />
+                <TrendingUp className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -183,9 +183,9 @@ export default function RiskPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">极高风险规则</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{rules.filter(r => r.severity === 'critical').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{rules.filter(r => r.severity === 'critical').length}</p>
                 </div>
-                <Target className="w-10 h-10 text-red-400/50" />
+                <Target className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -196,7 +196,7 @@ export default function RiskPage() {
                   <p className="text-sm text-muted-foreground">规则分类</p>
                   <p className="text-2xl font-bold mt-1">{new Set(rules.map(r => r.category)).size}</p>
                 </div>
-                <Shield className="w-10 h-10 text-cyan-400/50" />
+                <Shield className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -305,7 +305,7 @@ export default function RiskPage() {
                   </TableHeader>
                   <TableBody>
                     {rules.map((rule) => (
-                      <TableRow key={rule.id} className="hover:bg-white/5">
+                      <TableRow key={rule.id} className="hover:bg-ink/[0.05]">
                         <TableCell>
                           <Badge variant="outline" className={cn(SEVERITY_STYLES[rule.severity])}>
                             {SEVERITY_LABELS[rule.severity]}
@@ -318,7 +318,7 @@ export default function RiskPage() {
                         <TableCell className="text-sm text-muted-foreground max-w-xs truncate">
                           {rule.description}
                         </TableCell>
-                        <TableCell className="font-mono tabular-nums text-amber-400">
+                        <TableCell className="font-mono tabular-nums text-amber-600">
                           {rule.triggerCount}
                         </TableCell>
                         <TableCell>
@@ -368,7 +368,7 @@ export default function RiskPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

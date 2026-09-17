@@ -1,14 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Shield, Lock, Mail, AlertCircle } from 'lucide-react';
+import { AlertCircle, KeyRound, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,32 +45,39 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md animate-in">
-        {/* Brand Header */}
-        <div className="text-center mb-8">
-          <Link href="/login" className="inline-flex items-center gap-2 text-xl font-semibold" aria-label="RWA.LAT Admin">
-            <svg className="h-8 w-12" viewBox="140 188 226 124" fill="none" aria-hidden="true">
-              <path fill="currentColor" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
-              <path fill="currentColor" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
-              <path fill="#2FE6BF" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
+    <div className="flex min-h-screen items-center justify-center px-4 py-12">
+      <div className="animate-in w-full max-w-md">
+        {/* Brand */}
+        <div className="mb-7 text-center">
+          <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[20px] bg-white shadow-glass ring-1 ring-ink/[0.06]">
+            <svg className="h-7 w-11" viewBox="140 188 226 124" fill="none" aria-hidden="true">
+              <path fill="#141830" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
+              <path fill="#141830" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
+              <path fill="#5b6cf9" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
             </svg>
-            <span className="font-semibold tracking-tight">RWA.LAT Admin</span>
-          </Link>
-          <p className="text-muted-foreground mt-2">后台运营管理系统</p>
+          </span>
+          <h1 className="text-xl font-semibold tracking-tight">RWA.LAT Admin</h1>
+          <p className="mt-1 text-sm text-muted-foreground">运营后台管理系统</p>
         </div>
 
-        <div className="glass-strong rounded-xl p-6 sm:p-8 animate-in">
-          <div className="text-center mb-6">
-            <h1 className="text-2xl font-semibold">欢迎回来</h1>
-            <p className="text-muted-foreground mt-1">请使用管理员账号登录</p>
+        {/* Card */}
+        <div className="glass-strong animate-in rounded-[28px] p-6 sm:p-8">
+          <div className="mb-6 flex items-center gap-3">
+            <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-mint/12 text-mint">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-base font-semibold">欢迎回来</p>
+              <p className="text-xs text-muted-foreground">请使用管理员账号登录</p>
+            </div>
           </div>
 
           {error && (
-            <div className="mb-4 p-3 rounded-lg bg-red-500/20 border border-red-500/50 text-red-400 text-sm flex items-center gap-2" role="alert">
-              <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
+            <div
+              className="mb-5 flex items-center gap-2 rounded-2xl border border-negative/25 bg-negative/10 p-3 text-sm text-negative"
+              role="alert"
+            >
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -84,9 +88,7 @@ export default function LoginPage() {
                 邮箱地址
               </Label>
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                </svg>
+                <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-faint" />
                 <Input
                   id="email"
                   type="email"
@@ -102,31 +104,11 @@ export default function LoginPage() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="mfa-code" className="text-sm font-medium">
-                Authenticator code (if required)
-              </Label>
-              <Input
-                id="mfa-code"
-                type="text"
-                inputMode="numeric"
-                pattern="[0-9]{6}"
-                maxLength={6}
-                placeholder="123456"
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                autoComplete="one-time-code"
-                disabled={loading}
-              />
-            </div>
-
-            <div className="space-y-2">
               <Label htmlFor="password" className="text-sm font-medium">
                 密码
               </Label>
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2H7" />
-                </svg>
+                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-faint" />
                 <Input
                   id="password"
                   type="password"
@@ -141,16 +123,36 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <Button
-              type="submit"
-              className="w-full py-3 text-base font-medium"
-              disabled={loading}
-              size="lg"
-            >
+            <div className="space-y-2">
+              <Label htmlFor="mfa-code" className="flex items-center gap-1.5 text-sm font-medium">
+                <KeyRound className="h-3.5 w-3.5 text-text-faint" />
+                动态验证码（如需）
+              </Label>
+              <Input
+                id="mfa-code"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]{6}"
+                maxLength={6}
+                placeholder="6 位 Authenticator 验证码"
+                value={mfaCode}
+                onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                autoComplete="one-time-code"
+                disabled={loading}
+                className="tracking-[0.3em]"
+              />
+            </div>
+
+            <Button type="submit" className="w-full" size="lg" disabled={loading}>
               {loading ? (
                 <>
-                  <svg className="w-5 h-5 animate-spin mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                  <svg className="mr-2 h-4 w-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
                   </svg>
                   登录中...
                 </>
@@ -160,9 +162,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 pt-4 border-t border-white/10">
-            <p className="text-sm text-muted-foreground text-center">
-              RWA.LAT 后台运营管理系统 v0.1.0
+          <div className="mt-6 border-t border-ink/[0.08] pt-4">
+            <p className="text-center text-xs text-muted-foreground">
+              RWA.LAT 后台运营管理系统 · 请勿在公共设备上保存登录状态
             </p>
           </div>
         </div>
@@ -170,4 +172,3 @@ export default function LoginPage() {
     </div>
   );
 }
-

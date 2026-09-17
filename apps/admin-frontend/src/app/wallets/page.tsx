@@ -46,10 +46,10 @@ const TYPE_LABELS: Record<string, string> = {
 };
 
 const TYPE_STYLES: Record<string, string> = {
-  deposit: 'bg-blue-500/20 text-blue-400',
+  deposit: 'bg-blue-500/20 text-blue-600',
   withdrawal: 'bg-purple-500/20 text-purple-400',
-  collection: 'bg-cyan-500/20 text-cyan-400',
-  operational: 'bg-amber-500/20 text-amber-400',
+  collection: 'bg-cyan-500/20 text-sky-600',
+  operational: 'bg-amber-500/20 text-amber-600',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -61,9 +61,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-mint/20 text-mint',
-  frozen: 'bg-red-500/20 text-red-400',
-  pending: 'bg-amber-500/20 text-amber-400',
-  archived: 'bg-gray-500/20 text-gray-400',
+  frozen: 'bg-red-500/20 text-red-600',
+  pending: 'bg-amber-500/20 text-amber-600',
+  archived: 'bg-gray-500/20 text-slate-500',
 };
 
 export default function WalletsPage() {
@@ -206,9 +206,9 @@ export default function WalletsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">冻结钱包</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{wallets.filter(w => w.status === 'frozen').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{wallets.filter(w => w.status === 'frozen').length}</p>
                 </div>
-                <Wallet className="w-10 h-10 text-red-400/50" />
+                <Wallet className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -217,9 +217,9 @@ export default function WalletsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">待激活</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-400">{wallets.filter(w => w.status === 'pending').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{wallets.filter(w => w.status === 'pending').length}</p>
                 </div>
-                <Activity className="w-10 h-10 text-amber-400/50" />
+                <Activity className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -232,7 +232,7 @@ export default function WalletsPage() {
                     {wallets.reduce((sum, w) => sum + parseFloat(w.usdValue.replace(/[$,]/g, '')), 0).toLocaleString()}
                   </p>
                 </div>
-                <Send className="w-10 h-10 text-cyan-400/50" />
+                <Send className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -346,7 +346,7 @@ export default function WalletsPage() {
                   </TableHeader>
                   <TableBody>
                     {wallets.map((w) => (
-                      <TableRow key={w.id} className="hover:bg-white/5">
+                      <TableRow key={w.id} className="hover:bg-ink/[0.05]">
                         <TableCell>
                           <Badge variant="outline">{CHAIN_LABELS[w.chain]}</Badge>
                         </TableCell>
@@ -370,7 +370,7 @@ export default function WalletsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell className="font-mono tabular-nums">{w.balance}</TableCell>
-                        <TableCell className="font-mono tabular-nums text-cyan-400">{w.usdValue}</TableCell>
+                        <TableCell className="font-mono tabular-nums text-sky-600">{w.usdValue}</TableCell>
                         <TableCell className="text-sm text-muted-foreground">
                           {w.lastActivityAt === '—' ? '—' : new Date(w.lastActivityAt).toLocaleDateString('zh-CN')}
                         </TableCell>
@@ -396,7 +396,7 @@ export default function WalletsPage() {
                               </DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {w.status === 'active' && (
-                                <DropdownMenuItem onClick={() => handleAction('freeze', w)} className="text-amber-400">
+                                <DropdownMenuItem onClick={() => handleAction('freeze', w)} className="text-amber-600">
                                   冻结钱包
                                 </DropdownMenuItem>
                               )}
@@ -420,7 +420,7 @@ export default function WalletsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

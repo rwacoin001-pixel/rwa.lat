@@ -15,9 +15,9 @@ import {
 
 const stats = [
   { name: '总资产管理规模', value: '$12,450,000', change: '+12.5%', icon: DollarSign, color: 'text-mint' },
-  { name: '活跃用户数', value: '3,247', change: '+8.2%', icon: Users, color: 'text-cyan-400' },
-  { name: '钱包余额总计', value: '$8,920,000', change: '-2.1%', icon: Wallet, color: 'text-amber-400' },
-  { name: '待处理赎回', value: '23 笔', change: '+5', icon: TrendingUpIcon, color: 'text-amber-400' },
+  { name: '活跃用户数', value: '3,247', change: '+8.2%', icon: Users, color: 'text-sky-600' },
+  { name: '钱包余额总计', value: '$8,920,000', change: '-2.1%', icon: Wallet, color: 'text-amber-600' },
+  { name: '待处理赎回', value: '23 笔', change: '+5', icon: TrendingUpIcon, color: 'text-amber-600' },
 ];
 
 const recentActivity = [
@@ -29,9 +29,9 @@ const recentActivity = [
 ];
 
 const statusStyles: Record<string, string> = {
-  '待审批': 'bg-amber-500/20 text-amber-400',
-  '待处理': 'bg-amber-500/20 text-amber-400',
-  '待补件': 'bg-amber-500/20 text-amber-400',
+  '待审批': 'bg-amber-500/20 text-amber-600',
+  '待处理': 'bg-amber-500/20 text-amber-600',
+  '待补件': 'bg-amber-500/20 text-amber-600',
   '通过': 'bg-mint/20 text-mint',
   '完成': 'bg-mint/20 text-mint',
 };
@@ -68,7 +68,7 @@ export default function DashboardPage() {
                     <p className="text-2xl font-bold mt-1">{stat.value}</p>
                     <p className="text-sm font-medium mt-2" style={{ color: stat.color.replace('text-', '') }}>{stat.change}</p>
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-xl bg-ink/[0.04] flex items-center justify-center">
                     <stat.icon className="w-6 h-6" style={{ color: stat.color.replace('text-', '') }} />
                   </div>
                 </div>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
             <div className="glass-strong rounded-xl p-6">
               <div className="flex flex-row items-center justify-between mb-6">
                 <h2 className="text-lg font-semibold">近期活动</h2>
-                <button className="text-sm text-muted-foreground hover:text-white transition-colors">
+                <button className="text-sm text-muted-foreground hover:text-ink transition-colors">
                   查看全部
                 </button>
               </div>
@@ -92,15 +92,15 @@ export default function DashboardPage() {
                 {recentActivity.map((activity) => (
                   <div
                     key={activity.id}
-                    className="flex items-center justify-between p-4 rounded-xl bg-white/5 hover:bg-white/10 transition-colors"
+                    className="flex items-center justify-between p-4 rounded-xl bg-ink/[0.04] hover:bg-ink/[0.08] transition-colors"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center">
-                        {activity.type === '赎回申请' && <Activity className="w-5 h-5 text-amber-400" />}
+                      <div className="w-10 h-10 rounded-xl bg-ink/[0.04] flex items-center justify-center">
+                        {activity.type === '赎回申请' && <Activity className="w-5 h-5 text-amber-600" />}
                         {activity.type === 'KYC 审核' && <Shield className="w-5 h-5 text-mint" />}
-                        {activity.type === '充值到账' && <TrendingUp className="w-5 h-5 text-cyan-400" />}
-                        {activity.type === '提现请求' && <Activity className="w-5 h-5 text-amber-400" />}
-                        {activity.type === 'KYC 补件' && <Shield className="w-5 h-5 text-amber-400" />}
+                        {activity.type === '充值到账' && <TrendingUp className="w-5 h-5 text-sky-600" />}
+                        {activity.type === '提现请求' && <Activity className="w-5 h-5 text-amber-600" />}
+                        {activity.type === 'KYC 补件' && <Shield className="w-5 h-5 text-amber-600" />}
                       </div>
                       <div>
                         <p className="font-medium">{activity.type}</p>
@@ -109,7 +109,7 @@ export default function DashboardPage() {
                     </div>
                     <div className="text-right">
                       <p className="font-medium tabular-nums">{activity.amount}</p>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[activity.status] || 'bg-white/10 text-muted-foreground'}`}>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${statusStyles[activity.status] || 'bg-ink/[0.07] text-muted-foreground'}`}>
                         {activity.status}
                       </span>
                       <p className="text-xs text-muted-foreground mt-1">{activity.time}</p>
@@ -125,7 +125,7 @@ export default function DashboardPage() {
             <div className="glass-strong rounded-xl p-6">
               <h3 className="text-lg font-semibold mb-4">系统健康度</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-ink/[0.04]">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-mint/20 flex items-center justify-center">
                       <Shield className="w-5 h-5 text-mint" />
@@ -137,10 +137,10 @@ export default function DashboardPage() {
                   </div>
                   <span className="text-xs font-medium bg-mint/20 text-mint px-2 py-1 rounded-full">健康</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-ink/[0.04]">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-cyan-400/20 flex items-center justify-center">
-                      <TrendingUp className="w-5 h-5 text-cyan-400" />
+                      <TrendingUp className="w-5 h-5 text-sky-600" />
                     </div>
                     <div>
                       <p className="font-medium">数据库</p>
@@ -149,10 +149,10 @@ export default function DashboardPage() {
                   </div>
                   <span className="text-xs font-medium bg-mint/20 text-mint px-2 py-1 rounded-full">健康</span>
                 </div>
-                <div className="flex items-center justify-between p-3 rounded-xl bg-white/5">
+                <div className="flex items-center justify-between p-3 rounded-xl bg-ink/[0.04]">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-xl bg-amber-400/20 flex items-center justify-center">
-                      <Shield className="w-5 h-5 text-amber-400" />
+                      <Shield className="w-5 h-5 text-amber-600" />
                     </div>
                     <div>
                       <p className="font-medium">Polymarket 连接</p>
@@ -167,27 +167,27 @@ export default function DashboardPage() {
             <div className="mt-6 glass-strong rounded-xl p-6">
               <h3 className="text-lg font-semibold mb-4">待办事项</h3>
               <ul className="space-y-3">
-                <li className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                <li className="flex items-center gap-3 p-3 rounded-xl bg-ink/[0.04]">
                   <div className="w-8 h-8 rounded-lg bg-amber-400/20 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-amber-400" />
+                    <Activity className="w-4 h-4 text-amber-600" />
                   </div>
                   <div>
                     <p className="font-medium text-sm">3 笔赎回待审批</p>
                     <p className="text-xs text-muted-foreground">最早提交于 2 分钟前</p>
                   </div>
                 </li>
-                <li className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                <li className="flex items-center gap-3 p-3 rounded-xl bg-ink/[0.04]">
                   <div className="w-8 h-8 rounded-lg bg-amber-400/20 flex items-center justify-center">
-                    <Shield className="w-4 h-4 text-amber-400" />
+                    <Shield className="w-4 h-4 text-amber-600" />
                   </div>
                   <div>
                     <p className="font-medium text-sm">2 份 KYC 待补件</p>
                     <p className="text-xs text-muted-foreground">截止日期：今日 23:59</p>
                   </div>
                 </li>
-                <li className="flex items-center gap-3 p-3 rounded-xl bg-white/5">
+                <li className="flex items-center gap-3 p-3 rounded-xl bg-ink/[0.04]">
                   <div className="w-8 h-8 rounded-lg bg-cyan-400/20 flex items-center justify-center">
-                    <Activity className="w-4 h-4 text-cyan-400" />
+                    <Activity className="w-4 h-4 text-sky-600" />
                   </div>
                   <div>
                     <p className="font-medium text-sm">1 笔大额提现待人工复核</p>

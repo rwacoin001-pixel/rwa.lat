@@ -46,9 +46,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-mint/20 text-mint',
-  closed: 'bg-amber-500/20 text-amber-400',
-  resolved: 'bg-blue-500/20 text-blue-400',
-  cancelled: 'bg-gray-500/20 text-gray-400',
+  closed: 'bg-amber-500/20 text-amber-600',
+  resolved: 'bg-blue-500/20 text-blue-600',
+  cancelled: 'bg-gray-500/20 text-slate-500',
 };
 
 export default function PolymarketPage() {
@@ -97,7 +97,7 @@ export default function PolymarketPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总市场数</p><p className="text-2xl font-bold mt-1">{totalCount}</p></div><BarChart3 className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">活跃市场</p><p className="text-2xl font-bold mt-1 text-mint">{markets.filter(m => m.status === 'active').length}</p></div><Activity className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总流动性(USD)</p><p className="text-2xl font-bold mt-1 text-cyan-400">{markets.reduce((s, m) => s + parseFloat(m.liquidityUsd.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><DollarSign className="w-10 h-10 text-cyan-400/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总流动性(USD)</p><p className="text-2xl font-bold mt-1 text-sky-600">{markets.reduce((s, m) => s + parseFloat(m.liquidityUsd.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><DollarSign className="w-10 h-10 text-sky-600/50" /></div></CardContent></Card>
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总交易量(USD)</p><p className="text-2xl font-bold mt-1 text-purple-400">{markets.reduce((s, m) => s + parseFloat(m.volumeUsd.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><Trophy className="w-10 h-10 text-purple-400/50" /></div></CardContent></Card>
         </div>
 
@@ -123,18 +123,18 @@ export default function PolymarketPage() {
                 <TableHead>市场名称</TableHead><TableHead className="w-24">类别</TableHead><TableHead className="w-24">YES/NO</TableHead><TableHead className="w-28">流动性(USD)</TableHead><TableHead className="w-28">交易量(USD)</TableHead><TableHead className="w-24">状态</TableHead><TableHead className="w-28">截止日期</TableHead><TableHead className="w-28">结算结果</TableHead><TableHead className="w-24">操作</TableHead>
               </TableRow></TableHeader><TableBody>
                 {markets.map((m) => (
-                  <TableRow key={m.id} className="hover:bg-white/5">
+                  <TableRow key={m.id} className="hover:bg-ink/[0.05]">
                     <TableCell><p className="font-medium">{m.marketName}</p><p className="text-xs text-muted-foreground font-mono">{m.marketSlug}</p></TableCell>
-                    <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-400">{CATEGORY_LABELS[m.category]}</Badge></TableCell>
-                    <TableCell><div className="flex gap-2 text-sm"><span className="text-mint font-mono">{m.yesPrice}</span><span className="text-red-400 font-mono">{m.noPrice}</span></div></TableCell>
-                    <TableCell className="font-mono tabular-nums text-sm text-cyan-400">{m.liquidityUsd}</TableCell>
+                    <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-600">{CATEGORY_LABELS[m.category]}</Badge></TableCell>
+                    <TableCell><div className="flex gap-2 text-sm"><span className="text-mint font-mono">{m.yesPrice}</span><span className="text-red-600 font-mono">{m.noPrice}</span></div></TableCell>
+                    <TableCell className="font-mono tabular-nums text-sm text-sky-600">{m.liquidityUsd}</TableCell>
                     <TableCell className="font-mono tabular-nums text-sm">{m.volumeUsd}</TableCell>
                     <TableCell><Badge variant="outline" className={cn(STATUS_STYLES[m.status])}>{STATUS_LABELS[m.status]}</Badge></TableCell>
                     <TableCell className="text-sm"><div className="flex items-center gap-1"><Calendar className="w-4 h-4 text-muted-foreground" />{new Date(m.endDate).toLocaleDateString('zh-CN')}</div></TableCell>
                     <TableCell>{m.resolvedOutcome ? <Badge variant="outline" className="bg-mint/20 text-mint">{m.resolvedOutcome}</Badge> : <span className="text-muted-foreground">—</span>}{m.resolutionSource && <p className="text-xs text-muted-foreground mt-1">来源: {m.resolutionSource}</p>}</TableCell>
                     <TableCell><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => window.open(`/polymarket/${m.id}`, '_blank')}><Eye className="w-4 h-4 mr-2" />查看详情</DropdownMenuItem>
-                      {m.status === 'active' && <DropdownMenuItem className="text-amber-400">关闭市场</DropdownMenuItem>}
+                      {m.status === 'active' && <DropdownMenuItem className="text-amber-600">关闭市场</DropdownMenuItem>}
                       {m.status === 'closed' && <DropdownMenuItem className="text-mint"><Trophy className="w-4 h-4 mr-2" />结算市场</DropdownMenuItem>}
                       <DropdownMenuItem>查看交易记录</DropdownMenuItem>
                     </DropdownMenuContent></DropdownMenu></TableCell>
@@ -142,7 +142,7 @@ export default function PolymarketPage() {
                 ))}
               </TableBody></Table></div>
             )}
-            {totalPages > 1 && (<div className="px-4 py-4 border-t border-white/10"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} /></div>)}
+            {totalPages > 1 && (<div className="px-4 py-4 border-t border-ink/[0.07]"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} /></div>)}
           </CardContent>
         </Card>
       </div>

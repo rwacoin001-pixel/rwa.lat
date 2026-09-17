@@ -45,9 +45,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-mint/20 text-mint',
-  suspended: 'bg-amber-500/20 text-amber-400',
-  pending: 'bg-blue-500/20 text-blue-400',
-  revoked: 'bg-red-500/20 text-red-400',
+  suspended: 'bg-amber-500/20 text-amber-600',
+  pending: 'bg-blue-500/20 text-blue-600',
+  revoked: 'bg-red-500/20 text-red-600',
 };
 
 export default function ProvidersPage() {
@@ -115,8 +115,8 @@ export default function ProvidersPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总计</p><p className="text-2xl font-bold mt-1">{totalCount}</p></div><Building2 className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">KYC 已验证</p><p className="text-2xl font-bold mt-1 text-mint">{providers.filter(p => p.kycVerified).length}</p></div><CheckCircle className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">待审核</p><p className="text-2xl font-bold mt-1 text-amber-400">{providers.filter(p => p.status === 'pending').length}</p></div><XCircle className="w-10 h-10 text-amber-400/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总资产(USD)</p><p className="text-2xl font-bold mt-1 text-cyan-400">{providers.reduce((s, p) => s + parseFloat(p.totalValueUsd.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><DollarSign className="w-10 h-10 text-cyan-400/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">待审核</p><p className="text-2xl font-bold mt-1 text-amber-600">{providers.filter(p => p.status === 'pending').length}</p></div><XCircle className="w-10 h-10 text-amber-600/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总资产(USD)</p><p className="text-2xl font-bold mt-1 text-sky-600">{providers.reduce((s, p) => s + parseFloat(p.totalValueUsd.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><DollarSign className="w-10 h-10 text-sky-600/50" /></div></CardContent></Card>
         </div>
 
         <Card className="glass-strong">
@@ -159,20 +159,20 @@ export default function ProvidersPage() {
                   </TableRow></TableHeader>
                   <TableBody>
                     {providers.map((p) => (
-                      <TableRow key={p.id} className="hover:bg-white/5">
+                      <TableRow key={p.id} className="hover:bg-ink/[0.05]">
                         <TableCell>
                           <p className="font-medium">{p.name}</p>
                           <p className="text-sm text-muted-foreground">{p.contactEmail}</p>
                         </TableCell>
-                        <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-400">{TYPE_LABELS[p.type]}</Badge></TableCell>
+                        <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-600">{TYPE_LABELS[p.type]}</Badge></TableCell>
                         <TableCell className="flex items-center gap-1"><Globe className="w-4 h-4 text-muted-foreground" />{p.country}</TableCell>
                         <TableCell>
                           <p className="font-mono text-sm">{p.licenseNumber}</p>
                           <p className="text-xs text-muted-foreground">有效期: {p.licenseExpiry}</p>
                         </TableCell>
                         <TableCell className="font-mono tabular-nums">{p.assetsCount}</TableCell>
-                        <TableCell className="font-mono tabular-nums text-cyan-400">{p.totalValueUsd}</TableCell>
-                        <TableCell>{p.kycVerified ? <Badge variant="outline" className="bg-mint/20 text-mint">已验证</Badge> : <Badge variant="outline" className="bg-amber-500/20 text-amber-400">未验证</Badge>}</TableCell>
+                        <TableCell className="font-mono tabular-nums text-sky-600">{p.totalValueUsd}</TableCell>
+                        <TableCell>{p.kycVerified ? <Badge variant="outline" className="bg-mint/20 text-mint">已验证</Badge> : <Badge variant="outline" className="bg-amber-500/20 text-amber-600">未验证</Badge>}</TableCell>
                         <TableCell><Badge variant="outline" className={cn(STATUS_STYLES[p.status])}>{STATUS_LABELS[p.status]}</Badge></TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -182,7 +182,7 @@ export default function ProvidersPage() {
                               <DropdownMenuItem><Edit className="w-4 h-4 mr-2" />编辑</DropdownMenuItem>
                               <DropdownMenuSeparator />
                               {!p.kycVerified && <DropdownMenuItem className="text-mint">验证 KYC</DropdownMenuItem>}
-                              {p.status === 'active' && <DropdownMenuItem className="text-amber-400">暂停</DropdownMenuItem>}
+                              {p.status === 'active' && <DropdownMenuItem className="text-amber-600">暂停</DropdownMenuItem>}
                               {p.status === 'suspended' && <DropdownMenuItem className="text-mint">恢复</DropdownMenuItem>}
                               <DropdownMenuItem className="text-destructive">吊销许可证</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -195,7 +195,7 @@ export default function ProvidersPage() {
               </div>
             )}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} />
               </div>
             )}

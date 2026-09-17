@@ -43,8 +43,8 @@ const ACTION_LABELS: Record<string, string> = {
 
 const ACTION_STYLES: Record<string, string> = {
   allow: 'bg-mint/20 text-mint',
-  deny: 'bg-red-500/20 text-red-400',
-  review: 'bg-amber-500/20 text-amber-400',
+  deny: 'bg-red-500/20 text-red-600',
+  review: 'bg-amber-500/20 text-amber-600',
 };
 
 export default function EligibilityPage() {
@@ -256,7 +256,7 @@ export default function EligibilityPage() {
                   </TableHeader>
                   <TableBody>
                     {rules.map((rule) => (
-                      <TableRow key={rule.id} className="hover:bg-white/5">
+                      <TableRow key={rule.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono font-bold text-mint">
                           #{rule.priority}
                         </TableCell>
@@ -315,7 +315,7 @@ export default function EligibilityPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

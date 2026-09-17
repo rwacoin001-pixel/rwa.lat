@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#000000',
+  themeColor: '#eef1fb',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 5,
@@ -47,7 +47,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       </head>
-      <body className={`${inter.className} ${spaceGrotesk.className} font-inter antialiased bg-black text-white min-h-screen`}>
+      <body className={`${inter.className} ${spaceGrotesk.className} font-inter antialiased min-h-screen text-ink`}>
         {children}
       </body>
     </html>

@@ -37,9 +37,9 @@ const SOURCE_LABELS: Record<string, string> = {
 
 const SOURCE_STYLES: Record<string, string> = {
   oracle: 'bg-purple-500/20 text-purple-400',
-  manual: 'bg-amber-500/20 text-amber-400',
-  chainlink: 'bg-blue-500/20 text-blue-400',
-  api: 'bg-green-500/20 text-green-400',
+  manual: 'bg-amber-500/20 text-amber-600',
+  chainlink: 'bg-blue-500/20 text-blue-600',
+  api: 'bg-green-500/20 text-emerald-600',
 };
 
 export default function PricingPage() {
@@ -87,8 +87,8 @@ export default function PricingPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">追踪资产数</p><p className="text-2xl font-bold mt-1">{totalCount}</p></div><Coins className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">24h 上涨</p><p className="text-2xl font-bold mt-1 text-mint">{pricings.filter(p => parseFloat(p.change24h.replace(/[+$]/g, '')) > 0).length}</p></div><TrendingUp className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">24h 下跌</p><p className="text-2xl font-bold mt-1 text-red-400">{pricings.filter(p => parseFloat(p.change24h.replace(/[-$]/g, '')) < 0).length}</p></div><TrendingDown className="w-10 h-10 text-red-400/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">24h 交易量(USD)</p><p className="text-2xl font-bold mt-1 text-cyan-400">{pricings.reduce((s, p) => s + parseFloat(p.volume24h.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><BarChart3 className="w-10 h-10 text-cyan-400/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">24h 下跌</p><p className="text-2xl font-bold mt-1 text-red-600">{pricings.filter(p => parseFloat(p.change24h.replace(/[-$]/g, '')) < 0).length}</p></div><TrendingDown className="w-10 h-10 text-red-600/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">24h 交易量(USD)</p><p className="text-2xl font-bold mt-1 text-sky-600">{pricings.reduce((s, p) => s + parseFloat(p.volume24h.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><BarChart3 className="w-10 h-10 text-sky-600/50" /></div></CardContent></Card>
         </div>
 
         <Card className="glass-strong">
@@ -115,19 +115,19 @@ export default function PricingPage() {
                   const isUp = parseFloat(p.change24h.replace(/[+$]/g, '')) > 0;
                   const isDown = parseFloat(p.change24h.replace(/[-$]/g, '')) < 0;
                   return (
-                    <TableRow key={p.id} className="hover:bg-white/5">
+                    <TableRow key={p.id} className="hover:bg-ink/[0.05]">
                       <TableCell><p className="font-medium">{p.assetName}</p><p className="text-sm text-muted-foreground font-mono">{p.assetSymbol}</p></TableCell>
                       <TableCell className="font-mono tabular-nums font-medium">{p.currentPrice}</TableCell>
                       <TableCell className="font-mono tabular-nums text-sm text-muted-foreground">{p.previousPrice}</TableCell>
                       <TableCell>
-                        <div className={cn('flex items-center gap-1', isUp ? 'text-mint' : isDown ? 'text-red-400' : 'text-gray-400')}>
+                        <div className={cn('flex items-center gap-1', isUp ? 'text-mint' : isDown ? 'text-red-600' : 'text-slate-500')}>
                           {isUp ? <TrendingUp className="w-4 h-4" /> : isDown ? <TrendingDown className="w-4 h-4" /> : null}
                           <span className="font-mono text-sm">{p.change24h}</span>
                           <span className="font-mono text-xs">({p.changePercent24h})</span>
                         </div>
                       </TableCell>
                       <TableCell className="font-mono tabular-nums text-sm">{p.volume24h}</TableCell>
-                      <TableCell className="font-mono tabular-nums text-sm text-cyan-400">{p.marketCap}</TableCell>
+                      <TableCell className="font-mono tabular-nums text-sm text-sky-600">{p.marketCap}</TableCell>
                       <TableCell><Badge variant="outline" className={cn(SOURCE_STYLES[p.source])}>{SOURCE_LABELS[p.source]}</Badge></TableCell>
                       <TableCell className="text-sm text-muted-foreground">{new Date(p.lastUpdated).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</TableCell>
                       <TableCell><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">
@@ -139,7 +139,7 @@ export default function PricingPage() {
                 })}
               </TableBody></Table></div>
             )}
-            {totalPages > 1 && (<div className="px-4 py-4 border-t border-white/10"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} /></div>)}
+            {totalPages > 1 && (<div className="px-4 py-4 border-t border-ink/[0.07]"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} /></div>)}
           </CardContent>
         </Card>
       </div>

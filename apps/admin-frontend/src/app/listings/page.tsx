@@ -46,12 +46,12 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  reviewing: 'bg-blue-500/20 text-blue-400',
+  pending: 'bg-amber-500/20 text-amber-600',
+  reviewing: 'bg-blue-500/20 text-blue-600',
   approved: 'bg-mint/20 text-mint',
-  rejected: 'bg-red-500/20 text-red-400',
-  live: 'bg-green-500/20 text-green-400',
-  closed: 'bg-gray-500/20 text-gray-400',
+  rejected: 'bg-red-500/20 text-red-600',
+  live: 'bg-green-500/20 text-emerald-600',
+  closed: 'bg-gray-500/20 text-slate-500',
 };
 
 export default function ListingsPage() {
@@ -99,10 +99,10 @@ export default function ListingsPage() {
 
         <div className="grid gap-4 md:grid-cols-5">
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总计</p><p className="text-2xl font-bold mt-1">{totalCount}</p></div><ListChecks className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">待审核</p><p className="text-2xl font-bold mt-1 text-amber-400">{listings.filter(l => l.status === 'pending' || l.status === 'reviewing').length}</p></div><Clock className="w-10 h-10 text-amber-400/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">待审核</p><p className="text-2xl font-bold mt-1 text-amber-600">{listings.filter(l => l.status === 'pending' || l.status === 'reviewing').length}</p></div><Clock className="w-10 h-10 text-amber-600/50" /></div></CardContent></Card>
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">已上架</p><p className="text-2xl font-bold mt-1 text-mint">{listings.filter(l => l.status === 'live').length}</p></div><CheckCircle className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">已拒绝</p><p className="text-2xl font-bold mt-1 text-red-400">{listings.filter(l => l.status === 'rejected').length}</p></div><XCircle className="w-10 h-10 text-red-400/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">已下架</p><p className="text-2xl font-bold mt-1 text-gray-400">{listings.filter(l => l.status === 'closed').length}</p></div><Lock className="w-10 h-10 text-gray-400/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">已拒绝</p><p className="text-2xl font-bold mt-1 text-red-600">{listings.filter(l => l.status === 'rejected').length}</p></div><XCircle className="w-10 h-10 text-red-600/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">已下架</p><p className="text-2xl font-bold mt-1 text-slate-500">{listings.filter(l => l.status === 'closed').length}</p></div><Lock className="w-10 h-10 text-slate-500/50" /></div></CardContent></Card>
         </div>
 
         <Card className="glass-strong">
@@ -127,28 +127,28 @@ export default function ListingsPage() {
                 <TableHead>资产名称/符号</TableHead><TableHead>供应方</TableHead><TableHead className="w-24">类型</TableHead><TableHead className="w-32">投资范围</TableHead><TableHead className="w-28">预期收益</TableHead><TableHead className="w-24">锁定期</TableHead><TableHead className="w-24">状态</TableHead><TableHead className="w-28">提交日期</TableHead><TableHead className="w-24">操作</TableHead>
               </TableRow></TableHeader><TableBody>
                 {listings.map((l) => (
-                  <TableRow key={l.id} className="hover:bg-white/5">
+                  <TableRow key={l.id} className="hover:bg-ink/[0.05]">
                     <TableCell><p className="font-medium">{l.assetName}</p><p className="text-sm text-muted-foreground font-mono">{l.assetSymbol}</p></TableCell>
                     <TableCell className="text-sm">{l.providerName}</TableCell>
-                    <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-400">{TYPE_LABELS[l.listingType]}</Badge></TableCell>
+                    <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-600">{TYPE_LABELS[l.listingType]}</Badge></TableCell>
                     <TableCell><p className="font-mono text-xs">最低: {l.minInvestment}</p><p className="font-mono text-xs text-muted-foreground">最高: {l.maxInvestment}</p></TableCell>
                     <TableCell className="font-mono text-sm text-mint">{l.expectedReturn}</TableCell>
                     <TableCell className="text-sm">{l.lockupPeriod}</TableCell>
-                    <TableCell><Badge variant="outline" className={cn(STATUS_STYLES[l.status])}>{STATUS_LABELS[l.status]}</Badge>{l.rejectionReason && <p className="text-xs text-red-400 mt-1 truncate max-w-[100px]">{l.rejectionReason}</p>}</TableCell>
-                    <TableCell className="text-sm text-muted-foreground"><p>{new Date(l.submissionDate).toLocaleDateString('zh-CN')}</p>{l.reviewDate && <p className="text-xs text-blue-400">审核: {new Date(l.reviewDate).toLocaleDateString('zh-CN')}</p>}</TableCell>
+                    <TableCell><Badge variant="outline" className={cn(STATUS_STYLES[l.status])}>{STATUS_LABELS[l.status]}</Badge>{l.rejectionReason && <p className="text-xs text-red-600 mt-1 truncate max-w-[100px]">{l.rejectionReason}</p>}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground"><p>{new Date(l.submissionDate).toLocaleDateString('zh-CN')}</p>{l.reviewDate && <p className="text-xs text-blue-600">审核: {new Date(l.reviewDate).toLocaleDateString('zh-CN')}</p>}</TableCell>
                     <TableCell><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8"><MoreHorizontal className="w-4 h-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={() => window.open(`/listings/${l.id}`, '_blank')}><Eye className="w-4 h-4 mr-2" />查看详情</DropdownMenuItem>
                       {l.status === 'pending' && <DropdownMenuItem className="text-mint"><CheckCircle className="w-4 h-4 mr-2" />批准上架</DropdownMenuItem>}
                       {l.status === 'pending' && <DropdownMenuItem className="text-destructive"><XCircle className="w-4 h-4 mr-2" />拒绝上架</DropdownMenuItem>}
                       <DropdownMenuSeparator />
-                      {l.status === 'live' && <DropdownMenuItem className="text-amber-400">下架</DropdownMenuItem>}
+                      {l.status === 'live' && <DropdownMenuItem className="text-amber-600">下架</DropdownMenuItem>}
                       {l.status === 'approved' && <DropdownMenuItem className="text-mint"><TrendingUp className="w-4 h-4 mr-2" />上架发行</DropdownMenuItem>}
                     </DropdownMenuContent></DropdownMenu></TableCell>
                   </TableRow>
                 ))}
               </TableBody></Table></div>
             )}
-            {totalPages > 1 && (<div className="px-4 py-4 border-t border-white/10"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} /></div>)}
+            {totalPages > 1 && (<div className="px-4 py-4 border-t border-ink/[0.07]"><Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} /></div>)}
           </CardContent>
         </Card>
       </div>

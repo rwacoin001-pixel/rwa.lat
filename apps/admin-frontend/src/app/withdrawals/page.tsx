@@ -62,20 +62,20 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
-  reviewing: 'bg-blue-500/20 text-blue-400',
+  pending: 'bg-amber-500/20 text-amber-600',
+  reviewing: 'bg-blue-500/20 text-blue-600',
   approved: 'bg-mint/20 text-mint',
-  rejected: 'bg-red-500/20 text-red-400',
+  rejected: 'bg-red-500/20 text-red-600',
   processing: 'bg-purple-500/20 text-purple-400',
   completed: 'bg-mint/20 text-mint',
-  failed: 'bg-red-500/20 text-red-400',
-  cancelled: 'bg-gray-500/20 text-gray-400',
+  failed: 'bg-red-500/20 text-red-600',
+  cancelled: 'bg-gray-500/20 text-slate-500',
 };
 
 const PRIORITY_STYLES: Record<string, string> = {
-  normal: 'bg-blue-500/20 text-blue-400',
-  high: 'bg-amber-500/20 text-amber-400',
-  urgent: 'bg-red-500/20 text-red-400',
+  normal: 'bg-blue-500/20 text-blue-600',
+  high: 'bg-amber-500/20 text-amber-600',
+  urgent: 'bg-red-500/20 text-red-600',
 };
 
 const PRIORITY_LABELS: Record<string, string> = {
@@ -85,10 +85,10 @@ const PRIORITY_LABELS: Record<string, string> = {
 };
 
 const RISK_STYLES: Record<string, string> = {
-  low: 'bg-green-500/20 text-green-400',
-  medium: 'bg-amber-500/20 text-amber-400',
+  low: 'bg-green-500/20 text-emerald-600',
+  medium: 'bg-amber-500/20 text-amber-600',
   high: 'bg-orange-500/20 text-orange-400',
-  critical: 'bg-red-500/20 text-red-400',
+  critical: 'bg-red-500/20 text-red-600',
 };
 
 export default function WithdrawalsPage() {
@@ -206,9 +206,9 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">待处理</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-400">{withdrawals.filter(w => w.status === 'pending').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{withdrawals.filter(w => w.status === 'pending').length}</p>
                 </div>
-                <Clock className="w-10 h-10 text-amber-400/50" />
+                <Clock className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -217,9 +217,9 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">审核中</p>
-                  <p className="text-2xl font-bold mt-1 text-blue-400">{withdrawals.filter(w => w.status === 'reviewing').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{withdrawals.filter(w => w.status === 'reviewing').length}</p>
                 </div>
-                <Clock className="w-10 h-10 text-blue-400/50" />
+                <Clock className="w-10 h-10 text-blue-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -228,9 +228,9 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">紧急优先级</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{withdrawals.filter(w => w.priority === 'urgent').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{withdrawals.filter(w => w.priority === 'urgent').length}</p>
                 </div>
-                <AlertTriangle className="w-10 h-10 text-red-400/50" />
+                <AlertTriangle className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -250,11 +250,11 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">今日金额(USD)</p>
-                  <p className="text-2xl font-bold mt-1 text-cyan-400">
+                  <p className="text-2xl font-bold mt-1 text-sky-600">
                     {withdrawals.filter(w => new Date(w.requestedAt).toDateString() === new Date().toDateString()).reduce((sum, w) => sum + parseFloat(w.amountUsd.replace(/[$,]/g, '')), 0).toLocaleString()}
                   </p>
                 </div>
-                <ArrowRight className="w-10 h-10 text-cyan-400/50" />
+                <ArrowRight className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -263,9 +263,9 @@ export default function WithdrawalsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">高风险拦截</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{withdrawals.filter(w => w.riskLevel === 'critical' || w.riskLevel === 'high').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{withdrawals.filter(w => w.riskLevel === 'critical' || w.riskLevel === 'high').length}</p>
                 </div>
-                <AlertTriangle className="w-10 h-10 text-red-400/50" />
+                <AlertTriangle className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -395,7 +395,7 @@ export default function WithdrawalsPage() {
                   </TableHeader>
                   <TableBody>
                     {withdrawals.map((w) => (
-                      <TableRow key={w.id} className="hover:bg-white/5">
+                      <TableRow key={w.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {w.id.slice(0, 8)}...
                         </TableCell>
@@ -443,7 +443,7 @@ export default function WithdrawalsPage() {
                         <TableCell className="text-sm text-muted-foreground">
                           <p>{new Date(w.requestedAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
                           {w.reviewedAt && (
-                            <p className="text-xs text-blue-400">审核: {new Date(w.reviewedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
+                            <p className="text-xs text-blue-600">审核: {new Date(w.reviewedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
                           )}
                           {w.completedAt && (
                             <p className="text-xs text-mint">完成: {new Date(w.completedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
@@ -481,7 +481,7 @@ export default function WithdrawalsPage() {
                                 </DropdownMenuItem>
                               )}
                               {w.status === 'reviewing' && (
-                                <DropdownMenuItem onClick={() => handleAction('escalate', w)} className="text-amber-400">
+                                <DropdownMenuItem onClick={() => handleAction('escalate', w)} className="text-amber-600">
                                   <AlertTriangle className="w-4 h-4 mr-2" />
                                   升级处理
                                 </DropdownMenuItem>
@@ -503,7 +503,7 @@ export default function WithdrawalsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

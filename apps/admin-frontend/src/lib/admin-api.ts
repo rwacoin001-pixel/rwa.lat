@@ -11,7 +11,8 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   })
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }))
-    throw new Error(error.message || `HTTP ${response.status}`)
+    const message = typeof error.message === 'string' ? error.message : Array.isArray(error.message) ? error.message.join('；') : `HTTP ${response.status}`
+    throw new Error(message)
   }
   if (response.status === 204) return undefined as T
   return response.json()
@@ -51,6 +52,25 @@ export const adminApi = {
   listTreasuryAddresses: () => request<TreasuryAddress[]>('/control/wallet/treasury-addresses'),
   saveTreasuryAddress: (data: TreasuryAddressInput) => request<TreasuryAddress>('/control/wallet/treasury-addresses', { method: 'POST', body: JSON.stringify(data) }),
   deactivateTreasuryAddress: (id: string) => request<TreasuryAddress[]>(`/control/wallet/treasury-addresses/${encodeURIComponent(id)}`, { method: 'DELETE' }),
+
+  // ── 对象存储（文件上传）───────────────────────────────────
+  getStorageReadiness: () => request<StorageReadiness>('/storage/status'),
+  presignUpload: (data: PresignUploadInput) =>
+    request<PresignUploadResult>('/storage/presign-upload', { method: 'POST', body: JSON.stringify(data) }),
+  completeUpload: (data: { presignedId: string; sizeBytes: number; md5?: string }) =>
+    request<StoredObject>('/storage/complete', { method: 'POST', body: JSON.stringify(data) }),
+  listObjects: (params?: { bucket?: string; scanStatus?: string; q?: string; page?: number; pageSize?: number }) => {
+    const qs = new URLSearchParams()
+    Object.entries(params ?? {}).forEach(([key, value]) => { if (value !== undefined && value !== '') qs.set(key, String(value)) })
+    return request<StoredObjectPage>(`/storage/objects${qs.size ? `?${qs}` : ''}`)
+  },
+  scanObject: (id: string) => request<StoredObject>(`/storage/objects/${encodeURIComponent(id)}/scan`, { method: 'POST', body: JSON.stringify({}) }),
+  downloadObject: (id: string, disposition?: 'inline' | 'attachment') =>
+    request<{ url: string; expiresInSec: number; objectId: string }>(`/storage/objects/${encodeURIComponent(id)}/download`, {
+      method: 'POST',
+      body: JSON.stringify({ disposition }),
+    }),
+  deleteObject: (id: string) => request<{ deleted: boolean; objectId: string }>(`/storage/objects/${encodeURIComponent(id)}`, { method: 'DELETE', body: JSON.stringify({}) }),
 }
 
 export type ProductState = 'draft' | 'published' | 'suspended' | 'retired'
@@ -91,3 +111,47 @@ export type StorageStatus = { enabled: boolean; bucket: string; uploadFlow: stri
 export type TreasuryAddress = { id: string; network: string; assetCode: string; purpose: string; label: string; address: string; memo: string | null; state: string; updatedAt: string }
 export type TreasuryAddressInput = { network: 'tron' | 'ethereum' | 'arbitrum'; assetCode: string; purpose: 'deposit' | 'withdrawal' | 'collection' | 'operational'; label: string; address: string; memo?: string; state?: 'active' | 'inactive' }
 
+// ── 存储类型 ─────────────────────────────────────────────────
+export type StoredObject = {
+  id: string
+  bucket: string
+  key: string
+  storageRef: string
+  contentType: string
+  sizeBytes: string
+  expectedSizeBytes?: string | null
+  checksumSha256: string | null
+  scanStatus: 'pending' | 'clean' | 'quarantined' | 'failed'
+  scanProvider?: string | null
+  scannedAt?: string | null
+  tags?: Record<string, unknown>
+  uploadedBy?: string | null
+  uploadedAt: string
+}
+export type StoredObjectPage = { items: StoredObject[]; total: number; page: number; pageSize: number }
+export type PresignUploadInput = {
+  bucket: 'rwa-kyc' | 'rwa-assets' | 'rwa-attachments'
+  fileName: string
+  contentType: string
+  expectedSizeBytes: number
+  checksumSha256: string
+  purpose?: 'product-media' | 'disclosure' | 'kyc' | 'misc'
+  productId?: string
+}
+export type PresignUploadResult = {
+  presignedUrl: string
+  presignedId: string
+  objectId: string
+  objectKey: string
+  expiresInSec: number
+  requiredHeaders: Record<string, string>
+}
+export type StorageReadiness = {
+  enabled: boolean
+  scanMode: string
+  internalScanAvailable: boolean
+  externalEndpoint: boolean
+  buckets: { name: string; label: string; maxBytes: number; contentTypes: string[] }[]
+  uploadFlow: string
+  message: string
+}

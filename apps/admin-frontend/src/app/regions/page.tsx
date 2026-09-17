@@ -41,9 +41,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   allowed: 'bg-mint/20 text-mint',
-  restricted: 'bg-amber-500/20 text-amber-400',
-  blocked: 'bg-red-500/20 text-red-400',
-  pending_review: 'bg-blue-500/20 text-blue-400',
+  restricted: 'bg-amber-500/20 text-amber-600',
+  blocked: 'bg-red-500/20 text-red-600',
+  pending_review: 'bg-blue-500/20 text-blue-600',
 };
 
 const KYC_LABELS: Record<string, string> = {
@@ -160,9 +160,9 @@ export default function RegionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">限制准入</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-400">{regions.filter(r => r.status === 'restricted').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{regions.filter(r => r.status === 'restricted').length}</p>
                 </div>
-                <Shield className="w-10 h-10 text-amber-400/50" />
+                <Shield className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -171,9 +171,9 @@ export default function RegionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">禁止准入</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">{regions.filter(r => r.status === 'blocked').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-red-600">{regions.filter(r => r.status === 'blocked').length}</p>
                 </div>
-                <Lock className="w-10 h-10 text-red-400/50" />
+                <Lock className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -182,9 +182,9 @@ export default function RegionsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">待复核</p>
-                  <p className="text-2xl font-bold mt-1 text-blue-400">{regions.filter(r => r.status === 'pending_review').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{regions.filter(r => r.status === 'pending_review').length}</p>
                 </div>
-                <MapPin className="w-10 h-10 text-blue-400/50" />
+                <MapPin className="w-10 h-10 text-blue-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -272,7 +272,7 @@ export default function RegionsPage() {
                   </TableHeader>
                   <TableBody>
                     {regions.map((r) => (
-                      <TableRow key={r.id} className="hover:bg-white/5">
+                      <TableRow key={r.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-sm font-medium">{r.code}</TableCell>
                         <TableCell>
                           <div>
@@ -286,12 +286,12 @@ export default function RegionsPage() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn(r.kycRequired ? 'bg-blue-500/20 text-blue-400' : 'bg-gray-500/20 text-gray-400')}>
+                          <Badge variant="outline" className={cn(r.kycRequired ? 'bg-blue-500/20 text-blue-600' : 'bg-gray-500/20 text-slate-500')}>
                             {r.kycRequired ? KYC_LABELS.true : KYC_LABELS.false}
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={cn(r.enhancedKycRequired ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-500/20 text-gray-400')}>
+                          <Badge variant="outline" className={cn(r.enhancedKycRequired ? 'bg-purple-500/20 text-purple-400' : 'bg-gray-500/20 text-slate-500')}>
                             {r.enhancedKycRequired ? ENHANCED_KYC_LABELS.true : ENHANCED_KYC_LABELS.false}
                           </Badge>
                         </TableCell>
@@ -356,7 +356,7 @@ export default function RegionsPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

@@ -47,9 +47,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   active: 'bg-mint/20 text-mint',
-  frozen: 'bg-red-500/20 text-red-400',
-  pending: 'bg-amber-500/20 text-amber-400',
-  delisted: 'bg-gray-500/20 text-gray-400',
+  frozen: 'bg-red-500/20 text-red-600',
+  pending: 'bg-amber-500/20 text-amber-600',
+  delisted: 'bg-gray-500/20 text-slate-500',
 };
 
 export default function AssetsPage() {
@@ -117,8 +117,8 @@ export default function AssetsPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总资产数</p><p className="text-2xl font-bold mt-1">{totalCount}</p></div><Coins className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
           <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">活跃资产</p><p className="text-2xl font-bold mt-1 text-mint">{assets.filter(a => a.status === 'active').length}</p></div><TrendingUp className="w-10 h-10 text-mint/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">待审核</p><p className="text-2xl font-bold mt-1 text-amber-400">{assets.filter(a => a.status === 'pending').length}</p></div><Building2 className="w-10 h-10 text-amber-400/50" /></div></CardContent></Card>
-          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总市值(USD)</p><p className="text-2xl font-bold mt-1 text-cyan-400">{assets.reduce((s, a) => s + parseFloat(a.marketCap.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><DollarSign className="w-10 h-10 text-cyan-400/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">待审核</p><p className="text-2xl font-bold mt-1 text-amber-600">{assets.filter(a => a.status === 'pending').length}</p></div><Building2 className="w-10 h-10 text-amber-600/50" /></div></CardContent></Card>
+          <Card className="glass-strong"><CardContent className="p-6"><div className="flex items-center justify-between"><div><p className="text-sm text-muted-foreground">总市值(USD)</p><p className="text-2xl font-bold mt-1 text-sky-600">{assets.reduce((s, a) => s + parseFloat(a.marketCap.replace(/[$,]/g, '')), 0).toLocaleString()}</p></div><DollarSign className="w-10 h-10 text-sky-600/50" /></div></CardContent></Card>
         </div>
 
         <Card className="glass-strong">
@@ -160,12 +160,12 @@ export default function AssetsPage() {
                   </TableRow></TableHeader>
                   <TableBody>
                     {assets.map((a) => (
-                      <TableRow key={a.id} className="hover:bg-white/5">
+                      <TableRow key={a.id} className="hover:bg-ink/[0.05]">
                         <TableCell>
                           <p className="font-medium">{a.name}</p>
                           <p className="text-sm text-muted-foreground font-mono">{a.symbol}</p>
                         </TableCell>
-                        <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-400">{TYPE_LABELS[a.type]}</Badge></TableCell>
+                        <TableCell><Badge variant="outline" className="bg-blue-500/20 text-blue-600">{TYPE_LABELS[a.type]}</Badge></TableCell>
                         <TableCell className="text-sm">{a.issuer}</TableCell>
                         <TableCell>
                           <p className="font-mono tabular-nums font-medium">{a.price}</p>
@@ -184,7 +184,7 @@ export default function AssetsPage() {
                               <DropdownMenuItem onClick={() => window.open(`/assets/${a.id}`, '_blank')}><Eye className="w-4 h-4 mr-2" />查看详情</DropdownMenuItem>
                               <DropdownMenuItem><Edit className="w-4 h-4 mr-2" />编辑</DropdownMenuItem>
                               <DropdownMenuSeparator />
-                              {a.status === 'active' && <DropdownMenuItem className="text-amber-400">冻结资产</DropdownMenuItem>}
+                              {a.status === 'active' && <DropdownMenuItem className="text-amber-600">冻结资产</DropdownMenuItem>}
                               {a.status === 'frozen' && <DropdownMenuItem className="text-mint">解冻资产</DropdownMenuItem>}
                               <DropdownMenuItem className="text-destructive">下架资产</DropdownMenuItem>
                             </DropdownMenuContent>
@@ -197,7 +197,7 @@ export default function AssetsPage() {
               </div>
             )}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} showPageSize pageSize={pageSize} onPageSizeChange={setPageSize} />
               </div>
             )}

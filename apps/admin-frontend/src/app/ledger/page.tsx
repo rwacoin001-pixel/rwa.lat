@@ -44,12 +44,12 @@ const TYPE_LABELS: Record<string, string> = {
 
 const TYPE_STYLES: Record<string, string> = {
   deposit: 'bg-mint/20 text-mint',
-  withdrawal: 'bg-red-500/20 text-red-400',
-  trade: 'bg-blue-500/20 text-blue-400',
-  fee: 'bg-amber-500/20 text-amber-400',
+  withdrawal: 'bg-red-500/20 text-red-600',
+  trade: 'bg-blue-500/20 text-blue-600',
+  fee: 'bg-amber-500/20 text-amber-600',
   reward: 'bg-purple-500/20 text-purple-400',
-  penalty: 'bg-red-500/20 text-red-400',
-  adjustment: 'bg-gray-500/20 text-gray-400',
+  penalty: 'bg-red-500/20 text-red-600',
+  adjustment: 'bg-gray-500/20 text-slate-500',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -59,9 +59,9 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
+  pending: 'bg-amber-500/20 text-amber-600',
   confirmed: 'bg-mint/20 text-mint',
-  failed: 'bg-red-500/20 text-red-400',
+  failed: 'bg-red-500/20 text-red-600',
 };
 
 export default function LedgerPage() {
@@ -171,11 +171,11 @@ export default function LedgerPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">今日出账(USD)</p>
-                  <p className="text-2xl font-bold mt-1 text-red-400">
+                  <p className="text-2xl font-bold mt-1 text-red-600">
                     {entries.filter(e => ['withdrawal', 'fee'].includes(e.type) && new Date(e.createdAt).toDateString() === new Date().toDateString()).reduce((sum, e) => sum + Math.abs(parseFloat(e.amount)), 0).toLocaleString()}
                   </p>
                 </div>
-                <TrendingDown className="w-10 h-10 text-red-400/50" />
+                <TrendingDown className="w-10 h-10 text-red-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -184,9 +184,9 @@ export default function LedgerPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">待确认交易</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-400">{entries.filter(e => e.status === 'pending').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{entries.filter(e => e.status === 'pending').length}</p>
                 </div>
-                <Clock className="w-10 h-10 text-amber-400/50" />
+                <Clock className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -197,7 +197,7 @@ export default function LedgerPage() {
                   <p className="text-sm text-muted-foreground">总记录数</p>
                   <p className="text-2xl font-bold mt-1">{totalCount.toLocaleString()}</p>
                 </div>
-                <DollarSign className="w-10 h-10 text-cyan-400/50" />
+                <DollarSign className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -310,7 +310,7 @@ export default function LedgerPage() {
                   </TableHeader>
                   <TableBody>
                     {entries.map((entry) => (
-                      <TableRow key={entry.id} className="hover:bg-white/5">
+                      <TableRow key={entry.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {entry.txId.slice(0, 8)}...
                         </TableCell>
@@ -327,7 +327,7 @@ export default function LedgerPage() {
                         </TableCell>
                         <TableCell>
                           <div className="text-sm">
-                            <p className={cn('font-mono tabular-nums font-medium', parseFloat(entry.amount) > 0 ? 'text-mint' : 'text-red-400')}>
+                            <p className={cn('font-mono tabular-nums font-medium', parseFloat(entry.amount) > 0 ? 'text-mint' : 'text-red-600')}>
                               {entry.amount} {entry.asset}
                             </p>
                           </div>
@@ -393,7 +393,7 @@ export default function LedgerPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}

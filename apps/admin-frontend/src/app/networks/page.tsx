@@ -49,9 +49,9 @@ const STATUS_LABELS: Record<string, string> = {
 
 const STATUS_STYLES: Record<string, string> = {
   healthy: 'bg-mint/20 text-mint',
-  degraded: 'bg-amber-500/20 text-amber-400',
-  down: 'bg-red-500/20 text-red-400',
-  maintenance: 'bg-blue-500/20 text-blue-400',
+  degraded: 'bg-amber-500/20 text-amber-600',
+  down: 'bg-red-500/20 text-red-600',
+  maintenance: 'bg-blue-500/20 text-blue-600',
 };
 
 export default function NetworksPage() {
@@ -172,9 +172,9 @@ export default function NetworksPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">降级/故障</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-400">{networks.filter(n => n.status === 'degraded' || n.status === 'down').length}</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-600">{networks.filter(n => n.status === 'degraded' || n.status === 'down').length}</p>
                 </div>
-                <AlertTriangle className="w-10 h-10 text-amber-400/50" />
+                <AlertTriangle className="w-10 h-10 text-amber-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -183,11 +183,11 @@ export default function NetworksPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">平均成功率(24h)</p>
-                  <p className="text-2xl font-bold mt-1 text-cyan-400">
+                  <p className="text-2xl font-bold mt-1 text-sky-600">
                     {(networks.reduce((sum, n) => sum + n.successRate24h, 0) / networks.length || 0).toFixed(1)}%
                   </p>
                 </div>
-                <Activity className="w-10 h-10 text-cyan-400/50" />
+                <Activity className="w-10 h-10 text-sky-600/50" />
               </div>
             </CardContent>
           </Card>
@@ -236,7 +236,7 @@ export default function NetworksPage() {
                   </TableHeader>
                   <TableBody>
                     {networks.map((n) => (
-                      <TableRow key={n.chain} className="hover:bg-white/5">
+                      <TableRow key={n.chain} className="hover:bg-ink/[0.05]">
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className={cn('w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold', CHAIN_CONFIG[n.chain]?.color || 'bg-gray-500')}>
@@ -253,10 +253,10 @@ export default function NetworksPage() {
                             {STATUS_LABELS[n.status]}
                           </Badge>
                           {n.isSyncing && (
-                            <p className="text-xs text-amber-400 mt-1">同步中...</p>
+                            <p className="text-xs text-amber-600 mt-1">同步中...</p>
                           )}
                           {n.alerts.length > 0 && (
-                            <p className="text-xs text-red-400 mt-1">{n.alerts[0]}</p>
+                            <p className="text-xs text-red-600 mt-1">{n.alerts[0]}</p>
                           )}
                         </TableCell>
                         <TableCell>
@@ -279,15 +279,15 @@ export default function NetworksPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
-                            <span className={cn('font-mono tabular-nums font-medium', n.successRate24h >= 99 ? 'text-mint' : n.successRate24h >= 95 ? 'text-amber-400' : 'text-red-400')}>
+                            <span className={cn('font-mono tabular-nums font-medium', n.successRate24h >= 99 ? 'text-mint' : n.successRate24h >= 95 ? 'text-amber-600' : 'text-red-600')}>
                               {n.successRate24h}%
                             </span>
                             {n.successRate24h >= 99 ? (
                               <CheckCircle className="w-4 h-4 text-mint" />
                             ) : n.successRate24h >= 95 ? (
-                              <AlertTriangle className="w-4 h-4 text-amber-400" />
+                              <AlertTriangle className="w-4 h-4 text-amber-600" />
                             ) : (
-                              <XCircle className="w-4 h-4 text-red-400" />
+                              <XCircle className="w-4 h-4 text-red-600" />
                             )}
                           </div>
                         </TableCell>
@@ -298,7 +298,7 @@ export default function NetworksPage() {
                           <span className="font-mono tabular-nums">{n.walletCount.toLocaleString()}</span>
                         </TableCell>
                         <TableCell>
-                          <span className="font-mono tabular-nums text-cyan-400">{n.dailyVolumeUsd}</span>
+                          <span className="font-mono tabular-nums text-sky-600">{n.dailyVolumeUsd}</span>
                         </TableCell>
                         <TableCell>
                           <div className="flex gap-1">

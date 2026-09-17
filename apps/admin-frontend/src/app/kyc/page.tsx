@@ -35,10 +35,10 @@ const KYC_STATUS_LABELS: Record<string, string> = {
 };
 
 const KYC_STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-400',
+  pending: 'bg-amber-500/20 text-amber-600',
   approved: 'bg-mint/20 text-mint',
-  rejected: 'bg-red-500/20 text-red-400',
-  supplement: 'bg-cyan-500/20 text-cyan-400',
+  rejected: 'bg-red-500/20 text-red-600',
+  supplement: 'bg-cyan-500/20 text-sky-600',
 };
 
 const LEVEL_LABELS: Record<string, string> = {
@@ -48,9 +48,9 @@ const LEVEL_LABELS: Record<string, string> = {
 };
 
 const LEVEL_STYLES: Record<string, string> = {
-  basic: 'bg-blue-500/20 text-blue-400',
+  basic: 'bg-blue-500/20 text-blue-600',
   enhanced: 'bg-purple-500/20 text-purple-400',
-  institutional: 'bg-cyan-500/20 text-cyan-400',
+  institutional: 'bg-cyan-500/20 text-sky-600',
 };
 
 export default function KYCPage() {
@@ -239,7 +239,7 @@ export default function KYCPage() {
                   </TableHeader>
                   <TableBody>
                     {cases.map((k) => (
-                      <TableRow key={k.id} className="hover:bg-white/5">
+                      <TableRow key={k.id} className="hover:bg-ink/[0.05]">
                         <TableCell className="font-mono text-xs text-muted-foreground">
                           {k.id.slice(0, 8)}...
                         </TableCell>
@@ -320,7 +320,7 @@ export default function KYCPage() {
 
             {/* Pagination */}
             {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-white/10">
+              <div className="px-4 py-4 border-t border-ink/[0.07]">
                 <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
