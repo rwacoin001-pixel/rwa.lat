@@ -5,6 +5,7 @@ import { DataSource, QueryRunner } from 'typeorm'
 import { CatalogService } from '../catalog/catalog.service'
 import { ComplianceService } from '../compliance/compliance.service'
 import { NotificationService } from '../notification/notification.service'
+import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 
 type OrderState = 'submitted' | 'processing' | 'filled' | 'partially_filled' | 'failed'
 type OutcomeKey = 'long' | 'yes' | 'no'
@@ -35,6 +36,7 @@ export class OrdersService {
     private readonly catalog: CatalogService,
     private readonly compliance: ComplianceService,
     private readonly notifications: NotificationService,
+    private readonly operations: OperationalCapabilityService,
     config: ConfigService,
   ) {
     this.demoOperationsEnabled = config.get<string>('APP_ENV') !== 'production'
@@ -42,6 +44,10 @@ export class OrdersService {
   }
 
   async create(userId: string, dto: { productId: string; atomicAmount: string; outcomeKey?: OutcomeKey }, idempotencyKey: string, requestId: string) {
+    await this.operations.assertEnabled(
+      OPERATIONAL_SWITCH_KEYS.orders,
+      'New order acceptance is currently paused by the operator.',
+    )
     this.assertIdempotencyKey(idempotencyKey)
     const product = await this.catalog.getProduct(dto.productId)
     const quote = await this.catalog.requireOrderableQuote(dto.productId)
@@ -368,3 +374,4 @@ export class OrdersService {
     }
   }
 }
+
