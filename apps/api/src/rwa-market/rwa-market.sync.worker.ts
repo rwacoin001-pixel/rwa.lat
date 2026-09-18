@@ -79,12 +79,12 @@ export class RwaMarketSyncWorker implements OnApplicationBootstrap, OnApplicatio
     const now = new Date()
     const day = dayBucket(now)
     const hour = hourBucket(now)
+    // 说明：metrics-full / snapshot 不在时间表里延迟触发（会与全量 assets 撞 advisory lock），
+    // 改为 assets 成功后链式入队（见 drain）；此处仅保留独立轻任务。
     const planned: Array<{ kind: RwaSyncKind; dedupKey: string; delayMs: number; maxItems?: number }> = [
       { kind: 'issuers', dedupKey: `rwa-sync:issuers:${day}`, delayMs: 0 },
       { kind: 'assets', dedupKey: `rwa-sync:assets:${day}`, delayMs: 90_000 },
       { kind: 'metrics', dedupKey: `rwa-sync:metrics-hour:${hour}`, delayMs: 0, maxItems: 1000 },
-      { kind: 'metrics', dedupKey: `rwa-sync:metrics-full:${day}`, delayMs: 180_000 },
-      { kind: 'snapshot', dedupKey: `rwa-sync:snapshot:${day}`, delayMs: 300_000 },
     ]
     for (const item of planned) {
       try {
@@ -123,12 +123,40 @@ export class RwaMarketSyncWorker implements OnApplicationBootstrap, OnApplicatio
           await this.queue.nack(job.id, `RWA sync ${kind} failed (0/${summary.itemsTotal} upserted)`, new Date(), this.workerId)
         } else {
           await this.queue.ack(job.id, new Date(), this.workerId)
+          // 链式：assets 成功后立即（去重键按天）追加入队 metrics-full 与 snapshot
+          if (kind === 'assets') {
+            await this.chainAfterAssets()
+          }
         }
       } catch (error) {
         await this.queue.nack(job.id, safeError(error), new Date(), this.workerId)
       }
     }
     return jobs.length
+  }
+
+  private async chainAfterAssets(): Promise<void> {
+    const now = new Date()
+    const day = dayBucket(now)
+    try {
+      await this.queue.enqueue({
+        queueName: RWA_MARKET_SYNC_QUEUE,
+        payload: { kind: 'metrics', scheduled: true },
+        dedupKey: `rwa-sync:metrics-full:${day}`,
+        maxAttempts: 3,
+        runAt: now,
+      })
+      await this.queue.enqueue({
+        queueName: RWA_MARKET_SYNC_QUEUE,
+        payload: { kind: 'snapshot', scheduled: true },
+        dedupKey: `rwa-sync:snapshot:${day}`,
+        maxAttempts: 3,
+        runAt: new Date(now.getTime() + 60_000),
+      })
+      this.log.log('chained metrics-full + snapshot after assets sync')
+    } catch (error) {
+      this.log.warn(`chain enqueue failed: ${safeError(error)}`)
+    }
   }
 
   private async tick() {
