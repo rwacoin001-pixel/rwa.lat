@@ -6,6 +6,7 @@ export type RwaScreen =
   | 'deposit' | 'withdraw' | 'transfer' | 'wallet-success' | 'activity' | 'asset-detail' | 'position-detail'
   | 'ai-plan' | 'notifications' | 'kyc' | 'security' | 'referral' | 'records' | 'support' | 'settings' | 'marketing' | 'official-channels' | 'scam-report' | 'close-account'
   | 'trust-center' | 'access-regions' | 'product-disclosures' | 'legal-center'
+  | 'community' | 'community-post' | 'community-profile'
 
 const screenPaths: Record<RwaScreen, string> = {
   welcome: '/welcome',
@@ -52,6 +53,9 @@ const screenPaths: Record<RwaScreen, string> = {
   'access-regions': '/trust/access-and-regions',
   'product-disclosures': '/trust/product-disclosures',
   'legal-center': '/trust/legal',
+  community: '/community',
+  'community-post': '/community/post',
+  'community-profile': '/community/member',
 }
 
 const pathScreens = new Map(Object.entries(screenPaths).map(([screen, path]) => [path, screen as RwaScreen]))

@@ -20,6 +20,7 @@ import { OrdersModule } from './orders/orders.module'
 import { YieldModule } from './yield/yield.module'
 import { PolymarketModule } from './polymarket/polymarket.module'
 import { OperationsModule } from './operations/operations.module'
+import { CommunityModule } from './community/community.module'
 
 @Module({
   imports: [
@@ -47,6 +48,7 @@ import { OperationsModule } from './operations/operations.module'
     YieldModule,
     PolymarketModule,
     OperationsModule,
+    CommunityModule,
   ],
 })
 export class AppModule {}

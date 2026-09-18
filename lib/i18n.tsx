@@ -15,7 +15,7 @@ export const localeOptions: Array<{ code: AppLocale; label: string; direction: '
 ]
 
 const en = {
-  'nav.home': 'Home', 'nav.invest': 'Invest', 'nav.portfolio': 'Portfolio', 'nav.wallet': 'Wallet', 'nav.ai': 'AI advisor',
+  'nav.home': 'Home', 'nav.invest': 'Invest', 'nav.portfolio': 'Portfolio', 'nav.wallet': 'Wallet', 'nav.ai': 'AI advisor', 'nav.community': 'Community',
   'common.demo': 'Demo', 'common.refresh': 'Refresh', 'common.viewAll': 'View all', 'common.back': 'Back', 'common.save': 'Save preferences', 'common.language': 'Language', 'common.languagesCount': '7 languages',
   'home.totalPortfolio': 'Total Portfolio', 'home.aiScore': 'AI Portfolio Score', 'home.marketBrief': 'AI Market Brief', 'home.marketBriefBody': 'Compute demand is accelerating.', 'home.explore': 'Explore Opportunities', 'home.snapshot': 'Market snapshot', 'home.actions': "Today's actions", 'home.income': 'Income calendar',
   'invest.title': 'Invest', 'invest.search': 'Search opportunities', 'invest.filters': 'Filters', 'invest.execution': 'Execution desk', 'invest.noResults': 'No matching opportunities',
@@ -33,6 +33,12 @@ const en = {
   'trust.title': 'Trust center', 'trust.eyebrow': 'TRUST CENTER', 'trust.heading': 'Know who, what and where before you invest.', 'trust.body': 'Review access rules, product structures, fees, legal documents, support routes and verified channels in one place.',
   'trust.access': 'Access and regions', 'trust.accessBody': 'Guest rules, country checks and product restrictions', 'trust.products': 'Product disclosures', 'trust.productsBody': 'Issuer, return source, fees, maturity and exit', 'trust.legal': 'Legal document center', 'trust.legalBody': 'Terms, privacy, risk and consent versions', 'trust.supportBody': 'Create and track an investment or payment case',
   'trust.demoNote': 'Demo content supports product review. Partner names, licences, eligibility rules and offering documents require approval before real execution.',
+  'community.title': 'Community', 'community.subtitle': 'Research, markets and stories from the RWA.LAT community',
+  'community.sortLatest': 'Latest', 'community.sortHot': 'Hot', 'community.loadMore': 'Load more',
+  'community.emptyTitle': 'Nothing here yet', 'community.emptyBody': 'The community is warming up — check back soon.',
+  'community.comments': 'Comments', 'community.joinTitle': 'Sign in to join the discussion', 'community.joinBody': 'Public reading stays open. Posting and replies need a secure account.',
+  'community.statsPosts': 'Posts', 'community.statsFollowers': 'Followers', 'community.statsFollowing': 'Following',
+  'community.viewProfile': 'View profile', 'community.recentPosts': 'Recent posts', 'community.backToFeed': 'Back to community',
 } as const
 
 type TranslationKey = keyof typeof en
@@ -41,7 +47,7 @@ type Dictionary = Partial<Record<TranslationKey, string>>
 const dictionaries: Record<AppLocale, Dictionary> = {
   en,
   'zh-CN': {
-    'nav.home': '首页', 'nav.invest': '投资', 'nav.portfolio': '资产组合', 'nav.wallet': '钱包', 'nav.ai': 'AI 助手',
+    'nav.home': '首页', 'nav.invest': '投资', 'nav.portfolio': '资产组合', 'nav.wallet': '钱包', 'nav.ai': 'AI 助手', 'nav.community': '社区',
     'common.demo': '演示', 'common.refresh': '刷新', 'common.viewAll': '查看全部', 'common.back': '返回', 'common.save': '保存偏好', 'common.language': '语言', 'common.languagesCount': '支持 7 种语言',
     'home.totalPortfolio': '总资产', 'home.aiScore': 'AI 组合评分', 'home.marketBrief': 'AI 市场简报', 'home.marketBriefBody': '算力需求正在加速。', 'home.explore': '探索投资机会', 'home.snapshot': '市场概览', 'home.actions': '今日事项', 'home.income': '收益日历',
     'invest.title': '投资', 'invest.search': '搜索投资机会', 'invest.filters': '筛选', 'invest.execution': '执行中心', 'invest.noResults': '没有匹配的产品',
@@ -59,9 +65,15 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': '信任中心', 'trust.eyebrow': '信任与透明', 'trust.heading': '投资之前，先确认主体、产品与适用地区。', 'trust.body': '集中查看准入规则、产品结构、费用、法律文件、客服路径与官方渠道。',
     'trust.access': '准入与可用地区', 'trust.accessBody': '访客规则、国家核验与产品限制', 'trust.products': '产品披露', 'trust.productsBody': '发行方、收益来源、费用、期限与退出', 'trust.legal': '法律文件中心', 'trust.legalBody': '条款、隐私、风险与同意版本', 'trust.supportBody': '创建并追踪投资、订单或支付争议',
     'trust.demoNote': '演示内容仅用于产品审阅。真实执行前须核准合作方、牌照、准入规则及发行文件。',
+    'community.title': '社区', 'community.subtitle': '来自 RWA.LAT 社区的研究、市场观察与故事',
+    'community.sortLatest': '最新', 'community.sortHot': '热门', 'community.loadMore': '加载更多',
+    'community.emptyTitle': '这里还静悄悄的', 'community.emptyBody': '社区正在热场，稍后再来看看。',
+    'community.comments': '评论', 'community.joinTitle': '登录后参与讨论', 'community.joinBody': '浏览保持开放；发帖与回复需要安全账户。',
+    'community.statsPosts': '帖子', 'community.statsFollowers': '关注者', 'community.statsFollowing': '正在关注',
+    'community.viewProfile': '查看主页', 'community.recentPosts': '最近发布', 'community.backToFeed': '返回社区',
   },
   hi: {
-    'nav.home': 'होम', 'nav.invest': 'निवेश', 'nav.portfolio': 'पोर्टफोलियो', 'nav.wallet': 'वॉलेट', 'nav.ai': 'AI सलाहकार',
+    'nav.home': 'होम', 'nav.invest': 'निवेश', 'nav.portfolio': 'पोर्टफोलियो', 'nav.wallet': 'वॉलेट', 'nav.ai': 'AI सलाहकार', 'nav.community': 'समुदाय',
     'common.demo': 'डेमो', 'common.refresh': 'रीफ़्रेश', 'common.viewAll': 'सभी देखें', 'common.back': 'वापस', 'common.save': 'प्राथमिकताएँ सहेजें', 'common.language': 'भाषा',
     'home.totalPortfolio': 'कुल पोर्टफोलियो', 'home.aiScore': 'AI पोर्टफोलियो स्कोर', 'home.marketBrief': 'AI मार्केट ब्रीफ', 'home.marketBriefBody': 'कंप्यूट मांग तेज़ हो रही है।', 'home.explore': 'अवसर देखें', 'home.snapshot': 'बाज़ार का सार', 'home.actions': 'आज के कार्य', 'home.income': 'आय कैलेंडर',
     'invest.title': 'निवेश', 'invest.search': 'अवसर खोजें', 'invest.execution': 'निष्पादन केंद्र', 'invest.noResults': 'कोई मेल खाता उत्पाद नहीं', 'portfolio.title': 'पोर्टफोलियो', 'portfolio.total': 'कुल निवेश', 'portfolio.allocation': 'आवंटन', 'portfolio.askAi': 'AI से पूछें', 'wallet.title': 'वॉलेट', 'wallet.deposit': 'जमा', 'wallet.withdraw': 'निकासी', 'wallet.transfer': 'ट्रांसफर', 'wallet.fiat': 'फ़िएट जल्द उपलब्ध', 'wallet.assets': 'परिसंपत्तियाँ', 'wallet.activity': 'गतिविधि',
@@ -76,7 +88,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'विश्वास केंद्र', 'trust.eyebrow': 'विश्वास केंद्र', 'trust.heading': 'निवेश से पहले जानें—कौन, क्या और कहाँ।', 'trust.body': 'पात्रता नियम, उत्पाद संरचना, शुल्क, कानूनी दस्तावेज़, सहायता और सत्यापित चैनल एक ही स्थान पर देखें।', 'trust.access': 'पात्रता और क्षेत्र', 'trust.accessBody': 'अतिथि नियम, देश जाँच और उत्पाद प्रतिबंध', 'trust.products': 'उत्पाद प्रकटीकरण', 'trust.productsBody': 'जारीकर्ता, आय स्रोत, शुल्क, अवधि और निकास', 'trust.legal': 'कानूनी दस्तावेज़ केंद्र', 'trust.legalBody': 'शर्तें, गोपनीयता, जोखिम और सहमति संस्करण', 'trust.supportBody': 'निवेश या भुगतान मामला बनाएँ और उसकी स्थिति देखें', 'trust.demoNote': 'यह डेमो सामग्री उत्पाद समीक्षा के लिए है। वास्तविक निष्पादन से पहले भागीदार, लाइसेंस, पात्रता और पेशकश दस्तावेज़ स्वीकृत होने चाहिए।',
   },
   es: {
-    'nav.home': 'Inicio', 'nav.invest': 'Invertir', 'nav.portfolio': 'Cartera', 'nav.wallet': 'Billetera', 'nav.ai': 'Asesor IA',
+    'nav.home': 'Inicio', 'nav.invest': 'Invertir', 'nav.portfolio': 'Cartera', 'nav.wallet': 'Billetera', 'nav.ai': 'Asesor IA', 'nav.community': 'Comunidad',
     'common.demo': 'Demo', 'common.refresh': 'Actualizar', 'common.viewAll': 'Ver todo', 'common.back': 'Volver', 'common.save': 'Guardar preferencias', 'common.language': 'Idioma',
     'home.totalPortfolio': 'Cartera total', 'home.aiScore': 'Puntuación IA', 'home.marketBrief': 'Resumen de mercado IA', 'home.marketBriefBody': 'La demanda de cómputo se acelera.', 'home.explore': 'Explorar oportunidades', 'home.snapshot': 'Resumen del mercado', 'home.actions': 'Tareas de hoy', 'home.income': 'Calendario de ingresos',
     'invest.title': 'Invertir', 'invest.search': 'Buscar oportunidades', 'invest.execution': 'Centro de ejecución', 'invest.noResults': 'No hay productos que coincidan', 'portfolio.title': 'Cartera', 'portfolio.total': 'Total invertido', 'portfolio.allocation': 'Distribución', 'portfolio.askAi': 'Consultar a la IA', 'wallet.title': 'Billetera', 'wallet.deposit': 'Depositar', 'wallet.withdraw': 'Retirar', 'wallet.transfer': 'Transferir', 'wallet.fiat': 'Fiat próximamente', 'wallet.assets': 'Activos', 'wallet.activity': 'Actividad',
@@ -91,7 +103,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'Centro de confianza', 'trust.eyebrow': 'CENTRO DE CONFIANZA', 'trust.heading': 'Conoce quién, qué y dónde antes de invertir.', 'trust.body': 'Consulta en un solo lugar las reglas de acceso, estructuras, comisiones, documentos legales, soporte y canales verificados.', 'trust.access': 'Acceso y regiones', 'trust.accessBody': 'Reglas para invitados, controles por país y restricciones', 'trust.products': 'Divulgaciones de producto', 'trust.productsBody': 'Emisor, fuente de rendimiento, comisiones, vencimiento y salida', 'trust.legal': 'Centro de documentos legales', 'trust.legalBody': 'Términos, privacidad, riesgos y versiones de consentimiento', 'trust.supportBody': 'Crea y sigue un caso de inversión o pago', 'trust.demoNote': 'El contenido Demo sirve para revisar el producto. Los socios, licencias, reglas de acceso y documentos de oferta deben aprobarse antes de cualquier ejecución real.',
   },
   ar: {
-    'nav.home': 'الرئيسية', 'nav.invest': 'استثمار', 'nav.portfolio': 'المحفظة', 'nav.wallet': 'المحفظة الرقمية', 'nav.ai': 'مستشار الذكاء الاصطناعي',
+    'nav.home': 'الرئيسية', 'nav.invest': 'استثمار', 'nav.portfolio': 'المحفظة', 'nav.wallet': 'المحفظة الرقمية', 'nav.ai': 'مستشار الذكاء الاصطناعي', 'nav.community': 'المجتمع',
     'common.demo': 'عرض تجريبي', 'common.refresh': 'تحديث', 'common.viewAll': 'عرض الكل', 'common.back': 'رجوع', 'common.save': 'حفظ التفضيلات', 'common.language': 'اللغة',
     'home.totalPortfolio': 'إجمالي المحفظة', 'home.aiScore': 'تقييم المحفظة بالذكاء الاصطناعي', 'home.marketBrief': 'موجز السوق', 'home.marketBriefBody': 'الطلب على الحوسبة يتسارع.', 'home.explore': 'استكشف الفرص', 'home.snapshot': 'لمحة السوق', 'home.actions': 'مهام اليوم', 'home.income': 'تقويم الدخل',
     'invest.title': 'استثمار', 'invest.search': 'ابحث عن الفرص', 'invest.execution': 'مركز التنفيذ', 'invest.noResults': 'لا توجد منتجات مطابقة', 'portfolio.title': 'المحفظة', 'portfolio.total': 'إجمالي الاستثمار', 'portfolio.allocation': 'التوزيع', 'portfolio.askAi': 'اسأل الذكاء الاصطناعي', 'wallet.title': 'المحفظة الرقمية', 'wallet.deposit': 'إيداع', 'wallet.withdraw': 'سحب', 'wallet.transfer': 'تحويل', 'wallet.fiat': 'العملات التقليدية قريبًا', 'wallet.assets': 'الأصول', 'wallet.activity': 'النشاط',
@@ -106,7 +118,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'مركز الثقة', 'trust.eyebrow': 'مركز الثقة', 'trust.heading': 'اعرف الجهة والمنتج والمنطقة قبل الاستثمار.', 'trust.body': 'راجع قواعد الإتاحة وهياكل المنتجات والرسوم والوثائق القانونية ومسارات الدعم والقنوات الموثقة في مكان واحد.', 'trust.access': 'الإتاحة والمناطق', 'trust.accessBody': 'قواعد الضيف والتحقق حسب الدولة وقيود المنتجات', 'trust.products': 'إفصاحات المنتجات', 'trust.productsBody': 'المُصدر ومصدر العائد والرسوم والاستحقاق والخروج', 'trust.legal': 'مركز الوثائق القانونية', 'trust.legalBody': 'الشروط والخصوصية والمخاطر وإصدارات الموافقة', 'trust.supportBody': 'أنشئ حالة استثمار أو دفع وتابعها', 'trust.demoNote': 'محتوى العرض مخصص لمراجعة المنتج. يجب اعتماد الشركاء والتراخيص وقواعد الإتاحة ووثائق الطرح قبل أي تنفيذ حقيقي.',
   },
   fr: {
-    'nav.home': 'Accueil', 'nav.invest': 'Investir', 'nav.portfolio': 'Portefeuille', 'nav.wallet': 'Wallet', 'nav.ai': 'Conseiller IA',
+    'nav.home': 'Accueil', 'nav.invest': 'Investir', 'nav.portfolio': 'Portefeuille', 'nav.wallet': 'Wallet', 'nav.ai': 'Conseiller IA', 'nav.community': 'Communauté',
     'common.demo': 'Démo', 'common.refresh': 'Actualiser', 'common.viewAll': 'Tout voir', 'common.back': 'Retour', 'common.save': 'Enregistrer les préférences', 'common.language': 'Langue',
     'home.totalPortfolio': 'Portefeuille total', 'home.aiScore': 'Score IA du portefeuille', 'home.marketBrief': 'Brief marché IA', 'home.marketBriefBody': 'La demande de calcul accélère.', 'home.explore': 'Explorer les opportunités', 'home.snapshot': 'Aperçu du marché', 'home.actions': 'Actions du jour', 'home.income': 'Calendrier des revenus',
     'invest.title': 'Investir', 'invest.search': 'Rechercher des opportunités', 'invest.execution': "Centre d'exécution", 'invest.noResults': 'Aucun produit correspondant', 'portfolio.title': 'Portefeuille', 'portfolio.total': 'Total investi', 'portfolio.allocation': 'Répartition', 'portfolio.askAi': "Demander à l’IA", 'wallet.title': 'Portefeuille', 'wallet.deposit': 'Déposer', 'wallet.withdraw': 'Retirer', 'wallet.transfer': 'Transférer', 'wallet.fiat': 'Fiat bientôt disponible', 'wallet.assets': 'Actifs', 'wallet.activity': 'Activité',
@@ -121,7 +133,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'Centre de confiance', 'trust.eyebrow': 'CENTRE DE CONFIANCE', 'trust.heading': "Identifiez l'acteur, le produit et la zone avant d'investir.", 'trust.body': "Consultez au même endroit les règles d'accès, structures, frais, documents juridiques, voies d'assistance et canaux vérifiés.", 'trust.access': 'Accès et régions', 'trust.accessBody': 'Règles invité, contrôles pays et restrictions produit', 'trust.products': 'Informations sur les produits', 'trust.productsBody': 'Émetteur, source du rendement, frais, échéance et sortie', 'trust.legal': 'Centre de documents juridiques', 'trust.legalBody': 'Conditions, confidentialité, risques et versions de consentement', 'trust.supportBody': "Créez et suivez un dossier d'investissement ou de paiement", 'trust.demoNote': "Le contenu Demo sert à examiner le produit. Partenaires, licences, règles d'accès et documents d'offre doivent être approuvés avant toute exécution réelle.",
   },
   pt: {
-    'nav.home': 'Início', 'nav.invest': 'Investir', 'nav.portfolio': 'Portfólio', 'nav.wallet': 'Carteira', 'nav.ai': 'Consultor de IA',
+    'nav.home': 'Início', 'nav.invest': 'Investir', 'nav.portfolio': 'Portfólio', 'nav.wallet': 'Carteira', 'nav.ai': 'Consultor de IA', 'nav.community': 'Comunidade',
     'common.demo': 'Demo', 'common.refresh': 'Atualizar', 'common.viewAll': 'Ver tudo', 'common.back': 'Voltar', 'common.save': 'Salvar preferências', 'common.language': 'Idioma',
     'home.totalPortfolio': 'Portfólio total', 'home.aiScore': 'Pontuação de IA', 'home.marketBrief': 'Resumo de mercado IA', 'home.marketBriefBody': 'A demanda por computação está acelerando.', 'home.explore': 'Explorar oportunidades', 'home.snapshot': 'Visão geral do mercado', 'home.actions': 'Ações de hoje', 'home.income': 'Calendário de rendimentos',
     'invest.title': 'Investir', 'invest.search': 'Buscar oportunidades', 'invest.execution': 'Central de execução', 'invest.noResults': 'Nenhum produto correspondente', 'portfolio.title': 'Portfólio', 'portfolio.total': 'Total investido', 'portfolio.allocation': 'Alocação', 'portfolio.askAi': 'Perguntar à IA', 'wallet.title': 'Carteira', 'wallet.deposit': 'Depositar', 'wallet.withdraw': 'Sacar', 'wallet.transfer': 'Transferir', 'wallet.fiat': 'Fiat em breve', 'wallet.assets': 'Ativos', 'wallet.activity': 'Atividade',
