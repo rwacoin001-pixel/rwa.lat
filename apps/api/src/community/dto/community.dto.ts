@@ -17,7 +17,12 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator'
-import { COMMUNITY_COMMENT_BODY_MAX, COMMUNITY_POST_BODY_MAX, COMMUNITY_REPORT_REASON_MAX } from '../community.util'
+import {
+  COMMUNITY_COMMENT_BODY_MAX,
+  COMMUNITY_POST_BODY_MAX,
+  COMMUNITY_REPORT_REASON_MAX,
+  COMMUNITY_TRANSLATION_LANGS,
+} from '../community.util'
 
 const HANDLE_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}$/
 const POST_SOURCES = ['original', 'rewrite', 'data', 'event', 'user', 'import'] as const
@@ -135,6 +140,11 @@ export class PublishCommunityPostDto {
   @IsOptional()
   @IsDateString()
   publishedAt?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  lang?: string
 }
 
 export class PublishCommunityCommentDto {
@@ -154,6 +164,11 @@ export class PublishCommunityCommentDto {
   @IsOptional()
   @IsDateString()
   publishedAt?: string
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  lang?: string
 }
 
 export class CommunityLikeDto {
@@ -271,4 +286,15 @@ export class CreateCommunityReportDto {
 export class ReviewCommunityReportDto {
   @IsIn(['reviewed', 'dismissed'])
   action!: 'reviewed' | 'dismissed'
+}
+
+export class TranslateCommunityTargetDto {
+  @IsIn(['post', 'comment'])
+  targetType!: 'post' | 'comment'
+
+  @IsUUID()
+  targetId!: string
+
+  @IsIn([...COMMUNITY_TRANSLATION_LANGS])
+  targetLang!: (typeof COMMUNITY_TRANSLATION_LANGS)[number]
 }

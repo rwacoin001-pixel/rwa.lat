@@ -107,6 +107,9 @@ export class CommunityPost {
   @Column({ type: 'jsonb', default: () => "'[]'" })
   topics!: string[]
 
+  @Column({ type: 'varchar', length: 16, default: 'zh-Hans' })
+  lang!: string
+
   @Column({ type: 'varchar', default: 'original' })
   source!: string
 
@@ -155,6 +158,9 @@ export class CommunityComment {
 
   @Column({ type: 'text' })
   body!: string
+
+  @Column({ type: 'varchar', length: 16, default: 'zh-Hans' })
+  lang!: string
 
   @Column({ type: 'int', default: 0 })
   like_count!: number
@@ -282,4 +288,35 @@ export class CommunityQueueItem {
 
   @UpdateDateColumn({ type: 'timestamptz' })
   updated_at!: Date
+}
+
+/**
+ * Cached translations of community posts/comments. One row per
+ * (target, language); generated on demand by the public translate endpoint.
+ */
+@Entity({ schema: 'app', name: 'community_translations' })
+export class CommunityTranslation {
+  @PrimaryGeneratedColumn('uuid')
+  id!: string
+
+  @Column({ type: 'varchar', length: 16 })
+  target_type!: 'post' | 'comment'
+
+  @Column({ type: 'uuid' })
+  target_id!: string
+
+  @Column({ type: 'varchar', length: 16 })
+  target_lang!: string
+
+  @Column({ type: 'varchar', length: 16 })
+  source_lang!: string
+
+  @Column({ type: 'text' })
+  body!: string
+
+  @Column({ type: 'varchar', length: 32, nullable: true })
+  provider?: string | null
+
+  @CreateDateColumn({ type: 'timestamptz' })
+  created_at!: Date
 }

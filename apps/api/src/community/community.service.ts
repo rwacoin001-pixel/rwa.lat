@@ -3,6 +3,7 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, QueryFailedError, Repository } from 'typeorm'
@@ -16,7 +17,9 @@ import {
   CommunityQueueItem,
   CommunityReport,
   CommunityTopic,
+  CommunityTranslation,
 } from './community.entities'
+import { CommunityTranslationProvider } from './community.translation'
 import {
   COMMUNITY_COMMENT_BODY_MAX,
   COMMUNITY_POST_BODY_MAX,
@@ -24,6 +27,7 @@ import {
   decodeCursor,
   encodeCursor,
   isValidHandle,
+  normalizeCommunityLang,
   normalizeHandle,
   sanitizeImages,
   sanitizeTopics,
@@ -40,6 +44,7 @@ import {
   PublishDueCommunityQueueDto,
   ReviewCommunityQueueItemDto,
   ReviewCommunityReportDto,
+  TranslateCommunityTargetDto,
   UpsertCommunityProfileDto,
 } from './dto/community.dto'
 
@@ -67,6 +72,8 @@ export class CommunityService {
     @InjectRepository(CommunityTopic) private readonly topics: Repository<CommunityTopic>,
     @InjectRepository(CommunityQueueItem) private readonly queue: Repository<CommunityQueueItem>,
     @InjectRepository(CommunityReport) private readonly reports: Repository<CommunityReport>,
+    @InjectRepository(CommunityTranslation) private readonly translations: Repository<CommunityTranslation>,
+    private readonly translationProvider: CommunityTranslationProvider,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -202,6 +209,74 @@ export class CommunityService {
     return { id: saved.id, state: saved.state, createdAt: saved.created_at }
   }
 
+  // ---- translations ----
+
+  async translateTarget(dto: TranslateCommunityTargetDto) {
+    const targetLang = normalizeCommunityLang(dto.targetLang)
+    let text: string
+    let sourceLang: string
+    if (dto.targetType === 'post') {
+      const post = await this.posts.findOne({ where: { id: dto.targetId } })
+      if (!post) throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
+      text = post.body
+      sourceLang = normalizeCommunityLang(post.lang)
+    } else {
+      const comment = await this.comments.findOne({ where: { id: dto.targetId } })
+      if (!comment) throw new NotFoundException(COMMUNITY_ERROR_CODES.COMMENT_NOT_FOUND)
+      text = comment.body
+      sourceLang = normalizeCommunityLang(comment.lang)
+    }
+
+    if (sourceLang === targetLang) {
+      return { targetType: dto.targetType, targetId: dto.targetId, targetLang, sourceLang, text, cached: true }
+    }
+
+    const cached = await this.translations.findOne({
+      where: { target_type: dto.targetType, target_id: dto.targetId, target_lang: targetLang },
+    })
+    if (cached) {
+      return {
+        targetType: dto.targetType,
+        targetId: dto.targetId,
+        targetLang,
+        sourceLang: cached.source_lang,
+        text: cached.body,
+        cached: true,
+      }
+    }
+
+    if (!this.translationProvider.isConfigured()) {
+      throw new ServiceUnavailableException(COMMUNITY_ERROR_CODES.TRANSLATION_UNAVAILABLE)
+    }
+
+    let translated: string
+    try {
+      translated = await this.translationProvider.translate(text, sourceLang, targetLang)
+    } catch (error) {
+      this.logger.warn(
+        `community translation failed for ${dto.targetType}/${dto.targetId}: ${(error as Error).message}`,
+      )
+      throw new ServiceUnavailableException(COMMUNITY_ERROR_CODES.TRANSLATION_FAILED)
+    }
+
+    try {
+      await this.translations.save(
+        this.translations.create({
+          target_type: dto.targetType,
+          target_id: dto.targetId,
+          target_lang: targetLang,
+          source_lang: sourceLang,
+          body: translated,
+          provider: 'llm',
+        }),
+      )
+    } catch (error) {
+      if (!this.isUniqueViolation(error)) throw error
+    }
+
+    return { targetType: dto.targetType, targetId: dto.targetId, targetLang, sourceLang, text: translated, cached: false }
+  }
+
   // ---- internal (engine / operator) operations ----
 
   async upsertProfile(dto: UpsertCommunityProfileDto) {
@@ -232,6 +307,7 @@ export class CommunityService {
       body,
       images: sanitizeImages(dto.images),
       topics,
+      lang: normalizeCommunityLang(dto.lang),
       source: dto.source && POST_SOURCE_VALUES.has(dto.source) ? dto.source : 'original',
       state: 'published',
       published_at: dto.publishedAt ? new Date(dto.publishedAt) : new Date(),
@@ -252,6 +328,7 @@ export class CommunityService {
       profile_id: profile.id,
       parent_id: dto.parentId ?? null,
       body,
+      lang: normalizeCommunityLang(dto.lang),
     })
     const saved = await this.comments.save(comment)
     await this.posts.increment({ id: post.id }, 'comment_count', 1)
@@ -552,6 +629,7 @@ export class CommunityService {
     return {
       id: post.id,
       body: post.body,
+      lang: post.lang,
       images: post.images ?? [],
       topics: post.topics ?? [],
       likeCount: post.like_count,
@@ -568,6 +646,7 @@ export class CommunityService {
       postId: comment.post_id,
       parentId: comment.parent_id ?? null,
       body: comment.body,
+      lang: comment.lang,
       likeCount: comment.like_count,
       createdAt: comment.created_at,
       author: comment.author ? this.shapeProfile(comment.author) : null,

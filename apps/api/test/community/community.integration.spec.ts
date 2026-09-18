@@ -152,4 +152,31 @@ describeDatabase('community schema', () => {
       dataSource.query(`UPDATE app.community_reports SET state = 'bogus' WHERE id = $1`, [openReport.id]),
     ).rejects.toMatchObject({ code: '23514' })
   })
+
+  it('stores translation cache rows with a unique target+lang constraint', async () => {
+    const profile = await createProfile('translation')
+    const post = await createPost(profile.id)
+    const [row] = await dataSource.query(
+      `INSERT INTO app.community_translations (id, target_type, target_id, target_lang, source_lang, body)
+       VALUES ($1, 'post', $2, 'pt', 'en', 'ola mundo') RETURNING target_lang, source_lang`,
+      [randomUUID(), post.id],
+    )
+    expect(row).toMatchObject({ target_lang: 'pt', source_lang: 'en' })
+
+    await expect(
+      dataSource.query(
+        `INSERT INTO app.community_translations (id, target_type, target_id, target_lang, source_lang, body)
+         VALUES ($1, 'post', $2, 'pt', 'en', 'duplicate')`,
+        [randomUUID(), post.id],
+      ),
+    ).rejects.toMatchObject({ code: '23505' })
+
+    await expect(
+      dataSource.query(
+        `INSERT INTO app.community_translations (id, target_type, target_id, target_lang, source_lang, body)
+         VALUES ($1, 'bogus', $2, 'pt', 'en', 'x')`,
+        [randomUUID(), post.id],
+      ),
+    ).rejects.toMatchObject({ code: '23514' })
+  })
 })

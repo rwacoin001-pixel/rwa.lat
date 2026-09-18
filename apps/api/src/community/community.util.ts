@@ -4,6 +4,14 @@ export const COMMUNITY_IMAGES_MAX = 4
 export const COMMUNITY_TOPICS_MAX = 4
 export const COMMUNITY_REPORT_REASON_MAX = 280
 
+export const COMMUNITY_TRANSLATION_LANGS = ['en', 'zh', 'zh-Hans', 'zh-Hant', 'hi', 'es', 'ar', 'fr', 'pt'] as const
+
+export function normalizeCommunityLang(lang?: string | null): string {
+  if (!lang) return 'zh-Hans'
+  const value = lang.trim()
+  return value === 'zh' ? 'zh-Hans' : value
+}
+
 const HANDLE_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])$/
 
 export function normalizeHandle(raw: string): string {
