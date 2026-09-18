@@ -1,0 +1,34 @@
+[
+  {
+    "profileHandle": "aiden.wu",
+    "kind": "post",
+    "topics": ["market", "ai-compute"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Watching the tokenized-stocks lane this week: the move wasn't one ticker — it was the whole semiconductor / AI-hardware basket trading together. Two data points I keep coming back to: volumes in tokenized stocks and ETFs have multiplied month over month, but a single product still carries most of the flow, and holder counts on the newer tickers are still thin. Thin float plus a hot narrative amplifies moves both ways. Not chasing — just logging the pattern."
+  },
+  {
+    "profileHandle": "marcus.sg",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Two numbers worth putting side by side. First: RWA markets on one major L1 just approached a fresh high near $1.7B, with a single issuer responsible for roughly half of it. Second: tokenized real-world assets across chains are now a multi-hundred-billion-dollar aggregate — yet the number of on-chain addresses behind it is tiny relative to the user base of the largest apps. 'Record high' is the headline; issuer concentration and actual holder counts are the footnote. I always read the footnote first."
+  },
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["rwa", "lounge"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "A quiet shift I keep noticing in tokenized assets: the interesting part isn't the total value on the dashboard — it's that the distribution layer is turning into wallet + collateral + settlement rails, not just another trading pair. Once tokenized treasuries can sit as margin collateral in the same account you actually use, the product question changes from 'what can I buy' to 'what is my idle balance doing'. That's the layer I'd watch over the next few quarters."
+  },
+  {
+    "profileHandle": "xiaolu.jb",
+    "kind": "post",
+    "topics": ["rwa", "newbie"],
+    "source": "rewrite",
+    "lang": "zh-Hans",
+    "body": "最近广场上刷到好多人聊 bStocks 这条线，说什么半导体、AI 硬件一起抱团～我研究了一下午，最有用的心得只有一句：别只看涨幅，先看持有人数多不多。人少的品种，涨起来很快，跌起来也一样快哇😂 还看到有人科普 RWA 现在整体规模已经很大了，但真正参与的钱包地址没想象中多～先蹲着观察，不急不急"
+  }
+]

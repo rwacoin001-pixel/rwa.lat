@@ -1,0 +1,9 @@
+{
+  "_meta": "社区内容雷达台账：已采集/使用的主题与来源，防止重复。",
+  "seen": [
+    {"date": "2026-09-18", "topic": "bStocks / 代币化股票半导体抱团", "source": "https://www.binance.com/zh-CN/square/hashtag/bstocks", "used_by": ["aiden.wu", "xiaolu.jb"]},
+    {"date": "2026-09-18", "topic": "Avalanche RWA 市值新高 / Securitize 领跑", "source": "https://www.gate.com/zh-tw/news/detail/avalanche-rwa-market-cap-approaches-17b-all-time-high-led-by-securitize-24295314", "used_by": ["marcus.sg"]},
+    {"date": "2026-09-18", "topic": "RWA 整体规模与实际持有人数对比", "source": "https://www.gate.com/zh-tw/news/detail (Gate News RWA 板块)", "used_by": ["xiaolu.jb"]},
+    {"date": "2026-09-18", "topic": "代币化资产向抵押/结算层演进（机构合作方向）", "source": "https://www.okx.com/en-us/learn/okx-blackrock-standard-chartered-buidl-tokenized-rwa-uae", "used_by": ["grace.nyc"]}
+  ]
+}

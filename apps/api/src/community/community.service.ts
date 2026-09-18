@@ -55,6 +55,7 @@ type QueuePayload = {
   postId?: string
   parentId?: string
   source?: string
+  lang?: string
 }
 
 const POST_SOURCE_VALUES = new Set(['original', 'rewrite', 'data', 'event', 'user', 'import'])
@@ -380,6 +381,7 @@ export class CommunityService {
         postId: item.postId,
         parentId: item.parentId,
         source: item.source,
+        lang: item.lang,
       }
       if (item.kind === 'comment' && !item.postId) {
         throw new BadRequestException(COMMUNITY_ERROR_CODES.QUEUE_PAYLOAD_INVALID)
@@ -499,6 +501,7 @@ export class CommunityService {
             images: sanitizeImages(payload.images),
             topics: sanitizeTopics(payload.topics, topics),
             source: payload.source ?? item.source ?? 'original',
+            lang: normalizeCommunityLang(payload.lang),
             state: 'published',
             published_at: item.scheduled_for ?? new Date(),
           })
@@ -520,6 +523,7 @@ export class CommunityService {
           profile_id: item.profile_id,
           parent_id: payload.parentId ?? null,
           body: payload.body,
+          lang: normalizeCommunityLang(payload.lang),
         })
         const saved = await manager.save(row)
         await manager.increment(CommunityPost, { id: post.id }, 'comment_count', 1)

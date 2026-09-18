@@ -233,6 +233,11 @@ export class EnqueueCommunityItemDto {
   @IsOptional()
   @IsIn(POST_SOURCES)
   source?: (typeof POST_SOURCES)[number]
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(16)
+  lang?: string
 }
 
 export class EnqueueCommunityDto {
