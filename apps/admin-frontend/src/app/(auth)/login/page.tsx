@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertCircle, KeyRound, Lock, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,7 +13,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [nextPath, setNextPath] = useState('/dashboard');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('expired') === '1') {
+      setNotice('登录会话已过期或已失效，请重新登录。');
+    }
+    const next = params.get('next');
+    if (next && next.startsWith('/')) setNextPath(next);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,7 +46,7 @@ export default function LoginPage() {
         throw new Error(data.message || '登录失败');
       }
 
-      router.push('/dashboard');
+      router.push(nextPath);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : '登录失败，请重试');
@@ -71,6 +82,16 @@ export default function LoginPage() {
               <p className="text-xs text-muted-foreground">请使用管理员账号登录</p>
             </div>
           </div>
+
+          {notice && !error && (
+            <div
+              className="mb-5 flex items-center gap-2 rounded-2xl border border-mint/25 bg-mint/10 p-3 text-sm text-mint"
+              role="status"
+            >
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{notice}</span>
+            </div>
+          )}
 
           {error && (
             <div

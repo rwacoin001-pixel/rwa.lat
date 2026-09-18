@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
@@ -279,6 +279,23 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [closedSections, setClosedSections] = useState<Record<string, boolean>>({})
   const [allOpen, setAllOpen] = useState(false)
+
+  // 全局 401 拦截：管理会话过期/失效时统一回到登录页并提示重新登录，
+  // 而不是让每个页面的数据请求各自显示 "Admin session is invalid or expired"。
+  useEffect(() => {
+    const originalFetch = window.fetch.bind(window)
+    window.fetch = async (...args: Parameters<typeof fetch>) => {
+      const response = await originalFetch(...args)
+      if (response.status === 401 && !window.location.pathname.startsWith('/login')) {
+        const next = encodeURIComponent(window.location.pathname + window.location.search)
+        window.location.assign(`/login?expired=1&next=${next}`)
+      }
+      return response
+    }
+    return () => {
+      window.fetch = originalFetch
+    }
+  }, [])
 
   const current = useMemo(() => sectionOf(pathname), [pathname])
 
