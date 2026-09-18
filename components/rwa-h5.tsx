@@ -1,5 +1,6 @@
 'use client'
 
+import CountUp from '@/components/react-bits/count-up'
 import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import {
@@ -40,6 +41,7 @@ import {
   TrendingUp,
   Upload,
   UserRound,
+  Users,
   WalletCards,
   X,
   type LucideIcon,
@@ -57,6 +59,7 @@ import { orderStatusCopy, orderStatusText } from '@/lib/order-status-copy'
 import { assetExperienceCopy } from '@/lib/asset-experience-copy'
 import { categoryLabel, localizeProduct } from '@/lib/catalog-localization'
 import PolymarketDetailPanel from './polymarket-detail-panel'
+import { CommunityFeedScreen, CommunityPostScreen, CommunityProfileScreen } from './community-screens'
 import { pathForScreen, type RwaScreen } from '@/lib/rwa-routes'
 import { getProducts, getFeaturedProducts, getProjectProfile, demoLogin, isAuthenticated, setAuthToken, type DemoCategory, type DemoProduct } from '@/lib/h5-data'
 import { demoProducts as fallbackProducts, featuredProducts as fallbackFeatured, projectProfiles } from '@/lib/demo-catalog'
@@ -65,7 +68,7 @@ import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 
 type Screen = RwaScreen
 type OrderAsset = 'compute' | 'rwa' | 'stocks' | 'prediction'
-type PrimaryScreen = 'home' | 'invest' | 'portfolio' | 'wallet'
+type PrimaryScreen = 'home' | 'invest' | 'portfolio' | 'wallet' | 'community'
 type InvestCategory = 'All' | 'Compute' | 'RWA' | 'Stocks' | 'Prediction'
 type RiskFilter = 'all' | 'low' | 'medium' | 'high'
 type AvailabilityFilter = 'all' | 'open' | 'limited'
@@ -152,6 +155,7 @@ function BottomDock({ screen, setScreen }: { screen: Screen; setScreen: (screen:
     { id: 'invest', label: t('nav.invest'), icon: TrendingUp },
     { id: 'portfolio', label: t('nav.portfolio'), icon: ChartPie },
     { id: 'wallet', label: t('nav.wallet'), icon: WalletCards },
+    { id: 'community', label: t('nav.community'), icon: Users },
   ]
   return (
     <nav className="liquid-dock" aria-label={shellCopy.primaryNavigation}>
@@ -216,7 +220,7 @@ function HomeScreen({ go, notify, openProduct, isGuest, products, featured }: { 
       <TopBar onProfile={() => go('profile')} onNotifications={() => go('notifications')} />
 
       <div className="portfolio-heading">
-        {isGuest ? <><p>{copy.publicPreview}</p><h1>{copy.exploreGlobalAssets}</h1><strong>{copy.liveDiscovery}</strong><div>{copy.signInPortfolio}</div></> : <><p>{t('home.totalPortfolio')}</p><h1>$128,540<span>.20</span></h1><strong>+$328.40 <i>·</i> +1.2% {copy.today}</strong><div>{t('home.aiScore')} <b>87</b></div></>}
+        {isGuest ? <><p>{copy.publicPreview}</p><h1>{copy.exploreGlobalAssets}</h1><strong>{copy.liveDiscovery}</strong><div>{copy.signInPortfolio}</div></> : <><p>{t('home.totalPortfolio')}</p><h1>$<CountUp to={128540} duration={2.4} separator="," /><span>.20</span></h1><strong>+$328.40 <i>·</i> +1.2% {copy.today}</strong><div>{t('home.aiScore')} <b>87</b></div></>}
       </div>
 
       <div className="globe-hero">
@@ -1128,6 +1132,8 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
   const [products, setProducts] = useState<DemoProduct[]>(fallbackProducts)
   const [selectedProduct, setSelectedProduct] = useState<DemoProduct>(fallbackProducts[0])
   const [featured, setFeatured] = useState<DemoProduct[]>(fallbackFeatured)
+  const [communityPostId, setCommunityPostId] = useState<string | null>(null)
+  const [communityHandle, setCommunityHandle] = useState<string | null>(null)
   useEffect(() => {
     setSessionMode(window.localStorage.getItem('rwa-session-mode') === 'authenticated' ? 'authenticated' : 'guest')
     const storedFlow = window.sessionStorage.getItem('rwa-wallet-flow-mode')
@@ -1138,6 +1144,13 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
     } catch {
       window.sessionStorage.removeItem('rwa-selected-product')
     }
+    const storedCommunityPost = window.sessionStorage.getItem('rwa-community-post')
+    if (storedCommunityPost) setCommunityPostId(storedCommunityPost)
+    const storedCommunityHandle = window.sessionStorage.getItem('rwa-community-handle')
+    if (storedCommunityHandle) setCommunityHandle(storedCommunityHandle)
+    const communityParams = new URLSearchParams(window.location.search)
+    if (initialScreen === 'community-post' && communityParams.get('id')) setCommunityPostId(communityParams.get('id'))
+    if (initialScreen === 'community-profile' && communityParams.get('handle')) setCommunityHandle(communityParams.get('handle'))
     setSessionReady(true)
   }, [])
   // ── API-first product loading ──
@@ -1294,6 +1307,16 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
     window.sessionStorage.setItem('rwa-selected-product', JSON.stringify(product))
     go('prediction-detail')
   }
+  const openCommunityPost = (id: string) => {
+    setCommunityPostId(id)
+    window.sessionStorage.setItem('rwa-community-post', id)
+    go('community-post')
+  }
+  const openCommunityProfile = (handle: string) => {
+    setCommunityHandle(handle)
+    window.sessionStorage.setItem('rwa-community-handle', handle)
+    go('community-profile')
+  }
   const openWalletFlow = (mode: 'deposit' | 'withdraw' | 'transfer') => {
     setWalletFlowMode(mode)
     window.sessionStorage.setItem('rwa-wallet-flow-mode', mode)
@@ -1315,7 +1338,7 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
     }
     setAuthenticated()
   }
-  const showDock = !['welcome', 'login', 'register', 'verify-email', 'recovery', 'profile', 'rwa-detail', 'compute-detail', 'stock-detail', 'prediction-detail', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'deposit', 'withdraw', 'transfer', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'ai-plan', 'notifications', 'kyc', 'security', 'referral', 'records', 'support', 'settings', 'marketing', 'official-channels', 'scam-report', 'close-account'].includes(screen)
+  const showDock = !['welcome', 'login', 'register', 'verify-email', 'recovery', 'profile', 'rwa-detail', 'compute-detail', 'stock-detail', 'prediction-detail', 'community-post', 'community-profile', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'deposit', 'withdraw', 'transfer', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'ai-plan', 'notifications', 'kyc', 'security', 'referral', 'records', 'support', 'settings', 'marketing', 'official-channels', 'scam-report', 'close-account'].includes(screen)
   return (
     <>
       <a className="skip-link" href="#main-content">{shellCopy.skipContent}</a>
@@ -1331,6 +1354,9 @@ function RwaH5Content({ initialScreen = 'home' }: { initialScreen?: Screen }) {
         {screen === 'invest' && <InvestScreen go={go} notify={notify} openProduct={openProduct} openPrediction={openPrediction} products={products} />}
         {screen === 'portfolio' && <PortfolioScreen go={go} notify={notify} />}
         {screen === 'wallet' && <WalletScreen go={go} notify={notify} openWalletFlow={openWalletFlow} />}
+        {screen === 'community' && <CommunityFeedScreen go={go} openPost={openCommunityPost} openProfile={openCommunityProfile} />}
+        {screen === 'community-post' && <CommunityPostScreen postId={communityPostId} go={go} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
+        {screen === 'community-profile' && <CommunityProfileScreen handle={communityHandle} go={go} openPost={openCommunityPost} />}
         {screen === 'rwa-detail' && <RwaDetailScreen product={selectedProduct.category === 'RWA' ? localizedSelectedProduct : localizeProduct(products.find((product) => product.category === 'RWA')!, locale)} go={go} notify={notify} openOrder={openOrder} />}
         {screen === 'compute-detail' && <AssetDetailScreen product={selectedProduct.category === 'Compute' ? localizedSelectedProduct : localizeProduct(products[0], locale)} asset="compute" go={go} openOrder={openOrder} notify={notify} />}
         {screen === 'stock-detail' && <AssetDetailScreen product={selectedProduct.category === 'Stocks' ? localizedSelectedProduct : localizeProduct(products.find((product) => product.category === 'Stocks')!, locale)} asset="stocks" go={go} openOrder={openOrder} notify={notify} />}
