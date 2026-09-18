@@ -26,6 +26,27 @@ interface CreateLedgerAdjustmentInput {
   requestId: string
 }
 
+interface BasketSettlementTransferInput {
+  userId: string
+  portfolioId: string
+  direction: 'subscription' | 'redemption'
+  /** USDT 原子单位（正整数字符串） */
+  atomicAmount: string
+  referenceType: 'basket_subscription' | 'basket_redemption'
+  referenceId: string
+  requestId: string
+}
+
+interface BasketInvestmentTransferInput {
+  portfolioId: string
+  direction: 'invest' | 'divest'
+  /** USDT 原子单位（正整数字符串） */
+  atomicAmount: string
+  /** 调仓订单 id（幂等键 basket_rebalance:<orderId>） */
+  referenceId: string
+  requestId: string
+}
+
 @Injectable()
 export class LedgerService {
   constructor(private readonly dataSource: DataSource) {}
@@ -486,6 +507,133 @@ export class LedgerService {
       })
       return { id: adjustmentId, state: 'posted', ledgerTransactionId: persistedTransactionId, duplicate: !inserted.length }
     })
+  }
+
+  /**
+   * Basket 申赎资金划转（Phase 10）：用户可用账户 ↔ 组合结算账户（platform/basket_settlement）。
+   * - 幂等：idempotency_key = `${referenceType}:${referenceId}`
+   * - 订阅：用户可用 debit → 组合 credit；赎回：组合 debit → 用户可用 credit
+   * - 余额不足由账本触发器拒绝（用户账户 allow_negative=false）
+   */
+  async transferBasketSettlement(
+    input: BasketSettlementTransferInput,
+  ): Promise<{ ledgerTransactionId: string | null; duplicate: boolean }> {
+    if (!/^[1-9]\d{0,77}$/.test(input.atomicAmount)) {
+      throw new BadRequestException({
+        code: LEDGER_ERROR_CODES.RECONCILIATION_INPUT_INVALID,
+        message: 'Basket transfer amount must be a positive smallest-unit integer.',
+      })
+    }
+    return this.transaction(async (runner) => {
+      const user = await this.userAccount(runner, input.userId, 'available')
+      const basket = await this.basketSettlementAccount(runner, input.portfolioId)
+      const idempotencyKey = `${input.referenceType}:${input.referenceId}`
+      const transactionId = await this.ledgerTransaction(
+        runner,
+        input.referenceType,
+        idempotencyKey,
+        input.requestId,
+        input.referenceType,
+        input.referenceId,
+        'service',
+        null,
+      )
+      if (transactionId) {
+        const [debitAccount, creditAccount] = input.direction === 'subscription' ? [user, basket] : [basket, user]
+        await runner.query(
+          `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
+           VALUES ($1, $2, 'debit', $4), ($1, $3, 'credit', $4)`,
+          [transactionId, debitAccount, creditAccount, input.atomicAmount],
+        )
+        return { ledgerTransactionId: transactionId, duplicate: false }
+      }
+      const [existing] = await runner.query(`SELECT id FROM app.ledger_transactions WHERE idempotency_key = $1`, [idempotencyKey])
+      return { ledgerTransactionId: (existing?.id as string | undefined) ?? null, duplicate: true }
+    })
+  }
+
+  /**
+   * Basket 内部投资腿（Phase 13-14）：组合现金 ↔ 组合投资（invested_cost 账户）。
+   * 买入成交 = invest（现金减、投资增）；卖出成交 = divest（投资减、现金增）。
+   * 幂等键 basket_rebalance:<orderId>（每张调仓订单一条现金流）。
+   */
+  async transferBasketInvestment(
+    input: BasketInvestmentTransferInput,
+  ): Promise<{ ledgerTransactionId: string | null; duplicate: boolean }> {
+    if (!/^[1-9]\d{0,77}$/.test(input.atomicAmount)) {
+      throw new BadRequestException({
+        code: LEDGER_ERROR_CODES.RECONCILIATION_INPUT_INVALID,
+        message: 'Basket investment amount must be a positive smallest-unit integer.',
+      })
+    }
+    return this.transaction(async (runner) => {
+      const basket = await this.basketSettlementAccount(runner, input.portfolioId)
+      const invested = await this.basketInvestedAccount(runner, input.portfolioId)
+      const idempotencyKey = `basket_rebalance:${input.referenceId}`
+      const transactionId = await this.ledgerTransaction(
+        runner,
+        'basket_rebalance',
+        idempotencyKey,
+        input.requestId,
+        'basket_rebalance',
+        input.referenceId,
+        'service',
+        null,
+      )
+      if (transactionId) {
+        const [debitAccount, creditAccount] = input.direction === 'invest' ? [basket, invested] : [invested, basket]
+        await runner.query(
+          `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
+           VALUES ($1, $2, 'debit', $4), ($1, $3, 'credit', $4)`,
+          [transactionId, debitAccount, creditAccount, input.atomicAmount],
+        )
+        return { ledgerTransactionId: transactionId, duplicate: false }
+      }
+      const [existing] = await runner.query(`SELECT id FROM app.ledger_transactions WHERE idempotency_key = $1`, [idempotencyKey])
+      return { ledgerTransactionId: (existing?.id as string | undefined) ?? null, duplicate: true }
+    })
+  }
+
+  /** 组合投资账户（幂等创建；owner_reference = basket:<portfolioId>:invested） */
+  private async basketInvestedAccount(runner: QueryRunner, portfolioId: string): Promise<string> {
+    const reference = `basket:${portfolioId}:invested`
+    await runner.query(
+      `INSERT INTO app.ledger_accounts
+        (owner_type, owner_reference, purpose, asset_code, asset_decimals, network, normal_side)
+       VALUES ('platform', $1, 'invested_cost', 'USDT', 6, NULL, 'credit') ON CONFLICT DO NOTHING`,
+      [reference],
+    )
+    const [account] = await runner.query(
+      `SELECT id FROM app.ledger_accounts
+       WHERE owner_type = 'platform' AND owner_reference = $1
+         AND purpose = 'invested_cost' AND asset_code = 'USDT' AND network IS NULL`,
+      [reference],
+    )
+    if (!account) {
+      throw new NotFoundException({ code: LEDGER_ERROR_CODES.ACCOUNT_NOT_FOUND, message: 'Basket invested account could not be resolved.' })
+    }
+    return account.id as string
+  }
+
+  /** 组合结算账户（幂等创建；owner_reference = basket:<portfolioId>） */
+  private async basketSettlementAccount(runner: QueryRunner, portfolioId: string): Promise<string> {
+    const reference = `basket:${portfolioId}`
+    await runner.query(
+      `INSERT INTO app.ledger_accounts
+        (owner_type, owner_reference, purpose, asset_code, asset_decimals, network, normal_side)
+       VALUES ('platform', $1, 'basket_settlement', 'USDT', 6, NULL, 'credit') ON CONFLICT DO NOTHING`,
+      [reference],
+    )
+    const [account] = await runner.query(
+      `SELECT id FROM app.ledger_accounts
+       WHERE owner_type = 'platform' AND owner_reference = $1
+         AND purpose = 'basket_settlement' AND asset_code = 'USDT' AND network IS NULL`,
+      [reference],
+    )
+    if (!account) {
+      throw new NotFoundException({ code: LEDGER_ERROR_CODES.ACCOUNT_NOT_FOUND, message: 'Basket settlement account could not be resolved.' })
+    }
+    return account.id as string
   }
 
   private async userAccount(runner: QueryRunner, userId: string, purpose: 'available' | 'locked') {

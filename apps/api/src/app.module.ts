@@ -23,6 +23,7 @@ import { OperationsModule } from './operations/operations.module'
 import { CommunityModule } from './community/community.module'
 import { RwaMarketModule } from './rwa-market/rwa-market.module'
 import { RwaAnalysisModule } from './rwa-analysis/rwa-analysis.module'
+import { BasketModule } from './basket/basket.module'
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { RwaAnalysisModule } from './rwa-analysis/rwa-analysis.module'
     CommunityModule,
     RwaMarketModule,
     RwaAnalysisModule,
+    BasketModule,
   ],
 })
 export class AppModule {}

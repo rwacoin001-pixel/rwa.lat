@@ -83,6 +83,32 @@ Controller 只调用 Service；长任务全部经 job_queue（§80 可拆 Worker
 
 **每 Phase 验收**：`lint(build)` + 单测 + `verify:migration-rehearsal` + 相关集成测试；小步提交推送。
 
+### 实施进度（2026-09-18 更新）
+
+- ✅ **Phase 1** Schema（22 表 + 36 实体 + 迁移 1789720000000；测试 4/4）
+- ✅ **Phase 2** CMC Provider（`feat 6909f70`；接口/客户端/归一化/错误分类；实弹冒烟通过）
+- ✅ **Phase 3-5** Normalize + Sync Worker + 公开 API（`feat 543b851`）：
+  迁移 1789721000000（索引 + basket.* 开关）、Sync（advisory lock + 分块 upsert + issuer 关联 via quotes/latest + 去重防线）、
+  公开 `/v1/rwa/*` 9 端点（assets/detail/history/issuers/networks/categories/rankings/overview）、
+  内部 `/v1/internal/rwa-market/*`（health/sync/sync-runs）、Worker（issuers/assets/snapshot 每日、metrics 每小时增量 + 每日全量）；
+  测试 23/23（含真实 CMC 实弹：7942 资产目录全量可用，40 条实拉验证）
+- ✅ **Phase 6-7** 评分引擎 + AI 分析（`feat 3548c43`）：确定性八维评分（权重/风控等级 v1）、
+  DeepSeek 结构化 JSON 分析（复用 TRANSLATION_* 密钥通道）、Worker（score-batch 6h / ai-batch 每日）、
+  内部 `/v1/internal/rwa-analysis/*`；测试 13/13
+- ✅ **Phase 8-15** Basket 全链：策略/版本/目标配置（确定性权重+上限迭代）、组合/持仓、NAV 引擎、
+  申赎（挂 basket.subscriptions / basket.redemptions 开关 + 披露确认 + 账本双录 + 幂等）、
+  风控（组合/调仓提案两套确定性检查）、调仓计划（drift → run+orders+risk 入库）、
+  执行适配器（manual/paper/disabled 三态；真实路由未实现）、成交回填（账本 invest/divest 腿）、
+  对账（reconciliation_runs/cases 复用 + 当日窗口幂等）、basket-ops Worker（NAV 批刷 / drift 扫描）、
+  用户端 `/v1/basket/*` + 内部 `/v1/internal/basket/*`；测试 8/8（含 20 步验收链）
+- 迁移：1789722000000（ledger purpose/type 扩展 basket_* 值；down 用 NOT VALID 兼容 append-only 账本）
+
+**关键设计（Basket ↔ Ledger）**：每组合两个 platform 账户——`basket_settlement`（现金）与 `basket:…:invested`（投资成本）；
+订阅=用户可用→结算、赎回=结算→用户可用、成交=结算↔投资（幂等键绑定订阅/赎回/订单 id）；
+所有金额落账本前显式换算 USDT 原子（6dp 四舍五入），保证对账零差异。
+
+**部署状态**：待 Render 部署 + 生产迁移（1789721000000/1789722000000）+ Worker env 开启。
+
 ---
 
 ## 六、可能冲突与规避（评审结论）
