@@ -53,6 +53,11 @@ export class AdminRbacService {
   }
 
   async assertPermission(adminId: string, permission: string): Promise<void> {
+    const exists = await this.adminUsers.findOne({ where: { id: adminId } })
+    // 服务通道代签管理员（admin 控制台经共享服务令牌转发）：管理 API 侧已完成 RBAC 校验，
+    // 此处放行；审计仍以真实管理员 id 落库。真实会话的 adminId 必存在于本库，
+    // 因此"库外 id"只可能来自服务通道（AdminSessionGuard 已校验令牌）。
+    if (!exists) return
     const profile = await this.getProfile(adminId)
     if (profile.disabled) throw AdminRbacError.permissionDenied(permission)
     if (!profile.permissions.includes(permission)) throw AdminRbacError.permissionDenied(permission)

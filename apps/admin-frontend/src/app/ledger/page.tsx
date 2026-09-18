@@ -1,412 +1,236 @@
-'use client';
+'use client'
 
-import { useState, useEffect } from 'react';
-import { AdminLayout } from '@/components/layout/AdminLayout';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Pagination } from '@/components/ui/pagination';
-import { Search, Filter, Eye, Download, RefreshCw, ArrowRight, ArrowLeft, DollarSign, TrendingUp, TrendingDown, Clock, CheckCircle } from 'lucide-react';
-import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
-import { cn } from '@/lib/utils';
+import { useState } from 'react'
+import { AdminLayout } from '@/components/layout/AdminLayout'
+import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
 
-interface LedgerEntry {
-  id: string;
-  txId: string;
-  userId: string;
-  userName: string;
-  type: 'deposit' | 'withdrawal' | 'trade' | 'fee' | 'reward' | 'penalty' | 'adjustment';
-  asset: string;
-  amount: string;
-  balanceBefore: string;
-  balanceAfter: string;
-  chain?: string;
-  txHash?: string;
-  status: 'pending' | 'confirmed' | 'failed';
-  relatedOrderId?: string;
-  notes?: string;
-  createdAt: string;
-  confirmedAt?: string;
+type ReconRun = {
+  id: string
+  provider: string
+  network: string | null
+  assetCode: string
+  expectedAtomicBalance: string
+  observedAtomicBalance: string
+  differenceAtomicAmount: string
+  state: string
+  sourceReference: string | null
+  createdAt: string
+  completedAt: string | null
+  cases: Array<Record<string, unknown>>
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  deposit: '充值',
-  withdrawal: '提现',
-  trade: '交易',
-  fee: '手续费',
-  reward: '奖励',
-  penalty: '罚金',
-  adjustment: '调整',
-};
+type Adjustment = {
+  id: string
+  side: string
+  atomicAmount: string
+  reasonCode: string
+  state: string
+  requestedBy: string
+  approvedBy: string | null
+  requestedAt: string
+  postedAt: string | null
+  ownerType: string
+  userId: string | null
+  ownerReference: string | null
+  purpose: string
+  assetCode: string
+}
 
-const TYPE_STYLES: Record<string, string> = {
-  deposit: 'bg-mint/20 text-mint',
-  withdrawal: 'bg-red-500/20 text-red-600',
-  trade: 'bg-blue-500/20 text-blue-600',
-  fee: 'bg-amber-500/20 text-amber-600',
-  reward: 'bg-purple-500/20 text-purple-400',
-  penalty: 'bg-red-500/20 text-red-600',
-  adjustment: 'bg-gray-500/20 text-slate-500',
-};
+const RECON_TABS = [
+  { value: '', label: '全部' },
+  { value: 'matched', label: '一致' },
+  { value: 'differences_found', label: '有差异' },
+  { value: 'failed', label: '失败' },
+]
 
-const STATUS_LABELS: Record<string, string> = {
-  pending: '待确认',
-  confirmed: '已确认',
-  failed: '失败',
-};
-
-const STATUS_STYLES: Record<string, string> = {
-  pending: 'bg-amber-500/20 text-amber-600',
-  confirmed: 'bg-mint/20 text-mint',
-  failed: 'bg-red-500/20 text-red-600',
-};
+const ADJ_TABS = [
+  { value: '', label: '全部' },
+  { value: 'requested', label: '待审批' },
+  { value: 'approved', label: '已通过' },
+  { value: 'posted', label: '已过账' },
+  { value: 'rejected', label: '已驳回' },
+]
 
 export default function LedgerPage() {
-  const [entries, setEntries] = useState<LedgerEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
-  const [typeFilter, setTypeFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
-  const [assetFilter, setAssetFilter] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(20);
-  const [totalPages, setTotalPages] = useState(0);
-  const [totalCount, setTotalCount] = useState(0);
+  const [reconState, setReconState] = useState('')
+  const [adjState, setAdjState] = useState('')
+  const [busy, setBusy] = useState('')
+  const [notice, setNotice] = useState('')
 
-  useEffect(() => {
-    fetchLedger();
-  }, [currentPage, pageSize, search, typeFilter, statusFilter, assetFilter]);
+  const recon = useApi<{ runs: ReconRun[] }>(`/api/admin/ledger/reconciliations${reconState ? `?state=${reconState}` : ''}`)
+  const adjustments = useApi<{ adjustments: Adjustment[] }>(`/api/admin/ledger/adjustments${adjState ? `?state=${adjState}` : ''}`)
 
-  const fetchLedger = async () => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({
-        page: String(currentPage),
-        limit: String(pageSize),
-        search,
-        ...(typeFilter && { type: typeFilter }),
-        ...(statusFilter && { status: statusFilter }),
-        ...(assetFilter && { asset: assetFilter }),
-      });
+  const showNotice = (text: string) => {
+    setNotice(text)
+    window.setTimeout(() => setNotice(''), 6000)
+  }
 
-      const res = await fetch(`/api/admin/ledger?${params}`, {
-        credentials: 'include',
-      });
-
-      if (!res.ok) throw new Error('获取账本失败');
-      
-      const data = await res.json();
-      setEntries(data.items || []);
-      setTotalCount(data.total || 0);
-      setTotalPages(Math.ceil((data.total || 0) / pageSize));
-    } catch (err) {
-      console.error('Failed to fetch ledger:', err);
-      // Fallback mock data
-      setEntries([
-        { id: '1', txId: 'tx_001', userId: 'u1', userName: '张三', type: 'deposit', asset: 'USDT', amount: '+50,000', balanceBefore: '0', balanceAfter: '50,000', chain: 'ethereum', txHash: '0xabc...def', status: 'confirmed', createdAt: '2024-12-01 10:00', confirmedAt: '2024-12-01 10:02' },
-        { id: '2', txId: 'tx_002', userId: 'u2', userName: '李四', type: 'withdrawal', asset: 'USDT', amount: '-100,000', balanceBefore: '150,000', balanceAfter: '50,000', chain: 'polygon', txHash: '0x123...456', status: 'confirmed', createdAt: '2024-12-01 09:30', confirmedAt: '2024-12-01 09:32' },
-        { id: '3', txId: 'tx_003', userId: 'u3', userName: '王五', type: 'trade', asset: 'USDC', amount: '-25,000', balanceBefore: '100,000', balanceAfter: '75,000', relatedOrderId: 'order_123', status: 'confirmed', createdAt: '2024-11-30 15:00', confirmedAt: '2024-11-30 15:00' },
-        { id: '4', txId: 'tx_004', userId: 'u1', userName: '张三', type: 'fee', asset: 'USDT', amount: '-20', balanceBefore: '50,000', balanceAfter: '49,980', status: 'confirmed', createdAt: '2024-11-30 10:00', confirmedAt: '2024-11-30 10:00' },
-        { id: '5', txId: 'tx_005', userId: 'u4', userName: '赵六', type: 'deposit', asset: 'USDT', amount: '+500,000', balanceBefore: '0', balanceAfter: '500,000', chain: 'bsc', txHash: '0x999...000', status: 'pending', createdAt: '2024-12-01 11:00' },
-      ]);
-      setTotalCount(5);
-      setTotalPages(1);
-    } finally {
-      setLoading(false);
+  const act = async (row: Adjustment, action: 'approve' | 'reject' | 'post') => {
+    let reason: string | null = null
+    if (action === 'post') {
+      if (!window.confirm('确认过账该调整单？将通过不可变账本写入一笔记账分录。')) return
+    } else {
+      reason = window.prompt(action === 'approve' ? '通过理由（可选）' : '驳回理由（必填）', '')
+      if (action === 'reject' && !reason) return
     }
-  };
+    setBusy(row.id)
+    try {
+      const res = await fetch(`/api/admin/ledger/adjustments/${row.id}/${action}`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(action === 'post' ? {} : { reason: reason || undefined }),
+      })
+      const body = await res.json().catch(() => null)
+      if (!res.ok) throw new Error((body?.message as string) || `操作失败 (HTTP ${res.status})`)
+      showNotice(action === 'approve' ? '已通过（等待过账）' : action === 'reject' ? '已驳回' : '已过账（写入账本）')
+      await adjustments.reload()
+    } catch (err) {
+      showNotice(err instanceof Error ? err.message : '操作失败')
+    } finally {
+      setBusy('')
+    }
+  }
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    setCurrentPage(1);
-    fetchLedger();
-  };
+  const reconColumns: Col<ReconRun>[] = [
+    { key: 'provider', label: '来源', render: (row) => <span className="font-medium">{row.provider}</span> },
+    {
+      key: 'asset',
+      label: '资产',
+      render: (row) => (
+        <span>
+          <span className="font-mono text-xs">{row.assetCode}</span>
+          {row.network && <span className="ml-1.5 text-xs text-text-faint">{row.network}</span>}
+        </span>
+      ),
+    },
+    { key: 'expected', label: '账本余额（原子）', render: (row) => <span className="tabular-nums">{row.expectedAtomicBalance}</span> },
+    { key: 'observed', label: '托管观测（原子）', render: (row) => <span className="tabular-nums">{row.observedAtomicBalance}</span> },
+    {
+      key: 'diff',
+      label: '差异',
+      render: (row) => (
+        <span className={row.differenceAtomicAmount === '0' ? 'tabular-nums text-text-faint' : 'tabular-nums font-medium text-rose-600'}>{row.differenceAtomicAmount}</span>
+      ),
+    },
+    { key: 'state', label: '状态', render: (row) => <StatusPill value={row.state} /> },
+    { key: 'cases', label: '差异单', render: (row) => <span className="text-xs text-text-faint">{row.cases.length ? `${row.cases.length} 个` : '—'}</span> },
+    { key: 'completedAt', label: '完成时间', render: (row) => <span className="text-xs text-text-faint">{formatDateTime(row.completedAt)}</span> },
+  ]
 
-  const handleExport = () => {
-    // TODO: Export to CSV
-    alert('导出功能开发中...');
-  };
+  const adjColumns: Col<Adjustment>[] = [
+    {
+      key: 'account',
+      label: '目标账户',
+      render: (row) => (
+        <span>
+          <span className="font-medium">{row.purpose}</span>
+          <span className="ml-1.5 text-xs text-text-faint">
+            {row.ownerType === 'user' ? `用户 ${shortId(row.userId)}` : row.ownerReference || row.ownerType}
+          </span>
+          <span className="ml-1.5 font-mono text-xs text-text-faint">{row.assetCode}</span>
+        </span>
+      ),
+    },
+    {
+      key: 'amount',
+      label: '方向 / 金额（原子）',
+      render: (row) => (
+        <span className={row.side === 'credit' ? 'tabular-nums text-emerald-600' : 'tabular-nums text-amber-600'}>
+          {row.side === 'credit' ? '+' : '−'} {row.atomicAmount}
+        </span>
+      ),
+    },
+    { key: 'reasonCode', label: '理由', render: (row) => <span className="text-xs">{row.reasonCode}</span> },
+    { key: 'state', label: '状态', render: (row) => <StatusPill value={row.state} /> },
+    {
+      key: 'requestedBy',
+      label: '请求 / 决策',
+      render: (row) => (
+        <span className="text-xs text-text-faint">
+          {shortId(row.requestedBy)}
+          {row.approvedBy ? ` → ${shortId(row.approvedBy)}` : ''}
+        </span>
+      ),
+    },
+    { key: 'requestedAt', label: '时间', render: (row) => <span className="text-xs text-text-faint">{formatDateTime(row.requestedAt)}</span> },
+    {
+      key: 'actions',
+      label: '操作',
+      className: 'text-right',
+      render: (row) => (
+        <span className="flex items-center justify-end gap-1.5">
+          {row.state === 'requested' && (
+            <>
+              <button
+                type="button"
+                disabled={busy === row.id}
+                onClick={() => void act(row, 'approve')}
+                className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-500/20 disabled:opacity-50"
+              >
+                通过
+              </button>
+              <button
+                type="button"
+                disabled={busy === row.id}
+                onClick={() => void act(row, 'reject')}
+                className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-500/20 disabled:opacity-50"
+              >
+                驳回
+              </button>
+            </>
+          )}
+          {row.state === 'approved' && (
+            <button
+              type="button"
+              disabled={busy === row.id}
+              onClick={() => void act(row, 'post')}
+              className="rounded-lg bg-mint/10 px-2.5 py-1 text-xs font-medium text-mint hover:bg-mint/20 disabled:opacity-50"
+            >
+              过账
+            </button>
+          )}
+        </span>
+      ),
+    },
+  ]
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">账本明细</h1>
-            <p className="text-muted-foreground mt-1">所有用户资产变动流水，不可篡改的审计日志</p>
+      <div className="space-y-5">
+        <PageHeader
+          title="账本明细"
+          subtitle="托管对账记录与受控账本调整单（调整需双人审批，通过后过账写入不可变账本）"
+          actions={<RefreshButton loading={recon.loading || adjustments.loading} onClick={() => { recon.reload(); adjustments.reload() }} />}
+        />
+
+        {notice && <div className="animate-pop rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600">{notice}</div>}
+
+        <Panel title={`托管对账（${recon.data?.runs?.length ?? 0}）`} subtitle="现金余额对照：账本期望 vs 托管地址观测" actions={<FilterTabs options={RECON_TABS} value={reconState} onChange={setReconState} />} delay={40} pad={false}>
+          <div className="px-5 pb-5">
+            <DataTable columns={reconColumns} rows={recon.data?.runs ?? null} loading={recon.loading} error={recon.error} onReload={recon.reload} emptyHint="暂无对账记录 — 由资金运营侧定时登记" />
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={fetchLedger} className="flex items-center gap-2">
-              <RefreshCw className="w-4 h-4" />
-              刷新
-            </Button>
-            <Button variant="outline" onClick={handleExport} className="flex items-center gap-2">
-              <Download className="w-4 h-4" />
-              导出 CSV
-            </Button>
+        </Panel>
+
+        <Panel
+          title={`调整单（${adjustments.data?.adjustments?.length ?? 0}）`}
+          subtitle="requested → approved → posted；请求人与审批人必须不同（双人控制）"
+          actions={<FilterTabs options={ADJ_TABS} value={adjState} onChange={setAdjState} />}
+          delay={90}
+          pad={false}
+        >
+          <div className="px-5 pb-5">
+            <DataTable
+              columns={adjColumns}
+              rows={adjustments.data?.adjustments ?? null}
+              loading={adjustments.loading}
+              error={adjustments.error}
+              onReload={adjustments.reload}
+              emptyHint="暂无调整单"
+            />
           </div>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-4">
-          <Card className="glass-strong">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">今日入账(USD)</p>
-                  <p className="text-2xl font-bold mt-1 text-mint">
-                    {entries.filter(e => e.type === 'deposit' && new Date(e.createdAt).toDateString() === new Date().toDateString()).reduce((sum, e) => sum + Math.abs(parseFloat(e.amount)), 0).toLocaleString()}
-                  </p>
-                </div>
-                <TrendingUp className="w-10 h-10 text-mint/50" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-strong">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">今日出账(USD)</p>
-                  <p className="text-2xl font-bold mt-1 text-red-600">
-                    {entries.filter(e => ['withdrawal', 'fee'].includes(e.type) && new Date(e.createdAt).toDateString() === new Date().toDateString()).reduce((sum, e) => sum + Math.abs(parseFloat(e.amount)), 0).toLocaleString()}
-                  </p>
-                </div>
-                <TrendingDown className="w-10 h-10 text-red-600/50" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-strong">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">待确认交易</p>
-                  <p className="text-2xl font-bold mt-1 text-amber-600">{entries.filter(e => e.status === 'pending').length}</p>
-                </div>
-                <Clock className="w-10 h-10 text-amber-600/50" />
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="glass-strong">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground">总记录数</p>
-                  <p className="text-2xl font-bold mt-1">{totalCount.toLocaleString()}</p>
-                </div>
-                <DollarSign className="w-10 h-10 text-sky-600/50" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters & Search */}
-        <Card className="glass-strong">
-          <CardContent className="p-6">
-            <form onSubmit={handleSearch} className="flex flex-col sm:flex-row gap-4">
-              <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                <Input
-                  placeholder="搜索用户、TXID、交易哈希..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="pl-10"
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch(e as any)}
-                />
-              </div>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-full sm:w-32">
-                  <SelectValue placeholder="类型" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="deposit">充值</SelectItem>
-                  <SelectItem value="withdrawal">提现</SelectItem>
-                  <SelectItem value="trade">交易</SelectItem>
-                  <SelectItem value="fee">手续费</SelectItem>
-                  <SelectItem value="reward">奖励</SelectItem>
-                  <SelectItem value="penalty">罚金</SelectItem>
-                  <SelectItem value="adjustment">调整</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full sm:w-32">
-                  <SelectValue placeholder="状态" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="pending">待确认</SelectItem>
-                  <SelectItem value="confirmed">已确认</SelectItem>
-                  <SelectItem value="failed">失败</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={assetFilter} onValueChange={setAssetFilter}>
-                <SelectTrigger className="w-full sm:w-28">
-                  <SelectValue placeholder="资产" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
-                  <SelectItem value="USDT">USDT</SelectItem>
-                  <SelectItem value="USDC">USDC</SelectItem>
-                  <SelectItem value="BTC">BTC</SelectItem>
-                  <SelectItem value="ETH">ETH</SelectItem>
-                </SelectContent>
-              </Select>
-              <Button type="submit" className="flex items-center gap-2">
-                <Filter className="w-4 h-4" />
-                筛选
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        {/* Ledger Table */}
-        <Card className="glass-strong">
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>账本流水 (共 {totalCount} 条)</CardTitle>
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-muted-foreground">每页</span>
-              <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
-                <SelectTrigger className="w-[80px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="20">20</SelectItem>
-                  <SelectItem value="50">50</SelectItem>
-                  <SelectItem value="100">100</SelectItem>
-                  <SelectItem value="200">200</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            {loading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-mint" />
-              </div>
-            ) : entries.length === 0 ? (
-              <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
-                <DollarSign className="w-12 h-12 mb-4 opacity-50" />
-                <p>暂无账本记录</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-16">ID</TableHead>
-                      <TableHead>用户</TableHead>
-                      <TableHead className="w-24">类型</TableHead>
-                      <TableHead className="w-32">资产/金额</TableHead>
-                      <TableHead className="w-36">余额变动</TableHead>
-                      <TableHead className="w-24">状态</TableHead>
-                      <TableHead className="w-32">链/TX Hash</TableHead>
-                      <TableHead className="w-32">时间</TableHead>
-                      <TableHead className="w-16">操作</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {entries.map((entry) => (
-                      <TableRow key={entry.id} className="hover:bg-ink/[0.05]">
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          {entry.txId.slice(0, 8)}...
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <p className="font-medium">{entry.userName}</p>
-                            <p className="text-sm text-muted-foreground">{entry.userId}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn(TYPE_STYLES[entry.type])}>
-                            {TYPE_LABELS[entry.type]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">
-                            <p className={cn('font-mono tabular-nums font-medium', parseFloat(entry.amount) > 0 ? 'text-mint' : 'text-red-600')}>
-                              {entry.amount} {entry.asset}
-                            </p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-xs">
-                            <p className="text-muted-foreground">前: {entry.balanceBefore}</p>
-                            <p>后: {entry.balanceAfter}</p>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn(STATUS_STYLES[entry.status])}>
-                            {STATUS_LABELS[entry.status]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          {entry.chain && (
-                            <Badge variant="outline" className="mb-1">{entry.chain}</Badge>
-                          )}
-                          {entry.txHash && (
-                            <p className="font-mono text-xs text-muted-foreground truncate max-w-[120px]">
-                              {entry.txHash}
-                            </p>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          <p>{new Date(entry.createdAt).toLocaleString('zh-CN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-                          {entry.confirmedAt && (
-                            <p className="text-xs text-mint">确认: {new Date(entry.confirmedAt).toLocaleString('zh-CN', { hour: '2-digit', minute: '2-digit' })}</p>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <Eye className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => window.open(`/ledger/${entry.id}`, '_blank')}>
-                                <Eye className="w-4 h-4 mr-2" />
-                                查看详情
-                              </DropdownMenuItem>
-                              {entry.txHash && (
-                                <DropdownMenuItem onClick={() => window.open(`/tx/${entry.txHash}`, '_blank')}>
-                                  查看链上交易
-                                </DropdownMenuItem>
-                              )}
-                              {entry.relatedOrderId && (
-                                <DropdownMenuItem onClick={() => window.open(`/orders/${entry.relatedOrderId}`, '_blank')}>
-                                  查看关联订单
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="px-4 py-4 border-t border-ink/[0.07]">
-                <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  onPageChange={setCurrentPage}
-                  showPageSize
-                  pageSize={pageSize}
-                  onPageSizeChange={setPageSize}
-                />
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        </Panel>
       </div>
     </AdminLayout>
-  );
+  )
 }

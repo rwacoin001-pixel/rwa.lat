@@ -66,6 +66,18 @@ export class NotificationService {
     return { markedCount: result.affected ?? 0 }
   }
 
+  /** 管理端：全量最近通知（跨用户），用于管理台「通知管理」页。 */
+  async listForAdmin(limit = 100, kind?: string): Promise<NotificationView[]> {
+    const where: Record<string, unknown> = {}
+    if (kind) where.kind = kind
+    const rows = await this.notificationRepo.find({
+      where,
+      order: { created_at: 'DESC' },
+      take: Math.min(Math.max(limit, 1), 200),
+    })
+    return rows.map((r) => this.toView(r))
+  }
+
   async create(dto: {
     recipient_user_id: string
     channel: string

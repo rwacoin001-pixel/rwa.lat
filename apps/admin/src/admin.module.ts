@@ -19,6 +19,8 @@ import { AdminBasketController } from './admin-basket.controller'
 import { AdminBasketService } from './admin-basket.service'
 import { AdminCommunityController } from './admin-community-ops.controller'
 import { AdminCommunityOpsService } from './admin-community-ops.service'
+import { AdminCoreOpsController } from './admin-core-ops.controller'
+import { AdminCoreOpsService } from './admin-core-ops.service'
 
 @Module({
   imports: [
@@ -42,6 +44,7 @@ import { AdminCommunityOpsService } from './admin-community-ops.service'
     AdminFundsOpsController,
     AdminBasketController,
     AdminCommunityController,
+    AdminCoreOpsController,
   ],
   providers: [
     AdminService,
@@ -53,6 +56,7 @@ import { AdminCommunityOpsService } from './admin-community-ops.service'
     AdminWalletOpsService,
     AdminBasketService,
     AdminCommunityOpsService,
+    AdminCoreOpsService,
   ],
 })
 export class AdminModule {

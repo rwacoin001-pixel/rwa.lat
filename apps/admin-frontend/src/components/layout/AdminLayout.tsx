@@ -8,9 +8,11 @@ import {
   Activity,
   ArrowUpRight,
   Bell,
+  BellRing,
   BookOpen,
   Bot,
   Boxes,
+  CheckCircle2,
   ChevronDown,
   ClipboardCheck,
   FileText,
@@ -38,6 +40,7 @@ import {
   TrendingUp,
   Users,
   Wallet,
+  Workflow,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -118,6 +121,9 @@ const NAV_SECTIONS: NavSection[] = [
     icon: Settings,
     items: [
       { name: 'AI 运维', href: '/ai-ops', icon: Bot },
+      { name: '审批中心', href: '/approvals', icon: CheckCircle2 },
+      { name: '作业队列', href: '/job-queue', icon: Workflow },
+      { name: '通知管理', href: '/notifications', icon: BellRing },
       { name: '服务商', href: '/providers', icon: Plug },
       { name: '地区配置', href: '/regions', icon: Globe },
       { name: '系统设置', href: '/settings', icon: Settings },

@@ -41,6 +41,12 @@ export class AdminNotificationController {
     private readonly rbac: AdminRbacService,
   ) {}
 
+  @Get()
+  async list(@CurrentAdmin() admin: AuthenticatedAdmin, @Query('limit') limit?: string, @Query('kind') kind?: string) {
+    await this.rbac.assertPermission(admin.id, 'notifications.manage')
+    return this.svc.listForAdmin(limit ? Number(limit) : 100, kind)
+  }
+
   @Post()
   async create(@CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: CreateNotificationDto) {
     await this.rbac.assertPermission(admin.id, 'notifications.manage')
