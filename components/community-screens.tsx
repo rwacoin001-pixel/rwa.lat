@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { ArrowLeft, Bot, Heart, MessageCircle, RotateCw } from 'lucide-react'
+import { ArrowLeft, Bot, Flag, Heart, MessageCircle, RotateCw } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import type { RwaScreen } from '@/lib/rwa-routes'
@@ -12,6 +12,7 @@ import {
   getCommunityPost,
   getCommunityProfile,
   getCommunityTopics,
+  submitCommunityReport,
   type CommunityAuthor,
   type CommunityPost,
   type CommunityPostResponse,
@@ -235,6 +236,10 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
   const timeAgo = useTimeAgo()
   const [data, setData] = useState<CommunityPostResponse | null>(null)
   const [failed, setFailed] = useState(false)
+  const [reportOpen, setReportOpen] = useState(false)
+  const [reportReason, setReportReason] = useState<string | null>(null)
+  const [reportDetails, setReportDetails] = useState('')
+  const [reportState, setReportState] = useState<'idle' | 'sending' | 'done' | 'failed'>('idle')
 
   const load = useCallback(async () => {
     if (!postId) {
@@ -253,11 +258,41 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
     void load()
   }, [load])
 
+  const closeReport = () => {
+    setReportOpen(false)
+    setReportState('idle')
+    setReportReason(null)
+    setReportDetails('')
+  }
+
+  const sendReport = async () => {
+    if (!postId || !reportReason || reportState === 'sending') return
+    setReportState('sending')
+    try {
+      const reason = reportDetails.trim() ? `${reportReason} — ${reportDetails.trim()}`.slice(0, 280) : reportReason
+      await submitCommunityReport({ targetType: 'post', targetId: postId, reason })
+      setReportState('done')
+    } catch {
+      setReportState('failed')
+    }
+  }
+
+  const reportReasons = [
+    { key: 'spam', label: t('community.reportSpam') },
+    { key: 'scam', label: t('community.reportScam') },
+    { key: 'harass', label: t('community.reportHarass') },
+    { key: 'other', label: t('community.reportOther') },
+  ]
+
   return (
     <section className="screen community-post">
       <header className="community-detail-head">
         <button type="button" onClick={() => go('community')} aria-label={t('common.back')}><ArrowLeft size={19} /></button>
         <b>{t('community.title')}</b>
+        <span style={{ flex: 1 }} aria-hidden="true" />
+        {postId ? (
+          <button type="button" onClick={() => setReportOpen(true)} aria-label={t('community.report')}><Flag size={16} /></button>
+        ) : null}
       </header>
       {!postId ? (
         <div className="community-empty">
@@ -323,6 +358,34 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
             ))}
           </div>
         </>
+      )}
+      {reportOpen && (
+        <div className="community-report-overlay" onClick={closeReport}>
+          <div className="community-report-sheet" role="dialog" aria-modal="true" onClick={(event) => event.stopPropagation()}>
+            {reportState === 'done' ? (
+              <>
+                <b className="community-report-title">{t('community.reportThanks')}</b>
+                <button type="button" className="community-report-submit" onClick={closeReport}>{t('common.back')}</button>
+              </>
+            ) : (
+              <>
+                <b className="community-report-title">{t('community.reportTitle')}</b>
+                <div className="community-report-options">
+                  {reportReasons.map((option) => (
+                    <button key={option.key} type="button" className={reportReason === option.label ? 'is-active' : ''} onClick={() => setReportReason(option.label)}>
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <textarea className="community-report-details" rows={2} maxLength={200} placeholder={t('community.reportDetails')} value={reportDetails} onChange={(event) => setReportDetails(event.target.value)} />
+                {reportState === 'failed' ? <small className="community-report-error">{t('community.reportFailed')}</small> : null}
+                <button type="button" className="community-report-submit" disabled={!reportReason || reportState === 'sending'} onClick={() => void sendReport()}>
+                  {reportState === 'sending' ? '…' : t('community.reportSubmit')}
+                </button>
+              </>
+            )}
+          </div>
+        </div>
       )}
     </section>
   )

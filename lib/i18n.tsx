@@ -39,6 +39,9 @@ const en = {
   'community.comments': 'Comments', 'community.joinTitle': 'Sign in to join the discussion', 'community.joinBody': 'Public reading stays open. Posting and replies need a secure account.',
   'community.statsPosts': 'Posts', 'community.statsFollowers': 'Followers', 'community.statsFollowing': 'Following',
   'community.viewProfile': 'View profile', 'community.recentPosts': 'Recent posts', 'community.backToFeed': 'Back to community',
+  'community.report': 'Report', 'community.reportTitle': 'Report this post',
+  'community.reportSpam': 'Spam or ads', 'community.reportScam': 'Scam or fraud', 'community.reportHarass': 'Harassment or hate', 'community.reportOther': 'Something else',
+  'community.reportDetails': 'Add details (optional)', 'community.reportSubmit': 'Submit report', 'community.reportThanks': 'Report received. Thank you.', 'community.reportFailed': 'Could not submit. Try again later.',
 } as const
 
 type TranslationKey = keyof typeof en
@@ -71,6 +74,9 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'community.comments': '评论', 'community.joinTitle': '登录后参与讨论', 'community.joinBody': '浏览保持开放；发帖与回复需要安全账户。',
     'community.statsPosts': '帖子', 'community.statsFollowers': '关注者', 'community.statsFollowing': '正在关注',
     'community.viewProfile': '查看主页', 'community.recentPosts': '最近发布', 'community.backToFeed': '返回社区',
+    'community.report': '举报', 'community.reportTitle': '举报这条帖子',
+    'community.reportSpam': '垃圾广告', 'community.reportScam': '诈骗或欺诈', 'community.reportHarass': '骚扰或仇恨', 'community.reportOther': '其他问题',
+    'community.reportDetails': '补充说明（可选）', 'community.reportSubmit': '提交举报', 'community.reportThanks': '已收到举报，感谢反馈。', 'community.reportFailed': '提交失败，请稍后重试。',
   },
   hi: {
     'nav.home': 'होम', 'nav.invest': 'निवेश', 'nav.portfolio': 'पोर्टफोलियो', 'nav.wallet': 'वॉलेट', 'nav.ai': 'AI सलाहकार', 'nav.community': 'समुदाय',

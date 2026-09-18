@@ -95,3 +95,13 @@ export async function getCommunityComments(postId: string, params: { before?: st
 export async function getCommunityProfile(handle: string) {
   return apiGet<CommunityProfileResponse>(`/v1/community/profiles/${encodeURIComponent(handle)}`)
 }
+
+export async function submitCommunityReport(params: { targetType: 'post' | 'comment' | 'profile'; targetId: string; reason: string }) {
+  const response = await fetch(`${API_BASE_URL}/v1/community/reports`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', accept: 'application/json' },
+    body: JSON.stringify(params),
+  })
+  if (!response.ok) throw new Error(`community api ${response.status}`)
+  return (await response.json()) as { id: string; state: string; createdAt: string }
+}

@@ -14,11 +14,13 @@ import {
   CommunityPost,
   CommunityProfile,
   CommunityQueueItem,
+  CommunityReport,
   CommunityTopic,
 } from './community.entities'
 import {
   COMMUNITY_COMMENT_BODY_MAX,
   COMMUNITY_POST_BODY_MAX,
+  COMMUNITY_REPORT_REASON_MAX,
   decodeCursor,
   encodeCursor,
   isValidHandle,
@@ -31,11 +33,13 @@ import {
   CommunityFeedQueryDto,
   CommunityFollowDto,
   CommunityLikeDto,
+  CreateCommunityReportDto,
   EnqueueCommunityDto,
   PublishCommunityCommentDto,
   PublishCommunityPostDto,
   PublishDueCommunityQueueDto,
   ReviewCommunityQueueItemDto,
+  ReviewCommunityReportDto,
   UpsertCommunityProfileDto,
 } from './dto/community.dto'
 
@@ -62,6 +66,7 @@ export class CommunityService {
     @InjectRepository(CommunityFollow) private readonly follows: Repository<CommunityFollow>,
     @InjectRepository(CommunityTopic) private readonly topics: Repository<CommunityTopic>,
     @InjectRepository(CommunityQueueItem) private readonly queue: Repository<CommunityQueueItem>,
+    @InjectRepository(CommunityReport) private readonly reports: Repository<CommunityReport>,
     private readonly dataSource: DataSource,
   ) {}
 
@@ -176,6 +181,25 @@ export class CommunityService {
         description: topic.description ?? null,
       })),
     }
+  }
+
+  // ---- public reports ----
+
+  async submitReport(dto: CreateCommunityReportDto) {
+    const reason = dto.reason.trim()
+    if (reason.length < 2 || reason.length > COMMUNITY_REPORT_REASON_MAX) {
+      throw new BadRequestException(COMMUNITY_ERROR_CODES.REPORT_REASON_INVALID)
+    }
+    await this.assertReportTarget(dto.targetType, dto.targetId)
+    const report = this.reports.create({
+      target_type: dto.targetType,
+      target_id: dto.targetId,
+      profile_id: null,
+      reason,
+      state: 'open',
+    })
+    const saved = await this.reports.save(report)
+    return { id: saved.id, state: saved.state, createdAt: saved.created_at }
   }
 
   // ---- internal (engine / operator) operations ----
@@ -349,6 +373,25 @@ export class CommunityService {
     return { published, failed, publishedIds }
   }
 
+  async listReports(state?: string, limit = 100) {
+    const where = state ? { state: state as CommunityReport['state'] } : {}
+    const items = await this.reports.find({
+      where,
+      order: { created_at: 'DESC' },
+      take: Math.min(Math.max(limit, 1), 500),
+    })
+    return { items: items.map((report) => this.shapeReport(report)) }
+  }
+
+  async resolveReport(id: string, dto: ReviewCommunityReportDto) {
+    const report = await this.reports.findOne({ where: { id } })
+    if (!report) throw new NotFoundException(COMMUNITY_ERROR_CODES.REPORT_NOT_FOUND)
+    if (report.state !== 'open') throw new BadRequestException(COMMUNITY_ERROR_CODES.REPORT_STATE_INVALID)
+    report.state = dto.action
+    const saved = await this.reports.save(report)
+    return this.shapeReport(saved)
+  }
+
   async stats() {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000)
     const [profiles, posts, comments, queuePending, postsLast24h] = await Promise.all([
@@ -459,6 +502,32 @@ export class CommunityService {
     const repo = manager ? manager.getRepository(CommunityTopic) : this.topics
     const rows = await repo.find({ select: { slug: true } })
     return new Set(rows.map((row) => row.slug))
+  }
+
+  private async assertReportTarget(targetType: 'post' | 'comment' | 'profile', targetId: string) {
+    if (targetType === 'post') {
+      const post = await this.posts.findOne({ where: { id: targetId } })
+      if (!post || post.state === 'removed') throw new NotFoundException(COMMUNITY_ERROR_CODES.TARGET_NOT_FOUND)
+      return
+    }
+    if (targetType === 'comment') {
+      const comment = await this.comments.findOne({ where: { id: targetId } })
+      if (!comment || comment.state === 'removed') throw new NotFoundException(COMMUNITY_ERROR_CODES.TARGET_NOT_FOUND)
+      return
+    }
+    const profile = await this.profiles.findOne({ where: { id: targetId } })
+    if (!profile) throw new NotFoundException(COMMUNITY_ERROR_CODES.TARGET_NOT_FOUND)
+  }
+
+  private shapeReport(report: CommunityReport) {
+    return {
+      id: report.id,
+      targetType: report.target_type,
+      targetId: report.target_id,
+      reason: report.reason,
+      state: report.state,
+      createdAt: report.created_at,
+    }
   }
 
   private isUniqueViolation(error: unknown): boolean {

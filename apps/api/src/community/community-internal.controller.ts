@@ -23,6 +23,7 @@ import {
   PublishCommunityPostDto,
   PublishDueCommunityQueueDto,
   ReviewCommunityQueueItemDto,
+  ReviewCommunityReportDto,
   UpsertCommunityProfileDto,
 } from './dto/community.dto'
 
@@ -103,6 +104,18 @@ export class InternalCommunityController {
   @ApiOperation({ summary: 'Publish approved queue items whose schedule is due' })
   publishDue(@Body() dto: PublishDueCommunityQueueDto) {
     return this.community.publishDueQueueItems(dto)
+  }
+
+  @Get('reports')
+  @ApiOperation({ summary: 'List content reports (moderation inbox)' })
+  reports(@Query('state') state?: string, @Query('limit') limit?: string) {
+    return this.community.listReports(state, limit ? Number(limit) : 100)
+  }
+
+  @Put('reports/:id')
+  @ApiOperation({ summary: 'Mark a content report reviewed or dismissed' })
+  resolveReport(@Param('id', new ParseUUIDPipe()) id: string, @Body() dto: ReviewCommunityReportDto) {
+    return this.community.resolveReport(id, dto)
   }
 
   @Get('stats')

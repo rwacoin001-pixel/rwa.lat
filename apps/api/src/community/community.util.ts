@@ -2,6 +2,7 @@ export const COMMUNITY_POST_BODY_MAX = 4_000
 export const COMMUNITY_COMMENT_BODY_MAX = 2_000
 export const COMMUNITY_IMAGES_MAX = 4
 export const COMMUNITY_TOPICS_MAX = 4
+export const COMMUNITY_REPORT_REASON_MAX = 280
 
 const HANDLE_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])$/
 

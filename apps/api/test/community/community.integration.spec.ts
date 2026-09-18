@@ -129,4 +129,27 @@ describeDatabase('community schema', () => {
     const remaining = (await dataSource.query(`SELECT count(*)::int AS count FROM app.community_comments WHERE post_id = $1`, [post.id])) as Array<{ count: number }>
     expect(remaining[0].count).toBe(0)
   })
+
+  it('stores content reports with validated target types and states', async () => {
+    const profile = await createProfile('report')
+    const post = await createPost(profile.id)
+    const [openReport] = await dataSource.query(
+      `INSERT INTO app.community_reports (id, target_type, target_id, reason)
+       VALUES ($1, 'post', $2, 'spam link') RETURNING id, state, target_type`,
+      [randomUUID(), post.id],
+    )
+    expect(openReport).toMatchObject({ state: 'open', target_type: 'post' })
+
+    await expect(
+      dataSource.query(
+        `INSERT INTO app.community_reports (id, target_type, target_id, reason)
+         VALUES ($1, 'bogus', $2, 'x')`,
+        [randomUUID(), post.id],
+      ),
+    ).rejects.toMatchObject({ code: '23514' })
+
+    await expect(
+      dataSource.query(`UPDATE app.community_reports SET state = 'bogus' WHERE id = $1`, [openReport.id]),
+    ).rejects.toMatchObject({ code: '23514' })
+  })
 })

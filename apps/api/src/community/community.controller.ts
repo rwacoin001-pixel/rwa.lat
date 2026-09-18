@@ -1,7 +1,7 @@
-import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common'
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CommunityService } from './community.service'
-import { CommunityCommentsQueryDto, CommunityFeedQueryDto } from './dto/community.dto'
+import { CommunityCommentsQueryDto, CommunityFeedQueryDto, CreateCommunityReportDto } from './dto/community.dto'
 
 /**
  * Public community reads. Anonymous access by design: the feed, posts,
@@ -40,5 +40,11 @@ export class CommunityController {
   @ApiOperation({ summary: 'Get a community profile with stats and recent posts' })
   profile(@Param('handle') handle: string) {
     return this.community.getProfile(handle)
+  }
+
+  @Post('reports')
+  @ApiOperation({ summary: 'Submit a content report for a post, comment or profile (anonymous accepted)' })
+  report(@Body() dto: CreateCommunityReportDto) {
+    return this.community.submitReport(dto)
   }
 }

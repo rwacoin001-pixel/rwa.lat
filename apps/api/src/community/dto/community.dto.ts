@@ -17,7 +17,7 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator'
-import { COMMUNITY_COMMENT_BODY_MAX, COMMUNITY_POST_BODY_MAX } from '../community.util'
+import { COMMUNITY_COMMENT_BODY_MAX, COMMUNITY_POST_BODY_MAX, COMMUNITY_REPORT_REASON_MAX } from '../community.util'
 
 const HANDLE_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}$/
 const POST_SOURCES = ['original', 'rewrite', 'data', 'event', 'user', 'import'] as const
@@ -253,4 +253,22 @@ export class PublishDueCommunityQueueDto {
   @Min(1)
   @Max(200)
   limit?: number
+}
+
+export class CreateCommunityReportDto {
+  @IsIn(['post', 'comment', 'profile'])
+  targetType!: 'post' | 'comment' | 'profile'
+
+  @IsUUID()
+  targetId!: string
+
+  @IsString()
+  @MinLength(2)
+  @MaxLength(COMMUNITY_REPORT_REASON_MAX)
+  reason!: string
+}
+
+export class ReviewCommunityReportDto {
+  @IsIn(['reviewed', 'dismissed'])
+  action!: 'reviewed' | 'dismissed'
 }
