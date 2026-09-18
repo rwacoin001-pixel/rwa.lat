@@ -2,6 +2,7 @@ import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } fro
 import { ConfigService } from '@nestjs/config'
 import { hostname } from 'node:os'
 import { randomUUID } from 'node:crypto'
+import { DataSource } from 'typeorm'
 import { JobQueueService } from '../job-queue/job-queue.service'
 import { BASKET_OPS_QUEUE } from './basket.constants'
 import { BasketNavService } from './basket.nav.service'
@@ -50,7 +51,7 @@ export class BasketOpsWorker implements OnApplicationBootstrap, OnApplicationShu
     private readonly queue: JobQueueService,
     private readonly nav: BasketNavService,
     private readonly rebalance: BasketRebalanceService,
-    private readonly dataSource: import('typeorm').DataSource,
+    private readonly dataSource: DataSource,
     config: ConfigService,
   ) {
     this.workerEnabled = config.get<string>('BASKET_OPS_WORKER_ENABLED') === 'true'
