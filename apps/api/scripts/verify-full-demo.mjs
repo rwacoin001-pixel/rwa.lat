@@ -8,6 +8,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 
 const baseUrl = process.env.RWA_API_URL ?? 'http://127.0.0.1:4000/v1'
+const adminBaseUrl = process.env.RWA_ADMIN_API_URL ?? 'http://127.0.0.1:4100/v1'
 const env = Object.fromEntries(
   readFileSync(resolve(process.cwd(), '.env'), 'utf8')
     .split(/\r?\n/)
@@ -43,6 +44,23 @@ const put = (path, body, headers) => request(path, { method: 'PUT', headers, bod
 const authHeaders = (token) => ({ authorization: `Bearer ${token}` })
 const idempotency = (prefix) => `${prefix}-${randomUUID()}`
 
+const adminPassword = process.env.RWA_ADMIN_PASSWORD ?? env.RWA_ADMIN_PASSWORD
+if (!adminPassword) throw new Error('RWA_ADMIN_PASSWORD is required for the local Demo acceptance run.')
+const adminLoginResponse = await fetch(`${adminBaseUrl}/admin/auth/login`, {
+  method: 'POST',
+  headers: { 'content-type': 'application/json' },
+  body: JSON.stringify({
+    email: process.env.RWA_ADMIN_EMAIL ?? env.RWA_ADMIN_EMAIL ?? 'demo@admin.rwa.lat',
+    password: adminPassword,
+  }),
+})
+const adminLoginText = await adminLoginResponse.text()
+const adminLoginPayload = adminLoginText ? JSON.parse(adminLoginText) : null
+if (!adminLoginResponse.ok || !adminLoginPayload?.sessionToken) {
+  throw new Error(`Admin login failed (${adminLoginResponse.status}): ${JSON.stringify(adminLoginPayload)}`)
+}
+const adminHeaders = authHeaders(adminLoginPayload.sessionToken)
+
 const email = `acceptance-${Date.now()}-${randomBytes(4).toString('hex')}@demo.rwa.lat`
 const registration = await post('/auth/demo/register', { email, locale: 'en' })
 const login = await post('/auth/demo/login', { email, type: 'user' })
@@ -51,7 +69,7 @@ const headers = authHeaders(login.token)
 
 const kyc = await post('/compliance/kyc/start', { provider: 'stub' }, headers)
 await post('/compliance/kyc/submit', { providerCaseRef: `acceptance-${randomUUID()}` }, headers)
-await post(`/compliance/kyc/${kyc.id}/decision`, { decision: 'approved', reasonCode: 'demo_approved' })
+await post(`/compliance/kyc/${kyc.id}/decision`, { decision: 'approved', reasonCode: 'demo_approved' }, adminHeaders)
 
 const networks = await request('/wallet/networks')
 const arbitrum = networks.networks.find((network) => network.id === 'arbitrum')
@@ -112,21 +130,23 @@ const predictionMarket = await post('/demo-admin/predictions', {})
 const prediction = await createAndFill('prediction', '50000000', 'yes', predictionMarket)
 await post('/demo-admin/predictions/settle', { productId: prediction.productId, outcomeKey: 'yes' })
 
-const positions = await request(`/portfolio/positions?user_id=${encodeURIComponent(login.userId)}`)
+const positions = await request('/portfolio/positions', { headers })
 const rwaPosition = positions.find((position) => position.productId === rwa.productId && position.outcomeKey === 'long')
 if (!rwaPosition || BigInt(rwaPosition.quantityAtomicAmount) < 100000000n) {
   throw new Error('Filled RWA order did not produce a redeemable server-side position.')
 }
-const redemption = await post(`/portfolio/redemptions?user_id=${encodeURIComponent(login.userId)}`, {
+const redemption = await post('/portfolio/redemptions', {
   productId: rwa.productId,
   quantityAtomicAmount: '100000000',
   requestId: `acceptance-redemption-${randomUUID()}`,
-})
+}, headers)
 const completedRedemption = await post(`/demo-admin/orders/redemptions/${redemption.id}/complete`, {})
 if (completedRedemption.state !== 'completed') throw new Error('Demo redemption did not complete.')
 
 const recipientEmail = `recipient-${Date.now()}-${randomBytes(4).toString('hex')}@demo.rwa.lat`
 const recipientRegistration = await post('/auth/demo/register', { email: recipientEmail, locale: 'en' })
+const recipientLogin = await post('/auth/demo/login', { email: recipientEmail, type: 'user' })
+const recipientHeaders = authHeaders(recipientLogin.token)
 const transfer = await post('/wallet/transfers', {
   recipientUserId: recipientRegistration.userId,
   atomicAmount: '10000000',
@@ -141,58 +161,56 @@ const withdrawal = await post('/wallet/withdrawals', {
 const completedWithdrawal = await post(`/demo-admin/withdrawals/${withdrawal.id}/complete`, {})
 if (completedWithdrawal.state !== 'completed') throw new Error('Demo withdrawal did not complete.')
 
-const ticket = await post(`/user-ops/tickets?author_user_id=${encodeURIComponent(login.userId)}`, {
+const ticket = await post('/user-ops/tickets', {
   subject: 'Demo order review',
   body: 'Please review the completed demo order.',
   category: 'dispute',
   order_id: rwa.id,
   priority: 'normal',
-})
-await post(`/user-ops/tickets/${ticket.id}/messages?author_user_id=${encodeURIComponent(login.userId)}`, {
+}, headers)
+await post(`/user-ops/tickets/${ticket.id}/messages`, {
   body: 'I have attached the requested Demo details.',
-  attachments: { demo: true },
-})
-const adminTicket = await post(`/demo-admin/tickets/${ticket.id}/respond`, {
+}, headers)
+const adminTicket = await post(`/admin/tickets/${ticket.id}/respond`, {
   body: 'Demo operations is reviewing this request.',
   status: 'investigating',
   assignee: 'demo-ops',
-})
-const ticketTimeline = await request(`/user-ops/tickets/${ticket.id}/timeline?author_user_id=${encodeURIComponent(login.userId)}`)
+}, adminHeaders)
+const ticketTimeline = await request(`/user-ops/tickets/${ticket.id}/timeline`, { headers })
 if (adminTicket.ticket.status !== 'investigating' || ticketTimeline.messages.at(-1)?.actorType !== 'admin') {
   throw new Error('Support ticket timeline did not persist the Demo admin response.')
 }
 
-const invitation = await post(`/user-ops/invitations?inviter_user_id=${encodeURIComponent(login.userId)}`, {
+const invitation = await post('/user-ops/invitations', {
   email: recipientEmail,
   role: 'member',
-})
-const acceptedInvitation = await post(`/user-ops/invitations/accept?user_id=${encodeURIComponent(recipientRegistration.userId)}`, {
+}, headers)
+const acceptedInvitation = await post('/user-ops/invitations/accept', {
   token: invitation.token,
-})
-const inviterRewards = await request(`/user-ops/rewards?user_id=${encodeURIComponent(login.userId)}`)
-const recipientRewards = await request(`/user-ops/rewards?user_id=${encodeURIComponent(recipientRegistration.userId)}`)
+}, recipientHeaders)
+const inviterRewards = await request('/user-ops/rewards', { headers })
+const recipientRewards = await request('/user-ops/rewards', { headers: recipientHeaders })
 if (acceptedInvitation.invitation.state !== 'accepted' || !inviterRewards.length || !recipientRewards.length) {
   throw new Error('Referral acceptance did not persist both reward records.')
 }
 
-const preferences = await put(`/user-ops/preferences?user_id=${encodeURIComponent(login.userId)}`, {
+const preferences = await put('/user-ops/preferences', {
   locale: 'en',
   channels: { in_app: true, email: true, sms: false, push: true },
   communication_consent: true,
-})
+}, headers)
 if (!preferences.communicationConsent || !preferences.channels.email || !preferences.channels.push) {
   throw new Error('Marketing preferences were not persisted.')
 }
 
-const notifications = await request(`/notifications?recipient_user_id=${encodeURIComponent(login.userId)}`)
+const notifications = await request('/notifications', { headers })
 if (!notifications.length) throw new Error('Financial workflow did not create user notifications.')
-await post(`/notifications/read-all?recipient_user_id=${encodeURIComponent(login.userId)}`, {})
-const unreadNotifications = await request(`/notifications?recipient_user_id=${encodeURIComponent(login.userId)}&filter=unread`)
+await post('/notifications/read-all', {}, headers)
+const unreadNotifications = await request('/notifications?filter=unread', { headers })
 if (unreadNotifications.length) throw new Error('Notifications were not marked read server-side.')
 
 const wallet = await request('/wallet', { headers })
-const recipientLogin = await post('/auth/demo/login', { email: recipientEmail, type: 'user' })
-const recipientWallet = await request('/wallet', { headers: authHeaders(recipientLogin.token) })
+const recipientWallet = await request('/wallet', { headers: recipientHeaders })
 const orders = await request('/orders', { headers })
 const yields = await request('/yield', { headers })
 const ledger = await request('/ledger/transactions', { headers })
