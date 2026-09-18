@@ -19,6 +19,10 @@ overrides:
   sharp: 0.35.0
   '@hono/node-server': 2.0.10
 
+patchedDependencies:
+  '@opennextjs/aws@4.0.2': 33b4bc9f79f46dd4c073639cf1a4fd3db7042b4bbaff6b581408133b86f9798d
+  '@opennextjs/cloudflare@1.20.1': 20debb55960655e9c09d1680aa0ce641d7aedbc9c9201ba54332b3b4aa7bd5f5
+
 importers:
 
   .:
@@ -74,7 +78,7 @@ importers:
     devDependencies:
       '@opennextjs/cloudflare':
         specifier: 1.20.1
-        version: 1.20.1(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.110.0)
+        version: 1.20.1(patch_hash=20debb55960655e9c09d1680aa0ce641d7aedbc9c9201ba54332b3b4aa7bd5f5)(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.110.0)
       '@tailwindcss/postcss':
         specifier: ^4.2.0
         version: 4.2.0
@@ -10141,7 +10145,7 @@ snapshots:
 
   '@open-draft/until@2.1.0': {}
 
-  '@opennextjs/aws@4.0.2(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))':
+  '@opennextjs/aws@4.0.2(patch_hash=33b4bc9f79f46dd4c073639cf1a4fd3db7042b4bbaff6b581408133b86f9798d)(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@aws-sdk/client-cloudfront': 3.984.0
@@ -10164,11 +10168,11 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@opennextjs/cloudflare@1.20.1(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.110.0)':
+  '@opennextjs/cloudflare@1.20.1(patch_hash=20debb55960655e9c09d1680aa0ce641d7aedbc9c9201ba54332b3b4aa7bd5f5)(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(wrangler@4.110.0)':
     dependencies:
       '@ast-grep/napi': 0.40.5
       '@dotenvx/dotenvx': 1.31.0
-      '@opennextjs/aws': 4.0.2(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
+      '@opennextjs/aws': 4.0.2(patch_hash=33b4bc9f79f46dd4c073639cf1a4fd3db7042b4bbaff6b581408133b86f9798d)(next@16.2.11(@babel/core@7.29.7)(@opentelemetry/api@1.9.1)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))
       ci-info: 4.4.0
       cloudflare: 4.5.0
       comment-json: 4.6.2

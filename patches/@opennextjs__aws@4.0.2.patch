@@ -1,0 +1,38 @@
+diff --git a/dist/build/copyTracedFiles.js b/dist/build/copyTracedFiles.js
+index 9701b0401e987ee7cd696873af9d15b751580c52..36ed90c07f85b2bcb3d1f3a802a1993268ea6a03 100644
+--- a/dist/build/copyTracedFiles.js
++++ b/dist/build/copyTracedFiles.js
+@@ -228,7 +228,32 @@ File ${serverPath} does not exist
+                 symlinkSync(symlink, to);
+             }
+             catch (e) {
+-                if (e.code !== "EEXIST") {
++                if (e.code === "EEXIST") {
++                    //Ignore
++                }
++                else if (e.code === "EPERM" && process.platform === "win32") {
++                    // Windows without symlink privilege: recreate the pnpm link as a junction (dirs) or copy (files)
++                    const linkTarget = path.isAbsolute(symlink) ? symlink : path.resolve(path.dirname(from), symlink);
++                    let targetIsDir = false;
++                    try {
++                        targetIsDir = statSync(linkTarget).isDirectory();
++                    }
++                    catch (err) {
++                        //Ignore
++                    }
++                    if (targetIsDir) {
++                        try {
++                            symlinkSync(linkTarget, to, "junction");
++                        }
++                        catch (err) {
++                            cpSync(linkTarget, to, { recursive: true, dereference: true });
++                        }
++                    }
++                    else {
++                        copyFileAndMakeOwnerWritable(linkTarget, to);
++                    }
++                }
++                else {
+                     throw e;
+                 }
+             }

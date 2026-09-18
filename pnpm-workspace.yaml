@@ -27,3 +27,7 @@ overrides:
   ip-address: 10.3.1
   sharp: 0.35.0
   '@hono/node-server': 2.0.10
+
+patchedDependencies:
+  '@opennextjs/aws@4.0.2': patches/@opennextjs__aws@4.0.2.patch
+  '@opennextjs/cloudflare@1.20.1': patches/@opennextjs__cloudflare@1.20.1.patch

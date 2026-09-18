@@ -1,0 +1,132 @@
+diff --git a/dist/cli/build/bundle-server.js b/dist/cli/build/bundle-server.js
+index be3f893561dab6ad635e71a9cbb49603bfa44534..ac63fec319e68ace9ff03705d1a7f4e74a936614 100644
+--- a/dist/cli/build/bundle-server.js
++++ b/dist/cli/build/bundle-server.js
+@@ -100,7 +100,7 @@ export async function bundleServer(buildOpts, projectOpts) {
+             // Apply updater updates, must be the last plugin
+             updater.plugin,
+         ],
+-        external: ["./middleware/handler.mjs"],
++        external: ["./middleware/handler.mjs", "@img/*", "*.node"],
+         alias: {
+             // When @vercel/og is not used, alias the edge entry to a throwing shim so the
+             // dynamic `import("next/dist/compiled/@vercel/og/index.edge.js")` call site
+@@ -115,6 +115,10 @@ export async function bundleServer(buildOpts, projectOpts) {
+             "next/dist/compiled/node-fetch": path.join(buildOpts.outputDir, "cloudflare-templates/shims/fetch.js"),
+             // Workers have builtin Web Sockets
+             "next/dist/compiled/ws": path.join(buildOpts.outputDir, "cloudflare-templates/shims/empty.js"),
++            // `sharp` is not needed when `images.unoptimized` is set; replace it with an
++            // empty shim so platform-specific native binaries (.node) are never resolved
++            // (which breaks esbuild, notably for the win32-x64 build on Windows).
++            "sharp": path.join(buildOpts.outputDir, "cloudflare-templates/shims/empty.js"),
+             // The toolbox optimizer pulls severals MB of dependencies (`caniuse-lite`, `terser`, `acorn`, ...)
+             // Drop it to optimize the code size
+             // See https://github.com/vercel/next.js/blob/6eb235c/packages/next/src/server/optimize-amp.ts
+diff --git a/dist/cli/build/patches/plugins/next-server.js b/dist/cli/build/patches/plugins/next-server.js
+index d816e838c1b2a23355161f0859ba9cd81f76d6d0..f3ea3c40d58f06566a4d0251f8827c39d8422c06 100644
+--- a/dist/cli/build/patches/plugins/next-server.js
++++ b/dist/cli/build/patches/plugins/next-server.js
+@@ -28,6 +28,8 @@ export function patchNextServer(updater, buildOpts) {
+                 contents = patchCode(contents, createComposableCacheHandlersRule(composableCacheHandler));
+                 // Node middleware are not supported on Cloudflare yet
+                 contents = patchCode(contents, disableNodeMiddlewareRule);
++                // Middleware manifest must be loaded through the inlined loadManifest (Next 16)
++                contents = patchCode(contents, middlewareManifestRule);
+                 contents = patchCode(contents, attachRequestMetaRule);
+                 return contents;
+             },
+@@ -45,6 +47,20 @@ fix: |-
+     // patched by open next
+   }
+ `;
++// Next 16 loads the middleware manifest with a bare `require(this.middlewareManifestPath)`
++// which esbuild cannot resolve statically and therefore becomes an unsupported dynamic
++// require at runtime (workerd). Route it through the patched `loadManifest` instead so it
++// resolves from the inlined manifests (like every other manifest already does).
++export const middlewareManifestRule = `
++rule:
++  pattern:
++    selector: method_definition
++    context: "class { getMiddlewareManifest($$$PARAMS) { $$$_ } }"
++fix: |-
++  getMiddlewareManifest($$$PARAMS) {
++    return this.minimalMode ? null : (0, _loadmanifestexternal.loadManifest)(this.middlewareManifestPath);
++  }
++`;
+ export const buildIdRule = `
+ rule:
+   pattern:
+diff --git a/dist/cli/build/patches/plugins/turbopack.js b/dist/cli/build/patches/plugins/turbopack.js
+index 4f0e134603a71cad093f6deb1ffc543ea4cc57a6..7f8e044d47286f8c635b34c20dad5ae6d02cbc99 100644
+--- a/dist/cli/build/patches/plugins/turbopack.js
++++ b/dist/cli/build/patches/plugins/turbopack.js
+@@ -66,7 +66,7 @@ fix: |-
+ function discoverExternalModuleMappings(filePath) {
+     // filePath is like: .../.next/server/chunks/ssr/[turbopack]_runtime.js
+     // We need: .../.next/node_modules/
+-    const dotNextDir = filePath.replace(/\/server\/chunks\/.*$/, "");
++    const dotNextDir = filePath.replace(/\\/g, "/").replace(/\/server\/chunks\/.*$/, "");
+     const nodeModulesDir = path.join(dotNextDir, "node_modules");
+     const mappings = new Map();
+     if (!fs.existsSync(nodeModulesDir)) {
+@@ -76,7 +76,7 @@ function discoverExternalModuleMappings(filePath) {
+         try {
+             if (entry.isSymbolicLink()) {
+                 const entryPath = path.join(nodeModulesDir, entry.name);
+-                const target = fs.readlinkSync(entryPath);
++                const target = fs.readlinkSync(entryPath).replace(/\\/g, "/");
+                 // target is like "../../node_modules/shiki" — extract package name
+                 const match = target.match(/node_modules\/(.+)$/);
+                 if (match?.[1]) {
+@@ -166,7 +166,7 @@ function discoverBareExternalImports(tracedFiles, runtimeCode) {
+     const externalImportAlias = propMatch[1];
+     // Chunks call externalImport as e.g. `.y("shiki")` — build a regex using the discovered property name.
+     const externalImportRegexp = new RegExp(`\\.${externalImportAlias}\\("([^"]+)"\\)`, "g");
+-    const chunkFiles = tracedFiles.filter((f) => f.includes(".next/server/chunks/"));
++    const chunkFiles = tracedFiles.filter((f) => f.replace(/\\/g, "/").includes(".next/server/chunks/"));
+     for (const filePath of chunkFiles) {
+         try {
+             const content = fs.readFileSync(filePath, "utf-8");
+@@ -245,10 +245,13 @@ ${inlineChunksFn(tracedFiles)}\n${loadWasmChunkFn(tracedFiles)}`;
+ function getInlinableChunks(tracedFiles) {
+     const chunks = new Set();
+     for (const file of tracedFiles) {
++        // `tracedFiles` entries are platform-native paths (backslashes on Windows),
++        // so path checks have to run against a normalized (posix) form.
++        const normalized = file.replace(/\\/g, "/");
+         if (file === "[turbopack]_runtime.js") {
+             continue;
+         }
+-        if (file.includes(".next/server/chunks/")) {
++        if (normalized.includes(".next/server/chunks/")) {
+             chunks.add(file);
+         }
+     }
+@@ -261,9 +264,13 @@ function inlineChunksFn(tracedFiles) {
+   function requireChunk(chunkPath) {
+     switch(chunkPath) {
+ ${chunks
+-        .map((chunk) => `      case "${
+-    // we only want the path after /path/to/.next/
+-    chunk.replace(/.*\/\.next\//, "")}": return require("${chunk}");`)
++        .map((chunk) => {
++        // We only want the path after /path/to/.next/ and both the case key and the
++        // require argument must be normalized to forward slashes (Windows paths would
++        // otherwise never match and backslashes would corrupt the generated string).
++        const normalized = chunk.replace(/\\/g, "/");
++        return `      case ${JSON.stringify(normalized.replace(/.*\/\.next\//, ""))}: return require(${JSON.stringify(normalized)});`;
++    })
+         .join("\n")}
+       default:
+         throw new Error(\`Not found \${chunkPath}\`);
+@@ -282,8 +289,8 @@ ${chunks
+ export function loadWasmChunkFn(tracedFiles) {
+     const wasmFiles = tracedFiles.filter((f) => f.endsWith(".wasm"));
+     const cases = wasmFiles
+-        .map((absPath) => ({ absPath, relPath: absPath.replace(/.*\/\.next\//, "") }))
+-        .map(({ absPath, relPath }) => `      case "${relPath}": return (await import("${absPath}")).default;`)
++        .map((absPath) => ({ absPath: absPath.replace(/\\/g, "/") }))
++        .map(({ absPath }) => `      case ${JSON.stringify(absPath.replace(/.*\/\.next\//, ""))}: return (await import(${JSON.stringify(absPath)})).default;`)
+         .join("\n");
+     return `
+   async function loadWasmChunk(chunkPath) {
