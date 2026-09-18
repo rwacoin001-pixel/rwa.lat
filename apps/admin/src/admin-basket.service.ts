@@ -49,6 +49,10 @@ export class AdminBasketService {
     )
   }
 
+  candidateFacets(actorId: string, query: { minScore?: number }) {
+    return this.request('GET', withQuery('/internal/basket/candidate-facets', query), actorId)
+  }
+
   activateVersion(actorId: string, strategyId: string, body: Record<string, unknown>) {
     return this.request('POST', `/internal/basket/strategies/${encodeURIComponent(strategyId)}/activate`, actorId, body)
   }

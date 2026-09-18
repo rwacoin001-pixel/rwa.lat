@@ -130,9 +130,20 @@ export class BasketStrategyService {
     )) as Array<{ id: string; slug: string; name: string; asset_class: string; score: string; risk_level: string }>
 
     if (!candidates.length) {
+      const facets = await this.getCandidateFacets({ minScore })
+      const available = facets.classes
+        .filter((row) => row.aboveMinScore > 0)
+        .slice(0, 8)
+        .map((row) => `${row.assetClass} (${row.aboveMinScore})`)
+        .join(', ')
       throw new ConflictException({
         code: BASKET_ERROR_CODES.ALLOCATION_EMPTY,
-        message: 'No candidate assets matched the allocation criteria (scores/prices/filters).',
+        message:
+          `No candidate assets matched the allocation criteria (classes=${classes.join('/')}, minScore=${minScore}). `
+          + (available
+            ? `The catalog currently has candidates in: ${available}. Lower minScore or widen assetClasses.`
+            : `No active catalog assets satisfy minScore=${minScore} with live prices. Lower minScore or wait for the next market sync.`),
+        facets,
       })
     }
 
@@ -232,6 +243,37 @@ export class BasketStrategyService {
        ORDER BY sa.target_weight_pct DESC`,
       [versionId],
     )
+  }
+
+  /**
+   * 候选面（供管理台生成配置选择器）：按类别汇总「总量 / 有行情 / 达到评分线」的数量与最高分，
+   * 让运营在生成目标配置前看清哪些类别与分数线能出候选，避免 ALLOCATION_EMPTY 盲猜。
+   */
+  async getCandidateFacets(params: { minScore?: number } = {}) {
+    const minScore = Math.min(Math.max(Math.trunc(params.minScore ?? 60), 0), 100)
+    const classes = (await this.ds.query(
+      `SELECT a.asset_class AS "assetClass",
+              count(*)::int AS total,
+              count(*) FILTER (WHERE m.price_usd IS NOT NULL)::int AS priced,
+              count(*) FILTER (WHERE s.asset_id IS NOT NULL)::int AS scored,
+              count(*) FILTER (WHERE m.price_usd IS NOT NULL AND s.overall_score >= $1)::int AS "aboveMinScore",
+              round(max(s.overall_score))::int AS "maxScore"
+       FROM app.rwa_assets a
+       LEFT JOIN app.rwa_asset_scores s ON s.asset_id = a.id AND s.score_version = 'v1'
+       LEFT JOIN app.rwa_asset_metrics m ON m.asset_id = a.id
+       WHERE a.status = 'active'
+       GROUP BY a.asset_class
+       ORDER BY "aboveMinScore" DESC, total DESC`,
+      [minScore],
+    )) as Array<{ assetClass: string; total: number; priced: number; aboveMinScore: number; maxScore: number | null }>
+    return {
+      minScore,
+      scoreVersion: 'v1',
+      defaultClasses: DEFAULT_CLASSES,
+      totalCandidates: classes.reduce((sum, row) => sum + row.aboveMinScore, 0),
+      classes: classes.map((row) => ({ ...row, inDefaultSet: DEFAULT_CLASSES.includes(row.assetClass) })),
+      generatedAt: new Date().toISOString(),
+    }
   }
 
   async listStrategies() {

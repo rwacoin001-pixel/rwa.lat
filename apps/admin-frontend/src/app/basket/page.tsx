@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { StatCard } from '@/components/ui/visuals'
+import { AllocationDialog } from './allocation-dialog'
 import { cn } from '@/lib/utils'
 import {
   RefreshCw,
@@ -79,6 +81,7 @@ export default function BasketOpsPage() {
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [allocTarget, setAllocTarget] = useState<{ strategy: StrategyRow; version: Record<string, any> } | null>(null)
 
   const call = useCallback(
     async (path: string, init?: RequestInit) => {
@@ -144,6 +147,12 @@ export default function BasketOpsPage() {
     if (tab === 'reconciliations') void loadReconciliations()
   }, [tab, loadPortfolios, loadReconciliations])
 
+  // 顶部 KPI 卡片需要组合与对账摘要：首次进入即静默加载
+  useEffect(() => {
+    void loadPortfolios()
+    void loadReconciliations()
+  }, [loadPortfolios, loadReconciliations])
+
   const showNotice = (text: string) => {
     setNotice(text)
     window.setTimeout(() => setNotice(''), 6000)
@@ -192,28 +201,26 @@ export default function BasketOpsPage() {
     }
   }
 
-  const generateAllocation = async (strategy: StrategyRow, version: Record<string, any>) => {
-    const classes = window.prompt('资产类别（逗号分隔）', 'treasury,money_market,bond,stable_value')
-    if (classes === null) return
-    const maxAssets = window.prompt('最大持仓数量', '12')
-    const cashBuffer = window.prompt('现金缓冲 %（不参与配置）', '5')
-    const minScore = window.prompt('入选最低评分（0-100）', '60')
+  const submitAllocation = async (params: { assetClasses: string[]; minScore: number; maxAssets: number; cashBufferPct: number }) => {
+    if (!allocTarget) return false
+    const { strategy, version } = allocTarget
     const result = await call(`/strategies/${strategy.id}/versions/${version.id}/allocation`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({
-        assetClasses: classes.split(',').map((v) => v.trim()).filter(Boolean),
-        maxAssets: maxAssets ? Number(maxAssets) : undefined,
-        cashBufferPct: cashBuffer ? Number(cashBuffer) : undefined,
-        minScore: minScore ? Number(minScore) : undefined,
-      }),
+      body: JSON.stringify(params),
     })
-    if (result) {
-      const count = Array.isArray((result as any).allocation) ? (result as any).allocation.length : (result as any).items?.length ?? 0
-      showNotice(`目标配置已生成（${count} 个资产）`)
-      await toggleStrategy(strategy.slug)
-      await toggleStrategy(strategy.slug)
+    if (!result) return false
+    const count = Array.isArray((result as any).assets)
+      ? (result as any).assets.length
+      : Array.isArray((result as any).allocation)
+        ? (result as any).allocation.length
+        : (result as any).items?.length ?? 0
+    showNotice(`目标配置已生成（${count} 个资产）`)
+    if (expandedStrategy === strategy.slug) {
+      const detail = await call(`/strategies/${encodeURIComponent(strategy.slug)}`)
+      if (detail) setStrategyDetail(detail as Record<string, any>)
     }
+    return true
   }
 
   const activateVersion = async (strategy: StrategyRow, version: Record<string, any>) => {
@@ -386,6 +393,9 @@ export default function BasketOpsPage() {
     if (result) setRunDetail(result as Record<string, any>)
   }
 
+  const activeAllocRows = ((strategyDetail?.targetAllocation ?? []) as Array<Record<string, any>>)
+  const allocMaxWeight = Math.max(...activeAllocRows.map((row) => Number(row.targetWeightPct ?? row.target_weight_pct ?? 0)), 1)
+
   return (
     <AdminLayout>
       <div className="space-y-6">
@@ -410,6 +420,30 @@ export default function BasketOpsPage() {
 
         {error && <div className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-600">{error}</div>}
         {notice && <div className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600">{notice}</div>}
+
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="策略"
+            value={strategies.length}
+            sub={`运行中 ${strategies.filter((row) => row.status === 'active').length} · 草稿 ${strategies.filter((row) => row.status === 'draft').length}`}
+            tone="mint"
+            delay={40}
+          />
+          <StatCard
+            label="组合"
+            value={portfolios.length}
+            sub={`在管 ${portfolios.filter((row) => row.status === 'active' || row.status === 'pilot').length} · 含已关闭`}
+            tone="sky"
+            delay={90}
+          />
+          <StatCard
+            label="对账一致率"
+            value={reconciliations.length ? `${Math.round((reconciliations.filter((run) => run.state === 'matched').length / reconciliations.length) * 100)}%` : '—'}
+            sub={reconciliations.length ? `最近 ${reconciliations.length} 次记录` : '暂无对账记录'}
+            tone="emerald"
+            delay={140}
+          />
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           {TABS.map((item) => (
@@ -488,7 +522,7 @@ export default function BasketOpsPage() {
                                 <div className="flex items-center gap-2">
                                   <button
                                     type="button"
-                                    onClick={() => void generateAllocation(strategy, version)}
+                                    onClick={() => setAllocTarget({ strategy, version })}
                                     className="rounded-lg bg-sky-500/10 px-2.5 py-1.5 text-xs font-medium text-sky-600 hover:bg-sky-500/20"
                                   >
                                     生成目标配置
@@ -520,7 +554,17 @@ export default function BasketOpsPage() {
                                         <tr key={row.assetId ?? row.asset_id} className="border-t border-ink/5">
                                           <td className="py-1.5 pr-3">{row.name ?? row.slug}</td>
                                           <td className="py-1.5 pr-3">{row.assetClass ?? row.asset_class ?? '-'}</td>
-                                          <td className="py-1.5 pr-3 font-medium">{row.targetWeightPct ?? row.target_weight_pct}%</td>
+                                          <td className="py-1.5 pr-3">
+                                            <div className="flex items-center gap-2">
+                                              <span className="w-12 font-medium tabular-nums">{row.targetWeightPct ?? row.target_weight_pct}%</span>
+                                              <span className="h-1.5 w-24 overflow-hidden rounded-full bg-ink/[0.07]">
+                                                <span
+                                                  className="bar-fill block h-full rounded-full bg-gradient-to-r from-mint to-accent-2"
+                                                  style={{ width: `${Math.min((Number(row.targetWeightPct ?? row.target_weight_pct ?? 0) / allocMaxWeight) * 100, 100)}%` }}
+                                                />
+                                              </span>
+                                            </div>
+                                          </td>
                                           <td className="py-1.5 text-muted-foreground">{row.inclusionReason ?? row.inclusion_reason ?? '-'}</td>
                                         </tr>
                                       ))}
@@ -826,6 +870,14 @@ export default function BasketOpsPage() {
           </Card>
         )}
       </div>
+
+      <AllocationDialog
+        open={allocTarget !== null}
+        onClose={() => setAllocTarget(null)}
+        strategyName={allocTarget?.strategy.name ?? ''}
+        versionLabel={allocTarget ? `v${allocTarget.version.version}` : ''}
+        onSubmit={submitAllocation}
+      />
     </AdminLayout>
   )
 }

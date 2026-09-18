@@ -89,6 +89,13 @@ export class InternalBasketController {
     return this.strategies.activateVersion(id, dto.versionId)
   }
 
+  @Get('candidate-facets')
+  @ApiOperation({ summary: 'Candidate asset facets for allocation pickers (classes / price coverage / scores)' })
+  candidateFacets(@Query('minScore') minScore?: string) {
+    const parsed = minScore ? Number(minScore) : undefined
+    return this.strategies.getCandidateFacets({ minScore: parsed !== undefined && Number.isFinite(parsed) ? parsed : undefined })
+  }
+
   // ---- 组合 ----
   @Post('portfolios')
   @ApiOperation({ summary: 'Create a basket portfolio from the active strategy version' })

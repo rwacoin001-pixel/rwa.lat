@@ -76,6 +76,13 @@ export class AdminBasketController {
     return this.basket.activateVersion(adminId(request), id, body)
   }
 
+  @Get('candidate-facets')
+  @RequireAdminPermissions('basket.operations.manage')
+  @ApiOperation({ summary: 'Candidate asset facets for the allocation picker (classes / price coverage / scores)' })
+  candidateFacets(@Req() request: AdminRequest, @Query('minScore') minScore?: string) {
+    return this.basket.candidateFacets(adminId(request), { minScore: minScore ? numeric(minScore, 60) : undefined })
+  }
+
   // ---- 组合 ----
 
   @Get('portfolios')
