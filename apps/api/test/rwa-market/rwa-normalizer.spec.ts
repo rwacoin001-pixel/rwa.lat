@@ -67,7 +67,27 @@ describe('rwa normalizer', () => {
       logoUrl: null,
       rank: 1,
       isTokenized: true,
+      issuerName: null,
     })
+  })
+
+  it('propagates issuer name from the token list', () => {
+    const asset = normalizeCmcAsset({
+      name: 'Nvidia',
+      slug: 'nvidia',
+      rwa_id: 2,
+      asset_type: 'stock',
+      tokens: [{ symbol: 'bNVDA', name: 'Backed NVIDIA', crypto_id: 1, issuer_id: 'x1', issuer_name: 'Backed Assets' }],
+    })
+    expect(asset.issuerName).toBe('Backed Assets')
+    expect(asset.assetClass).toBe('equity')
+  })
+
+  it('falls back to a slug-based external id when rwa_id is missing', () => {
+    const asset = normalizeCmcAsset({ name: 'Alphabet Inc.', slug: 'alphabet-inc', rwa_id: null, asset_type: 'stock' })
+    expect(asset.externalId).toBe('slug:alphabet-inc')
+    const metric = normalizeCmcMetrics({ name: 'Alphabet Inc.', slug: 'alphabet-inc', rwa_id: null })
+    expect(metric.externalId).toBe('slug:alphabet-inc')
   })
 
   it('normalizes metrics including tokens and dates', () => {

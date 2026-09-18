@@ -56,12 +56,20 @@ export function parseDate(value: string | null | undefined): Date | null {
   return Number.isNaN(d.getTime()) ? null : d
 }
 
+/** 统一外部 ID：CMC 偶有 rwa_id=null 的列表条目（如 alphabet-inc），以 slug 兜底保证唯一 */
+export function externalIdOf(raw: { rwa_id?: number | null; slug?: string | null; name: string }): string {
+  if (raw.rwa_id !== null && raw.rwa_id !== undefined) return String(raw.rwa_id)
+  const slug = raw.slug && raw.slug.length > 0 ? raw.slug : slugify(raw.name)
+  return `slug:${slug}`
+}
+
 export function normalizeCmcAsset(
   raw: CmcRwaAssetListItem,
   info?: CmcRwaInfoEntry | null,
 ): NormalizedRwaAsset {
+  const issuerName = raw.tokens?.find((token) => token.issuer_name)?.issuer_name ?? null
   return {
-    externalId: String(raw.rwa_id),
+    externalId: externalIdOf(raw),
     externalSlug: raw.slug && raw.slug.length > 0 ? raw.slug : slugify(raw.name),
     name: raw.name,
     symbol: raw.symbol ?? null,
@@ -72,6 +80,7 @@ export function normalizeCmcAsset(
     logoUrl: info?.logo ?? null,
     rank: raw.rwa_rank ?? null,
     isTokenized: raw.has_tokens === true,
+    issuerName,
   }
 }
 
@@ -94,13 +103,14 @@ export function normalizeCmcToken(raw: CmcRwaToken): NormalizedTokenRef {
     issuerExternalId: raw.issuer_id ?? null,
     issuerName: raw.issuer_name ?? null,
     priceUsd: dec(raw.price),
+    marketCapUsd: dec(raw.market_cap),
   }
 }
 
 export function normalizeCmcMetrics(raw: CmcRwaAssetListItem): NormalizedMarketMetric {
   const quote = raw.quotes?.[0]
   return {
-    externalId: String(raw.rwa_id),
+    externalId: externalIdOf(raw),
     priceUsd: dec(raw.average_tokenized_price ?? quote?.average_tokenized_price),
     tokenizedMarketCapUsd: dec(raw.tokenized_market_cap ?? quote?.tokenized_market_cap),
     tokenizedVolume24hUsd: dec(raw.tokenized_volume_24h ?? quote?.tokenized_volume_24h),

@@ -9,6 +9,9 @@ export const OPERATIONAL_SWITCH_KEYS = {
   withdrawalExecution: 'wallet.withdrawals.execution',
   yield: 'yield.processing',
   polymarket: 'polymarket.trading',
+  basketSubscriptions: 'basket.subscriptions',
+  basketRedemptions: 'basket.redemptions',
+  basketRebalanceExecution: 'basket.rebalance.execution',
 } as const
 
 @Injectable()

@@ -41,6 +41,9 @@ export class RwaIssuer {
   @Column({ type: 'varchar', length: 500, nullable: true })
   logo_url?: string | null
 
+  @Column({ type: 'int', default: 0 })
+  token_count!: number
+
   @Column({ type: 'boolean', default: false })
   verified!: boolean
 

@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common'
-import { normalizeCmcAsset, normalizeCmcIssuer, normalizeCmcMetrics } from '../../normalizers/rwa.normalizer'
+import { normalizeCmcAsset, normalizeCmcIssuer, normalizeCmcMetrics, normalizeCmcToken } from '../../normalizers/rwa.normalizer'
 import { CoinMarketCapClient } from './coinmarketcap.client'
 import type {
   CmcIssuerListResponse,
@@ -9,6 +9,7 @@ import type {
   CmcRwaListResponse,
 } from './coinmarketcap.types'
 import type {
+  NormalizedAssetTokens,
   NormalizedIssuer,
   NormalizedMarketMetric,
   NormalizedRwaAsset,
@@ -20,6 +21,7 @@ import type {
 
 const PAGE_LIMIT = 100
 const MAX_PAGES = 300 // 保护上限：300 × 100 = 30000 条
+const QUOTES_BATCH = 50 // quotes/latest 实测 ≤80 id/批、1 credit/批；取 50 稳妥
 
 function clamp(value: number, min: number, max: number): number {
   if (!Number.isFinite(value)) return max
@@ -67,6 +69,24 @@ export class CoinMarketCapRwaProvider implements RwaDataProvider {
       info = null // 详情失败不阻塞基础信息返回
     }
     return normalizeCmcAsset(entry as unknown as CmcRwaAssetListItem, info)
+  }
+
+  /** 代币明细（含发行人）——quotes/latest；仅支持数字 rwa_id（无 ID 条目跳过） */
+  async getAssetTokens(externalIds: string[]): Promise<NormalizedAssetTokens[]> {
+    const numericIds = externalIds.filter((id) => /^\d+$/.test(id))
+    const out: NormalizedAssetTokens[] = []
+    for (let i = 0; i < numericIds.length; i += QUOTES_BATCH) {
+      const chunk = numericIds.slice(i, i + QUOTES_BATCH)
+      const data = await this.client.get<{ rwa_assets: CmcRwaAssetListItem[] }>(
+        '/v5/real-world-assets/quotes/latest',
+        { rwa_id: chunk.join(',') },
+      )
+      for (const item of data.rwa_assets ?? []) {
+        if (item.rwa_id === null || item.rwa_id === undefined) continue
+        out.push({ externalId: String(item.rwa_id), tokens: (item.tokens ?? []).map(normalizeCmcToken) })
+      }
+    }
+    return out
   }
 
   async healthCheck(): Promise<ProviderHealth> {

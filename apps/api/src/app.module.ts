@@ -21,6 +21,7 @@ import { YieldModule } from './yield/yield.module'
 import { PolymarketModule } from './polymarket/polymarket.module'
 import { OperationsModule } from './operations/operations.module'
 import { CommunityModule } from './community/community.module'
+import { RwaMarketModule } from './rwa-market/rwa-market.module'
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { CommunityModule } from './community/community.module'
     PolymarketModule,
     OperationsModule,
     CommunityModule,
+    RwaMarketModule,
   ],
 })
 export class AppModule {}

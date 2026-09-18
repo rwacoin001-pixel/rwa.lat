@@ -17,7 +17,7 @@ export type CmcRwaIdEntry = {
   name: string
   symbol?: string | null
   slug: string
-  rwa_id: number
+  rwa_id?: number | null
   asset_type?: string | null
   rwa_rank?: number | null
   has_tokens?: boolean | null
@@ -32,6 +32,8 @@ export type CmcRwaToken = {
   issuer_id?: string
   issuer_name?: string
   price?: number
+  market_cap?: number
+  volume_24h?: number
 }
 
 export type CmcRwaQuote = {
