@@ -21,8 +21,10 @@ import {
   LifeBuoy,
   LogOut,
   Menu,
+  MessageCircle,
   Network,
   Percent,
+  PieChart,
   Plug,
   Receipt,
   Scale,
@@ -56,6 +58,7 @@ const PRIMARY: NavItem[] = [
   { name: '订单', href: '/orders', icon: ShoppingCart },
   { name: '用户', href: '/users', icon: Users },
   { name: '钱包财资', href: '/wallets', icon: Wallet },
+  { name: 'Basket 运营', href: '/basket', icon: PieChart },
 ]
 
 const GROUPS: { title: string; items: NavItem[] }[] = [
@@ -73,6 +76,7 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
       { name: '收益管理', href: '/yields', icon: Percent },
       { name: '文件管理', href: '/files', icon: FolderOpen },
       { name: '预测市场', href: '/polymarket', icon: Activity },
+      { name: 'Basket 运营', href: '/basket', icon: PieChart },
       { name: '结算管理', href: '/settlements', icon: Receipt },
     ],
   },
@@ -96,8 +100,9 @@ const GROUPS: { title: string; items: NavItem[] }[] = [
     ],
   },
   {
-    title: '风控与支持',
+    title: '社区与风控',
     items: [
+      { name: '社区审核', href: '/community', icon: MessageCircle },
       { name: '风险控制', href: '/risk', icon: ShieldAlert },
       { name: '申诉处理', href: '/appeals', icon: Gavel },
       { name: '争议处理', href: '/disputes', icon: Gavel },

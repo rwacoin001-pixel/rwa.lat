@@ -15,6 +15,10 @@ import { AdminStorageController } from './admin-storage.controller'
 import { AdminStorageService } from './admin-storage.service'
 import { AdminFundsOpsController, AdminWalletOpsController } from './admin-wallet-ops.controller'
 import { AdminWalletOpsService } from './admin-wallet-ops.service'
+import { AdminBasketController } from './admin-basket.controller'
+import { AdminBasketService } from './admin-basket.service'
+import { AdminCommunityController } from './admin-community-ops.controller'
+import { AdminCommunityOpsService } from './admin-community-ops.service'
 
 @Module({
   imports: [
@@ -29,8 +33,27 @@ import { AdminWalletOpsService } from './admin-wallet-ops.service'
       logging: false,
     }),
   ],
-  controllers: [AdminController, AdminAuthController, AdminControlController, AdminStorageController, AdminWalletOpsController, AdminFundsOpsController],
-  providers: [AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService, AdminStorageService, AdminWalletOpsService],
+  controllers: [
+    AdminController,
+    AdminAuthController,
+    AdminControlController,
+    AdminStorageController,
+    AdminWalletOpsController,
+    AdminFundsOpsController,
+    AdminBasketController,
+    AdminCommunityController,
+  ],
+  providers: [
+    AdminService,
+    AdminAuthService,
+    AdminSessionGuard,
+    AdminPermissionGuard,
+    AdminControlService,
+    AdminStorageService,
+    AdminWalletOpsService,
+    AdminBasketService,
+    AdminCommunityOpsService,
+  ],
 })
 export class AdminModule {
   static forTest(dataSource: DataSource): DynamicModule {
