@@ -97,10 +97,11 @@ export class PredictionService {
       tokenRow.state !== 'active'
       || tokenRow.market_state !== 'active'
       || tokenRow.enable_order_book !== true
-      || tokenRow.restricted === true
     ) {
       throw predictionMarketNotTradeable(tokenRow.market_mapping_id)
     }
+    // 注：market.restricted 是 Polymarket 的地区显示策略（对真实 CLOB 下单有意义）；
+    // 内部盘仅消费开奖数据 + 内部记账，不受其约束。
 
     // 取价（CLOB 订单簿最优卖价；无卖盘用最新成交价兜底）
     const book = await this.polymarket.getOrderBook(input.tokenId)
