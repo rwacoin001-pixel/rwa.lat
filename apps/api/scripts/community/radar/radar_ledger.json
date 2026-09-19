@@ -4,6 +4,12 @@
     {"date": "2026-09-18", "topic": "bStocks / 代币化股票半导体抱团", "source": "https://www.binance.com/zh-CN/square/hashtag/bstocks", "used_by": ["aiden.wu", "xiaolu.jb"]},
     {"date": "2026-09-18", "topic": "Avalanche RWA 市值新高 / Securitize 领跑", "source": "https://www.gate.com/zh-tw/news/detail/avalanche-rwa-market-cap-approaches-17b-all-time-high-led-by-securitize-24295314", "used_by": ["marcus.sg"]},
     {"date": "2026-09-18", "topic": "RWA 整体规模与实际持有人数对比", "source": "https://www.gate.com/zh-tw/news/detail (Gate News RWA 板块)", "used_by": ["xiaolu.jb"]},
-    {"date": "2026-09-18", "topic": "代币化资产向抵押/结算层演进（机构合作方向）", "source": "https://www.okx.com/en-us/learn/okx-blackrock-standard-chartered-buidl-tokenized-rwa-uae", "used_by": ["grace.nyc"]}
+    {"date": "2026-09-18", "topic": "代币化资产向抵押/结算层演进（机构合作方向）", "source": "https://www.okx.com/en-us/learn/okx-blackrock-standard-chartered-buidl-tokenized-rwa-uae", "used_by": ["grace.nyc"]},
+    {"date": "2026-09-18", "topic": "香港施政报告：外汇基金票据代币化运作（逾1.3万亿港元）+数码债券占全球约五成", "source": "https://www.info.gov.hk/gia/general/202609/16/P2026091600212.htm", "used_by": ["laoliang.84"]},
+    {"date": "2026-09-18", "topic": "SEC Innovation Exemption（Order 34-106402）代币化NMS股票五年沙盒", "source": "https://www.reuters.com/world/us-securities-regulator-rolls-out-five-year-exemption-tokenized-stock-trading-2026-09-17/", "used_by": ["daniel.lon"]},
+    {"date": "2026-09-19", "topic": "RWA 永续合约 8 月成交量创纪录 6020 亿美元（Binance 占 60.9%、Gate +158%）；合约不交割/不持有底层资产", "source": "https://www.gate.com/zh/news/detail/bybit-derivatives-volume-hits-321b-in-august-as-rwa-perpetuals-reach-record-24342249", "used_by": ["azhe.tpe"]},
+    {"date": "2026-09-19", "topic": "代币化股票转账量 +415% vs 链上存量价值仅 +1.45%（活动与价值背离，RWA.xyz 口径）", "source": "https://coindoo.com/tokenized-stock-activity-surges", "used_by": ["kenji.tokyo"]},
+    {"date": "2026-09-19", "topic": "Avalanche 上线 NYLIM 高收益公司债代币化基金 HYB（Centrifuge 发行，原生赎回 T+3~T+5）+ RedStone 约 300ms 场外拍卖实现同区块退出", "source": "https://kucoin.com/news/flash/nylim-launches-first-tokenized-fund-on-avalanche-via-centrifuge", "used_by": ["aiden.wu"]},
+    {"date": "2026-09-19", "topic": "加拿大 OSFI 声明：代币化存款与普通存款法律上无区别（技术中立）", "source": "https://www.osfi-bsif.gc.ca/en/news/statement-tokenized-other-digitally-represented-deposits", "used_by": ["daniel.lon"]}
   ]
 }

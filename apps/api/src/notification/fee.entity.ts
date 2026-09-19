@@ -21,7 +21,7 @@ export class Fee {
   @Column({ type: 'numeric', precision: 78, scale: 0 })
   amount_atomic!: string
 
-  @Column({ type: 'varchar', length: 3, default: 'USD' })
+  @Column({ type: 'varchar', length: 10, default: 'USD' })
   currency!: string
 
   @Column({ type: 'varchar', default: 'accrued' })

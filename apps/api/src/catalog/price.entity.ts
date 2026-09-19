@@ -23,7 +23,7 @@ export class PriceQuote {
   @Column({ type: 'numeric', precision: 78, scale: 0 })
   unit_price_atomic_amount!: string
 
-  @Column({ type: 'varchar', length: 3, default: 'USD' })
+  @Column({ type: 'varchar', length: 10, default: 'USD' })
   currency!: string
 
   @Column({ type: 'varchar' })
@@ -51,7 +51,7 @@ export class PriceSnapshot {
   @Column({ type: 'numeric', precision: 78, scale: 0 })
   unit_price_atomic_amount!: string
 
-  @Column({ type: 'varchar', length: 3 })
+  @Column({ type: 'varchar', length: 10 })
   currency!: string
 
   @CreateDateColumn({ type: 'timestamptz' })
