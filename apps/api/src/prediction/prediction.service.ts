@@ -481,7 +481,13 @@ export class PredictionService {
        ORDER BY SUM(b.stake_atomic) DESC
        LIMIT 10`,
     )
-    return { totals, settlementRuns: runs?.n ?? 0, exposureTop, limits: PREDICTION_LIMITS }
+    return {
+      totals,
+      settlementRuns: runs?.n ?? 0,
+      exposureTop,
+      // slippageBps 内部是 BigInt（滑点计算用）——JSON 序列化前转 number
+      limits: { ...PREDICTION_LIMITS, slippageBps: Number(PREDICTION_LIMITS.slippageBps) },
+    }
   }
 
   async adminListBets(input: { page: number; limit: number; status?: string; marketId?: string }) {
