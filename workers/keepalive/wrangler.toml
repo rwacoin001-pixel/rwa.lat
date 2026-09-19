@@ -2,6 +2,6 @@ name = "rwa-keepalive"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
 
-# 每 8 分钟唤醒一次（Render 免费层 15 分钟无请求即休眠）
+# 每 4 分钟唤醒一次（Render 15 分钟休眠、Neon 数据库 5 分钟自动挂起——4 分钟双保险）
 [triggers]
-crons = ["*/8 * * * *"]
+crons = ["*/4 * * * *"]

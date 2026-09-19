@@ -2,7 +2,7 @@
 // 效果：API 冷启动从 ~30-125s 降为 0（服务常醒）；成本：免费（CF Workers 免费层）
 
 const TARGETS = [
-  'https://api.rwa.lat/v1/health',
+  'https://api.rwa.lat/v1/health/ready',
   'https://admin-api.rwa.lat/v1/admin/health',
 ];
 
