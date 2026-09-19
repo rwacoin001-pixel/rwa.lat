@@ -9,6 +9,7 @@ export const OPERATIONAL_SWITCH_KEYS = {
   withdrawalExecution: 'wallet.withdrawals.execution',
   yield: 'yield.processing',
   polymarket: 'polymarket.trading',
+  predictionBetting: 'prediction.betting',
   basketSubscriptions: 'basket.subscriptions',
   basketRedemptions: 'basket.redemptions',
   basketRebalanceExecution: 'basket.rebalance.execution',

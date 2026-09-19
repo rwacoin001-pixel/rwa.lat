@@ -24,6 +24,7 @@ import { CommunityModule } from './community/community.module'
 import { RwaMarketModule } from './rwa-market/rwa-market.module'
 import { RwaAnalysisModule } from './rwa-analysis/rwa-analysis.module'
 import { BasketModule } from './basket/basket.module'
+import { PredictionModule } from './prediction/prediction.module'
 import { AdminConsoleModule } from './admin-console/admin-console.module'
 
 @Module({
@@ -56,6 +57,7 @@ import { AdminConsoleModule } from './admin-console/admin-console.module'
     RwaMarketModule,
     RwaAnalysisModule,
     BasketModule,
+    PredictionModule,
     AdminConsoleModule,
   ],
 })
