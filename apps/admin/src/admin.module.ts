@@ -19,6 +19,8 @@ import { AdminBasketController } from './admin-basket.controller'
 import { AdminBasketService } from './admin-basket.service'
 import { AdminCommunityController } from './admin-community-ops.controller'
 import { AdminCommunityOpsService } from './admin-community-ops.service'
+import { AdminPredictionController } from './admin-prediction.controller'
+import { AdminPredictionService } from './admin-prediction.service'
 import { AdminCoreOpsController } from './admin-core-ops.controller'
 import { AdminCoreOpsService } from './admin-core-ops.service'
 
@@ -44,6 +46,7 @@ import { AdminCoreOpsService } from './admin-core-ops.service'
     AdminFundsOpsController,
     AdminBasketController,
     AdminCommunityController,
+    AdminPredictionController,
     AdminCoreOpsController,
   ],
   providers: [
@@ -56,6 +59,7 @@ import { AdminCoreOpsService } from './admin-core-ops.service'
     AdminWalletOpsService,
     AdminBasketService,
     AdminCommunityOpsService,
+    AdminPredictionService,
     AdminCoreOpsService,
   ],
 })

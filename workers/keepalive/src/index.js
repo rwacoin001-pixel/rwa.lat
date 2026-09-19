@@ -4,6 +4,7 @@
 const TARGETS = [
   'https://api.rwa.lat/v1/health/ready',
   'https://admin-api.rwa.lat/v1/admin/health',
+  'https://rwa-lat-admin-frontend.onrender.com/',
 ];
 
 async function ping(url) {

@@ -454,4 +454,83 @@ export class PredictionService {
       [randomUUID(), userId, action, objectId, requestId, JSON.stringify(metadata)],
     )
   }
+
+  // ---------- 管理台查询 ----------
+
+  async adminStats() {
+    const [totals] = await this.dataSource.query(
+      `SELECT
+         count(*)::int AS total,
+         count(*) FILTER (WHERE status = 'placed')::int AS placed,
+         count(*) FILTER (WHERE status = 'won')::int AS won,
+         count(*) FILTER (WHERE status = 'lost')::int AS lost,
+         count(*) FILTER (WHERE status = 'void')::int AS void,
+         COALESCE(SUM(stake_atomic) FILTER (WHERE status = 'placed'), 0)::text AS "openStakeAtomic",
+         COALESCE(SUM(stake_atomic), 0)::text AS "totalStakeAtomic",
+         COALESCE(SUM(CASE WHEN status = 'won' THEN shares * 1000000 / 1000000000000000000 ELSE 0 END), 0)::text AS "paidOutAtomic"
+       FROM app.prediction_bets`,
+    )
+    const [runs] = await this.dataSource.query(`SELECT count(*)::int AS n FROM app.prediction_settlement_runs`)
+    const exposureTop = await this.dataSource.query(
+      `SELECT b.market_mapping_id::text AS "marketId", m.question, m.slug,
+              COALESCE(SUM(b.stake_atomic), 0)::text AS "openStakeAtomic", count(*)::int AS bets
+       FROM app.prediction_bets b
+       JOIN app.polymarket_market_mappings m ON m.id = b.market_mapping_id
+       WHERE b.status = 'placed'
+       GROUP BY 1, 2, 3
+       ORDER BY SUM(b.stake_atomic) DESC
+       LIMIT 10`,
+    )
+    return { totals, settlementRuns: runs?.n ?? 0, exposureTop, limits: PREDICTION_LIMITS }
+  }
+
+  async adminListBets(input: { page: number; limit: number; status?: string; marketId?: string }) {
+    const where: string[] = []
+    const params: unknown[] = []
+    if (input.status) {
+      params.push(input.status)
+      where.push(`b.status = $${params.length}`)
+    }
+    if (input.marketId) {
+      params.push(input.marketId)
+      where.push(`b.market_mapping_id = $${params.length}`)
+    }
+    const clause = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    const offset = (input.page - 1) * input.limit
+    const items = await this.dataSource.query(
+      `SELECT b.id::text, b.user_id::text AS "userId", b.status, b.side,
+              b.stake_atomic::text AS "stakeAtomic", b.shares::text, b.price::text,
+              b.created_at AS "createdAt", b.settled_at AS "settledAt",
+              m.question, m.slug, t.outcome
+       FROM app.prediction_bets b
+       JOIN app.polymarket_market_mappings m ON m.id = b.market_mapping_id
+       LEFT JOIN app.polymarket_token_mappings t ON t.token_id = b.token_id
+       ${clause}
+       ORDER BY b.created_at DESC
+       LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, input.limit, offset],
+    )
+    const [count] = await this.dataSource.query(
+      `SELECT count(*)::int AS n FROM app.prediction_bets b ${clause}`,
+      params,
+    )
+    return { total: count?.n ?? 0, page: input.page, limit: input.limit, items }
+  }
+
+  async adminListSettlements(input: { page: number; limit: number }) {
+    const offset = (input.page - 1) * input.limit
+    const items = await this.dataSource.query(
+      `SELECT r.id::text, r.market_mapping_id::text AS "marketId", m.question, m.slug,
+              r.winning_token_id AS "winningTokenId", r.outcome, r.bets_settled AS "betsSettled",
+              r.total_stake_atomic::text AS "totalStakeAtomic", r.total_paid_atomic::text AS "totalPaidAtomic",
+              r.executed_at AS "executedAt"
+       FROM app.prediction_settlement_runs r
+       JOIN app.polymarket_market_mappings m ON m.id = r.market_mapping_id
+       ORDER BY r.executed_at DESC
+       LIMIT $1 OFFSET $2`,
+      [input.limit, offset],
+    )
+    const [count] = await this.dataSource.query(`SELECT count(*)::int AS n FROM app.prediction_settlement_runs`)
+    return { total: count?.n ?? 0, page: input.page, limit: input.limit, items }
+  }
 }
