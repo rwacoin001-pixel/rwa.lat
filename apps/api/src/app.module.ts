@@ -20,6 +20,8 @@ import { OrdersModule } from './orders/orders.module'
 import { YieldModule } from './yield/yield.module'
 import { PolymarketModule } from './polymarket/polymarket.module'
 import { OperationsModule } from './operations/operations.module'
+import { MediaModule } from './media/media.module'
+import { SummaryModule } from './summary/summary.module'
 import { CommunityModule } from './community/community.module'
 import { RwaMarketModule } from './rwa-market/rwa-market.module'
 import { RwaAnalysisModule } from './rwa-analysis/rwa-analysis.module'
@@ -53,6 +55,8 @@ import { AdminConsoleModule } from './admin-console/admin-console.module'
     YieldModule,
     PolymarketModule,
     OperationsModule,
+    MediaModule,
+    SummaryModule,
     CommunityModule,
     RwaMarketModule,
     RwaAnalysisModule,

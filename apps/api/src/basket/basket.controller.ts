@@ -4,8 +4,9 @@ import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
 import { OptionalSessionAuthGuard } from '../security/optional-session-auth.guard'
-import { AcknowledgeDisclosureDto, BasketLimitQueryDto, BasketRedeemDto, BasketSubscribeDto } from './basket.dto'
+import { AcknowledgeDisclosureDto, BasketLimitQueryDto, BasketRedeemDto, BasketSubscribeDto, CreateRecommendationDto } from './basket.dto'
 import { BasketPortfolioService } from './portfolio.service'
+import { BasketRecommendationService } from './recommendation.service'
 import { BasketSubscriptionService } from './subscription.service'
 
 /**
@@ -20,6 +21,7 @@ export class BasketController {
   constructor(
     private readonly portfolios: BasketPortfolioService,
     private readonly subscriptions: BasketSubscriptionService,
+    private readonly recommendations: BasketRecommendationService,
   ) {}
 
   @Get('portfolios')
@@ -73,6 +75,13 @@ export class BasketController {
     @Req() request: AuthenticatedRequest,
   ) {
     return this.subscriptions.redeem(actor.userId, id, dto, requireIdempotencyKey(idempotencyKey), request.requestId ?? 'basket-redeem')
+  }
+
+  @Post('recommendations')
+  @UseGuards(OptionalSessionAuthGuard)
+  @ApiOperation({ summary: 'Rule-based portfolio recommendation (rules-v1) — public; every draft is stored with answers and engine version' })
+  recommend(@CurrentAuth() actor: SecurityActor | undefined, @Body() dto: CreateRecommendationDto) {
+    return this.recommendations.recommend(actor?.userId ?? null, dto)
   }
 
   @Get('disclosures')

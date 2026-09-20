@@ -243,6 +243,24 @@ export class BasketRedeemDto {
   units!: string
 }
 
+export class CreateRecommendationDto {
+  @ApiProperty({ enum: ['short', 'medium', 'long'] })
+  @IsIn(['short', 'medium', 'long'])
+  horizon!: 'short' | 'medium' | 'long'
+
+  @ApiProperty({ enum: ['conservative', 'balanced', 'growth'] })
+  @IsIn(['conservative', 'balanced', 'growth'])
+  riskAppetite!: 'conservative' | 'balanced' | 'growth'
+
+  @ApiProperty({ enum: ['income', 'growth', 'diversified'] })
+  @IsIn(['income', 'growth', 'diversified'])
+  focus!: 'income' | 'growth' | 'diversified'
+
+  @ApiProperty({ enum: ['new', 'intermediate', 'experienced'] })
+  @IsIn(['new', 'intermediate', 'experienced'])
+  experience!: 'new' | 'intermediate' | 'experienced'
+}
+
 export class AcknowledgeDisclosureDto {
   @ApiPropertyOptional()
   @IsOptional()

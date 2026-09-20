@@ -10,6 +10,7 @@ import { InternalServiceGuard } from '../wallet/internal-ops.controller'
 import { BASKET_EXECUTION_ADAPTER_TOKEN } from './basket.constants'
 import { BasketOpsWorker } from './basket.ops.worker'
 import { BasketNavService } from './basket.nav.service'
+import { BasketRecommendationService } from './recommendation.service'
 import { BasketController } from './basket.controller'
 import {
   BasketHolding,
@@ -63,6 +64,7 @@ import { BasketSubscriptionService } from './subscription.service'
   ],
   controllers: [BasketController, InternalBasketController],
   providers: [
+    BasketRecommendationService,
     BasketStrategyService,
     BasketPortfolioService,
     BasketNavService,
