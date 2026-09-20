@@ -40,7 +40,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
         to: input.email,
         subject,
         text: `${action}: ${link}`,
-        html: `<p>${action}</p><p><a href="${escapeHtml(link)}">${action}</a></p><p>This link expires in 15 minutes and can be used once.</p>`,
+        html: `<p>${action}</p><p><a href="${escapeHtml(link)}">${action}</a></p><p>This link expires in 60 minutes and can be used once.</p>`,
       })
     } catch {
       throw new ServiceUnavailableException({

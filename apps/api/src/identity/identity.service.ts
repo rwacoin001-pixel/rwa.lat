@@ -21,7 +21,7 @@ import { IdentityDeliveryService } from './identity-delivery.service'
 import { OAuthProviderService, type OAuthProviderName } from './oauth-provider.service'
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
-const ONE_TIME_TOKEN_TTL_MS = 15 * 60 * 1000
+const ONE_TIME_TOKEN_TTL_MS = 60 * 60 * 1000
 
 export interface AuthResult {
   userId: string
