@@ -6,7 +6,7 @@
  * (e.g. PG is down), it falls back to static demo data so the UI never breaks.
  */
 
-import { apiClient, type Product, type AssetClass } from './api-client'
+import { apiClient, type Product, type ListProductsResponse } from './api-client'
 import {
   demoProducts,
   featuredProducts,
@@ -19,41 +19,42 @@ import {
 
 function mapApiProduct(api: Product): DemoProduct {
   const { rwa } = require('./rwa-h5-copy')
-  const assetClass = (api.assetClass ?? 'compute').toLowerCase() as
-    | 'compute'
-    | 'rwa'
-    | 'stocks'
-    | 'prediction'
+  const assetClass = (api.assetClassId ?? 'compute').toLowerCase()
+  // Map catalog asset classes (equity/fund/commodity) onto the H5 scene/category system
   const kind =
     assetClass === 'compute'
       ? 'compute'
-      : assetClass === 'stocks'
+      : assetClass === 'equity' || assetClass === 'fund' || assetClass === 'stocks'
         ? 'stocks'
         : assetClass === 'prediction'
           ? 'prediction'
-          : 'solar'
-  const catLabel = (assetClass.charAt(0).toUpperCase() + assetClass.slice(1)) as
-    | 'Compute'
-    | 'RWA'
-    | 'Stocks'
-    | 'Prediction'
+          : assetClass === 'commodity'
+            ? 'solar-dome'
+            : 'solar'
+  const catLabel =
+    assetClass === 'equity' || assetClass === 'fund' || assetClass === 'stocks'
+      ? 'Stocks'
+      : assetClass === 'compute'
+        ? 'Compute'
+        : assetClass === 'prediction'
+          ? 'Prediction'
+          : 'RWA'
 
   return {
     id: api.id,
-    title: api.name ?? rwa?.[api.id]?.title ?? api.id,
-    subtitle: api.tagline ?? '',
+    title: api.displayName ?? rwa?.[api.id]?.title ?? api.id,
+    subtitle: api.summary ?? '',
     category: catLabel,
-    risk: ((api.riskLevel ?? 'medium') === 'low'
-      ? 'Low Risk'
-      : (api.riskLevel ?? 'medium') === 'high'
-        ? 'High Risk'
-        : 'Medium Risk') as DemoProduct['risk'],
+    // Risk and performance are deliberately not invented from the catalog API.
+    // Keep the presentation metadata only for seeded demo products and clearly
+    // label newly published products as indicative until a quote is available.
+    risk: (rwa?.[api.id]?.risk ?? 'Medium Risk') as DemoProduct['risk'],
     kind: kind as DemoProduct['kind'],
-    returnMetric: api.apyDisplay ?? `${api.apy ?? 10}%`,
-    returnLabel: 'projected APY',
-    minimum: api.minInvestment ? `${api.minInvestment} USDT` : '100 USDT',
-    liquidity: api.liquidity ?? 'Monthly window',
-    availability: api.status === 'live' ? 'Open' : 'Pending',
+    returnMetric: rwa?.[api.id]?.returnMetric ?? '—',
+    returnLabel: rwa?.[api.id]?.returnLabel ?? 'indicative',
+    minimum: api.minOrderAtomicAmount ? `${Number(api.minOrderAtomicAmount) / (10 ** api.assetDecimals)} ${api.assetCode}` : 'Review terms',
+    liquidity: 'Review terms',
+    availability: api.state === 'published' ? 'Open' : 'Pending',
     note: 'Live data via Core API',
     isDemo: false,
   }
@@ -67,8 +68,19 @@ export async function getProducts(): Promise<DemoProduct[]> {
   if (cachedProducts && now - cacheTs < 60_000) return cachedProducts
 
   try {
-    const response = await apiClient.listProducts({ limit: 50 })
-    const mapped = response.items.map(mapApiProduct)
+    const response = await apiClient.listProducts() as ListProductsResponse | Product[]
+    // The deployed catalog controller returns an array while older API-client
+    // builds describe the response as { items, total }; accept both shapes so
+    // the homepage stays API-first across environments.
+    const items = Array.isArray(response) ? response : response.items
+    if (!items.length) {
+      // An empty published catalog is a valid backend state during rollout, but
+      // it should not collapse the discovery surface for public visitors.
+      cachedProducts = demoProducts
+      cacheTs = now
+      return demoProducts
+    }
+    const mapped = items.map(mapApiProduct)
     cachedProducts = mapped
     cacheTs = now
     return mapped
