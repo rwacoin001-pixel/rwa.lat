@@ -146,7 +146,7 @@ export class BasketPortfolioService {
         `SELECT gav.raw AS "grossAssetValueUsd", gav.nav, gav.ts AS timestamp, gav.quality FROM (
            SELECT trim_scale(gross_asset_value_usd)::text AS raw,
                   trim_scale(nav_per_unit)::text AS nav,
-                  timestamp, data_quality AS quality
+                  timestamp AS ts, data_quality AS quality
            FROM app.basket_nav_snapshots WHERE portfolio_id = $1 ORDER BY timestamp DESC LIMIT 10
          ) gav`,
         [portfolioId],
