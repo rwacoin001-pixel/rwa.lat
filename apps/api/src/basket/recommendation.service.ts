@@ -29,10 +29,11 @@ export class BasketRecommendationService {
 
   async recommend(userId: string | null, answers: RecommendationAnswers) {
     const rows = (await this.ds.query(
-      `SELECT id, name, slug, COALESCE(risk_level, 'medium') AS risk_level
-       FROM app.basket_portfolios
-       WHERE status IN ('pilot', 'active')
-       ORDER BY name`,
+      `SELECT p.id, p.name, s.slug, COALESCE(s.risk_level, 'medium') AS risk_level
+       FROM app.basket_portfolios p
+       LEFT JOIN app.basket_strategies s ON s.id = p.strategy_id
+       WHERE p.status IN ('pilot', 'active')
+       ORDER BY p.name`,
     )) as Array<{ id: string; name: string; slug: string; risk_level: string }>
 
     const recommended = rows
