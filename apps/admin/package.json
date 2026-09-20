@@ -12,8 +12,8 @@
     "build:low-memory": "node --max-old-space-size=768 node_modules/@nestjs/cli/bin/nest.js build"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.500.0",
-    "@aws-sdk/s3-request-presigner": "^3.500.0",
+    "@aws-sdk/client-s3": "^3.1134.0",
+    "@aws-sdk/s3-request-presigner": "^3.1134.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.4",
     "@nestjs/core": "^11.0.1",
@@ -21,12 +21,12 @@
     "@nestjs/swagger": "^11.0.0",
     "@nestjs/typeorm": "^11.0.3",
     "class-transformer": "^0.5.1",
-    "class-validator": "^0.14.1",
+    "class-validator": "^0.15.1",
     "helmet": "^8.0.0",
-    "pg": "^8.22.0",
+    "pg": "^8.23.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "typeorm": "^1.0.0"
+    "typeorm": "^1.1.1"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
@@ -34,9 +34,9 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^30.0.0",
     "@types/node": "^22.0.0",
-    "@types/pg": "^8.20.0",
-    "jest": "^30.4.2",
-    "ts-jest": "^29.4.11",
+    "@types/pg": "^8.23.1",
+    "jest": "^30.5.1",
+    "ts-jest": "^29.4.12",
     "typescript": "^5.7.3"
   }
 }
