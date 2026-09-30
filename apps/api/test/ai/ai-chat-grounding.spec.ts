@@ -1,4 +1,5 @@
 import { AiService } from '../../src/ai/ai.service'
+import type { AiModelClient } from '../../src/ai/ai-model.client'
 import type { KnowledgeSource } from '../../src/ai/ai-knowledge.policy'
 
 const source: KnowledgeSource = { id: '9d7f53b0-48a6-4251-a3bc-171a545b3dad', sourceId: 'kb:9d7f53b0-48a6-4251-a3bc-171a545b3dad:v2', revision: 2, title: '赎回', summary: '', body: '实际到账后才能再投资。', locale: 'zh-CN', category: 'redemption', productIds: [], publishedAt: '2026-09-30T00:00:00Z' }
@@ -7,7 +8,7 @@ function fixture() {
   const session = { id: 'session', userId: 'owner', title: 'New conversation', updatedAt: new Date() }
   const sessions = { create: (value: any) => value, save: jest.fn(async (value: any) => ({ ...session, ...value })), findOne: jest.fn(async () => session) }
   const messages = { create: (value: any) => value, save: jest.fn(async (value: any) => ({ ...value, createdAt: new Date() })), find: jest.fn(async () => []), delete: jest.fn(async () => ({})) }
-  const model = { configured: true, providerName: 'DeepSeek', modelName: 'test', complete: jest.fn(async () => ({ text: JSON.stringify({ reply: '实际到账后才能再投资。', sourceIds: [source.sourceId] }), model: 'test' })) }
+  const model = { configured: true, providerName: 'DeepSeek', modelName: 'test', complete: jest.fn(async (..._args: Parameters<AiModelClient['complete']>) => ({ text: JSON.stringify({ reply: '实际到账后才能再投资。', sourceIds: [source.sourceId] }), model: 'test' })) }
   const knowledge = { enabled: true, retrieve: jest.fn(async () => [source]), stillCurrent: jest.fn(async () => true) }
   const service = new AiService(sessions as any, messages as any, model as any, knowledge as any)
   return { service, sessions, messages, model, knowledge }
