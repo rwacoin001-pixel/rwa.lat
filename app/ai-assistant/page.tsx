@@ -7,12 +7,14 @@ import { useI18n } from '@/lib/i18n'
 import { SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
 import { containsWalletSecret } from '@/lib/ai-input-guard'
 import styles from './page.module.css'
+import AiQuestionCard from '@/components/maison/AiQuestionCard'
+import type { AiQuestion } from '@/lib/api/ai-customer'
 
 const amounts = ['cashBudgetAtomic','cashReserveAtomic','maxManagedValueAtomic','maxActionAtomic','maxDailyTurnoverAtomic','maxTotalTurnoverAtomic','maxFeeAtomic'] as const
 const integers = ['maxProductWeightBps','maxUnrealizedLossBps','horizonDays','maxLockDays','maxFeeBps','scheduleIntervalMinutes','minTradeIntervalMinutes','rebalanceThresholdBps'] as const
 const labels:Record<string,string>={cashBudgetAtomic:'管理现金',cashReserveAtomic:'账户现金保留',maxManagedValueAtomic:'管理总额上限',maxActionAtomic:'单次申请上限',maxDailyTurnoverAtomic:'每日申请上限',maxTotalTurnoverAtomic:'累计申请上限',maxFeeAtomic:'单次费用上限',maxProductWeightBps:'单产品比例上限（基点）',maxUnrealizedLossBps:'浮亏停止阈值（基点）',horizonDays:'投资期限（天）',maxLockDays:'最长锁定（天）',maxFeeBps:'费用比例上限（基点）',scheduleIntervalMinutes:'检查间隔（分钟）',minTradeIntervalMinutes:'交易最短间隔（分钟）',rebalanceThresholdBps:'调整偏离阈值（基点）'}
 const english:Record<string,string>={cashBudgetAtomic:'Managed cash',cashReserveAtomic:'Cash reserve',maxManagedValueAtomic:'Managed value limit',maxActionAtomic:'Per-application limit',maxDailyTurnoverAtomic:'Daily turnover limit',maxTotalTurnoverAtomic:'Lifetime turnover limit',maxFeeAtomic:'Fee limit',maxProductWeightBps:'Product concentration (%)',maxUnrealizedLossBps:'Loss review threshold (%)',horizonDays:'Investment horizon (days)',maxLockDays:'Maximum lock (days)',maxFeeBps:'Fee rate limit (%)',scheduleIntervalMinutes:'Review interval (minutes)',minTradeIntervalMinutes:'Minimum trade interval (minutes)',rebalanceThresholdBps:'Rebalance threshold (%)'}
-type Message={role:'user'|'assistant';text:string;citations?:Citation[]}
+type Message={role:'user'|'assistant';text:string;citations?:Citation[];questions?:AiQuestion[]}
 const fromAtomic=(value:string)=>{ const n=BigInt(value);return `${n/BigInt(1000000)}.${(n%BigInt(1000000)).toString().padStart(6,'0')}` }
 const toAtomic=(value:string)=>{if(!/^(0|[1-9]\d*)(\.\d{1,6})?$/.test(value))throw new Error('Enter a USDT amount with at most 6 decimals');const [a,b='']=value.split('.');return (BigInt(a)*BigInt(1000000)+BigInt(b.padEnd(6,'0'))).toString()}
 
@@ -37,12 +39,24 @@ function AiAssistantContent(){
   useEffect(()=>{if(tab==='mandate')void load()},[tab])
   async function perform(work:()=>Promise<void>){if(busy)return;setBusy(true);setError('');try{await work()}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
   const change=(k:string,v:string)=>{setFields(f=>({...f,[k]:v}));setConfirmed(false)}
-  const send=()=>perform(async()=>{const question=text.trim();if(!question)return;if(containsWalletSecret(question))throw new Error(copy('请勿发送私钥或助记词','Do not send private keys or recovery phrases'));const reply=await aiCustomer.chat(question,zh?'zh-CN':locale,session,scopes);if(!reply.ok)throw new Error(reply.error.message);setMessages(m=>[...m,{role:'user',text:question},{role:'assistant',text:reply.data.reply,citations:reply.data.citations}]);setSession(reply.data.sessionId);setText('')})
+  const sendAnswer=async(question:string):Promise<boolean>=>{
+    if(busy||!question.trim())return false
+    setBusy(true);setError('')
+    try{
+      if(question.length>4000)throw new Error(copy('答案过长，请缩短后重试','Please shorten your answer'))
+      if(containsWalletSecret(question))throw new Error(copy('请勿发送私钥或助记词','Do not send private keys or recovery phrases'))
+      const reply=await aiCustomer.chat(question,zh?'zh-CN':locale,session,scopes)
+      if(!reply.ok)throw new Error(reply.error.message)
+      setMessages(m=>[...m,{role:'user',text:question},{role:'assistant',text:reply.data.reply,citations:reply.data.citations,questions:reply.data.questions}]);setSession(reply.data.sessionId)
+      return true
+    }catch(e){setError((e as Error).message);return false}finally{setBusy(false)}
+  }
+  const send=async()=>{if(await sendAnswer(text.trim()))setText('')}
   const save=()=>perform(async()=>{if(!confirmed || !mandate)return;const content:MandateContent={...Object.fromEntries(amounts.map(k=>[k,toAtomic(fields[k]??'')])),...Object.fromEntries(integers.map(k=>[k,Number(fields[k]||'NaN')])),allowedProductIds:(fields.allowedProductIds??'').split(/[\s,]+/).filter(Boolean),positions:JSON.parse(fields.positions||'[]'),riskBand:fields.riskBand,effectiveAt:new Date(fields.effectiveAt).toISOString(),expiresAt:new Date(fields.expiresAt).toISOString(),goals:fields.goals,locale:zh?'zh-CN':locale,notifications:['in_app'],...actions} as MandateContent;const r=await aiCustomer.saveMandate(content,mandate.mandate?.revision??0,mandate.termsVersion);if(!r.ok)throw new Error(r.error.message);setConfirmed(false);await load()})
   return <main className={styles.page}><header><Link href="/">RWA.LAT</Link><nav><button aria-pressed={tab==='chat'} onClick={()=>setTab('chat')}>{copy('客服','Support')}</button><button aria-pressed={tab==='mandate'} onClick={()=>setTab('mandate')}>{copy('投资授权','Investment mandate')}</button></nav></header>
     {error&&<p role="alert" className={styles.error}>{error}</p>}
     {tab==='chat'?<section className={styles.card}>
-      <div className={styles.messages} aria-live="polite">{messages.map((m,i)=><article key={i} data-role={m.role}><p>{m.text}</p>{m.citations?.map(c=><button key={c.sourceId} onClick={()=>perform(async()=>{const r=await aiCustomer.source(c);if(!r.ok)throw new Error(r.error.message);setSource(r.data)})}>{c.title} · v{c.revision}</button>)}</article>)}{busy&&<span role="status">…</span>}</div>
+      <div className={styles.messages} aria-live="polite">{messages.map((m,i)=><article key={i} data-role={m.role}><p>{m.text}</p>{!!m.questions?.length&&<AiQuestionCard questions={m.questions} locale={locale} disabled={busy} onConfirm={sendAnswer}/>} {m.citations?.map(c=><button key={c.sourceId} onClick={()=>perform(async()=>{const r=await aiCustomer.source(c);if(!r.ok)throw new Error(r.error.message);setSource(r.data)})}>{c.title} · v{c.revision}</button>)}</article>)}{busy&&<span role="status">…</span>}</div>
       <fieldset disabled={busy||!provider}><legend>{copy('向模型服务商分享本人信息','Share my account information with the model provider')} · {provider??'…'}</legend>{(['balances','positions','orders','qualification'] as AccountScope[]).map(s=><label key={s}><input type="checkbox" checked={scopes.includes(s)} onChange={e=>setScopes(a=>e.target.checked?[...a,s]:a.filter(v=>v!==s))}/>{zh?({balances:'余额',positions:'持仓',orders:'订单',qualification:'资格'})[s]:s}</label>)}</fieldset>
       <form onSubmit={e=>{e.preventDefault();void send()}}><textarea aria-label={copy('消息','Message')} value={text} maxLength={5000} onChange={e=>setText(e.target.value)}/><button disabled={busy||!text.trim()}>{copy('发送','Send')}</button></form>
       <details><summary>{copy('创建工单','Create ticket')}</summary><form onSubmit={e=>{e.preventDefault();const data=new FormData(e.currentTarget);void perform(async()=>{const r=await aiCustomer.draftTicket(String(data.get('subject')),String(data.get('body')));if(!r.ok)throw new Error(r.error.message);setDraft(r.data);setTicketConfirmed(false)})}}><input name="subject" required maxLength={200} placeholder={copy('主题','Subject')}/><textarea name="body" required maxLength={5000} placeholder={copy('问题详情','Details')}/><button disabled={busy}>{copy('预览','Preview')}</button></form>{draft&&<div><h3>{draft.content.subject}</h3><p>{draft.content.body}</p><label><input type="checkbox" checked={ticketConfirmed} onChange={e=>setTicketConfirmed(e.target.checked)}/>{copy('确认提交以上内容','Confirm the content above')}</label><button disabled={busy||!ticketConfirmed} onClick={()=>perform(async()=>{const r=await aiCustomer.confirmTicket(draft.id);if(!r.ok)throw new Error(r.error.message);setDraft(null);setMessages(m=>[...m,{role:'assistant',text:r.data.reference}])})}>{copy('提交工单','Submit ticket')}</button></div>}</details>

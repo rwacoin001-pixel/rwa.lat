@@ -64,7 +64,7 @@ export class AiModelClient {
     return 'the configured AI provider'
   }
 
-  async complete(system: string, messages: AiModelMessage[], maxTokens = 2048): Promise<AiModelReply> {
+  async complete(system: string, messages: AiModelMessage[], maxTokens = 2048, json = false): Promise<AiModelReply> {
     if (!this.configured) {
       throw new Error('AI model is not configured')
     }
@@ -84,6 +84,7 @@ export class AiModelClient {
               body: JSON.stringify({
                 model: this.model,
                 max_tokens: maxTokens,
+                ...(json ? { response_format: { type: 'json_object' } } : {}),
                 messages: [
                   { role: 'system', content: system },
                   ...messages.map((message) => ({ role: message.role, content: message.content })),

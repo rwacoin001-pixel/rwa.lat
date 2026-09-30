@@ -1,7 +1,8 @@
 'use client'
 import { containsWalletSecret } from '@/lib/ai-input-guard'
 import Link from 'next/link'
-import type { Citation } from '@/lib/api/ai-customer'
+import type { Citation, AiQuestion } from '@/lib/api/ai-customer'
+import AiQuestionCard from './AiQuestionCard'
 
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type ReactNode } from 'react'
 import { AlertCircle, ArrowUp, ArrowUpLeft, Check, Copy, Layers3, RotateCcw, Square, SquarePen, X } from 'lucide-react'
@@ -13,7 +14,7 @@ import ParticleLogoIcon from '../particle-logo-icon'
 import { MaisonPage } from './primitives'
 import a from './ai-chat.module.css'
 
-type Message = { id: number; role: 'user' | 'assistant'; content: string; citations?: Citation[] }
+type Message = { id: number; role: 'user' | 'assistant'; content: string; citations?: Citation[]; questions?: AiQuestion[] }
 type SendError = { text: string; tone: 'error' | 'info'; retry: string | null }
 const MAX = 4000
 const fill = (template: string, values: Record<string, string | number>) => template.replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''))
@@ -122,8 +123,8 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
   // The chat endpoint is synchronous and has no server-side cancel: stopping only ends the wait
   // here, and the copy says the reply may still be stored in history.
   const ask = useCallback(async (message: string) => {
-    if (!message || sending || status !== 'ready') return
-    if (containsWalletSecret(message)) { setError({ text: chat.secret, tone: 'info', retry: null }); return }
+    if (!message || sending || inflight.current || status !== 'ready') return false
+    if (message.length > MAX || containsWalletSecret(message)) { setError({ text: message.length > MAX ? chat.tooLong : chat.secret, tone: 'info', retry: null }); return false }
     const controller = new AbortController()
     inflight.current = controller
     const userId = nextId.current++
@@ -131,7 +132,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
     setMessages((current) => [...current, { id: userId, role: 'user', content: message }])
     const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(sessionId ? { sessionId } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
     // Stop / New chat already settled the UI; a late result from an abandoned request is dropped.
-    if (controller.signal.aborted || inflight.current !== controller) return
+    if (controller.signal.aborted || inflight.current !== controller) return false
     inflight.current = null
     setSending(false)
     if (!result.ok) {
@@ -143,13 +144,14 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
       const text = reason === 'ABORTED' ? chat.cancelled : code === 0 ? chat.network : code === 503 ? chat.off : code === 429 ? chat.busy : code === 404 ? chat.sessionLost : code === 413 || code === 400 ? chat.tooLong : chat.failed
       setError({ text, tone: reason === 'ABORTED' ? 'info' : 'error', retry: code === 503 || code === 400 || code === 413 ? null : message })
       window.requestAnimationFrame(() => field.current?.focus())
-      return
+      return false
     }
     const data = result.data
     const answer = typeof data.reply === 'string' ? data.reply : typeof data.answer === 'string' ? data.answer : typeof data.response === 'string' ? data.response : typeof data.content === 'string' ? data.content : null
     if (typeof data.sessionId === 'string') setSessionId(data.sessionId)
-    if (answer) { const id = nextId.current++; setRevealId(id); const citations = Array.isArray(data.citations) ? data.citations.filter((c): c is Citation => typeof c?.id === 'string' && typeof c?.title === 'string' && Number.isInteger(c?.revision)) : []; setMessages((current) => [...current, { id, role: 'assistant', content: answer, citations }]) }
+    if (answer) { const id = nextId.current++; setRevealId(id); const citations = Array.isArray(data.citations) ? data.citations.filter((c): c is Citation => typeof c?.id === 'string' && typeof c?.title === 'string' && Number.isInteger(c?.revision)) : []; const questions = Array.isArray(data.questions) ? data.questions as AiQuestion[] : []; setMessages((current) => [...current, { id, role: 'assistant', content: answer, citations, questions }]); return true }
     else setError({ text: chat.badFormat, tone: 'error', retry: null })
+    return false
   }, [chat, locale, sending, sessionId, status])
 
   // Stopping settles the UI at once rather than waiting for the aborted fetch to unwind.
@@ -210,6 +212,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
             : <li key={message.id} className={a.assistant}>
               <div className={a.who}><Mark /><b>{c.name}</b></div>
               <Answer text={message.content} reveal={message.id === revealId && !reduced()} />
+              {!!message.questions?.length && <AiQuestionCard questions={message.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} />}
               {message.citations?.map(c=><Link key={`${c.id}:${c.revision}`} href={`/ai-assistant?knowledge=${encodeURIComponent(c.id)}&revision=${c.revision}`}>{c.title} · v{c.revision}</Link>)}
               <div className={a.tools}>
                 <button type="button" onClick={() => void copyText(message)} aria-label={copied === message.id ? c.copied : c.copy}>{copied === message.id ? <Check size={15} /> : <Copy size={15} />}<span>{copied === message.id ? c.copied : c.copy}</span></button>

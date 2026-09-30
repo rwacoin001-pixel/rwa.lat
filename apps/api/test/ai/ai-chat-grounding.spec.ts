@@ -14,6 +14,30 @@ function fixture() {
 }
 
 describe('Published knowledge in customer chat', () => {
+  it('returns, persists and restores clarification cards as readable history', async () => {
+    const f = fixture()
+    const questions = [{ id: 'intent', title: '你的问题？', multiple: false, options: [{ id: 'account', label: '账户' }, { id: 'order', label: '订单' }] }]
+    f.model.complete.mockResolvedValue({ text: JSON.stringify({ reply: '先确认一下。', sourceIds: [], questions }), model: 'test' })
+    const reply = await f.service.chat('owner', { message: '帮我', locale: 'zh-CN' })
+    expect(reply.questions).toEqual(questions)
+    const saved = f.messages.save.mock.calls[1][0]
+    expect(JSON.parse(saved.content)).toEqual({ cardVersion: 1, reply: reply.reply, questions })
+    f.messages.find.mockResolvedValue([saved] as any)
+    const history = await f.service.getSession('owner', 'session')
+    expect(history.messages[0]).toMatchObject({ content: reply.reply, questions })
+    expect(f.model.complete.mock.calls[0][0]).toContain('never consent to investment')
+    await f.service.chat('owner', { message: '账户', sessionId: 'session', locale: 'zh-CN' })
+    const modelHistory = f.model.complete.mock.calls[1][1] as Array<{ content: string }>
+    expect(modelHistory[0].content).toContain('你的问题？')
+    expect(modelHistory[0].content).not.toContain('cardVersion')
+  })
+  it('still supports structured clarification when the knowledge feature is disabled', async () => {
+    const f = fixture()
+    f.knowledge.enabled = false
+    f.model.complete.mockResolvedValue({ text: JSON.stringify({ reply: '具体哪里需要帮助？', sourceIds: [], questions: [] }), model: 'test' })
+    expect((await f.service.chat('owner', { message: '帮我' })).questions).toEqual([])
+    expect(f.knowledge.retrieve).not.toHaveBeenCalled()
+  })
   it('passes actual published sources and stores verified citations', async () => {
     const f = fixture()
     const reply = await f.service.chat('owner', { message: '赎回到账', locale: 'zh-CN' })

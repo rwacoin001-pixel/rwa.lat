@@ -6,6 +6,15 @@ describe('AI provider delivery contract', () => {
   const client = () => new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://ai.example.test', AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'configured-model' }))
   afterEach(() => jest.restoreAllMocks())
 
+  it('requests JSON delivery for clarification cards without changing normal text calls', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"reply":"Choose","sourceIds":[],"questions":[]}' } }] }), { status: 200 }))
+    const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only' }))
+    await configured.complete('Return JSON', [{ role: 'user', content: 'Help' }], 2048, true)
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body)).response_format).toEqual({ type: 'json_object' })
+    await configured.complete('Normal answer', [{ role: 'user', content: 'Hello' }])
+    expect(JSON.parse(String(fetch.mock.calls[1][1]?.body)).response_format).toBeUndefined()
+  })
+
   it.each(['https://api.deepseek.com', 'https://api.deepseek.com/v1'])('infers OpenAI delivery for %s', async endpoint => {
     const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: ' DeepSeek reply ' } }], usage: { prompt_tokens: 3, completion_tokens: 4 } }), { status: 200 }))
     const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: endpoint, AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'deepseek-chat' }))

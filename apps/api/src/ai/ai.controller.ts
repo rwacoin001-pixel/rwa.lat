@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, UseGuards } from '@nestjs/c
 import { ApiOkResponse, ApiOperation, ApiProperty, ApiTags } from '@nestjs/swagger'
 import { AiService } from './ai.service'
 import { AiChatDto, AiFeedbackDto } from './dto/ai.dto'
+import { AiChatResponseDto } from './dto/ai-chat-response.dto'
 import { OptionalSessionAuthGuard, type OptionallyAuthenticatedRequest } from '../security/optional-session-auth.guard'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
 import { CurrentAuth } from '../security/current-auth.decorator'
@@ -40,7 +41,7 @@ export class AiController {
   @Post('chat')
   @UseGuards(OptionalSessionAuthGuard)
   @ApiOperation({ summary: 'Send a message to the AI assistant (works anonymous; history requires login)' })
-  @ApiOkResponse({ description: 'Assistant reply.' })
+  @ApiOkResponse({ type: AiChatResponseDto, description: 'Verified reply and optional clarification cards; cards do not authorize actions.' })
   async chat(
     @Body() dto: AiChatDto,
     @CurrentAuth() auth: OptionalAuth | undefined,
