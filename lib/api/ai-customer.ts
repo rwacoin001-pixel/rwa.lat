@@ -18,7 +18,7 @@ const body = (value:unknown,method='POST'): RequestInit => ({method,headers:{'co
 export const aiCustomer = {
   status:()=>request<{provider:string;configured:boolean}>('/v1/ai/status'),
   choices:()=>request<{products:Array<{id:string;name:string}>;positions:Array<{id:string;productId:string;name:string;decimals:number;quantityAtomic:string}>}>('/v1/ai/investment/choices'),
-  chat:(message:string,locale:string,sessionId?:string,accountScopes:AccountScope[]=[])=>request<components['schemas']['AiChatResponseDto']>('/v1/ai/chat',body({message,locale,sessionId,accountScopes})),
+  chat:(message:string,locale:string,sessionId?:string,accountScopes:AccountScope[]=[])=>request<components['schemas']['AiChatResponseDto']>('/v1/ai/chat',body({message,locale,sessionId,...(accountScopes.length ? {accountScopes} : {})})),
   source:(citation:Citation)=>request<{title:string;body:string}>(`/v1/ai/knowledge/${citation.id}/versions/${citation.revision}`),
   draftTicket:(subject:string,text:string)=>request<{id:string;content:{subject:string;body:string};expiresAt:string}>('/v1/ai/ticket-drafts',body({subject,body:text,category:'support'})),
   confirmTicket:(id:string)=>request<{ticketId:string;reference:string;state:string}>(`/v1/ai/ticket-drafts/${id}/confirm`,body({confirmed:true})),
