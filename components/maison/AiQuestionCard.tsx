@@ -83,7 +83,7 @@ export default function AiQuestionCard({ questions, locale, disabled = false, on
     } finally { setPending(false) }
   }
 
-  return <AnimatePresence>{!answered && <motion.section className={s.card} aria-label={p[0]} dir={locale === 'ar' ? 'rtl' : undefined}
+  return <AnimatePresence>{!answered && !pending && <motion.section className={s.card} aria-label={p[0]} dir={locale === 'ar' ? 'rtl' : undefined}
     initial={{ opacity: 0, y: reduceMotion ? 0 : 10, scale: reduceMotion ? 1 : .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: reduceMotion ? 0 : 6, scale: reduceMotion ? 1 : .98 }} transition={{ duration: reduceMotion ? 0 : .2, ease: [.22, 1, .36, 1] }}>
       <header className={s.header}><span><MessageCircleQuestionMark size={20} strokeWidth={1.7} aria-hidden="true"/>{p[0]}</span><div>{questions.length > 1 && <small>{step + 1}/{questions.length}</small>}<button type="button" className={s.icon} aria-label={p[4]} disabled={locked} onClick={dismiss}><X size={18} strokeWidth={1.7}/></button></div></header>
       <AnimatePresence mode="wait" initial={false}><motion.fieldset key={q.id} className={s.question} disabled={locked}

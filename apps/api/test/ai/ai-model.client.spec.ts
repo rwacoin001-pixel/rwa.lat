@@ -54,4 +54,33 @@ describe('AI provider delivery contract', () => {
     jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ content: [] }), { status: 200 }))
     await expect(client().complete('System', [{ role: 'user', content: 'Test' }])).rejects.toThrow('empty completion')
   })
+
+  it('recovers an empty JSON completion once without restarting the timeout budget', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch')
+      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: '' } }] }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ choices: [{ message: { content: '{"reply":"Recovered","sourceIds":[],"questions":[]}' } }] }), { status: 200 }))
+    const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only' }))
+    const reply = await configured.complete('Return JSON', [{ role: 'user', content: 'Selected goal' }], 2048, true)
+    expect(reply.text).toContain('Recovered')
+    expect(fetch).toHaveBeenCalledTimes(2)
+    expect(fetch.mock.calls[1][1]?.signal).toBe(fetch.mock.calls[0][1]?.signal)
+    const retry = JSON.parse(String(fetch.mock.calls[1][1]?.body))
+    expect(retry.response_format).toEqual({ type: 'json_object' })
+    expect(retry.messages[0].content).toContain('complete, non-empty JSON object')
+    expect(retry.messages[1]).toEqual({ role: 'user', content: 'Selected goal' })
+  })
+
+  it('stops after two empty JSON completions and never delivers reasoning as the answer', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ choices: [{ message: { content: '', reasoning_content: 'internal-only' } }] }), { status: 200 }))
+    const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only' }))
+    await expect(configured.complete('Return JSON', [{ role: 'user', content: 'Selection' }], 2048, true)).rejects.toThrow('empty completion')
+    expect(fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not retry provider credential errors even in JSON mode', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('secret-provider-detail', { status: 401 }))
+    const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only' }))
+    await expect(configured.complete('Return JSON', [{ role: 'user', content: 'Selection' }], 2048, true)).rejects.toThrow('401')
+    expect(fetch).toHaveBeenCalledTimes(1)
+  })
 })

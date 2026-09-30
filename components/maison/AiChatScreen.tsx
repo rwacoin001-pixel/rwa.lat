@@ -140,9 +140,10 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
       setMessages((current) => current.filter((item) => item.id !== userId))
       setInput(message)
       const { status: code, code: reason } = result.error
+      const upstreamFailure = code === 503 && reason === 'AI_UPSTREAM_UNAVAILABLE'
       if (code === 404) setSessionId(null)
-      const text = reason === 'ABORTED' ? chat.cancelled : code === 0 ? chat.network : code === 503 ? chat.off : code === 429 ? chat.busy : code === 404 ? chat.sessionLost : code === 413 || code === 400 ? chat.tooLong : chat.failed
-      setError({ text, tone: reason === 'ABORTED' ? 'info' : 'error', retry: code === 503 || code === 400 || code === 413 ? null : message })
+      const text = reason === 'ABORTED' ? chat.cancelled : code === 0 ? chat.network : upstreamFailure ? chat.failed : code === 503 ? chat.off : code === 429 ? chat.busy : code === 404 ? chat.sessionLost : code === 413 || code === 400 ? chat.tooLong : chat.failed
+      setError({ text, tone: reason === 'ABORTED' ? 'info' : 'error', retry: (code === 503 && !upstreamFailure) || code === 400 || code === 413 ? null : message })
       window.requestAnimationFrame(() => field.current?.focus())
       return false
     }

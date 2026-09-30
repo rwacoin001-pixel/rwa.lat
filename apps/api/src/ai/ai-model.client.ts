@@ -71,83 +71,93 @@ export class AiModelClient {
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), this.timeoutMs)
     try {
-      const response =
-        this.apiStyle === 'openai'
-          ? await fetch(`${this.endpoint}/chat/completions`, {
-              method: 'POST',
-              signal: controller.signal,
-              headers: {
-                'content-type': 'application/json',
-                authorization: `Bearer ${this.apiKey}`,
-                'user-agent': this.userAgent,
-              },
-              body: JSON.stringify({
-                model: this.model,
-                max_tokens: maxTokens,
-                ...(json ? { response_format: { type: 'json_object' } } : {}),
-                messages: [
-                  { role: 'system', content: system },
-                  ...messages.map((message) => ({ role: message.role, content: message.content })),
-                ],
-              }),
-            })
-          : await fetch(`${this.endpoint}${/\/v1$/i.test(this.endpoint) ? '' : '/v1'}/messages`, {
-              method: 'POST',
-              signal: controller.signal,
-              headers: {
-                'content-type': 'application/json',
-                'x-api-key': this.apiKey,
-                'anthropic-version': '2023-06-01',
-                'user-agent': this.userAgent,
-              },
-              body: JSON.stringify({
-                model: this.model,
-                max_tokens: maxTokens,
-                system,
-                messages: messages.map((message) => ({ role: message.role, content: message.content })),
-              }),
-            })
-      if (!response.ok) {
-        // Provider error bodies may contain credentials or request data.
-        this.logger.warn(`AI model upstream HTTP ${response.status}`)
-        throw new Error(`AI upstream error ${response.status}`)
-      }
-      const raw = (await response.json()) as Record<string, unknown>
-      let text = ''
-      let usedModel = this.model
-      let inputTokens: number | undefined
-      let outputTokens: number | undefined
-      if (this.apiStyle === 'openai') {
-        const payload = raw as {
-          choices?: { message?: { content?: string } }[]
-          model?: string
-          usage?: { prompt_tokens?: number; completion_tokens?: number }
+      // JSON mode can occasionally deliver empty content. Retry only this
+      // read-only generation once, within the original timeout budget.
+      for (let attempt = 0; attempt < 2; attempt++) {
+        const deliverySystem = attempt === 0 ? system : `${system}\nReturn a complete, non-empty JSON object matching the output contract. Keep the reply brief and include the required fields. Do not output whitespace or commentary outside JSON.`
+        const response =
+          this.apiStyle === 'openai'
+            ? await fetch(`${this.endpoint}/chat/completions`, {
+                method: 'POST',
+                signal: controller.signal,
+                headers: {
+                  'content-type': 'application/json',
+                  authorization: `Bearer ${this.apiKey}`,
+                  'user-agent': this.userAgent,
+                },
+                body: JSON.stringify({
+                  model: this.model,
+                  max_tokens: maxTokens,
+                  ...(json ? { response_format: { type: 'json_object' } } : {}),
+                  messages: [
+                    { role: 'system', content: deliverySystem },
+                    ...messages.map((message) => ({ role: message.role, content: message.content })),
+                  ],
+                }),
+              })
+            : await fetch(`${this.endpoint}${/\/v1$/i.test(this.endpoint) ? '' : '/v1'}/messages`, {
+                method: 'POST',
+                signal: controller.signal,
+                headers: {
+                  'content-type': 'application/json',
+                  'x-api-key': this.apiKey,
+                  'anthropic-version': '2023-06-01',
+                  'user-agent': this.userAgent,
+                },
+                body: JSON.stringify({
+                  model: this.model,
+                  max_tokens: maxTokens,
+                  system,
+                  messages: messages.map((message) => ({ role: message.role, content: message.content })),
+                }),
+              })
+        if (!response.ok) {
+          // Provider error bodies may contain credentials or request data.
+          this.logger.warn(`AI model upstream HTTP ${response.status}`)
+          throw new Error(`AI upstream error ${response.status}`)
         }
-        text = (payload.choices?.[0]?.message?.content ?? '').trim()
-        usedModel = payload.model ?? this.model
-        inputTokens = payload.usage?.prompt_tokens
-        outputTokens = payload.usage?.completion_tokens
-      } else {
-        const payload = raw as {
-          content?: { type?: string; text?: string }[]
-          model?: string
-          usage?: { input_tokens?: number; output_tokens?: number }
+        const raw = (await response.json()) as Record<string, unknown>
+        let text = ''
+        let usedModel = this.model
+        let inputTokens: number | undefined
+        let outputTokens: number | undefined
+        if (this.apiStyle === 'openai') {
+          const payload = raw as {
+            choices?: { message?: { content?: string } }[]
+            model?: string
+            usage?: { prompt_tokens?: number; completion_tokens?: number }
+          }
+          text = (payload.choices?.[0]?.message?.content ?? '').trim()
+          usedModel = payload.model ?? this.model
+          inputTokens = payload.usage?.prompt_tokens
+          outputTokens = payload.usage?.completion_tokens
+        } else {
+          const payload = raw as {
+            content?: { type?: string; text?: string }[]
+            model?: string
+            usage?: { input_tokens?: number; output_tokens?: number }
+          }
+          text = (payload.content ?? [])
+            .filter((block) => block.type === 'text' && typeof block.text === 'string')
+            .map((block) => block.text)
+            .join('\n')
+            .trim()
+          usedModel = payload.model ?? this.model
+          inputTokens = payload.usage?.input_tokens
+          outputTokens = payload.usage?.output_tokens
         }
-        text = (payload.content ?? [])
-          .filter((block) => block.type === 'text' && typeof block.text === 'string')
-          .map((block) => block.text)
-          .join('\n')
-          .trim()
-        usedModel = payload.model ?? this.model
-        inputTokens = payload.usage?.input_tokens
-        outputTokens = payload.usage?.output_tokens
+        if (!text && json && this.apiStyle === 'openai' && attempt === 0) {
+          this.logger.warn('AI model returned empty JSON content; retrying once')
+          continue
+        }
+        if (!text) throw new Error('AI upstream returned an empty completion')
+        return {
+          text,
+          model: usedModel,
+          usage: { inputTokens, outputTokens },
+        }
       }
-      if (!text) throw new Error('AI upstream returned an empty completion')
-      return {
-        text,
-        model: usedModel,
-        usage: { inputTokens, outputTokens },
-      }
+      throw new Error('AI upstream returned an empty completion')
     } finally {
       clearTimeout(timer)
     }
