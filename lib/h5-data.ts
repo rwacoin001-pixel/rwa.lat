@@ -1,11 +1,12 @@
 /**
- * H5 Data Layer — API-first with demo fallback
+ * H5 Data Layer — API-backed catalog
  *
  * All RWA-H5 data flows through this module.  When the Core API is running,
- * it fetches live data via @rwa-lat/api-client.  When the API is unreachable
- * (e.g. PG is down), it falls back to static demo data so the UI never breaks.
+ * it fetches live data via @rwa-lat/api-client. Errors retain the last catalog
+ * snapshot or return an empty list; they never substitute demo products.
  */
 
+import { fromAtomic } from './money'
 import { apiClient, type Product, type ListProductsResponse } from './api-client'
 import {
   demoProducts,
@@ -52,7 +53,7 @@ function mapApiProduct(api: Product): DemoProduct {
     kind: kind as DemoProduct['kind'],
     returnMetric: rwa?.[api.id]?.returnMetric ?? '—',
     returnLabel: rwa?.[api.id]?.returnLabel ?? 'indicative',
-    minimum: api.minOrderAtomicAmount ? `${Number(api.minOrderAtomicAmount) / (10 ** api.assetDecimals)} ${api.assetCode}` : 'Review terms',
+    minimum: api.minOrderAtomicAmount ? `${fromAtomic(api.minOrderAtomicAmount, api.assetDecimals)} ${api.assetCode}` : 'Review terms',
     liquidity: 'Review terms',
     availability: api.state === 'published' ? 'Open' : 'Pending',
     note: 'Live data via Core API',
@@ -74,31 +75,30 @@ export async function getProducts(): Promise<DemoProduct[]> {
     // the homepage stays API-first across environments.
     const items = Array.isArray(response) ? response : response.items
     if (!items.length) {
-      // An empty published catalog is a valid backend state during rollout, but
-      // it should not collapse the discovery surface for public visitors.
-      cachedProducts = demoProducts
+      // 真实空目录就是空——不再用 demo 冒充（圆桌第4场裁定 + 验收报告 P0）
+      cachedProducts = []
       cacheTs = now
-      return demoProducts
+      return []
     }
     const mapped = items.map(mapApiProduct)
     cachedProducts = mapped
     cacheTs = now
     return mapped
   } catch {
-    console.warn('[h5-data] API unavailable — falling back to demo catalog')
-    return demoProducts
+    console.warn('[h5-data] API unavailable')
+    return cachedProducts ?? []
   }
 }
 
 export function getFeaturedProducts(): DemoProduct[] {
-  // Featured is a subset — we return API if cached, else demo
+  // Featured is a subset — API cached values only（不用 demo 回退）
   if (cachedProducts) return cachedProducts.filter((p) => p.availability === 'Open')
-  return featuredProducts
+  return []
 }
 
 export function getProductById(id: string): DemoProduct | undefined {
   if (cachedProducts) return cachedProducts.find((p) => p.id === id)
-  return demoProducts.find((p) => p.id === id)
+  return undefined
 }
 
 export function getProjectProfile(id: string): DemoProjectProfile | undefined {

@@ -19,7 +19,7 @@ function fixture() {
     mode: 'live',
     submitCase: jest.fn().mockResolvedValue({
       providerCaseRef: 'aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee',
-      status: 'submitted',
+      status: 'not_started',
       verificationUrl: 'https://verify.didit.me/en/session/token',
     }),
     getCase: jest.fn(),
@@ -43,7 +43,6 @@ function fixture() {
     repository() as never,
     provider,
     new StubSanctionsProvider({ get: () => '' } as never),
-    { isAllowed: () => true } as never,
     crypto as never,
     { get: (key: string) => key === 'PRODUCTION_FINANCIAL_FEATURES_ENABLED' ? 'false' : undefined } as ConfigService,
   )
@@ -59,7 +58,8 @@ describe('ComplianceService Didit integration boundary', () => {
 
     expect(result.verificationUrl).toBe('https://verify.didit.me/en/session/token')
     expect(kycRepo.save).toHaveBeenCalledWith(expect.objectContaining({
-      state: 'submitted',
+      state: 'not_started',
+      submittedAt: null,
       provider: 'didit',
       providerCaseHash: Buffer.from('hash:aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'),
     }))
@@ -108,5 +108,43 @@ describe('ComplianceService Didit integration boundary', () => {
       isTest: true,
     })).resolves.toEqual({ accepted: true, updated: false })
     expect(kycRepo.findOne).not.toHaveBeenCalled()
+  })
+
+  it('repairs an unfinished hosted session that was incorrectly labelled under review', async () => {
+    const { service, kycRepo, provider } = fixture()
+    const row = { state: 'submitted', userId: 'user-1', provider: 'didit', providerCaseCiphertext: Buffer.from('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'), submittedAt: new Date() }
+    kycRepo.findOne.mockResolvedValue(row)
+    ;(provider.getCase as jest.Mock).mockResolvedValue({ state: 'in_progress' })
+    expect((await service.getKycStatus('user-1'))?.state).toBe('in_progress')
+    expect(row.submittedAt).toBeNull()
+  })
+
+  it('keeps a stored decision during provider failures', async () => {
+    const { service, kycRepo, provider } = fixture()
+    const row = { state: 'submitted', provider: 'didit', providerCaseCiphertext: Buffer.from('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee') }
+    kycRepo.findOne.mockResolvedValue(row)
+    ;(provider.getCase as jest.Mock).mockRejectedValue(new Error('offline'))
+    expect((await service.getKycStatus('user-1'))?.state).toBe('submitted')
+    expect(kycRepo.save).not.toHaveBeenCalled()
+  })
+
+  it('clears a stale submission date even when the authoritative state is unchanged', async () => {
+    const { service, kycRepo, provider } = fixture()
+    const row = { state: 'in_progress', provider: 'didit', providerCaseCiphertext: Buffer.from('aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee'), submittedAt: new Date() }
+    kycRepo.findOne.mockResolvedValue(row)
+    ;(provider.getCase as jest.Mock).mockResolvedValue({ state: 'in_progress' })
+    await service.getKycStatus('user-1')
+    expect(row.submittedAt).toBeNull()
+    expect(kycRepo.save).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not call an abandoned capture under review', async () => {
+    const { service, kycRepo, provider } = fixture()
+    const row = { state: 'submitted', submittedAt: new Date(), userId: 'user-1' }
+    kycRepo.findOne.mockResolvedValue(row)
+    ;(provider.mapStatus as jest.Mock).mockReturnValue({ state: 'in_progress' })
+    await service.receiveDiditWebhook({ body: {}, signatureV2: 'a'.repeat(64), timestamp: '1784419200', isTest: false })
+    expect(row.state).toBe('in_progress')
+    expect(row.submittedAt).toBeNull()
   })
 })

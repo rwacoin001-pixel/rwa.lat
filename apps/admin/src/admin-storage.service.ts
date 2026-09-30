@@ -395,13 +395,33 @@ export class AdminStorageService implements OnModuleDestroy {
   async deleteObject(objectId: string, adminId: string) {
     const s3 = this.requireClient()
     const object = await this.getObjectRow(objectId)
+    const ref = `${object.bucket}/${object.key}`
+    if (!this.core) throw new ServiceUnavailableException('Core database is not configured')
+    const client = await this.core.connect()
+    try {
+    await client.query('BEGIN')
+    const locked = await client.query('SELECT id FROM app.object_storage_objects WHERE id=$1 FOR UPDATE', [objectId])
+    if (!locked.rows.length) throw new NotFoundException('文件不存在')
+    const { rows: [usage] } = await client.query<{ used: boolean }>(`SELECT (
+      EXISTS (SELECT 1 FROM app.products WHERE cover_storage_ref = $1 OR media_refs_json ? $1)
+      OR EXISTS (SELECT 1 FROM app.disclosure_files WHERE storage_ref = $1)
+      OR EXISTS (SELECT 1 FROM app.manual_trade_settlements WHERE evidence_ref = $1)
+      OR EXISTS (SELECT 1 FROM app.platform_configuration c, jsonb_array_elements(COALESCE(c.draft->'documents', '[]'::jsonb)) d WHERE d->>'storageRef' = $1)
+      OR EXISTS (SELECT 1 FROM app.platform_configuration_versions v, jsonb_array_elements(COALESCE(v.content->'documents', '[]'::jsonb)) d WHERE d->>'storageRef' = $1)
+    ) AS used`, [ref])
+    if (usage?.used) throw new ConflictException('文件仍被产品、主体资料或发布记录引用，不能删除')
     try {
       await s3.send(new DeleteObjectCommand({ Bucket: this.physicalBucket(object.bucket), Key: object.key }))
     } catch {
-      // 存储端对象可能已不存在；继续清理数据库记录
+      throw new ServiceUnavailableException('存储删除失败，文件记录已保留，请稍后重试')
     }
-    await this.query(`UPDATE app.presigned_urls SET used_at = COALESCE(used_at, now()) WHERE object_id = $1`, [object.id])
-    await this.query(`DELETE FROM app.object_storage_objects WHERE id = $1`, [object.id])
+    await client.query(`UPDATE app.presigned_urls SET used_at = COALESCE(used_at, now()) WHERE object_id = $1`, [object.id])
+    await client.query(`DELETE FROM app.object_storage_objects WHERE id = $1`, [object.id])
+    await client.query('COMMIT')
+    } catch (error) {
+      await client.query('ROLLBACK')
+      throw error
+    } finally { client.release() }
     await this.audit(adminId, 'admin.storage.object_deleted', 'storage_object', object.id, {
       bucket: object.bucket,
       key: object.key,

@@ -106,6 +106,18 @@ describeDatabase('rwa market public query (integration)', () => {
     expect(Number(series.points[0].priceUsd)).toBeGreaterThan(0)
   })
 
+  it('falls back to TVL when a history row has no market cap', async () => {
+    await ds.query(
+      `INSERT INTO app.rwa_asset_metric_history (asset_id, date, tvl_usd)
+       SELECT id, CURRENT_DATE - offs, 7000000 + offs FROM app.rwa_assets, generate_series(1, 3) AS offs WHERE slug = 't2-beta'`,
+    )
+    const series = await query.getAssetHistory('t2-beta', 7)
+    expect(series.points).toHaveLength(3)
+    expect(series.points[0].priceUsd).toBeNull()
+    expect(Number(series.points[0].marketCapUsd)).toBe(7000003)
+    expect(Number(series.points[0].tvlUsd)).toBe(7000003)
+  })
+
   it('lists issuers, rankings, categories and overview aggregates', async () => {
     const issuers = await query.listIssuers()
     const t2 = (issuers.items as Array<Record<string, any>>).find((item) => item.slug === 't2-issuer')

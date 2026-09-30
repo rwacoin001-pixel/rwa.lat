@@ -2,68 +2,154 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  Optional,
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { randomUUID } from 'node:crypto'
-import { IsNull, Repository } from 'typeorm'
+import { randomBytes, randomUUID } from 'node:crypto'
+import { walletSignInMessage } from './wallet-sign-in-message'
+import { maskEmail } from '../data-governance/data-masking.util'
+import { DataSource, EntityManager, IsNull, Repository } from 'typeorm'
 import { ConfigService } from '@nestjs/config'
+import { generateAuthenticationOptions, verifyAuthenticationResponse } from '@simplewebauthn/server'
+import type { AuthenticationResponseJSON } from '@simplewebauthn/server'
 import { IDENTITY_ERROR_CODES } from './identity.errors'
 import { IdentityCrypto } from './identity-crypto.service'
 import { Device } from './device.entity'
 import { LoginIdentity } from './login-identity.entity'
+import { PasskeyCredential } from '../security/passkey-credential.entity'
+import { IdentityPasskeyChallenge } from './identity-passkey-challenge.entity'
 import { Session } from './session.entity'
 import { User } from './user.entity'
 import { IdentityOneTimeToken, type IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
 import { IdentityDeliveryService } from './identity-delivery.service'
 import { OAuthProviderService, type OAuthProviderName } from './oauth-provider.service'
+import { AuthFlowService, type AuthProof, type AuthDevice } from './auth-flow.service'
+import { ReferralBindingService } from '../referral/referral-binding.service'
+import {
+  validateRegistrationConsents,
+  loadRegistrationConsents,
+  type RegistrationConsentAcceptance,
+} from './consent-policy'
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 const ONE_TIME_TOKEN_TTL_MS = 60 * 60 * 1000
+const PASSKEY_CHALLENGE_TTL_MS = 5 * 60 * 1000
 
 export interface AuthResult {
   userId: string
   sessionId: string
   token: string
+  /** True when the account's email login identity has been verified (S1 home lifecycle). */
+  emailVerified: boolean
+}
+
+/** Session-level auth state view (S1: GET /auth/session). */
+export interface SessionView {
+  userId: string
+  sessionId: string
+  emailVerified: boolean
+  authAdapter: string
+  expiresAt: string
+  /** Masked sign-in label for account chrome, e.g. a***@example.com or 0x12…abcd. */
+  accountLabel: string | null
 }
 
 @Injectable()
 export class IdentityService {
+  private readonly authFlows: AuthFlowService
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
     @InjectRepository(LoginIdentity) private readonly loginIdentities: Repository<LoginIdentity>,
     @InjectRepository(Device) private readonly devices: Repository<Device>,
     @InjectRepository(Session) private readonly sessions: Repository<Session>,
     @InjectRepository(IdentityOneTimeToken) private readonly oneTimeTokens: Repository<IdentityOneTimeToken>,
+    @InjectRepository(PasskeyCredential) private readonly passkeys: Repository<PasskeyCredential>,
+    @InjectRepository(IdentityPasskeyChallenge) private readonly passkeyChallenges: Repository<IdentityPasskeyChallenge>,
     private readonly crypto: IdentityCrypto,
     private readonly delivery: IdentityDeliveryService,
     private readonly oauthProvider: OAuthProviderService,
     private readonly config: ConfigService,
-  ) {}
+    private readonly dataSource: DataSource,
+    @Optional() private readonly referral?: ReferralBindingService,
+  ) { this.authFlows = new AuthFlowService(dataSource, crypto, delivery) }
 
-  async registerEmail(email: string, locale = 'en'): Promise<{ accepted: true }> {
+  async loginPassword(email: string, password: string, device?: AuthDevice) {
+    const verified = await this.authFlows.checkPassword(email, password)
+    await this.authFlows.authorize(verified.userId, 'password', device, verified.version)
+    throw new UnauthorizedException({ code: 'AUTH_FLOW_REQUIRED', message: 'Second factor is required.' })
+  }
+
+  async managePassword(rawToken: string, device?: AuthDevice, email?: string) {
+    const session = await this.getSessionViewByToken(rawToken)
+    return this.authFlows.beginPasswordManagement(session.userId, device, email)
+  }
+
+  resendAuthFlow(token: string) { return this.authFlows.resend(token) }
+
+  async completeAuthFlow(input: Parameters<AuthFlowService['complete']>[0]) {
+    return this.authFlows.complete(input, async (payload, manager) => {
+      if (payload.oauth) {
+        const consents = validateRegistrationConsents(input.consents, await loadRegistrationConsents(manager, this.config, true))
+        const { provider, subject, locale } = payload.oauth
+        const key = `${provider}:${subject}`
+        const hash = this.crypto.hashIdentifier(key)
+        await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`oauth:${hash.toString('hex')}`])
+        const identities = manager.getRepository(LoginIdentity)
+        const existing = await identities.findOne({ where: { kind: provider, identifierHash: hash } })
+        if (existing) throw new ConflictException({ code: 'AUTH_RESTART_LOGIN', message: 'Account already exists. Sign in again.' })
+        const userId = randomUUID()
+        await manager.getRepository(User).save({ id: userId, status: 'active', locale: locale ?? 'en' })
+        await this.referral?.bindNewUser(manager,userId)
+        const encrypted = this.crypto.encrypt(key)
+        await identities.save({ id: randomUUID(), userId, kind: provider, state: 'verified', identifierHash: hash,
+          identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date() })
+        await this.persistRegistrationConsents(manager, userId, consents, new Date(), randomUUID())
+        return this.createSession(userId, payload.device, manager)
+      }
+      return this.createSession(payload.userId!, payload.device, manager)
+    })
+  }
+
+  async consentRequirements() { return { required: await loadRegistrationConsents(this.dataSource, this.config) } }
+
+  async registerEmail(email: string, locale = 'en', consentInput?: unknown): Promise<{ accepted: true }> {
+    const userId = await this.prepareEmailRegistration(email, locale, consentInput)
+    const normalized = email.toLowerCase().trim()
+    const token = await this.issueOneTimeToken(userId, 'email_verification')
+    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', token })
+    return { accepted: true }
+  }
+
+  /** Internal registration shared by email links and mobile verification codes. */
+  async prepareEmailRegistration(email: string, locale = 'en', consentInput?: unknown, transactionManager?: EntityManager): Promise<string> {
     const normalized = email.toLowerCase().trim()
     const hash = this.crypto.hashIdentifier(normalized)
-    const existing = await this.loginIdentities.findOne({
-      where: { kind: 'email', identifierHash: hash },
-    })
-    if (existing && existing.state === 'verified') {
-      throw new ConflictException({
-        code: IDENTITY_ERROR_CODES.EMAIL_TAKEN,
-        message: 'An account with this email already exists.',
+    const prepare = async (manager: EntityManager) => {
+      const consents = validateRegistrationConsents(consentInput, await loadRegistrationConsents(manager, this.config, true))
+      const loginIdentities = manager.getRepository(LoginIdentity)
+      const users = manager.getRepository(User)
+      const existing = await loginIdentities.findOne({
+        where: { kind: 'email', identifierHash: hash },
       })
-    }
+      if (existing?.state === 'verified') {
+        throw new ConflictException({
+          code: IDENTITY_ERROR_CODES.EMAIL_TAKEN,
+          message: 'An account with this email already exists.',
+        })
+      }
+      if (existing?.state === 'revoked' || existing?.revokedAt) {
+        throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
+      }
 
-    const userId = existing?.userId ?? randomUUID()
-    if (!existing) {
-      await this.users.save(
-        this.users.create({ id: userId, status: 'active', locale }),
-      )
-      const { ciphertext, keyVersion } = this.crypto.encrypt(normalized)
-      await this.loginIdentities.save(
-        this.loginIdentities.create({
+      const userId = existing?.userId ?? randomUUID()
+      if (!existing) {
+        await users.save(users.create({ id: userId, status: 'active', locale }))
+        await this.referral?.bindNewUser(manager,userId)
+        const { ciphertext, keyVersion } = this.crypto.encrypt(normalized)
+        await loginIdentities.save(loginIdentities.create({
           id: randomUUID(),
           userId,
           kind: 'email',
@@ -71,12 +157,40 @@ export class IdentityService {
           identifierHash: hash,
           identifierCiphertext: ciphertext,
           encryptionKeyVersion: keyVersion,
-        }),
-      )
+        }))
+      }
+
+      await this.authFlows.requireRegistrationPassword(manager, userId)
+      // Retries for pending signups add only a consent version not yet on file.
+      const acceptedRows = existing
+        ? await manager.query(
+          'SELECT document_type, document_version FROM app.consents WHERE user_id = $1 AND granted = true',
+          [userId],
+        ) as Array<{ document_type: string; document_version: string }>
+        : []
+      const alreadyAccepted = new Set(acceptedRows.map((row) => `${row.document_type}:${row.document_version}`))
+      const missingConsents = consents.filter((consent) => !alreadyAccepted.has(`${consent.documentType}:${consent.version}`))
+      if (missingConsents.length) {
+        await this.persistRegistrationConsents(manager, userId, missingConsents, new Date(), randomUUID())
+      }
+      return userId
     }
-    const token = await this.issueOneTimeToken(userId, 'email_verification')
-    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', token })
-    return { accepted: true }
+    return transactionManager ? prepare(transactionManager) : this.dataSource.transaction(prepare)
+  }
+
+  /** Called only after the code service has atomically consumed a valid challenge. */
+  async completeEmailCode(userId: string, device?: { fingerprint?: string; name?: string }): Promise<AuthResult> {
+    const user = await this.users.findOne({ where: { id: userId } })
+    const identity = await this.loginIdentities.findOne({ where: { userId, kind: 'email', revokedAt: IsNull() } })
+    if (!user || user.status === 'closed' || user.status === 'suspended' || !identity || identity.state === 'revoked') {
+      throw new UnauthorizedException({ code: 'AUTH_EMAIL_CODE_INVALID', message: 'The verification code is invalid or expired.' })
+    }
+    if (identity.state !== 'verified') {
+      identity.state = 'verified'
+      identity.verifiedAt = new Date()
+      await this.loginIdentities.save(identity)
+    }
+    return this.issueSession(userId, device)
   }
 
   async verifyEmail(token: string, device?: { fingerprint?: string; name?: string }): Promise<AuthResult & { verified: true }> {
@@ -84,7 +198,7 @@ export class IdentityService {
     const identity = await this.loginIdentities.findOne({
       where: { kind: 'email', userId },
     })
-    if (!identity) {
+    if (!identity || identity.state === 'revoked' || identity.revokedAt) {
       throw new NotFoundException({
         code: IDENTITY_ERROR_CODES.IDENTITY_NOT_FOUND,
         message: 'Email identity not found.',
@@ -98,9 +212,24 @@ export class IdentityService {
     return { ...(await this.issueSession(userId, device)), verified: true }
   }
 
-  async createWalletChallenge(address: string): Promise<{ address: string; nonce: string }> {
+  async createWalletChallenge(address: string, chainId = 1): Promise<{ address: string; nonce: string; registrationRequired: boolean }> {
     const normalized = address.toLowerCase()
-    return { address: normalized, nonce: this.crypto.issueWalletChallenge(normalized) }
+    const identifierHash = this.crypto.hashIdentifier(normalized)
+    const existingIdentity = await this.loginIdentities.findOne({
+      where: { kind: 'external_wallet', identifierHash },
+    })
+    const origin = this.config.get<string>('PUBLIC_APP_URL')
+    if (!origin) throw new ServiceUnavailableException({ code: 'WALLET_ORIGIN_UNAVAILABLE', message: 'Wallet sign-in is not configured.' })
+    const issuedAt = new Date()
+    const expiresAt = new Date(issuedAt.getTime() + 5 * 60 * 1000)
+    const nonce = walletSignInMessage(origin, normalized, chainId, randomBytes(24).toString('hex'), issuedAt, expiresAt)
+    await this.dataSource.query('INSERT INTO app.wallet_sign_in_challenges (message_hash, address, expires_at) VALUES ($1, $2, $3)', [this.crypto.hashToken(nonce), normalized, expiresAt])
+    // nonce retains its wire field name; its value is now the full domain-bound sign-in message.
+    return {
+      address: normalized,
+      nonce,
+      registrationRequired: !existingIdentity,
+    }
   }
 
   async verifyWalletSignature(
@@ -108,39 +237,49 @@ export class IdentityService {
     signature: string,
     nonce: string,
     device?: { fingerprint?: string; name?: string },
+    consentInput?: unknown,
   ): Promise<AuthResult> {
     const normalized = address.toLowerCase()
-    this.crypto.consumeWalletChallenge(normalized, nonce)
+    const [challenge] = await this.dataSource.query('SELECT address FROM app.wallet_sign_in_challenges WHERE message_hash = $1 AND address = $2 AND consumed_at IS NULL AND expires_at > now()', [this.crypto.hashToken(nonce), normalized])
+    if (!challenge) throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.NONCE_MISMATCH, message: 'Wallet challenge is invalid or expired.' })
     if (!this.crypto.verifyWalletSignature(normalized, nonce, signature)) {
       throw new UnauthorizedException({
         code: IDENTITY_ERROR_CODES.INVALID_SIGNATURE,
         message: 'Wallet signature does not recover to the claimed address.',
       })
     }
-    return this.upsertExternalWallet(normalized, device)
+    return this.upsertExternalWallet(normalized, device, consentInput, this.crypto.hashToken(nonce))
   }
 
   private async upsertExternalWallet(
     address: string,
     device?: { fingerprint?: string; name?: string },
+    consentInput?: unknown,
+    challengeHash?: Buffer,
   ): Promise<AuthResult> {
     const hash = this.crypto.hashIdentifier(address)
-    const identity = await this.loginIdentities.findOne({
-      where: { kind: 'external_wallet', identifierHash: hash },
-    })
-    if (identity) {
-      if (identity.state !== 'verified') {
-        identity.state = 'verified'
-        identity.verifiedAt = new Date()
-        await this.loginIdentities.save(identity)
+    const userId = await this.dataSource.transaction(async (manager) => {
+      const consumed = await manager.query('UPDATE app.wallet_sign_in_challenges SET consumed_at = now() WHERE message_hash = $1 AND address = $2 AND consumed_at IS NULL AND expires_at > now() RETURNING address', [challengeHash, address])
+      if (!consumed.length) throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.NONCE_MISMATCH, message: 'Wallet challenge has already been used or expired.' })
+      const loginIdentities = manager.getRepository(LoginIdentity)
+      const identity = await loginIdentities.findOne({ where: { kind: 'external_wallet', identifierHash: hash } })
+      if (identity) {
+        if (identity.state === 'revoked' || identity.revokedAt) throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
+        if (identity.state !== 'verified') {
+          identity.state = 'verified'
+          identity.verifiedAt = new Date()
+          await loginIdentities.save(identity)
+        }
+        return identity.userId
       }
-      return this.issueSession(identity.userId, device)
-    }
-    const userId = randomUUID()
-    await this.users.save(this.users.create({ id: userId, status: 'active', locale: 'en' }))
-    const { ciphertext, keyVersion } = this.crypto.encrypt(address)
-    await this.loginIdentities.save(
-      this.loginIdentities.create({
+
+      const consents = validateRegistrationConsents(consentInput, await loadRegistrationConsents(manager, this.config, true))
+      const userId = randomUUID()
+      const users = manager.getRepository(User)
+      await users.save(users.create({ id: userId, status: 'active', locale: 'en' }))
+      await this.referral?.bindNewUser(manager,userId)
+      const { ciphertext, keyVersion } = this.crypto.encrypt(address)
+      await loginIdentities.save(loginIdentities.create({
         id: randomUUID(),
         userId,
         kind: 'external_wallet',
@@ -149,31 +288,59 @@ export class IdentityService {
         identifierCiphertext: ciphertext,
         encryptionKeyVersion: keyVersion,
         verifiedAt: new Date(),
-      }),
-    )
+      }))
+      await this.persistRegistrationConsents(manager, userId, consents, new Date(), randomUUID())
+      return userId
+    })
+
     return this.issueSession(userId, device)
   }
 
   private async upsertVerifiedOAuthSubject(
     provider: 'google' | 'x',
     subject: string,
-    meta?: { displayName?: string; locale?: string; device?: { fingerprint?: string; name?: string } },
+    meta: {
+      displayName?: string
+      locale?: string
+      device?: { fingerprint?: string; name?: string }
+      intent: 'login' | 'register'
+      registrationConsents?: RegistrationConsentAcceptance[]
+      consentedAt?: Date
+      referralAttribution?: string
+    },
   ): Promise<AuthResult> {
     const key = `${provider}:${subject}`
     const hash = this.crypto.hashIdentifier(key)
-    const identity = await this.loginIdentities.findOne({
-      where: { kind: provider, identifierHash: hash },
-    })
-    if (identity) {
-      return this.issueSession(identity.userId, meta?.device)
-    }
-    const userId = randomUUID()
-    await this.users.save(
-      this.users.create({ id: userId, status: 'active', locale: meta?.locale ?? 'en' }),
-    )
-    const { ciphertext, keyVersion } = this.crypto.encrypt(key)
-    await this.loginIdentities.save(
-      this.loginIdentities.create({
+    const userId = await this.dataSource.transaction(async (manager) => {
+      const loginIdentities = manager.getRepository(LoginIdentity)
+      const identity = await loginIdentities.findOne({ where: { kind: provider, identifierHash: hash } })
+      if (identity) {
+        if (identity.state !== 'verified' || identity.revokedAt) throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
+        return identity.userId
+      }
+
+      if (meta.intent !== 'register') {
+        throw new ConflictException({
+          code: IDENTITY_ERROR_CODES.REGISTRATION_REQUIRED,
+          message: 'No account is linked to this provider. Create an account and accept the current terms first.',
+          provider,
+        })
+      }
+
+      const consents = validateRegistrationConsents(meta.registrationConsents, await loadRegistrationConsents(manager, this.config, true))
+      if (!(meta.consentedAt instanceof Date) || !Number.isFinite(meta.consentedAt.getTime())) {
+        throw new BadRequestException({
+          code: IDENTITY_ERROR_CODES.CONSENT_REQUIRED,
+          message: 'The registration consent snapshot is missing or invalid.',
+        })
+      }
+
+      const userId = randomUUID()
+      const users = manager.getRepository(User)
+      await users.save(users.create({ id: userId, status: 'active', locale: meta.locale ?? 'en' }))
+      await this.referral?.bindNewUser(manager,userId,meta.referralAttribution)
+      const { ciphertext, keyVersion } = this.crypto.encrypt(key)
+      await loginIdentities.save(loginIdentities.create({
         id: randomUUID(),
         userId,
         kind: provider,
@@ -182,13 +349,20 @@ export class IdentityService {
         identifierCiphertext: ciphertext,
         encryptionKeyVersion: keyVersion,
         verifiedAt: new Date(),
-      }),
-    )
-    return this.issueSession(userId, meta?.device)
+      }))
+      await this.persistRegistrationConsents(manager, userId, consents, meta.consentedAt, randomUUID())
+      return userId
+    })
+    return this.issueSession(userId, meta.device)
   }
 
-  beginOAuth(provider: OAuthProviderName) {
-    return this.oauthProvider.begin(provider)
+  async beginOAuth(provider: OAuthProviderName, intent: 'login' | 'register' = 'login', consentInput?: unknown) {
+    const consents = intent === 'register' ? validateRegistrationConsents(consentInput, await loadRegistrationConsents(this.dataSource, this.config)) : undefined
+    const flow=await this.oauthProvider.begin(provider, intent, consents)
+    const url=new URL(flow.authorizationUrl)
+    const state=url.searchParams.get(provider==='x' ? 'oauth_token' : 'state')
+    if (state) await this.referral?.rememberOAuth(this.crypto.hashToken(state))
+    return flow
   }
 
   async exchangeOAuthCode(
@@ -199,11 +373,55 @@ export class IdentityService {
     device?: { fingerprint?: string; name?: string },
   ): Promise<AuthResult> {
     const verified = await this.oauthProvider.exchange(provider, code, state, redirectUri)
+    const referralAttribution=await this.referral?.oauthAttribution(this.crypto.hashToken(state))
+    if (verified.intent === 'login') {
+      const existing = await this.loginIdentities.findOne({ where: { kind: provider, identifierHash: this.crypto.hashIdentifier(`${provider}:${verified.subject}`) } })
+      if (!existing) {
+        // First-time OAuth sign-in creates the account immediately (no consent interstitial).
+        // The live legal versions are still recorded as an accepted snapshot, so the audit trail is intact.
+        const requirements = await loadRegistrationConsents(this.dataSource, this.config, true)
+        const consents: RegistrationConsentAcceptance[] = requirements.map(requirement => ({
+          documentType: requirement.documentType,
+          version: requirement.version,
+          accepted: true as const,
+        }))
+        return this.upsertVerifiedOAuthSubject(provider, verified.subject, {
+          displayName: verified.displayName,
+          locale: verified.locale,
+          device,
+          intent: 'register',
+          referralAttribution,
+          registrationConsents: consents,
+          consentedAt: new Date(),
+        })
+      }
+    }
     return this.upsertVerifiedOAuthSubject(provider, verified.subject, {
       displayName: verified.displayName,
       locale: verified.locale,
       device,
+      intent: verified.intent,
+      referralAttribution,
+      registrationConsents: verified.registrationConsents,
+      consentedAt: verified.consentedAt,
     })
+  }
+
+  private async persistRegistrationConsents(
+    manager: EntityManager,
+    userId: string,
+    consents: RegistrationConsentAcceptance[],
+    recordedAt: Date,
+    requestId: string,
+  ): Promise<void> {
+    for (const consent of consents) {
+      await manager.query(
+        `INSERT INTO app.consents
+          (user_id, document_type, document_version, granted, recorded_at, request_id)
+         VALUES ($1, $2, $3, true, $4, $5)`,
+        [userId, consent.documentType, consent.version, recordedAt, requestId],
+      )
+    }
   }
 
   async recover(email: string): Promise<{ accepted: true }> {
@@ -220,9 +438,165 @@ export class IdentityService {
     return { accepted: true }
   }
 
+  /**
+   * Email magic-link login: for a registered address, send a single-use sign-in link.
+   * Anti-enumeration: unregistered addresses receive the same `{ accepted: true }` response.
+   * Pending (unverified) addresses receive a fresh verification link instead.
+   */
+  async requestEmailLogin(email: string): Promise<{ accepted: true }> {
+    const normalized = email.toLowerCase().trim()
+    const hash = this.crypto.hashIdentifier(normalized)
+    const identity = await this.loginIdentities.findOne({
+      where: { kind: 'email', identifierHash: hash },
+    })
+    if (!identity || identity.state === 'revoked' || identity.revokedAt) {
+      return { accepted: true }
+    }
+    if (identity.state === 'verified') {
+      const token = await this.issueOneTimeToken(identity.userId, 'email_login')
+      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_login', token })
+    } else {
+      const token = await this.issueOneTimeToken(identity.userId, 'email_verification')
+      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', token })
+    }
+    return { accepted: true }
+  }
+
+  async confirmEmailLogin(token: string, device?: { fingerprint?: string; name?: string }): Promise<AuthResult> {
+    const userId = await this.consumeOneTimeToken(token, 'email_login', IDENTITY_ERROR_CODES.INVALID_VERIFICATION)
+    return this.issueSession(userId, device)
+  }
+
+  /**
+   * Passkey login — step 1: issue a WebAuthn authentication challenge.
+   * With `email`, the prompt is scoped to that account's registered passkeys;
+   * without it, discoverable credentials (usernameless) are offered.
+   */
+  async beginPasskeyLogin(email?: string): Promise<{ challengeId: string; options: Record<string, unknown> }> {
+    const rpId = this.config.get<string>('PASSKEY_RP_ID') ?? 'localhost'
+    let allowCredentials: { id: string; transports: never }[] | undefined
+    let scopedUserId: string | null = null
+    if (email) {
+      const normalized = email.toLowerCase().trim()
+      const hash = this.crypto.hashIdentifier(normalized)
+      const identity = await this.loginIdentities.findOne({
+        where: { kind: 'email', identifierHash: hash, state: 'verified', revokedAt: IsNull() },
+      })
+      if (!identity) {
+        throw new UnauthorizedException({
+          code: IDENTITY_ERROR_CODES.IDENTITY_NOT_FOUND,
+          message: 'No passkey is registered for this account.',
+        })
+      }
+      const credentials = await this.passkeys.find({ where: { userId: identity.userId, state: 'active' } })
+      if (!credentials.length) {
+        throw new UnauthorizedException({
+          code: IDENTITY_ERROR_CODES.IDENTITY_NOT_FOUND,
+          message: 'No passkey is registered for this account.',
+        })
+      }
+      allowCredentials = credentials.map((credential) => ({
+        id: credential.credentialId,
+        transports: credential.transports as never,
+      }))
+      scopedUserId = identity.userId
+    }
+    const options = await generateAuthenticationOptions({
+      rpID: rpId,
+      userVerification: 'required',
+      allowCredentials: allowCredentials as never,
+    })
+    // Keep the account scope authenticated alongside the challenge; allowCredentials only constrains browser UI.
+    const encrypted = this.crypto.encrypt(JSON.stringify({ version: 1, challenge: options.challenge, userId: scopedUserId }))
+    const row = await this.passkeyChallenges.save(
+      this.passkeyChallenges.create({
+        id: randomUUID(),
+        kind: 'passkey_login',
+        challengeHash: this.crypto.hashToken(options.challenge),
+        challengeCiphertext: encrypted.ciphertext,
+        encryptionKeyVersion: encrypted.keyVersion,
+        expiresAt: new Date(Date.now() + PASSKEY_CHALLENGE_TTL_MS),
+        consumedAt: null,
+      }),
+    )
+    return { challengeId: row.id, options: options as unknown as Record<string, unknown> }
+  }
+
+  /** Passkey login — step 2: verify the assertion and open a session. */
+  async finishPasskeyLogin(
+    challengeId: string,
+    response: Record<string, unknown>,
+    device?: { fingerprint?: string; name?: string },
+  ): Promise<AuthResult> {
+    const challenge = await this.passkeyChallenges.findOne({
+      where: { id: challengeId, kind: 'passkey_login', consumedAt: IsNull() },
+    })
+    if (!challenge || challenge.expiresAt.getTime() <= Date.now()) {
+      throw new UnauthorizedException({
+        code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION,
+        message: 'The passkey challenge is invalid or expired.',
+      })
+    }
+    let binding: { version: number; challenge: string; userId: string | null }
+    try {
+      binding = JSON.parse(this.crypto.decrypt(challenge.challengeCiphertext, challenge.encryptionKeyVersion))
+      if (!binding || binding.version !== 1 || typeof binding.challenge !== 'string' ||
+          !(binding.userId === null || (typeof binding.userId === 'string' && binding.userId.length > 0))) throw new Error('Invalid binding')
+    } catch {
+      // Legacy challenges did not persist scope. Fail closed and require a fresh challenge.
+      throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION, message: 'The passkey challenge is invalid or expired.' })
+    }
+    const credentialId = typeof response.id === 'string' ? response.id : ''
+    const passkey = await this.passkeys.findOne({ where: { credentialId, state: 'active' } })
+    if (!passkey) {
+      throw new UnauthorizedException({
+        code: IDENTITY_ERROR_CODES.IDENTITY_NOT_FOUND,
+        message: 'This passkey is not registered.',
+      })
+    }
+    if (binding.userId !== null && passkey.userId !== binding.userId) {
+      throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION, message: 'The passkey does not belong to this account.' })
+    }
+    const rpId = this.config.get<string>('PASSKEY_RP_ID') ?? 'localhost'
+    const origin = this.config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3030'
+    const verification = await verifyAuthenticationResponse({
+      response: response as unknown as AuthenticationResponseJSON,
+      expectedChallenge: binding.challenge,
+      expectedOrigin: origin,
+      expectedRPID: rpId,
+      requireUserVerification: true,
+      credential: {
+        id: passkey.credentialId,
+        publicKey: new Uint8Array(passkey.publicKey),
+        counter: passkey.counter,
+        transports: passkey.transports as never,
+      },
+    })
+    if (!verification.verified) {
+      throw new UnauthorizedException({
+        code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION,
+        message: 'The passkey assertion could not be verified.',
+      })
+    }
+    const consumed = await this.passkeyChallenges.update(
+      { id: challenge.id, consumedAt: IsNull() },
+      { consumedAt: new Date() },
+    )
+    if (consumed.affected !== 1) {
+      throw new UnauthorizedException({
+        code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION,
+        message: 'The passkey challenge is invalid or expired.',
+      })
+    }
+    passkey.counter = verification.authenticationInfo.newCounter
+    passkey.lastUsedAt = new Date()
+    await this.passkeys.save(passkey)
+    return this.issueSession(passkey.userId, device, 'passkey')
+  }
+
   async confirmRecovery(token: string, device?: { fingerprint?: string; name?: string }): Promise<AuthResult> {
     const userId = await this.consumeOneTimeToken(token, 'account_recovery', IDENTITY_ERROR_CODES.INVALID_VERIFICATION)
-    return this.issueSession(userId, device)
+    return this.issueSession(userId, device, 'recovery')
   }
 
   async revokeSession(sessionId: string, token: string): Promise<{ revoked: true }> {
@@ -361,18 +735,77 @@ export class IdentityService {
     return { userId, verified: true }
   }
 
+  /** S1: session-level auth view for home lifecycle + GateSheet (token-based, no guard dependency). */
+  async getSessionViewByToken(rawToken: string): Promise<SessionView> {
+    const session = await this.sessions.findOne({
+      where: { tokenHash: this.crypto.hashToken(rawToken), state: 'active' },
+    })
+    if (!session) {
+      throw new UnauthorizedException({
+        code: IDENTITY_ERROR_CODES.SESSION_NOT_FOUND,
+        message: 'Active session not found.',
+      })
+    }
+    if (session.expiresAt <= new Date()) {
+      session.state = 'expired'
+      session.revokeReason = 'expired'
+      await this.sessions.save(session)
+      throw new UnauthorizedException({
+        code: IDENTITY_ERROR_CODES.SESSION_NOT_FOUND,
+        message: 'The session has expired.',
+      })
+    }
+    session.lastSeenAt = new Date()
+    await this.sessions.save(session)
+    const emailIdentity = await this.loginIdentities.findOne({ where: { userId: session.userId, kind: 'email' } })
+    return {
+      userId: session.userId,
+      sessionId: session.id,
+      emailVerified: emailIdentity?.state === 'verified',
+      authAdapter: this.config.get<string>('AUTH_ADAPTER') ?? 'production',
+      expiresAt: session.expiresAt.toISOString(),
+      accountLabel: await this.accountLabel(session.userId, emailIdentity),
+    }
+  }
+
+  /** Only the masked form leaves the service; plaintext identifiers are never returned. */
+  private async accountLabel(userId: string, emailIdentity: LoginIdentity | null): Promise<string | null> {
+    try {
+      if (emailIdentity && !emailIdentity.revokedAt) return maskEmail(this.crypto.decrypt(emailIdentity.identifierCiphertext, emailIdentity.encryptionKeyVersion))
+      const wallet = await this.loginIdentities.findOne({ where: { userId, kind: 'external_wallet', revokedAt: IsNull() } })
+      if (!wallet) return null
+      const address = this.crypto.decrypt(wallet.identifierCiphertext, wallet.encryptionKeyVersion)
+      return address.length > 10 ? `${address.slice(0, 6)}…${address.slice(-4)}` : address
+    } catch {
+      return null
+    }
+  }
+
   private async issueSession(
     userId: string,
     device?: { fingerprint?: string; name?: string },
+    proof: AuthProof = 'primary',
   ): Promise<AuthResult> {
-    const fingerprint = device?.fingerprint ?? 'anonymous'
+    await this.authFlows.authorize(userId, proof, device)
+    return this.createSession(userId, device)
+  }
+
+  private async createSession(
+    userId: string,
+    device?: AuthDevice,
+    manager?: EntityManager,
+  ): Promise<AuthResult> {
+    const devices = manager?.getRepository(Device) ?? this.devices
+    const sessions = manager?.getRepository(Session) ?? this.sessions
+    const identities = manager?.getRepository(LoginIdentity) ?? this.loginIdentities
+    const fingerprint = device?.fingerprint ?? randomUUID()
     const fingerprintHash = this.crypto.hashIdentifier(`${userId}:${fingerprint}`)
-    let deviceRow = await this.devices.findOne({
+    let deviceRow = await devices.findOne({
       where: { userId, fingerprintHash },
     })
     if (!deviceRow) {
-      deviceRow = await this.devices.save(
-        this.devices.create({
+      deviceRow = await devices.save(
+        devices.create({
           id: randomUUID(),
           userId,
           fingerprintHash,
@@ -383,8 +816,8 @@ export class IdentityService {
     }
 
     const token = this.crypto.generateSessionToken()
-    const session = await this.sessions.save(
-      this.sessions.create({
+    const session = await sessions.save(
+      sessions.create({
         id: randomUUID(),
         userId,
         deviceId: deviceRow.id,
@@ -393,7 +826,9 @@ export class IdentityService {
         expiresAt: new Date(Date.now() + SESSION_TTL_MS),
       }),
     )
-    return { userId, sessionId: session.id, token }
+    const emailIdentity = await identities.findOne({ where: { userId, kind: 'email' } })
+    const emailVerified = emailIdentity?.state === 'verified'
+    return { userId, sessionId: session.id, token, emailVerified }
   }
 
   private async issueOneTimeToken(userId: string, purpose: IdentityOneTimeTokenPurpose): Promise<string> {

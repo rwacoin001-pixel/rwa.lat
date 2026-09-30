@@ -5,6 +5,10 @@ import { IdentityModule } from '../identity/identity.module'
 import { Session } from '../identity/session.entity'
 import { SecurityModule } from '../security/security.module'
 import { ComplianceService } from './compliance.service'
+import { NativeKycService } from './native-kyc.service'
+import { AdminNativeKycController } from './admin-native-kyc.controller'
+import { RiskProfileService } from './risk-profile.service'
+import { RiskProfile } from './risk-profile.entity'
 import { ComplianceController } from './compliance.controller'
 import { KycCase } from './kyc-case.entity'
 import { EligibilityProfile } from './eligibility-profile.entity'
@@ -13,24 +17,26 @@ import { ScreeningCase } from './screening-case.entity'
 import { StubKycProvider } from './stub-kyc.provider'
 import { StubSanctionsProvider } from './stub-sanctions.provider'
 import { DisabledSanctionsProvider } from './disabled-sanctions.provider'
-import { RegionPolicy } from './region-policy'
 import type { KycProvider } from './kyc-provider.interface'
 import type { SanctionsProvider } from './sanctions-provider.interface'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
 import { RealDiditKycProvider } from './kyc/providers/real-didit-kyc.provider'
+import { PlatformModule } from '../platform/platform.module'
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([KycCase, EligibilityProfile, RiskFlag, ScreeningCase, Session]),
+    TypeOrmModule.forFeature([KycCase, EligibilityProfile, RiskFlag, ScreeningCase, RiskProfile, Session]),
     IdentityModule,
     SecurityModule,
     AdminRbacModule,
     ConfigModule,
+    PlatformModule,
   ],
-  controllers: [ComplianceController],
+  controllers: [ComplianceController, AdminNativeKycController],
   providers: [
     ComplianceService,
-    RegionPolicy,
+    NativeKycService,
+    RiskProfileService,
     {
       provide: 'KycProvider',
       useFactory: (configService: ConfigService) => {

@@ -96,11 +96,21 @@ export default function FilesPage() {
   }, [])
 
   const openObject = async (object: StoredObject, mode: 'inline' | 'attachment') => {
+    // Create previews during the user's click, before the authorization request.
+    // Downloads navigate to an attachment response and do not need a popup.
+    const preview = mode === 'inline' ? window.open('about:blank', '_blank') : null
+    if (mode === 'inline' && !preview) {
+      setNotice({ kind: 'error', text: '浏览器未打开预览窗口，请允许本站弹窗，或使用下载。' })
+      return
+    }
+    if (preview) preview.opener = null
     setBusyId(object.id)
     try {
       const res = await adminApi.downloadObject(object.id, mode)
-      window.open(res.url, '_blank')
+      if (preview) preview.location.replace(res.url)
+      else window.location.assign(res.url)
     } catch (e) {
+      preview?.close()
       setNotice({ kind: 'error', text: e instanceof Error ? e.message : '无法生成链接' })
     } finally {
       setBusyId('')
@@ -112,7 +122,7 @@ export default function FilesPage() {
     try {
       const updated = await adminApi.scanObject(object.id)
       setItems((prev) => prev.map((item) => (item.id === updated.id ? updated : item)))
-      setNotice({ kind: 'ok', text: '已重新扫描' })
+      setNotice({ kind: 'ok', text: '已提交重新扫描，完成后刷新查看结果。' })
     } catch (e) {
       setNotice({ kind: 'error', text: e instanceof Error ? e.message : '扫描失败' })
     } finally {

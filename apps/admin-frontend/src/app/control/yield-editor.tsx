@@ -16,9 +16,11 @@ import {
   PAYOUT_MODE_LABELS,
   pctToBps,
   RATE_TYPE_LABELS,
+  SCHEDULE_MODE_LABELS,
   type PayoutFrequency,
   type PayoutMode,
   type RateType,
+  type YieldScheduleMode,
   type YieldTerms,
   type YieldTier,
 } from '@/lib/yield-terms'
@@ -272,6 +274,25 @@ export function YieldEditor({ value, onChange }: { value: YieldTerms; onChange: 
             />
             复利计息（利息计入本金继续生息）
           </label>
+        </div>
+
+        <div className="rounded-2xl border border-ink/[0.08] bg-white/50 p-4">
+          <p className="mb-3 text-sm font-medium">预计派息日历</p>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Field label="计划方式" hint="默认使用产品条款中的统一派息日历；只有合同明确按购买日起息时才选择持仓入账日。">
+              <Select value={terms.scheduleMode ?? 'product_calendar'} onValueChange={(v) => patch({ scheduleMode: v as YieldScheduleMode })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>{(Object.keys(SCHEDULE_MODE_LABELS) as YieldScheduleMode[]).map((mode) => <SelectItem key={mode} value={mode}>{SCHEDULE_MODE_LABELS[mode]}</SelectItem>)}</SelectContent>
+              </Select>
+            </Field>
+            {terms.scheduleMode !== 'position_anniversary' && <Field label="首次预计支付日" hint="按产品条款填写；之后由付息频率自动生成。">
+              <Input type="date" value={terms.firstExpectedPaymentDate ?? ''} onChange={(event) => patch({ firstExpectedPaymentDate: event.target.value || undefined })} />
+            </Field>}
+            <NumInput label="资格截止提前天数" value={terms.recordDateOffsetDays != null ? String(terms.recordDateOffsetDays) : '0'} onChange={(v) => patch({ recordDateOffsetDays: v === '' ? undefined : Number(v) })} />
+            <Field label="计划时区" hint="日期按该时区解释；建议使用产品合同所在地时区。">
+              <Input value={terms.scheduleTimezone ?? 'UTC'} placeholder="UTC / Asia/Shanghai" onChange={(event) => patch({ scheduleTimezone: event.target.value.trim() || undefined })} />
+            </Field>
+          </div>
         </div>
 
         {/* 费率 */}

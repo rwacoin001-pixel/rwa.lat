@@ -1,7 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { WordReveal, CountUp } from './motion-primitives'
+import { WordReveal } from './motion-primitives'
 
 function PortfolioChart() {
   // in-function scope: avoids Turbopack export-mode SSR hoisting drop of module-level const
@@ -131,12 +131,10 @@ export default function PortfolioSection() {
               <div className="text-xs font-medium mb-2" style={{ color: 'rgba(255,255,255,0.4)' }}>
                 Total Portfolio Value
               </div>
-              <div className="text-4xl md:text-5xl font-bold text-white">
-                <CountUp to={128540} duration={2.4} prefix="$" separator />
-              </div>
+              <div className="text-4xl md:text-5xl font-bold text-white">—</div>
               <div className="flex items-center gap-2 mt-2">
                 <span className="text-sm font-semibold" style={{ color: '#34D399' }}>
-                  <CountUp to={14230} duration={2} prefix="+$" separator />
+                  —
                 </span>
                 <span className="text-xs" style={{ color: 'rgba(255,255,255,0.4)' }}>+12.4% this month</span>
               </div>
@@ -164,7 +162,7 @@ export default function PortfolioSection() {
                     strokeDasharray={`${2 * Math.PI * 22}`}
                     style={{ transformOrigin: '28px 28px', rotate: '-90deg' }}
                     initial={{ strokeDashoffset: `${2 * Math.PI * 22}` }}
-                    whileInView={{ strokeDashoffset: `${2 * Math.PI * 22 * (1 - 87 / 100)}` }}
+                    whileInView={{ strokeDashoffset: `${2 * Math.PI * 22}` }}
                     viewport={{ once: true }}
                     transition={{ duration: 2, ease: 'easeOut', delay: 0.5 }}
                   />
@@ -173,15 +171,15 @@ export default function PortfolioSection() {
                   className="absolute inset-0 flex items-center justify-center text-lg font-bold"
                   style={{ color: '#5FF3AB' }}
                 >
-                  <CountUp to={87} duration={2} />
+                  —
                 </div>
               </div>
               <div>
                 <div className="text-xs font-medium" style={{ color: 'rgba(255,255,255,0.4)' }}>
                   AI Portfolio Score
                 </div>
-                <div className="text-sm font-semibold text-white mt-0.5">Excellent</div>
-                <div className="text-xs mt-0.5" style={{ color: '#34D399' }}>Top 8% globally</div>
+                <div className="text-sm font-semibold text-white mt-0.5">Awaiting live data</div>
+                <div className="text-xs mt-0.5" style={{ color: '#34D399' }}>Calculated after account sync</div>
               </div>
             </div>
           </div>

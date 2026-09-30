@@ -1,8 +1,10 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Inject,
   Injectable,
+  Optional,
   NotFoundException,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -12,6 +14,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { ConfigService } from '@nestjs/config'
 import { IdentityCrypto } from '../identity/identity-crypto.service'
+import { AuditLog } from '../security/audit-log.entity'
 import { COMPLIANCE_ERROR_CODES } from './compliance.errors'
 import { KycCase, type KycCaseState } from './kyc-case.entity'
 import { EligibilityProfile, type EligibilityDecision } from './eligibility-profile.entity'
@@ -19,7 +22,7 @@ import { RiskFlag, type RiskFlagState } from './risk-flag.entity'
 import { ScreeningCase, type ScreeningKind, type ScreeningState } from './screening-case.entity'
 import type { KycProvider } from './kyc-provider.interface'
 import type { SanctionsProvider } from './sanctions-provider.interface'
-import { RegionPolicy } from './region-policy'
+import { PlatformService } from '../platform/platform.service'
 
 function notFound(code: string, message: string): NotFoundException {
   return new NotFoundException({
@@ -34,7 +37,7 @@ function notFound(code: string, message: string): NotFoundException {
  * 统一资格与合规服务（API-004）。
  *
  * 验收核心：用户、资产、订单都必须经由本服务的 evaluateEligibility 判定，
- * 同一策略引擎聚合 KYC 状态、制裁筛查、地域准入与风险标记。
+ * 同一策略引擎聚合 KYC 状态、制裁筛查与风险标记。地域规则待合规确认可信地区来源后恢复。
  */
 @Injectable()
 export class ComplianceService {
@@ -47,9 +50,9 @@ export class ComplianceService {
     @InjectRepository(ScreeningCase) private readonly screeningRepo: Repository<ScreeningCase>,
     @Inject('KycProvider') private readonly kycProvider: KycProvider,
     @Inject('SanctionsProvider') private readonly sanctionsProvider: SanctionsProvider,
-    private readonly regionPolicy: RegionPolicy,
     private readonly crypto: IdentityCrypto,
     config: ConfigService,
+    @Optional() private readonly platform?: PlatformService,
   ) {
     this.policyVersion = config.get<string>('POLICY_VERSION') ?? '2026.1'
     const financialMode = config.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
@@ -109,24 +112,22 @@ export class ComplianceService {
     if (latest?.state === 'approved') {
       throw new ConflictException('KYC is already approved')
     }
+    if (latest?.state === 'submitted') throw new ConflictException('KYC is under review')
 
     const submission = await this.kycProvider.submitCase({ userId, payload })
     if (!submission.verificationUrl) {
       throw new ServiceUnavailableException('The KYC provider did not return a hosted verification URL')
     }
     const encrypted = this.crypto.encrypt(submission.providerCaseRef)
-    const kyc = latest
-      && latest.provider === this.kycProvider.name
-      && ['in_progress', 'submitted', 'needs_information'].includes(latest.state)
-      ? latest
-      : this.kycRepo.create({ id: randomUUID(), userId })
-    kyc.state = 'submitted'
+    // Keep earlier references intact so delayed callbacks cannot decide a newer case.
+    const kyc = this.kycRepo.create({ id: randomUUID(), userId })
+    kyc.state = submission.status
     kyc.provider = this.kycProvider.name
     kyc.providerCaseHash = this.crypto.hmac(submission.providerCaseRef)
     kyc.providerCaseCiphertext = encrypted.ciphertext
     kyc.encryptionKeyVersion = encrypted.keyVersion
     kyc.reasonCode = null
-    kyc.submittedAt = kyc.submittedAt ?? new Date()
+    kyc.submittedAt = submission.status === 'submitted' ? new Date() : null
     kyc.decidedAt = null
     kyc.expiresAt = null
     const saved = await this.kycRepo.save(kyc)
@@ -167,9 +168,12 @@ export class ComplianceService {
     }
 
     const providerCase = this.kycProvider.mapStatus(event.status)
-    if (providerCase.state === kyc.state) return { accepted: true, updated: false }
+    const unfinished = providerCase.state === 'not_started' || providerCase.state === 'in_progress'
+    if (providerCase.state === kyc.state && !(unfinished && kyc.submittedAt)) return { accepted: true, updated: false }
     kyc.state = providerCase.state
     kyc.reasonCode = providerCase.reason?.slice(0, 128) ?? null
+    if (unfinished) kyc.submittedAt = null
+    else if (providerCase.state !== 'expired') kyc.submittedAt ??= new Date()
     if (providerCase.state === 'approved' || providerCase.state === 'rejected') {
       kyc.decidedAt = new Date()
     }
@@ -196,7 +200,7 @@ export class ComplianceService {
     }
   }
 
-  async decideKyc(caseId: string, decision: 'approved' | 'rejected', reasonCode?: string): Promise<KycCase> {
+  async decideKyc(caseId: string, decision: 'approved' | 'rejected', reasonCode?: string, actorId?: string): Promise<KycCase> {
     const kyc = await this.kycRepo.findOne({ where: { id: caseId } })
     if (!kyc) throw notFound(COMPLIANCE_ERROR_CODES.KYC_CASE_NOT_FOUND, 'KYC 案件不存在')
     if (kyc.state !== 'submitted') {
@@ -207,16 +211,51 @@ export class ComplianceService {
         timestamp: new Date().toISOString(),
       })
     }
+    if (decision === 'approved' && kyc.provider === 'didit') {
+      const ref = this.crypto.decrypt(kyc.providerCaseCiphertext, kyc.encryptionKeyVersion)
+      if (ref.startsWith('native:')) {
+        const checks = JSON.parse(ref.slice(7)) as Record<string, unknown>
+        if (!['document', 'liveness', 'faceMatch'].every(key => (checks[key] as { status?: string } | undefined)?.status === 'Approved')) throw new ConflictException('All three mandatory checks must pass before approval')
+      }
+    }
     kyc.state = decision === 'approved' ? 'approved' : 'rejected'
     kyc.reasonCode = reasonCode ?? null
     kyc.decidedAt = new Date()
-    const saved = await this.kycRepo.save(kyc)
+    const saved = actorId ? await this.kycRepo.manager.transaction(async manager => {
+      const repo = manager.getRepository(KycCase)
+      const result = await repo.update({ id: caseId, state: 'submitted' }, { state: kyc.state, reasonCode: kyc.reasonCode, decidedAt: kyc.decidedAt })
+      if (result.affected !== 1) throw new ConflictException('Verification was already decided')
+      await manager.getRepository(AuditLog).insert({ id: randomUUID(), actorType: 'admin', actorId, userId: kyc.userId, action: 'kyc.manual_decision', objectType: 'kyc_case', objectId: caseId, reasonCode: kyc.reasonCode, requestId: randomUUID(), metadata: { decision } as never })
+      return (await repo.findOne({ where: { id: caseId } }))!
+    }) : await this.kycRepo.save(kyc)
     await this.evaluateEligibility(kyc.userId, 'default')
     return saved
   }
 
   async getKycStatus(userId: string): Promise<KycCase | null> {
-    return this.kycRepo.findOne({ where: { userId }, order: { updatedAt: 'DESC' } })
+    const kyc = await this.kycRepo.findOne({ where: { userId }, order: { createdAt: 'DESC' } })
+    if (!kyc || kyc.provider !== 'didit' || !['not_started', 'in_progress', 'submitted', 'needs_information'].includes(kyc.state)) return kyc
+    try {
+      const ref = this.crypto.decrypt(kyc.providerCaseCiphertext, kyc.encryptionKeyVersion)
+      // Native requests have their own combined decision; they are not hosted sessions.
+      if (ref.startsWith('native:') && kyc.state === 'in_progress' && Date.now() - new Date(kyc.updatedAt).getTime() > 5 * 60_000) {
+        await this.kycRepo.update({ id: kyc.id, state: 'in_progress' }, { state: 'needs_information', reasonCode: 'native_verification_interrupted', submittedAt: null })
+        return this.kycRepo.findOne({ where: { id: kyc.id } })
+      }
+      if (!/^[0-9a-f-]{36}$/i.test(ref)) return kyc
+      const current = await this.kycProvider.getCase(ref)
+      const unfinished = current.state === 'not_started' || current.state === 'in_progress'
+      if (current.state === kyc.state && !(unfinished && kyc.submittedAt)) return kyc
+      kyc.state = current.state
+      kyc.reasonCode = current.reason ?? null
+      if (unfinished) kyc.submittedAt = null
+      else if (current.state !== 'expired') kyc.submittedAt ??= new Date()
+      if (current.state === 'approved' || current.state === 'rejected') kyc.decidedAt = new Date()
+      return await this.kycRepo.save(kyc)
+    } catch {
+      // A provider outage cannot invent approval or erase a previously stored decision.
+      return kyc
+    }
   }
 
   // ---- 制裁 / 筛查 ----
@@ -247,17 +286,18 @@ export class ComplianceService {
 
   // ---- 统一资格评估（验收核心） ----
 
-  async evaluateEligibility(userId: string, productScope: string, region?: string): Promise<EligibilityProfile> {
+  async evaluateEligibility(userId: string, productScope: string, _region?: string): Promise<EligibilityProfile> {
     const reasons: string[] = []
     let decision: EligibilityDecision = 'eligible'
 
-    // 1) 地域准入
-    if (region && !this.regionPolicy.isAllowed(region)) {
+    // Use only an operator-verified profile, never the client's claimed country.
+    const access = await this.platform?.evaluateAccess(userId)
+    if (access && !access.allowed) {
       decision = 'ineligible'
-      reasons.push('region_blocked')
+      reasons.push(access.reason ?? 'region_restricted')
     }
 
-    // 2) KYC 状态
+    // 1) KYC 状态
     const kyc = await this.getKycStatus(userId)
     if (!kyc || kyc.state !== 'approved') {
       if (decision === 'eligible') {
@@ -266,7 +306,7 @@ export class ComplianceService {
       }
     }
 
-    // 3) 制裁 / PEP 筛查
+    // 2) 制裁 / PEP 筛查
     const screening = await this.screeningRepo.findOne({
       where: { userId },
       order: { openedAt: 'DESC' },
@@ -276,7 +316,7 @@ export class ComplianceService {
       reasons.push(screening.state === 'confirmed_match' ? 'sanctions_match' : 'sanctions_review')
     }
 
-    // 4) 未关闭的风险标记
+    // 3) 未关闭的风险标记
     const openFlags = await this.riskRepo.find({ where: { userId } })
     const blocking = openFlags.filter((f) => f.state === 'open' || f.state === 'under_review')
     if (blocking.some((f) => f.severity === 'critical' || f.severity === 'high')) {
@@ -298,7 +338,8 @@ export class ComplianceService {
     profile.evidenceReferences = {
       kycState: kyc?.state ?? null,
       screeningState: screening?.state ?? null,
-      region: region ?? null,
+      region: access?.region ?? null,
+      platformPolicyRevision: access?.revision ?? null,
     }
     profile.decidedAt = new Date()
     profile.expiresAt = null
@@ -311,6 +352,19 @@ export class ComplianceService {
     })
     if (!profile) throw notFound(COMPLIANCE_ERROR_CODES.ELIGIBILITY_NOT_FOUND, '尚无资格评估记录')
     return profile
+  }
+
+  /** Apply the existing policy before accepting a new investment commitment. */
+  async requireInvestmentEligibility(userId: string, productScope: string): Promise<void> {
+    const result = await this.evaluateEligibility(userId, productScope)
+    if (result.decision !== 'eligible') {
+      throw new ForbiddenException({
+        code: 'INVESTMENT_NOT_ELIGIBLE',
+        message: 'This account is not currently eligible for a new investment.',
+        decision: result.decision,
+        reasonCodes: result.reasonCodes,
+      })
+    }
   }
 
   // ---- 风险标记 ----

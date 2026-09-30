@@ -68,7 +68,7 @@ describe('IdentityCrypto', () => {
   it('verifyWalletSignature recovers the claimed address from a real EIP-191 signature', () => {
     const priv = secp256k1.utils.randomPrivateKey()
     const address = deriveAddress(priv)
-    const message = crypto.issueWalletChallenge(address)
+    const message = crypto.generateNonce()
     const signature = signMessage(priv, message)
     expect(crypto.verifyWalletSignature(address, message, signature)).toBe(true)
     expect(crypto.verifyWalletSignature('0x' + '0'.repeat(40), message, signature)).toBe(false)

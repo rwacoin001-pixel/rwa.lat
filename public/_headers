@@ -1,0 +1,8 @@
+# Cloudflare Workers Assets 静态文件响应头（Netlify 风格 `_headers` 格式）
+#
+# 目的：Next.js 的 /_next/static/** 文件名自带内容 hash（内容变则文件名变），
+# 因此可以安全地设置一年期 immutable 缓存，省掉浏览器每次访问的 25 个回源校验请求。
+# 只对带 hash 的路径启用；/brand、/asset-icons 等无 hash 的目录不设长缓存，避免更新不生效。
+
+/_next/static/*
+  Cache-Control: public, max-age=31536000, immutable

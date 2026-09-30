@@ -8,6 +8,7 @@ import { atomicTo18, div18, format18, mul18, parse18, sub18, toAtomic, toAtomicR
 import { BasketNavService } from './basket.nav.service'
 import { BasketPortfolioService } from './portfolio.service'
 import { BasketRiskService } from './risk.service'
+import { ComplianceService } from '../compliance/compliance.service'
 
 const AMOUNT_PATTERN = /^\d+(\.\d{1,6})?$/
 const UNITS_PATTERN = /^\d+(\.\d{1,8})?$/
@@ -30,6 +31,7 @@ export class BasketSubscriptionService {
     private readonly portfolios: BasketPortfolioService,
     private readonly nav: BasketNavService,
     private readonly risk: BasketRiskService,
+    private readonly compliance: ComplianceService,
   ) {}
 
   async subscribe(
@@ -47,6 +49,8 @@ export class BasketSubscriptionService {
 
     const existing = await this.findByIdempotency('basket_subscriptions', idempotencyKey, userId)
     if (existing) return { duplicate: true, subscription: existing }
+
+    await this.compliance.requireInvestmentEligibility(userId, 'basket')
 
     const portfolio = await this.portfolios.getPortfolio(portfolioId)
     if (!['pilot', 'active'].includes(portfolio.status as string)) {

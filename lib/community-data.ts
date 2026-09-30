@@ -4,7 +4,7 @@
  * community must stay honest).
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'
+import { request } from './api/_http'
 
 export type CommunityAuthor = {
   id: string
@@ -35,12 +35,15 @@ export type CommunityComment = {
   postId: string
   parentId: string | null
   body: string
+  images?: string[]
   likeCount: number
   createdAt: string
   author: CommunityAuthor | null
 }
 
 export type CommunityTopic = {
+  /** Stable API id when available; older deployments may only return slug. */
+  id?: string
   slug: string
   title: string
   description: string | null
@@ -59,9 +62,9 @@ export type CommunityProfileResponse = {
 }
 
 async function apiGet<T>(path: string): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, { headers: { accept: 'application/json' } })
-  if (!response.ok) throw new Error(`community api ${response.status}`)
-  return (await response.json()) as T
+  const result = await request<T>(path, { token: null })
+  if (!result.ok) throw new Error(result.error.message)
+  return result.data
 }
 
 export async function getCommunityFeed(params: { sort?: 'latest' | 'hot'; topic?: string; cursor?: string; limit?: number } = {}) {
@@ -97,11 +100,7 @@ export async function getCommunityProfile(handle: string) {
 }
 
 export async function submitCommunityReport(params: { targetType: 'post' | 'comment' | 'profile'; targetId: string; reason: string }) {
-  const response = await fetch(`${API_BASE_URL}/v1/community/reports`, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', accept: 'application/json' },
-    body: JSON.stringify(params),
-  })
-  if (!response.ok) throw new Error(`community api ${response.status}`)
-  return (await response.json()) as { id: string; state: string; createdAt: string }
+  const result = await request<{ id: string; state: string; createdAt: string }>('/v1/community/reports', { method: 'POST', token: null, body: JSON.stringify(params) })
+  if (!result.ok) throw new Error(result.error.message)
+  return result.data
 }

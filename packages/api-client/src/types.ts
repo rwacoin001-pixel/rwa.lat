@@ -21,6 +21,13 @@ export interface ApiError {
   details?: Record<string, unknown>
 }
 
+export interface ApiErrorEnvelope {
+  error: ApiError
+  requestId?: string
+  path?: string
+  timestamp?: string
+}
+
 export interface PaginatedResponse<T> {
   items: T[]
   total: number

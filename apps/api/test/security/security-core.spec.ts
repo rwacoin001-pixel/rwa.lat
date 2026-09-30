@@ -116,4 +116,33 @@ describe('Security core', () => {
     expect(passkey.state).toBe('revoked')
     expect(auditLogs.save).toHaveBeenCalledTimes(2)
   })
+
+  it('returns a redacted user security-event view without audit metadata or internal identifiers', async () => {
+    const occurredAt = new Date('2026-09-25T08:00:00.000Z')
+    const event = {
+      id: '00000000-0000-4000-8000-000000000001', actorType: 'user', actorId: 'user-1', userId: 'user-1',
+      action: 'security.passkey.registered', objectType: 'passkey', objectId: 'passkey-1', requestId: 'request-secret',
+      reasonCode: null, metadata: { ip: '203.0.113.5', credentialId: 'private-material' }, occurredAt,
+    }
+    const auditLogs = { find: jest.fn().mockResolvedValue([event]) }
+    const service = new SecurityService(
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      {} as any,
+      auditLogs as any,
+      crypto(),
+      { get: () => undefined } as any,
+    )
+
+    await expect(service.listEvents({ userId: 'user-1', sessionId: 'session-1', deviceId: null })).resolves.toEqual([{
+      id: '00000000-0000-4000-8000-000000000001', action: 'security.passkey.registered', occurredAt,
+    }])
+    expect(auditLogs.find).toHaveBeenCalledWith({
+      where: { userId: 'user-1', action: expect.anything() },
+      order: { occurredAt: 'DESC' },
+      take: 50,
+    })
+  })
 })

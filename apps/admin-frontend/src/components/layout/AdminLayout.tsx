@@ -77,6 +77,9 @@ const NAV_SECTIONS: NavSection[] = [
       { name: '结算管理', href: '/settlements', icon: Receipt },
       { name: '预测市场', href: '/polymarket', icon: Activity },
       { name: '文件管理', href: '/files', icon: FolderOpen },
+      { name: '正式文件模板', href: '/document-templates', icon: FileText },
+      { name: '学习内容', href: '/content', icon: BookOpen },
+      { name: '推荐奖励', href: '/referral', icon: Network },
     ],
   },
   {
@@ -121,10 +124,14 @@ const NAV_SECTIONS: NavSection[] = [
     icon: Settings,
     items: [
       { name: 'AI 运维', href: '/ai-ops', icon: Bot },
+        { name: '客服知识库', href: '/ai-knowledge', icon: BookOpen },
+        { name: 'AI 投资管理', href: '/ai-investment', icon: PieChart },
       { name: '审批中心', href: '/approvals', icon: CheckCircle2 },
       { name: '作业队列', href: '/job-queue', icon: Workflow },
       { name: '通知管理', href: '/notifications', icon: BellRing },
       { name: '服务商', href: '/providers', icon: Plug },
+      { name: '主体与资料', href: '/organization', icon: Globe },
+      { name: '服务条款与隐私', href: '/legal', icon: ScrollText },
       { name: '地区配置', href: '/regions', icon: Globe },
       { name: '系统设置', href: '/settings', icon: Settings },
     ],
@@ -279,6 +286,18 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [closedSections, setClosedSections] = useState<Record<string, boolean>>({})
   const [allOpen, setAllOpen] = useState(false)
+  const [adminIdentity, setAdminIdentity] = useState<{email: string} | null>(null)
+
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetch('/api/admin/auth/me', {credentials: 'include', cache: 'no-store', signal: controller.signal})
+      .then(async response => {
+        if (!response.ok) return
+        const profile = await response.json()
+        if (!controller.signal.aborted && typeof profile?.email === 'string') setAdminIdentity({email: profile.email})
+      }).catch(() => { /* Keep a neutral label when identity cannot be loaded. */ })
+    return () => controller.abort()
+  }, [])
 
   // 全局 401 拦截：管理会话过期/失效时统一回到登录页并提示重新登录，
   // 而不是让每个页面的数据请求各自显示 "Admin session is invalid or expired"。
@@ -340,8 +359,8 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   R
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate text-[13px] font-semibold">管理员</p>
-                  <p className="truncate text-[11px] text-text-faint">rwacoin001@gmail.com</p>
+                  <p className="truncate text-[13px] font-semibold">{adminIdentity?.email.split('@')[0] ?? '管理员'}</p>
+                  <p className="truncate text-[11px] text-text-faint">{adminIdentity?.email ?? '登录账户'}</p>
                 </div>
               </div>
               <DropdownMenu>

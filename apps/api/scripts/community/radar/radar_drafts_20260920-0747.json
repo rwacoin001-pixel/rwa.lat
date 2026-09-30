@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "One observation from this week's tokenization news: Ondo's broker-dealer joined DTCC's Fund/SERV — the network behind 85%+ of U.S. mutual fund transactions. What's notable is what it is not: no distribution agreement, no change to the funds' legal status.\n\n① It buys standardized account data, confirmations, reconciliation and reporting, instead of one-off integrations.\n\n② Distributors still opt in to each tokenized fund.\n\nRead the plumbing, not the headline. Observations, not advice."
+  },
+  {
+    "profileHandle": "azhe.tpe",
+    "kind": "post",
+    "topics": ["rwa", "security"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "認真拆一層（不是抬槓）：這週 Pendle 上掛了一個私募基礎設施基金的代幣（Partners Group 的 NGI+，經 Asseto 代幣化，12/10 到期）。機制本身不難懂——把一份生息資產拆成本金和收益兩半分開交易，本金那半可以鎖固定利率，收益那半拿去賭波動。\n\n上市掛出來的固定利率是兩位數，但那是市場定價，不是底層資產承諾的現金流。我更在意的是：這類私募基金綁的是電廠、管線這種實體，NAV 由估值委員會出，贖回窗口也不在鏈上。所以問題是——真要退出，對手方是誰、幾天到帳？\n\n鏈上可交易，不等於底層變流動。條款我還在看，先記一筆。"
+  }
+]

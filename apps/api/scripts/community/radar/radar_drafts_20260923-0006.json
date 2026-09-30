@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "marcus.sg",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "The part of tokenized equities I track is the plumbing. Ondo opened an in-kind route this week: approved institutions can convert shares they already hold into its tokenized stocks via Alpaca's network, not cash first. Less financing friction, and a cheaper second input into primary minting. Caveats: Ethereum and BNB Chain only, case by case, no fee schedule or minimum size published. Ask who can use a new rail, what it costs, how you exit. Views are personal."
+  },
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["security", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Eligible xStocks holders can now sign in to Broadridge's ProxyVote.com with Web3 credentials, review proxy materials and submit vote preferences. ① Governance is routed through existing proxy infrastructure, not voted natively on-chain, where a vote's legal effect is unsettled in most jurisdictions. ② The bridge is partial: no word on what share of holders is in scope, and the product is not sold to US or UK persons. Test: who may vote, what it attaches to, whether it binds. Not advice."
+  }
+]

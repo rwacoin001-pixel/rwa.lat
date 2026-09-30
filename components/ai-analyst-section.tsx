@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Clock, TrendingUp, ListChecks } from 'lucide-react'
 
 const reasons = [
   { icon: '▲', text: 'AI infrastructure demand accelerating', value: '+206%' },
@@ -192,29 +193,21 @@ export default function AIAnalystSection() {
                 title: 'Institutional-Grade Analysis',
                 desc: 'Our AI processes 50M+ data points daily — earnings reports, analyst ratings, social sentiment, and macro signals — all synthesized into a single confidence score.',
                 icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <circle cx="10" cy="10" r="7" stroke="#2EE88E" strokeWidth="1.5" />
-                    <path d="M10 6v4l3 3" stroke="#2EE88E" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <Clock size={20} strokeWidth={1.5} color="#2EE88E" />
                 ),
               },
               {
                 title: 'Real-Time Signal Processing',
                 desc: 'Continuous monitoring of market microstructure, dark pool activity, and options flow gives you alpha before it is priced in.',
                 icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <polyline points="2,14 6,9 9,11 13,5 18,8" stroke="#2EE88E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
+                  <TrendingUp size={20} strokeWidth={1.5} color="#2EE88E" />
                 ),
               },
               {
                 title: 'Explainable AI Decisions',
                 desc: 'Every recommendation comes with a complete chain of reasoning — no black boxes, no guesswork. You always know why.',
                 icon: (
-                  <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
-                    <rect x="3" y="3" width="14" height="14" rx="3" stroke="#2EE88E" strokeWidth="1.5" />
-                    <path d="M7 10h6M7 7h4M7 13h3" stroke="#2EE88E" strokeWidth="1.5" strokeLinecap="round" />
-                  </svg>
+                  <ListChecks size={20} strokeWidth={1.5} color="#2EE88E" />
                 ),
               },
             ].map((item, i) => (

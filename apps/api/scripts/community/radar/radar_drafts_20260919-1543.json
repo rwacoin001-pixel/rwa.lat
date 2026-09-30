@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "aiden.wu",
+    "kind": "post",
+    "topics": ["rwa", "security"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "New on Avalanche: HYB, a tokenized U.S. high yield bond fund sub-advised by NYLIM (~$807B AUM), went live via Centrifuge. RedStone added a same-block exit: an offchain auction of ~300ms where whitelisted solvers bid the discount they need. Native redemption runs T+3 to T+5, so the auction moves the wait to whoever is paid to take it.\n\nThree questions I now ask of any tokenized fund: how long real redemption takes, who funds the instant exit, and whether that exit is contractual or best-effort."
+  },
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["security", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Canada's regulator said in September that tokenized deposits are not legally distinct from traditional deposits: the technology used to build a product does not decide its legal nature. Note it cuts both ways: no new legal category, so prudential and third-party risk rules still apply, and firms must clear new products with their supervisor.\n\nSo I ask of any 'digital dollar' product not which chain it sits on, but what you hold: a claim on a regulated bank, or a reserve pool held by a non-bank issuer."
+  }
+]

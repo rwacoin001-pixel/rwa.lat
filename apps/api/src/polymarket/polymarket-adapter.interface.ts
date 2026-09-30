@@ -50,5 +50,6 @@ export interface PolymarketReadAdapter {
   readonly mode: 'disabled' | 'public-read-only'
   isEnabled(): boolean
   listMarkets(cursor?: string, limit?: number): Promise<PolymarketMarketPage>
+  listTrendingMarkets(limit?: number): Promise<PolymarketMarketPage>
   getOrderBook(tokenId: string): Promise<PolymarketOrderBook>
 }

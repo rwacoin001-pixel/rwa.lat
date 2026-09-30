@@ -1,0 +1,112 @@
+/* Task H1 · /profile/documents — page-specific styles only.
+   Shared classes come from maison.module.css (via `maison as s`); this file only adds
+   the records-vault surface, the formal-document rows and small row chrome.
+   Tokens only (--m-*), logical properties only, so dark theme and RTL come for free. */
+
+/* Records vault header card: the lacquer credential plus a faint ledger ruling as texture. */
+.vault {
+  position: relative;
+  overflow: hidden;
+}
+.vault::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: .32;
+  background: repeating-linear-gradient(180deg, transparent 0 22px, var(--m-lacquer-line) 22px 23px);
+  -webkit-mask-image: linear-gradient(180deg, transparent 26%, #000 96%);
+  mask-image: linear-gradient(180deg, transparent 26%, #000 96%);
+}
+
+/* Order record rows: state badge sits under the amount, end-aligned. */
+.badgeSlot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  margin-top: 5px;
+}
+
+/* Formal documents: unavailable-styled rows — dashed, muted, never clickable. */
+.docList {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.docRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 4px 12px;
+  padding: 12px;
+  border: 1px dashed var(--m-line);
+  border-radius: 14px;
+  background: var(--m-glass);
+  color: var(--m-muted);
+}
+/* File-type glyph tile with a folded corner, like a document sheet. */
+.docGlyph {
+  position: relative;
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  align-self: start;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border: 1px solid var(--m-line);
+  border-radius: 10px;
+  background: var(--m-glass-deep);
+  color: var(--m-faint);
+}
+.docGlyph::after {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: 11px;
+  height: 11px;
+  background: linear-gradient(225deg, var(--m-bg) 46%, var(--m-line) 48%, transparent 52%);
+}
+.docHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 0;
+}
+.docHead b {
+  color: var(--m-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+.docHead .badge {
+  flex: none;
+}
+.docBody {
+  margin: 0;
+  font-size: 11.5px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+/* Related rows: caption is smaller and quieter than the row title. */
+.caption {
+  display: block;
+  margin-top: 3px;
+  color: var(--m-faint);
+  font-size: 10.5px;
+  line-height: 1.45;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 350px) {
+  .docRow { padding: 10px; gap: 4px 10px; }
+  .docGlyph { width: 34px; height: 34px; }
+  .docHead b { font-size: 12.5px; }
+}

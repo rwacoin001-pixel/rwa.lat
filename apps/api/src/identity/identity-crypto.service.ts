@@ -1,24 +1,16 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
 import { keccak_256 } from '@noble/hashes/sha3'
 import { secp256k1 } from '@noble/curves/secp256k1'
-import { IDENTITY_ERROR_CODES } from './identity.errors'
 
-const NONCE_TTL_MS = 5 * 60 * 1000
 const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
-
-interface ChallengeRecord {
-  nonce: string
-  expiresAt: number
-}
 
 @Injectable()
 export class IdentityCrypto {
   private readonly hmacKey: Buffer
   private readonly encKeys: Map<number, Buffer>
   private readonly activeEncKeyVersion: number
-  private readonly challenges = new Map<string, ChallengeRecord>()
 
   constructor(private readonly config: ConfigService) {
     this.hmacKey = Buffer.from(this.config.getOrThrow<string>('IDENTITY_HMAC_KEY'), 'hex')
@@ -104,12 +96,17 @@ export class IdentityCrypto {
   }
 
   verifyTotp(secret: string, code: string, now = Date.now()): boolean {
-    if (!/^\d{6}$/.test(code)) return false
+    return this.verifyTotpCounter(secret, code, now) !== null
+  }
+
+  verifyTotpCounter(secret: string, code: string, now = Date.now()): number | null {
+    if (!/^\d{6}$/.test(code)) return null
     for (const offset of [-1, 0, 1]) {
-      const expected = this.totpCode(secret, Math.floor(now / 30_000) + offset)
-      if (timingSafeEqual(Buffer.from(expected), Buffer.from(code))) return true
+      const counter = Math.floor(now / 30_000) + offset
+      const expected = this.totpCode(secret, counter)
+      if (timingSafeEqual(Buffer.from(expected), Buffer.from(code))) return counter
     }
-    return false
+    return null
   }
 
   private totpCode(secret: string, counter: number): string {
@@ -154,33 +151,6 @@ export class IdentityCrypto {
     for (let i = 0; i < mac.length; i++) diff |= mac.charCodeAt(i) ^ expected.charCodeAt(i)
     if (diff !== 0) return null
     return Buffer.from(payload, 'base64url').toString()
-  }
-
-  /** Issue a single-use wallet challenge nonce bound to the address. */
-  issueWalletChallenge(address: string): string {
-    const nonce = this.generateNonce()
-    this.challenges.set(address.toLowerCase(), { nonce, expiresAt: Date.now() + NONCE_TTL_MS })
-    return nonce
-  }
-
-  /** Consume a wallet challenge nonce, enforcing single-use and TTL. */
-  consumeWalletChallenge(address: string, nonce: string): void {
-    const key = address.toLowerCase()
-    const record = this.challenges.get(key)
-    if (!record || record.nonce !== nonce) {
-      throw new UnauthorizedException({
-        code: IDENTITY_ERROR_CODES.NONCE_MISMATCH,
-        message: 'Wallet challenge nonce does not match.',
-      })
-    }
-    if (record.expiresAt < Date.now()) {
-      this.challenges.delete(key)
-      throw new UnauthorizedException({
-        code: IDENTITY_ERROR_CODES.NONCE_EXPIRED,
-        message: 'Wallet challenge nonce has expired.',
-      })
-    }
-    this.challenges.delete(key)
   }
 
   /** Verify an EIP-191 personal_sign signature recovers to the claimed address. */

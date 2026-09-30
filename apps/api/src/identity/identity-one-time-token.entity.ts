@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm'
 
-export type IdentityOneTimeTokenPurpose = 'email_verification' | 'account_recovery'
+export type IdentityOneTimeTokenPurpose = 'email_verification' | 'account_recovery' | 'email_login'
 
 @Entity({ schema: 'app', name: 'identity_one_time_tokens' })
 export class IdentityOneTimeToken {

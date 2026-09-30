@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import { Target, TrendingUp, Cpu, Star } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { WordReveal, CountUp, TiltCard } from './motion-primitives'
 
@@ -45,10 +46,7 @@ function AIAgentCard() {
           className="w-6 h-6 rounded-lg flex items-center justify-center"
           style={{ background: 'rgba(46, 232, 142,0.2)', border: '1px solid rgba(46, 232, 142,0.4)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <circle cx="7" cy="7" r="4" stroke="#2EE88E" strokeWidth="1.5" />
-            <circle cx="7" cy="7" r="1.5" fill="#2EE88E" />
-          </svg>
+          <Target size={14} strokeWidth={1.5} color="#2EE88E" />
         </div>
         <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
           AI Investment Agent
@@ -138,9 +136,7 @@ function StockCard() {
           className="w-6 h-6 rounded-lg flex items-center justify-center"
           style={{ background: 'rgba(52,211,153,0.15)', border: '1px solid rgba(52,211,153,0.3)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <polyline points="1,11 5,6 8,8 13,2" stroke="#34D399" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
+          <TrendingUp size={14} strokeWidth={1.5} color="#34D399" />
         </div>
         <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
           Stock Intelligence
@@ -213,10 +209,7 @@ function ComputeCard() {
           className="w-6 h-6 rounded-lg flex items-center justify-center"
           style={{ background: 'rgba(96,165,250,0.15)', border: '1px solid rgba(96,165,250,0.3)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect x="2" y="2" width="10" height="10" rx="1.5" stroke="#5FF3AB" strokeWidth="1.5" />
-            <rect x="4.5" y="4.5" width="5" height="5" rx="1" fill="#5FF3AB" opacity="0.4" />
-          </svg>
+          <Cpu size={14} strokeWidth={1.5} color="#5FF3AB" />
         </div>
         <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
           AI Compute Infrastructure
@@ -307,9 +300,7 @@ function PredictionCard() {
           className="w-6 h-6 rounded-lg flex items-center justify-center"
           style={{ background: 'rgba(167,139,250,0.15)', border: '1px solid rgba(167,139,250,0.3)' }}
         >
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M7 1L8.5 5H13L9.5 7.5L11 12L7 9L3 12L4.5 7.5L1 5H5.5L7 1Z" stroke="#A78BFA" strokeWidth="1.2" strokeLinejoin="round" />
-          </svg>
+          <Star size={14} strokeWidth={1.2} color="#A78BFA" />
         </div>
         <span className="text-xs font-semibold" style={{ color: 'rgba(255,255,255,0.6)' }}>
           Prediction Intelligence

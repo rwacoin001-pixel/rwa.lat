@@ -3,8 +3,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  Optional,
   ServiceUnavailableException,
 } from '@nestjs/common'
+import { ObjectStorageService } from '../object-storage/object-storage.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, QueryFailedError, Repository } from 'typeorm'
 import { COMMUNITY_ERROR_CODES } from './community.errors'
@@ -29,6 +31,7 @@ import {
   isValidHandle,
   normalizeCommunityLang,
   normalizeHandle,
+  communityMediaId,
   sanitizeImages,
   sanitizeTopics,
 } from './community.util'
@@ -58,6 +61,10 @@ type QueuePayload = {
   lang?: string
 }
 
+/** Decides whether a stored media reference may be shown; external URLs always pass, member uploads only once scan-cleared. */
+type MediaGate = (url: string) => boolean
+const OPEN_GATE: MediaGate = () => true
+
 const POST_SOURCE_VALUES = new Set(['original', 'rewrite', 'data', 'event', 'user', 'import'])
 
 @Injectable()
@@ -76,7 +83,15 @@ export class CommunityService {
     @InjectRepository(CommunityTranslation) private readonly translations: Repository<CommunityTranslation>,
     private readonly translationProvider: CommunityTranslationProvider,
     private readonly dataSource: DataSource,
+    @Optional() private readonly storage?: ObjectStorageService,
   ) {}
+
+  private async mediaGate(rows: Array<{ images?: string[] | null; author?: CommunityProfile | null }>, extra: Array<string | null | undefined> = []): Promise<MediaGate> {
+    const ids = [...rows.flatMap(row => [...(row.images ?? []), row.author?.avatar_url]), ...extra].map(communityMediaId).filter((id): id is string => Boolean(id))
+    if (!ids.length) return OPEN_GATE
+    const readable = this.storage ? await this.storage.readableCommunityImageIds(ids).catch(() => new Set<string>()) : new Set<string>()
+    return url => { const id = communityMediaId(url); return !id || readable.has(id) }
+  }
 
   // ---- public reads ----
 
@@ -89,13 +104,28 @@ export class CommunityService {
       .where("post.state = 'published'")
       .andWhere('post.published_at IS NOT NULL')
     if (query.topic) {
-      qb.andWhere('post.topics @> CAST(:topicFilter AS jsonb)', {
-        topicFilter: JSON.stringify([query.topic.trim().toLowerCase()]),
-      })
+      const requestedTopic = query.topic.trim().toLowerCase()
+      const topic = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(requestedTopic)
+        ? await this.topics.findOne({ where: { id: requestedTopic } })
+        : await this.topics.findOne({ where: { slug: requestedTopic } })
+      // Historical demo posts stored topic IDs; newer posts store slugs.
+      // Accept either representation so the public filter does not silently empty the feed.
+      if (topic) {
+        qb.andWhere('(post.topics @> CAST(:topicIdFilter AS jsonb) OR post.topics @> CAST(:topicSlugFilter AS jsonb))', {
+          topicIdFilter: JSON.stringify([topic.id]),
+          topicSlugFilter: JSON.stringify([topic.slug]),
+        })
+      } else {
+        qb.andWhere('post.topics @> CAST(:topicFilter AS jsonb)', {
+          topicFilter: JSON.stringify([requestedTopic]),
+        })
+      }
     }
     if (sort === 'hot') {
-      qb.orderBy('(post.like_count * 3 + post.comment_count * 5 + post.view_count)', 'DESC')
+      qb.addSelect('post.like_count * 3 + post.comment_count * 5 + post.view_count', 'hot_score')
+        .orderBy('hot_score', 'DESC')
         .addOrderBy('post.published_at', 'DESC')
+        .addOrderBy('post.id', 'DESC')
         .take(limit)
     } else {
       if (query.cursor) {
@@ -116,7 +146,8 @@ export class CommunityService {
       const last = items[items.length - 1]
       nextCursor = encodeCursor(last.published_at as Date, last.id)
     }
-    return { items: items.map((post) => this.shapePost(post)), nextCursor }
+    const gate = await this.mediaGate(items)
+    return { items: items.map((post) => this.shapePost(post, gate)), nextCursor }
   }
 
   async getPost(id: string) {
@@ -132,7 +163,8 @@ export class CommunityService {
       }),
       this.comments.count({ where: { post_id: id, state: 'published' } }),
     ])
-    return { post: this.shapePost(post), comments: comments.map((comment) => this.shapeComment(comment)), commentTotal }
+    const gate = await this.mediaGate([post, ...comments])
+    return { post: this.shapePost(post, gate), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
   }
 
   async listComments(postId: string, query: CommunityCommentsQueryDto) {
@@ -157,7 +189,8 @@ export class CommunityService {
     const hasMore = rows.length > limit
     const page = hasMore ? rows.slice(0, limit) : rows
     const nextBefore = hasMore ? encodeCursor(page[page.length - 1].created_at, page[page.length - 1].id) : null
-    return { items: page.reverse().map((comment) => this.shapeComment(comment)), nextBefore }
+    const gate = await this.mediaGate(page)
+    return { items: page.reverse().map((comment) => this.shapeComment(comment, gate)), nextBefore }
   }
 
   async getProfile(handle: string) {
@@ -173,10 +206,11 @@ export class CommunityService {
         take: 20,
       }),
     ])
+    const gate = await this.mediaGate(recent, [profile.avatar_url])
     return {
-      profile: this.shapeProfile(profile, true),
+      profile: this.shapeProfile(profile, true, gate),
       stats: { postCount, followerCount, followingCount },
-      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost)),
+      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate)),
     }
   }
 
@@ -184,6 +218,7 @@ export class CommunityService {
     const topics = await this.topics.find({ order: { sort: 'ASC' } })
     return {
       items: topics.map((topic) => ({
+        id: topic.id,
         slug: topic.slug,
         title: topic.title,
         description: topic.description ?? null,
@@ -615,13 +650,13 @@ export class CommunityService {
     return error instanceof QueryFailedError && (error as { code?: string }).code === '23505'
   }
 
-  private shapeProfile(profile: CommunityProfile, full = false) {
+  private shapeProfile(profile: CommunityProfile, full = false, gate: MediaGate = OPEN_GATE) {
     return {
       id: profile.id,
       handle: profile.handle,
       displayName: profile.display_name,
       kind: profile.kind,
-      avatarUrl: profile.avatar_url ?? null,
+      avatarUrl: profile.avatar_url && gate(profile.avatar_url) ? profile.avatar_url : null,
       bio: profile.bio ?? null,
       city: profile.city ?? null,
       countryCode: profile.country_code ?? null,
@@ -629,31 +664,32 @@ export class CommunityService {
     }
   }
 
-  private shapePost(post: CommunityPost) {
+  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE) {
     return {
       id: post.id,
       body: post.body,
       lang: post.lang,
-      images: post.images ?? [],
+      images: (post.images ?? []).filter(gate),
       topics: post.topics ?? [],
       likeCount: post.like_count,
       commentCount: post.comment_count,
       viewCount: post.view_count,
       publishedAt: post.published_at,
-      author: post.author ? this.shapeProfile(post.author) : null,
+      author: post.author ? this.shapeProfile(post.author, false, gate) : null,
     }
   }
 
-  private shapeComment(comment: CommunityComment) {
+  private shapeComment(comment: CommunityComment, gate: MediaGate = OPEN_GATE) {
     return {
       id: comment.id,
       postId: comment.post_id,
       parentId: comment.parent_id ?? null,
       body: comment.body,
+      images: (comment.images ?? []).filter(gate),
       lang: comment.lang,
       likeCount: comment.like_count,
       createdAt: comment.created_at,
-      author: comment.author ? this.shapeProfile(comment.author) : null,
+      author: comment.author ? this.shapeProfile(comment.author, false, gate) : null,
     }
   }
 

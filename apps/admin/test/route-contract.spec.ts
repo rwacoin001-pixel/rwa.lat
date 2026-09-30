@@ -2,6 +2,7 @@ import { PATH_METADATA } from '@nestjs/common/constants'
 import { AdminAuthController } from '../src/admin-auth.controller'
 import { AdminController } from '../src/admin.controller'
 import { ADMIN_API_PREFIX } from '../src/route-contract'
+import { AdminPlatformController } from '../src/admin-platform.controller'
 import { GUARDS_METADATA } from '@nestjs/common/constants'
 import { AdminPermissionGuard, ADMIN_REQUIRED_PERMISSIONS } from '../src/admin-permission.guard'
 
@@ -17,5 +18,10 @@ describe('Admin API route contract', () => {
     expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.listUsers)).toEqual(['users.read'])
     expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.listRedemptions)).toEqual(['redemptions.read'])
     expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.getRedemption)).toEqual(['redemptions.read'])
+  })
+
+  it('enforces platform permissions before editing or publishing operator information', () => {
+    expect(Reflect.getMetadata(GUARDS_METADATA, AdminPlatformController)).toContain(AdminPermissionGuard)
+    expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminPlatformController)).toEqual(['platform.manage'])
   })
 })

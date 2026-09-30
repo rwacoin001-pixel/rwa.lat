@@ -1,6 +1,6 @@
 import { Body, Controller, DefaultValuePipe, Get, Headers, Param, ParseIntPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiOperation, ApiQuery, ApiTags } from '@nestjs/swagger'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
@@ -66,11 +66,13 @@ export class LedgerController {
 
   @Get('transactions')
   @ApiOperation({ summary: 'List signed-in user immutable ledger vouchers and entries' })
+  @ApiQuery({ name: 'cursor', required: false, description: 'Opaque cursor returned by the previous page' })
   transactions(
     @CurrentAuth() actor: SecurityActor,
     @Query('limit', new DefaultValuePipe(50), ParseIntPipe) limit: number,
+    @Query('cursor') cursor?: string,
   ) {
-    return this.ledger.listUserTransactions(actor.userId, limit)
+    return this.ledger.listUserTransactions(actor.userId, limit, cursor)
   }
 }
 

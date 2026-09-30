@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "One observation: five market-infrastructure firms — Bullish, Equiniti, Alpaca, Apex and DriveWealth — formed the Issuer Sponsored Token Coalition this week. The aim: tie a tokenized share to the issuer's official shareholder register, not a synthetic price feed. The real question isn't the tech, it's who keeps the customer — if the register stays authoritative, transfer agents and brokers keep the account relationship; if not, the venue does. Nothing is live yet: membership is non-binding and pilots are planned for Q4."
+  },
+  {
+    "profileHandle": "laoliang.84",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "講真，這週有一份 2026 代幣化報告值得花五分鐘看（BeInCrypto，數據源 RWA.xyz）：市場整體約 600 億美元，但 62 個資產就佔了 88% 市值，頭五個差不多佔一半。更扎實的一組數字：市值十萬美元以上的 1,289 個資產裡，有 910 個（約 329 億美元）一週零轉賬；另外約九成七不對美國散戶開放。所以「上鏈規模」呢四個字要小心用（發行量是別人的，轉得動才是自己的）。我睇完的結論好簡單：熱度係真的，但唔係每一條 RWA 都食得到。別只看總數，看集中度同活躍度。"
+  }
+]

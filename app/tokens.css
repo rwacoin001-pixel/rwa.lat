@@ -1,0 +1,41 @@
+:root {
+  --r-sm: 8px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
+  --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
+  --topbar-h: 56px; --topbar-side-w: 88px; --btn-topbar-w: 40px; --dock-h: 72px;
+  --ratio-asset: 2 / 1; --ratio-ugc: 16 / 9;
+  --font-sans: Inter, system-ui, sans-serif; --font-num: Inter, system-ui, sans-serif;
+  --fs-display: 32px; --lh-display: 40px; --fs-h1: 24px; --lh-h1: 32px;
+  --fs-h2: 17px; --lh-h2: 24px; --fs-body: 15px; --lh-body: 22px; --fs-caption: 12px; --lh-caption: 16px;
+  --media-button: rgb(0 0 0 / .28); --media-ink: #fff; --overlay: rgb(0 0 0 / .4);
+  --focus-width: 2px; --chart-height: 200px; --score-height: 6px;
+}
+:root, [data-theme='light'] {
+  --bg: #F4F1EA; --surface: #FFFFFF; --surface-2: #ECE8DF;
+  --ink-rgb: 14 17 22; --ink: #0E1116; --ink-2: #4A5058; --ink-3: #6E747D;
+  --ink-disabled: rgb(14 17 22 / .38); --placeholder: rgb(14 17 22 / .40);
+  --accent-rgb: 15 92 90; --accent: #0F5C5A; --on-accent: #F4F1EA;
+  --up: #1F7A4D; --down: #B4322F; --warn: #B8860B; --info: #2F5D9E;
+  --shadow-card: 0 1px 2px rgb(var(--ink-rgb) / .06), 0 8px 24px rgb(var(--ink-rgb) / .06);
+  --hero-bg: var(--accent); --hero-ink: var(--on-accent); --hero-ring: none; --bg-texture: none;
+  --font-num: var(--font-geist-mono), Inter, system-ui, sans-serif;
+}
+[data-theme='dark'] {
+  --bg: #0A0B0D; --surface: #13151A; --surface-2: #1B1E25;
+  --ink-rgb: 240 242 245; --ink: #F0F2F5; --ink-2: #B6BCC6; --ink-3: #8B93A0;
+  --ink-disabled: rgb(240 242 245 / .40); --placeholder: rgb(240 242 245 / .42);
+  --accent-rgb: 127 224 200; --accent: #7FE0C8; --on-accent: #0A0B0D;
+  --up: #5BD39A; --down: #F0645C; --warn: #E0B84A; --info: #7FB2F0;
+  --shadow-card: none; --hero-bg: var(--surface); --hero-ink: var(--accent);
+  --hero-ring: 0 0 0 1px rgb(var(--accent-rgb) / .35);
+  --font-num: var(--font-geist-mono), ui-monospace, monospace;
+  --font-display: Georgia, 'Noto Serif', 'Source Serif 4', 'Times New Roman', serif;
+  --bg-texture: radial-gradient(rgb(var(--ink-rgb) / .05) 1px, transparent 1px);
+}
+:root, [data-theme] {
+  --hairline: rgb(var(--ink-rgb) / .10); --focus-ring: rgb(var(--accent-rgb) / .6);
+  --chart-up: var(--up); --chart-down: var(--down); --chart-grid: rgb(var(--ink-rgb) / .06);
+  --chart-area-from: rgb(var(--accent-rgb) / .25); --chart-area-to: transparent;
+  --muted: var(--ink-2); --faint: var(--ink-3); --mint: var(--accent); --negative: var(--down);
+  --high: var(--warn); --medium: var(--info); --line: var(--hairline); --black: var(--bg);
+  --glass: var(--surface); --glass-strong: var(--surface-2); --ice: var(--ink-2);
+}

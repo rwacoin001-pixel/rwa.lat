@@ -9,8 +9,13 @@ out
 tmp
 .env
 .env.*
+**/.env
+**/.env.*
 !.env.example
+!**/.env.example
+**/.local-runtime
 **/production.env
 *.log
 *.tsbuildinfo
 docs
+video

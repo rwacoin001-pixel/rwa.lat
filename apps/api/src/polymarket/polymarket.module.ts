@@ -14,6 +14,8 @@ import {
 } from './polymarket.entities'
 import { PolymarketPublicAdapter } from './polymarket-public.adapter'
 import { PolymarketService } from './polymarket.service'
+import { AiModelClient } from '../ai/ai-model.client'
+import { PolymarketTranslationService } from './polymarket-translation.service'
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { PolymarketService } from './polymarket.service'
   providers: [
     PolymarketPublicAdapter,
     PolymarketService,
+    AiModelClient,
+    PolymarketTranslationService,
     { provide: POLYMARKET_READ_ADAPTER, useExisting: PolymarketPublicAdapter },
   ],
   exports: [PolymarketService, POLYMARKET_READ_ADAPTER],

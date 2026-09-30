@@ -1,5 +1,6 @@
 import { Test } from '@nestjs/testing'
 import { INestApplication, ValidationPipe } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import { DataSource } from 'typeorm'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { AuditLog } from '../../src/security/audit-log.entity'
@@ -29,6 +30,7 @@ describe('AdminRbacService', () => {
 
     moduleRef = await Test.createTestingModule({
       imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
         TypeOrmModule.forRoot({
           ...opts,
           entities: [AdminRole, AdminUser, AdminApprovalRequest, AdminRolePermission, AdminSession, AuditLog],

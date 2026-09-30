@@ -1,21 +1,35 @@
 import * as React from "react"
 import { cn } from "cn"
+import { Skeleton } from './skeleton'
+import { Empty } from './Empty'
+import { ErrorBlock } from './ErrorBlock'
 
 function Card({
   className,
   size = "default",
+  variant = 'card',
+  state,
+  message,
+  retry,
+  asOf,
+  children,
   ...props
-}: React.ComponentProps<"div"> & { size?: "default" | "sm" }) {
+}: React.ComponentProps<"div"> & { size?: "default" | "sm"; variant?: 'card' | 'card-flat' | 'card-row' | 'card-hero' | 'card-media' | 'card-tile'; state?: 'skeleton' | 'empty' | 'error' | 'stale'; message?: string; retry?: () => void; asOf?: string | null }) {
   return (
     <div
       data-slot="card"
       data-size={size}
+      data-state={state}
+      aria-busy={state === 'skeleton'}
       className={cn(
-        "group/card flex flex-col gap-(--card-spacing) overflow-hidden rounded-xl bg-card py-(--card-spacing) text-sm text-card-foreground ring-1 ring-foreground/10 [--card-spacing:--spacing(4)] has-data-[slot=card-footer]:pb-0 has-[>img:first-child]:pt-0 data-[size=sm]:[--card-spacing:--spacing(3)] data-[size=sm]:has-data-[slot=card-footer]:pb-0 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl",
+        `rwa-card ${variant}`,
         className
       )}
       {...props}
-    />
+    >
+      {state === 'skeleton' ? <Skeleton /> : state === 'empty' ? <Empty message={message} /> : state === 'error' ? <ErrorBlock message={message} retry={retry} /> : children}
+      {state === 'stale' && <time className="rwa-stale" dateTime={asOf ?? undefined}>{asOf ? `数据更新于 ${new Date(asOf).toLocaleString()}` : '数据时间未知'}</time>}
+    </div>
   )
 }
 

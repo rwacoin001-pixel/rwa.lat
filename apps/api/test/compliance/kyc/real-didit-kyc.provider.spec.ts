@@ -51,7 +51,7 @@ describe('RealDiditKycProvider', () => {
 
     expect(result).toEqual({
       providerCaseRef: sessionId,
-      status: 'submitted',
+      status: 'not_started',
       verificationUrl: 'https://verify.didit.me/en/session/token',
     })
     expect(fetchMock).toHaveBeenCalledTimes(1)
@@ -76,12 +76,19 @@ describe('RealDiditKycProvider', () => {
   })
 
   it.each([
+    ['Not Started', { state: 'not_started' }],
+    ['InProgress', { state: 'in_progress' }],
+    ['Abandoned', { state: 'expired', reason: 'didit_abandoned' }],
     ['Approved', { state: 'approved', decision: 'approved' }],
     ['Declined', { state: 'rejected', decision: 'rejected', reason: 'didit_declined' }],
     ['Kyc Expired', { state: 'expired', reason: 'didit_kycexpired' }],
     ['In Review', { state: 'submitted' }],
   ])('maps %s without persisting raw provider data', (status, expected) => {
     expect(provider().mapStatus(status)).toEqual(expected)
+  })
+
+  it('rejects unknown states instead of inventing review', () => {
+    expect(() => provider().mapStatus('Unknown')).toThrow('unknown verification status')
   })
 
   it('verifies X-Signature-V2 over sorted Unicode-preserving JSON', () => {
@@ -142,5 +149,38 @@ describe('RealDiditKycProvider', () => {
   it('pins the official API origin in production', () => {
     expect(() => provider({ APP_ENV: 'production', DIDIT_API_BASE_URL: 'https://proxy.example.com' }))
       .toThrow(/verification\.didit\.me/)
+  })
+
+  it('uses the documented multipart fields for all three native checks', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch')
+      .mockResolvedValueOnce(jsonResponse(200, { request_id: sessionId, id_verification: { status: 'Approved', document_type: 'Passport', warnings: [], full_name: 'must-not-retain' } }))
+      .mockResolvedValueOnce(jsonResponse(200, { request_id: workflowId, liveness: { status: 'Approved', score: 90, warnings: [] } }))
+      .mockResolvedValueOnce(jsonResponse(200, { request_id: sessionId, face_match: { status: 'Approved', score: 90, warnings: [] } }))
+    const image = { buffer: Buffer.from([255, 216, 255, 0]), mimetype: 'image/jpeg' }
+    const result = await provider().verifyImages({ userId: 'user', documentType: 'passport', front: image, selfie: image })
+    expect(fetchMock.mock.calls.map(call => call[0])).toEqual(['https://verification.didit.me/v3/id-verification/', 'https://verification.didit.me/v3/passive-liveness/', 'https://verification.didit.me/v3/face-match/'])
+    const forms = fetchMock.mock.calls.map(call => call[1]?.body as FormData)
+    expect(forms[0].get('front_image')).toBeInstanceOf(Blob)
+    expect(forms[0].get('perform_document_liveness')).toBe('true')
+    expect(forms[1].get('user_image')).toBeInstanceOf(Blob)
+    expect(forms[2].get('ref_image')).toBeInstanceOf(Blob)
+    expect(forms.every(form => form.get('save_api_request') === 'true')).toBe(true)
+    expect(JSON.stringify(result)).not.toContain('must-not-retain')
+  })
+
+  it('never retries a paid POST automatically after a timeout response', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(504, {}))
+    const image = { buffer: Buffer.alloc(32), mimetype: 'image/jpeg' }
+    await expect(provider({ DIDIT_API_MAX_RETRIES: '3' }).verifyImages({ userId: 'user', documentType: 'passport', front: image, selfie: image })).rejects.toMatchObject({ code: 'PROVIDER_TIMEOUT' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects a two-sided document incorrectly submitted as a passport', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(200, {
+      request_id: sessionId, id_verification: { status: 'Approved', document_type: 'Identity Card', warnings: [] },
+    }))
+    const image = { buffer: Buffer.alloc(32), mimetype: 'image/jpeg' }
+    await expect(provider().verifyImages({ userId: 'user', documentType: 'passport', front: image, selfie: image })).rejects.toMatchObject({ code: 'PROVIDER_INVALID_REQUEST' })
+    expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 })

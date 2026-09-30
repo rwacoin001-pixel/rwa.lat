@@ -1,0 +1,24 @@
+[
+  {
+    "profileHandle": "aiden.wu",
+    "kind": "post",
+    "topics": [
+      "ai-compute",
+      "rwa"
+    ],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "BlackRock's paper The Machine-Native Economy argues AI agents will need money built for machines, and cites ~$11.2T adjusted stablecoin volume in 2025 — Visa-scale. It also floats compute as the next tokenized asset class. Rack-side view: agents paying per inference job is believable. What isn't standardized is the contract behind a tokenized GPU — chip-generation productivity gaps, regional power prices, depreciation terms. Until those are written down, it's a price feed, not a yield."
+  },
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": [
+      "security",
+      "rwa"
+    ],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Worth flagging: the ESCB's Sept 22 MiCA-review filing asks Brussels to scrap the 30%/60% bank-deposit floors for stablecoin reserves for maturity buckets — shares maturing within one and five working days. Not deregulation: issuer deposits hit a 100% outflow rate in banks' liquidity math, vs ~5% for retail. The ban on paying holders interest stays. Consultation closes Sept 30 and any change means amending MiCA. Read reserve rules as redemption timing, not a safety label. Not advice."
+  }
+]

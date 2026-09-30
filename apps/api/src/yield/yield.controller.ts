@@ -1,9 +1,9 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common'
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiTags, ApiExcludeController } from '@nestjs/swagger'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
-import { CreateYieldBatchDto, SettlePredictionDto } from './yield.dto'
+import { CreateYieldBatchDto, SettlePredictionDto, YieldScheduleQueryDto } from './yield.dto'
 import { YieldService } from './yield.service'
 
 @ApiTags('yield')
@@ -17,8 +17,14 @@ export class YieldController {
   list(@CurrentAuth() actor: SecurityActor) {
     return this.yields.listForUser(actor.userId)
   }
+
+  @Get('schedule')
+  schedule(@CurrentAuth() actor: SecurityActor, @Query() query: YieldScheduleQueryDto) {
+    return this.yields.listExpectedSchedule(actor.userId, query.months ?? 18)
+  }
 }
 
+@ApiExcludeController()
 @ApiTags('demo-admin')
 @Controller('demo-admin')
 export class DemoYieldController {

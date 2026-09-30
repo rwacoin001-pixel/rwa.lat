@@ -1,0 +1,52 @@
+.root { display: grid; gap: 13px; min-width: 0; }
+.heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 2px; }
+.eyebrow { color: var(--home-accent); font-size: 9px; font-weight: 760; letter-spacing: .18em; }
+.heading h2 { margin: 4px 0 0; color: var(--home-ink); font-family: var(--font-display); font-size: var(--home-h2-size, 26px); font-weight: 400; letter-spacing: var(--home-h2-tracking, -.045em); line-height: 1; }
+.mark { display: grid; place-items: center; width: 31px; height: 31px; border: 1px solid var(--home-line); border-radius: 10px; color: var(--home-accent); background: var(--home-glass); box-shadow: inset 0 1px rgba(255,255,255,.6); font-family: Georgia,serif; font-size: 19px; }
+.list { display: grid; gap: 11px; }
+.card { position: relative; display: grid; gap: 13px; overflow: hidden; padding: 17px; border: 1px solid var(--home-line); border-radius: 25px; color: var(--home-ink); background: linear-gradient(140deg,rgba(255,255,255,.52),var(--home-glass) 57%,rgba(235,218,198,.48)); box-shadow: inset 0 1px rgba(255,255,255,.75),inset 0 -13px 24px rgba(145,112,82,.06),var(--home-shadow); -webkit-backdrop-filter: blur(30px) saturate(155%); backdrop-filter: blur(30px) saturate(155%); text-decoration: none; transition: transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease; }
+.card::before { content: ''; position: absolute; inset: -50% -32% auto 25%; height: 180px; pointer-events: none; background: radial-gradient(ellipse,rgba(255,255,255,.48),transparent 67%); }
+.card:hover { transform: translateY(-3px); box-shadow: inset 0 1px rgba(255,255,255,.75),0 25px 55px rgba(58,42,29,.2); }
+.card:active { transform: scale(.984); }
+:global(.rwa-mobile[data-theme='dark']) .card { background: linear-gradient(140deg,var(--home-card-tint, rgba(71,100,109,.31)),var(--home-glass) 57%,var(--home-card-deep, rgba(15,29,36,.78))); box-shadow: inset 0 1px rgba(255,255,255,.18),inset 0 -15px 28px rgba(0,0,0,.2),var(--home-shadow); }
+.top,.foot,.outcome { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.top { justify-content: flex-start; }
+.top > svg:last-child { margin-inline-start: auto; color: var(--home-muted); }
+.icon { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border: 1px solid var(--home-line); border-radius: 11px; color: var(--home-accent); background: color-mix(in srgb,var(--home-accent) 9%,rgba(255,255,255,.25)); }
+.category { color: var(--home-muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+.question { position: relative; color: var(--home-ink); font-size: 15px; font-weight: 640; line-height: 1.35; letter-spacing: -.015em; }
+.outcomes { display: grid; gap: 7px; }
+.outcome { min-height: 38px; padding: 0 11px; border: 1px solid color-mix(in srgb,var(--home-line) 78%,transparent); border-radius: 12px; background: color-mix(in srgb,var(--home-glass-deep) 68%,transparent); color: var(--home-ink); font-size: 12px; }
+.outcome b { color: var(--home-accent); font-size: 15px; font-variant-numeric: tabular-nums; }
+.outcome:nth-child(2) b { color: var(--home-muted); }
+.probabilityBar { display: block; height: 4px; overflow: hidden; border-radius: 9px; background: color-mix(in srgb,var(--home-ink) 11%,transparent); }
+.probabilityBar > span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg,var(--home-accent),color-mix(in srgb,var(--home-accent) 55%,white)); }
+.foot { flex-wrap: wrap; color: var(--home-muted); font-size: 10px; line-height: 1.4; }
+.foot b { color: var(--home-ink); font-size: 11px; font-weight: 680; }
+.source { margin: 0 3px; color: var(--home-muted); font-size: 9px; }
+.loading { display: grid; gap: 10px; }
+.loading span { height: 170px; border-radius: 25px; background: linear-gradient(100deg,var(--home-glass),var(--home-glass-deep),var(--home-glass)); background-size: 200% 100%; animation: poly-shimmer 1.5s linear infinite; }
+.empty { min-height: 110px; border: 1px dashed var(--home-line); border-radius: 24px; color: var(--home-muted); background: var(--home-glass); font: inherit; font-size: 12px; }
+@keyframes poly-shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .card:hover,.card:active { transform: none; } .loading span { animation: none; } }
+
+/* S3 light glass cards, retaining real read-only probabilities and links. */
+.root { gap: 20px; }
+.heading { padding: 0; }
+.heading h2 { font-size: 32px; letter-spacing: -.015em; line-height: 1.15; }
+.list { display: flex; gap: 14px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--home-gutter, 22px); margin-inline: calc(-1 * var(--home-gutter, 22px)); padding: 0 var(--home-gutter, 22px) 8px; scrollbar-width: none; }
+.list::-webkit-scrollbar { display: none; }
+.card,:global(.rwa-mobile[data-theme='dark']) .card { flex: 0 0 min(272px,85vw); scroll-snap-align: start; gap: 16px; padding: 18px; border-radius: 22px; border-color: var(--home-line-soft); background: var(--home-glass); box-shadow: inset 0 1px var(--home-glass-edge); backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px); transition: transform .45s var(--home-ease),box-shadow .45s var(--home-ease); }
+.card::before { display: none; }
+.card:hover { box-shadow: inset 0 1px var(--home-glass-edge),var(--home-shadow-soft); }
+.question { font-family: var(--font-display); font-size: 22px; font-weight: 400; line-height: 1.15; min-height: 76px; letter-spacing: -.005em; }
+.category { font-weight: 500; }
+.icon,.mark { border-color: var(--home-line); box-shadow: none; background: transparent; }
+.outcome { min-height: 40px; border: 0; background: color-mix(in srgb,var(--home-ink) 4.5%,transparent); }
+.outcome b { font-weight: 450; font-size: 21px; }
+.probabilityBar > span { background: var(--home-accent); transform-origin: left; animation: probability-enter 1.6s var(--home-ease) both; }
+.foot { margin-top: auto; }
+.foot b { font-weight: 500; }
+@keyframes probability-enter { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@media (prefers-reduced-motion: reduce) { .card { transition: none; } .probabilityBar > span { animation: none; } }
+:global(.rwa-mobile) .root.root .eyebrow { color: var(--home-accent); }

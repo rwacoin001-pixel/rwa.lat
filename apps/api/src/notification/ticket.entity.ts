@@ -15,6 +15,12 @@ export class Ticket {
   @Column({ type: 'uuid' })
   author_user_id!: string
 
+  @Column({ type: 'varchar', length: 128, nullable: true })
+  idempotency_key!: string | null
+
+  @Column({ type: 'char', length: 64, nullable: true })
+  request_hash!: string | null
+
   @Column({ type: 'varchar' })
   subject!: string
 

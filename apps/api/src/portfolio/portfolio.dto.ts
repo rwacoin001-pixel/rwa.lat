@@ -1,4 +1,4 @@
-import { IsOptional, IsString, IsIn, IsInt, Min, Max } from 'class-validator'
+import { IsOptional, IsString, IsInt, Min, Max, Matches, MaxLength, IsNotEmpty, IsUUID } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class CaptureSnapshotDto {
@@ -23,11 +23,13 @@ export class HistoryQueryDto {
 
 export class RequestRedemptionDto {
   @ApiProperty()
-  @IsString()
+  @IsUUID()
   productId!: string
 
   @ApiProperty()
   @IsString()
+  @Matches(/^[0-9]{1,78}$/)
+  @Matches(/[1-9]/)
   quantityAtomicAmount!: string
 
   @ApiPropertyOptional()
@@ -37,5 +39,8 @@ export class RequestRedemptionDto {
 
   @ApiProperty()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
+  @Matches(/\S/)
   requestId!: string
 }

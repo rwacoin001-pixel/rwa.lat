@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "laoliang.84",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "英国那边在讨论一件事：考虑把代币化黄金从集合投资与基金规则的管辖范围里放出来（9 月中放的风）。做了全球约七成黄金生意的伦敦，现在要在规则上迁就链上，唔係挂。\n\n数字是这样：XAUT 约 26 亿美元、PAXG 约 19 亿美元，两个加起来占了这条赛道绝大部分；月度转账量分别约 37 亿和 16 亿美元，30 天还在往上走。关键是两个发行方都在英国监管范围之外——这才是要改规则的真正原因。\n\n我个人的看法（不一定对）：规则放宽不等于有人接盘。看代币化黄金只问三句就好——托管在哪、谁去审计、赎回要几天。答不清楚的，当它不存在。\n\n别上头。"
+  },
+  {
+    "profileHandle": "sam.dubai",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Nasdaq just put $100M into Payward (Kraken's parent) to push tokenized equities forward — and the part most people skipped is the market-surveillance deal bundled in with it. The industry spent two years arguing about who gets to mint the token. Nasdaq is buying the trust layer instead.\n\nAcross the cities I drift through, nobody asks for 'a crypto stock'. They ask for a cheap, always-open door to dollars. That is a different product brief.\n\nCustody and redemption still sit off-chain.\n\nObservation, not advice."
+  }
+]

@@ -24,10 +24,19 @@ import { MediaModule } from './media/media.module'
 import { SummaryModule } from './summary/summary.module'
 import { CommunityModule } from './community/community.module'
 import { RwaMarketModule } from './rwa-market/rwa-market.module'
+import { MarketContextModule } from './market-context/market-context.module'
 import { RwaAnalysisModule } from './rwa-analysis/rwa-analysis.module'
+import { AiModule } from './ai/ai.module'
+import { TradingModule } from './trading/trading.module'
 import { BasketModule } from './basket/basket.module'
 import { PredictionModule } from './prediction/prediction.module'
 import { AdminConsoleModule } from './admin-console/admin-console.module'
+import { PlatformModule } from './platform/platform.module'
+import { ContentModule } from './content/content.module'
+import { GeneratedDocumentsModule } from './generated-documents/generated-documents.module'
+import { PublicShareModule } from './sharing/public-share.module'
+import { LegalModule } from './legal/legal.module'
+import { ReferralHttpModule } from './referral/referral-http.module'
 
 @Module({
   imports: [
@@ -59,10 +68,19 @@ import { AdminConsoleModule } from './admin-console/admin-console.module'
     SummaryModule,
     CommunityModule,
     RwaMarketModule,
+    MarketContextModule,
     RwaAnalysisModule,
+    AiModule,
+    TradingModule,
     BasketModule,
     PredictionModule,
     AdminConsoleModule,
+    PlatformModule,
+    ContentModule,
+    GeneratedDocumentsModule,
+    PublicShareModule,
+    LegalModule,
+    ReferralHttpModule,
   ],
 })
 export class AppModule {}

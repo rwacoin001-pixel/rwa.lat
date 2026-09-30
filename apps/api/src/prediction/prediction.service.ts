@@ -3,6 +3,7 @@ import { DataSource } from 'typeorm'
 import { randomUUID } from 'node:crypto'
 import { OperationalCapabilityService } from '../operations/operational-capability.service'
 import { PolymarketService } from '../polymarket/polymarket.service'
+import { ComplianceService } from '../compliance/compliance.service'
 import {
   PREDICTION_SWITCH_KEY,
   predictionBetNotFound,
@@ -15,6 +16,11 @@ import {
   predictionSlippageExceeded,
   predictionStakeLimitExceeded,
 } from './prediction.errors'
+import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
+import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
+
+// 18 位定标换算已抽到 prediction-hedge-math（纯函数模块，可独立测试）；此处 re-export 保持既有引用不变。
+export { formatDecimal18, parseDecimal18 }
 
 /** 默认限额（路线 A 方案默认值；P2 可迁配置） */
 export const PREDICTION_LIMITS = {
@@ -24,24 +30,8 @@ export const PREDICTION_LIMITS = {
   slippageBps: 200n, // 2%
 } as const
 
-const SHARES_SCALE = 10n ** 18n
-const ATOMIC_PER_UNIT = 10n ** 6n // USDT 6 位小数
-
-/** "0.62" → 620000000000000000n；"1" → 1000000000000000000n（18 位定标） */
-export function parseDecimal18(value: string): bigint {
-  const trimmed = value.trim()
-  if (!/^\d+(\.\d+)?$/.test(trimmed)) throw new Error(`Invalid decimal: ${value}`)
-  const [whole, frac = ''] = trimmed.split('.')
-  const fracPadded = (frac + '0'.repeat(18)).slice(0, 18)
-  return BigInt(whole) * SHARES_SCALE + BigInt(fracPadded || '0')
-}
-
-/** 620000000000000000n → "0.62"（用于 numeric(38,18) 插入） */
-export function formatDecimal18(value: bigint): string {
-  const whole = value / SHARES_SCALE
-  const frac = (value % SHARES_SCALE).toString().padStart(18, '0').replace(/0+$/, '')
-  return frac.length ? `${whole}.${frac}` : whole.toString()
-}
+// 定标换算（SHARES_SCALE / ATOMIC_PER_UNIT / parseDecimal18 / formatDecimal18）
+// 已移至 prediction-hedge-math.ts 并在文件顶部导入。
 
 @Injectable()
 export class PredictionService {
@@ -51,12 +41,14 @@ export class PredictionService {
     private readonly dataSource: DataSource,
     private readonly capability: OperationalCapabilityService,
     private readonly polymarket: PolymarketService,
+    private readonly compliance: ComplianceService,
   ) {}
 
   // ---------------------------------------------------------------- 用户侧
 
   async status() {
     const enabled = await this.capability.isEnabled(PREDICTION_SWITCH_KEY)
+    const fees = predictionFeeConfig()
     return {
       enabled,
       mode: 'internal_a',
@@ -65,6 +57,14 @@ export class PredictionService {
         maxDailyStakeAtomic: PREDICTION_LIMITS.maxDailyStakeAtomic,
         maxMarketExposureAtomic: PREDICTION_LIMITS.maxMarketExposureAtomic,
         slippageBps: PREDICTION_LIMITS.slippageBps.toString(),
+        assetDecimals: 6,
+      },
+      /** A+C 混合收费：下注费 + 派彩费。前端确认页与费率页必须读这里的值。 */
+      fees: {
+        placeFeeBps: fees.placeFeeBps,
+        payoutFeeBps: fees.payoutFeeBps,
+        placeFeeRate: bpsToRate(fees.placeFeeBps),
+        payoutFeeRate: bpsToRate(fees.payoutFeeBps),
         assetDecimals: 6,
       },
     }
@@ -82,6 +82,12 @@ export class PredictionService {
     if (stake > BigInt(PREDICTION_LIMITS.maxStakeAtomic)) {
       throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
     }
+
+    // A 段收费：下注时先抽下注费，只有净额进入风险池（费收即时确认，不承担赔付风险）
+    const feeConfig = predictionFeeConfig()
+    const placeFee = feeOn(stake, feeConfig.placeFeeBps)
+    const riskStake = stake - placeFee
+    if (riskStake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
 
     // 市场与代币校验（要求市场 active 且 token 未结算）
     const [tokenRow] = await this.dataSource.query(
@@ -127,8 +133,8 @@ export class PredictionService {
       }
     }
 
-    // 份额（18 位定标）= 投注(6位原子) × 1e36 / (价格(18位) × 1e6)
-    const shares18 = (stake * SHARES_SCALE * SHARES_SCALE) / (price18 * ATOMIC_PER_UNIT)
+    // 份额（18 位定标）= 净本金(riskStake, 6位原子) × 1e36 / (价格(18位) × 1e6)
+    const shares18 = (riskStake * SHARES_SCALE * SHARES_SCALE) / (price18 * ATOMIC_PER_UNIT)
     if (shares18 <= 0n) throw predictionPriceUnavailable(input.tokenId)
 
     const runner = this.dataSource.createQueryRunner()
@@ -147,6 +153,8 @@ export class PredictionService {
         return this.toBetView(existing, true)
       }
 
+      await this.compliance.requireInvestmentEligibility(userId, 'prediction')
+
       // 日累计限额
       const [daily] = await runner.query(
         `SELECT COALESCE(SUM(stake_atomic), 0)::text AS total FROM app.prediction_bets
@@ -157,19 +165,20 @@ export class PredictionService {
         throw predictionDailyLimitExceeded(PREDICTION_LIMITS.maxDailyStakeAtomic)
       }
 
-      // 单市场敞口限额
+      // 单市场敞口限额（口径 = 平台真实承担的风险本金，不含下注费）
       const [exposure] = await runner.query(
-        `SELECT COALESCE(SUM(stake_atomic), 0)::text AS total FROM app.prediction_bets
+        `SELECT COALESCE(SUM(stake_atomic - fee_atomic), 0)::text AS total FROM app.prediction_bets
          WHERE market_mapping_id = $1 AND status = 'placed'`,
         [tokenRow.market_mapping_id],
       )
-      if (BigInt(exposure.total) + stake > BigInt(PREDICTION_LIMITS.maxMarketExposureAtomic)) {
+      if (BigInt(exposure.total) + riskStake > BigInt(PREDICTION_LIMITS.maxMarketExposureAtomic)) {
         throw predictionMarketExposureLimit(PREDICTION_LIMITS.maxMarketExposureAtomic)
       }
 
-      // 用户可用余额账户 + 平台池账户
+      // 用户可用余额账户 + 平台池账户 + 平台手续费收入账户
       const available = await this.ensureUserAccount(runner, userId)
       const pool = await this.poolAccount(runner)
+      const feeAccount = await this.feeAccount(runner)
       const [balance] = await runner.query(
         `SELECT COALESCE(current_atomic_balance, 0)::text AS amount FROM app.ledger_account_balances WHERE account_id = $1`,
         [available],
@@ -180,13 +189,13 @@ export class PredictionService {
       const betId = randomUUID()
       const [bet] = await runner.query(
         `INSERT INTO app.prediction_bets
-          (id, user_id, market_mapping_id, token_id, side, stake_atomic, shares, price, status, idempotency_key)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'placed', $9)
+          (id, user_id, market_mapping_id, token_id, side, stake_atomic, fee_atomic, payout_fee_atomic, shares, price, status, idempotency_key)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, 'placed', $10)
          ON CONFLICT (user_id, idempotency_key) DO NOTHING
          RETURNING *`,
         [
           betId, userId, tokenRow.market_mapping_id, tokenRow.token_id, String(tokenRow.outcome ?? 'YES').toUpperCase(),
-          stake.toString(), formatDecimal18(shares18), formatDecimal18(price18), input.idempotencyKey,
+          stake.toString(), placeFee.toString(), formatDecimal18(shares18), formatDecimal18(price18), input.idempotencyKey,
         ],
       )
       if (!bet) {
@@ -198,22 +207,33 @@ export class PredictionService {
         return this.toBetView(raced, true)
       }
 
-      // 记账：user.available --(debit)--> pool(credit)
+      // 记账：user.available --(debit stake)--> pool(credit riskStake) + fee_revenue(credit placeFee)
+      // 三笔分录同属一笔交易，借贷净额为 0（账本平衡触发器要求）。
       const transactionId = await this.createLedgerTransaction(
         runner, 'prediction_stake', `prediction_stake:${betId}`, requestId, betId, userId,
       )
       if (transactionId) {
         await runner.query(
           `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
-           VALUES ($1, $2, 'debit', $4), ($1, $3, 'credit', $4)`,
-          [transactionId, available, pool, stake.toString()],
+           VALUES ($1, $2, 'debit', $3), ($1, $4, 'credit', $5)`,
+          [transactionId, available, stake.toString(), pool, riskStake.toString()],
         )
+        if (placeFee > 0n) {
+          await runner.query(
+            `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
+             VALUES ($1, $2, 'credit', $3)`,
+            [transactionId, feeAccount, placeFee.toString()],
+          )
+        }
       }
 
       await this.audit(runner, userId, requestId, 'prediction.bet.placed', betId, {
         marketMappingId: tokenRow.market_mapping_id,
         tokenId: tokenRow.token_id,
         stakeAtomic: stake.toString(),
+        placeFeeAtomic: placeFee.toString(),
+        riskStakeAtomic: riskStake.toString(),
+        placeFeeBps: feeConfig.placeFeeBps,
         price: formatDecimal18(price18),
         shares: formatDecimal18(shares18),
       })
@@ -266,7 +286,7 @@ export class PredictionService {
     return rows.map((r: { id: string }) => r.id)
   }
 
-  async settleMarket(marketMappingId: string): Promise<{ settled: boolean; outcome?: string; betsSettled: number; totalPaidAtomic: string }> {
+  async settleMarket(marketMappingId: string): Promise<{ settled: boolean; outcome?: string; betsSettled: number; totalPaidAtomic: string; totalFeeAtomic: string }> {
     const runner = this.dataSource.createQueryRunner()
     await runner.connect()
     await runner.startTransaction()
@@ -279,7 +299,7 @@ export class PredictionService {
       )
       if (already) {
         await runner.commitTransaction()
-        return { settled: false, betsSettled: 0, totalPaidAtomic: '0' }
+        return { settled: false, betsSettled: 0, totalPaidAtomic: '0', totalFeeAtomic: '0' }
       }
 
       const tokens = await runner.query(
@@ -289,7 +309,7 @@ export class PredictionService {
       const resolved = (tokens as Array<{ token_id: string; state: string }>).filter((t) => t.state === 'resolved')
       if (resolved.length === 0) {
         await runner.commitTransaction()
-        return { settled: false, betsSettled: 0, totalPaidAtomic: '0' }
+        return { settled: false, betsSettled: 0, totalPaidAtomic: '0', totalFeeAtomic: '0' }
       }
       const voided = resolved.length > 1
       const winnerTokenId = voided ? null : resolved[0].token_id
@@ -299,53 +319,71 @@ export class PredictionService {
         [marketMappingId],
       )
       const pool = await this.poolAccount(runner)
+      const feeAccount = await this.feeAccount(runner)
+      const feeConfig = predictionFeeConfig()
       let betsSettled = 0
       let totalStake = 0n
       let totalPaid = 0n
+      let totalFee = 0n
 
       for (const bet of bets as Array<Record<string, unknown>>) {
         const betId = bet.id as string
         const userId = bet.user_id as string
         const stakeAtomic = BigInt(bet.stake_atomic as string)
+        const betPlaceFee = BigInt(String(bet.fee_atomic ?? '0'))
         totalStake += stakeAtomic
         const available = await this.ensureUserAccount(runner, userId)
 
         if (voided) {
-          // 退款：pool --(debit)--> user(credit)
-          const txId = await this.createLedgerTransaction(
-            runner, 'prediction_void_refund', `prediction_void_refund:${betId}`, `settle:${marketMappingId}`, betId, userId,
-          )
-          if (txId) {
-            await runner.query(
-              `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
-               VALUES ($1, $2, 'debit', $4), ($1, $3, 'credit', $4)`,
-              [txId, pool, available, stakeAtomic.toString()],
+          // 退款：退回净本金（stake − 下注费）。下注费是已提供服务的对价，不作退回。
+          const refund = stakeAtomic - betPlaceFee
+          if (refund > 0n) {
+            const txId = await this.createLedgerTransaction(
+              runner, 'prediction_void_refund', `prediction_void_refund:${betId}`, `settle:${marketMappingId}`, betId, userId,
             )
-            totalPaid += stakeAtomic
+            if (txId) {
+              await runner.query(
+                `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
+                 VALUES ($1, $2, 'debit', $3), ($1, $4, 'credit', $3)`,
+                [txId, pool, refund.toString(), available],
+              )
+              totalPaid += refund
+            }
           }
           await runner.query(
             `UPDATE app.prediction_bets SET status = 'void', settled_at = now() WHERE id = $1 AND status = 'placed'`,
             [betId],
           )
         } else if ((bet.token_id as string) === winnerTokenId) {
-          // 派彩：shares(18 位小数字符串) → atomic(6)，pool --> user
-          const payout = parseDecimal18(String(bet.shares)) / 10n ** 12n
-          if (payout > 0n) {
+          // 派彩：毛额 = shares(18 位小数) → atomic(6)；再抽派彩费
+          const grossPayout = parseDecimal18(String(bet.shares)) / 10n ** 12n
+          const payoutFee = feeOn(grossPayout, feeConfig.payoutFeeBps)
+          const netPayout = grossPayout - payoutFee
+          if (netPayout > 0n) {
             const txId = await this.createLedgerTransaction(
               runner, 'prediction_payout', `prediction_payout:${betId}`, `settle:${marketMappingId}`, betId, userId,
             )
             if (txId) {
+              // pool --(debit 毛额)--> user(credit 净额) + fee_revenue(credit 派彩费)
               await runner.query(
                 `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
-                 VALUES ($1, $2, 'debit', $4), ($1, $3, 'credit', $4)`,
-                [txId, pool, available, payout.toString()],
+                 VALUES ($1, $2, 'debit', $3), ($1, $4, 'credit', $5)`,
+                [txId, pool, grossPayout.toString(), available, netPayout.toString()],
               )
-              totalPaid += payout
+              if (payoutFee > 0n) {
+                await runner.query(
+                  `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
+                   VALUES ($1, $2, 'credit', $3)`,
+                  [txId, feeAccount, payoutFee.toString()],
+                )
+              }
+              totalPaid += netPayout
+              totalFee += payoutFee
             }
           }
           await runner.query(
-            `UPDATE app.prediction_bets SET status = 'won', settled_at = now() WHERE id = $1 AND status = 'placed'`,
-            [betId],
+            `UPDATE app.prediction_bets SET status = 'won', payout_fee_atomic = $2, settled_at = now() WHERE id = $1 AND status = 'placed'`,
+            [betId, payoutFee.toString()],
           )
         } else {
           await runner.query(
@@ -358,15 +396,15 @@ export class PredictionService {
 
       await runner.query(
         `INSERT INTO app.prediction_settlement_runs
-          (market_mapping_id, winning_token_id, outcome, bets_settled, total_stake_atomic, total_paid_atomic)
-         VALUES ($1, $2, $3, $4, $5, $6)
+          (market_mapping_id, winning_token_id, outcome, bets_settled, total_stake_atomic, total_paid_atomic, total_fee_atomic)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
          ON CONFLICT (market_mapping_id) DO NOTHING`,
-        [marketMappingId, winnerTokenId, voided ? 'void' : 'resolved', betsSettled, totalStake.toString(), totalPaid.toString()],
+        [marketMappingId, winnerTokenId, voided ? 'void' : 'resolved', betsSettled, totalStake.toString(), totalPaid.toString(), totalFee.toString()],
       )
 
       await runner.commitTransaction()
-      this.log.log(`prediction settle market=${marketMappingId} outcome=${voided ? 'void' : 'resolved'} bets=${betsSettled} paid=${totalPaid.toString()}`)
-      return { settled: true, outcome: voided ? 'void' : 'resolved', betsSettled, totalPaidAtomic: totalPaid.toString() }
+      this.log.log(`prediction settle market=${marketMappingId} outcome=${voided ? 'void' : 'resolved'} bets=${betsSettled} paid=${totalPaid.toString()} fee=${totalFee.toString()}`)
+      return { settled: true, outcome: voided ? 'void' : 'resolved', betsSettled, totalPaidAtomic: totalPaid.toString(), totalFeeAtomic: totalFee.toString() }
     } catch (error) {
       await runner.rollbackTransaction()
       throw error
@@ -384,6 +422,10 @@ export class PredictionService {
       tokenId: row.token_id,
       side: row.side,
       stakeAtomic: String(row.stake_atomic),
+      feeAtomic: String(row.fee_atomic ?? '0'),
+      payoutFeeAtomic: String(row.payout_fee_atomic ?? '0'),
+      /** 实际进入风险池的本金 = stake − 下注费 */
+      riskStakeAtomic: (BigInt(String(row.stake_atomic ?? '0')) - BigInt(String(row.fee_atomic ?? '0'))).toString(),
       shares: String(row.shares),
       price: String(row.price),
       status: row.status,
@@ -418,6 +460,23 @@ export class PredictionService {
        WHERE owner_type = 'platform' AND owner_reference = 'prediction_pool' AND purpose = 'settlement' AND asset_code = 'USDT'`,
     )
     if (!account) throw new Error('Failed to resolve prediction pool account')
+    return account.id as string
+  }
+
+  /**
+   * 平台手续费收入账户（predict_fee）。
+   * 下注费与派彩费都进这里；它是收入账户，永不参与赔付，因此不需要跟着池子承担风险。
+   */
+  private async feeAccount(runner: ReturnType<DataSource['createQueryRunner']>) {
+    await runner.query(
+      `INSERT INTO app.ledger_accounts (owner_type, owner_reference, purpose, asset_code, asset_decimals, normal_side)
+       VALUES ('platform', 'prediction_fee', 'fee_revenue', 'USDT', 6, 'credit') ON CONFLICT DO NOTHING`,
+    )
+    const [account] = await runner.query(
+      `SELECT id FROM app.ledger_accounts
+       WHERE owner_type = 'platform' AND owner_reference = 'prediction_fee' AND purpose = 'fee_revenue' AND asset_code = 'USDT'`,
+    )
+    if (!account) throw new Error('Failed to resolve prediction fee revenue account')
     return account.id as string
   }
 
@@ -465,28 +524,50 @@ export class PredictionService {
          count(*) FILTER (WHERE status = 'won')::int AS won,
          count(*) FILTER (WHERE status = 'lost')::int AS lost,
          count(*) FILTER (WHERE status = 'void')::int AS void,
-         COALESCE(SUM(stake_atomic) FILTER (WHERE status = 'placed'), 0)::text AS "openStakeAtomic",
+         COALESCE(SUM(stake_atomic - fee_atomic) FILTER (WHERE status = 'placed'), 0)::text AS "openStakeAtomic",
          COALESCE(SUM(stake_atomic), 0)::text AS "totalStakeAtomic",
+         COALESCE(SUM(fee_atomic), 0)::text AS "placeFeeAtomic",
+         COALESCE(SUM(payout_fee_atomic), 0)::text AS "payoutFeeAtomic",
+         COALESCE(SUM(fee_atomic + payout_fee_atomic), 0)::text AS "totalFeeAtomic",
          COALESCE(SUM(CASE WHEN status = 'won' THEN shares * 1000000 / 1000000000000000000 ELSE 0 END), 0)::text AS "paidOutAtomic"
        FROM app.prediction_bets`,
     )
     const [runs] = await this.dataSource.query(`SELECT count(*)::int AS n FROM app.prediction_settlement_runs`)
+    const [feeLedger] = await this.dataSource.query(
+      `SELECT COALESCE(b.current_atomic_balance, 0)::text AS "feeRevenueAtomic"
+       FROM app.ledger_accounts a
+       LEFT JOIN app.ledger_account_balances b ON b.account_id = a.id
+       WHERE a.owner_type = 'platform' AND a.owner_reference = 'prediction_fee' AND a.purpose = 'fee_revenue'
+         AND a.asset_code = 'USDT'`,
+    )
+    const [poolLedger] = await this.dataSource.query(
+      `SELECT COALESCE(b.current_atomic_balance, 0)::text AS "poolAtomic"
+       FROM app.ledger_accounts a
+       LEFT JOIN app.ledger_account_balances b ON b.account_id = a.id
+       WHERE a.owner_type = 'platform' AND a.owner_reference = 'prediction_pool' AND a.purpose = 'settlement'
+         AND a.asset_code = 'USDT'`,
+    )
     const exposureTop = await this.dataSource.query(
       `SELECT b.market_mapping_id::text AS "marketId", m.question, m.slug,
-              COALESCE(SUM(b.stake_atomic), 0)::text AS "openStakeAtomic", count(*)::int AS bets
+              COALESCE(SUM(b.stake_atomic - b.fee_atomic), 0)::text AS "openStakeAtomic", count(*)::int AS bets
        FROM app.prediction_bets b
        JOIN app.polymarket_market_mappings m ON m.id = b.market_mapping_id
        WHERE b.status = 'placed'
        GROUP BY 1, 2, 3
-       ORDER BY SUM(b.stake_atomic) DESC
+       ORDER BY SUM(b.stake_atomic - b.fee_atomic) DESC
        LIMIT 10`,
     )
     return {
       totals,
       settlementRuns: runs?.n ?? 0,
       exposureTop,
+      /** 平台手续费收入账户余额（累计已确认收入，USDT atomic） */
+      feeRevenueAtomic: feeLedger?.feeRevenueAtomic ?? '0',
+      /** 投注池余额；为负表示庄家已赔穿、需要资金账户补足 */
+      poolAtomic: poolLedger?.poolAtomic ?? '0',
       // slippageBps 内部是 BigInt（滑点计算用）——JSON 序列化前转 number
       limits: { ...PREDICTION_LIMITS, slippageBps: Number(PREDICTION_LIMITS.slippageBps) },
+      fees: predictionFeeConfig(),
     }
   }
 
@@ -505,7 +586,9 @@ export class PredictionService {
     const offset = (input.page - 1) * input.limit
     const items = await this.dataSource.query(
       `SELECT b.id::text, b.user_id::text AS "userId", b.status, b.side,
-              b.stake_atomic::text AS "stakeAtomic", b.shares::text, b.price::text,
+              b.stake_atomic::text AS "stakeAtomic", b.fee_atomic::text AS "feeAtomic",
+              b.payout_fee_atomic::text AS "payoutFeeAtomic",
+              b.shares::text, b.price::text,
               b.created_at AS "createdAt", b.settled_at AS "settledAt",
               m.question, m.slug, t.outcome
        FROM app.prediction_bets b

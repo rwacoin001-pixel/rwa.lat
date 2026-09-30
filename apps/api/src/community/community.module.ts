@@ -16,9 +16,15 @@ import { InternalCommunityController } from './community-internal.controller'
 import { CommunityController } from './community.controller'
 import { CommunityService } from './community.service'
 import { CommunityTranslationProvider } from './community.translation'
+import { SecurityModule } from '../security/security.module'
+import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
+import { CommunityMemberService } from './community-member.service'
+import { CommunityMemberController, AdminCommunityMemberController, CommunityMediaController } from './community-member.controller'
+import { ObjectStorageModule } from '../object-storage/object-storage.module'
 
 @Module({
   imports: [
+    SecurityModule, AdminRbacModule, ObjectStorageModule,
     TypeOrmModule.forFeature([
       CommunityProfile,
       CommunityPost,
@@ -31,8 +37,8 @@ import { CommunityTranslationProvider } from './community.translation'
       CommunityTranslation,
     ]),
   ],
-  controllers: [CommunityController, InternalCommunityController],
-  providers: [CommunityService, InternalServiceGuard, CommunityTranslationProvider],
+  controllers: [CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController],
+  providers: [CommunityService, InternalServiceGuard, CommunityTranslationProvider, CommunityMemberService],
   exports: [CommunityService],
 })
 export class CommunityModule {}

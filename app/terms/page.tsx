@@ -1,19 +1,24 @@
 import type { Metadata } from 'next'
 import LegalPage, { Section, RiskNote } from '@/components/legal-page'
+import PublishedLegalPage from '@/components/published-legal-page'
 
 export const metadata: Metadata = {
   title: 'Terms of Service — RWA.LAT',
   description: 'The terms governing your use of the RWA.LAT platform.',
 }
 
-export default function TermsOfServicePage() {
+export const dynamic = 'force-dynamic'
+
+export default async function TermsOfServicePage({ searchParams }: { searchParams: Promise<{ version?: string }> }) {
+  const { version } = await searchParams
   return (
-    <LegalPage badge="Legal" title="Terms of Service" updated="September 18, 2026">
-      <div className="space-y-10 text-sm leading-7 text-[#929aa6] sm:text-[15px]">
+    <PublishedLegalPage kind="terms" version={version}>
+    <LegalPage kind="terms" title="Terms of Service" updated="September 18, 2026" effectiveDate="2026-09-18">
+      <div>
         <Section n="1" title="Acceptance of These Terms">
           <p>
             These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the RWA.LAT platform at{' '}
-            <a href="https://rwa.lat" className="text-[#2fe6bf] hover:underline">
+            <a href="https://rwa.lat">
               https://rwa.lat
             </a>{' '}
             and related applications and services (the &ldquo;Service&rdquo;). By accessing or using the Service, you
@@ -177,7 +182,7 @@ export default function TermsOfServicePage() {
         <Section n="17" title="Contact">
           <p>
             For questions about these Terms, contact us at{' '}
-            <a href="mailto:support@rwa.lat" className="text-[#2fe6bf] hover:underline">
+            <a href="mailto:support@rwa.lat">
               support@rwa.lat
             </a>
             .
@@ -185,5 +190,6 @@ export default function TermsOfServicePage() {
         </Section>
       </div>
     </LegalPage>
+    </PublishedLegalPage>
   )
 }

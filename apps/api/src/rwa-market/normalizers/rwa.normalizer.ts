@@ -27,6 +27,12 @@ const ASSET_CLASS_MAP: Record<string, RwaAssetClass> = {
   stable_value: 'stable_value',
 }
 
+/** Upstream sources use "-" (or blanks) as a no-ticker placeholder; store that as null. */
+export function cleanSymbol(raw: string | null | undefined): string | null {
+  const symbol = raw?.trim()
+  return symbol && !/^[-–—]+$/.test(symbol) ? symbol : null
+}
+
 export function mapCmcAssetType(rawType: string | null | undefined): RwaAssetClass {
   if (!rawType) return 'other'
   const key = rawType.trim().toLowerCase().replace(/[\s-]+/g, '_')
@@ -72,7 +78,7 @@ export function normalizeCmcAsset(
     externalId: externalIdOf(raw),
     externalSlug: raw.slug && raw.slug.length > 0 ? raw.slug : slugify(raw.name),
     name: raw.name,
-    symbol: raw.symbol ?? null,
+    symbol: cleanSymbol(raw.symbol),
     assetClass: mapCmcAssetType(raw.asset_type),
     rawAssetType: raw.asset_type ?? null,
     description: info?.about?.description?.trim() || null,
@@ -97,7 +103,7 @@ export function normalizeCmcIssuer(raw: CmcIssuerListItem): NormalizedIssuer {
 
 export function normalizeCmcToken(raw: CmcRwaToken): NormalizedTokenRef {
   return {
-    symbol: raw.symbol ?? null,
+    symbol: cleanSymbol(raw.symbol),
     name: raw.name ?? null,
     cryptoId: raw.crypto_id ?? null,
     issuerExternalId: raw.issuer_id ?? null,

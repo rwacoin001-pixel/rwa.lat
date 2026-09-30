@@ -174,8 +174,8 @@ export function ProductEditor({
     assetDecimals: String(product.assetDecimals),
     network: product.network ?? 'none',
     summary: product.summary ?? '',
-    minHuman: fromAtomic(product.minOrderAtomicAmount, product.assetDecimals),
-    maxHuman: fromAtomic(product.maxOrderAtomicAmount, product.assetDecimals),
+    minHuman: fromAtomic(product.minOrderAtomicAmount, 6),
+    maxHuman: fromAtomic(product.maxOrderAtomicAmount, 6),
   })
   // 利率与收益
   const [yieldTerms, setYieldTerms] = useState<YieldTerms>((product.yieldTerms ?? {}) as YieldTerms)
@@ -217,8 +217,8 @@ export function ProductEditor({
     try {
       const decimals = Number(basic.assetDecimals)
       if (!Number.isInteger(decimals) || decimals < 0 || decimals > 18) throw new Error('资产精度需为 0-18 的整数')
-      const min = toAtomic(basic.minHuman, decimals)
-      const max = toAtomic(basic.maxHuman, decimals)
+      const min = toAtomic(basic.minHuman, 6)
+      const max = toAtomic(basic.maxHuman, 6)
       if (basic.minHuman.trim() && min === null) throw new Error('最小下单额格式不正确')
       if (basic.maxHuman.trim() && max === null) throw new Error('最大下单额格式不正确')
       const updated = await adminApi.updateProduct(current.id, {
@@ -298,6 +298,17 @@ export function ProductEditor({
     }
   }
 
+  const setCover = async (ref: string | null) => {
+    setBusy('cover')
+    try {
+      const updated = await adminApi.updateProduct(current.id, { coverStorageRef: ref })
+      setCurrent(updated)
+      showOk(ref ? '独立封面已保存' : '封面已移除')
+      onChanged()
+    } catch (e) { showError(e, '保存封面失败') }
+    finally { setBusy('') }
+  }
+
   const addMediaRef = async (ref: string) => {
     if (mediaRefs.includes(ref)) return
     await persistMedia([...mediaRefs, ref])
@@ -307,7 +318,7 @@ export function ProductEditor({
     setBusy('quote')
     setNotice(null)
     try {
-      const decimals = current.assetDecimals
+      const decimals = 6
       const atomic = toAtomic(priceForm.priceHuman, decimals)
       if (atomic === null) throw new Error('价格格式不正确')
       if (!priceForm.validUntil) throw new Error('请选择报价有效期')
@@ -315,6 +326,7 @@ export function ProductEditor({
       if (!Number.isFinite(validUntil.getTime()) || validUntil <= new Date()) throw new Error('有效期必须晚于当前时间')
       const list = await adminApi.addPrice(current.id, {
         unitPriceAtomicAmount: atomic,
+        unitPriceDecimals: decimals,
         currency: priceForm.currency,
         source: priceForm.source.trim() || 'admin',
         validUntil: validUntil.toISOString(),
@@ -591,12 +603,25 @@ export function ProductEditor({
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader><CardTitle>产品封面</CardTitle><CardDescription>单独指定用于市场卡片的图片，不随附件顺序变化。</CardDescription></CardHeader>
+        <CardContent className="space-y-3">
+          {current.coverStorageRef && <RefPreview storageRef={current.coverStorageRef} onRemove={() => void setCover(null)} />}
+          <StorageUpload bucket="rwa-assets" purpose="product-media" productId={current.id} accept=".png,.jpg,.jpeg" label="上传并设置封面" onDone={(object) => void setCover(object.storageRef)} />
+          <Label htmlFor="product-cover-ref">也可从已上传图片中指定</Label>
+          <select id="product-cover-ref" className="w-full rounded-xl border p-2" value={current.coverStorageRef ?? ''} disabled={busy === 'cover'} onChange={(e) => void setCover(e.target.value || null)}>
+            <option value="">不指定封面</option>
+            {Array.from(new Set([...mediaRefs, ...(current.coverStorageRef ? [current.coverStorageRef] : [])])).map(ref => <option key={ref} value={ref}>{ref.split('/').pop()}</option>)}
+          </select>
+        </CardContent>
+      </Card>
+
       {/* 媒体与文件 */}
       <Card>
         <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2">
           <div>
             <CardTitle>媒体与文件</CardTitle>
-            <CardDescription>产品图片与附件（直传 Cloudflare R2，自动校验）</CardDescription>
+            <CardDescription>产品图片与附件（直传文件存储，校验后可关联）</CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
@@ -665,7 +690,7 @@ export function ProductEditor({
                   return (
                     <tr key={quote.id} className="border-b border-ink/[0.05] last:border-0">
                       <td className="px-3 py-2 font-medium tabular-nums">
-                        {fromAtomic(quote.unitPriceAtomicAmount, current.assetDecimals) || quote.unitPriceAtomicAmount}
+                        {fromAtomic(quote.unitPriceAtomicAmount, quote.unitPriceDecimals ?? 6) || quote.unitPriceAtomicAmount}
                       </td>
                       <td className="px-3 py-2">{quote.currency}</td>
                       <td className="px-3 py-2 text-text-secondary">{quote.source}</td>

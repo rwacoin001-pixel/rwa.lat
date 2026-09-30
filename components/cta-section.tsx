@@ -1,5 +1,7 @@
 'use client'
 
+import { ArrowRight } from 'lucide-react'
+
 import { motion } from 'framer-motion'
 import { useRef, useEffect } from 'react'
 import AnimatedBrand from './animated-brand'
@@ -164,9 +166,7 @@ export default function CTASection() {
                 style={{ background: '#2EE88E', boxShadow: '0 0 10px #2EE88E' }}
               />
               Join RWA.LAT
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                <path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
+              <ArrowRight size={16} strokeWidth={1.5} />
             </motion.a>
 
             {/* Social proof */}
@@ -212,7 +212,7 @@ export default function CTASection() {
             className="block h-auto"
             style={{
               width: 'clamp(12rem, 42vw, 42rem)',
-              filter: 'drop-shadow(0 0 50px rgba(47,230,191,.14))',
+              filter: 'drop-shadow(0 0 50px rgb(var(--accent-rgb)/.14))',
             }}
           />
         </motion.div>

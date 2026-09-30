@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { cn } from '@/lib/utils'
+import {AdminPasswordForm} from '@/components/admin-password-form'
 import {
   ArrowUpRight,
   BadgeCheck,
@@ -22,6 +23,8 @@ import {
 } from 'lucide-react'
 
 type Profile = { id: string; email: string; roleName: string; permissions: string[] }
+type SecurityStatus = {mfaState: 'enabled' | 'pending' | 'disabled'; mfaRequired: boolean; sessionTtlSeconds: number; loginMaxFailures: number; loginLockSeconds: number; environment: string}
+const ENVIRONMENT_LABELS: Record<string, string> = {development: '本地开发', production: '生产', test: '测试', staging: '预发布', unknown: '未提供'}
 
 const PERMISSION_LABELS: Record<string, string> = {
   'basket.operations.manage': 'Basket 组合运营',
@@ -49,18 +52,21 @@ function permissionLabel(key: string) {
 export default function SettingsPage() {
   const [profile, setProfile] = useState<Profile | null>(null)
   const [health, setHealth] = useState<{ status: string; app: string; time: string } | null>(null)
+  const [security, setSecurity] = useState<SecurityStatus | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let mounted = true
     const load = async () => {
-      const [meRes, healthRes] = await Promise.allSettled([
+      const [meRes, healthRes, securityRes] = await Promise.allSettled([
         fetch('/api/admin/auth/me', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
         fetch('/api/admin/health', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
+        fetch('/api/admin/auth/security', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
       ])
       if (!mounted) return
       if (meRes.status === 'fulfilled' && meRes.value) setProfile(meRes.value as Profile)
       if (healthRes.status === 'fulfilled' && healthRes.value) setHealth(healthRes.value as { status: string; app: string; time: string })
+      if (securityRes.status === 'fulfilled' && securityRes.value) setSecurity(securityRes.value as SecurityStatus)
       setLoading(false)
     }
     void load()
@@ -153,23 +159,23 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between rounded-xl bg-ink/[0.03] px-4 py-3">
                   <div>
                     <p className="font-medium">两步验证（MFA）</p>
-                    <p className="text-xs text-text-faint">登录时需输入动态验证码，已强制启用</p>
+                    <p className="text-xs text-text-faint">{security ? security.mfaRequired ? '系统要求管理员启用动态验证' : '按当前账号绑定状态验证' : '验证状态暂不可用'}</p>
                   </div>
-                  <span className="pill bg-emerald-500/12 text-emerald-600">已启用</span>
+                  <span className="pill bg-ink/[0.06] text-text-secondary">{security ? {enabled: '已启用', pending: '待绑定', disabled: '未启用'}[security.mfaState] : '未读取'}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-xl bg-ink/[0.03] px-4 py-3">
                   <div>
                     <p className="font-medium">会话有效期</p>
-                    <p className="text-xs text-text-faint">到期后需重新登录（默认 8 小时）</p>
+                    <p className="text-xs text-text-faint">到期后需重新登录，以后台实际策略为准</p>
                   </div>
-                  <span className="pill bg-ink/[0.06] text-text-secondary">8 小时</span>
+                  <span className="pill bg-ink/[0.06] text-text-secondary">{security ? `${security.sessionTtlSeconds / 3600} 小时` : '未读取'}</span>
                 </div>
                 <div className="flex items-center justify-between rounded-xl bg-ink/[0.03] px-4 py-3">
                   <div>
                     <p className="font-medium">登录防护</p>
-                    <p className="text-xs text-text-faint">连续失败 5 次锁定 15 分钟；高风险操作全部留审计</p>
+                    <p className="text-xs text-text-faint">{security ? `连续失败 ${security.loginMaxFailures} 次锁定 ${security.loginLockSeconds / 60} 分钟` : '登录防护策略暂不可用'}</p>
                   </div>
-                  <span className="pill bg-emerald-500/12 text-emerald-600">已开启</span>
+                  <span className="pill bg-ink/[0.06] text-text-secondary">{security ? '已读取' : '未读取'}</span>
                 </div>
               </div>
               <form action="/api/auth/logout" method="POST" className="mt-4 border-t border-ink/[0.06] pt-4">
@@ -205,12 +211,12 @@ export default function SettingsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-text-secondary">运行环境</span>
                   <span className="pill bg-mint/12 text-mint">
-                    <Globe className="h-3 w-3" /> 生产
+                    <Globe className="h-3 w-3" /> {security ? ENVIRONMENT_LABELS[security.environment] ?? '未提供' : '未读取'}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-text-secondary">资金执行</span>
-                  <span className="pill bg-ink/[0.06] text-text-secondary">默认关闭</span>
+                  <Link href="/control" className="text-xs underline underline-offset-4">查看实际控制开关</Link>
                 </div>
               </div>
             </section>
@@ -241,6 +247,7 @@ export default function SettingsPage() {
               </div>
             </section>
 
+            <AdminPasswordForm />
             {/* 关于 */}
             <section className="animate-rise rounded-card border border-mint/20 bg-gradient-to-br from-mint/10 via-white/50 to-accent-2/10 p-5" style={{ animationDelay: '210ms' }}>
               <p className="text-sm font-semibold">RWA.LAT Admin Console</p>

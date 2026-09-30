@@ -16,6 +16,27 @@ describe('IdentityDeliveryService', () => {
 
   afterAll(() => mockFetch.mockRestore())
 
+  it('sends the mobile six-digit code without an authorization link or token', async () => {
+    const delivery = new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production',
+      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@rwa.lat', SMTP_HOST: 'smtp.rwa.lat',
+      SMTP_PORT: '465', SMTP_SECURE: 'true', SMTP_AUTH_MODE: 'none' }))
+    await delivery.sendEmailCode({ email: 'user@example.com', intent: 'login', code: '012345', locale: 'zh-CN' })
+    const message = mockSendMail.mock.calls[0][0]
+    expect(message.text).toContain('012345')
+    expect(message.text).toContain('10 分钟')
+    expect(message.html).not.toMatch(/href=|token=/)
+    expect(delivery.lastDemoCode('user@example.com', 'login')).toBeUndefined()
+  })
+
+  it('keeps code delivery failures generic', async () => {
+    mockSendMail.mockRejectedValueOnce(new Error('sensitive provider failure'))
+    const delivery = new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production',
+      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@rwa.lat', SMTP_HOST: 'smtp.rwa.lat',
+      SMTP_PORT: '465', SMTP_SECURE: 'true', SMTP_AUTH_MODE: 'none' }))
+    await expect(delivery.sendEmailCode({ email: 'user@example.com', intent: 'register', code: '012345', locale: 'en' }))
+      .rejects.toMatchObject({ response: { code: 'AUTH_DELIVERY_FAILED', message: 'Account email could not be delivered. Please retry later.' } })
+  })
+
   it('keeps plaintext one-time tokens only in the explicitly enabled Demo outbox', async () => {
     const delivery = new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'demo' }))
 
@@ -49,7 +70,7 @@ describe('IdentityDeliveryService', () => {
     expect(mockSendMail).toHaveBeenCalledWith(expect.objectContaining({
       to: 'user@example.com',
       subject: expect.stringContaining('Recover'),
-      text: expect.stringContaining('https://app.rwa.lat/recover?token=one-time-token'),
+      text: expect.stringContaining('https://app.rwa.lat/recovery?token=one-time-token'),
     }))
     expect(delivery.lastDemoToken('user@example.com', 'account_recovery')).toBeUndefined()
   })

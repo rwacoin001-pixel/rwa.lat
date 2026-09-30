@@ -17,9 +17,15 @@ Database commands:
 - `npm run db:migration:revert` reverts the latest applied migration.
 - Set `NODE_ENV=test` when running migrations against `TEST_DATABASE_URL`; the configuration refuses to reuse `DATABASE_URL` for tests.
 - Deployments set `APP_ENV` to `demo`, `staging`, or `production` and provide the matching environment-specific URL. Database names must carry the matching environment suffix.
-- Passkey endpoints require exact `PASSKEY_RP_ID` and `PASSKEY_ORIGIN` values for the deployed web origin. These values must be reviewed per environment and must not be inferred from request headers.
+- Passkey endpoints use `PASSKEY_RP_ID=localhost` and `PASSKEY_ORIGIN=http://localhost:3030` by default for local development. Deployments should set and review exact values for their web origin; the API never infers them from request headers.
 
 For low-memory Windows environments, use `npm run test:unit:low-memory` to run database-free Jest suites in five isolated serial batches and `npm run build:low-memory` for a 1GB-bounded Nest build. Database-backed suites remain under `npm run test:integration` and require `TEST_DATABASE_URL`.
+
+## Registration consent
+
+`GET /v1/auth/consent-requirements` is the source of the current registration document versions. Normal email and OAuth registration must submit affirmative Terms and Privacy acceptances for those versions. OAuth sign-in starts with `intent: "login"`; an unknown provider identity returns `REGISTRATION_REQUIRED` and cannot create an account. OAuth registration must start with `intent: "register"` and valid consents. Wallet challenge responses include `registrationRequired`; when it is true, the client must collect consent before asking the wallet to sign and send the consents to wallet verify. Wallet verify checks again and atomically records both consent rows with the new user and identity. Existing email, OAuth, and wallet account sign-ins do not require new consent.
+
+The explicit `AUTH_ADAPTER=demo` routes (`/v1/auth/demo/register` and `/v1/auth/demo/login`) exist for development previews and may create demo users without `app.consents` rows. They do not represent a real user's consent and must not be used for production registration. Production startup rejects the demo adapter. The demo email outbox is likewise a local testing mechanism; it is not a real email delivery provider.
 
 Schema synchronization is permanently disabled. Every schema change must use a reviewed migration that supports both `up` and `down`.
 

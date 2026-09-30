@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { Repository } from 'typeorm'
+import { In, Repository } from 'typeorm'
 import { AssetClass } from './asset-class.entity'
 import { Product } from './product.entity'
 import { DisclosureFile } from './disclosure-file.entity'
@@ -23,11 +23,13 @@ export interface ProductView {
   minOrderAtomicAmount?: string
   maxOrderAtomicAmount?: string
   state: string
+  imageUrl: string | null
 }
 
 export interface QuoteView {
   productId: string
   unitPriceAtomicAmount: string
+  unitPriceDecimals: number
   currency: string
   source: string
   validUntil: Date
@@ -57,7 +59,7 @@ export class CatalogService {
   async listProducts(assetClass?: string, state?: 'published' | 'suspended'): Promise<ProductView[]> {
     const where: Record<string, unknown> = {}
     if (assetClass) where.asset_class_id = assetClass
-    if (state) where.state = state
+    where.state = state ?? In(['published','suspended'])
     const products = await this.productRepo.find({ where, order: { published_at: 'DESC' } })
     return products.map((p) => this.toProductView(p))
   }
@@ -68,20 +70,31 @@ export class CatalogService {
     return this.toProductView(product)
   }
 
+  async getPublicProduct(id: string): Promise<ProductView> {
+    const product = await this.productRepo.findOne({ where: { id } })
+    if (!product || !['published','suspended'].includes(product.state)) throw CatalogError.productNotFound(id)
+    return this.toProductView(product)
+  }
+
   async listDisclosures(productId: string): Promise<DisclosureFile[]> {
     const product = await this.productRepo.findOne({ where: { id: productId } })
     if (!product) throw CatalogError.productNotFound(productId)
-    return this.disclosureRepo.find({
+    const files = await this.disclosureRepo.find({
       where: { product_id: productId, state: 'active' },
       order: { published_at: 'DESC' },
     })
+    return files.map(file => Object.assign(file, {
+      publishedAt: file.published_at,
+      url: product.state === 'published' && file.storage_ref.startsWith('rwa-assets/')
+        ? `/v1/platform/products/${productId}/disclosures/${file.id}` : null,
+    }))
   }
 
   async getLatestQuote(productId: string, now: Date = new Date()): Promise<QuoteView> {
     const product = await this.productRepo.findOne({ where: { id: productId } })
     if (!product) throw CatalogError.productNotFound(productId)
     const quote = await this.quoteRepo.findOne({
-      where: { product_id: productId },
+      where: { product_id: productId, asset_code: product.asset_code },
       order: { valid_until: 'DESC' },
     })
     if (!quote) {
@@ -92,9 +105,11 @@ export class CatalogService {
       )
     }
     const stale = quote.valid_until.getTime() <= now.getTime()
+      || quote.captured_at.getTime() > now.getTime()
     return {
       productId,
       unitPriceAtomicAmount: quote.unit_price_atomic_amount,
+      unitPriceDecimals: quote.unit_price_decimals,
       currency: quote.currency,
       source: quote.source,
       validUntil: quote.valid_until,
@@ -130,6 +145,7 @@ export class CatalogService {
         product_id: quote.productId,
         quote_id: stored.id,
         unit_price_atomic_amount: quote.unitPriceAtomicAmount,
+        unit_price_decimals: quote.unitPriceDecimals,
         currency: quote.currency,
         captured_at: quote.capturedAt,
       }),
@@ -150,6 +166,7 @@ export class CatalogService {
       minOrderAtomicAmount: p.min_order_atomic_amount,
       maxOrderAtomicAmount: p.max_order_atomic_amount,
       state: p.state,
+      imageUrl: p.state === 'published' && p.cover_storage_ref ? `/v1/platform/products/${p.id}/cover` : null,
     }
   }
 }

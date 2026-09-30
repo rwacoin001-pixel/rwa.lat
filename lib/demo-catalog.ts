@@ -16,6 +16,8 @@ export interface DemoProduct {
   availability: string
   note: string
   isDemo: boolean
+  /** Real issuer/asset logo URL (RWA assets carry this from the backend). */
+  logoUrl?: string | null
 }
 
 export interface DemoProjectProfile {

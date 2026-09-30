@@ -26,6 +26,34 @@ interface CreateLedgerAdjustmentInput {
   requestId: string
 }
 
+interface LedgerTransactionCursor {
+  effectiveAt: string
+  id: string
+}
+
+const LEDGER_TRANSACTION_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+function decodeLedgerTransactionCursor(cursor: string | undefined): LedgerTransactionCursor | null {
+  if (!cursor) return null
+  try {
+    if (cursor.length > 512 || !/^[A-Za-z0-9_-]+$/.test(cursor)) throw new Error('invalid encoding')
+    const value = JSON.parse(Buffer.from(cursor, 'base64url').toString('utf8')) as Record<string, unknown>
+    if (typeof value.effectiveAt !== 'string' || !Number.isFinite(Date.parse(value.effectiveAt))) throw new Error('invalid timestamp')
+    if (typeof value.id !== 'string' || !LEDGER_TRANSACTION_ID.test(value.id)) throw new Error('invalid id')
+    return { effectiveAt: new Date(value.effectiveAt).toISOString(), id: value.id }
+  } catch {
+    throw new BadRequestException({
+      code: LEDGER_ERROR_CODES.TRANSACTION_CURSOR_INVALID,
+      message: 'The ledger page cursor is invalid.',
+    })
+  }
+}
+
+function encodeLedgerTransactionCursor(row: { effectiveAt: string | Date; id: string }): string {
+  const effectiveAt = row.effectiveAt instanceof Date ? row.effectiveAt.toISOString() : new Date(row.effectiveAt).toISOString()
+  return Buffer.from(JSON.stringify({ effectiveAt, id: row.id }), 'utf8').toString('base64url')
+}
+
 interface BasketSettlementTransferInput {
   userId: string
   portfolioId: string
@@ -66,8 +94,9 @@ export class LedgerService {
     return { accounts: rows, source: 'immutable-ledger-projection' }
   }
 
-  async listUserTransactions(userId: string, limit = 50) {
+  async listUserTransactions(userId: string, limit = 50, rawCursor?: string) {
     const safeLimit = Math.min(Math.max(limit, 1), 100)
+    const cursor = decodeLedgerTransactionCursor(rawCursor)
     const rows = await this.dataSource.query(
       `SELECT t.id, t.transaction_type AS "transactionType", t.reference_type AS "referenceType",
               t.reference_id AS "referenceId", t.effective_at AS "effectiveAt", t.created_at AS "createdAt",
@@ -75,6 +104,7 @@ export class LedgerService {
                 'entryId', e.id,
                 'accountId', a.id,
                 'purpose', a.purpose,
+                'normalSide', a.normal_side,
                 'side', e.side,
                 'atomicAmount', e.atomic_amount::text,
                 'assetCode', a.asset_code,
@@ -84,12 +114,18 @@ export class LedgerService {
        JOIN app.ledger_entries e ON e.transaction_id = t.id
        JOIN app.ledger_accounts a ON a.id = e.account_id
        WHERE a.user_id = $1
+         AND ($2::timestamptz IS NULL OR (t.effective_at, t.id) < ($2::timestamptz, $3::uuid))
        GROUP BY t.id
        ORDER BY t.effective_at DESC, t.id DESC
-       LIMIT $2`,
-      [userId, safeLimit],
+       LIMIT $4`,
+      [userId, cursor?.effectiveAt ?? null, cursor?.id ?? null, safeLimit + 1],
     )
-    return { transactions: rows, limit: safeLimit }
+    const transactions = rows.slice(0, safeLimit)
+    const last = transactions[transactions.length - 1]
+    const nextCursor = rows.length > safeLimit && last
+      ? encodeLedgerTransactionCursor({ effectiveAt: last.effectiveAt as string | Date, id: last.id as string })
+      : null
+    return { transactions, limit: safeLimit, nextCursor }
   }
 
   async settleWithdrawal(withdrawalId: string, chainTransactionId: string, requestId: string) {

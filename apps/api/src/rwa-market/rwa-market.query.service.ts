@@ -230,7 +230,8 @@ export class RwaMarketQueryService {
     const boundedDays = Math.min(Math.max(Math.trunc(days), 7), 365)
     const rows = (await this.ds.query(
       `SELECT h.date, trim_scale(h.price_usd)::text AS "priceUsd",
-              trim_scale(h.market_cap_usd)::text AS "marketCapUsd",
+              trim_scale(COALESCE(h.market_cap_usd, h.tvl_usd))::text AS "marketCapUsd",
+              trim_scale(h.tvl_usd)::text AS "tvlUsd",
               trim_scale(h.volume_24h_usd)::text AS "volumeUsd"
        FROM app.rwa_asset_metric_history h
        JOIN app.rwa_assets a ON a.id = h.asset_id

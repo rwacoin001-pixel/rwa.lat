@@ -1,4 +1,4 @@
-import { IsIn, IsOptional, IsString, IsUUID } from 'class-validator'
+import { IsIn, IsObject, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class ListNotificationsQueryDto {
@@ -29,18 +29,26 @@ export class CreateNotificationDto {
 
   @ApiProperty()
   @IsString()
+  @MinLength(1)
+  @MaxLength(100)
   kind!: string
 
   @ApiProperty()
   @IsString()
+  @MinLength(1)
+  @MaxLength(200)
   title!: string
 
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  @MaxLength(5000)
   body?: string
 
   @ApiPropertyOptional()
   @IsOptional()
+  @IsObject()
   payload?: Record<string, unknown>
+
+  @IsOptional() @IsUUID('4') idempotencyKey?: string
 }

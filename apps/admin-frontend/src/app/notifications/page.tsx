@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, PageHeader, Panel, RefreshButton, formatDateTime, shortId, useApi } from '@/components/console/framework'
 import { Send } from 'lucide-react'
@@ -14,6 +14,7 @@ type NotificationRow = {
   body?: string | null
   readAt?: string | null
   createdAt: string
+  payload?: { delivery?: { state: string } }
 }
 
 const CHANNELS = [
@@ -25,9 +26,11 @@ const CHANNELS = [
 
 export default function NotificationsPage() {
   const list = useApi<NotificationRow[]>('/api/admin/notifications?limit=100')
+  const channels = useApi<Record<string, boolean>>('/api/admin/notifications/channels')
   const [sending, setSending] = useState(false)
   const [notice, setNotice] = useState('')
   const [form, setForm] = useState({ recipientUserId: '', channel: 'in_app', kind: 'system', title: '', body: '' })
+  const intent = useRef<{ body: string; key: string } | null>(null)
 
   const showNotice = (text: string) => {
     setNotice(text)
@@ -35,27 +38,26 @@ export default function NotificationsPage() {
   }
 
   const send = async () => {
+    if (sending) return
     if (!form.recipientUserId.trim() || !form.title.trim()) {
       showNotice('请填写用户 ID 与标题')
       return
     }
     setSending(true)
     try {
+      const input = { recipient_user_id: form.recipientUserId.trim(), channel: form.channel, kind: form.kind.trim() || 'system', title: form.title.trim(), body: form.body.trim() || undefined }
+      const serialized = JSON.stringify(input)
+      if (intent.current?.body !== serialized) intent.current = { body: serialized, key: crypto.randomUUID() }
       const res = await fetch('/api/admin/notifications', {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({
-          recipient_user_id: form.recipientUserId.trim(),
-          channel: form.channel,
-          kind: form.kind.trim() || 'system',
-          title: form.title.trim(),
-          body: form.body.trim() || undefined,
-        }),
+        body: JSON.stringify({ ...input, idempotencyKey: intent.current.key }),
       })
       const data = await res.json().catch(() => null)
       if (!res.ok) throw new Error((data?.message as string) || `发送失败 (HTTP ${res.status})`)
-      showNotice('通知已创建')
+      showNotice(form.channel === 'email' ? '邮件已进入投递队列，请查看实际投递状态。' : '站内通知已送达')
+      intent.current = null
       setForm((prev) => ({ ...prev, title: '', body: '' }))
       list.reload()
     } catch (err) {
@@ -77,6 +79,7 @@ export default function NotificationsPage() {
       ),
     },
     { key: 'channel', label: '渠道', render: (row) => <span className="pill bg-ink/[0.06] text-text-secondary">{row.channel}</span> },
+    { key: 'delivery', label: '投递状态', render: row => <span>{({ queued: '排队中', retrying: '待重试', failed: '发送失败', canceled: '用户已取消授权', delivered: '站内已送达', provider_accepted: '邮件服务商已接收' } as Record<string, string>)[row.payload?.delivery?.state ?? ''] ?? (row.channel === 'in_app' ? '站内已送达' : '未核实')}</span> },
     { key: 'kind', label: '类型', render: (row) => <span className="font-mono text-xs">{row.kind}</span> },
     { key: 'recipient', label: '接收用户', render: (row) => <span className="font-mono text-xs text-text-faint">{shortId(row.recipientUserId, 12)}</span> },
     { key: 'readAt', label: '已读', render: (row) => <span className="text-xs text-text-faint">{row.readAt ? formatDateTime(row.readAt) : '未读'}</span> },
@@ -95,6 +98,7 @@ export default function NotificationsPage() {
         {notice && <div className="animate-pop rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600">{notice}</div>}
 
         <Panel title="发送通知" subtitle="接收用户 ID 可在「用户管理」中查询" delay={40}>
+          {channels.error && <p role="alert" className="mb-3 text-sm text-rose-600">{channels.error} <button type="button" onClick={channels.reload}>重试</button></p>}
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <label className="block xl:col-span-2">
               <span className="mb-1 block text-xs text-text-secondary">接收用户 ID（UUID）</span>
@@ -113,8 +117,8 @@ export default function NotificationsPage() {
                 className="w-full rounded-xl border border-ink/10 bg-white/80 px-3 py-2 text-[13px] shadow-sm"
               >
                 {CHANNELS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
+                  <option key={option.value} value={option.value} disabled={!channels.data?.[option.value]}>
+                    {option.label}{channels.data?.[option.value] ? '' : ' · 未接通'}
                   </option>
                 ))}
               </select>
@@ -147,7 +151,7 @@ export default function NotificationsPage() {
           <div className="mt-3 flex justify-end">
             <button
               type="button"
-              disabled={sending}
+              disabled={sending || !channels.data?.[form.channel]}
               onClick={() => void send()}
               className="flex items-center gap-2 rounded-xl bg-mint px-4 py-2 text-sm font-medium text-white shadow-pill transition-all hover:brightness-110 disabled:opacity-60"
             >

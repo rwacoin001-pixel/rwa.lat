@@ -7,6 +7,8 @@ import { PortfolioController } from '../src/portfolio/portfolio.controller'
 import { CORE_API_PREFIX } from '../src/route-contract'
 import { AdminFundsOperationsController, AdminWalletController, DemoWalletController, WalletCallbackController, WalletController, WalletPublicController } from '../src/wallet/wallet.controller'
 import { AdminLedgerController, LedgerCallbackController, LedgerController } from '../src/ledger/ledger.controller'
+import { AdminContentController, ContentController } from '../src/content/content.controller'
+import { LegalController } from '../src/legal/legal.controller'
 
 describe('Core API route contract', () => {
   it('owns the v1 prefix once in bootstrap and never in controller paths', () => {
@@ -26,6 +28,9 @@ describe('Core API route contract', () => {
       LedgerController,
       LedgerCallbackController,
       AdminLedgerController,
+      AdminContentController,
+      ContentController,
+      LegalController,
     ]
     for (const controller of controllers) {
       const path = Reflect.getMetadata(PATH_METADATA, controller) as string

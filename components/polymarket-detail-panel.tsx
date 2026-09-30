@@ -24,6 +24,9 @@ import {
   useState,
 } from 'react'
 import styles from './polymarket-detail-panel.module.css'
+import { RwaApiError, hasSession, newIdempotencyKey, predictionApi, toAtomic } from '@/lib/rwa-api'
+import { fmtUsdCompact } from '@/lib/money'
+import { EmptyState } from './ui/Empty'
 
 type PricePoint = { time: number; price: number }
 type BookLevel = { price: number; size: number }
@@ -135,45 +138,6 @@ function formatFreshness(value: string | undefined) {
   return `Updated ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
 }
 
-function makeIllustrativePayload(marketId: string, hint?: PolymarketDetailPanelProps['marketHint']): MarketPayload {
-  const yes = clampProbability(hint?.yesProbability, 0.63)
-  const now = Math.floor(Date.now() / 1000)
-  const history = Array.from({ length: 32 }, (_, index) => {
-    const drift = Math.sin(index * 0.58) * 0.018 + (index - 16) * 0.0022
-    return { time: now - (31 - index) * 3600, price: clampProbability(yes + drift) }
-  })
-  const bids = Array.from({ length: 6 }, (_, index) => ({
-    price: clampProbability(yes - 0.01 - index * 0.01),
-    size: 840 - index * 88,
-  }))
-  const asks = Array.from({ length: 6 }, (_, index) => ({
-    price: clampProbability(yes + 0.01 + index * 0.01),
-    size: 710 - index * 61,
-  }))
-
-  return {
-    source: 'unavailable',
-    fetchedAt: new Date().toISOString(),
-    integration: { marketDataReady: false, relayerConfigured: false, tradingEnabled: false },
-    market: {
-      id: marketId,
-      question: hint?.question ?? 'Will the selected event resolve YES?',
-      description: 'Illustrative fallback view. Live Polymarket metadata is currently unavailable and no order can be sent from this state.',
-      category: 'Prediction market',
-      outcomes: ['Yes', 'No'],
-      prices: [yes, 1 - yes],
-      tokenIds: [],
-      volume: 3_820_400,
-      volume24h: 412_700,
-      liquidity: 684_200,
-      endDate: null,
-      acceptingOrders: false,
-    },
-    orderbook: { bids, asks, tickSize: 0.01, minimumOrderSize: 5 },
-    pricing: { midpoint: yes, spread: 0.02, history },
-  }
-}
-
 function chartSample(points: PricePoint[], range: ChartRange) {
   const desired = range === '1H' ? 8 : range === '1D' ? 24 : range === '1W' ? 64 : points.length
   return points.slice(-Math.min(desired, points.length))
@@ -212,21 +176,20 @@ function LoadingState() {
         <span className={styles.skeletonMetric} />
       </div>
       <div className={styles.skeletonChart} />
-      <p><LoaderCircle className={styles.spinner} aria-hidden="true" /> Loading Gamma metadata and the public CLOB order book…</p>
+      <p><LoaderCircle className={styles.spinner} aria-hidden="true" /> Loading market details…</p>
     </section>
   )
 }
 
-function ErrorState({ message, onRetry, onUseIllustrative }: { message: string; onRetry: () => void; onUseIllustrative: () => void }) {
+function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <section className={styles.errorState} role="alert">
       <span className={styles.errorIcon}><XCircle aria-hidden="true" /></span>
       <p>Live market data is temporarily unavailable</p>
       <h2>The market could not be verified.</h2>
-      <small>{message} No live price or availability claim is being shown.</small>
+      <small>{message} Pricing and availability will appear when market details are available.</small>
       <div className={styles.errorActions}>
         <button type="button" onClick={onRetry}><RefreshCw aria-hidden="true" /> Retry live data</button>
-        <button type="button" onClick={onUseIllustrative}>Open illustrative preview <ArrowRight aria-hidden="true" /></button>
       </div>
     </section>
   )
@@ -309,7 +272,7 @@ function OrderBook({ bids, asks }: { bids: BookLevel[]; asks: BookLevel[] }) {
             </div>
           })}
         </div>
-      </> : <div className={styles.bookEmpty}><Info aria-hidden="true" /> No resting orders were returned for this token.</div>}
+      </> : <div className={styles.bookEmpty}><EmptyState variant="inline" icon={Info} title="No open orders" body="Open market depth will appear when orders are available." /></div>}
     </section>
   )
 }
@@ -323,11 +286,13 @@ function RegionNotice({ status }: { status: NonNullable<PolymarketDetailPanelPro
 export default function PolymarketDetailPanel({ marketId, marketHint, regionStatus = 'unknown', className = '', onReviewOrder }: PolymarketDetailPanelProps) {
   const [payload, setPayload] = useState<MarketPayload | null>(null)
   const [state, setState] = useState<LoadState>('loading')
-  const [error, setError] = useState('The public market endpoint did not return a usable response.')
+  const [error, setError] = useState('Market details are unavailable right now.')
   const [selectedOutcome, setSelectedOutcome] = useState<Outcome>('YES')
   const [amount, setAmount] = useState(100)
   const [range, setRange] = useState<ChartRange>('1D')
   const [preview, setPreview] = useState<PredictionOrderPreview | null>(null)
+  const [betState, setBetState] = useState<'idle' | 'submitting' | 'done' | 'error'>('idle')
+  const [betMessage, setBetMessage] = useState('')
 
   const loadMarket = useCallback(async (signal?: AbortSignal) => {
     setState('loading')
@@ -335,7 +300,7 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
     try {
       const response = await fetch(`/api/polymarket/market/${encodeURIComponent(marketId)}`, { cache: 'no-store', signal })
       const data = await response.json() as MarketPayload
-      if (!response.ok || !data.market) throw new Error(data.error ?? `Market endpoint returned ${response.status}`)
+      if (!response.ok || !data.market) throw new Error('Market details are unavailable right now.')
       const isPartial = !data.orderbook || !data.pricing?.history?.length
       setPayload(data)
       setState(isPartial ? 'degraded' : 'live')
@@ -353,17 +318,39 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
     return () => controller.abort()
   }, [loadMarket])
 
+  // 内部盘费率（A+C 混合）：下注先抽「下注费」，赢家派彩再抽「派彩费」。
+  // 必须在投注前披露，否则等于收未披露的钱。费率以服务端为权威，前端不硬编码。
+  const [fees, setFees] = useState<{ place: number; payout: number }>({ place: 0, payout: 0 })
+  useEffect(() => {
+    let active = true
+    predictionApi.status()
+      .then((status) => {
+        if (!active) return
+        setFees({ place: status.fees?.placeFeeRate ?? 0, payout: status.fees?.payoutFeeRate ?? 0 })
+      })
+      .catch(() => { /* 取不到费率时退化为 0，不阻塞页面 */ })
+    return () => { active = false }
+  }, [])
+
   const market = payload?.market
   const yesProbability = clampProbability(market?.prices?.[0] || payload?.pricing?.midpoint, clampProbability(marketHint?.yesProbability, 0.5))
   const noProbability = clampProbability(market?.prices?.[1], 1 - yesProbability)
   const selectedProbability = selectedOutcome === 'YES' ? yesProbability : noProbability
   const safeAmount = Math.max(0, Number.isFinite(amount) ? amount : 0)
-  const estimatedShares = selectedProbability > 0 ? safeAmount / selectedProbability : 0
+  // 只有净本金进池并折算份额；毛派彩再抽派彩费，中奖净到账才是用户实际到手。
+  const placeFeeRate = fees.place
+  const payoutFeeRate = fees.payout
+  const pctRate = (rate: number) => `${(rate * 100).toFixed(1)}%`
+  const placeFee = safeAmount * placeFeeRate
+  const netAmount = safeAmount - placeFee
+  const estimatedShares = selectedProbability > 0 ? netAmount / selectedProbability : 0
+  const payoutFee = estimatedShares * payoutFeeRate
+  const netPayout = estimatedShares - payoutFee
   const history = payload?.pricing?.history ?? []
   const isIllustrative = state === 'degraded' && payload?.source === 'unavailable'
   const hasTradingSource = Boolean(market?.acceptingOrders && payload?.orderbook && !isIllustrative)
   const reviewDisabled = regionStatus === 'restricted' || !safeAmount || safeAmount < (payload?.orderbook?.minimumOrderSize ?? 1)
-  const sourceLabel = state === 'live' ? 'Live via Polymarket' : isIllustrative ? 'Illustrative fallback' : 'Live metadata · partial CLOB'
+  const sourceLabel = state === 'live' ? 'Live via Polymarket' : isIllustrative ? 'Market view limited' : 'Live market data · partial'
 
   const openReview = () => {
     if (!market || reviewDisabled) return
@@ -374,15 +361,51 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
       amount: safeAmount,
       probability: selectedProbability,
       estimatedShares,
-      maximumPayout: estimatedShares,
+      maximumPayout: netPayout,
       mode: 'read-only-preview',
     }
     setPreview(nextPreview)
+    setBetState('idle')
+    setBetMessage('')
     onReviewOrder?.(nextPreview)
   }
 
+  // —— 真投注（内部盘 A）：用账户余额下注，官方开奖自动结算 ——
+  const placeRealBet = async () => {
+    if (!market || !preview || betState === 'submitting') return
+    if (!hasSession()) {
+      setBetState('error')
+      setBetMessage('请先登录后再投注（登录后回到本页即可）')
+      return
+    }
+    const tokenId = market.tokenIds[preview.outcome === 'YES' ? 0 : 1]
+    if (!tokenId) {
+      setBetState('error')
+      setBetMessage('该市场暂不支持余额投注')
+      return
+    }
+    setBetState('submitting')
+    setBetMessage('')
+    try {
+      const bet = await predictionApi.placeBet({
+        tokenId,
+        stakeAtomic: toAtomic(String(preview.amount)),
+        idempotencyKey: newIdempotencyKey('h5-bet'),
+      })
+      setBetState('done')
+      setBetMessage(`投注成功：${preview.amount} USDT · 获得 ${Number(bet.shares).toFixed(2)} 份 · 中奖净到账约 ${formatAmount(Number(bet.shares) * (1 - payoutFeeRate))} USDT · 开奖后自动结算`)
+    } catch (err) {
+      setBetState('error')
+      if (err instanceof RwaApiError && err.status === 401) {
+        setBetMessage('登录状态已失效，请重新登录')
+      } else {
+        setBetMessage(err instanceof RwaApiError ? `投注失败：${err.message}` : '投注失败，请稍后重试')
+      }
+    }
+  }
+
   if (state === 'loading') return <div className={`${styles.panel} ${className}`}><LoadingState /></div>
-  if (state === 'error') return <div className={`${styles.panel} ${className}`}><ErrorState message={error} onRetry={() => void loadMarket()} onUseIllustrative={() => { setPayload(makeIllustrativePayload(marketId, marketHint)); setState('degraded') }} /></div>
+  if (state === 'error') return <div className={`${styles.panel} ${className}`}><ErrorState message={error} onRetry={() => void loadMarket()} /></div>
   if (!market) return null
 
   return (
@@ -393,7 +416,7 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
         <button type="button" aria-label="Refresh market data" onClick={() => void loadMarket()}><RefreshCw aria-hidden="true" /></button>
       </div>
 
-      {state === 'degraded' && <div className={styles.degradedBanner} role="status"><AlertTriangle aria-hidden="true" /><span><strong>{isIllustrative ? 'Illustrative data only' : 'Partial market data'}</strong><small>{isIllustrative ? 'Live APIs are unavailable. Values below demonstrate layout and cannot be used for a decision.' : 'Some CLOB history or order-book fields were not returned. Current metadata remains visible.'}</small></span></div>}
+      {state === 'degraded' && <div className={styles.degradedBanner} role="status"><AlertTriangle aria-hidden="true" /><span><strong>{isIllustrative ? 'Market view limited' : 'Partial market data'}</strong><small>{isIllustrative ? 'Some market details are unavailable. Current reference values are for review only.' : 'Some market history or order-book fields are unavailable. Current metadata remains visible.'}</small></span></div>}
 
       <article className={styles.marketHero}>
         <div className={styles.marketLabel}><span>{market.category || 'Prediction market'}</span><i>Market #{market.id}</i></div>
@@ -442,7 +465,7 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
       <section className={styles.ticket} aria-labelledby="preview-ticket-title">
         <div className={styles.ticketHeading}>
           <span><WalletCards aria-hidden="true" /></span>
-          <div><small>Order simulator</small><h2 id="preview-ticket-title">Prepare a read-only preview</h2></div>
+          <div><small>余额投注 · 内部盘</small><h2 id="preview-ticket-title">用账户余额下注</h2></div>
           <i>{selectedOutcome}</i>
         </div>
         <div className={styles.outcomeTabs}>
@@ -454,26 +477,56 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
           <div><b>₮</b><input type="number" min={payload?.orderbook?.minimumOrderSize || 1} max="100000" step="1" value={amount} onChange={(event) => { setAmount(Number(event.target.value)); setPreview(null) }} aria-describedby="order-estimate" /><button type="button" onClick={() => { setAmount(1000); setPreview(null) }}>1,000</button></div>
         </label>
         <dl className={styles.orderEstimate} id="order-estimate">
-          <div><dt>Estimated shares</dt><dd>{formatAmount(estimatedShares)} {selectedOutcome}</dd></div>
-          <div><dt>Maximum payout if correct</dt><dd>{formatAmount(estimatedShares)} USDT</dd></div>
-          <div><dt>Indicative price</dt><dd>{Math.round(selectedProbability * 100)}¢</dd></div>
-          <div><dt>Minimum order</dt><dd>{formatAmount(payload?.orderbook?.minimumOrderSize || 1, 0)} USDT</dd></div>
+          <div><dt>预计份数</dt><dd>{formatAmount(estimatedShares)} {selectedOutcome}</dd></div>
+          <div><dt>下注费（{pctRate(placeFeeRate)}）</dt><dd>{formatAmount(placeFee)} USDT</dd></div>
+          <div><dt>派彩费（{pctRate(payoutFeeRate)}）</dt><dd>{formatAmount(payoutFee)} USDT</dd></div>
+          <div><dt>中奖净到账</dt><dd>{formatAmount(netPayout)} USDT</dd></div>
+          <div><dt>参考价格</dt><dd>{Math.round(selectedProbability * 100)}¢</dd></div>
+          <div><dt>最小下单</dt><dd>{formatAmount(payload?.orderbook?.minimumOrderSize || 1, 0)} USDT</dd></div>
         </dl>
-        <div className={styles.executionDisclosure}><Info aria-hidden="true" /><span><strong>{hasTradingSource ? 'Source market is accepting orders' : 'Execution is not enabled here'}</strong><small>RWA.LAT currently reads public market data. This control creates a preview only and never submits, signs or settles an order.</small></span></div>
+        <div className={styles.executionDisclosure}><Info aria-hidden="true" /><span><strong>余额投注已开放（内部盘 · 路线 A）</strong><small>用账户余额下注，按 Polymarket 官方开奖自动结算——无需钱包、无需签名。外部交易通道保持关闭。</small></span></div>
         <button type="button" className={styles.reviewButton} disabled={reviewDisabled} onClick={openReview}>
           <span><small>{regionStatus === 'restricted' ? 'Unavailable in your region' : 'No wallet signature requested'}</small>{regionStatus === 'restricted' ? 'Preview disabled' : `Review ${selectedOutcome} preview`}</span>
           <i><ArrowRight aria-hidden="true" /></i>
         </button>
         {preview && <div className={styles.previewReceipt} role="status">
           <CheckCircle2 aria-hidden="true" />
-          <span><strong>Preview prepared — no order sent</strong><small>{formatAmount(preview.amount)} USDT at {Math.round(preview.probability * 100)}¢ estimates {formatAmount(preview.estimatedShares)} {preview.outcome} shares.</small></span>
+          <span><strong>预览已生成</strong><small>{formatAmount(preview.amount)} USDT at {Math.round(preview.probability * 100)}¢ estimates {formatAmount(preview.estimatedShares)} {preview.outcome} shares.</small></span>
         </div>}
+        {preview && (
+          <button
+            type="button"
+            className={styles.reviewButton}
+            disabled={betState === 'submitting' || betState === 'done'}
+            onClick={() => void placeRealBet()}
+            style={{ marginTop: 10 }}
+          >
+            <span>
+              <small>{hasSession() ? `余额支付 · 约 ${formatAmount(preview.estimatedShares)} 份` : '需要登录'}</small>
+              {betState === 'submitting' ? '投注提交中…' : betState === 'done' ? '已投注 ✓' : `确认投注 ${formatAmount(preview.amount)} USDT（真）`}
+            </span>
+            <i><ArrowRight aria-hidden="true" /></i>
+          </button>
+        )}
+        {betMessage && (
+          <p
+            role="status"
+            style={{
+              marginTop: 8,
+              fontSize: 13,
+              lineHeight: 1.5,
+              color: betState === 'error' ? '#f87171' : betState === 'done' ? '#2FE6BF' : 'inherit',
+            }}
+          >
+            {betMessage}
+          </p>
+        )}
       </section>
 
       <RegionNotice status={regionStatus} />
       <footer className={styles.dataFootnote}>
         <LockKeyhole aria-hidden="true" />
-        <span><strong>Public market-data connection</strong><small>Metadata: Gamma API · pricing and depth: CLOB API · transactions: disabled</small></span>
+        <span><strong>Public market-data connection</strong><small>Prices and depth appear when available · transactions disabled</small></span>
       </footer>
     </div>
   )

@@ -24,6 +24,7 @@ import { PasskeyCredential } from './passkey-credential.entity'
 import { SecurityChallenge, type SecurityChallengeKind } from './security-challenge.entity'
 import { SECURITY_ERROR_CODES } from './security.errors'
 import { TotpFactor } from './totp-factor.entity'
+import type { SecurityEventViewDto } from './dto/security.dto'
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000
 const STEP_UP_TTL_MS = 5 * 60 * 1000
@@ -51,7 +52,7 @@ export class SecurityService {
     config: ConfigService,
   ) {
     this.rpId = config.get<string>('PASSKEY_RP_ID') ?? 'localhost'
-    this.origin = config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3001'
+    this.origin = config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3030'
     this.rpName = config.get<string>('PASSKEY_RP_NAME') ?? 'RWA.LAT'
   }
 
@@ -272,14 +273,19 @@ export class SecurityService {
 
   async beginPasskeyRegistration(actor: SecurityActor, requestId: string) {
     const passkeys = await this.passkeys.find({ where: { userId: actor.userId, state: 'active' } })
+    // The passkey picker shows userName: the sign-in email reads far better there than an account id.
+    const [identity] = await this.passkeys.manager.query(`SELECT identifier_ciphertext, encryption_key_version FROM app.login_identities
+      WHERE user_id = $1 AND kind = 'email' AND state = 'verified' ORDER BY verified_at DESC NULLS LAST LIMIT 1`, [actor.userId]) as
+      Array<{ identifier_ciphertext: Buffer; encryption_key_version: number }>
+    const email = identity ? this.crypto.decrypt(identity.identifier_ciphertext, identity.encryption_key_version) : null
     const options = await generateRegistrationOptions({
       rpName: this.rpName,
       rpID: this.rpId,
-      userName: actor.userId,
+      userName: email ?? actor.userId,
       userID: new TextEncoder().encode(actor.userId),
-      userDisplayName: 'RWA.LAT account',
+      userDisplayName: email ?? 'RWA.LAT account',
       attestationType: 'none',
-      authenticatorSelection: { residentKey: 'preferred', userVerification: 'required' },
+      authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
       excludeCredentials: passkeys.map((passkey) => ({ id: passkey.credentialId, transports: passkey.transports as never })),
     })
     const challengeId = await this.storeChallenge(actor, 'passkey_registration', options.challenge)
@@ -397,12 +403,13 @@ export class SecurityService {
     this.assertStepUp(actor, reauthentication)
   }
 
-  async listEvents(actor: SecurityActor) {
-    return this.auditLogs.find({
+  async listEvents(actor: SecurityActor): Promise<SecurityEventViewDto[]> {
+    const events = await this.auditLogs.find({
       where: { userId: actor.userId, action: Like('security.%') },
       order: { occurredAt: 'DESC' },
       take: 50,
     })
+    return events.map(({ id, action, occurredAt }) => ({ id, action, occurredAt }))
   }
 
   private async storeChallenge(actor: SecurityActor, kind: SecurityChallengeKind, value: string) {

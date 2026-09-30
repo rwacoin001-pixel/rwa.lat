@@ -1,5 +1,7 @@
 'use client'
 
+import { DUR, EASE, STAGGER, seconds, reduced } from '@/lib/motion'
+
 import {
   motion,
   useInView,
@@ -34,7 +36,7 @@ export function WordReveal({
   className,
   style,
   delay = 0,
-  stagger = 0.08,
+  stagger = STAGGER.step,
   as = 'span',
   once = true,
 }: WordRevealProps) {
@@ -85,9 +87,9 @@ export function WordReveal({
                 : { y: '110%', opacity: 0, filter: 'blur(14px)' }
             }
             transition={{
-              duration: 1,
-              delay: delay + i * stagger,
-              ease: [0.16, 1, 0.3, 1],
+              duration: seconds(DUR.reveal),
+              delay: reduced() ? 0 : delay + Math.min(i, STAGGER.max - 1) * stagger,
+              ease: EASE.std,
             }}
           >
             {word}
@@ -129,7 +131,7 @@ export function MagneticButton({
 
   const handleMove = (e: React.MouseEvent) => {
     const rect = ref.current?.getBoundingClientRect()
-    if (!rect) return
+    if (!rect || reduced()) return
     const relX = e.clientX - (rect.left + rect.width / 2)
     const relY = e.clientY - (rect.top + rect.height / 2)
     x.set(relX * strength)
@@ -165,7 +167,7 @@ export function MagneticButton({
           : hovered
           ? '0 0 24px rgba(255,255,255,0.06)'
           : 'none',
-        transition: 'box-shadow 0.4s ease, background 0.4s ease, color 0.4s ease',
+        transition: 'box-shadow var(--dur-long) var(--ease-std), background var(--dur-long) var(--ease-std), color var(--dur-long) var(--ease-std)',
       }}
       className={`relative inline-flex items-center justify-center gap-2 px-7 py-3.5 text-sm font-semibold rounded-full cursor-pointer overflow-hidden ${className}`}
     >
@@ -179,7 +181,7 @@ export function MagneticButton({
         }}
         initial={{ x: '-120%' }}
         animate={hovered ? { x: '120%' } : { x: '-120%' }}
-        transition={{ duration: 0.8, ease: 'easeInOut' }}
+        transition={{ duration: seconds(DUR.long), ease: EASE.std }}
       />
       <span className="relative z-10 inline-flex items-center gap-2">{children}</span>
     </motion.a>
@@ -205,7 +207,7 @@ interface CountUpProps {
 export function CountUp({
   to,
   from = 0,
-  duration = 2,
+  duration = DUR.reveal / 1000,
   decimals = 0,
   prefix = '',
   suffix = '',
@@ -220,6 +222,7 @@ export function CountUp({
   const doneRef = useRef(false)
 
   useAnimationFrame((t) => {
+    if (reduced()) { if (!doneRef.current) { setValue(to); doneRef.current = true }; return }
     if (!inView || doneRef.current) return
     if (startRef.current === null) startRef.current = t
     const elapsed = (t - startRef.current) / 1000
@@ -259,79 +262,8 @@ interface TiltCardProps {
   glow?: boolean
 }
 
-export function TiltCard({
-  children,
-  className = '',
-  style,
-  maxTilt = 6,
-  glow = true,
-}: TiltCardProps) {
-  const ref = useRef<HTMLDivElement>(null)
-  const rx = useMotionValue(0)
-  const ry = useMotionValue(0)
-  const srx = useSpring(rx, { stiffness: 150, damping: 18 })
-  const sry = useSpring(ry, { stiffness: 150, damping: 18 })
-  const glowX = useMotionValue(50)
-  const glowY = useMotionValue(50)
-  const sglowX = useSpring(glowX, { stiffness: 120, damping: 20 })
-  const sglowY = useSpring(glowY, { stiffness: 120, damping: 20 })
-  const [hovered, setHovered] = useState(false)
-
-  const handleMove = (e: React.MouseEvent) => {
-    const rect = ref.current?.getBoundingClientRect()
-    if (!rect) return
-    const px = (e.clientX - rect.left) / rect.width
-    const py = (e.clientY - rect.top) / rect.height
-    ry.set((px - 0.5) * maxTilt * 2)
-    rx.set(-(py - 0.5) * maxTilt * 2)
-    glowX.set(px * 100)
-    glowY.set(py * 100)
-  }
-
-  const handleLeave = () => {
-    rx.set(0)
-    ry.set(0)
-    glowX.set(50)
-    glowY.set(50)
-    setHovered(false)
-  }
-
-  const spotlight = useTransform(
-    [sglowX, sglowY],
-    ([gx, gy]) =>
-      `radial-gradient(circle at ${gx}% ${gy}%, rgba(46, 232, 142,0.18), transparent 55%)`
-  )
-
-  return (
-    <motion.div
-      ref={ref}
-      onMouseMove={handleMove}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={handleLeave}
-      style={{
-        rotateX: srx,
-        rotateY: sry,
-        transformStyle: 'preserve-3d',
-        transformPerspective: 1000,
-        ...style,
-      }}
-      className={`relative ${className}`}
-    >
-      {glow && (
-        <motion.div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[inherit] opacity-0 transition-opacity duration-500"
-          style={{
-            background: spotlight,
-            opacity: hovered ? 1 : 0,
-          }}
-        />
-      )}
-      <div style={{ transform: 'translateZ(30px)' }} className="relative h-full">
-        {children}
-      </div>
-    </motion.div>
-  )
+export function TiltCard({ children, className = '', style }: TiltCardProps) {
+  return <div className={`rwa-card card-media ${className}`} style={style}>{children}</div>
 }
 
 /* ------------------------------------------------------------------ */
@@ -368,7 +300,7 @@ export function Reveal({
           ? { opacity: 1, y: 0, filter: 'blur(0px)' }
           : { opacity: 0, y, filter: 'blur(8px)' }
       }
-      transition={{ duration: 0.9, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: seconds(DUR.base), delay: reduced() ? 0 : delay, ease: EASE.std }}
     >
       {children}
     </motion.div>

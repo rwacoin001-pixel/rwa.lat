@@ -46,10 +46,30 @@ export interface PolymarketMarketView {
   tradingEnabled: false
 }
 
+export interface PolymarketPublicPreview {
+  source: 'polymarket-gamma'
+  fetchedAt: Date
+  tradingEnabled: false
+  items: Array<{
+    id: string
+    eventKey: string
+    eventSlug: string | null
+    slug: string
+    question: string
+    category: 'macro' | 'crypto' | 'commodities' | 'other'
+    outcomes: Array<{ label: string; impliedProbability: number }>
+    volume24hUsd: number | null
+    providerUpdatedAt: Date | null
+    endAt: Date | null
+  }>
+}
+
 @Injectable()
 export class PolymarketService {
   private readonly staleAfterMs: number
   private readonly leaseMs: number
+  private previewCache: { until: number; value: PolymarketPublicPreview } | null = null
+  private previewRequest: Promise<PolymarketPublicPreview> | null = null
 
   constructor(
     @InjectRepository(PolymarketMarketMapping)
@@ -119,6 +139,60 @@ export class PolymarketService {
       tokenRows.filter((token) => token.marketMappingId === mapping.id),
       now,
     ))
+  }
+
+  async publicPreview(scope: 'finance' | 'all' = 'finance', now: Date = new Date()): Promise<PolymarketPublicPreview> {
+    if (!this.previewCache || this.previewCache.until <= now.getTime()) {
+      if (!this.previewRequest) this.previewRequest = this.loadPublicPreview(now)
+      try {
+        const value = await this.previewRequest
+        this.previewCache = { until: now.getTime() + 60_000, value }
+      } finally {
+        this.previewRequest = null
+      }
+    }
+    const value = this.previewCache.value
+    const eligible = scope === 'all' ? value.items : value.items.filter(item => item.category !== 'other')
+    const picked: typeof eligible = []
+    for (const category of ['macro', 'crypto', 'commodities', 'other'] as const) {
+      const next = eligible.find(item => item.category === category && !picked.some(chosen => chosen.eventKey === item.eventKey))
+      if (next && picked.length < 4) picked.push(next)
+    }
+    for (const item of eligible) {
+      if (picked.length === 4) break
+      if (!picked.some(chosen => chosen.eventKey === item.eventKey)) picked.push(item)
+    }
+    return { ...value, items: picked }
+  }
+
+  private async loadPublicPreview(now: Date): Promise<PolymarketPublicPreview> {
+    const page = await this.adapter.listTrendingMarkets(100)
+    const items = page.markets.flatMap((market) => {
+      if (!market.active || market.closed || market.archived || (market.endAt && market.endAt <= now)) return []
+      const outcomes = market.outcomes.flatMap((label, index) => {
+        const price = Number(market.outcomePrices[index])
+        return Number.isFinite(price) && price >= 0 && price <= 1 ? [{ label, impliedProbability: price }] : []
+      })
+      if (outcomes.length < 2 || outcomes.length !== market.outcomes.length) return []
+      const rawVolume = market.rawPayload.volume24hr
+      const volume = typeof rawVolume === 'number' ? rawVolume : typeof rawVolume === 'string' ? Number(rawVolume) : NaN
+      const event = Array.isArray(market.rawPayload.events) ? market.rawPayload.events[0] : null
+      const eventId = event && typeof event === 'object' && ('id' in event) ? event.id : null
+      const eventSlug = event && typeof event === 'object' && ('slug' in event) && typeof event.slug === 'string' ? event.slug : null
+      return [{
+        id: market.gammaMarketId,
+        eventKey: typeof eventId === 'string' || typeof eventId === 'number' ? String(eventId) : market.gammaMarketId,
+        eventSlug,
+        slug: market.slug,
+        question: market.question,
+        category: previewCategory(`${market.question} ${market.slug}`),
+        outcomes,
+        volume24hUsd: Number.isFinite(volume) && volume >= 0 ? volume : null,
+        providerUpdatedAt: market.providerUpdatedAt,
+        endAt: market.endAt,
+      }]
+    })
+    return { source: 'polymarket-gamma', fetchedAt: page.fetchedAt, tradingEnabled: false, items }
   }
 
   async getMarket(id: string, now: Date = new Date()): Promise<PolymarketMarketView> {
@@ -351,6 +425,13 @@ function resolveMarketState(record: PolymarketMarketRecord, tokensComplete: bool
   if (record.closed) return 'closed'
   if (record.active && record.conditionId && record.enableOrderBook && tokensComplete) return 'active'
   return 'discovered'
+}
+
+function previewCategory(value: string): 'macro' | 'crypto' | 'commodities' | 'other' {
+  if (/\b(bitcoin|btc|ethereum|eth|solana|sol|xrp|crypto|stablecoin|usdc)\b/i.test(value)) return 'crypto'
+  if (/\b(gold|silver|crude|brent|wti|copper)\b|\b(oil price|price of oil)\b/i.test(value)) return 'commodities'
+  if (/\b(fed|federal reserve|interest rates?|inflation|cpi|recession|treasur(?:y|ies)|s&p|nasdaq|dow jones|gdp|unemployment|stock market)\b/i.test(value)) return 'macro'
+  return 'other'
 }
 
 function boundedSeconds(value: string | undefined, fallback: number): number {

@@ -19,6 +19,52 @@ interface BatchRow {
   executed_at: Date | null
 }
 
+type PayoutFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'at_maturity'
+type ScheduleMode = 'product_calendar' | 'position_anniversary'
+type ScheduleTerms = {
+  rateType?: string
+  annualRateBps?: number
+  termDays?: number
+  payoutFrequency?: PayoutFrequency
+  scheduleMode?: ScheduleMode
+  firstExpectedPaymentDate?: string
+  recordDateOffsetDays?: number
+  scheduleTimezone?: string
+}
+
+const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/
+const isoDate = (date: Date) => date.toISOString().slice(0, 10)
+const parseDate = (value: string) => {
+  if (!ISO_DATE.test(value)) return new Date(Number.NaN)
+  const parsed = new Date(`${value}T00:00:00.000Z`)
+  return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value ? new Date(Number.NaN) : parsed
+}
+const addDays = (date: Date, days: number) => new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate() + days))
+const addMonthsClamped = (date: Date, months: number, preferredDay = date.getUTCDate()) => {
+  const targetMonth = date.getUTCMonth() + months
+  const last = new Date(Date.UTC(date.getUTCFullYear(), targetMonth + 1, 0)).getUTCDate()
+  return new Date(Date.UTC(date.getUTCFullYear(), targetMonth, Math.min(preferredDay, last)))
+}
+const advance = (date: Date, frequency: PayoutFrequency, preferredDay = date.getUTCDate()) => {
+  if (frequency === 'daily') return addDays(date, 1)
+  if (frequency === 'weekly') return addDays(date, 7)
+  if (frequency === 'monthly') return addMonthsClamped(date, 1, preferredDay)
+  if (frequency === 'quarterly') return addMonthsClamped(date, 3, preferredDay)
+  if (frequency === 'semiannual') return addMonthsClamped(date, 6, preferredDay)
+  if (frequency === 'annual') return addMonthsClamped(date, 12, preferredDay)
+  return date
+}
+const retreat = (date: Date, frequency: PayoutFrequency, preferredDay = date.getUTCDate()) => {
+  if (frequency === 'daily') return addDays(date, -1)
+  if (frequency === 'weekly') return addDays(date, -7)
+  if (frequency === 'monthly') return addMonthsClamped(date, -1, preferredDay)
+  if (frequency === 'quarterly') return addMonthsClamped(date, -3, preferredDay)
+  if (frequency === 'semiannual') return addMonthsClamped(date, -6, preferredDay)
+  if (frequency === 'annual') return addMonthsClamped(date, -12, preferredDay)
+  return date
+}
+const periodsPerYear = (frequency: PayoutFrequency) => ({ daily: 365n, weekly: 52n, monthly: 12n, quarterly: 4n, semiannual: 2n, annual: 1n, at_maturity: 1n })[frequency]
+
 @Injectable()
 export class YieldService {
   private readonly demoOperationsEnabled: boolean
@@ -43,6 +89,81 @@ export class YieldService {
       [userId],
     )
     return rows
+  }
+
+  async listExpectedSchedule(userId: string, months = 18, now = new Date()) {
+    const positions = await this.dataSource.query(
+      `SELECT pos.id AS "positionId", pos.product_id AS "productId", pos.opened_at AS "openedAt",
+              pos.cost_atomic_amount::text AS "costAtomicAmount", product.display_name AS "productName",
+              product.yield_terms_json AS "yieldTerms"
+         FROM app.positions pos
+         JOIN app.products product ON product.id = pos.product_id
+        WHERE pos.user_id = $1 AND pos.state = 'active' AND pos.quantity_atomic_amount > 0
+          AND product.state = 'published' AND product.asset_class_id <> 'prediction'
+        ORDER BY product.display_name, pos.opened_at`,
+      [userId],
+    ) as Array<{ positionId: string; productId: string; openedAt: Date; costAtomicAmount: string; productName: string; yieldTerms: ScheduleTerms }>
+    const today = parseDate(isoDate(now))
+    const horizon = addMonthsClamped(today, Math.min(Math.max(months, 1), 36))
+    const events: Array<Record<string, unknown>> = []
+    for (const position of positions) {
+      const terms = position.yieldTerms ?? {}
+      const frequency = terms.payoutFrequency
+      const mode = terms.scheduleMode ?? 'product_calendar'
+      if (!frequency) continue
+      const opened = parseDate(isoDate(new Date(position.openedAt)))
+      let payment: Date
+      if (mode === 'position_anniversary') {
+        payment = frequency === 'at_maturity' && Number.isInteger(terms.termDays) && Number(terms.termDays) > 0
+          ? addDays(opened, Number(terms.termDays))
+          : advance(opened, frequency)
+      } else {
+        if (!terms.firstExpectedPaymentDate) continue
+        payment = parseDate(terms.firstExpectedPaymentDate)
+      }
+      if (Number.isNaN(payment.getTime())) continue
+      const recurrenceDay = mode === 'position_anniversary' ? opened.getUTCDate() : payment.getUTCDate()
+      let previous = frequency === 'at_maturity' ? opened : mode === 'position_anniversary' ? opened : retreat(payment, frequency, recurrenceDay)
+      let guard = 0
+      while (payment < today && frequency !== 'at_maturity' && guard++ < 500) {
+        previous = payment
+        payment = advance(payment, frequency, recurrenceDay)
+      }
+      while (payment <= horizon && guard++ < 500) {
+        const recordDate = addDays(payment, -Math.max(0, Math.min(Number(terms.recordDateOffsetDays ?? 0), 365)))
+        if (opened <= recordDate && payment >= today) {
+          const rate = terms.rateType === 'fixed' && Number.isInteger(terms.annualRateBps) && Number(terms.annualRateBps) >= 0
+            ? BigInt(Number(terms.annualRateBps)) : null
+          let amount: string | null = null
+          if (rate !== null) {
+            const cost = BigInt(position.costAtomicAmount)
+            amount = frequency === 'at_maturity' && Number.isInteger(terms.termDays) && Number(terms.termDays) > 0
+              ? (cost * rate * BigInt(Number(terms.termDays)) / 10_000n / 365n).toString()
+              : (cost * rate / 10_000n / periodsPerYear(frequency)).toString()
+          }
+          const paymentDate = isoDate(payment)
+          events.push({
+            id: `expected:${position.productId}:${paymentDate}`,
+            productId: position.productId,
+            productName: position.productName,
+            paymentDate,
+            recordDate: isoDate(recordDate),
+            periodStart: isoDate(previous),
+            periodEnd: paymentDate,
+            expectedAtomicAmount: amount,
+            assetCode: 'USDT',
+            assetDecimals: 6,
+            estimated: true,
+            scheduleMode: mode,
+            timezone: terms.scheduleTimezone ?? 'UTC',
+          })
+        }
+        if (frequency === 'at_maturity') break
+        previous = payment
+        payment = advance(payment, frequency, recurrenceDay)
+      }
+    }
+    return events.sort((left, right) => String(left.paymentDate).localeCompare(String(right.paymentDate)) || String(left.productId).localeCompare(String(right.productId))).slice(0, 240)
   }
 
   async listForAdmin() {
@@ -215,15 +336,15 @@ export class YieldService {
     this.assertDemoOperations()
     const templateRows = await this.dataSource.query(
       `SELECT asset_decimals, network, min_order_atomic_amount, max_order_atomic_amount,
-              unit_price_atomic_amount, currency
+              unit_price_atomic_amount, unit_price_decimals, currency
        FROM app.products p
        JOIN LATERAL (
-         SELECT unit_price_atomic_amount, currency FROM app.price_quotes
+         SELECT unit_price_atomic_amount, unit_price_decimals, currency FROM app.price_quotes
          WHERE product_id = p.id ORDER BY valid_until DESC LIMIT 1
        ) q ON true
        WHERE p.asset_class_id = 'prediction' AND p.state = 'published'
        ORDER BY p.published_at ASC LIMIT 1`,
-    ) as Array<{ asset_decimals: number; network: string | null; min_order_atomic_amount: string | null; max_order_atomic_amount: string | null; unit_price_atomic_amount: string; currency: string }>
+    ) as Array<{ asset_decimals: number; network: string | null; min_order_atomic_amount: string | null; max_order_atomic_amount: string | null; unit_price_atomic_amount: string; unit_price_decimals: number; currency: string }>
     const template = templateRows[0]
     if (!template) throw new ConflictException({ code: 'PREDICTION_TEMPLATE_MISSING', message: 'A published prediction Demo template is required.' })
     const id = randomUUID()
@@ -238,9 +359,9 @@ export class YieldService {
       )
       await manager.query(
         `INSERT INTO app.price_quotes
-          (id, product_id, asset_code, unit_price_atomic_amount, currency, source, valid_until, captured_at)
-         VALUES ($1, $2, 'USD', $3, $4, 'demo-admin', now() + interval '365 days', now())`,
-        [randomUUID(), id, template.unit_price_atomic_amount, template.currency],
+          (id, product_id, asset_code, unit_price_atomic_amount, unit_price_decimals, currency, source, valid_until, captured_at)
+         VALUES ($1, $2, 'USD', $3, $4, $5, 'demo-admin', now() + interval '365 days', now())`,
+        [randomUUID(), id, template.unit_price_atomic_amount, template.unit_price_decimals, template.currency],
       )
     })
     return { id, assetClassId: 'prediction', externalRef, requestId }

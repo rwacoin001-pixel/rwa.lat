@@ -121,6 +121,12 @@ class ProductFieldsDto {
   @ArrayMaxSize(30)
   @IsString({ each: true })
   mediaRefs?: string[]
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(520)
+  coverStorageRef?: string | null
 }
 
 export class CreateProductDto extends ProductFieldsDto {}
@@ -204,6 +210,12 @@ export class UpdateProductDto {
   @ArrayMaxSize(30)
   @IsString({ each: true })
   mediaRefs?: string[]
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  @MaxLength(520)
+  coverStorageRef?: string | null
 }
 
 export class ProductStateDto {
@@ -213,6 +225,13 @@ export class ProductStateDto {
 }
 
 export class PriceQuoteInputDto {
+  @ApiPropertyOptional({ default: 6 })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(18)
+  unitPriceDecimals?: number
+
   @ApiProperty()
   @IsString()
   @Matches(/^[0-9]+$/)

@@ -6,6 +6,7 @@
 export type RateType = 'fixed' | 'floating' | 'tiered' | 'profit_share'
 export type PayoutFrequency = 'daily' | 'weekly' | 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'at_maturity'
 export type PayoutMode = 'interest' | 'principal_plus_interest' | 'profit_share'
+export type YieldScheduleMode = 'product_calendar' | 'position_anniversary'
 
 export type YieldTier = { minAmount: string; maxAmount?: string; annualRateBps: number }
 export type YieldProjection = { label: string; annualizedBps: number; note?: string }
@@ -23,6 +24,10 @@ export type YieldTerms = {
   termDays?: number
   payoutFrequency?: PayoutFrequency
   payoutMode?: PayoutMode
+  scheduleMode?: YieldScheduleMode
+  firstExpectedPaymentDate?: string
+  recordDateOffsetDays?: number
+  scheduleTimezone?: string
   compounding?: boolean
   settlementCycle?: string
   fees?: {
@@ -59,6 +64,11 @@ export const PAYOUT_MODE_LABELS: Record<PayoutMode, string> = {
   interest: '按期付息',
   principal_plus_interest: '到期还本付息',
   profit_share: '按利润分成',
+}
+
+export const SCHEDULE_MODE_LABELS: Record<YieldScheduleMode, string> = {
+  product_calendar: '产品统一派息日历',
+  position_anniversary: '按持仓入账日起算',
 }
 
 export const PAYOUTS_PER_YEAR: Record<PayoutFrequency, number> = {

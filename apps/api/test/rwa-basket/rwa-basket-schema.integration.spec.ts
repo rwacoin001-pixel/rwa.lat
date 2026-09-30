@@ -17,7 +17,7 @@ describeDatabase('rwa basket schema', () => {
     if (dataSource?.isInitialized) await dataSource.destroy()
   })
 
-  it('creates the 22 rwa/basket tables', async () => {
+  it('creates the current rwa/basket tables including recommendation drafts', async () => {
     const rows = (await dataSource.query(
       `SELECT tablename FROM pg_tables WHERE schemaname = 'app'
        AND (tablename LIKE 'rwa_%' OR tablename LIKE 'basket_%'
@@ -46,11 +46,11 @@ describeDatabase('rwa basket schema', () => {
       'basket_redemptions',
       'basket_rebalance_runs',
       'basket_rebalance_orders',
+      'basket_recommendation_drafts',
       'risk_disclosures',
       'user_risk_acknowledgements',
     ]
-    for (const name of expected) expect(names).toContain(name)
-    expect(names).toHaveLength(22)
+    expect(names).toEqual(expected.sort())
   })
 
   it('enforces asset class check, contract uniqueness and single metric row per asset', async () => {

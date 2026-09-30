@@ -374,6 +374,29 @@ export class WalletService {
     return this.withdrawalResponse(withdrawal, result.created)
   }
 
+  async getWithdrawalStatus(userId: string, withdrawalId: string) {
+    const withdrawal = await this.withdrawals.findOne({ where: { id: withdrawalId, userId } })
+    if (!withdrawal) {
+      throw new NotFoundException({
+        code: WALLET_ERROR_CODES.WITHDRAWAL_NOT_FOUND,
+        message: 'Withdrawal was not found.',
+      })
+    }
+    return {
+      id: withdrawal.id,
+      state: withdrawal.state,
+      network: withdrawal.network,
+      assetCode: withdrawal.assetCode,
+      assetDecimals: withdrawal.assetDecimals,
+      atomicAmount: withdrawal.atomicAmount,
+      feeAtomicAmount: withdrawal.feeAtomicAmount,
+      reasonCode: withdrawal.reasonCode,
+      requestedAt: withdrawal.requestedAt,
+      approvedAt: withdrawal.approvedAt,
+      completedAt: withdrawal.completedAt,
+    }
+  }
+
   async createTransfer(actor: SecurityActor, dto: CreateTransferDto, idempotencyKey: string, requestId: string) {
     this.assertIdempotencyKey(idempotencyKey)
     this.assertExecutionEnabled()

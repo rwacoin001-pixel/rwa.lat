@@ -5,9 +5,16 @@
   "compatibility_date": "2026-07-15",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
+  "routes": [
+    { "pattern": "rwa.lat/*", "zone_name": "rwa.lat" },
+    { "pattern": "www.rwa.lat/*", "zone_name": "rwa.lat" }
+  ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
+  },
+  "vars": {
+    "API_INTERNAL_URL": "https://api.rwa.lat"
   },
   "observability": {
     "enabled": true

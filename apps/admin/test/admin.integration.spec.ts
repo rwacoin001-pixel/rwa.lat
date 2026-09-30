@@ -21,6 +21,8 @@ describe('AdminModule (integration)', () => {
     const opts = buildDatabaseOptions({ ...process.env, NODE_ENV: 'test' })
     ds = new DataSource(opts)
     await ds.initialize()
+    const [connected] = await ds.query('SELECT current_database() AS name')
+    if (connected.name !== decodeURIComponent(new URL(process.env.TEST_DATABASE_URL!).pathname.slice(1)) || !connected.name.endsWith('_test')) throw new Error('Refusing to reset a database outside the explicit test target')
     await ds.query(`DROP SCHEMA IF EXISTS app CASCADE`)
     await ds.query(`DROP TABLE IF EXISTS public.schema_migrations`)
     await ds.runMigrations({ transaction: 'all' })
@@ -81,6 +83,13 @@ describe('AdminModule (integration)', () => {
     expect(rows.length).toBe(1)
     expect(rows[0].id).toBe('11111111-1111-1111-1111-111111111111')
     expect(rows[0].state).toBe('requested')
+  })
+
+  it('uses the explicit isolated database for injected services', async () => {
+    expect(app.get(DataSource)).toBe(ds)
+    const [row] = await app.get(DataSource).query('SELECT current_database() AS name')
+    expect(row.name).toBe(decodeURIComponent(new URL(process.env.TEST_DATABASE_URL!).pathname.slice(1)))
+    expect(row.name.endsWith('_test')).toBe(true)
   })
 
   it('counts redemptions grouped by state', async () => {
@@ -151,5 +160,58 @@ describe('AdminModule (integration)', () => {
     await expect(auth.login({ email: 'demo@admin.rwa.lat', password: adminPassword })).rejects.toThrow('Additional administrator verification is required')
     const result = await auth.login({ email: 'demo@admin.rwa.lat', password: adminPassword, mfaCode: createAdminTotp(secret) })
     await expect(auth.authenticate(result.sessionToken)).resolves.toMatchObject({ email: 'demo@admin.rwa.lat' })
+  })
+
+  it('rejects unauthenticated password changes', async () => {
+    const port = app.getHttpServer().address().port
+    const response = await fetch(`http://127.0.0.1:${port}/v1/admin/auth/password`, {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ currentPassword: adminPassword, newPassword: 'another-secure-password' }),
+    })
+    expect(response.status).toBe(401)
+  })
+
+  it('returns the actual authenticated account security policy without factor material', async () => {
+    const port = app.getHttpServer().address().port
+    expect((await fetch(`http://127.0.0.1:${port}/v1/admin/auth/security`)).status).toBe(401)
+    const login = await auth.login({email: 'demo@admin.rwa.lat', password: adminPassword, mfaCode: createAdminTotp('JBSWY3DPEHPK3PXP')})
+    const response = await fetch(`http://127.0.0.1:${port}/v1/admin/auth/security`, {headers: {authorization: `Bearer ${login.sessionToken}`}})
+    expect(response.status).toBe(200)
+    expect(await response.json()).toEqual({mfaState: 'enabled', mfaRequired: false, sessionTtlSeconds: 28800, loginMaxFailures: 5, loginLockSeconds: 900, environment: 'test'})
+    await auth.logout(login.sessionToken)
+  })
+
+  it('does not change a password with wrong current credentials, a missing factor or a short replacement', async () => {
+    const [before] = await ds.query(`SELECT id,password_hash,mfa_secret_ciphertext FROM app.admin_users WHERE email=$1`, ['demo@admin.rwa.lat'])
+    await expect(auth.changePassword(before.id, {currentPassword: adminPassword, newPassword: 'short'})).rejects.toThrow('12 to 256')
+    await expect(auth.changePassword(before.id, {currentPassword: 'wrong-current-password', newPassword: 'another-secure-password'})).rejects.toThrow('Current administrator password')
+    await expect(auth.changePassword(before.id, {currentPassword: adminPassword, newPassword: 'another-secure-password'})).rejects.toThrow('Additional administrator verification')
+    const [after] = await ds.query(`SELECT password_hash,mfa_secret_ciphertext,failed_login_count FROM app.admin_users WHERE id=$1`, [before.id])
+    expect(after.password_hash).toBe(before.password_hash)
+    expect(after.mfa_secret_ciphertext).toBe(before.mfa_secret_ciphertext)
+    expect(after.failed_login_count).toBe(2)
+    const events = await ds.query(`SELECT metadata FROM app.audit_logs WHERE actor_id=$1 AND action='admin.password.change_failed'`, [before.id])
+    expect(events).toHaveLength(2)
+    expect(events.every((event: {metadata: Record<string, unknown>}) => Object.keys(event.metadata).join(',') === 'reason')).toBe(true)
+  })
+
+  it('changes only the authenticated administrator password, preserves MFA and permissions and revokes every old session', async () => {
+    const secret = 'JBSWY3DPEHPK3PXP'
+    const [before] = await ds.query(`SELECT id,role_id,mfa_secret_ciphertext FROM app.admin_users WHERE email=$1`, ['demo@admin.rwa.lat'])
+    const oldSessions = await Promise.all([1, 2].map(() => auth.login({email: 'demo@admin.rwa.lat', password: adminPassword, mfaCode: createAdminTotp(secret)})))
+    const newPassword = 'changed-local-admin-password'
+    await expect(auth.changePassword(before.id, {currentPassword: adminPassword, newPassword, mfaCode: createAdminTotp(secret)})).resolves.toMatchObject({status: 'password_changed', reauthenticationRequired: true})
+    for (const session of oldSessions) await expect(auth.authenticate(session.sessionToken)).rejects.toThrow()
+    await expect(auth.login({email: 'demo@admin.rwa.lat', password: adminPassword, mfaCode: createAdminTotp(secret)})).rejects.toThrow('Invalid administrator credentials')
+    const result = await auth.login({email: 'demo@admin.rwa.lat', password: newPassword, mfaCode: createAdminTotp(secret)})
+    await expect(auth.authenticate(result.sessionToken)).resolves.toMatchObject({id: before.id})
+    const [after] = await ds.query(`SELECT role_id,mfa_state,mfa_secret_ciphertext FROM app.admin_users WHERE id=$1`, [before.id])
+    expect(after.role_id).toBe(before.role_id)
+    expect(after.mfa_state).toBe('enabled')
+    expect(after.mfa_secret_ciphertext).toBe(before.mfa_secret_ciphertext)
+    const events = await ds.query(`SELECT metadata FROM app.audit_logs WHERE actor_id=$1 AND action='admin.password.changed'`, [before.id])
+    expect(events).toHaveLength(1)
+    expect(events[0].metadata).toEqual({sessionsRevoked: true, mfaPreserved: true})
+    await auth.logout(result.sessionToken)
   })
 })

@@ -16,8 +16,10 @@ export async function POST(request: NextRequest) {
     })
     const body = await response.json().catch(() => ({ message: 'Authentication service unavailable' }))
     if (!response.ok || !body?.sessionToken) {
+      if (response.status >= 500 || response.ok) return NextResponse.json({message:'后台认证服务暂时不可用，请稍后重试。'}, {status:503})
+      if (response.status === 429) return NextResponse.json({message:'登录尝试过于频繁，请稍后重试。'}, {status:429})
       const mfaRequired = body?.message === 'Additional administrator verification is required'
-      return NextResponse.json({ message: mfaRequired ? 'Additional administrator verification is required' : 'Invalid administrator credentials' }, { status: 401 })
+      return NextResponse.json({ message: mfaRequired ? '密码已通过，请填写当前动态验证码；如未完成 MFA 设置，请联系管理员。' : '管理员邮箱或密码未通过校验；临时锁定也会显示此提示。请勿连续重复尝试。' }, { status: 401 })
     }
     const result = NextResponse.json({ admin: body.admin, expiresAt: body.expiresAt })
     result.cookies.set('rwa-admin-session', body.sessionToken, {

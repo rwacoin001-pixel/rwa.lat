@@ -1,24 +1,59 @@
 'use client'
 
 import { AnimatePresence, motion } from 'framer-motion'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import AnimatedBrand from './animated-brand'
+
+const INTRO_MS = 2600
 
 export default function IntroSequence() {
   const [show, setShow] = useState(true)
+  // Mobile PWAs throttle timers while backgrounded, which used to leave body.overflow='hidden'
+  // stuck forever (page could not be scrolled after returning). Remember the previous inline
+  // value, release exactly once, and rescue the lock on lifecycle events.
+  const previousOverflow = useRef<string | null>(null)
+  const released = useRef(false)
+  const startedAt = useRef(0)
+
+  const releaseScroll = useCallback(() => {
+    if (released.current) return
+    released.current = true
+    document.body.style.overflow = previousOverflow.current ?? ''
+  }, [])
 
   useEffect(() => {
-    // lock scroll during intro
+    previousOverflow.current = document.body.style.overflow || null
+    startedAt.current = Date.now()
     document.body.style.overflow = 'hidden'
-    const t = setTimeout(() => {
+
+    const timer = setTimeout(() => {
       setShow(false)
-      document.body.style.overflow = ''
-    }, 2600)
-    return () => {
-      clearTimeout(t)
-      document.body.style.overflow = ''
+      releaseScroll()
+    }, INTRO_MS)
+
+    // Returning from the background: if the intro has served its time, finish it now.
+    const onResume = () => {
+      if (document.visibilityState !== 'visible') return
+      if (Date.now() - startedAt.current >= INTRO_MS) {
+        setShow(false)
+        releaseScroll()
+      }
     }
-  }, [])
+
+    document.addEventListener('visibilitychange', onResume)
+    window.addEventListener('pageshow', onResume)
+    window.addEventListener('focus', onResume)
+    window.addEventListener('pagehide', releaseScroll)
+
+    return () => {
+      clearTimeout(timer)
+      document.removeEventListener('visibilitychange', onResume)
+      window.removeEventListener('pageshow', onResume)
+      window.removeEventListener('focus', onResume)
+      window.removeEventListener('pagehide', releaseScroll)
+      releaseScroll()
+    }
+  }, [releaseScroll])
 
   return (
     <AnimatePresence>

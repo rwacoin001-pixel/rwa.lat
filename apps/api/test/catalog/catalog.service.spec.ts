@@ -44,6 +44,10 @@ describe('CatalogService (unit)', () => {
       code: CATALOG_ERROR_CODES.PRODUCT_NOT_FOUND,
     })
   })
+  it.each(['draft','retired'])('does not expose a %s product through the public detail boundary',async state=>{
+    productRepo.findOne=jest.fn().mockResolvedValue({id:'private-product',state} as Product)
+    await expect(service.getPublicProduct('private-product')).rejects.toMatchObject({code:CATALOG_ERROR_CODES.PRODUCT_NOT_FOUND})
+  })
 
   it('getLatestQuote marks stale when valid_until passed', async () => {
     productRepo.findOne = jest.fn().mockResolvedValue({ id: 'p1' } as Product)
@@ -53,6 +57,7 @@ describe('CatalogService (unit)', () => {
       .mockResolvedValue({
         product_id: 'p1',
         unit_price_atomic_amount: '100',
+        unit_price_decimals: 6,
         currency: 'USD',
         source: 'seed',
         valid_until: past,
@@ -60,6 +65,7 @@ describe('CatalogService (unit)', () => {
       } as PriceQuote)
     const q = await service.getLatestQuote('p1', now())
     expect(q.stale).toBe(true)
+    expect(q.unitPriceDecimals).toBe(6)
   })
 
   it('getLatestQuote marks fresh when valid_until in future', async () => {
@@ -70,6 +76,7 @@ describe('CatalogService (unit)', () => {
       .mockResolvedValue({
         product_id: 'p1',
         unit_price_atomic_amount: '100',
+        unit_price_decimals: 6,
         currency: 'USD',
         source: 'seed',
         valid_until: future,
@@ -79,6 +86,19 @@ describe('CatalogService (unit)', () => {
     expect(q.stale).toBe(false)
   })
 
+  it('does not treat a future-dated quote as current', async () => {
+    productRepo.findOne = jest.fn().mockResolvedValue({ id: 'p1', asset_code: 'RWA', state: 'published' } as Product)
+    const future = new Date(Date.now() + 60_000)
+    quoteRepo.findOne = jest.fn().mockResolvedValue({
+      product_id: 'p1', asset_code: 'RWA', unit_price_atomic_amount: '100', unit_price_decimals: 6,
+      currency: 'USD', source: 'future-test', captured_at: future,
+      valid_until: new Date(future.getTime() + 60_000),
+    } as PriceQuote)
+    await expect(service.requireOrderableQuote('p1', now())).rejects.toMatchObject({
+      code: CATALOG_ERROR_CODES.QUOTE_STALE,
+    })
+  })
+
   it('requireOrderableQuote rejects stale quote (data expiration blocks order)', async () => {
     productRepo.findOne = jest.fn().mockResolvedValue({ id: 'p1', state: 'published' } as Product)
     quoteRepo.findOne = jest
@@ -86,6 +106,7 @@ describe('CatalogService (unit)', () => {
       .mockResolvedValue({
         product_id: 'p1',
         unit_price_atomic_amount: '100',
+        unit_price_decimals: 6,
         currency: 'USD',
         source: 'seed',
         valid_until: new Date(Date.now() - 1000),

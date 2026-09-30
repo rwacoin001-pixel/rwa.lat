@@ -1,4 +1,5 @@
 import {
+  cleanSymbol,
   dec,
   mapCmcAssetType,
   normalizeCmcAsset,
@@ -9,6 +10,14 @@ import {
 } from '../../src/rwa-market/normalizers/rwa.normalizer'
 
 describe('rwa normalizer', () => {
+  it('treats dash and blank tickers as missing', () => {
+    expect(cleanSymbol('-')).toBeNull()
+    expect(cleanSymbol(' — ')).toBeNull()
+    expect(cleanSymbol('')).toBeNull()
+    expect(cleanSymbol(undefined)).toBeNull()
+    expect(cleanSymbol(' USTB ')).toBe('USTB')
+  })
+
   it('maps CMC asset types to RWA.LAT asset classes', () => {
     expect(mapCmcAssetType('commodity')).toBe('commodity')
     expect(mapCmcAssetType('stock')).toBe('equity')

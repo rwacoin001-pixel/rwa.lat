@@ -1,22 +1,16 @@
 'use client'
 
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
+import { localeOptions } from '@/lib/app-locales'
+import type { AppLocale } from '@/lib/app-locales'
+import { isAppLocale, LANGUAGE_COOKIE } from '@/lib/locale-detection'
 
-export type AppLocale = 'en' | 'zh-CN' | 'hi' | 'es' | 'ar' | 'fr' | 'pt'
-
-export const localeOptions: Array<{ code: AppLocale; label: string; direction: 'ltr' | 'rtl' }> = [
-  { code: 'en', label: 'English', direction: 'ltr' },
-  { code: 'zh-CN', label: '简体中文', direction: 'ltr' },
-  { code: 'hi', label: 'हिन्दी', direction: 'ltr' },
-  { code: 'es', label: 'Español', direction: 'ltr' },
-  { code: 'ar', label: 'العربية', direction: 'rtl' },
-  { code: 'fr', label: 'Français', direction: 'ltr' },
-  { code: 'pt', label: 'Português', direction: 'ltr' },
-]
+export { localeOptions } from '@/lib/app-locales'
+export type { AppLocale } from '@/lib/app-locales'
 
 const en = {
-  'nav.home': 'Home', 'nav.invest': 'Invest', 'nav.portfolio': 'Portfolio', 'nav.wallet': 'Wallet', 'nav.ai': 'AI advisor', 'nav.community': 'Community',
-  'common.demo': 'Demo', 'common.refresh': 'Refresh', 'common.viewAll': 'View all', 'common.back': 'Back', 'common.save': 'Save preferences', 'common.language': 'Language', 'common.languagesCount': '7 languages',
+  'nav.home': 'Home', 'nav.invest': 'Invest', 'nav.portfolio': 'Portfolio', 'nav.wallet': 'Wallet', 'nav.markets': 'Markets', 'nav.assets': 'Assets', 'wallet.entryTitle': 'Wallet', 'wallet.entryBody': 'Balance · deposit · withdraw', 'nav.ai': 'AI advisor', 'nav.community': 'Community',
+  'common.demo': 'Preview', 'common.refresh': 'Refresh', 'common.viewAll': 'View all', 'common.back': 'Back', 'common.save': 'Save preferences', 'common.language': 'Language', 'common.languagesCount': '7 languages',
   'home.totalPortfolio': 'Total Portfolio', 'home.aiScore': 'AI Portfolio Score', 'home.marketBrief': 'AI Market Brief', 'home.marketBriefBody': 'Compute demand is accelerating.', 'home.explore': 'Explore Opportunities', 'home.snapshot': 'Market snapshot', 'home.actions': "Today's actions", 'home.income': 'Income calendar',
   'invest.title': 'Invest', 'invest.search': 'Search opportunities', 'invest.filters': 'Filters', 'invest.execution': 'Execution desk', 'invest.noResults': 'No matching opportunities',
   'invest.refine': 'Refine opportunities', 'invest.matchCount': '{count} products match', 'invest.reset': 'Reset', 'invest.riskLevel': 'Risk level', 'invest.allRisk': 'All risk levels', 'invest.low': 'Low', 'invest.medium': 'Medium', 'invest.high': 'High', 'invest.availability': 'Availability', 'invest.anyStatus': 'Any status', 'invest.openNow': 'Open now', 'invest.limited': 'Limited capacity', 'invest.minimum': 'Minimum allocation', 'invest.anyAmount': 'Any amount', 'invest.showCount': 'Show {count} opportunities', 'invest.featured': 'Featured', 'invest.yieldHigh': 'Yield: high to low', 'invest.minimumLow': 'Minimum: low to high', 'invest.riskLow': 'Risk: low to high', 'invest.sortTitle': 'Sort opportunities', 'invest.sortBody': 'Choose the order that fits your review', 'invest.featuredBody': 'Curated platform order', 'invest.yieldBody': 'Projected or indicative metric', 'invest.minimumBody': 'Start with lower allocations', 'invest.riskBody': 'Review lower-risk labels first', 'invest.closeOptions': 'Close options',
@@ -25,14 +19,14 @@ const en = {
   'profile.title': 'Profile', 'profile.verified': 'Verified investor', 'profile.identity': 'Identity & KYC', 'profile.security': 'Security & devices', 'profile.referral': 'Referral rewards', 'profile.records': 'Transaction records', 'profile.support': 'Support center', 'profile.marketing': 'Marketing preferences', 'profile.official': 'Official channels', 'profile.trust': 'Trust & disclosures', 'profile.settings': 'Settings', 'profile.signout': 'Sign out of RWA.LAT',
   'auth.hero': 'Global assets. One intelligent wallet.', 'auth.body': 'Invest with USDT across compute, real-world assets, stocks and prediction markets.', 'auth.start': 'Get started', 'auth.guest': 'Explore as guest', 'auth.login': 'Welcome to RWA.LAT', 'auth.register': 'Create your account', 'auth.email': 'Continue with email', 'auth.google': 'Continue with Google', 'auth.x': 'Continue with X', 'auth.wallet': 'Sign with wallet',
   'settings.language': 'Language', 'settings.notifications': 'Market notifications', 'settings.marketing': 'Marketing preferences', 'settings.fiat': 'Fiat entry',
-  'marketing.title': 'Marketing preferences', 'marketing.heading': 'You decide what reaches you.', 'marketing.body': 'Control research, product and event updates independently from essential account messages.', 'marketing.email': 'Research & product email', 'marketing.push': 'Market and event push', 'marketing.community': 'Community invitations', 'marketing.unsubscribe': 'Unsubscribe from all marketing', 'marketing.saved': 'Marketing preferences saved in this Demo.',
+  'marketing.title': 'Marketing preferences', 'marketing.heading': 'You decide what reaches you.', 'marketing.body': 'Control research, product and event updates independently from essential account messages.', 'marketing.email': 'Research & product email', 'marketing.push': 'Market and event push', 'marketing.community': 'Community invitations', 'marketing.unsubscribe': 'Unsubscribe from all marketing', 'marketing.saved': 'Marketing preferences saved.',
   'official.title': 'Official channels', 'official.heading': 'Verify before you trust.', 'official.body': 'RWA.LAT never asks for seed phrases, private keys, verification codes or transfers to a personal address.', 'official.domain': 'Official domain', 'official.social': 'Verified social accounts', 'official.report': 'Report impersonation or scam',
-  'scam.title': 'Report a scam', 'scam.heading': 'Help us investigate safely.', 'scam.body': 'Submit the suspicious account, URL or wallet address. Never include a seed phrase or private key.', 'scam.source': 'Suspicious account, URL or wallet', 'scam.details': 'What happened?', 'scam.submit': 'Create Demo report',
+  'scam.title': 'Report a scam', 'scam.heading': 'Help us investigate safely.', 'scam.body': 'Submit the suspicious account, URL or wallet address. Never include a seed phrase or private key.', 'scam.source': 'Suspicious account, URL or wallet', 'scam.details': 'What happened?', 'scam.submit': 'Submit report',
   'guest.badge': 'Guest', 'guest.signin': 'Sign in to continue', 'guest.protected': 'This action requires a secure account. Public product browsing remains available.',
   'risk.aiTitle': 'AI decision acknowledgement', 'risk.aiBody': 'AI output may be incomplete or wrong. It is not a guarantee of return or a substitute for legal, tax or licensed investment advice.',
   'trust.title': 'Trust center', 'trust.eyebrow': 'TRUST CENTER', 'trust.heading': 'Know who, what and where before you invest.', 'trust.body': 'Review access rules, product structures, fees, legal documents, support routes and verified channels in one place.',
   'trust.access': 'Access and regions', 'trust.accessBody': 'Guest rules, country checks and product restrictions', 'trust.products': 'Product disclosures', 'trust.productsBody': 'Issuer, return source, fees, maturity and exit', 'trust.legal': 'Legal document center', 'trust.legalBody': 'Terms, privacy, risk and consent versions', 'trust.supportBody': 'Create and track an investment or payment case',
-  'trust.demoNote': 'Demo content supports product review. Partner names, licences, eligibility rules and offering documents require approval before real execution.',
+  'trust.demoNote': 'Product information is subject to partner, licence, eligibility and offering-document approval before execution.',
   'community.title': 'Community', 'community.subtitle': 'Research, markets and stories from the RWA.LAT community',
   'community.sortLatest': 'Latest', 'community.sortHot': 'Hot', 'community.loadMore': 'Load more',
   'community.emptyTitle': 'Nothing here yet', 'community.emptyBody': 'The community is warming up — check back soon.',
@@ -50,7 +44,7 @@ type Dictionary = Partial<Record<TranslationKey, string>>
 const dictionaries: Record<AppLocale, Dictionary> = {
   en,
   'zh-CN': {
-    'nav.home': '首页', 'nav.invest': '投资', 'nav.portfolio': '资产组合', 'nav.wallet': '钱包', 'nav.ai': 'AI 助手', 'nav.community': '社区',
+    'nav.home': '首页', 'nav.invest': '投资', 'nav.portfolio': '资产组合', 'nav.wallet': '钱包', 'nav.markets': '市场', 'nav.assets': '资产', 'wallet.entryTitle': '钱包', 'wallet.entryBody': '余额 · 充值 · 提现', 'nav.ai': 'AI 助手', 'nav.community': '社区',
     'common.demo': '演示', 'common.refresh': '刷新', 'common.viewAll': '查看全部', 'common.back': '返回', 'common.save': '保存偏好', 'common.language': '语言', 'common.languagesCount': '支持 7 种语言',
     'home.totalPortfolio': '总资产', 'home.aiScore': 'AI 组合评分', 'home.marketBrief': 'AI 市场简报', 'home.marketBriefBody': '算力需求正在加速。', 'home.explore': '探索投资机会', 'home.snapshot': '市场概览', 'home.actions': '今日事项', 'home.income': '收益日历',
     'invest.title': '投资', 'invest.search': '搜索投资机会', 'invest.filters': '筛选', 'invest.execution': '执行中心', 'invest.noResults': '没有匹配的产品',
@@ -79,7 +73,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'community.reportDetails': '补充说明（可选）', 'community.reportSubmit': '提交举报', 'community.reportThanks': '已收到举报，感谢反馈。', 'community.reportFailed': '提交失败，请稍后重试。',
   },
   hi: {
-    'nav.home': 'होम', 'nav.invest': 'निवेश', 'nav.portfolio': 'पोर्टफोलियो', 'nav.wallet': 'वॉलेट', 'nav.ai': 'AI सलाहकार', 'nav.community': 'समुदाय',
+    'nav.home': 'होम', 'nav.invest': 'निवेश', 'nav.portfolio': 'पोर्टफोलियो', 'nav.wallet': 'वॉलेट', 'nav.markets': 'मार्केट', 'nav.assets': 'संपत्तियाँ', 'wallet.entryTitle': 'वॉलेट', 'wallet.entryBody': 'बैलेंस · जमा · निकासी', 'nav.ai': 'AI सलाहकार', 'nav.community': 'समुदाय',
     'common.demo': 'डेमो', 'common.refresh': 'रीफ़्रेश', 'common.viewAll': 'सभी देखें', 'common.back': 'वापस', 'common.save': 'प्राथमिकताएँ सहेजें', 'common.language': 'भाषा',
     'home.totalPortfolio': 'कुल पोर्टफोलियो', 'home.aiScore': 'AI पोर्टफोलियो स्कोर', 'home.marketBrief': 'AI मार्केट ब्रीफ', 'home.marketBriefBody': 'कंप्यूट मांग तेज़ हो रही है।', 'home.explore': 'अवसर देखें', 'home.snapshot': 'बाज़ार का सार', 'home.actions': 'आज के कार्य', 'home.income': 'आय कैलेंडर',
     'invest.title': 'निवेश', 'invest.search': 'अवसर खोजें', 'invest.execution': 'निष्पादन केंद्र', 'invest.noResults': 'कोई मेल खाता उत्पाद नहीं', 'portfolio.title': 'पोर्टफोलियो', 'portfolio.total': 'कुल निवेश', 'portfolio.allocation': 'आवंटन', 'portfolio.askAi': 'AI से पूछें', 'wallet.title': 'वॉलेट', 'wallet.deposit': 'जमा', 'wallet.withdraw': 'निकासी', 'wallet.transfer': 'ट्रांसफर', 'wallet.fiat': 'फ़िएट जल्द उपलब्ध', 'wallet.assets': 'परिसंपत्तियाँ', 'wallet.activity': 'गतिविधि',
@@ -94,7 +88,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'विश्वास केंद्र', 'trust.eyebrow': 'विश्वास केंद्र', 'trust.heading': 'निवेश से पहले जानें—कौन, क्या और कहाँ।', 'trust.body': 'पात्रता नियम, उत्पाद संरचना, शुल्क, कानूनी दस्तावेज़, सहायता और सत्यापित चैनल एक ही स्थान पर देखें।', 'trust.access': 'पात्रता और क्षेत्र', 'trust.accessBody': 'अतिथि नियम, देश जाँच और उत्पाद प्रतिबंध', 'trust.products': 'उत्पाद प्रकटीकरण', 'trust.productsBody': 'जारीकर्ता, आय स्रोत, शुल्क, अवधि और निकास', 'trust.legal': 'कानूनी दस्तावेज़ केंद्र', 'trust.legalBody': 'शर्तें, गोपनीयता, जोखिम और सहमति संस्करण', 'trust.supportBody': 'निवेश या भुगतान मामला बनाएँ और उसकी स्थिति देखें', 'trust.demoNote': 'यह डेमो सामग्री उत्पाद समीक्षा के लिए है। वास्तविक निष्पादन से पहले भागीदार, लाइसेंस, पात्रता और पेशकश दस्तावेज़ स्वीकृत होने चाहिए।',
   },
   es: {
-    'nav.home': 'Inicio', 'nav.invest': 'Invertir', 'nav.portfolio': 'Cartera', 'nav.wallet': 'Billetera', 'nav.ai': 'Asesor IA', 'nav.community': 'Comunidad',
+    'nav.home': 'Inicio', 'nav.invest': 'Invertir', 'nav.portfolio': 'Cartera', 'nav.wallet': 'Billetera', 'nav.markets': 'Mercados', 'nav.assets': 'Activos', 'wallet.entryTitle': 'Billetera', 'wallet.entryBody': 'Saldo · depósito · retiro', 'nav.ai': 'Asesor IA', 'nav.community': 'Comunidad',
     'common.demo': 'Demo', 'common.refresh': 'Actualizar', 'common.viewAll': 'Ver todo', 'common.back': 'Volver', 'common.save': 'Guardar preferencias', 'common.language': 'Idioma',
     'home.totalPortfolio': 'Cartera total', 'home.aiScore': 'Puntuación IA', 'home.marketBrief': 'Resumen de mercado IA', 'home.marketBriefBody': 'La demanda de cómputo se acelera.', 'home.explore': 'Explorar oportunidades', 'home.snapshot': 'Resumen del mercado', 'home.actions': 'Tareas de hoy', 'home.income': 'Calendario de ingresos',
     'invest.title': 'Invertir', 'invest.search': 'Buscar oportunidades', 'invest.execution': 'Centro de ejecución', 'invest.noResults': 'No hay productos que coincidan', 'portfolio.title': 'Cartera', 'portfolio.total': 'Total invertido', 'portfolio.allocation': 'Distribución', 'portfolio.askAi': 'Consultar a la IA', 'wallet.title': 'Billetera', 'wallet.deposit': 'Depositar', 'wallet.withdraw': 'Retirar', 'wallet.transfer': 'Transferir', 'wallet.fiat': 'Fiat próximamente', 'wallet.assets': 'Activos', 'wallet.activity': 'Actividad',
@@ -109,7 +103,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'Centro de confianza', 'trust.eyebrow': 'CENTRO DE CONFIANZA', 'trust.heading': 'Conoce quién, qué y dónde antes de invertir.', 'trust.body': 'Consulta en un solo lugar las reglas de acceso, estructuras, comisiones, documentos legales, soporte y canales verificados.', 'trust.access': 'Acceso y regiones', 'trust.accessBody': 'Reglas para invitados, controles por país y restricciones', 'trust.products': 'Divulgaciones de producto', 'trust.productsBody': 'Emisor, fuente de rendimiento, comisiones, vencimiento y salida', 'trust.legal': 'Centro de documentos legales', 'trust.legalBody': 'Términos, privacidad, riesgos y versiones de consentimiento', 'trust.supportBody': 'Crea y sigue un caso de inversión o pago', 'trust.demoNote': 'El contenido Demo sirve para revisar el producto. Los socios, licencias, reglas de acceso y documentos de oferta deben aprobarse antes de cualquier ejecución real.',
   },
   ar: {
-    'nav.home': 'الرئيسية', 'nav.invest': 'استثمار', 'nav.portfolio': 'المحفظة', 'nav.wallet': 'المحفظة الرقمية', 'nav.ai': 'مستشار الذكاء الاصطناعي', 'nav.community': 'المجتمع',
+    'nav.home': 'الرئيسية', 'nav.invest': 'استثمار', 'nav.portfolio': 'المحفظة', 'nav.wallet': 'المحفظة الرقمية', 'nav.markets': 'الأسواق', 'nav.assets': 'الأصول', 'wallet.entryTitle': 'المحفظة', 'wallet.entryBody': 'الرصيد · إيداع · سحب', 'nav.ai': 'مستشار الذكاء الاصطناعي', 'nav.community': 'المجتمع',
     'common.demo': 'عرض تجريبي', 'common.refresh': 'تحديث', 'common.viewAll': 'عرض الكل', 'common.back': 'رجوع', 'common.save': 'حفظ التفضيلات', 'common.language': 'اللغة',
     'home.totalPortfolio': 'إجمالي المحفظة', 'home.aiScore': 'تقييم المحفظة بالذكاء الاصطناعي', 'home.marketBrief': 'موجز السوق', 'home.marketBriefBody': 'الطلب على الحوسبة يتسارع.', 'home.explore': 'استكشف الفرص', 'home.snapshot': 'لمحة السوق', 'home.actions': 'مهام اليوم', 'home.income': 'تقويم الدخل',
     'invest.title': 'استثمار', 'invest.search': 'ابحث عن الفرص', 'invest.execution': 'مركز التنفيذ', 'invest.noResults': 'لا توجد منتجات مطابقة', 'portfolio.title': 'المحفظة', 'portfolio.total': 'إجمالي الاستثمار', 'portfolio.allocation': 'التوزيع', 'portfolio.askAi': 'اسأل الذكاء الاصطناعي', 'wallet.title': 'المحفظة الرقمية', 'wallet.deposit': 'إيداع', 'wallet.withdraw': 'سحب', 'wallet.transfer': 'تحويل', 'wallet.fiat': 'العملات التقليدية قريبًا', 'wallet.assets': 'الأصول', 'wallet.activity': 'النشاط',
@@ -124,7 +118,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'مركز الثقة', 'trust.eyebrow': 'مركز الثقة', 'trust.heading': 'اعرف الجهة والمنتج والمنطقة قبل الاستثمار.', 'trust.body': 'راجع قواعد الإتاحة وهياكل المنتجات والرسوم والوثائق القانونية ومسارات الدعم والقنوات الموثقة في مكان واحد.', 'trust.access': 'الإتاحة والمناطق', 'trust.accessBody': 'قواعد الضيف والتحقق حسب الدولة وقيود المنتجات', 'trust.products': 'إفصاحات المنتجات', 'trust.productsBody': 'المُصدر ومصدر العائد والرسوم والاستحقاق والخروج', 'trust.legal': 'مركز الوثائق القانونية', 'trust.legalBody': 'الشروط والخصوصية والمخاطر وإصدارات الموافقة', 'trust.supportBody': 'أنشئ حالة استثمار أو دفع وتابعها', 'trust.demoNote': 'محتوى العرض مخصص لمراجعة المنتج. يجب اعتماد الشركاء والتراخيص وقواعد الإتاحة ووثائق الطرح قبل أي تنفيذ حقيقي.',
   },
   fr: {
-    'nav.home': 'Accueil', 'nav.invest': 'Investir', 'nav.portfolio': 'Portefeuille', 'nav.wallet': 'Wallet', 'nav.ai': 'Conseiller IA', 'nav.community': 'Communauté',
+    'nav.home': 'Accueil', 'nav.invest': 'Investir', 'nav.portfolio': 'Portefeuille', 'nav.wallet': 'Wallet', 'nav.markets': 'Marchés', 'nav.assets': 'Actifs', 'wallet.entryTitle': 'Wallet', 'wallet.entryBody': 'Solde · dépôt · retrait', 'nav.ai': 'Conseiller IA', 'nav.community': 'Communauté',
     'common.demo': 'Démo', 'common.refresh': 'Actualiser', 'common.viewAll': 'Tout voir', 'common.back': 'Retour', 'common.save': 'Enregistrer les préférences', 'common.language': 'Langue',
     'home.totalPortfolio': 'Portefeuille total', 'home.aiScore': 'Score IA du portefeuille', 'home.marketBrief': 'Brief marché IA', 'home.marketBriefBody': 'La demande de calcul accélère.', 'home.explore': 'Explorer les opportunités', 'home.snapshot': 'Aperçu du marché', 'home.actions': 'Actions du jour', 'home.income': 'Calendrier des revenus',
     'invest.title': 'Investir', 'invest.search': 'Rechercher des opportunités', 'invest.execution': "Centre d'exécution", 'invest.noResults': 'Aucun produit correspondant', 'portfolio.title': 'Portefeuille', 'portfolio.total': 'Total investi', 'portfolio.allocation': 'Répartition', 'portfolio.askAi': "Demander à l’IA", 'wallet.title': 'Portefeuille', 'wallet.deposit': 'Déposer', 'wallet.withdraw': 'Retirer', 'wallet.transfer': 'Transférer', 'wallet.fiat': 'Fiat bientôt disponible', 'wallet.assets': 'Actifs', 'wallet.activity': 'Activité',
@@ -139,7 +133,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
     'trust.title': 'Centre de confiance', 'trust.eyebrow': 'CENTRE DE CONFIANCE', 'trust.heading': "Identifiez l'acteur, le produit et la zone avant d'investir.", 'trust.body': "Consultez au même endroit les règles d'accès, structures, frais, documents juridiques, voies d'assistance et canaux vérifiés.", 'trust.access': 'Accès et régions', 'trust.accessBody': 'Règles invité, contrôles pays et restrictions produit', 'trust.products': 'Informations sur les produits', 'trust.productsBody': 'Émetteur, source du rendement, frais, échéance et sortie', 'trust.legal': 'Centre de documents juridiques', 'trust.legalBody': 'Conditions, confidentialité, risques et versions de consentement', 'trust.supportBody': "Créez et suivez un dossier d'investissement ou de paiement", 'trust.demoNote': "Le contenu Demo sert à examiner le produit. Partenaires, licences, règles d'accès et documents d'offre doivent être approuvés avant toute exécution réelle.",
   },
   pt: {
-    'nav.home': 'Início', 'nav.invest': 'Investir', 'nav.portfolio': 'Portfólio', 'nav.wallet': 'Carteira', 'nav.ai': 'Consultor de IA', 'nav.community': 'Comunidade',
+    'nav.home': 'Início', 'nav.invest': 'Investir', 'nav.portfolio': 'Portfólio', 'nav.wallet': 'Carteira', 'nav.markets': 'Mercados', 'nav.assets': 'Ativos', 'wallet.entryTitle': 'Carteira', 'wallet.entryBody': 'Saldo · depósito · saque', 'nav.ai': 'Consultor de IA', 'nav.community': 'Comunidade',
     'common.demo': 'Demo', 'common.refresh': 'Atualizar', 'common.viewAll': 'Ver tudo', 'common.back': 'Voltar', 'common.save': 'Salvar preferências', 'common.language': 'Idioma',
     'home.totalPortfolio': 'Portfólio total', 'home.aiScore': 'Pontuação de IA', 'home.marketBrief': 'Resumo de mercado IA', 'home.marketBriefBody': 'A demanda por computação está acelerando.', 'home.explore': 'Explorar oportunidades', 'home.snapshot': 'Visão geral do mercado', 'home.actions': 'Ações de hoje', 'home.income': 'Calendário de rendimentos',
     'invest.title': 'Investir', 'invest.search': 'Buscar oportunidades', 'invest.execution': 'Central de execução', 'invest.noResults': 'Nenhum produto correspondente', 'portfolio.title': 'Portfólio', 'portfolio.total': 'Total investido', 'portfolio.allocation': 'Alocação', 'portfolio.askAi': 'Perguntar à IA', 'wallet.title': 'Carteira', 'wallet.deposit': 'Depositar', 'wallet.withdraw': 'Sacar', 'wallet.transfer': 'Transferir', 'wallet.fiat': 'Fiat em breve', 'wallet.assets': 'Ativos', 'wallet.activity': 'Atividade',
@@ -164,22 +158,33 @@ type I18nValue = {
 
 const I18nContext = createContext<I18nValue | null>(null)
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<AppLocale>('en')
+function persistLocale(locale: AppLocale): void {
+  try { window.localStorage.setItem(LANGUAGE_COOKIE, locale) } catch { /* Storage is optional. */ }
+  try {
+    document.cookie = `${LANGUAGE_COOKIE}=${encodeURIComponent(locale)}; Path=/; Max-Age=31536000; SameSite=Lax${location.protocol === 'https:' ? '; Secure' : ''}`
+  } catch { /* Cookies can also be blocked independently of local storage. */ }
+}
 
-  useEffect(() => {
-    const stored = window.localStorage.getItem('rwa-language') as AppLocale | null
-    const browser = window.navigator.language
-    const detected = localeOptions.some((item) => item.code === stored)
-      ? stored!
-      : browser.startsWith('zh') ? 'zh-CN'
-        : localeOptions.find((item) => browser.toLowerCase().startsWith(item.code.toLowerCase()))?.code ?? 'en'
+export function I18nProvider({ children, initialLocale = 'en' }: { children: ReactNode; initialLocale?: AppLocale }) {
+  const [locale, setLocaleState] = useState<AppLocale>(initialLocale)
+
+  useLayoutEffect(() => {
+    let stored: string | null = null
+    try {
+      stored = window.localStorage.getItem('rwa-language')
+    } catch { /* Storage is optional. */ }
+    // Migrate existing device preferences to a cookie so subsequent SSR agrees.
+    const detected = isAppLocale(stored) ? stored : initialLocale
     setLocaleState(detected)
-  }, [])
+    persistLocale(detected)
+  }, [initialLocale])
 
   const setLocale = (next: AppLocale) => {
     setLocaleState(next)
-    window.localStorage.setItem('rwa-language', next)
+    const direction = localeOptions.find((item) => item.code === next)?.direction ?? 'ltr'
+    document.documentElement.lang = next
+    document.documentElement.dir = direction
+    persistLocale(next)
   }
   const direction = localeOptions.find((item) => item.code === locale)?.direction ?? 'ltr'
 

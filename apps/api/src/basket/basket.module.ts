@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { IdentityModule } from '../identity/identity.module'
 import { SecurityModule } from '../security/security.module'
+import { ComplianceModule } from '../compliance/compliance.module'
 import { JobQueueModule } from '../job-queue/job-queue.module'
 import { LedgerModule } from '../ledger/ledger.module'
 import { OperationsModule } from '../operations/operations.module'
@@ -61,6 +62,7 @@ import { BasketSubscriptionService } from './subscription.service'
     OperationsModule,
     IdentityModule,
     SecurityModule,
+    ComplianceModule,
   ],
   controllers: [BasketController, InternalBasketController],
   providers: [

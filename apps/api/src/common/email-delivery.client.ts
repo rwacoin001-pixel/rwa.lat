@@ -8,6 +8,7 @@ export interface EmailDeliveryMessage {
   subject: string
   text: string
   html?: string
+  idempotencyKey?: string
 }
 
 export class EmailDeliveryClient {
@@ -81,6 +82,7 @@ export class EmailDeliveryClient {
         headers: {
           authorization: `Bearer ${this.resendApiKey}`,
           'content-type': 'application/json',
+          ...(message.idempotencyKey ? { 'idempotency-key': message.idempotencyKey } : {}),
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         },
         body: JSON.stringify({

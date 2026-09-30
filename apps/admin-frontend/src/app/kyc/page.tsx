@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
+import KycReview from '@/components/kyc-review'
 import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatChip, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
 
 type KycCase = {
@@ -26,6 +27,7 @@ const TABS = [
 
 export default function KycPage() {
   const [state, setState] = useState('')
+  const [selected, setSelected] = useState<KycCase | null>(null)
   const kyc = useApi<KycCase[]>(`/api/admin/console/kyc${state ? `?state=${state}&limit=200` : '?limit=200'}`)
   const rows = kyc.data ?? []
 
@@ -38,6 +40,7 @@ export default function KycPage() {
     { key: 'submittedAt', label: '提交时间', render: (row) => <span className="text-xs text-text-faint">{formatDateTime(row.submittedAt ?? row.createdAt)}</span> },
     { key: 'decidedAt', label: '决定时间', render: (row) => <span className="text-xs text-text-faint">{formatDateTime(row.decidedAt)}</span> },
     { key: 'expiresAt', label: '过期时间', render: (row) => <span className="text-xs text-text-faint">{formatDateTime(row.expiresAt)}</span> },
+    { key: 'review', label: '核验', render: (row) => <button type="button" className="text-xs underline" onClick={() => setSelected(row)}>查看记录</button> },
   ]
 
   return (
@@ -45,7 +48,7 @@ export default function KycPage() {
       <div className="space-y-5">
         <PageHeader
           title="KYC 审核"
-          subtitle="身份认证档案（Didit 服务商回调写入）— 审核决策在认证服务商与合规流程中执行"
+          subtitle="身份核验与人工复核"
           actions={<RefreshButton loading={kyc.loading} onClick={kyc.reload} />}
         />
 
@@ -62,13 +65,7 @@ export default function KycPage() {
           </div>
         </Panel>
 
-        <Panel title="流程说明" delay={260}>
-          <ul className="space-y-1.5 text-[13px] text-text-secondary">
-            <li className="flex items-start gap-2"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />用户在前台发起认证 → 跳转 Didit 托管页 → 回调写入本档案（提交/通过/驳回/过期）</li>
-            <li className="flex items-start gap-2"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />档案中的证件信息加密存储（数据库仅保存哈希与密文），本页不展示任何个人敏感信息</li>
-            <li className="flex items-start gap-2"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-mint" />驳回后的复核与申诉入口由合规流程处理；认证服务商处可查看完整审核记录</li>
-          </ul>
-        </Panel>
+        {selected && <KycReview key={selected.id} id={selected.id} state={selected.state} onClose={() => setSelected(null)} onDone={() => { setSelected(null); kyc.reload() }} />}
       </div>
     </AdminLayout>
   )

@@ -12,13 +12,12 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/admin/package.json apps/admin/package.json
 COPY apps/admin-frontend/package.json apps/admin-frontend/package.json
 COPY packages/api-client/package.json packages/api-client/package.json
-COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/contracts packages/contracts
 RUN --mount=type=cache,id=pnpm,target=/pnpm/store \
-    pnpm install --frozen-lockfile --filter @rwa-lat/api... --ignore-scripts
+    pnpm install --frozen-lockfile --filter @rwa-lat/api... --filter '!rwalat' --prefer-offline --ignore-scripts --network-concurrency=8
 
 COPY apps/api apps/api
-COPY packages/contracts packages/contracts
-RUN pnpm --dir apps/api build:low-memory
+RUN cd apps/api && node --max-old-space-size=1024 node_modules/@nestjs/cli/bin/nest.js build
 
 FROM node:22-bookworm-slim AS runtime
 ENV PNPM_HOME=/pnpm \
@@ -27,6 +26,10 @@ ENV PNPM_HOME=/pnpm \
     APP_ENV=production \
     PORT=4000
 RUN corepack enable
+RUN apt-get update && apt-get install -y --no-install-recommends chromium chromium-sandbox fonts-noto-cjk \
+    && rm -rf /var/lib/apt/lists/*
+ENV DOCUMENT_PDF_EXECUTABLE_PATH=/usr/bin/chromium \
+    DOCUMENT_PDF_DISABLE_SANDBOX=false
 WORKDIR /workspace
 
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
@@ -35,14 +38,13 @@ COPY apps/api/package.json apps/api/package.json
 COPY apps/admin/package.json apps/admin/package.json
 COPY apps/admin-frontend/package.json apps/admin-frontend/package.json
 COPY packages/api-client/package.json packages/api-client/package.json
-COPY packages/contracts/package.json packages/contracts/package.json
+COPY packages/contracts packages/contracts
 RUN --mount=type=cache,id=pnpm-prod,target=/pnpm/store \
-    pnpm install --frozen-lockfile --prod --filter @rwa-lat/api... --ignore-scripts
+    pnpm install --frozen-lockfile --prod --filter @rwa-lat/api... --filter '!rwalat' --prefer-offline --ignore-scripts --network-concurrency=8
 
 COPY --from=build --chown=node:node /workspace/apps/api/dist apps/api/dist
-COPY --chown=node:node packages/contracts packages/contracts
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/v1/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
-CMD ["node", "apps/api/dist/main.js"]
+CMD ["sh", "-c", "cd apps/api && node_modules/.bin/typeorm migration:run -d dist/database/data-source.js && cd /workspace && exec node apps/api/dist/main.js"]

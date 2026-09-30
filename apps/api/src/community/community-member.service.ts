@@ -1,0 +1,160 @@
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
+import { createHash, randomUUID } from 'node:crypto'
+import { DataSource, EntityManager } from 'typeorm'
+import { CommunityComment, CommunityFollow, CommunityLike, CommunityPost, CommunityProfile, CommunityTopic } from './community.entities'
+import { normalizeCommunityLang, sanitizeTopics } from './community.util'
+import { MEMBER_MEDIA_MAX, MemberCommentDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
+import { ObjectStorageService, communityMediaPath, type CommunityImagePurpose } from '../object-storage/object-storage.service'
+import { communityMediaId } from './community.util'
+
+@Injectable()
+export class CommunityMemberService {
+  constructor(private readonly db: DataSource, @Optional() private readonly storage?: ObjectStorageService) {}
+
+  private requireStorage() {
+    if (!this.storage) throw new ServiceUnavailableException('Media storage is not available')
+    return this.storage
+  }
+  /** Resolves member-supplied object ids into stored media paths after ownership and upload checks. */
+  private async media(userId: string, ids: string[] | undefined, purpose: CommunityImagePurpose) {
+    if (!ids?.length) return []
+    if (ids.length > MEMBER_MEDIA_MAX) throw new BadRequestException('At most four images')
+    return (await this.requireStorage().attachableCommunityImages(userId, ids, purpose)).map(communityMediaPath)
+  }
+  uploadImage(userId: string, purpose: CommunityImagePurpose, file: { buffer: Buffer; mimetype?: string } | undefined) {
+    if (!file?.buffer?.length) throw new BadRequestException('Image file required')
+    return this.db.transaction(async m => { await this.member(m, userId) }).then(async () => {
+      const stored = await this.requireStorage().storeCommunityImage(userId, purpose, file.buffer, file.mimetype)
+      return { ...stored, url: communityMediaPath(stored.objectId) }
+    })
+  }
+  async setAvatar(userId: string, objectId: string | null) {
+    const [path] = objectId ? await this.media(userId, [objectId], 'avatar') : [null]
+    return this.db.transaction(async m => {
+      const p = await this.member(m, userId)
+      p.avatar_url = path
+      return this.view(await m.save(p))
+    })
+  }
+
+  private async member(m: EntityManager, userId: string) {
+    await m.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`community-member:${userId}`])
+    const [user] = await m.query('SELECT status FROM app.users WHERE id=$1', [userId])
+    if (user?.status !== 'active') throw new ForbiddenException('Active account required')
+    const repo = m.getRepository(CommunityProfile)
+    let profile = await repo.findOneBy({ user_id: userId })
+    if (!profile) {
+      const handle = `u${userId.replace(/-/g, '')}`.slice(0, 32)
+      profile = await repo.save(repo.create({ user_id: userId, handle, display_name: `Member ${handle.slice(-6)}`, kind: 'member', is_active: true }))
+    }
+    if (!profile.is_active) throw new ForbiddenException('Community profile is inactive')
+    return profile
+  }
+  private publicProfile(p: CommunityProfile) { return { id: p.id, handle: p.handle, displayName: p.display_name, kind: p.kind, bio: p.bio ?? null, avatarUrl: p.avatar_url ?? null } }
+  /** Own-profile view: an avatar still in malware scan is reported as pending instead of a URL that would not load yet. */
+  private async view(p: CommunityProfile) {
+    const base = this.publicProfile(p)
+    const id = communityMediaId(base.avatarUrl)
+    if (!id) return { ...base, avatarPending: false }
+    const readable = this.storage ? await this.storage.readableCommunityImageIds([id]).catch(() => new Set<string>()) : new Set<string>()
+    return readable.has(id) ? { ...base, avatarPending: false } : { ...base, avatarUrl: null, avatarPending: true }
+  }
+  async profile(userId: string) { return this.view(await this.db.transaction(async m => this.member(m, userId))) }
+  updateProfile(userId: string, input: MemberProfileDto) {
+    return this.db.transaction(async m => {
+      const p = await this.member(m, userId)
+      if (!input.displayName.trim()) throw new BadRequestException('Display name cannot be blank')
+      p.display_name = input.displayName.trim(); p.bio = input.bio?.trim() ?? p.bio
+      return m.save(p)
+    }).then(p => this.view(p))
+  }
+  private write(userId: string, key: string | undefined, intent: Record<string, unknown>, kind: 'post' | 'comment', work: (m: EntityManager, profile: CommunityProfile) => Promise<{ id: string }>) {
+    if (!key || !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(key)) throw new BadRequestException('Idempotency-Key UUID v4 required')
+    const hash = createHash('sha256').update(JSON.stringify(intent)).digest('hex')
+    return this.db.transaction(async m => {
+      const profile = await this.member(m, userId)
+      const [existing] = await m.query('SELECT * FROM app.community_user_intents WHERE user_id=$1 AND idempotency_key=$2', [userId, key])
+      if (existing) {
+        if (existing.request_hash !== hash || existing.result_type !== kind) throw new ConflictException('Idempotency-Key belongs to another publication')
+        return { id: existing.result_id, duplicate: true }
+      }
+      const result = await work(m, profile)
+      await m.query('INSERT INTO app.community_user_intents(user_id,idempotency_key,request_hash,result_type,result_id) VALUES($1,$2,$3,$4,$5)', [userId, key, hash, kind, result.id])
+      return { id: result.id, duplicate: false }
+    })
+  }
+  async post(userId: string, key: string | undefined, input: MemberPostDto) {
+    const body = (input.body ?? '').trim(); const lang = normalizeCommunityLang(input.lang)
+    const imageIds = input.imageIds ?? []
+    if ((!body && !imageIds.length) || body.length > 4000) throw new BadRequestException('Invalid post body')
+    const images = await this.media(userId, imageIds, 'post')
+    return this.write(userId, key, { body, lang, topics: input.topics ?? [], ...(images.length ? { images } : {}) }, 'post', async (m, p) => {
+      const topics = await m.getRepository(CommunityTopic).find()
+      return m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date() }))
+    })
+  }
+  async comment(userId: string, key: string | undefined, postId: string, input: MemberCommentDto) {
+    const body = (input.body ?? '').trim(); const lang = normalizeCommunityLang(input.lang)
+    const imageIds = input.imageIds ?? []
+    if ((!body && !imageIds.length) || body.length > 2000) throw new BadRequestException('Invalid reply body')
+    const images = await this.media(userId, imageIds, 'post')
+    return this.write(userId, key, { postId, body, lang, parentId: input.parentId ?? null, ...(images.length ? { images } : {}) }, 'comment', async (m, p) => {
+      const post = await m.getRepository(CommunityPost).findOne({ where: { id: postId }, lock: { mode: 'pessimistic_write' } })
+      if (post?.state !== 'published') throw new NotFoundException('Post is not public')
+      if (input.parentId && !await m.getRepository(CommunityComment).existsBy({ id: input.parentId, post_id: postId, state: 'published' })) throw new BadRequestException('Invalid parent reply')
+      const comment = await m.save(m.create(CommunityComment, { post_id: postId, profile_id: p.id, parent_id: input.parentId, body, images, lang, state: 'published' }))
+      await m.increment(CommunityPost, { id: postId }, 'comment_count', 1)
+      return comment
+    })
+  }
+  like(userId: string, targetId: string, desired: boolean) {
+    return this.db.transaction(async m => {
+      const p = await this.member(m, userId)
+      const post = await m.getRepository(CommunityPost).findOne({ where: { id: targetId }, lock: { mode: 'pessimistic_write' } })
+      if (post?.state !== 'published') throw new NotFoundException('Post is not public')
+      const repo = m.getRepository(CommunityLike); const where = { profile_id: p.id, target_type: 'post' as const, target_id: targetId }
+      const exists = await repo.existsBy(where)
+      if (desired && !exists) { await repo.insert(where); await m.increment(CommunityPost, { id: targetId }, 'like_count', 1) }
+      if (!desired && exists) { await repo.delete(where); await m.decrement(CommunityPost, { id: targetId }, 'like_count', 1) }
+      return { liked: desired, likeCount: post.like_count + (desired && !exists ? 1 : !desired && exists ? -1 : 0) }
+    })
+  }
+  follow(userId: string, handle: string, desired: boolean) {
+    return this.db.transaction(async m => {
+      const p = await this.member(m, userId)
+      const target = await m.getRepository(CommunityProfile).findOneBy({ handle: handle.toLowerCase(), is_active: true })
+      if (!target) throw new NotFoundException('Member not found')
+      if (target.id === p.id) throw new BadRequestException('Cannot follow yourself')
+      const where = { follower_id: p.id, followee_id: target.id }; const repo = m.getRepository(CommunityFollow)
+      if (desired) await repo.createQueryBuilder().insert().values(where).orIgnore().execute()
+      else await repo.delete(where)
+      return { following: desired, followerCount: await repo.countBy({ followee_id: target.id }) }
+    })
+  }
+  state(userId: string, postId?: string, handle?: string) {
+    return this.db.transaction(async m => {
+      const p = await this.member(m, userId)
+      const target = handle ? await m.getRepository(CommunityProfile).findOneBy({ handle }) : null
+      return { profile: p, liked: postId ? await m.getRepository(CommunityLike).existsBy({ profile_id: p.id, target_type: 'post', target_id: postId }) : false, following: target ? await m.getRepository(CommunityFollow).existsBy({ follower_id: p.id, followee_id: target.id }) : false }
+    }).then(async r => ({ ...r, profile: await this.view(r.profile) }))
+  }
+  publications() {
+    return this.db.query(`SELECT p.id,'post' AS "targetType",p.body,p.state,p.created_at AS "createdAt",u.handle FROM app.community_posts p JOIN app.community_profiles u ON u.id=p.profile_id WHERE p.source='user'
+      UNION ALL SELECT c.id,'comment',c.body,c.state,c.created_at,u.handle FROM app.community_comments c JOIN app.community_profiles u ON u.id=c.profile_id WHERE u.user_id IS NOT NULL ORDER BY "createdAt" DESC LIMIT 100`)
+  }
+  moderate(input: ModerateMemberContentDto, actorId: string) {
+    if (!input.reason.trim()) throw new BadRequestException('Moderation reason required')
+    return this.db.transaction(async m => {
+      const table = input.targetType === 'post' ? 'community_posts' : 'community_comments'
+      const [row] = await m.query(`SELECT * FROM app.${table} WHERE id=$1 FOR UPDATE`, [input.targetId])
+      if (!row) throw new NotFoundException('Publication not found')
+      if (row.state === 'removed' && input.state === 'published') throw new ConflictException('Removed publication cannot be restored directly')
+      await m.query(`UPDATE app.${table} SET state=$2 WHERE id=$1`, [row.id, input.state])
+      if (input.targetType === 'comment' && (row.state === 'published') !== (input.state === 'published')) {
+        await m.query('UPDATE app.community_posts SET comment_count=GREATEST(0,comment_count+$2) WHERE id=$1', [row.post_id, input.state === 'published' ? 1 : -1])
+      }
+      await m.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata) VALUES($1,'admin',$2,'community.moderate',$3,$4,$5,$6::jsonb)`, [randomUUID(), actorId, input.targetType, row.id, randomUUID(), JSON.stringify({ from: row.state, to: input.state, reason: input.reason.trim() })])
+      return { id: row.id, state: input.state }
+    })
+  }
+}

@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config'
 import { createHmac } from 'node:crypto'
+import * as presigner from '@aws-sdk/s3-request-presigner'
 import type { Repository } from 'typeorm'
 import { canonicalCallbackJson } from '../../src/job-queue/partner-callback.verifier'
 import { ObjectScanCallbackVerifier } from '../../src/object-storage/object-scan-callback.verifier'
@@ -7,6 +8,42 @@ import type { ObjectStorageObject, PresignedUrl } from '../../src/object-storage
 import { ObjectStorageService, parseBucketMap, validateObjectUpload } from '../../src/object-storage/object-storage.service'
 
 describe('object storage production security', () => {
+  it.each([undefined, 'true', 'false'])('allows pending downloads only with explicit scan waiver %p', async requireScan => {
+    const signed = jest.spyOn(presigner, 'getSignedUrl').mockResolvedValue('https://storage.example.test/signed')
+    try {
+      for (const status of ['pending','clean','quarantined','failed'] as const) {
+        const object = storedObject({ scanStatus: status })
+        const { service } = serviceWithObject(object, requireScan)
+        const download = service.createDownloadPresignedUrl({ bucket: object.bucket, key: object.key, createdBy: '22222222-2222-2222-2222-222222222222' })
+        if (status === 'clean' || (status === 'pending' && requireScan === 'false')) await expect(download).resolves.toMatchObject({ presignedUrl: 'https://storage.example.test/signed' })
+        else await expect(download).rejects.toMatchObject({ status: 423 })
+        expect(object.scanStatus).toBe(status)
+      }
+    } finally { signed.mockRestore() }
+  })
+  it.each([undefined, 'true', 'false'])('keeps public asset reads gated by the same explicit policy %p', async requireScan => {
+    const signed = jest.spyOn(presigner, 'getSignedUrl').mockResolvedValue('https://storage.example.test/signed')
+    try {
+      for (const status of ['pending','clean','quarantined','failed'] as const) {
+        const object = storedObject({ scanStatus: status, bucket: 'rwa-assets', key: 'disclosure.pdf' })
+        const { service } = serviceWithObject(object, requireScan)
+        const result = service.createPublishedAssetUrl('rwa-assets/disclosure.pdf')
+        if (status === 'clean' || (status === 'pending' && requireScan === 'false')) await expect(result).resolves.toBe('https://storage.example.test/signed')
+        else await expect(result).rejects.toMatchObject({ status: 404 })
+      }
+    } finally { signed.mockRestore() }
+  })
+  it('does not remove a file referenced by a posted trade or published document', async () => {
+    const send = jest.fn()
+    const query = jest.fn().mockResolvedValueOnce([{ id: 'file-id' }]).mockResolvedValueOnce([{ used: true }])
+    const objects = { manager: { transaction: (work: (em: unknown) => unknown) => work({ query }) } }
+    const service = new ObjectStorageService(new ConfigService({ OBJECT_STORAGE_ENABLED: 'false' }), objects as any, {} as any)
+    ;(service as any).enabled = true
+    ;(service as any).s3 = { send }
+    await expect(service.deleteObject('rwa-attachments', 'receipt.pdf')).rejects.toThrow('不能删除')
+    expect(send).not.toHaveBeenCalled()
+    expect(query).toHaveBeenCalledTimes(2)
+  })
   it('maps stable logical buckets to distinct deployment-specific physical buckets', () => {
     expect(parseBucketMap(JSON.stringify({
       'rwa-kyc': 'rwa-lat-prod-kyc-001',
@@ -159,7 +196,7 @@ function storedObject(overrides: Partial<ObjectStorageObject> = {}): ObjectStora
   }
 }
 
-function serviceWithObject(object: ObjectStorageObject) {
+function serviceWithObject(object: ObjectStorageObject, requireScan?: string) {
   const save = jest.fn(async (value: ObjectStorageObject) => value)
   const update = jest.fn(async () => ({ affected: 1, raw: [], generatedMaps: [] }))
   const objectFind = jest.fn(async () => [object])
@@ -187,6 +224,7 @@ function serviceWithObject(object: ObjectStorageObject) {
       S3_ACCESS_KEY: 'test-access',
       S3_SECRET_KEY: 'test-secret-value-at-least-24-characters',
       OBJECT_STORAGE_SCAN_PROVIDER: 'approved-scanner',
+      OBJECT_STORAGE_REQUIRE_SCAN: requireScan,
     }),
     objects as unknown as Repository<ObjectStorageObject>,
     presigned as unknown as Repository<PresignedUrl>,

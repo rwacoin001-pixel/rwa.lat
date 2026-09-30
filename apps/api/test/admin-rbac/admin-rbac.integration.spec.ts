@@ -1,4 +1,5 @@
 import { INestApplication } from '@nestjs/common'
+import { ConfigModule } from '@nestjs/config'
 import { Test } from '@nestjs/testing'
 import { DataSource } from 'typeorm'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -46,6 +47,7 @@ describe('API-013 admin RBAC HTTP (Pg + guard)', () => {
 
     moduleRef = await Test.createTestingModule({
       imports: [
+        ConfigModule.forRoot({ isGlobal: true }),
         TypeOrmModule.forRoot({ ...opts, entities: [AdminRole, AdminUser, AdminApprovalRequest, AdminRolePermission, AdminSession, AuditLog] }),
         AdminRbacModule,
       ],

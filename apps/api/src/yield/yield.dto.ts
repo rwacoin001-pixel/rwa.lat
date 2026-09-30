@@ -1,4 +1,4 @@
-import { IsIn, IsISO8601, Matches } from 'class-validator'
+import { IsIn, IsInt, IsISO8601, IsOptional, Matches, Max, Min } from 'class-validator'
 import { ApiProperty } from '@nestjs/swagger'
 
 export class CreateYieldBatchDto {
@@ -27,4 +27,12 @@ export class SettlePredictionDto {
   @ApiProperty()
   @IsIn(['yes', 'no', 'void'])
   outcomeKey!: 'yes' | 'no' | 'void'
+}
+
+export class YieldScheduleQueryDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(36)
+  months?: number
 }

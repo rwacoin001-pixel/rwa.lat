@@ -4,12 +4,12 @@ services:
     runtime: docker
     plan: free
     region: singapore
-    repo: https://github.com/rwacoin001-pixel/rwa.lat
+    repo: https://github.com/wx6668888/rwa-lat-backup
     branch: main
     dockerContext: .
     dockerfilePath: ./deploy/Dockerfile.api
     autoDeployTrigger: off
-    healthCheckPath: /v1/health/ready
+    healthCheckPath: /v1/health
     numInstances: 1
     envVars:
       - key: NODE_ENV
@@ -59,14 +59,18 @@ services:
       - key: RESEND_HTTP_TIMEOUT_MS
         value: "10000"
       - key: GOOGLE_OAUTH_ENABLED
-        value: "false"
+        value: "true"
       - key: X_OAUTH_ENABLED
-        value: "false"
+        value: "true"
       - key: PRODUCTION_FINANCIAL_FEATURES_ENABLED
-        value: "false"
+        value: "true"
       - key: WALLET_EXECUTION_ENABLED
-        value: "false"
+        value: "true"
       - key: WALLET_EXECUTION_WORKER_ENABLED
+        value: "false"
+      - key: RECURRING_INVESTMENT_WORKER_ENABLED
+        value: "false"
+      - key: NOTIFICATION_DELIVERY_WORKER_ENABLED
         value: "false"
       - key: POLYMARKET_TRADING_ENABLED
         value: "false"
@@ -114,8 +118,24 @@ services:
         value: "25"
       - key: OBJECT_STORAGE_ENABLED
         value: "false"
+      - key: OBJECT_STORAGE_REQUIRE_SCAN
+        value: "true"
+      - key: DOCUMENT_GENERATION_WORKER_ENABLED
+        value: "true"
+      - key: DOCUMENT_PDF_EXECUTABLE_PATH
+        value: /usr/bin/chromium
+      - key: DOCUMENT_PDF_DISABLE_SANDBOX
+        value: "false"
       - key: OTEL_SERVICE_NAME
         value: rwa-lat-core
+      - key: AI_MODEL_ENDPOINT
+        value: https://api.deepseek.com
+      - key: AI_MODEL_NAME
+        value: deepseek-chat
+      - key: AI_MODEL_API_KEY
+        sync: false
+      - key: AI_MODEL_API_STYLE
+        value: openai
       - key: LOG_LEVEL
         value: info
 
@@ -124,7 +144,7 @@ services:
     runtime: docker
     plan: free
     region: singapore
-    repo: https://github.com/rwacoin001-pixel/rwa.lat
+    repo: https://github.com/wx6668888/rwa-lat-backup
     branch: main
     dockerContext: .
     dockerfilePath: ./deploy/Dockerfile.admin
@@ -196,7 +216,7 @@ services:
     runtime: docker
     plan: free
     region: singapore
-    repo: https://github.com/rwacoin001-pixel/rwa.lat
+    repo: https://github.com/wx6668888/rwa-lat-backup
     branch: main
     dockerContext: .
     dockerfilePath: ./deploy/Dockerfile.admin-frontend

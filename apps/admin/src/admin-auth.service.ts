@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Injectable, UnauthorizedException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, randomUUID, scryptSync, timingSafeEqual } from 'node:crypto'
 import { DataSource } from 'typeorm'
@@ -88,7 +88,7 @@ export function createAdminTotp(secret: string, at = Date.now()): string {
 }
 
 function verifyAdminPassword(password: string, encoded: string | null): boolean {
-  if (!encoded) return false
+  if (!encoded || !/^scrypt\$[0-9a-f]{32}\$[0-9a-f]{128}$/.test(encoded)) return false
   const [algorithm, saltHex, digestHex] = encoded.split('$')
   if (algorithm !== PASSWORD_HASH_PREFIX || !saltHex || !digestHex) return false
   try {
@@ -161,6 +161,45 @@ export class AdminAuthService {
       metadata: { ipAddress: input.ipAddress ?? null, userAgent: this.safeUserAgent(input.userAgent) },
     })
     return issued
+  }
+
+  async changePassword(adminId: string, input: {currentPassword:string;newPassword:string;mfaCode?:string}) {
+    if(input.newPassword.length<12||input.newPassword.length>256)throw new BadRequestException('New administrator password must contain 12 to 256 characters')
+    const outcome=await this.ds.transaction(async em=>{
+      const [row]=await em.query('SELECT password_hash,disabled_at,locked_until,mfa_state,mfa_secret_ciphertext FROM app.admin_users WHERE id=$1 FOR UPDATE',[adminId])
+      if(!row||row.disabled_at||(row.locked_until&&new Date(row.locked_until).getTime()>Date.now()))return 'credentials'
+      const passwordValid=verifyAdminPassword(input.currentPassword,row.password_hash)
+      const mfaValid=(!this.mfaRequired||row.mfa_state==='enabled')&&row.mfa_state!=='pending'&&(row.mfa_state!=='enabled'||this.verifyMfaCode(row.mfa_secret_ciphertext,input.mfaCode))
+      if(!passwordValid||!mfaValid){
+        await em.query(`UPDATE app.admin_users SET failed_login_count=failed_login_count+1,
+          locked_until=CASE WHEN failed_login_count+1 >= $2 THEN now()+($3::text||' seconds')::interval ELSE locked_until END WHERE id=$1`,[adminId,this.maxFailures,this.lockSeconds])
+        await em.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata)
+          VALUES($1,'admin',$2::uuid,'admin.password.change_failed','admin_user',$2::text,$3,$4::jsonb)`,
+          [randomUUID(),adminId,randomUUID(),JSON.stringify({reason:passwordValid?'mfa_verification_failed':'current_password_verification_failed'})])
+        return passwordValid?'mfa':'credentials'
+      }
+      await em.query('UPDATE app.admin_users SET password_hash=$2,failed_login_count=0,locked_until=NULL WHERE id=$1',[adminId,hashAdminPassword(input.newPassword)])
+      await em.query('UPDATE app.admin_sessions SET revoked_at=now() WHERE admin_user_id=$1 AND revoked_at IS NULL',[adminId])
+      await em.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata)
+        VALUES($1,'admin',$2::uuid,'admin.password.changed','admin_user',$2::text,$3,'{"sessionsRevoked":true,"mfaPreserved":true}'::jsonb)`,[randomUUID(),adminId,randomUUID()])
+      return 'ok'
+    })
+    if(outcome!=='ok')throw new UnauthorizedException(outcome==='mfa'?'Additional administrator verification is required':'Current administrator password could not be verified')
+    return {status:'password_changed',reauthenticationRequired:true}
+  }
+
+  async securityStatus(adminId: string) {
+    const [row] = await this.ds.query('SELECT mfa_state FROM app.admin_users WHERE id=$1 AND disabled_at IS NULL', [adminId])
+    if (!row) throw new UnauthorizedException('Admin session is invalid or expired')
+    const environment = this.config.get<string>('APP_ENV')
+    return {
+      mfaState: row.mfa_state as 'enabled' | 'pending' | 'disabled',
+      mfaRequired: this.mfaRequired,
+      sessionTtlSeconds: this.sessionTtlSeconds,
+      loginMaxFailures: this.maxFailures,
+      loginLockSeconds: this.lockSeconds,
+      environment: ['development', 'production', 'test', 'staging'].includes(environment ?? '') ? environment : 'unknown',
+    }
   }
 
   async authenticate(rawToken: string): Promise<AdminSessionActor> {

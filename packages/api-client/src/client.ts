@@ -7,7 +7,6 @@ const getWindow = () => isBrowser ? window : undefined
 import type {
   // Types
   ApiResponse,
-  ApiError,
   RegisterEmailRequest,
   RegisterEmailResponse,
   VerifyEmailRequest,
@@ -59,6 +58,7 @@ import type {
 export interface ApiClientConfig {
   baseUrl: string
   getAuthToken?: () => string | null
+  onUnauthorized?: (error: AxiosError<unknown>) => void
   timeout?: number
 }
 
@@ -69,20 +69,28 @@ export class ApiClientError extends Error {
     public readonly code: string,
     message: string,
     public readonly status?: number,
-    public readonly details?: Record<string, unknown>
+    public readonly details?: Record<string, unknown>,
+    public readonly requestId?: string
   ) {
     super(message)
     this.name = 'ApiClientError'
   }
 
-  static fromAxiosError(error: AxiosError<ApiError>): ApiClientError {
+  static fromAxiosError(error: AxiosError<unknown>): ApiClientError {
     if (error.response) {
-      const data = error.response.data
+      const outer = asRecord(error.response.data) ?? {}
+      const data = asRecord(outer.error) ?? outer
+      const message = typeof data.message === 'string'
+        ? data.message
+        : Array.isArray(data.message)
+          ? data.message.filter((item): item is string => typeof item === 'string').join('; ')
+          : error.message
       return new ApiClientError(
-        data?.code || 'API_ERROR',
-        data?.message || error.message,
+        typeof data.code === 'string' ? data.code : 'API_ERROR',
+        message || error.message,
         error.response.status,
-        data?.details
+        asRecord(data.details),
+        typeof outer.requestId === 'string' ? outer.requestId : undefined
       )
     }
     if (error.code === 'ECONNABORTED') {
@@ -105,6 +113,7 @@ export class ApiClient {
     this.config = {
       baseUrl: config.baseUrl,
       getAuthToken: config.getAuthToken || (() => null),
+      onUnauthorized: config.onUnauthorized || (() => undefined),
       timeout: config.timeout || 30000
     }
 
@@ -131,7 +140,12 @@ export class ApiClient {
     // Response interceptor for error handling
     this.client.interceptors.response.use(
       (response) => response,
-      (error: AxiosError<ApiError>) => Promise.reject(ApiClientError.fromAxiosError(error))
+      (error: AxiosError<unknown>) => {
+        if (error.response?.status === 401) {
+          try { this.config.onUnauthorized(error) } catch { /* Keep the API error as the rejected result. */ }
+        }
+        return Promise.reject(ApiClientError.fromAxiosError(error))
+      }
     )
   }
 
@@ -390,17 +404,25 @@ export class ApiClient {
 
 // ─── Factory Functions ───
 
-export function createUserApiClient(baseUrl?: string): ApiClient {
+export function createUserApiClient(
+  baseUrl?: string,
+  options: Pick<ApiClientConfig, 'getAuthToken' | 'onUnauthorized'> = {}
+): ApiClient {
   return new ApiClient({
     baseUrl: baseUrl || (isBrowser 
       ? (getWindow() as any).__NEXT_PUBLIC_API_URL__ || 'http://localhost:4000' 
       : 'http://localhost:4000'),
-    getAuthToken: () => {
+    getAuthToken: options.getAuthToken ?? (() => {
       if (isBrowser) {
-        return getWindow()?.localStorage.getItem('auth_token') || null
+        const storage = getWindow()?.localStorage
+        // Keep both keys readable while older auth screens migrate to the
+        // canonical session key. This prevents a valid session from being
+        // silently dropped by data screens that mount after login.
+        return storage?.getItem('auth_token') || storage?.getItem('rwa-session-token') || null
       }
       return null
-    }
+    }),
+    onUnauthorized: options.onUnauthorized,
   })
 }
 
@@ -410,4 +432,10 @@ export function createAdminApiClient(baseUrl?: string): ApiClient {
     // session server-side and never exposes an administrator credential.
     baseUrl: baseUrl || '/api/admin',
   })
+}
+
+function asRecord(value: unknown): Record<string, unknown> | undefined {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value as Record<string, unknown>
+    : undefined
 }

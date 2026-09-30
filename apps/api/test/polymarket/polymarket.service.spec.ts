@@ -2,6 +2,7 @@ import { ConfigService } from '@nestjs/config'
 import type { ObjectLiteral, Repository } from 'typeorm'
 import type { AdminRbacService } from '../../src/admin-rbac/admin-rbac.service'
 import type { PolymarketReadAdapter } from '../../src/polymarket/polymarket-adapter.interface'
+import { normalizeMarket } from '../../src/polymarket/polymarket-public.adapter'
 import {
   PolymarketExternalEvent,
   PolymarketMarketMapping,
@@ -40,6 +41,7 @@ describe('PolymarketService', () => {
       mode: 'public-read-only',
       isEnabled: jest.fn().mockReturnValue(true),
       listMarkets: jest.fn(),
+      listTrendingMarkets: jest.fn(),
       getOrderBook: jest.fn(),
     }
     service = new PolymarketService(
@@ -111,6 +113,28 @@ describe('PolymarketService', () => {
         response: expect.objectContaining({ code: POLYMARKET_ERROR_CODES.TRADING_DISABLED }),
       })
     }
+  })
+
+  it('publishes only active finance quotes with provider prices and reuses its short cache', async () => {
+    const marketsFromGamma = [
+      { id: '1', slug: 'fed-rate', question: 'Will the Fed cut rates?', active: true, closed: false, restricted: true, outcomes: '["Yes","No"]', outcomePrices: '["0.63","0.37"]', volume24hr: 9000, events: [{ id: 'fed-event', slug: 'fed-decision' }] },
+      { id: '2', slug: 'sports-game', question: 'Will the Tigers win?', active: true, closed: false, outcomes: '["Yes","No"]', outcomePrices: '["0.8","0.2"]' },
+      { id: '3', slug: 'bitcoin-price', question: 'Will Bitcoin reach $90,000?', active: true, closed: false, outcomes: '["Yes","No"]', outcomePrices: '["0.4","0.6"]' },
+      { id: '5', slug: 'fed-rate-up', question: 'Will the Fed raise rates?', active: true, closed: false, outcomes: '["Yes","No"]', outcomePrices: '["0.2","0.8"]', events: [{ id: 'fed-event' }] },
+      { id: '4', slug: 'gold-price', question: 'Will gold reach $5,000?', active: false, closed: true, outcomes: '["Yes","No"]', outcomePrices: '["0.7","0.3"]' },
+    ].map(normalizeMarket).filter((item): item is NonNullable<typeof item> => item !== null)
+    adapter.listTrendingMarkets.mockResolvedValue({ markets: marketsFromGamma, nextCursor: null, fetchedAt: new Date('2026-09-24T00:00:00Z') })
+
+    const finance = await service.publicPreview('finance', new Date('2026-09-24T00:00:00Z'))
+    const all = await service.publicPreview('all', new Date('2026-09-24T00:00:01Z'))
+
+    expect(finance.items.map(item => item.id)).toEqual(['1', '3'])
+    expect(finance.items[0].outcomes[0].impliedProbability).toBe(.63)
+    expect(finance.items[0].eventSlug).toBe('fed-decision')
+    expect(finance.items[0].volume24hUsd).toBe(9000)
+    expect(finance.tradingEnabled).toBe(false)
+    expect(all.items.map(item => item.id)).toContain('2')
+    expect(adapter.listTrendingMarkets).toHaveBeenCalledTimes(1)
   })
 
   it('canonicalizes object keys for stable event hashes', () => {

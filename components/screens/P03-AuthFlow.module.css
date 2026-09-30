@@ -1,0 +1,7 @@
+.flow { display: block; }
+.success { margin: 12px 2px 0; color: var(--auth-accent); font-size: 12.5px; line-height: 1.6; overflow-wrap: anywhere; }
+.footer { margin: 12px -2px 0; }
+.footer button { display: inline-flex; gap: 8px; align-items: center; min-height: 40px; padding: 0 2px; border: 0; background: transparent; color: var(--auth-muted); font: 500 12.5px/1.4 var(--sans); cursor: pointer; }
+.footer button:hover { color: var(--ink); }
+.footer button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 4px; }
+[dir='rtl'] .footer svg { transform: rotate(180deg); }

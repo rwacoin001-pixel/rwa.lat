@@ -10,7 +10,6 @@ import { KycCase } from '../../src/compliance/kyc-case.entity'
 import { EligibilityProfile } from '../../src/compliance/eligibility-profile.entity'
 import { RiskFlag } from '../../src/compliance/risk-flag.entity'
 import { ScreeningCase } from '../../src/compliance/screening-case.entity'
-import { RegionPolicy } from '../../src/compliance/region-policy'
 import { StubKycProvider } from '../../src/compliance/stub-kyc.provider'
 import { StubSanctionsProvider } from '../../src/compliance/stub-sanctions.provider'
 import type { KycProvider } from '../../src/compliance/kyc-provider.interface'
@@ -35,8 +34,6 @@ describe('ComplianceService 核心逻辑', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let screeningRepo: any
   let sanctions: StubSanctionsProvider
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let regionPolicy: { isAllowed: jest.Mock }
 
   const userId = randomUUID()
 
@@ -46,7 +43,6 @@ describe('ComplianceService 核心逻辑', () => {
     riskRepo = repoMock() as never
     screeningRepo = repoMock() as never
     sanctions = new StubSanctionsProvider({ get: () => '' } as never)
-    regionPolicy = { isAllowed: jest.fn().mockReturnValue(true) }
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -57,7 +53,6 @@ describe('ComplianceService 核心逻辑', () => {
         { provide: getRepositoryToken(ScreeningCase), useValue: screeningRepo },
         { provide: 'KycProvider', useClass: StubKycProvider },
         { provide: 'SanctionsProvider', useValue: sanctions },
-        { provide: RegionPolicy, useValue: regionPolicy },
         { provide: ConfigService, useValue: { get: (k: string) => `test-${k}` } },
         {
           provide: IdentityCrypto,
@@ -107,12 +102,15 @@ describe('ComplianceService 核心逻辑', () => {
     expect(saved.decision).toBe('manual_review')
   })
 
-  it('地域被封锁 -> 资格 ineligible', async () => {
-    regionPolicy.isAllowed.mockReturnValue(false)
+  it('地区规则待合规确认：忽略客户端地区且不产生地区阻断', async () => {
+    kycRepo.findOne!.mockResolvedValue({ id: 'c1', userId, state: 'approved' } as KycCase)
+    screeningRepo.findOne!.mockResolvedValue(null)
+    riskRepo.find!.mockResolvedValue([])
     eligibilityRepo.findOne!.mockResolvedValue(null)
     const profile = await service.evaluateEligibility(userId, 'rwa-token', 'KP')
-    expect(profile.decision).toBe('ineligible')
-    expect(profile.reasonCodes).toContain('region_blocked')
+    expect(profile.decision).toBe('eligible')
+    expect(profile.reasonCodes).not.toContain('region_blocked')
+    expect(profile.evidenceReferences.region).toBeNull()
   })
 
   it('高风险/严重风险标记 -> 资格 manual_review', async () => {

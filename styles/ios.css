@@ -1,0 +1,567 @@
+/* iOS chrome · one nav bar, one Dock and one spring vocabulary for every page beyond Home.
+   Loaded after globals.css (app/layout.tsx) so it settles the layered topbar/dock overrides there.
+   Warm = light theme (ivory glass, lacquer-gold accent); cool = dark theme (ink glass, ice-blue accent). */
+
+:root {
+  /* Phone column cap — wide enough for the largest phones (iPhone 16 Pro Max = 440pt) so no side bands show. */
+  --app-max: 480px;
+  /* Damped springs sampled from x(t) = 1 − e^(−ζωt)(cos ω_d t + ζω/ω_d · sin ω_d t). */
+  --spring: linear(0, .0333, .1144, .2213, .338, .4539, .5619, .6584, .7413, .8105, .8666, .9109, .9447, .9699, .9879, 1.0001, 1.008, 1.0126, 1.0147, 1.0152, 1.0145, 1.0132, 1.0115, 1.0098, 1.008, 1.0064, 1.005, 1.0037, 1); /* ζ .8 · 1.5% overshoot */
+  --spring-dur: 520ms;
+  --spring-bouncy: linear(0, .0464, .1601, .3089, .4682, .6207, .7553, .8664, .9521, 1.0135, 1.0532, 1.0751, 1.0832, 1.0814, 1.0731, 1.0612, 1.048, 1.035, 1.0233, 1.0134, 1.0057, 1.0001, .9963, .9941, .9931, .9931, .9937, .9946, 1); /* ζ .62 · 8% overshoot */
+  --spring-bouncy-dur: 640ms;
+}
+
+.rwa-mobile {
+  --bar-ink: #1b1813;
+  --bar-muted: rgba(40, 33, 25, .56);
+  --bar-accent: #8a6a3b;
+  --bar-line: rgba(27, 24, 19, .1);
+  --bar-glass: rgba(252, 249, 243, .72);
+  --bar-btn: rgba(255, 253, 249, .62);
+  --bar-btn-line: rgba(255, 255, 255, .9);
+  --bar-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 1px 2px rgba(56, 38, 20, .07), 0 8px 18px -10px rgba(56, 38, 20, .24);
+  --dock-glass: rgba(252, 248, 241, .74);
+  --dock-line: rgba(255, 255, 255, .86);
+  --dock-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -10px 22px rgba(160, 130, 104, .08), 0 18px 38px -14px rgba(68, 46, 32, .34), 0 2px 6px rgba(68, 46, 32, .08);
+  --dock-lens: rgba(138, 106, 59, .11);
+  --dock-lens-line: rgba(255, 255, 255, .78);
+  --dock-lens-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), inset 0 -6px 12px rgba(138, 106, 59, .08), 0 6px 14px -8px rgba(68, 46, 32, .3);
+}
+.rwa-mobile[data-theme='dark'] {
+  --bar-ink: #e9edf3;
+  --bar-muted: rgba(214, 224, 236, .56);
+  --bar-accent: #bcd9e3;
+  --bar-line: rgba(185, 213, 222, .12);
+  --bar-glass: rgba(9, 14, 24, .66);
+  --bar-btn: rgba(255, 255, 255, .06);
+  --bar-btn-line: rgba(185, 213, 222, .16);
+  --bar-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 8px 18px -10px rgba(0, 0, 0, .7);
+  --dock-glass: rgba(14, 20, 32, .64);
+  --dock-line: rgba(185, 213, 222, .18);
+  --dock-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -10px 22px rgba(0, 0, 0, .28), 0 18px 40px -12px rgba(0, 0, 0, .66), 0 0 22px rgba(150, 196, 214, .08);
+  --dock-lens: rgba(185, 213, 222, .12);
+  --dock-lens-line: rgba(200, 228, 238, .24);
+  --dock-lens-shadow: inset 0 1px 0 rgba(255, 255, 255, .14), 0 8px 18px -10px rgba(0, 0, 0, .7);
+}
+
+/* ── Maison pages fill the column edge to edge (the shell gutter was showing as a side band). ── */
+.rwa-mobile:not([data-screen='home']):has(> .rwa-screen-transition > [data-maison-page]) { padding-inline: 0; }
+
+/* ── Nav bar · every page except Home ───────────────────────────────────────────────── */
+.rwa-mobile:not([data-screen='home']) { --topbar-h: 52px; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar.rwa-topbar--s1 {
+  color: var(--bar-ink);
+  background: transparent;
+  border-bottom: 0;
+  box-shadow: 0 .5px 0 transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition: background-color .28s ease, box-shadow .28s ease, -webkit-backdrop-filter .28s ease, backdrop-filter .28s ease;
+}
+/* Scroll-edge appearance: clear at rest, glass + hairline once content passes underneath. */
+.rwa-mobile:not([data-screen='home']) .rwa-topbar.rwa-topbar--s1[data-scrolled='true'] {
+  background: var(--bar-glass);
+  box-shadow: 0 .5px 0 var(--bar-line);
+  -webkit-backdrop-filter: blur(24px) saturate(180%);
+  backdrop-filter: blur(24px) saturate(180%);
+}
+.rwa-mobile:not([data-screen='home']) .rwa-topbar--s1 .rwa-topbar__grid {
+  position: relative;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  column-gap: 4px;
+  height: var(--topbar-h);
+  padding: 0 10px;
+}
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__leading { grid-column: 1; display: flex; gap: 4px; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__context { grid-column: 3; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__utilities { grid-column: 4; display: flex; align-items: center; gap: 6px; }
+/* The title is centred on the bar, not on the space the slots leave, so it sits in the same place on every page. */
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__center {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  pointer-events: none;
+  font-size: 16.5px;
+  font-weight: 620;
+  letter-spacing: -.012em;
+}
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__center > * { pointer-events: auto; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__center > span:not(.rwa-steps) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__center > span { animation: ios-title-in .42s var(--spring) backwards; }
+/* Large-title handoff: the bar title waits while the page's own h1 is in view, then rises in as it slides under. */
+.rwa-mobile:not([data-screen='home']) .rwa-topbar__center > span:not(.rwa-steps) { transition: opacity .28s var(--m-ease, ease), transform .42s var(--spring); }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar[data-large-title='true'] .rwa-topbar__center > span:not(.rwa-steps) { opacity: 0; transform: translateY(6px); }
+/* Inbox count on the avatar: a small ink capsule on the leading-top edge of the disc. */
+.rwa-mobile .rwa-topbar .rwa-topbar__account .rwa-topbar__count { position: absolute; top: 3px; right: auto; inset-inline-end: 1px; display: grid; place-items: center; min-width: 17px; height: 17px; padding: 0 4px; box-sizing: border-box; border-radius: 999px; background: #e0564a; color: #fff; font: 700 10px/1 var(--m-sans, system-ui); font-variant-numeric: tabular-nums; box-shadow: 0 0 0 2px var(--m-bg, #fff); animation: ios-count-in .4s var(--spring) backwards; }
+@keyframes ios-count-in { from { transform: scale(.4); opacity: 0; } }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar--s1 button.rwa-topbar__slot:not(.rwa-topbar__slot--logo) { justify-self: center; color: var(--bar-ink); }
+/* Media heroes keep their own contrast buttons; only the geometry is shared. */
+.rwa-mobile:not([data-screen='home']) .rwa-topbar--s1[data-surface='transparent-over-media'] { background: transparent; box-shadow: none; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar--s1[data-surface='transparent-over-media'][data-scrolled='true'] { background: var(--bar-glass); box-shadow: 0 .5px 0 var(--bar-line); }
+[dir='rtl'] .rwa-topbar__slot[data-slot='L1'] .lucide-chevron-left { transform: scaleX(-1); }
+
+/* ── Nav bar geometry · shared by Home and every other page (D3.2) ──────────────────────
+   Safe area + 10px of air, one 44px row, and the same 12px inline inset so L1 / R1 land on
+   identical coordinates everywhere. Buttons are bare glyphs: no disc, no glass, no hairline. */
+.rwa-mobile[data-theme][data-screen] .rwa-topbar.rwa-topbar--s1[data-template] {
+  top: 0;
+  min-height: 0;
+  padding-top: calc(env(safe-area-inset-top) + 10px);
+}
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__grid {
+  height: 44px;
+  min-height: 44px;
+  column-gap: 0;
+  padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
+}
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__leading,
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__utilities { gap: 2px; }
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot:not(.rwa-topbar__slot--logo),
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__account {
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  min-height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition: opacity .18s ease, transform var(--spring-dur) var(--spring);
+}
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot:not(.rwa-topbar__slot--logo) svg { width: 23px; height: 23px; stroke-width: 1.85; }
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot[data-slot='L1'] svg.lucide-chevron-left { width: 27px; height: 27px; stroke-width: 2.1; }
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot:hover,
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__account:hover { background: transparent; }
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot:active,
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__account:active { opacity: .5; transform: scale(.94); transition-duration: .06s; }
+/* The wordmark keeps its natural width; its text and the back chevron's stroke both start ~20px in. */
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__slot--logo { width: auto; min-width: 0; flex: none; height: 44px; padding: 0 8px; place-items: center start; }
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot[data-slot='L1']:has(> svg.lucide-chevron-left) { margin-inline-start: -9px; }
+/* Close and search glyphs pulled in so their first stroke lines up with the chevron's (~20px from the edge). */
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot[data-slot='L1']:has(> svg.lucide-x) { margin-inline-start: -7px; }
+.rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] button.rwa-topbar__slot[data-slot='L1']:has(> svg.lucide-search) { margin-inline-start: -4px; }
+/* Over a media hero the glyphs carry their own contrast instead of a disc. */
+.rwa-mobile:not([data-screen='home']) .rwa-topbar--s1[data-surface='transparent-over-media']:not([data-scrolled='true']) button.rwa-topbar__slot { color: var(--media-ink, #fff); background: transparent; }
+.rwa-mobile:not([data-screen='home']) .rwa-topbar--s1[data-surface='transparent-over-media']:not([data-scrolled='true']) button.rwa-topbar__slot svg { filter: drop-shadow(0 1px 2px rgba(0, 0, 0, .38)) drop-shadow(0 0 10px rgba(0, 0, 0, .18)); }
+
+/* Account avatar · a 38px disc in the 44px hit area, tinted to the warm / cool palette. */
+.rwa-mobile {
+  --avatar-ink: #6b4f2a;
+  --avatar-disc: linear-gradient(150deg, #f6ecdc 0%, #e8d3b2 100%);
+  --avatar-line: rgba(255, 255, 255, .95);
+  --avatar-shadow: inset 0 1px 0 rgba(255, 255, 255, .8), 0 6px 14px -8px rgba(92, 64, 30, .5);
+}
+.rwa-mobile[data-theme='dark'] {
+  --avatar-ink: #cfe4ec;
+  --avatar-disc: linear-gradient(150deg, #22324a 0%, #111b2b 100%);
+  --avatar-line: rgba(185, 213, 222, .26);
+  --avatar-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), 0 6px 14px -8px rgba(0, 0, 0, .8);
+}
+.rwa-topbar__avatar-disc {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  overflow: hidden;
+  border-radius: 50%;
+  color: var(--avatar-ink);
+  background: var(--avatar-disc);
+  box-shadow: 0 0 0 .5px var(--avatar-line), var(--avatar-shadow);
+}
+.rwa-topbar__avatar-disc > svg,
+.rwa-topbar__avatar-disc > img { display: block; width: 100%; height: 100%; }
+.rwa-topbar__avatar-disc > svg.lucide { width: 21px; height: 21px; }
+.rwa-topbar__avatar-disc .rwa-topbar__initial { width: auto; height: auto; color: inherit; background: none; font-size: 15px; font-weight: 700; }
+.rwa-mobile .rwa-topbar .rwa-topbar__account[data-ring='attention']::before { top: 3px; inset-inline-end: 3px; }
+
+/* ── Nav bar collapse · non-Home pages share the Home rule and the Dock spring ───────── */
+.rwa-mobile:not([data-screen='home']) .rwa-topbar.rwa-topbar--s1[data-template] {
+  transition: transform var(--spring-dur) var(--spring), opacity .22s ease, background-color .28s ease, box-shadow .28s ease, -webkit-backdrop-filter .28s ease, backdrop-filter .28s ease;
+}
+.rwa-mobile:not([data-screen='home']) .rwa-topbar.rwa-topbar--s1[data-template][data-chrome-hidden='true'] {
+  transform: translateY(calc(-100% - 8px));
+  opacity: 0;
+  pointer-events: none;
+}
+.rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] > .rwa-topbar.rwa-topbar--s1[data-template] {
+  transition: transform var(--spring-dur) var(--spring), opacity .22s ease;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rwa-mobile[data-screen] .rwa-topbar.rwa-topbar--s1[data-template],
+  .rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] > .rwa-topbar.rwa-topbar--s1[data-template] { transition: none; }
+}
+
+/* Edge swipe back · a glass chevron follows the finger in from the leading edge. */
+.rwa-edge-back {
+  position: fixed;
+  z-index: 140;
+  top: 50%;
+  inset-inline-start: max(0px, calc((100vw - var(--app-max)) / 2));
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  margin-top: -20px;
+  border-radius: 50%;
+  color: var(--bar-ink);
+  background: var(--bar-glass);
+  box-shadow: 0 0 0 .5px var(--bar-line), 0 10px 24px -12px rgba(0, 0, 0, .45);
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-48px);
+  transition: transform var(--spring-dur) var(--spring), opacity .2s ease, color .15s ease;
+}
+[dir='rtl'] .rwa-edge-back { scale: -1 1; }
+.rwa-edge-back[data-state='drag'] {
+  opacity: calc(.35 + var(--edge-progress, 0) * .65);
+  transform: translateX(calc(var(--edge-pull, 0px) - 30px));
+  transition: opacity .1s linear, color .15s ease;
+}
+.rwa-edge-back[data-armed='true'] { color: var(--bar-accent); transform: translateX(calc(var(--edge-pull, 0px) - 30px)) scale(1.08); }
+@media (prefers-reduced-motion: reduce) { .rwa-edge-back { transition: opacity .1s linear; } }
+@keyframes ios-title-in { from { opacity: 0; transform: translateY(4px); } }
+
+/* ── Dock · liquid glass capsule + AI orb, identical on Home, Markets and Assets ─────── */
+.liquid-dock__quick-trigger {
+  position: absolute;
+  z-index: 4;
+  inset-inline-end: 72px;
+  bottom: calc(100% + 10px);
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: .5px solid var(--dock-line);
+  border-radius: 50%;
+  color: var(--bar-accent);
+  background: var(--dock-glass);
+  box-shadow: var(--dock-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(175%);
+  backdrop-filter: blur(24px) saturate(175%);
+  pointer-events: auto;
+  transition: opacity .22s ease, transform var(--spring-bouncy-dur) var(--spring-bouncy), color .2s ease;
+}
+.liquid-dock__quick-trigger[aria-expanded='true'] svg { transform: rotate(45deg); }
+.liquid-dock__quick-trigger svg { transition: transform .28s var(--spring); }
+.liquid-dock__quick-menu {
+  position: absolute;
+  z-index: 3;
+  inset-inline-end: 62px;
+  bottom: calc(100% + 60px);
+  display: grid;
+  gap: 3px;
+  width: min(218px, calc(100vw - 32px));
+  padding: 7px;
+  border: .5px solid var(--dock-line);
+  border-radius: 19px;
+  color: var(--bar-ink);
+  background: var(--dock-glass);
+  box-shadow: var(--dock-shadow);
+  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(28px) saturate(180%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px) scale(.96);
+  transform-origin: bottom right;
+  transition: opacity .2s ease, transform var(--spring-dur) var(--spring), visibility .2s;
+}
+[dir='rtl'] .liquid-dock__quick-menu { transform-origin: bottom left; }
+.liquid-dock__quick-menu[data-open='true'] { opacity: 1; visibility: visible; pointer-events: auto; transform: translateY(0) scale(1); }
+.liquid-dock__quick-menu button { display: grid; grid-template-columns: 25px minmax(0, 1fr) 16px; align-items: center; gap: 9px; min-height: 42px; padding: 0 10px; border: 0; border-radius: 13px; color: inherit; background: transparent; font: inherit; font-size: 12px; font-weight: 600; text-align: start; cursor: pointer; }
+.liquid-dock__quick-menu button > svg:first-child { color: var(--bar-accent); }
+.liquid-dock__quick-menu button > svg:last-child { opacity: .5; }
+.liquid-dock__quick-menu button:hover,
+.liquid-dock__quick-menu button:focus-visible { outline: none; background: color-mix(in srgb, var(--bar-accent) 12%, transparent); }
+.liquid-dock__quick-menu button:focus-visible { box-shadow: inset 0 0 0 1px var(--dock-line); }
+.liquid-dock.is-compact .liquid-dock__quick-trigger,
+.liquid-dock.is-compact .liquid-dock__quick-menu { opacity: 0; visibility: hidden; pointer-events: none; }
+
+/* Order review and wallet actions rise as sheets above the existing Dock. Direct URLs still render the same forms. */
+.rwa-mobile[data-sheet='true'] > .rwa-screen-transition {
+  position: fixed;
+  z-index: 19;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 0 0 calc(84px + env(safe-area-inset-bottom));
+  isolation: isolate;
+}
+.rwa-mobile[data-sheet='true'] > .rwa-screen-transition::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: rgba(7, 11, 16, .34);
+  -webkit-backdrop-filter: blur(11px) saturate(1.12);
+  backdrop-filter: blur(11px) saturate(1.12);
+}
+.rwa-mobile[data-sheet='true'] > .rwa-screen-transition > [data-maison-page] {
+  position: relative;
+  z-index: 1;
+  width: min(calc(100vw - 16px), var(--app-max));
+  /* Hug the content; long forms scroll inside the panel. */
+  height: auto;
+  min-height: 0;
+  max-height: min(calc(100dvh - 104px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 800px);
+  padding-bottom: 0;
+  margin: 0;
+  overflow-x: clip;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: .5px solid var(--m-line);
+  border-radius: 28px;
+  background: var(--m-bg);
+  box-shadow: 0 28px 72px rgba(0, 0, 0, .38), inset 0 .5px 0 var(--m-rim);
+  scrollbar-width: none;
+}
+.rwa-mobile[data-sheet='true'] > .rwa-screen-transition > [data-maison-page]::-webkit-scrollbar { display: none; }
+/* The panel scrolls, not the window, so the scroll-edge state never flips: keep the bar solid and drop the status-bar inset. */
+.rwa-mobile[data-sheet='true'] > .rwa-screen-transition > [data-maison-page] > .rwa-topbar.rwa-topbar--s1 {
+  padding-top: 0;
+  background: var(--m-bg);
+  box-shadow: 0 .5px 0 var(--m-line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+/* A grab handle over the bar says the sheet can be pulled down. */
+.rwa-mobile[data-sheet='true'] > .rwa-screen-transition > [data-maison-page] > .rwa-topbar.rwa-topbar--s1::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  top: 6px;
+  left: 50%;
+  width: 36px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--m-line);
+  transform: translateX(-50%);
+}
+@media (prefers-reduced-motion: reduce) {
+  .liquid-dock__quick-trigger,
+  .liquid-dock__quick-menu,
+  .liquid-dock__quick-menu button { transition: none; }
+  .liquid-dock__quick-trigger svg { transition: none; }
+}
+/* Dock · a lacquer capsule where only the current tab carries its label.
+   Inactive tabs are 44px icon targets; the active tab opens into a filled capsule (icon + label) on the bouncy spring.
+   Warm = ink lacquer bar + ivory capsule; cool = deep navy bar + champagne-gold capsule. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock {
+  --dock-h: 52px;
+  --dock-orb: 46px;
+  --dock-bar: linear-gradient(180deg, rgba(46, 39, 30, .94) 0%, rgba(24, 20, 15, .95) 100%);
+  --dock-bar-line: rgba(255, 238, 212, .12);
+  --dock-bar-shadow: inset 0 1px 0 rgba(255, 240, 216, .16), inset 0 -8px 16px rgba(0, 0, 0, .28), 0 18px 36px -14px rgba(40, 26, 14, .55), 0 3px 8px rgba(40, 26, 14, .14);
+  --dock-tab: rgba(244, 234, 216, .6);
+  --dock-tab-hover: rgba(250, 243, 230, .88);
+  --dock-cap: linear-gradient(180deg, #fffbf3 0%, #f3e8d4 100%);
+  --dock-cap-ink: var(--bar-ink);
+  --dock-cap-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -3px 6px rgba(138, 106, 59, .14), 0 4px 12px -4px rgba(0, 0, 0, .45);
+  --dock-plus: #f6ecd9;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  gap: 10px;
+}
+.rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock {
+  --dock-bar: linear-gradient(180deg, rgba(24, 35, 58, .94) 0%, rgba(11, 18, 34, .96) 100%);
+  --dock-bar-line: rgba(185, 213, 222, .16);
+  --dock-bar-shadow: inset 0 1px 0 rgba(214, 232, 255, .12), inset 0 -8px 16px rgba(0, 0, 0, .32), 0 18px 40px -12px rgba(0, 0, 0, .72), 0 0 22px rgba(150, 196, 214, .06);
+  --dock-tab: rgba(206, 218, 236, .58);
+  --dock-tab-hover: rgba(232, 238, 248, .88);
+  --dock-cap: linear-gradient(180deg, #f4e2bb 0%, #d4b27a 58%, #c29c60 100%);
+  --dock-cap-ink: #1c1609;
+  --dock-cap-shadow: inset 0 1px 0 rgba(255, 249, 232, .85), inset 0 -3px 6px rgba(92, 64, 22, .28), 0 4px 14px -4px rgba(0, 0, 0, .6), 0 0 16px -6px rgba(226, 190, 128, .45);
+  --dock-plus: #e6cf9f;
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__pill {
+  height: var(--dock-h);
+  min-height: var(--dock-h);
+  max-height: var(--dock-h);
+  justify-content: stretch;
+  gap: 0;
+  padding: 3.5px;
+  border: .5px solid var(--dock-bar-line);
+  background: var(--dock-bar);
+  box-shadow: var(--dock-bar-shadow);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  backdrop-filter: blur(24px) saturate(160%);
+  transform-origin: 26px 50%;
+  transition: opacity .26s ease, transform var(--spring-dur) var(--spring), filter .26s ease;
+}
+[dir='rtl'] .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__pill { transform-origin: calc(100% - 26px) 50%; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__shine { top: 1px; height: 10px; opacity: .14; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link,
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active {
+  /* Idle tabs share the spare width as hit area; the active tab is exactly as wide as its capsule. */
+  flex: 1 1 44px;
+  min-width: 44px;
+  height: 100%;
+  flex-direction: row;
+  justify-content: center;
+  gap: 0;
+  padding: 0;
+  overflow: visible;
+  color: var(--dock-tab);
+  background: transparent;
+  box-shadow: none;
+  transition: color .26s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active { flex: 0 0 auto; color: var(--dock-cap-ink); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link:not(.is-active):hover { color: var(--dock-tab-hover); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link:active { transform: none; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link:focus-visible { outline: none; }
+/* The capsule sits behind icon + label; idle it is a 44px disc that only shows as a press/focus ring. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link::before {
+  content: '';
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  margin-inline: auto;
+  width: min(100%, 44px);
+  border-radius: 999px;
+  background: var(--dock-cap);
+  box-shadow: var(--dock-cap-shadow);
+  opacity: 0;
+  transform: scale(.7);
+  transition: opacity .2s ease, transform var(--spring-bouncy-dur) var(--spring-bouncy), width var(--spring-bouncy-dur) var(--spring-bouncy);
+  pointer-events: none;
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active::before { width: 100%; opacity: 1; transform: scale(1); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link:not(.is-active):active::before { opacity: .14; transform: scale(.94); transition-duration: .12s; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link:not(.is-active):focus-visible::before { opacity: 1; background: transparent; box-shadow: inset 0 0 0 1.5px var(--dock-plus); transform: scale(.94); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active:focus-visible::before { box-shadow: var(--dock-cap-shadow), 0 0 0 2px var(--dock-plus); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link > * { position: relative; z-index: 1; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link__icon,
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__icon { width: 24px; height: 24px; margin-inline: 10px; color: inherit; border: 0; box-shadow: none; filter: none; transition: margin var(--spring-bouncy-dur) var(--spring-bouncy); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__icon { margin-inline: 14px 7px; animation: ios-pop var(--spring-bouncy-dur) var(--spring-bouncy); }
+/* Label: a 0fr → 1fr grid track, so it opens to its exact width on the same spring as the capsule. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link__label {
+  display: grid;
+  grid-template-columns: 0fr;
+  max-width: none;
+  margin-inline-end: 0;
+  overflow: hidden;
+  color: inherit;
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: .005em;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  animation: none;
+  transition: grid-template-columns var(--spring-bouncy-dur) var(--spring-bouncy), margin var(--spring-bouncy-dur) var(--spring-bouncy), opacity .14s ease;
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link__label > span { min-width: 0; overflow: hidden; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__label {
+  grid-template-columns: 1fr;
+  max-width: none;
+  margin-inline-end: 16px;
+  color: inherit;
+  font-weight: 680;
+  opacity: 1;
+  transition: grid-template-columns var(--spring-bouncy-dur) var(--spring-bouncy), margin var(--spring-bouncy-dur) var(--spring-bouncy), opacity .24s ease .1s;
+}
+/* Minimised on scroll (iOS tab-bar minimise): the capsule folds into its leading edge, the active tab stays as one round button. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock.is-compact .liquid-dock__pill { opacity: 0; transform: scale(.4, .9); filter: blur(1px); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__compact-button {
+  width: var(--dock-orb);
+  min-width: var(--dock-orb);
+  height: var(--dock-orb);
+  min-height: var(--dock-orb);
+  max-height: var(--dock-orb);
+  border: .5px solid var(--dock-bar-line);
+  color: var(--dock-cap-ink);
+  background: var(--dock-cap);
+  box-shadow: var(--dock-cap-shadow), 0 10px 24px -10px rgba(0, 0, 0, .45);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transform: translateY(-50%) scale(.6);
+  transition: opacity .22s ease, transform var(--spring-bouncy-dur) var(--spring-bouncy);
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock.is-compact .liquid-dock__compact-button { transform: translateY(-50%) scale(1); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__compact-button:active { transform: translateY(-50%) scale(.94); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__compact-button span { color: inherit; }
+/* Quick "+" · a small lacquer coin over the bar's trailing end, clear of the orb column. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__quick-trigger {
+  inset-inline-end: calc(var(--dock-orb) + 10px);
+  bottom: calc(100% + 8px);
+  width: 36px;
+  height: 36px;
+  border-color: var(--dock-bar-line);
+  color: var(--dock-plus);
+  background: var(--dock-bar);
+  box-shadow: var(--dock-bar-shadow);
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__quick-menu { inset-inline-end: var(--dock-orb); bottom: calc(100% + 52px); }
+/* AI orb · one polished metal sphere on every Dock page, a little under the bar height (46) and matching the compact button (42) when minimised.
+   Warm = champagne bronze, cool = ice steel; the LiquidMetal shader is kept as a live sheen under the specular highlights. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb {
+  --orb: var(--dock-orb);
+  width: var(--orb); height: var(--orb); min-width: var(--orb); min-height: var(--orb); max-width: var(--orb); max-height: var(--orb);
+  flex: 0 0 var(--orb);
+  overflow: hidden;
+  border: .5px solid rgba(255, 255, 255, .78);
+  background: radial-gradient(circle at 30% 18%, #fffaf2 0%, #f1dec2 13%, #c8a882 31%, #865f48 63%, #3b302b 81%, #dbba92 98%);
+  box-shadow: inset 0 2px 3px rgba(255, 255, 255, .85), inset 0 -5px 10px rgba(93, 56, 37, .42), 0 18px 38px -14px rgba(68, 46, 32, .42), 0 2px 6px rgba(68, 46, 32, .1);
+  transition: width var(--spring-dur) var(--spring), height var(--spring-dur) var(--spring), min-width var(--spring-dur) var(--spring), min-height var(--spring-dur) var(--spring), max-width var(--spring-dur) var(--spring), max-height var(--spring-dur) var(--spring), flex-basis var(--spring-dur) var(--spring);
+}
+.rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock .ai-orb {
+  border-color: rgba(231, 248, 251, .6);
+  background: radial-gradient(circle at 30% 18%, #f5fcff 0%, #d5e7eb 13%, #8faeba 32%, #4b6672 63%, #172830 82%, #b7d3d8 98%);
+  box-shadow: inset 0 2px 4px rgba(255, 255, 255, .67), inset 0 -6px 11px rgba(5, 19, 27, .66), 0 18px 40px -12px rgba(0, 0, 0, .66), 0 0 22px rgba(150, 196, 214, .1);
+}
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock.is-compact { --dock-orb: 42px; }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb__orb { width: calc(var(--orb) - 4px); height: calc(var(--orb) - 4px); opacity: .34; mix-blend-mode: screen; filter: contrast(1.35) saturate(.72); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb::before {
+  z-index: 2; inset: 2px; border-radius: 50%; opacity: 1; transform: none;
+  background: radial-gradient(ellipse 48% 31% at 33% 20%, rgba(255, 255, 255, .9), transparent 82%), radial-gradient(ellipse 24% 14% at 69% 77%, rgba(255, 240, 209, .72), transparent 95%);
+}
+.rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock .ai-orb::before { background: radial-gradient(ellipse 50% 31% at 32% 19%, rgba(248, 254, 255, .94), transparent 82%), radial-gradient(ellipse 27% 16% at 71% 78%, rgba(171, 225, 236, .67), transparent 95%); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb::after {
+  z-index: 3; inset: 2px; border: 1px solid rgba(255, 255, 255, .33); border-radius: 50%;
+  background: radial-gradient(ellipse 17% 9% at 27% 17%, rgba(255, 255, 255, .88), transparent 98%), radial-gradient(ellipse 39% 30% at 69% 77%, rgba(250, 207, 156, .42), transparent 99%);
+  box-shadow: inset 1px 2px 5px rgba(255, 255, 255, .46), inset -3px -6px 11px rgba(60, 40, 31, .24);
+}
+.rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock .ai-orb::after { border-color: rgba(234, 250, 253, .3); background: radial-gradient(ellipse 17% 9% at 27% 17%, rgba(255, 255, 255, .88), transparent 98%), radial-gradient(ellipse 39% 30% at 69% 77%, rgba(174, 219, 235, .4), transparent 99%); box-shadow: inset 1px 2px 6px rgba(255, 255, 255, .45), inset -4px -6px 12px rgba(5, 16, 22, .46); }
+/* Open (on /ai): a hairline ring in the theme accent. */
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb.is-active { border-color: var(--bar-accent); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb:active { transform: none; }
+@keyframes ios-pop { from { scale: .78; } to { scale: 1; } }
+
+/* ── Page enter · a short rise on the spring instead of a blur-in ─────────────────────── */
+.rwa-screen-transition.rwa-enter { animation: ios-enter .5s var(--spring) backwards; }
+@keyframes ios-enter { from { opacity: 0; transform: translateY(10px) scale(.994); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .rwa-mobile .rwa-topbar__center > span,
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__icon,
+  .rwa-screen-transition.rwa-enter { animation: none; }
+  .rwa-mobile .rwa-topbar .rwa-topbar__account .rwa-topbar__count { animation: none; }
+  .rwa-mobile:not([data-screen='home']) .rwa-topbar__center > span:not(.rwa-steps) { transition: none; }
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__pill,
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__compact-button { transition: opacity .01ms; }
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb { transition: none; }
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link,
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link::before,
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link__icon,
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link__label,
+  .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__label { transition: none; }
+}
+
+/* Warm/cool reveal: the new theme is clipped to a circle growing from the toggle (animated from rwa-topbar). */
+html[data-theme-reveal]::view-transition-old(root),
+html[data-theme-reveal]::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+html[data-theme-reveal]::view-transition-new(root) { z-index: 1; }
+/* Colour transitions would replay inside the circle as a second, softer fade. */
+html[data-theme-reveal] *, html[data-theme-reveal] *::before, html[data-theme-reveal] *::after { transition: none !important; }

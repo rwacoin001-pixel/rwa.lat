@@ -11,10 +11,12 @@ describe('API edge security', () => {
   it('limits authentication attempts per client IP and resets after the window', () => {
     const limiter = new ApiRateLimiter()
     const input = { method: 'POST', path: '/v1/auth/wallet/verify', ip: '203.0.113.10', now: 1_000 }
-    for (let attempt = 0; attempt < 5; attempt += 1) expect(limiter.consume(input).allowed).toBe(true)
+    for (let attempt = 0; attempt < 10; attempt += 1) expect(limiter.consume(input).allowed).toBe(true)
     const blocked = limiter.consume(input)
-    expect(blocked).toMatchObject({ allowed: false, limit: 5, rule: 'authentication-attempt' })
+    expect(blocked).toMatchObject({ allowed: false, limit: 10, rule: 'authentication-attempt' })
     expect(blocked.retryAfterSeconds).toBe(60)
+    // Each sign-in step has its own allowance: a spent wallet bucket leaves password login open.
+    expect(limiter.consume({ ...input, path: '/v1/auth/login/password' }).allowed).toBe(true)
     expect(limiter.consume({ ...input, now: 61_000 }).allowed).toBe(true)
   })
 

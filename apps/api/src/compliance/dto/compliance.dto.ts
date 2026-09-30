@@ -8,6 +8,12 @@ export class StartKycDto {
   provider!: string
 }
 
+export class CaptureKycDto {
+  @ApiProperty({ enum: ['passport', 'id_card'] })
+  @IsIn(['passport', 'id_card'])
+  documentType!: 'passport' | 'id_card'
+}
+
 export class SubmitKycDto {
   @ApiProperty()
   @IsString()
@@ -51,7 +57,7 @@ export class EvaluateEligibilityDto {
   @Length(2, 64)
   productScope!: string
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ deprecated: true, description: '仅为兼容保留，当前资格评估忽略此字段，待合规确认可信地区来源后恢复。' })
   @IsOptional()
   @IsString()
   @Length(2, 64)

@@ -68,6 +68,24 @@ describe('API-012 user-ops integration (PG)', () => {
     expect(closed.closedAt).toBeDefined()
   })
 
+  it('replays keyed ticket creation and rejects key reuse with different content', async () => {
+    svc = service()
+    const input = {
+      author_user_id: USER,
+      subject: 'Idempotent support request',
+      body: 'Please review this account issue.',
+      idempotencyKey: 'ticket-request-000001',
+    }
+    const first = await svc.createTicket(input)
+    const replay = await svc.createTicket(input)
+    expect(replay.id).toBe(first.id)
+    await expect(svc.createTicket({ ...input, body: 'A different request body.' })).rejects.toMatchObject({
+      status: 409,
+      response: expect.objectContaining({ code: 'TICKET_IDEMPOTENCY_CONFLICT' }),
+    })
+    await expect(svc.listTickets(USER)).resolves.toHaveLength(1)
+  })
+
   it('closeTicket throws NotFound for unknown', async () => {
     svc = service()
     await expect(svc.closeTicket('deadbeef-dead-dead-dead-deaddeaddead', USER)).rejects.toBeInstanceOf(
@@ -91,6 +109,11 @@ describe('API-012 user-ops integration (PG)', () => {
     expect(accepted.invitation.state).toBe('accepted')
     expect(accepted.inviterReward.state).toBe('earned')
     expect(accepted.inviteeReward.userId).toBe(INVITEE)
+    expect(accepted.inviterReward.decimals).toBe(2)
+    const replay = await svc.acceptInvitation(token, INVITEE)
+    expect(replay.invitation.id).toBe(accepted.invitation.id)
+    expect(replay.inviterReward.id).toBe(accepted.inviterReward.id)
+    expect(replay.inviteeReward.id).toBe(accepted.inviteeReward.id)
     await expect(svc.listRewards(USER)).resolves.toHaveLength(1)
     await expect(svc.listRewards(INVITEE)).resolves.toHaveLength(1)
   })

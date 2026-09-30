@@ -1,5 +1,5 @@
-import { Body, Controller, Get, Headers, Param, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
+import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
+import { ApiBearerAuth, ApiOperation, ApiTags, ApiExcludeController } from '@nestjs/swagger'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
@@ -67,6 +67,12 @@ export class WalletController {
   @ApiOperation({ summary: 'List screened withdrawal address-book entries and cooldown state' })
   withdrawalAddresses(@CurrentAuth() actor: SecurityActor) {
     return this.wallet.listWithdrawalAddressBook(actor.userId)
+  }
+
+  @Get('withdrawals/:id')
+  @ApiOperation({ summary: 'Read the signed-in user withdrawal status without exposing the destination' })
+  withdrawalStatus(@CurrentAuth() actor: SecurityActor, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.wallet.getWithdrawalStatus(actor.userId, id)
   }
 
   @Post('withdrawal-addresses')
@@ -257,6 +263,7 @@ export class AdminFundsOperationsController {
   }
 }
 
+@ApiExcludeController()
 @ApiTags('demo-admin')
 @Controller('demo-admin/withdrawals')
 export class DemoWalletController {

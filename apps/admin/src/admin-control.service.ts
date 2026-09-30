@@ -146,6 +146,7 @@ export class AdminControlService implements OnModuleDestroy {
              COALESCE(p.metadata_json, '{}'::jsonb) AS metadata,
              COALESCE(p.yield_terms_json, '{}'::jsonb) AS "yieldTerms",
              COALESCE(p.risk_disclosure_json, '{}'::jsonb) AS "riskDisclosure",
+             p.cover_storage_ref AS "coverStorageRef",
              COALESCE(p.media_refs_json, '[]'::jsonb) AS "mediaRefs",
              q.unit_price_atomic_amount AS "latestPriceAtomicAmount",
              q.currency AS "latestPriceCurrency", q.valid_until AS "priceValidUntil",
@@ -175,6 +176,7 @@ export class AdminControlService implements OnModuleDestroy {
              COALESCE(p.metadata_json, '{}'::jsonb) AS metadata,
              COALESCE(p.yield_terms_json, '{}'::jsonb) AS "yieldTerms",
              COALESCE(p.risk_disclosure_json, '{}'::jsonb) AS "riskDisclosure",
+             p.cover_storage_ref AS "coverStorageRef",
              COALESCE(p.media_refs_json, '[]'::jsonb) AS "mediaRefs"
         FROM app.products p WHERE p.id = $1
     `, [id])
@@ -185,15 +187,15 @@ export class AdminControlService implements OnModuleDestroy {
   async createProduct(input: CreateProductDto, adminId: string) {
     await this.assertAssetClass(input.assetClassId)
     this.assertAtomicRange(input.minOrderAtomicAmount, input.maxOrderAtomicAmount)
-    this.validateProductContent(input)
+    await this.validateProductContent(input)
     const id = randomUUID()
     await this.query(`
       INSERT INTO app.products (
         id, asset_class_id, external_ref, display_name, summary, asset_code,
         asset_decimals, network, min_order_atomic_amount, max_order_atomic_amount,
         state, metadata_json, yield_terms_json, risk_disclosure_json, media_refs_json,
-        updated_by
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', $11::jsonb, $12::jsonb, $13::jsonb, $14::jsonb, $15)
+        updated_by, cover_storage_ref
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft', $11::jsonb, $12::jsonb, $13::jsonb, $14::jsonb, $15, $16)
     `, [
       id,
       input.assetClassId,
@@ -210,6 +212,7 @@ export class AdminControlService implements OnModuleDestroy {
       this.json(input.riskDisclosure),
       this.json(input.mediaRefs ?? []),
       adminId,
+      input.coverStorageRef || null,
     ])
     await this.audit(adminId, 'admin.catalog.product_created', 'product', id, { displayName: input.displayName })
     return this.getProduct(id)
@@ -222,12 +225,13 @@ export class AdminControlService implements OnModuleDestroy {
       input.minOrderAtomicAmount ?? this.asString(current.minOrderAtomicAmount),
       input.maxOrderAtomicAmount ?? this.asString(current.maxOrderAtomicAmount),
     )
-    this.validateProductContent(input)
+    await this.validateProductContent(input)
 
     const patch: ProductPatch = {}
     const add = (key: keyof UpdateProductDto, column: string, value: unknown) => {
-      if (value !== undefined) patch[column] = value
+      if (input[key] !== undefined) patch[column] = value
     }
+    add('coverStorageRef', 'cover_storage_ref', input.coverStorageRef || null)
     add('assetClassId', 'asset_class_id', input.assetClassId)
     add('externalRef', 'external_ref', input.externalRef?.trim() || null)
     add('displayName', 'display_name', input.displayName?.trim())
@@ -282,7 +286,7 @@ export class AdminControlService implements OnModuleDestroy {
     await this.getProduct(productId)
     return this.query(`
       SELECT id, product_id AS "productId", asset_code AS "assetCode",
-             unit_price_atomic_amount AS "unitPriceAtomicAmount", currency, source,
+             unit_price_atomic_amount AS "unitPriceAtomicAmount", unit_price_decimals AS "unitPriceDecimals", currency, source,
              valid_until AS "validUntil", captured_at AS "capturedAt"
         FROM app.price_quotes WHERE product_id = $1 ORDER BY captured_at DESC
     `, [productId])
@@ -294,11 +298,12 @@ export class AdminControlService implements OnModuleDestroy {
     if (!Number.isFinite(validUntil.getTime()) || validUntil <= new Date()) {
       throw new ConflictException('Price quote validity must be in the future')
     }
+    if (BigInt(input.unitPriceAtomicAmount) <= 0n) throw new ConflictException('报价必须大于零')
     const id = randomUUID()
     await this.query(`
-      INSERT INTO app.price_quotes (id, product_id, asset_code, unit_price_atomic_amount, currency, source, valid_until)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
-    `, [id, productId, product.assetCode, input.unitPriceAtomicAmount, input.currency, input.source.trim(), validUntil])
+      INSERT INTO app.price_quotes (id, product_id, asset_code, unit_price_atomic_amount, currency, source, valid_until, unit_price_decimals)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+    `, [id, productId, product.assetCode, input.unitPriceAtomicAmount, input.currency, input.source.trim(), validUntil, input.unitPriceDecimals ?? 6])
     await this.query(`UPDATE app.products SET updated_at = now(), updated_by = $2 WHERE id = $1`, [productId, adminId])
     await this.audit(adminId, 'admin.catalog.price_quote_created', 'price_quote', id, { productId, source: input.source })
     return this.listQuotes(productId)
@@ -316,17 +321,36 @@ export class AdminControlService implements OnModuleDestroy {
 
   async addDisclosure(productId: string, input: DisclosureInputDto, adminId: string) {
     await this.getProduct(productId)
+    const object = await this.assertPublicFile(input.storageRef.trim(), false)
+    if (object.checksum_sha256 !== input.contentHash.toLowerCase()) throw new ConflictException('文件校验和不一致')
     const id = randomUUID()
-    await this.query(`
+    if (!this.core) throw new ServiceUnavailableException('Core database is not configured')
+    const client = await this.core.connect()
+    try {
+      await client.query('BEGIN')
+      // Serialize replacements even when there is no active disclosure yet.
+      await client.query('SELECT id FROM app.products WHERE id = $1 FOR UPDATE', [productId])
+      await client.query(`
       UPDATE app.disclosure_files SET state = 'superseded', superseded_at = now()
        WHERE product_id = $1 AND kind = $2 AND locale = $3 AND state = 'active'
     `, [productId, input.kind, input.locale])
-    await this.query(`
+      await client.query(`
       INSERT INTO app.disclosure_files
         (id, product_id, kind, locale, title, storage_ref, content_hash, state)
       VALUES ($1, $2, $3, $4, $5, $6, decode($7, 'hex'), 'active')
     `, [id, productId, input.kind, input.locale, input.title.trim(), input.storageRef.trim(), input.contentHash.toLowerCase()])
-    await this.audit(adminId, 'admin.catalog.disclosure_saved', 'disclosure_file', id, { productId, kind: input.kind })
+      await client.query(
+        `INSERT INTO app.audit_logs (id, actor_type, actor_id, action, object_type, object_id, request_id, metadata)
+         VALUES ($1, 'admin', $2, 'admin.catalog.disclosure_saved', 'disclosure_file', $3, $4, $5::jsonb)`,
+        [randomUUID(), adminId, id, randomUUID(), JSON.stringify({ productId, kind: input.kind })],
+      )
+      await client.query('COMMIT')
+    } catch (error) {
+      await client.query('ROLLBACK')
+      throw error
+    } finally {
+      client.release()
+    }
     return this.listDisclosures(productId)
   }
 
@@ -432,13 +456,27 @@ export class AdminControlService implements OnModuleDestroy {
     if (!rows.length) throw new ConflictException('An active asset class is required')
   }
 
-  private validateProductContent(input: {
+  private async validateProductContent(input: {
     yieldTerms?: Record<string, unknown>
     riskDisclosure?: Record<string, unknown>
     mediaRefs?: string[]
+    coverStorageRef?: string | null
   }) {
+    if (input.coverStorageRef) await this.assertPublicFile(input.coverStorageRef, true)
     if (input.yieldTerms !== undefined) this.validateYieldTerms(input.yieldTerms)
-    if (input.mediaRefs !== undefined) this.validateMediaRefs(input.mediaRefs)
+    if (input.mediaRefs !== undefined) {
+      this.validateMediaRefs(input.mediaRefs)
+      for (const ref of input.mediaRefs) await this.assertPublicFile(ref, false)
+    }
+  }
+
+  private async assertPublicFile(ref: string, imageOnly: boolean) {
+    if (!ref.startsWith('rwa-assets/')) throw new ConflictException('产品公开资料只能使用 rwa-assets 文件库')
+    const rows = await this.query<{ content_type: string; checksum_sha256: string }>(
+      `SELECT content_type, checksum_sha256 FROM app.object_storage_objects WHERE bucket = 'rwa-assets' AND key = $1 AND scan_status = 'clean' AND size_bytes > 0`, [ref.slice('rwa-assets/'.length)])
+    if (!rows[0]) throw new ConflictException('文件不存在或尚未通过校验')
+    if (imageOnly && !['image/png', 'image/jpeg'].includes(rows[0].content_type)) throw new ConflictException('封面必须是 PNG 或 JPEG 图片')
+    return rows[0]
   }
 
   private validateYieldTerms(terms: Record<string, unknown>) {
@@ -464,6 +502,24 @@ export class AdminControlService implements OnModuleDestroy {
     }
     if (terms.payoutMode !== undefined && !['interest', 'principal_plus_interest', 'profit_share'].includes(String(terms.payoutMode))) {
       fail('付息方式不合法')
+    }
+    if (terms.scheduleMode !== undefined && !['product_calendar', 'position_anniversary'].includes(String(terms.scheduleMode))) {
+      fail('派息计划方式不合法')
+    }
+    if (terms.firstExpectedPaymentDate !== undefined) {
+      const value = String(terms.firstExpectedPaymentDate)
+      const parsed = /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00.000Z`) : new Date(Number.NaN)
+      if (Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== value) fail('首次预计支付日必须是有效的 YYYY-MM-DD 日期')
+    }
+    if (terms.scheduleMode === 'product_calendar' && !terms.firstExpectedPaymentDate) fail('产品统一派息日历必须填写首次预计支付日')
+    if (terms.recordDateOffsetDays !== undefined) {
+      const days = terms.recordDateOffsetDays
+      if (typeof days !== 'number' || !Number.isInteger(days) || days < 0 || days > 365) fail('资格截止提前天数需为 0-365 的整数')
+    }
+    if (terms.scheduleTimezone !== undefined) {
+      const timezone = String(terms.scheduleTimezone)
+      if (timezone.length < 1 || timezone.length > 80) fail('计划时区长度不合法')
+      try { new Intl.DateTimeFormat('en', { timeZone: timezone }).format(new Date()) } catch { fail('计划时区必须是有效的 IANA 时区') }
     }
     if (terms.tiers !== undefined) {
       const tiers = terms.tiers as unknown

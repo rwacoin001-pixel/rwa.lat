@@ -1,0 +1,38 @@
+/* Material layer (D3.3) · shared texture, hairline and light tokens for Maison and Home surfaces.
+   Surfaces opt in through these variables; the gyroscope writes --tilt-x / --tilt-y (lib/device-tilt.ts). */
+
+:root {
+  --tilt-x: 0;
+  --tilt-y: 0;
+  /* Paper: fine isotropic noise. Brushed: noise stretched along x so it reads as drawn metal. Both alpha-only. */
+  --tex-paper: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  --tex-brushed: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='120'%3E%3Cfilter id='b'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.004 .9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .2 -.05'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23b)'/%3E%3C/svg%3E");
+  /* Light comes from above and slides against the tilt, so shadows fall away from it. */
+  --light-dx: calc(var(--tilt-x) * -10px);
+  --light-dy: calc(var(--tilt-y) * -6px);
+  --light-x: calc(50% + var(--tilt-x) * 38%);
+  --light-y: calc(-8% + var(--tilt-y) * 30%);
+}
+
+/* Key-moment sweep (lib/moment.ts): one diagonal band of light crosses the surface once.
+   The attribute lifts it over surface rules such as `.lacquer > * { position: relative }`. */
+.m-sheen[aria-hidden] {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.m-sheen::before {
+  content: '';
+  position: absolute;
+  inset: -20% auto -20% -60%;
+  width: 45%;
+  background: linear-gradient(100deg, transparent, rgba(255, 244, 220, .5) 45%, rgba(255, 255, 255, .75) 50%, rgba(255, 244, 220, .5) 55%, transparent);
+  mix-blend-mode: soft-light;
+  transform: skewX(-18deg);
+  animation: m-sheen 900ms cubic-bezier(.22, .8, .18, 1) forwards;
+}
+.rwa-mobile[data-theme='dark'] .m-sheen::before { background: linear-gradient(100deg, transparent, rgba(188, 217, 227, .35) 45%, rgba(236, 246, 250, .6) 50%, rgba(188, 217, 227, .35) 55%, transparent); mix-blend-mode: screen; }
+@keyframes m-sheen { to { transform: translateX(420%) skewX(-18deg); } }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ManualSettlements } from '@/components/manual-settlements'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatChip, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
 
@@ -87,6 +88,7 @@ export default function OrdersPage() {
           actions={<RefreshButton loading={orders.loading} onClick={orders.reload} />}
         />
 
+        <ManualSettlements />
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
           <StatChip label="订单总数" value={rows.length || '…'} delay={40} />
           <StatChip label="已成交" value={rows.filter((row) => row.state === 'filled').length || (orders.loading ? '…' : 0)} delay={90} />

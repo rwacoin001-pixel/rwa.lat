@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "laoliang.84",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "美國那邊《CLARITY 法案》上周在參議院 49 比 50 沒過（立法繼續拖），幾天後 SEC 就自己開了個五年期的口子，讓合資格平台可以先跑 AMM 池、不用註冊成交易所。\n\n看著像大利好？TD Cowen 潑了盆冷水：短期沒什麼人會用（美國散戶買股票本來就方便，發行方也不見得有興趣），真正有量的還是永續合約，不是代幣化現貨。\n\nAave 創始人補了一句，DeFi 可能要走「Uber 路徑」——先做到幾百萬人離不開，規則自然有人來補。\n\n我個人的看法（不一定對）：立法卡住的時候，「先做起來」確實是行業唯一的路；但散戶要分清「監管允許」和「有人真的在用」，這兩件事經常差很遠，別上頭。"
+  },
+  {
+    "profileHandle": "sam.dubai",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Kraken now lets you park tokenized SPYx, QQQx or NVDAx in a vault that lends them out onchain for roughly 1.8-2% net APY.\n\nRead the fine print twice — no shareholder rights, no voting, no dividends, and exit can take up to three days.\n\nThe map matters too: it's closed to the US, UK, Canada, Australia and the UAE. Tokenized stocks and ETFs sit near $2.84B, up from about $540M a year ago — and the number I keep watching isn't the yield, it's who's allowed in."
+  }
+]

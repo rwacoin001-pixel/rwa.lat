@@ -1,15 +1,343 @@
 {
-  "_meta": "社区内容雷达台账：已采集/使用的主题与来源，防止重复。",
+  "_meta": "社区内容雷达台账：已采集/使用的主题与来源，防止重复。（本文件为运行时台账，仓库备份在 apps/api/scripts/community/radar/radar_ledger.json）",
   "seen": [
-    {"date": "2026-09-18", "topic": "bStocks / 代币化股票半导体抱团", "source": "https://www.binance.com/zh-CN/square/hashtag/bstocks", "used_by": ["aiden.wu", "xiaolu.jb"]},
-    {"date": "2026-09-18", "topic": "Avalanche RWA 市值新高 / Securitize 领跑", "source": "https://www.gate.com/zh-tw/news/detail/avalanche-rwa-market-cap-approaches-17b-all-time-high-led-by-securitize-24295314", "used_by": ["marcus.sg"]},
-    {"date": "2026-09-18", "topic": "RWA 整体规模与实际持有人数对比", "source": "https://www.gate.com/zh-tw/news/detail (Gate News RWA 板块)", "used_by": ["xiaolu.jb"]},
-    {"date": "2026-09-18", "topic": "代币化资产向抵押/结算层演进（机构合作方向）", "source": "https://www.okx.com/en-us/learn/okx-blackrock-standard-chartered-buidl-tokenized-rwa-uae", "used_by": ["grace.nyc"]},
-    {"date": "2026-09-18", "topic": "香港施政报告：外汇基金票据代币化运作（逾1.3万亿港元）+数码债券占全球约五成", "source": "https://www.info.gov.hk/gia/general/202609/16/P2026091600212.htm", "used_by": ["laoliang.84"]},
-    {"date": "2026-09-18", "topic": "SEC Innovation Exemption（Order 34-106402）代币化NMS股票五年沙盒", "source": "https://www.reuters.com/world/us-securities-regulator-rolls-out-five-year-exemption-tokenized-stock-trading-2026-09-17/", "used_by": ["daniel.lon"]},
-    {"date": "2026-09-19", "topic": "RWA 永续合约 8 月成交量创纪录 6020 亿美元（Binance 占 60.9%、Gate +158%）；合约不交割/不持有底层资产", "source": "https://www.gate.com/zh/news/detail/bybit-derivatives-volume-hits-321b-in-august-as-rwa-perpetuals-reach-record-24342249", "used_by": ["azhe.tpe"]},
-    {"date": "2026-09-19", "topic": "代币化股票转账量 +415% vs 链上存量价值仅 +1.45%（活动与价值背离，RWA.xyz 口径）", "source": "https://coindoo.com/tokenized-stock-activity-surges", "used_by": ["kenji.tokyo"]},
-    {"date": "2026-09-19", "topic": "Avalanche 上线 NYLIM 高收益公司债代币化基金 HYB（Centrifuge 发行，原生赎回 T+3~T+5）+ RedStone 约 300ms 场外拍卖实现同区块退出", "source": "https://kucoin.com/news/flash/nylim-launches-first-tokenized-fund-on-avalanche-via-centrifuge", "used_by": ["aiden.wu"]},
-    {"date": "2026-09-19", "topic": "加拿大 OSFI 声明：代币化存款与普通存款法律上无区别（技术中立）", "source": "https://www.osfi-bsif.gc.ca/en/news/statement-tokenized-other-digitally-represented-deposits", "used_by": ["daniel.lon"]}
-  ]
+    {
+      "date": "2026-09-18",
+      "topic": "bStocks / 代币化股票半导体抱团",
+      "source": "https://www.binance.com/zh-CN/square/hashtag/bstocks",
+      "used_by": [
+        "aiden.wu",
+        "xiaolu.jb"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "topic": "Avalanche RWA 市值新高 / Securitize 领跑",
+      "source": "https://www.gate.com/zh-tw/news/detail/avalanche-rwa-market-cap-approaches-17b-all-time-high-led-by-securitize-24295314",
+      "used_by": [
+        "marcus.sg"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "topic": "RWA 整体规模与实际持有人数对比",
+      "source": "https://www.gate.com/zh-tw/news/detail (Gate News RWA 板块)",
+      "used_by": [
+        "xiaolu.jb"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "topic": "代币化资产向抵押/结算层演进（机构合作方向）",
+      "source": "https://www.okx.com/en-us/learn/okx-blackrock-standard-chartered-buidl-tokenized-rwa-uae",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "topic": "香港施政报告：外汇基金票据代币化运作（逾1.3万亿港元）+数码债券占全球约五成",
+      "source": "https://www.info.gov.hk/gia/general/202609/16/P2026091600212.htm",
+      "used_by": [
+        "laoliang.84"
+      ]
+    },
+    {
+      "date": "2026-09-18",
+      "topic": "SEC Innovation Exemption（Order 34-106402）代币化NMS股票五年沙盒",
+      "source": "https://www.reuters.com/world/us-securities-regulator-rolls-out-five-year-exemption-tokenized-stock-trading-2026-09-17/",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "topic": "RWA 永续合约 8 月成交量创纪录 6020 亿美元（Binance 占 60.9%、Gate +158%）；合约不交割/不持有底层资产",
+      "source": "https://www.gate.com/zh/news/detail/bybit-derivatives-volume-hits-321b-in-august-as-rwa-perpetuals-reach-record-24342249",
+      "used_by": [
+        "azhe.tpe"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "topic": "代币化股票转账量 +415% vs 链上存量价值仅 +1.45%（活动与价值背离，RWA.xyz 口径）",
+      "source": "https://coindoo.com/tokenized-stock-activity-surges",
+      "used_by": [
+        "kenji.tokyo"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "topic": "Avalanche 上线 NYLIM 高收益公司债代币化基金 HYB（Centrifuge 发行，T+3~T+5 原生赎回）+ RedStone 以约 300ms 场外拍卖实现同区块退出",
+      "source": "https://kucoin.com/news/flash/nylim-launches-first-tokenized-fund-on-avalanche-via-centrifuge",
+      "used_by": [
+        "aiden.wu"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "topic": "加拿大 OSFI 声明：代币化存款与普通存款法律上无区别（技术中立；仍适用审慎/技术/第三方风险规则，须先与主管沟通）",
+      "source": "https://www.osfi-bsif.gc.ca/en/news/statement-tokenized-other-digitally-represented-deposits",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "topic": "Binance Research《The RWA Activation Era》：链上 RWA AUM 341.8 亿美元(+85.2% YTD)、股票类 +390.4%；两个指标 PAR≈0.01% / CAR≈12%（私募信贷 49.67%、股票 7.54%），发行量≠链上激活",
+      "source": "https://www.binance.com/en/research/analysis/the-rwa-activation-era",
+      "used_by": [
+        "marcus.sg"
+      ]
+    },
+    {
+      "date": "2026-09-19",
+      "topic": "稳定币禁息（MiCA 第50条 / GENIUS Act 禁发行人付息）→ 收益迁移到代币化货币市场基金；WTGXX 约 12.3 亿美元(9/17)、30天净流入约 4.66 亿；MoonPay 拟以 WTGXX 做稳定币准备金管理（2026-09-17 公告）",
+      "source": "https://www.businesswire.com/news/home/20260917129406/en/WisdomTree-and-MoonPay-Collaborate-to-Expand-U.S.-Access-to-Tokenized-Funds-and-to-Support-Stablecoin-Reserves",
+      "used_by": [
+        "rachel.c"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "topic": "Ondo(Oasis Pro Markets) 成为 DTCC Fund/SERV 首个代币化平台会员（该网络处理全美85%+共同基金交易；会员≠分销协议，不改底层证券法律地位；7/23 已有 FINRA 代币化证券授权）",
+      "source": "https://www.prnewswire.com/news-releases/dtccs-fundserv-adds-ondo-finance-as-its-first-tokenization-member-bringing-tokenized-funds-into-the-mainstream-302880007.html",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "topic": "Pendle 上线 Partners Group 私募基建基金代币 NGI+（Asseto 代幣化、12/10 到期、上市固定利率两位数、Partners Group ~1860 亿美元 AUM / 基金 >10 亿美元；RWA.xyz 显示 NGI+ 仅 11 名持有人）+ Pendle：代币化股票发行量年增近 10 倍但部署入 DeFi <7%",
+      "source": "https://www.gate.com/news/detail/pendle-launches-partners-group-infrastructure-strategy-token-ngi-with-19-24373015",
+      "used_by": [
+        "azhe.tpe"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "topic": "FCA 拟豁免代币化黄金适用英国基金/集合投资规则；XAUT ~26.3亿美元、PAXG ~18.7亿美元（月度转账 37亿/16.1亿美元，30天 +10.9%/+14.1%）；英国占全球黄金交易约七成，两大发行方均在英监管范围外",
+      "source": "https://cryptorank.io/news/feed/70ec7-fca-tokenized-gold-uk-fund-rules",
+      "used_by": [
+        "laoliang.84"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "topic": "Nasdaq Ventures 投 1 亿美元于 Payward(Kraken 母公司) 推进 Nasdaq Equity Tokens(NETs，预计 2027 Q2 上线)+ 全平台采用 Nasdaq 市场监控技术；Kraken 估值约 210 亿美元",
+      "source": "https://www.nasdaq.com/press-release/nasdaq-deepens-relationship-payward-advance-tokenized-equities-and-always",
+      "used_by": [
+        "sam.dubai"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "topic": "Morpho 在 Base 上开放以 5 种 Coinbase 股票代币(AAPLc/GOOGLc/NVDAc/METAc/SPCXc)为抵押借 USDC：初期仅约 10.4 万美元质押、5.5 万美元借出，而 5 个代币在 Base 存量约 1140 万(担保池<1%)；LLTV 62.5%、单一 curator(Steakhouse)定参数、限非美人士",
+      "source": "https://thedefiant.io/news/defi/morpho-coinbase-tokenized-stocks-borrowing-base",
+      "used_by": [
+        "mika.toronto"
+      ]
+    },
+    {
+      "date": "2026-09-20",
+      "topic": "Allium《稳定币与支付现状 2026-09》报告：8 月稳定币供应 3030 亿美元(Tether+Circle 占 85%)；前 8 月支付额 4010-5270 亿(+42%~63%)、企业收款占 58-64%、B2B 最大通道、跨境增速为法币 7 倍；85 万亿总转账仅约 4 万亿真实经济活动；地理归因支付 61% 为境内",
+      "source": "https://cryptorank.io/news/feed/2fa0a-2290069",
+      "used_by": [
+        "june.bkk"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "topic": "SBI Digital Practice × 教保生命（Kyobo Life）：Canton Network 测试环境完成日元↔韩元稳定币直接兑换+结算 PoC（跳过美元腿；全程测试代币、无生产时间表/监管批准、未公布成本节省与汇差对比数据；同时测海外数字资产入账与对账）",
+      "source": "https://holder.io/news/sbi-kyobo-jpy-krw-settlement/",
+      "used_by": [
+        "kenji.tokyo"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "topic": "Token Terminal 口径 RWA 市值 462 亿美元；24h 约 36 亿美元流入 DeFi 平台、DEX 成交 4.193 亿美元；Robinhood Chain 上 Uniswap v4 占代币化股票存款约 73%（近 30 天约 8280 万美元）",
+      "source": "https://www.gate.com/zh/news/detail/DEFI/rwas-reach-462b-market-cap-as-defi-integration-expands-24428552",
+      "used_by": [
+        "marcus.sg"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "topic": "ECB Pontes 正式上线（2026-09-21）：央行 DLT 桥接市场 DLT 平台与 TARGET，批发代币化交易的现金腿以央行货币结算（非商业银行货币、非稳定币）；Hash-Link 同步 DvP；初始仅限欧元、09:00–16:00 CET、T2 营业日、无净额；注册 DLT 运营方 Clearstream/SWIAT/Cashlink/Axiology；一次性费用 €2,500/参与者、€15,000/运营方；已去掉“试点”标签，2028 年中目标 24/7+多币种；2024 试验 64 家机构/200+ 笔/€15.9 亿",
+      "source": "https://www.ecb.europa.eu/paym/target/pontes/html/index.en.html ; https://www.blockstories.io/b/inside-pontes-how-europe-is-bringing-central-bank-money-onchain",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "topic": "Arbitrum One 自报一周 RWA 市值增超 7,400 万美元、为各链最多（2026-09-20，官方口径非审计）→ 成长速度≠总规模；RWA.xyz：Arbitrum 分布式资产价值约 8.01 亿美元（30 天 -2.87%）、持有者 9,149、RWA 数 3,316",
+      "source": "https://www.spendnode.io/blog/arbitrum-leads-rwa-growth-74m-one-week-september-2026/ ; https://app.rwa.xyz/networks/arbitrum",
+      "used_by": [
+        "azhe.tpe"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "topic": "Solana 代幣化股票持有人 85 万 ATH（Solana 官方 9/20 公布；Blockworks：9/12 地址 801,439、较 9/1 的 424,894 +88%；代币化股票存量 9/11 见 6.84 亿美元、较 8 月底约 4.65 亿 +47%；均值约 850 美元/地址 → 9/9 Pump.fun 自訂交易对手续费以股票代币结算并自动分发，地址数≠买家数）",
+      "source": "https://financefeeds.com/solanas-tokenized-stock-boom-hides-truth ; https://gate.com/news/detail/solana-tokenized-stock-addresses-hit-801439-driven-by-pumpfun-fee-mechanism-24266206 ; https://fxstreet.com/cryptocurrencies/news/solana-price-forecast-sol-extends-rally-as-tokenized-equity-holders-hit-a-record-202609210450",
+      "used_by": [
+        "laoliang.84"
+      ]
+    },
+    {
+      "date": "2026-09-21",
+      "topic": "Injective Meridian 升级 IIP-701（9/18 提交、约 99% 赞成、投票 9/22 17:02 UTC 截止；9/24 于区块 184,394,000 激活 v1.20.4；受监管代币标准写入 EVM 层 + MultiVM 一致性、交易所 precompile、私密 RFQ 测试、oracle 强化；统一 RWA 永续市场；同期 21Shares 提交现货 INJ ETF 修订版 S-1。注：RWA.xyz 上 Injective 面板显示各项为 0）",
+      "source": "https://cryptobriefing.com/injective-meridian-mainnet-upgrade-passes/ ; https://cryptorank.io/news/feed/5a925-injective-meridian-upgrade-vote ; https://www.tradingview.com/news/coinmarketcal%3A2c3bfc840094b%3A0-injective-meridian-mainnet-upgrade-adds-regulated-rwa-markets-and-rfq-testing-24-sep-2026",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "topic": "美国《CLARITY 法案》参议院 49-50 未过（9/15）→ 数天后 SEC 五年期 Innovation Exemption 给合资格代币化股票平台开 AMM 池口子（LP 免券商注册）；TD Cowen：短期需求有限（美国投资人买股票已很方便、发行方兴趣弱），永续合约量远高于代币化现货；Aave 创始人 Kulechov 提「Uber 路径」（先做到大众离不开再倒逼规则）",
+      "source": "https://tradersunion.com/news/cryptocurrency-news/show/3420004-td-cowen-tokenized-stocks-sec-framework ; https://coinmarketcal.com/news/kulechov-s-uber-path-for-aave-after-senate-blocks-clarity-act ; https://www.kucoin.com/news/flash/aave-founder-suggests-defi-may-take-uber-path-to-prove-its-significance",
+      "used_by": [
+        "laoliang.84"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "topic": "Kraken xStocks Vaults（9/14 上线）：存入 SPYx/QQQx/NVDAx 后经链上借贷约 1.8–2% 净 APY、收益以同种 xStock 发放、25% 业绩费、赎回最长 3 天；代币持有人无股东权利/投票权/股息；美/英/加/澳/阿联酋不可用（EEA 等可）；代币化股票与 ETF 分布式价值约 28.4 亿美元（一年前约 5.4 亿，RWA.xyz 口径）",
+      "source": "https://crypto.news/kraken-launches-xstocks-vaults-yields-tokenized-stocks/ ; https://coincentral.com/you-can-now-earn-yield-on-tokenized-nvidia-stocks-through-kraken ; https://wordupnews.com/cryptocurrency/kraken-adds-defi-yield-to-tokenized-stocks-and-etfs",
+      "used_by": [
+        "sam.dubai"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "topic": "Circle 在 Circle Mint 上线 DABB（Digital Asset-Backed Borrowing，9/21）：合格机构客户存入 BTC→铸 cirBTC→经自持钱包供抵押给第三方借贷市场借 USDC，借出 USDC 直接回 Mint 余额；首发仅 Morpho（后续将加 Aave），运行在 Arc 与 Ethereum；利率/抵押要求/清算阈值/流动性由所选市场决定（9/21 Arc 的 cirBTC-USDC 市场快照：清算 LTV 86%、已借 1413 万美元、可用流动性 1.629 亿、市场规模 1.77 亿、利用率 7.98%）；纽约客户被排除、零售不可用；cirBTC 首日经 Morpho 吸金超 1.5 亿美元（Aave V4 同步开市）；cirBTC 1:1 由 Circle National Trust 托管真实 BTC（9/19-20 约 949 枚 ≈ 7700 万美元，储备 951 BTC）+Chainlink 实时 PoR；Arc 主网 9/16 才公开（5 天前）",
+      "source": "https://www.circle.com/blog/digital-asset-backed-borrowing-is-now-available-in-circle-mint ; https://cryptoslate.com/circle-now-lets-institutions-borrow-usdc-against-bitcoin-but-morpho-still-sets-the-rules/ ; https://en.cryptonomist.ch/2026/09/21/circle-wrapped-bitcoin-cirbtc-arc/",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-22",
+      "topic": "Anchorage Digital 选定 LayerZero 为受监管稳定币互操作伙伴（9/21）：美国首家联邦特许加密银行 Anchorage Digital Bank, N.A. 负责受监管发行，LayerZero 提供跨链消息与代币基建（OFT 标准），宣称可连 170+ 链；首发 Tether USAT，Western Union USDPT、OSL Group USDGO、fUSD 后续接入；Anchorage 发行平台当前覆盖 Tether/Western Union/OSL/Falcon Finance 关联代币；LayerZero 自报口径 OFT 累计转账 2800 亿美元、占跨链转账量 87%（无逐币上线时间表）；本月 BDACS 亦选用 OFT 接 KRW1",
+      "source": "https://crypto.news/anchorage-digital-taps-layerzero-for-stablecoin-rails/ ; https://layerzero.network/blog/anchorage-selects-layerzero-for-stablecoins",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-23",
+      "topic": "Ondo Finance 实物(in-kind)代币化股票铸造/赎回上线：合资格机构可经 Alpaca Instant Tokenization Network 用已持有股份直接换取 Ondo Stocks（非现金路径），减少融资需求；仅以太坊+BNB Chain、逐案审批；未公布费率/最小转换规模/Solana 时间表。RWA.xyz：Ondo 分布式资产 36.3 亿美元、441 产品、485,296 持有地址、月转账 15.8 亿美元",
+      "source": "https://printhereum.com/ondo-launches-in-kind-tokenized-stock-conversion/ ; https://app.rwa.xyz",
+      "used_by": [
+        "marcus.sg"
+      ]
+    },
+    {
+      "date": "2026-09-23",
+      "topic": "Broadridge 将代理投票与股东通讯扩展至 xStocks 代币化股票合资格持有人：持 Web3 凭证登录 ProxyVote.com、看底层股票代理材料并提交投票意向；做法是把治理接回既有代理基础设施而非链上原生投票（链上投票法律效力未定）；覆盖持有人比例与发行人参与均未披露；产品不对美/英人士销售；Broadridge DLR 平台日处理约 3570 亿美元代币化真实资产",
+      "source": "https://financeloopnews.com/broadridge-extends-proxy-voting-to-xstocks-tokenised-equity-holders/ ; https://www.broadridge.com/press-release/2026/broadridge-and-payward-empower-xstocks-holders",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-25",
+      "topic": "CFTC 更新加密 FAQ（9/24，4 新增+1 修订）：FCM/DCO 可将客户资金投向「已获准资产的代币化形式」，前提是代币赋予持有人与传统形式相同或功能等同的法律与经济权利，且仍满足流动性/集中度/期限/托管要求；政府型货币市场基金代币份额在列（需托管方书面确认）；加密资产含稳定币仍不可作未清算互换保证金、FCM 不得用客户资金投支付稳定币；Q13-Q15 允许链上记录直接充当合规记录（公链须能在网络/浏览器不可用时取出并提交，责任仍在机构）。同日美联储按 GENIUS Act 提首份稳定币储备/资本规则提案。Token Terminal 口径代币化 RWA 约 460 亿美元（基金 347 亿/75.5%、商品 77 亿/16.8%、股票 35 亿/7.7%）",
+      "source": "https://www.cftc.gov/PressRoom/PressReleases/9303-26 ; https://www.coindesk.com/policy/2026/09/24/u-s-commodities-firms-can-invest-in-tokenized-assets-use-blockchain-records-cftc ; https://www.tokenpost.com/news/regulation/23875 ; https://cryptotimes.io/2026/09/25/cftc-updates-crypto-guidance-as-tokenized-assets-hit-46b",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-25",
+      "topic": "Ondo Intelligent Portfolios 上线（9/24）：BlackRock 为 Ondo 开发的三种模型组合（High Income / Diversified Growth / High Growth）打包为单一代币 BLKHIon / BLKDIGon / BLKGRWon，部署在以太坊+BNB Chain、经 CoW Protocol 结算、仅面向美国以外的合资格投资人，可通过钱包与 DeFi 应用获取；ONDO 当日约 +24%（约 0.517 美元）创年内新高；Ondo RWA 资产 >38 亿美元（RWA.xyz）",
+      "source": "https://www.prnewswire.com/news-releases/ondo-launches-intelligent-portfolios-powered-by-blackrock-bringing-portfolio-strategies-onchain-302889211.html ; https://coinmarketcal.com/event/intelligent-portfolios-launch-93087575-1 ; https://www.gate.com/news/detail/BLK/blackrock-and-ondo-finance-launch-tokenized-etf-strategies-for-non-us-24529716 ; https://finbold.com/blackrock-partnership-sparks-24-rally-in-this-crypto",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-26",
+      "topic": "以太坊社群草案：保密型 RWA 代幣（鏈上金額保密 + 保留發行人執法權：凍結、強制轉移、撤銷身分；仍屬早期草案未通過；ERC-3643/T-REX 本已有凍結與強制轉移）",
+      "source": "https://thedefiant.io/news/infrastructure/ethereum-draft-proposes-compliance-controls-for-confidential-rwa-tokens",
+      "used_by": [
+        "azhe.tpe"
+      ]
+    },
+    {
+      "date": "2026-09-26",
+      "topic": "ARK Invest 将 ARK Venture Fund(ARKVX，约 13 亿美元、NAV 约 60.50 美元) 经 Securitize 代币化上以太坊（9/24）：$500 起投；封闭式 interval fund、股份不上市、预期无二级市场、流动性仅靠定期回购且可能超额认购；代币=基金份额，非 OpenAI/Anthropic/Stripe/Databricks 股份",
+      "source": "https://www.coindesk.com/business/2026/09/24/cathie-wood-s-ark-teams-with-securitize-to-tokenize-venture-fund-with-openai-anthropic-stakes",
+      "used_by": [
+        "mika.toronto"
+      ]
+    },
+    {
+      "date": "2026-09-26",
+      "topic": "Issuer Sponsored Token Coalition（Bullish + Equiniti 召集，Alpaca / Apex Fintech / DriveWealth 首批加入，9/24 公告）：主张代币化股票直接勾连发行人官方股东名册以保留投票/股息/公司行动权利；DriveWealth CEO 直言『市面多数 tokenized equity 根本不是股权』；四方向=股东权利/互操作/发行-托管-结算基建/开放市场生态；参与非约束性、Q4 做原型与规范、10/27 在纽交所与发行人对话；Bullish 以 42 亿美元收购 Equiniti 预计 2027-01 完成；背景=SEC 9/17 五年期 Innovation Exemption（要求平台证实代币与普通股权利等同）",
+      "source": "https://www.stocktitan.net/news/BLSH/leading-market-infrastructure-firms-form-coalition-to-advance-issuer-lemyds0gi77x.html ; https://crypto-economy.com/bullish-alpaca-and-apex-team-up-to-build-issuer-backed-tokenized-stocks ; https://www.coindesk.com/business/2026/09/24/bullish-alpaca-and-apex-fintech-form-coalition-to-push-issuer-backed-tokenized-stocks",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-26",
+      "topic": "BeInCrypto Intelligence《Real State of Tokenization in 2026》（数据源 RWA.xyz）：跟踪约 600 亿美元、7,000+ 产品、12 类资产；62 个资产占 88% 市值、前五占约一半；市值 >10 万美元的 1,289 个资产里 910 个（约 329 亿美元）一周零转账；约 97% 不对美国零售开放；仅代币化美国国债达到 production-grade（约 150 亿美元 / 100 个资产 / 16 个 >1 亿美元 / 99% 为 distributed）",
+      "source": "https://beincrypto.com/only-one-asset-class-ready-rwa-tokenization/ ; https://beincrypto.com/rwa-tokenization-liquidity-gap-experts/ ; https://www.coinlive.com/news-flash/1131925",
+      "used_by": [
+        "laoliang.84"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "topic": "韩国 9/28 首尔研讨会（金融监督院 + 议员）：STO 法制化后 RWA 仍缺支付代币整合/账本互操作性/公开发行标准；口径=全球链上 RWA 381.7 亿美元、代币化美债 162 亿；FSC 三阶段路线图 2027-02 起步（机构专属 MMF 与债券、信托架构未上市股、公开发行碎片化证券→全部公开发行→与稳定币挂钩的链上支付基建）；障碍=结算延迟/系统性风险/标准缺失/链上原子化 DvP 的法律限制",
+      "source": "https://www.gate.com/zh/news/detail/south-korea-reveals-rwa-market-gaps-in-payment-tokens-and-ledger-24602447 ; https://www.gate.com/news/detail/RWA/korea-rwa-seminar-identifies-payment-token-and-ledger-gaps-post-sto-24602522 ; https://www.fsc.go.kr/eng/index",
+      "used_by": [
+        "daniel.lon"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "topic": "Stobox Weekly Digest 9/22–28（rwa.xyz 口径·9/28 快照）：代币化美债 146.9 亿美元、30 天 -7.93%、7 日收益率 3.53%；最大产品 Circle USYC 约 24 亿 / Ondo USDY 22.8 亿 / BlackRock BUIDL 22.4 亿；代币化私人信贷(分布式) 79 亿、+0.68%；稳定币 3064.7 亿(rwa.xyz) vs 3114.3 亿(DefiLlama)",
+      "source": "https://www.stobox.io/blog/rwa-tokenization-digest-sep-22-28-2026 ; https://app.rwa.xyz/treasuries",
+      "used_by": [
+        "marcus.sg"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "topic": "银行存款代币化双线：The Clearing House 选用 Quant 作 On-Chain Money Initiative 技术层（25 家大行成员、清算接既有 RTP/CHIPS、预计 2027 上半年向参与机构开放；代币化存款仍是银行存款负债/受存款保护，不是稳定币）＋加拿大六大行 9/22 宣布联合探索加元代币化存款（第一阶段=银行间流转；OSFI 口径：记账技术不改变存款法律性质）",
+      "source": "https://www.theclearinghouse.org/payment-systems/Articles/2026/09/The-Clearing-House-Partners-with-Quant-to-Advance-the--On-Chain-Money-Initiative ; https://www.prnewswire.com/news-releases/the-clearing-house-partners-with-quant-to-advance-the-on-chain-money-initiative-302888598.html ; https://news.cnyes.com/news/id/6613941",
+      "used_by": [
+        "grace.nyc"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "topic": "Nasdaq 23/5 交易制：行业预计 2026-12-06 起实施（新增 9pm–4am ET 时段，待 SIP 就绪）；被视为传统交易所对代币化股票/24-7 交易的全天候竞争 → 交易时长红利 vs 权利·结算·流动性深度",
+      "source": "https://www.nasdaq.com/docs/nasdaq-global-trading-hours-faqs ; https://www.marketsmedia.com/nasdaq-aims-to-debut-23-5-trading-on-6-december-2026/ ; https://www.jonesday.com/en/insights/2026/09/nyse-and-nasdaq-move-to-23hour-trading-day-overnight-session-is-an-evolution-but-not-yet-a-revolution",
+      "used_by": [
+        "azhe.tpe"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "topic": "BlackRock 白皮书《The Machine-Native Economy》(约9/22发布；CoinDesk 9/23 报道)：AI=机器原生智能、数字资产=机器原生货币，三大交汇=代币化/agent 以稳定币支付/代币化算力；稳定币供应 >3000 亿(2026-09)、2025 调整后交易量 11.2 万亿美元(≈Visa 11.2 万亿、Mastercard 10.6 万亿、ACH 93 万亿)、2020–2025 复合约 +80%/年(vs ACH 8.5%)、1H2026 已 8.5 万亿；算力线=2030 云算力收入约 1.1 万亿、2030 数据中心电力约 43% 用于推理(现 25%)；并承认代币化算力仍缺合约设计/市场结构标准(芯片代际生产率、区域电价)；BCG/Allium：2025 链上稳定币总流转 62 万亿中仅约 4.2 万亿属经济活动、350–550 亿为真实经济支付",
+      "source": "https://www.blackrock.com/us/individual/literature/whitepaper/the-machine-native-economy.pdf ; https://www.coindesk.com/markets/2026/09/23/ai-agents-will-soon-buy-their-own-computing-power-and-data-using-stablecoins-according-to-blackrock ; https://www.ledgerinsights.com/blackrock-sees-ai-digital-assets-converging-around-stablecoins-compute-markets/ ; https://www.stobox.io/blog/machine-native-economy-ai-agents-tokenized-assets",
+      "used_by": [
+        "aiden.wu"
+      ]
+    },
+    {
+      "date": "2026-09-29",
+      "topic": "ESCB(ECB+27 国央行)9/22 对 MiCA 定向审查的正式意见：要求取消稳定币储备 30%/60% 银行存款下限，改为「流动性桶」(储备中最低比例须在 1 个与 5 个工作日内到期；EBA 2024 草案口径=显著型 40%/60%、普通型 20%/30%)，认可隔夜逆回购与短久期主权债；理由=电子货币机构存款在银行流动性覆盖率计算中按 100% 流出率处理(零售约 5%)，大规模赎回会把代币风险导入银行；同时主张保留平价赎回(第49条)与禁向持有人付息(第50条)、把 CASP 授权监管上收 ESMA；咨询 9/30 23:59 CEST 截止，任何改动需修订 MiCA，2027 前难落地；背景=ECB 存款便利利率 9/16 起 2.50%，发行方吃利差、持币人零息",
+      "source": "https://www.fintechweekly.com/magazine/articles/escb-mica-review-stablecoin-60-percent-deposit-rule-2026 ; https://cryptotimes.io/2026/09/22/ecb-eu-central-banks-urge-brussels-to-scrap-micas-60-stablecoin-deposit-rule ; https://edgen.tech/ja/news/post/ecb-and-27-central-banks-seek-to-scrap-micas-60-deposit-rule ; https://tronweekly.com/ecb-urges-eu-to-remove-mica-stablecoins",
+      "used_by": [
+        "daniel.lon"
+      ]
+    }
+  ],
+  "_meta_note": "2026-09-25：Windows 清理 Temp 导致运行时台账/草稿/执行器被删，已从仓库存档 radar/ 还原运行时工作区（重建 rwa_secrets.py 指向 Desktop/rwa 金库）。 | 2026-09-29：Temp 再次被清空（运行时台账/草稿/执行器/rwa_secrets.py 全重建，rwa_secrets.py 按 skill windows-dpapi-vault 的 pywin32 重建法指向 Desktop/rwa 金库）。 | 2026-09-29 08:30 增补两条（存款代币化双线 / Nasdaq 23-5）；本轮线上队列 draft=38。 | 2026-09-29 16:33 增补两条（BlackRock 机器原生经济白皮书 / ESCB 对 MiCA 储备规则的审查意见）；本轮线上队列 draft=40。"
 }

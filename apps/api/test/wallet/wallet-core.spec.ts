@@ -165,6 +165,38 @@ describe('WalletService', () => {
     expect(ledger.createWithdrawalWithLock).not.toHaveBeenCalled()
   })
 
+  it('returns only the signed-in user withdrawal status fields', async () => {
+    const requestedAt = new Date('2026-09-25T08:00:00.000Z')
+    const completedAt = new Date('2026-09-25T08:05:00.000Z')
+    const { service, withdrawals } = buildService()
+    withdrawals.findOne.mockResolvedValue({
+      id: 'withdrawal-1', userId: 'user-1', walletId: 'wallet-1', network: 'arbitrum',
+      assetCode: 'USDT', assetDecimals: 6, atomicAmount: '1000000', feeAtomicAmount: '50000',
+      destinationHash: Buffer.from('hash'), destinationCiphertext: Buffer.from('secret'),
+      encryptionKeyVersion: 1, addressBookEntryId: 'address-book-1', policySnapshot: { private: true },
+      state: 'completed', idempotencyKey: 'private-key', chainTransactionId: 'chain-1',
+      reasonCode: null, approvedAt: requestedAt, executionLeaseUntil: null,
+      executionAttemptCount: 1, requestedAt, completedAt,
+    })
+
+    await expect(service.getWithdrawalStatus('user-1', 'withdrawal-1')).resolves.toEqual({
+      id: 'withdrawal-1', state: 'completed', network: 'arbitrum', assetCode: 'USDT', assetDecimals: 6,
+      atomicAmount: '1000000', feeAtomicAmount: '50000', reasonCode: null,
+      requestedAt, approvedAt: requestedAt, completedAt,
+    })
+    expect(withdrawals.findOne).toHaveBeenCalledWith({ where: { id: 'withdrawal-1', userId: 'user-1' } })
+  })
+
+  it('hides another user withdrawal behind the same not-found response', async () => {
+    const { service, withdrawals } = buildService()
+    withdrawals.findOne.mockResolvedValue(null)
+
+    await expect(service.getWithdrawalStatus('user-2', 'withdrawal-1')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'WALLET_WITHDRAWAL_NOT_FOUND' }),
+    })
+    expect(withdrawals.findOne).toHaveBeenCalledWith({ where: { id: 'withdrawal-1', userId: 'user-2' } })
+  })
+
   it('refuses to start financial mode when the installed custody adapter is still a stub', () => {
     expect(() => buildService({ financial: true })).toThrow(/CustodyAdapter/)
   })

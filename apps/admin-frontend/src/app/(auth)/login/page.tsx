@@ -19,6 +19,7 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get('passwordChanged') === '1') setNotice('密码已修改，请使用新密码和当前动态验证码重新登录。');
     if (params.get('expired') === '1') {
       setNotice('登录会话已过期或已失效，请重新登录。');
     }

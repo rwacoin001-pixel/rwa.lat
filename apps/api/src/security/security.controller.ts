@@ -6,6 +6,7 @@ import {
   PasskeyAssertionFinishDto,
   PasskeyFinishDto,
   RecoveryCodeDto,
+  SecurityEventViewDto,
   StepUpDto,
   TotpCodeDto,
   TotpEnrollmentDto,
@@ -133,7 +134,7 @@ export class SecurityController {
   }
 
   @Get('events')
-  @ApiOkResponse({ description: 'Latest immutable security audit records for the signed-in user.' })
+  @ApiOkResponse({ type: SecurityEventViewDto, isArray: true, description: 'Latest redacted security events for the signed-in user.' })
   @ApiOperation({ summary: 'List the latest security events' })
   events(@CurrentAuth() actor: SecurityActor) {
     return this.security.listEvents(actor)

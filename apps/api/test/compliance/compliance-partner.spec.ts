@@ -31,7 +31,6 @@ describe('PARTNER-001 桩适配器（类型化占位）', () => {
       kyc,
       sanctions,
       {} as never,
-      {} as never,
       config as never,
     )).toThrow(/stub providers are forbidden/)
   })
@@ -72,7 +71,6 @@ describe('PARTNER-001 桩适配器（类型化占位）', () => {
       {} as never,
       { name: 'didit', mode: 'live' } as never,
       new DisabledSanctionsProvider(),
-      {} as never,
       {} as never,
       config as never,
     )).not.toThrow()

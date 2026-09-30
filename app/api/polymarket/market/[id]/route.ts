@@ -39,7 +39,7 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
   const integration = polymarketServerConfig()
   try {
     const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${encodeURIComponent(id)}`, { next: { revalidate }, signal: AbortSignal.timeout(8_000) })
-    if (!marketResponse.ok) throw new Error(`Gamma response ${marketResponse.status}`)
+    if (!marketResponse.ok) throw new Error('Market data unavailable')
     const market = await marketResponse.json() as GammaMarket
     const tokenIds = arrayValue(market.clobTokenIds)
     const tokenId = tokenIds[0]
@@ -84,6 +84,6 @@ export async function GET(_request: Request, context: { params: Promise<{ id: st
       },
     })
   } catch (error) {
-    return NextResponse.json({ source: 'unavailable', integration, error: error instanceof Error ? error.message : 'Market unavailable' }, { status: 502 })
+    return NextResponse.json({ source: 'unavailable', integration, error: 'Market details are unavailable right now.' }, { status: 502 })
   }
 }

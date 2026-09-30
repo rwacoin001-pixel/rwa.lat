@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "kenji.tokyo",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "ja",
+    "body": "ちょっと記録しておく。SBIデジタルプラクティスと韓国の教保生命が、円建てとウォン建てのステーブルコインを直接交換する検証を、Canton Network のテスト環境で完了したと発表した。\n\nいつもの越境送金は円→ドル→ウォンと二度両替するのが普通なので、「ドルの脚」を外すという発想自体は、越境ECをやっている身としては素直に気になる。\n\nただ、使われたのはテスト用トークンで、本番の予定も規制の承認もまだ出ていない。コストがどれだけ下がったかの数字も公表されていない。\n\n私が見たいのは三つ。両替を省いた分の実額、相手方リスクを誰が負うか、そして決済が止まったときの扱い。ここが書かれてから判断でいい。"
+  },
+  {
+    "profileHandle": "marcus.sg",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Token Terminal puts tokenized RWAs near $46.2B; headlines say ~$3.6B flowed into DeFi venues in 24h, DEX volume ~$419M. And on Robinhood Chain, Uniswap v4 reportedly holds ~73% of tokenized-equity deposits, ~$83M in 30 days.\n\nTwo questions before calling that adoption. What does 'deposit' mean here — collateral posted, borrowed against, or just transferred in? The definition moves the number. And how concentrated: one protocol, one chain, one incentive is not a broad market.\n\nDirection looks real. Concentrated flow is not yet durable."
+  }
+]

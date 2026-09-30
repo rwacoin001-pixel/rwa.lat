@@ -16,13 +16,18 @@ import { AdminSupportController, UserOpsController } from './user-ops.controller
 import { SecurityModule } from '../security/security.module'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
 import { ObjectStorageModule } from '../object-storage/object-storage.module'
+import { IdentityModule } from '../identity/identity.module'
+import { JobQueueModule } from '../job-queue/job-queue.module'
+import { NotificationDeliveryService } from './notification-delivery.service'
+import { AccountClosureService } from './account-closure.service'
+import { AccountClosureController, AdminAccountClosureController } from './account-closure.controller'
 
 const models = [Notification, Ticket, TicketMessage, TicketEvent, Invitation, Subscription, Fee, Reward, Preference]
 
 @Module({
-  imports: [TypeOrmModule.forFeature(models), SecurityModule, AdminRbacModule, ObjectStorageModule],
-  controllers: [NotificationController, AdminNotificationController, UserOpsController, AdminSupportController],
-  providers: [NotificationService, UserOpsService],
-  exports: [NotificationService, UserOpsService],
+  imports: [TypeOrmModule.forFeature(models), SecurityModule, AdminRbacModule, ObjectStorageModule, IdentityModule, JobQueueModule],
+  controllers: [NotificationController, AdminNotificationController, UserOpsController, AdminSupportController, AccountClosureController, AdminAccountClosureController],
+  providers: [NotificationService, UserOpsService, NotificationDeliveryService, AccountClosureService],
+  exports: [NotificationService, UserOpsService, NotificationDeliveryService],
 })
 export class NotificationModule {}

@@ -94,7 +94,7 @@ const products: Record<AppLocale, Record<string, ProductCopy>> = {
 const meta: Record<AppLocale, {
   risk: Record<string, string>; returns: Record<string, string>; liquidity: Record<string, string>; availability: Record<string, string>; note: string
 }> = {
-  en: { risk: {}, returns: {}, liquidity: {}, availability: {}, note: 'Demo product for presentation' },
+  en: { risk: {}, returns: {}, liquidity: {}, availability: {}, note: 'Product profile for review' },
   'zh-CN': {
     risk: { 'Low Risk': '低风险', 'Medium Risk': '中风险', 'High Risk': '高风险' },
     returns: { 'projected APY': '预计年化收益率', 'projected yield': '预计收益率', 'indicative yield': '指示性收益率', 'AI score': 'AI 评分' },
@@ -117,6 +117,17 @@ const meta: Record<AppLocale, {
     risk: { 'Low Risk': 'Risco baixo', 'Medium Risk': 'Risco médio', 'High Risk': 'Risco alto' }, returns: { 'projected APY': 'APY projetado', 'projected yield': 'retorno projetado', 'indicative yield': 'retorno indicativo', 'AI score': 'pontuação de IA' }, liquidity: { 'Monthly window': 'Janela mensal', '90-day term': 'Prazo de 90 dias', 'Weekly queue': 'Fila semanal', 'Quarterly window': 'Janela trimestral', '12-month term': 'Prazo de 12 meses', 'T+2 redemption': 'Resgate T+2', '18-month term': 'Prazo de 18 meses', 'Market hours': 'Horário de mercado' }, availability: { '72% capacity': '72% de capacidade', '41% capacity': '41% de capacidade', '88% capacity': '88% de capacidade', '65% capacity': '65% de capacidade', Open: 'Aberto', '58% subscribed': '58% subscrito', 'Daily dealing': 'Negociação diária', '34% subscribed': '34% subscrito', 'Market open': 'Mercado aberto' }, note: 'Produto demo para apresentação',
   },
 }
+
+const liveReturnLabels: Record<AppLocale, Record<string, string>> = {
+  en: { 'Current APY': 'Current APY', '24h change': '24h change', 'On-chain TVL': 'On-chain TVL' },
+  'zh-CN': { 'Current APY': '当前 APY', '24h change': '24 小时变化', 'On-chain TVL': '链上 TVL' },
+  hi: { 'Current APY': 'वर्तमान APY', '24h change': '24 घंटे का बदलाव', 'On-chain TVL': 'ऑन-चेन TVL' },
+  es: { 'Current APY': 'APY actual', '24h change': 'cambio en 24 h', 'On-chain TVL': 'TVL en cadena' },
+  ar: { 'Current APY': 'العائد السنوي الحالي', '24h change': 'التغير خلال 24 ساعة', 'On-chain TVL': 'القيمة المقفلة على السلسلة' },
+  fr: { 'Current APY': 'APY actuel', '24h change': 'variation sur 24 h', 'On-chain TVL': 'TVL on-chain' },
+  pt: { 'Current APY': 'APY atual', '24h change': 'variação em 24 h', 'On-chain TVL': 'TVL on-chain' },
+}
+for (const locale of Object.keys(liveReturnLabels) as AppLocale[]) Object.assign(meta[locale].returns, liveReturnLabels[locale])
 
 export function localizeProduct(product: DemoProduct, locale: AppLocale): DemoProduct {
   if (locale === 'en') return product

@@ -20,6 +20,7 @@ node_modules
 .DS_Store
 .next/
 dist/
+.local-runtime/
 .wrangler/
 out/
 .open-next/
@@ -34,3 +35,8 @@ page_dump.html
 
 # Windows reserved-name artifacts
 **/nul
+
+# Local visual verification artifacts
+.tmp-shots/
+shots/
+.chrome-batch2-light/

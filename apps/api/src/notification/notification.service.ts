@@ -11,6 +11,7 @@ export interface NotificationView {
   kind: string
   title: string
   body?: string
+  payload: Record<string, unknown>
   readAt?: Date
   createdAt: Date
 }
@@ -107,6 +108,7 @@ export class NotificationService {
       kind: n.kind,
       title: n.title,
       body: n.body,
+      payload: n.payload ?? {},
       readAt: n.read_at,
       createdAt: n.created_at,
     }

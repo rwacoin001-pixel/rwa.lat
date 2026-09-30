@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["security", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Read the CFTC's Thursday FAQ update slowly. Eligible FCMs and DCOs may put customer funds into tokenized forms of investments already permitted under Reg 1.25 — but only if the token grants legal and economic rights the same or functionally equivalent to the traditional asset, and the asset still passes the liquidity, concentration, maturity and custody tests. Tokenized government money market shares are in, subject to a written acknowledgment from the custodian. What did not change: stablecoins still are not eligible margin for uncleared swaps. And putting records onchain does not shift the obligation — the firm must still produce them if the network goes down. Format change, not substance. Not legal advice."
+  },
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "One observation: Ondo's new Intelligent Portfolios are less about the strategies than about packaging. Three BlackRock-designed model portfolios — high income, diversified growth, high growth — shipped as single transferable tokens on Ethereum and BNB Chain, offered only to eligible investors outside the US. ① Retail normally reaches model portfolios through a platform; here the wrapper itself is the product. ② The constraint is eligibility, not capability, and eligibility is now something you can price. ONDO's move on the headline is sentiment; the wrapper design is the part I would read."
+  }
+]

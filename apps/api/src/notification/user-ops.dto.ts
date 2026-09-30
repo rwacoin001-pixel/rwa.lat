@@ -69,6 +69,9 @@ export class AdminTicketResponseDto extends CreateTicketMessageDto {
 }
 
 export class AdminTicketListQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsIn(['support', 'dispute', 'appeal', 'scam_report'])
+  category?: 'support' | 'dispute' | 'appeal' | 'scam_report'
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsIn(['open', 'pending', 'investigating', 'waiting_user', 'resolved', 'closed'])
@@ -102,6 +105,78 @@ export class AcceptInvitationDto {
   @ApiProperty()
   @IsString()
   token!: string
+}
+
+export class InvitationViewResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string
+
+  @ApiProperty({ format: 'uuid' })
+  inviterUserId!: string
+
+  @ApiPropertyOptional({ format: 'email' })
+  email?: string
+
+  @ApiProperty()
+  role!: string
+
+  @ApiProperty({ enum: ['pending', 'accepted', 'revoked', 'expired'] })
+  state!: string
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  acceptedUserId?: string
+
+  @ApiPropertyOptional({ format: 'date-time' })
+  acceptedAt?: Date
+
+  @ApiProperty({ format: 'date-time' })
+  expiresAt!: Date
+
+  @ApiProperty({ format: 'date-time' })
+  createdAt!: Date
+}
+
+export class RewardViewResponseDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string
+
+  @ApiProperty({ format: 'uuid' })
+  userId!: string
+
+  @ApiProperty({ enum: ['referral', 'loyalty', 'promo', 'cashback'] })
+  kind!: string
+
+  @ApiProperty({ type: 'string', pattern: '^[0-9]+$' })
+  amountAtomic!: string
+
+  @ApiProperty({ type: 'string', pattern: '^[A-Z]{3}$' })
+  currency!: string
+
+  @ApiProperty({ type: 'integer', nullable: true, example: 2, description: 'Decimal places used to format amountAtomic; currently declared for USD only.' })
+  decimals!: number | null
+
+  @ApiProperty({ enum: ['earned', 'redeemed', 'expired', 'revoked'] })
+  state!: string
+
+  @ApiPropertyOptional()
+  referenceType?: string
+
+  @ApiPropertyOptional({ format: 'uuid' })
+  referenceId?: string
+
+  @ApiProperty({ format: 'date-time' })
+  earnedAt!: Date
+}
+
+export class AcceptInvitationResultResponseDto {
+  @ApiProperty({ type: () => InvitationViewResponseDto })
+  invitation!: InvitationViewResponseDto
+
+  @ApiProperty({ type: () => RewardViewResponseDto })
+  inviterReward!: RewardViewResponseDto
+
+  @ApiProperty({ type: () => RewardViewResponseDto })
+  inviteeReward!: RewardViewResponseDto
 }
 
 export class UpsertPreferencesDto {

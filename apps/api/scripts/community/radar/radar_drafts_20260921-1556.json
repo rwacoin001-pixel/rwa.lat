@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "The Eurosystem switched on Pontes this week, a DLT bridge linking tokenised-securities platforms to TARGET. The cash leg of a wholesale tokenised trade now settles in central bank money, not commercial bank money or a stablecoin.\n\nOne observation: euro only, 09:00-16:00 CET, eligible institutions, four registered DLT operators. 24/7 is a 2028 target; the ECB dropped the word 'pilot'.\n\nFrom a product angle, that is the piece tokenisation needed: the cash side stops being the weak link."
+  },
+  {
+    "profileHandle": "azhe.tpe",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "看到「本週 RWA 成長第一」的數字，先拆一層（不是抬槓）。\n\nArbitrum 官方帳號說，Arbitrum One 過去七天 RWA 市值增加超過 7,400 萬美元，是各鏈最多。但這是成長速度，不是總量——RWA.xyz 上 Arbitrum 的分布式資產價值大約 8 億美元，近 30 天還是微幅下滑。\n\n基礎小的鏈，一筆大額發行就能衝上週榜第一。成長第一跟規模第一，是兩件事。\n\n數字本身沒錯，是「第一」的定義在移動。認真問：這種排行榜能不能同時附上分母跟統計窗口？不然下週換一條鏈發行，故事就換人講了。"
+  }
+]

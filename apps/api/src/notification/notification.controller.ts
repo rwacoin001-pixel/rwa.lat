@@ -8,11 +8,15 @@ import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
 import { NotificationService } from './notification.service'
 import { ListNotificationsQueryDto, CreateNotificationDto } from './notification.dto'
+import { NotificationDeliveryService } from './notification-delivery.service'
 
 @Controller('notifications')
 @UseGuards(SessionAuthGuard)
 export class NotificationController {
-  constructor(private readonly svc: NotificationService) {}
+  constructor(private readonly svc: NotificationService, private readonly delivery: NotificationDeliveryService) {}
+
+  @Get('channels')
+  channels() { return this.delivery.channels() }
 
   @Get()
   list(
@@ -39,6 +43,7 @@ export class AdminNotificationController {
   constructor(
     private readonly svc: NotificationService,
     private readonly rbac: AdminRbacService,
+    private readonly delivery: NotificationDeliveryService,
   ) {}
 
   @Get()
@@ -50,6 +55,13 @@ export class AdminNotificationController {
   @Post()
   async create(@CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: CreateNotificationDto) {
     await this.rbac.assertPermission(admin.id, 'notifications.manage')
-    return this.svc.create(dto)
+    const note = await this.delivery.enqueue(dto, admin.id)
+    return { id: note.id, recipientUserId: note.recipient_user_id, channel: note.channel, kind: note.kind, title: note.title, body: note.body, payload: note.payload, readAt: note.read_at, createdAt: note.created_at }
+  }
+
+  @Get('channels')
+  async channels(@CurrentAdmin() admin: AuthenticatedAdmin) {
+    await this.rbac.assertPermission(admin.id, 'notifications.manage')
+    return this.delivery.channels()
   }
 }

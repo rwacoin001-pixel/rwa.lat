@@ -22,8 +22,42 @@ describe('LedgerService', () => {
       accounts: [{ accountId: 'a1', atomicBalance: '123' }],
       source: 'immutable-ledger-projection',
     })
-    await expect(service.listUserTransactions('user-1', 500)).resolves.toMatchObject({ limit: 100 })
-    expect(query.mock.calls[1][1]).toEqual(['user-1', 100])
+    await expect(service.listUserTransactions('user-1', 500)).resolves.toMatchObject({ limit: 100, nextCursor: null })
+    expect(query.mock.calls[1][1]).toEqual(['user-1', null, null, 101])
+    expect(String(query.mock.calls[1][0])).toContain("'normalSide', a.normal_side")
+  })
+
+  it('pages ledger transactions using the stable effectiveAt/id ordering', async () => {
+    const query = jest.fn().mockResolvedValue([
+      { id: '00000000-0000-4000-8000-000000000002', effectiveAt: '2026-09-25T08:00:00.000Z', entries: [] },
+      { id: '00000000-0000-4000-8000-000000000001', effectiveAt: '2026-09-25T08:00:00.000Z', entries: [] },
+      { id: '00000000-0000-4000-8000-000000000000', effectiveAt: '2026-09-25T08:00:00.000Z', entries: [] },
+    ])
+    const service = new LedgerService({ query } as never)
+
+    const first = await service.listUserTransactions('user-1', 2)
+    expect(first.transactions.map((row: { id: string }) => row.id)).toEqual([
+      '00000000-0000-4000-8000-000000000002', '00000000-0000-4000-8000-000000000001',
+    ])
+    expect(first.nextCursor).toBe(Buffer.from(JSON.stringify({
+      effectiveAt: '2026-09-25T08:00:00.000Z', id: '00000000-0000-4000-8000-000000000001',
+    })).toString('base64url'))
+
+    await service.listUserTransactions('user-1', 2, first.nextCursor ?? undefined)
+    expect(query.mock.calls[1][1]).toEqual([
+      'user-1', '2026-09-25T08:00:00.000Z', '00000000-0000-4000-8000-000000000001', 3,
+    ])
+    expect(String(query.mock.calls[1][0])).toContain('(t.effective_at, t.id) < ($2::timestamptz, $3::uuid)')
+  })
+
+  it('rejects malformed ledger transaction cursors before querying', async () => {
+    const query = jest.fn()
+    const service = new LedgerService({ query } as never)
+
+    await expect(service.listUserTransactions('user-1', 20, 'not-a-cursor')).rejects.toMatchObject({
+      response: expect.objectContaining({ code: 'LEDGER_TRANSACTION_CURSOR_INVALID' }),
+    })
+    expect(query).not.toHaveBeenCalled()
   })
 
   it('creates a reconciliation case for a difference without mutating balances', async () => {

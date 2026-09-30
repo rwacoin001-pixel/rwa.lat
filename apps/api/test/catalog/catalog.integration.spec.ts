@@ -70,6 +70,7 @@ describe('CatalogModule (PG integration)', () => {
     const quote = await catalog.requireOrderableQuote(product.id, new Date())
     expect(quote.stale).toBe(false)
     expect(quote.unitPriceAtomicAmount).toBe('1010000')
+    expect(quote.unitPriceDecimals).toBe(6)
   })
 
   it('requireOrderableQuote throws QUOTE_STALE after expiration', async () => {
@@ -108,6 +109,28 @@ describe('CatalogModule (PG integration)', () => {
       dataSource.getRepository(PriceSnapshot) as any,
     )
 
+    await expect(catalog.requireOrderableQuote(product.id, new Date())).rejects.toMatchObject({
+      code: CATALOG_ERROR_CODES.QUOTE_STALE,
+    })
+  })
+
+  it('does not price a product using a quote for another asset code', async () => {
+    const assetClassRepo = dataSource.getRepository(AssetClass)
+    const productRepo = dataSource.getRepository(Product)
+    const quoteRepo = dataSource.getRepository(PriceQuote)
+    await assetClassRepo.save(assetClassRepo.create({ id: 'rwa', display_name: 'RWA', state: 'active' }))
+    const product = await productRepo.save(productRepo.create({
+      asset_class_id: 'rwa', display_name: 'Changed unit product', asset_code: 'NEW', asset_decimals: 6,
+      state: 'published', published_at: new Date(),
+    }))
+    await quoteRepo.save(quoteRepo.create({
+      product_id: product.id, asset_code: 'OLD', unit_price_atomic_amount: '9000000',
+      currency: 'USD', source: 'old-unit-test', valid_until: new Date(Date.now() + 60_000),
+    }))
+    catalog = new CatalogService(
+      assetClassRepo, productRepo, dataSource.getRepository(DisclosureFile),
+      quoteRepo, dataSource.getRepository(PriceSnapshot),
+    )
     await expect(catalog.requireOrderableQuote(product.id, new Date())).rejects.toMatchObject({
       code: CATALOG_ERROR_CODES.QUOTE_STALE,
     })

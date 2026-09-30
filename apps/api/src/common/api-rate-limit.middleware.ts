@@ -5,6 +5,8 @@ type RateLimitRule = {
   limit: number
   windowMs: number
   matches: (method: string, path: string) => boolean
+  /** Count each endpoint separately, so one sign-in step never spends another's allowance. */
+  perPath?: boolean
 }
 
 type Bucket = { count: number; resetAt: number }
@@ -29,16 +31,37 @@ const RULES: RateLimitRule[] = [
     matches: () => true,
   },
   {
+    // Each member image upload carries up to 10 MB of bytes through the API; 4 per post keeps this generous.
+    name: 'community-media-upload',
+    limit: 60,
+    windowMs: HOUR,
+    matches: (method, path) => method === 'POST' && path === '/v1/community/me/media',
+  },
+  {
     name: 'authentication-attempt',
-    limit: 5,
+    limit: 10,
     windowMs: MINUTE,
-    matches: (method, path) => method === 'POST' && /^\/v1\/auth\/(verify-email|wallet\/verify|oauth\/(google|x)(?:\/start)?|recover\/confirm|demo\/login)$/.test(path),
+    perPath: true,
+    matches: (method, path) => method === 'POST' && /^\/v1\/auth\/(verify-email|email-code\/confirm|login\/(password|email\/confirm)|flow\/(complete|resend)|password\/manage|passkey\/(challenge|verify)|wallet\/verify|oauth\/(google|x)(?:\/start)?|recover\/confirm|demo\/login)$/.test(path),
   },
   {
     name: 'registration',
     limit: 3,
     windowMs: HOUR,
     matches: (method, path) => method === 'POST' && /^\/v1\/auth\/(register\/email|demo\/register)$/.test(path),
+  },
+  {
+    // Email-first sign-in reveals whether an address is registered; this cap keeps bulk enumeration impractical.
+    name: 'email-lookup',
+    limit: 30,
+    windowMs: HOUR,
+    matches: (method, path) => method === 'POST' && path === '/v1/auth/email/lookup',
+  },
+  {
+    name: 'email-code-delivery',
+    limit: 20,
+    windowMs: HOUR,
+    matches: (method, path) => method === 'POST' && path === '/v1/auth/email-code/request',
   },
   {
     name: 'account-recovery',
@@ -51,6 +74,18 @@ const RULES: RateLimitRule[] = [
     limit: 10,
     windowMs: MINUTE,
     matches: (method, path) => method === 'POST' && path.startsWith('/v1/security/step-up/'),
+  },
+  {
+    name: 'identity-capture',
+    limit: 5,
+    windowMs: HOUR,
+    matches: (method, path) => method === 'POST' && path === '/v1/compliance/kyc/capture',
+  },
+  {
+    name: 'polymarket-translation',
+    limit: 12,
+    windowMs: MINUTE,
+    matches: (method, path) => method === 'POST' && path === '/v1/polymarket/translations',
   },
   {
     name: 'partner-callback',
@@ -78,7 +113,8 @@ export class ApiRateLimiter {
 
     for (const rule of RULES) {
       if (!rule.matches(input.method.toUpperCase(), input.path)) continue
-      const decision = this.consumeRule(rule, normalizeIp(input.ip), now)
+      const client = normalizeIp(input.ip)
+      const decision = this.consumeRule(rule, rule.perPath ? `${client}:${input.path}` : client, now)
       if (!decision.allowed) return decision
       if (decision.remaining / decision.limit < strictest.remaining / strictest.limit) strictest = decision
     }

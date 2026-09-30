@@ -42,7 +42,7 @@ export type RwaH5Copy = {
 
 export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
   en: {
-    shell: { notifications: 'Notifications', openProfile: 'Open profile', primaryNavigation: 'Primary navigation', skipContent: 'Skip to main content', offlineTitle: 'You are offline', offlineBody: 'Live prices and order previews are paused. Cached Demo content remains available.', openMasRecord: 'Open MAS institution record', disclosureOpened: 'Disclosure opened in this Demo.' },
+    shell: { notifications: 'Notifications', openProfile: 'Open profile', primaryNavigation: 'Primary navigation', skipContent: 'Skip to main content', offlineTitle: 'You are offline', offlineBody: 'Live prices and order previews are paused. Cached content remains available.', openMasRecord: 'Open MAS institution record', disclosureOpened: 'Disclosure opened.' },
     portfolio: {
       positions: [
         { name: 'H100 inference pool', detail: 'Compute · 2 units', change: '+12.40 today' },
@@ -57,7 +57,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
         { date: '30 Apr', label: 'Treasury reference accrual' },
       ],
       netContributions: 'Net contributions', marketMovement: 'Market movement', incomeSettled: 'Income settled',
-      months: ['Jun', 'Jul', 'Aug', 'Sep'], exportTitle: 'Export performance statement', exportBody: 'Demo only. Official statements require completed settlement data.', exportReady: 'Demo performance statement prepared.',
+      months: ['Jun', 'Jul', 'Aug', 'Sep'], exportTitle: 'Export performance statement', exportBody: 'Official statements require completed settlement data.', exportReady: 'Performance statement prepared.',
     },
     trust: {
       access: { eyebrow: 'ACCESS & ELIGIBILITY', title: 'Availability is checked by person, product and location.', body: 'Guest browsing is public. Funding, orders and withdrawals require account verification, sanctions screening and a product-level eligibility result.' },
@@ -66,24 +66,24 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
       accessRows: [
         { title: 'Guest browsing', description: 'Product discovery and public market information are available without an account.' },
         { title: 'Account actions', description: 'Funding, investing and withdrawals require sign-in, KYC and sanctions screening.' },
-        { title: 'Country result', description: 'Demo: not yet evaluated. Production uses residence, nationality, IP and product rules.' },
+        { title: 'Country result', description: 'Not yet evaluated. Availability uses residence, nationality, device context and product rules.' },
         { title: 'Product override', description: 'A product may remain unavailable even when the account is otherwise eligible.' },
       ],
       productRows: [
         { title: 'AI Compute · H100 pool', description: 'Revenue participation · 0.80% subscription · 8.00% of project revenue management fee · monthly exit queue.' },
         { title: 'RWA · Solar Income 2027', description: 'Operating-asset participation · 0.80% subscription · 1.20% annual management · quarterly exit window.' },
-        { title: 'Global Stocks · AI Leaders', description: 'Broker/tokenized route pending · 0.35% Demo transaction fee · exit during supported market hours.' },
+        { title: 'Global Stocks · AI Leaders', description: 'Broker/tokenized route pending · 0.35% transaction fee · exit during supported market hours.' },
         { title: 'Prediction markets', description: 'Public data discovery · fee shown before confirmation · exit depends on market liquidity and resolution.' },
         { title: 'USDT wallet', description: 'Custody/MPC provider pending · TRON, Ethereum and Arbitrum planned.' },
       ],
       legalRows: [
-        { title: 'Terms of Use', description: 'Demo version 1.0 · production counsel approval pending' },
-        { title: 'Privacy Notice', description: 'Demo version 1.0 · data controller details pending' },
+        { title: 'Terms of Use', description: 'Version 1.0 · counsel approval pending' },
+        { title: 'Privacy Notice', description: 'Version 1.0 · data controller details pending' },
         { title: 'Risk Disclosure', description: 'Loss, liquidity, counterparty, technology and regulatory risks' },
         { title: 'Corporate profile', description: 'Singapore operator mapping is provisional until company-secretary confirmation' },
         { title: 'Consent record', description: 'Language, version, IP/device context and timestamp will be retained' },
       ],
-      resultLabel: 'Current Demo result', resultValue: 'Guest · public browsing only', notEvaluated: 'Not evaluated', entityMapping: 'Provisional Singapore entity mapping', masStatus: 'MAS status: Capital Markets Services Licensee · Venture Capital Fund Management',
+      resultLabel: 'Current result', resultValue: 'Guest · public browsing only', notEvaluated: 'Not evaluated', entityMapping: 'Provisional Singapore entity mapping', masStatus: 'MAS status: Capital Markets Services Licensee · Venture Capital Fund Management',
     },
   },
   'zh-CN': {

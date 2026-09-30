@@ -62,3 +62,10 @@ export function sanitizeTopics(topics: string[] | undefined, known?: Set<string>
   }
   return seen
 }
+
+const COMMUNITY_MEDIA_PATH = /^\/v1\/community\/media\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})$/i
+
+/** Object id behind an API-relative community media reference, or null for external/legacy URLs. */
+export function communityMediaId(url: string | null | undefined): string | null {
+  return url ? COMMUNITY_MEDIA_PATH.exec(url)?.[1]?.toLowerCase() ?? null : null
+}

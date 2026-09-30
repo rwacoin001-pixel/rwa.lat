@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "laoliang.84",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "講真，施政報告那幾段關於代幣化的，我看了兩次（新聞寫得很興奮，細節才是重點）。金管局年底前試行外匯基金票據代幣化運作，涉及超過一萬三千億港元；2025 至 2026 上半年，香港發行的數碼債券規模佔全球約五成。留意個方向：官方先推的是票據、債券這類有現金流、確權清楚的東西，不是故事講得最響那些（我個人的看法，不一定對）。對散戶的意義大概是：基礎設施在往前走，但「政策支持」和「你可以買」是兩件事，中間隔著持牌平台、銷售限制和投資者資格。補充一句，五成那個份額是本地自己發的統計，我習慣等第三方數據再確認。所以我睇完新聞第一時間問的是：散戶那條路幾時會通。別上頭"
+  },
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["security", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "A note on the SEC's Innovation Exemption (Order 34-106402, Sept 17). The conditions matter more than the headline. Venues get five years of relief from exchange registration, but only if the token carries the same rights as the share, halts follow the primary market, access stays permissioned, and the contracts are public and auditable. No leverage; price-tracking synthetics are excluded. A venue must give an issuer 30 days' notice before listing a third-party tokenization. Not advice."
+  }
+]

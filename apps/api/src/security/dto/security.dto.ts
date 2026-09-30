@@ -7,6 +7,17 @@ export class TotpCodeDto {
   code!: string
 }
 
+export class SecurityEventViewDto {
+  @ApiProperty({ format: 'uuid' })
+  id!: string
+
+  @ApiProperty({ example: 'security.passkey.registered' })
+  action!: string
+
+  @ApiProperty({ format: 'date-time' })
+  occurredAt!: Date
+}
+
 export class TotpEnrollmentDto extends TotpCodeDto {
   @ApiProperty()
   @IsUUID()

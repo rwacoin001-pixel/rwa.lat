@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "An observation: banks keep choosing tokenized deposits over stablecoins. ① The Clearing House picked Quant to power its On-Chain Money Initiative — 25 US banks, tied to the RTP/CHIPS rails, open to participants in H1 2027. ② Canada's six largest banks are jointly exploring CAD tokenized deposits; their regulator's line: the recording technology doesn't change a deposit's legal nature. One bank tokenizing its own deposits is easy; bank A's deposit at bank B with the same value is the hard part."
+  },
+  {
+    "profileHandle": "azhe.tpe",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "認真問一個（不是抬槓）：Nasdaq 要把美股交易時段拉到 23 小時，預計 12/6 上路（等 SIP 就緒、為 9pm–4am ET 增開一段）。我第一反應是：鏈上代幣化股票最大的賣點不就是 24/7 嗎，是不是要被追上了？再想一下不對——延長時段解決的是「可及性」，不解決「權利跟結算」：代幣持有人的投票、股息、公司行動走哪一套？盤後那幾小時誰提供流動性、風控跟客服誰值班？會被吃掉的是時間差紅利，剩下要拼的是合規權利、流動性深度、鏈上可組合性。工程視角：交易時長是最容易改的參數，後面那三樣才是真正難的。"
+  }
+]

@@ -19,6 +19,22 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 export const adminApi = {
+  getLegal: (kind: LegalKind) => request<LegalConfiguration>(`/legal/${kind}`),
+  saveLegal: (kind: LegalKind, expectedRevision: number, content: LegalContent) => request<LegalConfiguration>(`/legal/${kind}`, { method: 'PUT', body: JSON.stringify({ expectedRevision, content }) }),
+  publishLegal: (kind: LegalKind, expectedRevision: number) => request<LegalConfiguration>(`/legal/${kind}/publish`, { method: 'POST', body: JSON.stringify({ expectedRevision }) }),
+  legalVersions: (kind: LegalKind) => request<LegalVersion[]>(`/legal/${kind}/versions`),
+  accountClosures:()=>request<Array<{id:string;userId:string;state:string;reason:string;createdAt:string}>>('/account-closures'),
+  accountClosure:(id:string)=>request<{id:string;userId:string;state:string;reason:string;createdAt:string;blockers:{code:string;count:number}[]}>(`/account-closures/${encodeURIComponent(id)}`),
+  reviewAccountClosure:(id:string,body:{decision:'close'|'reject';note:string})=>request(`/account-closures/${encodeURIComponent(id)}/review`,{method:'POST',body:JSON.stringify(body)}),
+  settlementInfo: (kind: 'orders' | 'redemptions', id: string) => request<{ id: string; userId: string; state: string; productName: string; quantityDecimals: number; feeRequired: boolean }>(`/manual-settlements/${kind}/${encodeURIComponent(id)}`),
+  postSettlement: (kind: 'orders' | 'redemptions', id: string, data: { externalReference: string; evidenceRef: string; amountAtomic: string; quantityAtomic: string; feeAtomic?: string }) => request(`/manual-settlements/${kind}/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify(data) }),
+  reviewSettlement: (id: string, state: 'verified' | 'exception', note: string) => request(`/manual-settlements/${encodeURIComponent(id)}/review`, { method: 'POST', body: JSON.stringify({ state, note }) }),
+  getPlatform: () => request<PlatformConfiguration>('/platform'),
+  savePlatform: (expectedRevision: number, content: PlatformContent) => request<PlatformConfiguration>('/platform', { method: 'PUT', body: JSON.stringify({ expectedRevision, content }) }),
+  publishPlatform: (expectedRevision: number) => request<PlatformConfiguration>('/platform/publish', { method: 'POST', body: JSON.stringify({ expectedRevision }) }),
+  platformVersions: () => request<Array<{ revision: number; publishedAt: string }>>('/platform/versions'),
+  getVerifiedAccess: (id: string) => request<VerifiedAccess | null>(`/platform/users/${encodeURIComponent(id)}/access`),
+  saveVerifiedAccess: (id: string, data: VerifiedAccess) => request<VerifiedAccess>(`/platform/users/${encodeURIComponent(id)}/access`, { method: 'PUT', body: JSON.stringify(data) }),
   getProfile: () => request<{ id: string; email: string; roleName: string; permissions: string[] }>('/auth/me'),
   listApprovals: (params?: { state?: string; limit?: number }) => {
     const qs = new URLSearchParams()
@@ -73,6 +89,11 @@ export const adminApi = {
   deleteObject: (id: string) => request<{ deleted: boolean; objectId: string }>(`/storage/objects/${encodeURIComponent(id)}`, { method: 'DELETE', body: JSON.stringify({}) }),
 }
 
+export type LegalKind = 'terms' | 'privacy'
+export type LegalContent = { title: string; effectiveDate: string; sections: Array<{ title: string; body: string }> }
+export type LegalConfiguration = { kind: LegalKind; revision: number; draft: Partial<LegalContent>; publishedRevision: number | null; updatedAt: string }
+export type LegalVersion = { revision: number; version: string; content: LegalContent; publishedAt: string }
+
 export type ProductState = 'draft' | 'published' | 'suspended' | 'retired'
 export type AssetClass = { id: string; displayName: string; description: string | null; state: string }
 export type ProductInput = {
@@ -89,6 +110,7 @@ export type ProductInput = {
   yieldTerms?: Record<string, unknown>
   riskDisclosure?: Record<string, unknown>
   mediaRefs?: string[]
+  coverStorageRef?: string | null
 }
 export type AdminProduct = ProductInput & {
   id: string
@@ -102,8 +124,8 @@ export type AdminProduct = ProductInput & {
   priceSource?: string | null
 }
 export type AssetClassInput = { id: string; displayName: string; description?: string }
-export type PriceQuote = { id: string; productId: string; assetCode: string; unitPriceAtomicAmount: string; currency: string; source: string; validUntil: string; capturedAt: string }
-export type PriceInput = { unitPriceAtomicAmount: string; currency: string; source: string; validUntil: string }
+export type PriceQuote = { unitPriceDecimals: number; id: string; productId: string; assetCode: string; unitPriceAtomicAmount: string; currency: string; source: string; validUntil: string; capturedAt: string }
+export type PriceInput = { unitPriceDecimals?: number; unitPriceAtomicAmount: string; currency: string; source: string; validUntil: string }
 export type Disclosure = { id: string; productId: string; kind: string; locale: string; title: string; storageRef: string; contentHash: string; state: string; publishedAt: string }
 export type DisclosureInput = { kind: 'prospectus' | 'risk_disclosure' | 'terms' | 'regulatory'; locale: string; title: string; storageRef: string; contentHash: string }
 export type OperationalSwitch = { key: string; label: string; description: string; current: { enabled: boolean; reason: string; updatedAt: string } | null; environmentReady: boolean; canEnable: boolean }
@@ -155,3 +177,12 @@ export type StorageReadiness = {
   uploadFlow: string
   message: string
 }
+
+export type PlatformContent = {
+  legalName: string; registrationNumber: string; jurisdiction: string; address: string;
+  supportEmail: string; description: string; allowedRegions: string[]; investorTypes: string[];
+  documents: Array<{ title: string; storageRef: string; public: boolean; kind?: 'general'|'reserve_audit'|'reserve_custody'; reportDate?: string; asOfDate?: string; issuer?: string }>;
+  officialChannels: Array<{ kind: 'website' | 'x' | 'telegram' | 'linkedin' | 'discord' | 'other'; label: string; url: string; note: string }>;
+}
+export type PlatformConfiguration = { revision: number; draft: Partial<PlatformContent>; published: PlatformContent | null; publishedRevision: number | null; publishedAt: string | null }
+export type VerifiedAccess = { region: string; investorType: string; evidenceRef: string; verifiedAt?: string }

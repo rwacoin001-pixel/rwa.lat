@@ -58,6 +58,9 @@ export class Product {
   })
   max_order_atomic_amount?: string
 
+  @Column({ type: 'text', nullable: true })
+  cover_storage_ref?: string | null
+
   @Column({ type: 'varchar', default: 'draft' })
   state!: ProductState
 

@@ -1,4 +1,5 @@
 'use client'
+import {AccountClosures} from '@/components/account-closures'
 
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, PageHeader, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
@@ -37,6 +38,7 @@ export default function UsersPage() {
             <DataTable columns={columns} rows={rows} loading={list.loading} error={list.error} onReload={list.reload} emptyHint="暂无用户" compact />
           </div>
         </Panel>
+        <AccountClosures />
       </div>
     </AdminLayout>
   )

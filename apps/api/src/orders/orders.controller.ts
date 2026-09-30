@@ -1,10 +1,11 @@
 import { Body, Controller, Get, Headers, Param, Post, Req, UseGuards } from '@nestjs/common'
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger'
+import { ApiBearerAuth, ApiTags, ApiExcludeController, ApiOkResponse } from '@nestjs/swagger'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
 import { AdvanceOrderDto, CreateOrderDto } from './orders.dto'
 import { OrdersService } from './orders.service'
+import { OrderResponseDto } from './orders.response.dto'
 
 @ApiTags('orders')
 @ApiBearerAuth()
@@ -14,16 +15,19 @@ export class OrdersController {
   constructor(private readonly orders: OrdersService) {}
 
   @Get()
+  @ApiOkResponse({ type: [OrderResponseDto] })
   list(@CurrentAuth() actor: SecurityActor) {
     return this.orders.listForUser(actor.userId)
   }
 
   @Get(':id')
+  @ApiOkResponse({ type: OrderResponseDto })
   get(@CurrentAuth() actor: SecurityActor, @Param('id') id: string) {
     return this.orders.getForUser(id, actor.userId)
   }
 
   @Post()
+  @ApiOkResponse({ type: OrderResponseDto })
   create(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateOrderDto, @Headers('idempotency-key') key: string, @Req() request: AuthenticatedRequest) {
     return this.orders.create(actor.userId, dto, key, request.requestId ?? 'unknown')
   }
@@ -31,6 +35,7 @@ export class OrdersController {
 
 // This controller is deliberately local-Demo-only. OrdersService fails closed
 // unless DEMO_OPERATIONS_ENABLED=true and APP_ENV is not production.
+@ApiExcludeController()
 @ApiTags('demo-admin')
 @Controller('demo-admin/orders')
 export class DemoOrdersController {

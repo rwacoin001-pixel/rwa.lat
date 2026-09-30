@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common'
+import { ConflictException, Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { In, IsNull, LessThan, Repository } from 'typeorm'
@@ -7,7 +7,7 @@ import type { HeadObjectCommandOutput } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 import { ObjectStorageObject, PresignedUrl } from './object-storage.entities'
 import { OBJECT_STORAGE_ERROR_CODES, ObjectStorageError } from './object-storage.errors'
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 
 const ALLOWED_BUCKETS = ['rwa-kyc', 'rwa-assets', 'rwa-attachments'] as const
 const MAX_PRESIGNED_TTL_SEC = 900
@@ -19,7 +19,7 @@ const BUCKET_POLICIES: Record<string, { maxBytes: number; contentTypes: string[]
   },
   'rwa-assets': {
     maxBytes: 100 * 1024 * 1024,
-    contentTypes: ['application/pdf', 'image/jpeg', 'image/png'],
+    contentTypes: ['application/pdf', 'image/jpeg', 'image/png', 'image/webp', 'image/gif'],
   },
   'rwa-attachments': {
     maxBytes: 25 * 1024 * 1024,
@@ -31,7 +31,27 @@ const EXTENSIONS: Record<string, string[]> = {
   'application/pdf': ['.pdf'],
   'image/jpeg': ['.jpg', '.jpeg'],
   'image/png': ['.png'],
+  'image/webp': ['.webp'],
+  'image/gif': ['.gif'],
   'text/plain': ['.txt'],
+}
+
+/** Community member images: raster formats only (no SVG), sniffed from bytes, never trusted from the client label. */
+export const COMMUNITY_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
+export type CommunityImageType = (typeof COMMUNITY_IMAGE_TYPES)[number]
+export type CommunityImagePurpose = 'post' | 'avatar'
+export const COMMUNITY_IMAGE_MAX_BYTES: Record<CommunityImagePurpose, number> = { post: 10 * 1024 * 1024, avatar: 5 * 1024 * 1024 }
+const COMMUNITY_IMAGE_EXT: Record<CommunityImageType, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' }
+
+/** Magic-byte sniff for the four accepted raster formats. */
+export function sniffImageType(bytes: Buffer): CommunityImageType | null {
+  if (bytes.length < 12) return null
+  if (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) return 'image/jpeg'
+  if (bytes.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]))) return 'image/png'
+  if (bytes.subarray(0, 4).toString('latin1') === 'RIFF' && bytes.subarray(8, 12).toString('latin1') === 'WEBP') return 'image/webp'
+  const gif = bytes.subarray(0, 6).toString('latin1')
+  if (gif === 'GIF87a' || gif === 'GIF89a') return 'image/gif'
+  return null
 }
 
 @Injectable()
@@ -72,6 +92,80 @@ export class ObjectStorageService {
         : undefined,
       forcePathStyle: config.get<string>('S3_FORCE_PATH_STYLE') === 'true',
     })
+  }
+
+  /** Fixed-markup platform PDF; private user ownership and normal scan clearance still apply. */
+  async storeGeneratedPdf(userId: string, documentId: string, bytes: Buffer) {
+    const checksumSha256 = createHash('sha256').update(bytes).digest('hex')
+    const key = `documents/${documentId}/${randomUUID()}.pdf`
+    validateObjectUpload({ bucket: 'rwa-attachments', key, contentType: 'application/pdf', expectedSizeBytes: bytes.length, checksumSha256 })
+    if (bytes.subarray(0,5).toString() !== '%PDF-') throw new ConflictException('Generated file is not a PDF')
+    const client = this.requireClient()
+    await client.send(new PutObjectCommand({ Bucket: this.physicalBucket('rwa-attachments'), Key: key,
+      Body: bytes, ContentType: 'application/pdf', ContentLength: bytes.length,
+      ChecksumSHA256: Buffer.from(checksumSha256, 'hex').toString('base64'),
+      ...(this.kmsKeyId ? { ServerSideEncryption: 'aws:kms' as const, SSEKMSKeyId: this.kmsKeyId } : {}),
+    }), { abortSignal: AbortSignal.timeout(30_000) })
+    const object = await this.objects.save(this.objects.create({ bucket: 'rwa-attachments', key, contentType: 'application/pdf',
+      sizeBytes: String(bytes.length), expectedSizeBytes: String(bytes.length), checksumSha256, scanStatus: 'pending',
+      uploadedBy: userId, tags: { source: 'generated-document', documentId } }))
+    return { objectId: object.id, checksumSha256 }
+  }
+
+  /**
+   * Member image upload for the community (post media or avatar). The API receives the bytes,
+   * sniffs the real format, and stores them in the private asset bucket as a pending object;
+   * the scan worker clears it and only then will {@link createCommunityImageUrl} serve it.
+   */
+  async storeCommunityImage(userId: string, purpose: CommunityImagePurpose, bytes: Buffer, declaredType?: string) {
+    const contentType = sniffImageType(bytes)
+    if (!contentType || (declaredType && declaredType.toLowerCase() !== contentType && !(declaredType === 'image/jpg' && contentType === 'image/jpeg'))) {
+      throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.INVALID_OBJECT, 'Only JPEG, PNG, WebP or GIF images are accepted', 400)
+    }
+    if (bytes.length < 1 || bytes.length > COMMUNITY_IMAGE_MAX_BYTES[purpose]) {
+      throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.INVALID_OBJECT, 'Image size is outside the allowed range', 413)
+    }
+    const checksumSha256 = createHash('sha256').update(bytes).digest('hex')
+    const key = `community/${userId}/${purpose}/${randomUUID()}.${COMMUNITY_IMAGE_EXT[contentType]}`
+    validateObjectUpload({ bucket: 'rwa-assets', key, contentType, expectedSizeBytes: bytes.length, checksumSha256 })
+    const client = this.requireClient()
+    await client.send(new PutObjectCommand({ Bucket: this.physicalBucket('rwa-assets'), Key: key,
+      Body: bytes, ContentType: contentType, ContentLength: bytes.length,
+      ChecksumSHA256: Buffer.from(checksumSha256, 'hex').toString('base64'),
+      ...(this.kmsKeyId ? { ServerSideEncryption: 'aws:kms' as const, SSEKMSKeyId: this.kmsKeyId } : {}),
+    }), { abortSignal: AbortSignal.timeout(30_000) })
+    const object = await this.objects.save(this.objects.create({ bucket: 'rwa-assets', key, contentType,
+      sizeBytes: String(bytes.length), expectedSizeBytes: String(bytes.length), checksumSha256, scanStatus: 'pending',
+      uploadedBy: userId, tags: { source: 'community-image', purpose } }))
+    return { objectId: object.id, contentType, sizeBytes: bytes.length, scanStatus: object.scanStatus }
+  }
+
+  /** Owned, fully uploaded, not rejected community images of one purpose; pending ones may be attached and appear once cleared. */
+  async attachableCommunityImages(userId: string, objectIds: string[], purpose: CommunityImagePurpose): Promise<string[]> {
+    if (!objectIds.length) return []
+    const unique = [...new Set(objectIds)]
+    if (unique.length !== objectIds.length) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.INVALID_OBJECT, 'Image references are invalid', 400)
+    this.requireClient()
+    const rows = await this.objects.find({ where: { id: In(unique), bucket: 'rwa-assets', uploadedBy: userId } })
+    const ok = rows.filter(row => row.tags?.source === 'community-image' && row.tags?.purpose === purpose
+      && BigInt(row.sizeBytes) > 0n && (row.scanStatus === 'pending' || row.scanStatus === 'clean'))
+    if (ok.length !== unique.length) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.INVALID_OBJECT, 'Every image must be your own completed upload', 400)
+    return unique
+  }
+
+  /** Subset of community image ids that may be shown right now (clean, or pending under an explicit scan waiver). */
+  async readableCommunityImageIds(objectIds: string[]): Promise<Set<string>> {
+    const unique = [...new Set(objectIds)]
+    if (!unique.length || !this.enabled) return new Set()
+    const rows = await this.objects.find({ select: { id: true, scanStatus: true, sizeBytes: true, tags: true }, where: { id: In(unique), bucket: 'rwa-assets' } })
+    return new Set(rows.filter(row => row.tags?.source === 'community-image' && BigInt(row.sizeBytes) > 0n && this.readableScanStatus(row.scanStatus)).map(row => row.id))
+  }
+
+  /** Short-lived inline URL for a cleared community image; anything else is indistinguishable from missing. */
+  async createCommunityImageUrl(objectId: string): Promise<string> {
+    const object = await this.objects.findOne({ where: { id: objectId, bucket: 'rwa-assets' } })
+    if (!object || object.tags?.source !== 'community-image') throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Image not found', 404)
+    return this.createPublishedAssetUrl(`rwa-assets/${object.key}`, true)
   }
 
   async createUploadPresignedUrl(input: {
@@ -138,6 +232,20 @@ export class ObjectStorageService {
     }
   }
 
+  /** Called only after a published product/profile reference has been authorized. */
+  async createPublishedAssetUrl(ref: string, imageOnly = false): Promise<string> {
+    if (!ref.startsWith('rwa-assets/')) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Public asset not found', 404)
+    const key = ref.slice('rwa-assets/'.length)
+    const object = await this.objects.findOne({ where: { bucket: 'rwa-assets', key } })
+    if (!object || !this.readableScanStatus(object.scanStatus) || BigInt(object.sizeBytes) <= 0n) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Public asset not found', 404)
+    if (imageOnly && !(COMMUNITY_IMAGE_TYPES as readonly string[]).includes(object.contentType)) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Image not found', 404)
+    return getSignedUrl(this.requireClient(), new GetObjectCommand({
+      Bucket: this.physicalBucket('rwa-assets'), Key: key,
+      ResponseContentType: object.contentType,
+      ResponseContentDisposition: imageOnly ? 'inline' : 'attachment',
+    }), { expiresIn: 60 })
+  }
+
   async createDownloadPresignedUrl(input: {
     bucket: string
     key: string
@@ -153,7 +261,7 @@ export class ObjectStorageService {
         : { bucket: input.bucket, key: input.key },
     })
     if (!obj) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Object not found', 404)
-    if (obj.scanStatus !== 'clean' || obj.sizeBytes === '0') {
+    if (!this.readableScanStatus(obj.scanStatus) || obj.sizeBytes === '0') {
       throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.SCAN_PENDING, 'Object is not cleared for download', 423)
     }
 
@@ -287,6 +395,10 @@ export class ObjectStorageService {
     return obj
   }
 
+  private readableScanStatus(status: string) {
+    return status === 'clean' || (this.config.get<string>('OBJECT_STORAGE_REQUIRE_SCAN') === 'false' && status === 'pending')
+  }
+
   async createUserAttachmentUpload(input: {
     userId: string
     fileName: string
@@ -363,11 +475,26 @@ export class ObjectStorageService {
   async deleteObject(bucket: string, key: string): Promise<void> {
     const s3 = this.requireClient()
     this.assertBucket(bucket)
-    const obj = await this.objects.findOne({ where: { bucket, key } })
-    if (!obj) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Object not found', 404)
-    await s3.send(new DeleteObjectCommand({ Bucket: this.physicalBucket(bucket), Key: key }))
-    await this.presigned.update({ objectId: obj.id, usedAt: IsNull() }, { usedAt: new Date() })
-    await this.objects.remove(obj)
+    await this.objects.manager.transaction(async em => {
+      const [obj] = await em.query(`SELECT id FROM app.object_storage_objects WHERE bucket=$1 AND key=$2 FOR UPDATE`, [bucket, key])
+      if (!obj) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Object not found', 404)
+      const [usage] = await em.query(`SELECT (
+        EXISTS (SELECT 1 FROM app.manual_trade_settlements WHERE evidence_ref=$1)
+        OR EXISTS (SELECT 1 FROM app.generated_documents d JOIN app.object_storage_objects o ON o.id=d.object_id WHERE o.bucket || '/' || o.key=$1)
+        OR EXISTS (SELECT 1 FROM app.document_tax_records t WHERE t.content->>'evidenceRef'=$1)
+        OR EXISTS (SELECT 1 FROM app.products WHERE cover_storage_ref=$1 OR media_refs_json ? $1)
+        OR EXISTS (SELECT 1 FROM app.disclosure_files WHERE storage_ref=$1)
+        OR EXISTS (SELECT 1 FROM app.platform_configuration c, jsonb_array_elements(COALESCE(c.draft->'documents','[]'::jsonb)) d WHERE d->>'storageRef'=$1)
+        OR EXISTS (SELECT 1 FROM app.platform_configuration_versions v, jsonb_array_elements(COALESCE(v.content->'documents','[]'::jsonb)) d WHERE d->>'storageRef'=$1)
+        OR EXISTS (SELECT 1 FROM app.community_profiles WHERE avatar_url=$2)
+        OR EXISTS (SELECT 1 FROM app.community_posts WHERE images ? $2)
+        OR EXISTS (SELECT 1 FROM app.community_comments WHERE images ? $2)
+      ) AS used`, [`${bucket}/${key}`, communityMediaPath(obj.id)])
+      if (usage.used) throw new ConflictException('文件仍被业务记录引用，不能删除')
+      await s3.send(new DeleteObjectCommand({ Bucket: this.physicalBucket(bucket), Key: key }))
+      await em.query(`UPDATE app.presigned_urls SET used_at=COALESCE(used_at,now()) WHERE object_id=$1`, [obj.id])
+      await em.query(`DELETE FROM app.object_storage_objects WHERE id=$1`, [obj.id])
+    })
   }
 
   async getObjectMeta(bucket: string, key: string): Promise<ObjectStorageObject | null> {
@@ -413,6 +540,9 @@ export class ObjectStorageService {
     return this.bucketMap[logicalBucket] ?? logicalBucket
   }
 }
+
+/** Public, API-relative reference stored on community rows; the API resolves it to a short-lived signed URL. */
+export function communityMediaPath(objectId: string) { return `/v1/community/media/${objectId}` }
 
 export function parseBucketMap(value: string | undefined): Record<string, string> {
   if (!value?.trim()) return {}

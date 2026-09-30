@@ -1,7 +1,18 @@
 import type { Metadata, Viewport } from 'next'
+import { cookies, headers } from 'next/headers'
+import { getCloudflareContext } from '@opennextjs/cloudflare'
+import { LANGUAGE_COOKIE, resolveInitialLocale } from '@/lib/locale-detection'
+import { GeistMono } from 'geist/font/mono'
 import PwaRegister from '@/components/pwa-register'
-import { designTokens } from '@/lib/design-tokens'
+import { documentPreferencesBootstrap, themeColors } from '@/lib/document-preferences-bootstrap'
+import { desktopRedirectBootstrap } from '@/lib/desktop-redirect'
 import './globals.css'
+import '../styles/ios.css'
+import '../styles/material.css'
+import PressFeedback from '@/components/press-feedback'
+import { RwaThemeProvider } from '@/lib/rwa-theme'
+import { I18nProvider } from '@/lib/i18n'
+import PageChrome from '@/components/page-chrome'
 
 export const metadata: Metadata = {
   title: 'RWA.LAT — AI Investment OS',
@@ -32,20 +43,38 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  colorScheme: 'dark',
-  themeColor: designTokens.color.canvas,
+  colorScheme: 'light dark',
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: themeColors.light },
+    { media: '(prefers-color-scheme: dark)', color: themeColors.dark },
+  ],
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
   viewportFit: 'cover',
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const [requestHeaders, requestCookies] = await Promise.all([headers(), cookies()])
+  let country = requestHeaders.get('cf-ipcountry')
+  try {
+    const edgeCountry = getCloudflareContext().cf?.country
+    if (typeof edgeCountry === 'string') country = edgeCountry
+  } catch { /* Local Next.js and other hosts use the header or browser fallback. */ }
+  const initialLocale = resolveInitialLocale({
+    savedLocale: requestCookies.get(LANGUAGE_COOKIE)?.value,
+    country,
+    acceptLanguage: requestHeaders.get('accept-language'),
+  })
   return (
-    <html lang="en" className="bg-black">
-      <body className="antialiased bg-black text-white overflow-x-hidden">
+    <html lang={initialLocale} dir={initialLocale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: desktopRedirectBootstrap }} />
+        <script dangerouslySetInnerHTML={{ __html: documentPreferencesBootstrap }} />
+      </head>
+      <body className={`antialiased overflow-x-hidden ${GeistMono.variable}`}>
         <PwaRegister />
-        {children}
+        <PressFeedback />
+        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome />{children}</I18nProvider></RwaThemeProvider>
       </body>
     </html>
   )

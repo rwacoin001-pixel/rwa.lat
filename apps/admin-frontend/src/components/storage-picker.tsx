@@ -12,7 +12,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
-import { adminApi, type StoredObject } from '@/lib/admin-api'
+import { adminApi, type PresignUploadInput, type StoredObject } from '@/lib/admin-api'
 import { StorageUpload } from '@/components/storage-upload'
 
 function ObjectThumb({ object, selected, onSelect }: { object: StoredObject; selected: boolean; onSelect: (object: StoredObject) => void }) {
@@ -70,6 +70,7 @@ export function StoragePicker({
   onOpenChange,
   onSelect,
   bucket = 'rwa-assets',
+  purpose = 'product-media',
   productId,
   title = '从文件库选择',
 }: {
@@ -77,6 +78,7 @@ export function StoragePicker({
   onOpenChange: (open: boolean) => void
   onSelect: (object: StoredObject) => void
   bucket?: 'rwa-kyc' | 'rwa-assets' | 'rwa-attachments'
+  purpose?: PresignUploadInput['purpose']
   productId?: string
   title?: string
 }) {
@@ -131,7 +133,7 @@ export function StoragePicker({
           </Button>
           <StorageUpload
             bucket={bucket}
-            purpose="product-media"
+            purpose={purpose}
             productId={productId}
             label="上传新文件"
             size="sm"

@@ -1,0 +1,43 @@
+/* Pull-to-refresh capsule: drops from under the nav bar and traces the W as the page is pulled. */
+.ptr {
+  --ptr: 0;
+  --ptr-y: 0px;
+  /* Home is not a Maison page; fall back to neutral glass there. */
+  --ptr-ink: var(--m-ink, currentColor);
+  --ptr-glass: var(--m-topbar-bg, color-mix(in srgb, Canvas 72%, transparent));
+  --ptr-line: var(--m-line, rgba(128, 128, 128, .28));
+  position: fixed;
+  z-index: 30;
+  top: calc(var(--topbar-h, 56px) + env(safe-area-inset-top) - 44px);
+  inset-inline: 0;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  pointer-events: none;
+  opacity: min(1, calc(var(--ptr) * 1.6));
+  transform: translateY(var(--ptr-y));
+}
+.ptr[data-phase='idle'] { transition: transform .42s var(--spring, var(--m-ease)), opacity .3s var(--m-ease); }
+.ptr[data-phase='refreshing'], .ptr[data-phase='done'], .ptr[data-phase='failed'] { opacity: 1; transition: transform .42s var(--spring, var(--m-ease)); }
+.mark { display: grid; place-items: center; width: 44px; height: 44px; border: .5px solid var(--ptr-line); border-radius: 50%; background: var(--ptr-glass); -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); box-shadow: inset 0 1px var(--m-rim, rgba(255, 255, 255, .5)), var(--m-shadow-soft, 0 8px 22px -12px rgba(0, 0, 0, .35)); color: var(--ptr-ink); }
+.mark svg { width: 26px; height: 15px; overflow: visible; }
+.mark path { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-width: 7; stroke-linejoin: round; stroke-dasharray: 1; transition: fill-opacity .3s var(--m-ease); }
+.mark path[data-accent] { color: var(--m-accent, var(--rwa-logo-accent, #c9a063)); }
+/* Each stroke of the W draws in its own slice of the pull, so the mark writes itself left to right. */
+.mark path:nth-child(1) { stroke-dashoffset: calc(1 - clamp(0, var(--ptr) / .45, 1)); }
+.mark path:nth-child(2) { stroke-dashoffset: calc(1 - clamp(0, (var(--ptr) - .3) / .45, 1)); }
+.mark path:nth-child(3) { stroke-dashoffset: calc(1 - clamp(0, (var(--ptr) - .6) / .4, 1)); }
+.ptr[data-phase='armed'] .mark { transform: scale(1.06); transition: transform .3s var(--m-spring, var(--m-ease)); }
+.ptr:is([data-phase='armed'], [data-phase='refreshing'], [data-phase='done']) .mark path { stroke-dashoffset: 0; fill-opacity: 1; }
+.ptr[data-phase='refreshing'] .mark svg { animation: ptrBreathe 1s var(--m-ease) infinite; }
+.ptr[data-phase='done'] .mark { animation: ptrPop .42s var(--m-spring, var(--m-ease)) both; }
+.label, .hint { padding: 5px 10px; border-radius: 999px; background: var(--ptr-glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--m-muted, currentColor); font: 500 11.5px/1 var(--m-sans, inherit); letter-spacing: .02em; }
+.label:empty, .hint:empty { display: none; }
+@keyframes ptrBreathe { 50% { opacity: .45; transform: scale(.92); } }
+@keyframes ptrPop { 40% { transform: scale(1.12); } }
+@media (prefers-reduced-motion: reduce) {
+  .ptr, .ptr[data-phase] { transition: none; }
+  .ptr[data-phase='armed'] .mark, .ptr[data-phase='done'] .mark, .ptr[data-phase='refreshing'] .mark svg { transform: none; animation: none; }
+}
+/* Our pull replaces the browser's own, so the two never fire together. */
+:global(html):has(.ptr) { overscroll-behavior-y: contain; }

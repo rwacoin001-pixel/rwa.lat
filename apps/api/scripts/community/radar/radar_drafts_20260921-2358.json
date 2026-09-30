@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "laoliang.84",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "Solana 官方說代幣化股票持有人突破 85 萬，創新高（聽起來很猛）\n\n拆開看：9 月 12 日地址數 801,439，比 9 月 1 日的 424,894 多了 88%；但同期代幣化股票存量只由約 4.65 億升到 6.84 億美元（+47%）。除一除，平均每個地址大約 850 美元。\n\n再看時間點：9 月 9 日 Pump.fun 上了自訂交易對，手續費直接用股票代幣結算、自動分到錢包。也就是說，這些地址有一部分是「手續費找零」，不是主動買股票。\n\n我個人的看法（不一定對）：地址數不等於買家數。這種數字拿來宣傳可以，拿來當需求證據就太早了。下一期數據如果地址增速和存量增速收斂，才算真的有人進場。"
+  },
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["rwa", "security"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Injective's Meridian upgrade (IIP-701) cleared governance with ~99% support, activating September 24.\n\nThe compliance angle is the interesting one: regulated token standards sit in the EVM layer itself, so apps inherit eligibility and transfer controls rather than each issuer rebuilding them.\n\n提醒一句: that is a design choice, not a change to the legal character of the instrument. A near-unanimous staking vote is a governance signal, not issuer demand. Watch who actually issues, and on what terms."
+  }
+]

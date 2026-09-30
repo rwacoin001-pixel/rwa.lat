@@ -57,6 +57,23 @@ export class PolymarketPublicAdapter implements PolymarketReadAdapter {
     return { markets, nextCursor, fetchedAt: new Date() }
   }
 
+  async listTrendingMarkets(limit = 100): Promise<PolymarketMarketPage> {
+    this.requireEnabled()
+    const url = new URL(`${this.gammaUrl}/markets`)
+    url.searchParams.set('limit', String(Math.min(Math.max(Math.trunc(limit), 1), 100)))
+    url.searchParams.set('active', 'true')
+    url.searchParams.set('closed', 'false')
+    url.searchParams.set('order', 'volume24hr')
+    url.searchParams.set('ascending', 'false')
+    const payload = await this.fetchJson(url)
+    if (!Array.isArray(payload)) throw new PolymarketUpstreamError(POLYMARKET_ERROR_CODES.UPSTREAM_INVALID_RESPONSE)
+    return {
+      markets: payload.map(normalizeMarket).filter((item): item is PolymarketMarketRecord => item !== null),
+      nextCursor: null,
+      fetchedAt: new Date(),
+    }
+  }
+
   async getOrderBook(tokenId: string): Promise<PolymarketOrderBook> {
     this.requireEnabled()
     const url = new URL(`${this.clobUrl}/book`)

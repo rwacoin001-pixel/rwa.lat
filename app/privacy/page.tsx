@@ -1,19 +1,24 @@
 import type { Metadata } from 'next'
 import LegalPage, { Section } from '@/components/legal-page'
+import PublishedLegalPage from '@/components/published-legal-page'
 
 export const metadata: Metadata = {
   title: 'Privacy Policy — RWA.LAT',
   description: 'How RWA.LAT collects, uses, stores, and protects personal information.',
 }
 
-export default function PrivacyPolicyPage() {
+export const dynamic = 'force-dynamic'
+
+export default async function PrivacyPolicyPage({ searchParams }: { searchParams: Promise<{ version?: string }> }) {
+  const { version } = await searchParams
   return (
-    <LegalPage badge="Legal" title="Privacy Policy" updated="September 18, 2026">
-      <div className="space-y-10 text-sm leading-7 text-[#929aa6] sm:text-[15px]">
+    <PublishedLegalPage kind="privacy" version={version}>
+    <LegalPage kind="privacy" title="Privacy Policy" updated="September 18, 2026" effectiveDate="2026-09-18">
+      <div>
         <Section n="1" title="Who We Are">
           <p>
             RWA.LAT (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates the RWA.LAT platform available at{' '}
-            <a href="https://rwa.lat" className="text-[#2fe6bf] hover:underline">
+            <a href="https://rwa.lat">
               https://rwa.lat
             </a>{' '}
             and related applications and services (the &ldquo;Service&rdquo;). This Privacy Policy explains what
@@ -29,23 +34,23 @@ export default function PrivacyPolicyPage() {
           <p>We collect the following categories of information:</p>
           <ul className="list-disc space-y-2 pl-5">
             <li>
-              <span className="text-[#f5f7f8]">Information you provide.</span> Email address (used for account
+              <span className="font-medium">Information you provide.</span> Email address (used for account
               registration and sign-in), wallet addresses you connect, a display name if you choose one, community
               content you post, and any communications you send to us (such as support requests).
             </li>
             <li>
-              <span className="text-[#f5f7f8]">Identity verification information.</span> Where required by applicable
+              <span className="font-medium">Identity verification information.</span> Where required by applicable
               law or to access certain features, we — or our third-party verification providers — may collect identity
               data such as your name, date of birth, government-issued identification documents, and biometric
               information (for example, a selfie or liveness check).
             </li>
             <li>
-              <span className="text-[#f5f7f8]">Information collected automatically.</span> Log and usage data such as
+              <span className="font-medium">Information collected automatically.</span> Log and usage data such as
               IP address, device and browser type, operating system, pages viewed, and interactions with the Service,
               collected through cookies, local storage, and similar technologies.
             </li>
             <li>
-              <span className="text-[#f5f7f8]">Blockchain information.</span> Public blockchain data associated with
+              <span className="font-medium">Blockchain information.</span> Public blockchain data associated with
               wallet addresses you use with the Service. Blockchain records are public by nature — we do not control
               them and cannot delete them.
             </li>
@@ -70,23 +75,23 @@ export default function PrivacyPolicyPage() {
           </p>
           <ul className="list-disc space-y-2 pl-5">
             <li>
-              <span className="text-[#f5f7f8]">Service providers.</span> We use trusted third parties to help operate
+              <span className="font-medium">Service providers.</span> We use trusted third parties to help operate
               the Service, including cloud hosting and infrastructure providers, managed database providers, email
               delivery providers, identity verification providers (for KYC), cloud storage providers, and analytics
               providers. These providers process information on our behalf under contractual obligations.
             </li>
             <li>
-              <span className="text-[#f5f7f8]">Legal requirements.</span> We may disclose information if required to
+              <span className="font-medium">Legal requirements.</span> We may disclose information if required to
               do so by law, regulation, legal process, or governmental request, or if we believe disclosure is
               necessary to protect the rights, property, or safety of RWA.LAT, our users, or the public.
             </li>
             <li>
-              <span className="text-[#f5f7f8]">Business transfers.</span> If we are involved in a merger, acquisition,
+              <span className="font-medium">Business transfers.</span> If we are involved in a merger, acquisition,
               financing, or sale of assets, information may be transferred as part of that transaction, subject to
               this Privacy Policy.
             </li>
             <li>
-              <span className="text-[#f5f7f8]">With your direction or consent.</span> We may share information when you
+              <span className="font-medium">With your direction or consent.</span> We may share information when you
               instruct us to or otherwise consent to it.
             </li>
           </ul>
@@ -136,7 +141,7 @@ export default function PrivacyPolicyPage() {
           </p>
           <p>
             To exercise any of these rights, contact us at{' '}
-            <a href="mailto:support@rwa.lat" className="text-[#2fe6bf] hover:underline">
+            <a href="mailto:support@rwa.lat">
               support@rwa.lat
             </a>
             . We may need to verify your identity before fulfilling a request. You may also have the right to lodge a
@@ -164,7 +169,7 @@ export default function PrivacyPolicyPage() {
           <p>
             If you have questions or concerns about this Privacy Policy or our handling of your personal information,
             contact us at{' '}
-            <a href="mailto:support@rwa.lat" className="text-[#2fe6bf] hover:underline">
+            <a href="mailto:support@rwa.lat">
               support@rwa.lat
             </a>
             .
@@ -172,5 +177,6 @@ export default function PrivacyPolicyPage() {
         </Section>
       </div>
     </LegalPage>
+    </PublishedLegalPage>
   )
 }

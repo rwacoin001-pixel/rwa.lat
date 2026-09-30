@@ -70,6 +70,7 @@ export interface RewardView {
   kind: string
   amountAtomic: string
   currency: string
+  decimals: number | null
   state: string
   referenceType?: string
   referenceId?: string
@@ -110,6 +111,7 @@ export class UserOpsService {
   // ---- 工单 ----
   async createTicket(dto: {
     author_user_id: string
+    idempotencyKey?: string
     subject: string
     body: string
     priority?: 'low' | 'normal' | 'high' | 'urgent'
@@ -117,6 +119,61 @@ export class UserOpsService {
     order_id?: string
     attachmentObjectIds?: string[]
   }): Promise<TicketView> {
+    if (dto.idempotencyKey !== undefined) {
+      const key = dto.idempotencyKey
+      if (!/^[\x21-\x7e]{8,128}$/.test(key)) {
+        throw new BadRequestException({ code: 'TICKET_IDEMPOTENCY_KEY_INVALID', message: 'Idempotency-Key must contain 8 to 128 visible ASCII characters.' })
+      }
+      const requestHash = createHash('sha256').update(JSON.stringify({
+        subject: dto.subject,
+        body: dto.body,
+        priority: dto.priority ?? 'normal',
+        category: dto.category ?? 'support',
+        orderId: dto.order_id ?? null,
+        attachmentObjectIds: [...(dto.attachmentObjectIds ?? [])].sort(),
+      })).digest('hex')
+      return this.ticketRepo.manager.transaction(async (manager) => {
+        await manager.query('SELECT pg_advisory_xact_lock(hashtextextended($1, 0))', [`support-ticket:${dto.author_user_id}:${key}`])
+        const tickets = manager.getRepository(Ticket)
+        const existing = await tickets.findOne({ where: { author_user_id: dto.author_user_id, idempotency_key: key } })
+        if (existing) {
+          if (existing.request_hash !== requestHash) {
+            throw new ConflictException({ code: 'TICKET_IDEMPOTENCY_CONFLICT', message: 'The Idempotency-Key was already used for another ticket.' })
+          }
+          return this.toTicketView(existing)
+        }
+        const attachments = await this.storage.assertCleanAttachmentIds(dto.attachmentObjectIds, dto.author_user_id)
+        const ticket = await tickets.save(tickets.create({
+          author_user_id: dto.author_user_id,
+          idempotency_key: key,
+          request_hash: requestHash,
+          subject: dto.subject,
+          body: dto.body,
+          priority: dto.priority ?? 'normal',
+          category: dto.category ?? 'support',
+          order_id: dto.order_id,
+          updated_at: new Date(),
+        }))
+        const messages = manager.getRepository(TicketMessage)
+        await messages.save(messages.create({
+          ticket_id: ticket.id,
+          actor_type: 'user',
+          actor_user_id: dto.author_user_id,
+          body: dto.body,
+          attachments,
+        }))
+        const events = manager.getRepository(TicketEvent)
+        await events.save(events.create({
+          ticket_id: ticket.id,
+          event_type: 'created',
+          actor_type: 'user',
+          actor_user_id: dto.author_user_id,
+          next_status: ticket.status,
+          metadata: { category: ticket.category, orderId: ticket.order_id },
+        }))
+        return this.toTicketView(ticket)
+      })
+    }
     const attachments = await this.storage.assertCleanAttachmentIds(dto.attachmentObjectIds, dto.author_user_id)
     const t = await this.ticketRepo.save(
       this.ticketRepo.create({
@@ -216,9 +273,9 @@ export class UserOpsService {
     return this.loadTicketTimelineForAdmin(id)
   }
 
-  async listTicketsForAdmin(status?: Ticket['status'], limit = 50): Promise<TicketView[]> {
+  async listTicketsForAdmin(status?: Ticket['status'], limit = 50, category?: Ticket['category']): Promise<TicketView[]> {
     const rows = await this.ticketRepo.find({
-      where: status ? { status } : {},
+      where: { ...(status ? { status } : {}), ...(category ? { category } : {}) },
       order: { updated_at: 'DESC' },
       take: Math.min(Math.max(limit, 1), 200),
     })
@@ -286,28 +343,48 @@ export class UserOpsService {
   async acceptInvitation(token: string, userId: string): Promise<{ invitation: InvitationView; inviterReward: RewardView; inviteeReward: RewardView }> {
     if (!token || token.length < 16) throw new BadRequestException('Invitation token is invalid')
     const tokenHash = createHash('sha256').update(token).digest()
-    const invitation = await this.inviteRepo.findOne({ where: { token_hash: tokenHash } })
-    if (!invitation) throw new NotFoundException('Invitation not found')
-    if (invitation.state !== 'pending') throw new ConflictException(`Invitation ${invitation.id} is ${invitation.state}`)
-    if (invitation.expires_at.getTime() <= Date.now()) {
-      invitation.state = 'expired'
-      await this.inviteRepo.save(invitation)
-      throw new ConflictException(`Invitation ${invitation.id} is expired`)
-    }
-    if (invitation.inviter_user_id === userId) throw new BadRequestException('Inviter cannot accept their own invitation')
-    invitation.state = 'accepted'
-    invitation.accepted_user_id = userId
-    invitation.accepted_at = new Date()
-    await this.inviteRepo.save(invitation)
-    const [inviterReward, inviteeReward] = await Promise.all([
-      this.ensureReferralReward(invitation.inviter_user_id, invitation.id),
-      this.ensureReferralReward(userId, invitation.id),
-    ])
-    return {
-      invitation: this.toInvitationView(invitation),
-      inviterReward: this.toRewardView(inviterReward),
-      inviteeReward: this.toRewardView(inviteeReward),
-    }
+    const result = await this.inviteRepo.manager.transaction(async (manager) => {
+      const invitations = manager.getRepository(Invitation)
+      const rewards = manager.getRepository(Reward)
+      const invitation = await invitations.findOne({
+        where: { token_hash: tokenHash },
+        lock: { mode: 'pessimistic_write' },
+      })
+      if (!invitation) throw new NotFoundException('Invitation not found')
+
+      if (invitation.state === 'accepted') {
+        if (invitation.accepted_user_id !== userId) {
+          throw new ConflictException(`Invitation ${invitation.id} is accepted`)
+        }
+      } else {
+        if (invitation.state !== 'pending') throw new ConflictException(`Invitation ${invitation.id} is ${invitation.state}`)
+        if (invitation.expires_at.getTime() <= Date.now()) {
+          invitation.state = 'expired'
+          await invitations.save(invitation)
+          return { expired: true as const }
+        }
+        if (invitation.inviter_user_id === userId) throw new BadRequestException('Inviter cannot accept their own invitation')
+        invitation.state = 'accepted'
+        invitation.accepted_user_id = userId
+        invitation.accepted_at = new Date()
+        await invitations.save(invitation)
+      }
+
+      const [inviterReward, inviteeReward] = await Promise.all([
+        this.ensureReferralReward(invitation.inviter_user_id, invitation.id, rewards),
+        this.ensureReferralReward(userId, invitation.id, rewards),
+      ])
+      return {
+        expired: false as const,
+        value: {
+          invitation: this.toInvitationView(invitation),
+          inviterReward: this.toRewardView(inviterReward),
+          inviteeReward: this.toRewardView(inviteeReward),
+        },
+      }
+    })
+    if (result.expired) throw new ConflictException('Invitation is expired')
+    return result.value
   }
 
   async listRewards(userId: string): Promise<RewardView[]> {
@@ -352,9 +429,21 @@ export class UserOpsService {
     userId: string,
     dto: { locale?: string; channels?: Record<string, boolean>; communication_consent?: boolean },
   ): Promise<PreferenceView> {
+    // Validate at the service boundary too: IsObject alone does not check channel values.
+    if (dto.locale !== undefined && (typeof dto.locale !== 'string' || !/^[a-z]{2}(?:[-_][A-Z]{2})?$/.test(dto.locale))) {
+      throw new BadRequestException({ code: 'PREFERENCES_INVALID_LOCALE', message: 'Use a locale such as en or zh-CN.' })
+    }
+    if (dto.channels !== undefined && (!dto.channels || typeof dto.channels !== 'object' || Array.isArray(dto.channels)
+      || Object.values(dto.channels).some((value) => typeof value !== 'boolean'))) {
+      throw new BadRequestException({ code: 'PREFERENCES_INVALID_CHANNELS', message: 'Notification channels must contain boolean values.' })
+    }
+    if (dto.communication_consent !== undefined && typeof dto.communication_consent !== 'boolean') {
+      throw new BadRequestException({ code: 'PREFERENCES_INVALID_CONSENT', message: 'Communication consent must be a boolean.' })
+    }
     let p = await this.prefRepo.findOne({ where: { user_id: userId } })
     if (!p) p = this.prefRepo.create({ user_id: userId })
-    if (dto.locale !== undefined) p.locale = dto.locale
+    // The existing DB constraint uses zh_CN; public clients use BCP 47 zh-CN.
+    if (dto.locale !== undefined) p.locale = dto.locale.replace('-', '_')
     if (dto.channels !== undefined) p.channels = dto.channels
     if (dto.communication_consent !== undefined) p.communication_consent = dto.communication_consent
     const saved = await this.prefRepo.save(p)
@@ -408,7 +497,7 @@ export class UserOpsService {
   private toPreferenceView(p: Preference): PreferenceView {
     return {
       userId: p.user_id,
-      locale: p.locale,
+      locale: p.locale?.replace('_', '-'),
       channels: p.channels,
       communicationConsent: p.communication_consent,
       updatedAt: p.updated_at,
@@ -449,10 +538,10 @@ export class UserOpsService {
     }))
   }
 
-  private async ensureReferralReward(userId: string, invitationId: string): Promise<Reward> {
-    const existing = await this.rewardRepo.findOne({ where: { user_id: userId, kind: 'referral', ref_type: 'invitation', ref_id: invitationId } })
+  private async ensureReferralReward(userId: string, invitationId: string, rewardRepo = this.rewardRepo): Promise<Reward> {
+    const existing = await rewardRepo.findOne({ where: { user_id: userId, kind: 'referral', ref_type: 'invitation', ref_id: invitationId } })
     if (existing) return existing
-    return this.rewardRepo.save(this.rewardRepo.create({
+    return rewardRepo.save(rewardRepo.create({
       user_id: userId,
       kind: 'referral',
       amount_atomic: '1000000',
@@ -493,6 +582,7 @@ export class UserOpsService {
       kind: reward.kind,
       amountAtomic: reward.amount_atomic,
       currency: reward.currency,
+      decimals: reward.currency === 'USD' ? 2 : null,
       state: reward.state,
       referenceType: reward.ref_type,
       referenceId: reward.ref_id,

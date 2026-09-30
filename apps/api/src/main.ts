@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import './observability/instrumentation'
-import { ValidationPipe } from '@nestjs/common'
+import { RequestMethod, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
@@ -9,6 +9,7 @@ import { HttpExceptionFilter } from './common/http-exception.filter'
 import { RequestContextMiddleware } from './common/request-context.middleware'
 import { CORE_API_PREFIX } from './route-contract'
 import { createApiRateLimitMiddleware } from './common/api-rate-limit.middleware'
+import { createApiCorsOptions } from './common/cors-options'
 import type { Server } from 'node:http'
 
 function parseOrigins(value: string | undefined) {
@@ -25,10 +26,10 @@ async function bootstrap() {
   express.set('trust proxy', parseTrustProxyHops(process.env.TRUST_PROXY_HOPS))
 
   app.use(helmet())
-  app.enableCors({ origin: parseOrigins(process.env.CORS_ORIGINS), credentials: true })
+  app.enableCors(createApiCorsOptions(parseOrigins(process.env.CORS_ORIGINS)))
   app.use(new RequestContextMiddleware().use)
   app.use(createApiRateLimitMiddleware())
-  app.setGlobalPrefix(prefix)
+  app.setGlobalPrefix(prefix,{exclude:[{path:'r/:code',method:RequestMethod.GET}]})
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   app.useGlobalFilters(new HttpExceptionFilter())
 

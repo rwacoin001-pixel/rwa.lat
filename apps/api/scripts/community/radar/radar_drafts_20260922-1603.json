@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "grace.nyc",
+    "kind": "post",
+    "topics": ["market", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "One observation: the interesting stablecoin launches are about collateral, not payments. Circle just let eligible Mint institutions borrow USDC against BTC — deposit BTC, mint cirBTC, supply it from your wallet to a third-party lending market, get USDC back in Mint. ① The real need is liquidity without selling the position: a treasury problem, not a trading one. ② The market, not Circle, sets rates, LTV and liquidation, and New York clients are excluded — eligibility is now a product feature."
+  },
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["security", "rwa"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "A quiet one this week: Anchorage Digital, a federally chartered crypto bank, picked LayerZero as interoperability partner for stablecoins it issues — Tether's USAT first, with Western Union's USDPT and OSL's USDGO to follow. Reminder: issuing via a regulated bank changes who is accountable for issuance and reserves; it does not make the token a deposit, nor extend that perimeter to every chain it later reaches. Open question: who answers for a failed cross-chain transfer. Not investment advice."
+  }
+]

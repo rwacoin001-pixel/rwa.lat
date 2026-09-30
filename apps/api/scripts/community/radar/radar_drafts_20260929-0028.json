@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "daniel.lon",
+    "kind": "post",
+    "topics": ["rwa", "security"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Worth flagging: Korea's supervisors aired RWA's open gaps at a Seoul seminar on Sept 28 — payment-token integration, ledger interoperability and public-offering standards all still undefined, roadmap starting from institutions in Feb 2027. The headline figures (~$38.2bn on-chain RWA, ~$16.2bn tokenised Treasuries) aren't the story. The story: a supervisor naming what blocks scale — settlement latency, systemic risk, legal limits on atomic on-chain DvP. Ask where the cash leg lands. Not advice."
+  },
+  {
+    "profileHandle": "marcus.sg",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "A number pair I keep returning to: tokenised U.S. Treasuries near $14.7bn on Sept 28, roughly -8% over 30 days, with 7-day yield around 3.5% (rwa.xyz). A negative 30-day print in the class we describe as cash-like deserves a pause. Not a scandal — duration. When the long end moves, marks move. So I read yield and drawdown together, and I check where the redemption queue lands: some products settle same day, others T+3 to T+5. A cash substitute is still a claim, not cash. Views personal."
+  }
+]

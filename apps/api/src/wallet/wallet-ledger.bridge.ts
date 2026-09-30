@@ -1,4 +1,4 @@
-import { ConflictException, Injectable } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DataSource, QueryRunner } from 'typeorm'
 import type { WalletNetwork, WithdrawalState } from './wallet.entities'
@@ -44,6 +44,16 @@ export class WalletLedgerBridge {
     await runner.connect()
     await runner.startTransaction()
     try {
+      const [user] = await runner.query('SELECT status FROM app.users WHERE id=$1 FOR SHARE',[userId])
+      if (!user) throw new BadRequestException('Deposit account not found')
+      if (user.status === 'closed') {
+        const [deposit] = await runner.query('SELECT state FROM app.deposits WHERE id=$1 AND user_id=$2 FOR UPDATE',[depositId,userId])
+        if (!deposit) throw new BadRequestException('Deposit not found')
+        if (deposit.state === 'credited') { await runner.commitTransaction(); return {credited:true,duplicate:true} }
+        await runner.query("UPDATE app.deposits SET state='manual_review',reason_code='account_closed_manual_refund' WHERE id=$1 AND state<>'rejected'",[depositId])
+        await runner.commitTransaction()
+        return {credited:false,manualReview:true,reasonCode:'account_closed_manual_refund'}
+      }
       const available = await this.ensureUserAccount(runner, userId, 'available')
       const settlement = await this.ensureSystemAccount(runner, `custody:${network}`, 'settlement', network)
       const transactionId = await this.createLedgerTransaction(
@@ -475,6 +485,24 @@ export class WalletLedgerBridge {
     await runner.connect()
     await runner.startTransaction()
     try {
+      const [prior] = await runner.query(
+        `SELECT id, recipient_user_id AS "recipientUserId", atomic_amount::text AS "atomicAmount"
+         FROM app.internal_transfers WHERE sender_user_id = $1 AND idempotency_key = $2`,
+        [input.senderUserId, input.idempotencyKey],
+      )
+      if (prior) return await this.resolveTransferReplay(runner, prior, input)
+
+      const [recipientUser] = await runner.query(
+        `SELECT id FROM app.users WHERE id = $1`,
+        [input.recipientUserId],
+      )
+      if (!recipientUser) {
+        throw new BadRequestException({
+          code: WALLET_ERROR_CODES.TRANSFER_RECIPIENT_UNAVAILABLE,
+          message: 'This transfer could not be completed. Check the recipient details and try again.',
+        })
+      }
+
       const inserted = await runner.query(
         `INSERT INTO app.internal_transfers
           (id, sender_user_id, recipient_user_id, asset_code, asset_decimals, atomic_amount,
@@ -485,11 +513,17 @@ export class WalletLedgerBridge {
       )
       if (!inserted.length) {
         const [existing] = await runner.query(
-          `SELECT id FROM app.internal_transfers WHERE sender_user_id = $1 AND idempotency_key = $2`,
+          `SELECT id, recipient_user_id AS "recipientUserId", atomic_amount::text AS "atomicAmount"
+           FROM app.internal_transfers WHERE sender_user_id = $1 AND idempotency_key = $2`,
           [input.senderUserId, input.idempotencyKey],
         )
-        await runner.commitTransaction()
-        return { id: existing.id as string, created: false }
+        if (!existing) {
+          throw new ConflictException({
+            code: WALLET_ERROR_CODES.IDEMPOTENCY_CONFLICT,
+            message: 'The transfer request could not be safely replayed. Start a new request.',
+          })
+        }
+        return await this.resolveTransferReplay(runner, existing, input)
       }
       const sender = await this.ensureUserAccount(runner, input.senderUserId, 'available')
       const recipient = await this.ensureUserAccount(runner, input.recipientUserId, 'available')
@@ -520,6 +554,21 @@ export class WalletLedgerBridge {
     } finally {
       await runner.release()
     }
+  }
+
+  private async resolveTransferReplay(
+    runner: QueryRunner,
+    existing: { id: string; recipientUserId: string; atomicAmount: string },
+    input: CreateTransferInput,
+  ): Promise<{ id: string; created: false }> {
+    if (existing.recipientUserId !== input.recipientUserId || BigInt(existing.atomicAmount) !== BigInt(input.atomicAmount)) {
+      throw new ConflictException({
+        code: WALLET_ERROR_CODES.IDEMPOTENCY_CONFLICT,
+        message: 'This request key was already used for a different transfer. Start a new request.',
+      })
+    }
+    await runner.commitTransaction()
+    return { id: existing.id, created: false }
   }
 
   private async ensureUserAccount(runner: QueryRunner, userId: string, purpose: 'available' | 'locked') {

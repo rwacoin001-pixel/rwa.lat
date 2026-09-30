@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { CommunityPublications } from '@/components/community-publications'
 import {
   RefreshCw,
   CheckCircle2,
@@ -230,6 +231,7 @@ export default function CommunityReviewPage() {
         </div>
 
         {error && <div className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-600">{error}</div>}
+        <CommunityPublications />
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
           {statCards.map((card) => (

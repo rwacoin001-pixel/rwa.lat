@@ -23,6 +23,9 @@ export class PriceQuote {
   @Column({ type: 'numeric', precision: 78, scale: 0 })
   unit_price_atomic_amount!: string
 
+  @Column({ type: 'smallint', default: 6 })
+  unit_price_decimals!: number
+
   @Column({ type: 'varchar', length: 10, default: 'USD' })
   currency!: string
 
@@ -50,6 +53,9 @@ export class PriceSnapshot {
 
   @Column({ type: 'numeric', precision: 78, scale: 0 })
   unit_price_atomic_amount!: string
+
+  @Column({ type: 'smallint', default: 6 })
+  unit_price_decimals!: number
 
   @Column({ type: 'varchar', length: 10 })
   currency!: string

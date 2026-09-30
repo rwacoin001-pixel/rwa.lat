@@ -58,6 +58,30 @@ describe('UserOpsService (unit)', () => {
     expect(ticketRepo.save).toHaveBeenCalled()
   })
 
+  it('replays the same keyed ticket and rejects reuse for different content', async () => {
+    const saved = mkTicket({ id: 'keyed-ticket', subject: 'Help', body: 'Please help', idempotency_key: 'request-12345678' })
+    saved.request_hash = ''
+    ticketRepo.findOne.mockResolvedValueOnce(null).mockImplementation(async () => saved)
+    ticketRepo.save.mockImplementation(async (ticket) => {
+      saved.request_hash = (ticket as Ticket).request_hash
+      return saved
+    })
+    const manager = {
+      query: jest.fn(),
+      getRepository: (entity: unknown) => entity === Ticket ? ticketRepo : entity === TicketMessage ? messageRepo : modEventRepo,
+    }
+    const modEventRepo = { create: jest.fn((value) => value), save: jest.fn((value) => value) }
+    Object.defineProperty(ticketRepo, 'manager', { value: { transaction: (work: (tx: typeof manager) => Promise<unknown>) => work(manager) } })
+    const input = { author_user_id: USER, subject: 'Help', body: 'Please help', idempotencyKey: 'request-12345678' }
+    const first = await svc.createTicket(input)
+    const replay = await svc.createTicket(input)
+    expect(replay.id).toBe(first.id)
+    expect(ticketRepo.save).toHaveBeenCalledTimes(1)
+    expect(messageRepo.save).toHaveBeenCalledTimes(1)
+    await expect(svc.createTicket({ ...input, body: 'A different ticket' })).rejects.toMatchObject({ status: 409 })
+    expect(ticketRepo.save).toHaveBeenCalledTimes(1)
+  })
+
   it('stores only attachment IDs cleared by object storage for the same user', async () => {
     const objectId = '33333333-3333-4333-8333-333333333333'
     storage.assertCleanAttachmentIds.mockResolvedValue({ objectIds: [objectId] })
@@ -134,5 +158,34 @@ describe('UserOpsService (unit)', () => {
     expect(r.channels.email).toBe(true)
     expect(r.communicationConsent).toBe(true)
     expect(prefRepo.save).toHaveBeenCalled()
+  })
+
+  it.each([
+    { channels: { email: 'false' } },
+    { channels: { push: 1 } },
+    { channels: [] },
+    { channels: null },
+    { locale: 'english' },
+    { locale: null },
+    { communication_consent: null },
+    { communication_consent: 'true' },
+  ])('rejects invalid preference values before writing: %j', async (input) => {
+    await expect(svc.upsertPreferences(USER, input as any)).rejects.toMatchObject({ status: 400 })
+    expect(prefRepo.save).not.toHaveBeenCalled()
+  })
+
+  it('preserves omitted fields while accepting false and the Chinese locale', async () => {
+    const p = Object.assign(new Preference(), {
+      user_id: USER, locale: 'en', channels: { in_app: true, email: false }, communication_consent: true,
+    })
+    prefRepo.findOne.mockResolvedValue(p)
+    const r = await svc.upsertPreferences(USER, { locale: 'zh-CN', communication_consent: false })
+    expect(r).toMatchObject({ locale: 'zh-CN', communicationConsent: false, channels: { in_app: true, email: false } })
+    expect(prefRepo.save).toHaveBeenCalledWith(expect.objectContaining({ locale: 'zh_CN' }))
+  })
+
+  it('normalizes legacy database locale values when reading', async () => {
+    prefRepo.findOne.mockResolvedValue(Object.assign(new Preference(), { user_id: USER, locale: 'zh_CN' }))
+    expect(await svc.getPreferences(USER)).toMatchObject({ locale: 'zh-CN' })
   })
 })

@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core'
 import helmet from 'helmet'
 import { AdminModule } from './admin.module'
 import { AdminSessionGuard } from './admin-session.guard'
+import { AdminPermissionGuard } from './admin-permission.guard'
 import { ADMIN_API_PREFIX } from './route-contract'
 import { createAdminRateLimitMiddleware, createAdminRequestContextMiddleware } from './admin-edge.middleware'
 import type { Server } from 'node:http'
@@ -18,7 +19,7 @@ async function bootstrap() {
   const prefix = ADMIN_API_PREFIX
   app.setGlobalPrefix(prefix)
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
-  app.useGlobalGuards(app.get(AdminSessionGuard))
+  app.useGlobalGuards(app.get(AdminSessionGuard), app.get(AdminPermissionGuard))
 
   const port = Number(process.env.PORT ?? 4100)
   const server = await app.listen(port) as Server

@@ -7,9 +7,15 @@ import { randomUUID } from 'node:crypto'
 import { AppModule } from '../../src/app.module'
 import { IdentityService } from '../../src/identity/identity.service'
 import { IdentityDeliveryService } from '../../src/identity/identity-delivery.service'
+import { REGISTRATION_CONSENT_REQUIREMENTS, type RegistrationConsentAcceptance } from '../../src/identity/consent-policy'
 import { buildDatabaseOptions } from '../../src/database/database-options'
 
 const describeDb = process.env.TEST_DATABASE_URL ? describe : describe.skip
+const acceptedConsents: RegistrationConsentAcceptance[] = REGISTRATION_CONSENT_REQUIREMENTS.map(({ documentType, version }) => ({
+  documentType,
+  version,
+  accepted: true,
+}))
 
 function signMessage(priv: Uint8Array, address: string, message: string): string {
   const pub = secp256k1.getPublicKey(priv, false)
@@ -46,7 +52,7 @@ describeDb('Identity API-002 integration', () => {
 
   it('registers, verifies email, and recovers', async () => {
     const email = `integration-${randomUUID()}@rwa.lat`
-    const reg = await svc.registerEmail(email)
+    const reg = await svc.registerEmail(email, 'en', acceptedConsents)
     expect(reg).toEqual({ accepted: true })
     const verificationToken = delivery.lastDemoToken(email, 'email_verification')
     expect(verificationToken).toBeTruthy()
@@ -65,7 +71,7 @@ describeDb('Identity API-002 integration', () => {
     const address = '0x' + Buffer.from(keccak_256(pub.subarray(1)).subarray(12)).toString('hex')
     const { nonce } = await svc.createWalletChallenge(address)
     const signature = signMessage(priv, address, nonce)
-    const result = await svc.verifyWalletSignature(address, signature, nonce)
+    const result = await svc.verifyWalletSignature(address, signature, nonce, undefined, acceptedConsents)
     expect(result.token).toHaveLength(64)
     expect(result.sessionId).toBeTruthy()
   })

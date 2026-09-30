@@ -2,23 +2,27 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   Post,
   Put,
   Query,
   UseGuards,
 } from '@nestjs/common'
+import { ApiOkResponse } from '@nestjs/swagger'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
 import { UserOpsService } from './user-ops.service'
 import {
   AcceptInvitationDto,
+  AcceptInvitationResultResponseDto,
   AdminTicketListQueryDto,
   AdminTicketResponseDto,
   CreateInvitationDto,
   CreateTicketDto,
   CreateTicketMessageDto,
+  RewardViewResponseDto,
   UpsertPreferencesDto,
 } from './user-ops.dto'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
@@ -33,9 +37,10 @@ export class UserOpsController {
 
   // 工单
   @Post('tickets')
-  createTicket(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateTicketDto) {
+  createTicket(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateTicketDto, @Headers('idempotency-key') idempotencyKey?: string) {
     return this.svc.createTicket({
       author_user_id: actor.userId,
+      idempotencyKey,
       subject: dto.subject,
       body: dto.body,
       priority: dto.priority,
@@ -87,11 +92,13 @@ export class UserOpsController {
   }
 
   @Post('invitations/accept')
+  @ApiOkResponse({ type: AcceptInvitationResultResponseDto })
   acceptInvitation(@CurrentAuth() actor: SecurityActor, @Body() dto: AcceptInvitationDto) {
     return this.svc.acceptInvitation(dto.token, actor.userId)
   }
 
   @Get('rewards')
+  @ApiOkResponse({ type: RewardViewResponseDto, isArray: true })
   listRewards(@CurrentAuth() actor: SecurityActor) {
     return this.svc.listRewards(actor.userId)
   }
@@ -134,7 +141,7 @@ export class AdminSupportController {
   @Get()
   async list(@CurrentAdmin() admin: AuthenticatedAdmin, @Query() query: AdminTicketListQueryDto) {
     await this.authorize(admin)
-    return this.svc.listTicketsForAdmin(query.status, query.limit)
+    return this.svc.listTicketsForAdmin(query.status, query.limit, query.category)
   }
 
   @Get(':id/timeline')

@@ -1,0 +1,227 @@
+/* Maison bridge for pre-Maison screens. Lives inside MaisonPage (.root), so every value comes from --m-*.
+   Selectors are prefixed with `:global(.rwa-mobile) .bridge.bridge` to outrank the legacy light-theme overrides
+   in app/globals.css without !important. */
+
+.bridge {
+  /* Legacy tokens → Maison palette. Derived legacy tokens (--muted, --mint…) resolve at :root, so each is restated. */
+  --bg: var(--m-bg); --surface: var(--m-glass); --surface-2: var(--m-glass-deep); --glass: var(--m-glass); --glass-strong: var(--m-glass-deep);
+  --ink: var(--m-ink); --ink-2: var(--m-muted); --ink-3: var(--m-faint); --muted: var(--m-muted); --faint: var(--m-faint); --ice: var(--m-muted);
+  --accent: var(--m-accent); --mint: var(--m-accent); --on-accent: var(--m-on-accent); --accent-rgb: 138 106 59;
+  --line: var(--m-line); --hairline: var(--m-line); --high: var(--m-warn); --warn: var(--m-warn); --down: var(--m-down); --negative: var(--m-down); --up: var(--m-up);
+  --focus-ring: color-mix(in srgb, var(--m-accent) 60%, transparent);
+  margin-inline: calc(-1 * var(--m-gutter));
+  margin-top: -6px;
+  color: var(--m-ink);
+}
+:global(.rwa-mobile[data-theme='dark']) .bridge { --accent-rgb: 227 187 122; }
+
+/* ---- Ground ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.screen) { background: transparent; color: var(--m-ink); animation: none; }
+
+/* ---- Topbar: clear at rest, page-tinted glass once content scrolls under it (same as native Maison pages). ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-topbar) { color: var(--m-ink); background: transparent; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; transition: background-color .28s ease, box-shadow .28s ease; }
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-topbar[data-scrolled='true']) { background: var(--m-topbar-bg); box-shadow: 0 .5px 0 var(--m-line); -webkit-backdrop-filter: blur(24px) saturate(1.8); backdrop-filter: blur(24px) saturate(1.8); }
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-topbar) :global(button) { color: inherit; }
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-topbar__title--center small) { color: var(--m-muted); }
+
+/* ---- Hero: Maison app pages carry their name in the nav bar, so a page-title hero keeps only its lede;
+   the kicker and icon go, the heading stays for screen readers (same rule as .hero > .display). ---- */
+:global(.rwa-mobile) .bridge.bridge :global(:is(.trust-hero, .account-flow-hero)) { padding: 4px var(--m-gutter) 16px; margin: 0; text-align: start; background: none; border: 0; box-shadow: none; }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.trust-hero, .account-flow-hero) > :is(p, span:has(> svg))) { display: none; }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.trust-hero, .account-flow-hero) h1) { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.trust-hero > span, .account-flow-hero > small)) { display: block; max-width: 34em; margin: 0; color: var(--m-muted); font-size: 12.5px; line-height: 1.55; text-wrap: pretty; }
+
+/* ---- Surfaces ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.glass) {
+  border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); color: var(--m-ink);
+  box-shadow: inset 0 1px var(--m-rim), var(--m-shadow-soft); -webkit-backdrop-filter: blur(18px) saturate(1.1); backdrop-filter: blur(18px) saturate(1.1);
+}
+:global(.rwa-mobile) .bridge.bridge :global(.glass::after) { display: none; }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.trust-list, .security-report-form, .report-success, .official-channel-list)) { margin-inline: var(--m-gutter); }
+
+/* Row lists (trust center, published channels): lacquer-free icon tiles, hairline separators. */
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list button) { min-height: 72px; grid-template-columns: 36px 1fr auto; gap: 14px; padding: 14px 16px; border-top-color: var(--m-line-soft); color: var(--m-ink); transition: background-color .2s var(--m-ease); }
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list button:hover) { background: var(--m-line-soft); }
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list button > span),
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list button:nth-child(2n) > span) {
+  width: 36px; height: 36px; border: 1px solid var(--m-line); border-radius: 11px; background: var(--m-glass-deep); color: var(--m-accent);
+}
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list button > span svg) { width: 18px; height: 18px; stroke-width: 1.6; }
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list b) { font: 600 14px/1.3 var(--m-sans); color: var(--m-ink); }
+:global(.rwa-mobile) .bridge.bridge :global(.trust-list small) { color: var(--m-muted); font-size: 12px; line-height: 1.45; }
+:global(.rwa-mobile) .bridge.bridge :global(.trust-note) { margin: 18px var(--m-gutter) 0; padding-top: 14px; border-top: 1px solid var(--m-line-soft); color: var(--m-faint); font-size: 11.5px; line-height: 1.55; }
+:global(.rwa-mobile) .bridge.bridge :global(.trust-note svg) { color: var(--m-warn); }
+
+/* Callout (anti-scam): warm warning wash instead of the neon amber. */
+:global(.rwa-mobile) .bridge.bridge :global(.anti-scam-callout) {
+  margin: 16px var(--m-gutter) 0; padding: 14px 16px; border: 1px solid color-mix(in srgb, var(--m-warn) 28%, var(--m-line)); border-radius: 16px;
+  background: color-mix(in srgb, var(--m-warn) 7%, transparent); color: var(--m-muted); font-size: 12.5px;
+}
+:global(.rwa-mobile) .bridge.bridge :global(.anti-scam-callout b) { color: var(--m-ink); font-size: 13.5px; }
+:global(.rwa-mobile) .bridge.bridge :global(.anti-scam-callout > svg) { color: var(--m-warn); }
+
+/* ---- Fields ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.screen label) { color: var(--m-muted); font: 500 12.5px/1.3 var(--m-sans); letter-spacing: .01em; }
+:global(.rwa-mobile) .bridge.bridge :global(.screen :is(input:not([type='checkbox'], [type='radio'], [type='range']), textarea, select)) {
+  width: 100%; min-height: 48px; padding: 12px 14px; border: 1px solid var(--m-line); border-radius: 14px;
+  background: var(--m-glass-deep); color: var(--m-ink); font: 15px/1.45 var(--m-sans); box-shadow: none; outline: 0;
+  transition: border-color .2s var(--m-ease), box-shadow .2s var(--m-ease);
+}
+:global(.rwa-mobile) .bridge.bridge :global(.screen textarea) { min-height: 112px; resize: vertical; }
+:global(.rwa-mobile) .bridge.bridge :global(.screen :is(input, textarea, select)::placeholder) { color: var(--m-faint); }
+:global(.rwa-mobile) .bridge.bridge :global(.screen :is(input, textarea, select):focus-visible) {
+  border-color: color-mix(in srgb, var(--m-accent) 60%, var(--m-line)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--m-accent) 13%, transparent);
+}
+:global(.rwa-mobile) .bridge.bridge :global(.screen :is(input, textarea, select):disabled) { opacity: .6; }
+:global(.rwa-mobile) .bridge.bridge :global(.screen input[type='checkbox']) { accent-color: var(--m-accent); }
+
+/* ---- Primary CTA: the Maison gold, in flow (never overlapping fields) ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.flow-cta) {
+  position: static; inset: auto; transform: none;
+  width: calc(100% - 2 * var(--m-gutter)); max-width: 440px; height: 52px; min-height: 52px; padding: 0 22px; margin: 22px auto 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  border: 0; border-radius: 999px; background: var(--m-cta); color: var(--m-cta-ink); font: 600 15px/1 var(--m-sans);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .45), 0 14px 28px -16px rgba(120, 84, 36, .55); transition: transform .2s var(--m-ease), opacity .2s;
+}
+:global(.rwa-mobile) .bridge.bridge :global(.security-report-form .flow-cta) { width: 100%; margin-top: 4px; }
+:global(.rwa-mobile) .bridge.bridge :global(.flow-cta:active:not(:disabled)) { transform: scale(.98); }
+:global(.rwa-mobile) .bridge.bridge :global(.flow-cta:disabled) { background: var(--m-line); color: var(--m-faint); box-shadow: none; opacity: 1; }
+:global(.rwa-mobile) .bridge.bridge :global(.flow-cta svg) { width: 18px; height: 18px; }
+:global(.rwa-mobile) .bridge.bridge :global(.screen.has-fixed-cta) { padding-bottom: calc(32px + env(safe-area-inset-bottom)); }
+
+/* ---- Forms and result cards ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.security-report-form) { gap: 18px; padding: 18px 16px; }
+:global(.rwa-mobile) .bridge.bridge :global(.security-report-form label) { gap: 8px; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-counter) { justify-self: end; color: var(--m-faint); font: 500 11px/1 var(--m-mono); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-feedback[data-tone='error']) { margin: 0; color: var(--m-down); font-size: 13px; }
+:global(.rwa-mobile) .bridge.bridge :global(.report-success) { padding: 28px 20px; gap: 10px; }
+:global(.rwa-mobile) .bridge.bridge :global(.report-success > svg) { color: var(--m-accent); }
+:global(.rwa-mobile) .bridge.bridge :global(.report-success h2) { font: 400 26px/1.15 var(--m-display); color: var(--m-ink); }
+:global(.rwa-mobile) .bridge.bridge :global(.report-success b) { color: var(--m-ink); font: 600 15px/1.2 var(--m-mono); letter-spacing: .04em; }
+:global(.rwa-mobile) .bridge.bridge :global(.report-success p) { color: var(--m-muted); font-size: 13px; }
+:global(.rwa-mobile) .bridge.bridge :global(.report-success button) {
+  min-height: 44px; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 0 18px;
+  border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass-deep); color: var(--m-ink); font: 600 13.5px/1 var(--m-sans);
+}
+
+:global(.rwa-mobile) .bridge.bridge :global(.screen :is(button, a, input, textarea, select, summary):focus-visible) { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+/* ---- Shared legacy states and selection ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-liquid-selection) { display: none; }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.rwa-error, .rwa-empty)) {
+  justify-items: start; gap: 8px; margin: 8px 0 0; padding: 16px; border: 1px dashed var(--m-line); border-radius: var(--m-radius);
+  background: transparent; color: var(--m-muted); font-size: 12.5px; text-align: start;
+}
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-error) { border-style: solid; border-color: color-mix(in srgb, var(--m-down) 35%, transparent); color: var(--m-ink); }
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-error > svg) { color: var(--m-down); }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.rwa-error, .rwa-empty) p) { margin: 0; font-size: 13.5px; font-weight: 600; line-height: 1.45; }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.rwa-error, .rwa-empty, .community-empty, .status-screen) button:not(.flow-cta)) {
+  min-height: 36px; display: inline-flex; align-items: center; gap: 6px; padding: 0 15px; border: 1px solid var(--m-line); border-radius: 999px;
+  background: var(--m-glass-deep); color: var(--m-ink); font: 600 12.5px/1 var(--m-sans);
+}
+:global(.rwa-mobile) .bridge.bridge :global(:is(.empty-state--card, .empty-state--inline)) { border: 1px dashed var(--m-line); border-radius: var(--m-radius); background: transparent; }
+:global(.rwa-mobile) .bridge.bridge :global(.empty-state--page) { background: transparent; }
+:global(.rwa-mobile) .bridge.bridge :global(.empty-state__icon) { border: 1px solid var(--m-line); background: var(--m-glass-deep); color: var(--m-accent); }
+:global(.rwa-mobile) .bridge.bridge :global(.empty-state b) { color: var(--m-ink); font-size: 14px; font-weight: 600; }
+:global(.rwa-mobile) .bridge.bridge :global(.empty-state small) { color: var(--m-muted); font-size: 12px; }
+:global(.rwa-mobile) .bridge.bridge :global(.empty-state--page b) { font: 400 22px/1.2 var(--m-display); }
+:global(.rwa-mobile) .bridge.bridge :global(.rwa-card) {
+  border: 1px solid var(--m-line); border-radius: 16px; background: var(--m-glass); color: var(--m-ink); box-shadow: inset 0 1px var(--m-rim);
+}
+
+/* Segmented chips (notification filters, community topics): glass at rest, ink when chosen, as on /markets. */
+:global(.rwa-mobile) .bridge.bridge :global(:is(.s2-notification-filters .rwa-sel, .community-chip)) {
+  min-height: 34px; padding: 0 14px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass); color: var(--m-muted);
+  font: 600 12.5px/1 var(--m-sans); box-shadow: none;
+}
+:global(.rwa-mobile) .bridge.bridge :global(:is(.s2-notification-filters .rwa-sel[data-state="selected"], .community-chip.is-active)) { border-color: var(--m-ink); background: var(--m-ink); color: var(--m-bg); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-chip.is-active *) { color: var(--m-bg); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-sort) { border: 1px solid var(--m-line); background: var(--m-glass-deep); padding: 3px; box-shadow: inset 0 1px var(--m-rim); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-sort button) { min-height: 30px; padding: 0 14px; color: var(--m-muted); font: 600 12.5px/1 var(--m-sans); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-sort button.is-active) { background: var(--m-bg); color: var(--m-ink); box-shadow: 0 1px 2px rgba(0, 0, 0, .08), inset 0 1px var(--m-rim); }
+
+/* ---- Notifications ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notifications) { padding-inline: var(--m-gutter); }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notification-filters) { margin: 4px 0 14px; }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notification-row > svg) { color: var(--m-accent); }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notification-row b) { font: 600 14px/1.35 var(--m-sans); color: var(--m-ink); }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notification-row small) { color: var(--m-muted); font-size: 12px; }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notification-row time) { color: var(--m-faint); font: 500 11px/1.2 var(--m-mono); }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-notification-row[data-focused="true"]) { outline: 0; background: color-mix(in srgb, var(--m-accent) 9%, var(--m-glass)); box-shadow: inset 2px 0 0 var(--m-accent); }
+
+/* ---- Community ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.community-header small) { color: var(--m-muted); font-size: 12.5px; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-controls) { background: var(--m-topbar-bg); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); box-shadow: 0 .5px 0 var(--m-line); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-join) {
+  gap: 10px; padding: 14px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); box-shadow: inset 0 1px var(--m-rim), var(--m-shadow-soft);
+}
+:global(.rwa-mobile) .bridge.bridge :global(.community-join b) { color: var(--m-ink); font: 600 14px/1.3 var(--m-sans); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-join small) { color: var(--m-muted); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-join button) {
+  min-height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--m-ink); color: var(--m-bg); font: 600 13px/1 var(--m-sans); box-shadow: none;
+}
+:global(.rwa-mobile) .bridge.bridge :global(.community-join button:disabled) { background: var(--m-line); color: var(--m-faint); opacity: 1; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-card) { border-color: var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); color: var(--m-ink); box-shadow: inset 0 1px var(--m-rim), var(--m-shadow-soft); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-tag) { color: var(--m-accent); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-more) { border-color: var(--m-line); background: var(--m-glass); color: var(--m-ink); font-weight: 600; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-empty) { justify-items: start; margin-top: 14px; padding: 18px 16px; border: 1px dashed var(--m-line); border-radius: var(--m-radius); background: transparent; text-align: start; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-empty b) { color: var(--m-ink); font: 400 20px/1.2 var(--m-display); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-empty span) { max-width: none; color: var(--m-muted); }
+
+/* ---- Status / maintenance: semantic Maison hues instead of neon teal/amber/pink ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.status-screen) { padding-inline: var(--m-gutter); }
+:global(.rwa-mobile) .bridge.bridge :global(.status-rows .is-ok) { color: var(--m-up); }
+:global(.rwa-mobile) .bridge.bridge :global(.status-hero.is-ok > span) { color: var(--m-up); background: color-mix(in srgb, var(--m-up) 12%, transparent); }
+:global(.rwa-mobile) .bridge.bridge :global(.status-rows .is-warn) { color: var(--m-warn); }
+:global(.rwa-mobile) .bridge.bridge :global(.status-rows .is-down) { color: var(--m-down); }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.community-screen, .community-post)) { --mobile-gutter: var(--m-gutter); padding-inline: var(--m-gutter); }
+:global(.rwa-mobile) .bridge.bridge :global(.community-header) { padding: 2px 0 12px; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-controls) { padding-block: 10px; }
+
+/* ---- Onboarding overview (p0a markup): gutter, lede-only hero, Maison section heads ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-screen) { padding: 0 var(--m-gutter) calc(32px + env(safe-area-inset-bottom)); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-header) { gap: 12px; margin: 2px 0 16px; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-header .p0a-eyebrow) { display: none; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-header h1) { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-header p) { color: var(--m-muted); font-size: 12.5px; line-height: 1.55; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-live-chip) { border: 1px solid var(--m-line); background: var(--m-glass-deep); color: var(--m-muted); font: 500 11.5px/1 var(--m-sans); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-live-chip > span) { background: var(--m-accent); box-shadow: none; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-section-heading) { margin: 26px 0 12px; padding-bottom: 10px; border-bottom: 1px solid var(--m-line); align-items: baseline; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-section-heading .p0a-eyebrow) { display: block; color: var(--m-faint); font: 500 10.5px/1 var(--m-mono); letter-spacing: .12em; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-section-heading h2) { margin-top: 6px; font: 400 22px/1.15 var(--m-display); letter-spacing: -.01em; color: var(--m-ink); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-section-heading > button) { color: var(--m-accent); font: 600 12.5px/1 var(--m-sans); }
+:global(.rwa-mobile) .bridge.bridge :global(:is(.p0a-card-icon, .p0a-card-icon.is-mint, .p0a-step__icon)) { border: 1px solid var(--m-line); background: var(--m-glass-deep); color: var(--m-accent); box-shadow: none; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-compliance-card) { padding: 14px; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-compliance-card .p0a-card-top > span:nth-child(2)) { font: 600 14px/1.25 var(--m-sans); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-compliance-card :is(p, small)) { color: var(--m-muted); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-step__number) { border-color: var(--m-line); color: var(--m-faint); font-family: var(--m-mono); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-disclaimer) { padding: 12px 14px; border: 1px solid color-mix(in srgb, var(--m-warn) 28%, var(--m-line)); border-radius: 14px; background: color-mix(in srgb, var(--m-warn) 7%, transparent); color: var(--m-muted); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-disclaimer > svg) { color: var(--m-warn); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-secondary-button) { min-height: 36px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass-deep); color: var(--m-ink); font: 600 12.5px/1 var(--m-sans); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-trace-note > svg) { color: var(--m-accent); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-trace-note small) { color: var(--m-muted); }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-step__icon) { width: 34px; height: 34px; flex: none; display: grid; place-items: center; border-radius: 11px; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-card-icon) { width: 32px; height: 32px; flex: none; border-radius: 10px; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-card-top) { flex-wrap: wrap; row-gap: 8px; }
+:global(.rwa-mobile) .bridge.bridge :global(.community-empty button) { justify-self: start; }
+:global(.rwa-mobile) .bridge.bridge :global(.p0a-secondary-button) { white-space: nowrap; }
+
+/* ---- Welcome / boot: mark on paper, a single hairline loader, centred error card ---- */
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot) { min-height: 86dvh; gap: 26px; padding-inline: var(--m-gutter); }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot > svg) { width: 40px; height: 40px; color: var(--m-ink); }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot .rwa-skeleton) {
+  position: relative; width: 96px; height: 1px; min-height: 1px; overflow: hidden; border-radius: 1px; background: var(--m-line); animation: none;
+}
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot .rwa-skeleton::after) {
+  content: ''; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, var(--m-accent), transparent);
+  animation: bootSweep 1.6s var(--m-ease) infinite;
+}
+@keyframes bootSweep { from { transform: translateX(-100%); } to { transform: translateX(250%); } }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot .rwa-error) {
+  width: min(320px, 100%); justify-items: center; gap: 10px; padding: 20px 18px; text-align: center;
+  border: 1px solid var(--m-line); background: var(--m-glass); box-shadow: inset 0 1px var(--m-rim), var(--m-shadow-soft);
+}
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot .rwa-error p) { color: var(--m-ink); font-weight: 500; }
+:global(.rwa-mobile) .bridge.bridge :global(.s2-boot .rwa-error button) { margin-top: 4px; }
+@media (prefers-reduced-motion: reduce) {
+  :global(.rwa-mobile) .bridge.bridge :global(.s2-boot .rwa-skeleton::after) { animation: none; width: 100%; opacity: .5; }
+}

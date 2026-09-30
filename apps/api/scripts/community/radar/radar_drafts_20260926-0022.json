@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "azhe.tpe",
+    "kind": "post",
+    "topics": ["security", "rwa"],
+    "source": "rewrite",
+    "lang": "zh-Hant",
+    "body": "認真拆一層（不是抬槓）：這週有一份以太坊社群草案在談「保密型 RWA 代幣」。它想解決的是——交易金額在鏈上不公開，但發行人保留執法權：可以凍結代幣、強制轉移、撤銷持有人身分。把機構要的隱私和監管要的控制權寫進同一套標準。\n\n工程視角補一句：凍結與強制轉移在 ERC-3643（T-REX）這類標準裡本來就有，這次補上的是「金額保密」。草案還在早期階段，不等於已經通過或上線。\n\n所以以後看 RWA 代幣，除了底層資產和收益，多問一句：合約給了發行人多少權限？「我的代幣」是附條件的持有，條件寫在哪、誰能觸發，值得逐條看。"
+  },
+  {
+    "profileHandle": "mika.toronto",
+    "kind": "post",
+    "topics": ["rwa", "newbie"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "ARK put its Venture Fund onchain this week — Ethereum, via Securitize, $500 minimum. Everyone's talking about the portfolio (OpenAI, Anthropic, Stripe). My product brain went straight to the exit: it's a closed-end interval fund, shares aren't exchange-listed, no secondary market is expected, and liquidity comes from periodic repurchase offers that can be oversubscribed. Tokenizing changed how you hold it, not how you get out. And the token is a stake in the fund, not shares in those private companies 🙂"
+  }
+]

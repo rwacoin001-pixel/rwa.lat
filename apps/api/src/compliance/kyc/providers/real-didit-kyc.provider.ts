@@ -7,6 +7,10 @@ import type {
   KycSubmissionResult,
   KycWebhookEvent,
   KycWebhookVerificationInput,
+  NativeKycImages,
+  NativeKycChecks,
+  NativeKycCheck,
+  KycImage,
 } from '../../kyc-provider.interface'
 
 const DEFAULT_BASE_URL = 'https://verification.didit.me'
@@ -76,7 +80,7 @@ export class RealDiditKycProvider implements KycProvider {
     }
     return {
       providerCaseRef: data.session_id,
-      status: 'submitted',
+      status: data.status === undefined ? 'not_started' : this.submissionStatus(data.status),
       verificationUrl: data.url,
     }
   }
@@ -94,6 +98,8 @@ export class RealDiditKycProvider implements KycProvider {
 
   mapStatus(status: string): KycProviderCase {
     const normalized = status.trim().toLowerCase().replace(/[\s_-]+/g, '')
+    if (normalized === 'notstarted') return { state: 'not_started' }
+    if (normalized === 'inprogress') return { state: 'in_progress' }
     if (normalized === 'approved') return { state: 'approved', decision: 'approved' }
     if (normalized === 'declined' || normalized === 'rejected') {
       return { state: 'rejected', decision: 'rejected', reason: 'didit_declined' }
@@ -104,7 +110,49 @@ export class RealDiditKycProvider implements KycProvider {
     if (normalized === 'awaitinguser' || normalized === 'requiresadditionalinfo') {
       return { state: 'needs_information' }
     }
-    return { state: 'submitted' }
+    if (normalized === 'inreview' || normalized === 'resubmitted') return { state: 'submitted' }
+    throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Didit returned an unknown verification status', false)
+  }
+
+  private submissionStatus(value: unknown): 'not_started' | 'in_progress' | 'submitted' {
+    if (typeof value !== 'string') throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Invalid session status', false)
+    const state = this.mapStatus(value).state
+    if (state === 'not_started' || state === 'in_progress' || state === 'submitted') return state
+    throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Unexpected new session status', false)
+  }
+
+  async verifyImages(input: NativeKycImages): Promise<NativeKycChecks> {
+    const form = () => {
+      const body = new FormData()
+      // Provider retains evidence for review. Our database stores encrypted references only.
+      body.set('save_api_request', 'true')
+      body.set('vendor_data', input.userId)
+      return body
+    }
+    const add = (body: FormData, field: string, image: KycImage) => body.set(field, new Blob([new Uint8Array(image.buffer)], { type: image.mimetype }), `${field}.${image.mimetype === 'image/png' ? 'png' : 'jpg'}`)
+    const idBody = form()
+    add(idBody, 'front_image', input.front)
+    if (input.back) add(idBody, 'back_image', input.back)
+    idBody.set('perform_document_liveness', 'true')
+    const id = await this.request<Record<string, unknown>>('/v3/id-verification/', { method: 'POST', body: idBody })
+    const document = nativeCheck(id, 'id_verification')
+    const detected = isRecord(id.id_verification) ? id.id_verification.document_type : null
+    const allowed = input.documentType === 'passport' ? ['Passport'] : ['Identity Card', "Driver's License", 'Residence Permit']
+    if (document.status === 'Approved' && !allowed.includes(String(detected))) throw new DiditProviderError('PROVIDER_INVALID_REQUEST', 'The detected document does not match the selected document type', false)
+    const livenessBody = form()
+    add(livenessBody, 'user_image', input.selfie)
+    const live = await this.request<Record<string, unknown>>('/v3/passive-liveness/', { method: 'POST', body: livenessBody })
+    const liveness = nativeCheck(live, 'liveness', true)
+    const faceBody = form()
+    add(faceBody, 'user_image', input.selfie)
+    // Match against the same authenticated document image; never follow provider media URLs.
+    add(faceBody, 'ref_image', input.front)
+    const face = await this.request<Record<string, unknown>>('/v3/face-match/', { method: 'POST', body: faceBody })
+    const references = [id, live, face].map(data => {
+      if (typeof data.request_id !== 'string' || !isUuid(data.request_id)) throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Invalid native request reference', false)
+      return data.request_id
+    })
+    return { references, document, liveness, faceMatch: nativeCheck(face, 'face_match', true) }
   }
 
   verifyWebhook(input: KycWebhookVerificationInput): KycWebhookEvent {
@@ -135,9 +183,11 @@ export class RealDiditKycProvider implements KycProvider {
     return { eventId, webhookType, sessionId, status, workflowId }
   }
 
-  private async request<T>(path: string, init: { method: 'GET' | 'POST'; body?: string }): Promise<T> {
+  private async request<T>(path: string, init: { method: 'GET' | 'POST'; body?: string | FormData }): Promise<T> {
+    // Paid POSTs may have succeeded even if their response was lost. Never replay them automatically.
+    const maxRetries = init.method === 'GET' ? this.config.maxRetries : 0
     let lastError: DiditProviderError | undefined
-    for (let attempt = 0; attempt <= this.config.maxRetries; attempt += 1) {
+    for (let attempt = 0; attempt <= maxRetries; attempt += 1) {
       const controller = new AbortController()
       const timeout = setTimeout(() => controller.abort(), this.config.timeoutMs)
       try {
@@ -147,14 +197,14 @@ export class RealDiditKycProvider implements KycProvider {
           headers: {
             'x-api-key': this.config.apiKey,
             Accept: 'application/json',
-            ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+            ...(typeof init.body === 'string' ? { 'Content-Type': 'application/json' } : {}),
           },
           redirect: 'error',
           signal: controller.signal,
         })
         if (!response.ok) {
           lastError = errorForStatus(response.status)
-          if (!lastError.retryable || attempt === this.config.maxRetries) throw lastError
+          if (!lastError.retryable || attempt === maxRetries) throw lastError
           await delay(retryDelay(response.headers.get('retry-after'), attempt, this.config.retryBaseDelayMs))
           continue
         }
@@ -162,7 +212,7 @@ export class RealDiditKycProvider implements KycProvider {
       } catch (error) {
         const normalized = normalizeRequestError(error)
         lastError = normalized
-        if (!normalized.retryable || attempt === this.config.maxRetries) throw normalized
+        if (!normalized.retryable || attempt === maxRetries) throw normalized
         await delay(this.config.retryBaseDelayMs * (2 ** attempt))
       } finally {
         clearTimeout(timeout)
@@ -170,6 +220,18 @@ export class RealDiditKycProvider implements KycProvider {
     }
     throw lastError ?? new DiditProviderError('PROVIDER_UNAVAILABLE', 'Didit request failed', false)
   }
+}
+
+function nativeCheck(data: Record<string, unknown>, key: string, scoreRequired = false): NativeKycCheck {
+  const check = data[key]
+  if (!isRecord(check) || !['Approved', 'Declined'].includes(String(check.status)) || !Array.isArray(check.warnings)) throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Invalid native verification result', false)
+  const score = typeof check.score === 'number' && Number.isFinite(check.score) && check.score >= 0 && check.score <= 100 ? check.score : undefined
+  if (scoreRequired && check.status === 'Approved' && score === undefined) throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Native verification score is missing', false)
+  const warnings = check.warnings.map(warning => {
+    if (!isRecord(warning) || typeof warning.risk !== 'string' || !/^[A-Z0-9_]{1,128}$/.test(warning.risk)) throw new DiditProviderError('PROVIDER_UNAVAILABLE', 'Invalid native warning', false)
+    return warning.risk
+  })
+  return { status: check.status as NativeKycCheck['status'], score, warnings }
 }
 
 function readDiditConfig(config: ConfigService): DiditConfig {

@@ -37,9 +37,11 @@ export function validateEnvironment(input: Environment): Environment {
   if (encryptionKeys.includes(read(input, 'IDENTITY_HMAC_KEY').toLowerCase())) {
     throw new Error('IDENTITY_HMAC_KEY and IDENTITY_ENC_KEY must use different production keys')
   }
-  if (read(input, 'POLYMARKET_TRADING_ENABLED') === 'true') {
-    throw new Error('POLYMARKET_TRADING_ENABLED=true is forbidden because authenticated order submission is not installed')
-  }
+  // Internal prediction betting is installed: POST /v1/predictions/bets takes an authenticated
+  // stake, prices it from the CLOB book, moves the balance through the internal ledger and the
+  // settlement worker resolves it against the synced Polymarket market data. Enabling the switch
+  // is therefore permitted here; the pricing endpoints are validated for https immediately below
+  // whenever they are configured (the CLOB/Gamma defaults are built in).
   if (read(input, 'POLYMARKET_GAMMA_URL')) assertHttps(input, 'POLYMARKET_GAMMA_URL')
   if (read(input, 'POLYMARKET_CLOB_URL')) assertHttps(input, 'POLYMARKET_CLOB_URL')
   assertObjectStorage(input)
@@ -213,7 +215,13 @@ function assertObjectStorage(input: Environment) {
   if (enabled !== 'true') return
 
   requireValue(input, 'S3_REGION')
-  requireValue(input, 'S3_KMS_KEY_ID', 8)
+  // KMS 仅 AWS S3 支持。非 AWS 端点（如 Backblaze B2）不支持 aws:kms，
+  // 若强制要求，object-storage.service.ts 会给每次上传带上
+  // ServerSideEncryption=aws:kms 头，导致上传被对象存储拒绝。
+  const s3Endpoint = read(input, 'S3_ENDPOINT')
+  if (!s3Endpoint || /amazonaws\.com/i.test(s3Endpoint)) {
+    requireValue(input, 'S3_KMS_KEY_ID', 8)
+  }
   requireValue(input, 'OBJECT_STORAGE_SCAN_CALLBACK_SECRET', 32)
   requireNonStub(input, 'OBJECT_STORAGE_SCAN_PROVIDER')
   assertS3BucketMap(input)
@@ -283,24 +291,31 @@ function assertEmailDelivery(input: Environment) {
 }
 
 function assertOAuthProviders(input: Environment) {
-  for (const prefix of ['GOOGLE', 'X'] as const) {
-    const enabledKey = `${prefix}_OAUTH_ENABLED`
-    const enabled = read(input, enabledKey)
-    if (enabled !== 'true' && enabled !== 'false') {
-      throw new Error(`${enabledKey} must be explicitly true or false`)
-    }
-    if (enabled !== 'true') continue
-    requireValue(input, `${prefix}_OAUTH_CLIENT_ID`, 8)
-    requireValue(input, `${prefix}_OAUTH_CLIENT_SECRET`, 16)
-    const redirectKey = `${prefix}_OAUTH_REDIRECT_URI`
-    assertHttps(input, redirectKey)
-    const host = new URL(read(input, redirectKey)).hostname
-    if (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host)) {
-      throw new Error(`${redirectKey} must use a non-local production host`)
-    }
+  const googleEnabled = read(input, 'GOOGLE_OAUTH_ENABLED')
+  if (googleEnabled !== 'true' && googleEnabled !== 'false') throw new Error('GOOGLE_OAUTH_ENABLED must be explicitly true or false')
+  if (googleEnabled === 'true') {
+    requireValue(input, 'GOOGLE_OAUTH_CLIENT_ID', 8)
+    requireValue(input, 'GOOGLE_OAUTH_CLIENT_SECRET', 16)
+    assertOAuthRedirect(input, 'GOOGLE_OAUTH_REDIRECT_URI')
+  }
+
+  const xEnabled = read(input, 'X_OAUTH_ENABLED')
+  if (xEnabled !== 'true' && xEnabled !== 'false') throw new Error('X_OAUTH_ENABLED must be explicitly true or false')
+  if (xEnabled === 'true') {
+    requireValue(input, 'X_OAUTH1_CONSUMER_KEY', 8)
+    requireValue(input, 'X_OAUTH1_CONSUMER_SECRET', 16)
+    assertOAuthRedirect(input, 'X_OAUTH_REDIRECT_URI')
   }
   const timeout = read(input, 'OAUTH_HTTP_TIMEOUT_MS')
   if (timeout) requireInteger(input, 'OAUTH_HTTP_TIMEOUT_MS', 1_000, 30_000)
+}
+
+function assertOAuthRedirect(input: Environment, redirectKey: string) {
+  assertHttps(input, redirectKey)
+  const host = new URL(read(input, redirectKey)).hostname
+  if (/^(localhost|127\.0\.0\.1|0\.0\.0\.0)$/i.test(host)) {
+    throw new Error(`${redirectKey} must use a non-local production host`)
+  }
 }
 
 function assertS3BucketMap(input: Environment) {

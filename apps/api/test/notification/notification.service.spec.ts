@@ -74,4 +74,9 @@ describe('NotificationService', () => {
     expect(res.id).toBe('n1')
     expect(repo.save).toHaveBeenCalledTimes(1)
   })
+
+  it('returns navigation payload instead of losing a notification deep link', async () => {
+    repo.find.mockResolvedValue([makeNote({ payload: { route: '/assets/recurring' } })])
+    expect((await svc.listForUser(USER))[0].payload).toEqual({ route: '/assets/recurring' })
+  })
 })

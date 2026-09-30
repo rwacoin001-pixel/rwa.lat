@@ -60,6 +60,23 @@ describe('PolymarketPublicAdapter', () => {
     })
   })
 
+  it('reads trending public markets from Gamma without opening a trading path', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify([{
+      id: '987', slug: 'fed-rate', question: 'Will the Fed cut rates?', active: true, closed: false,
+      outcomes: '["Yes","No"]', outcomePrices: '["0.63","0.37"]', volume24hr: 9000,
+    }]), { status: 200 }))
+    global.fetch = fetchMock
+    const adapter = new PolymarketPublicAdapter(new ConfigService({ POLYMARKET_READ_ENABLED: 'true' }))
+
+    const page = await adapter.listTrendingMarkets(100)
+
+    expect(page.markets[0]).toMatchObject({ gammaMarketId: '987', outcomePrices: ['0.63', '0.37'] })
+    const requested = new URL(String(fetchMock.mock.calls[0][0]))
+    expect(requested.pathname).toBe('/markets')
+    expect(requested.searchParams.get('order')).toBe('volume24hr')
+    expect(requested.searchParams.get('ascending')).toBe('false')
+  })
+
   it('fails closed when public market-data access is disabled', async () => {
     const adapter = new PolymarketPublicAdapter(new ConfigService({ POLYMARKET_READ_ENABLED: 'false' }))
     await expect(adapter.listMarkets()).rejects.toMatchObject({

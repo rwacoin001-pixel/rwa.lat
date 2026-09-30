@@ -21,10 +21,27 @@ class AdminLoginDto {
   @Matches(/^\d{6}$/)
   mfaCode?: string
 }
+class AdminChangePasswordDto {
+  @IsString() @MinLength(1) @MaxLength(256) currentPassword!:string
+  @IsString() @MinLength(12) @MaxLength(256) newPassword!:string
+  @IsOptional() @IsString() @Matches(/^\d{6}$/) mfaCode?:string
+}
 
 @Controller('admin/auth')
 export class AdminAuthController {
   constructor(private readonly auth: AdminAuthService) {}
+  @UseGuards(AdminSessionGuard)
+  @Get('security')
+  security(@Req() request: AdminRequest) {
+    if (!request.admin?.id) throw new Error('Authenticated administrator missing')
+    return this.auth.securityStatus(request.admin.id)
+  }
+  @UseGuards(AdminSessionGuard)
+  @Post('password')
+  changePassword(@Req() request:AdminRequest,@Body() dto:AdminChangePasswordDto){
+    if(!request.admin?.id)throw new Error('Authenticated administrator missing')
+    return this.auth.changePassword(request.admin.id,dto)
+  }
 
   @AdminPublic()
   @Post('login')

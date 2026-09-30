@@ -15,6 +15,12 @@ import { SessionAuthGuard } from '../src/security/session-auth.guard'
 import { DataGovernanceController } from '../src/data-governance/data-governance.controller'
 import { AdminWalletController } from '../src/wallet/wallet.controller'
 import { AdminLedgerController } from '../src/ledger/ledger.controller'
+import { AdminContentController } from '../src/content/content.controller'
+import { CommunityMemberController, AdminCommunityMemberController } from '../src/community/community-member.controller'
+import { AiPlanningController } from '../src/ai/ai-planning.controller'
+import { AccountClosureController, AdminAccountClosureController } from '../src/notification/account-closure.controller'
+import { GeneratedDocumentsController, AdminDocumentTemplatesController } from '../src/generated-documents/generated-documents.controller'
+import { PublicShareController } from '../src/sharing/public-share.controller'
 
 function classGuards(target: object): unknown[] {
   return Reflect.getMetadata(GUARDS_METADATA, target) ?? []
@@ -26,7 +32,7 @@ function methodGuards(target: object, method: string): unknown[] {
 }
 
 describe('production route guard contract', () => {
-  it.each([PortfolioController, NotificationController, UserOpsController, UserObjectStorageController])(
+  it.each([PortfolioController, NotificationController, UserOpsController, UserObjectStorageController, CommunityMemberController, AiPlanningController, AccountClosureController, GeneratedDocumentsController])(
     'derives end-user identity from SessionAuthGuard on %p',
     (controller) => expect(classGuards(controller)).toContain(SessionAuthGuard),
   )
@@ -41,6 +47,10 @@ describe('production route guard contract', () => {
     AdminSupportController,
     AdminWalletController,
     AdminLedgerController,
+    AdminContentController,
+    AdminCommunityMemberController,
+    AdminAccountClosureController,
+    AdminDocumentTemplatesController,
   ])(
     'protects operational controller %p with AdminSessionGuard',
     (controller) => expect(classGuards(controller)).toContain(AdminSessionGuard),
@@ -53,5 +63,8 @@ describe('production route guard contract', () => {
 
   it('protects Prometheus metrics with the dedicated bearer guard', () => {
     expect(classGuards(MetricsController)).toContain(MetricsAccessGuard)
+  })
+  it.each(['create','revoke','list'])('requires a user session for PublicShareController.%s',method=>{
+    expect(methodGuards(PublicShareController.prototype,method)).toContain(SessionAuthGuard)
   })
 })

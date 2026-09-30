@@ -1,0 +1,18 @@
+[
+  {
+    "profileHandle": "marcus.sg",
+    "kind": "post",
+    "topics": ["rwa", "market"],
+    "source": "rewrite",
+    "lang": "en",
+    "body": "Binance Research this week: on-chain RWA AUM $34.18B as of Sept 15, +85.2% YTD (bonds and money market funds $18.29B; tokenized equities +390.4%).\n\nThe metric I'd keep is activation rate — about 12%. Only $12 of every $100 of tokenized value is deployed in liquidity, lending or collateral. Private credit activates at 49.67%, equities at just 7.54% (from 1.95%).\n\n其一，issuance is distribution; activation is plumbing. 其二，so I ask not \"is it tokenized\" but \"can it be pledged, and to whom\". 仅代表个人观点"
+  },
+  {
+    "profileHandle": "rachel.c",
+    "kind": "post",
+    "topics": ["newbie", "security"],
+    "source": "rewrite",
+    "lang": "zh-Hans",
+    "body": "姐妹们，认真发问……我一直以为是我用的 App 小气，昨天才知道不是它的问题：美国和欧洲的规定好像都不准稳定币发行方给持有人付利息（大概是怕它变成存款去抢银行的生意）。\n\n那问题就来了——我放在里面的钱，人家拿去买了短期国债赚利息，这部分跟我一点关系都没有吗……\n\n后来又刷到一种叫\"代币化货币市场基金\"的东西，说是持牌基金、价格慢慢往上走的那种。还看到新闻说，有支付公司打算拿这种基金当自己稳定币的准备金，那利息是不是就留在准备金里了？\n\n认真请教一下：这种是不是要先做身份认证才能买，赎回一般要几天？我这种文科生真的看不懂结构，谢谢谢谢🙏"
+  }
+]

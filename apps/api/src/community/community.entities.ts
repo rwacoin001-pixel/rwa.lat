@@ -159,6 +159,10 @@ export class CommunityComment {
   @Column({ type: 'text' })
   body!: string
 
+  /** API-relative media references (see communityMediaPath); at most four. */
+  @Column({ type: 'jsonb', default: () => "'[]'" })
+  images!: string[]
+
   @Column({ type: 'varchar', length: 16, default: 'zh-Hans' })
   lang!: string
 

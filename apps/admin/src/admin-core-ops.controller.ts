@@ -22,6 +22,85 @@ type QueryMap = Record<string, string | undefined>
 @UseGuards(AdminPermissionGuard)
 export class AdminCoreOpsController {
   constructor(private readonly core: AdminCoreOpsService) {}
+  @Get('referral/settings') @RequireAdminPermissions('platform.manage')
+  referralSettings(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/settings') }
+  @Get('referral/overview') @RequireAdminPermissions('platform.manage')
+  referralOverview(@Req() r:AdminRequest,@Query() q:QueryMap) { return this.core.get(adminId(r),'/referral/overview',q) }
+  @Get('referral/reconciliation') @RequireAdminPermissions('platform.manage')
+  referralReconciliation(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/reconciliation') }
+  @Post('referral/settings/save') @RequireAdminPermissions('platform.manage')
+  referralSave(@Req() r:AdminRequest,@Body() body:Record<string,unknown>) { return this.core.post(adminId(r),'/referral/settings/save',body) }
+  @Post('referral/settings/rollback') @RequireAdminPermissions('platform.manage')
+  referralRollback(@Req() r:AdminRequest,@Body() body:Record<string,unknown>) { return this.core.post(adminId(r),'/referral/settings/rollback',body) }
+  @Get('document-templates') @RequireAdminPermissions('platform.manage')
+  documentTemplates(@Req() request:AdminRequest){return this.core.get(adminId(request),'/document-templates')}
+  @Post('document-templates/company') @RequireAdminPermissions('platform.manage')
+  documentCompany(@Req() request:AdminRequest,@Body() body:Record<string,unknown>){return this.core.post(adminId(request),'/document-templates/company',body)}
+  @Get('document-templates/issued') @RequireAdminPermissions('platform.manage')
+  issuedDocuments(@Req() request:AdminRequest,@Query() query:QueryMap){return this.core.get(adminId(request),'/document-templates/issued',query)}
+  @Post('document-templates/tax-records') @RequireAdminPermissions('platform.manage')
+  issueTaxDocument(@Req() request:AdminRequest,@Body() body:Record<string,unknown>){return this.core.post(adminId(request),'/document-templates/tax-records',body)}
+  @Get('document-templates/:kind/versions') @RequireAdminPermissions('platform.manage')
+  documentVersions(@Req() request:AdminRequest,@Param('kind') kind:string){return this.core.get(adminId(request),`/document-templates/${encodeURIComponent(kind)}/versions`)}
+  @Post('document-templates/:kind/save') @RequireAdminPermissions('platform.manage')
+  saveDocumentTemplate(@Req() request:AdminRequest,@Param('kind') kind:string,@Body() body:Record<string,unknown>){return this.core.post(adminId(request),`/document-templates/${encodeURIComponent(kind)}/save`,body)}
+  @Post('document-templates/:kind/reset') @RequireAdminPermissions('platform.manage')
+  resetDocumentTemplate(@Req() request:AdminRequest,@Param('kind') kind:string,@Body() body:Record<string,unknown>){return this.core.post(adminId(request),`/document-templates/${encodeURIComponent(kind)}/reset`,body)}
+  @Post('document-templates/:kind/restore') @RequireAdminPermissions('platform.manage')
+  restoreDocumentTemplate(@Req() request:AdminRequest,@Param('kind') kind:string,@Body() body:Record<string,unknown>){return this.core.post(adminId(request),`/document-templates/${encodeURIComponent(kind)}/restore`,body)}
+  @Get('account-closures') @RequireAdminPermissions('users.account_closure.manage')
+  closures(@Req() request:AdminRequest){return this.core.get(adminId(request),'/account-closures')}
+  @Get('account-closures/:id') @RequireAdminPermissions('users.account_closure.manage')
+  closure(@Req() request:AdminRequest,@Param('id') id:string){return this.core.get(adminId(request),`/account-closures/${encodeURIComponent(id)}`)}
+  @Post('account-closures/:id/review') @RequireAdminPermissions('users.account_closure.manage')
+  reviewClosure(@Req() request:AdminRequest,@Param('id') id:string,@Body() body:Record<string,unknown>){return this.core.post(adminId(request),`/account-closures/${encodeURIComponent(id)}/review`,body)}
+
+  @Get('content/articles') @RequireAdminPermissions('platform.manage')
+  articles(@Req() request: AdminRequest) { return this.core.get(adminId(request), '/content/articles') }
+  @Post('content/articles') @RequireAdminPermissions('platform.manage')
+  createArticle(@Req() request: AdminRequest, @Body() body: Record<string, unknown>) { return this.core.post(adminId(request), '/content/articles', body) }
+  @Post('content/articles/:id/save') @RequireAdminPermissions('platform.manage')
+  saveArticle(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) { return this.core.put(adminId(request), `/content/articles/${encodeURIComponent(id)}`, body) }
+  @Post('content/articles/:id/publish') @RequireAdminPermissions('platform.manage')
+  publishArticle(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) { return this.core.post(adminId(request), `/content/articles/${encodeURIComponent(id)}/publish`, body) }
+  @Post('content/articles/:id/archive') @RequireAdminPermissions('platform.manage')
+  archiveArticle(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) { return this.core.post(adminId(request), `/content/articles/${encodeURIComponent(id)}/archive`, body) }
+
+  @Get('manual-settlements')
+  @RequireAdminPermissions('orders.settlement.review')
+  manualSettlements(@Req() request: AdminRequest) {
+    return this.core.get(adminId(request), '/manual-settlements')
+  }
+
+  @Post('manual-settlements/orders/:id')
+  @RequireAdminPermissions('orders.settlement.post')
+  settleOrder(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+    return this.core.post(adminId(request), `/manual-settlements/orders/${encodeURIComponent(id)}`, body)
+  }
+
+  @Get('manual-settlements/orders/:id')
+  @RequireAdminPermissions('orders.settlement.post')
+  orderSettlementInfo(@Req() request: AdminRequest, @Param('id') id: string) {
+    return this.core.get(adminId(request), `/manual-settlements/orders/${encodeURIComponent(id)}`)
+  }
+
+  @Get('manual-settlements/redemptions/:id')
+  @RequireAdminPermissions('orders.settlement.post')
+  redemptionSettlementInfo(@Req() request: AdminRequest, @Param('id') id: string) {
+    return this.core.get(adminId(request), `/manual-settlements/redemptions/${encodeURIComponent(id)}`)
+  }
+
+  @Post('manual-settlements/redemptions/:id')
+  @RequireAdminPermissions('orders.settlement.post')
+  settleRedemption(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+    return this.core.post(adminId(request), `/manual-settlements/redemptions/${encodeURIComponent(id)}`, body)
+  }
+
+  @Post('manual-settlements/:id/review')
+  @RequireAdminPermissions('orders.settlement.review')
+  reviewSettlement(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+    return this.core.post(adminId(request), `/manual-settlements/${encodeURIComponent(id)}/review`, body)
+  }
 
   // ---- 账本：对账 + 调整单 ----
 
@@ -100,6 +179,13 @@ export class AdminCoreOpsController {
   }
 
   // ---- 客服工单 ----
+  @Get('community/publications')
+  @RequireAdminPermissions('community.content.review')
+  communityPublications(@Req() request: AdminRequest) { return this.core.get(adminId(request), '/community/publications') }
+
+  @Post('community/publications/moderate')
+  @RequireAdminPermissions('community.content.review')
+  moderateCommunityPublication(@Req() request: AdminRequest, @Body() body: Record<string, unknown>) { return this.core.post(adminId(request), '/community/publications/moderate', body) }
 
   @Get('support/tickets')
   @RequireAdminPermissions('support.tickets.manage')
@@ -161,6 +247,12 @@ export class AdminCoreOpsController {
     return this.core.get(adminId(request), '/notifications', query)
   }
 
+  @Get('notifications/channels')
+  @RequireAdminPermissions('notifications.manage')
+  notificationChannels(@Req() request: AdminRequest) {
+    return this.core.get(adminId(request), '/notifications/channels')
+  }
+
   @Post('notifications')
   @RequireAdminPermissions('notifications.manage')
   @ApiOperation({ summary: 'Create a notification for a user (core admin/notifications)' })
@@ -191,6 +283,18 @@ export class AdminCoreOpsController {
   @ApiOperation({ summary: 'KYC cases (core admin/kyc)' })
   consoleKyc(@Req() request: AdminRequest, @Query() query: QueryMap) {
     return this.core.get(adminId(request), '/kyc', query)
+  }
+
+  @Get('kyc/:id/checks')
+  @RequireAdminPermissions('compliance.manage')
+  kycChecks(@Req() request: AdminRequest, @Param('id') id: string) {
+    return this.core.get(adminId(request), `/kyc/${encodeURIComponent(id)}/checks`)
+  }
+
+  @Post('kyc/:id/decision')
+  @RequireAdminPermissions('compliance.manage')
+  kycDecision(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) {
+    return this.core.post(adminId(request), `/kyc/${encodeURIComponent(id)}/decision`, body)
   }
 
   @Get('console/risk-flags')

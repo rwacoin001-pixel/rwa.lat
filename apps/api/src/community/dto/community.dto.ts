@@ -37,7 +37,7 @@ export class CommunityFeedQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
-  @MaxLength(32)
+  @MaxLength(36)
   topic?: string
 
   @ApiPropertyOptional()
