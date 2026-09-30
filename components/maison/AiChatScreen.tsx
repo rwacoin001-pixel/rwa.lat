@@ -212,7 +212,6 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
             : <li key={message.id} className={a.assistant}>
               <div className={a.who}><Mark /><b>{c.name}</b></div>
               <Answer text={message.content} reveal={message.id === revealId && !reduced()} />
-              {!!message.questions?.length && <AiQuestionCard questions={message.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} />}
               {message.citations?.map(c=><Link key={`${c.id}:${c.revision}`} href={`/ai-assistant?knowledge=${encodeURIComponent(c.id)}&revision=${c.revision}`}>{c.title} · v{c.revision}</Link>)}
               <div className={a.tools}>
                 <button type="button" onClick={() => void copyText(message)} aria-label={copied === message.id ? c.copied : c.copy}>{copied === message.id ? <Check size={15} /> : <Copy size={15} />}<span>{copied === message.id ? c.copied : c.copy}</span></button>
@@ -232,6 +231,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
       </div>
 
       <div className={a.dockWrap}>
+        {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
         <form className={a.composer} data-disabled={status === 'disabled' || undefined} onSubmit={(event) => { event.preventDefault(); submit() }}>
           <textarea ref={field} rows={1} value={input} dir="auto" maxLength={MAX} aria-label={c.placeholder} placeholder={c.placeholder} disabled={status === 'disabled'}
             onChange={(event) => setInput(event.target.value)} onKeyDown={onKey}

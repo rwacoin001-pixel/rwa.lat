@@ -194,3 +194,4 @@ button.icon:active { transform: scale(.92); }
   .mark[data-busy]::before { opacity: .6; }
   .shimmer { animation: none; background: none; color: var(--m-muted); }
 }
+.dockWrap>section{bottom:calc(100% - 18px)}
