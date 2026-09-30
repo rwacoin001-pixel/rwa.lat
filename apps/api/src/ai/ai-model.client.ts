@@ -64,12 +64,12 @@ export class AiModelClient {
     return 'the configured AI provider'
   }
 
-  async complete(system: string, messages: AiModelMessage[], maxTokens = 2048, json = false): Promise<AiModelReply> {
+  async complete(system: string, messages: AiModelMessage[], maxTokens = 2048, json = false, budgetMs?: number): Promise<AiModelReply> {
     if (!this.configured) {
       throw new Error('AI model is not configured')
     }
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), this.timeoutMs)
+    const timer = setTimeout(() => controller.abort(), Math.min(this.timeoutMs, budgetMs ?? this.timeoutMs))
     try {
       // JSON mode can occasionally deliver empty content. Retry only this
       // read-only generation once, within the original timeout budget.
@@ -88,7 +88,9 @@ export class AiModelClient {
                 body: JSON.stringify({
                   model: this.model,
                   max_tokens: maxTokens,
-                  ...(json ? { response_format: { type: 'json_object' } } : {}),
+                  // On empty JSON-mode output, keep the strict JSON prompt but
+                  // omit the provider's format constraint for the one fallback.
+                  ...(json && attempt === 0 ? { response_format: { type: 'json_object' } } : {}),
                   messages: [
                     { role: 'system', content: deliverySystem },
                     ...messages.map((message) => ({ role: message.role, content: message.content })),
@@ -150,7 +152,10 @@ export class AiModelClient {
           this.logger.warn('AI model returned empty JSON content; retrying once')
           continue
         }
-        if (!text) throw new Error('AI upstream returned an empty completion')
+        if (!text) {
+          this.logger.warn('AI model returned an empty completion')
+          throw new Error('AI upstream returned an empty completion')
+        }
         return {
           text,
           model: usedModel,

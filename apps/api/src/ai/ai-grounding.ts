@@ -26,7 +26,7 @@ export function parseQuestions(value: unknown): AiQuestion[] {
   })
 }
 
-export const QUESTION_OUTPUT_CONTRACT = '\nOUTPUT CONTRACT: Return only JSON {"reply":"brief customer answer","sourceIds":[],"questions":[]}. When clarification is genuinely needed, include 1–3 short questions in the user language, each {"id":"stable_key","title":"question","multiple":false,"options":[{"id":"option_key","label":"short option","description":"optional short explanation"}]}. Use 2–5 distinct options per question. The UI always provides a free-text answer; do not add Other options. Do not repeat questions already answered. Questions collect context, never consent to investment, account access or money movement. Do not preselect financial choices or invent product facts in options. For complete requests, answer directly with questions:[]. Cite only supplied sourceIds; without a source do not assert platform terms or product facts. General explanations, identity and verified account snapshots may use sourceIds:[]. Never expose internal runtime fields.'
+export const QUESTION_OUTPUT_CONTRACT = '\nOUTPUT CONTRACT: Return only JSON {"reply":"brief customer answer","sourceIds":[],"questions":[]}. Hard limit: at most three question objects per response. If more information is needed, ask remaining questions in a later turn. When clarification is genuinely needed, include 1–3 short questions in the user language, each {"id":"stable_key","title":"question","multiple":false,"options":[{"id":"option_key","label":"short option","description":"optional short explanation"}]}. Use 2–5 distinct options per question. The UI always provides a free-text answer; do not add Other options. Do not repeat questions already answered. Questions collect context, never consent to investment, account access or money movement. Do not preselect financial choices or invent product facts in options. For complete requests, answer directly with questions:[]. Cite only supplied sourceIds; without a source do not assert platform terms or product facts. General explanations, identity and verified account snapshots may use sourceIds:[]. Never expose internal runtime fields.'
 
 /** Model output is untrusted. Citations are resolved against server-selected versions. */
 export function parseGroundedReply(text: string, sources: KnowledgeSource[]): { reply: string; citations: KnowledgeCitation[]; questions?: AiQuestion[] } {
@@ -49,3 +49,4 @@ export function parseGroundedReply(text: string, sources: KnowledgeSource[]): { 
   const questions = parseQuestions(result.questions)
   return { reply: result.reply.trim(), citations, ...(questions.length ? { questions } : {}) }
 }
+

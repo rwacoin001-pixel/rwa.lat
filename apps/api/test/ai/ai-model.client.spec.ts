@@ -65,7 +65,7 @@ describe('AI provider delivery contract', () => {
     expect(fetch).toHaveBeenCalledTimes(2)
     expect(fetch.mock.calls[1][1]?.signal).toBe(fetch.mock.calls[0][1]?.signal)
     const retry = JSON.parse(String(fetch.mock.calls[1][1]?.body))
-    expect(retry.response_format).toEqual({ type: 'json_object' })
+    expect(retry.response_format).toBeUndefined()
     expect(retry.messages[0].content).toContain('complete, non-empty JSON object')
     expect(retry.messages[1]).toEqual({ role: 'user', content: 'Selected goal' })
   })

@@ -31,6 +31,7 @@ describe('Published knowledge in customer chat', () => {
     const modelHistory = f.model.complete.mock.calls[1][1] as Array<{ content: string }>
     expect(modelHistory[0].content).toContain('你的问题？')
     expect(modelHistory[0].content).not.toContain('cardVersion')
+    expect(JSON.parse(modelHistory[0].content)).toEqual({ reply: reply.reply, sourceIds: [], questions })
   })
   it('still supports structured clarification when the knowledge feature is disabled', async () => {
     const f = fixture()
@@ -38,6 +39,30 @@ describe('Published knowledge in customer chat', () => {
     f.model.complete.mockResolvedValue({ text: JSON.stringify({ reply: '具体哪里需要帮助？', sourceIds: [], questions: [] }), model: 'test' })
     expect((await f.service.chat('owner', { message: '帮我' })).questions).toEqual([])
     expect(f.knowledge.retrieve).not.toHaveBeenCalled()
+  })
+  it('regenerates excessive questions once and persists only the validated reply', async () => {
+    const f = fixture()
+    const options = [{ id: 'a', label: '稳健' }, { id: 'b', label: '增长' }]
+    const invalid = JSON.stringify({ reply: 'Choose', sourceIds: [], questions: Array.from({ length: 4 }, (_, index) => ({ id: `q${index}`, title: '目标？', multiple: false, options })) })
+    f.model.complete.mockResolvedValueOnce({ text: invalid, model: 'test' })
+      .mockResolvedValueOnce({ text: JSON.stringify({ reply: '已根据选择继续。', sourceIds: [], questions: [] }), model: 'test' })
+    const result = await f.service.chat('owner', { message: '我有1000U如何投资' })
+    expect(result.reply).toBe('已根据选择继续。')
+    expect(result.questions).toEqual([])
+    expect(f.model.complete).toHaveBeenCalledTimes(2)
+    expect(f.model.complete.mock.calls[1][0]).toContain('OUTPUT CORRECTION')
+    expect(f.messages.save.mock.calls[1][0].content).toBe(result.reply)
+  })
+  it('keeps format regeneration inside the original response deadline', async () => {
+    const f = fixture()
+    let now = 1000
+    const clock = jest.spyOn(Date, 'now').mockImplementation(() => now)
+    try {
+      f.model.complete.mockImplementationOnce(async () => { now += 85_000; return { text: '{}', model: 'test' } })
+      await f.service.chat('owner', { message: '选择完成' })
+      expect(f.model.complete.mock.calls[0][4]).toBe(90_000)
+      expect(f.model.complete.mock.calls[1][4]).toBe(5_000)
+    } finally { clock.mockRestore() }
   })
   it('passes actual published sources and stores verified citations', async () => {
     const f = fixture()
