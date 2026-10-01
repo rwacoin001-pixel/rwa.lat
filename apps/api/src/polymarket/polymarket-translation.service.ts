@@ -103,7 +103,7 @@ export class PolymarketTranslationService {
     if(existing)return existing
     const job=this.contentTranslation(texts,dto.locale)
     this.contentJobs.set(key,job)
-    try{return await job}finally{this.contentJobs.delete(key)}
+    try{return await job}catch{this.logger.warn('Content translation unavailable; original text retained');return {locale:dto.locale,available:false,items:[]}}finally{this.contentJobs.delete(key)}
   }
   private async contentTranslation(texts:string[],locale:TranslateContentDto['locale']) {
     if(!this.model.configured)return {locale,available:false,items:[]}
