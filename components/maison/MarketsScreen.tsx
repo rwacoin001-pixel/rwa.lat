@@ -20,8 +20,9 @@ import { fmtDate, fmtDateTime } from './format'
 import { HengxuPanel } from './HengxuScreen'
 import { PredictionFeed } from './PredictionFeed'
 
-const TABS = ['assets', 'baskets', 'trade', 'predictions'] as const
+const TABS = ['predictions', 'baskets', 'trade', 'assets'] as const
 type Tab = typeof TABS[number]
+const TAB_LABEL_INDEX: Record<Tab, number> = { assets: 0, baskets: 1, trade: 2, predictions: 3 }
 const CLASSES = ['all', 'rwa', 'compute', 'stocks'] as const
 type ClassFilter = typeof CLASSES[number]
 const SORTS: RwaSort[] = ['market_cap', 'change_24h', 'name']
@@ -94,7 +95,7 @@ export function MarketsScreen({ query }: { query: string }) {
 
     <TickerTape items={tape} label={pro.tape} />
 
-    <Segmented value={tab} onChange={setTab} label={m.title} sticky options={TABS.map((key) => ({ value: key, label: m.tabs[TABS.indexOf(key)] }))} />
+    <Segmented value={tab} onChange={setTab} label={m.title} sticky options={TABS.map((key) => ({ value: key, label: m.tabs[TAB_LABEL_INDEX[key]] }))} />
 
     {tab === 'assets' && <div className={s.tabPanel} role="tabpanel">
       <label className={s.search}>

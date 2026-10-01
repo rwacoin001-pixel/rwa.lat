@@ -22,22 +22,24 @@
 .rowProbability { font-size:25px; letter-spacing:-.04em; white-space:nowrap; }
 .learnButton { display:inline-flex; align-items:center; justify-content:center; gap:6px; flex-shrink:0; padding:10px 13px; border:1px solid var(--m-accent); border-radius:30px; background:var(--m-cta); color:var(--m-cta-ink); font:inherit; font-size:12px; font-weight:600; box-shadow:var(--m-shadow-soft); cursor:pointer; }
 .tutorial { touch-action:pan-y; }
-.tutorialArt { height:210px; display:grid; place-items:center; position:relative; margin:16px 0 24px; perspective:800px; }
-.floatingCard { min-width:215px; padding:24px; border:1px solid var(--m-line); border-radius:20px; background:var(--m-glass); box-shadow:var(--m-shadow); transform:rotate(-5deg); animation:floatCard 5s ease-in-out infinite; }
-.floatingCard b { display:block; font-size:28px; margin:8px 0 16px; }
-.floatingCard span { display:block; margin-top:8px; }
-.artChoices { display:flex; gap:8px; }
-.artChoices i { flex:1; text-align:center; padding:12px; font-style:normal; border-radius:12px; background:var(--m-glass-deep); }
-.artChoices i:first-child { color:var(--m-up); }
-.dots { display:flex; justify-content:center; gap:10px; margin:22px 0; }
-.dots button { width:9px; height:9px; padding:0; border:0; border-radius:50%; background:var(--m-line); cursor:pointer; }
-.dots button[aria-current='step'] { width:24px; border-radius:9px; background:var(--m-accent); }
+.guideScene { margin:0 0 12px; animation:guideReveal .35s var(--m-ease); }
+.guideImage { display:block; width:100%; max-height:228px; filter:drop-shadow(0 12px 14px rgba(30,22,10,.09)); }
+.guideImage > g { transform-origin:center; animation:floatCard 5s ease-in-out infinite; }
+.guideCopy { text-align:center; min-height:116px; }
+.guideCopy h2 { font-size:25px; margin:9px 0; }
+.guideCopy p { margin:0 auto; max-width:32ch; font-size:13px; line-height:1.6; color:var(--m-muted); }
+.swipeHint { min-height:40px; margin:0; text-align:center; font-size:11px; color:var(--m-faint); }
+.dots { display:flex; justify-content:center; gap:0; margin:10px 0; }
+.dots button { display:grid; place-items:center; width:44px; height:44px; padding:0; border:0; background:none; cursor:pointer; }
+.dots i { width:6px; height:6px; border-radius:50%; background:var(--m-line); transition:width .2s ease,background .2s ease; }
+.dots button[aria-current='step'] i { width:20px; border-radius:9px; background:var(--m-accent); }
 .ticketMeta { margin:8px 0; font-size:12px; color:var(--m-muted); }
 .quickAmounts { display:flex; gap:8px; margin:14px 0; }
 .quickAmounts button { flex:1; }
 .ticketFooter { position:sticky; bottom:calc(-18px - env(safe-area-inset-bottom)); padding:12px 0 calc(18px + env(safe-area-inset-bottom)); background:var(--m-bg); border-top:1px solid var(--m-line); z-index:2; }
 .ticketFooter button { margin-top:0!important; }
-@keyframes floatCard { 50% { transform:translateY(-8px) rotate(-3deg); } }
-@media(prefers-reduced-motion:reduce) { .floatingCard { animation:none; } }
+@keyframes floatCard { 50% { translate:0 -5px; } }
+@keyframes guideReveal { from { opacity:0; translate:10px 0; } to { opacity:1; translate:0 0; } }
+@media(prefers-reduced-motion:reduce) { .guideImage > g, .guideScene { animation:none; } }
 
 .legendAvatar > span { width:24px; height:24px; font-size:12px; border-radius:7px; }

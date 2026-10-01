@@ -1,7 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
-import dynamic from 'next/dynamic'
-import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Copy, History, LockKeyhole, Share2, Users } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, CircleHelp, Copy, LockKeyhole, Share2, Users } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -11,8 +10,7 @@ import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
 import x from './referral.module.css'
-const Legacy = dynamic(() => import('./LegacyReferralScreen').then(m => m.LegacyReferralScreen))
-type Tab = 'team' | 'rewards' | 'rules' | 'legacy'
+type Tab = 'team' | 'rewards' | 'rules'
 
 export function ReferralScreen({ query = '' }: { query?: string }) {
   const { locale } = useI18n(), zh = locale.startsWith('zh')
@@ -33,7 +31,6 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const money = (atomic?: string) => fmtAtomic(atomic, 6, '', 2).trim()
   const list = tab === 'team' ? members : awards
   const states: Record<string, string> = { candidate: t('待计算', 'Candidate'), pending_review: t('待审核', 'Pending review'), approved: t('已批准', 'Approved'), available: t('可领取', 'Available'), frozen: t('已冻结', 'Frozen'), claimed_credit: t('已领额度', 'Credit claimed'), claimed_cash: t('已领现金', 'Cash claimed'), rejected: t('已拒绝', 'Rejected'), revoked: t('已撤销', 'Revoked') }
-  if (tab === 'legacy') return <><button className={x.legacyBack} onClick={() => setTab('team')}><ArrowLeft size={16} />{t('返回推荐中心', 'Back to referrals')}</button><Legacy query={query} /></>
   return <div className={x.screen}><MaisonPage page="referral" topbar={<header className={x.topbar}><button aria-label={t('返回', 'Back')} onClick={() => backOr('/profile')}><ArrowLeft size={21} strokeWidth={1.5} /></button><h1>{t('推荐奖励', 'Referrals')}</h1><button aria-label={t('查看邀请规则', 'View invitation rules')} onClick={showRules}><CircleHelp size={21} strokeWidth={1.5} /></button></header>}>
     <section className={x.pass} aria-label={t('我的邀请码', 'My invitation code')}><p className={x.brand}>RWA.LAT</p>
       {me.error ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={t('重试', 'Retry')} /> : !me.data ? <Skeleton rows={2} /> : <>
@@ -54,6 +51,6 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
       {(tab === 'team' || tab === 'rewards') && (list.error ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={list.error.message} retry={list.refetch} retryLabel={t('重试', 'Retry')} /> : !list.data ? <Skeleton rows={2} /> : <>{!list.data.items.length ? <div className={x.empty}><Users size={31} strokeWidth={1.25} /><p>{tab === 'team' ? t('暂无邀请记录', 'No invitations yet') : t('暂无奖励记录', 'No rewards yet')}</p></div> : <div className={x.scroll}><table className={x.table}><thead><tr><th>{tab === 'team' ? t('成员', 'Member') : t('金额', 'Amount')}</th><th>{t('层级', 'Level')}</th><th>{tab === 'team' ? t('绑定日期', 'Bound on') : t('状态', 'State')}</th></tr></thead><tbody>{tab === 'team' ? members.data?.items.map((r, i) => <tr key={`${r.memberLabel}:${i}`}><td>{r.memberLabel}…</td><td>{r.level}</td><td>{fmtDate(r.boundAt, locale)}</td></tr>) : awards.data?.items.map(r => <tr key={r.id}><td>{fmtAtomic(r.amountAtomic, r.decimals, r.currency)}<small>v{r.settingsVersion} · {fmtDate(r.occurredAt, locale)}</small></td><td>{r.level}</td><td>{states[r.state] ?? r.state}</td></tr>)}</tbody></table></div>}{list.data.total > 20 && <div className={x.pager}><button disabled={page === 1} onClick={() => setPage(p => p - 1)}>{t('上一页', 'Previous')}</button><span>{page} / {Math.ceil(list.data.total / 20)}</span><button disabled={page * 20 >= list.data.total} onClick={() => setPage(p => p + 1)}>{t('下一页', 'Next')}</button></div>}</>)}
       {tab === 'rules' && (summary.data ? <ReferralRules rules={summary.data.rules} locale={locale} /> : <StateBlock tone={summary.error ? 'error' : 'unavailable'} title={t('规则暂不可用', 'Rules unavailable')} retry={summary.refetch} retryLabel={t('重试', 'Retry')} />)}
     </section>
-    <div className={x.footerLinks}>{tab !== 'rules' && <button onClick={showRules}><BookOpen size={20} strokeWidth={1.5} /><span>{t('查看完整邀请规则', 'View full invitation rules')}</span><ArrowRight size={17} /></button>}<button onClick={() => setTab('legacy')}><History size={20} strokeWidth={1.5} /><span>{t('历史邀请与奖励', 'Legacy invitations & rewards')}</span><ArrowRight size={17} /></button></div>
+    {tab !== 'rules' && <div className={x.footerLinks}><button onClick={showRules}><BookOpen size={20} strokeWidth={1.5} /><span>{t('查看完整邀请规则', 'View full invitation rules')}</span><ArrowRight size={17} /></button></div>}
   </MaisonPage></div>
 }
