@@ -3,12 +3,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { getPolymarketFeed, POLYMARKET_CATEGORIES, type PolymarketCategory, type PolymarketFeedMarket } from '@/lib/api/polymarket-feed'
-import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import { fmtUsd } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { openPath } from '@/lib/maison-nav'
 import { polymarketFeedCopy } from '@/lib/polymarket-feed-copy'
-import { polymarketTranslationCopy } from '@/lib/polymarket-translation-copy'
 import { Figure } from './motion'
 import { fmtDate, fmtDateTime } from './format'
 import { Skeleton, StateBlock, maison as s } from './primitives'
@@ -27,8 +26,7 @@ export function PredictionFeed() {
   const [loadedOnce, setLoadedOnce] = useState(false)
   const [error, setError] = useState(false)
   const [retry, setRetry] = useState(0)
-  const [translations, setTranslations] = useState<Record<string, PolymarketTranslation>>({})
-  const requestedTranslations = useRef(new Set<string>())
+  const content=useContentTranslation(items.flatMap(item=>[item.question,...item.outcomes.map(o=>o.label),'2026 Midterms']))
   const sentinel = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -53,26 +51,6 @@ export function PredictionFeed() {
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
   }, [category, offset, retry])
-
-  useEffect(() => {
-    if (locale === 'en' || !items.length) return
-    const ids = items.flatMap((item) => item.marketIds ?? [item.id]).filter((id) => {
-      const key = `${locale}:${id}`
-      if (requestedTranslations.current.has(key)) return false
-      requestedTranslations.current.add(key)
-      return true
-    })
-    for (let index = 0; index < ids.length; index += 20) {
-      void translatePolymarketMarkets(ids.slice(index, index + 20), locale).then((result) => {
-        if (!result.ok || !result.data.available) return
-        setTranslations((previous) => {
-          const next = { ...previous }
-          for (const item of result.data.items) next[`${locale}:${item.id}`] = item
-          return next
-        })
-      })
-    }
-  }, [items, locale])
 
   useEffect(() => {
     if (!nextOffset || loading || error || !sentinel.current || typeof IntersectionObserver === 'undefined') return
@@ -102,13 +80,12 @@ export function PredictionFeed() {
     {!loadedOnce && loading ? <Skeleton rows={3} /> : null}
     {error && !items.length ? <StateBlock tone="error" title={m.loadError} retry={() => setRetry((value) => value + 1)} retryLabel={labels.retry} /> : null}
     {items.length > 0 && <div aria-live="off">{items.map((item) => {
-      const translated = !item.id.startsWith('event-') ? translations[`${locale}:${item.marketIds?.[0] ?? item.id}`] : undefined
       return <button type="button" key={item.id} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
-      <span className={s.productMeta}><span>{item.featured ? (locale.startsWith('zh') ? '2026 中期选举' : '2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{translated && <span>{polymarketTranslationCopy[locale].translated}</span>}{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
+      <span className={s.productMeta}><span>{item.featured ? (content('2026 Midterms')) : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
       {item.image && <img src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" style={{width:44,height:44,borderRadius:10,objectFit:"cover",float:"right",marginLeft:12}} />}
-      <b className={s.predQuestion}>{translated?.question ?? item.question}</b>
+      <b className={s.predQuestion}>{content(item.question)}</b>
       <span className={s.prob}>{item.outcomes.map((outcome, index) => <span key={outcome.label} className={s.probRow}>
-        <span>{translated?.outcomes[index] ?? ((item.optionCount??1)>1 ? translations[`${locale}:${item.marketIds?.[index]}`]?.question ?? outcome.label : outcome.label)}</span>
+        <span>{content(outcome.label)}</span>
         <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
         <span className={s.probBar}><i style={{ ['--p' as string]: outcome.impliedProbability }} /></span>
       </span>)}</span>

@@ -3,6 +3,7 @@
 import { AlertTriangle, ArrowRight, Check, Info } from 'lucide-react'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
@@ -59,6 +60,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   const validId = id && isOrderableId(id) ? id : null
   const detail = useBasket(validId)
   const basket = detail.data
+  const content=useContentTranslation(basket?[basket.name,basket.strategyName,...basket.holdings.map(h=>h.name)]:[])
   const topbar = <RwaTopbar screen="basket-detail" title={basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => backOr('/markets?tab=baskets')} />
 
   if (!validId) return <Missing page="basket" topbar={topbar} />
@@ -73,11 +75,11 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   return <MaisonPage page="basket" dock topbar={topbar} cta={open}>
     <header className={s.hero}>
       <p className={s.kicker}>{b.kicker}</p>
-      <h1 className={s.titleL}>{basket.name}</h1>
+      <h1 className={s.titleL}>{content(basket.name)}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <span className={s.badge} data-tone={open ? 'live' : 'warn'}>{statusLabel(b, basket.status)}</span>
         {basket.riskLevel && <span className={s.badge}>{b.risk} · {basket.riskLevel}</span>}
-        <span>{basket.strategyName}</span>
+        <span>{content(basket.strategyName)}</span>
       </p>
     </header>
 
@@ -107,8 +109,8 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
     <SectionHead index="02" title={b.holdings} action={<small className={`${s.muted} ${s.num}`}>{basket.holdings.length}</small>} />
     {basket.holdings.length ? <ul className={s.list}>{basket.holdings.map((holding) => <li key={holding.assetId}>
       <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(holding.slug)}`)}>
-        <Logo name={holding.name} />
-        <span className={s.rowMain}><b>{holding.name}</b><small>{[holding.assetClass?.replace(/_/g, ' '), holding.targetWeightPct ? `${b.target} ${Number(holding.targetWeightPct).toFixed(2)}%` : null].filter(Boolean).join(' · ')}</small></span>
+        <Logo name={content(holding.name)} />
+        <span className={s.rowMain}><b>{content(holding.name)}</b><small>{[holding.assetClass?.replace(/_/g, ' '), holding.targetWeightPct ? `${b.target} ${Number(holding.targetWeightPct).toFixed(2)}%` : null].filter(Boolean).join(' · ')}</small></span>
         <span className={s.rowFig}><b className={s.num}>{holding.actualWeightPct ? `${Number(holding.actualWeightPct).toFixed(2)}%` : '—'}</b><small className={s.muted}>{fmtUsd(holding.marketValueUsd, { compact: true, locale })}</small></span>
       </button>
     </li>)}</ul> : <StateBlock title={b.noHoldings} />}
@@ -136,6 +138,7 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
   const validId = id && isOrderableId(id) ? id : null
   const detail = useBasket(validId)
   const basket = detail.data
+  const content=useContentTranslation(basket?[basket.name,basket.strategyName,...basket.holdings.map(h=>h.name)]:[])
   const disclosures = useQuery(side === 'subscribe' && validId ? 'basket:disclosures' : null, listBasketDisclosures, { staleTime: 5 * 60_000 })
   const wallet = useQuery(side === 'subscribe' ? 'wallet:summary:basket' : null, getWallet, { staleTime: 15_000 })
   const [value, setValue] = useState('')

@@ -1,5 +1,6 @@
 'use client'
 import {useState} from 'react'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import {useI18n} from '@/lib/i18n'
 import {maison as s} from './primitives'
 import {probabilityHistoryState} from '@/lib/polymarket-data'
@@ -9,12 +10,14 @@ export function PredictionProbabilityChart({curves,onRetry}:{curves:ProbabilityC
   const {locale}=useI18n(), [hover,setHover]=useState<number|null>(null)
   const points=curves.flatMap(c=>c.points), min=Math.min(...points.map(p=>p.time)), max=Math.max(...points.map(p=>p.time))
   const state=probabilityHistoryState(curves)
-  if(state==='unavailable')return <p className={s.fieldError} role="status">{locale.startsWith('zh')?'历史行情暂不可用':'Historical data unavailable'} <button className={s.link} onClick={onRetry}>{locale.startsWith('zh')?'重试':'Retry'}</button></p>
-  if(!points.length)return <p className={s.muted}>{locale.startsWith('zh')?'此时段暂无可用历史数据':'No available history for this period'}</p>
+  
+  const tr=useContentTranslation(["Historical data unavailable", "Retry", "No available history for this period", "Some histories are unavailable", "Historical probability chart"])
+  if(state==='unavailable')return <p className={s.fieldError} role="status">{tr('Historical data unavailable')} <button className={s.link} onClick={onRetry}>{tr('Retry')}</button></p>
+  if(!points.length)return <p className={s.muted}>{tr('No available history for this period')}</p>
   const x=(time:number)=>40+(time-min)/Math.max(1,max-min)*640, y=(p:number)=>220-p*200
   return <div>
-    {state==='partial'&&<p className={s.foot} role="status">{locale.startsWith('zh')?'部分曲线暂不可用':'Some histories are unavailable'} <button className={s.link} onClick={onRetry}>{locale.startsWith('zh')?'重试':'Retry'}</button></p>}
-    <svg viewBox="0 0 720 265" role="img" aria-label={locale.startsWith('zh')?'真实概率历史曲线':'Historical probability chart'} style={{width:'100%',height:'auto',touchAction:'pan-y'}} onPointerLeave={()=>setHover(null)} onPointerMove={e=>{const r=e.currentTarget.getBoundingClientRect();setHover(min+Math.max(0,Math.min(1,((e.clientX-r.left)/r.width*720-40)/640))*(max-min))}}>
+    {state==='partial'&&<p className={s.foot} role="status">{tr('Some histories are unavailable')} <button className={s.link} onClick={onRetry}>{tr('Retry')}</button></p>}
+    <svg viewBox="0 0 720 265" role="img" aria-label={tr('Historical probability chart')} style={{width:'100%',height:'auto',touchAction:'pan-y'}} onPointerLeave={()=>setHover(null)} onPointerMove={e=>{const r=e.currentTarget.getBoundingClientRect();setHover(min+Math.max(0,Math.min(1,((e.clientX-r.left)/r.width*720-40)/640))*(max-min))}}>
       {[0,.25,.5,.75,1].map(p=><g key={p}><line x1="40" x2="680" y1={y(p)} y2={y(p)} stroke="currentColor" opacity=".12" strokeDasharray="3 4"/><text x="688" y={y(p)+4} fill="currentColor" fontSize="12">{p*100}%</text></g>)}
       {curves.map((c,i)=><path key={c.id} d={c.points.map((p,j)=>`${j?'L':'M'}${x(p.time).toFixed(2)},${y(p.price).toFixed(2)}`).join(' ')} fill="none" stroke={COLORS[i%4]} strokeWidth="2" vectorEffect="non-scaling-stroke"/>)}
       {hover!==null&&<line x1={x(hover)} x2={x(hover)} y1="20" y2="220" stroke="currentColor" opacity=".3"/>}

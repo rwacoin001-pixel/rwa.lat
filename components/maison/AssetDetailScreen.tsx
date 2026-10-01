@@ -4,6 +4,7 @@ import { ArrowRight, ExternalLink, Info, ShieldCheck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import RwaTopbar from '@/components/rwa-topbar'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
@@ -22,7 +23,8 @@ export function AssetDetailScreen({ slug }: { slug: string | null }) {
   const copy = marketCopy[locale]
   const products = useQuery('markets:catalog', listProducts, { staleTime: 60_000, pollInterval: POLL.list })
   const product = slug ? productForSlug(products.data, slug) : undefined
-  const topbar = <RwaTopbar screen="rwa-detail" title={product?.displayName ?? ''} onBack={() => backOr('/markets')} />
+  const content=useContentTranslation(product?[product.displayName,product.summary??'']:[])
+  const topbar = <RwaTopbar screen="rwa-detail" title={content(product?.displayName ?? '')} onBack={() => backOr('/markets')} />
   if (!slug) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}><StateBlock title={copy.detail.notFound} body={copy.detail.notFoundBody} /></div></MaisonPage>
   if (!products.data && !products.error) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}><Skeleton rows={4} /></div></MaisonPage>
   // A catalog failure must not silently downgrade an investable product to "research only".
@@ -58,6 +60,7 @@ function MediaCard({ src, items }: { src: string; items: Parameters<typeof StatS
 
 function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar: React.ReactNode }) {
   const { locale } = useI18n()
+  const content=useContentTranslation([product.displayName,product.summary??''])
   const copy = marketCopy[locale]
   const d = copy.detail
   const [tab, setTab] = useState(0)
@@ -84,8 +87,8 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
   return <MaisonPage page="asset" topbar={topbar} cta>
     <header className={s.hero}>
       <p className={s.kicker}>{klass} · {d.investable}</p>
-      <h1 className={s.titleL}>{product.displayName}</h1>
-      {product.summary && <p className={s.lede}>{product.summary}</p>}
+      <h1 className={s.titleL}>{content(product.displayName)}</h1>
+      {product.summary && <p className={s.lede}>{content(product.summary)}</p>}
       {product.state==='published' && <PublicShareButton key={product.id} kind="product" resourceId={product.id} />}
     </header>
 
@@ -108,7 +111,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
     </Lacquer>
 
     <div style={{ marginTop: 22 }}>
-      <Segmented value={String(tab)} onChange={(value) => setTab(Number(value))} label={product.displayName} options={d.tabs.map((label, index) => ({ value: String(index), label }))} />
+      <Segmented value={String(tab)} onChange={(value) => setTab(Number(value))} label={content(product.displayName)} options={d.tabs.map((label, index) => ({ value: String(index), label }))} />
     </div>
     {tab === 0 && <div className={s.tabPanel} role="tabpanel">
       <StatStrip items={[
@@ -158,6 +161,7 @@ function ResearchDetail({ slug }: { slug: string }) {
   const history = useQuery(`markets:rwa-history:${slug}`, () => getRwaHistory(slug, 90), { staleTime: 300_000 })
   const pro = proCopy[locale]
   const asset = detail.data
+  const content=useContentTranslation(asset?[asset.name,asset.description??'']:[])
   const topbar = <RwaTopbar screen="rwa-detail" title={asset?.name ?? ''} onBack={() => backOr('/markets')} />
   if (!asset && !detail.error) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}><Skeleton rows={4} /></div></MaisonPage>
   if (!asset) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}>
@@ -181,10 +185,10 @@ function ResearchDetail({ slug }: { slug: string }) {
   return <MaisonPage page="asset" topbar={topbar}>
     <header className={s.hero}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Logo src={asset.logoUrl} name={asset.name} />
+        <Logo src={asset.logoUrl} name={content(asset.name)} />
         <p className={s.kicker} style={{ flexWrap: 'wrap' }}>{[symbol, asset.assetClass.replace(/_/g, ' ')].filter(Boolean).join(' · ')}</p>
       </div>
-      <h1 className={s.titleL} style={{ marginTop: 14 }}>{asset.name}</h1>
+      <h1 className={s.titleL} style={{ marginTop: 14 }}>{content(asset.name)}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <span className={s.badge} data-tone="accent">{d.research}</span>
         {asset.issuer && <button type="button" className={s.link} onClick={() => openPath(`/issuers/${encodeURIComponent(asset.issuer.slug)}`)}>{d.issuer}: {asset.issuer.name}</button>}
@@ -214,7 +218,7 @@ function ResearchDetail({ slug }: { slug: string }) {
       { label: d.region, value: asset.region ?? '—' },
       { label: d.issuer, value: asset.issuer?.name ?? '—' },
     ]} />
-    {asset.description && <p className={s.prose} style={{ marginTop: 16 }}>{asset.description}</p>}
+    {asset.description && <p className={s.prose} style={{ marginTop: 16 }}>{content(asset.description)}</p>}
     {asset.websiteUrl && <a className={s.link} style={{ marginTop: 8 }} href={asset.websiteUrl} target="_blank" rel="noopener noreferrer">{d.website}<ExternalLink size={13} /></a>}
 
     {asset.sources?.length > 0 && <>

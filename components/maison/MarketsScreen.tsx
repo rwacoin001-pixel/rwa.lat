@@ -4,6 +4,7 @@ import { ArrowUpRight, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import RwaTopbar from '@/components/rwa-topbar'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
@@ -59,6 +60,7 @@ export function MarketsScreen({ query }: { query: string }) {
 
   const products = useQuery('markets:catalog', listProducts, { staleTime: 60_000, pollInterval: POLL.list })
   const directory = useQuery(`markets:rwa:${sort}:${term}`, () => listRwaAssets({ sort, search: term || undefined, limit: 40 }), { staleTime: 60_000, pollInterval: POLL.list })
+  const content=useContentTranslation((products.data??[]).flatMap(p=>[p.displayName,p.summary??'']))
   const listed = useMemo(() => (products.data ?? []).filter(isListed), [products.data])
   const investable = useMemo(() => {
     const needle = term.toLowerCase()
@@ -143,6 +145,7 @@ export function MarketsScreen({ query }: { query: string }) {
  *  exchanges list instruments, they don't tile them. */
 function ProductTable({ products, featured }: { products: CatalogProduct[]; featured: boolean }) {
   const { locale } = useI18n()
+  const content=useContentTranslation(products.flatMap(p=>[p.displayName,p.summary??'']))
   const copy = marketCopy[locale]
   const pro = proCopy[locale]
   const [list] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
@@ -161,7 +164,7 @@ function ProductTable({ products, featured }: { products: CatalogProduct[]; feat
         return <li key={product.id}>
           <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(slug)}`)}>
             <Logo name={product.displayName} />
-            <span className={s.rowMain}><b>{product.displayName}</b><small>{[klass, product.network].filter(Boolean).join(' · ')}</small></span>
+            <span className={s.rowMain}><b>{content(product.displayName)}</b><small>{[klass, product.network].filter(Boolean).join(' · ')}</small></span>
             <span className={s.rowFig}><b className={s.num}>{fmtUsdt(product.minOrderAtomicAmount)}</b><small className={s.up}>{copy.detail.investable}</small></span>
           </button>
         </li>
@@ -179,6 +182,7 @@ const PRODUCT_IMAGES: Record<string, string> = {
 }
 
 function ProductCard({ product, tone }: { product: CatalogProduct; tone?: 'lacquer' }) {
+  const content=useContentTranslation([product.displayName,product.summary??''])
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const slug = product.externalRef ?? product.id
@@ -188,9 +192,9 @@ function ProductCard({ product, tone }: { product: CatalogProduct; tone?: 'lacqu
       <Image src={product.imageUrl ? apiUrl(product.imageUrl) : PRODUCT_IMAGES[product.externalRef!]} unoptimized={Boolean(product.imageUrl)} alt="" fill sizes="(max-width: 500px) 60vw, 280px" style={{ objectFit: 'cover' }} />
     </span>}
     <span className={s.productMeta}><span>{klass}</span>{product.network && <span>{product.network}</span>}</span>
-    <span className={s.productName}>{product.displayName}</span>
+    <span className={s.productName}>{content(product.displayName)}</span>
     <span className={s.productArrow} aria-hidden="true"><ArrowUpRight size={16} /></span>
-    {product.summary && <span className={s.productSummary}>{product.summary}</span>}
+    {product.summary && <span className={s.productSummary}>{content(product.summary)}</span>}
     <span className={s.productFoot}><span>{copy.detail.investable}</span><b className={s.num}>{fill(copy.markets.from, { v: fmtUsdt(product.minOrderAtomicAmount) })}</b></span>
   </button>
 }

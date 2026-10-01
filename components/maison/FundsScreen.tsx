@@ -2,6 +2,9 @@
 
 import { AlertTriangle, ArrowRight, ArrowUpFromLine, BookUser, Check, ChevronRight, ClipboardPaste, Copy, Info, Plus, QrCode, Send, Share2, ShieldCheck } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
+import {TransferScanner} from './TransferScanner'
+import {transferRecipientFromCode} from '@/lib/transfer-code'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -305,6 +308,8 @@ export function ReceiveScreen() {
 /** `/assets/cash/transfer` — internal USDT transfer to another user id; posts instantly, so consent + idempotency + step-up. */
 export function TransferScreen({ query }: { query: string }) {
   const { locale } = useI18n()
+  const [scanning,setScanning]=useState(false)
+  const tr=useContentTranslation(['Scan receive code'])
   const f = fundsCopy[locale]
   const t = f.transfer
   const states = walletCopy[locale].states
@@ -381,6 +386,7 @@ export function TransferScreen({ query }: { query: string }) {
   </MaisonPage>
 
   return <MaisonPage page="transfer" topbar={topbar} cta>
+    {scanning&&<TransferScanner onClose={()=>setScanning(false)} onCode={code=>{const value=transferRecipientFromCode(code,window.location.origin);if(!value)return false;setRecipient(value);setServerError(null);setConsent(false);return true}}/>}
     <header className={s.hero}>
       <p className={s.kicker}>{t.kicker}</p>
       <h1 className={s.titleL}>{t.title}</h1>
@@ -395,6 +401,7 @@ export function TransferScreen({ query }: { query: string }) {
             <input value={recipient} autoComplete="off" spellCheck={false} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-invalid={Boolean(recipientError)} aria-describedby="transfer-recipient-meta"
               onChange={(event) => { setRecipient(event.target.value.replace(/\s/g, '')); setServerError(null); setPasteFailed(false) }} />
             <button type="button" className={s.pasteButton} onClick={() => void paste()}><ClipboardPaste size={14} aria-hidden="true" />{t.paste}</button>
+            <button type="button" className={s.pasteButton} onClick={()=>setScanning(true)}><QrCode size={14} aria-hidden="true"/>{tr('Scan receive code')}</button>
           </span>
         </label>
         {recipientError ? <p className={s.fieldError} id="transfer-recipient-meta" role="alert">{recipientError}</p> : <p className={s.fieldMeta} id="transfer-recipient-meta" style={{ display: 'block' }} role={pasteFailed ? 'status' : undefined}>{pasteFailed ? t.pasteFailed : t.recipientHint}</p>}

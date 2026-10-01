@@ -85,7 +85,7 @@ const RULES: RateLimitRule[] = [
     name: 'polymarket-translation',
     limit: 12,
     windowMs: MINUTE,
-    matches: (method, path) => method === 'POST' && path === '/v1/polymarket/translations',
+    matches: (method, path) => method === 'POST' && (path === '/v1/polymarket/translations' || path === '/v1/polymarket/translations/content'),
   },
   {
     name: 'partner-callback',

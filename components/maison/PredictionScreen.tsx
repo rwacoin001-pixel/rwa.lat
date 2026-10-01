@@ -11,6 +11,7 @@ import { invalidate, useQuery } from '@/lib/api/_query'
 import { POLL } from '@/lib/api/_http'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import { getPolymarketMarket, getPredictionStatus, getWallet, placePredictionBet, type PlaceBetBody, type PolymarketMarket, type PredictionBet } from '@/lib/api/markets'
+import {useContentTranslation} from '@/lib/use-content-translation'
 import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
 import { fmtUsd, toAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
@@ -34,6 +35,7 @@ export function PredictionScreen({id}:{id:string|null}) {
 export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcome=0 }: { id: string | null; eventHeader?: ReactNode; eventId?: string; initialOutcome?: number }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
+  const tr=useContentTranslation(['Net winning profit','Return if lost','Betting paused: invalid price, insufficient sell liquidity or expired quote.'])
   const t = tradeCopy[locale].prediction
   const validId = id && MARKET_ID.test(id) ? id : null
   const market = useQuery(validId ? `prediction:market:${validId}` : null, () => getPolymarketMarket(validId!), { staleTime: 30_000, pollInterval: POLL.quote })
@@ -113,6 +115,7 @@ function outcomeLabel(label: string, copy: (typeof marketCopy)[keyof typeof mark
 function BetTicket({ data, translation, initialOutcome=0 }: { data: PolymarketMarket; translation?: PolymarketTranslation; initialOutcome?: number }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
+  const tr=useContentTranslation(['Net winning profit','Return if lost','Betting paused: invalid price, insufficient sell liquidity or expired quote.'])
   const t = tradeCopy[locale].prediction
   const signedIn = useSignedIn()
   const status = useQuery('prediction:status', getPredictionStatus, { staleTime: 60_000, pollInterval: POLL.list })
@@ -224,11 +227,11 @@ function BetTicket({ data, translation, initialOutcome=0 }: { data: PolymarketMa
         <div><dt>{t.payout}</dt><dd className={s.num}>{estimate.grossPayout !== null ? `≈ ${estimate.grossPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div><dt>{fill(t.feePayout, { r: pct(payoutFeeRate) })}</dt><dd className={s.num}>{payoutFee !== null ? `${payoutFee.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div data-strong="true"><dt>{t.netPayout}</dt><dd className={s.num}>{netPayout !== null ? `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
-        <div><dt>{locale.startsWith('zh') ? '中奖净利润' : 'Net winning profit'}</dt><dd className={s.num}>{netPayout !== null && estimate.stakeAmount !== null ? `≈ ${(netPayout-estimate.stakeAmount).toLocaleString(locale,{maximumFractionDigits:2})} USDT` : '—'}</dd></div>
-        <div><dt>{locale.startsWith('zh') ? '未中奖到账' : 'Return if lost'}</dt><dd className={s.num}>0 USDT</dd></div>
+        <div><dt>{tr('Net winning profit')}</dt><dd className={s.num}>{netPayout !== null && estimate.stakeAmount !== null ? `≈ ${(netPayout-estimate.stakeAmount).toLocaleString(locale,{maximumFractionDigits:2})} USDT` : '—'}</dd></div>
+        <div><dt>{tr('Return if lost')}</dt><dd className={s.num}>0 USDT</dd></div>
       </dl>
     </section>
-    {!quote.available && <div className={s.notice} role="status"><Info size={16}/><span>{locale.startsWith('zh') ? '该方向暂不可下注：报价异常、卖盘不足或报价已过期。有效报价恢复后开放。' : 'Betting paused: invalid price, insufficient sell liquidity or expired quote.'}</span></div>}
+    {!quote.available && <div className={s.notice} role="status"><Info size={16}/><span>{tr('Betting paused: invalid price, insufficient sell liquidity or expired quote.')}</span></div>}
     {outcome !== null && !tokenId && <p className={s.fieldError}>{t.noToken}</p>}
     {outcome !== null && price !== null && Number.isFinite(m.prices[outcome]) && Math.abs(price - m.prices[outcome]) > 0.1 && <div className={s.notice} role="note"><Info size={16} /><span>{fill(t.wide, { p: pct(price), m: pct(m.prices[outcome]) })}</span></div>}
 

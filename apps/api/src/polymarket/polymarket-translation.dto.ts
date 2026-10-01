@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, Matches } from 'class-validator'
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsBoolean, IsIn, IsOptional, IsString, Matches, MaxLength, MinLength } from 'class-validator'
 
 export class TranslatePolymarketMarketsDto {
   @ApiProperty({ type: [String], maxItems: 20 })
@@ -18,4 +18,12 @@ export class TranslatePolymarketMarketsDto {
   @IsOptional()
   @IsBoolean()
   includeRules?: boolean
+}
+
+export class TranslateContentDto {
+  @IsIn(['en','zh-CN','hi','es','ar','fr','pt'])
+  locale!: 'en' | 'zh-CN' | 'hi' | 'es' | 'ar' | 'fr' | 'pt'
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10)
+  @IsString({each:true}) @MinLength(1,{each:true}) @MaxLength(4000,{each:true})
+  texts!: string[]
 }

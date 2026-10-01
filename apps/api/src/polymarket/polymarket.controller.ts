@@ -5,7 +5,7 @@ import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 import { ListPolymarketMarketsQueryDto, SyncPolymarketMarketsDto } from './polymarket.dto'
 import { PolymarketService } from './polymarket.service'
-import { TranslatePolymarketMarketsDto } from './polymarket-translation.dto'
+import { TranslateContentDto, TranslatePolymarketMarketsDto } from './polymarket-translation.dto'
 import { PolymarketTranslationService } from './polymarket-translation.service'
 
 @ApiTags('polymarket')
@@ -32,6 +32,9 @@ export class PolymarketController {
   translate(@Body() dto: TranslatePolymarketMarketsDto) {
     return this.translations.translate(dto)
   }
+
+  @Post('translations/content')
+  translateContent(@Body() dto:TranslateContentDto) {return this.translations.translateContent(dto)}
 
   @Get('markets/:id')
   getMarket(@Param('id') id: string) {
