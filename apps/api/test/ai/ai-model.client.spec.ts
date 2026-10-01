@@ -6,6 +6,15 @@ describe('AI provider delivery contract', () => {
   const client = () => new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://ai.example.test', AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'configured-model' }))
   afterEach(() => jest.restoreAllMocks())
 
+  it('delivers NVIDIA Flash structured content with thinking disabled', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: '{"translations":["评论"]}' } }] }), { status: 200 }))
+    const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://integrate.api.nvidia.com/v1', AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'deepseek-ai/deepseek-v4.1-flash' }))
+    expect(configured.providerName).toBe('NVIDIA')
+    expect((await configured.complete('Translate', [{ role: 'user', content: 'Comments' }], 2048, true)).text).toContain('评论')
+    expect(fetch.mock.calls[0][0]).toBe('https://integrate.api.nvidia.com/v1/chat/completions')
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body))).toMatchObject({ chat_template_kwargs: { thinking: false }, response_format: { type: 'json_object' } })
+  })
+
   it('requests JSON delivery for clarification cards without changing normal text calls', async () => {
     const fetch = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"reply":"Choose","sourceIds":[],"questions":[]}' } }] }), { status: 200 }))
     const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only' }))

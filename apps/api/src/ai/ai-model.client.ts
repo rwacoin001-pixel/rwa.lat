@@ -38,7 +38,7 @@ export class AiModelClient {
       this.apiStyle = explicit
     } else {
       if (explicit) throw new Error('AI_MODEL_API_STYLE must be openai or anthropic')
-      this.apiStyle = /deepseek|openai|siliconflow|moonshot|dashscope/i.test(this.endpoint) && !/\/anthropic(?:\/|$)/i.test(this.endpoint)
+      this.apiStyle = /deepseek|openai|siliconflow|moonshot|dashscope|integrate\.api\.nvidia\.com/i.test(this.endpoint) && !/\/anthropic(?:\/|$)/i.test(this.endpoint)
         ? 'openai'
         : 'anthropic'
     }
@@ -58,6 +58,7 @@ export class AiModelClient {
       if (host === 'api.deepseek.com') return 'DeepSeek'
       if (host === 'api.openai.com') return 'OpenAI'
       if (host === 'api.anthropic.com') return 'Anthropic'
+      if (host === 'integrate.api.nvidia.com') return 'NVIDIA'
     } catch {
       // The configured endpoint is not a public identity claim.
     }
@@ -88,6 +89,11 @@ export class AiModelClient {
                 body: JSON.stringify({
                   model: this.model,
                   max_tokens: maxTokens,
+                  // NVIDIA's DeepSeek Flash needs non-thinking output for
+                  // structured translations and customer-service replies.
+                  ...(/^https:\/\/integrate\.api\.nvidia\.com(?:\/|$)/i.test(this.endpoint) && /^deepseek-ai\/deepseek-v4.*flash/i.test(this.model)
+                    ? { chat_template_kwargs: { thinking: false } }
+                    : {}),
                   // On empty JSON-mode output, keep the strict JSON prompt but
                   // omit the provider's format constraint for the one fallback.
                   ...(json && attempt === 0 ? { response_format: { type: 'json_object' } } : {}),
