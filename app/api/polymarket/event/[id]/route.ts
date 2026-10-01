@@ -11,7 +11,7 @@ export async function GET(request:Request, context:{params:Promise<{id:string}>}
     const event=await r.json() as GammaEventData
     const markets=eventMarkets(event).map(m=>({id:m.id!,question:m.question!,label:m.groupItemTitle||m.question!,image:m.image??null,prices:stringArray(m.outcomePrices).map(Number),tokenIds:stringArray(m.clobTokenIds),closed:Boolean(m.closed),volume:Number(m.volume)||0,endAt:m.endDate??null}))
     const chosen=(url.searchParams.get('markets')??'').split(',').filter(Boolean)
-    const chartMarkets=chosen.length ? markets.filter(m=>chosen.includes(m.id)).slice(0,4) : markets.filter(m=>!m.closed).slice(0,4)
+    const chartMarkets=chosen.length ? markets.filter(m=>chosen.includes(m.id)).slice(0,4) : markets.filter(m=>!m.closed).sort((a,b)=>(b.prices[0]??0)-(a.prices[0]??0)).slice(0,4)
     const curves=await Promise.all(chartMarkets.map(async m=>{
       try {
         if(!m.tokenIds[0]) throw new Error('No token')

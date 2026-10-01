@@ -16,7 +16,13 @@ export function probabilityHistoryState(curves:Array<{available:boolean;points:u
   return curves.some(c=>c.points.length)?'ready':'empty'
 }
 export function historyQuery(period: HistoryPeriod) {
-  if (period === 'max') return 'interval=max&fidelity=60'
-  const seconds = { '1h':3600, '1d':86400, '1w':604800, '1m':2592000 }[period]
-  return `startTs=${Math.floor(Date.now()/1000)-seconds}&endTs=${Math.floor(Date.now()/1000)}&fidelity=${period === '1h' ? 1 : period === '1d' ? 5 : 60}`
+  // CLOB rejects explicit start/end windows covering a month, even at coarse fidelity.
+  // Its supported interval=1m means one MONTH, not one minute.
+  return `interval=${period}&fidelity=${period === '1h' ? 1 : period === '1d' ? 5 : 60}`
+}
+
+export function formatProbability(value: number | undefined, locale: string) {
+  if (value == null || !Number.isFinite(value) || value < 0 || value > 1) return '—'
+  if (value > 0 && value < .01) return '<1%'
+  return `${(value * 100).toLocaleString(locale, {maximumFractionDigits: 1})}%`
 }
