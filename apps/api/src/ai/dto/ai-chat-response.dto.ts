@@ -12,6 +12,7 @@ export class AiQuestionResponseDto {
   @ApiProperty({ type: [AiQuestionOptionResponseDto], minItems: 2, maxItems: 5 }) options!: AiQuestionOptionResponseDto[]
 }
 export class AiCitationResponseDto {
+  @ApiPropertyOptional({ type: String, description: 'Verified platform navigation link.' }) url?: string
   @ApiProperty({ type: String }) id!: string
   @ApiProperty({ type: String }) sourceId!: string
   @ApiProperty({ type: Number }) revision!: number

@@ -90,6 +90,7 @@ button.icon:active { transform: scale(.92); }
 .answer li { display: list-item; padding-inline-start: .2em; }
 .answer ol li::marker { font: 600 .9em var(--m-mono); }
 .answer em { font-style: italic; }
+.answer a { color: var(--m-accent); text-decoration: underline; text-underline-offset: 3px; }
 .answer li + li { margin-top: .35em; }
 .answer li::marker { color: var(--m-accent); }
 .answer strong { font-weight: 620; }

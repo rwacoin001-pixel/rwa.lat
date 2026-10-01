@@ -2,7 +2,7 @@ import { request } from './_http'
 import type { components } from './ai-chat-schema'
 
 export type AccountScope = 'balances'|'positions'|'orders'|'qualification'
-export type Citation = { id:string;revision:number;title:string;locale:string;sourceId:string }
+export type Citation = { id:string;revision:number;title:string;locale:string;sourceId:string;url?:string }
 export type AiQuestion = components['schemas']['AiQuestionResponseDto']
 export type MandateContent = {
   allowedProductIds:string[]; positions:Array<{positionId:string;quantityAtomic:string}>;

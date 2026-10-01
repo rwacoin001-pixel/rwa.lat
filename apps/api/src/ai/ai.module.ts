@@ -11,6 +11,7 @@ import { AiPlanningService } from './ai-planning.service'
 import { AiPlanningController } from './ai-planning.controller'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
 import { AiKnowledgeService } from './ai-knowledge.service'
+import { AiPlatformKnowledgeService } from './ai-platform-knowledge.service'
 import { AdminAiKnowledgeController, AiKnowledgeController } from './ai-knowledge.controller'
 import { NotificationModule } from '../notification/notification.module'
 import { AiCustomerToolsService } from './ai-customer-tools.service'
@@ -25,7 +26,7 @@ import { ComplianceModule } from '../compliance/compliance.module'
 @Module({
   imports: [TypeOrmModule.forFeature([AiChatSession, AiChatMessage]), SecurityModule, CatalogModule, AdminRbacModule, NotificationModule, OrdersModule, PortfolioModule, ComplianceModule],
   controllers: [AiController, AiPlanningController, AdminAiKnowledgeController, AiKnowledgeController, AiCustomerToolsController, AiMandateController, AdminAiInvestmentController],
-  providers: [AiService, AiModelClient, AiPlanningService, AiKnowledgeService, AiCustomerToolsService, AiMandateService, AiAutomaticService],
+  providers: [AiService, AiModelClient, AiPlanningService, AiKnowledgeService, AiPlatformKnowledgeService, AiCustomerToolsService, AiMandateService, AiAutomaticService],
   exports: [AiService],
 })
 export class AiModule {}

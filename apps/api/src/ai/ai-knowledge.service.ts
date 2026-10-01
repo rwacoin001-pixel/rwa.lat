@@ -1,9 +1,10 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, NotFoundException, Optional } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { randomUUID } from 'node:crypto'
 import { DataSource, EntityManager } from 'typeorm'
 import { AI_LOCALES, SaveKnowledgeDto } from './ai-knowledge.dto'
 import { KnowledgeRecord, KnowledgeSource, activeAt, knowledgeSearchPatterns, selectKnowledgeSources } from './ai-knowledge.policy'
+import { AiPlatformKnowledgeService } from './ai-platform-knowledge.service'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const liveFields = `id,published,published_revision AS "publishedRevision",published_at AS "publishedAt",archived_at AS "archivedAt"`
@@ -11,7 +12,7 @@ export const SUPPORT_POLICY_ID = '9e9e8a8a-dcfa-4b2f-8f68-6b308af9a101'
 
 @Injectable()
 export class AiKnowledgeService {
-  constructor(private readonly ds: DataSource, private readonly config: ConfigService) {}
+  constructor(private readonly ds: DataSource, private readonly config: ConfigService, @Optional() private readonly platform?: AiPlatformKnowledgeService) {}
   get enabled() { return this.config.get<string>('AI_KNOWLEDGE_ENABLED') !== 'false' }
 
   /** Reserved, administrator-published internal rule; never a public citation or user instruction. */
@@ -82,14 +83,18 @@ export class AiKnowledgeService {
   async retrieve(question: string, locale: string, authenticated: boolean): Promise<KnowledgeSource[]> {
     if (!this.enabled) return []
     const patterns = knowledgeSearchPatterns(question)
-    if (!patterns.length || !AI_LOCALES.includes(locale as any)) return []
-    const rows: KnowledgeRecord[] = await this.ds.query(`SELECT ${liveFields} FROM app.ai_knowledge_items
-      WHERE published IS NOT NULL AND archived_at IS NULL AND locale=$1
+    if (!AI_LOCALES.includes(locale as any)) return []
+    const [live, rows]: [KnowledgeSource[], KnowledgeRecord[]] = await Promise.all([
+      this.platform?.retrieve(question, locale) ?? Promise.resolve([]),
+      this.ds.query(`SELECT ${liveFields} FROM app.ai_knowledge_items
+      WHERE published IS NOT NULL AND archived_at IS NULL AND locale=ANY($4::text[])
       AND (published->>'visibility'='public' OR ($3 AND published->>'visibility'='authenticated'))
       AND (published->>'title' ILIKE ANY($2::text[]) OR published->>'summary' ILIKE ANY($2::text[])
         OR published->>'body' ILIKE ANY($2::text[]) OR published->>'category' ILIKE ANY($2::text[]))
-      ORDER BY CASE WHEN published->>'title' ILIKE ANY($2::text[]) THEN 0 ELSE 1 END,published_at DESC,id LIMIT 40`, [locale, patterns, authenticated])
-    return selectKnowledgeSources(rows, { now: new Date(), locale, authenticated })
+      ORDER BY CASE WHEN locale=$1 THEN 0 ELSE 1 END,CASE WHEN published->>'title' ILIKE ANY($2::text[]) THEN 0 ELSE 1 END,published_at DESC,id LIMIT 40`, [locale, patterns, authenticated, [...new Set([locale,'en','zh-CN'])]])
+    ])
+    const manual = rows.flatMap(row => selectKnowledgeSources([row], { now: new Date(), locale: String(row.published?.locale ?? ''), authenticated })).slice(0, 5)
+    return [...live, ...manual]
   }
   async publicVersion(id: string, revision: number, authenticated: boolean): Promise<KnowledgeSource> {
     const [current]: KnowledgeRecord[] = await this.ds.query(`SELECT ${liveFields} FROM app.ai_knowledge_items WHERE id=$1`, [id])
@@ -102,6 +107,9 @@ export class AiKnowledgeService {
     return sources[0]
   }
   async stillCurrent(sources: KnowledgeSource[], authenticated: boolean): Promise<boolean> {
+    if (!sources.length) return true
+    if (this.platform && !await this.platform.stillCurrent(sources)) return false
+    sources = sources.filter(source => !source.sourceId.startsWith('live:'))
     if (!sources.length) return true
     const rows: KnowledgeRecord[] = await this.ds.query(`SELECT ${liveFields} FROM app.ai_knowledge_items WHERE id=ANY($1::uuid[])`, [sources.map(source => source.id)])
     return sources.every(source => selectKnowledgeSources(rows.filter(row => row.id === source.id), { now: new Date(), locale: source.locale, authenticated })[0]?.sourceId === source.sourceId)

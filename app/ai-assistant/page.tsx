@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { aiNavigationLink } from '@/lib/ai-navigation-link'
 import { aiCustomer, type AccountScope, type Citation, type MandateContent, type MandateState, type Run } from '@/lib/api/ai-customer'
 import { useI18n } from '@/lib/i18n'
 import { SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
@@ -15,6 +16,13 @@ const integers = ['maxProductWeightBps','maxUnrealizedLossBps','horizonDays','ma
 const labels:Record<string,string>={cashBudgetAtomic:'管理现金',cashReserveAtomic:'账户现金保留',maxManagedValueAtomic:'管理总额上限',maxActionAtomic:'单次申请上限',maxDailyTurnoverAtomic:'每日申请上限',maxTotalTurnoverAtomic:'累计申请上限',maxFeeAtomic:'单次费用上限',maxProductWeightBps:'单产品比例上限（基点）',maxUnrealizedLossBps:'浮亏停止阈值（基点）',horizonDays:'投资期限（天）',maxLockDays:'最长锁定（天）',maxFeeBps:'费用比例上限（基点）',scheduleIntervalMinutes:'检查间隔（分钟）',minTradeIntervalMinutes:'交易最短间隔（分钟）',rebalanceThresholdBps:'调整偏离阈值（基点）'}
 const english:Record<string,string>={cashBudgetAtomic:'Managed cash',cashReserveAtomic:'Cash reserve',maxManagedValueAtomic:'Managed value limit',maxActionAtomic:'Per-application limit',maxDailyTurnoverAtomic:'Daily turnover limit',maxTotalTurnoverAtomic:'Lifetime turnover limit',maxFeeAtomic:'Fee limit',maxProductWeightBps:'Product concentration (%)',maxUnrealizedLossBps:'Loss review threshold (%)',horizonDays:'Investment horizon (days)',maxLockDays:'Maximum lock (days)',maxFeeBps:'Fee rate limit (%)',scheduleIntervalMinutes:'Review interval (minutes)',minTradeIntervalMinutes:'Minimum trade interval (minutes)',rebalanceThresholdBps:'Rebalance threshold (%)'}
 type Message={role:'user'|'assistant';text:string;citations?:Citation[];questions?:AiQuestion[]}
+function ReplyLinks({text}:{text:string}) {
+  return text.split(/(\[[^\]\n]+\]\([^\s)]+\))/g).map((part,index)=>{
+    const match=/^\[([^\]]+)\]\(([^)]+)\)$/.exec(part)
+    const href=match ? aiNavigationLink(match[2]) : null
+    return match ? (href ? <Link key={index} href={href} prefetch={false}>{match[1]}</Link> : match[1]) : part
+  })
+}
 const fromAtomic=(value:string)=>{ const n=BigInt(value);return `${n/BigInt(1000000)}.${(n%BigInt(1000000)).toString().padStart(6,'0')}` }
 const toAtomic=(value:string)=>{if(!/^(0|[1-9]\d*)(\.\d{1,6})?$/.test(value))throw new Error('Enter a USDT amount with at most 6 decimals');const [a,b='']=value.split('.');return (BigInt(a)*BigInt(1000000)+BigInt(b.padEnd(6,'0'))).toString()}
 
@@ -56,7 +64,7 @@ function AiAssistantContent(){
   return <main className={styles.page}><header><Link href="/">RWA.LAT</Link><nav><button aria-pressed={tab==='chat'} onClick={()=>setTab('chat')}>{copy('客服','Support')}</button><button aria-pressed={tab==='mandate'} onClick={()=>setTab('mandate')}>{copy('投资授权','Investment mandate')}</button></nav></header>
     {error&&<p role="alert" className={styles.error}>{error}</p>}
     {tab==='chat'?<section className={styles.card}>
-      <div className={styles.messages} aria-live="polite">{messages.map((m,i)=><article key={i} data-role={m.role}><p>{m.text}</p> {m.citations?.map(c=><button key={c.sourceId} onClick={()=>perform(async()=>{const r=await aiCustomer.source(c);if(!r.ok)throw new Error(r.error.message);setSource(r.data)})}>{c.title} · v{c.revision}</button>)}</article>)}{busy&&<span role="status">…</span>}</div>
+      <div className={styles.messages} aria-live="polite">{messages.map((m,i)=><article key={i} data-role={m.role}><p>{m.role==='assistant' ? <ReplyLinks text={m.text}/> : m.text}</p> {m.citations?.map(c=>aiNavigationLink(c.url) ? <Link key={c.sourceId} href={aiNavigationLink(c.url)!} prefetch={false}>{c.title}</Link> : <button key={c.sourceId} onClick={()=>perform(async()=>{const r=await aiCustomer.source(c);if(!r.ok)throw new Error(r.error.message);setSource(r.data)})}>{c.title} · v{c.revision}</button>)}</article>)}{busy&&<span role="status">…</span>}</div>
       <fieldset disabled={busy||!provider}><legend>{copy('向模型服务商分享本人信息','Share my account information with the model provider')} · {provider??'…'}</legend>{(['balances','positions','orders','qualification'] as AccountScope[]).map(s=><label key={s}><input type="checkbox" checked={scopes.includes(s)} onChange={e=>setScopes(a=>e.target.checked?[...a,s]:a.filter(v=>v!==s))}/>{zh?({balances:'余额',positions:'持仓',orders:'订单',qualification:'资格'})[s]:s}</label>)}</fieldset>
       <div className={styles.composerDock}>
         {(() => { const index = messages.findLastIndex(m => m.role === 'assistant'); const latest = messages[index]; return latest?.questions?.length ? <AiQuestionCard key={index} questions={latest.questions} locale={locale} disabled={busy} onConfirm={sendAnswer}/> : null })()}

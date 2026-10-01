@@ -1,6 +1,7 @@
 'use client'
 import { containsWalletSecret } from '@/lib/ai-input-guard'
 import Link from 'next/link'
+import { aiNavigationLink } from '@/lib/ai-navigation-link'
 import type { Citation, AiQuestion } from '@/lib/api/ai-customer'
 import AiQuestionCard from './AiQuestionCard'
 
@@ -23,13 +24,15 @@ const fill = (template: string, values: Record<string, string | number>) => temp
 
 function inline(text: string, keyBase: string): ReactNode[] {
   const out: ReactNode[] = []
-  const pattern = /(\*\*[^*\n]+\*\*|`[^`\n]+`|(?<![\w*])\*[^*\s][^*\n]*\*(?![\w*]))/g
+  const pattern = /(\[[^\]\n]+\]\([^\s)]+\)|\*\*[^*\n]+\*\*|`[^`\n]+`|(?<![\w*])\*[^*\s][^*\n]*\*(?![\w*]))/g
   let last = 0, match: RegExpExecArray | null, index = 0
   while ((match = pattern.exec(text))) {
     if (match.index > last) out.push(text.slice(last, match.index))
     const token = match[0]
     const key = `${keyBase}-${index++}`
-    out.push(token.startsWith('**') ? <strong key={key}>{token.slice(2, -2)}</strong> : token.startsWith('*') ? <em key={key}>{token.slice(1, -1)}</em> : <code key={key} dir="ltr">{token.slice(1, -1)}</code>)
+    const link = /^\[([^\]]+)\]\(([^)]+)\)$/.exec(token)
+    const href = link ? aiNavigationLink(link[2]) : null
+    out.push(link ? (href ? <Link key={key} href={href} prefetch={false}>{link[1]}</Link> : link[1]) : token.startsWith('**') ? <strong key={key}>{token.slice(2, -2)}</strong> : token.startsWith('*') ? <em key={key}>{token.slice(1, -1)}</em> : <code key={key} dir="ltr">{token.slice(1, -1)}</code>)
     last = match.index + token.length
   }
   if (last < text.length) out.push(text.slice(last))
@@ -213,7 +216,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
             : <li key={message.id} className={a.assistant}>
               <div className={a.who}><Mark /><b>{c.name}</b></div>
               <Answer text={message.content} reveal={message.id === revealId && !reduced()} />
-              {message.citations?.map(c=><Link key={`${c.id}:${c.revision}`} href={`/ai-assistant?knowledge=${encodeURIComponent(c.id)}&revision=${c.revision}`}>{c.title} · v{c.revision}</Link>)}
+              {message.citations?.map(c=><Link key={`${c.id}:${c.revision}`} prefetch={false} href={aiNavigationLink(c.url) ?? `/ai-assistant?knowledge=${encodeURIComponent(c.id)}&revision=${c.revision}`}>{c.title}{c.url ? '' : ` · v${c.revision}`}</Link>)}
               <div className={a.tools}>
                 <button type="button" onClick={() => void copyText(message)} aria-label={copied === message.id ? c.copied : c.copy}>{copied === message.id ? <Check size={15} /> : <Copy size={15} />}<span>{copied === message.id ? c.copied : c.copy}</span></button>
                 <span className={a.srOnly} aria-live="polite">{copied === message.id ? c.copied : ''}</span>

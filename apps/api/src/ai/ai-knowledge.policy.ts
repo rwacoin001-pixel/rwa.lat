@@ -17,6 +17,7 @@ export interface KnowledgeSource {
   category: string
   productIds: string[]
   publishedAt: string
+  url?: string
 }
 
 const STOP_WORDS = new Set(['what', 'when', 'where', 'does', 'please', 'could', 'would', 'with', 'from', 'have', 'this', 'that', 'about', '什么', '怎么', '如何', '需要', '多久', '我的', '可以', '我们', '是否'])

@@ -1,6 +1,6 @@
 import type { KnowledgeSource } from './ai-knowledge.policy'
 
-export type KnowledgeCitation = Pick<KnowledgeSource, 'id' | 'sourceId' | 'revision' | 'title' | 'locale' | 'publishedAt'>
+export type KnowledgeCitation = Pick<KnowledgeSource, 'id' | 'sourceId' | 'revision' | 'title' | 'locale' | 'publishedAt' | 'url'>
 export type AiQuestion = { id: string; title: string; multiple: boolean; options: Array<{ id: string; label: string; description?: string }> }
 
 /** Cards collect conversation context only; they cannot encode links, tools or financial actions. */
@@ -42,11 +42,35 @@ export function parseGroundedReply(text: string, sources: KnowledgeSource[]): { 
   const ids = result.sourceIds as string[]
   if (new Set(ids).size !== ids.length) throw new Error('Duplicate AI reply source')
   const citations = ids.map(sourceId => {
-    const source = sources.find(row => row.sourceId === sourceId)
+    // Some compatible models return the supplied record id rather than its
+    // versioned sourceId. Resolve only a unique server-selected record, and
+    // always persist its canonical, freshness-checked versioned citation.
+    const byId = sources.filter(row => row.id === sourceId)
+    const source = sources.find(row => row.sourceId === sourceId) ?? (byId.length === 1 ? byId[0] : undefined)
     if (!source) throw new Error('AI reply cites an unavailable source')
-    return { id: source.id, sourceId: source.sourceId, revision: source.revision, title: source.title, locale: source.locale, publishedAt: source.publishedAt }
+    return { id: source.id, sourceId: source.sourceId, revision: source.revision, title: source.title, locale: source.locale, publishedAt: source.publishedAt, ...(source.url ? {url: source.url} : {}) }
   })
+  if (new Set(citations.map(citation => citation.sourceId)).size !== citations.length) throw new Error('Duplicate AI reply source')
   const questions = parseQuestions(result.questions)
-  return { reply: result.reply.trim(), citations, ...(questions.length ? { questions } : {}) }
+  return { reply: verifiedReplyLinks(result.reply.trim(), sources), citations, ...(questions.length ? { questions } : {}) }
+}
+
+/** Resolve model links against supplied pages/records, never invented record IDs. */
+function verifiedReplyLinks(reply: string, sources: KnowledgeSource[]): string {
+  const allowed = new Set<string>()
+  const add = (url: unknown) => { if (typeof url === 'string' && url.startsWith('/') && !url.startsWith('//') && !url.includes(':')) allowed.add(url) }
+  for (const source of sources) {
+    add(source.url)
+    try {
+      const body = JSON.parse(source.body)
+      for (const key of ['pages','additionalPages','records']) {
+        if (Array.isArray(body[key])) for (const row of body[key]) { add(row?.path); add(row?.url) }
+      }
+    } catch { /* Authored prose is not a navigation authority. */ }
+  }
+  return reply.replace(/\[([^\]\n]+)\]\(([^\s)]+)\)/g, (_match, label, href) => {
+    const local = href.startsWith('https://rwa.lat/') ? href.slice('https://rwa.lat'.length) : href
+    return allowed.has(local) ? `[${label}](${local})` : label
+  })
 }
 
