@@ -1,7 +1,10 @@
 'use client'
 
 import { AlertTriangle, ArrowRight, Check, Info } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { predictionQuote } from '@/lib/prediction-quote'
+import { PredictionEventScreen } from './PredictionEventScreen'
+import { PredictionDiscussion } from './PredictionDiscussion'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -24,22 +27,11 @@ const DEC_6 = /^\d+(\.\d{1,6})?$/
 
 const pct = (value: number | null | undefined) => value == null || !Number.isFinite(value) ? '—' : `${(value * 100).toFixed(1)}%`
 
-/**
- * Indicative price for an outcome, mirroring the server (best ask of that token).
- * The proxy only carries the first token's book, so the second outcome uses 1 − best bid.
- */
-function indicativePrice(data: PolymarketMarket, index: number): number | null {
-  const book = data.orderbook
-  const asks = (book?.asks ?? []).map((level) => level.price).filter((price) => price > 0 && price <= 1)
-  const bids = (book?.bids ?? []).map((level) => level.price).filter((price) => price > 0 && price < 1)
-  const fromBook = index === 0 ? (asks.length ? Math.min(...asks) : null) : (bids.length ? 1 - Math.max(...bids) : null)
-  const fallback = data.market.prices[index]
-  const price = fromBook ?? (Number.isFinite(fallback) ? fallback : null)
-  return price !== null && price > 0 && price <= 1 ? price : null
-}
-
 /** `/prediction/:id` — Polymarket data is public; betting uses the internal market and needs a session and eligibility. */
-export function PredictionScreen({ id }: { id: string | null }) {
+export function PredictionScreen({id}:{id:string|null}) {
+  return id?.startsWith('event-') && /^event-\d+$/.test(id) ? <PredictionEventScreen key={id} id={id.slice(6)}/> : <PredictionMarketScreen key={id} id={id}/>
+}
+export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcome=0 }: { id: string | null; eventHeader?: ReactNode; eventId?: string; initialOutcome?: number }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const t = tradeCopy[locale].prediction
@@ -67,6 +59,7 @@ export function PredictionScreen({ id }: { id: string | null }) {
   const partial = !data.orderbook || history.length < 2
 
   return <MaisonPage page="prediction" dock topbar={topbar}>
+    {eventHeader}
     <header className={s.hero}>
       <p className={s.kicker}>{t.kicker}{m.category ? ` · ${m.category}` : ''}</p>
       <h1 className={s.titleL}>{translated?.question ?? m.question}</h1>
@@ -93,20 +86,22 @@ export function PredictionScreen({ id }: { id: string | null }) {
     </section>
     {partial && <div className={s.notice}><Info size={16} /><span>{t.partial}</span></div>}
 
-    <SectionHead index="01" title={t.history} note={m.outcomes[0] ? translated?.outcomes[0] ?? outcomeLabel(m.outcomes[0], copy) : undefined} />
+    {!eventHeader && <><SectionHead index="01" title={t.history} note={m.outcomes[0] ? translated?.outcomes[0] ?? outcomeLabel(m.outcomes[0], copy) : undefined} />
     {history.length >= 2 ? <>
       <Sparkline points={history.map((point) => point.price)} label={t.history} />
       <div className={s.chartAxis}><span>{fmtDate(new Date(history[0].time * 1000).toISOString(), locale)}</span><span>{fmtDate(new Date(history[history.length - 1].time * 1000).toISOString(), locale)}</span></div>
     </> : <StateBlock title={t.historyEmpty} />}
 
-    <SectionHead index="02" title={t.place} />
-    <BetTicket data={data} translation={translated} />
+    </>}
+    <div id="prediction-ticket" style={{scrollMarginTop:80}}><SectionHead index="02" title={t.place} /></div>
+    <BetTicket key={`${m.id}:${initialOutcome}`} data={data} translation={translated} initialOutcome={initialOutcome}/>
 
     {m.description && <>
       <SectionHead index="03" title={t.rules} />
       <p className={s.prose} style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{translated?.rules ?? m.description}</p>
       {!expanded && <button type="button" className={s.link} onClick={() => setExpanded(true)}>{tradeCopy[locale].basketOrder.readMore}</button>}
     </>}
+    {(eventId || m.eventId) && <PredictionDiscussion key={eventId??m.eventId} eventId={(eventId??m.eventId)!}/>}
   </MaisonPage>
 }
 
@@ -115,7 +110,7 @@ function outcomeLabel(label: string, copy: (typeof marketCopy)[keyof typeof mark
   return key === 'yes' ? copy.review.yes : key === 'no' ? copy.review.no : label
 }
 
-function BetTicket({ data, translation }: { data: PolymarketMarket; translation?: PolymarketTranslation }) {
+function BetTicket({ data, translation, initialOutcome=0 }: { data: PolymarketMarket; translation?: PolymarketTranslation; initialOutcome?: number }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const t = tradeCopy[locale].prediction
@@ -124,7 +119,7 @@ function BetTicket({ data, translation }: { data: PolymarketMarket; translation?
   const wallet = useQuery(signedIn ? 'wallet:summary:prediction' : null, getWallet, { staleTime: 15_000 })
   // 默认选中第一个方向。若初始为 null，price 恒为 null，
   // 「预计份数 / 派彩费 / 中奖净到账」会全部显示「—」——用户填了金额却看不到任何结果。
-  const [outcome, setOutcome] = useState<number | null>(0)
+  const [outcome, setOutcome] = useState<number | null>(initialOutcome)
   const [stake, setStake] = useState('')
   const [risk, setRisk] = useState(false)
   const [pending, setPending] = useState(false)
@@ -132,12 +127,15 @@ function BetTicket({ data, translation }: { data: PolymarketMarket; translation?
   const [done, setDone] = useState<PredictionBet | null>(null)
   const keys = useRef(new Map<string, string>())
 
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 10000); return () => clearInterval(timer) }, [])
   const m = data.market
   const limits = status.data?.limits
   const decimals = limits?.assetDecimals ?? 6
   const atomic = stake && DEC_6.test(stake) ? toAtomic(stake, decimals) : null
   const available = wallet.data?.balances.availableAtomic ?? null
-  const price = outcome === null ? null : indicativePrice(data, outcome)
+  const quote = predictionQuote(outcome === null ? null : data.outcomeBooks?.[outcome], outcome === null ? undefined : m.prices[outcome], atomic ? Number(atomic)/(10**decimals)*(1-(status.data?.fees?.placeFeeRate??0)) : 0, now)
+  const price = quote.available ? quote.price : null
   const tokenId = outcome === null ? null : m.tokenIds[outcome] ?? null
 
   const fieldError = useMemo(() => {
@@ -182,7 +180,7 @@ function BetTicket({ data, translation }: { data: PolymarketMarket; translation?
     </div>
   </section>
 
-  const ready = Boolean(tokenId && atomic && !fieldError && risk && !pending)
+  const ready = Boolean(tokenId && atomic && quote.available && !fieldError && risk && !pending)
   const submit = async () => {
     if (!ready || !tokenId || !atomic) return
     const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}) }
@@ -226,8 +224,11 @@ function BetTicket({ data, translation }: { data: PolymarketMarket; translation?
         <div><dt>{t.payout}</dt><dd className={s.num}>{estimate.grossPayout !== null ? `≈ ${estimate.grossPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div><dt>{fill(t.feePayout, { r: pct(payoutFeeRate) })}</dt><dd className={s.num}>{payoutFee !== null ? `${payoutFee.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div data-strong="true"><dt>{t.netPayout}</dt><dd className={s.num}>{netPayout !== null ? `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
+        <div><dt>{locale.startsWith('zh') ? '中奖净利润' : 'Net winning profit'}</dt><dd className={s.num}>{netPayout !== null && estimate.stakeAmount !== null ? `≈ ${(netPayout-estimate.stakeAmount).toLocaleString(locale,{maximumFractionDigits:2})} USDT` : '—'}</dd></div>
+        <div><dt>{locale.startsWith('zh') ? '未中奖到账' : 'Return if lost'}</dt><dd className={s.num}>0 USDT</dd></div>
       </dl>
     </section>
+    {!quote.available && <div className={s.notice} role="status"><Info size={16}/><span>{locale.startsWith('zh') ? '该方向暂不可下注：报价异常、卖盘不足或报价已过期。有效报价恢复后开放。' : 'Betting paused: invalid price, insufficient sell liquidity or expired quote.'}</span></div>}
     {outcome !== null && !tokenId && <p className={s.fieldError}>{t.noToken}</p>}
     {outcome !== null && price !== null && Number.isFinite(m.prices[outcome]) && Math.abs(price - m.prices[outcome]) > 0.1 && <div className={s.notice} role="note"><Info size={16} /><span>{fill(t.wide, { p: pct(price), m: pct(m.prices[outcome]) })}</span></div>}
 

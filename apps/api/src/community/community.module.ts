@@ -1,3 +1,4 @@
+import { PredictionDiscussionController } from './prediction-discussion.controller'
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { InternalServiceGuard } from '../wallet/internal-ops.controller'
@@ -37,7 +38,7 @@ import { ObjectStorageModule } from '../object-storage/object-storage.module'
       CommunityTranslation,
     ]),
   ],
-  controllers: [CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController],
+  controllers: [PredictionDiscussionController, CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController],
   providers: [CommunityService, InternalServiceGuard, CommunityTranslationProvider, CommunityMemberService],
   exports: [CommunityService],
 })

@@ -26,6 +26,9 @@ export class CommunityMemberController {
   @Get('state') state(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query('postId', new ParseUUIDPipe({ optional: true })) postId?: string, @Query('handle') handle?: string) { return this.member.state(a.userId, postId, handle) }
   @Post('posts') post(@CurrentAuth() a: AuthenticatedRequest['auth'], @Headers('idempotency-key') key: string, @Body() dto: MemberPostDto) { return this.member.post(a.userId, key, dto) }
   @Post('posts/:id/comments') comment(@CurrentAuth() a: AuthenticatedRequest['auth'], @Headers('idempotency-key') key: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: MemberCommentDto) { return this.member.comment(a.userId, key, id, dto) }
+  @Put('comments/:id/like') commentLike(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.member.commentLike(a.userId,id,true) }
+  @Get('comments/likes') commentLikes(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query('ids') ids?: string) { return this.member.commentLikeState(a.userId,(ids??'').split(',').filter(Boolean)) }
+  @Delete('comments/:id/like') commentUnlike(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.member.commentLike(a.userId,id,false) }
   @Put('posts/:id/like') like(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.member.like(a.userId, id, true) }
   @Delete('posts/:id/like') unlike(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.member.like(a.userId, id, false) }
   @Put('profiles/:handle/follow') follow(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('handle') handle: string) { return this.member.follow(a.userId, handle, true) }

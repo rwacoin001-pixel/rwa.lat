@@ -207,6 +207,23 @@ export class PolymarketService {
     return this.toMarketView(mapping, tokens, now)
   }
 
+  async getOutcomeProbability(tokenId: string): Promise<number | null> {
+    const token = await this.tokens.findOne({ where: { tokenId } })
+    const market = token ? await this.markets.findOne({ where: { id: token.marketMappingId } }) : null
+    if (!token || !market) return null
+    try {
+      const response = await fetch(`https://gamma-api.polymarket.com/markets/${encodeURIComponent(market.gammaMarketId)}`, { headers: {accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}, signal: AbortSignal.timeout(5000) })
+      if (!response.ok) return null
+      const row = await response.json() as {clobTokenIds?: string | string[]; outcomePrices?: string | string[]; acceptingOrders?: boolean; closed?: boolean}
+      if (row.closed || row.acceptingOrders !== true) return null
+      const tokens = typeof row.clobTokenIds === 'string' ? JSON.parse(row.clobTokenIds) : row.clobTokenIds
+      const prices = typeof row.outcomePrices === 'string' ? JSON.parse(row.outcomePrices) : row.outcomePrices
+      if (!Array.isArray(tokens) || !Array.isArray(prices)) return null
+      const index = tokens.indexOf(tokenId), price = index >= 0 ? Number(prices[index]) : NaN
+      return Number.isFinite(price) && price >= 0 && price <= 1 ? price : null
+    } catch { return null }
+  }
+
   async getOrderBook(tokenId: string, now: Date = new Date()) {
     const token = await this.tokens.findOne({ where: { tokenId } })
     if (!token) throw polymarketTokenNotFound(tokenId)

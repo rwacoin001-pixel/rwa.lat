@@ -2,6 +2,8 @@ import { randomUUID } from 'node:crypto'
 import { DataSource, QueryRunner } from 'typeorm'
 import { buildDatabaseOptions } from '../../src/database/database-options'
 import { CommunityMemberService } from '../../src/community/community-member.service'
+import {CommunityService} from '../../src/community/community.service'
+import {CommunityProfile,CommunityPost,CommunityComment,CommunityLike,CommunityFollow,CommunityTopic,CommunityQueueItem,CommunityReport,CommunityTranslation} from '../../src/community/community.entities'
 
 const suite = process.env.TEST_DATABASE_URL ? describe : describe.skip
 suite('Member publication with isolated PostgreSQL', () => {
@@ -17,10 +19,32 @@ suite('Member publication with isolated PostgreSQL', () => {
   beforeEach(async () => {
     runner = db.createQueryRunner(); await runner.connect(); await runner.startTransaction()
     userId = randomUUID(); await runner.query('INSERT INTO app.users(id) VALUES($1)', [userId])
-    service = new CommunityMemberService({ query: (sql: string, args: unknown[]) => runner.query(sql, args), transaction: (work: any) => work(runner.manager) } as unknown as DataSource)
+    service = new CommunityMemberService({ getRepository: (e: any) => runner.manager.getRepository(e), query: (sql: string, args: unknown[]) => runner.query(sql, args), transaction: (work: any) => work(runner.manager) } as unknown as DataSource)
   })
   afterEach(async () => { await runner.rollbackTransaction(); await runner.release() })
   afterAll(async () => { if (db?.isInitialized) await db.destroy() })
+  it('binds replies to verified events, preserves moderation and makes likes idempotent', async () => {
+    const fetchMock=jest.spyOn(global,'fetch').mockResolvedValue({ok:true,json:async()=>({id:'1234567',title:'Isolated event fixture'})} as Response)
+    try {
+      const a=await service.ensurePredictionThread(userId,'1234567')
+      expect(await service.ensurePredictionThread(userId,'1234567')).toBe(a)
+      const reply=await service.comment(userId,randomUUID(),a,{body:'Isolated reply'})
+      expect(await service.commentLike(userId,reply.id,true)).toMatchObject({likeCount:1})
+      expect(await service.commentLikeState(userId,[reply.id])).toEqual({likedIds:[reply.id]})
+      expect(await service.commentLike(userId,reply.id,true)).toMatchObject({likeCount:1})
+      expect(await service.commentLike(userId,reply.id,false)).toMatchObject({likeCount:0})
+      expect(await service.commentLikeState(userId,[reply.id])).toEqual({likedIds:[]})
+      const repos=[CommunityProfile,CommunityPost,CommunityComment,CommunityLike,CommunityFollow,CommunityTopic,CommunityQueueItem,CommunityReport,CommunityTranslation].map(e=>runner.manager.getRepository(e))
+      const publicService=Reflect.construct(CommunityService,[...repos,{},db]) as CommunityService
+      expect((await publicService.stats()).postsLast24h).toEqual(expect.any(Number))
+      expect((await publicService.getFeed({})).items.some((p:{id:string})=>p.id===a)).toBe(false)
+      const other=await service.post(userId,randomUUID(),{body:'Separate isolated discussion'})
+      await expect(service.comment(userId,randomUUID(),other.id,{body:'Wrong parent',parentId:reply.id})).rejects.toThrow('Invalid parent')
+      await runner.query("UPDATE app.community_posts SET state='hidden' WHERE id=$1",[a])
+      await expect(service.ensurePredictionThread(userId,'1234567')).rejects.toThrow('not public')
+      await expect(service.commentLike(userId,reply.id,true)).rejects.toThrow('not public')
+    } finally {fetchMock.mockRestore()}
+  })
   it('publishes as the authenticated member immediately and retries the same intent once', async () => {
     const key = randomUUID(); const input = { body: '公开的隔离测试帖子', topics: ['rwa'] }
     const a = await service.post(userId, key, input); const b = await service.post(userId, key, input)

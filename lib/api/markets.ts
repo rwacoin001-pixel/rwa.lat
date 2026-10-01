@@ -39,7 +39,8 @@ export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice
 /** Shape of the same-origin `/api/polymarket/market/:id` proxy (Gamma + CLOB). */
 export type PolymarketMarket = {
   source: string; fetchedAt: string
-  market: { id: string; question: string; description: string; category: string; outcomes: string[]; prices: number[]; tokenIds: string[]; volume: number; volume24h: number; liquidity: number; endDate: string | null; acceptingOrders: boolean }
+  market: { id: string; eventId?: string | null; question: string; description: string; category: string; outcomes: string[]; prices: number[]; tokenIds: string[]; volume: number; volume24h: number; liquidity: number; endDate: string | null; acceptingOrders: boolean }
+  outcomeBooks?: Array<({ tokenId: string; fetchedAt: string; asOf?: string; bids: Array<{price:number;size:number}>; asks: Array<{price:number;size:number}>; minimumOrderSize: number }) | null>
   orderbook: { bids: Array<{ price: number; size: number }>; asks: Array<{ price: number; size: number }>; tickSize: number; minimumOrderSize: number } | null
   pricing: { midpoint: number; spread: number; history: Array<{ time: number; price: number }> }
 }
@@ -142,9 +143,9 @@ export const OPEN_TRADING_STATES = new Set(['open', 'partial'])
 export const getPredictionStatus = () => request<PredictionStatus>('/v1/predictions/status')
 export const placePredictionBet = (body: PlaceBetBody) => request<PredictionBet & { duplicate?: boolean }>('/v1/predictions/bets', { method: 'POST', body: JSON.stringify(body) })
 /** Same-origin Next route, not /v1: it proxies public Polymarket data and never carries the session. */
-export async function getPolymarketMarket(id: string): Promise<ApiResult<PolymarketMarket>> {
+export async function getPolymarketMarket(id: string, period = 'max'): Promise<ApiResult<PolymarketMarket>> {
   try {
-    const response = await fetch(`/api/polymarket/market/${encodeURIComponent(id)}`, { cache: 'no-store' })
+    const response = await fetch(`/api/polymarket/market/${encodeURIComponent(id)}?period=${encodeURIComponent(period)}`, { cache: 'no-store' })
     const data = await response.json().catch(() => null) as PolymarketMarket | null
     if (!response.ok || !data?.market) return { ok: false, error: { status: response.status, code: 'POLYMARKET_UNAVAILABLE', message: 'Market data is unavailable right now.' } }
     return { ok: true, data }

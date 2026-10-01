@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict'
+import {test} from 'node:test'
+import {activeEventMarkets,eventMarkets,historyQuery,probabilityHistoryState} from '../lib/polymarket-data'
+import {estimatePredictionBet} from '../lib/prediction-bet-estimate'
+test('keeps candidate/date child markets grouped even with a past display end date',()=>{
+  const e={markets:[{id:'1',question:'By Oct 7?',active:true,endDate:'2020-01-01',outcomes:'["Yes","No"]'},{id:'2',question:'By Oct 31?',active:true,outcomes:['Yes','No']},{id:'3',question:'Resolved',closed:true,outcomes:['Yes','No']}]}
+  assert.deepEqual(activeEventMarkets(e).map(m=>m.id),['1','2'])
+  assert.equal(eventMarkets(e).length,3)
+  assert.match(historyQuery('1h'),/fidelity=1/)
+})
+test('distinguishes unavailable, empty and partial probability history',()=>{
+  assert.equal(probabilityHistoryState([{available:false,points:[]}]),'unavailable')
+  assert.equal(probabilityHistoryState([{available:true,points:[]}]),'empty')
+  assert.equal(probabilityHistoryState([{available:false,points:[]},{available:true,points:[1]}]),'partial')
+})
+test('winning return includes principal and losing shares do not refund principal',()=>{
+  const e=estimatePredictionBet({stakeAtomic:'100000000',decimals:6,price:.87,placeFeeRate:.03,payoutFeeRate:.03})
+  assert.equal(e.stakeAmount,100)
+  assert.ok(Math.abs(e.netPayout!-108.14942528735632)<1e-8)
+  assert.ok(Math.abs((e.netPayout!-e.stakeAmount!)-8.14942528735632)<1e-8)
+})

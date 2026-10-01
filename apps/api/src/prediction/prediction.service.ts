@@ -16,6 +16,7 @@ import {
   predictionSlippageExceeded,
   predictionStakeLimitExceeded,
 } from './prediction.errors'
+import { validatedPredictionPrice } from './prediction-quote'
 import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
 import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
 
@@ -109,20 +110,12 @@ export class PredictionService {
     // 注：market.restricted 是 Polymarket 的地区显示策略（对真实 CLOB 下单有意义）；
     // 内部盘仅消费开奖数据 + 内部记账，不受其约束。
 
-    // 取价（CLOB 订单簿最优卖价；无卖盘用最新成交价兜底）
-    const book = await this.polymarket.getOrderBook(input.tokenId)
-    const askPrices = (book.asks ?? [])
-      .map((level: { price: string }) => level.price)
-      .filter((p: unknown): p is string => typeof p === 'string')
-      .map((p: string) => parseDecimal18(p))
-    const price18 = askPrices.length
-      ? askPrices.reduce((min: bigint, p: bigint) => (p < min ? p : min))
-      : book.lastTradePrice
-        ? parseDecimal18(book.lastTradePrice)
-        : null
-    if (price18 === null || price18 <= 0n || price18 > SHARES_SCALE) {
-      throw predictionPriceUnavailable(input.tokenId)
-    }
+    const [book, probability] = await Promise.all([
+      this.polymarket.getOrderBook(input.tokenId),
+      this.polymarket.getOutcomeProbability(input.tokenId),
+    ])
+    const price18 = validatedPredictionPrice(book, input.tokenId, riskStake, probability)
+    if (price18 === null) throw predictionPriceUnavailable(input.tokenId)
 
     // 滑点保护
     if (input.expectedPrice) {

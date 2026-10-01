@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
 import { createHash, randomUUID } from 'node:crypto'
+import { predictionThreadId } from './prediction-discussion'
 import { DataSource, EntityManager } from 'typeorm'
 import { CommunityComment, CommunityFollow, CommunityLike, CommunityPost, CommunityProfile, CommunityTopic } from './community.entities'
 import { normalizeCommunityLang, sanitizeTopics } from './community.util'
@@ -91,6 +92,51 @@ export class CommunityMemberService {
     return this.write(userId, key, { body, lang, topics: input.topics ?? [], ...(images.length ? { images } : {}) }, 'post', async (m, p) => {
       const topics = await m.getRepository(CommunityTopic).find()
       return m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date() }))
+    })
+  }
+  async ensurePredictionThread(userId: string, eventId: string) {
+    let id: string
+    try { id = predictionThreadId(eventId) } catch { throw new BadRequestException('Invalid event ID') }
+    await this.db.transaction(async m => { await this.member(m, userId) })
+    const existing = await this.db.getRepository(CommunityPost).findOneBy({id})
+    if (existing) {
+      if(existing.state !== 'published') throw new NotFoundException('Discussion is not public')
+      return id
+    }
+    const response = await fetch(`https://gamma-api.polymarket.com/events/${eventId}`, { headers: {accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}, signal: AbortSignal.timeout(5000) })
+    if (!response.ok) throw new ServiceUnavailableException('Cannot verify prediction event')
+    const event = await response.json() as {id?: string; title?: string}
+    if (String(event.id) !== eventId || !event.title) throw new BadRequestException('Invalid event')
+    await this.db.transaction(async m => {
+      await m.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['prediction-discussion:'+eventId])
+      if (await m.getRepository(CommunityPost).existsBy({id})) return
+      await m.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['prediction-discussion:official'])
+      const profiles=m.getRepository(CommunityProfile)
+      let official=await profiles.findOneBy({handle:'rwalat-predictions'})
+      if(!official) official=await profiles.save(profiles.create({handle:'rwalat-predictions',display_name:'RWA.LAT · Predictions',kind:'official',is_active:true}))
+      await m.save(m.create(CommunityPost,{id,profile_id:official.id,body:event.title!.slice(0,4000),images:[],topics:[],lang:'en',source:'event',state:'published',published_at:new Date()}))
+    })
+    return id
+  }
+  commentLike(userId:string, targetId:string, desired:boolean) {
+    return this.db.transaction(async m=>{
+      const p=await this.member(m,userId)
+      const c=await m.getRepository(CommunityComment).findOne({where:{id:targetId},lock:{mode:'pessimistic_write'}})
+      if(c?.state!=='published'||!await m.getRepository(CommunityPost).existsBy({id:c.post_id,state:'published'})) throw new NotFoundException('Reply is not public')
+      const repo=m.getRepository(CommunityLike), where={profile_id:p.id,target_type:'comment' as const,target_id:targetId},exists=await repo.existsBy(where)
+      const delta=desired&&!exists?1:!desired&&exists?-1:0
+      if(delta===1)await repo.insert(where)
+      if(delta===-1)await repo.delete(where)
+      if(delta)await m.increment(CommunityComment,{id:targetId},'like_count',delta)
+      return {liked:desired,likeCount:c.like_count+delta}
+    })
+  }
+  commentLikeState(userId:string, ids:string[]) {
+    if(ids.length>50||ids.some(id=>! /^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/i.test(id))) throw new BadRequestException('Invalid reply IDs')
+    return this.db.transaction(async m=>{
+      const profile=await this.member(m,userId)
+      const rows=await m.query("SELECT target_id FROM app.community_likes WHERE profile_id=$1 AND target_type='comment' AND target_id=ANY($2::uuid[])",[profile.id,ids])
+      return {likedIds:rows.map((r:{target_id:string})=>r.target_id)}
     })
   }
   async comment(userId: string, key: string | undefined, postId: string, input: MemberCommentDto) {

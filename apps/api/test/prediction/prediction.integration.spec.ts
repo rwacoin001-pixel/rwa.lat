@@ -30,6 +30,7 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
   let noTokenId: string
 
   const polymarket = {
+    getOutcomeProbability: async () => 0.60,
     getOrderBook: async (tokenId: string) => ({
       tokenId,
       conditionId: null,

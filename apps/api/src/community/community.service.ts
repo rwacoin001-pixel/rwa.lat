@@ -102,6 +102,7 @@ export class CommunityService {
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
       .where("post.state = 'published'")
+      .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
       .andWhere('post.published_at IS NOT NULL')
     if (query.topic) {
       const requestedTopic = query.topic.trim().toLowerCase()
@@ -516,6 +517,7 @@ export class CommunityService {
       this.posts
         .createQueryBuilder('post')
         .where("post.state = 'published'")
+      .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
         .andWhere('post.published_at >= :dayAgo', { dayAgo })
         .getCount(),
     ])

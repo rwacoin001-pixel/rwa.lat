@@ -17,6 +17,10 @@ export const POLYMARKET_CATEGORY_TAGS: Record<Exclude<PolymarketCategory, 'all'>
 
 export type PolymarketFeedMarket = {
   id: string
+  featured?: boolean
+  marketIds?: string[]
+  optionCount?: number
+  image?: string | null
   question: string
   category: PolymarketCategory
   outcomes: Array<{ label: string; impliedProbability: number }>
