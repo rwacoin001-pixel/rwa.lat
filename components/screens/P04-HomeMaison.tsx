@@ -48,6 +48,7 @@ import { homeDataCopy } from '@/lib/route-copy'
 import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home'
 import styles from './P04-HomeMaison.module.css'
 import { PullToRefresh } from '../maison/PullToRefresh'
+import { homeAssetImage, HOME_ASSET_FALLBACK } from '@/lib/home-asset-media'
 
 const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--home-display-latin', display: 'swap' })
 
@@ -123,12 +124,10 @@ function formatUsdCents(value: number, locale: AppLocale) {
   try { return fmtUsd(fromAtomic(BigInt(cents).toString(), 2), { locale }) } catch { return '—' }
 }
 
-function assetImage(assetClass: string | undefined, index: number) {
-  const kind = (assetClass ?? '').toLowerCase()
-  if (kind === 'treasury' || kind === 'bond') return index % 2 ? '/media/home/asset-treasury-paper.webp' : '/media/generated/design-v2/treasury-architecture-v1.png'
-  if (kind === 'real_estate') return '/media/home/asset-real-estate.webp'
-  if (kind === 'infrastructure') return '/media/home/asset-infrastructure.webp'
-  return null
+function FeaturedAssetPhoto({ src }: { src: string }) {
+  const [failed, setFailed] = useState(false)
+  // Decorative imagery: the adjacent name already identifies the asset.
+  return <img className={styles.assetPhoto} src={failed ? HOME_ASSET_FALLBACK : src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} style={{ objectFit: 'cover', objectPosition: 'center' }} />
 }
 
 function changeTone(value: string | null | undefined) {
@@ -426,11 +425,11 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
         <SectionHead index="03" title={copy.featured} onMore={() => go('invest')} more={copy.all} />
         {featured.loading && !featured.data ? <div className={styles.skeletonRow}><span /><span /></div> : featured.error ? <ErrorBlock message={featured.error.message} retry={featured.refetch} /> : featuredItems.length ? <div className={styles.rail}>
           {featuredItems.map((asset, index) => {
-            const image = assetImage(asset.assetClass, index)
+            const image = homeAssetImage(asset, index)
             const symbol = asset.symbol && asset.symbol !== '-' ? asset.symbol : null
             return <motion.button type="button" key={asset.slug} className={styles.asset} onClick={() => router.push(`/asset/${encodeURIComponent(asset.slug)}`)} whileTap={reduced ? undefined : { scale: .97 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
               <span className={styles.assetMedia} data-fallback={image ? undefined : 'true'}>
-                {image && <span className={styles.assetPhoto} style={{ backgroundImage: `url('${image}')`, backgroundPosition: index % 2 ? '70% center' : '35% center' }} />}
+                <FeaturedAssetPhoto src={image} />
                 <span className={styles.assetRank} dir="ltr">{String(asset.rank ?? index + 1).padStart(2, '0')}</span>
                 <span className={styles.assetClass}>{classLabel(asset.assetClass ?? 'rwa', locale)}</span>
               </span>

@@ -22,6 +22,16 @@ const PRODUCT_STATES = ['draft', 'published', 'suspended', 'retired'] as const
 const DISCLOSURE_KINDS = ['prospectus', 'risk_disclosure', 'terms', 'regulatory'] as const
 const WALLET_PURPOSES = ['deposit', 'withdrawal', 'collection', 'operational'] as const
 
+export class AutomaticQuoteBindingDto {
+  @IsInt() @Min(0) expectedRevision!: number
+  @IsBoolean() enabled!: boolean
+  @IsString() @MinLength(1) @MaxLength(200) issuerName!: string
+  @IsString() @MinLength(1) @MaxLength(200) tokenName!: string
+  @IsString() @MinLength(1) @MaxLength(32) tokenSymbol!: string
+  @IsString() @Matches(/^[a-z][a-z0-9-]{1,63}$/) chain!: string
+  @IsString() @Matches(/^[a-zA-Z0-9]{20,128}$/) contractAddress!: string
+}
+
 export class AssetClassInputDto {
   @ApiProperty()
   @IsString()

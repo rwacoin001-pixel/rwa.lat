@@ -4,6 +4,7 @@ import type { AdminRequest } from './admin-session.guard'
 import { RequireAdminPermissions } from './admin-permission.guard'
 import {
   AssetClassInputDto,
+  AutomaticQuoteBindingDto,
   CreateProductDto,
   DisclosureInputDto,
   PriceQuoteInputDto,
@@ -71,6 +72,11 @@ export class AdminControlController {
   @Get('products/:id/prices')
   prices(@Param('id') id: string) {
     return this.control.listQuotes(id)
+  }
+
+  @Put('products/:id/automatic-quote')
+  saveAutomaticQuote(@Param('id') id: string, @Body() dto: AutomaticQuoteBindingDto, @Req() request: AdminRequest) {
+    return this.control.saveAutomaticQuote(id, dto, this.adminId(request))
   }
 
   @Post('products/:id/prices')

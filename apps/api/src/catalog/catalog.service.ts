@@ -5,6 +5,7 @@ import { AssetClass } from './asset-class.entity'
 import { Product } from './product.entity'
 import { DisclosureFile } from './disclosure-file.entity'
 import { PriceQuote, PriceSnapshot } from './price.entity'
+import { automaticQuoteSource } from './automatic-quote'
 import {
   CatalogError,
   CATALOG_ERROR_CODES,
@@ -85,7 +86,7 @@ export class CatalogService {
     })
     return files.map(file => Object.assign(file, {
       publishedAt: file.published_at,
-      url: product.state === 'published' && file.storage_ref.startsWith('rwa-assets/')
+      url: product.state === 'published'
         ? `/v1/platform/products/${productId}/disclosures/${file.id}` : null,
     }))
   }
@@ -93,8 +94,10 @@ export class CatalogService {
   async getLatestQuote(productId: string, now: Date = new Date()): Promise<QuoteView> {
     const product = await this.productRepo.findOne({ where: { id: productId } })
     if (!product) throw CatalogError.productNotFound(productId)
+    const binding = product.quote_binding_json
+    if (binding && !binding.enabled) throw CatalogError.quoteStale(productId)
     const quote = await this.quoteRepo.findOne({
-      where: { product_id: productId, asset_code: product.asset_code },
+      where: { product_id: productId, asset_code: product.asset_code, ...(binding ? { source: automaticQuoteSource(binding) } : {}) },
       order: { valid_until: 'DESC' },
     })
     if (!quote) {

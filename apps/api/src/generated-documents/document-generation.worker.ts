@@ -16,7 +16,7 @@ export class DocumentGenerationWorker implements OnModuleInit, OnModuleDestroy {
     private readonly storage: ObjectStorageService, private readonly config: ConfigService,
     private readonly documents: GeneratedDocumentsService) {}
   onModuleInit() {
-    if(this.config.get<string>('APP_ENV')==='test' || this.config.get<string>('DOCUMENT_GENERATION_WORKER_ENABLED')==='false' || !this.renderer.executablePath || this.config.get<string>('OBJECT_STORAGE_ENABLED')!=='true') return
+    if(this.config.get<string>('APP_ENV')==='test' || this.config.get<string>('DOCUMENT_GENERATION_WORKER_ENABLED')==='false' || !this.renderer.available || this.config.get<string>('OBJECT_STORAGE_ENABLED')!=='true') return
     this.timer=setInterval(()=>void this.tick(),5000);this.timer.unref()
   }
   onModuleDestroy() { if(this.timer) clearInterval(this.timer) }

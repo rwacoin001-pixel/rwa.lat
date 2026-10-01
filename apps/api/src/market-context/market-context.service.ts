@@ -4,6 +4,7 @@ import { YahooProvider, YAHOO_SYMBOLS } from './providers/yahoo.provider'
 import { FrankfurterProvider } from './providers/frankfurter.provider'
 import { CoinGeckoProvider } from './providers/coingecko.provider'
 import { DefiLlamaProvider } from './providers/defillama.provider'
+import { OkxProvider } from './providers/okx.provider'
 import type { MarketContextResponse, MarketQuote, OnchainMetric, UsdtPegStatus } from './market-context.types'
 
 /**
@@ -23,6 +24,7 @@ export class MarketContextService {
     private readonly cache: MarketCacheService,
     private readonly yahoo: YahooProvider,
     private readonly frankfurter: FrankfurterProvider,
+    private readonly okx: OkxProvider,
     private readonly coingecko: CoinGeckoProvider,
     private readonly defillama: DefiLlamaProvider,
   ) {}
@@ -56,14 +58,21 @@ export class MarketContextService {
     // 第二行：黄金（从 anchors 复用）+ BTC/ETH（下面 crypto）
     const gold = bySymbol.get('GC=F')
 
-    // ---- CoinGecko（BTC/ETH + USDT 锚定）----
-    const cgRead = await this.cache.getOrFetch<{ quotes: MarketQuote[]; usdt: UsdtPegStatus | null }>(
-      'coingecko:crypto',
+    // ---- OKX 主源（BTC/ETH + USDT 锚定）；失败才回落 CoinGecko ----
+    // 背景：CoinGecko 匿名接口按 IP 限流，实测间歇性返回 429 → crypto 为空 → degraded。
+    // OKX 公开接口无需 key 且限额宽松，故升为主源；CoinGecko 保留为兜底，两者都免费。
+    // TTL 维持 45s/宽限 5min 不变（主源无速率压力，行情应尽量新鲜）。
+    const cgRead = await this.cache.getOrFetch<{ quotes: MarketQuote[]; usdt: UsdtPegStatus | null; source: string }>(
+      'crypto:quotes',
       45_000,
       5 * 60_000,
       async () => {
-        const res = await this.coingecko.fetchQuotes(new Date().toISOString())
-        return res.quotes.length > 0 ? res : null
+        const received = new Date().toISOString()
+        const okxRead = await this.okx.fetchQuotes(received)
+        if (okxRead.quotes.length > 0) return { ...okxRead, source: 'OKX' }
+        this.log.warn('OKX 未返回加密货币行情，回落 CoinGecko')
+        const cgFallback = await this.coingecko.fetchQuotes(received)
+        return cgFallback.quotes.length > 0 ? { ...cgFallback, source: 'CoinGecko' } : null
       },
     )
     const crypto = cgRead.value?.quotes ?? []

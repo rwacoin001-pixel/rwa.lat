@@ -20,7 +20,7 @@ const INTEGRATIONS = [
   {
     name: 'Didit',
     role: 'KYC 身份认证服务商',
-    detail: '托管认证流程 + Webhook 回调写入 KYC 档案（证件信息加密落库）',
+    detail: '站内证件与自拍采集，Didit 核验与回调更新认证状态',
     icon: ShieldCheck,
     tone: 'text-emerald-600',
     href: '/kyc',
@@ -54,16 +54,16 @@ const INTEGRATIONS = [
     hrefLabel: '查看同步状态',
   },
   {
-    name: 'Render',
+    name: 'Oracle Cloud / Cloudflare',
     role: '应用托管（核心 API / 管理台 / Worker）',
-    detail: '核心 API、管理 API、管理前端与社区服务运行于 Render；数据库为 Neon PostgreSQL',
+    detail: 'Oracle Cloud 运行核心 API、管理 API 与管理前端；Cloudflare 发布用户前端',
     icon: Server,
     tone: 'text-slate-600',
   },
   {
     name: 'Neon PostgreSQL',
     role: '主数据库',
-    detail: '核心库 + 管理库 + 测试库；迁移随部署自动执行',
+    detail: '核心业务库与管理员认证库分开；数据库迁移在发布前核验',
     icon: Database,
     tone: 'text-slate-600',
   },

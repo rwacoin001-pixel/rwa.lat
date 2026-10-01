@@ -10,10 +10,11 @@ import { LoginIdentity } from './login-identity.entity'
 export type AuthDevice = { fingerprint?: string; name?: string }
 type Step = 'totp' | 'email' | 'password' | 'consent'
 export type AuthProof = 'primary' | 'passkey' | 'password' | 'recovery'
-type OAuthSubject = { provider: 'google' | 'x'; subject: string; locale?: string }
+type OAuthSubject = { provider: 'google' | 'x'; subject: string; locale?: string; referralAttribution?: string }
 type Payload = {
-  userId?: string; device?: AuthDevice; steps: Step[]; purpose: 'login' | 'reset' | 'setup' | 'oauth';
+  userId?: string; device?: AuthDevice; steps: Step[]; purpose: 'login' | 'reset' | 'setup' | 'oauth' | 'email_change';
   version: number; factorIds: string[]; oauth?: OAuthSubject; emailHash?: string; sentAt?: number; sends?: number; bindingEmail?: string;
+  previousEmailHash?: string | null;
 }
 export type AuthFlowView = { continuationToken: string; step: Step; expiresIn: number; retryAfter?: number }
 type Row = { payload_ciphertext: Buffer; encryption_key_version: number; attempts: number; expires_at: Date; consumed_at: Date | null }
@@ -82,16 +83,30 @@ export class AuthFlowService {
     return { userId: row.user_id as string, version: row.version as number }
   }
 
-  async beginPasswordManagement(userId: string, device?: AuthDevice, bindEmail?: string): Promise<never> {
+  async beginPasswordManagement(userId: string, device?: AuthDevice, bindEmail?: string, reauthenticated = false): Promise<never> {
     const { policy, factorIds } = await this.policy(this.db.manager, userId)
     const existing = await this.db.manager.getRepository(LoginIdentity).findOne({ where: { userId, kind: 'email' } })
     const bindingEmail = !existing ? bindEmail?.trim().toLowerCase() : undefined
     if (!bindingEmail) await this.emailFor(this.db.manager, userId)
-    const steps: Step[] = factorIds.length ? ['totp'] : []
-    if (bindingEmail || !factorIds.length) steps.push('email')
+    const steps: Step[] = !reauthenticated && factorIds.length ? ['totp'] : []
+    if (bindingEmail || (!reauthenticated && !factorIds.length)) steps.push('email')
     steps.push('password')
     this.required(await this.begin({ userId, device, bindingEmail, steps,
       purpose: 'reset', version: policy.version, factorIds }))
+  }
+
+  /** Called only after signed-in, session-bound step-up verification by IdentityService. */
+  async beginEmailChange(userId: string, email: string): Promise<never> {
+    const bindingEmail = email.trim().toLowerCase()
+    const { policy, factorIds } = await this.policy(this.db.manager, userId)
+    const identities = this.db.manager.getRepository(LoginIdentity)
+    const existing = await identities.findOne({ where: { userId, kind: 'email' } })
+    const hash = this.crypto.hashIdentifier(bindingEmail)
+    if (await identities.findOne({ where: { kind: 'email', identifierHash: hash } })) {
+      throw new ConflictException({ code: 'AUTH_EMAIL_BIND_CONFLICT', message: 'This email cannot be linked.' })
+    }
+    this.required(await this.begin({ userId, steps: ['email'], purpose: 'email_change', version: policy.version,
+      factorIds, bindingEmail, previousEmailHash: existing?.identifierHash.toString('hex') ?? null }))
   }
 
   private async begin(payload: Payload): Promise<AuthFlowView> {
@@ -164,15 +179,28 @@ export class AuthFlowService {
           const identifierHash = this.crypto.hashIdentifier(payload.bindingEmail)
           await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`email:${identifierHash.toString('hex')}`])
           const identities = manager.getRepository(LoginIdentity)
-          if (await identities.findOne({ where: [{ kind: 'email', identifierHash }, { kind: 'email', userId: payload.userId }] })) {
+          const existing = await identities.findOne({ where: { kind: 'email', userId: payload.userId } })
+          if (await identities.findOne({ where: { kind: 'email', identifierHash } }) ||
+            (payload.purpose !== 'email_change' && existing) ||
+            (payload.purpose === 'email_change' && (existing?.identifierHash.toString('hex') ?? null) !== payload.previousEmailHash)) {
             throw new ConflictException({ code: 'AUTH_EMAIL_BIND_CONFLICT', message: 'This email cannot be linked. Sign in with its existing account.' })
           }
           const encrypted = this.crypto.encrypt(payload.bindingEmail)
-          await identities.save({ id: randomUUID(), userId: payload.userId, kind: 'email', state: 'verified', verifiedAt: new Date(),
+          await identities.save({ id: existing?.id ?? randomUUID(), userId: payload.userId, kind: 'email', state: 'verified', revokedAt: null, verifiedAt: new Date(),
             identifierHash, identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion })
           await manager.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,user_id,action,object_type,object_id,request_id,metadata)
             VALUES($1,'user',$2::uuid,$2::uuid,'security.email.bound','user',$2::text,$3,'{}')`, [randomUUID(), payload.userId, randomUUID()])
           delete payload.bindingEmail
+          if (payload.purpose === 'email_change') {
+            await manager.query(`INSERT INTO app.auth_credentials(user_id,version) VALUES($1,1)
+              ON CONFLICT(user_id) DO UPDATE SET version=app.auth_credentials.version+1,updated_at=now()`, [payload.userId])
+            await manager.query(`UPDATE app.sessions SET state='revoked',revoked_at=now(),revoke_reason='email_changed'
+              WHERE user_id=$1 AND state='active'`, [payload.userId])
+            await manager.query(`UPDATE app.identity_one_time_tokens SET consumed_at=now() WHERE user_id=$1 AND consumed_at IS NULL`, [payload.userId])
+            await manager.query(`UPDATE app.email_code_challenges SET consumed_at=now() WHERE user_id=$1 AND consumed_at IS NULL`, [payload.userId])
+            await manager.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,user_id,action,object_type,object_id,request_id,metadata)
+              VALUES($1,'user',$2::uuid,$2::uuid,'security.email.changed','user',$2::text,$3,'{}')`, [randomUUID(), payload.userId, randomUUID()])
+          }
         }
       } else if (step === 'totp') {
         const factors = await manager.query(`SELECT id,secret_ciphertext,encryption_key_version FROM app.totp_factors
@@ -204,6 +232,7 @@ export class AuthFlowService {
       if (!valid) return { invalid: true as const }
       payload.steps.shift()
       if (payload.steps.length) return { flow: await this.insert(manager, payload, new Date(row.expires_at)) }
+      if (payload.purpose === 'email_change') return { done: { emailChanged: true, requiresLogin: true } }
       if (step === 'password' && payload.purpose === 'reset') return { done: { passwordChanged: true, requiresLogin: true } }
       return { done: await finish(payload, manager) }
     })

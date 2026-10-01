@@ -10,7 +10,8 @@ import { useI18n } from '@/lib/i18n'
 import { clearSession, type ApiError, type ApiResult } from '@/lib/api/_http'
 import { clearQueryCache, invalidate, useQuery } from '@/lib/api/_query'
 import { logout } from '@/lib/api/auth'
-import { continueAuth, managePassword } from '@/lib/api/auth-flow'
+import { changeAccountEmail, continueAuth, managePassword } from '@/lib/api/auth-flow'
+import { securityEmailCopy } from '@/lib/security-email-copy'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import {
   confirmTotpEnrollment, listDevices, listSessions, removePasskey, removeTotp, revokeDevice, revokeOtherSessions, revokeSession, startTotpEnrollment, trustCurrentDevice,
@@ -95,6 +96,9 @@ export function SecurityScreen({ query = '', onSignedOut }: { query?: string; on
   const [busy, setBusy] = useState<string | null>(null)
   const [needsEmail, setNeedsEmail] = useState(false)
   const [bindingEmail, setBindingEmail] = useState('')
+  const [emailEditor, setEmailEditor] = useState(false)
+  const [newEmail, setNewEmail] = useState('')
+  const emailText = securityEmailCopy[locale]
 
   const choose = (value: Tab) => { setTab(value); setFlash(null); setPending(null); setQuery('tab', value === 'methods' ? null : value) }
   const passkeys = (factors.data?.passkeys ?? []).filter((item) => item.state === 'active')
@@ -194,10 +198,25 @@ export function SecurityScreen({ query = '', onSignedOut }: { query?: string; on
     <FlashNote flash={flash} />
 
     {panel('methods', <>
+      <SectionHead index="00" title={emailText.title} action={<button type="button" className={s.ghost} data-size="s"
+        disabled={Boolean(busy)} onClick={() => setEmailEditor(value => !value)}>{emailEditor ? emailText.cancel : emailText.change}</button>} />
+      {emailEditor && <form onSubmit={async event => {
+        event.preventDefault()
+        if (busy) return
+        setBusy('email'); setFlash(null)
+        try {
+          const result = await run(true, r => changeAccountEmail(newEmail.trim(), r ?? ''))
+          if (result && !result.ok && !continueAuth(result.error)) setFlash({ tone: 'error', text: emailText.unavailable })
+        } finally { setBusy(null) }
+      }}>
+        <label className={s.field}><span>{emailText.newEmail}</span><input type="email" required maxLength={254} autoComplete="email"
+          value={newEmail} onChange={event => setNewEmail(event.target.value)} disabled={Boolean(busy)} /></label>
+        <button type="submit" className={s.ghost} disabled={Boolean(busy) || !newEmail.trim()}>{emailText.confirm}</button>
+      </form>}
       <SectionHead index="00" title={authPasswordCopy[locale].password}
-        action={<button type="button" className={s.ghost} data-size="s" disabled={Boolean(busy)} onClick={async () => {
+        action={<button type="button" className={s.ghost} data-size="s" disabled={Boolean(busy) || !factors.data} onClick={async () => {
           setBusy('password'); setFlash(null)
-          try { const result = await managePassword(needsEmail ? bindingEmail.trim() : undefined); if (!result.ok && !continueAuth(result.error)) {
+          try { const result = await run(passkeys.length > 0 || Boolean(totp), r => managePassword(needsEmail ? bindingEmail.trim() : undefined, r)); if (result && !result.ok && !continueAuth(result.error)) {
             if (result.error.code === 'AUTH_EMAIL_BIND_REQUIRED') setNeedsEmail(true)
             setFlash({ tone: 'error', text: result.error.code === 'AUTH_EMAIL_BIND_REQUIRED' ? authPasswordCopy[locale].bind : authPasswordCopy[locale].failed })
           } }

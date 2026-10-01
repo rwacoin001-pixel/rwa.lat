@@ -6,6 +6,8 @@ import { DisclosureFile } from './disclosure-file.entity'
 import { PriceQuote, PriceSnapshot } from './price.entity'
 import { CatalogService } from './catalog.service'
 import { CatalogController } from './catalog.controller'
+import { AutomaticQuoteWorker } from './automatic-quote.worker'
+import { FreeContractPriceClient } from './free-contract-price.client'
 
 @Module({
   imports: [
@@ -18,7 +20,7 @@ import { CatalogController } from './catalog.controller'
     ]),
   ],
   controllers: [CatalogController],
-  providers: [CatalogService],
+  providers: [CatalogService, AutomaticQuoteWorker, FreeContractPriceClient],
   exports: [CatalogService],
 })
 export class CatalogModule {}

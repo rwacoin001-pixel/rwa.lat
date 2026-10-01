@@ -27,6 +27,7 @@ import { IdentityOneTimeToken, type IdentityOneTimeTokenPurpose } from './identi
 import { IdentityDeliveryService } from './identity-delivery.service'
 import { OAuthProviderService, type OAuthProviderName } from './oauth-provider.service'
 import { AuthFlowService, type AuthProof, type AuthDevice } from './auth-flow.service'
+import { assertReauthentication } from '../security/reauthentication'
 import { ReferralBindingService } from '../referral/referral-binding.service'
 import {
   validateRegistrationConsents,
@@ -82,9 +83,16 @@ export class IdentityService {
     throw new UnauthorizedException({ code: 'AUTH_FLOW_REQUIRED', message: 'Second factor is required.' })
   }
 
-  async managePassword(rawToken: string, device?: AuthDevice, email?: string) {
+  async managePassword(rawToken: string, device?: AuthDevice, email?: string, reauthentication?: string) {
     const session = await this.getSessionViewByToken(rawToken)
-    return this.authFlows.beginPasswordManagement(session.userId, device, email)
+    if (reauthentication) assertReauthentication(this.crypto, session, reauthentication)
+    return this.authFlows.beginPasswordManagement(session.userId, device, email, Boolean(reauthentication))
+  }
+
+  async changeEmail(rawToken: string, email: string, reauthentication: string) {
+    const session = await this.getSessionViewByToken(rawToken)
+    assertReauthentication(this.crypto, session, reauthentication)
+    return this.authFlows.beginEmailChange(session.userId, email)
   }
 
   resendAuthFlow(token: string) { return this.authFlows.resend(token) }
@@ -93,7 +101,7 @@ export class IdentityService {
     return this.authFlows.complete(input, async (payload, manager) => {
       if (payload.oauth) {
         const consents = validateRegistrationConsents(input.consents, await loadRegistrationConsents(manager, this.config, true))
-        const { provider, subject, locale } = payload.oauth
+        const { provider, subject, locale, referralAttribution } = payload.oauth
         const key = `${provider}:${subject}`
         const hash = this.crypto.hashIdentifier(key)
         await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`oauth:${hash.toString('hex')}`])
@@ -102,7 +110,7 @@ export class IdentityService {
         if (existing) throw new ConflictException({ code: 'AUTH_RESTART_LOGIN', message: 'Account already exists. Sign in again.' })
         const userId = randomUUID()
         await manager.getRepository(User).save({ id: userId, status: 'active', locale: locale ?? 'en' })
-        await this.referral?.bindNewUser(manager,userId)
+        await this.referral?.bindNewUser(manager,userId,referralAttribution)
         const encrypted = this.crypto.encrypt(key)
         await identities.save({ id: randomUUID(), userId, kind: provider, state: 'verified', identifierHash: hash,
           identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date() })
@@ -377,23 +385,12 @@ export class IdentityService {
     if (verified.intent === 'login') {
       const existing = await this.loginIdentities.findOne({ where: { kind: provider, identifierHash: this.crypto.hashIdentifier(`${provider}:${verified.subject}`) } })
       if (!existing) {
-        // First-time OAuth sign-in creates the account immediately (no consent interstitial).
-        // The live legal versions are still recorded as an accepted snapshot, so the audit trail is intact.
-        const requirements = await loadRegistrationConsents(this.dataSource, this.config, true)
-        const consents: RegistrationConsentAcceptance[] = requirements.map(requirement => ({
-          documentType: requirement.documentType,
-          version: requirement.version,
-          accepted: true as const,
-        }))
-        return this.upsertVerifiedOAuthSubject(provider, verified.subject, {
-          displayName: verified.displayName,
+        return this.authFlows.beginOAuth({
+          provider,
+          subject: verified.subject,
           locale: verified.locale,
-          device,
-          intent: 'register',
           referralAttribution,
-          registrationConsents: consents,
-          consentedAt: new Date(),
-        })
+        }, device)
       }
     }
     return this.upsertVerifiedOAuthSubject(provider, verified.subject, {

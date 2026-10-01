@@ -9,10 +9,11 @@ import { POLL } from '@/lib/api/_http'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import { getPolymarketMarket, getPredictionStatus, getWallet, placePredictionBet, type PlaceBetBody, type PolymarketMarket, type PredictionBet } from '@/lib/api/markets'
 import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
-import { fmtUsd, fromAtomic, toAtomic } from '@/lib/money'
+import { fmtUsd, toAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { tradeCopy } from '@/lib/maison-trade-copy'
 import { polymarketTranslationCopy } from '@/lib/polymarket-translation-copy'
+import { estimatePredictionBet } from '@/lib/prediction-bet-estimate'
 import { backOr, openPath, signInThenReturn, useSignedIn } from '@/lib/maison-nav'
 import { MaisonPage, SectionHead, Skeleton, Sparkline, StateBlock, maison as s } from './primitives'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
@@ -151,15 +152,14 @@ function BetTicket({ data, translation }: { data: PolymarketMarket; translation?
   // 费率以服务端 /v1/predictions/status 为权威（下方 status.data.fees），前端不硬编码。
   const placeFeeRate = status.data?.fees?.placeFeeRate ?? 0
   const payoutFeeRate = status.data?.fees?.payoutFeeRate ?? 0
-  const placeFeeAtomic = atomic && placeFeeRate > 0
-    ? (BigInt(atomic) * BigInt(Math.round(placeFeeRate * 10_000))) / BigInt(10_000)
-    : BigInt(0)
-  const riskAtomic = atomic ? BigInt(atomic) - placeFeeAtomic : null
-  const shares = riskAtomic !== null && riskAtomic > BigInt(0) && price && !fieldError
-    ? Number(fromAtomic(riskAtomic.toString(), decimals)) / price
-    : null
-  const payoutFee = shares !== null ? shares * payoutFeeRate : null
-  const netPayout = shares !== null && payoutFee !== null ? shares - payoutFee : null
+  const estimate = estimatePredictionBet({
+    stakeAtomic: atomic,
+    decimals,
+    price,
+    placeFeeRate,
+    payoutFeeRate,
+  })
+  const { shares, payoutFee, netPayout, placeFeeAtomic } = estimate
 
   if (!status.data && !status.error) return <Skeleton rows={2} />
   if (status.error && !status.data) return <StateBlock tone="error" title={copy.common.errorGeneric} body={status.error.message} retry={status.refetch} retryLabel={copy.common.retry} />
@@ -221,7 +221,9 @@ function BetTicket({ data, translation }: { data: PolymarketMarket; translation?
       <dl className={s.summary}>
         <div><dt>{t.price}</dt><dd className={s.num}>{price ? pct(price) : '—'}</dd></div>
         <div><dt>{t.shares}</dt><dd className={s.num}>{shares ? `≈ ${shares.toLocaleString(locale, { maximumFractionDigits: 2 })}` : '—'}</dd></div>
+        <div><dt>{t.stake}</dt><dd className={s.num}>{estimate.stakeAmount !== null ? `≈ ${estimate.stakeAmount.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div><dt>{fill(t.feePlace, { r: pct(placeFeeRate) })}</dt><dd className={s.num}>{atomic ? fmtAtomic(placeFeeAtomic.toString(), decimals, 'USDT') : '—'}</dd></div>
+        <div><dt>{t.payout}</dt><dd className={s.num}>{estimate.grossPayout !== null ? `≈ ${estimate.grossPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div><dt>{fill(t.feePayout, { r: pct(payoutFeeRate) })}</dt><dd className={s.num}>{payoutFee !== null ? `${payoutFee.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
         <div data-strong="true"><dt>{t.netPayout}</dt><dd className={s.num}>{netPayout !== null ? `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
       </dl>

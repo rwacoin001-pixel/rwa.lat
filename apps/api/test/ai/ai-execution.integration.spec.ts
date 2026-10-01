@@ -26,7 +26,9 @@ suite('AI mandates and real ledger applications in dedicated temporary PostgreSQ
   let db:DataSource
   beforeAll(async()=>{
     const target=new URL(process.env.TEST_DATABASE_URL!)
-    if(target.hostname!=='127.0.0.1'||target.port!=='55439'||target.pathname!=='/rwa_ai_customer_20260930_test')throw new Error('Dedicated AI cluster required')
+    const ownedCluster=target.pathname.startsWith('/rwa_lat_codex_')&&target.pathname.endsWith('_test')
+    const legacyCluster=target.port==='55439'&&target.pathname==='/rwa_ai_customer_20260930_test'
+    if(target.hostname!=='127.0.0.1'||(!ownedCluster&&!legacyCluster))throw new Error('Dedicated AI cluster required')
     db=new DataSource(buildDatabaseOptions({...process.env,NODE_ENV:'test'}));await db.initialize();await db.runMigrations()
   })
   afterAll(async()=>{if(db?.isInitialized)await db.destroy()})

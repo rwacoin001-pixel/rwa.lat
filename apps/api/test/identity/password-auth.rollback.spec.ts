@@ -24,7 +24,7 @@ suite('password authentication (real PostgreSQL, rollback only)', () => {
   let db: DataSource, runner: QueryRunner, identity: IdentityService, crypto: IdentityCrypto, delivery: IdentityDeliveryService
   let codes: EmailCodeService, userId: string, email: string
   const password = 'test-only long password 928!'
-  const config = new ConfigService({ AUTH_ADAPTER: 'demo', IDENTITY_HMAC_KEY: 'a'.repeat(64), IDENTITY_ENC_KEY: 'b'.repeat(64) })
+  const config = new ConfigService({ AUTH_ADAPTER: 'demo', IDENTITY_HMAC_KEY: 'a'.repeat(64), IDENTITY_ENC_KEY: 'b'.repeat(64), PASSKEY_RP_ID:'localhost', PASSKEY_ORIGIN:'http://localhost:3030' })
   const device = { fingerprint: randomUUID(), name: 'test-only device' }
   async function flow(request: Promise<unknown>, step: string): Promise<AuthFlowView> {
     try { await request } catch (error) {
@@ -37,8 +37,11 @@ suite('password authentication (real PostgreSQL, rollback only)', () => {
   }
   const finish = (f: AuthFlowView, extra: Record<string, string> = {}) => identity.completeAuthFlow({ continuationToken: f.continuationToken, ...extra })
   beforeAll(async () => {
-    db = new DataSource(buildDatabaseOptions({ ...process.env, NODE_ENV: 'development', APP_ENV: 'development' }))
-    if (new URL(String(db.options.type === 'postgres' ? db.options.url : '')).pathname !== '/rwa_lat_dev') throw new Error('Requires local development database')
+    const isolated = Boolean(process.env.TEST_DATABASE_URL)
+    db = new DataSource(buildDatabaseOptions({ ...process.env, NODE_ENV: isolated ? 'test' : 'development', APP_ENV: isolated ? 'test' : 'development' }))
+    const target = new URL(String(db.options.type === 'postgres' ? db.options.url : ''))
+    if (!['localhost', '127.0.0.1', '[::1]'].includes(target.hostname)
+      || (isolated ? !target.pathname.endsWith('_test') : target.pathname !== '/rwa_lat_dev')) throw new Error('Requires local isolated test or development database')
     await db.initialize()
   })
   beforeEach(async () => {
@@ -172,6 +175,47 @@ suite('password authentication (real PostgreSQL, rollback only)', () => {
       .rejects.toMatchObject({ response: { code: 'AUTH_EMAIL_BIND_CONFLICT' } })
     expect(await runner.manager.getRepository(LoginIdentity).countBy({ userId })).toBe(0)
     expect(await runner.manager.getRepository(LoginIdentity).countBy({ userId: otherId })).toBe(1)
+  })
+  async function signedIn() {
+    const f = await flow(identity.loginPassword(email, password), 'email')
+    return await finish(f, { code: delivery.lastDemoCode(email, 'login')! }) as { token: string; sessionId: string }
+  }
+  const proof = (sessionId: string, extra: Record<string, unknown> = {}) => crypto.signState(JSON.stringify({
+    audience: 'rwa-lat-security-step-up', userId, sessionId, method: 'passkey', expiresAt: Date.now() + 60_000, ...extra,
+  }))
+  it('requires the current account and session proof before changing email or skipping password factors', async () => {
+    const session = await signedIn()
+    for (const token of ['invalid', proof('another-session'), proof(session.sessionId, { userId: randomUUID() }), proof(session.sessionId, { expiresAt: 0 })]) {
+      await expect(identity.changeEmail(session.token, `new-${email}`, token)).rejects.toMatchObject({ response: { code: 'STEP_UP_REQUIRED' } })
+      await expect(identity.managePassword(session.token, device, undefined, token)).rejects.toMatchObject({ response: { code: 'STEP_UP_REQUIRED' } })
+    }
+    const next = await flow(identity.managePassword(session.token, device, undefined, proof(session.sessionId)), 'password')
+    expect(await finish(next, { password: 'replacement password 789!' })).toEqual({ passwordChanged: true, requiresLogin: true })
+  })
+  it('changes email only after the new mailbox code, invalidates old sessions and refuses replay', async () => {
+    const session = await signedIn(), target = `new-${email}`
+    const previousRecovery = await runner.manager.getRepository(IdentityOneTimeToken).save({
+      id: randomUUID(), userId, purpose: 'account_recovery', tokenHash: crypto.hashToken('old-recovery'), expiresAt: new Date(Date.now() + 60_000), consumedAt: null,
+    })
+    const f = await flow(identity.changeEmail(session.token, target, proof(session.sessionId)), 'email')
+    await expect(finish(f, { code: 'invalid' })).rejects.toMatchObject({ response: { code: 'AUTH_CODE_INVALID' } })
+    expect((await runner.manager.getRepository(LoginIdentity).findOneBy({ userId }))?.identifierHash.equals(crypto.hashIdentifier(email))).toBe(true)
+    const code = delivery.lastDemoCode(target, 'login')!
+    expect(await finish(f, { code })).toEqual({ emailChanged: true, requiresLogin: true })
+    await expect(finish(f, { code })).rejects.toThrow()
+    await expect(identity.getSessionViewByToken(session.token)).rejects.toThrow()
+    expect((await runner.manager.getRepository(IdentityOneTimeToken).findOneBy({ id: previousRecovery.id }))?.consumedAt).not.toBeNull()
+    await expect(identity.loginPassword(email, password)).rejects.toThrow()
+    await flow(identity.loginPassword(target, password), 'email')
+  })
+  it('never merges an existing email account during an email change', async () => {
+    const session = await signedIn(), otherId = randomUUID(), target = `taken-${email}`
+    const encrypted = crypto.encrypt(target)
+    await runner.manager.getRepository(User).save({ id: otherId, status: 'active', locale: 'en' })
+    await runner.manager.getRepository(LoginIdentity).save({ id: randomUUID(), userId: otherId, kind: 'email', state: 'verified',
+      identifierHash: crypto.hashIdentifier(target), identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date() })
+    await expect(identity.changeEmail(session.token, target, proof(session.sessionId))).rejects.toMatchObject({ response: { code: 'AUTH_EMAIL_BIND_CONFLICT' } })
+    expect(await sessions()).toBe(1)
   })
   it('continues a verified OAuth signup after consent without repeating provider authorization', async () => {
     const exchange = jest.fn().mockResolvedValue({ subject: `provider-${randomUUID()}`, intent: 'login' })

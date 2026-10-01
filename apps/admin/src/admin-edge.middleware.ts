@@ -12,7 +12,7 @@ export class AdminRateLimiter {
     this.sweep(now)
     const global = this.consumeBucket(`global:${safeIp(input.ip)}`, 300, 60_000, now)
     if (!global.allowed) return { ...global, rule: 'global' }
-    if (input.method.toUpperCase() === 'POST' && input.path === '/v1/admin/auth/login') {
+    if (input.method.toUpperCase() === 'POST' && /^\/v1\/admin\/auth\/(login|totp-login|recovery\/(request|verify|confirm))$/.test(input.path)) {
       const login = this.consumeBucket(`login:${safeIp(input.ip)}`, 5, 60_000, now)
       return { ...login, rule: 'admin-login' }
     }

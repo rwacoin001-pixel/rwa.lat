@@ -206,7 +206,7 @@ export class DepositPoolService {
   }
 
   private async claimAvailableAddress(manager: { query: (query: string, parameters?: unknown[]) => Promise<unknown> }, network: WalletNetwork, userId: string) {
-    const rows = await manager.query(
+    const raw = await manager.query(
       `WITH candidate AS (
          SELECT id FROM app.deposit_pool_addresses
           WHERE network = $1 AND state = 'available'
@@ -220,7 +220,11 @@ export class DepositPoolService {
         WHERE target.id = candidate.id
        RETURNING target.id, target.address_ciphertext, target.encryption_key_version`,
       [network, userId],
-    ) as Array<Record<string, unknown>>
+    )
+    // TypeORM's PostgreSQL UPDATE result is [rows, affectedCount], unlike SELECT.
+    const rows = Array.isArray(raw) && raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === 'number'
+      ? raw[0] as Array<Record<string, unknown>>
+      : raw as Array<Record<string, unknown>>
     return rows[0] ?? null
   }
 

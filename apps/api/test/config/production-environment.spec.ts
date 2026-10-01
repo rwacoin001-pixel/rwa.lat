@@ -59,8 +59,9 @@ describe('production environment validation', () => {
     expect(() => validateEnvironment(production({ WALLET_EXECUTION_ENABLED: 'true' }))).toThrow(/forbidden/i)
   })
 
-  it('rejects Polymarket trading activation and non-HTTPS provider URLs', () => {
-    expect(() => validateEnvironment(production({ POLYMARKET_TRADING_ENABLED: 'true' }))).toThrow(/not installed/i)
+  it('allows the installed internal prediction flow and rejects non-HTTPS provider URLs', () => {
+    expect(validateEnvironment(production({ POLYMARKET_TRADING_ENABLED: 'true' })))
+      .toMatchObject({ POLYMARKET_TRADING_ENABLED: 'true' })
     expect(() => validateEnvironment(production({ POLYMARKET_GAMMA_URL: 'http://gamma.example.com' }))).toThrow(/HTTPS/i)
   })
 

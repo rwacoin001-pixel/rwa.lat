@@ -7,6 +7,9 @@ import { documentHtml, DocumentSnapshot } from './document-model'
 @Injectable()
 export class DocumentPdfRenderer {
   constructor(private readonly config: ConfigService) {}
+  get available(): boolean {
+    return (!!this.config.get<string>('DOCUMENT_PDF_SERVICE_URL') && (this.config.get<string>('DOCUMENT_PDF_SERVICE_SECRET')?.length ?? 0) >= 32) || !!this.executablePath
+  }
   get executablePath(): string | undefined {
     const configured = this.config.get<string>('DOCUMENT_PDF_EXECUTABLE_PATH')?.trim()
     if (configured) return existsSync(configured) ? configured : undefined
@@ -14,6 +17,19 @@ export class DocumentPdfRenderer {
     return ['C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe', 'C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe', '/usr/bin/chromium'].find(existsSync)
   }
   async render(snapshot: DocumentSnapshot): Promise<Buffer> {
+    const service = this.config.get<string>('DOCUMENT_PDF_SERVICE_URL')
+    if (service) {
+      const secret = this.config.get<string>('DOCUMENT_PDF_SERVICE_SECRET')
+      if (!secret || secret.length < 32) throw new ServiceUnavailableException('PDF_RENDERER_UNAVAILABLE')
+      const response = await fetch(new URL('/render', service), {
+        method: 'POST', headers: { authorization: `Bearer ${secret}`, 'content-type': 'text/html; charset=utf-8' },
+        body: documentHtml(snapshot), signal: AbortSignal.timeout(60_000), redirect: 'error',
+      })
+      if (!response.ok || response.headers.get('content-type') !== 'application/pdf') throw new Error('PDF_RENDERER_UNAVAILABLE')
+      const bytes = Buffer.from(await response.arrayBuffer())
+      if (bytes.length > 25 * 1024 * 1024 || bytes.subarray(0,5).toString() !== '%PDF-') throw new Error('PDF_OUTPUT_INVALID')
+      return bytes
+    }
     if (!this.executablePath) throw new ServiceUnavailableException('PDF_RENDERER_UNAVAILABLE')
     const puppeteer = (require('puppeteer-core') as {default:PuppeteerNode}).default
     const browser = await puppeteer.launch({ executablePath: this.executablePath, headless: true, timeout: 15_000,

@@ -85,7 +85,7 @@ export class AdminStorageService implements OnModuleDestroy {
     const secretAccessKey = config.get<string>('S3_SECRET_KEY')?.trim()
     if (!region || !accessKeyId || !secretAccessKey) {
       this.configError =
-        '对象存储已标记启用，但 S3_REGION / S3_ACCESS_KEY / S3_SECRET_KEY 未配置完整，存储功能暂不可用（请在 Render 补齐环境变量后重新部署）。'
+        '对象存储已启用，但 S3_REGION / S3_ACCESS_KEY / S3_SECRET_KEY 未配置完整，请补齐部署环境变量。'
       this.s3 = null
       return
     }
@@ -111,6 +111,7 @@ export class AdminStorageService implements OnModuleDestroy {
     }))
     return {
       enabled: this.enabled,
+      requireScan: this.config.get<string>('OBJECT_STORAGE_REQUIRE_SCAN') !== 'false',
       scanMode: this.scanMode,
       internalScanAvailable: this.scanMode === 'internal-basic',
       externalEndpoint: Boolean(this.config.get<string>('S3_ENDPOINT')?.trim()),
@@ -122,8 +123,10 @@ export class AdminStorageService implements OnModuleDestroy {
         : this.enabled
         ? this.scanMode === 'internal-basic'
           ? '对象存储已启用：预签名直传 + 内置基础校验（魔数/大小/校验和）。接入外部杀毒服务后可切换为 external 模式。'
-          : '对象存储已启用：预签名直传，等待外部扫描服务回调后可用于下载。'
-        : '对象存储尚未启用：请在 Render 配置 S3/R2 并设置 OBJECT_STORAGE_ENABLED=true。',
+          : this.config.get<string>('OBJECT_STORAGE_REQUIRE_SCAN') === 'false'
+            ? '对象存储已启用：待扫描文件临时允许读取，隔离或校验失败文件继续拦截。'
+            : '对象存储已启用：预签名直传，等待外部扫描服务回调后可用于下载。'
+        : '对象存储尚未启用：请配置 S3/R2 并设置 OBJECT_STORAGE_ENABLED=true。',
     }
   }
 
@@ -375,7 +378,9 @@ export class AdminStorageService implements OnModuleDestroy {
   async createDownload(objectId: string, adminId: string, disposition: 'inline' | 'attachment' = 'inline') {
     const s3 = this.requireClient()
     const object = await this.getObjectRow(objectId)
-    if (object.scan_status !== 'clean' || object.size_bytes === '0') {
+    const readable = object.scan_status === 'clean'
+      || (this.config.get<string>('OBJECT_STORAGE_REQUIRE_SCAN') === 'false' && object.scan_status === 'pending')
+    if (!readable || object.size_bytes === '0') {
       throw new ConflictException('文件尚未通过安全校验，暂不能下载或预览')
     }
     const cmd = new GetObjectCommand({
@@ -474,6 +479,8 @@ export class AdminStorageService implements OnModuleDestroy {
   }
 
   private physicalBucket(logicalBucket: string): string {
+    // Legacy imports persisted the configured physical bucket in object records.
+    if (Object.values(this.bucketMap).includes(logicalBucket)) return logicalBucket
     this.assertBucket(logicalBucket)
     return this.bucketMap[logicalBucket] ?? logicalBucket
   }

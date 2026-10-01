@@ -23,6 +23,7 @@ import type { YieldTerms } from '@/lib/yield-terms'
 import { StoragePicker } from '@/components/storage-picker'
 import { StorageUpload } from '@/components/storage-upload'
 import { YieldEditor } from './yield-editor'
+import { AutomaticQuoteEditor } from './automatic-quote-editor'
 
 const STATE_LABELS: Record<string, string> = { draft: '草稿', published: '已发布', suspended: '已暂停', retired: '已归档' }
 const STATE_BADGE: Record<string, 'softGray' | 'softGreen' | 'softAmber' | 'softRed'> = {
@@ -660,6 +661,7 @@ export function ProductEditor({
       </Card>
 
       {/* 报价 */}
+      <AutomaticQuoteEditor product={current} onSaved={updated => { setCurrent(updated); onChanged(); void loadRelated() }} />
       <Card>
         <CardHeader>
           <CardTitle>价格与报价</CardTitle>
@@ -741,7 +743,7 @@ export function ProductEditor({
                 onChange={(e) => setPriceForm({ ...priceForm, validUntil: e.target.value })}
               />
             </div>
-            <Button onClick={() => void addQuote()} disabled={busy === 'quote'}>
+            <Button onClick={() => void addQuote()} disabled={busy === 'quote' || !!current.quoteBinding}>
               {busy === 'quote' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}录入报价
             </Button>
           </div>

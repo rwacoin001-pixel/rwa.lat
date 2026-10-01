@@ -78,10 +78,7 @@ export default function SettingsPage() {
   return (
     <AdminLayout>
       <div className="space-y-5">
-        <div className="animate-rise">
-          <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">系统设置</h1>
-          <p className="mt-1 text-sm text-muted-foreground">管理员资料 · 权限 · 安全与会话 · 系统状态</p>
-        </div>
+
 
         <div className="grid gap-4 lg:grid-cols-3">
           {/* ── 左列（2/3）────────────────────────────── */}

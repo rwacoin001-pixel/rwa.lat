@@ -14,6 +14,7 @@
 .top > svg:last-child { margin-inline-start: auto; color: var(--home-muted); }
 .icon { display: grid; place-items: center; width: 34px; height: 34px; flex: none; border: 1px solid var(--home-line); border-radius: 11px; color: var(--home-accent); background: color-mix(in srgb,var(--home-accent) 9%,rgba(255,255,255,.25)); }
 .category { color: var(--home-muted); font-size: 10px; font-weight: 700; letter-spacing: .1em; }
+.mt { padding: 2px 7px; border: 1px solid var(--home-line); border-radius: 7px; color: var(--home-muted); font-size: 9px; font-weight: 600; letter-spacing: .04em; white-space: nowrap; }
 .question { position: relative; color: var(--home-ink); font-size: 15px; font-weight: 640; line-height: 1.35; letter-spacing: -.015em; }
 .outcomes { display: grid; gap: 7px; }
 .outcome { min-height: 38px; padding: 0 11px; border: 1px solid color-mix(in srgb,var(--home-line) 78%,transparent); border-radius: 12px; background: color-mix(in srgb,var(--home-glass-deep) 68%,transparent); color: var(--home-ink); font-size: 12px; }

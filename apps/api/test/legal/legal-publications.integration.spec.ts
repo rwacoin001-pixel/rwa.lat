@@ -29,6 +29,8 @@ suite('Legal publication and registration boundaries in an owned disposable data
   let db: DataSource, admin: AdminLegalService, app: INestApplication, base: string
   let adminApp: AdminApplication, adminBase: string
   let codes: EmailCodeService, delivery: IdentityDeliveryService
+  let identity: IdentityService
+  const oauthExchange = jest.fn()
   const actor = randomUUID()
   const config = new ConfigService({ APP_ENV: 'production' })
   const content = (text = 'Verified business text') => ({ title:'Terms',effectiveDate:'2026-09-18',sections:[{title:'Scope',body:text}] })
@@ -40,8 +42,8 @@ suite('Legal publication and registration boundaries in an owned disposable data
     admin = new AdminLegalService(new ConfigService({ CORE_DATABASE_URL:process.env.TEST_DATABASE_URL }))
     const identityConfig=new ConfigService({ APP_ENV:'production',AUTH_ADAPTER:'demo',IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64) })
     const crypto=new IdentityCrypto(identityConfig);delivery=new IdentityDeliveryService(identityConfig)
-    const identity=new IdentityService(db.getRepository(User),db.getRepository(LoginIdentity),db.getRepository(Device),db.getRepository(Session),
-      db.getRepository(IdentityOneTimeToken),db.getRepository(PasskeyCredential),db.getRepository(IdentityPasskeyChallenge),crypto,delivery,{} as OAuthProviderService,identityConfig,db)
+    identity=new IdentityService(db.getRepository(User),db.getRepository(LoginIdentity),db.getRepository(Device),db.getRepository(Session),
+      db.getRepository(IdentityOneTimeToken),db.getRepository(PasskeyCredential),db.getRepository(IdentityPasskeyChallenge),crypto,delivery,{exchange:oauthExchange} as unknown as OAuthProviderService,identityConfig,db)
     codes=new EmailCodeService(db,crypto,delivery,identity)
     const module = await Test.createTestingModule({ controllers:[LegalController,IdentityController], providers:[
       {provide:DataSource,useValue:db},
@@ -115,7 +117,9 @@ suite('Legal publication and registration boundaries in an owned disposable data
     const required=(await (await fetch(`${base}/v1/auth/consent-requirements`)).json()).required
     const address=`legal-${randomUUID()}@example.test`
     const challenge=await codes.request({email:address,intent:'register',consents:required.map((r:any)=>({...r,accepted:true}))})
-    const session=await codes.confirm({email:address,intent:'register',challengeId:challenge.challengeId,code:delivery.lastDemoCode(address,'register')!})
+    const verification=await codes.confirm({email:address,intent:'register',challengeId:challenge.challengeId,code:delivery.lastDemoCode(address,'register')!}).catch(error=>error.response)
+    expect(verification).toMatchObject({code:'AUTH_FLOW_REQUIRED',authFlow:{step:'password'}})
+    const session=await identity.completeAuthFlow({continuationToken:verification.authFlow.continuationToken,password:'isolated legal test password 123!'}) as {userId:string}
     const stored=await db.query('SELECT document_version FROM app.consents WHERE user_id=$1 ORDER BY document_version',[session.userId])
     expect(stored.map((r:any)=>r.document_version)).toEqual(['privacy-1','terms-1'])
     await publish('terms',content('Updated'))
@@ -124,6 +128,23 @@ suite('Legal publication and registration boundaries in an owned disposable data
     expect((await codes.confirm({email:address,intent:'login',challengeId:login.challengeId,code:delivery.lastDemoCode(address,'login')!})).userId).toBe(session.userId)
     expect(await db.query('SELECT id FROM app.consents WHERE user_id=$1',[session.userId])).toHaveLength(2)
     await expect(codes.request({email:`new-${randomUUID()}@example.test`,intent:'register',consents:required.map((r:any)=>({...r,accepted:true}))})).rejects.toMatchObject({response:{code:'AUTH_CONSENT_VERSION_MISMATCH'}})
+  })
+  it.each(['google','x'] as const)('requires explicit consent once for a new %s user and keeps returning login direct',async provider => {
+    await publish('terms');await publish('privacy')
+    const subject=randomUUID()
+    oauthExchange.mockResolvedValue({subject,intent:'login',locale:'zh-CN'})
+    const flowError=await identity.exchangeOAuthCode(provider,'verified-fixture-code','fixture-state').catch(error=>error)
+    expect(flowError.response).toMatchObject({code:'AUTH_FLOW_REQUIRED',authFlow:{step:'consent'}})
+    const token=flowError.response.authFlow.continuationToken
+    expect(await db.query('SELECT id FROM app.login_identities WHERE kind=$1 AND identifier_hash=$2',[provider,new IdentityCrypto(new ConfigService({IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64)})).hashIdentifier(`${provider}:${subject}`)])).toHaveLength(0)
+    await expect(identity.completeAuthFlow({continuationToken:token})).rejects.toThrow()
+    const required=await loadRegistrationConsents(db,config)
+    const session=await identity.completeAuthFlow({continuationToken:token,consents:required.map(r=>({...r,accepted:true}))}) as {userId:string;token:string}
+    expect(await db.query('SELECT id FROM app.consents WHERE user_id=$1 AND granted=true',[session.userId])).toHaveLength(2)
+    await expect(identity.completeAuthFlow({continuationToken:token,consents:required.map(r=>({...r,accepted:true}))})).rejects.toThrow()
+    await publish('terms',content('Later version'))
+    await expect(identity.exchangeOAuthCode(provider,'next-verified-code','next-state')).resolves.toMatchObject({userId:session.userId})
+    expect(await db.query('SELECT id FROM app.consents WHERE user_id=$1',[session.userId])).toHaveLength(2)
   })
   it('serializes publication against a registration transaction that has already read the versions',async () => {
     await publish('terms'); await publish('privacy')

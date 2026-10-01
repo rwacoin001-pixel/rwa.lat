@@ -150,11 +150,8 @@ export default function FilesPage() {
   return (
     <AdminLayout>
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">文件管理</h1>
-          <p className="mt-1 text-sm text-muted-foreground">产品媒体、披露文件与附件的统一文件库（Cloudflare R2 直传 + 安全校验）</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+
         <div className="flex items-center gap-2">
           <StorageUpload
             bucket="rwa-assets"
@@ -328,7 +325,7 @@ export default function FilesPage() {
                       <td className="px-4 py-3 text-text-faint">{new Date(item.uploadedAt).toLocaleString('zh-CN')}</td>
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-0.5">
-                          {item.scanStatus === 'clean' ? (
+                          {(item.scanStatus === 'clean' || (readiness?.requireScan === false && item.scanStatus === 'pending')) ? (
                             <>
                               <Button variant="ghost" size="icon" className="h-8 w-8" title="预览" onClick={() => void openObject(item, 'inline')} disabled={busyId === item.id}>
                                 <Eye className="h-4 w-4" />

@@ -62,8 +62,8 @@ export default function ContinueAuthPage() {
         if (result.error.code.includes('CONSENT')) { setAgreed(false); setRequirements(null); setAttempt(n => n + 1) }
         return
       }
-      // Accepting terms on a first OAuth/wallet visit is how a new account is born.
-      if (flow.step === 'consent') markNewAccount(sessionStorage, true)
+      // New OAuth users have finished registration here and go straight home.
+      if (flow.step === 'consent') markNewAccount(sessionStorage, false)
       clearAuthFlow()
       setValue(''); setRepeat('')
       if (result.data.requiresLogin) { clearSession(); window.location.replace('/login'); return }
@@ -71,7 +71,11 @@ export default function ContinueAuthPage() {
       saveSession(result.data.token, { userId: result.data.userId, sessionId: result.data.sessionId })
       const oauth = sessionStorage.getItem('rwa.auth-oauth') === '1'
       sessionStorage.removeItem('rwa.auth-oauth')
-      window.location.replace(consumeAuthDestination(sessionStorage, location.origin, oauth))
+      if (flow.step === 'consent') {
+        sessionStorage.removeItem('rwa.return-to')
+        consumeAuthDestination(sessionStorage, location.origin, oauth, true)
+        window.location.replace('/home')
+      } else window.location.replace(consumeAuthDestination(sessionStorage, location.origin, oauth))
     } finally { locked.current = false; setBusy(false) }
   }
   const resend = async () => {

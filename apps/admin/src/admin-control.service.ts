@@ -11,6 +11,7 @@ import { DataSource } from 'typeorm'
 import { Pool, type QueryResultRow } from 'pg'
 import {
   AssetClassInputDto,
+  AutomaticQuoteBindingDto,
   CreateProductDto,
   DisclosureInputDto,
   PriceQuoteInputDto,
@@ -150,12 +151,16 @@ export class AdminControlService implements OnModuleDestroy {
              COALESCE(p.media_refs_json, '[]'::jsonb) AS "mediaRefs",
              q.unit_price_atomic_amount AS "latestPriceAtomicAmount",
              q.currency AS "latestPriceCurrency", q.valid_until AS "priceValidUntil",
-             q.source AS "priceSource"
+             q.source AS "priceSource", p.quote_binding_json AS "quoteBinding",
+             p.quote_sync_checked_at AS "quoteSyncCheckedAt", p.quote_sync_error AS "quoteSyncError"
         FROM app.products p
         LEFT JOIN LATERAL (
           SELECT unit_price_atomic_amount, currency, valid_until, source
             FROM app.price_quotes
            WHERE product_id = p.id
+             AND (p.quote_binding_json IS NULL OR (
+               p.quote_binding_json->>'enabled'='true' AND source='automatic:defillama:binding:'
+                 ||(p.quote_binding_json->>'bindingId')))
            ORDER BY captured_at DESC
            LIMIT 1
         ) q ON true
@@ -177,7 +182,9 @@ export class AdminControlService implements OnModuleDestroy {
              COALESCE(p.yield_terms_json, '{}'::jsonb) AS "yieldTerms",
              COALESCE(p.risk_disclosure_json, '{}'::jsonb) AS "riskDisclosure",
              p.cover_storage_ref AS "coverStorageRef",
-             COALESCE(p.media_refs_json, '[]'::jsonb) AS "mediaRefs"
+             COALESCE(p.media_refs_json, '[]'::jsonb) AS "mediaRefs",
+             p.quote_binding_json AS "quoteBinding", p.quote_sync_checked_at AS "quoteSyncCheckedAt",
+             p.quote_sync_error AS "quoteSyncError"
         FROM app.products p WHERE p.id = $1
     `, [id])
     if (!rows[0]) throw new NotFoundException('Product was not found')
@@ -263,7 +270,10 @@ export class AdminControlService implements OnModuleDestroy {
     await this.getProduct(id)
     if (input.state === 'published') {
       const quotes = await this.query<{ count: string }>(
-        `SELECT COUNT(*)::text AS count FROM app.price_quotes WHERE product_id = $1 AND valid_until > now()`,
+        `SELECT COUNT(*)::text AS count FROM app.price_quotes q JOIN app.products p ON p.id=q.product_id
+          WHERE q.product_id=$1 AND q.valid_until>now() AND q.captured_at<=now()
+          AND (p.quote_binding_json IS NULL OR (p.quote_binding_json->>'enabled'='true'
+            AND q.source='automatic:defillama:binding:'||(p.quote_binding_json->>'bindingId')))`,
         [id],
       )
       if (Number(quotes[0]?.count ?? 0) < 1) {
@@ -292,8 +302,29 @@ export class AdminControlService implements OnModuleDestroy {
     `, [productId])
   }
 
+  async saveAutomaticQuote(productId: string, input: AutomaticQuoteBindingDto, adminId: string) {
+    await this.getProduct(productId)
+    if (input.chain === 'coingecko') throw new ConflictException('必须使用链和代币合约，不能使用币种目录代替')
+    if (![input.issuerName,input.tokenName,input.tokenSymbol].every(value => value.trim())) {
+      throw new ConflictException('发行方和代币名称、符号不能为空')
+    }
+    const binding = {
+      revision: input.expectedRevision + 1, bindingId: randomUUID(), enabled: input.enabled,
+      issuerName: input.issuerName.trim(), tokenName: input.tokenName.trim(), tokenSymbol: input.tokenSymbol.trim(),
+      chain: input.chain, contractAddress: input.contractAddress,
+    }
+    const rows = await this.query(`UPDATE app.products SET quote_binding_json=$2::jsonb,
+      quote_sync_checked_at=NULL,quote_sync_error=NULL,updated_at=now(),updated_by=$3
+      WHERE id=$1 AND COALESCE((quote_binding_json->>'revision')::integer,0)=$4 RETURNING id`,
+      [productId,JSON.stringify(binding),adminId,input.expectedRevision])
+    if (!rows.length) throw new ConflictException('绑定已被其他管理员修改，请刷新后再保存')
+    await this.audit(adminId, 'admin.catalog.automatic_quote_bound', 'product', productId, binding)
+    return this.getProduct(productId)
+  }
+
   async addQuote(productId: string, input: PriceQuoteInputDto, adminId: string) {
-    const product = await this.getProduct(productId) as { assetCode: string }
+    const product = await this.getProduct(productId) as { assetCode: string; quoteBinding?: unknown }
+    if (product.quoteBinding) throw new ConflictException('已绑定自动行情，不能用人工报价替代该代币价格')
     const validUntil = new Date(input.validUntil)
     if (!Number.isFinite(validUntil.getTime()) || validUntil <= new Date()) {
       throw new ConflictException('Price quote validity must be in the future')
@@ -364,16 +395,16 @@ export class AdminControlService implements OnModuleDestroy {
     return SWITCH_DEFINITIONS.map((definition) => ({
       ...definition,
       current: byKey.get(definition.key) ?? null,
-      environmentReady: this.environmentReady(definition.environmentKey),
+      environmentReady: this.environmentReady(definition.environmentKey, definition.key),
       canEnable: definition.key !== 'wallet.withdrawals.execution'
-        && this.environmentReady(definition.environmentKey),
+        && this.environmentReady(definition.environmentKey, definition.key),
     }))
   }
 
   async updateSwitch(switchKey: string, input: SwitchInputDto, adminId: string) {
     const definition = SWITCH_DEFINITIONS.find((item) => item.key === switchKey)
     if (!definition) throw new NotFoundException('Operational switch was not found')
-    if (input.enabled && (definition.key === 'wallet.withdrawals.execution' || !this.environmentReady(definition.environmentKey))) {
+    if (input.enabled && (definition.key === 'wallet.withdrawals.execution' || !this.environmentReady(definition.environmentKey, definition.key))) {
       throw new ConflictException({
         code: 'OPERATIONAL_SWITCH_ENVIRONMENT_BLOCKED',
         message: definition.key === 'wallet.withdrawals.execution'
@@ -583,10 +614,10 @@ export class AdminControlService implements OnModuleDestroy {
     return JSON.stringify(value ?? {})
   }
 
-  private environmentReady(environmentKey: string) {
-    return this.coreConfigured
-      && this.config.get<string>('ADMIN_LIVE_OPERATIONS_ENABLED') === 'true'
-      && this.config.get<string>(environmentKey) === 'true'
+  private environmentReady(environmentKey: string, switchKey: string) {
+    if (switchKey === 'wallet.deposits.crediting') return this.coreConfigured
+    const coreReady = this.coreConfigured && this.config.get<string>(environmentKey) === 'true'
+    return coreReady && this.config.get<string>('ADMIN_LIVE_OPERATIONS_ENABLED') === 'true'
   }
 
   private async query<T extends QueryResultRow = Record<string, unknown>>(text: string, values: unknown[] = []): Promise<T[]> {

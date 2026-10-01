@@ -34,9 +34,9 @@ export type FundsCopy = {
 
 const en: FundsCopy = {
   stepUp: {
-    title: 'Confirm it’s you', body: 'Moving funds needs a fresh security check. The approval lasts 5 minutes on this session only.',
+    title: 'Confirm it’s you', body: 'Verify to continue.',
     totp: 'Authenticator', recovery: 'Recovery code', passkey: 'Passkey', totpLabel: '6-digit code', recoveryLabel: 'Recovery code', passkeyBody: 'Use the passkey saved on this device.', passkeyCta: 'Use passkey',
-    verify: 'Verify', verifying: 'Verifying…', cancel: 'Cancel', noFactors: 'No security factor yet', noFactorsBody: 'Set up an authenticator app or a passkey before moving funds.', openSecurity: 'Open security settings', loadError: 'Could not load your security factors',
+    verify: 'Verify', verifying: 'Verifying…', cancel: 'Cancel', noFactors: 'No security factor yet', noFactorsBody: 'Set up a passkey or authenticator app first.', openSecurity: 'Open security settings', loadError: 'Could not load your security factors',
     required: 'Requires a fresh security check', waived: 'Local demo: the server waives the security check',
   },
   errors: {
@@ -74,9 +74,9 @@ const en: FundsCopy = {
 
 const zh: FundsCopy = {
   stepUp: {
-    title: '确认是你本人', body: '资金转出需要重新验证安全因子。验证有效期 5 分钟，仅限当前会话。',
+    title: '确认是你本人', body: '验证后继续。',
     totp: '验证器', recovery: '恢复码', passkey: '通行密钥', totpLabel: '6 位验证码', recoveryLabel: '恢复码', passkeyBody: '使用保存在本设备上的通行密钥。', passkeyCta: '使用通行密钥',
-    verify: '验证', verifying: '验证中…', cancel: '取消', noFactors: '尚未设置安全因子', noFactorsBody: '转出资金前，请先设置验证器应用或通行密钥。', openSecurity: '前往安全设置', loadError: '无法加载安全因子',
+    verify: '验证', verifying: '验证中…', cancel: '取消', noFactors: '尚未设置安全因子', noFactorsBody: '请先绑定 Passkey 或动态验证码。', openSecurity: '前往安全设置', loadError: '无法加载安全因子',
     required: '需要重新进行安全验证', waived: '本地演示：服务端已豁免安全验证',
   },
   errors: {
@@ -114,9 +114,9 @@ const zh: FundsCopy = {
 
 const hi: FundsCopy = {
   stepUp: {
-    title: 'पुष्टि करें कि यह आप हैं', body: 'फंड भेजने के लिए नई सुरक्षा जाँच चाहिए। यह स्वीकृति केवल इस सत्र में 5 मिनट तक मान्य है।',
+    title: 'पुष्टि करें कि यह आप हैं', body: 'जारी रखने के लिए सत्यापित करें।',
     totp: 'ऑथेंटिकेटर', recovery: 'रिकवरी कोड', passkey: 'पासकी', totpLabel: '6 अंकों का कोड', recoveryLabel: 'रिकवरी कोड', passkeyBody: 'इस डिवाइस पर सहेजी गई पासकी का उपयोग करें।', passkeyCta: 'पासकी का उपयोग करें',
-    verify: 'सत्यापित करें', verifying: 'सत्यापित हो रहा है…', cancel: 'रद्द करें', noFactors: 'अभी कोई सुरक्षा फ़ैक्टर नहीं', noFactorsBody: 'फंड भेजने से पहले ऑथेंटिकेटर ऐप या पासकी सेट करें।', openSecurity: 'सुरक्षा सेटिंग खोलें', loadError: 'सुरक्षा फ़ैक्टर लोड नहीं हो सके',
+    verify: 'सत्यापित करें', verifying: 'सत्यापित हो रहा है…', cancel: 'रद्द करें', noFactors: 'अभी कोई सुरक्षा फ़ैक्टर नहीं', noFactorsBody: 'पहले पासकी या ऑथेंटिकेटर ऐप सेट करें।', openSecurity: 'सुरक्षा सेटिंग खोलें', loadError: 'सुरक्षा फ़ैक्टर लोड नहीं हो सके',
     required: 'नई सुरक्षा जाँच आवश्यक', waived: 'लोकल डेमो: सर्वर सुरक्षा जाँच माफ़ करता है',
   },
   errors: {
@@ -154,9 +154,9 @@ const hi: FundsCopy = {
 
 const es: FundsCopy = {
   stepUp: {
-    title: 'Confirma que eres tú', body: 'Mover fondos requiere una verificación de seguridad reciente. La aprobación dura 5 minutos y solo en esta sesión.',
+    title: 'Confirma que eres tú', body: 'Verifica para continuar.',
     totp: 'Autenticador', recovery: 'Código de recuperación', passkey: 'Llave de acceso', totpLabel: 'Código de 6 dígitos', recoveryLabel: 'Código de recuperación', passkeyBody: 'Usa la llave de acceso guardada en este dispositivo.', passkeyCta: 'Usar llave de acceso',
-    verify: 'Verificar', verifying: 'Verificando…', cancel: 'Cancelar', noFactors: 'Aún no hay factor de seguridad', noFactorsBody: 'Configura una app de autenticación o una llave de acceso antes de mover fondos.', openSecurity: 'Abrir ajustes de seguridad', loadError: 'No se pudieron cargar tus factores de seguridad',
+    verify: 'Verificar', verifying: 'Verificando…', cancel: 'Cancelar', noFactors: 'Aún no hay factor de seguridad', noFactorsBody: 'Configura primero una llave de acceso o una app de autenticación.', openSecurity: 'Abrir ajustes de seguridad', loadError: 'No se pudieron cargar tus factores de seguridad',
     required: 'Requiere una verificación de seguridad reciente', waived: 'Demo local: el servidor omite la verificación',
   },
   errors: {
@@ -194,9 +194,9 @@ const es: FundsCopy = {
 
 const ar: FundsCopy = {
   stepUp: {
-    title: 'أكِّد هويتك', body: 'تحويل الأموال يتطلب تحققًا أمنيًا حديثًا. تستمر الموافقة 5 دقائق في هذه الجلسة فقط.',
+    title: 'أكِّد هويتك', body: 'تحقق للمتابعة.',
     totp: 'تطبيق المصادقة', recovery: 'رمز الاسترداد', passkey: 'مفتاح المرور', totpLabel: 'رمز من 6 أرقام', recoveryLabel: 'رمز الاسترداد', passkeyBody: 'استخدم مفتاح المرور المحفوظ على هذا الجهاز.', passkeyCta: 'استخدام مفتاح المرور',
-    verify: 'تحقق', verifying: 'جارٍ التحقق…', cancel: 'إلغاء', noFactors: 'لا يوجد عامل أمان بعد', noFactorsBody: 'اضبط تطبيق مصادقة أو مفتاح مرور قبل تحويل الأموال.', openSecurity: 'فتح إعدادات الأمان', loadError: 'تعذر تحميل عوامل الأمان',
+    verify: 'تحقق', verifying: 'جارٍ التحقق…', cancel: 'إلغاء', noFactors: 'لا يوجد عامل أمان بعد', noFactorsBody: 'اضبط مفتاح مرور أو تطبيق مصادقة أولاً.', openSecurity: 'فتح إعدادات الأمان', loadError: 'تعذر تحميل عوامل الأمان',
     required: 'يتطلب تحققًا أمنيًا حديثًا', waived: 'عرض محلي: الخادم يعفي من التحقق الأمني',
   },
   errors: {
@@ -234,9 +234,9 @@ const ar: FundsCopy = {
 
 const fr: FundsCopy = {
   stepUp: {
-    title: 'Confirmez votre identité', body: 'Sortir des fonds exige une vérification de sécurité récente. L’autorisation dure 5 minutes, sur cette session uniquement.',
+    title: 'Confirmez votre identité', body: 'Vérifiez pour continuer.',
     totp: 'Authentificateur', recovery: 'Code de secours', passkey: 'Clé d’accès', totpLabel: 'Code à 6 chiffres', recoveryLabel: 'Code de secours', passkeyBody: 'Utilisez la clé d’accès enregistrée sur cet appareil.', passkeyCta: 'Utiliser la clé d’accès',
-    verify: 'Vérifier', verifying: 'Vérification…', cancel: 'Annuler', noFactors: 'Aucun facteur de sécurité', noFactorsBody: 'Configurez une application d’authentification ou une clé d’accès avant de sortir des fonds.', openSecurity: 'Ouvrir la sécurité', loadError: 'Impossible de charger vos facteurs de sécurité',
+    verify: 'Vérifier', verifying: 'Vérification…', cancel: 'Annuler', noFactors: 'Aucun facteur de sécurité', noFactorsBody: 'Configurez d’abord une clé d’accès ou une application d’authentification.', openSecurity: 'Ouvrir la sécurité', loadError: 'Impossible de charger vos facteurs de sécurité',
     required: 'Vérification de sécurité récente requise', waived: 'Démo locale : le serveur dispense de la vérification',
   },
   errors: {
@@ -274,9 +274,9 @@ const fr: FundsCopy = {
 
 const pt: FundsCopy = {
   stepUp: {
-    title: 'Confirme que é você', body: 'Movimentar fundos exige uma verificação de segurança recente. A aprovação dura 5 minutos, só nesta sessão.',
+    title: 'Confirme que é você', body: 'Verifique para continuar.',
     totp: 'Autenticador', recovery: 'Código de recuperação', passkey: 'Chave de acesso', totpLabel: 'Código de 6 dígitos', recoveryLabel: 'Código de recuperação', passkeyBody: 'Use a chave de acesso salva neste dispositivo.', passkeyCta: 'Usar chave de acesso',
-    verify: 'Verificar', verifying: 'Verificando…', cancel: 'Cancelar', noFactors: 'Nenhum fator de segurança ainda', noFactorsBody: 'Configure um app autenticador ou uma chave de acesso antes de movimentar fundos.', openSecurity: 'Abrir segurança', loadError: 'Não foi possível carregar seus fatores de segurança',
+    verify: 'Verificar', verifying: 'Verificando…', cancel: 'Cancelar', noFactors: 'Nenhum fator de segurança ainda', noFactorsBody: 'Configure primeiro uma chave de acesso ou um app autenticador.', openSecurity: 'Abrir segurança', loadError: 'Não foi possível carregar seus fatores de segurança',
     required: 'Exige uma verificação de segurança recente', waived: 'Demo local: o servidor dispensa a verificação',
   },
   errors: {

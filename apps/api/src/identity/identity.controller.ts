@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Header, Headers, Param, Pos
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { IdentityService } from './identity.service'
 import { RegisterEmailDto } from './dto/register-email.dto'
-import { PasswordLoginDto, PasswordManageDto, AuthFlowCompleteDto, AuthFlowTokenDto } from './dto/password-auth.dto'
+import { PasswordLoginDto, PasswordManageDto, ChangeEmailDto, AuthFlowCompleteDto, AuthFlowTokenDto } from './dto/password-auth.dto'
 import { LoginEmailDto } from './dto/login-email.dto'
 import { PasskeyLoginChallengeDto, PasskeyLoginVerifyDto } from './dto/passkey-login.dto'
 import { VerifyEmailDto } from './dto/verify-email.dto'
@@ -38,7 +38,15 @@ export class IdentityController {
   managePassword(@Headers('authorization') authorization: string | undefined, @Body() dto: PasswordManageDto) {
     const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
     if (!token) throw new UnauthorizedException({ code: 'AUTHENTICATION_REQUIRED', message: 'Sign in first.' })
-    return this.identity.managePassword(token, dto.device, dto.email)
+    return this.identity.managePassword(token, dto.device, dto.email, dto.reauthentication)
+  }
+
+  @Post('email/change')
+  @ApiOperation({ summary: 'Require recent verification and send a code to the new sign-in email' })
+  changeEmail(@Headers('authorization') authorization: string | undefined, @Body() dto: ChangeEmailDto) {
+    const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
+    if (!token) throw new UnauthorizedException({ code: 'AUTH_SESSION_REQUIRED', message: 'Authentication required.' })
+    return this.identity.changeEmail(token, dto.email, dto.reauthentication)
   }
 
   @Post('email/lookup')

@@ -76,6 +76,17 @@ const batches = [
     'test/wallet/tron-address.spec.ts',
     'test/wallet/tron-signer.spec.ts',
   ],
+  [
+    'test/ai/ai-chat-grounding.spec.ts',
+    'test/ai/ai-customer-tools.spec.ts',
+    'test/ai/ai-grounding.spec.ts',
+    'test/ai/ai-knowledge-policy.spec.ts',
+    'test/ai/ai-mandate-policy.spec.ts',
+    'test/compliance/native-kyc.spec.ts',
+    'test/identity/passkey-account-binding.spec.ts',
+    'test/security/reauthentication.spec.ts',
+    'test/wallet/deposit-pool.service.spec.ts',
+  ],
 ]
 
 const jestBin = resolve('node_modules/jest/bin/jest.js')

@@ -14,6 +14,7 @@ describe('CatalogService (unit)', () => {
   let service: CatalogService
   let productRepo: Repository<Product>
   let quoteRepo: Repository<PriceQuote>
+  let disclosureRepo: Repository<DisclosureFile>
 
   const mockRepo = () => ({
     find: jest.fn(),
@@ -36,6 +37,7 @@ describe('CatalogService (unit)', () => {
     service = module.get(CatalogService)
     productRepo = module.get(getRepositoryToken(Product))
     quoteRepo = module.get(getRepositoryToken(PriceQuote))
+    disclosureRepo = module.get(getRepositoryToken(DisclosureFile))
   })
 
   it('getProduct throws when product missing', async () => {
@@ -124,4 +126,25 @@ describe('CatalogService (unit)', () => {
       code: CATALOG_ERROR_CODES.PRODUCT_NOT_PUBLISHED,
     })
   })
+
+  it('filters quotes by the current binding instead of using a fresh manual or former-token price', async () => {
+    const binding={enabled:true,chain:'ethereum',bindingId:'new-binding'}
+    productRepo.findOne=jest.fn().mockResolvedValue({id:'p1',asset_code:'RWA',state:'published',quote_binding_json:binding})
+    quoteRepo.findOne=jest.fn().mockResolvedValue(null)
+    await expect(service.requireOrderableQuote('p1',now())).rejects.toMatchObject({code:CATALOG_ERROR_CODES.QUOTE_STALE})
+    expect(quoteRepo.findOne).toHaveBeenCalledWith(expect.objectContaining({where:{product_id:'p1',asset_code:'RWA',source:'automatic:defillama:binding:new-binding'}}))
+  })
+  it('blocks a disabled automatic binding without looking up another quote', async () => {
+    productRepo.findOne=jest.fn().mockResolvedValue({id:'p1',state:'published',quote_binding_json:{enabled:false}})
+    await expect(service.requireOrderableQuote('p1',now())).rejects.toMatchObject({code:CATALOG_ERROR_CODES.QUOTE_STALE})
+    expect(quoteRepo.findOne).not.toHaveBeenCalled()
+  })
+  it('exposes a guarded disclosure route for legacy asset references but never draft products', async () => {
+    disclosureRepo.find = jest.fn().mockResolvedValue([{id:'d1',storage_ref:'rwa-lat-assets/legacy.pdf',published_at:new Date()}])
+    productRepo.findOne = jest.fn().mockResolvedValue({id:'p1',state:'published'})
+    expect((await service.listDisclosures('p1'))[0]).toMatchObject({url:'/v1/platform/products/p1/disclosures/d1'})
+    productRepo.findOne = jest.fn().mockResolvedValue({id:'p1',state:'draft'})
+    expect((await service.listDisclosures('p1'))[0]).toMatchObject({url:null})
+  })
+
 })

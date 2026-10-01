@@ -13,7 +13,8 @@ suite('Knowledge publishing in dedicated AI database', () => {
 
   beforeAll(async () => {
     const url = new URL(process.env.TEST_DATABASE_URL!)
-    if (url.hostname !== '127.0.0.1' || url.pathname !== '/rwa_ai_customer_20260930_test') throw new Error('This suite requires its dedicated temporary AI database')
+    const ownedCluster=url.pathname.startsWith('/rwa_lat_codex_')&&url.pathname.endsWith('_test')
+    if (url.hostname !== '127.0.0.1' || (!ownedCluster&&url.pathname !== '/rwa_ai_customer_20260930_test')) throw new Error('This suite requires its dedicated temporary AI database')
     database = new DataSource(buildDatabaseOptions({ ...process.env, APP_ENV: 'test', NODE_ENV: 'test' }))
     await database.initialize()
     await database.runMigrations()

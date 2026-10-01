@@ -1754,8 +1754,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     }
     reset()
     const frame = window.requestAnimationFrame(reset)
-    const timer = window.setTimeout(reset, 140)
-    return () => { window.cancelAnimationFrame(frame); window.clearTimeout(timer) }
+    return () => { window.cancelAnimationFrame(frame) }
   }, [screen])
   // 丝滑切换：URL 同步用 pushState（不触发 Next 路由重挂载）
   const syncUrl = (path: string) => {
@@ -1857,10 +1856,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     syncUrl(nextPath)
     // These are two modes of the same form; keep its viewport and video stable.
     if ((screen === 'login' || screen === 'register') && (next === 'login' || next === 'register')) return
-    const reset = () => window.scrollTo(0, 0)
-    window.setTimeout(reset, 0)
-    window.setTimeout(reset, 160)
-    window.setTimeout(reset, 320)
+    // The screen effect owns scroll reset; do not interrupt later user gestures.
   }
   const closeOverlay = () => {
     const storedBase = window.sessionStorage.getItem('rwa-overlay-base') as Screen | null

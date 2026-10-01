@@ -59,6 +59,8 @@ export const adminApi = {
   updateProduct: (id: string, data: Partial<ProductInput>) => request<AdminProduct>(`/control/products/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(data) }),
   setProductState: (id: string, state: ProductState) => request<AdminProduct>(`/control/products/${encodeURIComponent(id)}/state`, { method: 'PUT', body: JSON.stringify({ state }) }),
   listPrices: (id: string) => request<PriceQuote[]>(`/control/products/${encodeURIComponent(id)}/prices`),
+  saveAutomaticQuote: (id: string, data: Omit<AutomaticQuoteBinding, 'revision' | 'bindingId'> & { expectedRevision: number }) =>
+    request<AdminProduct>(`/control/products/${encodeURIComponent(id)}/automatic-quote`, { method: 'PUT', body: JSON.stringify(data) }),
   addPrice: (id: string, data: PriceInput) => request<PriceQuote[]>(`/control/products/${encodeURIComponent(id)}/prices`, { method: 'POST', body: JSON.stringify(data) }),
   listDisclosures: (id: string) => request<Disclosure[]>(`/control/products/${encodeURIComponent(id)}/disclosures`),
   addDisclosure: (id: string, data: DisclosureInput) => request<Disclosure[]>(`/control/products/${encodeURIComponent(id)}/disclosures`, { method: 'POST', body: JSON.stringify(data) }),
@@ -113,6 +115,9 @@ export type ProductInput = {
   coverStorageRef?: string | null
 }
 export type AdminProduct = ProductInput & {
+  quoteBinding?: AutomaticQuoteBinding | null
+  quoteSyncCheckedAt?: string | null
+  quoteSyncError?: string | null
   id: string
   version: number
   state: ProductState
@@ -122,6 +127,10 @@ export type AdminProduct = ProductInput & {
   latestPriceCurrency?: string | null
   priceValidUntil?: string | null
   priceSource?: string | null
+}
+export type AutomaticQuoteBinding = {
+  revision: number; bindingId: string; enabled: boolean; issuerName: string; tokenName: string;
+  tokenSymbol: string; chain: string; contractAddress: string
 }
 export type AssetClassInput = { id: string; displayName: string; description?: string }
 export type PriceQuote = { unitPriceDecimals: number; id: string; productId: string; assetCode: string; unitPriceAtomicAmount: string; currency: string; source: string; validUntil: string; capturedAt: string }
@@ -170,6 +179,7 @@ export type PresignUploadResult = {
 }
 export type StorageReadiness = {
   enabled: boolean
+  requireScan: boolean
   scanMode: string
   internalScanAvailable: boolean
   externalEndpoint: boolean

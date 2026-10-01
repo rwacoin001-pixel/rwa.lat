@@ -15,23 +15,20 @@ import { Skeleton, StateBlock, maison as s } from './primitives'
 import { Segmented } from './motion'
 
 type Method = 'totp' | 'recovery' | 'passkey'
-const MARGIN_MS = 15_000
 
 /** Wallet writes skip the server step-up only on the stub custodian with demo execution on; anything else needs a fresh factor. */
 export const stepUpRequired = (integration: WalletIntegration | null | undefined) => !integration || !(integration.adapterMode === 'stub' && integration.demoExecutionEnabled)
 
 /**
- * Session-bound re-authentication for money-out actions. The token lives in a ref only (never storage);
+ * Session-bound re-authentication for money-out actions. Each action obtains fresh verification;
  * `run` asks for it up front when required and once more if the server still answers STEP_UP_REQUIRED.
  * The action receives the token and must keep its idempotency key independent of it, so the retry replays the same intent.
  */
 export function useStepUp(): { run: <T>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>) => Promise<ApiResult<T> | null>; sheet: ReactNode } {
-  const token = useRef<{ value: string; until: number } | null>(null)
   const waiter = useRef<((value: string | null) => void) | null>(null)
   const [open, setOpen] = useState(false)
 
-  const obtain = useCallback((force = false) => {
-    if (!force && token.current && token.current.until - MARGIN_MS > Date.now()) return Promise.resolve<string | null>(token.current.value)
+  const obtain = useCallback(() => {
     return new Promise<string | null>((resolve) => {
       waiter.current?.(null)
       waiter.current = resolve
@@ -40,22 +37,20 @@ export function useStepUp(): { run: <T>(required: boolean, action: (reauthentica
   }, [])
 
   const settle = useCallback((result: StepUpResult | null) => {
-    if (result) token.current = { value: result.reauthentication, until: Date.now() + result.expiresInSeconds * 1000 }
     setOpen(false)
     const resolve = waiter.current
     waiter.current = null
     resolve?.(result?.reauthentication ?? null)
   }, [])
 
-  useEffect(() => () => { waiter.current?.(null); token.current = null }, [])
+  useEffect(() => () => { waiter.current?.(null); waiter.current = null }, [])
 
   const run = useCallback(async <T,>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>) => {
     let reauthentication = required ? await obtain() : null
     if (required && !reauthentication) return null
     let result = await action(reauthentication ?? undefined)
     if (!result.ok && result.error.code === 'STEP_UP_REQUIRED') {
-      token.current = null
-      reauthentication = await obtain(true)
+      reauthentication = await obtain()
       if (!reauthentication) return null
       result = await action(reauthentication)
     }
@@ -77,16 +72,19 @@ function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpR
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const verification = useRef<AbortController | null>(null)
 
   // Portal into the Maison page so the sheet inherits theme tokens; the page root has no transform, so fixed stays viewport-relative.
   useEffect(() => { setContainer(anchor.current?.closest<HTMLElement>('[data-maison-page]') ?? null) }, [])
   useEffect(() => { if (open) { setCode(''); setError(null); setBusy(false); setMethod(null) } }, [open])
+  useEffect(() => { if (!open) verification.current?.abort(); return () => verification.current?.abort() }, [open])
 
   const totp = factors.data?.totp.find((item) => item.state === 'active')
   const methods: Method[] = [
+    ...(typeof window !== 'undefined' && window.isSecureContext && typeof window.PublicKeyCredential === 'function' &&
+      typeof navigator.credentials?.get === 'function' && factors.data?.passkeys.some((item) => item.state === 'active') ? ['passkey' as const] : []),
     ...(totp ? ['totp' as const] : []),
     ...(totp && totp.recoveryCodesRemaining > 0 ? ['recovery' as const] : []),
-    ...(factors.data?.passkeys.some((item) => item.state === 'active') ? ['passkey' as const] : []),
   ]
   const active = method && methods.includes(method) ? method : methods[0] ?? null
   const valid = active === 'totp' ? /^\d{6}$/.test(code) : active === 'recovery' ? /^[A-Z0-9-]{8,16}$/.test(code) : active === 'passkey'
@@ -95,7 +93,11 @@ function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpR
     if (!active || busy || !valid) return
     setBusy(true)
     setError(null)
-    const result = active === 'totp' ? await stepUpWithTotp(code) : active === 'recovery' ? await stepUpWithRecoveryCode(code) : await stepUpWithPasskey()
+    const controller = new AbortController()
+    verification.current = controller
+    const result = active === 'totp' ? await stepUpWithTotp(code, controller.signal) : active === 'recovery' ? await stepUpWithRecoveryCode(code, controller.signal) : await stepUpWithPasskey(controller.signal)
+    if (controller.signal.aborted) return
+    verification.current = null
     setBusy(false)
     if (result.ok) { onDone(result.data); return }
     setError(f.errors[result.error.code] ?? result.error.message ?? common.errorGeneric)
@@ -105,7 +107,7 @@ function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpR
 
   return <>
     <span ref={anchor} hidden />
-    <Dialog.Root open={open} onOpenChange={(next) => { if (!next && !busy) onDone(null) }}>
+    <Dialog.Root open={open} onOpenChange={(next) => { if (!next) { verification.current?.abort(); onDone(null) } }}>
       <Dialog.Portal container={container}>
         <Dialog.Backdrop className={s.sheetBackdrop} />
         <Dialog.Popup className={s.sheet} data-step-up="" data-sheet="">
@@ -134,7 +136,7 @@ function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpR
                 <span className={s.ctaIcon}>{active === 'passkey' ? <Fingerprint size={17} /> : <KeyRound size={17} />}</span>
               </button>
             </form>}
-          <Dialog.Close className={s.ghost} style={{ width: '100%', marginTop: 10 }} disabled={busy}>{t.cancel}</Dialog.Close>
+          <Dialog.Close className={s.ghost} style={{ width: '100%', marginTop: 10 }}>{t.cancel}</Dialog.Close>
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

@@ -124,14 +124,8 @@ export default function DashboardPage() {
     <AdminLayout>
       <div className="space-y-5">
         {/* ── 页头 ─────────────────────────────────────── */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div className="animate-rise">
-            <h1 className="text-2xl font-bold tracking-tight lg:text-3xl">工作台</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {now ? `${now} · ` : ''}
-              {greeting(new Date().getHours())}，管理员 — 平台核心指标一览
-            </p>
-          </div>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-end">
+
           <button
             type="button"
             onClick={() => void load()}

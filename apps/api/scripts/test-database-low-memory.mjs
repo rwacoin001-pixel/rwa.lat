@@ -53,6 +53,8 @@ const suites = [
 
 const heapMb = Number(process.env.TEST_DATABASE_HEAP_MB ?? '768')
 if (!Number.isInteger(heapMb) || heapMb < 256 || heapMb > 4096) throw new Error('TEST_DATABASE_HEAP_MB must be an integer from 256 to 4096.')
+const timeoutMs = Number(process.env.TEST_DATABASE_TIMEOUT_MS ?? '120000')
+if (!Number.isInteger(timeoutMs) || timeoutMs < 30000 || timeoutMs > 300000) throw new Error('TEST_DATABASE_TIMEOUT_MS must be an integer from 30000 to 300000.')
 const args = process.argv.slice(2)
 const resumeFrom = args[0] === '--resume-from' && args.length === 2 ? args[1] : undefined
 if (args.length && !resumeFrom) throw new Error('Usage: test-database-low-memory.mjs [--resume-from suite-path]')
@@ -124,7 +126,7 @@ for (const [index, suite] of suites.entries()) {
   if (index >= 5) reportProgress(suite, 'started')
   const result = spawnSync(
     process.execPath,
-    [`--max-old-space-size=${heapMb}`, jestBin, '--runInBand', '--runTestsByPath', suite],
+    [`--max-old-space-size=${heapMb}`, jestBin, '--runInBand', `--testTimeout=${timeoutMs}`, '--runTestsByPath', suite],
     { cwd: process.cwd(), env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
   )
   if (result.error) {
@@ -133,6 +135,7 @@ for (const [index, suite] of suites.entries()) {
   }
   if (result.status !== 0) {
     const output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`
+    writeSync(2, output.replace(/\u001b\[[0-9;]*m/g, ''))
     reportFailure(suite, output)
     process.exit(result.status ?? 1)
   }

@@ -53,7 +53,7 @@ export function encryptAdminMfaSecret(secret: string, encryptionKey: string, key
   return [VERSIONED_MFA_CIPHER_PREFIX, String(keyVersion), ...payload].join('.')
 }
 
-function decryptAdminMfaSecret(ciphertext: string, keys: Map<number, Buffer>, activeVersion: number): string {
+export function decryptAdminMfaSecret(ciphertext: string, keys: Map<number, Buffer>, activeVersion: number): string {
   const parts = ciphertext.split('.')
   const versioned = parts[0] === VERSIONED_MFA_CIPHER_PREFIX
   const legacy = parts[0] === LEGACY_MFA_CIPHER_PREFIX
@@ -118,6 +118,7 @@ export class AdminAuthService {
   }
 
   async login(input: { email: string; password: string; mfaCode?: string; ipAddress?: string; userAgent?: string }) {
+    if (this.config.get<string>('ADMIN_LOGIN_MODE') === 'totp') throw new UnauthorizedException('Password login is disabled')
     const profile = await this.loadProfileByEmail(input.email, true)
     if (!profile || profile.disabledAt || (profile.lockedUntil && profile.lockedUntil.getTime() > Date.now()) || !verifyAdminPassword(input.password, profile.passwordHash)) {
       if (profile) await this.recordFailedLogin(profile.id)
@@ -388,7 +389,7 @@ export class AdminAuthService {
   }
 }
 
-function readAdminMfaKeyring(config: ConfigService): { keys: Map<number, Buffer>; activeVersion: number } {
+export function readAdminMfaKeyring(config: ConfigService): { keys: Map<number, Buffer>; activeVersion: number } {
   const encoded = config.get<string>('ADMIN_MFA_KEYS_JSON')?.trim()
   if (!encoded) {
     const legacy = config.get<string>('ADMIN_MFA_ENCRYPTION_KEY')

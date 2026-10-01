@@ -1,11 +1,11 @@
 import type { Metadata } from 'next'
-import DesktopShowcase from '@/components/desktop/DesktopShowcase'
+import TrustDesktopEntry from '@/components/desktop/TrustDesktopEntry'
 
 export const metadata: Metadata = {
-  title: 'RWA.LAT — Made for your phone',
-  description: 'RWA.LAT is a mobile investment app. Scan the code to open it on your phone.',
+  title: 'RWA.LAT — The Shape of Trust',
+  description: 'Every age writes trust in its own hand. Explore the story of real-world assets, then continue with RWA.LAT on your phone.',
 }
 
 export default function DesktopPage() {
-  return <DesktopShowcase />
+  return <TrustDesktopEntry />
 }

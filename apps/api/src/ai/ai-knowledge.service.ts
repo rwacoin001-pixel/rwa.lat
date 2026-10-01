@@ -3,15 +3,26 @@ import { ConfigService } from '@nestjs/config'
 import { randomUUID } from 'node:crypto'
 import { DataSource, EntityManager } from 'typeorm'
 import { AI_LOCALES, SaveKnowledgeDto } from './ai-knowledge.dto'
-import { KnowledgeRecord, KnowledgeSource, knowledgeSearchPatterns, selectKnowledgeSources } from './ai-knowledge.policy'
+import { KnowledgeRecord, KnowledgeSource, activeAt, knowledgeSearchPatterns, selectKnowledgeSources } from './ai-knowledge.policy'
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const liveFields = `id,published,published_revision AS "publishedRevision",published_at AS "publishedAt",archived_at AS "archivedAt"`
+export const SUPPORT_POLICY_ID = '9e9e8a8a-dcfa-4b2f-8f68-6b308af9a101'
 
 @Injectable()
 export class AiKnowledgeService {
   constructor(private readonly ds: DataSource, private readonly config: ConfigService) {}
   get enabled() { return this.config.get<string>('AI_KNOWLEDGE_ENABLED') !== 'false' }
+
+  /** Reserved, administrator-published internal rule; never a public citation or user instruction. */
+  async supportPolicy(): Promise<string> {
+    const [row]: KnowledgeRecord[] = await this.ds.query(`SELECT ${liveFields} FROM app.ai_knowledge_items WHERE id=$1`, [SUPPORT_POLICY_ID])
+    const policy = row?.published
+    if (!policy || row.archivedAt !== null || !row.publishedRevision || policy.visibility !== 'internal'
+      || policy.category !== 'support-policy' || !activeAt(policy.effectiveAt, policy.expiresAt, new Date())
+      || typeof policy.body !== 'string' || policy.body.length > 6000) return ''
+    return policy.body.trim()
+  }
 
   listAdmin() {
     return this.ds.query(`SELECT id,revision,locale,draft,published,published_revision AS "publishedRevision",published_at AS "publishedAt",archived_at AS "archivedAt",updated_at AS "updatedAt" FROM app.ai_knowledge_items ORDER BY updated_at DESC,id LIMIT 300`)

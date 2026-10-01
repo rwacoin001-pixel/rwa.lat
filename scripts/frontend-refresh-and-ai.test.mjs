@@ -28,7 +28,7 @@ test('hexadecimal key material remains blocked with or without a prefix',()=>{
 function queries(){
   const cleanup=[]
   const react={useRef:value=>({current:value}),useCallback:fn=>fn,useEffect:fn=>{const close=fn();if(close)cleanup.push(close)},useSyncExternalStore:(subscribe,snapshot)=>{cleanup.push(subscribe(()=>{}));return snapshot()}}
-  const module=load('lib/api/_query.ts',{react,'./_http':{SESSION_EXPIRED:'expired',SESSION_CHANGED:'changed',getSessionToken:()=>null}})
+  const module=load('lib/api/_query.ts',{react,'./_http':{SESSION_EXPIRED:'expired',SESSION_CHANGED:'changed',getSessionToken:()=>null},'@/lib/ui-loading':{beginUiLoading:()=>()=>{},markUiLoadingNetworkComplete(){}}})
   return {...module,cleanup:()=>cleanup.reverse().forEach(close=>close())}
 }
 test('refresh remains pending until all visible requests actually settle',async()=>{

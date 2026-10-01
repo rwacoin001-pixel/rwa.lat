@@ -11,11 +11,11 @@ describe('Customer AI tools', () => {
     expect(ds.query).not.toHaveBeenCalled()
   })
   it('queries only the session owner and returns a minimal projection', async () => {
-    const query = jest.fn(async (sql: string) => sql.includes('app.users') ? [{ status: 'active' }] : [{ assetCode: 'USDT', atomicAmount: '12000000', decimals: 6, purpose: 'available' }])
+    const query = jest.fn(async (sql: string, _params: unknown[] = []) => sql.includes('app.users') ? [{ status: 'active' }] : [{ assetCode: 'USDT', atomicAmount: '12000000', decimals: 6, purpose: 'available' }])
     const tools = new AiCustomerToolsService({ query } as any, {} as any)
     const result = await tools.account(owner, ['balances'])
     expect(result).toMatchObject({ balances: [{ assetCode: 'USDT', atomicAmount: '12000000' }] })
-    expect(query.mock.calls.every(call => call[1][0] === owner)).toBe(true)
+    expect(query.mock.calls.every(call => call[1]?.[0] === owner)).toBe(true)
     expect(query.mock.calls.some(call => /password|ciphertext|provider_case|wallet_address|SELECT\s+\*/i.test(call[0]))).toBe(false)
   })
   it('requires an owner-scoped draft and explicit confirmation before creating a ticket', async () => {

@@ -6,7 +6,10 @@ import { AdminController } from './admin.controller'
 import { AdminService } from './admin.service'
 import { AdminAuthController } from './admin-auth.controller'
 import { AdminAuthService } from './admin-auth.service'
+import { AdminTotpController } from './admin-totp.controller'
+import { AdminTotpService } from './admin-totp.service'
 import { AdminSessionGuard } from './admin-session.guard'
+import { AdminCorePrincipalService } from './admin-core-principal.service'
 import { validateAdminEnvironment } from './production-environment'
 import { AdminPermissionGuard } from './admin-permission.guard'
 import { AdminControlController } from './admin-control.controller'
@@ -31,12 +34,12 @@ import { AdminAiKnowledgeController } from './admin-ai-knowledge.controller'
 import { AdminAiInvestmentController } from './admin-ai-investment.controller'
 
 const controllers = [
-  AdminController, AdminAuthController, AdminControlController, AdminStorageController,
+  AdminController, AdminAuthController, AdminTotpController, AdminControlController, AdminStorageController,
   AdminWalletOpsController, AdminFundsOpsController, AdminBasketController,
   AdminCommunityController, AdminPredictionController, AdminCoreOpsController, AdminPlatformController, AdminLegalController, AdminAiKnowledgeController, AdminAiInvestmentController,
 ]
 const providers = [
-  AdminService, AdminAuthService, AdminSessionGuard, AdminPermissionGuard, AdminControlService,
+  AdminService, AdminAuthService, AdminTotpService, AdminSessionGuard, AdminCorePrincipalService, AdminPermissionGuard, AdminControlService,
   AdminStorageService, AdminWalletOpsService, AdminBasketService, AdminCommunityOpsService,
   AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService,
 ]

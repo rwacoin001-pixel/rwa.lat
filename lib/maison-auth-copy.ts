@@ -1,5 +1,15 @@
 import type { AppLocale } from './i18n'
 
+export const authCardCaption: Record<AppLocale, string> = {
+  en: 'Connect to real assets.',
+  'zh-CN': '从这里，连接真实资产。',
+  hi: 'वास्तविक संपत्तियों से जुड़ें।',
+  es: 'Conecta con activos reales.',
+  ar: 'تواصل مع الأصول الحقيقية.',
+  fr: 'Accédez aux actifs réels.',
+  pt: 'Conecte-se a ativos reais.',
+}
+
 /** Extra strings for the Maison sign-in card; the base auth strings stay in auth-visual-copy. */
 export type AuthSheetCopy = {
   kicker: string; modes: string; wallet: string; passkeyNote: string
@@ -14,7 +24,7 @@ export type AuthSheetCopy = {
 
 export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = {
   en: {
-    kicker: 'Real-world assets, held on-chain', modes: 'Sign in or create an account', wallet: 'Wallet', passkeyNote: 'Saved a passkey? Tap the email field to use it.',
+    kicker: 'Real-world assets, held on-chain', modes: 'Sign in or register', wallet: 'Wallet', passkeyNote: 'Saved a passkey? Tap the email field to use it.',
     loginTitle: 'Welcome back', loginLede: 'Sign in with your email and password.', registerTitle: 'Create your account', registerLede: 'Verify your email, then set a password.',
     codeTitle: 'Check your email', sentTo: 'We sent a 6-digit code to', or: 'or continue with', browse: 'Look around first',
     newHere: 'New to RWA.LAT?', createAccount: 'Create account', haveAccount: 'Already have an account?', signIn: 'Sign in',
@@ -23,7 +33,7 @@ export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = {
     continue: 'Continue', checking: 'Checking…', emailLede: 'Enter your email. We’ll sign you in or help you create an account.', account: 'Signing in as', newLede: 'No account uses this email yet. Verify it, then set a password to finish.', unavailable: 'This account can’t sign in right now. Contact support for help.',
   },
   'zh-CN': {
-    kicker: '真实资产 · 链上持有', modes: '登录或创建账户', wallet: '钱包', passkeyNote: '已保存通行密钥？点一下邮箱框即可使用。',
+    kicker: '真实资产 · 链上持有', modes: '登录或注册', wallet: '钱包', passkeyNote: '已保存通行密钥？点一下邮箱框即可使用。',
     loginTitle: '欢迎回来', loginLede: '使用邮箱和密码登录', registerTitle: '创建账户', registerLede: '先验证邮箱，再设置登录密码',
     codeTitle: '查收验证码', sentTo: '6 位验证码已发送至', or: '或使用以下方式', browse: '暂不注册，先看看',
     newHere: '还没有账户？', createAccount: '创建账户', haveAccount: '已有账户？', signIn: '登录',

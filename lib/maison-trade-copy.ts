@@ -77,7 +77,7 @@ const en: TradeCopy = {
   },
   prediction: {
     kicker: 'Prediction · Polymarket', closes: 'Closes', volume: '24h volume', liquidity: 'Liquidity', history: 'Probability history', historyEmpty: 'No price history is available for this market.', book: 'Order book', rules: 'Resolution rules',
-    stake: 'Stake', shares: 'Est. shares', payout: 'Max payout', price: 'Price', place: 'Place bet', placing: 'Placing…', done: 'Bet placed', doneBody: '{s} shares at {p}. It settles automatically at resolution.',
+    stake: 'Stake amount', shares: 'Est. shares', payout: 'Est. winnings', price: 'Price', place: 'Place bet', placing: 'Placing…', done: 'Bet placed', doneBody: '{s} shares at {p}. It settles automatically at resolution.',
     feePlace: 'Fee on stake ({r})', feePayout: 'Fee on winnings ({r})', netPayout: 'Net payout if you win',
     disabled: 'Betting is currently disabled. Market data stays visible.', notAccepting: 'The source market is not accepting orders.', limit: 'Up to {v} per bet', loadError: 'Market data is unavailable right now.',
     source: 'Live via Polymarket', wide: 'The best available price ({p}) is far from the market probability ({m}): the order book is thin. You will pay the best available price.', partial: 'Partial data: some order-book or history fields are missing.', risk: 'I understand the full stake can be lost and that the price may move before confirmation.', signIn: 'Sign in to bet',
@@ -132,7 +132,7 @@ const zh: TradeCopy = {
   },
   prediction: {
     kicker: '预测 · Polymarket', closes: '截止', volume: '24 小时成交额', liquidity: '流动性', history: '概率走势', historyEmpty: '该市场暂无价格历史。', book: '订单簿', rules: '结算规则',
-    stake: '投注金额', shares: '预计份数', payout: '最高赔付', price: '价格', place: '确认投注', placing: '提交中…', done: '投注成功', doneBody: '以 {p} 获得 {s} 份，开奖后自动结算。',
+    stake: '下注金额', shares: '预计份数', payout: '预计中奖金额', price: '价格', place: '确认投注', placing: '提交中…', done: '投注成功', doneBody: '以 {p} 获得 {s} 份，开奖后自动结算。',
     feePlace: '下注费（{r}）', feePayout: '派彩费（{r}）', netPayout: '中奖净到账',
     disabled: '投注当前已关闭，行情仍可查看。', notAccepting: '源市场当前不接受订单。', limit: '单笔最多 {v}', loadError: '市场数据暂不可用。',
     source: '来自 Polymarket 实时数据', wide: '当前可成交价（{p}）与市场概率（{m}）相差较大：订单簿深度不足。下注将按可成交价执行。', partial: '数据不完整：部分订单簿或历史字段缺失。', risk: '我了解可能损失全部投注金额，且确认前价格可能变动。', signIn: '登录后投注',
@@ -187,7 +187,7 @@ const hi: TradeCopy = {
   },
   prediction: {
     kicker: 'प्रेडिक्शन · Polymarket', closes: 'समापन', volume: '24 घंटे वॉल्यूम', liquidity: 'लिक्विडिटी', history: 'संभावना इतिहास', historyEmpty: 'इस बाज़ार का कोई मूल्य इतिहास उपलब्ध नहीं है।', book: 'ऑर्डर बुक', rules: 'निपटान नियम',
-    stake: 'दांव राशि', shares: 'अनुमानित शेयर', payout: 'अधिकतम भुगतान', price: 'कीमत', place: 'दांव लगाएँ', placing: 'भेजा जा रहा है…', done: 'दांव लगा', doneBody: '{p} पर {s} शेयर। परिणाम पर यह स्वतः सेटल होगा।',
+    stake: 'दांव राशि', shares: 'अनुमानित शेयर', payout: 'अनुमानित जीत', price: 'कीमत', place: 'दांव लगाएँ', placing: 'भेजा जा रहा है…', done: 'दांव लगा', doneBody: '{p} पर {s} शेयर। परिणाम पर यह स्वतः सेटल होगा।',
     feePlace: 'दांव पर शुल्क ({r})', feePayout: 'जीत पर शुल्क ({r})', netPayout: 'जीतने पर शुद्ध भुगतान',
     disabled: 'दांव अभी बंद है। बाज़ार डेटा दिखता रहेगा।', notAccepting: 'स्रोत बाज़ार अभी ऑर्डर नहीं ले रहा।', limit: 'प्रति दांव अधिकतम {v}', loadError: 'बाज़ार डेटा अभी उपलब्ध नहीं है।',
     source: 'Polymarket से लाइव', wide: 'सर्वोत्तम उपलब्ध मूल्य ({p}) बाज़ार संभावना ({m}) से काफ़ी अलग है: ऑर्डर बुक पतली है। आप सर्वोत्तम उपलब्ध मूल्य चुकाएँगे।', partial: 'आंशिक डेटा: कुछ ऑर्डर बुक या इतिहास फ़ील्ड उपलब्ध नहीं हैं।', risk: 'मैं समझता/समझती हूँ कि पूरी दांव राशि डूब सकती है और पुष्टि से पहले कीमत बदल सकती है।', signIn: 'दांव के लिए लॉग इन करें',
@@ -242,7 +242,7 @@ const es: TradeCopy = {
   },
   prediction: {
     kicker: 'Predicción · Polymarket', closes: 'Cierra', volume: 'Volumen 24 h', liquidity: 'Liquidez', history: 'Historial de probabilidad', historyEmpty: 'No hay historial de precios para este mercado.', book: 'Libro de órdenes', rules: 'Reglas de resolución',
-    stake: 'Apuesta', shares: 'Participaciones estimadas', payout: 'Pago máximo', price: 'Precio', place: 'Apostar', placing: 'Enviando…', done: 'Apuesta realizada', doneBody: '{s} participaciones a {p}. Se liquida automáticamente al resolverse.',
+    stake: 'Importe de apuesta', shares: 'Participaciones estimadas', payout: 'Ganancia estimada', price: 'Precio', place: 'Apostar', placing: 'Enviando…', done: 'Apuesta realizada', doneBody: '{s} participaciones a {p}. Se liquida automáticamente al resolverse.',
     feePlace: 'Comisión sobre la apuesta ({r})', feePayout: 'Comisión sobre las ganancias ({r})', netPayout: 'Pago neto si ganas',
     disabled: 'Las apuestas están desactivadas. Los datos siguen visibles.', notAccepting: 'El mercado de origen no acepta órdenes.', limit: 'Hasta {v} por apuesta', loadError: 'Los datos del mercado no están disponibles.',
     source: 'En vivo vía Polymarket', wide: 'El mejor precio disponible ({p}) está lejos de la probabilidad del mercado ({m}): el libro tiene poca profundidad. Pagarás el mejor precio disponible.', partial: 'Datos parciales: faltan campos del libro o del historial.', risk: 'Entiendo que puedo perder toda la apuesta y que el precio puede cambiar antes de confirmar.', signIn: 'Inicia sesión para apostar',
@@ -297,7 +297,7 @@ const ar: TradeCopy = {
   },
   prediction: {
     kicker: 'توقّع · Polymarket', closes: 'يُغلق', volume: 'حجم 24 ساعة', liquidity: 'السيولة', history: 'سجل الاحتمال', historyEmpty: 'لا يتوفر سجل أسعار لهذا السوق.', book: 'دفتر الأوامر', rules: 'قواعد الحسم',
-    stake: 'مبلغ الرهان', shares: 'الحصص التقديرية', payout: 'أقصى عائد', price: 'السعر', place: 'تأكيد الرهان', placing: 'جارٍ الإرسال…', done: 'تم الرهان', doneBody: '{s} حصة بسعر {p}. تتم التسوية تلقائيًا عند الحسم.',
+    stake: 'مبلغ الرهان', shares: 'الحصص التقديرية', payout: 'الأرباح التقديرية', price: 'السعر', place: 'تأكيد الرهان', placing: 'جارٍ الإرسال…', done: 'تم الرهان', doneBody: '{s} حصة بسعر {p}. تتم التسوية تلقائيًا عند الحسم.',
     feePlace: 'رسوم على الرهان ({r})', feePayout: 'رسوم على الأرباح ({r})', netPayout: 'صافي العائد عند الفوز',
     disabled: 'الرهان معطّل حاليًا. تبقى بيانات السوق ظاهرة.', notAccepting: 'السوق المصدر لا يقبل أوامر.', limit: 'حتى {v} لكل رهان', loadError: 'بيانات السوق غير متاحة حاليًا.',
     source: 'مباشر عبر Polymarket', wide: 'أفضل سعر متاح ({p}) بعيد عن احتمال السوق ({m}): دفتر الأوامر ضعيف السيولة. ستدفع أفضل سعر متاح.', partial: 'بيانات جزئية: بعض حقول الدفتر أو السجل غير متوفرة.', risk: 'أدرك أنني قد أخسر كامل مبلغ الرهان وأن السعر قد يتغير قبل التأكيد.', signIn: 'سجّل الدخول للرهان',
@@ -352,7 +352,7 @@ const fr: TradeCopy = {
   },
   prediction: {
     kicker: 'Prédiction · Polymarket', closes: 'Clôture', volume: 'Volume 24 h', liquidity: 'Liquidité', history: 'Historique de probabilité', historyEmpty: 'Aucun historique de prix pour ce marché.', book: 'Carnet d’ordres', rules: 'Règles de résolution',
-    stake: 'Mise', shares: 'Parts estimées', payout: 'Gain maximal', price: 'Prix', place: 'Parier', placing: 'Envoi…', done: 'Pari placé', doneBody: '{s} parts à {p}. Le règlement est automatique à la résolution.',
+    stake: 'Montant misé', shares: 'Parts estimées', payout: 'Gains estimés', price: 'Prix', place: 'Parier', placing: 'Envoi…', done: 'Pari placé', doneBody: '{s} parts à {p}. Le règlement est automatique à la résolution.',
     feePlace: 'Frais sur la mise ({r})', feePayout: 'Frais sur les gains ({r})', netPayout: 'Paiement net en cas de gain',
     disabled: 'Les paris sont désactivés. Les données restent visibles.', notAccepting: 'Le marché source n’accepte pas d’ordres.', limit: 'Jusqu’à {v} par pari', loadError: 'Les données du marché sont indisponibles.',
     source: 'En direct via Polymarket', wide: 'Le meilleur prix disponible ({p}) est loin de la probabilité du marché ({m}) : le carnet est peu profond. Vous paierez le meilleur prix disponible.', partial: 'Données partielles : certains champs du carnet ou de l’historique manquent.', risk: 'Je comprends que je peux perdre toute la mise et que le prix peut évoluer avant confirmation.', signIn: 'Connectez-vous pour parier',
@@ -407,7 +407,7 @@ const pt: TradeCopy = {
   },
   prediction: {
     kicker: 'Previsão · Polymarket', closes: 'Encerra', volume: 'Volume 24 h', liquidity: 'Liquidez', history: 'Histórico de probabilidade', historyEmpty: 'Não há histórico de preços para este mercado.', book: 'Livro de ofertas', rules: 'Regras de resolução',
-    stake: 'Aposta', shares: 'Cotas estimadas', payout: 'Pagamento máximo', price: 'Preço', place: 'Apostar', placing: 'Enviando…', done: 'Aposta feita', doneBody: '{s} cotas a {p}. A liquidação é automática na resolução.',
+    stake: 'Valor da aposta', shares: 'Cotas estimadas', payout: 'Ganhos estimados', price: 'Preço', place: 'Apostar', placing: 'Enviando…', done: 'Aposta feita', doneBody: '{s} cotas a {p}. A liquidação é automática na resolução.',
     feePlace: 'Taxa sobre a aposta ({r})', feePayout: 'Taxa sobre os ganhos ({r})', netPayout: 'Pagamento líquido se ganhar',
     disabled: 'As apostas estão desativadas. Os dados continuam visíveis.', notAccepting: 'O mercado de origem não aceita ordens.', limit: 'Até {v} por aposta', loadError: 'Os dados do mercado estão indisponíveis.',
     source: 'Ao vivo via Polymarket', wide: 'O melhor preço disponível ({p}) está longe da probabilidade do mercado ({m}): o livro tem pouca profundidade. Você pagará o melhor preço disponível.', partial: 'Dados parciais: faltam campos do livro ou do histórico.', risk: 'Entendo que posso perder toda a aposta e que o preço pode mudar antes da confirmação.', signIn: 'Entre para apostar',

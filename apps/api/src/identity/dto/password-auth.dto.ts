@@ -18,6 +18,12 @@ export class AuthFlowCompleteDto extends AuthFlowTokenDto {
   @ApiPropertyOptional({ type: [ConsentAcceptanceDto] }) @IsOptional() @IsArray() @ArrayMaxSize(2) @ValidateNested({ each: true }) @Type(() => ConsentAcceptanceDto) consents?: ConsentAcceptanceDto[]
 }
 export class PasswordManageDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() @Length(24, 4096) reauthentication?: string
   @ApiPropertyOptional() @IsOptional() @IsEmail() @MaxLength(254) email?: string
   @ApiPropertyOptional({ type: DeviceDto }) @IsOptional() @ValidateNested() @Type(() => DeviceDto) device?: DeviceDto
+}
+
+export class ChangeEmailDto {
+  @ApiProperty() @IsEmail() @MaxLength(254) email!: string
+  @ApiProperty() @IsString() @Length(24, 4096) reauthentication!: string
 }

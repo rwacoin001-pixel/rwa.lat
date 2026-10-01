@@ -33,7 +33,8 @@ export function authDevice() {
   const ua = navigator.userAgent
   return { fingerprint, name: /iPhone|iPad/.test(ua) ? 'iOS browser' : /Android/.test(ua) ? 'Android browser' : 'Web browser' }
 }
-export const managePassword = (email?: string) => request('/v1/auth/password/manage', { method: 'POST', body: JSON.stringify({ device: authDevice(), ...(email ? { email } : {}) }) })
+export const managePassword = (email?: string, reauthentication?: string) => request('/v1/auth/password/manage', { method: 'POST', body: JSON.stringify({ device: authDevice(), ...(email ? { email } : {}), ...(reauthentication ? { reauthentication } : {}) }) })
+export const changeAccountEmail = (email: string, reauthentication: string) => request('/v1/auth/email/change', { method: 'POST', body: JSON.stringify({ email, reauthentication }) })
 export const completeAuthFlow = (flow: AuthFlow, input: { code?: string; password?: string; consents?: unknown[] }) =>
   request<{ token?: string; userId?: string; sessionId?: string; requiresLogin?: boolean }>('/v1/auth/flow/complete', { method: 'POST', body: JSON.stringify({ continuationToken: flow.continuationToken, ...input }) })
 export const resendAuthFlow = (flow: AuthFlow) => request<{ retryAfter: number }>('/v1/auth/flow/resend', { method: 'POST', body: JSON.stringify({ continuationToken: flow.continuationToken }) })

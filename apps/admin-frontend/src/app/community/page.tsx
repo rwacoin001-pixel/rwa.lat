@@ -205,11 +205,8 @@ export default function CommunityReviewPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">C1.5 审核台</h1>
-            <p className="mt-1 text-muted-foreground">站内社区内容审核 · 队列发布 · 举报处理</p>
-          </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+
           <div className="flex items-center gap-2">
             <button
               type="button"

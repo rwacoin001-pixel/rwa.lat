@@ -270,11 +270,8 @@ export default function ControlPage() {
     <AdminLayout>
     <div className="space-y-5">
       {/* 页头 */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">运营控制台</h1>
-          <p className="mt-1 text-sm text-muted-foreground">产品、利率、披露、开关与财资地址的统一配置中心</p>
-        </div>
+      <div className="flex flex-wrap items-center justify-end gap-3">
+
         <div className="flex items-center gap-2">
           {tab === 'products' && !selectedProduct && (
             <Button onClick={() => setCreateOpen(true)}>
@@ -560,7 +557,7 @@ export default function ControlPage() {
             <CardContent className="flex items-start gap-2 p-4 text-sm text-amber-800">
               <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <p>
-                运营开关不是绕过环境门禁的按钮：真实资金相关能力仍受 Core 环境变量约束（当前生产为关闭状态，符合既定安全设计）。
+                充值入账可由授权管理员在此启停，实际入账仍由 Core API 的资金运行门禁控制；提现执行继续走双人审批。
               </p>
             </CardContent>
           </Card>

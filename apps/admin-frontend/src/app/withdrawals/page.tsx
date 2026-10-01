@@ -324,11 +324,8 @@ export default function WithdrawalsPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">提现审批</h1>
-            <p className="text-muted-foreground mt-1">手动托管模式：白名单用户自动打款，其余双人审批后热钱包签名广播</p>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
+
           <div className="flex gap-2">
             <Button variant="outline" className="flex items-center gap-2" onClick={() => { fetchWithdrawals(); fetchFunds(); }} disabled={busy}>
               <RefreshCw className="w-4 h-4" />

@@ -5,7 +5,7 @@ import { keccak_256 } from '@noble/hashes/sha3'
 import { secp256k1 } from '@noble/curves/secp256k1'
 import { randomUUID } from 'node:crypto'
 import { AppModule } from '../../src/app.module'
-import { IdentityService } from '../../src/identity/identity.service'
+import { IdentityService, type AuthResult } from '../../src/identity/identity.service'
 import { IdentityDeliveryService } from '../../src/identity/identity-delivery.service'
 import { REGISTRATION_CONSENT_REQUIREMENTS, type RegistrationConsentAcceptance } from '../../src/identity/consent-policy'
 import { buildDatabaseOptions } from '../../src/database/database-options'
@@ -56,13 +56,26 @@ describeDb('Identity API-002 integration', () => {
     expect(reg).toEqual({ accepted: true })
     const verificationToken = delivery.lastDemoToken(email, 'email_verification')
     expect(verificationToken).toBeTruthy()
-    const verified = await svc.verifyEmail(verificationToken!)
-    expect(verified.verified).toBe(true)
+    const verification = await svc.verifyEmail(verificationToken!).then(
+      () => { throw new Error('Registration must require password setup before issuing a session') },
+      error => error.response,
+    )
+    expect(verification).toMatchObject({ code: 'AUTH_FLOW_REQUIRED', authFlow: { step: 'password' } })
+    const verified = await svc.completeAuthFlow({ continuationToken: verification.authFlow.continuationToken, password: 'isolated registration password 123!' }) as AuthResult
+    expect(verified.emailVerified).toBe(true)
     const recovered = await svc.recover(email)
     expect(recovered).toEqual({ accepted: true })
     const recoveryToken = delivery.lastDemoToken(email, 'account_recovery')
     expect(recoveryToken).toBeTruthy()
-    await expect(svc.confirmRecovery(recoveryToken!)).resolves.toMatchObject({ userId: verified.userId })
+    const recovery = await svc.confirmRecovery(recoveryToken!).then(
+      () => { throw new Error('Recovery must require password reset') }, error => error.response,
+    )
+    expect(recovery).toMatchObject({ code: 'AUTH_FLOW_REQUIRED', authFlow: { step: 'password' } })
+    await expect(svc.completeAuthFlow({ continuationToken: recovery.authFlow.continuationToken, password: 'isolated replacement password 456!' }))
+      .resolves.toEqual({ passwordChanged: true, requiresLogin: true })
+    await expect(svc.getSessionViewByToken(verified.token)).rejects.toThrow()
+    await svc.requestEmailLogin(email)
+    await expect(svc.confirmEmailLogin(delivery.lastDemoToken(email, 'email_login')!)).resolves.toMatchObject({ userId: verified.userId })
   })
 
   it('opens a session via a valid wallet signature', async () => {

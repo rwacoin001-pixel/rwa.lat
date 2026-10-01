@@ -19,12 +19,17 @@ export class AdminPlatformService implements OnModuleDestroy {
   async getPlatformConfiguration() {
     const { rows } = await this.database().query(`SELECT revision, draft, published_revision AS "publishedRevision", published, published_at AS "publishedAt", updated_at AS "updatedAt" FROM app.platform_configuration WHERE id = true`)
     if (!rows[0]) throw new ServiceUnavailableException('Platform configuration migration is required')
-    return rows[0]
+    const value = rows[0]
+    // Imported published records can predate a maintained draft. Return the
+    // current publication for editing without mutating either stored version.
+    return value.published && value.revision < value.publishedRevision
+      ? { ...value, draft: value.published }
+      : value
   }
   async savePlatformConfiguration(input: SavePlatformDto, adminId: string) {
     await this.transaction(adminId, 'admin.platform.draft_saved', async (db) => {
       await this.validateDocuments(db, input.content.documents)
-      const { rows } = await db.query(`UPDATE app.platform_configuration SET draft = $1::jsonb, revision = revision + 1, updated_at = now(), updated_by = $2 WHERE id = true AND revision = $3 RETURNING revision`, [JSON.stringify(input.content), adminId, input.expectedRevision])
+      const { rows } = await db.query(`UPDATE app.platform_configuration SET draft = $1::jsonb, revision = GREATEST(revision, COALESCE(published_revision, 0)) + 1, updated_at = now(), updated_by = $2 WHERE id = true AND revision = $3 RETURNING revision`, [JSON.stringify(input.content), adminId, input.expectedRevision])
       if (!rows[0]) throw new ConflictException('资料已被其他人更新，请刷新后再保存')
       return { revision: rows[0].revision }
     })

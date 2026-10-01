@@ -234,9 +234,11 @@ export class ObjectStorageService {
 
   /** Called only after a published product/profile reference has been authorized. */
   async createPublishedAssetUrl(ref: string, imageOnly = false): Promise<string> {
-    if (!ref.startsWith('rwa-assets/')) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Public asset not found', 404)
-    const key = ref.slice('rwa-assets/'.length)
-    const object = await this.objects.findOne({ where: { bucket: 'rwa-assets', key } })
+    const slash = ref.indexOf('/')
+    const bucket = ref.slice(0, slash)
+    if (slash < 1 || (bucket !== 'rwa-assets' && bucket !== this.bucketMap['rwa-assets'])) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Public asset not found', 404)
+    const key = ref.slice(slash + 1)
+    const object = await this.objects.findOne({ where: { bucket, key } })
     if (!object || !this.readableScanStatus(object.scanStatus) || BigInt(object.sizeBytes) <= 0n) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Public asset not found', 404)
     if (imageOnly && !(COMMUNITY_IMAGE_TYPES as readonly string[]).includes(object.contentType)) throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Image not found', 404)
     return getSignedUrl(this.requireClient(), new GetObjectCommand({

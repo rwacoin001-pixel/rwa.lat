@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, OnModuleDestroy, Optional, ServiceUnavailableException } from '@nestjs/common'
+import { ConfigService } from '@nestjs/config'
+import { Pool } from 'pg'
 import { DataSource, In } from 'typeorm'
 
 export interface AdminUserLite {
@@ -30,11 +32,20 @@ export interface AdminRedemptionRow {
 }
 
 @Injectable()
-export class AdminService {
-  constructor(private readonly ds: DataSource) {}
+export class AdminService implements OnModuleDestroy {
+  private readonly core: Pool | null
+  constructor(private readonly ds: DataSource, @Optional() config?: ConfigService) {
+    const url = config?.get<string>('CORE_DATABASE_URL')?.trim()
+    if (!url && config?.get<string>('APP_ENV') === 'production') throw new ServiceUnavailableException('Core database is required for business records')
+    this.core = url ? new Pool({ connectionString: url, max: 2, connectionTimeoutMillis: 5000 }) : null
+  }
+  async onModuleDestroy() { await this.core?.end() }
+  private async query(sql: string, values?: unknown[]) {
+    return this.core ? (await this.core.query(sql, values)).rows : this.ds.query(sql, values)
+  }
 
   async listUsers(limit = 50, offset = 0): Promise<AdminUserLite[]> {
-    const rows = await this.ds.query(
+    const rows = await this.query(
       `SELECT id, status, locale, created_at, updated_at
        FROM app.users
        ORDER BY created_at DESC
@@ -47,7 +58,7 @@ export class AdminService {
   async listRedemptions(state?: string[], limit = 50, offset = 0): Promise<AdminRedemptionRow[]> {
     const where = state && state.length ? `WHERE state = ANY($3::text[])` : ''
     const params = state && state.length ? [limit, offset, state] : [limit, offset]
-    const rows = await this.ds.query(
+    const rows = await this.query(
       `SELECT id, user_id, product_id, asset_code, asset_decimals, quantity_atomic_amount,
               estimated_unit_price_atomic_amount, currency, destination_address, state,
               order_id, requested_at, executed_at, canceled_at, failed_at, reason_code, request_id
@@ -61,7 +72,7 @@ export class AdminService {
   }
 
   async getRedemption(id: string): Promise<AdminRedemptionRow | null> {
-    const rows = await this.ds.query(
+    const rows = await this.query(
       `SELECT id, user_id, product_id, asset_code, asset_decimals, quantity_atomic_amount,
               estimated_unit_price_atomic_amount, currency, destination_address, state,
               order_id, requested_at, executed_at, canceled_at, failed_at, reason_code, request_id
@@ -73,7 +84,7 @@ export class AdminService {
   }
 
   async countRedemptionsByState(): Promise<Record<string, number>> {
-    const rows = await this.ds.query(
+    const rows = await this.query(
       `SELECT state, COUNT(*)::int AS cnt FROM app.redemptions GROUP BY state`,
     )
     const out: Record<string, number> = {}

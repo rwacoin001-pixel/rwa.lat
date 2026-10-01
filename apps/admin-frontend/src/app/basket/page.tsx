@@ -399,11 +399,8 @@ export default function BasketOpsPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Basket 运营</h1>
-            <p className="mt-1 text-muted-foreground">AI 智能组合 · 策略与目标配置 · NAV · 调仓计划 · 对账（不接真实资金）</p>
-          </div>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-end">
+
           <button
             type="button"
             onClick={() => {

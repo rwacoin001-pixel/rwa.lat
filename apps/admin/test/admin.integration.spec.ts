@@ -5,6 +5,8 @@ import { AdminModule } from '../src/admin.module'
 import { AdminService } from '../src/admin.service'
 import { AdminAuthService, createAdminTotp, encryptAdminMfaSecret, hashAdminPassword } from '../src/admin-auth.service'
 import { AdminSessionGuard } from '../src/admin-session.guard'
+import { AdminCorePrincipalService } from '../src/admin-core-principal.service'
+import { AdminPlatformService } from '../src/admin-platform.service'
 import { buildDatabaseOptions } from './helpers/database-options'
 
 describe('AdminModule (integration)', () => {
@@ -21,11 +23,13 @@ describe('AdminModule (integration)', () => {
     const opts = buildDatabaseOptions({ ...process.env, NODE_ENV: 'test' })
     ds = new DataSource(opts)
     await ds.initialize()
+    console.info('Admin test fixture: connected to owned isolated database')
     const [connected] = await ds.query('SELECT current_database() AS name')
     if (connected.name !== decodeURIComponent(new URL(process.env.TEST_DATABASE_URL!).pathname.slice(1)) || !connected.name.endsWith('_test')) throw new Error('Refusing to reset a database outside the explicit test target')
     await ds.query(`DROP SCHEMA IF EXISTS app CASCADE`)
     await ds.query(`DROP TABLE IF EXISTS public.schema_migrations`)
     await ds.runMigrations({ transaction: 'all' })
+    console.info('Admin test fixture: schema migrations complete')
 
     await ds.query(
       `INSERT INTO app.users (id,status,locale,created_at,updated_at) VALUES ($1,'active','en',now(),now()) ON CONFLICT (id) DO NOTHING`,
@@ -65,9 +69,11 @@ describe('AdminModule (integration)', () => {
       ['demo@admin.rwa.lat', hashAdminPassword(adminPassword)],
     )
     const moduleRef = await Test.createTestingModule({ imports: [AdminModule.forTest(ds)] }).compile()
+    console.info('Admin test fixture: module compiled')
     app = moduleRef.createNestApplication()
     app.setGlobalPrefix('v1')
     await app.init()
+    console.info('Admin test fixture: application initialized')
     await app.listen(0)
     service = moduleRef.get(AdminService)
     auth = moduleRef.get(AdminAuthService)
@@ -90,6 +96,45 @@ describe('AdminModule (integration)', () => {
     const [row] = await app.get(DataSource).query('SELECT current_database() AS name')
     expect(row.name).toBe(decodeURIComponent(new URL(process.env.TEST_DATABASE_URL!).pathname.slice(1)))
     expect(row.name.endsWith('_test')).toBe(true)
+  })
+
+  it('registers a cross-database administrator as a non-login principal without granting permissions', async () => {
+    const actor = { id: '99999999-1111-4111-8111-111111111111', email: 'authoritative@example.invalid', roleId: 'external', roleName: 'operator', permissions: ['operations.write'], sessionId: 'external-session' }
+    const principals = app.get(AdminCorePrincipalService)
+    await Promise.all([principals.ensure(actor), principals.ensure(actor)])
+    const [row] = await ds.query(`SELECT u.password_hash,u.mfa_secret_ciphertext,u.disabled_at,
+      (SELECT count(*)::int FROM app.admin_role_permissions p WHERE p.role_id=u.role_id) AS permissions
+      FROM app.admin_users u WHERE u.id=$1`, [actor.id])
+    expect(row).toMatchObject({ password_hash: null, mfa_secret_ciphertext: null, permissions: 0 })
+    expect(row.disabled_at).not.toBeNull()
+    const [{ count }] = await ds.query(`SELECT count(*)::int AS count FROM app.audit_logs WHERE action='admin.control_plane.principal_registered' AND object_id=$1`, [actor.id])
+    expect(count).toBe(1)
+    await ds.query(`UPDATE app.operational_switches SET changed_by=$1 WHERE switch_key='orders.acceptance'`, [actor.id])
+  })
+
+  it('never overwrites an existing administrator authentication record when databases are shared', async () => {
+    const [before] = await ds.query(`SELECT id,password_hash,mfa_secret_ciphertext,role_id,disabled_at FROM app.admin_users WHERE email='demo@admin.rwa.lat'`)
+    await app.get(AdminCorePrincipalService).ensure({ id: before.id, email: 'other@example.invalid', roleId: 'external', roleName: 'external', permissions: [], sessionId: 'external' })
+    const [after] = await ds.query(`SELECT id,password_hash,mfa_secret_ciphertext,role_id,disabled_at FROM app.admin_users WHERE id=$1`, [before.id])
+    expect(after).toEqual(before)
+  })
+
+  it('edits an imported publication without losing its contents or colliding with its published version', async () => {
+    const platform = app.get(AdminPlatformService)
+    const [actor] = await ds.query(`SELECT id FROM app.admin_users WHERE email='demo@admin.rwa.lat'`)
+    const published = { legalName: 'Isolated Operator', registrationNumber: '', jurisdiction: 'SG', address: '', supportEmail: '', description: '', allowedRegions: ['SG'], investorTypes: ['professional'], documents: [], officialChannels: [] }
+    await ds.query(`UPDATE app.platform_configuration SET revision=0,draft='{}',published=$1,published_revision=1,published_at=now() WHERE id=true`, [JSON.stringify(published)])
+    expect((await platform.getPlatformConfiguration()).draft).toEqual(published)
+    const content = { ...published, investorTypes: ['professional', 'retail'] }
+    const saved = await platform.savePlatformConfiguration({ expectedRevision: 0, content }, actor.id)
+    expect(saved.revision).toBe(2)
+    expect(saved.published).toEqual(published)
+    const result = await platform.publishPlatformConfiguration({ expectedRevision: 2 }, actor.id)
+    expect(result.publishedRevision).toBe(2)
+    expect(result.published.investorTypes).toEqual(['professional', 'retail'])
+    const [history] = await ds.query(`SELECT content FROM app.platform_configuration_versions WHERE revision=2`)
+    expect(history.content).toEqual(content)
+    await expect(platform.savePlatformConfiguration({ expectedRevision: 0, content }, actor.id)).rejects.toThrow('资料已被其他人更新')
   })
 
   it('counts redemptions grouped by state', async () => {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
+import { ArrowRight, Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
 import Image from 'next/image'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import {
@@ -12,7 +12,7 @@ import {
 import { useI18n } from '@/lib/i18n'
 import { authRouteCopy, interpolateRouteCopy } from '@/lib/route-copy'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
-import { authSheetCopy } from '@/lib/maison-auth-copy'
+import { authSheetCopy, authCardCaption } from '@/lib/maison-auth-copy'
 import { authEmailCopy, normalizeEmailCode } from '@/lib/auth-email-copy'
 import styles from './P02-Login.module.css'
 import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
@@ -21,7 +21,7 @@ import { NEW_ACCOUNT_KEY, consumeAuthDestination, markNewAccount, markPasskeyOff
 import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
-import { AuthHero, AuthShell } from './AuthShell'
+import { AuthShell } from './AuthShell'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PENDING_CONSENTS = 'rwa.pending-consents'
@@ -343,12 +343,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     void usePasskey(account.email)
   }, [step, pending])
 
-  const cta = (label: string) => <span>{label}</span>
-  const title = walletChallenge || step === 'new' ? sheet.registerTitle
-    : step === 'code' ? sheet.codeTitle
-    : step === 'password' || step === 'passkey' ? sheet.loginTitle
-    : mode === 'register' ? sheet.registerTitle : sheet.modes
-  const lede = walletChallenge ? sheet.registerLede : step === 'new' ? sheet.newLede : step === 'email' ? sheet.emailLede : null
+  const cta = (label: string) => <><span>{label}</span><span className={styles.ctaIcon} data-ready={Boolean(email.trim())} aria-hidden="true"><ArrowRight size={21} strokeWidth={1.6} /></span></>
+  const title = sheet.modes
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
     <span>{visual.consentStart} <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span>
@@ -362,7 +358,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   // The address every later step acts on, with a way back to change it.
   const identity = account && <div className={styles.codeDelivery} role="status">
     {step === 'code' ? <Mail size={17} aria-hidden="true" /> : <UserRound size={17} aria-hidden="true" />}
-    <span><small>{step === 'code' ? sheet.sentTo : step === 'new' ? visual.emailAddress : sheet.account}</small><b dir="ltr">{account.email}</b></span>
+    <span><b dir="ltr">{account.email}</b></span>
     <button type="button" disabled={pending} aria-label={emailCopy.changeEmail} title={emailCopy.changeEmail} onClick={changeEmail}><Pencil size={16} aria-hidden="true" /></button>
   </div>
 
@@ -378,12 +374,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a>
   </>
 
-  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step }} footer={footer}
-    topAction={<button type="button" className={styles.topLink} onClick={browse}>{visual.browse}</button>}
-    hero={<AuthHero lines={visual.hero} />}>
+  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true' }} footer={footer}
+    topAction={<button type="button" className={styles.topLink} onClick={browse}>{visual.browse}</button>}>
+    <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
     <header className={styles.cardHead}>
-      <h2 className={styles.cardTitle}>{title}</h2>
-      {lede && <p className={styles.cardLede}>{lede}</p>}
+      <h1 className={styles.cardTitle}>{title}</h1>
+      {!walletChallenge && step === 'email' && <p className={styles.cardLede}>{authCardCaption[locale]}</p>}
     </header>
 
     {walletChallenge ? <>
@@ -434,7 +430,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     </form>}
 
     {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <p className={styles.divider}><span>{sheet.or}</span></p>
+      <div className={styles.divider} aria-hidden="true" />
       <div className={styles.methods}>
         <button type="button" disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={20} height={20} style={{ width: 20, height: 20 }} /></button>
         <button type="button" disabled={pending} onClick={() => void startProvider('x')} aria-label={visual.x} title={visual.x}><Image data-mono="" src="/auth/icon-x.svg" alt="" width={16} height={16} style={{ width: 16, height: 16 }} /></button>
@@ -442,5 +438,6 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         {passkeySupported && !autofill && <button type="button" disabled={pending} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passwordCopy.passkey}><Fingerprint size={20} strokeWidth={1.6} aria-hidden="true" /></button>}
       </div>
     </div>}
+    </div>
   </AuthShell>
 }

@@ -177,11 +177,8 @@ export default function WalletsPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">入金地址池</h1>
-            <p className="text-muted-foreground mt-1">手动托管模式：按用户分配专属 TRON USDT 充值地址（地址与私钥加密存储）</p>
-          </div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
+
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => { setCurrentPage(1); fetchPool(); }} disabled={busy} className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4" />

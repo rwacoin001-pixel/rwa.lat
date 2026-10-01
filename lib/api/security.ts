@@ -130,15 +130,15 @@ export type StepUpResult = { reauthentication: string; expiresInSeconds: number;
 
 export const listSecurityFactors = () => request<SecurityFactors>('/v1/security/factors')
 export const listSecurityEvents = () => request<SecurityEventView[]>('/v1/security/events')
-export const stepUpWithTotp = (code: string) => request<StepUpResult>('/v1/security/step-up/totp', { method: 'POST', body: JSON.stringify({ code }) })
-export const stepUpWithRecoveryCode = (code: string) => request<StepUpResult>('/v1/security/step-up/recovery-code', { method: 'POST', body: JSON.stringify({ code }) })
+export const stepUpWithTotp = (code: string, signal?: AbortSignal) => request<StepUpResult>('/v1/security/step-up/totp', { method: 'POST', body: JSON.stringify({ code }), signal, loading: 'silent' })
+export const stepUpWithRecoveryCode = (code: string, signal?: AbortSignal) => request<StepUpResult>('/v1/security/step-up/recovery-code', { method: 'POST', body: JSON.stringify({ code }), signal, loading: 'silent' })
 
 type PasskeyRequestOptionsJSON = Omit<PublicKeyCredentialRequestOptions, 'challenge' | 'allowCredentials'> & {
   challenge: string
   allowCredentials?: Array<Omit<PublicKeyCredentialDescriptor, 'id'> & { id: string }>
 }
 
-export async function stepUpWithPasskey(): Promise<ApiResult<StepUpResult>> {
+export async function stepUpWithPasskey(signal?: AbortSignal): Promise<ApiResult<StepUpResult>> {
   if (
     typeof window === 'undefined' ||
     !window.isSecureContext ||
@@ -147,13 +147,16 @@ export async function stepUpWithPasskey(): Promise<ApiResult<StepUpResult>> {
   ) {
     return localError('PASSKEY_UNSUPPORTED', 'Passkeys are not supported by this browser or device.')
   }
-  const start = await request<{ challengeId: string; options: PasskeyRequestOptionsJSON }>('/v1/security/step-up/passkey', { method: 'POST', body: JSON.stringify({}) })
+  const start = await request<{ challengeId: string; options: PasskeyRequestOptionsJSON }>('/v1/security/step-up/passkey', { method: 'POST', body: JSON.stringify({}), signal, loading: 'silent' })
   if (!start.ok) return { ok: false, error: start.error }
+  if (signal?.aborted) return localError('PASSKEY_CANCELLED', 'Passkey verification was cancelled.')
 
   let credential: Credential | null
   try {
     const options = start.data.options
     credential = await navigator.credentials.get({
+      signal,
+      mediation: 'required',
       publicKey: {
         ...options,
         challenge: decodeBase64Url(options.challenge),
@@ -166,7 +169,7 @@ export async function stepUpWithPasskey(): Promise<ApiResult<StepUpResult>> {
       ? localError('PASSKEY_CANCELLED', 'Passkey verification was cancelled.')
       : localError('PASSKEY_VERIFICATION_FAILED', 'Passkey verification could not be completed.')
   }
-  if (!credential || credential.type !== 'public-key') return localError('PASSKEY_CANCELLED', 'Passkey verification was cancelled.')
+  if (signal?.aborted || !credential || credential.type !== 'public-key') return localError('PASSKEY_CANCELLED', 'Passkey verification was cancelled.')
 
   const publicKeyCredential = credential as PublicKeyCredential
   const assertion = publicKeyCredential.response as AuthenticatorAssertionResponse
@@ -185,6 +188,8 @@ export async function stepUpWithPasskey(): Promise<ApiResult<StepUpResult>> {
   }
   return request<StepUpResult>('/v1/security/step-up/passkey/finish', {
     method: 'POST',
+    signal,
+    loading: 'silent',
     body: JSON.stringify({ challengeId: start.data.challengeId, response }),
   })
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertCircle, KeyRound, Lock, Mail, ShieldCheck } from 'lucide-react';
+import { AlertCircle, KeyRound, Mail, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,7 +10,6 @@ import { Label } from '@/components/ui/label';
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -19,12 +18,12 @@ export default function LoginPage() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('passwordChanged') === '1') setNotice('密码已修改，请使用新密码和当前动态验证码重新登录。');
+    if (params.get('passwordChanged') === '1') setNotice('请使用当前动态验证码重新登录。');
     if (params.get('expired') === '1') {
       setNotice('登录会话已过期或已失效，请重新登录。');
     }
     const next = params.get('next');
-    if (next && next.startsWith('/')) setNextPath(next);
+    if (next && next.startsWith('/') && !next.startsWith('//') && !next.includes('\\')) setNextPath(next);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,7 +37,7 @@ export default function LoginPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, password, ...(mfaCode ? { mfaCode } : {}) }),
+        body: JSON.stringify({ email, mfaCode }),
       });
 
       const data = await res.json();
@@ -125,36 +124,17 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password" className="text-sm font-medium">
-                密码
-              </Label>
-              <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-faint" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  required
-                  autoComplete="current-password"
-                  disabled={loading}
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
+<div className="space-y-2">
               <Label htmlFor="mfa-code" className="flex items-center gap-1.5 text-sm font-medium">
                 <KeyRound className="h-3.5 w-3.5 text-text-faint" />
-                动态验证码（如需）
+                动态验证码
               </Label>
               <Input
                 id="mfa-code"
                 type="text"
                 inputMode="numeric"
                 pattern="[0-9]{6}"
+                required
                 maxLength={6}
                 placeholder="6 位 Authenticator 验证码"
                 value={mfaCode}
@@ -183,6 +163,7 @@ export default function LoginPage() {
               )}
             </Button>
           </form>
+          <a href="/recover" className="mt-4 block text-center text-sm text-text-faint hover:text-ink">无法使用验证器？</a>
 
           <div className="mt-6 border-t border-ink/[0.08] pt-4">
             <p className="text-center text-xs text-muted-foreground">

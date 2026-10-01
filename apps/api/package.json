@@ -15,12 +15,12 @@
     "build:low-memory": "node --max-old-space-size=1024 node_modules/@nestjs/cli/bin/nest.js build",
     "verify:migration-contract": "node scripts/verify-migration-contract.mjs",
     "verify:migration-rehearsal": "node scripts/verify-migration-rehearsal.mjs",
-    "verify:prediction-hedge": "ts-node-transpile-only tools/verify-prediction-hedge.ts",
-    "verify:prediction-ledger": "psql -v ON_ERROR_STOP=1 -f tools/verify-prediction-ledger.sql",
     "db:migration:run": "typeorm-ts-node-commonjs migration:run -d src/database/data-source.ts",
     "db:migration:run:prod": "typeorm migration:run -d dist/database/data-source.js",
     "db:migration:revert": "typeorm-ts-node-commonjs migration:revert -d src/database/data-source.ts",
-    "db:migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts"
+    "db:migration:show": "typeorm-ts-node-commonjs migration:show -d src/database/data-source.ts",
+    "verify:prediction-hedge": "ts-node-transpile-only tools/verify-prediction-hedge.ts",
+    "verify:prediction-ledger": "psql -v ON_ERROR_STOP=1 -f tools/verify-prediction-ledger.sql"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.500.0",

@@ -339,13 +339,15 @@ describe('IdentityService', () => {
     )
   })
 
-  it('creates an account for a first-time verified OAuth sign-in and records current agreements', async () => {
+  it('does not create an account when an OAuth login identity is unknown', async () => {
     oauthProvider.exchange.mockResolvedValue({ subject: 'unknown-google-subject', intent: 'login' })
 
-    await expect(svc.exchangeOAuthCode('google', 'provider-code', 'state-value-with-minimum-length')).resolves.toHaveProperty('token')
-    expect(users.data).toHaveLength(1)
-    expect(logins.data).toHaveLength(1)
-    expect(consentQueries.filter(({ sql }) => sql.includes('INSERT INTO app.consents'))).toHaveLength(2)
+    await expect(svc.exchangeOAuthCode('google', 'provider-code', 'state-value-with-minimum-length'))
+      .rejects.toMatchObject({ response: { code: 'AUTH_FLOW_REQUIRED', authFlow: { step: 'consent' } } })
+
+    expect(users.data).toHaveLength(0)
+    expect(logins.data).toHaveLength(0)
+    expect(consentQueries.filter(({ sql }) => sql.includes('INSERT INTO app.consents'))).toHaveLength(0)
   })
 
   it('does not require new consent to sign in with an existing OAuth identity', async () => {

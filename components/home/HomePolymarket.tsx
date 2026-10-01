@@ -1,11 +1,14 @@
 'use client'
 
+import { useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, ChartNoAxesCombined, Coins, Landmark, Waves } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, request } from '@/lib/api/_http'
+import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fmtUsdCompact } from '@/lib/money'
+import { polymarketTranslationCopy } from '@/lib/polymarket-translation-copy'
 import styles from './HomePolymarket.module.css'
 
 type Market = {
@@ -40,14 +43,41 @@ export function HomePolymarket() {
   const fetched = result.data?.fetchedAt && !Number.isNaN(Date.parse(result.data.fetchedAt))
     ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(result.data.fetchedAt)) : null
 
+  // Machine translation of the upstream (English) market text, reusing the same
+  // backend cache as the prediction screens. The original is always kept as the
+  // fallback, so a translation outage never leaves the card empty.
+  const translationLabel = polymarketTranslationCopy[locale]
+  const [translations, setTranslations] = useState<Record<string, PolymarketTranslation>>({})
+  const attempts = useRef(new Map<string, number>())
+
+  useEffect(() => {
+    if (locale === 'en') return
+    const pending = (result.data?.items ?? [])
+      .map((item) => item.id)
+      .filter((id) => /^\d{1,20}$/.test(id))
+      .filter((id) => (attempts.current.get(`${locale}:${id}`) ?? 0) < 2)
+    if (!pending.length) return
+    for (const id of pending) attempts.current.set(`${locale}:${id}`, (attempts.current.get(`${locale}:${id}`) ?? 0) + 1)
+    void translatePolymarketMarkets(pending.slice(0, 20), locale).then((response) => {
+      if (!response.ok || !response.data.available) return
+      setTranslations((previous) => {
+        const next = { ...previous }
+        for (const item of response.data.items) next[`${locale}:${item.id}`] = item
+        return next
+      })
+      for (const item of response.data.items) attempts.current.set(`${locale}:${item.id}`, 99)
+    })
+  }, [locale, result.data])
+
   return <section className={styles.root} aria-label={label.title}>
     <div className={styles.heading}><div><span className={styles.eyebrow}>{label.eyebrow}</span><h2>{label.title}</h2></div><span className={styles.mark}>P</span></div>
     {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : result.error || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{result.data.items.map(market => {
       const Icon = categoryIcon[market.category]
+      const translated = translations[`${locale}:${market.id}`]
       return <button type="button" className={styles.card} key={market.id} onClick={() => router.push(`/prediction/${encodeURIComponent(market.id)}`)}>
-        <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} /></span><span className={styles.category}>{label[market.category]}</span><ArrowUpRight size={16} /></span>
-        <strong className={styles.question} lang="en">{market.question}</strong>
-        <span className={styles.outcomes}>{market.outcomes.slice(0, 2).map((outcome, index) => <span className={styles.outcome} key={`${market.id}-${index}`}><span lang="en">{outcome.label}</span><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(outcome.impliedProbability)}</b></span>)}</span>
+        <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}<ArrowUpRight size={16} /></span>
+        <strong className={styles.question} lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>
+        <span className={styles.outcomes}>{market.outcomes.slice(0, 2).map((outcome, index) => <span className={styles.outcome} key={`${market.id}-${index}`}><span lang={translated ? locale : 'en'}>{translated?.outcomes[index] ?? outcome.label}</span><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(outcome.impliedProbability)}</b></span>)}</span>
         <span className={styles.probabilityBar} aria-hidden="true"><span style={{ width: `${market.outcomes[0].impliedProbability * 100}%` }} /></span>
         <span className={styles.foot}><span>{label.probability}</span><span>{label.volume} <b dir="ltr">{market.volume24hUsd === null ? '—' : fmtUsdCompact(market.volume24hUsd, { locale, digits: 1 })}</b></span></span>
       </button>

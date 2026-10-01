@@ -3,6 +3,7 @@ import { Reflector } from '@nestjs/core'
 import type { Request } from 'express'
 import { ADMIN_PUBLIC } from './admin.guard.decorator'
 import { AdminAuthService, type AdminSessionActor } from './admin-auth.service'
+import { AdminCorePrincipalService } from './admin-core-principal.service'
 
 export type AdminRequest = Request & { admin?: AdminSessionActor }
 
@@ -11,6 +12,7 @@ export class AdminSessionGuard implements CanActivate {
   constructor(
     private readonly reflector: Reflector,
     private readonly auth: AdminAuthService,
+    private readonly principals: AdminCorePrincipalService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -23,6 +25,7 @@ export class AdminSessionGuard implements CanActivate {
     const token = request.headers.authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
     if (!token) throw new UnauthorizedException('Admin session is required')
     request.admin = await this.auth.authenticate(token)
+    if (!['GET', 'HEAD', 'OPTIONS'].includes(request.method)) await this.principals.ensure(request.admin)
     return true
   }
 }

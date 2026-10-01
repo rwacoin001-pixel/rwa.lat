@@ -6,6 +6,7 @@ import {
   PrimaryGeneratedColumn,
   Check,
 } from 'typeorm'
+import type { QuoteBinding } from './automatic-quote'
 
 export type ProductState = 'draft' | 'published' | 'suspended' | 'retired'
 
@@ -14,6 +15,9 @@ export type ProductState = 'draft' | 'published' | 'suspended' | 'retired'
 @Check(`"state" = 'retired' = ("retired_at" IS NOT NULL)`)
 @Check(`("min_order_atomic_amount" IS NULL OR "max_order_atomic_amount" IS NULL OR "min_order_atomic_amount" <= "max_order_atomic_amount")`)
 export class Product {
+  @Column({ type: 'jsonb', nullable: true })
+  quote_binding_json?: QuoteBinding | null
+
   @PrimaryGeneratedColumn('uuid')
   id!: string
 
