@@ -677,6 +677,7 @@ export class CommunityService {
       commentCount: post.comment_count,
       viewCount: post.view_count,
       publishedAt: post.published_at,
+      location: post.location ?? null,
       author: post.author ? this.shapeProfile(post.author, false, gate) : null,
     }
   }

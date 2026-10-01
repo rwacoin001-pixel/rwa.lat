@@ -1,10 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ArrayMaxSize, IsArray, IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsDefined, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator'
+import { Type } from 'class-transformer'
 
 /** X-style media limit shared by posts and replies. */
 export const MEMBER_MEDIA_MAX = 4
 
+export class MemberPostLocationDto {
+  @IsString() @MinLength(1) @MaxLength(80) city!: string
+  @IsString() @Matches(/^[A-Z]{2}$/) countryCode!: string
+  @IsIn(['device']) source!: 'device'
+}
 export class MemberPostDto {
+  @ApiProperty() @IsDefined() @ValidateNested() @Type(() => MemberPostLocationDto) location!: MemberPostLocationDto
   /** May be empty when at least one image is attached. */
   @ApiProperty() @IsString() @MaxLength(4000) body!: string
   @ApiPropertyOptional() @IsOptional() @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(32, { each: true }) topics?: string[]

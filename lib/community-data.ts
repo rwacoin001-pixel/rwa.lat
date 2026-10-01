@@ -19,6 +19,7 @@ export type CommunityAuthor = {
 }
 
 export type CommunityPost = {
+  location?: { city: string; countryCode: string } | null
   id: string
   body: string
   images: string[]

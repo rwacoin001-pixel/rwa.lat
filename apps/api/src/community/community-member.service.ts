@@ -88,10 +88,12 @@ export class CommunityMemberService {
     const body = (input.body ?? '').trim(); const lang = normalizeCommunityLang(input.lang)
     const imageIds = input.imageIds ?? []
     if ((!body && !imageIds.length) || body.length > 4000) throw new BadRequestException('Invalid post body')
+    if (!input.location?.city?.trim() || input.location.city.trim().length > 80 || !/^[A-Z]{2}$/.test(input.location.countryCode ?? '') || input.location.source !== 'device') throw new BadRequestException('Device location required to publish')
+    const location = { city: input.location.city.trim(), countryCode: input.location.countryCode, source: 'device' as const }
     const images = await this.media(userId, imageIds, 'post')
-    return this.write(userId, key, { body, lang, topics: input.topics ?? [], ...(images.length ? { images } : {}) }, 'post', async (m, p) => {
+    return this.write(userId, key, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}) }, 'post', async (m, p) => {
       const topics = await m.getRepository(CommunityTopic).find()
-      return m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date() }))
+      return m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, location, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date() }))
     })
   }
   async ensurePredictionThread(userId: string, eventId: string) {

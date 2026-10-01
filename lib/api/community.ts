@@ -1,5 +1,5 @@
 import { request } from './_http'
-export type CommunityPost = { id: string; body: string; images?: string[]; likeCount: number; commentCount: number; viewCount?: number; publishedAt: string; author: { handle: string; displayName: string; avatarUrl: string | null } }
+export type CommunityPost = { id: string; body: string; images?: string[]; location?: { city: string; countryCode: string } | null; likeCount: number; commentCount: number; viewCount?: number; publishedAt: string; author: { handle: string; displayName: string; avatarUrl: string | null; city?: string | null } }
 export type CommunityFeed = { items: CommunityPost[]; nextCursor?: string | null }
 export type CommunityTopic = { id: string; slug: string; title: string; description: string | null }
 /**

@@ -5,6 +5,7 @@ import { CommunityMemberService } from '../../src/community/community-member.ser
 import {CommunityService} from '../../src/community/community.service'
 import {CommunityProfile,CommunityPost,CommunityComment,CommunityLike,CommunityFollow,CommunityTopic,CommunityQueueItem,CommunityReport,CommunityTranslation} from '../../src/community/community.entities'
 
+const deviceLocation = { city: 'Singapore', countryCode: 'SG', source: 'device' as const }
 const suite = process.env.TEST_DATABASE_URL ? describe : describe.skip
 suite('Member publication with isolated PostgreSQL', () => {
   let db: DataSource, runner: QueryRunner, service: CommunityMemberService, userId: string
@@ -38,7 +39,7 @@ suite('Member publication with isolated PostgreSQL', () => {
       const publicService=Reflect.construct(CommunityService,[...repos,{},db]) as CommunityService
       expect((await publicService.stats()).postsLast24h).toEqual(expect.any(Number))
       expect((await publicService.getFeed({})).items.some((p:{id:string})=>p.id===a)).toBe(false)
-      const other=await service.post(userId,randomUUID(),{body:'Separate isolated discussion'})
+      const other=await service.post(userId,randomUUID(),{ location: deviceLocation, body:'Separate isolated discussion'})
       await expect(service.comment(userId,randomUUID(),other.id,{body:'Wrong parent',parentId:reply.id})).rejects.toThrow('Invalid parent')
       await runner.query("UPDATE app.community_posts SET state='hidden' WHERE id=$1",[a])
       await expect(service.ensurePredictionThread(userId,'1234567')).rejects.toThrow('not public')
@@ -46,21 +47,21 @@ suite('Member publication with isolated PostgreSQL', () => {
     } finally {fetchMock.mockRestore()}
   })
   it('publishes as the authenticated member immediately and retries the same intent once', async () => {
-    const key = randomUUID(); const input = { body: '公开的隔离测试帖子', topics: ['rwa'] }
+    const key = randomUUID(); const input = { location: deviceLocation, body: '公开的隔离测试帖子', topics: ['rwa'] }
     const a = await service.post(userId, key, input); const b = await service.post(userId, key, input)
     expect(b).toEqual({ id: a.id, duplicate: true })
-    const [post] = await runner.query('SELECT p.state,p.source,u.user_id FROM app.community_posts p JOIN app.community_profiles u ON u.id=p.profile_id WHERE p.id=$1', [a.id])
-    expect(post).toMatchObject({ state: 'published', source: 'user', user_id: userId })
-    await expect(service.post(userId, key, { body: '不同内容' })).rejects.toThrow('another publication')
+    const [post] = await runner.query('SELECT p.state,p.source,p.location,u.user_id FROM app.community_posts p JOIN app.community_profiles u ON u.id=p.profile_id WHERE p.id=$1', [a.id])
+    expect(post).toMatchObject({ state: 'published', source: 'user', user_id: userId, location: deviceLocation })
+    await expect(service.post(userId, key, { location: deviceLocation,  body: '不同内容' })).rejects.toThrow('another publication')
   })
   it('rejects blank writes, missing idempotency and inactive account writes', async () => {
-    await expect(service.post(userId, randomUUID(), { body: '  ' })).rejects.toThrow('Invalid post')
-    await expect(service.post(userId, undefined, { body: 'content' })).rejects.toThrow('Idempotency-Key')
+    await expect(service.post(userId, randomUUID(), { location: deviceLocation,  body: '  ' })).rejects.toThrow('Invalid post')
+    await expect(service.post(userId, undefined, { location: deviceLocation,  body: 'content' })).rejects.toThrow('Idempotency-Key')
     await runner.query("UPDATE app.users SET status='suspended' WHERE id=$1", [userId])
-    await expect(service.post(userId, randomUUID(), { body: 'content' })).rejects.toThrow('Active account')
+    await expect(service.post(userId, randomUUID(), { location: deviceLocation,  body: 'content' })).rejects.toThrow('Active account')
   })
   it('deduplicates replies and refuses replies on hidden posts', async () => {
-    const post = await service.post(userId, randomUUID(), { body: 'content' }); const key = randomUUID()
+    const post = await service.post(userId, randomUUID(), { location: deviceLocation,  body: 'content' }); const key = randomUUID()
     const comment = await service.comment(userId, key, post.id, { body: 'reply' })
     expect(await service.comment(userId, key, post.id, { body: 'reply' })).toMatchObject({ id: comment.id, duplicate: true })
     const [row] = await runner.query('SELECT comment_count FROM app.community_posts WHERE id=$1', [post.id])
@@ -69,7 +70,7 @@ suite('Member publication with isolated PostgreSQL', () => {
     await expect(service.comment(userId, randomUUID(), post.id, { body: 'reply' })).rejects.toThrow('not public')
   })
   it('keeps like counts stable through repeat set/unset and persists the member state', async () => {
-    const post = await service.post(userId, randomUUID(), { body: 'content' })
+    const post = await service.post(userId, randomUUID(), { location: deviceLocation,  body: 'content' })
     expect(await service.like(userId, post.id, true)).toMatchObject({ likeCount: 1 })
     expect(await service.like(userId, post.id, true)).toMatchObject({ likeCount: 1 })
     expect(await service.state(userId, post.id)).toMatchObject({ liked: true })
@@ -85,14 +86,14 @@ suite('Member publication with isolated PostgreSQL', () => {
     const readable = jest.fn(async (ids: string[]) => new Set(ids.filter(id => id !== avatarId)))
     const storage = { attachableCommunityImages: attachable, readableCommunityImageIds: readable }
     const media = new CommunityMemberService({ query: (sql: string, args: unknown[]) => runner.query(sql, args), transaction: (work: any) => work(runner.manager) } as unknown as DataSource, storage as any)
-    const post = await media.post(userId, randomUUID(), { body: '', imageIds: [imageId] })
+    const post = await media.post(userId, randomUUID(), { location: deviceLocation,  body: '', imageIds: [imageId] })
     const [row] = await runner.query('SELECT images FROM app.community_posts WHERE id=$1', [post.id])
     expect(row.images).toEqual([`/v1/community/media/${imageId}`])
     const reply = await media.comment(userId, randomUUID(), post.id, { body: 'with photo', imageIds: [imageId] })
     const [comment] = await runner.query('SELECT images FROM app.community_comments WHERE id=$1', [reply.id])
     expect(comment.images).toEqual([`/v1/community/media/${imageId}`])
-    await expect(media.post(userId, randomUUID(), { body: '' })).rejects.toThrow('Invalid post')
-    await expect(service.post(userId, randomUUID(), { body: 'x', imageIds: [imageId] })).rejects.toThrow('storage')
+    await expect(media.post(userId, randomUUID(), { location: deviceLocation,  body: '' })).rejects.toThrow('Invalid post')
+    await expect(service.post(userId, randomUUID(), { location: deviceLocation,  body: 'x', imageIds: [imageId] })).rejects.toThrow('storage')
     // A freshly uploaded avatar stays hidden until the scan clears it.
     const pending = await media.setAvatar(userId, avatarId)
     expect(pending).toMatchObject({ avatarUrl: null, avatarPending: true })
@@ -103,7 +104,7 @@ suite('Member publication with isolated PostgreSQL', () => {
     expect(await media.setAvatar(userId, null)).toMatchObject({ avatarUrl: null, avatarPending: false })
   })
   it('records moderation reasons and adjusts published reply counts without deleting evidence', async () => {
-    const post = await service.post(userId, randomUUID(), { body: 'content' })
+    const post = await service.post(userId, randomUUID(), { location: deviceLocation,  body: 'content' })
     const comment = await service.comment(userId, randomUUID(), post.id, { body: 'reply' })
     const admin = randomUUID()
     await service.moderate({ targetType: 'comment', targetId: comment.id, state: 'hidden', reason: 'test reason' }, admin)

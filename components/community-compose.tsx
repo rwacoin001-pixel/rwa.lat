@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { Camera, Globe2, Hash, ImagePlus, Maximize2, Trash2, X } from 'lucide-react'
+import { Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Trash2, X } from 'lucide-react'
+import { getPostLocation, locationCopy, type PostLocation } from '@/lib/community-location'
 import { request, readSession, SESSION_CHANGED, type ApiError } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
 import { communityCopy } from '@/lib/maison-content-copy'
@@ -145,6 +146,24 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [location, setLocation] = useState<PostLocation | null>(null)
+  const [locating, setLocating] = useState(false)
+  const [locationFailed, setLocationFailed] = useState(false)
+  const locationAttempt = useRef(0)
+  const locate = useCallback(async () => {
+    const attempt = ++locationAttempt.current
+    setLocation(null); setLocating(true); setLocationFailed(false)
+    try {
+      const result = await getPostLocation(locale)
+      if (locationAttempt.current === attempt) setLocation(result)
+    } catch { if (locationAttempt.current === attempt) setLocationFailed(true) }
+    finally { if (locationAttempt.current === attempt) setLocating(false) }
+  }, [locale])
+  useEffect(() => {
+    if (!open || reply) return
+    void locate()
+    return () => { ++locationAttempt.current }
+  }, [open, reply, locate])
   const popup = useRef<HTMLDivElement>(null)
   const field = useRef<HTMLTextAreaElement>(null)
   const picker = useRef<HTMLInputElement>(null)
@@ -200,7 +219,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const ready = shots.filter(s => s.status === 'done')
   const uploading = shots.some(s => s.status === 'uploading')
   const hasContent = trimmed.length > 0 || shots.length > 0
-  const canSend = (trimmed.length > 0 || ready.length > 0) && !uploading && body.length <= max && !busy
+  const canSend = (trimmed.length > 0 || ready.length > 0) && !uploading && body.length <= max && !busy && (reply || Boolean(location))
 
   const finish = () => { clearShots(); setBody(''); onClose() }
   const requestClose = () => {
@@ -234,7 +253,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const send = async () => {
     if (!canSend) return
     const imageIds = ready.map(s => s.id!)
-    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [] }), ...(imageIds.length ? { imageIds } : {}) })
+    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
     if (intent.current?.text !== payload) intent.current = { text: payload, key: crypto.randomUUID() }
     setBusy(true); setError('')
@@ -285,6 +304,10 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
             {topics.map(entry => <button key={entry.slug} type="button" aria-pressed={topic === entry.slug} onClick={() => { setTopic(entry.slug); setPanel(null) }}>#{entry.title}</button>)}
           </div>}
           <div className={x.composeTools}>
+            {!reply && <>
+              <button type="button" className={x.toolChip} disabled={locating || busy} onClick={() => void locate()}><MapPin size={16} aria-hidden="true" />{locating ? locationCopy[locale][1] : location ? `${location.city} · ${location.countryCode}` : locationCopy[locale][locationFailed ? 2 : 0]}</button>
+              <p className={x.composeNote}>{locationCopy[locale][3]}</p>
+            </>}
             {error && <p className={x.composeError} role="alert">{error}</p>}
             <p className={x.audience}><Globe2 size={15} strokeWidth={2} aria-hidden="true" />{k.everyone}</p>
             <div className={x.toolRow}>

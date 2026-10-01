@@ -79,7 +79,7 @@ export function CommunityFeedList({
     <div className="community-feed">
       {items.map((post) => (
         <button type="button" className="rwa-card card-row s2-post-row" key={post.id} onClick={onOpen}>
-          <span><b>{post.author.displayName}</b><small>@{post.author.handle}</small></span>
+          <span><b>{post.author.displayName}</b><small>@{post.author.handle}{(post.location?.city || post.author.city) ? ` · ${post.location?.city || post.author.city}` : ''}</small></span>
           <p>{post.body}</p>
           <small>{post.likeCount} · {post.commentCount}</small>
         </button>

@@ -104,7 +104,7 @@ function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, in
       <div className={x.postMain}>
         <p className={x.byline}>
           {toProfile ? <button type="button" className={x.name} onClick={(event) => { event.stopPropagation(); toProfile() }}>{author?.displayName ?? '—'}</button> : <b className={x.name}>{author?.displayName ?? '—'}</b>}
-          {author && <span className={x.handle} dir="ltr">@{author.handle}</span>}
+          {author && <span className={x.handle} dir="auto">@{author.handle}{(post.location?.city || author.city) ? ` · ${post.location?.city || author.city}` : ''}</span>}
           <span className={x.dot} aria-hidden="true">·</span>
           <time className={x.time} dateTime={post.publishedAt ?? undefined}>{timeAgo(post.publishedAt)}</time>
         </p>
@@ -352,7 +352,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
               {author ? <button type="button" className={x.avatarBtn} aria-label={author.displayName} onClick={() => openProfile(author.handle)}><Avatar author={author} size={46} /></button> : <Avatar author={author} size={46} />}
               <div className={x.focusWho}>
                 {author ? <button type="button" className={x.name} onClick={() => openProfile(author.handle)}>{author.displayName}</button> : <b className={x.name}>—</b>}
-                {author && <span className={x.handle} dir="ltr">@{author.handle}{author.city ? ` · ${author.city}` : ''}</span>}
+                {author && <span className={x.handle} dir="auto">@{author.handle}{(data.post.location?.city || author.city) ? ` · ${data.post.location?.city || author.city}` : ''}</span>}
               </div>
             </header>
             <p className={x.focusBody} dir="auto">{data.post.body}</p>

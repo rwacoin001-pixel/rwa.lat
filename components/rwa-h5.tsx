@@ -1,5 +1,6 @@
 'use client'
 import AppLoading from '@/components/app-loading'
+import { captureWalletBackdrop, WalletPageBackdrop } from './wallet-page-backdrop'
 import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
 
 import dynamic from 'next/dynamic'
@@ -1815,6 +1816,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       }
       ;(document.activeElement as HTMLElement | null)?.blur()
       // Fresh state object: Next only syncs its router for history writes that lack its own `__NA` marker.
+      if (/^\/wallet\/(deposit|withdraw|transfer)(?:\/|$)/.test(url.pathname)) captureWalletBackdrop()
       const state = nextNavigationState(Boolean(replace))
       if (replace) window.history.replaceState(state, '', url.pathname + url.search)
       else window.history.pushState(state, '', url.pathname + url.search)
@@ -1839,6 +1841,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       window.sessionStorage.setItem('rwa-overlay-base', screen)
     }
     setProfileBaseScreen(null)
+    if (next === 'deposit' || next === 'withdraw' || next === 'transfer') captureWalletBackdrop()
     setScreen(next)
     setRouteQuery('')
     setRouteParams({})
@@ -1972,6 +1975,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       <main id="main-content" className="rwa-shell" tabIndex={-1}>
       {!isOnline && <div className="connection-banner" role="status"><AlertTriangle size={16} /><span><b>{shellCopy.offlineTitle}</b><small>{shellCopy.offlineBody}</small></span></div>}
       <div className="rwa-mobile" data-theme={theme} data-mode={mode} data-screen={screen} data-dock={showDock ? 'true' : 'false'} data-sheet={isFloatingSheet ? 'true' : 'false'}>
+        {isWalletAction && <WalletPageBackdrop />}
         <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen} motion={navigationMotion}>
         {isProtectedWaiting ? <AppLoading /> : <ScreenRouter screen={screen} routes={{
           welcome: <MaisonBridge page="welcome"><BootScreen go={go} /></MaisonBridge>,

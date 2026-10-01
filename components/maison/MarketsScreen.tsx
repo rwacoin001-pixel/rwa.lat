@@ -32,7 +32,7 @@ function tabFrom(query: string): Tab {
   const raw = new URLSearchParams(query).get('tab')
   // 衡序 lives inside Baskets; keep old ?tab=hengxu links working.
   const value = raw === 'hengxu' ? 'baskets' : raw
-  return (TABS as readonly string[]).includes(value ?? '') ? value as Tab : 'assets'
+  return (TABS as readonly string[]).includes(value ?? '') ? value as Tab : 'predictions'
 }
 
 function useDebounced(value: string, delay = 320) {

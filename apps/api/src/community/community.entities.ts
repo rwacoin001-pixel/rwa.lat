@@ -101,6 +101,9 @@ export class CommunityPost {
   @Column({ type: 'text' })
   body!: string
 
+  @Column({ type: 'jsonb', nullable: true })
+  location?: { city: string; countryCode: string; source: 'device' } | null
+
   @Column({ type: 'jsonb', default: () => "'[]'" })
   images!: string[]
 
