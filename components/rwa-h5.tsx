@@ -1816,7 +1816,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       }
       ;(document.activeElement as HTMLElement | null)?.blur()
       // Fresh state object: Next only syncs its router for history writes that lack its own `__NA` marker.
-      if (/^\/wallet\/(deposit|withdraw|transfer)(?:\/|$)/.test(url.pathname)) captureWalletBackdrop()
+      if (/^\/(?:wallet|assets\/cash)\/(deposit|withdraw|transfer)(?:\/|$)/.test(url.pathname)) captureWalletBackdrop()
       const state = nextNavigationState(Boolean(replace))
       if (replace) window.history.replaceState(state, '', url.pathname + url.search)
       else window.history.pushState(state, '', url.pathname + url.search)
