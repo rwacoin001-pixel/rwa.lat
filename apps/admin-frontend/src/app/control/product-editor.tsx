@@ -24,6 +24,7 @@ import { StoragePicker } from '@/components/storage-picker'
 import { StorageUpload } from '@/components/storage-upload'
 import { YieldEditor } from './yield-editor'
 import { AutomaticQuoteEditor } from './automatic-quote-editor'
+import { productMediaRefs } from '@/lib/product-media'
 
 const STATE_LABELS: Record<string, string> = { draft: '草稿', published: '已发布', suspended: '已暂停', retired: '已归档' }
 const STATE_BADGE: Record<string, 'softGray' | 'softGreen' | 'softAmber' | 'softRed'> = {
@@ -187,7 +188,7 @@ export function ProductEditor({
   const [worstCaseText, setWorstCaseText] = useState(String(risk.worstCaseText ?? ''))
   const [riskNotes, setRiskNotes] = useState(String(risk.notes ?? ''))
   // 媒体
-  const [mediaRefs, setMediaRefs] = useState<string[]>(product.mediaRefs ?? [])
+  const [mediaRefs, setMediaRefs] = useState<string[]>(productMediaRefs(product.mediaRefs))
   const [pickerOpen, setPickerOpen] = useState(false)
   // 报价 / 披露
   const [quotes, setQuotes] = useState<PriceQuote[]>([])
@@ -290,7 +291,7 @@ export function ProductEditor({
     try {
       const updated = await adminApi.updateProduct(current.id, { mediaRefs: next })
       setCurrent(updated)
-      setMediaRefs(updated.mediaRefs ?? next)
+      setMediaRefs(updated.mediaRefs == null ? next : productMediaRefs(updated.mediaRefs))
       onChanged()
     } catch (e) {
       showError(e, '保存媒体失败')
