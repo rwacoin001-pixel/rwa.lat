@@ -48,6 +48,9 @@ export class CommunityTranslationProvider {
         },
         body: JSON.stringify({
           model: this.model,
+          ...(/^https:\/\/api\.deepseek\.com(?:\/|$)/i.test(this.baseUrl) && /flash/i.test(this.model)
+            ? { thinking: { type: 'disabled' } }
+            : {}),
           temperature: 0.2,
           messages: [
             {

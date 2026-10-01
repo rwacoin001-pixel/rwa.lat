@@ -22,6 +22,7 @@ fixture.require = name => {
   if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
   if (name === 'next/navigation') return { usePathname: () => pathname }
   if (name === 'lucide-react') return { Fingerprint: 'Fingerprint' }
+  if (name === './app-loading') return { default: 'AppLoading' }
   if (name === '@/lib/api/_http') return { readSession: () => session, SESSION_CHANGED: 'session', clearSession: () => { session = null; listeners.session?.() } }
   if (name === '@/lib/api/auth') return { logout: async () => { session = null; listeners.session?.() } }
   if (name === '@/lib/api/security') return { listSecurityFactors: async () => ({ ok: true, data: { passkeys: [{ state: 'active' }] } }), stepUpWithPasskey: async () => { assert.equal(window.isSecureContext, true); nativeCalls++; return nativeSuccess ? { ok: true, data: { reauthentication: 'native-proof' } } : { ok: false, error: { code: 'PASSKEY_CANCELLED' } } } }
@@ -42,7 +43,7 @@ function buttons(node, result = []) {
 }
 async function click(index) { buttons(render())[index].props.onClick(); await new Promise(resolve => setImmediate(resolve)) }
 ;(async () => {
-  assert.notEqual(render(), 'ACCOUNT_PRIVATE_CONTENT', 'No content before initial clock check')
+  assert.equal(render().type, 'AppLoading', 'Initial clock check has no fingerprint screen or private content')
   effects[0]()
   assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT')
   pathname = '/markets'

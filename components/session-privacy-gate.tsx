@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import { Fingerprint } from 'lucide-react'
+import AppLoading from './app-loading'
 import { clearSession, readSession, SESSION_CHANGED } from '@/lib/api/_http'
 import { logout } from '@/lib/api/auth'
 import { listSecurityFactors, stepUpWithPasskey } from '@/lib/api/security'
@@ -125,11 +125,11 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
   const canKeepMounted = !leaving.current && !locked.current && (!session ||
     (current.current?.key === sessionKey && !needsIdleVerification(current.current?.last)))
   if ((status === 'open' && (checkedPath === pathname || canKeepMounted)) || publicAuth) return children
+  if (status !== 'locked') return <AppLoading />
   const t = fundsCopy[locale].stepUp
   const text = labels[locale]
   return <MaisonPage page="locked">
-    <div style={{ minHeight: '85dvh', display: 'grid', placeContent: 'center', justifyItems: 'center', gap: 20 }} aria-busy={busy || status === 'checking'}>
-      <Fingerprint size={36} strokeWidth={1.3} aria-hidden="true" />
+    <div style={{ minHeight: '85dvh', display: 'grid', placeContent: 'center', justifyItems: 'center', gap: 20 }} aria-busy={busy}>
       {status === 'locked' && <>
         <p className={s.muted}>{t.title}</p>
         <button type="button" className={s.cta} onClick={() => void verify()} disabled={busy}>{busy ? t.verifying : text[0]}</button>

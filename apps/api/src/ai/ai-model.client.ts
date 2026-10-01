@@ -89,6 +89,9 @@ export class AiModelClient {
                 body: JSON.stringify({
                   model: this.model,
                   max_tokens: maxTokens,
+                  ...(/^https:\/\/api\.deepseek\.com(?:\/|$)/i.test(this.endpoint) && /flash/i.test(this.model)
+                    ? { thinking: { type: 'disabled' } }
+                    : {}),
                   // NVIDIA's DeepSeek Flash needs non-thinking output for
                   // structured translations and customer-service replies.
                   ...(/^https:\/\/integrate\.api\.nvidia\.com(?:\/|$)/i.test(this.endpoint) && /^deepseek-ai\/deepseek-v4.*flash/i.test(this.model)
