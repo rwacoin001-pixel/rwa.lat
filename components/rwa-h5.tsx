@@ -1,5 +1,6 @@
 'use client'
 import AppLoading from '@/components/app-loading'
+import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
 
 import dynamic from 'next/dynamic'
 
@@ -1605,6 +1606,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const [routeParams, setRouteParams] = useState<Record<string, string>>(initialParams)
   // Pathname of the last URL-driven navigation; '' after a legacy go(). Separates routes that share a screen (/compare → rwa-detail).
   const [routePath, setRoutePath] = useState(initialPath)
+  const navigationMotion = useNavigationViewport(`${screen}:${routePath}:${routeQuery}`)
   const [profileBaseScreen, setProfileBaseScreen] = useState<Screen | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [isOnline, setIsOnline] = useState(true)
@@ -1746,19 +1748,9 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     window.addEventListener('offline', updateConnection)
     return () => { window.removeEventListener('online', updateConnection); window.removeEventListener('offline', updateConnection) }
   }, [])
-  useEffect(() => {
-    const reset = () => {
-      document.documentElement.scrollTop = 0
-      document.body.scrollTop = 0
-      window.scrollTo(0, 0)
-    }
-    reset()
-    const frame = window.requestAnimationFrame(reset)
-    return () => { window.cancelAnimationFrame(frame) }
-  }, [screen])
   // 丝滑切换：URL 同步用 pushState（不触发 Next 路由重挂载）
   const syncUrl = (path: string) => {
-    if (window.location.pathname !== path) window.history.pushState(null, '', path)
+    if (`${window.location.pathname}${window.location.search}` !== path) window.history.pushState(nextNavigationState(), '', path)
   }
   const applyLocation = () => {
       const segs = window.location.pathname.split('/').filter(Boolean)
@@ -1823,7 +1815,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       }
       ;(document.activeElement as HTMLElement | null)?.blur()
       // Fresh state object: Next only syncs its router for history writes that lack its own `__NA` marker.
-      const state = { rwaNavigation: replace ? Boolean(window.history.state?.rwaNavigation) : true }
+      const state = nextNavigationState(Boolean(replace))
       if (replace) window.history.replaceState(state, '', url.pathname + url.search)
       else window.history.pushState(state, '', url.pathname + url.search)
       setProfileBaseScreen(null)
@@ -1871,6 +1863,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     setProfileBaseScreen(null)
     window.sessionStorage.removeItem('rwa-profile-base')
     window.sessionStorage.removeItem('rwa-overlay-base')
+    if (window.history.state?.rwaNavigation) { window.history.back(); return }
     setScreen(base)
     const nextPath = pathForScreen(base)
     syncUrl(nextPath)
@@ -1979,7 +1972,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       <main id="main-content" className="rwa-shell" tabIndex={-1}>
       {!isOnline && <div className="connection-banner" role="status"><AlertTriangle size={16} /><span><b>{shellCopy.offlineTitle}</b><small>{shellCopy.offlineBody}</small></span></div>}
       <div className="rwa-mobile" data-theme={theme} data-mode={mode} data-screen={screen} data-dock={showDock ? 'true' : 'false'} data-sheet={isFloatingSheet ? 'true' : 'false'}>
-        <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen}>
+        <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen} motion={navigationMotion}>
         {isProtectedWaiting ? <AppLoading /> : <ScreenRouter screen={screen} routes={{
           welcome: <MaisonBridge page="welcome"><BootScreen go={go} /></MaisonBridge>,
           login: <LoginScreen mode="login" go={go} notify={notify} onAuthenticated={setAuthenticated} />,

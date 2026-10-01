@@ -1,4 +1,5 @@
 'use client'
+import { usePageState } from '@/lib/app-navigation'
 
 import { ArrowRight, ArrowUpFromLine, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
@@ -62,7 +63,7 @@ export function PortfolioScreen({ query }: { query: string }) {
   const p = portfolioCopy[locale]
   const common = marketCopy[locale].common
   const initial = new URLSearchParams(query).get('tab')
-  const [tab, setTabState] = useState<Tab>(TABS.includes(initial as Tab) ? initial as Tab : 'overview')
+  const [tab, setTabState] = usePageState<Tab>('portfolio:tab', TABS.includes(initial as Tab) ? initial as Tab : 'overview')
   const setTab = (next: Tab) => {
     setTabState(next)
     const url = new URL(window.location.href)

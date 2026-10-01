@@ -14,6 +14,7 @@ import { fmtUsd, fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { proCopy } from '@/lib/maison-pro-copy'
 import { openPath } from '@/lib/maison-nav'
+import { usePageState } from '@/lib/app-navigation'
 import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Figure, PollBar, Segmented, StatStrip, TickerTape, useAutoAnimate } from './motion'
 import { fmtDate, fmtDateTime } from './format'
@@ -44,10 +45,10 @@ export function MarketsScreen({ query }: { query: string }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const m = copy.markets
-  const [tab, setTab] = useState<Tab>(() => tabFrom(query))
-  const [search, setSearch] = useState(() => new URLSearchParams(query).get('q') ?? '')
-  const [klass, setKlass] = useState<ClassFilter>('all')
-  const [sort, setSort] = useState<RwaSort>('market_cap')
+  const [tab, setTab] = usePageState<Tab>('markets:tab', () => tabFrom(query))
+  const [search, setSearch] = usePageState('markets:search', () => new URLSearchParams(query).get('q') ?? '')
+  const [klass, setKlass] = usePageState<ClassFilter>('markets:class', 'all')
+  const [sort, setSort] = usePageState<RwaSort>('markets:sort', 'market_cap')
   useEffect(() => { setTab(tabFrom(query)) }, [query])
   const term = useDebounced(search.trim().slice(0, 80))
 
@@ -57,7 +58,7 @@ export function MarketsScreen({ query }: { query: string }) {
     if (tab === 'assets') params.delete('tab'); else params.set('tab', tab)
     if (term) params.set('q', term); else params.delete('q')
     const next = `${window.location.pathname}${params.size ? `?${params}` : ''}`
-    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState({ rwaNavigation: Boolean(window.history.state?.rwaNavigation) }, '', next)
+    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState({ ...window.history.state, rwaNavigation: Boolean(window.history.state?.rwaNavigation) }, '', next)
   }, [tab, term])
 
   const products = useQuery('markets:catalog', listProducts, { staleTime: 60_000, pollInterval: POLL.list })

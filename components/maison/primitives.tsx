@@ -33,7 +33,7 @@ export function SectionHead({ index, title, note, action }: { index?: string; ti
 }
 
 export function Skeleton({ rows = 3 }: { rows?: number }) {
-  return <div className={styles.skeleton} aria-busy="true" aria-live="polite">{Array.from({ length: rows }, (_, index) => <i key={index} />)}</div>
+  return <div className={styles.skeleton} data-navigation-loading="true" aria-busy="true" aria-live="polite">{Array.from({ length: rows }, (_, index) => <i key={index} />)}</div>
 }
 
 /** One honest block for empty / error / unavailable. Never used for a successful zero. */

@@ -1,5 +1,6 @@
 'use client'
 import {useState,type CSSProperties} from 'react'
+import {usePageState} from '@/lib/app-navigation'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import {useI18n} from '@/lib/i18n'
@@ -19,7 +20,7 @@ async function readEvent(id:string,period:HistoryPeriod,curves:string[]):Promise
 }
 export function PredictionEventScreen({id}:{id:string}) {
   const {locale}=useI18n()
-  const [period,setPeriod]=useState<HistoryPeriod>('max'), [curves,setCurves]=useState<string[]>([]), [selected,setSelected]=useState<string|null>(null),[side,setSide]=useState(0),[resolved,setResolved]=useState(false),[ticketOpen,setTicketOpen]=useState(false)
+  const [period,setPeriod]=usePageState<HistoryPeriod>(`event:${id}:period`,'max'), [curves,setCurves]=usePageState<string[]>(`event:${id}:curves`,[]), [selected,setSelected]=usePageState<string|null>(`event:${id}:selected`,null),[side,setSide]=useState(0),[resolved,setResolved]=usePageState(`event:${id}:resolved`,false),[ticketOpen,setTicketOpen]=useState(false)
   const query=useQuery(`prediction:event:${id}:${period}:${curves.join(',')}`,()=>readEvent(id,period,curves),{staleTime:30000,pollInterval:30000})
   const event=query.data
   const content=useContentTranslation(event?[event.title,...event.markets.flatMap(m=>[m.label,m.question])]:[])

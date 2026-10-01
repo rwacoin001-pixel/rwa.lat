@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { usePageState } from '@/lib/app-navigation'
+import { mergeDisplayPage } from '@/lib/navigation-memory'
 import { useI18n } from '@/lib/i18n'
 import { getPolymarketFeed, POLYMARKET_CATEGORIES, type PolymarketCategory, type PolymarketFeedMarket } from '@/lib/api/polymarket-feed'
 import {useContentTranslation} from '@/lib/use-content-translation'
@@ -17,13 +19,13 @@ export function PredictionFeed() {
   const copy = marketCopy[locale]
   const m = copy.markets
   const labels = polymarketFeedCopy[locale]
-  const [category, setCategory] = useState<PolymarketCategory>('all')
-  const [offset, setOffset] = useState(0)
-  const [items, setItems] = useState<PolymarketFeedMarket[]>([])
-  const [nextOffset, setNextOffset] = useState<number | null>(null)
-  const [fetchedAt, setFetchedAt] = useState<string | null>(null)
+  const [category, setCategory] = usePageState<PolymarketCategory>('prediction:category', 'all')
+  const [offset, setOffset] = usePageState('prediction:offset', 0)
+  const [items, setItems] = usePageState<PolymarketFeedMarket[]>('prediction:items', [])
+  const [nextOffset, setNextOffset] = usePageState<number | null>('prediction:next', null)
+  const [fetchedAt, setFetchedAt] = usePageState<string | null>('prediction:updated', null)
   const [loading, setLoading] = useState(true)
-  const [loadedOnce, setLoadedOnce] = useState(false)
+  const [loadedOnce, setLoadedOnce] = usePageState('prediction:loaded', false)
   const [error, setError] = useState(false)
   const [retry, setRetry] = useState(0)
   const content=useContentTranslation(items.flatMap(item=>[item.question,...item.outcomes.map(o=>o.label),'2026 Midterms']))
@@ -36,11 +38,7 @@ export function PredictionFeed() {
     void getPolymarketFeed(category, offset, controller.signal)
       .then((page) => {
         if (controller.signal.aborted) return
-        setItems((previous) => {
-          if (offset === 0) return page.items
-          const seen = new Set(previous.map((item) => item.id))
-          return [...previous, ...page.items.filter((item) => !seen.has(item.id))]
-        })
+        setItems((previous) => mergeDisplayPage(previous, page.items, offset))
         setNextOffset(page.nextOffset)
         setFetchedAt(page.fetchedAt)
         setLoadedOnce(true)

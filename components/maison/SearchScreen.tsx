@@ -1,4 +1,5 @@
 'use client'
+import { usePageState } from '@/lib/app-navigation'
 
 import { ArrowUpRight, Clock3, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
@@ -29,7 +30,7 @@ export function SearchScreen({ query }: { query: string }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const t = directoryCopy[locale].search
-  const [input, setInput] = useState(() => queryParam(query, 'q') ?? '')
+  const [input, setInput] = usePageState('search:input', () => queryParam(query, 'q') ?? '')
   const [history, setHistory] = useState<string[]>([])
   useEffect(() => { setHistory(readHistory()) }, [])
   const term = useDebounced(input.trim().slice(0, 80))
@@ -39,7 +40,7 @@ export function SearchScreen({ query }: { query: string }) {
     const params = new URLSearchParams(window.location.search)
     if (term) params.set('q', term); else params.delete('q')
     const next = `${window.location.pathname}${params.size ? `?${params}` : ''}`
-    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState({ rwaNavigation: Boolean(window.history.state?.rwaNavigation) }, '', next)
+    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState({ ...window.history.state, rwaNavigation: Boolean(window.history.state?.rwaNavigation) }, '', next)
   }, [term])
 
   const products = useQuery('markets:catalog', listProducts, { staleTime: 60_000 })

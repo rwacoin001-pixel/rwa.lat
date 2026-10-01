@@ -73,18 +73,18 @@ export function SplitFlapText({ value, className = '', label }: SplitFlapTextPro
   )
 }
 
-type ScreenTransitionProps = { screenKey: string; children: ReactNode }
+type ScreenTransitionProps = { screenKey: string; children: ReactNode; motion?: 'enter' | 'return' }
 
 /**
  * A compositing-only screen transition. It deliberately animates opacity and
  * blur instead of transform so fixed order/wallet actions keep their viewport
  * anchor while a route changes.
  */
-export function ScreenTransition({ screenKey, children }: ScreenTransitionProps) {
+export function ScreenTransition({ screenKey, children, motion = 'enter' }: ScreenTransitionProps) {
   // CSS-driven fade: identical markup on server and client (no hydration mismatch).
   // prefers-reduced-motion is handled in CSS (.rwa-screen-fade media query).
   return (
-    <div key={screenKey} className="rwa-screen-transition rwa-enter">
+    <div key={`${screenKey}:${motion}`} className={`rwa-screen-transition rwa-${motion}`}>
       {children}
     </div>
   )
