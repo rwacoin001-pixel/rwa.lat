@@ -31,3 +31,9 @@
 @keyframes feed-shimmer { to { background-position: -200% 0; } }
 @keyframes feed-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .post,.spinner,.loading span { animation: none; } .post,.tabs,.tabs button { transition: none; } }
+
+.avatarLink { padding:0; border:0; border-radius:50%; background:transparent; cursor:pointer; }
+.meta,.actions { padding:0; border:0; background:transparent; text-align:start; cursor:pointer; font-family:inherit; }
+.meta { flex-wrap:wrap; }
+.post { padding-block:14px; grid-template-columns:40px minmax(0,1fr); gap:10px; cursor:default; }
+.postMain { gap:7px; }

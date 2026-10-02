@@ -8,6 +8,7 @@ import { request } from './api/_http'
 
 export type CommunityAuthor = {
   id: string
+  avatarSeed?: string
   handle: string
   displayName: string
   kind: 'persona' | 'member' | 'official'
@@ -19,6 +20,7 @@ export type CommunityAuthor = {
 }
 
 export type CommunityPost = {
+  lang?: string
   location?: { city: string; countryCode: string } | null
   id: string
   body: string
@@ -32,6 +34,7 @@ export type CommunityPost = {
 }
 
 export type CommunityComment = {
+  lang?: string
   id: string
   postId: string
   parentId: string | null

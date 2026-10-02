@@ -21,6 +21,7 @@ suite('Member publication with isolated PostgreSQL', () => {
     runner = db.createQueryRunner(); await runner.connect(); await runner.startTransaction()
     userId = randomUUID(); await runner.query('INSERT INTO app.users(id) VALUES($1)', [userId])
     service = new CommunityMemberService({ getRepository: (e: any) => runner.manager.getRepository(e), query: (sql: string, args: unknown[]) => runner.query(sql, args), transaction: (work: any) => work(runner.manager) } as unknown as DataSource)
+    await service.updateProfile(userId, {displayName:'Isolated member',handle:'test_member',location:deviceLocation})
   })
   afterEach(async () => { await runner.rollbackTransaction(); await runner.release() })
   afterAll(async () => { if (db?.isInitialized) await db.destroy() })

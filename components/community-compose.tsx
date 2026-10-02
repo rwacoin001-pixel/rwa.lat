@@ -12,41 +12,12 @@ import type { CommunityTopic } from '@/lib/community-data'
 import { communityError } from './community-actions'
 import { CommunityAvatar } from './community-avatar'
 import x from './maison/community.module.css'
+import { communityExperienceCopy } from '@/lib/community-experience-copy'
+import { useCommunityMe, publishCommunityMe, type CommunityMe } from '@/lib/use-community-me'
+export { useCommunityMe, publishCommunityMe, type CommunityMe } from '@/lib/use-community-me'
 
 /* ── Own community profile (GET /v1/community/me), shared across screens ── */
 
-export type CommunityMe = { id: string; handle: string; displayName: string; bio: string | null; avatarUrl: string | null; avatarPending: boolean }
-const ME_EVENT = 'rwa:community-me'
-let meCache: CommunityMe | null = null
-let meLoading: Promise<CommunityMe | null> | null = null
-
-export function publishCommunityMe(value: CommunityMe | null) {
-  meCache = value
-  window.dispatchEvent(new CustomEvent<CommunityMe | null>(ME_EVENT, { detail: value }))
-}
-
-function loadMe(): Promise<CommunityMe | null> {
-  meLoading ??= request<CommunityMe>('/v1/community/me', { loading: 'silent' })
-    .then(result => (result.ok ? result.data : null))
-    .finally(() => { meLoading = null })
-  return meLoading
-}
-
-export function useCommunityMe(guest: boolean): CommunityMe | null {
-  const [me, setMe] = useState<CommunityMe | null>(guest ? null : meCache)
-  useEffect(() => {
-    if (guest) { setMe(null); return }
-    let live = true
-    const onMe = (event: Event) => setMe((event as CustomEvent<CommunityMe | null>).detail)
-    const refresh = () => { void loadMe().then(value => { if (live && value) publishCommunityMe(value) }) }
-    const onSession = () => { meCache = null; setMe(null); refresh() }
-    window.addEventListener(ME_EVENT, onMe)
-    window.addEventListener(SESSION_CHANGED, onSession)
-    if (meCache) setMe(meCache); else refresh()
-    return () => { live = false; window.removeEventListener(ME_EVENT, onMe); window.removeEventListener(SESSION_CHANGED, onSession) }
-  }, [guest])
-  return me
-}
 
 /* ── Image upload ── */
 
@@ -146,6 +117,10 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [identityOpen, setIdentityOpen] = useState(false)
+  const liveMe = useCommunityMe(false)
+  const currentMe = liveMe ?? me
+  useEffect(() => { if (open && currentMe && !currentMe.identityConfigured) setIdentityOpen(true) }, [open, currentMe?.id, currentMe?.identityConfigured])
   const [location, setLocation] = useState<PostLocation | null>(null)
   const [locating, setLocating] = useState(false)
   const [locationFailed, setLocationFailed] = useState(false)
@@ -252,6 +227,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
 
   const send = async () => {
     if (!canSend) return
+    if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
     const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
@@ -260,7 +236,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
     const path = target.kind === 'reply' ? `/v1/community/me/posts/${encodeURIComponent(target.postId)}/comments` : '/v1/community/me/posts'
     const result = await request<{ id: string }>(path, { method: 'POST', body: payload, idempotencyKey: intent.current.key, loading: 'silent' })
     setBusy(false)
-    if (!result.ok) { setError(communityError(result.error, c)); return }
+    if (!result.ok) { if (/COMMUNITY_IDENTITY_REQUIRED/.test(result.error.message)) setIdentityOpen(true); else setError(communityError(result.error, c)); return }
     intent.current = null
     if (target.kind === 'reply') { try { window.localStorage.removeItem(replyKey(target.postId)) } catch { /* ignore */ } }
     else if (draftId) writeDrafts(readDrafts().filter(d => d.id !== draftId))
@@ -283,7 +259,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
             <button type="button" className={x.postBtn} disabled={!canSend} onClick={() => void send()}>{busy ? c.busy : reply ? k.reply : k.post}</button>
           </div>
           <div className={x.composeBody}>
-            <CommunityAvatar avatarUrl={me?.avatarUrl} handle={me?.handle} size={40} />
+            <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle} size={40} />
             <div className={x.composeMain}>
               {target.kind === 'reply' && target.handle && <p className={x.replyingTo}>{k.replyingTo} <span dir="ltr">@{target.handle}</span></p>}
               <textarea ref={field} className={x.composeField} value={body} dir="auto" rows={2} disabled={busy}
@@ -343,7 +319,9 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
           </div>}
         </Dialog.Popup>
       </Dialog.Portal>
-    </Dialog.Root></>
+    </Dialog.Root>
+    {currentMe && <CommunityProfileEditor open={identityOpen} onOpenChange={setIdentityOpen} me={currentMe} onSaved={() => undefined} />}
+    </>
 }
 
 /* ── Post detail reply bar ── */
@@ -353,7 +331,7 @@ export function CommunityReplyBar({ me, guest, onOpen, onLogin }: { me: Communit
   const picker = useRef<HTMLInputElement>(null)
   const open = (files?: File[]) => (guest ? onLogin() : onOpen(files))
   return <div className={x.replyBar}>
-    <CommunityAvatar avatarUrl={me?.avatarUrl} handle={me?.handle ?? 'guest'} size={32} />
+    <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'guest'} size={32} />
     <button type="button" className={x.replyPrompt} onClick={() => open()}>{k.replyBar}</button>
     <button type="button" className={x.toolBtn} aria-label={k.addImage} onClick={() => (guest ? onLogin() : picker.current?.click())}><ImagePlus size={20} strokeWidth={1.8} /></button>
     <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={event => { const files = [...(event.target.files ?? [])]; event.target.value = ''; if (files.length) open(files) }} />
@@ -367,43 +345,64 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
   const { locale } = useI18n(); const k = communityComposeCopy[locale]
   const { anchor, container } = useMaisonContainer()
   const [name, setName] = useState(me.displayName)
+  const [handle, setHandle] = useState(me.handleBase || '')
+  const [profileLocation, setProfileLocation] = useState<PostLocation | null>(null)
+  const [locating, setLocating] = useState(false)
+  const experience = communityExperienceCopy[locale]
+  const validHandle = /^[a-zA-Z0-9_]{3,20}$/.test(handle)
   const [bio, setBio] = useState(me.bio ?? '')
   const [preview, setPreview] = useState<string | null>(null)
   const [busy, setBusy] = useState<null | 'avatar' | 'save'>(null)
   const [note, setNote] = useState<{ tone: 'ok' | 'error'; text: string } | null>(null)
   const picker = useRef<HTMLInputElement>(null)
 
-  useEffect(() => { if (open) { setName(me.displayName); setBio(me.bio ?? ''); setNote(null) } }, [open, me.displayName, me.bio])
+  useEffect(() => { if (open) { setName(me.displayName); setHandle(me.handleBase || ''); setProfileLocation(null); setBio(me.bio ?? ''); setNote(null) } }, [open, me.displayName, me.bio, me.handleBase])
+  const locateProfile = async () => {
+    setLocating(true); setNote(null)
+    try { const value=await getPostLocation(locale);setProfileLocation(value);return value } catch { setNote({tone:'error',text:locationCopy[locale][2]});return null } finally {setLocating(false)}
+  }
   useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
 
   const pickAvatar = async (file: File | undefined) => {
     if (!file || busy) return
+    const actor=readSession()?.userId??null
+    if(!actor)return
     setBusy('avatar'); setNote(null)
     const uploaded = await uploadCommunityImage(file, 'avatar')
+    if(actor!==readSession()?.userId){setBusy(null);return}
     if (!uploaded.ok) { setBusy(null); setNote({ tone: 'error', text: uploadMessage(uploaded.error, k) }); return }
     const result = await request<CommunityMe>('/v1/community/me/avatar', { method: 'PUT', body: JSON.stringify({ objectId: uploaded.data.objectId }), loading: 'silent' })
     setBusy(null)
     if (!result.ok) { setNote({ tone: 'error', text: k.imageFailed }); return }
+    if(!publishCommunityMe(result.data,actor))return
     setPreview(URL.createObjectURL(file))
-    publishCommunityMe(result.data)
     if (result.data.avatarPending) setNote({ tone: 'ok', text: k.avatarPending })
     onSaved()
   }
   const removeAvatar = async () => {
     if (busy) return
+    const actor=readSession()?.userId??null
+    if(!actor)return
     setBusy('avatar'); setNote(null)
     const result = await request<CommunityMe>('/v1/community/me/avatar', { method: 'DELETE', loading: 'silent' })
     setBusy(null)
     if (!result.ok) { setNote({ tone: 'error', text: k.saveFailed }); return }
-    setPreview(null); publishCommunityMe(result.data); onSaved()
+    if(!publishCommunityMe(result.data,actor))return
+    setPreview(null); onSaved()
   }
   const save = async () => {
-    if (!name.trim() || busy) return
+    if (!name.trim() || busy || locating || !validHandle) return
+    const actor=readSession()?.userId??null
+    if(!actor)return
+    const chosenLocation=profileLocation ?? (!me.city ? await locateProfile() : null)
+    if (!chosenLocation && !me.city) return
+    if(actor!==readSession()?.userId)return
     setBusy('save'); setNote(null)
-    const result = await request<CommunityMe>('/v1/community/me', { method: 'PUT', body: JSON.stringify({ displayName: name.trim(), bio: bio.trim() }), loading: 'silent' })
+    const result = await request<CommunityMe>('/v1/community/me', { method: 'PUT', body: JSON.stringify({ displayName: name.trim(), handle, bio: bio.trim(), ...(chosenLocation ? {location:chosenLocation} : {}) }), loading: 'silent' })
     setBusy(null)
     if (!result.ok) { setNote({ tone: 'error', text: k.saveFailed }); return }
-    publishCommunityMe(result.data); onSaved(); onOpenChange(false)
+    if(!publishCommunityMe(result.data,actor))return
+    onSaved(); onOpenChange(false)
   }
   const hasAvatar = Boolean(preview || me.avatarUrl || me.avatarPending)
 
@@ -414,13 +413,13 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
         <Dialog.Popup className={`${x.sheet} ${x.editSheet}`}>
           <div className={x.sheetHead}>
             <Dialog.Close className={x.iconBtn} aria-label={k.close}><X size={22} strokeWidth={1.85} /></Dialog.Close>
-            <Dialog.Title className={x.sheetTitle}>{k.editProfile}</Dialog.Title>
+            <Dialog.Title className={x.sheetTitle}>{me.identityConfigured ? k.editProfile : experience.setup}</Dialog.Title>
             <span className={x.grow} />
-            <button type="button" className={x.postBtn} disabled={!name.trim() || busy !== null} onClick={() => void save()}>{busy === 'save' ? k.saving : k.save}</button>
+            <button type="button" className={x.postBtn} disabled={!name.trim() || !validHandle || locating || busy !== null} onClick={() => void save()}>{busy === 'save' ? k.saving : k.save}</button>
           </div>
           <div className={x.editAvatar}>
             <button type="button" className={x.editAvatarBtn} aria-label={k.changeAvatar} disabled={busy !== null} onClick={() => picker.current?.click()}>
-              {preview ? <img className={x.avatar} style={{ width: 84, height: 84 }} src={preview} alt="" /> : <CommunityAvatar avatarUrl={me.avatarUrl} handle={me.handle} size={84} />}
+              {preview ? <img className={x.avatar} style={{ width: 84, height: 84 }} src={preview} alt="" /> : <CommunityAvatar avatarUrl={me.avatarUrl} seed={me?.avatarSeed} handle={me.handle} size={84} />}
               <span className={x.editAvatarCam} data-busy={busy === 'avatar'} aria-hidden="true"><Camera size={22} strokeWidth={1.8} /></span>
             </button>
             <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void pickAvatar(file) }} />
@@ -431,6 +430,9 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
           </div>
           {(note || me.avatarPending) && <p className={x.editNote} data-tone={note?.tone ?? 'ok'} role={note?.tone === 'error' ? 'alert' : 'status'}>{note?.text ?? k.avatarPending}</p>}
           <label className={x.editField}><span>{k.displayName}</span><input value={name} maxLength={64} dir="auto" onChange={event => setName(event.target.value)} /></label>
+          <label className={x.editField}><span>{experience.username}</span><input value={handle} maxLength={20} dir="ltr" autoCapitalize="none" autoCorrect="off" spellCheck={false} placeholder="zhangqi" onChange={event => setHandle(event.target.value)} /><small>{handle && !validHandle ? experience.invalid : experience.hint}</small></label>
+          <button type="button" className={x.textBtn} disabled={locating || busy !== null} onClick={() => void locateProfile()}>{locating ? locationCopy[locale][1] : profileLocation?.city || me.city || experience.location}</button>
+          {me.handle && <p className={x.editNote} dir="ltr">@{me.handle}</p>}
           <label className={x.editField}><span>{k.bio}</span><textarea value={bio} maxLength={280} rows={3} dir="auto" onChange={event => setBio(event.target.value)} /><small>{bio.length}/280</small></label>
         </Dialog.Popup>
       </Dialog.Portal>

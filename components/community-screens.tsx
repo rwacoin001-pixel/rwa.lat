@@ -8,6 +8,7 @@ import { communityTopicCopy } from '@/lib/route-copy'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import RwaTopbar from './rwa-topbar'
 import { CommunityToggle } from './community-actions'
+import { CommunityText } from './community-text'
 import { CommunityAvatar, CommunityMark, mediaSrc } from './community-avatar'
 import { CommunityCompose, CommunityProfileEditor, CommunityReplyBar, useCommunityMe, type ComposeTarget } from './community-compose'
 import { communityComposeCopy } from '@/lib/maison-community-compose-copy'
@@ -55,7 +56,7 @@ function communityTopicTitle(topic: string, topics: CommunityTopic[], locale: ke
 }
 
 function Avatar({ author, size = 40, className }: { author?: CommunityAuthor | null; size?: number; className?: string }) {
-  return <CommunityAvatar avatarUrl={author?.avatarUrl} handle={author?.handle ?? 'anonymous'} size={size} className={className} />
+  return <CommunityAvatar avatarUrl={author?.avatarUrl} seed={author?.avatarSeed ?? author?.id} handle={author?.handle ?? 'anonymous'} size={size} className={className} />
 }
 
 function useTimeAgo() {
@@ -94,7 +95,7 @@ function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, in
   const author = post.author
   const ui = communityUiCopy[locale]
   const reduced = useReducedMotion()
-  const toProfile = openProfile && author ? () => openProfile(author.handle) : undefined
+  const toProfile = openProfile && author ? () => openProfile(author.handle || author.id) : undefined
   return (
     <motion.li className={x.post} onClick={() => openPost(post.id)}
       initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .42, ease: [.22, 1, .36, 1], delay: Math.min(index, 8) * .04 }}>
@@ -104,11 +105,11 @@ function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, in
       <div className={x.postMain}>
         <p className={x.byline}>
           {toProfile ? <button type="button" className={x.name} onClick={(event) => { event.stopPropagation(); toProfile() }}>{author?.displayName ?? '—'}</button> : <b className={x.name}>{author?.displayName ?? '—'}</b>}
-          {author && <span className={x.handle} dir="auto">@{author.handle}{(post.location?.city || author.city) ? ` · ${post.location?.city || author.city}` : ''}</span>}
+          {author?.handle && <span className={x.handle} dir="auto">@{author.handle}{(post.location?.city || author.city) ? ` · ${post.location?.city || author.city}` : ''}</span>}
           <span className={x.dot} aria-hidden="true">·</span>
           <time className={x.time} dateTime={post.publishedAt ?? undefined}>{timeAgo(post.publishedAt)}</time>
         </p>
-        <button type="button" className={x.body} dir="auto" onClick={(event) => { event.stopPropagation(); openPost(post.id) }}>{post.body}</button>
+        <CommunityText body={post.body} targetId={post.id} className={x.body} compact />
         <Images images={post.images} />
         <Tags list={post.topics} topics={topics} locale={locale} />
         <div className={x.bar}>
@@ -208,8 +209,9 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true 
         <div className={x.dock}>
           <TimelineTabs label={ui.feed} value={sort} onChange={setSort} options={tabs} />
           <div className={x.topics} role="group" aria-label={ui.topics}>
+            {me && <button type="button" onClick={() => openProfile(me.handle || me.id)}>{communityComposeCopy[locale].editProfile}</button>}
             <button type="button" aria-pressed={topic === null} onClick={() => setTopic(null)}>{t('common.viewAll')}</button>
-            {topics.map((entry) => <button key={entry.slug} type="button" aria-pressed={topic === entry.slug} onClick={() => setTopic(entry.slug)}>{entry.title}</button>)}
+            {topics.map((entry) => <button key={entry.slug} type="button" aria-pressed={topic === entry.slug} onClick={() => setTopic(entry.slug)}>{communityTopicTitle(entry.slug, topics, locale)}</button>)}
           </div>
         </div>
         {loading ? <div className={x.pad}><Skeleton rows={4} /></div>
@@ -349,13 +351,13 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
         <>
           <article className={x.focus}>
             <header className={x.focusHead}>
-              {author ? <button type="button" className={x.avatarBtn} aria-label={author.displayName} onClick={() => openProfile(author.handle)}><Avatar author={author} size={46} /></button> : <Avatar author={author} size={46} />}
+              {author ? <button type="button" className={x.avatarBtn} aria-label={author.displayName} onClick={() => openProfile(author.handle || author.id)}><Avatar author={author} size={46} /></button> : <Avatar author={author} size={46} />}
               <div className={x.focusWho}>
-                {author ? <button type="button" className={x.name} onClick={() => openProfile(author.handle)}>{author.displayName}</button> : <b className={x.name}>—</b>}
-                {author && <span className={x.handle} dir="auto">@{author.handle}{(data.post.location?.city || author.city) ? ` · ${data.post.location?.city || author.city}` : ''}</span>}
+                {author ? <button type="button" className={x.name} onClick={() => openProfile(author.handle || author.id)}>{author.displayName}</button> : <b className={x.name}>—</b>}
+                {author?.handle && <span className={x.handle} dir="auto">@{author.handle}{(data.post.location?.city || author.city) ? ` · ${data.post.location?.city || author.city}` : ''}</span>}
               </div>
             </header>
-            <p className={x.focusBody} dir="auto">{data.post.body}</p>
+            <CommunityText body={data.post.body} targetId={data.post.id} className={x.focusBody} />
             <Images images={data.post.images} />
             <Tags list={data.post.topics} topics={topics} locale={locale} />
             <p className={x.stamp}><time dateTime={data.post.publishedAt ?? undefined}>{fullTime}</time>{data.post.viewCount > 0 && <> · <b>{compact(locale, data.post.viewCount)}</b> {ui.views}</>}</p>
@@ -382,11 +384,11 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
                 <div className={x.postMain}>
                   <p className={x.byline}>
                     <b className={x.name}>{comment.author?.displayName ?? '—'}</b>
-                    {comment.author && <span className={x.handle} dir="ltr">@{comment.author.handle}</span>}
+                    {comment.author?.handle && <span className={x.handle} dir="ltr">@{comment.author.handle}</span>}
                     <span className={x.dot} aria-hidden="true">·</span>
                     <time className={x.time} dateTime={comment.createdAt ?? undefined}>{timeAgo(comment.createdAt)}</time>
                   </p>
-                  {comment.body && <p className={x.replyBody} dir="auto">{comment.body}</p>}
+                  {comment.body && <CommunityText body={comment.body} targetId={comment.id} targetType="comment" className={x.replyBody} />}
                   <Images images={comment.images ?? []} />
                 </div>
               </li>
@@ -452,7 +454,7 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
   const ui = communityUiCopy[locale]
   const me = useCommunityMe(isGuest)
   const [editing, setEditing] = useState(false)
-  const own = Boolean(me && handle && me.handle.toLowerCase() === handle.toLowerCase())
+  const own = Boolean(me && data && me.id === data.profile.id)
   return (
     <MaisonPage page="community-profile" topbar={<RwaTopbar screen="community-profile" title={data?.profile.displayName ?? t('community.viewProfile')} onBack={() => go('community')} />}>
     <div className={x.root}>
@@ -468,13 +470,13 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
           <header className={x.profile}>
             <div className={x.banner} aria-hidden="true"><CommunityMark seed={handle} size={220} className={x.bannerMark} /></div>
             <div className={x.profileRow}>
-              {own && me ? <CommunityAvatar avatarUrl={me.avatarUrl} handle={me.handle} size={76} className={x.profileAvatar} /> : <Avatar author={data.profile} size={76} className={x.profileAvatar} />}
+              {own && me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle} size={76} className={x.profileAvatar} /> : <Avatar author={data.profile} size={76} className={x.profileAvatar} />}
               {own
                 ? <button type="button" className={x.editBtn} onClick={() => setEditing(true)}><PenLine size={15} strokeWidth={2} aria-hidden="true" />{communityComposeCopy[locale].editProfile}</button>
                 : <div className={x.follow}><CommunityToggle guest={isGuest} handle={handle} onChanged={() => void load(true)} /></div>}
             </div>
             <h1 className={x.profileName}>{data.profile.displayName}</h1>
-            <p className={x.handle} dir="ltr">@{data.profile.handle}{data.profile.city ? ` · ${data.profile.city}` : ''}</p>
+            {data.profile.handle && <p className={x.handle} dir="ltr">@{data.profile.handle}{data.profile.city ? ` · ${data.profile.city}` : ''}</p>}
             {data.profile.bio ? <p className={x.bio} dir="auto">{data.profile.bio}</p> : null}
             <p className={x.tally}>
               <span><b>{compact(locale, data.stats.followingCount)}</b> {ui.following}</span>

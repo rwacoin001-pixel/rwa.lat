@@ -7,6 +7,8 @@ import { getCommunityFeed, getCommunityTopics, type CommunityPost } from '@/lib/
 import { useQuery } from '@/lib/api/_query'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import styles from './HomeSocialFeed.module.css'
+import {CommunityAvatar,mediaSrc} from '../community-avatar'
+import {CommunityText} from '../community-text'
 
 type Labels = { all: string; loading: string; retry: string; end: string; emptyTitle: string; emptyBody: string }
 type Props = { onOpen: (post: CommunityPost) => void; labels: Labels }
@@ -89,18 +91,18 @@ export function HomeSocialFeed({ onOpen, labels }: Props) {
     {state === 'loading' && <div className={styles.loading} aria-busy="true"><span /><span /><span /></div>}
     {state === 'error' && <button type="button" className={styles.message} onClick={() => { generation.current++; setState('loading'); void load(null, false, generation.current) }}>{labels.retry}</button>}
     {state === 'ready' && !items.length && <div className={styles.message}><strong>{labels.emptyTitle}</strong><p>{labels.emptyBody}</p></div>}
-    {state === 'ready' && items.map(post => <button type="button" className={styles.post} key={post.id} onClick={() => onOpen(post)}>
-      <span className={styles.avatar} aria-hidden="true">{post.author?.avatarUrl ? <img src={post.author.avatarUrl} alt="" loading="lazy" /> : (post.author?.displayName ?? '·').slice(0, 1).toUpperCase()}</span>
-      <span className={styles.postMain}>
-        <span className={styles.meta}><strong>{post.author?.displayName ?? '—'}</strong>{post.author?.handle && <><span>@{post.author.handle}</span><span>·</span></>}<time dateTime={post.publishedAt}>{dateFormatter.format(new Date(post.publishedAt))}</time><ArrowUpRight size={15} aria-hidden="true" /></span>
-        <span className={styles.body}>{post.body}</span>
-        {post.images?.[0] ? <span className={styles.image}><img src={post.images[0]} alt="" loading="lazy" /></span> : (() => {
+    {state === 'ready' && items.map(post => <article className={styles.post} key={post.id}>
+      <button type="button" className={styles.avatarLink} onClick={() => onOpen(post)} aria-label={post.author?.displayName || labels.all}><CommunityAvatar avatarUrl={post.author?.avatarUrl} seed={post.author?.avatarSeed ?? post.author?.id} handle={post.author?.handle} size={40} /></button>
+      <div className={styles.postMain}>
+        <button type="button" className={styles.meta} onClick={() => onOpen(post)}><strong>{post.author?.displayName ?? '—'}</strong>{post.author?.handle && <><span>@{post.author.handle}</span><span>·</span></>}{(post.location?.city || post.author?.city) && <span>{post.location?.city || post.author?.city}</span>}<time dateTime={post.publishedAt}>{dateFormatter.format(new Date(post.publishedAt))}</time><ArrowUpRight size={15} aria-hidden="true" /></button>
+        <CommunityText body={post.body} targetId={post.id} className={styles.body} compact onOpen={() => onOpen(post)} />
+        {post.images?.[0] ? <span className={styles.image}><img src={mediaSrc(post.images[0]) ?? undefined} alt="" loading="lazy" /></span> : (() => {
           const illustration = conceptArt.find(item => post.body.includes(item.match))
           return illustration && <span className={styles.image}><Image src={illustration.src} alt="" width={900} height={560} sizes="(max-width: 430px) calc(100vw - 94px), 336px" /><span className={styles.imageCaption}>{locale === 'zh-CN' ? '概念配图' : 'Concept illustration'}</span></span>
         })()}
-        <span className={styles.actions} aria-hidden="true"><span><MessageCircle size={16} />{post.commentCount}</span><span><Repeat2 size={16} /></span><span><Heart size={16} />{post.likeCount}</span></span>
-      </span>
-    </button>)}
+        <button type="button" className={styles.actions} onClick={() => onOpen(post)} aria-label={labels.all}><span><MessageCircle size={16} />{post.commentCount}</span><span><Repeat2 size={16} /></span><span><Heart size={16} />{post.likeCount}</span></button>
+      </div>
+    </article>)}
     {state === 'ready' && <div ref={sentinel} className={styles.sentinel}>
       {loadingMore ? <span className={styles.spinner} aria-label={labels.loading} /> : moreError ? <button type="button" onClick={() => void load(cursor, true, generation.current)}>{labels.retry}</button> : cursor === null ? <span>{labels.end}</span> : null}
     </div>}

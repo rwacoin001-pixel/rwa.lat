@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
 import { createHash, randomUUID } from 'node:crypto'
 import { predictionThreadId } from './prediction-discussion'
+import { communityCityCode } from './community-identity'
 import { DataSource, EntityManager } from 'typeorm'
 import { CommunityComment, CommunityFollow, CommunityLike, CommunityPost, CommunityProfile, CommunityTopic } from './community.entities'
 import { normalizeCommunityLang, sanitizeTopics } from './community.util'
@@ -51,7 +52,7 @@ export class CommunityMemberService {
     if (!profile.is_active) throw new ForbiddenException('Community profile is inactive')
     return profile
   }
-  private publicProfile(p: CommunityProfile) { return { id: p.id, handle: p.handle, displayName: p.display_name, kind: p.kind, bio: p.bio ?? null, avatarUrl: p.avatar_url ?? null } }
+  private publicProfile(p: CommunityProfile) { return { id: p.id, handle: p.identity_configured ? p.handle : '', handleBase: p.handle_base ?? '', city: p.city ?? null, countryCode: p.country_code ?? null, displayName: /^Member [0-9a-f]{6}$/.test(p.display_name) ? '' : p.display_name, identityConfigured: p.identity_configured, avatarSeed: p.id, kind: p.kind, bio: p.bio ?? null, avatarUrl: p.avatar_url ?? null } }
   /** Own-profile view: an avatar still in malware scan is reported as pending instead of a URL that would not load yet. */
   private async view(p: CommunityProfile) {
     const base = this.publicProfile(p)
@@ -65,6 +66,25 @@ export class CommunityMemberService {
     return this.db.transaction(async m => {
       const p = await this.member(m, userId)
       if (!input.displayName.trim()) throw new BadRequestException('Display name cannot be blank')
+      const base = (input.handle ?? '').trim().toLowerCase()
+      if (!/^[a-z0-9_]{3,20}$/.test(base)) throw new BadRequestException('COMMUNITY_HANDLE_INVALID')
+      const location = input.location
+      if (location && (!location.city?.trim() || location.city.length > 80 || !/^[A-Z]{2}$/.test(location.countryCode) || location.source !== 'device')) throw new BadRequestException('COMMUNITY_LOCATION_REQUIRED')
+      const city = location?.city.trim() ?? p.city
+      const country = location?.countryCode ?? p.country_code
+      if (!city || !country) throw new BadRequestException('COMMUNITY_LOCATION_REQUIRED')
+      const suffix = communityCityCode(city, country)
+      // Numbered candidates can overlap literal bases (zhangqi01). Serialize the whole city namespace.
+      await m.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`community-handle-city:${suffix}`])
+      let handle = p.identity_configured && p.handle_base === base && !location ? p.handle : `${base}.${suffix}`
+      for (let n = 0; ; n++) {
+        const occupied = await m.query('SELECT profile_id FROM app.community_handle_aliases WHERE handle=$1 UNION SELECT id AS profile_id FROM app.community_profiles WHERE lower(handle)=$1', [handle])
+        if (!occupied.some((row: { profile_id: string }) => row.profile_id !== p.id)) break
+        if (n >= 9999) throw new ConflictException('COMMUNITY_HANDLE_TAKEN')
+        handle = `${base}${String(n+1).padStart(2,'0')}.${suffix}`
+      }
+      await m.query('INSERT INTO app.community_handle_aliases(handle,profile_id) VALUES(lower($1),$3),($2,$3) ON CONFLICT DO NOTHING', [p.handle, handle, p.id])
+      p.handle = handle; p.handle_base = base; p.city = city; p.country_code = country; p.identity_configured = true
       p.display_name = input.displayName.trim(); p.bio = input.bio?.trim() ?? p.bio
       return m.save(p)
     }).then(p => this.view(p))
@@ -74,6 +94,7 @@ export class CommunityMemberService {
     const hash = createHash('sha256').update(JSON.stringify(intent)).digest('hex')
     return this.db.transaction(async m => {
       const profile = await this.member(m, userId)
+      if (!profile.identity_configured) throw new ConflictException('COMMUNITY_IDENTITY_REQUIRED')
       const [existing] = await m.query('SELECT * FROM app.community_user_intents WHERE user_id=$1 AND idempotency_key=$2', [userId, key])
       if (existing) {
         if (existing.request_hash !== hash || existing.result_type !== kind) throw new ConflictException('Idempotency-Key belongs to another publication')
@@ -170,7 +191,7 @@ export class CommunityMemberService {
   follow(userId: string, handle: string, desired: boolean) {
     return this.db.transaction(async m => {
       const p = await this.member(m, userId)
-      const target = await m.getRepository(CommunityProfile).findOneBy({ handle: handle.toLowerCase(), is_active: true })
+      const target = await this.resolveProfile(m, handle)
       if (!target) throw new NotFoundException('Member not found')
       if (target.id === p.id) throw new BadRequestException('Cannot follow yourself')
       const where = { follower_id: p.id, followee_id: target.id }; const repo = m.getRepository(CommunityFollow)
@@ -182,9 +203,15 @@ export class CommunityMemberService {
   state(userId: string, postId?: string, handle?: string) {
     return this.db.transaction(async m => {
       const p = await this.member(m, userId)
-      const target = handle ? await m.getRepository(CommunityProfile).findOneBy({ handle }) : null
+      const target = handle ? await this.resolveProfile(m, handle) : null
       return { profile: p, liked: postId ? await m.getRepository(CommunityLike).existsBy({ profile_id: p.id, target_type: 'post', target_id: postId }) : false, following: target ? await m.getRepository(CommunityFollow).existsBy({ follower_id: p.id, followee_id: target.id }) : false }
     }).then(async r => ({ ...r, profile: await this.view(r.profile) }))
+  }
+  private async resolveProfile(m: EntityManager, value: string) {
+    const key=value.trim().toLowerCase(),repo=m.getRepository(CommunityProfile)
+    let profile=await repo.findOneBy(/^[0-9a-f-]{36}$/i.test(key)?{id:key,is_active:true}:{handle:key,is_active:true})
+    if(!profile){const [alias]=await m.query('SELECT profile_id FROM app.community_handle_aliases WHERE handle=$1',[key]);if(alias)profile=await repo.findOneBy({id:alias.profile_id,is_active:true})}
+    return profile
   }
   publications() {
     return this.db.query(`SELECT p.id,'post' AS "targetType",p.body,p.state,p.created_at AS "createdAt",u.handle FROM app.community_posts p JOIN app.community_profiles u ON u.id=p.profile_id WHERE p.source='user'

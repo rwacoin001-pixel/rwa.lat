@@ -1,4 +1,6 @@
 'use client'
+import {CommunityText} from '../community-text'
+import {CommunityAvatar} from '../community-avatar'
 
 // Infinite-scroll community feed for the home screen.
 // Backend contract: /v1/community/feed?limit=&cursor= → { items, nextCursor }
@@ -78,11 +80,12 @@ export function CommunityFeedList({
   return (
     <div className="community-feed">
       {items.map((post) => (
-        <button type="button" className="rwa-card card-row s2-post-row" key={post.id} onClick={onOpen}>
+        <article className="card-row s2-post-row" key={post.id}>
+<CommunityAvatar avatarUrl={post.author.avatarUrl} seed={post.author.avatarSeed ?? post.author.id} handle={post.author.handle} />
           <span><b>{post.author.displayName}</b><small>@{post.author.handle}{(post.location?.city || post.author.city) ? ` · ${post.location?.city || post.author.city}` : ''}</small></span>
-          <p>{post.body}</p>
-          <small>{post.likeCount} · {post.commentCount}</small>
-        </button>
+          <CommunityText body={post.body} targetId={post.id} compact />
+          <button type="button" onClick={onOpen}>{post.likeCount} · {post.commentCount}</button>
+        </article>
       ))}
       {!preview && (
         <div ref={sentinelRef} className="community-feed__sentinel" aria-hidden="true">

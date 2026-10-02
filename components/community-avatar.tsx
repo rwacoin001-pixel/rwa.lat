@@ -3,6 +3,8 @@
 import { useEffect, useId, useState, type CSSProperties } from 'react'
 import { apiUrl } from '@/lib/api/_http'
 import x from './maison/community.module.css'
+import { useNotionist } from '@/lib/use-notionist'
+import { useCommunityProfileSnapshot } from '@/lib/use-community-me'
 
 /** Community media is stored as API-relative paths (`/v1/community/media/<id>`); resolve them against the API origin. */
 export function mediaSrc(url?: string | null): string | null {
@@ -93,12 +95,14 @@ export function CommunityMark({ seed, size = 40, className, style }: { seed: str
 }
 
 /** Real photo when the member has one and it loads; otherwise the generated seal for their handle. */
-export function CommunityAvatar({ avatarUrl, handle, size = 40, className }: { avatarUrl?: string | null; handle?: string | null; size?: number; className?: string }) {
-  const src = mediaSrc(avatarUrl)
+export function CommunityAvatar({ avatarUrl, handle, seed, size = 40, className }: { avatarUrl?: string | null; handle?: string | null; seed?: string | null; size?: number; className?: string }) {
+  const me=useCommunityProfileSnapshot()
+  const generated = useNotionist(seed || handle || 'anonymous')
+  const src = mediaSrc(me && me.avatarSeed===seed ? me.avatarUrl : avatarUrl)
   const [broken, setBroken] = useState<string | null>(null)
   useEffect(() => { setBroken(null) }, [src])
   if (src && broken !== src) {
     return <img className={`${x.avatar} ${className ?? ''}`} style={{ width: size, height: size }} src={src} alt="" loading="lazy" decoding="async" onError={() => setBroken(src)} />
   }
-  return <CommunityMark seed={handle ?? 'anonymous'} size={size} className={className} />
+  return generated ? <img className={`${x.avatar} ${className ?? ''}`} style={{ width:size,height:size }} src={generated} alt="" decoding="async" /> : <span className={`${x.avatar} ${className ?? ''}`} style={{ width:size,height:size }} aria-hidden="true" />
 }

@@ -40,7 +40,7 @@ export class CommunityProfile {
   @Column({ type: 'varchar', length: 280, nullable: true })
   bio?: string | null
 
-  @Column({ type: 'varchar', length: 64, nullable: true })
+  @Column({ type: 'varchar', length: 80, nullable: true })
   city?: string | null
 
   @Column({ type: 'char', length: 2, nullable: true })
@@ -57,6 +57,12 @@ export class CommunityProfile {
 
   @Column({ type: 'uuid', nullable: true })
   user_id?: string | null
+
+  @Column({ type: 'boolean', default: false })
+  identity_configured!: boolean
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  handle_base?: string | null
 
   @CreateDateColumn({ type: 'timestamptz' })
   created_at!: Date
@@ -320,6 +326,9 @@ export class CommunityTranslation {
 
   @Column({ type: 'text' })
   body!: string
+
+  @Column({ type: 'varchar', length: 64, nullable: true })
+  source_hash?: string | null
 
   @Column({ type: 'varchar', length: 32, nullable: true })
   provider?: string | null

@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronLeft, X, Moon, Sun, SlidersHorizontal, Search, Bell, Share2, Star, UserRound, Settings, MoreHorizontal, CircleHelp, Pencil, Calendar, ReceiptText, Download, Plus, UserPlus, CheckCheck, BookOpen, Info, type LucideIcon } from 'lucide-react'
-import { useEffect, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { revealTheme } from './maison/theme-reveal'
 import { rwaScreenTopbarKinds, slotsForScreen, type Slot, type TopbarKind, type SlotConfig } from '@/lib/rwa-topbar-config'
@@ -15,6 +15,8 @@ import { useUnread } from '@/hooks/useUnread'
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack'
 import { Segmented } from './ui/Segmented'
 import RwaLogoMark from './rwa-logo'
+import {useCommunityMe} from '@/lib/use-community-me'
+import {CommunityAvatar} from './community-avatar'
 import LanguageMenu from './language-menu'
 export type { Slot }
 export type TopbarCenter = { kind: 'title'; text: ReactNode } | { kind: 'segment'; items: string[]; value: number; onChange: (index: number) => void } | { kind: 'steps'; total: number; current: number } | null
@@ -38,35 +40,18 @@ const noopSubscribe = () => () => {}
 const subscribeScroll = (onChange: () => void) => { window.addEventListener('scroll', onChange, { passive: true }); return () => window.removeEventListener('scroll', onChange) }
 const readScrolled = () => window.scrollY > 2
 
-// DiceBear notionists, generated locally and loaded on demand so the style never weighs on first paint.
-const avatarCache = new Map<string, string>()
-let avatarKit: Promise<(seed: string) => string> | null = null
-const loadAvatarKit = () => avatarKit ??= Promise.all([import('@dicebear/core'), import('@dicebear/collection/async').then((styles) => styles.notionists())])
-  .then(([core, style]) => (seed: string) => core.createAvatar(style, { seed, scale: 112, translateY: 4 }).toDataUri())
-  .catch((error: unknown) => { avatarKit = null; throw error })
-function useNotionist(seed: string | null) {
-  const [made, setMade] = useState<{ seed: string; uri: string } | null>(null)
-  useEffect(() => {
-    if (!seed || avatarCache.has(seed)) return
-    let live = true
-    loadAvatarKit().then((make) => { const uri = make(seed); avatarCache.set(seed, uri); if (live) setMade({ seed, uri }) }).catch(() => undefined)
-    return () => { live = false }
-  }, [seed])
-  if (!seed) return null
-  return avatarCache.get(seed) ?? (made?.seed === seed ? made.uri : null)
-}
-
 function AccountButton({ copy, onProfile, unread }: { copy: TopbarCopy; onProfile?: () => void; unread: number }) {
   const { signedIn, initial, ring, userId } = useAccount()
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
-  const avatar = useNotionist(userId)
+  const me = useCommunityMe(!signedIn)
+  const avatar = me?.avatarUrl ?? me?.avatarSeed
   if (hydrated && !signedIn) return <button type="button" className="rwa-topbar__signin" onClick={() => navigate({ id: 'auth.login' })}><span>{copy.signIn}</span></button>
   const label = [copy.account, ring && copy.ring[ring], unread > 0 && copy.unread.replace('{n}', String(unread))].filter(Boolean).join(' · ')
   // The inbox count rides on the avatar (tab roots carry no bell); it outranks the verification dot.
   return <button type="button" className="rwa-profile-trigger rwa-topbar__account" data-ring={unread > 0 ? 'none' : ring ?? 'none'} aria-label={label} title={copy.account} onClick={() => onProfile ? onProfile() : navigate({ id: 'profile' })}>
     {/* Seeded by the unique userId, never the nickname; the initial holds the disc until the avatar resolves. */}
     <span className="rwa-topbar__avatar-disc" data-avatar={avatar ? 'notionists' : 'initial'} data-seed={userId ?? undefined} aria-hidden="true">{avatar
-      ? <img src={avatar} alt="" draggable={false} />
+      ? <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} size={38} />
       : initial ? <span className="rwa-topbar__initial">{initial}</span> : <UserRound size={22} strokeWidth={1.7} />}</span>
     {unread > 0 && <span className="rwa-topbar__count" aria-hidden="true">{unread > 99 ? '99+' : unread}</span>}
   </button>

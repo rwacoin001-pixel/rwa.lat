@@ -9,7 +9,7 @@ export const COMMUNITY_TRANSLATION_LANGS = ['en', 'zh', 'zh-Hans', 'zh-Hant', 'h
 export function normalizeCommunityLang(lang?: string | null): string {
   if (!lang) return 'zh-Hans'
   const value = lang.trim()
-  return value === 'zh' ? 'zh-Hans' : value
+  return ['zh', 'zh-CN', 'zh-Hans'].includes(value) ? 'zh-Hans' : ['zh-TW', 'zh-HK'].includes(value) ? 'zh-Hant' : value
 }
 
 const HANDLE_PATTERN = /^[a-z0-9](?:[a-z0-9._-]{1,30}[a-z0-9])$/

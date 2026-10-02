@@ -7,6 +7,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
+import { createHash } from 'node:crypto'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, QueryFailedError, Repository } from 'typeorm'
 import { COMMUNITY_ERROR_CODES } from './community.errors'
@@ -70,6 +71,7 @@ const POST_SOURCE_VALUES = new Set(['original', 'rewrite', 'data', 'event', 'use
 @Injectable()
 export class CommunityService {
   private readonly logger = new Logger(CommunityService.name)
+  private readonly translationFlights = new Map<string, Promise<{ targetType: string; targetId: string; targetLang: string; sourceLang: string; text: string; cached: boolean }>>()
 
   constructor(
     @InjectRepository(CommunityProfile) private readonly profiles: Repository<CommunityProfile>,
@@ -195,7 +197,12 @@ export class CommunityService {
   }
 
   async getProfile(handle: string) {
-    const profile = await this.profiles.findOne({ where: { handle: normalizeHandle(handle) } })
+    const key = normalizeHandle(handle)
+    let profile = await this.profiles.findOne({ where: /^[0-9a-f-]{36}$/i.test(key) ? { id: key } : { handle: key } })
+    if (!profile) {
+      const [alias] = await this.dataSource.query('SELECT profile_id FROM app.community_handle_aliases WHERE handle=$1', [key])
+      if (alias) profile = await this.profiles.findOne({ where: { id: alias.profile_id } })
+    }
     if (!profile || !profile.is_active) throw new NotFoundException(COMMUNITY_ERROR_CODES.PROFILE_NOT_FOUND)
     const [postCount, followerCount, followingCount, recent] = await Promise.all([
       this.posts.count({ where: { profile_id: profile.id, state: 'published' } }),
@@ -254,24 +261,32 @@ export class CommunityService {
     let sourceLang: string
     if (dto.targetType === 'post') {
       const post = await this.posts.findOne({ where: { id: dto.targetId } })
-      if (!post) throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
+      if (!post || post.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
       text = post.body
       sourceLang = normalizeCommunityLang(post.lang)
     } else {
       const comment = await this.comments.findOne({ where: { id: dto.targetId } })
-      if (!comment) throw new NotFoundException(COMMUNITY_ERROR_CODES.COMMENT_NOT_FOUND)
+      if (!comment || comment.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.COMMENT_NOT_FOUND)
       text = comment.body
       sourceLang = normalizeCommunityLang(comment.lang)
     }
 
-    if (sourceLang === targetLang) {
+    // Member lang is the app locale, not necessarily the language they wrote in.
+    const letters = [...text].filter(c => /\p{L}/u.test(c))
+    const fraction = (pattern: RegExp) => letters.filter(c => pattern.test(c)).length / Math.max(1, letters.length)
+    if (fraction(/\p{Script=Han}/u) > .2) sourceLang = 'zh-Hans'
+    else if (fraction(/\p{Script=Arabic}/u) > .2) sourceLang = 'ar'
+    else if (fraction(/\p{Script=Devanagari}/u) > .2) sourceLang = 'hi'
+    else if (fraction(/\p{Script=Latin}/u) > .8 && ['zh-Hans','zh-Hant','hi','ar'].includes(sourceLang)) sourceLang = 'en'
+    const sourceHash = createHash('sha256').update(sourceLang + '\n' + text).digest('hex')
+    if (!text.trim()) {
       return { targetType: dto.targetType, targetId: dto.targetId, targetLang, sourceLang, text, cached: true }
     }
 
     const cached = await this.translations.findOne({
       where: { target_type: dto.targetType, target_id: dto.targetId, target_lang: targetLang },
     })
-    if (cached) {
+    if (cached && cached.source_hash === sourceHash) {
       return {
         targetType: dto.targetType,
         targetId: dto.targetId,
@@ -286,6 +301,10 @@ export class CommunityService {
       throw new ServiceUnavailableException(COMMUNITY_ERROR_CODES.TRANSLATION_UNAVAILABLE)
     }
 
+    const flightKey = `${dto.targetType}:${dto.targetId}:${targetLang}:${sourceHash}`
+    const pending = this.translationFlights.get(flightKey)
+    if (pending) return pending
+    const work = (async () => {
     let translated: string
     try {
       translated = await this.translationProvider.translate(text, sourceLang, targetLang)
@@ -296,22 +315,20 @@ export class CommunityService {
       throw new ServiceUnavailableException(COMMUNITY_ERROR_CODES.TRANSLATION_FAILED)
     }
 
-    try {
-      await this.translations.save(
-        this.translations.create({
+      await this.translations.upsert({
           target_type: dto.targetType,
           target_id: dto.targetId,
           target_lang: targetLang,
           source_lang: sourceLang,
           body: translated,
+          source_hash: sourceHash,
           provider: 'llm',
-        }),
-      )
-    } catch (error) {
-      if (!this.isUniqueViolation(error)) throw error
-    }
+        }, ['target_type', 'target_id', 'target_lang'])
 
     return { targetType: dto.targetType, targetId: dto.targetId, targetLang, sourceLang, text: translated, cached: false }
+    })()
+    this.translationFlights.set(flightKey, work)
+    try { return await work } finally { this.translationFlights.delete(flightKey) }
   }
 
   // ---- internal (engine / operator) operations ----
@@ -655,10 +672,12 @@ export class CommunityService {
   private shapeProfile(profile: CommunityProfile, full = false, gate: MediaGate = OPEN_GATE) {
     return {
       id: profile.id,
-      handle: profile.handle,
-      displayName: profile.display_name,
+      handle: profile.kind === 'member' && !profile.identity_configured ? '' : profile.handle,
+      displayName: /^Member [0-9a-f]{6}$/.test(profile.display_name) ? '' : profile.display_name,
+      identityConfigured: profile.kind !== 'member' || profile.identity_configured,
+      avatarSeed: profile.id,
       kind: profile.kind,
-      avatarUrl: profile.avatar_url && gate(profile.avatar_url) ? profile.avatar_url : null,
+      avatarUrl: profile.avatar_url && gate(profile.avatar_url) && (profile.kind === 'member' || communityMediaId(profile.avatar_url)) ? profile.avatar_url : null,
       bio: profile.bio ?? null,
       city: profile.city ?? null,
       countryCode: profile.country_code ?? null,
