@@ -78,17 +78,44 @@ export function PredictionFeed() {
     {!loadedOnce && loading ? <Skeleton rows={3} /> : null}
     {error && !items.length ? <StateBlock tone="error" title={m.loadError} retry={() => setRetry((value) => value + 1)} retryLabel={labels.retry} /> : null}
     {items.length > 0 && <div aria-live="off">{items.map((item) => {
-      return <button type="button" key={item.id} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
-      <span className={s.productMeta}><span>{item.featured ? (content('2026 Midterms')) : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
-      {item.image && <img src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" style={{width:44,height:44,borderRadius:10,objectFit:"cover",float:"right",marginLeft:12}} />}
-      <b className={s.predQuestion}>{content(item.question)}</b>
-      <span className={s.prob}>{item.outcomes.map((outcome, index) => <span key={outcome.label} className={s.probRow}>
-        <span>{content(outcome.label)}</span>
-        <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
-        <span className={s.probBar}><i style={{ ['--p' as string]: outcome.impliedProbability }} /></span>
-      </span>)}</span>
-      <span className={s.foot} style={{ marginTop: 12 }}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span></span>
-    </button>})}</div>}
+      const layout = item.featured
+        ? 'featured'
+        : item.category === 'sports' && item.outcomes.length === 2
+          ? 'matchup'
+          : item.category === 'crypto' && item.outcomes.length === 2
+            ? 'pulse'
+            : item.outcomes.length > 2
+              ? 'multi'
+              : 'binary'
+      const shown = layout === 'multi' ? item.outcomes.slice(0, 4) : item.outcomes.slice(0, 2)
+      const remaining = Math.max(0, (item.optionCount ?? item.outcomes.length) - shown.length)
+      return <button type="button" key={item.id} data-layout={layout} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
+        {layout === 'featured' && item.image && <span className={s.predFeatureMedia}><img src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" /></span>}
+        <span className={s.predCardHead}>
+          <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
+          {layout !== 'featured' && item.image && <img className={s.predThumb} src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+        </span>
+        <b className={s.predQuestion}>{content(item.question)}</b>
+        {layout === 'featured' && <span className={s.predFeatureOutcomes}>{shown.map((outcome, index) => <span key={outcome.label} className={s.predFeatureOutcome}>
+          <span className={s.predFeatureLabel}><i data-index={index} />{content(outcome.label)}</span>
+          <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
+          <span className={s.predMiniBar}><i data-index={index} style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></span>
+        </span>)}</span>}
+        {layout === 'multi' && <span className={s.predOptions}>{shown.map((outcome, index) => <span key={outcome.label} className={s.predOption}>
+          <i data-index={index} />
+          <span>{content(outcome.label)}</span>
+          <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
+          <span className={s.predMiniBar}><i data-index={index} style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></span>
+        </span>)}</span>}
+        {(layout === 'binary' || layout === 'matchup' || layout === 'pulse') && <span className={s.predBinaryOutcomes}>{shown.map((outcome, index) => <span key={outcome.label} className={s.predBinaryOutcome} data-side={index}>
+          {layout === 'pulse' && <small>{content(outcome.label)}</small>}
+          <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
+          {layout !== 'pulse' && <span>{content(outcome.label)}</span>}
+          <i><span style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></i>
+        </span>)}</span>}
+        <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>
+      </button>
+    })}</div>}
     {loadedOnce && !loading && !error && !items.length && nextOffset === null ? <StateBlock title={copy.common.empty} /> : null}
     <div ref={sentinel} className={s.predFeedSentinel} aria-hidden="true" />
     {loading && loadedOnce ? <div className={s.predFeedStatus} role="status">{labels.loading}…</div> : null}

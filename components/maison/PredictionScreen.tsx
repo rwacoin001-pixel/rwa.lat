@@ -39,7 +39,6 @@ export function PredictionScreen({id}:{id:string|null}) {
 export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcome=0, ticketOpen, onTicketClose, ticketLabel, ticketImage, ticketEventTitle }: { id: string | null; eventHeader?: ReactNode; eventId?: string; initialOutcome?: number; ticketOpen?:boolean; onTicketClose?:()=>void; ticketLabel?:string; ticketImage?:string|null; ticketEventTitle?:string }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
-  const tr=useContentTranslation(['Net winning profit','Return if lost','Betting paused: invalid price, insufficient sell liquidity or expired quote.'])
   const t = tradeCopy[locale].prediction
   const validId = id && MARKET_ID.test(id) ? id : null
   const market = useQuery(validId ? `prediction:market:${validId}` : null, () => getPolymarketMarket(validId!), { staleTime: 30_000, pollInterval: POLL.quote })
@@ -126,7 +125,7 @@ function outcomeLabel(label: string, copy: (typeof marketCopy)[keyof typeof mark
 function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data: PolymarketMarket; translation?: PolymarketTranslation; initialOutcome?: number; onBusyChange?:(busy:boolean)=>void }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
-  const tr=useContentTranslation(['Net winning profit','Return if lost','Betting paused: invalid price, insufficient sell liquidity or expired quote.'])
+  const tr=useContentTranslation(['Betting paused: invalid price, insufficient sell liquidity or expired quote.'])
   const t = tradeCopy[locale].prediction
   const signedIn = useSignedIn()
   const status = useQuery('prediction:status', getPredictionStatus, { staleTime: 60_000, pollInterval: POLL.list })
@@ -232,17 +231,12 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data
     <div className={ui.quickAmounts}>{[10,50,100].map(amount=><button key={amount} type="button" className={s.chip} onClick={()=>{setStake(String(Number(stake||0)+amount));setServerError(null)}}>+{amount}</button>)}</div>
     {fieldError && <p className={s.fieldError} role="alert">{fieldError}</p>}
 
-    <section className={s.lacquer} style={{ marginTop: 20 }} aria-live="polite">
-      <dl className={s.summary}>
+    <section className={ui.betEstimate} style={{ marginTop: 14 }} aria-live="polite">
+      <dl>
         <div><dt>{t.price}</dt><dd className={s.num}>{price ? `${price.toLocaleString(locale,{maximumFractionDigits:4})} USDT · ${(price*100).toLocaleString(locale,{maximumFractionDigits:2})}¢` : '—'}</dd></div>
         <div><dt>{t.shares}</dt><dd className={s.num}>{shares ? `≈ ${shares.toLocaleString(locale, { maximumFractionDigits: 2 })}` : '—'}</dd></div>
-        <div><dt>{t.stake}</dt><dd className={s.num}>{estimate.stakeAmount !== null ? `≈ ${estimate.stakeAmount.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
-        <div><dt>{fill(t.feePlace, { r: pct(placeFeeRate) })}</dt><dd className={s.num}>{atomic ? fmtAtomic(placeFeeAtomic.toString(), decimals, 'USDT') : '—'}</dd></div>
-        <div><dt>{t.payout}</dt><dd className={s.num}>{estimate.grossPayout !== null ? `≈ ${estimate.grossPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
-        <div><dt>{fill(t.feePayout, { r: pct(payoutFeeRate) })}</dt><dd className={s.num}>{payoutFee !== null ? `${payoutFee.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
+        <div><dt>{t.feeEstimate}</dt><dd className={s.num}>{atomic ? `${fmtAtomic(placeFeeAtomic.toString(), decimals, 'USDT')} + ${payoutFee !== null ? payoutFee.toLocaleString(locale, { maximumFractionDigits: 2 }) : '—'} USDT` : '—'}</dd></div>
         <div data-strong="true"><dt>{t.netPayout}</dt><dd className={s.num}>{netPayout !== null ? `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
-        <div><dt>{tr('Net winning profit')}</dt><dd className={s.num}>{netPayout !== null && estimate.stakeAmount !== null ? `≈ ${(netPayout-estimate.stakeAmount).toLocaleString(locale,{maximumFractionDigits:2})} USDT` : '—'}</dd></div>
-        <div><dt>{tr('Return if lost')}</dt><dd className={s.num}>0 USDT</dd></div>
       </dl>
     </section>
     <p className={ui.ticketMeta}>{fill(copy.common.updated,{t:fmtDateTime(data.fetchedAt,locale)})}</p>
