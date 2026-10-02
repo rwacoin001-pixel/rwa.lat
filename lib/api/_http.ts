@@ -21,7 +21,8 @@ export function parseApiError(status: number, body: unknown, headers: Headers): 
 }
 
 export function apiUrl(path: string): string {
-  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || '').trim().replace(/\/+$/, '')
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL
+  const baseUrl = (configuredBaseUrl || (process.env.NODE_ENV === 'production' ? 'https://api.rwa.lat' : '')).trim().replace(/\/+$/, '')
   return baseUrl ? `${baseUrl}${path}` : path
 }
 
