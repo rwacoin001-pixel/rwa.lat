@@ -1,5 +1,4 @@
 'use client'
-import {PredictionHowTo} from './PredictionHowTo'
 
 import { ArrowUpRight, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
@@ -261,7 +260,6 @@ function PredictionsPanel({ listed, loading }: { listed: CatalogProduct[]; loadi
       <SectionHead index="01" title={m.predictionOpen} />
       {loading ? <Skeleton rows={1} /> : <div className={s.productGrid}>{orderable.map((product) => <ProductCard key={product.id} product={product} tone="lacquer" />)}</div>}
     </>}
-    <SectionHead index={loading || orderable.length ? '02' : '01'} title={m.discovery} note={m.discoveryNote} action={<PredictionHowTo/>} />
     <PredictionFeed />
   </div>
 }

@@ -17,6 +17,7 @@ export const POLYMARKET_CATEGORY_TAGS: Record<Exclude<PolymarketCategory, 'all'>
 
 export type PolymarketFeedMarket = {
   id: string
+  conditionId?: string | null
   featured?: boolean
   marketIds?: string[]
   optionCount?: number
@@ -35,8 +36,10 @@ export type PolymarketFeedPage = {
   nextOffset: number | null
 }
 
-export async function getPolymarketFeed(category: PolymarketCategory, offset: number, signal?: AbortSignal): Promise<PolymarketFeedPage> {
-  const query = new URLSearchParams({ category, offset: String(offset) })
+export const POLYMARKET_SORTS = ['volume24hr','volume','createdAt','endDate','liquidity'] as const
+export type PolymarketSort = typeof POLYMARKET_SORTS[number]
+export async function getPolymarketFeed(category: PolymarketCategory, offset: number, signal?: AbortSignal, sort:PolymarketSort='volume24hr', search=''): Promise<PolymarketFeedPage> {
+  const query = new URLSearchParams({ category, offset: String(offset), sort, q:search })
   const response = await fetch(`/api/polymarket/feed?${query}`, { signal })
   if (!response.ok) throw new Error('Polymarket feed unavailable')
   return response.json() as Promise<PolymarketFeedPage>

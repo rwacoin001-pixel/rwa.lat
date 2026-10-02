@@ -1,4 +1,9 @@
 .sheet { max-height: calc(100dvh - 32px); border-radius: 28px 28px 0 0; }
+.historyRegion { position:relative; min-height:220px; }
+.chartLoading { position:absolute; inset:0; display:grid; place-items:center; pointer-events:none; }
+.chartLoading i { width:24px; height:24px; border:2px solid var(--m-line); border-top-color:var(--m-accent); border-radius:50%; animation:chartSpin .8s linear infinite; }
+@keyframes chartSpin { to { transform:rotate(360deg); } }
+@media(prefers-reduced-motion:reduce) { .chartLoading i { animation:none; } }
 /* Lift only the open prediction overlay above persistent app chrome. */
 :global(.rwa-screen-transition):has(.sheet), :global([data-maison-page]):has(.sheet) { position: relative; z-index: 180; }
 .gripArea { padding: 2px 0 0; touch-action: pan-x; }

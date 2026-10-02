@@ -6,6 +6,10 @@ export function predictionQuote(book: PredictionBook | null | undefined, probabi
   const age = now - Date.parse(book?.asOf ?? '')
   const receivedAge = now - Date.parse(book?.fetchedAt ?? '')
   const depth = price === null ? 0 : asks.filter(x => x.price === price).reduce((total,x) => total+x.price*x.size,0)
-  const available = price !== null && Number.isFinite(age) && age >= -5000 && age <= 120000 && Number.isFinite(receivedAge) && receivedAge >= -5000 && receivedAge <= 120000 && probability !== undefined && Number.isFinite(probability) && Math.abs(price-probability) <= .1 + 1e-9 && depth + 1e-9 >= amount
-  return { price, available, depth }
+  const reason: 'unavailable'|'no_liquidity'|'expired'|'invalid_price'|'price_deviation'|null = !book ? 'unavailable' : price === null ? 'no_liquidity'
+    : !Number.isFinite(age) || age < -5000 || age > 120000 || !Number.isFinite(receivedAge) || receivedAge < -5000 || receivedAge > 120000 ? 'expired'
+    : probability === undefined || !Number.isFinite(probability) ? 'invalid_price'
+    : Math.abs(price-probability) > .1 + 1e-9 ? 'price_deviation'
+    : depth + 1e-9 < amount ? 'no_liquidity' : null
+  return { price, available: reason === null, depth, reason }
 }

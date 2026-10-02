@@ -44,10 +44,10 @@ export function predictionSlippageExceeded(expected: string, actual: string) {
   })
 }
 
-export function predictionStakeLimitExceeded(limitAtomic: string) {
+export function predictionStakeLimitExceeded(limitAtomic: string | null) {
   return new ConflictException({
     code: PREDICTION_ERROR_CODES.STAKE_LIMIT_EXCEEDED,
-    message: `A single bet may not exceed ${limitAtomic} atomic units.`,
+    message: limitAtomic === null ? 'Bet amount must be positive.' : `A single bet may not exceed ${limitAtomic} atomic units.`,
   })
 }
 

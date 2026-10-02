@@ -1,7 +1,7 @@
 export const HISTORY_PERIODS = ['1h','1d','1w','1m','max'] as const
 export type HistoryPeriod = typeof HISTORY_PERIODS[number]
-export type GammaMarketData = { id?: string; question?: string; description?: string; groupItemTitle?: string; image?: string; active?: boolean; closed?: boolean; archived?: boolean; outcomes?: string | string[]; outcomePrices?: string | string[]; clobTokenIds?: string | string[]; volume?: number | string; volume24hr?: number | string; liquidity?: number | string; endDate?: string; endDateIso?: string; category?: string; acceptingOrders?: boolean; events?: Array<{id?: string}> }
-export type GammaEventData = { id?: string; title?: string; description?: string; slug?: string; image?: string; active?: boolean; closed?: boolean; archived?: boolean; volume?: number | string; volume24hr?: number | string; endDate?: string; markets?: GammaMarketData[] }
+export type GammaMarketData = { conditionId?: string; id?: string; question?: string; description?: string; groupItemTitle?: string; image?: string; active?: boolean; closed?: boolean; archived?: boolean; outcomes?: string | string[]; outcomePrices?: string | string[]; clobTokenIds?: string | string[]; volume?: number | string; volume24hr?: number | string; liquidity?: number | string; endDate?: string; endDateIso?: string; category?: string; acceptingOrders?: boolean; events?: Array<{id?: string}> }
+export type GammaEventData = { tags?: Array<{id?: string; slug?: string}>; id?: string; title?: string; description?: string; slug?: string; image?: string; active?: boolean; closed?: boolean; archived?: boolean; volume?: number | string; volume24hr?: number | string; endDate?: string; markets?: GammaMarketData[] }
 export function stringArray(value: string | string[] | undefined): string[] {
   if (Array.isArray(value)) return value.map(String)
   try { const a: unknown = JSON.parse(value ?? '[]'); return Array.isArray(a) ? a.map(String) : [] } catch { return [] }

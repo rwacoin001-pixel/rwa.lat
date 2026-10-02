@@ -33,7 +33,7 @@ export type TradingOrder = { id: string; symbol: string | null; side: 'buy' | 's
 export type PlaceTradingOrderBody = { symbol: string; side: 'buy' | 'sell'; type: 'limit' | 'market'; price?: number; quantity: number; idempotencyKey: string }
 /** A+C 混合收费：下注费（place）+ 派彩费（payout）。以服务端 /v1/predictions/status 为权威。 */
 export type PredictionFees = { placeFeeBps: number; payoutFeeBps: number; placeFeeRate: number; payoutFeeRate: number; assetDecimals: number }
-export type PredictionStatus = { enabled: boolean; mode: string; limits: { maxStakeAtomic: string; maxDailyStakeAtomic: string; maxMarketExposureAtomic: string; slippageBps: string; assetDecimals: number }; fees?: PredictionFees }
+export type PredictionStatus = { enabled: boolean; mode: string; limits: { maxStakeAtomic: string | null; maxDailyStakeAtomic: string; maxMarketExposureAtomic: string; slippageBps: string; assetDecimals: number }; fees?: PredictionFees }
 export type PredictionBet = { id: string; status: string; stakeAtomic: string; shares: string; price: string; feeAtomic?: string; payoutFeeAtomic?: string; riskStakeAtomic?: string; [key: string]: unknown }
 export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string }
 /** Shape of the same-origin `/api/polymarket/market/:id` proxy (Gamma + CLOB). */
@@ -143,9 +143,9 @@ export const OPEN_TRADING_STATES = new Set(['open', 'partial'])
 export const getPredictionStatus = () => request<PredictionStatus>('/v1/predictions/status')
 export const placePredictionBet = (body: PlaceBetBody) => request<PredictionBet & { duplicate?: boolean }>('/v1/predictions/bets', { method: 'POST', body: JSON.stringify(body) })
 /** Same-origin Next route, not /v1: it proxies public Polymarket data and never carries the session. */
-export async function getPolymarketMarket(id: string, period = 'max'): Promise<ApiResult<PolymarketMarket>> {
+export async function getPolymarketMarket(id: string, period = 'max', fresh = false): Promise<ApiResult<PolymarketMarket>> {
   try {
-    const response = await fetch(`/api/polymarket/market/${encodeURIComponent(id)}?period=${encodeURIComponent(period)}`, { cache: 'no-store' })
+    const response = await fetch(`/api/polymarket/market/${encodeURIComponent(id)}?period=${encodeURIComponent(period)}${fresh ? '&refresh=1' : ''}`, { cache: 'no-store' })
     const data = await response.json().catch(() => null) as PolymarketMarket | null
     if (!response.ok || !data?.market) return { ok: false, error: { status: response.status, code: 'POLYMARKET_UNAVAILABLE', message: 'Market data is unavailable right now.' } }
     return { ok: true, data }

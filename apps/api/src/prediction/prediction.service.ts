@@ -25,7 +25,7 @@ export { formatDecimal18, parseDecimal18 }
 
 /** 默认限额（路线 A 方案默认值；P2 可迁配置） */
 export const PREDICTION_LIMITS = {
-  maxStakeAtomic: '100000000', // 100 USDT
+  maxStakeAtomic: null, // No per-bet cap; balance, daily and exposure gates still apply.
   maxDailyStakeAtomic: '500000000', // 500 USDT / 24h
   maxMarketExposureAtomic: '500000000', // 500 USDT 单市场未结算敞口
   slippageBps: 200n, // 2%
@@ -80,9 +80,6 @@ export class PredictionService {
 
     const stake = BigInt(input.stakeAtomic)
     if (stake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
-    if (stake > BigInt(PREDICTION_LIMITS.maxStakeAtomic)) {
-      throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
-    }
 
     // A 段收费：下注时先抽下注费，只有净额进入风险池（费收即时确认，不承担赔付风险）
     const feeConfig = predictionFeeConfig()

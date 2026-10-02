@@ -8,15 +8,17 @@ export async function GET(request: Request, context: {params: Promise<{id:string
   const {id} = await context.params
   const period = new URL(request.url).searchParams.get('period') ?? 'max'
   if (!/^\d+$/.test(id) || !HISTORY_PERIODS.includes(period as HistoryPeriod)) return NextResponse.json({error:'Invalid market parameters'},{status:400})
+  const fresh = new URL(request.url).searchParams.get('refresh') === '1'
+  const bookCache = fresh ? {cache: 'no-store' as const} : {next:{revalidate}}
   const integration = polymarketServerConfig()
   try {
-    const response = await fetch(`https://gamma-api.polymarket.com/markets/${id}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},next:{revalidate},signal:AbortSignal.timeout(8000)})
+    const response = await fetch(`https://gamma-api.polymarket.com/markets/${id}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},...bookCache,signal:AbortSignal.timeout(8000)})
     if (!response.ok) throw new Error('Unavailable')
     const market = await response.json() as GammaMarketData
     const tokenIds = stringArray(market.clobTokenIds)
     const outcomeBooks = await Promise.all(tokenIds.slice(0,2).map(async tokenId => {
       try {
-        const r = await fetch(`https://clob.polymarket.com/book?token_id=${encodeURIComponent(tokenId)}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},next:{revalidate},signal:AbortSignal.timeout(8000)})
+        const r = await fetch(`https://clob.polymarket.com/book?token_id=${encodeURIComponent(tokenId)}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},...bookCache,signal:AbortSignal.timeout(8000)})
         if (!r.ok) return null
         const b = await r.json() as Book
         if (b.asset_id && b.asset_id !== tokenId) return null

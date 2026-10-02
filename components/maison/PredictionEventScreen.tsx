@@ -1,5 +1,5 @@
 'use client'
-import {useState,type CSSProperties} from 'react'
+import {useRef,useState,type CSSProperties} from 'react'
 import {usePageState} from '@/lib/app-navigation'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
@@ -13,6 +13,8 @@ import {PredictionProbabilityChart,PROBABILITY_COLORS,type ProbabilityCurve} fro
 import {MaisonPage,Skeleton,StateBlock,Logo,maison as s} from './primitives'
 import {PredictionHowTo} from './PredictionHowTo'
 import ui from './prediction-experience.module.css'
+import {PredictionTranslationButton} from './PredictionTranslationButton'
+import {predictionInterfaceText} from '@/lib/prediction-interface-copy'
 
 type Event={id:string;title:string;image:string|null;volume:number;fetchedAt:string;endAt:string|null;markets:Array<{id:string;label:string;question:string;image:string|null;prices:number[];closed:boolean;volume:number}>;curves:ProbabilityCurve[]}
 async function readEvent(id:string,period:HistoryPeriod,curves:string[]):Promise<ApiResult<Event>> {
@@ -21,10 +23,13 @@ async function readEvent(id:string,period:HistoryPeriod,curves:string[]):Promise
 export function PredictionEventScreen({id}:{id:string}) {
   const {locale}=useI18n()
   const [period,setPeriod]=usePageState<HistoryPeriod>(`event:${id}:period`,'max'), [curves,setCurves]=usePageState<string[]>(`event:${id}:curves`,[]), [selected,setSelected]=usePageState<string|null>(`event:${id}:selected`,null),[side,setSide]=useState(0),[resolved,setResolved]=usePageState(`event:${id}:resolved`,false),[ticketOpen,setTicketOpen]=useState(false)
-  const query=useQuery(`prediction:event:${id}:${period}:${curves.join(',')}`,()=>readEvent(id,period,curves),{staleTime:30000,pollInterval:30000})
+  const query=useQuery(`prediction:event:${id}`,()=>readEvent(id,'max',[]),{staleTime:30000,pollInterval:30000})
   const event=query.data
-  const content=useContentTranslation(event?[event.title,...event.markets.flatMap(m=>[m.label,m.question])]:[])
-  const tr=useContentTranslation(["Predictions", "Closes", "All", "Select up to 4 probability curves", "Volume", "Buy No", "Buy Yes", "Resolved options", "Retry", "Updated", "1 hour", "1 day", "1 week", "1 month"])
+  const sources=event?[event.title,...event.markets.flatMap(m=>[m.label,m.question])]:[]
+  const translation=useContentTranslation(sources)
+  const [original,setOriginal]=useState(false)
+  const content=(text:string)=>original?text:translation(text)
+  const tr=(key:string)=>predictionInterfaceText(locale,key)
   const topbar=<RwaTopbar screen="prediction-detail" title={tr('Predictions')} onBack={()=>backOr('/markets?tab=predictions')}/>
   if(!event)return <MaisonPage page="prediction" dock topbar={topbar}><div className={s.hero}>{query.error?<StateBlock title={query.error.message} retry={query.refetch} retryLabel={tr('Retry')}/>:<Skeleton rows={5}/>}</div></MaisonPage>
   const current=event.markets.find(m=>m.id===selected)??event.markets.find(m=>!m.closed)??event.markets[0]
@@ -34,11 +39,12 @@ export function PredictionEventScreen({id}:{id:string}) {
   const legend=(markets:Event['markets'])=><div className={ui.legend}>{markets.map(m=>{const index=chartIds.indexOf(m.id);return <button key={m.id} type="button" className={ui.legendButton} style={{'--curve':index>=0?PROBABILITY_COLORS[index%4]:'var(--m-faint)'} as CSSProperties} aria-pressed={index>=0} onClick={()=>toggle(m.id)}><i className={ui.dot}/><span className={ui.legendAvatar}><Logo src={m.image} name={label(m)}/></span><span className={ui.legendName}>{label(m)}</span><b className={ui.legendValue}>{formatProbability(m.prices[0],locale)}</b></button>})}</div>
   const header=<section style={{marginBottom:28}}>
 <div className={ui.eventTitle}><Logo src={event.image} name={content(event.title)}/><h1 className={s.titleL}>{content(event.title)}</h1><PredictionHowTo/></div>
+    <PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={sources}/>
     {event.endAt&&<p className={s.foot}>{tr('Closes')} · {new Date(event.endAt).toLocaleDateString(locale)}</p>}
     {legend(event.markets.filter(m=>chartIds.includes(m.id)))}
     {event.markets.filter(m=>!m.closed).length>4&&<details><summary className={s.link}>{tr('Select up to 4 probability curves')}</summary>{legend(event.markets.filter(m=>!m.closed&&!chartIds.includes(m.id)))}</details>}
     <div className={s.chips}>{HISTORY_PERIODS.map(p=><button key={p} className={s.chip} aria-pressed={p===period} onClick={()=>setPeriod(p)}>{tr(({'1h':'1 hour','1d':'1 day','1w':'1 week','1m':'1 month','max':'All'} as const)[p])}</button>)}</div>
-    <PredictionProbabilityChart curves={event.curves.map(c=>({...c,label:event.markets.find(m=>m.id===c.id)?label(event.markets.find(m=>m.id===c.id)!):content(c.label)}))} onRetry={query.refetch}/>
+    <EventHistoryChart id={id} period={period} selected={curves} initial={event.curves} label={c=>event.markets.find(m=>m.id===c.id)?label(event.markets.find(m=>m.id===c.id)!):content(c.label)} retryLabel={tr('Retry')}/>
     <p className={s.foot}>Polymarket · {tr('Select up to 4 probability curves')}</p>
     <p className={s.foot}>{tr('Volume')} · ${event.volume.toLocaleString(locale)} · {tr('Updated')} {new Date(event.fetchedAt).toLocaleTimeString(locale)}</p>
     {event.markets.filter(m=>resolved||!m.closed).map(m=><section key={m.id} className={ui.row}>
@@ -50,4 +56,18 @@ export function PredictionEventScreen({id}:{id:string}) {
   </section>
   if(!current)return <MaisonPage page="prediction" dock topbar={topbar}>{header}</MaisonPage>
   return <PredictionMarketScreen key={id} id={current.id} eventHeader={header} eventId={id} initialOutcome={side} ticketOpen={ticketOpen} onTicketClose={()=>setTicketOpen(false)} ticketLabel={label(current)} ticketImage={current.image} ticketEventTitle={content(event.title)}/>
+}
+
+function EventHistoryChart({id,period,selected,initial,label,retryLabel}:{id:string;period:HistoryPeriod;selected:string[];initial:ProbabilityCurve[];label:(curve:ProbabilityCurve)=>string;retryLabel:string}) {
+  const {locale}=useI18n()
+  const baseline=period==='max'&&!selected.length
+  const query=useQuery(baseline?null:`prediction:history:${id}:${period}:${selected.join(',')}`,()=>readEvent(id,period,selected),{staleTime:30000,pollInterval:30000,loading:'silent'})
+  const previous=useRef(initial)
+  const data=baseline?initial:query.data?.curves
+  if(data)previous.current=data
+  return <div className={ui.historyRegion} aria-busy={query.loading} data-history-period={period}>
+    <div style={{opacity:query.loading?.45:1,transition:'opacity .15s'}}><PredictionProbabilityChart curves={(data??previous.current).map(c=>({...c,label:label(c)}))} onRetry={query.refetch}/></div>
+    {query.loading&&<span className={ui.chartLoading} role="status" aria-label={predictionInterfaceText(locale,'Loading chart')}><i/></span>}
+    {query.error&&<button className={s.link} onClick={query.refetch}>{retryLabel}</button>}
+  </div>
 }

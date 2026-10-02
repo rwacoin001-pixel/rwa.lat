@@ -1,6 +1,6 @@
 'use client'
 import {useState} from 'react'
-import {useContentTranslation} from '@/lib/use-content-translation'
+import {predictionInterfaceText} from '@/lib/prediction-interface-copy'
 import {useI18n} from '@/lib/i18n'
 import {maison as s} from './primitives'
 import {probabilityHistoryState} from '@/lib/polymarket-data'
@@ -11,7 +11,7 @@ export function PredictionProbabilityChart({curves,onRetry}:{curves:ProbabilityC
   const points=curves.flatMap(c=>c.points), min=Math.min(...points.map(p=>p.time)), max=Math.max(...points.map(p=>p.time))
   const state=probabilityHistoryState(curves)
 
-  const tr=useContentTranslation(["Historical data unavailable", "Retry", "No available history for this period", "Some histories are unavailable", "Historical probability chart"])
+  const tr=(key:string)=>predictionInterfaceText(locale,key)
   if(state==='unavailable')return <p className={s.fieldError} role="status">{tr('Historical data unavailable')} <button className={s.link} onClick={onRetry}>{tr('Retry')}</button></p>
   if(!points.length)return <p className={s.muted}>{tr('No available history for this period')}</p>
   const x=(time:number)=>40+(time-min)/Math.max(1,max-min)*640, y=(p:number)=>220-p*200

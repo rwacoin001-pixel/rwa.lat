@@ -11,7 +11,6 @@ import { invalidate, useQuery } from '@/lib/api/_query'
 import { POLL } from '@/lib/api/_http'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import { getPolymarketMarket, getPredictionStatus, getWallet, placePredictionBet, type PlaceBetBody, type PolymarketMarket, type PredictionBet } from '@/lib/api/markets'
-import {useContentTranslation} from '@/lib/use-content-translation'
 import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
 import { fmtUsd, toAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
@@ -25,6 +24,8 @@ import {PredictionSheet} from './PredictionSheet'
 import {PredictionHowTo} from './PredictionHowTo'
 import {Logo} from './primitives'
 import ui from './prediction-experience.module.css'
+import {predictionControlText} from '@/lib/prediction-controls-copy'
+import {communityExperienceCopy} from '@/lib/community-experience-copy'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
 const BET_PATH = '/v1/predictions/bets'
@@ -41,9 +42,12 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
   const copy = marketCopy[locale]
   const t = tradeCopy[locale].prediction
   const validId = id && MARKET_ID.test(id) ? id : null
-  const market = useQuery(validId ? `prediction:market:${validId}` : null, () => getPolymarketMarket(validId!), { staleTime: 30_000, pollInterval: POLL.quote })
+  const freshRequest=useRef(false)
+  const [quoteRefreshing,setQuoteRefreshing]=useState(false)
+  const market = useQuery(validId ? `prediction:market:${validId}` : null, () => getPolymarketMarket(validId!, 'max', freshRequest.current), { staleTime: 30_000, pollInterval: POLL.quote, loading:'silent' })
+  const refreshQuote=async()=>{if(quoteRefreshing)return;freshRequest.current=true;setQuoteRefreshing(true);try{const wasLoading=market.loading;await market.refetch();if(wasLoading)await market.refetch()}finally{freshRequest.current=false;setQuoteRefreshing(false)}}
   const translation = useQuery(validId && locale !== 'en' ? `prediction:translation:${validId}:${locale}` : null,
-    () => translatePolymarketMarkets([validId!], locale as Exclude<typeof locale, 'en'>, true), { staleTime: 10 * 60_000 })
+    () => translatePolymarketMarkets([validId!], locale as Exclude<typeof locale, 'en'>, true), { staleTime: 10 * 60_000, loading: 'silent' })
   const [localTicketOpen,setLocalTicketOpen]=useState(false),[ticketSide,setTicketSide]=useState(initialOutcome),[busy,setBusy]=useState(false)
   const isTicketOpen=ticketOpen??localTicketOpen
   const closeTicket=()=>{if(!busy){onTicketClose?.();setLocalTicketOpen(false)}}
@@ -105,11 +109,12 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
     {!eventHeader && <><SectionHead index="02" title={t.place} action={<PredictionHowTo/>}/><div className={s.outcome}>{m.outcomes.slice(0,2).map((label,i)=><button key={label} type="button" data-side={i?'no':'yes'} disabled={!m.acceptingOrders} onClick={()=>{setTicketSide(i);setLocalTicketOpen(true)}}>{translated?.outcomes[i]??outcomeLabel(label,copy)} · {pct(m.prices[i])}</button>)}</div></>}
     <PredictionSheet open={isTicketOpen} onClose={closeTicket} title={t.place} busy={busy}>
       <div className={ui.identity}><Logo src={ticketImage} name={ticketLabel??translated?.question??m.question}/><div>{ticketEventTitle&&<small>{ticketEventTitle}</small>}<b>{ticketLabel??translated?.question??m.question}</b><small>{t.closes} {m.endDate?fmtDate(m.endDate,locale):'—'}</small></div></div>
-      {isTicketOpen&&<BetTicket key={m.id} data={data} translation={translated} initialOutcome={eventHeader?initialOutcome:ticketSide} onBusyChange={setBusy}/>}
+      {isTicketOpen&&<BetTicket key={m.id} data={data} translation={translated} initialOutcome={eventHeader?initialOutcome:ticketSide} onBusyChange={setBusy} onRefreshQuote={refreshQuote} quoteRefreshing={quoteRefreshing} quoteError={market.error?.message}/>}
     </PredictionSheet>
 
     {m.description && <>
       <SectionHead index="03" title={t.rules} note={eventHeader?(ticketLabel??m.question):undefined} />
+      {locale!=='en'&&<button type="button" className={s.predTranslate} disabled={translation.loading} onClick={()=>localized?setShowOriginal(v=>!v):void translation.refetch()}>{translation.loading?communityExperienceCopy[locale].translating:localized&&!showOriginal?communityExperienceCopy[locale].original:communityExperienceCopy[locale].translate}</button>}
       <p className={s.prose} style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 5, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{translated?.rules ?? m.description}</p>
       {!expanded && <button type="button" className={s.link} onClick={() => setExpanded(true)}>{tradeCopy[locale].basketOrder.readMore}</button>}
     </>}
@@ -122,10 +127,10 @@ function outcomeLabel(label: string, copy: (typeof marketCopy)[keyof typeof mark
   return key === 'yes' ? copy.review.yes : key === 'no' ? copy.review.no : label
 }
 
-function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data: PolymarketMarket; translation?: PolymarketTranslation; initialOutcome?: number; onBusyChange?:(busy:boolean)=>void }) {
+function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefreshQuote, quoteRefreshing, quoteError }: { data: PolymarketMarket; translation?: PolymarketTranslation; initialOutcome?: number; onBusyChange?:(busy:boolean)=>void;onRefreshQuote:()=>Promise<void>;quoteRefreshing:boolean;quoteError?:string }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
-  const tr=useContentTranslation(['Betting paused: invalid price, insufficient sell liquidity or expired quote.'])
+  const text=(key:Parameters<typeof predictionControlText>[1])=>predictionControlText(locale,key)
   const t = tradeCopy[locale].prediction
   const signedIn = useSignedIn()
   const status = useQuery('prediction:status', getPredictionStatus, { staleTime: 60_000, pollInterval: POLL.list })
@@ -156,7 +161,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data
   const fieldError = useMemo(() => {
     if (!stake) return null
     if (!atomic || atomic === '0') return t.errors.format
-    if (limits && BigInt(atomic) > BigInt(limits.maxStakeAtomic)) return fill(t.errors.max, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })
+    if (limits?.maxStakeAtomic && BigInt(atomic) > BigInt(limits.maxStakeAtomic)) return fill(t.errors.max, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })
     if (available !== null && (wallet.data?.asset.decimals ?? 6) === decimals && BigInt(atomic) > BigInt(available)) return tradeCopy[locale].basketOrder.errors.balance
     return null
   }, [atomic, available, decimals, limits, locale, stake, t.errors, wallet.data?.asset.decimals])
@@ -195,7 +200,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data
     </div>
   </section>
 
-  const ready = Boolean(tokenId && atomic && quote.available && !fieldError && risk && !pending)
+  const ready = Boolean(tokenId && atomic && quote.available && !fieldError && risk && !pending && !quoteRefreshing && !quoteError)
   const submit = async () => {
     if (!ready || !tokenId || !atomic) return
     const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}) }
@@ -226,9 +231,9 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data
     </div>
     <div className={s.fieldMeta} id="bet-stake-meta">
       <span>{!wallet.data && !wallet.error ? '…' : wallet.error && !wallet.data ? <button type="button" className={s.link} onClick={wallet.refetch}>{copy.common.unavailable} · {copy.common.retry}</button> : fill(copy.review.available, { v: fmtAtomic(available, wallet.data?.asset.decimals ?? 6, wallet.data?.asset.code ?? 'USDT') })}</span>
-      {limits && <span className={s.num}>{fill(t.limit, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })}</span>}
+      {limits?.maxStakeAtomic && <span className={s.num}>{fill(t.limit, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })}</span>}
     </div>
-    <div className={ui.quickAmounts}>{[10,50,100].map(amount=><button key={amount} type="button" className={s.chip} onClick={()=>{setStake(String(Number(stake||0)+amount));setServerError(null)}}>+{amount}</button>)}</div>
+    <div className={ui.quickAmounts}>{[1,5,10,100].map(amount=><button key={amount} type="button" className={s.chip} onClick={()=>{setStake(String(Number(stake||0)+amount));setServerError(null)}}>+{amount}</button>)}</div>
     {fieldError && <p className={s.fieldError} role="alert">{fieldError}</p>}
 
     <section className={ui.betEstimate} style={{ marginTop: 14 }} aria-live="polite">
@@ -240,7 +245,9 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange }: { data
       </dl>
     </section>
     <p className={ui.ticketMeta}>{fill(copy.common.updated,{t:fmtDateTime(data.fetchedAt,locale)})}</p>
-    {!quote.available && <div className={s.notice} role="status"><Info size={16}/><span>{tr('Betting paused: invalid price, insufficient sell liquidity or expired quote.')}</span></div>}
+    {!quote.available && <div className={s.notice} role="status"><Info size={16}/><span>{text(quote.reason??'unavailable')}</span></div>}
+    <button type="button" className={s.link} disabled={quoteRefreshing||pending} onClick={()=>{setServerError(null);void onRefreshQuote()}}>{text(quoteRefreshing?'refreshing':'refresh')}</button>
+    {quoteError&&<p className={s.fieldError} role="alert">{text('unavailable')}</p>}
     {outcome !== null && !tokenId && <p className={s.fieldError}>{t.noToken}</p>}
     {outcome !== null && price !== null && Number.isFinite(m.prices[outcome]) && Math.abs(price - m.prices[outcome]) > 0.1 && <div className={s.notice} role="note"><Info size={16} /><span>{fill(t.wide, { p: pct(price), m: pct(m.prices[outcome]) })}</span></div>}
 

@@ -1,0 +1,12 @@
+import type {AppLocale} from './app-locales'
+const keys=['Predictions','Closes','All','Select up to 4 probability curves','Volume','Buy No','Buy Yes','Resolved options','Retry','Updated','1 hour','1 day','1 week','1 month','Historical data unavailable','No available history for this period','Some histories are unavailable','Historical probability chart','Loading chart'] as const
+const labels:Record<AppLocale,readonly string[]>={
+ en:keys,
+ 'zh-CN':['预测','截止','全部','选择最多 4 条概率曲线','成交量','买入否','买入是','已结算选项','重试','更新于','1 小时','1 天','1 周','1 个月','历史数据不可用','此时段暂无历史数据','部分历史数据不可用','历史概率图','图表加载中'],
+ hi:['पूर्वानुमान','समाप्ति','सभी','अधिकतम 4 संभावना रेखाएँ चुनें','मात्रा','नहीं खरीदें','हाँ खरीदें','निपटाए गए विकल्प','फिर प्रयास करें','अपडेट','1 घंटा','1 दिन','1 सप्ताह','1 महीना','ऐतिहासिक डेटा उपलब्ध नहीं','इस अवधि में इतिहास नहीं','कुछ इतिहास उपलब्ध नहीं','ऐतिहासिक संभावना चार्ट','चार्ट लोड हो रहा है'],
+ es:['Predicciones','Cierra','Todo','Elige hasta 4 curvas','Volumen','Comprar No','Comprar Sí','Opciones resueltas','Reintentar','Actualizado','1 hora','1 día','1 semana','1 mes','Historial no disponible','Sin historial para este periodo','Parte del historial no está disponible','Gráfico histórico de probabilidad','Cargando gráfico'],
+ ar:['التوقعات','الإغلاق','الكل','اختر حتى 4 منحنيات احتمالية','حجم التداول','شراء لا','شراء نعم','خيارات محسومة','إعادة المحاولة','آخر تحديث','ساعة','يوم','أسبوع','شهر','البيانات التاريخية غير متاحة','لا توجد بيانات لهذه الفترة','بعض البيانات غير متاحة','مخطط الاحتمالات التاريخية','جار تحميل المخطط'],
+ fr:['Prévisions','Clôture','Tout','Choisissez jusqu’à 4 courbes','Volume','Acheter Non','Acheter Oui','Options résolues','Réessayer','Mis à jour','1 heure','1 jour','1 semaine','1 mois','Historique indisponible','Aucun historique pour cette période','Certains historiques sont indisponibles','Graphique de probabilité historique','Chargement du graphique'],
+ pt:['Previsões','Encerra','Tudo','Escolha até 4 curvas','Volume','Comprar Não','Comprar Sim','Opções resolvidas','Tentar novamente','Atualizado','1 hora','1 dia','1 semana','1 mês','Histórico indisponível','Sem histórico neste período','Parte do histórico está indisponível','Gráfico histórico de probabilidade','Carregando gráfico'],
+}
+export function predictionInterfaceText(locale:AppLocale,key:string) {const index=keys.indexOf(key as typeof keys[number]);return index<0?key:labels[locale][index]??key}

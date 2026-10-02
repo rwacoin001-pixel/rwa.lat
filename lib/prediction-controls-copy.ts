@@ -1,0 +1,12 @@
+import type {AppLocale} from './app-locales'
+const keys=['search','sort','volume','volume24hr','createdAt','endDate','liquidity','refresh','refreshing','expired','no_liquidity','invalid_price','price_deviation','unavailable'] as const
+const values:Record<AppLocale,readonly string[]>={
+ en:['Search predictions','Sort','Total volume','24h volume','Newest','Closing soon','Liquidity','Refresh quote','Refreshing…','Quote expired. Refresh to continue.','Not enough sell liquidity for this amount.','No valid price available.','Price differs too much from market probability.','Quote unavailable. Try refreshing.'],
+ 'zh-CN':['搜索预测市场','排序','总交易量','24小时交易量','最新发布','即将封盘','流动性','刷新报价','刷新中…','报价已过期，请刷新。','当前卖盘不足以成交此金额。','当前价格无效。','成交价偏离市场概率过大。','暂时无法获取报价，请刷新。'],
+ hi:['पूर्वानुमान खोजें','क्रम','कुल मात्रा','24 घंटे की मात्रा','नवीनतम','जल्द बंद','तरलता','भाव रीफ़्रेश करें','रीफ़्रेश हो रहा है…','भाव समाप्त। रीफ़्रेश करें।','इस राशि के लिए पर्याप्त विक्रेता नहीं।','मान्य कीमत नहीं।','कीमत बाजार संभावना से बहुत अलग है।','भाव उपलब्ध नहीं। रीफ़्रेश करें।'],
+ es:['Buscar predicciones','Ordenar','Volumen total','Volumen 24 h','Más recientes','Próximo cierre','Liquidez','Actualizar cotización','Actualizando…','Cotización caducada. Actualiza.','Liquidez vendedora insuficiente para este importe.','Precio no válido.','El precio difiere demasiado de la probabilidad.','Cotización no disponible. Actualiza.'],
+ ar:['ابحث في التوقعات','الترتيب','إجمالي التداول','تداول 24 ساعة','الأحدث','الإغلاق القريب','السيولة','تحديث السعر','جار التحديث…','انتهت صلاحية السعر. حدّثه.','سيولة البيع غير كافية لهذا المبلغ.','لا يوجد سعر صالح.','السعر بعيد جداً عن احتمال السوق.','السعر غير متاح. حاول التحديث.'],
+ fr:['Rechercher une prévision','Trier','Volume total','Volume 24 h','Plus récents','Clôture proche','Liquidité','Actualiser le prix','Actualisation…','Prix expiré. Actualisez.','Liquidité de vente insuffisante pour ce montant.','Aucun prix valide.','Le prix s’écarte trop de la probabilité.','Prix indisponible. Actualisez.'],
+ pt:['Pesquisar previsões','Ordenar','Volume total','Volume 24 h','Mais recentes','Encerra em breve','Liquidez','Atualizar cotação','Atualizando…','Cotação expirada. Atualize.','Liquidez de venda insuficiente para este valor.','Preço inválido.','O preço diverge muito da probabilidade.','Cotação indisponível. Atualize.'],
+}
+export function predictionControlText(locale:AppLocale,key:typeof keys[number]) {return values[locale][keys.indexOf(key)]}

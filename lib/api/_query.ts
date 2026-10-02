@@ -36,7 +36,7 @@ if (typeof window !== 'undefined') window.addEventListener(SESSION_CHANGED, () =
   if (getSessionToken()) queueMicrotask(() => cache.forEach(item => { if (item.listeners.size) void item.refresh?.() }))
 })
 
-export function useQuery<T>(key: string | null, loader: () => Promise<ApiResult<T>>, options: { staleTime?: number; pollInterval?: number } = {}) {
+export function useQuery<T>(key: string | null, loader: () => Promise<ApiResult<T>>, options: { staleTime?: number; pollInterval?: number; loading?: 'silent' | 'overlay' } = {}) {
   const loadRef = useRef(loader)
   loadRef.current = loader
   const item = key === null ? undefined : entry<T>(key)
@@ -46,7 +46,7 @@ export function useQuery<T>(key: string | null, loader: () => Promise<ApiResult<
     if (!item) return
     if (item.pending) return item.pending
     const generation = item.generation
-    const finishLoading = item.snapshot.data === undefined && item.listeners.size ? beginUiLoading() : () => {}
+    const finishLoading = options.loading !== 'silent' && item.snapshot.data === undefined && item.listeners.size ? beginUiLoading() : () => {}
     item.finishLoading = finishLoading
     publish(item, { ...item.snapshot, error: undefined, loading: true })
     item.pending = (async () => {
@@ -60,7 +60,7 @@ export function useQuery<T>(key: string | null, loader: () => Promise<ApiResult<
       } finally { finishLoading(); if (generation === item.generation) item.pending = undefined }
     })()
     return item.pending
-  }, [item])
+  }, [item, options.loading])
   const staleTime = options.staleTime ?? 45_000
   useEffect(() => {
     if (!item) return
