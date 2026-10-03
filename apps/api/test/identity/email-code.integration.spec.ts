@@ -67,7 +67,7 @@ suite('Mobile email codes against a new disposable PostgreSQL database', () => {
         password: 'disposable test password 123!' }) as Awaited<ReturnType<EmailCodeService['confirm']>>
     }
   }
-  const age = async (challengeId: string) => db.query(`UPDATE app.email_code_challenges SET created_at=now()-interval '61 seconds' WHERE id=$1`, [challengeId])
+  const age = async (challengeId: string) => db.query('UPDATE app.email_code_challenges SET created_at=$1 WHERE id=$2', [new Date(Date.now() - 61_000), challengeId])
 
   it('registers only after verification, stores a hash, persists consent and issues a real session', async () => {
     const address = email(), challenge = await signup(address)
@@ -120,7 +120,7 @@ suite('Mobile email codes against a new disposable PostgreSQL database', () => {
     expect(row.attempts).toBe(5); expect(row.consumed_at).not.toBeNull()
     await expect(confirm(address, challenge.challengeId, 'register', correct)).rejects.toThrow()
     const other = email(), expired = await signup(other)
-    await db.query(`UPDATE app.email_code_challenges SET expires_at=now()-interval '1 second' WHERE id=$1`, [expired.challengeId])
+    await db.query('UPDATE app.email_code_challenges SET expires_at=$1 WHERE id=$2', [new Date(Date.now() - 1_000), expired.challengeId])
     await expect(confirm(other, expired.challengeId)).rejects.toThrow()
   })
 

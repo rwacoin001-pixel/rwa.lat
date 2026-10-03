@@ -1,6 +1,6 @@
 # Current source and production services
 
-The only development entry is `E:\rwa-lat-current`. It is a junction to the existing verified worktree, not a second source copy. Repository: `rwacoin001-pixel/rwa.lat`. Prepared branch: `codex/consolidation-20261004`; base: `7015a18`.
+The only development entry is `E:\rwa-lat-current`. It is a junction to the existing verified worktree, not a second source copy. Repository: `rwacoin001-pixel/rwa.lat`. Formal branch: `main`. Consolidation was prepared on `codex/consolidation-20261004` from `7015a18`; the user authorized verification followed by merge and push on 2026-10-04.
 
 After source changes, explicitly ask the user whether to merge. Only merge after their confirmation; then execute the approved merge directly. Do not release an unmerged worktree. `pnpm deploy:cloudflare` checks that the source is clean, on main and already pushed to origin/main.
 
@@ -35,11 +35,13 @@ Other D:/E: source workspaces are preserved drafts/archives and must not be used
 
 The two old Render admin frontends and their auto-deployment must be retired after the approved consolidation switch and final callback/dependency check. Until then, their presence is recorded explicitly. The keepalive source now targets only formal Oracle endpoints; publishing it is a separate release action. No service is stopped by committing this document.
 
-## Verification of the prepared source
+## Verification of the consolidation source
 
 - The production build wrapper completed all four builds. The frontend was rebuilt after excluding deployment configuration from Tailwind source scanning.
 - All eight configured API unit batches passed: 67 suites, 497 tests. One investment eligibility fixture was brought up to date with the current quote API without changing its rejection and rollback assertions.
 - Admin route/security unit tests: 10 passed. Frontend refresh/AI regression tests: 6 passed. Frontend prediction quote tests: 4 passed.
+- A fresh disposable PostgreSQL 18 database accepted all 78 current migrations. Ten integration suites passed, totaling 54 tests: identity and wallet schemas, transfers and reconciliation, prediction schema, catalog quotes, identity sessions, email verification codes, community profiles, and manual order settlement. Production databases and balances were not used. Two timestamp fixtures now use the application's clock so a remote database clock offset cannot change their expected expiry or freshness result; production guards and assertions are unchanged.
+- Live read-only checks covered the five prediction sort modes, rejection of an invalid mode, history for 1h/1d/1w/1m/max, discussions, asset data, community feed and service status. Browser checks covered search retained after returning, chart-only period loading, both discussion tabs, the +1/+5/+10/+100 stake controls (116 USDT preview), authenticated homepage rendering, and Arabic-to-English community translation with original/cached toggling. No real order, withdrawal or transfer was submitted.
 - The proposed Oracle Compose file passes `docker compose config --quiet` against the existing private configuration. It has not been started.
-- The release guard rejects this unmerged branch. The formal frontend, API health/readiness, Admin health and admin login URL returned HTTP 200; all four Oracle services remain healthy with their original start times and image IDs.
-- These checks confirm source reconstruction, builds, unit behavior and recovery backups. They do not replace real-device login or real-money business acceptance.
+- The release guard rejects unmerged branches; on main it additionally requires a clean source tree and a matching remote main revision. The formal frontend, API health/readiness, Admin health and admin login URL returned HTTP 200; all four Oracle services remain healthy with their original start times and image IDs.
+- These checks confirm source reconstruction, builds, unit/integration behavior, sampled browser flows and recovery backups. They do not replace real-device biometrics, all-language visual acceptance or real-money business acceptance. This consolidation merges and pushes source only; it does not replace production containers or frontend releases.

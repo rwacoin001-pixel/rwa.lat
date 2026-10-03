@@ -56,6 +56,8 @@ describe('CatalogModule (PG integration)', () => {
         currency: 'USD',
         source: 'seed',
         valid_until: new Date(Date.now() + 60000),
+        // Keep the fixture timestamp on the test clock, independent of the remote database clock.
+        captured_at: new Date(),
       }),
     )
 
