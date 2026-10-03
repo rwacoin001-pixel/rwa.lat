@@ -83,7 +83,13 @@ const RULES: RateLimitRule[] = [
   },
   {
     name: 'polymarket-translation',
-    limit: 12,
+    // 60/min, not 12/min (2026-10-02). Cost is bounded by CONTENT, not request count:
+    // polymarket_translations caches every translated string, so a repeat request is a DB
+    // read, not an LLM call. At 12/min a single market page (the UI sends 10 texts per
+    // request) plus a couple of taps drained the allowance; the key is the client IP, so
+    // mobile users behind carrier NAT shared that budget with strangers, the UI showed
+    // "翻译失败，重试", and retrying could never succeed.
+    limit: 60,
     windowMs: MINUTE,
     matches: (method, path) => method === 'POST' && (path === '/v1/polymarket/translations' || path === '/v1/polymarket/translations/content'),
   },

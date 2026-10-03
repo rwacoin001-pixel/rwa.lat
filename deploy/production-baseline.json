@@ -1,0 +1,38 @@
+{
+  "captured_date_beijing": "2026-10-04",
+  "repository": "https://github.com/rwacoin001-pixel/rwa.lat",
+  "source_base": "7015a18982e737bc3fae3fc3f3c60b98d00acd9f",
+  "canonical_workspace": "E:/rwa-lat-current",
+  "prepared_branch": "codex/consolidation-20261004",
+  "merge_requires_user_confirmation": true,
+  "frontend": {
+    "provider": "cloudflare",
+    "worker": "rwa-lat",
+    "version": "04eeeeb5-8957-4230-a9e6-ec62d564668f",
+    "origins": ["https://rwa.lat", "https://www.rwa.lat"]
+  },
+  "oracle": {
+    "host": "161.118.192.220",
+    "api": {"origin": "https://api.rwa.lat", "image_id": "sha256:7dc39ba317e2a27a5afa0d277aaa218c8f2be7dd299445908659133ba3c943e9"},
+    "admin": {
+      "origin": "https://admin-api.rwa.lat",
+      "image_id": "sha256:c93629782e5fb76ef0de6160487389025cdbbe1114db67d3de237f946cfd290c",
+      "original_image_metadata_available": false,
+      "do_not_recreate_from_mutable_tag": "rwa-lat-admin:20261002-free-quotes",
+      "preserved_running_filesystem_sha256": "e8796e5662bfd72121eeab189b2c664f27f17b645bfac3a1ea0da417c9967797"
+    },
+    "admin_frontend": {"origin": "https://admin.rwa.lat", "image_id": "sha256:baa90862fe35462076e1bc59529b15c2a6d757f2021e39f432659295afd58b0b"},
+    "pdf": {"image_id": "sha256:0c1d0c02d80bf6106bbbf536cd4f1e4d4f1a6a237aece9c08907b0f81218b203", "entrypoint": "apps/api/dist/generated-documents/pdf-renderer.server.js", "private_network": "pdf_internal"},
+    "community_bot": {"compose": "/opt/rwa-lat/deploy/compose.community-bot.yml", "state": "/opt/rwa-lat/community-bot/state"}
+  },
+  "database": {
+    "provider": "neon",
+    "host": "ep-jolly-surf-b35kftjs.c-4.ap-southeast-1.aws.neon.tech",
+    "core": "rwa_lat_production",
+    "admin": "rwa_lat_admin_production",
+    "migration_in_this_consolidation": false
+  },
+  "object_storage": {"provider": "backblaze-b2", "buckets": ["rwa-lat-assets", "rwa-lat-attachments", "rwa-lat-kyc"]},
+  "offsite_backup_directory": "E:/rwa-lat-backups/consolidation-20261004",
+  "legacy_admin_frontends_pending_retirement": ["rwa-admin.onrender.com", "rwa-lat-admin-frontend.onrender.com"]
+}

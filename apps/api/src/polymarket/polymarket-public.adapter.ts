@@ -101,6 +101,27 @@ export class PolymarketPublicAdapter implements PolymarketReadAdapter {
     }
   }
 
+  /**
+   * Resolve the market that owns a token id. Used to ingest a market on demand when a
+   * user bets on a market that is displayed but not yet mapped in our tables.
+   * Gamma accepts a `clob_token_ids` filter, so this is one request.
+   * Only returns a record that genuinely lists the requested token — never guess.
+   */
+  async getMarketByTokenId(tokenId: string): Promise<PolymarketMarketRecord | null> {
+    this.requireEnabled()
+    if (!tokenId) return null
+    const url = new URL(`${this.gammaUrl}/markets`)
+    url.searchParams.set('clob_token_ids', tokenId)
+    url.searchParams.set('limit', '5')
+    const payload = await this.fetchJson(url)
+    if (!Array.isArray(payload)) return null
+    for (const item of payload) {
+      const record = normalizeMarket(item)
+      if (record && record.tokenIds.includes(tokenId)) return record
+    }
+    return null
+  }
+
   private requireEnabled(): void {
     if (!this.enabled) throw new PolymarketIntegrationDisabledError()
   }

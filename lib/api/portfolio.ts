@@ -30,7 +30,7 @@ export const SETTLEMENT_DECIMALS = 6
 export const listPositions = () => request<PortfolioPositionsDto>('/v1/portfolio/positions')
 export const getPortfolioHistory = (productId?: string) => request<PortfolioHistoryDto>(`/v1/portfolio/history${productId ? `?productId=${encodeURIComponent(productId)}` : ''}`)
 export const listYield = () => request<YieldDto>('/v1/yield')
-export const listExpectedDistributions = (months = 18) => request<ExpectedDistribution[]>(`/v1/yield/schedule?months=${months}`)
+export const listExpectedDistributions = () => request<ExpectedDistribution[]>('/v1/yield/schedule')
 export const listOrders = () => request<OrdersDto>('/v1/orders')
 
 export type RebalanceLeg = {

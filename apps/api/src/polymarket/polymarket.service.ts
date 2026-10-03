@@ -1,4 +1,4 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Inject, Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { createHash, randomUUID } from 'node:crypto'
@@ -66,6 +66,7 @@ export interface PolymarketPublicPreview {
 
 @Injectable()
 export class PolymarketService {
+  private readonly log = new Logger(PolymarketService.name)
   private readonly staleAfterMs: number
   private readonly leaseMs: number
   private previewCache: { until: number; value: PolymarketPublicPreview } | null = null
@@ -233,15 +234,105 @@ export class PolymarketService {
     token.tickSize = book.tickSize
     token.minOrderSize = book.minOrderSize
     token.lastBookHash = book.hash
-    token.lastBookAt = book.asOf
+    // lastBookAt 记录的是【我们最后一次成功取到盘口的时间】，不是上游的变动时间。
+    // 上游时间戳（asOf）只在盘口真的变化时才前进，冷门市场会长时间冻结。
+    token.lastBookAt = book.fetchedAt
     await this.tokens.save(token)
     return {
       ...book,
       source: 'polymarket-clob-v2',
-      stale: this.isStale(book.asOf, now),
+      // 陈旧判定必须看【我们自己这次抓取】有多新（fetchedAt），不能看上游的变动时间
+      // （asOf）。用 asOf 会把"盘口 2 分钟没人交易"误判成"报价过期"，冷门市场因此
+      // 永远下不了注，而 UI 给的"刷新"根本改不了上游时间戳 ⇒ 死循环。
+      stale: this.isStale(book.fetchedAt, now),
       marketState: market.state,
       restricted: market.restricted,
       tradingEnabled: false as const,
+    }
+  }
+
+  /**
+   * 按需入库：把一个上游市场（含它的两个结果代币）补进映射表，返回是否可用。
+   *
+   * 背景：映射表里那 150 条是人工 SQL 塞的，代码里没有任何入库管线；而界面展示的是
+   * 上游全量市场（活跃事件 2100+），于是 93% 的市场点"下注"会被
+   * PREDICTION_MARKET_NOT_TRADEABLE 拒掉。这里在用户真下注时按 tokenId 反查上游补齐。
+   *
+   * 安全边界（重要）：
+   *  - 只接受「上游确认开放」的市场：active 且未 closed/archived 且开了订单簿；
+   *  - 只新增，**绝不覆盖已有的 state / market_mapping_id** —— 人工封停的市场不会
+   *    因为有人下注就被"复活"；
+   *  - 必须确认反查结果里真的含这个 tokenId（由适配器保证），否则宁可不上；
+   *  - 任何异常都吞掉返回 false，让调用方走原来的 NOT_TRADEABLE，行为不会更差。
+   */
+  async ensureTokenMapped(tokenId: string): Promise<boolean> {
+    if (!tokenId || !this.adapter.isEnabled()) return false
+    try {
+      const record = await this.adapter.getMarketByTokenId(tokenId)
+      if (!record) return false
+      if (!record.active || record.closed || record.archived) return false
+      if (!record.enableOrderBook) return false
+      if (!record.conditionId) return false
+      if (record.tokenIds.length < 2 || record.tokenIds.length !== record.outcomes.length) return false
+
+      const [marketRow] = (await this.markets.manager.query(
+        `INSERT INTO app.polymarket_market_mappings
+           (gamma_market_id, condition_id, slug, question, state, restricted, enable_order_book,
+            resolution_source, market_start_at, market_end_at, provider_updated_at, last_synced_at, raw_payload)
+         VALUES ($1,$2,$3,$4,'active',$5,$6,$7,$8,$9,$10, now(), $11::jsonb)
+         ON CONFLICT (gamma_market_id) DO UPDATE SET
+           condition_id       = COALESCE(EXCLUDED.condition_id, app.polymarket_market_mappings.condition_id),
+           slug               = EXCLUDED.slug,
+           question           = EXCLUDED.question,
+           restricted         = EXCLUDED.restricted,
+           enable_order_book  = EXCLUDED.enable_order_book,
+           resolution_source  = COALESCE(EXCLUDED.resolution_source, app.polymarket_market_mappings.resolution_source),
+           market_start_at    = COALESCE(EXCLUDED.market_start_at, app.polymarket_market_mappings.market_start_at),
+           market_end_at      = COALESCE(EXCLUDED.market_end_at, app.polymarket_market_mappings.market_end_at),
+           provider_updated_at= COALESCE(EXCLUDED.provider_updated_at, app.polymarket_market_mappings.provider_updated_at),
+           last_synced_at     = now(),
+           updated_at         = now()
+         RETURNING id`,
+        [
+          record.gammaMarketId,
+          record.conditionId,
+          record.slug,
+          record.question,
+          record.restricted,
+          record.enableOrderBook,
+          record.resolutionSource,
+          record.startAt,
+          record.endAt,
+          record.providerUpdatedAt,
+          JSON.stringify(record.rawPayload ?? {}),
+        ],
+      )) as Array<{ id: string }>
+      if (!marketRow?.id) return false
+
+      for (let i = 0; i < record.tokenIds.length; i += 1) {
+        await this.tokens.manager.query(
+          `INSERT INTO app.polymarket_token_mappings
+             (market_mapping_id, token_id, outcome, outcome_index, state)
+           VALUES ($1,$2,$3,$4,'active')
+           ON CONFLICT (token_id) DO NOTHING`,
+          [marketRow.id, record.tokenIds[i], record.outcomes[i] ?? `Outcome ${i + 1}`, i],
+        )
+      }
+
+      // 只有真正落库且可用于内部盘才返回 true
+      const [check] = (await this.tokens.manager.query(
+        `SELECT 1 AS ok FROM app.polymarket_token_mappings t
+           JOIN app.polymarket_market_mappings m ON m.id = t.market_mapping_id
+          WHERE t.token_id = $1 AND t.state = 'active' AND m.state = 'active'
+            AND m.enable_order_book = true`,
+        [tokenId],
+      )) as Array<{ ok: number }>
+      return check?.ok === 1
+    } catch (error) {
+      this.log?.warn?.(
+        `polymarket ensureTokenMapped failed token=${tokenId.slice(0, 16)}: ${String(error).slice(0, 160)}`,
+      )
+      return false
     }
   }
 

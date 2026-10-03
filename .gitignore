@@ -9,9 +9,13 @@ __v0_jsx-dev-runtime.ts
 # Environment variables
 .env
 .env.test
+.env.production
+.env.staging
 .env*.local
 deploy/production.env
 .secrets/
+*.private.json
+*.dump
 client_secret_*.json
 *.credentials.json
 

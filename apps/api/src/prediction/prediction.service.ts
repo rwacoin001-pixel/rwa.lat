@@ -34,6 +34,19 @@ export const PREDICTION_LIMITS = {
 // 定标换算（SHARES_SCALE / ATOMIC_PER_UNIT / parseDecimal18 / formatDecimal18）
 // 已移至 prediction-hedge-math.ts 并在文件顶部导入。
 
+/** Row shape of the token+market mapping lookup in placeBet. */
+type PredictionTokenRow = {
+  id: string
+  token_id: string
+  outcome: string | null
+  outcome_index: number | null
+  state: string
+  market_mapping_id: string
+  enable_order_book: boolean
+  restricted: boolean | null
+  market_state: string
+}
+
 @Injectable()
 export class PredictionService {
   private readonly log = new Logger(PredictionService.name)
@@ -88,14 +101,14 @@ export class PredictionService {
     if (riskStake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
 
     // 市场与代币校验（要求市场 active 且 token 未结算）
-    const [tokenRow] = await this.dataSource.query(
-      `SELECT t.id, t.token_id, t.outcome, t.outcome_index, t.state, t.market_mapping_id,
-              m.enable_order_book, m.restricted, m.state AS market_state
-       FROM app.polymarket_token_mappings t
-       JOIN app.polymarket_market_mappings m ON m.id = t.market_mapping_id
-       WHERE t.token_id = $1`,
-      [input.tokenId],
-    )
+    let tokenRow = await this.tokenMapping(input.tokenId)
+    if (!tokenRow) {
+      // 映射表原来只有人工 SQL 塞进去的 150 条，没有入库管线；而界面展示的是上游全量
+      // 市场（活跃事件 2100+），所以约 93% 的市场点"下注"会被拒。这里按 tokenId 反查
+      // 上游、按需补映射（只新增不覆盖状态），补完再查一次；仍不可用则维持原来的拒绝。
+      await this.polymarket.ensureTokenMapped(input.tokenId)
+      tokenRow = await this.tokenMapping(input.tokenId)
+    }
     if (!tokenRow) throw predictionMarketNotTradeable(input.tokenId)
     if (
       tokenRow.state !== 'active'
@@ -404,6 +417,19 @@ export class PredictionService {
   }
 
   // ---------------------------------------------------------------- 内部工具
+
+  /** Look up a token's mapping together with its market's tradeable flags. */
+  private async tokenMapping(tokenId: string): Promise<PredictionTokenRow | null> {
+    const [row] = (await this.dataSource.query(
+      `SELECT t.id, t.token_id, t.outcome, t.outcome_index, t.state, t.market_mapping_id,
+              m.enable_order_book, m.restricted, m.state AS market_state
+       FROM app.polymarket_token_mappings t
+       JOIN app.polymarket_market_mappings m ON m.id = t.market_mapping_id
+       WHERE t.token_id = $1`,
+      [tokenId],
+    )) as Array<PredictionTokenRow>
+    return row ?? null
+  }
 
   private toBetView(row: Record<string, unknown>, duplicate: boolean) {
     return {

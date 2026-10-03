@@ -181,7 +181,7 @@ export function YieldCalendarScreen({ query }: { query: string }) {
   const common = marketCopy[locale].common
   const products = useProducts()
   const credits = useQuery('portfolio:yield', listYield, { staleTime: 60_000 })
-  const schedule = useQuery('portfolio:yield-schedule', () => listExpectedDistributions(18), { staleTime: 60_000 })
+  const schedule = useQuery('portfolio:yield-schedule', () => listExpectedDistributions(), { staleTime: 60_000 })
   const all = useMemo(() => credits.data ?? [], [credits.data])
   const credited = useMemo(() => all.filter((item) => item.state === 'credited' && monthOf(item.creditedAt) && big(item.atomicAmount) !== null)
     .sort((x, y) => Date.parse(y.creditedAt) - Date.parse(x.creditedAt)), [all])

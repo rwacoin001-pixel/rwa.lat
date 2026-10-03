@@ -13,7 +13,7 @@
     "binding": "ASSETS"
   },
   "vars": {
-    "ADMIN_API_URL": "https://api.rwa.lat/v1"
+    "ADMIN_API_URL": "https://admin-api.rwa.lat/v1"
   },
   "observability": {
     "enabled": true

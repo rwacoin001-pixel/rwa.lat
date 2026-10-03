@@ -1,17 +1,16 @@
-const CACHE_NAME = 'rwa-lat-offline-v10'
+const CACHE_NAME = 'rwa-lat-offline-v11'
 const OFFLINE_ASSETS = [
-  '/offline.html',
+  '/offline',
   '/rwa-mark.svg',
   '/icons/rwa-pwa-v2-192.png',
   '/icons/rwa-pwa-v2-512.png',
   '/icons/rwa-pwa-v2-maskable-512.png',
   '/welcome',
   '/home',
-  '/invest',
+  '/markets',
   '/trust',
-  '/portfolio',
+  '/assets',
   '/community',
-  '/wallet',
   '/media/generated/project-assets/home-asset-hero-v1.png',
   '/media/generated/project-assets/home-solar-cover-v2.webp',
   '/media/generated/project-assets/home-residential-cover-v2.webp',
@@ -21,8 +20,23 @@ const OFFLINE_ASSETS = [
   '/media/ai-particle-icon/rwa-particle-icon-alpha-512.png',
 ]
 
+// Precache one URL at a time instead of a single atomic addAll().
+// addAll() rejects if ANY entry is not 2xx, which is exactly how install broke:
+// four URLs in the old list became redirects (/offline.html -> /offline, /invest -> /markets,
+// /portfolio and /wallet -> /assets), so the whole install failed and installed PWAs were
+// stuck on a stale shell forever. Per-URL caching makes a single bad entry harmless.
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_ASSETS)))
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) =>
+      Promise.all(
+        OFFLINE_ASSETS.map((url) =>
+          fetch(url, { redirect: 'follow', cache: 'reload' })
+            .then((response) => (response && response.ok ? cache.put(url, response) : null))
+            .catch(() => null),
+        ),
+      ),
+    ),
+  )
   self.skipWaiting()
 })
 
@@ -45,7 +59,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     // Never replay a cached authentication page or one-time callback URL.
     if (/^\/(?:auth|login|register|verify-email|recovery)(?:\/|$)/.test(url.pathname)) {
-      event.respondWith(fetch(event.request).catch(() => caches.match('/offline.html')))
+      event.respondWith(fetch(event.request).catch(() => caches.match('/offline')))
       return
     }
     event.respondWith(
@@ -57,7 +71,7 @@ self.addEventListener('fetch', (event) => {
           }
           return response
         })
-        .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline.html')),
+        .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline')),
     )
     return
   }

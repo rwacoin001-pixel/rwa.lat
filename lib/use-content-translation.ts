@@ -7,18 +7,36 @@ const pending=new Map<string,Promise<void>>()
 const listeners=new Set<()=>void>()
 let running=0
 const queue:Array<()=>void>=[]
+// 30 texts per request. At 10 a single market page needed several requests and drained the
+// per-minute allowance on /v1/polymarket/translations/content (2026-10-02).
+const BATCH=30
+// Only used if the API omits Retry-After; it normally states the exact remaining wait.
+const FALLBACK_RETRY_MS=45_000
+const MAX_RETRY_WAIT_MS=90_000
+const sleep=(ms:number)=>new Promise<void>(resolve=>setTimeout(resolve,ms))
 async function limited<T>(run:()=>Promise<T>):Promise<T> {
   if(running>=3)await new Promise<void>(resolve=>queue.push(resolve))
   running++
   try{return await run()}finally{running--;queue.shift()?.()}
 }
+async function sendBatch(locale:string,batch:string[],tried=false):Promise<void> {
+  const response=await limited(()=>request<{items:Array<{source:string;text:string}>}>('/v1/polymarket/translations/content',{method:'POST',body:JSON.stringify({locale,texts:batch}),timeoutMs:30000,loading:'silent'}))
+  if(response.ok){for(const item of response.data.items)if(item.text?.trim())cache.set(`${locale}:${item.source}`,item.text);return}
+  // 429 means "this minute's allowance is spent", not a broken request. The API always sends
+  // Retry-After (CORS-exposed and parsed into error.retryAfter), so wait it out once and
+  // retry — previously the hook ignored it, so tapping 重试 re-spent the same empty budget
+  // and the page stayed failed forever.
+  const after=response.error.retryAfter??0
+  const rateLimited=response.error.code==='RATE_LIMIT_EXCEEDED'||after>0
+  if(tried||!rateLimited)return
+  await sleep(after>0?Math.min(MAX_RETRY_WAIT_MS,after*1000):FALLBACK_RETRY_MS)
+  return sendBatch(locale,batch,true)
+}
 async function translate(locale:string,texts:string[]) {
   const missing=texts.filter(t=>!cache.has(`${locale}:${t}`)&&!pending.has(`${locale}:${t}`))
-  for(let i=0;i<missing.length;i+=10){
-    const batch=missing.slice(i,i+10)
-    const task=limited(()=>request<{items:Array<{source:string;text:string}>}>('/v1/polymarket/translations/content',{method:'POST',body:JSON.stringify({locale,texts:batch}),timeoutMs:30000,loading:'silent'})).then(response=>{
-      if(response.ok)for(const item of response.data.items)if(item.text?.trim())cache.set(`${locale}:${item.source}`,item.text)
-    }).catch(()=>{}).finally(()=>{for(const t of batch)pending.delete(`${locale}:${t}`);listeners.forEach(notify=>notify())})
+  for(let i=0;i<missing.length;i+=BATCH){
+    const batch=missing.slice(i,i+BATCH)
+    const task=sendBatch(locale,batch).catch(()=>{}).finally(()=>{for(const t of batch)pending.delete(`${locale}:${t}`);listeners.forEach(notify=>notify())})
     for(const t of batch)pending.set(`${locale}:${t}`,task)
   }
   await Promise.all(texts.map(t=>pending.get(`${locale}:${t}`)))

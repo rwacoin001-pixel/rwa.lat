@@ -1,0 +1,68 @@
+# Load verified image digests from a private --env-file.
+# Do not recreate the old Admin from its mutable 20261002-free-quotes tag.
+name: rwa-lat-oracle
+services:
+  api:
+    image: ${RWA_API_IMAGE:?Set a verified image ID or digest}
+    env_file: /opt/rwa-lat/config/api.production.env
+    command: [node, apps/api/dist/main.js]
+    init: true
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 2g
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,nosuid,size=512m"]
+    ports: [127.0.0.1:4000:4000]
+    networks: [default, pdf_internal]
+  admin:
+    image: ${RWA_ADMIN_IMAGE:?Set a verified image ID or digest}
+    env_file: /opt/rwa-lat/config/admin.production.env
+    init: true
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 1g
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=64m"]
+    ports: [127.0.0.1:4100:4100]
+  admin_frontend:
+    image: ${RWA_ADMIN_FRONTEND_IMAGE:?Set a verified image ID or digest}
+    env_file: /opt/rwa-lat/config/admin-frontend.production.env
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: '3000'
+    init: true
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 768m
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+      - /workspace/apps/admin-frontend/.next/cache:rw,nosuid,size=128m,uid=1000,gid=1000
+    ports: [127.0.0.1:3100:3000]
+  pdf_renderer:
+    image: ${RWA_PDF_IMAGE:?Set a verified image ID or digest}
+    env_file: /opt/rwa-lat/config/pdf-renderer.production.env
+    working_dir: /workspace/apps/api
+    command: [node, dist/generated-documents/pdf-renderer.server.js]
+    environment:
+      DOCUMENT_PDF_EXECUTABLE_PATH: /usr/bin/chromium
+    init: true
+    restart: unless-stopped
+    read_only: true
+    mem_limit: 1g
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs: ["/tmp:rw,nosuid,size=512m"]
+    networks: [pdf_internal]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3001/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+networks:
+  pdf_internal:
+    internal: true

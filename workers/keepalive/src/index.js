@@ -1,10 +1,9 @@
-// rwa-keepalive — 每 8 分钟 ping RWA 两个 Render 服务，防止免费层休眠
-// 效果：API 冷启动从 ~30-125s 降为 0（服务常醒）；成本：免费（CF Workers 免费层）
+// Check the canonical Oracle endpoints every 4 minutes.
 
 const TARGETS = [
   'https://api.rwa.lat/v1/health/ready',
   'https://admin-api.rwa.lat/v1/admin/health',
-  'https://rwa-lat-admin-frontend.onrender.com/',
+  'https://admin.rwa.lat/login',
 ];
 
 async function ping(url) {

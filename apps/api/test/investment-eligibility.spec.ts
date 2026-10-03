@@ -45,7 +45,11 @@ describe('new investment eligibility boundary', () => {
   it('rolls back prediction participation before any financial mutation', async () => {
     const runner = { connect: jest.fn(), startTransaction: jest.fn(), query: jest.fn().mockResolvedValue([]), commitTransaction: jest.fn(), rollbackTransaction: jest.fn(), release: jest.fn() }
     const ds = { query: jest.fn().mockResolvedValue([{ state: 'active', market_state: 'active', enable_order_book: true }]), createQueryRunner: () => runner }
-    const service = new PredictionService(ds as unknown as DataSource, { assertEnabled: jest.fn() } as unknown as OperationalCapabilityService, { getOrderBook: jest.fn().mockResolvedValue({ asks: [{ price: '0.5' }] }) } as unknown as PolymarketService, compliance as unknown as ComplianceService)
+    const polymarket = {
+      getOrderBook: jest.fn().mockResolvedValue({ tokenId: 't', stale: false, fetchedAt: new Date(), asks: [{ price: '0.5', size: '100' }] }),
+      getOutcomeProbability: jest.fn().mockResolvedValue(0.5),
+    }
+    const service = new PredictionService(ds as unknown as DataSource, { assertEnabled: jest.fn() } as unknown as OperationalCapabilityService, polymarket as unknown as PolymarketService, compliance as unknown as ComplianceService)
     await expect(service.placeBet('u', 'r', { tokenId: 't', stakeAtomic: '1000000', idempotencyKey: 'k' })).rejects.toBe(denied)
     expect(runner.rollbackTransaction).toHaveBeenCalled()
     expect(runner.commitTransaction).not.toHaveBeenCalled()

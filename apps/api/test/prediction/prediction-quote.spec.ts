@@ -1,5 +1,5 @@
 import { validatedPredictionPrice } from '../../src/prediction/prediction-quote'
-const book = () => ({ tokenId: 'yes', stale: false, asOf: new Date(), asks: [{price:'0.87',size:'1000'},{price:'0.16',size:'1000'}] })
+const book = () => ({ tokenId: 'yes', stale: false, fetchedAt: new Date(), asOf: new Date(), asks: [{price:'0.87',size:'1000'},{price:'0.16',size:'1000'}] })
 describe('prediction quote boundary', () => {
   it('sorts full positive liquidity and uses only selected token', () => {
     expect(validatedPredictionPrice(book(),'yes',97000000n,.155)).toBe(160000000000000000n)
