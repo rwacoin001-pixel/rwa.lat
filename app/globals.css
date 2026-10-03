@@ -2519,8 +2519,9 @@ html, body, button, input, select, textarea { font-variant-numeric: tabular-nums
 .ai-chat-error p { margin: 0; flex: 1 1 200px; }
 .ai-chat-error[data-tone="error"] p { color: var(--red, #ff627a); }
 
-/* Native-shell feel: no text inflation, tap flash, double-tap zoom or sideways drift. Pinch zoom stays available. */
-html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+/* Fixed app scale: allow native scrolling and swipes, without browser pinch/double-tap zoom.
+   Keep this declarative so single-finger scrolling never waits for a zoom-blocking listener. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; -webkit-tap-highlight-color: transparent; touch-action: pan-x pan-y; }
 button, a, [role='tab'], [role='button'] { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 /* Installed PWA: the page never rubber-bands past its edges or reveals the canvas behind it;
    the app's own pull-to-refresh (touch events) keeps working.
