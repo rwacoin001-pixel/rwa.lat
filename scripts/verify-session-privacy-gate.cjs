@@ -94,5 +94,25 @@ async function click(index) { buttons(render())[index].props.onClick(); await ne
   pathname = '/home'; render(); effects.at(-1)()
   pathname = '/markets'
   assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Guest menu navigation must also preserve the mounted application')
+  session = { userId: 'alice', sessionId: 'desktop-old-session', loggedInAt: new Date(now - 86400000).toISOString() }
+  states = []; refs = []; effects = []
+  pathname = '/desktop'
+  assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Public desktop presentation renders immediately even with an idle session')
+  const callsBeforeDesktop = nativeCalls
+  effects.at(-1)()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Desktop presentation does not request identity verification')
+  assert.equal(nativeCalls, callsBeforeDesktop, 'Desktop presentation never starts native verification')
+  assert.equal(data.has('rwa.idle.alice.desktop-old-session'), false, 'Public presentation does not refresh the private account activity clock')
+  pathname = '/profile/security'
+  assert.notEqual(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Leaving the public desktop cannot expose a stale private account')
+  effects.at(-1)()
+  await new Promise(resolve => setImmediate(resolve))
+  assert.notEqual(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Private account still locks after viewing the public presentation')
+  pathname = '/desktop/'
+  assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Desktop presentation also remains public with a trailing slash')
+  effects.at(-1)()
+  pathname = '/desktop-account'
+  assert.notEqual(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Only the desktop presentation is exempt, not paths sharing its prefix')
   console.log('PASS: initial privacy, background 24h lock, unsupported browser, automatic Passkey, cancellation, verified unlock, logout without content flash')
 })().finally(() => { Date.now = originalNow })

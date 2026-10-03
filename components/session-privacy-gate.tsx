@@ -30,7 +30,9 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
   const leaving = useRef(false)
   const pending = useRef<AbortController | null>(null)
   const { run, sheet } = useStepUp()
-  const publicAuth = /^\/(?:login|register|recover|auth)(?:\/|$)/.test(pathname) || pathname === '/terms' || pathname === '/privacy'
+  // The desktop trust presentation is public, even when an old mobile session exists.
+  const publicAuth = pathname === '/desktop' || pathname === '/desktop/' ||
+    /^\/(?:login|register|recover|auth)(?:\/|$)/.test(pathname) || pathname === '/terms' || pathname === '/privacy'
 
   const remember = () => {
     const item = current.current
