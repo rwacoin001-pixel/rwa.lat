@@ -26,6 +26,7 @@ import { User } from './user.entity'
 import { IdentityOneTimeToken, type IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
 import { IdentityDeliveryService } from './identity-delivery.service'
 import { OAuthProviderService, type OAuthProviderName } from './oauth-provider.service'
+import { persistGoogleEmail, verifiedGoogleEmail } from './google-email'
 import { AuthFlowService, type AuthProof, type AuthDevice } from './auth-flow.service'
 import { assertReauthentication } from '../security/reauthentication'
 import { ReferralBindingService } from '../referral/referral-binding.service'
@@ -43,7 +44,7 @@ export interface AuthResult {
   userId: string
   sessionId: string
   token: string
-  /** True when the account's email login identity has been verified (S1 home lifecycle). */
+  /** True when an account email or the server-verified Google email is available. */
   emailVerified: boolean
 }
 
@@ -101,7 +102,7 @@ export class IdentityService {
     return this.authFlows.complete(input, async (payload, manager) => {
       if (payload.oauth) {
         const consents = validateRegistrationConsents(input.consents, await loadRegistrationConsents(manager, this.config, true))
-        const { provider, subject, locale, referralAttribution } = payload.oauth
+        const { provider, subject, locale, verifiedEmail, referralAttribution } = payload.oauth
         const key = `${provider}:${subject}`
         const hash = this.crypto.hashIdentifier(key)
         await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`oauth:${hash.toString('hex')}`])
@@ -112,8 +113,9 @@ export class IdentityService {
         await manager.getRepository(User).save({ id: userId, status: 'active', locale: locale ?? 'en' })
         await this.referral?.bindNewUser(manager,userId,referralAttribution)
         const encrypted = this.crypto.encrypt(key)
-        await identities.save({ id: randomUUID(), userId, kind: provider, state: 'verified', identifierHash: hash,
+        const identity = await identities.save({ id: randomUUID(), userId, kind: provider, state: 'verified', identifierHash: hash,
           identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date() })
+        await persistGoogleEmail(manager, this.crypto, identity, verifiedEmail)
         await this.persistRegistrationConsents(manager, userId, consents, new Date(), randomUUID())
         return this.createSession(userId, payload.device, manager)
       }
@@ -310,6 +312,7 @@ export class IdentityService {
     meta: {
       displayName?: string
       locale?: string
+      verifiedEmail?: string
       device?: { fingerprint?: string; name?: string }
       intent: 'login' | 'register'
       registrationConsents?: RegistrationConsentAcceptance[]
@@ -321,9 +324,11 @@ export class IdentityService {
     const hash = this.crypto.hashIdentifier(key)
     const userId = await this.dataSource.transaction(async (manager) => {
       const loginIdentities = manager.getRepository(LoginIdentity)
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`oauth:${hash.toString('hex')}`])
       const identity = await loginIdentities.findOne({ where: { kind: provider, identifierHash: hash } })
       if (identity) {
         if (identity.state !== 'verified' || identity.revokedAt) throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
+        await persistGoogleEmail(manager, this.crypto, identity, meta.verifiedEmail)
         return identity.userId
       }
 
@@ -348,7 +353,7 @@ export class IdentityService {
       await users.save(users.create({ id: userId, status: 'active', locale: meta.locale ?? 'en' }))
       await this.referral?.bindNewUser(manager,userId,meta.referralAttribution)
       const { ciphertext, keyVersion } = this.crypto.encrypt(key)
-      await loginIdentities.save(loginIdentities.create({
+      const savedIdentity = await loginIdentities.save(loginIdentities.create({
         id: randomUUID(),
         userId,
         kind: provider,
@@ -358,6 +363,7 @@ export class IdentityService {
         encryptionKeyVersion: keyVersion,
         verifiedAt: new Date(),
       }))
+      await persistGoogleEmail(manager, this.crypto, savedIdentity, meta.verifiedEmail)
       await this.persistRegistrationConsents(manager, userId, consents, meta.consentedAt, randomUUID())
       return userId
     })
@@ -389,6 +395,7 @@ export class IdentityService {
           provider,
           subject: verified.subject,
           locale: verified.locale,
+          verifiedEmail: verified.verifiedEmail,
           referralAttribution,
         }, device)
       }
@@ -396,6 +403,7 @@ export class IdentityService {
     return this.upsertVerifiedOAuthSubject(provider, verified.subject, {
       displayName: verified.displayName,
       locale: verified.locale,
+      verifiedEmail: verified.verifiedEmail,
       device,
       intent: verified.intent,
       referralAttribution,
@@ -754,21 +762,33 @@ export class IdentityService {
     }
     session.lastSeenAt = new Date()
     await this.sessions.save(session)
-    const emailIdentity = await this.loginIdentities.findOne({ where: { userId: session.userId, kind: 'email' } })
+    const { emailIdentity, googleIdentity, googleEmail, emailVerified } = await this.emailStatus(session.userId)
     return {
       userId: session.userId,
       sessionId: session.id,
-      emailVerified: emailIdentity?.state === 'verified',
+      emailVerified,
       authAdapter: this.config.get<string>('AUTH_ADAPTER') ?? 'production',
       expiresAt: session.expiresAt.toISOString(),
-      accountLabel: await this.accountLabel(session.userId, emailIdentity),
+      accountLabel: await this.accountLabel(session.userId, emailIdentity, googleIdentity, googleEmail),
     }
   }
 
-  /** Only the masked form leaves the service; plaintext identifiers are never returned. */
-  private async accountLabel(userId: string, emailIdentity: LoginIdentity | null): Promise<string | null> {
+  private async emailStatus(userId: string, identities = this.loginIdentities) {
+    const [emailIdentity, googleIdentity] = await Promise.all([
+      identities.findOne({ where: { userId, kind: 'email' } }),
+      identities.findOne({ where: { userId, kind: 'google', state: 'verified', revokedAt: IsNull() } }),
+    ])
+    const googleEmail = verifiedGoogleEmail(this.crypto, googleIdentity)
+    const emailVerified = emailIdentity ? emailIdentity.state === 'verified' && !emailIdentity.revokedAt : Boolean(googleEmail)
+    return { emailIdentity, googleIdentity, googleEmail, emailVerified }
+  }
+
+  /** Only masked identifiers or a provider name leave the service. */
+  private async accountLabel(userId: string, emailIdentity: LoginIdentity | null, googleIdentity: LoginIdentity | null, googleEmail: string | null): Promise<string | null> {
     try {
       if (emailIdentity && !emailIdentity.revokedAt) return maskEmail(this.crypto.decrypt(emailIdentity.identifierCiphertext, emailIdentity.encryptionKeyVersion))
+      if (googleEmail) return maskEmail(googleEmail)
+      if (googleIdentity) return 'Google'
       const wallet = await this.loginIdentities.findOne({ where: { userId, kind: 'external_wallet', revokedAt: IsNull() } })
       if (!wallet) return null
       const address = this.crypto.decrypt(wallet.identifierCiphertext, wallet.encryptionKeyVersion)
@@ -823,8 +843,7 @@ export class IdentityService {
         expiresAt: new Date(Date.now() + SESSION_TTL_MS),
       }),
     )
-    const emailIdentity = await identities.findOne({ where: { userId, kind: 'email' } })
-    const emailVerified = emailIdentity?.state === 'verified'
+    const { emailVerified } = await this.emailStatus(userId, identities)
     return { userId, sessionId: session.id, token, emailVerified }
   }
 

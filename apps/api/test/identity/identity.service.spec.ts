@@ -123,6 +123,13 @@ describe('IdentityService', () => {
         // Password registration and factor policy are covered against real SQL in password-auth.rollback.spec.ts.
         if (sql.includes('SELECT u.status,coalesce(c.version')) return [{ status: 'active', version: 0, password_required: false, password_hash: null }]
         if (sql.includes('FROM app.totp_factors')) return []
+        if (sql.includes('INSERT INTO app.login_identities')) {
+          const [id, userId, identifierHash, identifierCiphertext, encryptionKeyVersion] = params
+          if (!logins.data.some(row => row.kind === 'email' && (row.userId === userId || row.identifierHash.equals(identifierHash)))) {
+            logins.data.push({ id, userId, kind: 'email', state: 'verified', identifierHash, identifierCiphertext, encryptionKeyVersion, verifiedAt: new Date(), revokedAt: null })
+          }
+          return []
+        }
         if (sql.includes('app.wallet_sign_in_challenges')) {
           const key = (params[0] as Buffer).toString('hex')
           if (sql.startsWith('INSERT')) { walletChallenges.set(key, { address: params[1], expiresAt: params[2] as Date, consumed: false }); return [] }
@@ -365,6 +372,97 @@ describe('IdentityService', () => {
     expect(result.userId).toBe(userId)
     expect(users.data).toHaveLength(0)
     expect(consentQueries.filter(({ sql }) => sql.includes('INSERT INTO app.consents'))).toHaveLength(0)
+  })
+
+  function existingGoogle(subject = 'existing-google-subject') {
+    const encrypted = crypto.encrypt(`google:${subject}`)
+    const identity = { id: 'google-identity', userId: 'google-user', kind: 'google', state: 'verified',
+      identifierHash: crypto.hashIdentifier(`google:${subject}`), identifierCiphertext: encrypted.ciphertext,
+      encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date(), revokedAt: null }
+    logins.data.push(identity)
+    return identity
+  }
+
+  function accountEmail(userId: string, email: string, state = 'verified') {
+    const encrypted = crypto.encrypt(email)
+    const identity = { id: 'email-identity', userId, kind: 'email', state,
+      identifierHash: crypto.hashIdentifier(email), identifierCiphertext: encrypted.ciphertext,
+      encryptionKeyVersion: encrypted.keyVersion, verifiedAt: state === 'pending' ? null : new Date(), revokedAt: null }
+    logins.data.push(identity)
+    return identity
+  }
+
+  it('creates a verified email and masked label from a new Google registration', async () => {
+    oauthProvider.exchange.mockResolvedValue({ subject: 'new-google-subject', verifiedEmail: 'alice@example.com', intent: 'register',
+      registrationConsents: acceptedConsents, consentedAt: new Date() })
+    const result = await svc.exchangeOAuthCode('google', 'code', 'server-state')
+    expect(result.emailVerified).toBe(true)
+    const view = await svc.getSessionViewByToken(result.token)
+    expect(view).toMatchObject({ userId: result.userId, emailVerified: true, accountLabel: 'a****@example.com' })
+    expect(logins.data.find(row => row.kind === 'email')).toMatchObject({ userId: result.userId, state: 'verified' })
+    expect(delivery.sendOneTimeLink).not.toHaveBeenCalled()
+    expect(JSON.stringify(view)).not.toContain('alice')
+  })
+
+  it('repairs an existing Google account in place on its next verified provider login', async () => {
+    existingGoogle()
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', intent: 'login' })
+    const old = await svc.exchangeOAuthCode('google', 'code', 'server-state')
+    expect(await svc.getSessionViewByToken(old.token)).toMatchObject({ userId: 'google-user', emailVerified: false, accountLabel: 'Google' })
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', verifiedEmail: 'alice@example.com', intent: 'login' })
+    const repaired = await svc.exchangeOAuthCode('google', 'code', 'server-state')
+    expect(repaired).toMatchObject({ userId: old.userId, emailVerified: true })
+    expect(await svc.getSessionViewByToken(old.token)).toMatchObject({ emailVerified: true, accountLabel: 'a****@example.com' })
+    expect(users.data).toHaveLength(0)
+    expect(logins.data.filter(row => row.kind === 'google')).toHaveLength(1)
+  })
+
+  it('keeps a duplicate email account separate while recognizing the Google email proof', async () => {
+    existingGoogle()
+    const other = accountEmail('other-user', 'alice@example.com')
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', verifiedEmail: 'alice@example.com', intent: 'login' })
+    const result = await svc.exchangeOAuthCode('google', 'code', 'server-state')
+    expect(result).toMatchObject({ userId: 'google-user', emailVerified: true })
+    expect(await svc.getSessionViewByToken(result.token)).toMatchObject({ accountLabel: 'a****@example.com', emailVerified: true })
+    expect(logins.data.filter(row => row.kind === 'email')).toEqual([other])
+    expect(other.userId).toBe('other-user')
+  })
+
+  it('verifies the same pending account email from Google proof without sending a new code', async () => {
+    existingGoogle()
+    const email = accountEmail('google-user', 'alice@example.com', 'pending')
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', verifiedEmail: 'alice@example.com', intent: 'login' })
+    expect((await svc.exchangeOAuthCode('google', 'code', 'server-state')).emailVerified).toBe(true)
+    expect(email.state).toBe('verified')
+    expect(delivery.sendOneTimeLink).not.toHaveBeenCalled()
+  })
+
+  it('preserves an explicitly changed account email rather than replacing it with the Google email', async () => {
+    existingGoogle()
+    const email = accountEmail('google-user', 'changed@example.com')
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', verifiedEmail: 'alice@example.com', intent: 'login' })
+    const result = await svc.exchangeOAuthCode('google', 'code', 'server-state')
+    expect(await svc.getSessionViewByToken(result.token)).toMatchObject({ accountLabel: 'c******@example.com', emailVerified: true })
+    expect(crypto.decrypt(email.identifierCiphertext, email.encryptionKeyVersion)).toBe('changed@example.com')
+  })
+
+  it('does not revive a revoked account email or Google sign-in method', async () => {
+    const google = existingGoogle()
+    const email = accountEmail('google-user', 'alice@example.com', 'revoked')
+    email.revokedAt = new Date() as never
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', verifiedEmail: 'alice@example.com', intent: 'login' })
+    expect((await svc.exchangeOAuthCode('google', 'code', 'server-state')).emailVerified).toBe(false)
+    expect(email.state).toBe('revoked')
+    google.state = 'revoked'; google.revokedAt = new Date() as never
+    await expect(svc.exchangeOAuthCode('google', 'code', 'server-state')).rejects.toMatchObject({ response: { code: 'IDENTITY_NOT_FOUND' } })
+  })
+
+  it('does not invent verification for old Google rows without a verified provider email', async () => {
+    existingGoogle()
+    oauthProvider.exchange.mockResolvedValue({ subject: 'existing-google-subject', intent: 'login' })
+    const result = await svc.exchangeOAuthCode('google', 'code', 'server-state')
+    expect(result.emailVerified).toBe(false)
+    expect(logins.data.filter(row => row.kind === 'email')).toHaveLength(0)
   })
 
   it('recover uses an indistinguishable response and only dispatches a token for a verified email', async () => {

@@ -8,7 +8,7 @@ export class SessionViewDto {
   @ApiProperty()
   sessionId!: string
 
-  @ApiProperty({ description: 'True when the email login identity is verified.' })
+  @ApiProperty({ description: 'True when the account email or server-verified Google email is available.' })
   emailVerified!: boolean
 
   @ApiProperty({ description: 'Server auth adapter mode (e.g. production, demo).' })

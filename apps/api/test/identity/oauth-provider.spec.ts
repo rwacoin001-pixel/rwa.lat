@@ -182,7 +182,7 @@ describe('OAuthProviderService', () => {
     const service = new OAuthProviderService(dataSource as never, crypto() as never, config('google') as never)
     global.fetch = jest.fn()
       .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ access_token: 'google-access-token' }) })
-      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sub: 'google-subject', name: 'Verified User', locale: 'en' }) }) as never
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sub: 'google-subject', name: 'Verified User', locale: 'en', email: ' VERIFIED@example.com ', email_verified: true }) }) as never
 
     await expect(service.exchange(
       'google', 'authorization-code', 's'.repeat(43), 'https://app.rwa.lat/auth/callback/google',
@@ -190,6 +190,7 @@ describe('OAuthProviderService', () => {
       subject: 'google-subject',
       displayName: 'Verified User',
       locale: 'en',
+      verifiedEmail: 'verified@example.com',
       intent: 'register',
       registrationConsents: acceptedConsents,
       consentedAt: new Date('2026-09-20T12:00:00.000Z'),
@@ -204,6 +205,17 @@ describe('OAuthProviderService', () => {
         headers: expect.objectContaining({ authorization: 'Bearer google-access-token' }),
       }),
     )
+  })
+
+  it.each([false, undefined, 'true', 1])('does not treat an unverified Google email claim (%s) as proof', async (emailVerified) => {
+    const tx = runner({ code_verifier_ciphertext: Buffer.from('encrypted'), encryption_key_version: 2,
+      redirect_uri: 'https://app.rwa.lat/auth/callback/google', intent: 'login',
+      expires_at: new Date(Date.now() + 60_000), consumed_at: null })
+    const service = new OAuthProviderService({ createQueryRunner: () => tx } as never, crypto() as never, config('google') as never)
+    global.fetch = jest.fn()
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ access_token: 'access-token' }) })
+      .mockResolvedValueOnce({ ok: true, status: 200, json: async () => ({ sub: 'google-subject', email: 'verified@example.com', email_verified: emailVerified }) }) as never
+    expect((await service.exchange('google', 'code', 's'.repeat(43))).verifiedEmail).toBeUndefined()
   })
 
   it('uses confidential-client Basic authentication and /2/users/me for X', async () => {

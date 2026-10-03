@@ -7,6 +7,11 @@ import { loadRegistrationConsents, validateRegistrationConsents, type Registrati
 
 export type OAuthProviderName = 'google' | 'x'
 
+export type VerifiedOAuthProfile = {
+  subject: string; displayName?: string; locale?: string; verifiedEmail?: string;
+  intent: 'login' | 'register'; registrationConsents?: RegistrationConsentAcceptance[]; consentedAt?: Date;
+}
+
 interface OAuthFlowRow {
   code_verifier_ciphertext: Buffer | null
   oauth1_request_token_secret_ciphertext: Buffer | null
@@ -98,7 +103,7 @@ export class OAuthProviderService {
     return { provider, authorizationUrl: authorization.toString(), expiresAt, intent }
   }
 
-  async exchange(provider: OAuthProviderName, code: string, state: string, suppliedRedirectUri?: string) {
+  async exchange(provider: OAuthProviderName, code: string, state: string, suppliedRedirectUri?: string): Promise<VerifiedOAuthProfile> {
     const flow = await this.consumeFlow(provider, state, suppliedRedirectUri)
     if (provider === 'x' && flow.oauth1_request_token_secret_ciphertext) {
       const config = this.xOAuth1Config()
@@ -120,10 +125,12 @@ export class OAuthProviderService {
     const token = credentials.accessToken
     if (provider === 'google') {
       const profile = await this.getJson('https://openidconnect.googleapis.com/v1/userinfo', token)
+      const email = readOptionalString(profile, 'email')?.trim().toLowerCase()
       return {
         subject: readSubject(profile, 'sub'),
         displayName: readOptionalString(profile, 'name'),
         locale: readOptionalString(profile, 'locale'),
+        verifiedEmail: profile.email_verified === true && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined,
         ...this.registrationSnapshot(flow),
       }
     }

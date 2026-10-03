@@ -218,17 +218,67 @@ suite('password authentication (real PostgreSQL, rollback only)', () => {
     expect(await sessions()).toBe(1)
   })
   it('continues a verified OAuth signup after consent without repeating provider authorization', async () => {
-    const exchange = jest.fn().mockResolvedValue({ subject: `provider-${randomUUID()}`, intent: 'login' })
+    const verifiedEmail = `google-${email}`
+    const exchange = jest.fn().mockResolvedValue({ subject: `provider-${randomUUID()}`, intent: 'login', verifiedEmail })
     ;(identity as any).oauthProvider = { exchange }
     const f = await flow(identity.exchangeOAuthCode('google', 'test-code', 'test-state', undefined, device), 'consent')
     const requirements = await identity.consentRequirements()
     await expect(identity.completeAuthFlow({ continuationToken: f.continuationToken })).rejects.toThrow()
     const result = await identity.completeAuthFlow({ continuationToken: f.continuationToken,
       consents: requirements.required.map(item => ({ documentType: item.documentType, version: item.version, accepted: true })) }) as { token: string; userId: string }
-    expect((await identity.getSessionViewByToken(result.token)).userId).toBe(result.userId)
+    expect(await identity.getSessionViewByToken(result.token)).toMatchObject({ userId: result.userId, emailVerified: true })
+    const linkedEmail = await runner.manager.getRepository(LoginIdentity).findOneBy({ userId: result.userId, kind: 'email' })
+    expect(linkedEmail?.state).toBe('verified')
+    expect(crypto.decrypt(linkedEmail!.identifierCiphertext, linkedEmail!.encryptionKeyVersion)).toBe(verifiedEmail)
     expect(exchange).toHaveBeenCalledTimes(1)
     await expect(identity.completeAuthFlow({ continuationToken: f.continuationToken })).rejects.toThrow()
   })
+  async function googleSignIn(verifiedEmail: string) {
+    const subject = `provider-${userId}`
+    const encrypted = crypto.encrypt(`google:${subject}`)
+    const repo = runner.manager.getRepository(LoginIdentity)
+    if (!await repo.findOneBy({ userId, kind: 'google' })) {
+      await repo.save({ id: randomUUID(), userId, kind: 'google', state: 'verified', verifiedAt: new Date(),
+        identifierHash: crypto.hashIdentifier(`google:${subject}`), identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion })
+    }
+    ;(identity as any).oauthProvider = { exchange: jest.fn().mockResolvedValue({ subject, verifiedEmail, intent: 'login' }) }
+    return identity.exchangeOAuthCode('google', 'test-code', 'test-state', undefined, device)
+  }
+
+  it('repairs a legacy Google account without changing its ID and persists a single verified email', async () => {
+    await runner.manager.getRepository(LoginIdentity).delete({ userId, kind: 'email' })
+    const target = `google-${email}`
+    const result = await googleSignIn(target)
+    expect(result).toMatchObject({ userId, emailVerified: true })
+    expect(await identity.getSessionViewByToken(result.token)).toMatchObject({ userId, emailVerified: true })
+    expect((await runner.manager.getRepository(LoginIdentity).findOneBy({ userId, kind: 'email' }))?.state).toBe('verified')
+    expect((await googleSignIn(target)).userId).toBe(userId)
+    expect(await runner.manager.getRepository(LoginIdentity).countBy({ userId, kind: 'email' })).toBe(1)
+  })
+
+  it('does not merge a Google account with another account that already owns its email', async () => {
+    await runner.manager.getRepository(LoginIdentity).delete({ userId, kind: 'email' })
+    const otherId = randomUUID(), target = `taken-${email}`, encrypted = crypto.encrypt(target)
+    await runner.manager.getRepository(User).save({ id: otherId, status: 'active', locale: 'en' })
+    await runner.manager.getRepository(LoginIdentity).save({ id: randomUUID(), userId: otherId, kind: 'email', state: 'verified', verifiedAt: new Date(),
+      identifierHash: crypto.hashIdentifier(target), identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion })
+    const result = await googleSignIn(target)
+    expect(result).toMatchObject({ userId, emailVerified: true })
+    const view = await identity.getSessionViewByToken(result.token)
+    expect(view.emailVerified).toBe(true)
+    expect(view.accountLabel).toContain('@example.invalid')
+    expect(view.accountLabel).not.toContain(target.split('@')[0])
+    expect(await runner.manager.getRepository(LoginIdentity).countBy({ userId, kind: 'email' })).toBe(0)
+    expect((await runner.manager.getRepository(LoginIdentity).findOneBy({ kind: 'email', identifierHash: crypto.hashIdentifier(target) }))?.userId).toBe(otherId)
+  })
+
+  it('preserves a separately changed account email after signing in with Google again', async () => {
+    const result = await googleSignIn(`google-${email}`)
+    expect(result.emailVerified).toBe(true)
+    const stored = await runner.manager.getRepository(LoginIdentity).findOneBy({ userId, kind: 'email' })
+    expect(crypto.decrypt(stored!.identifierCiphertext, stored!.encryptionKeyVersion)).toBe(email)
+  })
+
   it('enforces the per-account password attempt limit independently of IP', async () => {
     await runner.query(`INSERT INTO app.auth_password_attempts(identifier_hash,attempts,expires_at) VALUES($1,10,now()+interval '15 minutes')`, [crypto.hashIdentifier(email)])
     await expect(identity.loginPassword(email, password)).rejects.toMatchObject({ response: { code: 'AUTH_PASSWORD_RATE_LIMIT' } })
