@@ -1,10 +1,10 @@
-export type AiAttachment = { name: string; mime: string; size: number; text: string; method: 'text' | 'pdf' | 'docx' | 'ocr' }
-export const AI_FILE_LIMITS = { count: 3, bytes: 8 * 1024 * 1024, text: 12000, totalText: 24000, pdfPages: 20, pixels: 16000000 } as const
+export type AiAttachment = { name: string; mime: string; size: number; text: string; method: 'text' | 'pdf' | 'docx' | 'ocr' | 'image'; dataUrl?: string; width?: number; height?: number }
+export const AI_FILE_LIMITS = { count: 3, bytes: 8 * 1024 * 1024, text: 12000, totalText: 24000, pdfPages: 20, pixels: 16000000, imageEdge: 1920, imageBytes: 384 * 1024 } as const
 export const AI_FILE_ACCEPT = '.txt,.md,.csv,.json,.pdf,.docx,.jpg,.jpeg,.png,.webp'
 const formats: Record<string, { mime: string; method: AiAttachment['method'] }> = {
   txt: { mime: 'text/plain', method: 'text' }, md: { mime: 'text/markdown', method: 'text' }, csv: { mime: 'text/csv', method: 'text' }, json: { mime: 'application/json', method: 'text' },
   pdf: { mime: 'application/pdf', method: 'pdf' }, docx: { mime: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', method: 'docx' },
-  jpg: { mime: 'image/jpeg', method: 'ocr' }, jpeg: { mime: 'image/jpeg', method: 'ocr' }, png: { mime: 'image/png', method: 'ocr' }, webp: { mime: 'image/webp', method: 'ocr' },
+  jpg: { mime: 'image/jpeg', method: 'image' }, jpeg: { mime: 'image/jpeg', method: 'image' }, png: { mime: 'image/png', method: 'image' }, webp: { mime: 'image/webp', method: 'image' },
 }
 export function aiFileFormat(file: { name: string; size: number; type: string }) {
   const format = formats[file.name.toLowerCase().split('.').at(-1) ?? '']

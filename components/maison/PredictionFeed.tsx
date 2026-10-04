@@ -17,6 +17,8 @@ import { fmtDate, fmtDateTime } from './format'
 import { Skeleton, StateBlock, maison as s } from './primitives'
 import {PredictionTranslationButton} from './PredictionTranslationButton'
 import {PredictionPulse} from './PredictionPulse'
+import {openPredictionItems} from '@/lib/prediction-lifecycle'
+import {usePredictionExpiryClock} from '@/lib/use-prediction-expiry-clock'
 
 export function PredictionFeed() {
   const { locale } = useI18n()
@@ -38,7 +40,9 @@ export function PredictionFeed() {
   const [loadedOnce, setLoadedOnce] = usePageState('prediction:loaded', false)
   const [error, setError] = useState(false)
   const [retry, setRetry] = useState(0)
-  const sources=items.flatMap(item=>[item.question,...item.outcomes.map(o=>o.label)])
+  const now=usePredictionExpiryClock(items)
+  const visibleItems=openPredictionItems(items,now)
+  const sources=visibleItems.flatMap(item=>[item.question,...item.outcomes.map(o=>o.label)])
   const translation=useContentTranslation(sources)
   const [original,setOriginal]=useState(false)
   const content=(text:string)=>original?text:translation(text)
@@ -51,7 +55,7 @@ export function PredictionFeed() {
     void getPolymarketFeed(category, offset, controller.signal,sort,search)
       .then((page) => {
         if (controller.signal.aborted) return
-        setItems((previous) => mergeDisplayPage(previous, page.items, offset))
+        setItems((previous) => openPredictionItems(mergeDisplayPage(previous, page.items, offset)))
         setNextOffset(page.nextOffset)
         setFetchedAt(page.fetchedAt)
         setLoadedOnce(true)
@@ -73,7 +77,7 @@ export function PredictionFeed() {
           const refreshed=new Map(page.items.map(item=>[item.id,item]))
           // Replace only the rolling Up/Down slot; retain pagination and card order.
           const rolling=page.items.find(item=>item.conditionId&&item.outcomes.every(o=>/^(up|down)$/i.test(o.label)))
-          return previous.map(item=>refreshed.get(item.id)??(rolling&&item.conditionId&&item.outcomes.every(o=>/^(up|down)$/i.test(o.label))?rolling:item)).filter((item,index,list)=>list.findIndex(other=>other.id===item.id)===index)
+          return openPredictionItems(previous.map(item=>refreshed.get(item.id)??(rolling&&item.conditionId&&item.outcomes.every(o=>/^(up|down)$/i.test(o.label))?rolling:item)).filter((item,index,list)=>list.findIndex(other=>other.id===item.id)===index))
         })
         setFetchedAt(page.fetchedAt)
       }).catch(()=>{})
@@ -114,8 +118,8 @@ export function PredictionFeed() {
       {POLYMARKET_CATEGORIES.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={category === key} onClick={() => selectCategory(key)}>{labels.categories[key]}</button>)}
     </div>
     {!loadedOnce && loading ? <Skeleton rows={3} /> : null}
-    {error && !items.length ? <StateBlock tone="error" title={m.loadError} retry={() => setRetry((value) => value + 1)} retryLabel={labels.retry} /> : null}
-    {items.length > 0 && <div aria-live="off">{items.map((item) => {
+    {error && !visibleItems.length ? <StateBlock tone="error" title={m.loadError} retry={() => setRetry((value) => value + 1)} retryLabel={labels.retry} /> : null}
+    {visibleItems.length > 0 && <div aria-live="off">{visibleItems.map((item) => {
       const layout = item.featured
         ? 'featured'
         : item.outcomes.length === 2 && item.outcomes.every(o=>/^(up|down)$/i.test(o.label))
@@ -149,12 +153,12 @@ export function PredictionFeed() {
         {layout !== 'featured' && <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>}
       </button><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={[item.question,...item.outcomes.map(o=>o.label)]}/></article>
     })}</div>}
-    {loadedOnce && !loading && !error && !items.length && nextOffset === null ? <StateBlock title={copy.common.empty} /> : null}
+    {loadedOnce && !loading && !error && !visibleItems.length && nextOffset === null ? <StateBlock title={copy.common.empty} /> : null}
     <div ref={sentinel} className={s.predFeedSentinel} aria-hidden="true" />
     {loading && loadedOnce ? <div className={s.predFeedStatus} role="status">{labels.loading}…</div> : null}
-    {error && items.length > 0 ? <div className={s.predFeedStatus}><button type="button" className={s.ghost} onClick={() => setRetry((value) => value + 1)}>{labels.retry}</button></div> : null}
+    {error && visibleItems.length > 0 ? <div className={s.predFeedStatus}><button type="button" className={s.ghost} onClick={() => setRetry((value) => value + 1)}>{labels.retry}</button></div> : null}
     {nextOffset !== null && !loading && !error ? <div className={s.predFeedStatus}><button type="button" className={s.ghost} onClick={() => setOffset(nextOffset)}>{labels.more}</button></div> : null}
-    {loadedOnce && nextOffset === null && items.length > 0 && !loading ? <p className={s.predFeedStatus}>{labels.end}</p> : null}
+    {loadedOnce && nextOffset === null && visibleItems.length > 0 && !loading ? <p className={s.predFeedStatus}>{labels.end}</p> : null}
     {fetchedAt && <p className={s.foot}><span>{copy.common.source}: Polymarket</span><span>{fill(copy.common.updated, { t: fmtDateTime(fetchedAt, locale) })}</span></p>}
   </>
 }

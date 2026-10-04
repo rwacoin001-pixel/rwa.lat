@@ -1,16 +1,11 @@
-const CACHE_NAME = 'rwa-lat-offline-v11'
+const CACHE_NAME = 'rwa-lat-offline-v12'
 const OFFLINE_ASSETS = [
   '/offline',
   '/rwa-mark.svg',
   '/icons/rwa-pwa-v2-192.png',
   '/icons/rwa-pwa-v2-512.png',
   '/icons/rwa-pwa-v2-maskable-512.png',
-  '/welcome',
   '/home',
-  '/markets',
-  '/trust',
-  '/assets',
-  '/community',
   '/media/generated/project-assets/home-asset-hero-v1.png',
   '/media/generated/project-assets/home-solar-cover-v2.webp',
   '/media/generated/project-assets/home-residential-cover-v2.webp',
@@ -42,7 +37,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)))),
+    caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('rwa-lat-offline-') && key !== CACHE_NAME).map((key) => caches.delete(key)))),
   )
   self.clients.claim()
 })
@@ -56,6 +51,16 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Installed Android apps need the current start URL and brand colors. Never
+  // pin an old manifest behind the generic static-asset cache-first strategy.
+  if (url.pathname === '/manifest.webmanifest') {
+    event.respondWith(fetch(event.request).then((response) => {
+      if (response.ok) event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request,response.clone())))
+      return response
+    }).catch(() => caches.match(event.request)))
+    return
+  }
+
   if (event.request.mode === 'navigate') {
     // Never replay a cached authentication page or one-time callback URL.
     if (/^\/(?:auth|login|register|verify-email|recovery)(?:\/|$)/.test(url.pathname)) {
@@ -64,11 +69,14 @@ self.addEventListener('fetch', (event) => {
     }
     event.respondWith(
       fetch(event.request)
-        .then((response) => {
+        .then(async (response) => {
           if (response.ok) {
             const copy = response.clone()
             event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)))
           }
+          // Cloudflare failures are HTTP responses, not network exceptions.
+          // Keep the installed app usable with its last valid shell on a 5xx.
+          if (response.status >= 500) return (await caches.match(event.request)) || (await caches.match('/offline')) || response
           return response
         })
         .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline')),

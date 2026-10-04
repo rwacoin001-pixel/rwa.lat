@@ -39,7 +39,7 @@ export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice
 /** Shape of the same-origin `/api/polymarket/market/:id` proxy (Gamma + CLOB). */
 export type PolymarketMarket = {
   source: string; fetchedAt: string
-  market: { id: string; eventId?: string | null; question: string; description: string; category: string; outcomes: string[]; prices: number[]; tokenIds: string[]; volume: number; volume24h: number; liquidity: number; endDate: string | null; acceptingOrders: boolean }
+  market: { id: string; eventId?: string | null; question: string; description: string; category: string; outcomes: string[]; prices: number[]; tokenIds: string[]; volume: number; volume24h: number; liquidity: number; endDate: string | null; acceptingOrders: boolean; closed?:boolean; resolved?:boolean; active?:boolean; archived?:boolean }
   outcomeBooks?: Array<({ tokenId: string; fetchedAt: string; asOf?: string; bids: Array<{price:number;size:number}>; asks: Array<{price:number;size:number}>; minimumOrderSize: number }) | null>
   orderbook: { bids: Array<{ price: number; size: number }>; asks: Array<{ price: number; size: number }>; tickSize: number; minimumOrderSize: number } | null
   pricing: { midpoint: number; spread: number; history: Array<{ time: number; price: number }> }

@@ -4,7 +4,7 @@ import { AI_ACCOUNT_SCOPES, AiAccountScope } from '../ai-customer-tools.service'
 import type { AiAttachment } from '../ai-attachments'
 
 export class AiChatDto {
-  @ApiPropertyOptional({ description: 'Up to three locally extracted file excerpts. Validated server-side; no URLs or binary payloads.' })
+  @ApiPropertyOptional({ description: 'Up to three local document excerpts or resized JPEG image data URLs. No remote URLs; image pixels are transient and not stored.' })
   @IsOptional() @IsArray() @ArrayMaxSize(3)
   attachments?: AiAttachment[]
   @ApiProperty({ description: 'User message', minLength: 1, maxLength: 4000 })
@@ -17,7 +17,7 @@ export class AiChatDto {
   @IsString()
   sessionId?: string
 
-  @ApiPropertyOptional({ description: 'Optional UI context, e.g. { type: "asset", id: "ondo-global-markets" }' })
+  @ApiPropertyOptional({ description: 'Optional registered page key and market tab. Never include form values, account identifiers or authentication data.' })
   @IsOptional()
   @IsObject()
   context?: Record<string, unknown>

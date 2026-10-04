@@ -4,6 +4,7 @@ import { RequestMethod, ValidationPipe } from '@nestjs/common'
 import { NestFactory } from '@nestjs/core'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 import helmet from 'helmet'
+import { installAiChatBodyParser } from './ai/ai-body-parser'
 import { AppModule } from './app.module'
 import { HttpExceptionFilter } from './common/http-exception.filter'
 import { RequestContextMiddleware } from './common/request-context.middleware'
@@ -22,6 +23,8 @@ function parseOrigins(value: string | undefined) {
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, { bufferLogs: true })
   const prefix = CORE_API_PREFIX
+  // Only image chat needs the larger body. All other API routes keep Nest's default 100 KB limit.
+  installAiChatBodyParser(app)
   const express = app.getHttpAdapter().getInstance() as { set(name: string, value: unknown): void }
   express.set('trust proxy', parseTrustProxyHops(process.env.TRUST_PROXY_HOPS))
 

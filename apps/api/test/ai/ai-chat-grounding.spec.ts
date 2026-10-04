@@ -1,6 +1,7 @@
 import { AiService } from '../../src/ai/ai.service'
 import type { AiModelClient } from '../../src/ai/ai-model.client'
 import type { KnowledgeSource } from '../../src/ai/ai-knowledge.policy'
+import { imageFixture } from './ai-image-fixture'
 
 const source: KnowledgeSource = { id: '9d7f53b0-48a6-4251-a3bc-171a545b3dad', sourceId: 'kb:9d7f53b0-48a6-4251-a3bc-171a545b3dad:v2', revision: 2, title: '赎回', summary: '', body: '实际到账后才能再投资。', locale: 'zh-CN', category: 'redemption', productIds: [], publishedAt: '2026-09-30T00:00:00Z' }
 
@@ -8,20 +9,40 @@ function fixture() {
   const session = { id: 'session', userId: 'owner', title: 'New conversation', updatedAt: new Date() }
   const sessions = { create: (value: any) => value, save: jest.fn(async (value: any) => ({ ...session, ...value })), findOne: jest.fn(async () => session) }
   const messages = { create: (value: any) => value, save: jest.fn(async (value: any) => ({ ...value, createdAt: new Date() })), find: jest.fn(async () => []), delete: jest.fn(async () => ({})) }
-  const model = { configured: true, providerName: 'DeepSeek', modelName: 'test', complete: jest.fn(async (..._args: Parameters<AiModelClient['complete']>) => ({ text: JSON.stringify({ reply: '实际到账后才能再投资。', sourceIds: [source.sourceId] }), model: 'test' })) }
+  const model = { configured: true, visionAvailable: true, providerName: 'DeepSeek', modelName: 'test', complete: jest.fn(async (..._args: Parameters<AiModelClient['complete']>) => ({ text: JSON.stringify({ reply: '实际到账后才能再投资。', sourceIds: [source.sourceId] }), model: 'test' })) }
   const knowledge = { enabled: true, retrieve: jest.fn(async () => [source]), stillCurrent: jest.fn(async () => true) }
   const service = new AiService(sessions as any, messages as any, model as any, knowledge as any)
   return { service, sessions, messages, model, knowledge }
 }
 
 describe('Published knowledge in customer chat', () => {
+  it('sees pixels on the current turn while keeping binary data out of the database and historical replay', async () => {
+    const f = fixture(), image = imageFixture()
+    f.messages.find.mockImplementation(async () => [f.messages.save.mock.calls[0][0]] as any)
+    await f.service.chat('owner', { message: 'Which screen is this?', attachments: [image], context: { pageKey: 'cashDeposit' } })
+    const modelHistory = f.model.complete.mock.calls[0][1]
+    expect(modelHistory[0].images).toEqual([image.dataUrl])
+    const saved = f.messages.save.mock.calls[0][0]
+    expect(saved.content).not.toContain('base64')
+    expect(f.model.complete.mock.calls[0][0]).toContain('充值 Deposit')
+    expect(f.model.complete.mock.calls[0][0]).toContain('A screenshot is not verified account/identity evidence')
+    f.messages.find.mockResolvedValue([saved] as any)
+    await f.service.chat('owner', { message: 'Tell me the next step', sessionId: 'session' })
+    expect(f.model.complete.mock.calls[1][1][0].images).toBeUndefined()
+    expect((await f.service.getSession('owner', 'session')).messages[0].attachments?.[0]).not.toHaveProperty('dataUrl')
+  })
+  it('keeps images unsent and unstored when the configured provider cannot see them', async () => {
+    const f = fixture(); f.model.visionAvailable = false
+    await expect(f.service.chat('owner', { message: 'Read this', attachments: [imageFixture()] })).rejects.toMatchObject({ response: { code: 'AI_VISION_UNAVAILABLE' } })
+    expect(f.sessions.save).not.toHaveBeenCalled(); expect(f.messages.save).not.toHaveBeenCalled(); expect(f.model.complete).not.toHaveBeenCalled()
+  })
   it('stores file text under the session owner and replays actual extracted content to the text model', async () => {
     const f = fixture()
     const attachments = [{ name: 'statement.png', mime: 'image/png', size: 120, method: 'ocr' as const, text: 'Statement says 200 USDT' }]
     f.messages.find.mockImplementation(async () => [f.messages.save.mock.calls[0][0]] as any)
     await f.service.chat('owner', { message: 'Explain my file', sessionId: 'session', attachments })
     expect(f.model.complete.mock.calls[0][1][0].content).toContain(attachments[0].text)
-    expect(f.model.complete.mock.calls[0][1][0].content).toContain('no image pixels')
+    expect(f.model.complete.mock.calls[0][1][0].content).toContain('image pixels are provided separately only for the current turn')
     const stored = f.messages.save.mock.calls[0][0]
     expect(stored.sessionId).toBe('session')
     expect(JSON.parse(stored.content).attachments).toEqual(attachments)

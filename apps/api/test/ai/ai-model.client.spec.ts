@@ -6,6 +6,21 @@ describe('AI provider delivery contract', () => {
   const client = () => new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://ai.example.test', AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'configured-model' }))
   afterEach(() => jest.restoreAllMocks())
 
+  it('sends current image pixels to native Flash as real image content blocks', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ choices: [{ message: { content: '{"reply":"充值页面"}' } }] }), { status: 200 }))
+    const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'deepseek-flash' }))
+    const image = 'data:image/jpeg;base64,dGVzdA=='
+    expect(configured.visionAvailable).toBe(true)
+    await configured.complete('Identify the visible screen', [{ role: 'user', content: 'How do I recharge?', images: [image] }], 2048, true)
+    expect(JSON.parse(String(fetch.mock.calls[0][1]?.body)).messages[1].content).toEqual([{ type: 'text', text: 'How do I recharge?' }, { type: 'image_url', image_url: { url: image, detail: 'high' } }])
+  })
+  it('does not pretend text-only providers can see images', async () => {
+    const fetch = jest.spyOn(globalThis, 'fetch')
+    expect(client().visionAvailable).toBe(false)
+    await expect(client().complete('Read', [{ role: 'user', content: 'Read image', images: ['data:image/jpeg;base64,dGVzdA=='] }])).rejects.toThrow('unavailable')
+    expect(fetch).not.toHaveBeenCalled()
+  })
+
   it('uses native DeepSeek Flash without a reasoning delay for support and translations', async () => {
     const fetch = jest.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(JSON.stringify({ choices: [{ message: { content: '{"reply":"Ready"}' } }] }), { status: 200 }))
     const configured = new AiModelClient(new ConfigService({ AI_MODEL_ENDPOINT: 'https://api.deepseek.com', AI_MODEL_API_KEY: 'test-only', AI_MODEL_NAME: 'deepseek-flash' }))

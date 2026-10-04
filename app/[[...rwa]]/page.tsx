@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import RwaH5 from '@/components/rwa-h5'
+import RwaH5 from '@/components/rwa-app-entry'
 import { screenForSegments } from '@/lib/rwa-routes'
 import { screenForV2Query, screenForV2Segments } from '@/lib/routes-v2-adapter'
 import { resolveRoute } from '@/lib/routes-v2'

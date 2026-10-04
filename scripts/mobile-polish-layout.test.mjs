@@ -35,10 +35,10 @@ try {
   await context.addInitScript(() => localStorage.setItem('rwa.theme', 'light'))
   const page = await context.newPage()
   await page.goto(`${process.env.RWA_PREVIEW_URL || 'http://localhost:3034'}/dev/mobile-polish?screen=startup`, { waitUntil: 'networkidle', timeout: 120000 })
-  await page.locator('[data-startup-visual] canvas').waitFor(); await page.waitForTimeout(600)
+  await page.locator('[data-startup-visual] svg').waitFor(); await page.waitForTimeout(600)
   await page.screenshot({ path: resolve(output, 'startup-light.png') })
   await context.close()
   assert.deepEqual(errors, [])
   await writeFile(resolve(output, 'layout-acceptance.json'), JSON.stringify({ isolated: true, results, errors, physicalIphone: 'pending' }, null, 2))
-  console.log('PASS: seven locales at 320px, RTL, send hit bounds, simulated keyboard and live particle renderer')
+  console.log('PASS: seven locales at 320px, RTL, send hit bounds, simulated keyboard and live logo renderer')
 } finally { await browser.close() }

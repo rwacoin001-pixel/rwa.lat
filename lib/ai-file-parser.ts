@@ -1,12 +1,13 @@
 import { AI_FILE_LIMITS, aiFileFormat, validateExcerpt, validateDocxExpansion, type AiAttachment } from './ai-attachment-policy'
 import { containsWalletSecret } from './ai-input-guard'
 
-const languages: Record<string, string> = { 'zh-CN': 'chi_sim+eng', en: 'eng', es: 'spa+eng', fr: 'fra+eng', ar: 'ara+eng', hi: 'hin+eng', pt: 'por+eng' }
-/** Runs in the browser. Binary files never leave the device; only reviewed excerpts enter chat. */
+/** Documents stay local; images are resized and stripped of metadata before an explicit send. */
 export async function readAiFile(file: File, locale: string, current: AiAttachment[], signal: AbortSignal, progress: (percent: number) => void): Promise<AiAttachment> {
   const format = aiFileFormat(file)
   if (current.length >= AI_FILE_LIMITS.count) throw new Error('tooLarge')
   signal.throwIfAborted()
+  if (containsWalletSecret(file.name)) throw new Error('secret')
+  if (format.method === 'image') return readAiImage(file, signal, progress)
   let text = ''
   if (format.method === 'text') text = await file.text()
   else if (format.method === 'docx') {
@@ -31,18 +32,42 @@ export async function readAiFile(file: File, locale: string, current: AiAttachme
         progress(Math.round(n / pdf.numPages * 100))
       }
     } finally { signal.removeEventListener('abort', cancel); await task.destroy() }
-  } else {
-    const bitmap = await createImageBitmap(file)
-    const pixels = bitmap.width * bitmap.height; bitmap.close()
-    if (pixels > AI_FILE_LIMITS.pixels) throw new Error('tooLarge')
-    const { createWorker, OEM } = await import('tesseract.js')
-    const worker = await createWorker(languages[locale] ?? 'eng', OEM.LSTM_ONLY, { workerPath: '/ai-ocr/worker.min.js', corePath: '/ai-ocr/core', langPath: '/ai-ocr/lang', workerBlobURL: false, logger: message => progress(Math.round((message.progress ?? 0) * 100)) })
-    const cancel = () => { void worker.terminate() }; signal.addEventListener('abort', cancel, { once: true })
-    try { signal.throwIfAborted(); const result = await worker.recognize(file); text = result.data.text }
-    finally { signal.removeEventListener('abort', cancel); await worker.terminate() }
   }
   signal.throwIfAborted()
   text = validateExcerpt(text, current)
   if (containsWalletSecret(file.name + '\n' + text)) throw new Error('secret')
   return { name: file.name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 180), mime: format.mime, size: file.size, text, method: format.method }
+}
+
+async function readAiImage(file: File, signal: AbortSignal, progress: (percent: number) => void): Promise<AiAttachment> {
+  const bitmap = await createImageBitmap(file)
+  const canvas = document.createElement('canvas')
+  try {
+    signal.throwIfAborted()
+    if (!bitmap.width || !bitmap.height || bitmap.width * bitmap.height > AI_FILE_LIMITS.pixels) throw new Error('tooLarge')
+    let scale = Math.min(1, AI_FILE_LIMITS.imageEdge / Math.max(bitmap.width, bitmap.height))
+    for (let attempt = 0; attempt < 5; attempt++) {
+      signal.throwIfAborted()
+      canvas.width = Math.max(1, Math.round(bitmap.width * scale)); canvas.height = Math.max(1, Math.round(bitmap.height * scale))
+      const context = canvas.getContext('2d')
+      if (!context) throw new Error('unsupported')
+      context.fillStyle = '#fff'; context.fillRect(0, 0, canvas.width, canvas.height)
+      context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+      const blob = await new Promise<Blob>((resolve, reject) => canvas.toBlob(value => value ? resolve(value) : reject(new Error('unsupported')), 'image/jpeg', Math.max(.6, .88 - attempt * .08)))
+      signal.throwIfAborted(); progress(30 + attempt * 12)
+      if (blob.size <= AI_FILE_LIMITS.imageBytes) {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader()
+          const cancel = () => { reader.abort(); reject(signal.reason ?? new DOMException('Aborted', 'AbortError')) }
+          reader.onload = () => { signal.removeEventListener('abort', cancel); resolve(String(reader.result)) }
+          reader.onerror = () => { signal.removeEventListener('abort', cancel); reject(new Error('unsupported')) }
+          signal.addEventListener('abort', cancel, { once: true }); reader.readAsDataURL(blob)
+        })
+        signal.throwIfAborted(); progress(100)
+        return { name: file.name.replace(/[\u0000-\u001f\u007f/\\]/g, '_').slice(0, 180), mime: 'image/jpeg', size: file.size, method: 'image', text: '', dataUrl, width: canvas.width, height: canvas.height }
+      }
+      scale *= .8
+    }
+    throw new Error('tooLarge')
+  } finally { bitmap.close(); canvas.width = canvas.height = 0 }
 }

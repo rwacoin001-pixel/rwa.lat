@@ -4,6 +4,7 @@ import { ConfigService } from '@nestjs/config'
 export interface AiModelMessage {
   role: 'user' | 'assistant'
   content: string
+  images?: string[]
 }
 
 export interface AiModelReply {
@@ -52,6 +53,11 @@ export class AiModelClient {
     return this.model
   }
 
+  get visionAvailable(): boolean {
+    return this.configured && (this.config.get<string>('AI_MODEL_VISION_ENABLED') === 'true'
+      || (/^https:\/\/api\.deepseek\.com(?:\/v1)?$/i.test(this.endpoint) && /^deepseek-(?:flash|v4-flash(?:-vision-exp)?)$/i.test(this.model)))
+  }
+
   get providerName(): string {
     try {
       const host = new URL(this.endpoint).hostname.toLowerCase()
@@ -69,6 +75,7 @@ export class AiModelClient {
     if (!this.configured) {
       throw new Error('AI model is not configured')
     }
+    if (messages.some(message => message.images?.length) && !this.visionAvailable) throw new Error('AI image input is unavailable for this provider')
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), Math.min(this.timeoutMs, budgetMs ?? this.timeoutMs))
     try {
@@ -102,7 +109,9 @@ export class AiModelClient {
                   ...(json && attempt === 0 ? { response_format: { type: 'json_object' } } : {}),
                   messages: [
                     { role: 'system', content: deliverySystem },
-                    ...messages.map((message) => ({ role: message.role, content: message.content })),
+                    ...messages.map((message) => ({ role: message.role, content: message.images?.length
+                      ? [{ type: 'text', text: message.content }, ...message.images.map(url => ({ type: 'image_url', image_url: { url, detail: 'high' } }))]
+                      : message.content })),
                   ],
                 }),
               })
@@ -119,7 +128,9 @@ export class AiModelClient {
                   model: this.model,
                   max_tokens: maxTokens,
                   system,
-                  messages: messages.map((message) => ({ role: message.role, content: message.content })),
+                  messages: messages.map((message) => ({ role: message.role, content: message.images?.length
+                    ? [{ type: 'text', text: message.content }, ...message.images.map(url => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: url.slice('data:image/jpeg;base64,'.length) } }))]
+                    : message.content })),
                 }),
               })
         if (!response.ok) {

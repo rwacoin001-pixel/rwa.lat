@@ -1,9 +1,9 @@
 .root {
   position: fixed; inset: 0; z-index: 1000;
   display: grid; place-items: center; overflow: hidden; pointer-events: none;
-  background: #f4efe6; opacity: 1; transition: opacity 280ms ease;
+  background: #f4f1ea; opacity: 1; transition: opacity 280ms ease;
 }
-.root[data-theme='dark'] { background: #0b1321; }
+.root[data-theme='dark'] { background: #0a0b0d; }
 .root[data-leaving] { opacity: 0; }
 .logoStage { position: relative; width: clamp(144px, 48vw, 204px); aspect-ratio: 226 / 124; }
 .piece, .sheen { position: absolute; inset: 0; transform-origin: center; }

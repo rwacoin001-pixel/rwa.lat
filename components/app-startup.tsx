@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import RwaLogoMark from '@/components/rwa-logo'
 import { useRwaTheme } from '@/lib/rwa-theme'
@@ -41,27 +41,36 @@ export function LogoStartupVisual({ theme, leaving = false, replay = false }: { 
   </div>
 }
 
-/** One bounded entrance per app session, independent of account/network loading. */
+/** A single entrance, mounted before paint and independent of route/account loading. */
 export default function AppStartup() {
   const pathname = usePathname()
   const { theme } = useRwaTheme()
-  const attempted = useRef(false)
+  const initialPathname = useRef(pathname)
+  const showEntrance = useRef<boolean | null>(null)
   const [stage, setStage] = useState<'idle' | 'visible' | 'leaving'>('idle')
-  useEffect(() => {
-    if (attempted.current) return
-    const installed = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches ||
-      Boolean((navigator as Navigator & { standalone?: boolean }).standalone) || /RwaLatAndroidTrial\//.test(navigator.userAgent)
-    let seen = false
-    try { seen = sessionStorage.getItem(APP_STARTUP_KEY) === '1' } catch { /* Private mode still gets a bounded entrance. */ }
-    if (!shouldShowAppStartup({ pathname, installed, seen, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches })) return
-    attempted.current = true
-    try { sessionStorage.setItem(APP_STARTUP_KEY, '1') } catch { /* In-memory ref also prevents navigation repeats. */ }
+  useLayoutEffect(() => {
+    // Decide once for this document. Navigation must neither replay nor interrupt
+    // the entrance; StrictMode's setup/cleanup/setup keeps the same decision.
+    if (showEntrance.current === null) {
+      const installed = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches ||
+        Boolean((navigator as Navigator & { standalone?: boolean }).standalone) || /RwaLatAndroidTrial\//.test(navigator.userAgent)
+      let seen = false
+      try { seen = sessionStorage.getItem(APP_STARTUP_KEY) === '1' } catch { /* Storage is optional. */ }
+      showEntrance.current = shouldShowAppStartup({ pathname: initialPathname.current, installed, seen, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches })
+      if (showEntrance.current) {
+        try { sessionStorage.setItem(APP_STARTUP_KEY, '1') } catch { /* The decision ref prevents navigation repeats. */ }
+      }
+    }
+    if (!showEntrance.current) return
     setStage('visible')
     const fade = window.setTimeout(() => setStage('leaving'), 1550)
     const done = window.setTimeout(() => setStage('idle'), 1830)
-    const hide = () => { if (document.hidden) setStage('idle') }
+    const hide = () => {
+      if (!document.hidden) return
+      clearTimeout(fade); clearTimeout(done); setStage('idle')
+    }
     document.addEventListener('visibilitychange', hide)
-    return () => { clearTimeout(fade); clearTimeout(done); document.removeEventListener('visibilitychange', hide); setStage('idle') }
-  }, [pathname])
+    return () => { clearTimeout(fade); clearTimeout(done); document.removeEventListener('visibilitychange', hide) }
+  }, [])
   return stage === 'idle' ? null : <LogoStartupVisual theme={theme} leaving={stage === 'leaving'} />
 }

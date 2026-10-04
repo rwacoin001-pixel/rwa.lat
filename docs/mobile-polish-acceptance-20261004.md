@@ -22,7 +22,7 @@ Verification:
 
 Open-source selection/attribution: `mobile-polish-oss.md`. Details and remaining real-model/real-account/real-phone acceptance: `ai-input-acceptance.md`, `capture-acceptance.md`, `android-client-trial.md`.
 
-Artifacts: `C:\Users\30396\Desktop\rwa\artifacts\mobile-polish-20261004`. APK SHA256 `EF46545393F4CD297135828B5FF20782056C252CCC6B977224EADC23550F2A67`; signature and five Android unit tests passed, zero lint errors with three documented warnings. Installation/launch were not physically verified. Images provide text OCR, not full model vision; microphone/audio/safe areas and Didit acceptance require real devices/provider. The website overlay cannot animate the OS-owned static iOS launch screen.
+Artifacts: `C:\Users\30396\Desktop\rwa\artifacts\mobile-polish-20261004`. APK SHA256 `EF46545393F4CD297135828B5FF20782056C252CCC6B977224EADC23550F2A67`; signature and five Android unit tests passed, zero lint errors with three documented warnings. Installation/launch were not physically verified. At this historical 2026-10-04 checkpoint images provided text OCR. The 2026-10-05 follow-up adds actual native DeepSeek Flash scene/interface vision; see `ai-input-acceptance.md` for current evidence and deployment status. Microphone/audio/safe areas and Didit acceptance require real devices/provider. The website overlay cannot animate the OS-owned static iOS launch screen.
 
 Next action requires the user's explicit merge confirmation, followed by pushing the approved main commit and deploying both website and API together. The current APK loads live `rwa.lat`; it does not ship this unmerged website branch by itself.
 

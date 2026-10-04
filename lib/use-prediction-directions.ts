@@ -4,6 +4,7 @@ import {useQuery} from './api/_query'
 import type {ApiResult} from './api/_http'
 import type {PredictionBook} from './prediction-quote'
 import {evaluatePredictionDirections,type PredictionAvailabilityMarket} from './prediction-availability'
+import {isPredictionAcceptingOrders} from './prediction-lifecycle'
 
 type CachedBook={book:PredictionBook|null;receivedAt:number}
 const books=new Map<string,CachedBook>()
@@ -48,7 +49,7 @@ async function readDirectionBooks(tokens:readonly string[]):Promise<ApiResult<Ar
 }
 export function usePredictionDirections(market:PredictionAvailabilityMarket,enabled=true) {
   const tokens=market.tokenIds??[]
-  const key=enabled&&!market.closed&&market.acceptingOrders!==false&&tokens.length>=2?`prediction:availability:${tokens.slice(0,2).join(':')}`:null
+  const key=enabled&&isPredictionAcceptingOrders(market)&&tokens.length>=2?`prediction:availability:${tokens.slice(0,2).join(':')}`:null
   const query=useQuery(key,()=>readDirectionBooks(tokens),{staleTime:30000,pollInterval:45000,loading:'silent'})
   const [now,setNow]=useState(()=>Date.now())
   useEffect(()=>{if(!key)return;const timer=setInterval(()=>setNow(Date.now()),10000);return ()=>clearInterval(timer)},[key])

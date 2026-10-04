@@ -1,22 +1,29 @@
 'use client'
 import { containsWalletSecret } from '@/lib/ai-input-guard'
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { aiNavigationLink } from '@/lib/ai-navigation-link'
 import type { Citation, AiQuestion } from '@/lib/api/ai-customer'
 import AiQuestionCard from './AiQuestionCard'
 
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AlertCircle, ArrowUpLeft, Layers3, RotateCcw, SquarePen, X } from 'lucide-react'
+import { AlertCircle, ChevronLeft, RotateCcw } from 'lucide-react'
 import { request, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
 import { aiChatCopy } from '@/lib/maison-content-copy'
 import { aiShellCopy, aiInputCopy } from '@/lib/maison-ai-copy'
+import { aiVoiceCopy } from '@/lib/ai-voice-copy'
+import { aiVisualCopy } from '@/lib/ai-visual-copy'
+import type { AiPageContext } from '@/lib/ai-page-context'
+import { useRwaTheme } from '@/lib/rwa-theme'
+import { useReducedMotion } from 'motion/react'
 import { showAiAnswer, type AiAttachment } from '@/lib/ai-attachment-policy'
 import AiComposer from './AiComposer'
 import AiAnswerActions from './AiAnswerActions'
 import ParticleLogoIcon from '../particle-logo-icon'
 import { MaisonPage } from './primitives'
 import a from './ai-chat.module.css'
+const LiquidMetal = dynamic(() => import('@paper-design/shaders-react').then(module => module.LiquidMetal), { ssr: false })
 
 type Message = { id: number; messageId?: string; role: 'user' | 'assistant'; content: string; citations?: Citation[]; questions?: AiQuestion[]; attachments?: AiAttachment[] }
 type SendError = { text: string; tone: 'error' | 'info'; retry: string | null; attachments?: AiAttachment[] }
@@ -97,9 +104,11 @@ function Mark({ busy = false, size = 'sm' }: { busy?: boolean; size?: 'sm' | 'lg
 
 /* ---------- Screen ---------- */
 
-export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan: () => void }) {
+export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; onPlan: () => void; pageContext?: AiPageContext }) {
   const { locale } = useI18n()
+  const { theme } = useRwaTheme(), reduceMotion = useReducedMotion()
   const c = aiShellCopy[locale], chat = aiChatCopy[locale]
+  const voiceCopy = aiVoiceCopy(locale)
   const [input, setInput] = useState('')
   const [messages, setMessages] = useState<Message[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -110,6 +119,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
   const [keyboard, setKeyboard] = useState(0)
   const [dockHeight, setDockHeight] = useState(150)
   const [revealId, setRevealId] = useState<number | null>(null)
+  const [started, setStarted] = useState(false)
   const inflight = useRef<AbortController | null>(null)
   const nextId = useRef(1)
   const end = useRef<HTMLDivElement>(null)
@@ -121,7 +131,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
     return () => { active = false; inflight.current?.abort() }
   }, [])
 
-  useEffect(() => { const reset = () => { inflight.current?.abort(); inflight.current = null; setSending(false); setMessages([]); setSessionId(null); setInput(''); setError(null); setGeneration(n => n + 1) }; window.addEventListener(SESSION_CHANGED, reset); window.addEventListener(SESSION_EXPIRED, reset); return () => { window.removeEventListener(SESSION_CHANGED, reset); window.removeEventListener(SESSION_EXPIRED, reset) } }, [])
+  useEffect(() => { const reset = () => { inflight.current?.abort(); inflight.current = null; setSending(false); setMessages([]); setSessionId(null); setInput(''); setError(null); setStarted(false); setGeneration(n => n + 1) }; window.addEventListener(SESSION_CHANGED, reset); window.addEventListener(SESSION_EXPIRED, reset); return () => { window.removeEventListener(SESSION_CHANGED, reset); window.removeEventListener(SESSION_EXPIRED, reset) } }, [])
   useEffect(() => { const viewport = window.visualViewport; if (!viewport) return; const update = () => setKeyboard(Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)); viewport.addEventListener('resize', update); viewport.addEventListener('scroll', update); update(); return () => { viewport.removeEventListener('resize', update); viewport.removeEventListener('scroll', update) } }, [])
   useEffect(() => { if (!dock.current || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(entries => setDockHeight(Math.ceil(entries[0]?.contentRect.height ?? 150) + 40)); observer.observe(dock.current); return () => observer.disconnect() }, [])
 
@@ -136,9 +146,9 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
     const controller = new AbortController()
     inflight.current = controller
     const userId = nextId.current++
-    setError(null); setSending(true); setRevealId(null)
+    setError(null); setSending(true); setRevealId(null); setStarted(true)
     setMessages((current) => [...current, { id: userId, role: 'user', content: message, attachments }])
-    const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(attachments.length ? { attachments } : {}), ...(sessionId ? { sessionId } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
+    const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(attachments.length ? { attachments } : {}), ...(pageContext ? { context: pageContext } : {}), ...(sessionId ? { sessionId } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
     // Stop / New chat already settled the UI; a late result from an abandoned request is dropped.
     if (controller.signal.aborted || inflight.current !== controller) return false
     inflight.current = null
@@ -149,7 +159,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
       const { status: code, code: reason } = result.error
       const upstreamFailure = code === 503 && reason === 'AI_UPSTREAM_UNAVAILABLE'
       if (code === 404) setSessionId(null)
-      const text = reason === 'ABORTED' ? chat.cancelled : code === 0 ? chat.network : upstreamFailure ? chat.failed : code === 503 ? chat.off : code === 429 ? chat.busy : code === 404 ? chat.sessionLost : code === 413 || code === 400 ? chat.tooLong : chat.failed
+      const text = reason === 'AI_VISION_UNAVAILABLE' ? aiVisualCopy(locale).unavailable : reason === 'ABORTED' ? chat.cancelled : code === 0 ? chat.network : upstreamFailure ? chat.failed : code === 503 ? chat.off : code === 429 ? chat.busy : code === 404 ? chat.sessionLost : code === 413 || code === 400 ? chat.tooLong : chat.failed
       setError({ text, tone: reason === 'ABORTED' ? 'info' : 'error', retry: (code === 503 && !upstreamFailure) || code === 400 || code === 413 ? null : message, attachments })
       return false
     }
@@ -159,7 +169,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
     if (answer) { const id = nextId.current++; setRevealId(id); const citations = Array.isArray(data.citations) ? data.citations.filter((c): c is Citation => typeof c?.id === 'string' && typeof c?.title === 'string' && Number.isInteger(c?.revision)) : []; const questions = Array.isArray(data.questions) ? data.questions as AiQuestion[] : []; setMessages((current) => [...current, { id, messageId: typeof data.messageId === 'string' ? data.messageId : undefined, role: 'assistant', content: answer, citations, questions }]); return true }
     else { setMessages(current => current.filter(item => item.id !== userId)); setError({ text: chat.badFormat, tone: 'error', retry: null }) }
     return false
-  }, [chat, locale, sending, sessionId, status])
+  }, [chat, locale, sending, sessionId, status, pageContext])
 
   // Stopping settles the UI at once rather than waiting for the aborted fetch to unwind.
   const stop = () => {
@@ -174,38 +184,22 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
     if (pending !== null) setMessages(messages.slice(0, -1))
     setError({ text: chat.cancelled, tone: 'info', retry: pending, attachments: last?.attachments })
   }
-  const reset = () => { const controller = inflight.current; inflight.current = null; controller?.abort(); setSending(false); setMessages([]); setSessionId(null); setError(null); setInput(''); setRevealId(null); setGeneration(n => n + 1) }
-
   const empty = messages.length === 0 && !sending
 
   return <MaisonPage page="ai">
     <div className={a.shell}>
       <header className={a.bar}>
-        <button type="button" className={a.icon} aria-label={c.close} onClick={onClose}><X size={23} strokeWidth={1.85} /></button>
-        <h1 className={a.barTitle}><span>{c.title}</span></h1>
-        {messages.length > 0 || sending ? <button type="button" className={a.icon} aria-label={c.newChat} title={c.newChat} onClick={reset}><SquarePen size={19} strokeWidth={1.6} /></button> : <span className={a.icon} aria-hidden="true" />}
+        <button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><ChevronLeft size={23} strokeWidth={1.85} /></button>
+        <h1 className={a.barTitle}><span>{voiceCopy.title}</span></h1>
+        <span className={a.icon} aria-hidden="true" />
       </header>
-      <Link className={a.supportLink} href="/ai-assistant">{aiInputCopy(locale).support}</Link>
 
       <div className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
-        {empty ? <section className={a.welcome} aria-labelledby="ai-greeting">
-          <Mark size="lg" busy={status === 'loading'} />
-          <p className={a.kicker}>{c.kicker}</p>
-          <h2 id="ai-greeting" className={a.greeting}>{status === 'disabled' ? chat.unavailable : c.greeting}</h2>
-          <p className={a.lede}>{status === 'disabled' ? c.unavailableBody : status === 'loading' ? c.checking : chat.intro}</p>
-          {status !== 'disabled' && <div className={a.suggest}>
-            <small>{c.suggestions}</small>
-            <ul>
-              {c.prompts.map((prompt) => <li key={prompt}><button type="button" disabled={status !== 'ready'} onClick={() => void ask(prompt)}><span dir="auto">{prompt}</span><ArrowUpLeft size={16} strokeWidth={1.6} aria-hidden="true" /></button></li>)}
-            </ul>
-          </div>}
-          <button type="button" className={a.planCard} onClick={onPlan}>
-            <span className={a.planIcon} aria-hidden="true"><Layers3 size={18} strokeWidth={1.6} /></span>
-            <span><b>{c.plan}</b><small>{c.planBody}</small></span>
-          </button>
+        {empty && !started ? <section className={a.welcome} aria-label={voiceCopy.title}>
+          <span className={a.welcomeOrb} aria-hidden="true"><LiquidMetal shape="circle" colorBack="#00000000" colorTint={theme === 'light' ? '#D8B89B' : '#B9D5DE'} repetition={2.4} shiftRed={.28} shiftBlue={.28} contour={.45} softness={.65} distortion={1.25} angle={60} speed={reduceMotion ? 0 : 1.25} className={a.orbShader}/></span>
         </section> : <ol className={a.messages}>
           {messages.map((message) => message.role === 'user'
-            ? <li key={message.id} className={a.user}><span className={a.srOnly}>{c.you}: </span><p dir="auto">{message.content}</p>{message.attachments?.map((file, index) => <small key={`${file.name}-${index}`} className={a.fileNote}>{file.name} · {file.method === 'ocr' ? aiInputCopy(locale).ocr : aiInputCopy(locale).extracted}</small>)}</li>
+            ? <li key={message.id} className={a.user}><span className={a.srOnly}>{c.you}: </span><p dir="auto">{message.content}</p>{message.attachments?.map((file, index) => <small key={`${file.name}-${index}`} className={a.fileNote}>{file.name} · {file.method === 'image' ? aiVisualCopy(locale).image : file.method === 'ocr' ? aiInputCopy(locale).ocr : aiInputCopy(locale).extracted}</small>)}</li>
             : <li key={message.id} className={a.assistant}>
               <div className={a.who}><Mark /><b>{c.name}</b></div>
               {showAiAnswer(message.questions) ? <><Answer text={message.content} reveal={message.id === revealId && !reduced()} />
@@ -217,6 +211,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
             <Thinking label={c.thinking} slow={c.slow} slower={c.slower} seconds={c.seconds} />
           </li>}
         </ol>}
+        {status === 'disabled' && !error && <div className={a.notice} role="status"><AlertCircle size={16} aria-hidden="true"/><p>{chat.unavailable}</p></div>}
         {error && <div className={a.notice} data-tone={error.tone} role={error.tone === 'error' ? 'alert' : 'status'}>
           <AlertCircle size={16} strokeWidth={1.8} aria-hidden="true" /><p>{error.text}</p>
           {error.retry && status === 'ready' && <button type="button" onClick={() => { void ask(error.retry ?? '', error.attachments).then(success => { if (success) { setInput(''); setGeneration(n => n + 1) } }) }}><RotateCcw size={14} aria-hidden="true" />{chat.retry}</button>}
@@ -226,7 +221,7 @@ export function AiChatScreen({ onClose, onPlan }: { onClose: () => void; onPlan:
 
       <div ref={dock} className={a.dockWrap} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
-        <AiComposer key={generation} value={input} onChange={setInput} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
+        <AiComposer key={generation} value={input} onChange={setInput} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}
       </div>
     </div>

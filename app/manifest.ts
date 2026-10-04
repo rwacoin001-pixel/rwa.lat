@@ -5,14 +5,16 @@ export default function manifest(): MetadataRoute.Manifest {
     name: 'RWA.LAT — AI Investment OS',
     short_name: 'RWA.LAT',
     description: 'One USDT wallet. Global opportunities. AI-guided decisions.',
-    start_url: '/',
+    // Home is public and already restores the session. The legacy root Boot
+    // route waits for account summary before navigating and adds a second page.
+    start_url: '/home',
     id: '/',
     scope: '/',
     display: 'standalone',
     display_override: ['window-controls-overlay', 'standalone'],
     orientation: 'portrait',
-    background_color: '#F5F4F2',
-    theme_color: '#F5F4F2',
+    background_color: '#F4F1EA',
+    theme_color: '#F4F1EA',
     categories: ['finance', 'productivity'],
     shortcuts: [
       { name: 'Home', short_name: 'Home', url: '/home', icons: [{ src: '/icons/rwa-pwa-v2-192.png', sizes: '192x192' }] },

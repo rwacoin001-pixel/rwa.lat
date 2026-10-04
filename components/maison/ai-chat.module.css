@@ -29,7 +29,9 @@ button.icon:active { transform: scale(.92); }
 .end { height: 1px; scroll-margin-bottom: 188px; }
 
 /* ---- Welcome ---- */
-.welcome { display: flex; flex-direction: column; align-items: center; padding-top: clamp(28px, 9vh, 88px); text-align: center; animation: rise .6s var(--m-ease) both; }
+.welcome { display: grid; place-items: center; min-height: max(220px, calc(100dvh - 290px - env(safe-area-inset-top) - env(safe-area-inset-bottom))); text-align: center; animation: rise .6s var(--m-ease) both; }
+.welcomeOrb { position: relative; display: block; width: clamp(160px, 48vw, 208px); aspect-ratio: 1; animation: orbFloat 3.4s ease-in-out infinite; }
+.orbShader { width: 100%; height: 100%; }
 .kicker { margin: 22px 0 0; color: var(--m-accent); font: 600 10.5px/1 var(--m-sans); letter-spacing: .16em; text-transform: uppercase; }
 .greeting { max-width: 15em; margin: 12px 0 0; font: 400 clamp(28px, 8.4vw, 34px)/1.12 var(--m-display); letter-spacing: -.02em; color: var(--m-ink); text-wrap: balance; }
 .lede { max-width: 30em; margin: 12px 0 0; color: var(--m-muted); font-size: 13px; line-height: 1.55; text-wrap: pretty; }
@@ -188,9 +190,10 @@ button.icon:active { transform: scale(.92); }
 @keyframes dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2.5px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes breathe { 0%, 100% { opacity: .55; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.06); } }
+@keyframes orbFloat { 0%, 100% { transform: translateY(4px) scale(.96); } 50% { transform: translateY(-9px) scale(1.04); } }
 
 @media (prefers-reduced-motion: reduce) {
-  .welcome, .user, .notice, .answer[data-reveal] > *, .thinkingHint, .send[data-mode='stop'] { animation: none; }
+  .welcome, .welcomeOrb, .user, .notice, .answer[data-reveal] > *, .thinkingHint, .send[data-mode='stop'] { animation: none; }
   .mark[data-busy]::before, .mark[data-size='lg']::after, .dots i, .ghost i { animation: none; }
   .mark[data-busy]::before { opacity: .6; }
   .shimmer { animation: none; background: none; color: var(--m-muted); }

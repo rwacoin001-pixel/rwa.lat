@@ -2,9 +2,9 @@ import assert from 'node:assert/strict'
 import {test} from 'node:test'
 import {activeEventMarkets,eventMarkets,historyQuery,probabilityHistoryState,formatProbability} from '../lib/polymarket-data'
 import {estimatePredictionBet} from '../lib/prediction-bet-estimate'
-test('keeps candidate/date child markets grouped even with a past display end date',()=>{
+test('keeps future/unknown candidates grouped but excludes expired purchases despite a lagging closed flag',()=>{
   const e={markets:[{id:'1',question:'By Oct 7?',active:true,endDate:'2020-01-01',outcomes:'["Yes","No"]'},{id:'2',question:'By Oct 31?',active:true,outcomes:['Yes','No']},{id:'3',question:'Resolved',closed:true,outcomes:['Yes','No']}]}
-  assert.deepEqual(activeEventMarkets(e).map(m=>m.id),['1','2'])
+  assert.deepEqual(activeEventMarkets(e).map(m=>m.id),['2'])
   assert.equal(eventMarkets(e).length,3)
   assert.match(historyQuery('1h'),/fidelity=1/)
 })

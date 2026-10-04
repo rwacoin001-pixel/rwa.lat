@@ -16,6 +16,7 @@ import { PolymarketPublicAdapter } from './polymarket-public.adapter'
 import { PolymarketService } from './polymarket.service'
 import { AiModelClient } from '../ai/ai-model.client'
 import { PolymarketTranslationService } from './polymarket-translation.service'
+import { PolymarketDiscoveryController } from './public/polymarket-discovery.controller'
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { PolymarketTranslationService } from './polymarket-translation.service'
       PolymarketReconciliationCase,
     ]),
   ],
-  controllers: [PolymarketController, AdminPolymarketController],
+  controllers: [PolymarketController, AdminPolymarketController, PolymarketDiscoveryController],
   providers: [
     PolymarketPublicAdapter,
     PolymarketService,

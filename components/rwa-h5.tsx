@@ -1,5 +1,6 @@
 'use client'
 import AppLoading from '@/components/app-loading'
+import { aiPageContext, type AiPageContext } from '@/lib/ai-page-context'
 import { captureWalletBackdrop, WalletPageBackdrop } from './wallet-page-backdrop'
 import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
 
@@ -803,8 +804,8 @@ function WalletScreen({ go, notify, openWalletFlow }: { go: (screen: Screen) => 
   )
 }
 
-function AiScreen({ go, onClose }: { go: (screen: Screen) => void; notify: (message: string) => void; onClose: () => void }) {
-  return <AiChatScreen onClose={onClose} onPlan={() => go('ai-plan')} />
+function AiScreen({ go, onClose, pageContext }: { go: (screen: Screen) => void; notify: (message: string) => void; onClose: () => void; pageContext?: AiPageContext }) {
+  return <AiChatScreen onClose={onClose} onPlan={() => go('ai-plan')} pageContext={pageContext} />
 }
 
 function ProfileScreen({ go, notify, sessionMode, onClose, onOpenSection, onSignedOut }: { go: (screen: Screen) => void; notify: (message: string) => void; sessionMode: 'guest' | 'authenticated'; onClose: () => void; onOpenSection: (screen: Screen) => void; onSignedOut: () => void }) {
@@ -1603,6 +1604,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const shellCopy = rwaH5Copy[locale].shell
   const router = useRouter()
   const [screen, setScreen] = useState<Screen>(initialScreen)
+  const [aiContext, setAiContext] = useState<AiPageContext | undefined>()
   const [routeQuery, setRouteQuery] = useState(initialQuery)
   const [routeParams, setRouteParams] = useState<Record<string, string>>(initialParams)
   // Pathname of the last URL-driven navigation; '' after a legacy go(). Separates routes that share a screen (/compare → rwa-detail).
@@ -1809,6 +1811,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       const base = screenForSegments(segs) ?? screenForV2Segments(segs)
       if (!base) { window.location.assign(url.pathname + url.search); return }
       const next = screenForV2Query(url.pathname, url.searchParams, base)
+      if (next === 'ai' && screen !== 'ai') setAiContext(aiPageContext(window.location.pathname, window.location.search))
       if (sessionMode === 'guest' && (protectedScreens.includes(next) || routeRequiresAuth(url.pathname))) {
         window.sessionStorage.setItem('rwa.return-to', url.pathname + url.search)
         go('login')
@@ -1827,6 +1830,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     return () => window.removeEventListener(PATH_EVENT, receive)
   })
   const go = (next: Screen) => {
+    if (next === 'ai' && screen !== 'ai') setAiContext(aiPageContext(window.location.pathname, window.location.search))
     if (sessionMode === 'guest' && protectedScreens.includes(next)) {
       window.sessionStorage.setItem('rwa.return-to', pathForScreen(next))
       setToast(t('guest.protected'))
@@ -1984,7 +1988,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
           'verify-email': <AuthFlowScreen step="verify" go={go} notify={notify} onAuthenticated={setAuthenticated} />,
           recovery: <AuthFlowScreen step="recover" go={go} notify={notify} onAuthenticated={setAuthenticated} />,
           home: <HomeScreen go={go} />,
-          ai: <AiScreen go={go} notify={notify} onClose={closeOverlay} />,
+          ai: <AiScreen go={go} notify={notify} onClose={closeOverlay} pageContext={aiContext} />,
           profile: <MaisonProfileScreen guest={sessionMode === 'guest'} onClose={closeOverlay} onSignedOut={setSignedOut} />,
           notifications: <MaisonBridge page="notifications"><NotificationsScreen go={go} notify={notify} enabled={sessionReady && sessionMode === 'authenticated'} guest={sessionReady && sessionMode === 'guest'} focusId={routeParams.id} /></MaisonBridge>,
         }}>

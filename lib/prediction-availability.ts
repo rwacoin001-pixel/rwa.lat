@@ -1,6 +1,7 @@
 import {predictionQuote, type PredictionBook} from './prediction-quote'
+import {hasPredictionEnded,isPredictionDiscoverable,type PredictionLifecycle} from './prediction-lifecycle'
 
-export type PredictionAvailabilityMarket = {id:string; prices:number[]; tokenIds?:string[]; closed?:boolean; acceptingOrders?:boolean}
+export type PredictionAvailabilityMarket = PredictionLifecycle & {id:string; prices:number[]; tokenIds?:string[]}
 export type PredictionDirectionAvailability = {
   state:'available'|'unavailable'|'unknown'
   reason:'closed'|'paused'|'empty_book'|'thin_book'|'invalid_price'|'price_deviation'|'expired'|'unavailable'|null
@@ -11,7 +12,7 @@ export type PredictionDirectionAvailability = {
 export function evaluatePredictionDirections(market:PredictionAvailabilityMarket, books:readonly (PredictionBook|null|undefined)[] = [], now=Date.now(), baselineAmount=1):[PredictionDirectionAvailability,PredictionDirectionAvailability] {
   const minimum=Number.isFinite(baselineAmount)&&baselineAmount>0?baselineAmount:1
   return [0,1].map(side=>{
-    if(market.closed||market.acceptingOrders===false)return {state:'unavailable',reason:market.closed?'closed':'paused',price:null,depth:0}
+    if(!isPredictionDiscoverable(market,now)||market.acceptingOrders===false)return {state:'unavailable',reason:hasPredictionEnded(market,now)?'closed':'paused',price:null,depth:0}
     const book=books[side]
     // A missing response and a stale response are not proof of an illiquid market.
     if(!book)return {state:'unknown',reason:'unavailable',price:null,depth:0}

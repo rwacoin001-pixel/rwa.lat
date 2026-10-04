@@ -33,6 +33,8 @@ import { predictionTicketCopy } from '@/lib/prediction-ticket-copy'
 import { addPredictionStake, predictionCapacityStake, predictionWalletAction } from '@/lib/prediction-ticket-state'
 import { useHideUnavailablePrediction } from '@/lib/use-prediction-directions'
 import { predictionAvailabilityText } from '@/lib/prediction-availability-copy'
+import {hasPredictionEnded,isPredictionDiscoverable} from '@/lib/prediction-lifecycle'
+import {usePredictionExpiryClock} from '@/lib/use-prediction-expiry-clock'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
 const BET_PATH = '/v1/predictions/bets'
@@ -63,17 +65,19 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
   const [showGuide, setShowGuide] = useState(false)
   const [hideUnavailable, setHideUnavailable] = useHideUnavailablePrediction()
   const data = market.data
+  const now=usePredictionExpiryClock(data?[data.market]:[])
   const topbar = <RwaTopbar screen="prediction-detail" title={t.kicker.split(' · ')[0]} onBack={() => backOr('/markets?tab=predictions')} action={{label: predictionAvailabilityText(locale,'How to play'), Icon: Info, onClick: () => setShowGuide(true)}} />
   const guide = <PredictionHowTo open={showGuide} onOpenChange={setShowGuide} hideTrigger />
   const toMarkets = <button type="button" className={s.link} onClick={() => openPath('/markets?tab=predictions')}>{t.toMarkets}</button>
 
   if (!validId) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}<div className={s.hero}><StateBlock title={copy.detail.notFound} action={toMarkets} /></div></MaisonPage>
-  if (!data && !market.error) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}{eventHeader}{eventHeader?<PredictionSheet open={isTicketOpen} onClose={closeTicket} title={t.place}><Skeleton rows={4}/></PredictionSheet>:<div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
+  if (!data && !market.error) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}{eventHeader}{eventHeader?<PredictionSheet open={isTicketOpen} onClose={closeTicket} title={predictionTicketCopy[locale].buy} busy={busy} compact><div className={`${ui.identity} ${ui.ticketIdentity}`}><Logo src={ticketImage} name={ticketLabel??ticketEventTitle??''}/><div>{ticketEventTitle&&ticketEventTitle!==ticketLabel&&<small>{ticketEventTitle}</small>}<b>{ticketLabel}</b></div></div><Skeleton rows={3}/></PredictionSheet>:<div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
   if (!data) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}<div className={s.hero}>
     {eventHeader}<StateBlock tone="error" title={t.loadError} body={market.error?.status === 404 ? copy.detail.notFound : undefined} retry={market.refetch} retryLabel={copy.common.retry} action={toMarkets} />
   </div></MaisonPage>
 
   const m = data.market
+  const ended=!isPredictionDiscoverable(m,now)
   const localized = locale !== 'en' ? translation.data?.items.find((item) => item.id === m.id) : undefined
   const translated = showOriginal ? undefined : localized
   const translationLabels = polymarketTranslationCopy[locale]
@@ -91,7 +95,7 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
         <span className={s.badge} data-tone={m.acceptingOrders ? 'live' : 'warn'}>{t.source}</span>
         {m.endDate && <span>{t.closes} {fmtDate(m.endDate, locale)}</span>}
       </p>
-      <PredictionCountdown endAt={m.endDate} />
+      <PredictionCountdown endAt={m.endDate} closed={hasPredictionEnded(m,now)} />
       {locale !== 'en' && <p className={s.foot}>
         <span>{localized ? translationLabels.translated : translation.loading ? translationLabels.loading : translationLabels.unavailable}</span>
         {localized && <button type="button" className={s.link} onClick={() => setShowOriginal((value) => !value)}>{showOriginal ? translationLabels.hideOriginal : translationLabels.original}</button>}
@@ -119,8 +123,8 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
     </> : <StateBlock title={t.historyEmpty} />}
 
     </>}
-    {!eventHeader && <><SectionHead index="02" title={t.place} action={<PredictionHowTo/>}/><label className={ui.hideUnavailable}><input type="checkbox" checked={hideUnavailable} onChange={event=>setHideUnavailable(event.target.checked)}/>{predictionAvailabilityText(locale,'Hide unavailable')}</label><div className={s.outcome}>{m.outcomes.slice(0,2).map((label,i)=>hideUnavailable&&directions[i].state==='unavailable'?null:<button key={label} type="button" data-side={i?'no':'yes'} className={directions[i].state==='unavailable'?ui.unavailableButton:undefined} disabled={directions[i].state==='unavailable'} title={directions[i].state==='unavailable'?predictionTicketCopy[locale].unavailable:undefined} onClick={()=>{setTicketSide(i);setLocalTicketOpen(true)}}>{translated?.outcomes[i]??outcomeLabel(label,copy)} · {pct(m.prices[i])}</button>)}</div></>}
-    <PredictionSheet open={isTicketOpen} onClose={closeTicket} title={predictionTicketCopy[locale].buy} busy={busy} compact>
+    {!eventHeader && (ended?<StateBlock tone="unavailable" title={predictionAvailabilityText(locale,'Closed')}/>:<><SectionHead index="02" title={t.place} action={<PredictionHowTo/>}/><label className={ui.hideUnavailable}><input type="checkbox" checked={hideUnavailable} onChange={event=>setHideUnavailable(event.target.checked)}/>{predictionAvailabilityText(locale,'Hide unavailable')}</label><div className={s.outcome}>{m.outcomes.slice(0,2).map((label,i)=>hideUnavailable&&directions[i].state==='unavailable'?null:<button key={label} type="button" data-side={i?'no':'yes'} className={directions[i].state==='unavailable'?ui.unavailableButton:undefined} disabled={directions[i].state==='unavailable'} title={directions[i].state==='unavailable'?predictionTicketCopy[locale].unavailable:undefined} onClick={()=>{if(!isPredictionDiscoverable(m))return;setTicketSide(i);setLocalTicketOpen(true)}}>{translated?.outcomes[i]??outcomeLabel(label,copy)} · {pct(m.prices[i])}</button>)}</div></>)}
+    <PredictionSheet open={isTicketOpen&&!ended} onClose={closeTicket} title={predictionTicketCopy[locale].buy} busy={busy} compact>
       <div className={`${ui.identity} ${ui.ticketIdentity}`}><Logo src={ticketImage} name={ticketLabel??translated?.question??m.question}/><div>{ticketEventTitle&&ticketEventTitle!==ticketLabel&&<small>{ticketEventTitle}</small>}<b>{ticketLabel??translated?.question??m.question}</b></div></div>
       {isTicketOpen&&<BetTicket key={m.id} data={data} translation={translated} initialOutcome={eventHeader?initialOutcome:ticketSide} onBusyChange={setBusy} onRefreshQuote={refreshQuote} quoteRefreshing={quoteRefreshing} quoteError={market.error?.message}/>}
     </PredictionSheet>

@@ -24,6 +24,7 @@ class AiStatusResponseDto {
   @ApiProperty()
   model!: string
   @ApiProperty() provider!: string
+  @ApiProperty() visionAvailable!: boolean
 }
 
 @ApiTags('ai')

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import ts from 'typescript'
 
-function fixture(browser) {
+function fixture(browser, options = {}) {
   const react = {}, exports = {}, timers = new Map()
   const code = ts.transpileModule(readFileSync('components/maison/useAiVoice.ts', 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
   let timerId = 0
@@ -11,7 +11,7 @@ function fixture(browser) {
   const create = () => {
     const cleanups = [], states = [], refs = [], received = []
     Object.assign(react, { useState: value => { const index = states.length; states.push(value); return [value, next => { states[index] = typeof next === 'function' ? next(states[index]) : next }] }, useRef: value => { const item = { current: value }; refs.push(item); return item }, useCallback: fn => fn, useEffect: fn => { const cleanup = fn(); if (cleanup) cleanups.push(cleanup) } })
-    const hook = exports.useAiVoice('zh-CN', text => received.push(text))
+    const hook = exports.useAiVoice('zh-CN', text => received.push(text), options)
     return { hook, states, refs, received, cleanup: () => cleanups.forEach(fn => fn()), another: create, expire: () => [...timers.values()].forEach(fn => fn()) }
   }
   return create()
@@ -92,5 +92,57 @@ test('native Android denial and no-match errors show their actionable categories
   const emit = error => { const event = new Event('rwa-native-voice'); event.detail = { type: 'error', error }; browser.dispatchEvent(event) }
   f.hook.start(); emit('recognizer-9'); assert.equal(f.states[2], 'denied')
   f.hook.start(); emit('recognizer-7'); assert.equal(f.states[2], 'empty')
+  f.cleanup()
+})
+
+test('hold mode buffers final browser results until release and emits them only once', () => {
+  let active, stopped = 0
+  class Recognition { constructor() { active = this } start() {} stop() { stopped++ } abort() {} }
+  const f = fixture(Object.assign(new EventTarget(), { SpeechRecognition: Recognition }), { deferResult: true })
+  f.hook.start(); active.onresult({ results: [[{ transcript: '第一句' }], [{ transcript: '第二句' }]] })
+  assert.deepEqual(f.received, []); assert.equal(active.continuous, true)
+  f.hook.stop(); assert.equal(stopped, 1); assert.equal(f.states[3], true); assert.deepEqual(f.received, [])
+  const end = active.onend; end(); end()
+  assert.deepEqual(f.received, ['第一句 第二句']); assert.equal(f.states[3], false)
+  f.cleanup()
+})
+
+test('an engine that ends before finger release still cannot auto-send or leak a cancelled recording', () => {
+  let active
+  class Recognition { constructor() { active = this } start() {} stop() {} abort() {} }
+  const f = fixture(Object.assign(new EventTarget(), { SpeechRecognition: Recognition }), { deferResult: true })
+  f.hook.start(); active.onresult({ results: [[{ transcript: '等待松手' }]] }); active.onend()
+  assert.deepEqual(f.received, []); f.hook.stop(); assert.deepEqual(f.received, ['等待松手'])
+  f.hook.start(); active.onresult({ results: [[{ transcript: '上滑取消的内容' }]] }); const late = active.onend
+  f.hook.cancel(); late(); assert.deepEqual(f.received, ['等待松手'])
+  f.cleanup()
+})
+
+test('native hold release waits for a final transcript and end event; interim text is never sent', () => {
+  const browser = Object.assign(new EventTarget(), { RwaNativeVoice: { start() {}, stop() {} } }), f = fixture(browser, { deferResult: true })
+  const emit = detail => { const event = new Event('rwa-native-voice'); event.detail = detail; browser.dispatchEvent(event) }
+  f.hook.start(); emit({ type: 'result', text: '不完整', final: false }); f.hook.stop()
+  emit({ type: 'result', text: '真正最终语音', final: true }); assert.deepEqual(f.received, [])
+  emit({ type: 'end' }); assert.deepEqual(f.received, ['真正最终语音'])
+  f.cleanup()
+})
+
+test('release timeout and permission failure discard buffered text and permit another recording', () => {
+  let active
+  class Recognition { constructor() { active = this } start() {} stop() {} abort() {} }
+  const f = fixture(Object.assign(new EventTarget(), { SpeechRecognition: Recognition }), { deferResult: true })
+  f.hook.start(); active.onresult({ results: [[{ transcript: '没有结束事件，不发送' }]] }); f.hook.stop(); f.expire()
+  assert.deepEqual(f.received, []); assert.equal(f.states[2], 'failed')
+  f.hook.start(); active.onerror({ error: 'not-allowed' }); assert.equal(f.states[2], 'denied')
+  f.hook.start(); active.onresult({ results: [[{ transcript: '重新授权后' }]] }); f.hook.stop(); active.onend()
+  assert.deepEqual(f.received, ['重新授权后']); f.cleanup()
+})
+
+test('page hide aborts a held microphone and ignores its delayed result', () => {
+  let active, aborted = 0
+  class Recognition { constructor() { active = this } start() {} stop() {} abort() { aborted++ } }
+  const browser = Object.assign(new EventTarget(), { SpeechRecognition: Recognition }), f = fixture(browser, { deferResult: true })
+  f.hook.start(); const late = active.onresult; browser.dispatchEvent(new Event('pagehide'))
+  late({ results: [[{ transcript: '后台页面不应该发送' }]] }); assert.equal(aborted, 1); assert.deepEqual(f.received, [])
   f.cleanup()
 })

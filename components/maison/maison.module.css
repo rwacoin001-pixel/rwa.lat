@@ -135,6 +135,8 @@
 
 /* The topbar is sticky and in flow above the body, so the body only needs breathing room below it. */
 .body { position: relative; z-index: 1; padding: 6px var(--m-gutter) 0; }
+.root[data-maison-page='ai'] { padding: 0; }
+.root[data-maison-page='ai'] > .body { padding: 0; }
 /* Staggered first paint: top blocks rise in sequence; later blocks arrive together. Fixed bars are left alone. */
 .body > :not(.stickyCta) { animation: mRise .52s var(--spring, var(--m-ease)) backwards; animation-delay: 200ms; }
 .body > :nth-child(1) { animation-delay: 0ms; }
