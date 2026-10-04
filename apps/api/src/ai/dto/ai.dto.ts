@@ -1,8 +1,12 @@
 import { ArrayMaxSize, ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, Length } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { AI_ACCOUNT_SCOPES, AiAccountScope } from '../ai-customer-tools.service'
+import type { AiAttachment } from '../ai-attachments'
 
 export class AiChatDto {
+  @ApiPropertyOptional({ description: 'Up to three locally extracted file excerpts. Validated server-side; no URLs or binary payloads.' })
+  @IsOptional() @IsArray() @ArrayMaxSize(3)
+  attachments?: AiAttachment[]
   @ApiProperty({ description: 'User message', minLength: 1, maxLength: 4000 })
   @IsString()
   @Length(1, 4000)

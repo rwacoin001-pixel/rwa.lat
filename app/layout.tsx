@@ -9,11 +9,13 @@ import { desktopRedirectBootstrap } from '@/lib/desktop-redirect'
 import './globals.css'
 import '../styles/ios.css'
 import '../styles/material.css'
+import '../styles/installed-app.css'
 import PressFeedback from '@/components/press-feedback'
 import { RwaThemeProvider } from '@/lib/rwa-theme'
 import { I18nProvider } from '@/lib/i18n'
 import PageChrome from '@/components/page-chrome'
 import SessionPrivacyGate from '@/components/session-privacy-gate'
+import AppStartup from '@/components/app-startup'
 
 export const metadata: Metadata = {
   title: 'RWA.LAT — AI Investment OS',
@@ -77,7 +79,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <body className={`antialiased overflow-x-hidden ${GeistMono.variable}`}>
         <PwaRegister />
         <PressFeedback />
-        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
+        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><AppStartup /><SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
       </body>
     </html>
   )

@@ -1,0 +1,428 @@
+package lat.rwa.trial;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.DownloadManager;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.Insets;
+import android.net.Uri;
+import android.net.http.SslError;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Environment;
+import android.os.Handler;
+import android.os.Looper;
+import android.provider.MediaStore;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.WindowInsets;
+import android.webkit.CookieManager;
+import android.webkit.GeolocationPermissions;
+import android.webkit.PermissionRequest;
+import android.webkit.SslErrorHandler;
+import android.webkit.URLUtil;
+import android.webkit.ValueCallback;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.widget.Button;
+import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.Toast;
+import androidx.core.content.FileProvider;
+import androidx.webkit.WebSettingsCompat;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+import org.json.JSONObject;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+
+/** Installable trial shell. Business state and authentication remain in the website. */
+public final class MainActivity extends Activity {
+    private static final String HOME = "https://rwa.lat/home";
+    private static final int MEDIA_PERMISSION = 101, GEO_PERMISSION = 102, VOICE_PERMISSION = 103, CAMERA_PERMISSION = 104, FILE_PICK = 201, CAMERA_PICK = 202;
+    private WebView webView;
+    private LinearLayout nativeChrome;
+    private FrameLayout pageContainer;
+    private LinearLayout errorPanel;
+    private ProgressBar progress;
+    private String retryUrl = HOME;
+    private PermissionRequest pendingMedia;
+    private GeolocationPermissions.Callback pendingGeo;
+    private String geoOrigin;
+    private ValueCallback<Uri[]> pendingFiles;
+    private Uri cameraUri;
+    private File cameraFile;
+    private SpeechRecognizer speechRecognizer;
+    private String voiceLocale = "zh-CN";
+    private boolean voiceActive;
+    private boolean voiceBridge;
+    private boolean mainFrameFailed;
+    private final Handler ui = new Handler(Looper.getMainLooper());
+    private final Runnable voiceTimeout = () -> { stopVoice(true); emitVoice("error", null, "timeout", true); };
+    private final Runnable pageTimeout = () -> { if (progress.getVisibility() == View.VISIBLE) showError("连接时间较长，请检查网络后重试。", retryUrl); };
+
+    @SuppressLint("SetJavaScriptEnabled")
+    @Override public void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
+        else getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        LinearLayout root = new LinearLayout(this);
+        root.setOrientation(LinearLayout.VERTICAL);
+        root.setBackgroundColor(Color.rgb(23, 26, 32));
+        root.setOnApplyWindowInsetsListener((view, insets) -> {
+            if (Build.VERSION.SDK_INT >= 30) {
+                Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
+                view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
+            } else view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
+            return insets.consumeSystemWindowInsets();
+        });
+        LinearLayout chrome = new LinearLayout(this);
+        nativeChrome = chrome;
+        chrome.setGravity(Gravity.CENTER_VERTICAL);
+        chrome.setPadding(dp(16), 0, dp(8), 0);
+        View spacer = new View(this);
+        chrome.addView(spacer, new LinearLayout.LayoutParams(0, dp(48), 1));
+        Button browser = new Button(this);
+        browser.setText("浏览器登录"); browser.setTextSize(11); browser.setContentDescription("Google、X 和通行密钥使用浏览器登录");
+        browser.setTextColor(Color.rgb(219, 210, 192)); browser.setBackgroundColor(Color.TRANSPARENT);
+        browser.setOnClickListener(view -> showBrowserAuth());
+        chrome.addView(browser, new LinearLayout.LayoutParams(dp(104), dp(48)));
+        Button menu = new Button(this);
+        menu.setText("⋮"); menu.setTextColor(Color.WHITE); menu.setTextSize(22); menu.setContentDescription("客户端选项"); menu.setBackgroundColor(Color.TRANSPARENT);
+        menu.setOnClickListener(view -> showMenu());
+        chrome.addView(menu, new LinearLayout.LayoutParams(dp(48), dp(48)));
+        chrome.setVisibility(View.GONE);
+        root.addView(chrome);
+        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
+        progress.setMax(100); root.addView(progress, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(2)));
+        pageContainer = new FrameLayout(this);
+        root.addView(pageContainer, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+        setContentView(root);
+        webView = new WebView(this);
+        webView.setBackgroundColor(Color.rgb(23, 26, 32));
+        pageContainer.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        WebSettings settings = webView.getSettings();
+        settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
+        settings.setAllowFileAccess(false); settings.setAllowContentAccess(false);
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+        settings.setMediaPlaybackRequiresUserGesture(true);
+        settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);
+        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/0.1");
+        settings.setSafeBrowsingEnabled(true);
+        CookieManager.getInstance().setAcceptCookie(true);
+        CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
+        WebView.setWebContentsDebuggingEnabled(false);
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_AUTHENTICATION)) {
+            WebSettingsCompat.setWebAuthenticationSupport(settings, WebSettingsCompat.WEB_AUTHENTICATION_SUPPORT_NONE);
+        }
+        installVoiceBridge();
+        webView.setWebViewClient(new TrialWebClient());
+        webView.setWebChromeClient(new TrialChromeClient());
+        webView.setDownloadListener(this::download);
+        if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::navigateBack);
+        // Do not persist WebView history: callback URL state can contain one-use credentials.
+        webView.loadUrl(HOME);
+    }
+
+    private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
+    private void updateChrome(String url) {
+        String path = url == null ? "" : Uri.parse(url).getPath();
+        boolean authPage = "/login".equals(path) || "/register".equals(path) || (path != null && path.startsWith("/auth/"));
+        nativeChrome.setVisibility(authPage || errorPanel != null ? View.VISIBLE : View.GONE);
+    }
+    private boolean trustedCurrentPage() { return webView != null && UrlPolicy.trustedOrigin(webView.getUrl()); }
+    private boolean granted(String permission) { return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED; }
+    private void toast(String text) { Toast.makeText(this, text, Toast.LENGTH_LONG).show(); }
+    private void navigateBack() {
+        stopVoice(true);
+        if (errorPanel != null) { hideError(); webView.loadUrl(HOME); }
+        else if (webView.canGoBack()) webView.goBack();
+        else new AlertDialog.Builder(this).setMessage("退出 RWA.LAT 试用客户端？").setNeutralButton("客户端选项", (dialog, which) -> showMenu()).setNegativeButton("继续使用", null).setPositiveButton("退出", (dialog, which) -> finish()).show();
+    }
+    @Override public void onBackPressed() { navigateBack(); }
+    private void showMenu() {
+        new AlertDialog.Builder(this).setTitle("RWA.LAT 试用客户端")
+            .setItems(new String[]{"重新加载", "用浏览器打开当前页面", "浏览器登录", "清除应用内登录与缓存", "设备信息", "开源许可"}, (dialog, item) -> {
+                if (item == 0) { hideError(); webView.reload(); }
+                if (item == 1) openBrowser(UrlPolicy.safeBrowserPage(webView.getUrl()));
+                if (item == 2) showBrowserAuth();
+                if (item == 3) new AlertDialog.Builder(this).setMessage("清除应用内会话、网站存储和缓存？浏览器登录不受影响。")
+                    .setNegativeButton("取消", null).setPositiveButton("清除", (confirm, which) -> {
+                        stopVoice(true); webView.stopLoading(); android.webkit.WebStorage.getInstance().deleteAllData();
+                        CookieManager.getInstance().removeAllCookies(done -> { CookieManager.getInstance().flush(); webView.clearCache(true); webView.clearHistory(); hideError(); webView.loadUrl(HOME); });
+                    }).show();
+                if (item == 4) {
+                    PackageManager manager = getPackageManager();
+                    android.content.pm.PackageInfo provider = WebViewCompat.getCurrentWebViewPackage(this);
+                    String version = provider == null ? "不可用" : provider.packageName + " " + provider.versionName;
+                    new AlertDialog.Builder(this).setTitle("设备信息").setMessage("客户端 0.1.0-trial\nAndroid " + Build.VERSION.RELEASE + " · API " + Build.VERSION.SDK_INT + "\nWebView " + version + "\n系统语音识别：" + (SpeechRecognizer.isRecognitionAvailable(this) ? "可调用，尚需真机验证" : "未提供") + "\n\nGoogle / X / 通行密钥：浏览器路径。浏览器会话不会自动同步到应用。").setPositiveButton("知道了", null).show();
+                }
+                if (item == 5) {
+                    try (java.io.InputStream notice = getAssets().open("licenses/NOTICE.txt"); java.io.InputStream license = getAssets().open("licenses/Apache-2.0.txt")) {
+                        TextView text = new TextView(this); text.setPadding(dp(20), dp(12), dp(20), dp(12));
+                        text.setText(new String(readAsset(notice), java.nio.charset.StandardCharsets.UTF_8) + "\n\n" + new String(readAsset(license), java.nio.charset.StandardCharsets.UTF_8));
+                        android.widget.ScrollView scroll = new android.widget.ScrollView(this); scroll.addView(text);
+                        new AlertDialog.Builder(this).setTitle("开源许可").setView(scroll).setPositiveButton("关闭", null).show();
+                    } catch (java.io.IOException error) { toast("许可文件无法打开。"); }
+                }
+            }).show();
+    }
+    private byte[] readAsset(java.io.InputStream input) throws java.io.IOException {
+        java.io.ByteArrayOutputStream output = new java.io.ByteArrayOutputStream(); byte[] buffer = new byte[4096]; int length;
+        while ((length = input.read(buffer)) != -1) output.write(buffer, 0, length);
+        return output.toByteArray();
+    }
+    private void showBrowserAuth() {
+        new AlertDialog.Builder(this).setTitle("在浏览器登录")
+            .setMessage("Google、X 和通行密钥在系统浏览器中完成。登录后继续在浏览器使用；此试用版不会把浏览器会话同步到应用。应用内可使用邮箱密码或验证码。")
+            .setNegativeButton("留在应用", null).setPositiveButton("打开浏览器", (dialog, which) -> openBrowser("https://rwa.lat/login")).show();
+    }
+    private void openBrowser(String url) {
+        try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)); }
+        catch (ActivityNotFoundException error) { toast("未找到可用浏览器，请先安装浏览器。"); }
+    }
+    private boolean handleNavigation(String url, boolean mainFrame, boolean userGesture) {
+        UrlPolicy.Destination destination = UrlPolicy.destination(url);
+        if (destination == UrlPolicy.Destination.INTERNAL) return false;
+        if (!mainFrame) return true;
+        if (destination == UrlPolicy.Destination.BROWSER_AUTH) { showBrowserAuth(); return true; }
+        if (destination == UrlPolicy.Destination.EXTERNAL && userGesture && trustedCurrentPage()) {
+            new AlertDialog.Builder(this).setMessage("使用浏览器打开外部链接？").setNegativeButton("取消", null).setPositiveButton("打开", (dialog, which) -> openBrowser(url)).show();
+        } else toast("此链接未获准在客户端打开。");
+        return true;
+    }
+    private void showError(String message, String url) {
+        retryUrl = UrlPolicy.destination(url) == UrlPolicy.Destination.INTERNAL ? url : HOME;
+        ui.removeCallbacks(pageTimeout); progress.setVisibility(View.GONE); webView.setVisibility(View.INVISIBLE);
+        if (errorPanel != null) pageContainer.removeView(errorPanel);
+        errorPanel = new LinearLayout(this); errorPanel.setOrientation(LinearLayout.VERTICAL); errorPanel.setGravity(Gravity.CENTER); errorPanel.setPadding(dp(28), dp(28), dp(28), dp(28));
+        TextView heading = new TextView(this); heading.setText("暂时无法连接"); heading.setTextColor(Color.WHITE); heading.setTextSize(22); errorPanel.addView(heading);
+        TextView detail = new TextView(this); detail.setText(message); detail.setTextColor(Color.LTGRAY); detail.setGravity(Gravity.CENTER); detail.setPadding(0, dp(16), 0, dp(16)); errorPanel.addView(detail);
+        Button retry = new Button(this); retry.setText("重试"); retry.setOnClickListener(view -> { String target = retryUrl; hideError(); webView.loadUrl(target); }); errorPanel.addView(retry);
+        Button browser = new Button(this); browser.setText("用浏览器打开"); browser.setOnClickListener(view -> openBrowser(UrlPolicy.safeBrowserPage(retryUrl))); errorPanel.addView(browser);
+        pageContainer.addView(errorPanel, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        updateChrome(url);
+    }
+    private void hideError() { if (errorPanel != null) { pageContainer.removeView(errorPanel); errorPanel = null; } webView.setVisibility(View.VISIBLE); updateChrome(webView.getUrl()); }
+    private final class TrialWebClient extends WebViewClient {
+        @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return handleNavigation(request.getUrl().toString(), request.isForMainFrame(), request.hasGesture()); }
+        @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
+            if (UrlPolicy.destination(url) != UrlPolicy.Destination.INTERNAL) { view.stopLoading(); handleNavigation(url, true, false); return; }
+            hideError(); mainFrameFailed = false; retryUrl = url; progress.setVisibility(View.VISIBLE); progress.setProgress(0);
+            updateChrome(url);
+            ui.removeCallbacks(pageTimeout); ui.postDelayed(pageTimeout, 30000); stopVoice(true); denyPendingPermissions();
+        }
+        @Override public void onPageFinished(WebView view, String url) {
+            ui.removeCallbacks(pageTimeout); progress.setVisibility(View.GONE);
+            if (!mainFrameFailed && errorPanel == null && UrlPolicy.trustedOrigin(url)) installVoiceScript();
+        }
+        @Override public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) { updateChrome(url); }
+        @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+            if (request.isForMainFrame()) { mainFrameFailed = true; showError("请检查网络连接，再重新加载。", request.getUrl().toString()); }
+        }
+        @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {
+            if (request.isForMainFrame() && response.getStatusCode() >= 400) { mainFrameFailed = true; showError("服务器暂时不可用（" + response.getStatusCode() + "）。请稍后重试。", request.getUrl().toString()); }
+        }
+        @Override public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) { handler.cancel(); mainFrameFailed = true; showError("安全连接验证失败。请检查设备时间或网络后重试。", HOME); }
+        @Override public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+            String scheme = request.getUrl().getScheme();
+            if (request.isForMainFrame() && UrlPolicy.destination(request.getUrl().toString()) != UrlPolicy.Destination.INTERNAL) return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+            if ("http".equalsIgnoreCase(scheme) || "file".equalsIgnoreCase(scheme) || "content".equalsIgnoreCase(scheme)) return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
+            return null;
+        }
+        @Override public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
+            view.destroy(); new AlertDialog.Builder(MainActivity.this).setTitle("页面需要重新打开").setMessage("系统已停止网页进程，请重新启动客户端。").setCancelable(false).setPositiveButton("重新打开", (dialog, which) -> recreate()).show(); return true;
+        }
+    }
+    private final class TrialChromeClient extends WebChromeClient {
+        @Override public void onProgressChanged(WebView view, int newProgress) { progress.setProgress(newProgress); }
+        @Override public void onPermissionRequest(PermissionRequest request) {
+            runOnUiThread(() -> {
+                if (!trustedCurrentPage() || !UrlPolicy.trustedOrigin(request.getOrigin().toString())) { request.deny(); return; }
+                if (pendingMedia != null) pendingMedia.deny(); pendingMedia = request;
+                List<String> needed = new ArrayList<>();
+                for (String resource : request.getResources()) {
+                    if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource) && !granted(Manifest.permission.CAMERA)) needed.add(Manifest.permission.CAMERA);
+                    if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource) && !granted(Manifest.permission.RECORD_AUDIO)) needed.add(Manifest.permission.RECORD_AUDIO);
+                }
+                if (needed.isEmpty()) grantMedia(); else requestPermissions(needed.toArray(new String[0]), MEDIA_PERMISSION);
+            });
+        }
+        @Override public void onPermissionRequestCanceled(PermissionRequest request) { if (pendingMedia == request) pendingMedia = null; }
+        @Override public void onGeolocationPermissionsShowPrompt(String origin, GeolocationPermissions.Callback callback) {
+            if (!trustedCurrentPage() || !UrlPolicy.trustedOrigin(origin)) { callback.invoke(origin, false, false); return; }
+            if (pendingGeo != null) pendingGeo.invoke(geoOrigin, false, false);
+            pendingGeo = callback; geoOrigin = origin;
+            if (granted(Manifest.permission.ACCESS_COARSE_LOCATION)) grantGeo(); else requestPermissions(new String[]{Manifest.permission.ACCESS_COARSE_LOCATION, Manifest.permission.ACCESS_FINE_LOCATION}, GEO_PERMISSION);
+        }
+        @Override public void onGeolocationPermissionsHidePrompt() { pendingGeo = null; geoOrigin = null; }
+        @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
+            if (!trustedCurrentPage()) { callback.onReceiveValue(null); return true; }
+            cancelFiles(); pendingFiles = callback;
+            String[] accepted = params.getAcceptTypes();
+            boolean imageOnly = accepted.length > 0;
+            for (String type : accepted) if (!type.startsWith("image/")) imageOnly = false;
+            if (imageOnly && params.isCaptureEnabled()) startCamera();
+            else if (imageOnly) new AlertDialog.Builder(MainActivity.this).setTitle("选择照片").setItems(new String[]{"拍照", "从文件选择"}, (dialog, index) -> { if (index == 0) startCamera(); else chooseFiles(params); }).setOnCancelListener(dialog -> cancelFiles()).show();
+            else chooseFiles(params);
+            return true;
+        }
+    }
+    private void grantMedia() {
+        if (pendingMedia == null) return;
+        PermissionRequest request = pendingMedia; pendingMedia = null;
+        if (!trustedCurrentPage() || !UrlPolicy.trustedOrigin(request.getOrigin().toString())) { request.deny(); return; }
+        List<String> allowed = new ArrayList<>();
+        for (String resource : request.getResources()) {
+            if (PermissionRequest.RESOURCE_VIDEO_CAPTURE.equals(resource) && granted(Manifest.permission.CAMERA)) allowed.add(resource);
+            if (PermissionRequest.RESOURCE_AUDIO_CAPTURE.equals(resource) && granted(Manifest.permission.RECORD_AUDIO)) allowed.add(resource);
+        }
+        if (allowed.isEmpty()) { request.deny(); toast("权限未开启，可在系统设置中允许相机或麦克风。"); } else request.grant(allowed.toArray(new String[0]));
+    }
+    private void grantGeo() {
+        if (pendingGeo != null) { pendingGeo.invoke(geoOrigin, trustedCurrentPage() && UrlPolicy.trustedOrigin(geoOrigin) && granted(Manifest.permission.ACCESS_COARSE_LOCATION), false); pendingGeo = null; geoOrigin = null; }
+    }
+    private void denyPendingPermissions() {
+        if (pendingMedia != null) { pendingMedia.deny(); pendingMedia = null; }
+        if (pendingGeo != null) { pendingGeo.invoke(geoOrigin, false, false); pendingGeo = null; geoOrigin = null; }
+    }
+    private void chooseFiles(WebChromeClient.FileChooserParams params) {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
+        String[] types = java.util.Arrays.stream(params.getAcceptTypes()).filter(type -> type.matches("[a-zA-Z0-9.+-]+/[a-zA-Z0-9.+*_-]+") && !"*/*".equals(type)).toArray(String[]::new);
+        if (types.length == 1) intent.setType(types[0]); else if (types.length > 1) intent.putExtra(Intent.EXTRA_MIME_TYPES, types);
+        intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.getMode() == WebChromeClient.FileChooserParams.MODE_OPEN_MULTIPLE);
+        intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        try { startActivityForResult(intent, FILE_PICK); } catch (ActivityNotFoundException error) { cancelFiles(); toast("未找到文件选择器。"); }
+    }
+    private void startCamera() {
+        if (!granted(Manifest.permission.CAMERA)) { requestPermissions(new String[]{Manifest.permission.CAMERA}, CAMERA_PERMISSION); return; }
+        try {
+            File directory = new File(getCacheDir(), "captures"); if (!directory.exists() && !directory.mkdirs()) throw new java.io.IOException("capture directory");
+            cameraFile = File.createTempFile("capture-", ".jpg", directory);
+            cameraUri = FileProvider.getUriForFile(this, getPackageName() + ".files", cameraFile);
+            Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE).putExtra(MediaStore.EXTRA_OUTPUT, cameraUri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            intent.setClipData(android.content.ClipData.newRawUri("capture", cameraUri));
+            startActivityForResult(intent, CAMERA_PICK);
+        } catch (Exception error) { cancelFiles(); toast("无法打开相机，请改用文件选择。"); }
+    }
+    private void cancelFiles() { if (pendingFiles != null) { pendingFiles.onReceiveValue(null); pendingFiles = null; } }
+    @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != FILE_PICK && requestCode != CAMERA_PICK) return;
+        if (pendingFiles == null) return;
+        Uri[] result = null;
+        if (trustedCurrentPage() && resultCode == RESULT_OK) {
+            if (requestCode == CAMERA_PICK && cameraUri != null && cameraFile != null && cameraFile.length() > 0) result = new Uri[]{cameraUri};
+            else if (requestCode == FILE_PICK) {
+                Uri[] raw = WebChromeClient.FileChooserParams.parseResult(resultCode, data);
+                if (raw != null) result = java.util.Arrays.stream(raw).filter(uri -> "content".equals(uri.getScheme())).toArray(Uri[]::new);
+            }
+        }
+        pendingFiles.onReceiveValue(result); pendingFiles = null; cameraUri = null;
+        if (cameraFile != null) { File captured = cameraFile; ui.postDelayed(() -> captured.delete(), 300000); cameraFile = null; }
+    }
+    @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == MEDIA_PERMISSION) grantMedia();
+        if (requestCode == GEO_PERMISSION) grantGeo();
+        if (requestCode == VOICE_PERMISSION) { if (granted(Manifest.permission.RECORD_AUDIO)) startVoice(voiceLocale); else emitVoice("error", null, "permission-denied", true); }
+        if (requestCode == CAMERA_PERMISSION) { if (granted(Manifest.permission.CAMERA)) startCamera(); else { cancelFiles(); toast("相机权限未开启，可选择已有文件。"); } }
+    }
+    private void download(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
+        if (!trustedCurrentPage() || !UrlPolicy.trustedDownload(url)) { toast("此文件请在浏览器中下载。受保护或生成的文件不会自动传递应用会话。"); return; }
+        String filename = URLUtil.guessFileName(url, contentDisposition, mimetype).replaceAll("[^\\p{L}\\p{N}._-]", "_");
+        new AlertDialog.Builder(this).setMessage("下载文件到应用目录？\n" + filename).setNegativeButton("取消", null).setPositiveButton("下载", (dialog, which) -> {
+            try {
+                DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
+                request.setTitle(filename); if (mimetype != null) request.setMimeType(mimetype);
+                request.setAllowedOverMetered(true); request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE);
+                request.setDestinationInExternalFilesDir(this, Environment.DIRECTORY_DOWNLOADS, filename);
+                ((DownloadManager) getSystemService(DOWNLOAD_SERVICE)).enqueue(request);
+                toast("下载已交给系统。文件保存于应用目录，卸载应用时移除。");
+            } catch (Exception error) { toast("无法下载，请用浏览器打开此页面。"); }
+        }).show();
+    }
+    private void installVoiceBridge() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) || !SpeechRecognizer.isRecognitionAvailable(this)) return;
+        voiceBridge = true;
+        WebViewCompat.addWebMessageListener(webView, "RwaNativeVoiceChannel", java.util.Collections.singleton("https://rwa.lat"), (view, message, sourceOrigin, isMainFrame, reply) -> {
+            if (!isMainFrame || !UrlPolicy.trustedOrigin(sourceOrigin.toString()) || !trustedCurrentPage()) return;
+            try {
+                JSONObject payload = new JSONObject(message.getData());
+                if ("start".equals(payload.optString("type"))) startVoice(payload.optString("locale", "zh-CN"));
+                else if ("stop".equals(payload.optString("type"))) stopVoice(false);
+            } catch (Exception error) { emitVoice("error", null, "invalid-request", true); }
+        });
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) WebViewCompat.addDocumentStartJavaScript(webView, voiceScript(), java.util.Collections.singleton("https://rwa.lat"));
+    }
+    private String voiceScript() {
+        return "(()=>{if(!window.RwaNativeVoiceChannel)return;window.RwaNativeVoice=Object.freeze({start:({locale}={})=>window.RwaNativeVoiceChannel.postMessage(JSON.stringify({type:'start',locale:locale||'zh-CN'})),stop:()=>window.RwaNativeVoiceChannel.postMessage(JSON.stringify({type:'stop'}))});})()";
+    }
+    private void installVoiceScript() { if (voiceBridge && trustedCurrentPage()) webView.evaluateJavascript(voiceScript(), null); }
+    private void startVoice(String locale) {
+        if (!trustedCurrentPage() || !voiceBridge) return;
+        voiceLocale = locale.matches("[a-zA-Z]{2,3}(-[a-zA-Z0-9]{2,8}){0,2}") ? locale : "zh-CN";
+        if (!granted(Manifest.permission.RECORD_AUDIO)) { requestPermissions(new String[]{Manifest.permission.RECORD_AUDIO}, VOICE_PERMISSION); return; }
+        stopVoice(true);
+        try { speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this); }
+        catch (Exception error) { emitVoice("error", null, "recognizer-unavailable", true); return; }
+        speechRecognizer.setRecognitionListener(new RecognitionListener() {
+            @Override public void onReadyForSpeech(Bundle params) { emitVoice("listening", null, null, false); }
+            @Override public void onBeginningOfSpeech() {}
+            @Override public void onRmsChanged(float rmsdB) {}
+            @Override public void onBufferReceived(byte[] buffer) {}
+            @Override public void onEndOfSpeech() {}
+            @Override public void onError(int error) { emitVoice("error", null, "recognizer-" + error, true); stopVoice(true); }
+            @Override public void onResults(Bundle results) { transcript(results, true); stopVoice(true); }
+            @Override public void onPartialResults(Bundle results) { transcript(results, false); }
+            @Override public void onEvent(int type, Bundle params) {}
+        });
+        Intent intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM).putExtra(RecognizerIntent.EXTRA_LANGUAGE, voiceLocale).putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true).putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        try { voiceActive = true; speechRecognizer.startListening(intent); ui.postDelayed(voiceTimeout, 30000); }
+        catch (Exception error) { emitVoice("error", null, "recognizer-unavailable", true); stopVoice(true); }
+    }
+    private void transcript(Bundle result, boolean complete) {
+        ArrayList<String> values = result.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION);
+        if (values != null && !values.isEmpty()) emitVoice("result", values.get(0), null, complete);
+    }
+    private void stopVoice(boolean cancel) {
+        ui.removeCallbacks(voiceTimeout);
+        if (speechRecognizer == null) return;
+        if (!cancel) { speechRecognizer.stopListening(); ui.postDelayed(voiceTimeout, 10000); return; }
+        speechRecognizer.cancel(); speechRecognizer.destroy(); speechRecognizer = null;
+        if (voiceActive) { voiceActive = false; emitVoice("end", null, null, true); }
+    }
+    private void emitVoice(String type, String text, String error, boolean complete) {
+        if (!trustedCurrentPage()) return;
+        try {
+            JSONObject detail = new JSONObject().put("type", type).put("final", complete);
+            if (text != null) detail.put("text", text); if (error != null) detail.put("error", error);
+            webView.evaluateJavascript("window.dispatchEvent(new CustomEvent('rwa-native-voice',{detail:" + detail + "}));", null);
+        } catch (Exception ignored) { /* Never log speech text or page/session data. */ }
+    }
+    @Override protected void onPause() { stopVoice(true); CookieManager.getInstance().flush(); super.onPause(); }
+    @Override protected void onDestroy() {
+        stopVoice(true); denyPendingPermissions(); cancelFiles(); ui.removeCallbacksAndMessages(null);
+        if (webView != null) { pageContainer.removeView(webView); webView.destroy(); webView = null; }
+        super.onDestroy();
+    }
+}

@@ -1,0 +1,24 @@
+.root {
+  --start-bg: #f4efe6; --start-metal-top: #b99560; --start-metal: #8a6a3b; --start-metal-end: #e0c296;
+  position: fixed; inset: 0; z-index: 1000; overflow: hidden; pointer-events: none;
+  display: grid; place-items: center; background: var(--start-bg); color: #514331;
+  opacity: 1; transition: opacity 280ms ease;
+}
+.root[data-theme='dark'] {
+  --start-bg: #0b1321; --start-metal-top: #fff0cf; --start-metal: #d8b47e; --start-metal-end: #829aaa;
+  color: #ecdabb;
+}
+.root[data-leaving] { opacity: 0; }
+.halo { position: absolute; width: min(110vw, 600px); aspect-ratio: 1; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--start-metal) 9%, transparent), transparent 60%); filter: blur(22px); animation: breathe 1.8s ease-out both; }
+.composition { display: grid; justify-items: center; transform: translateY(-18px); }
+.logoStage { position: relative; width: min(350px, 92vw); height: 224px; }
+.particles { position: absolute; inset: 0; opacity: .95; animation: gather 1.15s cubic-bezier(.22,.8,.18,1) both; }
+.mark { position: absolute; width: 226.6px; height: 114.4px; top: 50%; left: 50%; transform: translate(-50%, -50%); opacity: .9; filter: drop-shadow(0 8px 25px color-mix(in srgb, var(--start-metal) 15%, transparent)); animation: resolve 1.3s ease both; }
+.mark path[data-wing='2'] { opacity: .78; }
+.wordmark { font: 650 20px/1 var(--font-geist-sans, system-ui); letter-spacing: .28em; padding-inline-start: .28em; animation: lettering 1s ease both; }
+.line { width: 30px; height: 1px; margin-top: 26px; background: currentColor; opacity: .24; animation: lettering 1.2s ease both; }
+@keyframes gather { from { opacity: 0; transform: scale(1.2); filter: blur(4px); } to { opacity: .95; transform: scale(1); filter: blur(0); } }
+@keyframes resolve { 0%, 20% { opacity: .08; filter: blur(3px); } 68% { opacity: .3; filter: blur(0); } 100% { opacity: .9; filter: blur(0); } }
+@keyframes lettering { 0%, 25% { opacity: 0; transform: translateY(6px); } 100% { opacity: 1; transform: translateY(0); } }
+@keyframes breathe { from { opacity: 0; transform: scale(.75); } to { opacity: 1; transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .root, .halo, .particles, .mark, .wordmark, .line { animation: none; transition: none; } .particles { display: none; } }

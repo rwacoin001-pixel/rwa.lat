@@ -5,9 +5,9 @@
 /* ---- Bar ---- */
 .bar {
   position: sticky; top: 0; z-index: 5;
-  /* Same geometry as the shared topbar: safe area + 10px, one 44px row, 12px inset. */
+  /* The shared app inset is added once around the 44px touch row. */
   display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; box-sizing: border-box;
-  height: calc(54px + env(safe-area-inset-top)); padding: calc(env(safe-area-inset-top) + 10px) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  height: calc(44px + var(--app-chrome-air, 10px) + env(safe-area-inset-top)); padding: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
   /* Frosted rather than filled, so the page's ambient light runs under the bar with no visible box edge. */
   background: color-mix(in srgb, var(--m-bg) 55%, transparent); backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1);
   -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent); mask-image: linear-gradient(to bottom, #000 72%, transparent);
@@ -196,3 +196,7 @@ button.icon:active { transform: scale(.92); }
   .shimmer { animation: none; background: none; color: var(--m-muted); }
 }
 .dockWrap>section{bottom:calc(100% - 18px)}
+.dockWrap[data-keyboard]{padding-bottom:8px}.dockWrap[data-keyboard] .disclaimer{display:none}
+.supportLink{align-self:center;font-size:10px;color:var(--m-muted);padding:3px 12px 5px;text-decoration:none}
+.fileNote{display:block;margin:5px 10px;color:var(--m-muted);font-size:10px;text-align:end;overflow-wrap:anywhere}
+.questionPrompt{font-size:13px;color:var(--m-muted);line-height:1.5;margin:0}

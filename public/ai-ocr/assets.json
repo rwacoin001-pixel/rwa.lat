@@ -1,0 +1,64 @@
+{
+  "languages": [
+    {
+      "language": "eng",
+      "package": "@tesseract.js-data/eng@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/eng/-/eng-1.0.0.tgz",
+      "integrity": "sha512-mbTumm6KQPUHyzTPQaF3ObXYnx0SqqfV2nabqFVQBwD6Kl7PhGSLSzOlfFTWy0P3BjghaSKA2W9GB19Jk+ZcTg==",
+      "sha256": "45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91",
+      "bytes": 2952873
+    },
+    {
+      "language": "chi_sim",
+      "package": "@tesseract.js-data/chi_sim@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/chi_sim/-/chi_sim-1.0.0.tgz",
+      "integrity": "sha512-iuErURkPbECDUazgsLn/r3c+tU2y5o5S/w14d0A/YiagfsjYyZKgTo75RUpsGJ311qtu0dIX4hqnXAAjmqf2CA==",
+      "sha256": "b8a23f10c7de500891eb458a8adc9cc58ab7f242f08b7d149f5e9aea4ad5db7c",
+      "bytes": 1718768
+    },
+    {
+      "language": "spa",
+      "package": "@tesseract.js-data/spa@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/spa/-/spa-1.0.0.tgz",
+      "integrity": "sha512-9Ln+QKq/TNu4Hy4aOp5b4nXo9U0C6IqJMzNDpAJZe/fNtz6jXG9G/hQgR/Irxj+RGf0M7Xy1MNx1yl4wQUIfeg==",
+      "sha256": "40be52f97b5d4eb7460073dc1f94cd546b27150333c0bf854ed7e7132db6bceb",
+      "bytes": 2100190
+    },
+    {
+      "language": "fra",
+      "package": "@tesseract.js-data/fra@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/fra/-/fra-1.0.0.tgz",
+      "integrity": "sha512-pp58gMaoyidoBBLd5y5rnf0WW0Y1994QrGqZrYatITqIU/AReUJMykD+YY3JDgvnmgz7uAx1UmhjjuyEmV8JEA==",
+      "sha256": "d611139672b3752c7097e671e4a1d9209dfd37f2aeb081ef6487fba3351e9255",
+      "bytes": 707406
+    },
+    {
+      "language": "ara",
+      "package": "@tesseract.js-data/ara@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/ara/-/ara-1.0.0.tgz",
+      "integrity": "sha512-bB60Av6dsv9LRUrlaM6SgnAwjUpdbanw9Jf3mbhDCZAhX7Cp8u7YjI8EWfCvMhH3R2QJT/2EA8cijqPANOhwaA==",
+      "sha256": "f4746c44b02342dd5b3d4f0198000f47d7c49f1a229e63e0f436c0592dcd9639",
+      "bytes": 1661906
+    },
+    {
+      "language": "hin",
+      "package": "@tesseract.js-data/hin@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/hin/-/hin-1.0.0.tgz",
+      "integrity": "sha512-MB6WY6g4SAtrs+Xuyz5JDDsLFCykCwIESV7M9KkyxF71bxBqhLa8e7GJi5yGa/Wl6V4nuC7LWX/EMdSyTINTvg==",
+      "sha256": "f3b6a0d320df38d886178cdd727b90dbf9df3db053adb32bd9cf73f0463cda07",
+      "bytes": 1389692
+    },
+    {
+      "language": "por",
+      "package": "@tesseract.js-data/por@1.0.0",
+      "source": "https://registry.npmjs.org/@tesseract.js-data/por/-/por-1.0.0.tgz",
+      "integrity": "sha512-sQ7GqYUgKaMmV0vNujYoXLlXUp2e5RGGkJxQ3L59kUOaupIugLJeb1dqhrfgyb71XQw7ltdSuXdQIoaoS/rpsQ==",
+      "sha256": "dacebc1386ddaaf8389f81094236cca0d690897cde693d48cbdaa881c86e2b4c",
+      "bytes": 1392239
+    }
+  ],
+  "versions": {
+    "pdfjs": "6.3.289",
+    "ocr": "7.0.0"
+  }
+}

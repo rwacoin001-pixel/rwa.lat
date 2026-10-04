@@ -29,6 +29,7 @@ export default function PageChrome() {
     const update = () => {
       frame = 0
       const root = document.documentElement
+      if (/RwaLatAndroidTrial\//.test(navigator.userAgent)) root.dataset.nativeApp = 'android'
       const auth = document.querySelector<HTMLElement>('[data-auth-theme]')
       const page = auth ?? document.querySelector<HTMLElement>('[data-maison-page]:not([data-maison-page="welcome"]), .rwa-mobile .screen, main:not(.rwa-shell):not([data-app-loading])')
       let color = auth ? getComputedStyle(auth).getPropertyValue('--auth-bg').trim() : ''

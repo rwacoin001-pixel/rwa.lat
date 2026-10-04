@@ -1,0 +1,14 @@
+/* Installed applications own a full viewport. Chrome adds the system inset once;
+   the short extra gap replaces the browser-oriented 10/12px breathing room. */
+@media (display-mode: standalone), (display-mode: fullscreen) {
+  :root { --app-chrome-air: 2px; --app-dock-air: 6px; }
+  .rwa-shell { padding-block: 0; }
+  .rwa-mobile[data-theme][data-screen] { --topbar-h: 46px; }
+  .rwa-mobile[data-theme][data-screen] .rwa-topbar.rwa-topbar--s1[data-template] { top: 0; }
+  .rwa-mobile[data-screen='home'] [data-home-s2='true'] { --feed-sticky-top: calc(46px + env(safe-area-inset-top)); }
+  .rwa-mobile[data-screen='home'] [data-home-s2='true'][data-topbar-hidden='true'] { --feed-sticky-top: 0px; }
+}
+/* Native WebView fits the system bars itself: its CSS safe-area values are zero.
+   Do not add hard-coded iPhone status-bar heights to either environment. */
+html[data-native-app='android'] { --app-chrome-air: 2px; --app-dock-air: 6px; }
+html[data-native-app='android'] .rwa-mobile[data-theme][data-screen] { --topbar-h: 46px; }

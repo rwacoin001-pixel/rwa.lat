@@ -1,10 +1,11 @@
 'use client'
 
-import { useEffect, useId, useRef, useState } from 'react'
+import { useId, useState } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { Check, ChevronLeft, Pencil, MessageCircleQuestionMark, Mic, X } from 'lucide-react'
 import type { AiQuestion } from '@/lib/api/ai-customer'
 import s from './ai-question-card.module.css'
+import { useAiVoice } from './useAiVoice'
 
 const copy: Record<string, string[]> = {
   'zh-CN': ['需要你的选择', '可多选', '选择一项', '自行填写', '输入你的答案…', '继续', '确认并继续', '修改', '已回答', '上一题', '更新回答'],
@@ -27,8 +28,6 @@ const panelCopy: Record<string, string[]> = {
   hi: ['प्रश्न', 'या अपना उत्तर लिखें', 'छोड़ें', 'भेजें', 'बंद करें', 'वॉइस इनपुट', 'वॉइस उपलब्ध नहीं', 'वॉइस विफल। अपना उत्तर लिखें।'],
   pt: ['Pergunta', 'Ou escreva sua resposta', 'Pular', 'Enviar', 'Fechar', 'Entrada de voz', 'Voz indisponível', 'Falha na voz. Digite sua resposta.'],
 }
-type VoiceSession = { lang: string; onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onerror: (() => void) | null; onend: (() => void) | null; start: () => void; stop: () => void; abort: () => void }
-type VoiceWindow = Window & { SpeechRecognition?: new () => VoiceSession; webkitSpeechRecognition?: new () => VoiceSession }
 
 export default function AiQuestionCard({ questions, locale, disabled = false, onConfirm }: {
   questions: AiQuestion[]; locale: string; disabled?: boolean; onConfirm: (answer: string) => Promise<boolean>
@@ -41,11 +40,13 @@ export default function AiQuestionCard({ questions, locale, disabled = false, on
   const [values, setValues] = useState<Record<string, Selection>>({})
   const [answered, setAnswered] = useState(false)
   const [pending, setPending] = useState(false)
-  const [voiceAvailable, setVoiceAvailable] = useState(false)
-  const [listening, setListening] = useState(false)
-  const [voiceError, setVoiceError] = useState('')
-  const voice = useRef<VoiceSession | null>(null)
-  useEffect(() => { const w = window as VoiceWindow; setVoiceAvailable(!!(w.SpeechRecognition ?? w.webkitSpeechRecognition)); return () => { const active = voice.current; if (active) { active.onresult = active.onerror = active.onend = null; active.abort() } } }, [])
+  const voice = useAiVoice(locale, text => setValues(previous => {
+    const question = questions[step]
+    if (!question) return previous
+    const value = previous[question.id] ?? blank()
+    return { ...previous, [question.id]: { ids: question.multiple ? value.ids : [], custom: true, text: [value.text, text].filter(Boolean).join(' ').slice(0, 600) } }
+  }))
+  const listening = voice.listening
   const q = questions[step]
   if (!q) return null
   const current = values[q.id] ?? blank()
@@ -63,17 +64,7 @@ export default function AiQuestionCard({ questions, locale, disabled = false, on
     ? { ...current, ids: current.ids.includes(id) ? current.ids.filter(v => v !== id) : [...current.ids, id] }
     : { ids: [id], custom: false, text: '' })
   const write = (text: string) => update({ ids: q.multiple ? current.ids : [], custom: !!text.trim(), text })
-  const dismiss = () => { voice.current?.abort(); setAnswered(true) }
-  const dictate = () => {
-    if (listening) { voice.current?.stop(); return }
-    const w = window as VoiceWindow, Constructor = w.SpeechRecognition ?? w.webkitSpeechRecognition
-    if (!Constructor) return
-    const recognition = new Constructor(); voice.current = recognition; recognition.lang = locale; setVoiceError('')
-    recognition.onresult = event => { const text = Array.from(event.results).map(result => result[0]?.transcript ?? '').join(' '); write([current.text, text].filter(Boolean).join(' ')) }
-    recognition.onerror = () => { setListening(false); setVoiceError(p[7]) }
-    recognition.onend = () => { setListening(false); voice.current = null }
-    try { recognition.start(); setListening(true) } catch { setListening(false); setVoiceError(p[7]) }
-  }
+  const dismiss = () => { voice.cancel(); setAnswered(true) }
   const confirm = async () => {
     if (locked || !questions.every(valid)) return
     setPending(true)
@@ -98,10 +89,10 @@ export default function AiQuestionCard({ questions, locale, disabled = false, on
         })}
         </div>
         <label className={s.customRow}><Pencil size={20} strokeWidth={1.6} aria-hidden="true"/><textarea className={s.custom} aria-label={`${q.title} — ${p[1]}`} placeholder={p[1]} maxLength={600} rows={1} value={current.text} onChange={event => write(event.target.value)} /></label>
-        {voiceError && <p className={s.voiceError} role="status">{voiceError}</p>}
+        {voice.error && <p className={s.voiceError} role="status">{voice.error === 'unavailable' ? p[6] : p[7]}</p>}
       </motion.fieldset></AnimatePresence>
       <footer className={s.footer}>{step > 0 && <button type="button" className={s.icon} aria-label={c[9]} disabled={locked || listening} onClick={() => setStep(i => i - 1)}><ChevronLeft size={18}/></button>}
-        <span className={s.spacer}/><button type="button" className={s.icon} aria-label={voiceAvailable ? p[5] : p[6]} title={voiceAvailable ? p[5] : p[6]} disabled={locked || !voiceAvailable} aria-pressed={listening} onClick={dictate}><Mic size={20} strokeWidth={1.8}/></button>
+        <span className={s.spacer}/><button type="button" className={s.icon} aria-label={p[5]} title={p[5]} disabled={locked} aria-pressed={listening} onClick={voice.start}><Mic size={20} strokeWidth={1.8}/></button>
         <button type="button" className={s.skip} disabled={locked} onClick={dismiss}>{p[2]}</button>
         <button type="button" className={s.continue} disabled={locked || listening || !valid(q) || (step === questions.length - 1 && !questions.every(valid))} onClick={() => step < questions.length - 1 ? setStep(i => i + 1) : void confirm()}>{pending ? '…' : step < questions.length - 1 ? c[5] : p[3]}</button>
       </footer>

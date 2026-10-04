@@ -1,0 +1,18 @@
+RWA.LAT Android Trial 0.1.0
+
+AndroidX WebKit, Core and transitive Jetpack libraries
+Copyright The Android Open Source Project
+https://github.com/androidx/androidx
+Apache License, Version 2.0
+
+Kotlin standard library (transitive runtime dependency)
+Copyright JetBrains s.r.o. and Kotlin Programming Language contributors
+https://github.com/JetBrains/kotlin
+Apache License, Version 2.0
+
+The app icon is copied from the RWA.LAT application's existing first-party
+public/icons/rwa-pwa-v2-512.png asset.
+
+See Apache-2.0.txt for the full license. Android System WebView and the
+selected device speech recognition service are supplied by the device,
+not redistributed as binaries inside this APK.

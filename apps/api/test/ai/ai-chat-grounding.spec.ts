@@ -15,6 +15,58 @@ function fixture() {
 }
 
 describe('Published knowledge in customer chat', () => {
+  it('stores file text under the session owner and replays actual extracted content to the text model', async () => {
+    const f = fixture()
+    const attachments = [{ name: 'statement.png', mime: 'image/png', size: 120, method: 'ocr' as const, text: 'Statement says 200 USDT' }]
+    f.messages.find.mockImplementation(async () => [f.messages.save.mock.calls[0][0]] as any)
+    await f.service.chat('owner', { message: 'Explain my file', sessionId: 'session', attachments })
+    expect(f.model.complete.mock.calls[0][1][0].content).toContain(attachments[0].text)
+    expect(f.model.complete.mock.calls[0][1][0].content).toContain('no image pixels')
+    const stored = f.messages.save.mock.calls[0][0]
+    expect(stored.sessionId).toBe('session')
+    expect(JSON.parse(stored.content).attachments).toEqual(attachments)
+    f.messages.find.mockResolvedValue([stored] as any)
+    const history = await f.service.getSession('owner', 'session')
+    expect(history.messages[0]).toMatchObject({ content: 'Explain my file', attachments })
+  })
+  it('rejects invalid attachments before creating a session or calling the provider', async () => {
+    const f = fixture()
+    await expect(f.service.chat('owner', { message: 'file', attachments: [{ name: 'file.exe', size: 10, text: 'fake', mime: 'application/x-executable', method: 'text' }] })).rejects.toThrow()
+    expect(f.sessions.save).not.toHaveBeenCalled()
+    expect(f.messages.save).not.toHaveBeenCalled()
+    expect(f.model.complete).not.toHaveBeenCalled()
+  })
+  it('rejects serialized excerpts that expand beyond the provider budget before saving a message', async () => {
+    const f = fixture()
+    const file = { name: 'escaped.txt', size: 12000, text: 'a' + '\u0001'.repeat(11999), mime: 'text/plain', method: 'text' as const }
+    await expect(f.service.chat('owner', { message: 'explain', attachments: [file, file] })).rejects.toThrow()
+    expect(f.sessions.findOne).not.toHaveBeenCalled()
+    expect(f.sessions.save).not.toHaveBeenCalled()
+    expect(f.messages.save).not.toHaveBeenCalled()
+    expect(f.model.complete).not.toHaveBeenCalled()
+  })
+  it('blocks wallet key material in the message before session or provider access', async () => {
+    const f = fixture()
+    for (const message of ['0x' + 'a'.repeat(64), Array(12).fill('abandon').join(' ')]) await expect(f.service.chat('owner', { message })).rejects.toThrow()
+    expect(f.sessions.save).not.toHaveBeenCalled()
+    expect(f.messages.save).not.toHaveBeenCalled()
+    expect(f.model.complete).not.toHaveBeenCalled()
+  })
+  it('authenticated history requires the requested owner and never reads messages after rejection', async () => {
+    const f = fixture()
+    f.sessions.findOne.mockResolvedValue(null as any)
+    await expect(f.service.getSession('other', 'session')).rejects.toThrow()
+    expect(f.sessions.findOne).toHaveBeenCalledWith({ where: { id: 'session', userId: 'other', deletedAt: expect.anything() } })
+    expect(f.messages.find).not.toHaveBeenCalled()
+  })
+  it('feedback cannot modify another owner\'s message', async () => {
+    const f = fixture()
+    ;(f.messages as any).findOne = jest.fn(async () => ({ id: 'message', role: 'assistant', sessionId: 'session' }))
+    f.sessions.findOne.mockResolvedValue(null as any)
+    await expect(f.service.feedback('other', 'message', true)).rejects.toThrow()
+    expect(f.sessions.findOne).toHaveBeenCalledWith({ where: { id: 'session', userId: 'other', deletedAt: expect.anything() } })
+    expect(f.messages.save).not.toHaveBeenCalled()
+  })
   it('returns, persists and restores clarification cards as readable history', async () => {
     const f = fixture()
     const questions = [{ id: 'intent', title: '你的问题？', multiple: false, options: [{ id: 'account', label: '账户' }, { id: 'order', label: '订单' }] }]

@@ -1,21 +1,26 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { aiNavigationLink } from '@/lib/ai-navigation-link'
 import { aiCustomer, type AccountScope, type Citation, type MandateContent, type MandateState, type Run } from '@/lib/api/ai-customer'
 import { useI18n } from '@/lib/i18n'
-import { SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
+import { SESSION_CHANGED, SESSION_EXPIRED, request } from '@/lib/api/_http'
 import { containsWalletSecret } from '@/lib/ai-input-guard'
 import styles from './page.module.css'
 import AiQuestionCard from '@/components/maison/AiQuestionCard'
 import type { AiQuestion } from '@/lib/api/ai-customer'
+import AiComposer from '@/components/maison/AiComposer'
+import AiAnswerActions from '@/components/maison/AiAnswerActions'
+import { aiInputCopy, aiShellCopy } from '@/lib/maison-ai-copy'
+import { aiChatCopy } from '@/lib/maison-content-copy'
+import { showAiAnswer, type AiAttachment } from '@/lib/ai-attachment-policy'
 
 const amounts = ['cashBudgetAtomic','cashReserveAtomic','maxManagedValueAtomic','maxActionAtomic','maxDailyTurnoverAtomic','maxTotalTurnoverAtomic','maxFeeAtomic'] as const
 const integers = ['maxProductWeightBps','maxUnrealizedLossBps','horizonDays','maxLockDays','maxFeeBps','scheduleIntervalMinutes','minTradeIntervalMinutes','rebalanceThresholdBps'] as const
 const labels:Record<string,string>={cashBudgetAtomic:'管理现金',cashReserveAtomic:'账户现金保留',maxManagedValueAtomic:'管理总额上限',maxActionAtomic:'单次申请上限',maxDailyTurnoverAtomic:'每日申请上限',maxTotalTurnoverAtomic:'累计申请上限',maxFeeAtomic:'单次费用上限',maxProductWeightBps:'单产品比例上限（基点）',maxUnrealizedLossBps:'浮亏停止阈值（基点）',horizonDays:'投资期限（天）',maxLockDays:'最长锁定（天）',maxFeeBps:'费用比例上限（基点）',scheduleIntervalMinutes:'检查间隔（分钟）',minTradeIntervalMinutes:'交易最短间隔（分钟）',rebalanceThresholdBps:'调整偏离阈值（基点）'}
 const english:Record<string,string>={cashBudgetAtomic:'Managed cash',cashReserveAtomic:'Cash reserve',maxManagedValueAtomic:'Managed value limit',maxActionAtomic:'Per-application limit',maxDailyTurnoverAtomic:'Daily turnover limit',maxTotalTurnoverAtomic:'Lifetime turnover limit',maxFeeAtomic:'Fee limit',maxProductWeightBps:'Product concentration (%)',maxUnrealizedLossBps:'Loss review threshold (%)',horizonDays:'Investment horizon (days)',maxLockDays:'Maximum lock (days)',maxFeeBps:'Fee rate limit (%)',scheduleIntervalMinutes:'Review interval (minutes)',minTradeIntervalMinutes:'Minimum trade interval (minutes)',rebalanceThresholdBps:'Rebalance threshold (%)'}
-type Message={role:'user'|'assistant';text:string;citations?:Citation[];questions?:AiQuestion[]}
+type Message={id?:string;role:'user'|'assistant';text:string;citations?:Citation[];questions?:AiQuestion[];attachments?:AiAttachment[]}
 function ReplyLinks({text}:{text:string}) {
   return text.split(/(\[[^\]\n]+\]\([^\s)]+\))/g).map((part,index)=>{
     const match=/^\[([^\]]+)\]\(([^)]+)\)$/.exec(part)
@@ -33,6 +38,10 @@ export default function AiAssistantPage(){
 }
 function AiAssistantContent(){
   const {locale}=useI18n();const zh=locale==='zh-CN'
+  const aiCopy=aiInputCopy(locale), shellCopy=aiShellCopy[locale], chatCopy=aiChatCopy[locale]
+  const sendLock=useRef(false)
+  const inflight=useRef<AbortController|null>(null)
+  useEffect(()=>()=>{const controller=inflight.current;inflight.current=null;controller?.abort()},[])
   const [tab,setTab]=useState<'chat'|'mandate'>('chat'),[messages,setMessages]=useState<Message[]>([]),[text,setText]=useState(''),[session,setSession]=useState<string>()
   const [scopes,setScopes]=useState<AccountScope[]>([]),[busy,setBusy]=useState(false),[error,setError]=useState(''),[source,setSource]=useState<{title:string;body:string}|null>(null)
   const [mandate,setMandate]=useState<MandateState|null>(null),[runs,setRuns]=useState<Run[]>([]),[fields,setFields]=useState<Record<string,string>>({}),[actions,setActions]=useState({allowBuy:false,allowRedeem:false,reinvestProceeds:false}),[confirmed,setConfirmed]=useState(false)
@@ -40,6 +49,8 @@ function AiAssistantContent(){
   const [choices,setChoices]=useState<{products:Array<{id:string;name:string}>;positions:Array<{id:string;productId:string;name:string;decimals:number;quantityAtomic:string}>}>({products:[],positions:[]})
   const [provider,setProvider]=useState<string>()
   const [access,setAccess]=useState<'loading'|'ready'|'login'|'error'>('loading')
+  const [history,setHistory]=useState<Array<{id:string;title:string}>>([])
+  useEffect(()=>{let alive=true;void request<Array<{id:string;title:string}>>('/v1/ai/sessions',{loading:'silent'}).then(r=>{if(alive&&r.ok)setHistory(r.data)});return()=>{alive=false}},[])
   useEffect(()=>{let alive=true;void aiCustomer.status().then(r=>{if(alive&&r.ok)setProvider(r.data.provider)});return()=>{alive=false}},[])
   useEffect(()=>{let alive=true;const params=new URLSearchParams(window.location.search),id=params.get('knowledge'),revision=Number(params.get('revision'));if(id&&/^[0-9a-f-]{36}$/i.test(id)&&Number.isSafeInteger(revision)&&revision>0)void aiCustomer.source({id,revision,title:'',locale:'',sourceId:''}).then(r=>{if(!alive)return;if(r.ok)setSource(r.data);else setError(r.error.message)});return()=>{alive=false}},[])
   const copy=(cn:string,en:string)=>zh?cn:en
@@ -47,28 +58,35 @@ function AiAssistantContent(){
   useEffect(()=>{if(tab==='mandate')void load()},[tab])
   async function perform(work:()=>Promise<void>){if(busy)return;setBusy(true);setError('');try{await work()}catch(e){setError((e as Error).message)}finally{setBusy(false)}}
   const change=(k:string,v:string)=>{setFields(f=>({...f,[k]:v}));setConfirmed(false)}
-  const sendAnswer=async(question:string):Promise<boolean>=>{
-    if(busy||!question.trim())return false
+  const sendAnswer=async(question:string,attachments:AiAttachment[]=[]):Promise<boolean>=>{
+    if(busy||sendLock.current||!question.trim())return false
+    sendLock.current=true
+    const controller=new AbortController();inflight.current=controller
     setBusy(true);setError('')
     try{
       if(question.length>4000)throw new Error(copy('答案过长，请缩短后重试','Please shorten your answer'))
-      if(containsWalletSecret(question))throw new Error(copy('请勿发送私钥或助记词','Do not send private keys or recovery phrases'))
-      const reply=await aiCustomer.chat(question,zh?'zh-CN':locale,session,scopes)
+      if(containsWalletSecret([question,...attachments.map(file=>file.name+'\n'+file.text)].join('\n')))throw new Error(chatCopy.secret)
+      const reply=await aiCustomer.chat(question,zh?'zh-CN':locale,session,scopes,attachments,controller.signal)
+      if(controller.signal.aborted||inflight.current!==controller)return false
       if(!reply.ok)throw new Error(reply.error.message)
-      setMessages(m=>[...m,{role:'user',text:question},{role:'assistant',text:reply.data.reply,citations:reply.data.citations,questions:reply.data.questions}]);setSession(reply.data.sessionId)
+      setMessages(m=>[...m,{role:'user',text:question,attachments},{id:reply.data.messageId,role:'assistant',text:reply.data.reply,citations:reply.data.citations,questions:reply.data.questions}]);setSession(reply.data.sessionId)
       return true
-    }catch(e){setError((e as Error).message);return false}finally{setBusy(false)}
+    }catch(e){if(!controller.signal.aborted&&inflight.current===controller)setError((e as Error).message);return false}finally{if(inflight.current===controller){inflight.current=null;sendLock.current=false;setBusy(false)}}
   }
-  const send=async()=>{if(await sendAnswer(text.trim()))setText('')}
+  // Stops the local wait. The synchronous API may still finish and store its answer.
+  const stop=()=>{const controller=inflight.current;if(!controller)return;inflight.current=null;controller.abort();sendLock.current=false;setBusy(false);setError(chatCopy.cancelled)}
   const save=()=>perform(async()=>{if(!confirmed || !mandate)return;const content:MandateContent={...Object.fromEntries(amounts.map(k=>[k,toAtomic(fields[k]??'')])),...Object.fromEntries(integers.map(k=>[k,Number(fields[k]||'NaN')])),allowedProductIds:(fields.allowedProductIds??'').split(/[\s,]+/).filter(Boolean),positions:JSON.parse(fields.positions||'[]'),riskBand:fields.riskBand,effectiveAt:new Date(fields.effectiveAt).toISOString(),expiresAt:new Date(fields.expiresAt).toISOString(),goals:fields.goals,locale:zh?'zh-CN':locale,notifications:['in_app'],...actions} as MandateContent;const r=await aiCustomer.saveMandate(content,mandate.mandate?.revision??0,mandate.termsVersion);if(!r.ok)throw new Error(r.error.message);setConfirmed(false);await load()})
   return <main className={styles.page}><header><Link href="/">RWA.LAT</Link><nav><button aria-pressed={tab==='chat'} onClick={()=>setTab('chat')}>{copy('客服','Support')}</button><button aria-pressed={tab==='mandate'} onClick={()=>setTab('mandate')}>{copy('投资授权','Investment mandate')}</button></nav></header>
     {error&&<p role="alert" className={styles.error}>{error}</p>}
     {tab==='chat'?<section className={styles.card}>
-      <div className={styles.messages} aria-live="polite">{messages.map((m,i)=><article key={i} data-role={m.role}><p>{m.role==='assistant' ? <ReplyLinks text={m.text}/> : m.text}</p> {m.citations?.map(c=>aiNavigationLink(c.url) ? <Link key={c.sourceId} href={aiNavigationLink(c.url)!} prefetch={false}>{c.title}</Link> : <button key={c.sourceId} onClick={()=>perform(async()=>{const r=await aiCustomer.source(c);if(!r.ok)throw new Error(r.error.message);setSource(r.data)})}>{c.title} · v{c.revision}</button>)}</article>)}{busy&&<span role="status">…</span>}</div>
+      {!!history.length&&<select aria-label={shellCopy.newChat} disabled={busy} value={session??''} onChange={event=>{const id=event.target.value;if(!id){setMessages([]);setSession(undefined);return}void perform(async()=>{const result=await request<{id:string;messages:Array<{id:string;role:'user'|'assistant';content:string;citations?:Citation[];questions?:AiQuestion[];attachments?:AiAttachment[]}>}>(`/v1/ai/sessions/${encodeURIComponent(id)}`);if(!result.ok)throw new Error(result.error.message);setSession(result.data.id);setMessages(result.data.messages.map(row=>({...row,text:row.content})))})}}><option value="">{shellCopy.newChat}</option>{history.map(item=><option key={item.id} value={item.id}>{item.title}</option>)}</select>}
+      <div className={styles.messages} aria-live="polite">{messages.map((m,i)=><article key={m.id??i} data-role={m.role}>
+        {m.role==='user'?<><p>{m.text}</p>{m.attachments?.map((file,index)=><small key={index}>{file.name} · {file.method==='ocr'?aiCopy.ocr:aiCopy.extracted}</small>)}</>:showAiAnswer(m.questions)?<><p><ReplyLinks text={m.text}/></p>{m.citations?.map(c=>aiNavigationLink(c.url)?<Link key={c.sourceId} href={aiNavigationLink(c.url)!} prefetch={false}>{c.title}</Link>:<button key={c.sourceId} onClick={()=>perform(async()=>{const r=await aiCustomer.source(c);if(!r.ok)throw new Error(r.error.message);setSource(r.data)})}>{c.title} · v{c.revision}</button>)}<AiAnswerActions text={m.text} messageId={m.id} localId={`${session??'new'}:${i}`} locale={locale}/></>:<p>{m.questions?.map(q=>q.title).join(' · ')}</p>}
+      </article>)}{busy&&<span role="status">{shellCopy.thinking}…</span>}</div>
       <fieldset disabled={busy||!provider}><legend>{copy('向模型服务商分享本人信息','Share my account information with the model provider')} · {provider??'…'}</legend>{(['balances','positions','orders','qualification'] as AccountScope[]).map(s=><label key={s}><input type="checkbox" checked={scopes.includes(s)} onChange={e=>setScopes(a=>e.target.checked?[...a,s]:a.filter(v=>v!==s))}/>{zh?({balances:'余额',positions:'持仓',orders:'订单',qualification:'资格'})[s]:s}</label>)}</fieldset>
       <div className={styles.composerDock}>
         {(() => { const index = messages.findLastIndex(m => m.role === 'assistant'); const latest = messages[index]; return latest?.questions?.length ? <AiQuestionCard key={index} questions={latest.questions} locale={locale} disabled={busy} onConfirm={sendAnswer}/> : null })()}
-        <form onSubmit={e=>{e.preventDefault();void send()}}><textarea aria-label={copy('消息','Message')} value={text} maxLength={4000} onChange={e=>setText(e.target.value)}/><button disabled={busy||!text.trim()}>{copy('发送','Send')}</button></form>
+        <AiComposer key={session??'new'} value={text} onChange={setText} onSend={sendAnswer} onStop={inflight.current?stop:undefined} busy={busy} placeholder={shellCopy.placeholder} sendLabel={chatCopy.send} stopLabel={shellCopy.stop} locale={locale} secretLabel={chatCopy.secret}/>
       </div>
       <details><summary>{copy('创建工单','Create ticket')}</summary><form onSubmit={e=>{e.preventDefault();const data=new FormData(e.currentTarget);void perform(async()=>{const r=await aiCustomer.draftTicket(String(data.get('subject')),String(data.get('body')));if(!r.ok)throw new Error(r.error.message);setDraft(r.data);setTicketConfirmed(false)})}}><input name="subject" required maxLength={200} placeholder={copy('主题','Subject')}/><textarea name="body" required maxLength={5000} placeholder={copy('问题详情','Details')}/><button disabled={busy}>{copy('预览','Preview')}</button></form>{draft&&<div><h3>{draft.content.subject}</h3><p>{draft.content.body}</p><label><input type="checkbox" checked={ticketConfirmed} onChange={e=>setTicketConfirmed(e.target.checked)}/>{copy('确认提交以上内容','Confirm the content above')}</label><button disabled={busy||!ticketConfirmed} onClick={()=>perform(async()=>{const r=await aiCustomer.confirmTicket(draft.id);if(!r.ok)throw new Error(r.error.message);setDraft(null);setMessages(m=>[...m,{role:'assistant',text:r.data.reference}])})}>{copy('提交工单','Submit ticket')}</button></div>}</details>
     </section>:access!=='ready'?<section className={styles.card}>{access==='login'?<Link href="/login?returnTo=%2Fai-assistant">{copy('登录','Log in')}</Link>:access==='loading'?<span role="status">…</span>:<button disabled={busy} onClick={()=>perform(load)}>{copy('重试','Retry')}</button>}</section>:<section className={styles.card}>

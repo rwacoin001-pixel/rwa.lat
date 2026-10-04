@@ -4,10 +4,12 @@ packages:
 
 allowBuilds:
   '@scarf/scarf': false
+  '@tsparticles/engine': false
   esbuild: true
   msw: false
   protobufjs: true
   sharp: true
+  tesseract.js: false
   unrs-resolver: true
   workerd: true
 
