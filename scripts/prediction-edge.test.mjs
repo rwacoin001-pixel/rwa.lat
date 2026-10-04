@@ -70,13 +70,14 @@ test('public edge relay streams only compact backend responses and forwards no s
     assert.deepEqual(await response.json(),{items:[]});assert.equal(response.headers.get('cache-control'),'public,max-age=10')
     assert.equal(received.url,'https://api.rwa.lat/v1/polymarket/public/feed?sort=volume')
     assert.deepEqual(received.options.headers,{accept:'application/json'})
+    assert.equal(received.options.redirect,'manual')
     assert.equal((await proxyPublicPrediction(new Request('https://rwa.lat/'),'event/../../auth')).status,400)
   })
 })
 
 test('relay never turns an error page into a cacheable public JSON response',async()=>{
   const {proxyPublicPrediction}=loader()('lib/prediction-public-proxy.ts')
-  for(const result of [new Response('upstream html',{headers:{'content-type':'text/html'}}),new Response('error',{status:503})]){
+  for(const result of [new Response('upstream html',{headers:{'content-type':'text/html'}}),new Response('error',{status:503}),new Response(null,{status:302,headers:{location:'https://untrusted.example/'}})]){
     await mocked(async()=>result,async()=>{const response=await proxyPublicPrediction(new Request('https://rwa.lat/'),'feed');assert.equal(response.status,502);assert.equal(response.headers.get('cache-control'),null)})
   }
 })

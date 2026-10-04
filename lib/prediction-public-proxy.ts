@@ -6,9 +6,10 @@ export async function proxyPublicPrediction(request:Request,path:string,base=pro
   const target=new URL(`/v1/polymarket/public/${path}`,base)
   target.search=input.search
   try {
-    const upstream=await fetch(target,{headers:{accept:'application/json'},cache:'no-store',redirect:'error',signal:AbortSignal.timeout(20_000)})
-    if(!upstream.ok)return Response.json({error:'Market data unavailable'},{status:upstream.status===400?400:502})
-    if(!upstream.headers.get('content-type')?.includes('application/json'))return Response.json({error:'Market data unavailable'},{status:502})
+    // Workers support manual redirects; do not follow a provider redirect.
+    const upstream=await fetch(target,{headers:{accept:'application/json'},cache:'no-store',redirect:'manual',signal:AbortSignal.timeout(20_000)})
+    if(!upstream.ok){console.warn('prediction_public_upstream_status',upstream.status);return Response.json({error:'Market data unavailable'},{status:upstream.status===400?400:502})}
+    if(!upstream.headers.get('content-type')?.includes('application/json')){console.warn('prediction_public_upstream_content_type');return Response.json({error:'Market data unavailable'},{status:502})}
     return new Response(upstream.body,{headers:{'content-type':'application/json','cache-control':upstream.headers.get('cache-control')||'no-store'}})
-  }catch{return Response.json({error:'Market data unavailable'},{status:502})}
+  }catch(error){console.warn('prediction_public_proxy_error',error instanceof Error?error.name+': '+error.message.replace(/https?:\/\/\S+/g,'[upstream]').slice(0,160):'Unknown error');return Response.json({error:'Market data unavailable'},{status:502})}
 }
