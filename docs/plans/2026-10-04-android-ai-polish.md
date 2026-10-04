@@ -4,7 +4,7 @@ Goal: deliver an installable Android trial APK and reviewable mobile improvement
 
 Architecture: keep the current Next.js/API application as the source of business behavior. Use maintained open-source native/browser components where suitable. Never expose model credentials in the client or make cosmetic changes imply successful KYC. Android authentication must use a supported external browser flow; label untested device features honestly.
 
-Design: retain RWA's existing warm/midnight themes and brand. Animate the existing logo during installed-app startup, for a bounded duration independent of account requests. Safe areas are applied once. Camera screens use a full-screen viewfinder and small controls. AI composer expands smoothly in place; question choices precede an answer.
+Design: retain RWA's existing warm/midnight themes and brand. Animate only the existing logo during installed-app startup, for a bounded duration independent of account requests. The reviewed revision uses Anime.js segment assembly and a subtle sheen, preserving the canonical white/mint and existing light-mode adaptation. Safe areas are applied once. Camera screens use a full-screen viewfinder and small controls. AI composer expands smoothly in place; question choices precede an answer.
 
 Ownership:
 - Android agent: apps/android-client and its build documentation/artifacts. Native trial, permissions, secure navigation, build/signing. No root package or layout edits.

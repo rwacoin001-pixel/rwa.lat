@@ -2,7 +2,7 @@
 
 Source: canonical `E:\rwa-lat-current` → `E:\rwa-lat-recovery\prediction-ui-20261002`, branch `feat/android-client-ai-polish-20261004`. Its verified base and current remote main are both `d76fec11d6f65776f8983f726e58a407d316e06d`. No older checkout was substituted. No merge, deployment or database migration has occurred in this task.
 
-Implemented: installed-app particle logo entrance, compact installed iOS chrome geometry, unified real scanner/KYC capture, shared AI composer and answer actions, question-first display and local file readers. The signed Android trial is available; further emulator/device work was stopped at the user's request.
+Implemented: installed-app logo entrance, compact installed iOS chrome geometry, unified real scanner/KYC capture, shared AI composer and answer actions, question-first display and local file readers. The signed Android trial is available; further emulator/device work was stopped at the user's request.
 
 Verification:
 
@@ -25,3 +25,5 @@ Open-source selection/attribution: `mobile-polish-oss.md`. Details and remaining
 Artifacts: `C:\Users\30396\Desktop\rwa\artifacts\mobile-polish-20261004`. APK SHA256 `EF46545393F4CD297135828B5FF20782056C252CCC6B977224EADC23550F2A67`; signature and five Android unit tests passed, zero lint errors with three documented warnings. Installation/launch were not physically verified. Images provide text OCR, not full model vision; microphone/audio/safe areas and Didit acceptance require real devices/provider. The website overlay cannot animate the OS-owned static iOS launch screen.
 
 Next action requires the user's explicit merge confirmation, followed by pushing the approved main commit and deploying both website and API together. The current APK loads live `rwa.lat`; it does not ship this unmerged website branch by itself.
+
+Logo revision after visual review: removed the particle renderer, gold recoloring, wordmark and decorative line. The entrance now reuses `RwaLogoMark`, the existing Anime.js 4.5 dependency and one scoped assembly/sheening timeline. The development preview repeats; production still ends within 1.83 seconds. Dark mode colors are exactly `#FFFFFF` / `#2FE6BF`; light mode preserves the existing `#0D0D0D` / `#0E8F7A` adaptation. The particle packages and their lockfile entries are removed without changing other dependency snapshots. TypeScript, scoped ESLint, startup-boundary regression, frozen offline dependency installation and actual browser no-text/color/motion checks passed for this revision. The four production builds listed above were performed before this visual revision; rebuilding the frontend is required before eventual deployment. User requested preview first and no deployment.

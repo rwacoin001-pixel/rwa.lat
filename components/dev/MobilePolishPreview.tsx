@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useRwaTheme } from '@/lib/rwa-theme'
-import { ParticleStartupVisual } from '@/components/app-startup'
+import { LogoStartupVisual } from '@/components/app-startup'
 import { TransferScanner } from '@/components/maison/TransferScanner'
 import KycCapture from '@/components/maison/KycCapture'
 import { AiChatScreen } from '@/components/maison/AiChatScreen'
@@ -18,7 +18,7 @@ export default function MobilePolishPreview() {
   const [open, setOpen] = useState(true)
   const [recipient, setRecipient] = useState('')
   return <main className="rwa-shell"><div className="rwa-mobile" data-theme={theme} data-screen="ai">
-    {open && mode === 'startup' && <ParticleStartupVisual theme={theme} />}
+    {open && mode === 'startup' && <LogoStartupVisual theme={theme} replay />}
     {open && mode === 'scanner' && <MaisonPage page="transfer"><TransferScanner onCode={code => { const value = transferRecipientFromCode(code, window.location.origin); if (!value) return false; setRecipient(value); setOpen(false); return true }} onClose={() => setOpen(false)} /></MaisonPage>}
     {open && mode === 'kyc' && <MaisonPage page="kyc"><KycCapture onClose={() => setOpen(false)} onComplete={() => setOpen(false)} /></MaisonPage>}
     {open && mode === 'ai' && <AiChatScreen onClose={() => setOpen(false)} onPlan={() => undefined} />}
