@@ -250,7 +250,7 @@ function detailRoute(asset: OrderAsset): Screen {
   return 'rwa-detail'
 }
 
-function BottomDock({ screen, setScreen, activeScreen, showQuickActions = false }: { screen: Screen; setScreen: (screen: Screen) => void; activeScreen?: PrimaryScreen; showQuickActions?: boolean }) {
+export function BottomDock({ screen, setScreen, activeScreen, showQuickActions = false }: { screen: Screen; setScreen: (screen: Screen) => void; activeScreen?: PrimaryScreen; showQuickActions?: boolean }) {
   const { locale, t } = useI18n()
   const { theme } = useRwaTheme()
   const shellCopy = rwaH5Copy[locale].shell
@@ -2064,7 +2064,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'legal-center' && <MaisonBridge page="trust"><TrustCenterScreen kind="legal-center" go={go} notify={notify} /></MaisonBridge>}
         </ScreenRouter>}
         </ScreenTransition>
-        {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet} />}
+        {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home'} />}
       </div>
       {toast && <div className="toast" role="status"><Check size={17} />{toast}</div>}
       </main>

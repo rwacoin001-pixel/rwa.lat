@@ -5,6 +5,8 @@
 :root {
   /* Phone column cap — wide enough for the largest phones (iPhone 16 Pro Max = 440pt) so no side bands show. */
   --app-max: 480px;
+  --app-dock-height: 52px;
+  --app-topbar-row-height: 44px;
   /* Damped springs sampled from x(t) = 1 − e^(−ζωt)(cos ω_d t + ζω/ω_d · sin ω_d t). */
   --spring: linear(0, .0333, .1144, .2213, .338, .4539, .5619, .6584, .7413, .8105, .8666, .9109, .9447, .9699, .9879, 1.0001, 1.008, 1.0126, 1.0147, 1.0152, 1.0145, 1.0132, 1.0115, 1.0098, 1.008, 1.0064, 1.005, 1.0037, 1); /* ζ .8 · 1.5% overshoot */
   --spring-dur: 520ms;
@@ -114,8 +116,8 @@
   padding-top: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px));
 }
 .rwa-mobile[data-theme][data-screen] .rwa-topbar--s1[data-template] .rwa-topbar__grid {
-  height: 44px;
-  min-height: 44px;
+  height: var(--app-topbar-row-height);
+  min-height: var(--app-topbar-row-height);
   column-gap: 0;
   padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
 }
@@ -360,7 +362,7 @@
    Inactive tabs are 44px icon targets; the active tab opens into a filled capsule (icon + label) on the bouncy spring.
    Warm = ink lacquer bar + ivory capsule; cool = deep navy bar + champagne-gold capsule. */
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock {
-  --dock-h: 52px;
+  --dock-h: var(--app-dock-height);
   --dock-orb: 46px;
   --dock-bar: linear-gradient(180deg, rgba(46, 39, 30, .94) 0%, rgba(24, 20, 15, .95) 100%);
   --dock-bar-line: rgba(255, 238, 212, .12);

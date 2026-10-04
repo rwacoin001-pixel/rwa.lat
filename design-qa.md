@@ -1,97 +1,63 @@
-# Authentication, brand motion, and PWA icon design QA
+# Homepage asset card design QA — 2026-10-05
 
-- Visual source screenshots supplied by the user:
-  - `D:\360MoveData\Users\Administrator\Desktop\rwa.lat\assets\generated\screens-v1\02-sign-in.png`
-  - `D:\360MoveData\Users\Administrator\Desktop\rwa.lat\assets\generated\screens-v1\03-kyc.png`
-- Current-product source captures: `design-audit/auth-2026-07-17/01-home-before.png` through `07-welcome-before.png`.
-- Implementation captures: `design-audit/auth-2026-07-17/08-home-after.png` through `14-verify-email-after-refined.png`.
-- Generated production asset: `public/media/generated/auth/verify-email-metal-envelope-v1.webp`.
-- PWA icon set: `public/icons/rwa-pwa-v2-192.png`, `rwa-pwa-v2-512.png`, `rwa-pwa-v2-maskable-512.png`, and `rwa-pwa-v2-apple-180.png`.
-- Browser viewport: 1265 x 712 for home, KYC, verify-email, and register comparisons; 1280 x 720 for welcome. The existing mobile shell renders at approximately 430 px wide.
-- State: Simplified Chinese, local production build, equivalent route and scroll state inside each before/after pair.
+## Scope and evidence
 
-## Full-view comparison evidence
+- Baseline: `8e5733015d57ee9dab373893428e6ec3ccfe0ed6`.
+- Source visual truth: `C:/Users/30396/.codex/generated_images/01a0df16-ba46-7431-9584-cc87a5d37b62/exec-7cfada50-5a36-4d30-a86e-997fe00e9e73.png` — the first displayed concept selected by the user.
+- Implementation: `http://localhost:3036/dev/home-card`, using the production `HomePortfolioCard`, existing hero CSS/assets and `BottomDock`.
+- Implementation capture: `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/screenshots/03-home-final-light-390x844.jpg`.
+- Full comparison: `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/screenshots/03-home-concept-implementation.png`.
+- Focused card comparison: `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/screenshots/03-home-card-focused-comparison.png`.
+- Previous project-root QA report preserved at `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/03-previous-design-qa.md`.
 
-- KYC: `design-audit/auth-2026-07-17/comparisons/kyc-before-after.png`
-- Verify email: `design-audit/auth-2026-07-17/comparisons/verify-email-before-after.png`
-- Register: `design-audit/auth-2026-07-17/comparisons/register-before-after.png`
-- Welcome: `design-audit/auth-2026-07-17/comparisons/welcome-before-after.png`
+## Comparison conditions
 
-The comparison images place the source capture and the implementation capture in one side-by-side image at the same viewport. KYC and verify-email now keep the center of their headers clear. The generated metallic mail asset has no visible rectangular matte and preserves the dark mint-lit product language. Register retains the supplied luminous semicircle, but the smaller brand and lower content origin create more breathing room. Welcome retains its product composition while reducing the center mark.
-
-## Focused comparison evidence
-
-- Home top bar: `design-audit/auth-2026-07-17/comparisons/home-logo-before-after.png`
-
-The focused crop confirms that the home mark changed from approximately 104 px to 70 px without changing the source artwork or the action controls. The motion remains restrained: the production SVG receives a shallow 3D float, aura pulse, and occasional light sweep, with a reduced-motion fallback.
-
-## Comparison history
-
-1. **P1 — Brand marks competed with task content on KYC and verify-email.**
-   - Before: a centered logo occupied the header between Back and Language controls.
-   - Fix: used the existing header layout with a center spacer on those two routes.
-   - After: both task titles begin sooner and the two action controls remain balanced.
-
-2. **P1 — Verify-email used a flat line icon instead of the requested realistic asset.**
-   - Before: a CSS glass tile, line envelope, and orbit rings.
-   - Fix: generated a brushed titanium/chrome envelope with restrained mint reflections, optimized it to a 768 px WebP, and feathered only the dark outer matte at placement time.
-   - After: the icon reads as a physical, high-resolution metal object without a visible image rectangle.
-
-3. **P2 — Register header and form felt vertically crowded.**
-   - Before: the mark, wordmark, title, subtitle, and first field started too close together.
-   - Fix: moved the arc down 26 px, moved the brand stack down 23 px, increased title spacing, reduced the mark, and expanded the scrollable minimum height from 930 px to 990 px.
-   - After: the title and first field are lower, gaps are more consistent, and no controls overlap or clip.
-
-4. **P2 — Home and welcome marks were oversized.**
-   - Fix: the home top-bar mark is 70 px and the welcome/register mark-only variant is 108 px (104 px on narrow screens). Motion was added only to the home instance.
-
-5. **P1 — Installed desktop PWA could retain the previous icon.**
-   - Before: the manifest exposed only an SVG and a 180 px image under stable old URLs.
-   - Fix: added explicit versioned 192 px, 512 px, 512 px maskable, and 180 px Apple assets; added a stable manifest `id`; set `updateViaCache: none`; call `registration.update()`; and bumped the offline cache to `rwa-lat-offline-v4`.
-   - Validation: every versioned asset returns HTTP 200, the manifest exposes all four icon declarations, and `public/sw.js` passes Node syntax validation.
+- Source: 852 × 1847 pixels. Render: 375 × 812 pixels from a 390 × 844 CSS-pixel browser viewport. Both are normalized to 390 × 844 in the comparison board; the implementation retains the browser scrollbar. This is browser emulation, not a physical device.
+- State: warm/light theme, Simplified Chinese, top of the page, invested sample account, visible balance 12,680.00 USDT, available 2,680.00, three holdings. No authentication token or session is fabricated.
+- The development controls and sample-data label belong only to the preview. The topbar truthfully displays Login because the local browser is unauthenticated; the reference's avatar is not reproduced with fake authentication.
+- User constraints take precedence over full-page pixel cloning: preserve the current hero art and brand font; align the compact card 16px above the expanded dock; keep normal document scrolling; use the first concept's three direct cash actions.
 
 ## Required fidelity surfaces
 
-- **Typography and copy:** existing localized copy, hierarchy, weights, and line wrapping are unchanged.
-- **Spacing and layout:** no overlap, accidental crop, or broken mobile-shell alignment remains in the compared states.
-- **Colors and tokens:** white, graphite, and `#2FE6BF` remain the only brand accents; the mail asset uses the same restrained mint reflection.
-- **Asset fidelity:** the supplied RWA mark SVG remains the visible source; no substitute logo drawing or placeholder was introduced.
-- **Responsiveness:** narrow-screen mark sizing and reduced-motion behavior are present. The taller register screen scrolls instead of compressing controls.
-- **Accessibility:** decorative images use empty alt text, task controls retain labels, focus-visible styling is preserved, and form errors remain announced.
+- **Typography:** existing Instrument Serif/Geist and locale fallbacks retained. Chinese hero scale, wrapping and weight remain unchanged on regular-height phones. Short phones reduce vertical spacing and longer headline sizing to preserve the full card. The gold balance uses exact atomic formatting, a moderate weight and a 28–36px scale; small labels, counts, tabular figures, ellipsis for exceptionally large values and the full unmasked amount title were inspected.
+- **Spacing/layout:** approximately 198/199/202px card heights at 375/390/430 widths; 20px corners, restrained elevation and three equal action columns. All three action targets are at least 52px high. Card-title and privacy controls are at least 44px high. Available funds and holdings share one line. The 16px card/dock gap is verified at 375×667, 390×844 and 430×932, and all seven locales on the shortest viewport.
+- **Colors/tokens:** warm charcoal/champagne and cool navy/gold follow the existing theme tokens; muted currency/labels, gold balance/icons, logical separators and focus styles are retained. No alternate brand palette was introduced.
+- **Assets/icons:** existing coastal day/night raster images, real RWA topbar assets and animated dock sphere are preserved. Cash/privacy controls use the existing Lucide family. No placeholder avatar, recreated logo, CSS picture or additional asset dependency was introduced.
+- **Copy/content:** localized deposit/withdraw/transfer names and original account guidance remain. Missing total, available funds or holdings display an em dash, never a invented zero. Critical restricted/degraded/locked guidance remains visible. Sample numbers are labeled and confined to a development route.
 
-## Interaction and build checks
+## Comparison history and fixes
 
-- Empty register submission announces `请输入有效的邮箱地址。` and moves focus to the email field.
-- Verify-email code `000000` announces the expired-code state after submission.
-- Home motion and register arc animation were sampled at two points and produced different transforms/clip paths.
-- Low-memory production build completed successfully with one worker and a 1024 MB heap.
-- Direct TypeScript validation still reports the repository's existing API-client/product-model errors in `lib/api-client.ts` and `lib/h5-data.ts`; none are in the changed files and the configured production build intentionally skips those existing errors.
+1. **P2 — Short-phone card could meet or overlap the dock.** The initial layout combined an inaccurate topbar subtraction with intrinsic translated headline height. Shared dock/topbar tokens and the first-screen grid fixed the origin and gap. A later 375×667 pass still found Hindi overflow and insufficient spacing for Spanish/French/Portuguese. A short-height-only spacing/headline rule corrected these cases. Revised evidence: `03-home-final-hi-375x667.jpg`, `03-home-final-light-375x667.jpg`, and the seven-locale geometry in `03-home-final-checks.json`; each now measures a 16px gap.
+2. **P2 — An expanded holdings click target could overlap a locked-order CTA.** Independent code review caught the overlap. Holdings are now plain text; the full-size asset-title button provides portfolio access. Locked account guidance keeps its separate View orders button. Button rectangles are saved in `03-home-final-checks.json`.
+3. **P2 — The asset-title accessible name differed from its visible text.** Removed the overriding aria label. Its accessible name now comes from the localized visible title.
+4. **P3 — Mock and rendered optical weight/layout differ slightly.** The implementation uses the actual app font, a lighter balance weight, right-aligned holdings and the original hero crop. These are accepted adaptations for the user's requested compact card and preserved hero, not unresolved functional mismatches.
 
-## Findings
+## Interactions and verification
 
-- No actionable P0, P1, or P2 visual mismatch remains for the requested scope.
-- P3: the register arc can appear faint at the beginning of its animation cycle; the later sampled phase reaches 0.82 opacity and the left-to-right sweep remains clearly visible.
+- Actual `/home` guest page uses the new component, keeps its Create account CTA, measures the same 16px gap and contains no homepage quick-action plus.
+- Deposit, withdrawal, transfer and asset-title clicks navigate to the existing routes. In the unauthenticated local browser they lead to the existing Login screen. No financial submission or authenticated account acceptance was performed.
+- Privacy hides both total and available balance and removes the full-amount title. Restoring visibility works.
+- Scrolling approximately 398px moves the card upward by the same amount; the card is relative in normal flow, not fixed over subsequent content.
+- Seven locales including Arabic RTL: no horizontal overflow on 375×667. Ten account fixtures: guest, email verification, KYC, unfunded, funded, restricted, missing data, locked funds, very large balance and invested account preserve their meaningful state/CTA.
+- Warm and cool themes captured. Final viewport geometry and button checks saved in `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/03-home-final-checks.json`.
+- Production route renders the Next not-found result and no sample content. Its streamed HTTP envelope is 200 with `NEXT_HTTP_ERROR_FALLBACK;404`, so this is not reported as a transport-level 404.
+- TypeScript, scoped lint and production Next build checked. No dependency or API/database/auth/business changes.
+- The final sample-preview browser tab reports no warnings or errors and renders the full card/dock. After one development build restart, an earlier tab logged a transient layout-script parse error; the generated script passed `node --check`, a normal reload rendered correctly and the final fresh tab is clean. No source change was made to disguise this local startup observation.
+- Real homepage/API checks locally show the pre-existing unavailable-local-API warnings. The sample preview is independent of live account data. No claim is made that these warnings or production API availability were fixed by this layout change.
 
-## Home logo size follow-up (2026-07-17)
+## Remaining acceptance boundaries
 
-- Visual source of truth: `design-audit/home-logo-2026-07-17/01-live-before.png` (the currently deployed `/home` view at the time of review).
-- Implementation screenshot: `design-audit/home-logo-2026-07-17/02-local-after.png`.
-- Focused same-image comparison: `design-audit/home-logo-2026-07-17/03-before-after-comparison.png`.
-- Viewport and state: 1280 x 720, Simplified Chinese, `/home`, top of page, equivalent production-build state.
+- Android/iOS hardware, installed-PWA safe-area insets and authenticated balances/financial operations require real-device/production acceptance after approved deployment. CSS respects the existing safe-area variables, but hardware behavior was not simulated as proof.
+- No merge, push or deployment is included in this iteration; source remains on the review branch until explicit user approval.
 
-### Follow-up comparison history
+## Implementation checklist
 
-1. **P2 — The 70 px home mark still competed with the three action controls.**
-   - Fix: reduced only the home top-bar lockup from 70 px to 52 px (50 px on narrow screens). No other logo placement or page spacing changed.
-   - Result: the measured rendered width is 51.93 px at 1280 x 720; the mark now acts as a restrained brand anchor while the action controls remain primary.
-2. **Motion fidelity check.**
-   - The existing 0.72 s reveal and 4.8 s float/aura animations remain active. Transform and filter values changed between two samples 900 ms apart, confirming that the smaller mark is still animated.
-3. **Runtime and build check.**
-   - The low-memory production build completed with a 1024 MB heap and one worker. The browser produced no errors; the only console entry is the expected warning that the undeployed API falls back to the demo catalog.
-
-### Follow-up findings
-
-- No actionable P0, P1, or P2 visual mismatch remains for the home-logo scope.
-- The 52 px asset remains crisp because it is the existing production SVG, not a raster replacement.
+- [x] Use the first concept's compact balance and three direct actions.
+- [x] Preserve hero imagery, font families, themes and localized account states.
+- [x] Remove the home-only quick plus.
+- [x] Align to the expanded dock and keep normal scrolling.
+- [x] Check responsive layout, privacy, status fixtures and existing navigation.
+- [x] Compare source and render together in full and focused images.
+- [ ] Merge/push/deploy only after the user confirms.
 
 final result: passed

@@ -32,6 +32,7 @@
   --home-sans: var(--font-geist-sans), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
   --home-ease: cubic-bezier(.22, .8, .18, 1);
   --home-gutter: 22px;
+  --home-topbar-box: calc(var(--app-topbar-row-height, 44px) + var(--app-chrome-air, 10px) + env(safe-area-inset-top));
   --font-display: var(--home-display);
   --home-h2-size: 34px;
   --home-h2-tracking: -.01em;
@@ -112,7 +113,7 @@
   left: 0;
   right: 0;
   width: min(100%, var(--app-max));
-  height: min(80vh, 740px);
+  height: 100svh;
   margin-inline: auto;
   pointer-events: none;
   will-change: transform;
@@ -134,6 +135,15 @@
     url('/media/home/hero-cool.webp');
 }
 
+.firstScreen {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: minmax(min-content, 1fr) auto;
+  gap: 22px;
+  min-height: calc(100svh - var(--app-dock-height, 52px) - max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) - 16px);
+  margin-top: calc(-1 * var(--home-topbar-box));
+}
 .hero {
   --chrome-color: #a7b7c8;
   position: relative;
@@ -141,9 +151,8 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  min-height: min(640px, 86vh);
-  margin-top: calc(-1 * (var(--topbar-h, 56px) + env(safe-area-inset-top)));
-  padding: calc(var(--topbar-h, 56px) + env(safe-area-inset-top) + 34px) 0 150px;
+  min-height: min-content;
+  padding: calc(var(--home-topbar-box) + 34px) 0 0;
   color: var(--home-hero-ink);
 }
 .heroCopy { padding-inline: var(--home-gutter); will-change: opacity, transform; }
@@ -185,26 +194,23 @@
   z-index: 2;
   display: grid;
   gap: 64px;
-  padding: 0 var(--home-gutter);
+  padding: 32px var(--home-gutter) 0;
   background: linear-gradient(180deg, transparent 0, var(--home-bg) 150px);
 }
 
-/* Lacquer portfolio card: a plain rounded slab (the D3.4 bevel-and-ear silhouette was dropped at the owner's request —
-   no sharp corners). The lacquer is painted on ::before and clipped to --card-shape, so the card itself stays
-   unclipped and its drop-shadow follows the rounded edge. */
+/* Compact portfolio summary; account guidance and cash routes retain their own guards. */
 .card {
-  --card-ear: 0px;
-  --card-shape: inset(0 round 24px);
+  --card-shape: inset(0 round 20px);
   position: relative;
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  min-height: 200px;
-  margin-top: -118px;
-  padding: calc(22px + var(--card-ear)) 22px 20px;
+  gap: 4px;
+  min-width: 0;
+  margin-inline: var(--home-gutter);
+  padding: 12px 18px 10px;
   color: var(--home-lacquer-ink);
-  filter: drop-shadow(var(--light-dx, 0) calc(20px + var(--light-dy, 0px)) 24px rgba(56, 38, 20, .3)) drop-shadow(0 5px 8px rgba(56, 38, 20, .14));
+  filter: drop-shadow(0 12px 18px rgba(56, 38, 20, .2));
   --mx: 78%;
   --my: 0%;
 }
@@ -214,10 +220,10 @@
   z-index: -1;
   inset: 0;
   clip-path: var(--card-shape);
-  background: var(--tex-brushed, none) 0 0 / 240px 120px, var(--home-lacquer);
-  box-shadow: inset 0 0 0 .5px var(--home-lacquer-line);
+  background: var(--home-lacquer);
+  box-shadow: inset 0 0 0 1px var(--home-lacquer-line);
 }
-:global(.rwa-mobile[data-theme='dark']) .card { filter: drop-shadow(var(--light-dx, 0) calc(24px + var(--light-dy, 0px)) 28px rgba(0, 0, 0, .55)) drop-shadow(0 6px 10px rgba(0, 0, 0, .35)); }
+:global(.rwa-mobile[data-theme='dark']) .card { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .4)); }
 .cardSheen {
   position: absolute;
   z-index: -1;
@@ -233,20 +239,33 @@
 /* Rim light along the top edge. */
 .card::after { content: ''; position: absolute; z-index: -1; inset: 0; clip-path: var(--card-shape); pointer-events: none; background: linear-gradient(180deg, rgba(255, 240, 210, .14), transparent 34px), radial-gradient(160px 40px at calc(100% - 60px) 0, rgba(217, 183, 126, .28), transparent 70%); }
 @keyframes home-sheen { 0%, 55% { background-position: 0 0, 130% 0; } 100% { background-position: 0 0, -130% 0; } }
-.cardTop { position: relative; display: flex; margin-top: -8px; align-items: center; justify-content: space-between; min-height: 28px; color: var(--home-lacquer-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
-/* The balance toggle rides up into the ear. */
-.cardTop button { display: grid; align-self: flex-start; margin-top: calc(var(--card-ear) * -1 + 2px); place-items: center; width: 32px; height: 32px; border: 1px solid var(--home-lacquer-line); border-radius: 999px; color: inherit; background: transparent; cursor: pointer; }
-.cardStatus { position: relative; margin-top: 10px; font-family: var(--home-display); font-size: 30px; font-weight: 400; line-height: 1.1; }
-.cardStatusSmall { position: relative; color: var(--home-lacquer-accent); font-size: 12px; font-weight: 500; }
-.cardValue { position: relative; margin-top: 4px; font-size: 38px; font-weight: 300; letter-spacing: -.04em; line-height: 1.05; font-variant-numeric: tabular-nums; }
-.cardFoot { position: relative; display: flex; align-items: stretch; gap: 8px; margin-top: auto; padding-top: 16px; }
-/* Holdings / available cash: small cards set into the lacquer. */
-.cardFoot > span { display: grid; flex: 1 1 0; align-content: end; gap: 3px; min-width: 0; padding: 11px 12px 10px; border-radius: 14px; background: rgba(255, 244, 222, .055); box-shadow: inset 0 0 0 .5px var(--home-lacquer-line), inset 0 .5px 0 rgba(255, 244, 222, .12); }
-.cardFoot b { overflow: hidden; font-size: 15px; font-weight: 500; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
-.cardFoot small { color: var(--home-lacquer-muted); font-size: 10.5px; letter-spacing: .06em; }
-.cardFoot button { display: grid; flex: none; place-items: center; align-self: center; width: 42px; height: 42px; border: 1px solid var(--home-lacquer-line); border-radius: 999px; color: var(--home-lacquer-accent); background: transparent; cursor: pointer; }
-.cardCta { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 50px; margin-top: auto; padding: 0 6px 0 20px; border: 0; border-radius: 999px; color: #1b1712; background: linear-gradient(180deg, #ecd3a4, #cfa769); box-shadow: inset 0 1px rgba(255, 255, 255, .55), 0 10px 24px -12px rgba(207, 167, 105, .8); font: inherit; font-size: 14px; font-weight: 600; letter-spacing: .02em; cursor: pointer; }
-.cardFoot + .cardCta { margin-top: 16px; }
+.cardTop { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; color: var(--home-lacquer-muted); font-size: 12px; font-weight: 400; }
+.cardHeading { display: flex; align-items: center; min-width: 0; }
+.cardTitle, .cardPrivacy, .cardExplore { padding: 0; border: 0; color: inherit; background: none; font: inherit; cursor: pointer; }
+.cardTitle { min-width: 0; min-height: 44px; text-align: start; }
+.cardPrivacy, .cardExplore { display: grid; flex: none; width: 44px; height: 44px; place-items: center; }
+.cardPrivacy { color: var(--home-lacquer-ink); }
+.cardExplore { color: var(--home-lacquer-accent); }
+.cardSample { flex: none; font-size: 10px; font-weight: 400; }
+.cardStatus { position: relative; margin: 4px 0 12px; font-family: var(--home-display); font-size: 24px; font-weight: 400; line-height: 1.2; }
+.cardValue { position: relative; display: flex; align-items: baseline; gap: 8px; min-width: 0; font-variant-numeric: tabular-nums; }
+.cardValue > strong { overflow: hidden; min-width: 0; color: var(--home-lacquer-accent); font-size: clamp(28px, 8.5vw, 36px); font-weight: 500; letter-spacing: -.03em; line-height: 1.16; text-overflow: ellipsis; white-space: nowrap; }
+.cardCurrency { flex: none; color: var(--home-lacquer-muted); font-size: 13px; }
+.cardFoot { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; min-height: 20px; }
+.cardFoot > span { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.cardFoot > span:first-child { flex: 1; }
+.cardFoot > span:last-child { flex: none; }
+.cardFoot b { overflow: hidden; font-size: 13px; font-weight: 400; font-variant-numeric: tabular-nums; text-overflow: ellipsis; white-space: nowrap; }
+.cardFoot small { flex: none; color: var(--home-lacquer-muted); font-size: 11px; }
+.cardNotice { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--home-lacquer-accent); font-size: 11px; line-height: 1.4; }
+.cardNotice button { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0; border: 0; color: inherit; background: none; font: inherit; cursor: pointer; }
+.cardActions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 2px; padding-top: 8px; border-top: 1px solid var(--home-lacquer-line); }
+.cardActions button { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 5px; min-width: 0; min-height: 52px; padding: 2px 4px; border: 0; color: var(--home-lacquer-accent); background: none; font: inherit; font-size: 12px; line-height: 1.2; cursor: pointer; }
+.cardActions button + button { border-inline-start: 1px solid var(--home-lacquer-line); }
+.cardActions button:hover, .cardPrivacy:hover, .cardExplore:hover { color: var(--home-lacquer-ink); }
+.card button:focus-visible { outline: 2px solid var(--home-lacquer-accent); outline-offset: 2px; border-radius: 8px; }
+.cardActions button:active { background: rgba(255, 244, 222, .06); }
+.cardCta { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; min-height: 44px; margin-top: auto; padding: 0 6px 0 16px; border: 0; border-radius: 999px; color: #1b1712; background: linear-gradient(180deg, #ecd3a4, #cfa769); box-shadow: inset 0 1px rgba(255, 255, 255, .55); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
 .cardCtaIcon { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 999px; color: #f5eee2; background: #1b1712; transition: transform .5s var(--home-ease); }
 .cardCta:hover .cardCtaIcon { transform: rotate(45deg); }
 
@@ -256,7 +275,7 @@
   isolation: isolate;
   display: flex;
   align-items: center;
-  margin-top: -46px;
+  margin-top: 0;
   overflow: hidden;
   border-radius: 18px;
   background: var(--home-glass);
@@ -371,6 +390,14 @@
   .sectionHead h2 { font-size: 29px; }
   .asset { flex-basis: 80%; }
 }
+/* Short phones keep the complete card above the dock, including longer translated headlines. */
+@media (max-height: 740px) {
+  .hero { padding-top: calc(var(--home-topbar-box) + 20px); }
+  .heroKicker { margin-top: 24px; }
+  .heroTitle { font-size: clamp(36px, 11vw, 44px); }
+  .root[data-locale='hi'] .heroTitle { font-size: 36px; }
+  .heroSub { margin-top: 12px; }
+}
 
 /* globals.css resets `.rwa-mobile[data-theme='light'] .screen span|small|p { color: inherit }` (0,3,1).
    Restore the colour-bearing text nodes with one step more specificity (0,4,0). */
@@ -379,6 +406,7 @@
 :global(.rwa-mobile) .root.root .sectionIndex { color: var(--home-accent); }
 :global(.rwa-mobile[data-theme='dark']) .root.root .heroItalic { color: #f0cf96; }
 :global(.rwa-mobile) .root.root .cardFoot small { color: var(--home-lacquer-muted); }
+:global(.rwa-mobile) .root.root .cardCurrency, :global(.rwa-mobile) .root.root .cardSample { color: var(--home-lacquer-muted); }
 :global(.rwa-mobile) .root.root .cardFoot b { color: var(--home-lacquer-ink); }
 :global(.rwa-mobile) .root.root .cardCtaIcon { color: #f5eee2; }
 :global(.rwa-mobile) .root.root .assetRank, :global(.rwa-mobile) .root.root .assetClass { color: #fbf6ee; }

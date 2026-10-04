@@ -15,7 +15,7 @@
  */
 
 import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Eye, EyeOff, Gift, ShieldCheck, X } from 'lucide-react'
+import { ArrowUpRight, Gift, ShieldCheck, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { Instrument_Serif } from 'next/font/google'
 import { GeistSans } from 'geist/font/sans'
@@ -42,7 +42,8 @@ import { HomeMarkets } from '@/components/home/HomeMarkets'
 import { HomeForYou } from '@/components/home/HomeForYou'
 import { HomePolymarket } from '@/components/home/HomePolymarket'
 import { homeStateCopy } from '@/components/home/home-state-copy'
-import { CountUp, EASE, MaskLines, Rise, useSheen } from '@/components/home/maison-motion'
+import { CountUp, EASE, MaskLines, Rise } from '@/components/home/maison-motion'
+import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { homeDataCopy } from '@/lib/route-copy'
 import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home'
@@ -70,13 +71,6 @@ const classLabels: Record<'en' | 'zh-CN', Record<string, string>> = {
 
 const tickerSymbols: Record<string, string> = { '^TNX': 'US10Y', 'DX-Y.NYB': 'DXY', 'GC=F': 'GOLD', '^GSPC': 'S&P 500', BTC: 'BTC', ETH: 'ETH' }
 
-type HomeAccountSnapshot = {
-  totalAssetsAtomic: string | null
-  totalAssetsDecimals: number
-  availableAtomic: string | null
-  availableDecimals: number
-  holdings: number
-}
 type FeaturedAsset = { slug: string; name: string; symbol?: string; assetClass?: string; marketCapUsd?: string | null; change24hPct?: string | null; change7dPct?: string | null; rank?: number | null; issuer?: { name: string } | null }
 type Distribution = { assetClass: string; assetCount: number; totalMarketCapUsd: string }
 
@@ -99,29 +93,6 @@ function walletTotalAtomic(wallet: WalletView) {
     try { total += BigInt(amount) } catch { return null }
   }
   return total.toString()
-}
-
-function formatAtomicUsd(atomic: string | null, decimals: number, locale: AppLocale) {
-  if (atomic === null) return '—'
-  try { return fmtUsd(fromAtomic(atomic, decimals), { locale }) } catch { return '—' }
-}
-
-function atomicUsdCents(atomic: string | null, decimals: number) {
-  if (atomic === null || !/^\d+$/.test(atomic) || !Number.isInteger(decimals) || decimals < 0 || decimals > 78) return null
-  try {
-    let scale = BigInt(1)
-    for (let index = 0; index < decimals; index += 1) scale *= BigInt(10)
-    const cents = (BigInt(atomic) * BigInt(100) + scale / BigInt(2)) / scale
-    return cents <= BigInt(Number.MAX_SAFE_INTEGER) ? Number(cents) : null
-  } catch {
-    return null
-  }
-}
-
-function formatUsdCents(value: number, locale: AppLocale) {
-  const cents = Math.round(value)
-  if (!Number.isSafeInteger(cents)) return '—'
-  try { return fmtUsd(fromAtomic(BigInt(cents).toString(), 2), { locale }) } catch { return '—' }
 }
 
 function FeaturedAssetPhoto({ src }: { src: string }) {
@@ -237,14 +208,12 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const overview = useQuery('rwa:overview', getRwaOverview, { pollInterval: POLL.quote })
   const featured = useQuery('rwa:featured:8', () => request<{ items: FeaturedAsset[] }>('/v1/rwa/assets?featured=true&limit=8'), { staleTime: 60_000, pollInterval: POLL.list })
   const context = useQuery('market-context:home', getMarketContextView, { staleTime: 45_000, pollInterval: POLL.quote })
-  const [account, setAccount] = useState<HomeAccountSnapshot | null>(null)
-  const [hideBalance, setHideBalance] = useState(false)
+  const [account, setAccount] = useState<HomePortfolioSnapshot | null>(null)
   const [sessionProbe, setSessionProbe] = useState<{ status: 'loading' | 'guest' | 'ok' | 'error'; view: SessionView | null }>({ status: 'loading', view: null })
   const [kycView, setKycView] = useState<KycStatusView | null>(null)
   const [walletSnapshot, setWalletSnapshot] = useState<{ available: number; locked: number; pending: number; invested: number } | null>(null)
   const [positionsCount, setPositionsCount] = useState<number | null>(null)
   const [topbarHidden, setTopbarHidden] = useState(false)
-  const cardRef = useSheen<HTMLDivElement>()
 
   useEffect(() => {
     let cancelled = false
@@ -262,7 +231,8 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
           totalAssetsDecimals: wallet ? wallet.asset.decimals : 6,
           availableAtomic: wallet?.balances.availableAtomic ?? null,
           availableDecimals: wallet?.asset.decimals ?? 6,
-          holdings: positions.length,
+          holdings: positionsResult.status === 'fulfilled' ? positions.length : null,
+          currency: wallet?.asset.code === 'USDT' ? 'USDT' : 'USD',
         })
       }
       if (wallet) setWalletSnapshot({
@@ -352,7 +322,6 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const stateLabels = homeStateCopy[locale]
   const statusLabel = state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
   const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' ? account : null
-  const portfolioValueCents = portfolioAccount ? atomicUsdCents(portfolioAccount.totalAssetsAtomic, portfolioAccount.totalAssetsDecimals) : null
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
 
   return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden}>
@@ -361,6 +330,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     <RwaTopbar screen="home" surface="transparent-over-media" action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/profile/referral') }} />
     <PullToRefresh />
 
+    <div className={styles.firstScreen}>
     <header className={styles.hero} data-chrome="">
       <motion.div className={styles.heroCopy} style={reduced ? undefined : { opacity: heroOpacity, y: heroLift }}>
         <motion.div className={styles.heroMeta} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.1 }}>
@@ -373,26 +343,10 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       <Ticker quotes={tickerQuotes} locale={locale} />
     </header>
 
+      <HomePortfolioCard state={state} account={portfolioAccount} labels={{ portfolio: copy.portfolio, available: copy.available, holdings: copy.holdings, showBalance: utility.showBalance, hideBalance: utility.hideBalance }} status={statusLabel} ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} />
+    </div>
+
     <div className={styles.content}>
-      <motion.div ref={cardRef} className={styles.card} data-lifecycle={state.lifecycle} initial={reduced ? false : { opacity: 0, y: 28 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.1, ease: EASE, delay: 0.45 }}>
-        <span className={styles.cardSheen} aria-hidden="true" />
-        <div className={styles.cardTop}>
-          <span>{copy.portfolio}</span>
-          {portfolioAccount && <button type="button" onClick={() => setHideBalance(value => !value)} aria-label={hideBalance ? utility.showBalance : utility.hideBalance}>{hideBalance ? <EyeOff size={16} /> : <Eye size={16} />}</button>}
-        </div>
-        <strong className={portfolioAccount ? styles.cardStatusSmall : styles.cardStatus} aria-live="polite">{statusLabel}</strong>
-        {portfolioAccount && <>
-          <strong className={styles.cardValue} dir="ltr">{hideBalance ? '••••••' : portfolioAccount.totalAssetsAtomic === null ? '—' : portfolioValueCents === null ? formatAtomicUsd(portfolioAccount.totalAssetsAtomic, portfolioAccount.totalAssetsDecimals, locale) : <CountUp value={portfolioValueCents} format={value => formatUsdCents(value, locale)} />}</strong>
-          <div className={styles.cardFoot}>
-            <span><b>{portfolioAccount.holdings}</b><small>{copy.holdings}</small></span>
-            <span><b dir="ltr">{portfolioAccount.availableAtomic == null ? '—' : hideBalance ? '••' : formatAtomicUsd(portfolioAccount.availableAtomic, portfolioAccount.availableDecimals, locale)}</b><small>{copy.available}</small></span>
-            {state.lifecycle === 'invested' && <button type="button" onClick={() => go('portfolio')} aria-label={copy.portfolio}><ArrowUpRight size={18} /></button>}
-          </div>
-        </>}
-        {mainCta && ctaLabel && <motion.button type="button" className={styles.cardCta} onClick={openMainCta} whileTap={reduced ? undefined : { scale: .97 }} transition={{ type: 'spring', stiffness: 420, damping: 26 }}>
-          <span>{ctaLabel}</span><span className={styles.cardCtaIcon}><ArrowUpRight size={16} /></span>
-        </motion.button>}
-      </motion.div>
 
       {(state.lifecycle === 'funded' || state.lifecycle === 'invested') && <InviteStrip copy={extra} locale={locale} />}
 
