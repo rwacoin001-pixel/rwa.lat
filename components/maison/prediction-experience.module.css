@@ -52,6 +52,59 @@
 .quickAmounts button { flex:1; }
 .ticketFooter { position:sticky; bottom:calc(-18px - env(safe-area-inset-bottom)); padding:12px 0 calc(18px + env(safe-area-inset-bottom)); background:var(--m-bg); border-top:1px solid var(--m-line); z-index:2; }
 .ticketFooter button { margin-top:0!important; }
+.compactSheet { padding-bottom:calc(12px + env(safe-area-inset-bottom)); }
+.compactSheet .sheetHead { margin-bottom:12px; }
+.compactSheet .sheetHead h2 { margin:0; padding:8px 14px; border-radius:22px; background:var(--m-glass-deep); font-family:var(--m-sans); font-size:13px; font-weight:650; }
+.ticketIdentity { gap:10px; margin:0 0 10px; }
+.ticketIdentity > span { flex:none; width:40px; height:40px; border-radius:12px; }
+.ticketIdentity > div { min-width:0; }
+.ticketIdentity small { margin:0 0 3px; font-size:11px; line-height:1.4; }
+.ticketIdentity b { font-size:14px; line-height:1.4; overflow-wrap:anywhere; }
+.compactTicket { display:grid; gap:10px; }
+.hideUnavailable { display:flex; align-items:center; justify-content:flex-end; gap:6px; font-size:11px; color:var(--m-muted); min-height:36px; cursor:pointer; }
+.hideUnavailable input { width:15px; height:15px; accent-color:var(--m-accent); }
+.ticketAmount { padding:6px 0 0; text-align:center; }
+.amountLabel { color:var(--m-muted); font-size:11px; }
+.centerAmount { display:flex; justify-content:center; align-items:baseline; gap:8px; max-width:100%; padding-top:3px; }
+.centerAmount input { min-width:0; width:100%; padding:0; border:0; background:transparent; color:var(--m-ink); font:600 clamp(44px,15vw,64px)/1.1 var(--m-sans); letter-spacing:-.05em; direction:ltr; text-align:center; outline:none; }
+.centerAmount input::placeholder { color:var(--m-faint); }
+.centerAmount input:focus-visible { border-radius:8px; box-shadow:0 0 0 2px var(--m-accent); }
+.centerAmount span { color:var(--m-muted); font-size:11px; font-weight:650; }
+.balance { margin:6px 0 0; color:var(--m-muted); font-size:11px; line-height:1.4; }
+.ticketOutcomes { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; border:1px solid var(--m-line-soft); border-radius:16px; background:var(--m-glass-deep); }
+.ticketOutcomes button { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-height:38px; border:1px solid transparent; border-radius:12px; color:var(--m-muted); background:transparent; font:600 13px var(--m-sans); cursor:pointer; }
+.ticketOutcomes button small { font-size:11px; font-weight:500; }
+.ticketOutcomes button[aria-pressed='true'] { background:var(--m-glass); border-color:var(--m-line); }
+.ticketOutcomes button[aria-pressed='true'][data-side='yes'] { color:var(--m-up); }
+.ticketOutcomes button[aria-pressed='true'][data-side='no'] { color:var(--m-down); }
+.ticketOutcomes button:disabled { opacity:.4; filter:grayscale(1); cursor:not-allowed; }
+.unavailableButton { filter:grayscale(1); }
+.netWin { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px 9px; min-height:34px; text-align:center; }
+.netWin span { color:var(--m-muted); font-size:11px; }
+.netWin b { color:var(--m-up); font-size:21px; font-weight:650; }
+.compactTicket .quickAmounts { margin:0; gap:7px; }
+.compactTicket .quickAmounts button { min-height:38px; min-width:0; font-size:12px; }
+.ticketDetails { color:var(--m-muted); font-size:11px; }
+.ticketDetails summary { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:30px; list-style:none; cursor:pointer; }
+.ticketDetails summary::-webkit-details-marker { display:none; }
+.ticketDetails[open] summary svg { rotate:180deg; }
+.ticketDetails dl { margin:0 0 5px; padding:0 9px; border:1px solid var(--m-line); border-radius:10px; background:var(--m-glass); }
+.ticketDetails dl > div { display:flex; justify-content:space-between; gap:12px; padding:8px 0; border-bottom:1px solid var(--m-line-soft); }
+.ticketDetails dl > div:last-child { border:0; }
+.ticketDetails dd { margin:0; color:var(--m-ink); text-align:end; }
+.quoteLine { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:5px 10px; font-size:11px; line-height:1.4; color:var(--m-muted); }
+.quoteLine button { display:inline-flex; gap:4px; align-items:center; min-height:30px; padding:0; border:0; background:transparent; color:var(--m-accent); font:inherit; cursor:pointer; }
+.quoteLine button:disabled { opacity:.5; cursor:not-allowed; }
+.quoteSpinner { animation:chartSpin .8s linear infinite; }
+.ticketIssue { margin:0; color:var(--m-down); font-size:12px; line-height:1.4; }
+.compactTicket .ticketConsent { margin:0; align-items:center; font-size:10px; line-height:1.45; }
+.compactTicket .ticketConsent input { width:16px; height:16px; margin:0; }
+.compactTicket .ticketFooter { bottom:calc(-12px - env(safe-area-inset-bottom)); padding:10px 0 calc(12px + env(safe-area-inset-bottom)); }
+.compactTicket .ticketFooter button { width:100%; min-height:52px; padding:14px 18px; font-size:15px; }
+.compactTicket .ticketFooter button:disabled { filter:grayscale(1); }
+:is(.ticketOutcomes button,.quoteLine button,.ticketDetails summary):focus-visible { outline:2px solid var(--m-accent); outline-offset:2px; }
+@media(max-height:700px) { .compactTicket { gap:7px; } .centerAmount input { font-size:48px; } .ticketIdentity { margin-bottom:4px; } .netWin b { font-size:19px; } }
+@media(prefers-reduced-motion:reduce) { .quoteSpinner { animation:none; } }
 @keyframes floatCard { 50% { translate:0 -5px; } }
 @keyframes guideReveal { from { opacity:0; translate:10px 0; } to { opacity:1; translate:0 0; } }
 @media(prefers-reduced-motion:reduce) { .guideImage > g, .guideScene { animation:none; } }

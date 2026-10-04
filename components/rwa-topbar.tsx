@@ -1,10 +1,12 @@
 'use client'
 
-import { ChevronLeft, X, Moon, Sun, SlidersHorizontal, Search, Bell, Share2, Star, UserRound, Settings, MoreHorizontal, CircleHelp, Pencil, Calendar, ReceiptText, Download, Plus, UserPlus, CheckCheck, BookOpen, Info, type LucideIcon } from 'lucide-react'
-import { useEffect, useSyncExternalStore, type ReactNode } from 'react'
+import { AlertTriangle, Check, ChevronLeft, X, Moon, Sun, SlidersHorizontal, Search, Bell, Share2, Star, UserRound, Settings, MoreHorizontal, CircleHelp, Pencil, Calendar, ReceiptText, Download, Plus, UserPlus, CheckCheck, BookOpen, Info, type LucideIcon } from 'lucide-react'
+import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { revealTheme } from './maison/theme-reveal'
-import { rwaScreenTopbarKinds, slotsForScreen, type Slot, type TopbarKind, type SlotConfig } from '@/lib/rwa-topbar-config'
+import { hasDefaultTopbarAction, topbarDestinations, rwaScreenTopbarKinds, slotsForScreen, type Slot, type TopbarKind, type SlotConfig } from '@/lib/rwa-topbar-config'
+import { sharePage } from '@/lib/share-page'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { navigate } from '@/lib/routes'
 import { useI18n, type AppLocale } from '@/lib/i18n'
@@ -18,9 +20,10 @@ import RwaLogoMark from './rwa-logo'
 import {useCommunityMe} from '@/lib/use-community-me'
 import {CommunityAvatar} from './community-avatar'
 import LanguageMenu from './language-menu'
+import actionStyles from './topbar-actions.module.css'
 export type { Slot }
 export type TopbarCenter = { kind: 'title'; text: ReactNode } | { kind: 'segment'; items: string[]; value: number; onChange: (index: number) => void } | { kind: 'steps'; total: number; current: number } | null
-export type RwaTopbarAction = { label: string; onClick: () => void; Icon?: LucideIcon; badge?: boolean }
+export type RwaTopbarAction = { label: string; onClick: () => void; Icon?: LucideIcon; badge?: boolean; disabled?: boolean; busy?: boolean }
 type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; action?: RwaTopbarAction; className?: string; badge?: { slot: 'R2' | 'R1'; count: number } }
 const icons: Record<Exclude<Slot, null | 'logo' | 'language'>, LucideIcon> = { back: ChevronLeft, close: X, theme: Moon, filter: SlidersHorizontal, search: Search, bell: Bell, share: Share2, star: Star, avatar: UserRound, gear: Settings, more: MoreHorizontal, help: CircleHelp, edit: Pencil, calendar: Calendar, ledger: ReceiptText, export: Download, plus: Plus, follow: UserPlus, readall: CheckCheck, book: BookOpen, info: Info }
 type TopbarCopy = { slots: Record<Exclude<Slot, null>, string>; account: string; signIn: string; steps: string; unread: string; themeTo: Record<'light' | 'dark', string>; ring: Record<Exclude<KycRing, null>, string> }
@@ -39,6 +42,15 @@ const noopSubscribe = () => () => {}
 // Scroll-edge appearance: the bar is clear at the top of a page and turns to glass once content scrolls under it.
 const subscribeScroll = (onChange: () => void) => { window.addEventListener('scroll', onChange, { passive: true }); return () => window.removeEventListener('scroll', onChange) }
 const readScrolled = () => window.scrollY > 2
+const shareCopy: Record<AppLocale, { copied: string; failed: string }> = {
+  en: { copied: 'Link copied', failed: 'Could not share or copy the link. Try again.' },
+  'zh-CN': { copied: '链接已复制', failed: '分享或复制失败，请重试。' },
+  hi: { copied: 'लिंक कॉपी हुआ', failed: 'लिंक साझा या कॉपी नहीं हुआ। फिर प्रयास करें।' },
+  es: { copied: 'Enlace copiado', failed: 'No se pudo compartir ni copiar el enlace. Reintenta.' },
+  ar: { copied: 'تم نسخ الرابط', failed: 'تعذرت مشاركة الرابط أو نسخه. حاول مجددًا.' },
+  fr: { copied: 'Lien copié', failed: 'Impossible de partager ou copier le lien. Réessayez.' },
+  pt: { copied: 'Link copiado', failed: 'Não foi possível compartilhar ou copiar o link. Tente de novo.' },
+}
 
 function AccountButton({ copy, onProfile, unread }: { copy: TopbarCopy; onProfile?: () => void; unread: number }) {
   const { signedIn, initial, ring, userId } = useAccount()
@@ -66,7 +78,10 @@ export default function RwaTopbar(props: Props) {
   // Every bar follows the Home rule: hidden while reading down, back on a small upward scroll or at the top.
   const chromeHidden = useScrollChrome()
   const config = { ...slotsForScreen(props.screen, props.kind), ...Object.fromEntries(Object.entries(props).filter(([key, value]) => ['template', 'l1', 'l2', 'r2', 'r1', 'surface', 'steps', 'hidden'].includes(key) && value !== undefined)) } as SlotConfig
+  const [shareNotice, setShareNotice] = useState<{ text: string; error: boolean } | null>(null)
+  const sharing = useRef(false)
   useEffect(() => { expandChrome() }, [])
+  useEffect(() => { if (!shareNotice) return; const timer = window.setTimeout(() => setShareNotice(null), 3000); return () => window.clearTimeout(timer) }, [shareNotice])
   const transparent = config.surface === 'transparent-over-media'
   const kind = props.kind ?? (props.screen ? rwaScreenTopbarKinds[props.screen] : undefined)
   // A pushed page (back button) never carries the account entry, even when its screen is a tab kind (wallet).
@@ -79,20 +94,26 @@ export default function RwaTopbar(props: Props) {
     if (slot === 'theme') { revealTheme(toggleTheme, theme === 'dark' ? 'light' : 'dark', event); return }
     if (slot === 'back') { if(props.onBack) props.onBack(); else if(history.state?.rwaNavigation) history.back(); else navigate({id:'home'}); return }
     if (slot === 'close') { if(props.onClose) props.onClose(); else if(props.onBack) props.onBack(); else navigate({id:'home'}); return }
-    if (props.action && position === 'R2') { props.action.onClick(); return }
-    if (slot === 'share') { if(navigator.share) void navigator.share({url:location.href}).catch(() => undefined); else void navigator.clipboard?.writeText(location.href); return }
-    const destination = { logo:'home', bell:'notifications', avatar:'profile', gear:'settings', ledger:'wallet.transactions', book:'wallet.addresses', help:'support', search:'search' } as const
-    if (slot && slot in destination) navigate({ id: destination[slot as keyof typeof destination] })
+    if (props.action && position === 'R2') { if (!props.action.disabled && !props.action.busy) props.action.onClick(); return }
+    if (slot === 'share') {
+      if (sharing.current) return
+      sharing.current = true
+      void sharePage(location.href, navigator).then(result => {
+        if (result === 'copied' || result === 'failed') setShareNotice({ text: shareCopy[locale][result], error: result === 'failed' })
+      }).finally(() => { sharing.current = false })
+      return
+    }
+    if (slot && slot in topbarDestinations) navigate({ id: topbarDestinations[slot as keyof typeof topbarDestinations] })
   }
   const renderSlot = (slot: Slot, position: 'L1' | 'L2' | 'R2' | 'R1') => {
     const custom = props.action && position === 'R2'
     if (!slot && custom) slot = 'more'
     // Guests have no inbox; the sign-in entry replaces it.
-    if (!slot || (slot === 'bell' && !signedIn && !props.onSlot)) return null
+    if (!slot || (!custom && !props.onSlot && !hasDefaultTopbarAction(slot)) || (!custom && slot === 'bell' && !signedIn && !props.onSlot)) return null
     if (slot === 'language') return <span className="rwa-topbar__slot rwa-topbar__slot--language" data-slot={position}><LanguageMenu variant="compact" /></span>
     if (slot === 'logo') return <button type="button" className="rwa-topbar__slot rwa-topbar__slot--logo rwa-sel" data-state="rest" data-slot={position} aria-label={copy.slots.logo} onClick={() => onSlot(slot, position)}><span className="rwa-topbar__brand"><RwaLogoMark className="rwa-topbar__logo" width="34" height="20" label="RWA" /><span>RWA.LAT</span></span>{props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count}</span>}</button>
     const Icon = custom && props.action?.Icon ? props.action.Icon : icons[slot]
-    return <button type="button" className="rwa-topbar__slot rwa-sel" data-state="rest" data-slot={position} aria-label={custom ? props.action!.label : slot === 'theme' ? copy.themeTo[theme === 'dark' ? 'light' : 'dark'] : copy.slots[slot]} onClick={(event) => onSlot(slot, position, event)}>
+    return <button type="button" className="rwa-topbar__slot rwa-sel" data-state="rest" data-slot={position} disabled={custom ? props.action!.disabled || props.action!.busy : undefined} aria-busy={custom ? props.action!.busy : undefined} aria-label={custom ? props.action!.label : slot === 'theme' ? copy.themeTo[theme === 'dark' ? 'light' : 'dark'] : copy.slots[slot]} onClick={(event) => onSlot(slot, position, event)}>
       {slot === 'theme' ? theme === 'dark' ? <Sun size={22} strokeWidth={1.8} /> : <Moon size={21} strokeWidth={1.8} /> : Icon ? <Icon size={22} strokeWidth={slot === 'back' ? 2.2 : 1.8} /> : <RwaLogoMark width="32" height="22" label="RWA" />}
       {props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count > 99 ? '99+' : props.badge.count}</span>}
     </button>
@@ -100,7 +121,7 @@ export default function RwaTopbar(props: Props) {
   // The edge swipe keeps a hidden bar's back or close action reachable.
   useEdgeSwipeBack(!config.hidden && (config.l1 === 'back' || config.l1 === 'close'), () => onSlot(config.l1, 'L1'))
   if (config.hidden) return null
-  return <header className={`rwa-topbar rwa-topbar--s1 ${props.className ?? ''}`} data-template={config.template} data-surface={transparent ? 'transparent-over-media' : 'solid'} data-scrolled={scrolled} data-chrome-hidden={chromeHidden} data-large-title={largeTitle} onFocusCapture={expandChrome}>
+  return <><header className={`rwa-topbar rwa-topbar--s1 ${props.className ?? ''}`} data-template={config.template} data-surface={transparent ? 'transparent-over-media' : 'solid'} data-scrolled={scrolled} data-chrome-hidden={chromeHidden} data-large-title={largeTitle} onFocusCapture={expandChrome}>
     <div className="rwa-topbar__grid">
       <div className="rwa-topbar__leading">{renderSlot(config.l1,'L1')}{renderSlot(config.l2,'L2')}</div>
       <div className="rwa-topbar__center">
@@ -114,5 +135,5 @@ export default function RwaTopbar(props: Props) {
         {showAccount && <AccountButton copy={copy} onProfile={props.onProfile} unread={unread} />}
       </div>
     </div>
-  </header>
+  </header>{shareNotice && createPortal(<div className={actionStyles.notice} data-theme={theme} data-error={shareNotice.error} role="status">{shareNotice.error ? <AlertTriangle size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}<span>{shareNotice.text}</span></div>, document.body)}</>
 }

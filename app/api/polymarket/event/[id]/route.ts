@@ -9,7 +9,7 @@ export async function GET(request:Request, context:{params:Promise<{id:string}>}
     const r=await fetch(`https://gamma-api.polymarket.com/events/${id}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},next:{revalidate},signal:AbortSignal.timeout(8000)})
     if(!r.ok) throw new Error('Unavailable')
     const event=await r.json() as GammaEventData
-    const markets=eventMarkets(event).map(m=>({id:m.id!,question:m.question!,label:m.groupItemTitle||m.question!,image:m.image??null,prices:stringArray(m.outcomePrices).map(Number),tokenIds:stringArray(m.clobTokenIds),closed:Boolean(m.closed),volume:Number(m.volume)||0,endAt:m.endDate??null}))
+    const markets=eventMarkets(event).map(m=>({id:m.id!,question:m.question!,label:m.groupItemTitle||m.question!,image:m.image??null,prices:stringArray(m.outcomePrices).map(Number),tokenIds:stringArray(m.clobTokenIds),closed:Boolean(m.closed),acceptingOrders:typeof m.acceptingOrders==='boolean'?m.acceptingOrders:undefined,volume:Number(m.volume)||0,endAt:m.endDate??null}))
     const chosen=(url.searchParams.get('markets')??'').split(',').filter(Boolean)
     const chartMarkets=chosen.length ? markets.filter(m=>chosen.includes(m.id)).slice(0,4) : markets.filter(m=>!m.closed).sort((a,b)=>(b.prices[0]??0)-(a.prices[0]??0)).slice(0,4)
     const curves=await Promise.all(chartMarkets.map(async m=>{
@@ -21,6 +21,6 @@ export async function GET(request:Request, context:{params:Promise<{id:string}>}
         return {id:m.id,label:m.label,available:true,points:(rows.history??[]).filter(x=>Number.isFinite(x.t)&&x.t>0&&Number.isFinite(x.p)&&x.p>=0&&x.p<=1).map(x=>({time:x.t,price:x.p})).sort((a,b)=>a.time-b.time)}
       }catch{return {id:m.id,label:m.label,available:false,points:[]}}
     }))
-    return NextResponse.json({id:event.id??id,title:event.title??'',description:event.description??'',image:event.image??null,volume:Number(event.volume)||0,endAt:event.endDate??null,markets,curves,fetchedAt:new Date().toISOString()})
+    return NextResponse.json({id:event.id??id,title:event.title??'',description:event.description??'',image:event.image??null,volume:Number(event.volume)||0,endAt:event.endDate??null,closed:Boolean(event.closed),markets,curves,fetchedAt:new Date().toISOString()})
   }catch{return NextResponse.json({error:'Event data unavailable'},{status:502})}
 }

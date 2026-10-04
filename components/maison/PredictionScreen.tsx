@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, ArrowRight, Check, Info } from 'lucide-react'
+import { ArrowRight, Check, Info } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { predictionQuote } from '@/lib/prediction-quote'
 import { PredictionEventScreen } from './PredictionEventScreen'
@@ -24,8 +24,15 @@ import {PredictionSheet} from './PredictionSheet'
 import {PredictionHowTo} from './PredictionHowTo'
 import {Logo} from './primitives'
 import ui from './prediction-experience.module.css'
-import {predictionControlText} from '@/lib/prediction-controls-copy'
 import {communityExperienceCopy} from '@/lib/community-experience-copy'
+import { usePageState } from '@/lib/app-navigation'
+import { evaluatePredictionDirections } from '@/lib/prediction-availability'
+import { PredictionCountdown } from './PredictionCountdown'
+import { PredictionBetForm } from './PredictionBetForm'
+import { predictionTicketCopy } from '@/lib/prediction-ticket-copy'
+import { addPredictionStake, predictionCapacityStake, predictionWalletAction } from '@/lib/prediction-ticket-state'
+import { useHideUnavailablePrediction } from '@/lib/use-prediction-directions'
+import { predictionAvailabilityText } from '@/lib/prediction-availability-copy'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
 const BET_PATH = '/v1/predictions/bets'
@@ -53,13 +60,16 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
   const closeTicket=()=>{if(!busy){onTicketClose?.();setLocalTicketOpen(false)}}
   const [expanded, setExpanded] = useState(false)
   const [showOriginal, setShowOriginal] = useState(false)
+  const [showGuide, setShowGuide] = useState(false)
+  const [hideUnavailable, setHideUnavailable] = useHideUnavailablePrediction()
   const data = market.data
-  const topbar = <RwaTopbar screen="prediction-detail" title={t.kicker.split(' · ')[0]} onBack={() => backOr('/markets?tab=predictions')} />
+  const topbar = <RwaTopbar screen="prediction-detail" title={t.kicker.split(' · ')[0]} onBack={() => backOr('/markets?tab=predictions')} action={{label: predictionAvailabilityText(locale,'How to play'), Icon: Info, onClick: () => setShowGuide(true)}} />
+  const guide = <PredictionHowTo open={showGuide} onOpenChange={setShowGuide} hideTrigger />
   const toMarkets = <button type="button" className={s.link} onClick={() => openPath('/markets?tab=predictions')}>{t.toMarkets}</button>
 
-  if (!validId) return <MaisonPage page="prediction" dock topbar={topbar}><div className={s.hero}><StateBlock title={copy.detail.notFound} action={toMarkets} /></div></MaisonPage>
-  if (!data && !market.error) return <MaisonPage page="prediction" dock topbar={topbar}>{eventHeader}{eventHeader?<PredictionSheet open={isTicketOpen} onClose={closeTicket} title={t.place}><Skeleton rows={4}/></PredictionSheet>:<div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
-  if (!data) return <MaisonPage page="prediction" dock topbar={topbar}><div className={s.hero}>
+  if (!validId) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}<div className={s.hero}><StateBlock title={copy.detail.notFound} action={toMarkets} /></div></MaisonPage>
+  if (!data && !market.error) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}{eventHeader}{eventHeader?<PredictionSheet open={isTicketOpen} onClose={closeTicket} title={t.place}><Skeleton rows={4}/></PredictionSheet>:<div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
+  if (!data) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}<div className={s.hero}>
     {eventHeader}<StateBlock tone="error" title={t.loadError} body={market.error?.status === 404 ? copy.detail.notFound : undefined} retry={market.refetch} retryLabel={copy.common.retry} action={toMarkets} />
   </div></MaisonPage>
 
@@ -69,8 +79,10 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
   const translationLabels = polymarketTranslationCopy[locale]
   const history = data.pricing.history.filter((point) => Number.isFinite(point.price) && Number.isFinite(point.time) && point.time > 0)
   const partial = !data.orderbook || history.length < 2
+  const directions = evaluatePredictionDirections(m, data.outcomeBooks)
 
   return <MaisonPage page="prediction" dock topbar={topbar}>
+    {guide}
     {eventHeader}
     {!eventHeader && <><header className={s.hero}>
       <p className={s.kicker}>{t.kicker}{m.category ? ` · ${m.category}` : ''}</p>
@@ -79,6 +91,7 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
         <span className={s.badge} data-tone={m.acceptingOrders ? 'live' : 'warn'}>{t.source}</span>
         {m.endDate && <span>{t.closes} {fmtDate(m.endDate, locale)}</span>}
       </p>
+      <PredictionCountdown endAt={m.endDate} />
       {locale !== 'en' && <p className={s.foot}>
         <span>{localized ? translationLabels.translated : translation.loading ? translationLabels.loading : translationLabels.unavailable}</span>
         {localized && <button type="button" className={s.link} onClick={() => setShowOriginal((value) => !value)}>{showOriginal ? translationLabels.hideOriginal : translationLabels.original}</button>}
@@ -106,9 +119,9 @@ export function PredictionMarketScreen({ id, eventHeader, eventId, initialOutcom
     </> : <StateBlock title={t.historyEmpty} />}
 
     </>}
-    {!eventHeader && <><SectionHead index="02" title={t.place} action={<PredictionHowTo/>}/><div className={s.outcome}>{m.outcomes.slice(0,2).map((label,i)=><button key={label} type="button" data-side={i?'no':'yes'} disabled={!m.acceptingOrders} onClick={()=>{setTicketSide(i);setLocalTicketOpen(true)}}>{translated?.outcomes[i]??outcomeLabel(label,copy)} · {pct(m.prices[i])}</button>)}</div></>}
-    <PredictionSheet open={isTicketOpen} onClose={closeTicket} title={t.place} busy={busy}>
-      <div className={ui.identity}><Logo src={ticketImage} name={ticketLabel??translated?.question??m.question}/><div>{ticketEventTitle&&<small>{ticketEventTitle}</small>}<b>{ticketLabel??translated?.question??m.question}</b><small>{t.closes} {m.endDate?fmtDate(m.endDate,locale):'—'}</small></div></div>
+    {!eventHeader && <><SectionHead index="02" title={t.place} action={<PredictionHowTo/>}/><label className={ui.hideUnavailable}><input type="checkbox" checked={hideUnavailable} onChange={event=>setHideUnavailable(event.target.checked)}/>{predictionAvailabilityText(locale,'Hide unavailable')}</label><div className={s.outcome}>{m.outcomes.slice(0,2).map((label,i)=>hideUnavailable&&directions[i].state==='unavailable'?null:<button key={label} type="button" data-side={i?'no':'yes'} className={directions[i].state==='unavailable'?ui.unavailableButton:undefined} disabled={directions[i].state==='unavailable'} title={directions[i].state==='unavailable'?predictionTicketCopy[locale].unavailable:undefined} onClick={()=>{setTicketSide(i);setLocalTicketOpen(true)}}>{translated?.outcomes[i]??outcomeLabel(label,copy)} · {pct(m.prices[i])}</button>)}</div></>}
+    <PredictionSheet open={isTicketOpen} onClose={closeTicket} title={predictionTicketCopy[locale].buy} busy={busy} compact>
+      <div className={`${ui.identity} ${ui.ticketIdentity}`}><Logo src={ticketImage} name={ticketLabel??translated?.question??m.question}/><div>{ticketEventTitle&&ticketEventTitle!==ticketLabel&&<small>{ticketEventTitle}</small>}<b>{ticketLabel??translated?.question??m.question}</b></div></div>
       {isTicketOpen&&<BetTicket key={m.id} data={data} translation={translated} initialOutcome={eventHeader?initialOutcome:ticketSide} onBusyChange={setBusy} onRefreshQuote={refreshQuote} quoteRefreshing={quoteRefreshing} quoteError={market.error?.message}/>}
     </PredictionSheet>
 
@@ -130,7 +143,6 @@ function outcomeLabel(label: string, copy: (typeof marketCopy)[keyof typeof mark
 function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefreshQuote, quoteRefreshing, quoteError }: { data: PolymarketMarket; translation?: PolymarketTranslation; initialOutcome?: number; onBusyChange?:(busy:boolean)=>void;onRefreshQuote:()=>Promise<void>;quoteRefreshing:boolean;quoteError?:string }) {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
-  const text=(key:Parameters<typeof predictionControlText>[1])=>predictionControlText(locale,key)
   const t = tradeCopy[locale].prediction
   const signedIn = useSignedIn()
   const status = useQuery('prediction:status', getPredictionStatus, { staleTime: 60_000, pollInterval: POLL.list })
@@ -138,7 +150,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   // 默认选中第一个方向。若初始为 null，price 恒为 null，
   // 「预计份数 / 派彩费 / 中奖净到账」会全部显示「—」——用户填了金额却看不到任何结果。
   const [outcome, setOutcome] = useState<number | null>(initialOutcome)
-  const [stake, setStake] = useState('')
+  const [stake, setStake] = usePageState(`prediction:ticket:${data.market.id}:stake`, '')
   const [risk, setRisk] = useState(false)
   const [pending, setPending] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
@@ -154,7 +166,9 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const decimals = limits?.assetDecimals ?? 6
   const atomic = stake && DEC_6.test(stake) ? toAtomic(stake, decimals) : null
   const available = wallet.data?.balances.availableAtomic ?? null
+  const walletAction = predictionWalletAction({availableAtomic: available, walletDecimals: wallet.data?.asset.decimals, walletAsset: wallet.data?.asset.code, expectedDecimals: decimals, loading: wallet.loading && !wallet.data, error: Boolean(wallet.error)})
   const quote = predictionQuote(outcome === null ? null : data.outcomeBooks?.[outcome], outcome === null ? undefined : m.prices[outcome], atomic ? Number(atomic)/(10**decimals)*(1-(status.data?.fees?.placeFeeRate??0)) : 0, now)
+  const directions = evaluatePredictionDirections(m, data.outcomeBooks, now)
   const price = quote.available ? quote.price : null
   const tokenId = outcome === null ? null : m.tokenIds[outcome] ?? null
 
@@ -162,7 +176,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     if (!stake) return null
     if (!atomic || atomic === '0') return t.errors.format
     if (limits?.maxStakeAtomic && BigInt(atomic) > BigInt(limits.maxStakeAtomic)) return fill(t.errors.max, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })
-    if (available !== null && (wallet.data?.asset.decimals ?? 6) === decimals && BigInt(atomic) > BigInt(available)) return tradeCopy[locale].basketOrder.errors.balance
+    if (available !== null && /^\d+$/.test(available) && (wallet.data?.asset.decimals ?? 6) === decimals && BigInt(atomic) > BigInt(available)) return tradeCopy[locale].basketOrder.errors.balance
     return null
   }, [atomic, available, decimals, limits, locale, stake, t.errors, wallet.data?.asset.decimals])
 
@@ -200,7 +214,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     </div>
   </section>
 
-  const ready = Boolean(tokenId && atomic && quote.available && !fieldError && risk && !pending && !quoteRefreshing && !quoteError)
+  const ready = Boolean(walletAction==='bet' && tokenId && atomic && atomic!=='0' && quote.available && !fieldError && risk && !pending && !quoteRefreshing && !quoteError)
   const submit = async () => {
     if (!ready || !tokenId || !atomic) return
     const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}) }
@@ -216,49 +230,18 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     setDone(result.data)
   }
 
-  return <div>
-    <div className={s.outcome} role="group" aria-label={copy.review.outcome}>
-      {m.outcomes.slice(0, 2).map((label, index) => <button key={label} type="button" data-side={index === 0 ? 'yes' : 'no'} aria-pressed={outcome === index} disabled={!m.tokenIds[index]}
-        onClick={() => { setOutcome(index); setServerError(null) }}>
-        {translation?.outcomes[index] ?? outcomeLabel(label, copy)} <span className={s.num} style={{ opacity: .7, fontWeight: 600 }}>{pct(m.prices[index])}</span>
-      </button>)}
-    </div>
-    <label className={s.kicker} htmlFor="bet-stake" style={{ display: 'block', marginTop: 20 }}>{t.stake}</label>
-    <div className={s.amount}>
-      <input id="bet-stake" inputMode="decimal" autoComplete="off" placeholder="0.00" value={stake} aria-invalid={Boolean(fieldError)} aria-describedby="bet-stake-meta"
-        onChange={(event) => { setStake(event.target.value.replace(',', '.').replace(/[^\d.]/g, '')); setServerError(null) }} />
-      <span>USDT</span>
-    </div>
-    <div className={s.fieldMeta} id="bet-stake-meta">
-      <span>{!wallet.data && !wallet.error ? '…' : wallet.error && !wallet.data ? <button type="button" className={s.link} onClick={wallet.refetch}>{copy.common.unavailable} · {copy.common.retry}</button> : fill(copy.review.available, { v: fmtAtomic(available, wallet.data?.asset.decimals ?? 6, wallet.data?.asset.code ?? 'USDT') })}</span>
-      {limits?.maxStakeAtomic && <span className={s.num}>{fill(t.limit, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })}</span>}
-    </div>
-    <div className={ui.quickAmounts}>{[1,5,10,100].map(amount=><button key={amount} type="button" className={s.chip} onClick={()=>{setStake(String(Number(stake||0)+amount));setServerError(null)}}>+{amount}</button>)}</div>
-    {fieldError && <p className={s.fieldError} role="alert">{fieldError}</p>}
-
-    <section className={ui.betEstimate} style={{ marginTop: 14 }} aria-live="polite">
-      <dl>
-        <div><dt>{t.price}</dt><dd className={s.num}>{price ? `${price.toLocaleString(locale,{maximumFractionDigits:4})} USDT · ${(price*100).toLocaleString(locale,{maximumFractionDigits:2})}¢` : '—'}</dd></div>
-        <div><dt>{t.shares}</dt><dd className={s.num}>{shares ? `≈ ${shares.toLocaleString(locale, { maximumFractionDigits: 2 })}` : '—'}</dd></div>
-        <div><dt>{t.feeEstimate}</dt><dd className={s.num}>{atomic ? `${fmtAtomic(placeFeeAtomic.toString(), decimals, 'USDT')} + ${payoutFee !== null ? payoutFee.toLocaleString(locale, { maximumFractionDigits: 2 }) : '—'} USDT` : '—'}</dd></div>
-        <div data-strong="true"><dt>{t.netPayout}</dt><dd className={s.num}>{netPayout !== null ? `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` : '—'}</dd></div>
-      </dl>
-    </section>
-    <p className={ui.ticketMeta}>{fill(copy.common.updated,{t:fmtDateTime(data.fetchedAt,locale)})}</p>
-    {!quote.available && <div className={s.notice} role="status"><Info size={16}/><span>{text(quote.reason??'unavailable')}</span></div>}
-    <button type="button" className={s.link} disabled={quoteRefreshing||pending} onClick={()=>{setServerError(null);void onRefreshQuote()}}>{text(quoteRefreshing?'refreshing':'refresh')}</button>
-    {quoteError&&<p className={s.fieldError} role="alert">{text('unavailable')}</p>}
-    {outcome !== null && !tokenId && <p className={s.fieldError}>{t.noToken}</p>}
-    {outcome !== null && price !== null && Number.isFinite(m.prices[outcome]) && Math.abs(price - m.prices[outcome]) > 0.1 && <div className={s.notice} role="note"><Info size={16} /><span>{fill(t.wide, { p: pct(price), m: pct(m.prices[outcome]) })}</span></div>}
-
-    <label className={s.consent}>
-      <input type="checkbox" checked={risk} onChange={(event) => { setRisk(event.target.checked); setServerError(null) }} />
-      <span>{t.risk}</span>
-    </label>
-    {serverError && <div className={s.notice} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
-    <div className={ui.ticketFooter}><button type="button" className={s.cta} style={{ marginTop: 16, width: '100%' }} onClick={submit} disabled={!ready} aria-busy={pending}>
-      <span>{pending ? t.placing : t.place}</span>
-      <span className={s.ctaIcon}><ArrowRight size={17} /></span>
-    </button></div>
-  </div>
+  const amountTooLarge = Boolean(atomic && atomic !== '0' && quote.reason==='no_liquidity' && outcome!==null && directions[outcome]?.state==='available')
+  let smallerStake = amountTooLarge ? predictionCapacityStake(quote.depth, placeFeeRate, decimals) : null
+  if (smallerStake && available && /^\d+$/.test(available) && BigInt(toAtomic(smallerStake,decimals)??'0')>BigInt(available)) smallerStake = null
+  return <PredictionBetForm
+    stake={stake} onStake={value=>{setStake(value);setServerError(null)}} onAdd={amount=>{setStake(addPredictionStake(stake,amount,decimals));setServerError(null)}}
+    outcomes={m.outcomes.slice(0,2).map((label,index)=>({label:translation?.outcomes[index]??outcomeLabel(label,copy),probability:pct(m.prices[index]),disabled:!m.tokenIds[index] || directions[index].state==='unavailable'}))}
+    outcome={outcome} onOutcome={index=>{setOutcome(index);setServerError(null)}} walletAction={walletAction} balance={fmtAtomic(available,decimals,'USDT')}
+    price={price ? `${(price*100).toLocaleString(locale,{maximumFractionDigits:2})}¢` : '—'} shares={shares ? `≈ ${shares.toLocaleString(locale,{maximumFractionDigits:2})}` : '—'}
+    fees={atomic ? `${fmtAtomic(placeFeeAtomic.toString(),decimals,'USDT')} + ${payoutFee!==null?payoutFee.toLocaleString(locale,{maximumFractionDigits:2}):'—'} USDT` : '—'}
+    netPayout={netPayout!==null?`≈ ${netPayout.toLocaleString(locale,{maximumFractionDigits:2})} USDT`:'—'} updatedAt={fmtDateTime(data.fetchedAt,locale)} limit={limits?.maxStakeAtomic?fill(t.limit,{v:fmtAtomic(limits.maxStakeAtomic,decimals,'USDT',0)}):undefined}
+    fieldError={fieldError} serverError={serverError} quoteReason={quote.reason} quoteError={Boolean(quoteError)} amountTooLarge={amountTooLarge} smallerStake={smallerStake}
+    refreshing={quoteRefreshing} pending={pending} risk={risk} ready={ready} onRisk={value=>{setRisk(value);setServerError(null)}}
+    onRefresh={()=>{setServerError(null);void onRefreshQuote()}} onLower={()=>{if(smallerStake){setStake(smallerStake);setServerError(null)}}} onReload={()=>void wallet.refetch()} onDeposit={()=>openPath('/wallet/deposit')} onSubmit={()=>void submit()}
+  />
 }

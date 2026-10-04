@@ -1,8 +1,8 @@
 'use client'
 
-import { AlertTriangle, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, BookUser, Check, ChevronRight, Copy, Info } from 'lucide-react'
+import { AlertTriangle, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, BookUser, Check, ChevronRight, Copy, Info, X } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -14,6 +14,7 @@ import { backOr, openPath, queryParam } from '@/lib/maison-nav'
 import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Figure, Lacquer, Segmented, StatStrip, useAutoAnimate } from './motion'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
+import helpStyles from './deposit-help.module.css'
 
 const DECIMALS = 6
 const ZERO = BigInt(0)
@@ -193,13 +194,24 @@ export function DepositScreen({ query }: { query: string }) {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
+  const [helpOpen, setHelpOpen] = useState(false)
+  const helpDialog = useRef<HTMLDialogElement>(null)
+  const helpTitle = useId()
   const inflight = useRef(false)
   const address = network ? addresses[network.id] : undefined
+  // Native top layer preserves Maison tokens and escapes route-animation transforms.
+  useEffect(() => {
+    const dialog = helpDialog.current
+    if (!dialog) return
+    if (helpOpen && !dialog.open) dialog.showModal()
+    else if (!helpOpen && dialog.open) dialog.close()
+  }, [helpOpen])
 
   const choose = (id: string) => {
     setPicked(id)
     setError(null)
     setCopied(false)
+    setHelpOpen(false)
     const url = new URL(window.location.href)
     url.searchParams.set('network', id)
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}`)
@@ -219,7 +231,7 @@ export function DepositScreen({ query }: { query: string }) {
     if (!address) return
     try { await navigator.clipboard.writeText(address.address); setCopied(true); window.setTimeout(() => setCopied(false), 1600) } catch { setCopied(false) }
   }
-  const topbar = <RwaTopbar screen="deposit" title={d.title} onBack={() => backOr('/assets/cash')} />
+  const topbar = <RwaTopbar screen="deposit" title={d.title} r2={network ? 'info' : null} action={network ? { label: d.before, Icon: Info, onClick: () => setHelpOpen(true) } : undefined} onBack={() => backOr('/assets/cash')} />
 
   return <MaisonPage page="deposit" topbar={topbar}>
     <header className={s.hero}>
@@ -232,7 +244,7 @@ export function DepositScreen({ query }: { query: string }) {
         <p className={s.kicker}>{d.network}</p>
         <Segmented value={network.id} onChange={choose} label={d.network} role="group" options={list.map((item) => ({ value: item.id, label: item.displayName }))} />
         <StatStrip fit items={[
-          { label: `${c.minDeposit} · ${network.assetCode}`, value: bare(network.minimumDepositAtomic) },
+          { label: `${c.minDeposit} · ${network.assetCode}`, value: fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, '', 2).trim() },
           { label: c.confirmations, value: String(network.requiredConfirmations) },
           { label: c.eta, value: fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') }) },
         ]} />
@@ -253,5 +265,21 @@ export function DepositScreen({ query }: { query: string }) {
         <p className={s.foot}><span>{fill(d.afterNote, { n: String(network.requiredConfirmations) })}</span></p>
         <button type="button" className={s.link} style={{ marginTop: 12 }} onClick={() => openPath('/assets/cash')}>{d.backCash}<ChevronRight size={13} /></button>
       </>}
+    {network && <dialog ref={helpDialog} className={helpStyles.help} aria-labelledby={helpTitle} onClose={() => setHelpOpen(false)} onCancel={() => setHelpOpen(false)} onClick={(event) => {
+      if (event.target !== event.currentTarget) return
+      const box = event.currentTarget.getBoundingClientRect()
+      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) setHelpOpen(false)
+    }}>
+      <i className={s.sheetGrip} aria-hidden="true" />
+      <div className={helpStyles.head}><h2 id={helpTitle} className={s.sheetTitle}>{d.before}</h2><button type="button" className={helpStyles.close} onClick={() => setHelpOpen(false)} aria-label={common.close}><X size={20} /></button></div>
+      <p className={helpStyles.network}>{network.assetCode} · {network.displayName}</p>
+      <dl className={helpStyles.facts}>
+        <div><dt>{c.minDeposit}</dt><dd>{fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, network.assetCode, 2)}</dd></div>
+        <div><dt>{c.confirmations}</dt><dd>{network.requiredConfirmations}</dd></div>
+        <div><dt>{c.eta}</dt><dd>{fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') })}</dd></div>
+      </dl>
+      <p className={helpStyles.warning}><AlertTriangle size={17} aria-hidden="true" /><span>{network.warning}</span></p>
+      {(address?.integration ?? networks.data?.integration)?.realFunds === false && <p className={helpStyles.warning}><Info size={17} aria-hidden="true" /><span>{d.testAddress}</span></p>}
+    </dialog>}
   </MaisonPage>
 }

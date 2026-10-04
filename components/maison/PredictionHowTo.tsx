@@ -1,6 +1,6 @@
 'use client'
 import {Info} from 'lucide-react'
-import {useId,useRef,useState} from 'react'
+import {useEffect,useId,useRef,useState} from 'react'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import {useI18n} from '@/lib/i18n'
 import {PredictionSheet} from './PredictionSheet'
@@ -30,13 +30,16 @@ function GuideArt({step,tr}:{step:number;tr:(text:keyof typeof TEXT)=>string}) {
     </g>
   </svg>
 }
-export function PredictionHowTo() {
-  const {locale}=useI18n(),[open,setOpen]=useState(false),[step,setStep]=useState(0),start=useRef<{x:number;y:number}|null>(null)
+export function PredictionHowTo({open:controlledOpen,onOpenChange,hideTrigger=false}:{open?:boolean;onOpenChange?:(open:boolean)=>void;hideTrigger?:boolean}={}) {
+  const {locale}=useI18n(),[localOpen,setLocalOpen]=useState(false),[step,setStep]=useState(0),start=useRef<{x:number;y:number}|null>(null)
+  const open=controlledOpen??localOpen
+  const setOpen=(value:boolean)=>{setLocalOpen(value);onOpenChange?.(value);if(value)setStep(0)}
+  useEffect(()=>{if(open)setStep(0)},[open])
   const translated=useContentTranslation(Object.keys(TEXT))
   const tr=(text:keyof typeof TEXT)=>{const value=translated(text);return value===text&&locale.startsWith('zh')?TEXT[text]:value}
   const titles=['Choose an event and a side','Review your order','Wait for settlement'] as const
   const bodies=['Read the rules. Choose Yes or No.','Enter an amount. Check shares, fees and net return.','Winning shares pay 1 USDT each, less payout fees. Losing shares pay 0. Net return includes principal.'] as const
-  return <><button type="button" className={ui.learnButton} onClick={()=>{setStep(0);setOpen(true)}}><Info size={15}/>{tr('How to play')}</button>
+  return <>{!hideTrigger&&<button type="button" className={ui.learnButton} onClick={()=>{setStep(0);setOpen(true)}}><Info size={15}/>{tr('How to play')}</button>}
     <PredictionSheet open={open} onClose={()=>setOpen(false)} title={tr('How to play')}>
       <div className={ui.tutorial} onTouchStart={e=>{start.current={x:e.touches[0].clientX,y:e.touches[0].clientY}}} onTouchEnd={e=>{if(start.current){const dx=e.changedTouches[0].clientX-start.current.x,dy=e.changedTouches[0].clientY-start.current.y;if(Math.abs(dx)>60&&Math.abs(dx)>Math.abs(dy)*1.5)setStep(v=>Math.max(0,Math.min(2,v+(dx<0?1:-1))))}start.current=null}}>
         <div className={ui.guideScene} key={step}><GuideArt step={step} tr={tr}/></div>

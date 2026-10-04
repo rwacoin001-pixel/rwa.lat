@@ -3,6 +3,10 @@ import type { RwaScreen } from './rwa-routes'
 export type Slot = 'logo' | 'back' | 'close' | 'language' | 'theme' | 'filter' | 'search' | 'bell' | 'share' | 'star' | 'avatar' | 'gear' | 'more' | 'help' | 'edit' | 'calendar' | 'ledger' | 'export' | 'plus' | 'follow' | 'readall' | 'book' | 'info' | null
 export type TopbarTemplate = 'T-Root' | 'T-Child' | 'T-Segment' | 'T-Flow'
 export type SlotConfig = { template: TopbarTemplate; l1: Slot; l2: Slot; r2: Slot; r1: Slot; surface?: 'solid' | 'transparent-over-media'; steps?: number; hidden?: boolean }
+export const topbarDestinations = { logo: 'home', bell: 'notifications', avatar: 'profile', gear: 'settings', ledger: 'wallet.transactions', book: 'wallet.addresses', help: 'support', search: 'search' } as const
+const defaultActionSlots = new Set<Slot>(['back', 'close', 'theme', 'share', 'language', ...Object.keys(topbarDestinations) as Slot[]])
+/** Contextual icons need a page callback; never show an enabled button with no behavior. */
+export function hasDefaultTopbarAction(slot: Slot) { return defaultActionSlots.has(slot) }
 const child: SlotConfig = { template: 'T-Child', l1: 'back', l2: null, r2: null, r1: 'language' }
 const root: SlotConfig = { ...child, template: 'T-Root', l1: 'logo' }
 const flow: SlotConfig = { ...child, template: 'T-Flow', l1: 'close', r1: 'language', steps: 2 }
