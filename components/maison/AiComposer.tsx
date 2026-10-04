@@ -25,7 +25,7 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   const expanded = !voiceMode && (focused || !!value || files.length > 0 || reading !== null)
   useLayoutEffect(() => { const el = field.current; if (el) { el.style.height = '0px'; el.style.height = `${Math.min(el.scrollHeight, 148)}px` } }, [value, expanded])
   useEffect(() => () => { processing.current?.abort() }, [])
-  useEffect(() => { if (!voice.listening && !voice.processing) { hold.current=null; keyHeld.current=false; setCancelled(false) } }, [voice.listening, voice.processing])
+  useEffect(() => { if (!voice.listening && !voice.processing) { hold.current=null; keyHeld.current=false; setCancelled(false) } }, [voice.listening, voice.processing, voice.error])
   const submit = async (message = value, releasedVoice = false) => {
     if (busy || disabled || reading !== null || sending.current || (!releasedVoice && (voice.listening || voice.processing)) || (!message.trim() && !files.length)) return
     sending.current = true; setPicker(false); setError('')
@@ -75,11 +75,11 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
       setError(reason === 'secret' ? secretLabel : reason === 'unsupported' ? c.unsupported : reason === 'empty' ? c.emptyFile : reason === 'tooLarge' ? c.tooLarge : c.fileFailed)
     } finally { clearTimeout(timeout); processing.current = null; setReading(null); if (fileInput.current) fileInput.current.value = ''; if (imageInput.current) imageInput.current.value = '' }
   }
-  const voiceError = voice.error === 'unavailable' ? c.voiceUnavailable : voice.error === 'denied' ? c.voiceDenied : voice.error === 'empty' ? c.voiceEmpty : voice.error ? c.voiceFailed : ''
+  const voiceError = voice.error === 'unavailable' ? c.voiceUnavailable : voice.error === 'denied' ? c.voiceDenied : voice.error === 'empty' ? c.voiceEmpty : voice.error === 'network' ? v.network : voice.error === 'capture' ? v.capture : voice.error === 'language' ? v.language : voice.error ? c.voiceFailed : ''
   return <div className={s.wrap} dir={locale === 'ar' ? 'rtl' : undefined}>
     {!busy && !value && !files.length && reading === null && !voice.listening && !voice.processing && <AiFaqTicker questions={visual.prompts} label={visual.suggestions} onSelect={question => { onChange(question); setVoiceMode(false); onInteraction?.(); window.requestAnimationFrame(() => field.current?.focus()) }}/>}
     <AnimatePresence>{voice.listening && <motion.div className={s.recording} data-cancel={cancelled || undefined} initial={{ opacity: 0, y: reduced ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 5 }}>
-      <AiVoiceWaveform active={voice.listening} cancelled={cancelled}/><p role="status">{cancelled ? v.cancel : v.release}</p>
+      <AiVoiceWaveform active={voice.listening} speaking={voice.speaking}/><p role="status">{cancelled ? v.cancel : !voice.ready ? v.preparing : v.release}</p>
     </motion.div>}</AnimatePresence>
     <AnimatePresence>{picker && <motion.div className={s.picker} initial={{ opacity: 0, y: reduced ? 0 : 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="group" aria-label={c.attach}>
       <button type="button" onClick={() => imageInput.current?.click()}><ImagePlus size={20}/><span>{c.image}<small>{visual.hint}</small></span></button>

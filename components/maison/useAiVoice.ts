@@ -1,89 +1,148 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type Recognition = { lang: string; interimResults: boolean; continuous: boolean; onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }) => void) | null; onerror: ((event: { error?: string }) => void) | null; onend: (() => void) | null; start(): void; stop(): void; abort(): void }
+type VoiceError = 'denied' | 'empty' | 'failed' | 'unavailable' | 'network' | 'capture' | 'language'
+type Recognition = {
+  lang: string; interimResults: boolean; continuous: boolean
+  onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }) => void) | null
+  onerror: ((event: { error?: string }) => void) | null
+  onend: (() => void) | null
+  onaudiostart: (() => void) | null; onspeechstart: (() => void) | null; onspeechend: (() => void) | null
+  start(): void; stop(): void; abort(): void
+}
 type VoiceWindow = Window & { RwaNativeVoice?: { start(input: { locale: string }): void; stop(): void }; SpeechRecognition?: new () => Recognition; webkitSpeechRecognition?: new () => Recognition }
 let cancelActiveVoice: (() => void) | null = null
+const detach = (item: Recognition) => { item.onresult = item.onerror = item.onend = item.onaudiostart = item.onspeechstart = item.onspeechend = null }
+const voiceError = (code = ''): VoiceError => code === 'service-not-allowed' ? 'unavailable' : /permission|denied|not-allowed|recognizer-9$/i.test(code) ? 'denied'
+  : /no.?speech|no.?match|recognizer-[67]$/i.test(code) ? 'empty'
+  : /network|recognizer-[12]$/i.test(code) ? 'network'
+  : /audio-capture|recognizer-3$/i.test(code) ? 'capture'
+  : /language-not-supported|recognizer-1[23]$/i.test(code) ? 'language' : 'failed'
 
-/** The default mode fills question cards. Hold mode keeps every transcript private until release. */
+/** Only the recognition engine opens the microphone. Hold mode sends nothing before release. */
 export function useAiVoice(locale: string, onText: (text: string) => void, options: { deferResult?: boolean } = {}) {
-  const [available, setAvailable] = useState(false), [listening, setListening] = useState(false), [error, setError] = useState<'denied' | 'empty' | 'failed' | 'unavailable' | null>(null)
-  const [processing, setProcessing] = useState(false)
-  const active = useRef(false), recognition = useRef<Recognition | null>(null), receive = useRef(onText), heard = useRef(false), timer = useRef<ReturnType<typeof setTimeout> | null>(null), run = useRef(0)
-  const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null), deferred = useRef(!!options.deferResult), transcript = useRef(''), released = useRef(false), ended = useRef(false)
+  const [available, setAvailable] = useState(false), [listening, setListening] = useState(false), [error, setError] = useState<VoiceError | null>(null)
+  const [processing, setProcessing] = useState(false), [ready, setReady] = useState(false), [speaking, setSpeaking] = useState(false)
+  const active = useRef(false), recognition = useRef<Recognition | null>(null), receive = useRef(onText), timer = useRef<ReturnType<typeof setTimeout> | null>(null), run = useRef(0)
+  const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null), restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const deferred = useRef(!!options.deferResult), transcript = useRef(''), completed = useRef(''), released = useRef(false), ended = useRef(false), delivered = useRef(false)
   receive.current = onText; deferred.current = !!options.deferResult
+  const textSoFar = useCallback(() => [completed.current, transcript.current].filter(Boolean).join(' ').trim().slice(0, 4000), [])
   const settle = useCallback(() => {
-    active.current = false; recognition.current = null; setListening(false); setProcessing(false)
+    active.current = false; recognition.current = null; setListening(false); setProcessing(false); setReady(false); setSpeaking(false)
     if (timer.current) clearTimeout(timer.current)
     if (releaseTimer.current) clearTimeout(releaseTimer.current)
-    timer.current = releaseTimer.current = null
+    if (restartTimer.current) clearTimeout(restartTimer.current)
+    timer.current = releaseTimer.current = restartTimer.current = null
   }, [])
   const cancel = useCallback(() => {
     const item = recognition.current, wasActive = active.current
-    run.current++; transcript.current = ''; settle()
+    run.current++; transcript.current = completed.current = ''; settle()
     if (cancelActiveVoice === cancel) cancelActiveVoice = null
-    try { if (item) { item.onresult = item.onerror = item.onend = null; item.abort() } else if (wasActive && !ended.current) (window as VoiceWindow).RwaNativeVoice?.stop() } catch { /* Navigation can already have torn down the microphone. */ }
+    try { if (item) { detach(item); item.abort() } else if (wasActive && !ended.current) (window as VoiceWindow).RwaNativeVoice?.stop() } catch { /* The browser may already have released the device. */ }
   }, [settle])
   const finish = useCallback(() => {
     if (!active.current) return
-    const text = transcript.current.trim(), deliver = deferred.current && released.current && !!text
-    settle()
+    const text = textSoFar(), deliver = deferred.current && released.current && !!text, item = recognition.current
+    settle(); transcript.current = completed.current = ''
     if (cancelActiveVoice === cancel) cancelActiveVoice = null
-    if (!heard.current) setError(previous => previous ?? 'empty')
+    // A timeout or an error can omit `end`; release the engine before delivering buffered words.
+    if (item) { detach(item); try { item.abort() } catch { /* Already stopped. */ } }
+    if (!text) setError(previous => previous ?? 'empty')
     if (deliver) receive.current(text)
-  }, [cancel, settle])
+    else if (!deferred.current && text && !delivered.current) receive.current(text)
+  }, [cancel, settle, textSoFar])
   const stop = useCallback(() => {
-    if (!active.current) return
-    released.current = true; setListening(false); setProcessing(deferred.current)
+    if (!active.current || released.current) return
+    released.current = true; setListening(false); setSpeaking(false); setProcessing(deferred.current)
+    if (timer.current) clearTimeout(timer.current)
+    timer.current = null
     if (ended.current) { finish(); return }
     try {
       if (recognition.current) recognition.current.stop(); else (window as VoiceWindow).RwaNativeVoice?.stop()
-      // Engines can fail to emit an end event. Discard that run instead of sending a partial result.
-      if (active.current) releaseTimer.current = setTimeout(() => { cancel(); setError('failed') }, 6000)
-    } catch { cancel(); setError('failed') }
-  }, [cancel, finish])
+      // Android sometimes emits only an interim result, or omits the final end callback.
+      if (active.current) releaseTimer.current = setTimeout(() => { if (textSoFar()) finish(); else { cancel(); setError('failed') } }, 6000)
+    } catch { if (textSoFar()) finish(); else { cancel(); setError('failed') } }
+  }, [cancel, finish, textSoFar])
   useEffect(() => {
     const w = window as VoiceWindow
     setAvailable(!!(w.RwaNativeVoice ?? w.SpeechRecognition ?? w.webkitSpeechRecognition))
     const native = (event: Event) => {
       if (!active.current || recognition.current || cancelActiveVoice !== cancel) return
       const detail = (event as CustomEvent<{ type: string; text?: string; error?: string; final?: boolean }>).detail
-      if (detail?.type === 'result' && detail.text && detail.final !== false) {
-        heard.current = true; transcript.current = detail.text
-        if (!deferred.current) receive.current(detail.text)
+      if (detail?.type === 'ready' || detail?.type === 'speechstart') { setReady(true); setSpeaking(detail.type === 'speechstart') }
+      if (detail?.type === 'result' && detail.text) {
+        setReady(true); setSpeaking(true)
+        transcript.current = detail.text.trim().slice(0, 4000)
+        if (!deferred.current && detail.final !== false) { delivered.current = true; receive.current(transcript.current) }
       }
-      if (detail?.type === 'error') { const reason = /permission|denied|not-allowed|recognizer-9$/i.test(detail.error ?? '') ? 'denied' : /no.?speech|no.?match|recognizer-[67]$/i.test(detail.error ?? '') ? 'empty' : 'failed'; cancel(); setError(reason) }
-      if (detail?.type === 'end') { ended.current = true; if (!deferred.current || released.current) finish() }
+      if (detail?.type === 'error') {
+        const reason = voiceError(detail.error)
+        // A no-match callback must not erase words already recognised in this held run.
+        if (reason === 'empty' && textSoFar()) { ended.current = true; setSpeaking(false); if (!deferred.current || released.current) finish() }
+        else { cancel(); setError(reason) }
+      }
+      if (detail?.type === 'end') { ended.current = true; setSpeaking(false); if (!deferred.current || released.current) finish() }
     }
     window.addEventListener('rwa-native-voice', native)
     const hide = () => { if (document.visibilityState === 'hidden') cancel() }
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', hide)
     window.addEventListener('pagehide', cancel)
     return () => { window.removeEventListener('rwa-native-voice', native); window.removeEventListener('pagehide', cancel); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', hide); cancel() }
-  }, [cancel, finish])
+  }, [cancel, finish, textSoFar])
   const start = useCallback(() => {
     if (active.current) { if (!deferred.current) stop(); return false }
     const w = window as VoiceWindow, Constructor = w.SpeechRecognition ?? w.webkitSpeechRecognition
     setAvailable(!!(w.RwaNativeVoice ?? Constructor))
     if (!w.RwaNativeVoice && !Constructor) { setError('unavailable'); return false }
     cancelActiveVoice?.(); cancelActiveVoice = cancel
-    const runId = ++run.current
-    setError(null); heard.current = false; transcript.current = ''; released.current = false; ended.current = false; active.current = true; setListening(true); setProcessing(false)
+    const runId = ++run.current, android = /Android/i.test(w.navigator?.userAgent ?? '')
+    setError(null); transcript.current = completed.current = ''; released.current = ended.current = delivered.current = false
+    active.current = true; setListening(true); setProcessing(false); setReady(false); setSpeaking(false)
     timer.current = setTimeout(() => { cancel(); setError(previous => previous ?? 'failed') }, 60000)
-    try {
-      if (w.RwaNativeVoice) { w.RwaNativeVoice.start({ locale }); return true }
-      if (!Constructor) { settle(); return false }
-      const item = new Constructor(); recognition.current = item; item.lang = locale === 'en' ? 'en-US' : locale; item.interimResults = deferred.current; item.continuous = deferred.current
+    const begin = () => {
+      if (!active.current || run.current !== runId || released.current || !Constructor) return
+      const item = new Constructor(); recognition.current = item; ended.current = false
+      item.lang = ({ en: 'en-US', es: 'es-ES', fr: 'fr-FR', pt: 'pt-BR', ar: 'ar-SA', hi: 'hi-IN' } as Record<string, string>)[locale] ?? locale
+      item.interimResults = true
+      // Chromium's Android recognizer does not implement continuous=true or shared audio tracks.
+      item.continuous = deferred.current && !android
       const current = () => active.current && run.current === runId && recognition.current === item
+      item.onaudiostart = () => { if (current()) setReady(true) }
+      item.onspeechstart = () => { if (current()) { setReady(true); setSpeaking(true) } }
+      item.onspeechend = () => { if (current()) setSpeaking(false) }
       item.onresult = event => {
         if (!current()) return
-        const text = Array.from(event.results).filter(result => result.isFinal !== false).map(result => result[0]?.transcript ?? '').join(' ').trim()
-        if (text) { heard.current = true; transcript.current = text; if (!deferred.current) receive.current(text) }
+        // Keep the latest full hypothesis; a later final event replaces it, never duplicates it.
+        const text = Array.from(event.results).map(result => result[0]?.transcript ?? '').join(' ').trim().slice(0, 4000)
+        if (text) { transcript.current = text; setReady(true); setSpeaking(true) }
+        if (!deferred.current) {
+          const final = Array.from(event.results).filter(result => result.isFinal !== false).map(result => result[0]?.transcript ?? '').join(' ').trim()
+          if (final) { delivered.current = true; receive.current(final) }
+        }
       }
-      item.onerror = event => { if (!current()) return; const reason = event.error === 'not-allowed' || event.error === 'service-not-allowed' ? 'denied' : event.error === 'no-speech' ? 'empty' : 'failed'; cancel(); setError(reason) }
-      item.onend = () => { if (!current()) return; ended.current = true; if (!deferred.current || released.current) finish() }
-      item.start(); return true
+      item.onerror = event => {
+        if (!current()) return
+        const reason = voiceError(event.error)
+        if ((reason === 'empty' || (event.error === 'aborted' && released.current)) && textSoFar()) { setSpeaking(false); if (released.current) finish(); return }
+        cancel(); setError(reason)
+      }
+      item.onend = () => {
+        if (!current()) return
+        ended.current = true; setReady(false); setSpeaking(false)
+        if (!deferred.current || released.current) { finish(); return }
+        // Android ends at each pause. Continue the same hold without losing previous sentences.
+        if (android && transcript.current) {
+          completed.current = textSoFar(); transcript.current = ''; recognition.current = null; detach(item)
+          restartTimer.current = setTimeout(() => { restartTimer.current = null; try { begin() } catch { cancel(); setError('failed') } }, 120)
+        }
+      }
+      item.start()
+    }
+    try {
+      if (w.RwaNativeVoice) { w.RwaNativeVoice.start({ locale }); return true }
+      begin(); return true
     } catch { cancel(); setError('failed'); return false }
-  }, [cancel, locale, settle, stop, finish])
-  return { available, listening, processing, error, start, stop, cancel }
+  }, [cancel, locale, stop, finish, textSoFar])
+  return { available, listening, processing, ready, speaking, error, start, stop, cancel }
 }

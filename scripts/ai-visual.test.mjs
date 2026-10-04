@@ -82,18 +82,10 @@ test('oversized decoded images fail before rendering and release resources', asy
   assert.equal(f.metrics.drawn, 0); assert.equal(f.metrics.closed, 1)
 })
 
-test('WaveSurfer cancels unloaded and late microphone instances without changing a successor recording', async () => {
-  const r = runtime(), instances = [], permits = []
-  const WaveSurfer = { create: options => { const item = { options, destroyed: 0, registerPlugin: plugin => plugin, destroy() { this.destroyed++ }, setOptions() {} }; instances.push(item); return item } }
-  const Record = { create: () => ({ startMic: () => new Promise(resolve => permits.push(resolve)) }) }
-  const Wave = load('components/maison/AiVoiceWaveform.tsx', { react: r.react, 'wavesurfer.js': { __esModule: true, default: WaveSurfer }, 'wavesurfer.js/dist/plugins/record.esm.js': { __esModule: true, default: Record } }, { navigator: { mediaDevices: { getUserMedia() {} } }, window: {}, AudioContext: class {}, getComputedStyle: () => ({ color: '#bd9355' }) }).default
-  const render = active => r.render(() => Wave({ active }), tree => nodes(tree, 'div').forEach(node => { if (node.props.ref) node.props.ref.current = {} }))
-  const tick = () => new Promise(resolve => setImmediate(resolve))
-  render(true); render(false); await tick(); assert.equal(instances.length, 0)
-  render(true); await tick(); assert.equal(instances.length, 1)
-  render(false); render(true); await tick(); assert.equal(instances.length, 2)
-  permits[0](); await tick(); assert.equal(instances[1].destroyed, 0)
-  assert.equal(render(true).props['data-ready'], undefined)
-  permits[1](); await tick(); assert.equal(render(true).props['data-ready'], true)
-  r.cleanup(); assert.equal(instances[1].destroyed, 1)
+test('voice activity follows recognition events and never opens a competing microphone', () => {
+  const Wave = load('components/maison/AiVoiceWaveform.tsx', {}, { navigator: new Proxy({}, { get() { throw new Error('The visual must not acquire the microphone') } }) }).default
+  assert.equal(Wave({ active: true, speaking: false }).props['data-speaking'], undefined)
+  assert.equal(Wave({ active: true, speaking: true }).props['data-speaking'], true)
+  assert.equal(Wave({ active: false, speaking: true }).props['data-speaking'], undefined)
+  assert.equal(nodes(Wave({ active: true }), 'i').length, 27)
 })
