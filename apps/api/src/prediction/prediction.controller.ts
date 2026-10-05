@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import type { RequestWithContext } from '../common/request-context.middleware'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
 import { ListPredictionBetsQueryDto, PlacePredictionBetDto } from './prediction.dto'
+import { PredictionFavoriteService } from './prediction-favorite.service'
 import { PredictionService } from './prediction.service'
 
 @ApiTags('predictions')
@@ -24,7 +25,10 @@ export class PredictionController {
 @UseGuards(SessionAuthGuard)
 @Controller('predictions')
 export class PredictionUserController {
-  constructor(private readonly prediction: PredictionService) {}
+  constructor(
+    private readonly prediction: PredictionService,
+    private readonly favorites: PredictionFavoriteService,
+  ) {}
 
   @Post('bets')
   @ApiOperation({ summary: 'Place a prediction bet using the account balance (internal market)' })
@@ -51,5 +55,23 @@ export class PredictionUserController {
   @ApiOperation({ summary: 'Read one of my prediction bets' })
   get(@CurrentAuth() actor: SecurityActor, @Param('id') id: string) {
     return this.prediction.getBet(actor.userId, id)
+  }
+
+  @Get('favorites')
+  @ApiOperation({ summary: 'List my starred prediction events' })
+  listFavorites(@CurrentAuth() actor: SecurityActor) {
+    return this.favorites.list(actor.userId)
+  }
+
+  @Post('favorites/:eventId')
+  @ApiOperation({ summary: 'Star a prediction event (idempotent)' })
+  addFavorite(@CurrentAuth() actor: SecurityActor, @Param('eventId') eventId: string) {
+    return this.favorites.add(actor.userId, eventId)
+  }
+
+  @Delete('favorites/:eventId')
+  @ApiOperation({ summary: 'Unstar a prediction event' })
+  removeFavorite(@CurrentAuth() actor: SecurityActor, @Param('eventId') eventId: string) {
+    return this.favorites.remove(actor.userId, eventId)
   }
 }
