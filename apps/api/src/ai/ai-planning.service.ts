@@ -79,7 +79,7 @@ export class AiPlanningService {
     if (!created.length) return this.generate(userId,expectedRevision,key)
     try {
       const reply = await this.model.complete([
-        buildRwaAssistantPrompt({ locale: goal.content.locale, provider: this.model.providerName, authenticated: true, mode: 'allocation' }),
+        buildRwaAssistantPrompt({ locale: goal.content.locale, authenticated: true, mode: 'allocation' }),
         'Return ONLY JSON: {"cashBps":integer,"explanation":string,"allocations":[{"productId":string,"weightBps":integer,"reason":string}]} .',
         'Weights including cash must total 10000 basis points. Suggest at most 8 of the supplied published products, using their exact IDs once.',
         'These are educational suggestions, not suitability approval, guaranteed returns or transaction instructions. Never claim trades occurred.',

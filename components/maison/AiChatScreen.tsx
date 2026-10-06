@@ -25,6 +25,7 @@ import type { AiPageContext } from '@/lib/ai-page-context'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { useReducedMotion } from 'motion/react'
 import { showAiAnswer, type AiAttachment } from '@/lib/ai-attachment-policy'
+import { AI_CHAT_SESSION_KEY, clearAiChatSession, parseAiChatSession, serializeAiChatSession, type AiChatMessage } from '@/lib/ai-chat-session'
 import AiComposer from './AiComposer'
 import AiAnswerActions from './AiAnswerActions'
 import ParticleLogoIcon from '../particle-logo-icon'
@@ -36,7 +37,7 @@ const CommunityFeed = dynamic(() => import('../community-screens').then(module =
 const TAB_KEY = 'rwa-ai-tab'
 const memberPath = (id: string) => '/community/member/' + encodeURIComponent(id)
 
-type Message = { id: number; messageId?: string; role: 'user' | 'assistant'; content: string; citations?: Citation[]; questions?: AiQuestion[]; attachments?: AiAttachment[] }
+type Message = AiChatMessage
 type SendError = { text: string; tone: 'error' | 'info'; retry: string | null; attachments?: AiAttachment[] }
 const MAX = 4000
 const fill = (template: string, values: Record<string, string | number>) => template.replace(/\{(\w+)\}/g, (_, key) => String(values[key] ?? ''))
@@ -131,6 +132,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const [dockHeight, setDockHeight] = useState(150)
   const [revealId, setRevealId] = useState<number | null>(null)
   const [started, setStarted] = useState(false)
+  const [sessionRestored, setSessionRestored] = useState(false)
   const inflight = useRef<AbortController | null>(null)
   const nextId = useRef(1)
   const end = useRef<HTMLDivElement>(null)
@@ -155,12 +157,44 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const community = tab === 'community'
 
   useEffect(() => {
+    try {
+      const snapshot = parseAiChatSession(sessionStorage.getItem(AI_CHAT_SESSION_KEY))
+      if (snapshot) {
+        setSessionId(snapshot.sessionId)
+        setMessages(snapshot.messages)
+        setStarted(true)
+        nextId.current = Math.max(0, ...snapshot.messages.map(message => message.id)) + 1
+      }
+    } catch { /* Storage can be unavailable in private or restricted browser modes. */ }
+    setSessionRestored(true)
+  }, [])
+
+  useEffect(() => {
+    if (!sessionRestored) return
+    try {
+      const snapshot = serializeAiChatSession(sessionId, messages)
+      if (snapshot) sessionStorage.setItem(AI_CHAT_SESSION_KEY, snapshot)
+      else clearAiChatSession(sessionStorage)
+    } catch { /* Conversation remains usable if storage is unavailable or full. */ }
+  }, [messages, sessionId, sessionRestored])
+
+  useEffect(() => {
     let active = true
     request<Record<string, unknown>>('/v1/ai/status').then((result) => { if (active) setStatus(result.ok && result.data?.available !== false && result.data?.configured !== false ? 'ready' : 'disabled') })
     return () => { active = false; inflight.current?.abort() }
   }, [])
 
-  useEffect(() => { const reset = () => { inflight.current?.abort(); inflight.current = null; setSending(false); setMessages([]); setSessionId(null); setInput(''); setError(null); setStarted(false); setGeneration(n => n + 1) }; window.addEventListener(SESSION_CHANGED, reset); window.addEventListener(SESSION_EXPIRED, reset); return () => { window.removeEventListener(SESSION_CHANGED, reset); window.removeEventListener(SESSION_EXPIRED, reset) } }, [])
+  useEffect(() => {
+    const reset = () => {
+      inflight.current?.abort(); inflight.current = null
+      setSending(false); setMessages([]); setSessionId(null); setInput(''); setError(null); setStarted(false)
+      try { clearAiChatSession(window.sessionStorage) } catch { /* Keep account transitions usable when storage is blocked. */ }
+      setGeneration(n => n + 1)
+    }
+    window.addEventListener(SESSION_CHANGED, reset)
+    window.addEventListener(SESSION_EXPIRED, reset)
+    return () => { window.removeEventListener(SESSION_CHANGED, reset); window.removeEventListener(SESSION_EXPIRED, reset) }
+  }, [])
   useEffect(() => { const viewport = window.visualViewport; if (!viewport) return; const update = () => setKeyboard(Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)); viewport.addEventListener('resize', update); viewport.addEventListener('scroll', update); update(); return () => { viewport.removeEventListener('resize', update); viewport.removeEventListener('scroll', update) } }, [])
   useEffect(() => { if (!dock.current || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(entries => setDockHeight(Math.ceil(entries[0]?.contentRect.height ?? 150) + 40)); observer.observe(dock.current); return () => observer.disconnect() }, [])
 
@@ -216,7 +250,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     if (pending !== null) setMessages(messages.slice(0, -1))
     setError({ text: chat.cancelled, tone: 'info', retry: pending, attachments: last?.attachments })
   }
-  const empty = messages.length === 0 && !sending
+  const empty = sessionRestored && messages.length === 0 && !sending
 
   return <MaisonPage page="ai">
     <div className={a.shell}>

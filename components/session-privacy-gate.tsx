@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import AppLoading from './app-loading'
-import { clearSession, readSession, SESSION_CHANGED } from '@/lib/api/_http'
+import { clearSession, readSession, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
+import { clearAiChatSession } from '@/lib/ai-chat-session'
 import { logout } from '@/lib/api/auth'
 import { listSecurityFactors, stepUpWithPasskey } from '@/lib/api/security'
 import { useI18n } from '@/lib/i18n'
@@ -30,6 +31,16 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
   const leaving = useRef(false)
   const pending = useRef<AbortController | null>(null)
   const { run, sheet } = useStepUp()
+
+  useEffect(() => {
+    const clearStoredAiThread = () => { try { clearAiChatSession(window.sessionStorage) } catch { /* Privacy cleanup must not block the session transition. */ } }
+    window.addEventListener(SESSION_CHANGED, clearStoredAiThread)
+    window.addEventListener(SESSION_EXPIRED, clearStoredAiThread)
+    return () => {
+      window.removeEventListener(SESSION_CHANGED, clearStoredAiThread)
+      window.removeEventListener(SESSION_EXPIRED, clearStoredAiThread)
+    }
+  }, [])
   // The desktop trust presentation is public, even when an old mobile session exists.
   const publicAuth = pathname === '/desktop' || pathname === '/desktop/' ||
     /^\/(?:login|register|recover|auth)(?:\/|$)/.test(pathname) || pathname === '/terms' || pathname === '/privacy'

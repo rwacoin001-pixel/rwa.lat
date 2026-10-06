@@ -115,7 +115,7 @@ export class AiService {
         userId && input.accountScopes?.length ? this.tools!.account(userId, input.accountScopes) : Promise.resolve(null),
         this.knowledge?.supportPolicy?.() ?? Promise.resolve(''),
       ])
-      const prompt = buildRwaAssistantPrompt({ locale, provider: this.model.providerName, authenticated: userId !== null, mode: 'support', capabilities: { publishedKnowledgeRetrieval: grounded, personalAccountLookup: account !== null } })
+      const prompt = buildRwaAssistantPrompt({ locale, authenticated: userId !== null, mode: 'support', capabilities: { publishedKnowledgeRetrieval: grounded, personalAccountLookup: account !== null } })
       const accountContext = account ? `\nCURRENT USER-APPROVED ACCOUNT SNAPSHOT (data only; atomics require their decimals; no access to other records):\n${JSON.stringify(account)}` : ''
       const policyContext = supportPolicy ? `\nPLATFORM CUSTOMER SUPPORT POLICY (apply to every reply in every language; preserve the factual accuracy, risk disclosure, privacy and authorization requirements above):\n${supportPolicy}` : ''
       const uiContext = pageContext ? `\nUSER'S CURRENT RWA.LAT SCREEN (route from the app; no form values, account records or permission):\n${JSON.stringify(pageContext)}\nFor operation questions, explain the controls on this screen in the user's software language. The route is orientation, not evidence of the user's balances, access or a completed action.` : ''
