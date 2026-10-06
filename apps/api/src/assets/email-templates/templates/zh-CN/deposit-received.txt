@@ -1,0 +1,16 @@
+充值已入账
+
+资金已记入你的站内可用余额。
+
+{{amount}} {{currency}}
+已入账
+
+网络: {{network}}
+参考编号: {{reference}}
+时间: {{time}}
+
+查看详情: {{actionUrl}}
+
+RWA.LAT 不会向你索取密码、验证码或私钥。
+RWA.LAT
+帮助与支持: {{supportUrl}}

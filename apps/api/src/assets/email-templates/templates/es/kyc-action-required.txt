@@ -1,0 +1,12 @@
+Se necesita más información
+
+Consulta la información requerida en la página de verificación.
+
+Motivo: {{reason}}
+Referencia: {{reference}}
+
+Continuar verificación: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

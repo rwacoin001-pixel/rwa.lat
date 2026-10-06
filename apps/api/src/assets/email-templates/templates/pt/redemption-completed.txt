@@ -1,0 +1,17 @@
+Resgate concluído
+
+O valor do resgate foi creditado no saldo da sua conta.
+
+{{amount}} {{currency}}
+Liquidado
+
+Produto: {{product}}
+Taxa: {{fee}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

@@ -1,0 +1,12 @@
+Récupérez l’accès à votre compte
+
+Confirmez votre demande de récupération du compte.
+
+
+Récupérer le compte: {{actionUrl}}
+
+Ce lien expire dans {{expiryText}} et ne peut être utilisé qu’une fois. Si vous ne l’avez pas demandé, ignorez cet e-mail.
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

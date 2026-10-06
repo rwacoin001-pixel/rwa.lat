@@ -1,0 +1,13 @@
+Asignación de inversión actualizada
+
+Revisa el estado de ejecución más reciente de esta asignación.
+
+Estado de ejecución: {{allocationState}}
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver asignación: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

@@ -1,0 +1,16 @@
+A new sign-in to your account
+
+The device below has just signed in to your account.
+
+Device: {{device}}
+Location (approximate): {{location}}
+Time: {{time}}
+
+Review security: {{actionUrl}}
+
+Not you? Review your account security and contact official support.
+{{securityUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

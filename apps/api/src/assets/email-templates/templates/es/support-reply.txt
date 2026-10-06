@@ -1,0 +1,12 @@
+Hay una respuesta a tu ticket
+
+El equipo de soporte ha respondido. Lee la respuesta completa en tu cuenta.
+
+Ticket: {{ticket}}
+Fecha y hora: {{time}}
+
+Ver ticket: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

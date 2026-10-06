@@ -1,0 +1,16 @@
+Security verification was updated
+
+Your security verification settings have changed.
+
+Verification method: {{factor}}
+Change: {{change}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+Not you? Review your account security and contact official support.
+{{securityUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

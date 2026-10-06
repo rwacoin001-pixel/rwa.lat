@@ -1,0 +1,10 @@
+Your account is ready
+
+Your email is verified. You can now use RWA.LAT.
+
+
+Open account: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

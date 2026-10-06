@@ -1,0 +1,16 @@
+Depósito creditado
+
+Os fundos foram creditados no saldo disponível da sua conta.
+
+{{amount}} {{currency}}
+Creditado
+
+Rede: {{network}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

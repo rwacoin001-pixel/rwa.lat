@@ -1,0 +1,16 @@
+Transferencia interna completada
+
+La transferencia se ha abonado al saldo de la cuenta del destinatario.
+
+{{amount}} {{currency}}
+Enviado
+
+Destinatario: {{recipient}}
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver detalles: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

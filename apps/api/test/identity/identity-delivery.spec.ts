@@ -24,7 +24,7 @@ describe('IdentityDeliveryService', () => {
     const message = mockSendMail.mock.calls[0][0]
     expect(message.text).toContain('012345')
     expect(message.text).toContain('10 分钟')
-    expect(message.html).not.toMatch(/href=|token=/)
+    expect(message.html).not.toMatch(/token=|auth\/callback|verify-email/)
     expect(delivery.lastDemoCode('user@example.com', 'login')).toBeUndefined()
   })
 

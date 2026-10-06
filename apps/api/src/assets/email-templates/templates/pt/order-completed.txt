@@ -1,0 +1,18 @@
+Ordem executada
+
+Este é o registro de execução da sua ordem.
+
+{{amount}} {{currency}}
+Executada
+
+Produto: {{product}}
+Unidades: {{units}}
+Taxa: {{fee}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

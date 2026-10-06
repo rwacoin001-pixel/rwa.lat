@@ -1,0 +1,17 @@
+Reembolso completado
+
+El importe del reembolso se ha abonado al saldo de tu cuenta.
+
+{{amount}} {{currency}}
+Liquidado
+
+Producto: {{product}}
+Comisión: {{fee}}
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver detalles: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

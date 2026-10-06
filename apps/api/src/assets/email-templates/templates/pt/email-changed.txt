@@ -1,0 +1,16 @@
+O e-mail da conta foi atualizado
+
+O e-mail usado para avisos e acesso à conta foi atualizado.
+
+E-mail anterior: {{previousEmail}}
+Novo e-mail: {{newEmail}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+Não foi você? Revise a segurança da conta e entre em contato com o suporte oficial.
+{{securityUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

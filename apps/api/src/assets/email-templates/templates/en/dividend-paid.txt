@@ -1,0 +1,17 @@
+Distribution credited
+
+This distribution has been credited to your account balance.
+
+{{amount}} {{currency}}
+Credited
+
+Product: {{product}}
+Period: {{period}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

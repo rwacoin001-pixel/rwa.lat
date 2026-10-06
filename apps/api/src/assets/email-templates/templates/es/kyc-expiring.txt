@@ -1,0 +1,12 @@
+Tu verificación está por vencer
+
+Actualiza tu información de verificación antes de que venza.
+
+Vencimiento: {{expiry}}
+Referencia: {{reference}}
+
+Actualizar verificación: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

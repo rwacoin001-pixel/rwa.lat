@@ -1,0 +1,16 @@
+Ordre envoyé
+
+Votre ordre a été envoyé. Consultez ses détails pour connaître l’état d’exécution.
+
+{{amount}} {{currency}}
+En attente d’exécution
+
+Produit: {{product}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

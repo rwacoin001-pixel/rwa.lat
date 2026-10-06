@@ -1,0 +1,12 @@
+Our service terms have changed
+
+Review the changes and their effective date.
+
+Effective date: {{effectiveDate}}
+Version: {{version}}
+
+Review terms: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

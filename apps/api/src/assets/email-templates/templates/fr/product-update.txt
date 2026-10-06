@@ -1,0 +1,11 @@
+Les nouveautés de RWA.LAT
+
+Découvrez les fonctionnalités de cette mise à jour.
+
+
+Voir les nouveautés: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}
+Se désabonner: {{unsubscribeUrl}}

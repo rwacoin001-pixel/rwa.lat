@@ -1,0 +1,18 @@
+Mercado de predicción liquidado
+
+El importe de liquidación y el resultado se muestran a continuación.
+
+{{amount}} {{currency}}
+Liquidado
+
+Mercado: {{market}}
+Resultado: {{outcome}}
+Comisión: {{fee}}
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver detalles: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

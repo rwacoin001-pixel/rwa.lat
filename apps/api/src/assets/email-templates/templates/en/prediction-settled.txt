@@ -1,0 +1,18 @@
+Prediction market settled
+
+Your settlement amount and outcome are shown below.
+
+{{amount}} {{currency}}
+Settled
+
+Market: {{market}}
+Outcome: {{outcome}}
+Fee: {{fee}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

@@ -1,0 +1,17 @@
+Distribution créditée
+
+Cette distribution a été créditée sur le solde de votre compte.
+
+{{amount}} {{currency}}
+Crédité
+
+Produit: {{product}}
+Période: {{period}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

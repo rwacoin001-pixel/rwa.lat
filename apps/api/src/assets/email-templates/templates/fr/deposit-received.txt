@@ -1,0 +1,16 @@
+Dépôt crédité
+
+Les fonds ont été crédités sur le solde disponible de votre compte.
+
+{{amount}} {{currency}}
+Crédité
+
+Réseau: {{network}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

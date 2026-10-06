@@ -1,0 +1,17 @@
+Withdrawal request received
+
+Your request was submitted. The transfer is not yet complete.
+
+{{amount}} {{currency}}
+Processing
+
+Fee: {{fee}}
+Destination: {{destination}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

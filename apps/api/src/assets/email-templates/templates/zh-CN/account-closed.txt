@@ -1,0 +1,12 @@
+账户已关闭
+
+账户关闭请求已处理完成。
+
+时间: {{time}}
+参考编号: {{reference}}
+
+联系支持: {{actionUrl}}
+
+RWA.LAT 不会向你索取密码、验证码或私钥。
+RWA.LAT
+帮助与支持: {{supportUrl}}

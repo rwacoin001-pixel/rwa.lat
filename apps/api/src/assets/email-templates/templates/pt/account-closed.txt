@@ -1,0 +1,12 @@
+Sua conta foi encerrada
+
+Sua solicitação de encerramento da conta foi processada.
+
+Data e hora: {{time}}
+Referência: {{reference}}
+
+Contatar o suporte: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

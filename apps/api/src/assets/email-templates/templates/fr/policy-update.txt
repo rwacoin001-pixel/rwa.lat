@@ -1,0 +1,12 @@
+Les conditions ont changé
+
+Consultez les modifications et leur date d’entrée en vigueur.
+
+Date d’entrée en vigueur: {{effectiveDate}}
+Version: {{version}}
+
+Consulter les conditions: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

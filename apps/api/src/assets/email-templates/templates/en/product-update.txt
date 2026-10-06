@@ -1,0 +1,11 @@
+What’s new at RWA.LAT
+
+Explore the features included in this update.
+
+
+View update: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}
+Unsubscribe: {{unsubscribeUrl}}

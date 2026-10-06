@@ -1,0 +1,12 @@
+Identity verification approved
+
+Your identity verification result has been updated.
+
+Reference: {{reference}}
+Time: {{time}}
+
+View verification: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

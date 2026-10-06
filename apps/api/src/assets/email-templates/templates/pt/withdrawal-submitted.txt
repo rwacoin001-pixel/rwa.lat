@@ -1,0 +1,17 @@
+Solicitação de saque recebida
+
+Sua solicitação foi enviada. A transferência ainda não foi concluída.
+
+{{amount}} {{currency}}
+Em processamento
+
+Taxa: {{fee}}
+Endereço de destino: {{destination}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

@@ -1,0 +1,17 @@
+赎回已完成
+
+赎回款已记入你的站内余额。
+
+{{amount}} {{currency}}
+已结算
+
+产品: {{product}}
+手续费: {{fee}}
+参考编号: {{reference}}
+时间: {{time}}
+
+查看详情: {{actionUrl}}
+
+RWA.LAT 不会向你索取密码、验证码或私钥。
+RWA.LAT
+帮助与支持: {{supportUrl}}

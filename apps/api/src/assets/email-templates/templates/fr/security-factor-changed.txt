@@ -1,0 +1,16 @@
+Vérification de sécurité modifiée
+
+Vos paramètres de vérification de sécurité ont changé.
+
+Méthode de vérification: {{factor}}
+Modification: {{change}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+Ce n’était pas vous ? Vérifiez la sécurité du compte et contactez l’assistance officielle.
+{{securityUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

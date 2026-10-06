@@ -11,6 +11,7 @@ import type { Response } from 'express'
 const SCOPES: Record<string, { dir: string; pattern: RegExp; contentType: string }> = {
   basket: { dir: 'media', pattern: /^[a-z0-9-]+\.png$/, contentType: 'image/png' },
   disclosure: { dir: 'disclosures', pattern: /^[a-z0-9-]+\.pdf$/, contentType: 'application/pdf' },
+  'email-v1': { dir: 'email-v1', pattern: /^(logo\.png|identity-envelope\.jpg|funds-wallet\.jpg|security-key\.jpg)$/, contentType: 'image/jpeg' },
 }
 
 @ApiTags('media')
@@ -23,7 +24,7 @@ export class MediaController {
     @Param('file') file: string,
     @Res({ passthrough: true }) res: Response,
   ): StreamableFile {
-    const spec = SCOPES[scope]
+    const spec = Object.prototype.hasOwnProperty.call(SCOPES, scope) ? SCOPES[scope] : undefined
     if (!spec || !spec.pattern.test(file)) {
       throw new NotFoundException({ code: 'MEDIA_NOT_FOUND', message: 'Unknown media scope or file name.' })
     }
@@ -32,7 +33,7 @@ export class MediaController {
       throw new NotFoundException({ code: 'MEDIA_NOT_FOUND', message: 'Media file not found.' })
     }
     res.set({
-      'Content-Type': spec.contentType,
+      'Content-Type': scope === 'email-v1' && file === 'logo.png' ? 'image/png' : spec.contentType,
       'Cache-Control': 'public, max-age=86400, immutable',
     })
     return new StreamableFile(createReadStream(filePath))

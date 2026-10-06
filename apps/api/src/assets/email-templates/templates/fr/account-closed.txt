@@ -1,0 +1,12 @@
+Votre compte a été fermé
+
+Votre demande de fermeture de compte a été traitée.
+
+Date et heure: {{time}}
+Référence: {{reference}}
+
+Contacter l’assistance: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

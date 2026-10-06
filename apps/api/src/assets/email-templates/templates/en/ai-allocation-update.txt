@@ -1,0 +1,13 @@
+Investment allocation status updated
+
+Review the latest execution state of this allocation.
+
+Execution state: {{allocationState}}
+Reference: {{reference}}
+Time: {{time}}
+
+View allocation: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

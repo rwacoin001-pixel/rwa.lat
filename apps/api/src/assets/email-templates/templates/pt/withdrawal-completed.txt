@@ -1,0 +1,17 @@
+Saque concluído
+
+Seu saque foi processado. Consulte os detalhes da transação.
+
+{{amount}} {{currency}}
+Concluído
+
+Taxa: {{fee}}
+Endereço de destino: {{destination}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

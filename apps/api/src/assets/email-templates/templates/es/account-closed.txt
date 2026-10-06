@@ -1,0 +1,12 @@
+Tu cuenta se ha cerrado
+
+La solicitud de cierre de tu cuenta se ha procesado.
+
+Fecha y hora: {{time}}
+Referencia: {{reference}}
+
+Contactar con soporte: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

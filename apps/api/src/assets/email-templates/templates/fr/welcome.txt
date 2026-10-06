@@ -1,0 +1,10 @@
+Votre compte est prêt
+
+Votre e-mail est vérifié. Vous pouvez maintenant utiliser RWA.LAT.
+
+
+Ouvrir le compte: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

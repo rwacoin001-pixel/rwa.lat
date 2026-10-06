@@ -1,0 +1,12 @@
+Your support ticket has a reply
+
+Support has replied. Read the full response in your account.
+
+Ticket: {{ticket}}
+Time: {{time}}
+
+View ticket: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

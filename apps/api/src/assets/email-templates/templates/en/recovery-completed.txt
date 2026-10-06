@@ -1,0 +1,14 @@
+Account recovery completed
+
+Account recovery is complete. Review your security settings.
+
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+Not you? Review your account security and contact official support.
+{{securityUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

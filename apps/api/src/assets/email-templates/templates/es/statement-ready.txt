@@ -1,0 +1,11 @@
+Tu extracto está listo
+
+Consulta o descarga el extracto de este periodo en tu cuenta.
+
+Periodo: {{period}}
+
+Ver extracto: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

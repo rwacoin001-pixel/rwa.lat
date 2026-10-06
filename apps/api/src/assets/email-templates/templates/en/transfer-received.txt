@@ -1,0 +1,16 @@
+You received an account transfer
+
+Incoming funds have been credited to your available balance.
+
+{{amount}} {{currency}}
+Received
+
+Sender: {{sender}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

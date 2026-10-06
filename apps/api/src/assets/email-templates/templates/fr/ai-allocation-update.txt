@@ -1,0 +1,13 @@
+Allocation d’investissement mise à jour
+
+Consultez le dernier état d’exécution de cette allocation.
+
+État d’exécution: {{allocationState}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir l’allocation: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

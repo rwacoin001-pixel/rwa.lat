@@ -1,0 +1,16 @@
+账户邮箱已更新
+
+用于账户通知和登录的邮箱已更新。
+
+原邮箱: {{previousEmail}}
+新邮箱: {{newEmail}}
+时间: {{time}}
+
+查看详情: {{actionUrl}}
+
+非本人操作？请立即检查账户安全，并联系官方客服。
+{{securityUrl}}
+
+RWA.LAT 不会向你索取密码、验证码或私钥。
+RWA.LAT
+帮助与支持: {{supportUrl}}

@@ -1,0 +1,12 @@
+Recupera el acceso a tu cuenta
+
+Confirma tu solicitud para recuperar el acceso a la cuenta.
+
+
+Recuperar cuenta: {{actionUrl}}
+
+Este enlace caduca en {{expiryText}} y solo se puede usar una vez. Si no lo solicitaste, ignora este correo.
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

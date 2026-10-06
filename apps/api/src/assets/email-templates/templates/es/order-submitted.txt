@@ -1,0 +1,16 @@
+Orden enviada
+
+Tu orden se ha enviado. Consulta los detalles para ver su estado de ejecución.
+
+{{amount}} {{currency}}
+Pendiente de ejecución
+
+Producto: {{product}}
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver detalles: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

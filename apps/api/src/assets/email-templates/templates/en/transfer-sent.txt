@@ -1,0 +1,16 @@
+Account transfer completed
+
+The transfer has been credited to the recipient’s account balance.
+
+{{amount}} {{currency}}
+Sent
+
+Recipient: {{recipient}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

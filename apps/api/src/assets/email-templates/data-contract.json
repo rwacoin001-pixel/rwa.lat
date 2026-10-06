@@ -1,0 +1,3712 @@
+[
+  {
+    "id": "registration-code",
+    "locale": "zh-CN",
+    "subject": "验证你的邮箱 · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "registration-code",
+    "locale": "en",
+    "subject": "Verify your email · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "registration-code",
+    "locale": "hi",
+    "subject": "अपना ईमेल सत्यापित करें · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "registration-code",
+    "locale": "es",
+    "subject": "Verifica tu correo · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "registration-code",
+    "locale": "ar",
+    "subject": "تحقق من بريدك الإلكتروني · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "registration-code",
+    "locale": "fr",
+    "subject": "Vérifiez votre e-mail · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "registration-code",
+    "locale": "pt",
+    "subject": "Verifique seu e-mail · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "zh-CN",
+    "subject": "确认本次登录 · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "en",
+    "subject": "Confirm your sign-in · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "hi",
+    "subject": "अपने लॉगिन की पुष्टि करें · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "es",
+    "subject": "Confirma tu acceso · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "ar",
+    "subject": "أكد تسجيل الدخول · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "fr",
+    "subject": "Confirmez votre connexion · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "login-code",
+    "locale": "pt",
+    "subject": "Confirme seu acesso · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "zh-CN",
+    "subject": "验证邮箱地址 · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "en",
+    "subject": "Verify your email address · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "hi",
+    "subject": "ईमेल पते की पुष्टि करें · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "es",
+    "subject": "Verifica tu dirección de correo · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "ar",
+    "subject": "تحقق من عنوان البريد · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "fr",
+    "subject": "Vérifiez votre adresse e-mail · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "verification-link",
+    "locale": "pt",
+    "subject": "Verifique seu endereço de e-mail · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "zh-CN",
+    "subject": "登录 RWA.LAT · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "en",
+    "subject": "Sign in to RWA.LAT · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "hi",
+    "subject": "RWA.LAT में लॉगिन करें · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "es",
+    "subject": "Accede a RWA.LAT · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "ar",
+    "subject": "سجل الدخول إلى RWA.LAT · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "fr",
+    "subject": "Connectez-vous à RWA.LAT · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "magic-login-link",
+    "locale": "pt",
+    "subject": "Entre na RWA.LAT · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "zh-CN",
+    "subject": "恢复账户访问 · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "en",
+    "subject": "Recover account access · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "hi",
+    "subject": "खाते की पहुँच पुनर्प्राप्त करें · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "es",
+    "subject": "Recupera el acceso a tu cuenta · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "ar",
+    "subject": "استعد الوصول إلى حسابك · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "fr",
+    "subject": "Récupérez l’accès à votre compte · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-link",
+    "locale": "pt",
+    "subject": "Recupere o acesso à conta · RWA.LAT",
+    "connection": "existing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiryText",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "zh-CN",
+    "subject": "确认重置密码 · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "en",
+    "subject": "Confirm password reset · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "hi",
+    "subject": "पासवर्ड रीसेट की पुष्टि करें · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "es",
+    "subject": "Confirma el cambio de contraseña · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "ar",
+    "subject": "أكد إعادة تعيين كلمة المرور · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "fr",
+    "subject": "Confirmez la réinitialisation · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "reset-password-code",
+    "locale": "pt",
+    "subject": "Confirme a redefinição de senha · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "zh-CN",
+    "subject": "绑定邮箱地址 · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "en",
+    "subject": "Link your email address · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "hi",
+    "subject": "अपना ईमेल पता जोड़ें · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "es",
+    "subject": "Vincula tu correo · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "ar",
+    "subject": "اربط بريدك الإلكتروني · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "fr",
+    "subject": "Associez votre adresse e-mail · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "bind-email-code",
+    "locale": "pt",
+    "subject": "Vincule seu e-mail · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "zh-CN",
+    "subject": "验证新邮箱 · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "en",
+    "subject": "Verify your new email · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "hi",
+    "subject": "अपना नया ईमेल सत्यापित करें · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "es",
+    "subject": "Verifica tu nuevo correo · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "ar",
+    "subject": "تحقق من بريدك الجديد · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "fr",
+    "subject": "Vérifiez votre nouvel e-mail · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "change-email-code",
+    "locale": "pt",
+    "subject": "Verifique seu novo e-mail · RWA.LAT",
+    "connection": "shared",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "zh-CN",
+    "subject": "账户已创建 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "en",
+    "subject": "Your account is ready · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "hi",
+    "subject": "आपका खाता तैयार है · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "es",
+    "subject": "Tu cuenta está lista · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "ar",
+    "subject": "حسابك جاهز · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "fr",
+    "subject": "Votre compte est prêt · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "welcome",
+    "locale": "pt",
+    "subject": "Sua conta está pronta · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "zh-CN",
+    "subject": "账户有新的登录 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "en",
+    "subject": "A new sign-in to your account · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "hi",
+    "subject": "आपके खाते में नया लॉगिन · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "es",
+    "subject": "Nuevo acceso a tu cuenta · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "ar",
+    "subject": "تسجيل دخول جديد إلى حسابك · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "fr",
+    "subject": "Nouvelle connexion à votre compte · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "new-login",
+    "locale": "pt",
+    "subject": "Novo acesso à sua conta · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "device",
+      "location",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "zh-CN",
+    "subject": "账户密码已更新 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "en",
+    "subject": "Your password was updated · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "hi",
+    "subject": "आपका पासवर्ड अपडेट हुआ · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "es",
+    "subject": "Tu contraseña se ha actualizado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "ar",
+    "subject": "تم تحديث كلمة المرور · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "fr",
+    "subject": "Votre mot de passe a été modifié · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "password-changed",
+    "locale": "pt",
+    "subject": "Sua senha foi atualizada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "zh-CN",
+    "subject": "账户邮箱已更新 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "en",
+    "subject": "Your account email was updated · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "hi",
+    "subject": "खाते का ईमेल अपडेट हुआ · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "es",
+    "subject": "El correo de tu cuenta se ha actualizado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "ar",
+    "subject": "تم تحديث بريد الحساب · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "fr",
+    "subject": "L’e-mail du compte a été modifié · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "email-changed",
+    "locale": "pt",
+    "subject": "O e-mail da conta foi atualizado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "newEmail",
+      "previousEmail",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "zh-CN",
+    "subject": "安全验证方式已更新 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "en",
+    "subject": "Security verification was updated · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "hi",
+    "subject": "सुरक्षा सत्यापन अपडेट हुआ · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "es",
+    "subject": "Verificación de seguridad actualizada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "ar",
+    "subject": "تم تحديث التحقق الأمني · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "fr",
+    "subject": "Vérification de sécurité modifiée · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "security-factor-changed",
+    "locale": "pt",
+    "subject": "Verificação de segurança atualizada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "change",
+      "factor",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "zh-CN",
+    "subject": "账户恢复已完成 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "en",
+    "subject": "Account recovery completed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "hi",
+    "subject": "खाता पुनर्प्राप्ति पूरी हुई · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "es",
+    "subject": "Recuperación de cuenta completada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "ar",
+    "subject": "اكتملت استعادة الحساب · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "fr",
+    "subject": "Récupération du compte terminée · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "recovery-completed",
+    "locale": "pt",
+    "subject": "Recuperação da conta concluída · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "securityUrl",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "zh-CN",
+    "subject": "账户已关闭 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "en",
+    "subject": "Your account was closed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "hi",
+    "subject": "आपका खाता बंद हो गया · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "es",
+    "subject": "Tu cuenta se ha cerrado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "ar",
+    "subject": "تم إغلاق حسابك · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "fr",
+    "subject": "Votre compte a été fermé · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "account-closed",
+    "locale": "pt",
+    "subject": "Sua conta foi encerrada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "zh-CN",
+    "subject": "充值已入账 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "en",
+    "subject": "Deposit credited · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "hi",
+    "subject": "जमा राशि खाते में आ गई · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "es",
+    "subject": "Depósito abonado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "ar",
+    "subject": "تمت إضافة الإيداع · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "fr",
+    "subject": "Dépôt crédité · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "deposit-received",
+    "locale": "pt",
+    "subject": "Depósito creditado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "network",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "zh-CN",
+    "subject": "提现申请已收到 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "en",
+    "subject": "Withdrawal request received · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "hi",
+    "subject": "निकासी का अनुरोध मिला · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "es",
+    "subject": "Solicitud de retiro recibida · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "ar",
+    "subject": "تم استلام طلب السحب · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "fr",
+    "subject": "Demande de retrait reçue · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-submitted",
+    "locale": "pt",
+    "subject": "Solicitação de saque recebida · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "zh-CN",
+    "subject": "提现已完成 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "en",
+    "subject": "Withdrawal completed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "hi",
+    "subject": "निकासी पूरी हुई · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "es",
+    "subject": "Retiro completado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "ar",
+    "subject": "اكتمل السحب · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "fr",
+    "subject": "Retrait terminé · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-completed",
+    "locale": "pt",
+    "subject": "Saque concluído · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "destination",
+      "fee",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "zh-CN",
+    "subject": "提现未完成 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "en",
+    "subject": "Withdrawal not completed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "hi",
+    "subject": "निकासी पूरी नहीं हुई · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "es",
+    "subject": "Retiro no completado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "ar",
+    "subject": "لم يكتمل السحب · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "fr",
+    "subject": "Retrait non terminé · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "withdrawal-failed",
+    "locale": "pt",
+    "subject": "Saque não concluído · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fundsStatus",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "zh-CN",
+    "subject": "站内转账已完成 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "en",
+    "subject": "Account transfer completed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "hi",
+    "subject": "खाते का हस्तांतरण पूरा हुआ · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "es",
+    "subject": "Transferencia interna completada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "ar",
+    "subject": "اكتمل التحويل الداخلي · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "fr",
+    "subject": "Transfert interne terminé · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-sent",
+    "locale": "pt",
+    "subject": "Transferência interna concluída · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "recipient",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "zh-CN",
+    "subject": "收到一笔站内转账 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "en",
+    "subject": "You received an account transfer · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "hi",
+    "subject": "आपको खाते में हस्तांतरण मिला · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "es",
+    "subject": "Has recibido una transferencia interna · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "ar",
+    "subject": "استلمت تحويلًا داخليًا · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "fr",
+    "subject": "Vous avez reçu un transfert interne · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "transfer-received",
+    "locale": "pt",
+    "subject": "Você recebeu uma transferência interna · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "reference",
+      "sender",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "zh-CN",
+    "subject": "订单已提交 · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "en",
+    "subject": "Order submitted · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "hi",
+    "subject": "ऑर्डर जमा हुआ · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "es",
+    "subject": "Orden enviada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "ar",
+    "subject": "تم تقديم الأمر · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "fr",
+    "subject": "Ordre envoyé · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-submitted",
+    "locale": "pt",
+    "subject": "Ordem enviada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "zh-CN",
+    "subject": "订单已成交 · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "en",
+    "subject": "Order executed · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "hi",
+    "subject": "ऑर्डर निष्पादित हुआ · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "es",
+    "subject": "Orden ejecutada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "ar",
+    "subject": "تم تنفيذ الأمر · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "fr",
+    "subject": "Ordre exécuté · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-completed",
+    "locale": "pt",
+    "subject": "Ordem executada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "units",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "zh-CN",
+    "subject": "订单未成交 · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "en",
+    "subject": "Order not executed · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "hi",
+    "subject": "ऑर्डर निष्पादित नहीं हुआ · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "es",
+    "subject": "Orden no ejecutada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "ar",
+    "subject": "لم يتم تنفيذ الأمر · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "fr",
+    "subject": "Ordre non exécuté · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "order-failed",
+    "locale": "pt",
+    "subject": "Ordem não executada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "fundsStatus",
+      "product",
+      "reason",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "zh-CN",
+    "subject": "赎回已完成 · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "en",
+    "subject": "Redemption completed · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "hi",
+    "subject": "रिडेम्पशन पूरा हुआ · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "es",
+    "subject": "Reembolso completado · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "ar",
+    "subject": "اكتمل الاسترداد · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "fr",
+    "subject": "Rachat terminé · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "redemption-completed",
+    "locale": "pt",
+    "subject": "Resgate concluído · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "zh-CN",
+    "subject": "收益已入账 · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "en",
+    "subject": "Distribution credited · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "hi",
+    "subject": "आय का वितरण जमा हुआ · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "es",
+    "subject": "Distribución abonada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "ar",
+    "subject": "تمت إضافة التوزيع · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "fr",
+    "subject": "Distribution créditée · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "dividend-paid",
+    "locale": "pt",
+    "subject": "Distribuição creditada · RWA.LAT",
+    "connection": "inapp",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "period",
+      "product",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "zh-CN",
+    "subject": "预测市场已结算 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "en",
+    "subject": "Prediction market settled · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "hi",
+    "subject": "पूर्वानुमान बाज़ार का निपटान हुआ · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "es",
+    "subject": "Mercado de predicción liquidado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "ar",
+    "subject": "تمت تسوية سوق التوقعات · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "fr",
+    "subject": "Marché de prédiction réglé · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "prediction-settled",
+    "locale": "pt",
+    "subject": "Mercado de previsão liquidado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "amount",
+      "assetBaseUrl",
+      "currency",
+      "fee",
+      "market",
+      "outcome",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "zh-CN",
+    "subject": "身份认证已通过 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "en",
+    "subject": "Identity verification approved · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "hi",
+    "subject": "पहचान सत्यापन स्वीकृत · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "es",
+    "subject": "Verificación de identidad aprobada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "ar",
+    "subject": "تم قبول التحقق من الهوية · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "fr",
+    "subject": "Vérification d’identité approuvée · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-approved",
+    "locale": "pt",
+    "subject": "Verificação de identidade aprovada · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "zh-CN",
+    "subject": "身份认证需要补充资料 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "en",
+    "subject": "More information is needed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "hi",
+    "subject": "अतिरिक्त जानकारी आवश्यक है · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "es",
+    "subject": "Se necesita más información · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "ar",
+    "subject": "نحتاج إلى معلومات إضافية · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "fr",
+    "subject": "Informations supplémentaires requises · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-action-required",
+    "locale": "pt",
+    "subject": "Precisamos de mais informações · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "reason",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "zh-CN",
+    "subject": "身份认证即将到期 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "en",
+    "subject": "Identity verification is expiring · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "hi",
+    "subject": "पहचान सत्यापन समाप्त होने वाला है · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "es",
+    "subject": "Tu verificación está por vencer · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "ar",
+    "subject": "التحقق من الهوية قارب الانتهاء · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "fr",
+    "subject": "Votre vérification va expirer · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "kyc-expiring",
+    "locale": "pt",
+    "subject": "Sua verificação está para vencer · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "expiry",
+      "reference",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "zh-CN",
+    "subject": "你的工单有新回复 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "en",
+    "subject": "Your support ticket has a reply · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "hi",
+    "subject": "आपके सहायता टिकट का जवाब आया · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "es",
+    "subject": "Hay una respuesta a tu ticket · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "ar",
+    "subject": "وصل رد على تذكرة الدعم · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "fr",
+    "subject": "Une réponse à votre ticket · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "support-reply",
+    "locale": "pt",
+    "subject": "Há uma resposta ao seu chamado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "ticket",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "zh-CN",
+    "subject": "账户账单已生成 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "en",
+    "subject": "Your account statement is ready · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "hi",
+    "subject": "खाते का विवरण-पत्र तैयार है · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "es",
+    "subject": "Tu extracto está listo · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "ar",
+    "subject": "كشف حسابك جاهز · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "fr",
+    "subject": "Votre relevé est prêt · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "statement-ready",
+    "locale": "pt",
+    "subject": "Seu extrato está pronto · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "period",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "zh-CN",
+    "subject": "服务条款有更新 · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "en",
+    "subject": "Our service terms have changed · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "hi",
+    "subject": "सेवा की शर्तें बदली हैं · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "es",
+    "subject": "Las condiciones han cambiado · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "ar",
+    "subject": "تم تحديث شروط الخدمة · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "fr",
+    "subject": "Les conditions ont changé · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "policy-update",
+    "locale": "pt",
+    "subject": "Os termos foram atualizados · RWA.LAT",
+    "connection": "missing",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "effectiveDate",
+      "supportUrl",
+      "version",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "zh-CN",
+    "subject": "投资配置状态已更新 · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "en",
+    "subject": "Investment allocation status updated · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "hi",
+    "subject": "निवेश आवंटन की स्थिति अपडेट हुई · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "es",
+    "subject": "Asignación de inversión actualizada · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "ar",
+    "subject": "تم تحديث حالة تخصيص الاستثمار · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "fr",
+    "subject": "Allocation d’investissement mise à jour · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "ai-allocation-update",
+    "locale": "pt",
+    "subject": "Alocação de investimento atualizada · RWA.LAT",
+    "connection": "conditional",
+    "fields": [
+      "actionUrl",
+      "allocationState",
+      "assetBaseUrl",
+      "reference",
+      "supportUrl",
+      "time",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "zh-CN",
+    "subject": "RWA.LAT 产品更新 · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "en",
+    "subject": "What’s new at RWA.LAT · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "hi",
+    "subject": "RWA.LAT में नया क्या है · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "es",
+    "subject": "Novedades de RWA.LAT · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "ar",
+    "subject": "الجديد في RWA.LAT · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "fr",
+    "subject": "Les nouveautés de RWA.LAT · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "product-update",
+    "locale": "pt",
+    "subject": "Novidades da RWA.LAT · RWA.LAT",
+    "connection": "manual",
+    "fields": [
+      "actionUrl",
+      "assetBaseUrl",
+      "supportUrl",
+      "unsubscribeUrl",
+      "year"
+    ]
+  }
+]

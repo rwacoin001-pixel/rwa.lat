@@ -1,0 +1,12 @@
+Your account was closed
+
+Your account closure request has been processed.
+
+Time: {{time}}
+Reference: {{reference}}
+
+Contact support: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

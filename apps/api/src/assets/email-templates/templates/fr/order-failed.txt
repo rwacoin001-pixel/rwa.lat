@@ -1,0 +1,15 @@
+Ordre non exécuté
+
+Votre ordre n’a pas été exécuté. Consultez le motif et l’état des fonds.
+
+Produit: {{product}}
+Motif: {{reason}}
+État des fonds: {{fundsStatus}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

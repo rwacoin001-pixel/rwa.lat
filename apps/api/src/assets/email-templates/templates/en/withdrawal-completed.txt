@@ -1,0 +1,17 @@
+Withdrawal completed
+
+Your withdrawal has been processed. View the transaction details.
+
+{{amount}} {{currency}}
+Completed
+
+Fee: {{fee}}
+Destination: {{destination}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

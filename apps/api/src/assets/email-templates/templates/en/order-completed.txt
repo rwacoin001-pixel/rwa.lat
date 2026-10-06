@@ -1,0 +1,18 @@
+Order executed
+
+Here is the execution record for your order.
+
+{{amount}} {{currency}}
+Executed
+
+Product: {{product}}
+Units: {{units}}
+Fee: {{fee}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

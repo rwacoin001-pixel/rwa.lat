@@ -59,12 +59,13 @@ export class EmailCodeService {
       }
       await manager.query(`UPDATE app.email_code_challenges SET consumed_at = now()
         WHERE identifier_hash = $1 AND consumed_at IS NULL`, [identifierHash])
+      const expiresAt = new Date(Date.now() + TTL_SECONDS * 1000)
       await manager.query(`INSERT INTO app.email_code_challenges(id,identifier_hash,user_id,intent,code_hash,expires_at)
         VALUES($1,$2,$3,$4,$5,$6)`, [challengeId, identifierHash, userId, input.intent,
-        this.crypto.hashToken(`email-code:${challengeId}:${input.intent}:${code}`), new Date(Date.now() + TTL_SECONDS * 1000)])
+        this.crypto.hashToken(`email-code:${challengeId}:${input.intent}:${code}`), expiresAt])
       // Unknown login emails have the identical response; no account is created.
       // A delivery failure rolls back the new challenge and preserves the old one.
-      if (userId) await this.delivery.sendEmailCode({ email, intent: input.intent, code, locale: input.locale ?? 'en' })
+      if (userId) await this.delivery.sendEmailCode({ email, intent: input.intent, code, locale: input.locale ?? 'en', expiresAt })
     })
     return { accepted: true as const, challengeId, expiresIn: TTL_SECONDS, retryAfter: RESEND_SECONDS }
   }

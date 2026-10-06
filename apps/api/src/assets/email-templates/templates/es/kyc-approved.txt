@@ -1,0 +1,12 @@
+Verificación de identidad aprobada
+
+El resultado de tu verificación de identidad se ha actualizado.
+
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver verificación: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

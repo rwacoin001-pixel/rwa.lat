@@ -1,0 +1,16 @@
+Nouvelle connexion à votre compte
+
+L’appareil ci-dessous vient de se connecter à votre compte.
+
+Appareil: {{device}}
+Lieu (approximatif): {{location}}
+Date et heure: {{time}}
+
+Vérifier la sécurité: {{actionUrl}}
+
+Ce n’était pas vous ? Vérifiez la sécurité du compte et contactez l’assistance officielle.
+{{securityUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

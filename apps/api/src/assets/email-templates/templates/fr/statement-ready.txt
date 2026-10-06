@@ -1,0 +1,11 @@
+Votre relevé est prêt
+
+Consultez ou téléchargez le relevé de cette période dans votre compte.
+
+Période: {{period}}
+
+Voir le relevé: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

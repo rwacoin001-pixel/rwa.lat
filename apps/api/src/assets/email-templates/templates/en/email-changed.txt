@@ -1,0 +1,16 @@
+Your account email was updated
+
+The email used for account notices and sign-in has been updated.
+
+Previous email: {{previousEmail}}
+New email: {{newEmail}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+Not you? Review your account security and contact official support.
+{{securityUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

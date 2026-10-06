@@ -1,0 +1,13 @@
+Vérifiez votre e-mail
+
+Saisissez ce code pour poursuivre la création de votre compte RWA.LAT.
+
+{{code}}
+Valable pendant {{expiryMinutes}} minutes
+
+
+Utilisez ce code uniquement pour l’action que vous avez demandée. Ne le partagez jamais. Si vous ne l’avez pas demandé, ignorez cet e-mail.
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

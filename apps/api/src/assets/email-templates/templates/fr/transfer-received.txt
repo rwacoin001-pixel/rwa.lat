@@ -1,0 +1,16 @@
+Vous avez reçu un transfert interne
+
+Les fonds reçus ont été crédités sur votre solde disponible.
+
+{{amount}} {{currency}}
+Reçu
+
+Expéditeur: {{sender}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

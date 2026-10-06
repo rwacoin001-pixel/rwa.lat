@@ -1,0 +1,17 @@
+Rachat terminé
+
+Le produit du rachat a été crédité sur le solde de votre compte.
+
+{{amount}} {{currency}}
+Réglé
+
+Produit: {{product}}
+Frais: {{fee}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

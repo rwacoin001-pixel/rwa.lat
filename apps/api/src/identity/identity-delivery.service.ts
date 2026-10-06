@@ -2,7 +2,13 @@ import { Injectable, OnModuleDestroy, ServiceUnavailableException } from '@nestj
 import { ConfigService } from '@nestjs/config'
 import { EmailDeliveryClient } from '../common/email-delivery.client'
 import type { IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
+import { emailExpiryText, remainingEmailMinutes, renderEmailTemplate } from '../common/email-template'
 
+type EmailCodePurpose = 'login' | 'register' | 'reset' | 'email_bind' | 'email_change'
+const CODE_TEMPLATES: Record<EmailCodePurpose, string> = {
+  login: 'login-code', register: 'registration-code', reset: 'reset-password-code',
+  email_bind: 'bind-email-code', email_change: 'change-email-code',
+}
 @Injectable()
 export class IdentityDeliveryService implements OnModuleDestroy {
   private readonly demoOutbox = new Map<string, string>()
@@ -20,7 +26,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     this.delivery.close()
   }
 
-  async sendOneTimeLink(input: { email: string; purpose: IdentityOneTimeTokenPurpose; token: string }): Promise<void> {
+  async sendOneTimeLink(input: { email: string; purpose: IdentityOneTimeTokenPurpose; token: string; locale?: string; expiresAt?: Date }): Promise<void> {
     if (this.demoMode) {
       this.demoOutbox.set(this.key(input.email, input.purpose), input.token)
       return
@@ -32,22 +38,14 @@ export class IdentityDeliveryService implements OnModuleDestroy {
       })
     }
     const link = this.oneTimeLink(input.purpose, input.token)
-    const subject = input.purpose === 'email_verification'
-      ? 'Verify your RWA.LAT account'
-      : input.purpose === 'email_login'
-        ? 'Sign in to RWA.LAT'
-        : 'Recover your RWA.LAT account'
-    const action = input.purpose === 'email_verification'
-      ? 'Verify account'
-      : input.purpose === 'email_login'
-        ? 'Sign in'
-        : 'Recover account'
     try {
+      const template = input.purpose === 'email_verification' ? 'verification-link'
+        : input.purpose === 'email_login' ? 'magic-login-link' : 'recovery-link'
+      const message = renderEmailTemplate(template, input.locale, { actionUrl: link,
+        expiryText: emailExpiryText(input.expiresAt ?? new Date(Date.now() + 3_600_000), input.locale) })
       await this.delivery.send({
         to: input.email,
-        subject,
-        text: `${action}: ${link}`,
-        html: `<p>${action}</p><p><a href="${escapeHtml(link)}">${action}</a></p><p>This link expires in 60 minutes and can be used once.</p>`,
+        ...message,
       })
     } catch {
       throw new ServiceUnavailableException({
@@ -57,20 +55,17 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     }
   }
 
-  async sendEmailCode(input: { email: string; intent: 'login' | 'register'; code: string; locale: string }): Promise<void> {
+  async sendEmailCode(input: { email: string; intent: 'login' | 'register'; code: string; locale: string; purpose?: EmailCodePurpose; expiresAt?: Date }): Promise<void> {
     if (this.demoMode) {
       this.demoOutbox.set(`code:${input.intent}:${input.email.toLowerCase()}`, input.code)
       return
     }
     if (!this.delivery.configured) throw new ServiceUnavailableException({ code: 'AUTH_DELIVERY_NOT_CONFIGURED', message: 'Account email delivery is not configured.' })
-    const chinese = input.locale === 'zh' || input.locale === 'zh-CN'
-    const subject = chinese ? 'RWA.LAT 邮箱验证码' : 'Your RWA.LAT verification code'
-    const instruction = chinese ? '请在发起登录或注册的页面输入以下验证码：' : 'Enter this code on the page where you started signing in or creating an account:'
-    const note = chinese ? '验证码 10 分钟内有效，只能使用一次。请勿向任何人透露；如非本人操作，请忽略此邮件。' : 'This code expires in 10 minutes and can be used once. Never share it. If you did not request it, ignore this email.'
     try {
-      await this.delivery.send({ to: input.email, subject,
-        text: `${instruction}\n\n${input.code}\n\n${note}`,
-        html: `<div style="font-family:Arial,sans-serif;max-width:480px;margin:auto;padding:32px;color:#182522"><p style="font-size:18px;font-weight:700">RWA.LAT</p><p>${instruction}</p><p style="font-size:36px;letter-spacing:8px;font-weight:700">${escapeHtml(input.code)}</p><p style="font-size:13px;line-height:1.7">${note}</p></div>` })
+      const message = renderEmailTemplate(CODE_TEMPLATES[input.purpose ?? input.intent], input.locale, {
+        code: input.code, expiryMinutes: remainingEmailMinutes(input.expiresAt ?? new Date(Date.now() + 600_000)),
+      })
+      await this.delivery.send({ to: input.email, ...message })
     } catch {
       throw new ServiceUnavailableException({ code: 'AUTH_DELIVERY_FAILED', message: 'Account email could not be delivered. Please retry later.' })
     }
@@ -101,8 +96,4 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     return link.toString()
   }
 
-}
-
-function escapeHtml(value: string): string {
-  return value.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }

@@ -1,0 +1,12 @@
+Votre vérification va expirer
+
+Mettez à jour vos informations de vérification avant leur expiration.
+
+Expiration: {{expiry}}
+Référence: {{reference}}
+
+Mettre à jour la vérification: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

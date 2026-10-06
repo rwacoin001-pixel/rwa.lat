@@ -1,0 +1,17 @@
+Retiro completado
+
+Tu retiro se ha procesado. Consulta los detalles de la transacción.
+
+{{amount}} {{currency}}
+Completado
+
+Comisión: {{fee}}
+Dirección de destino: {{destination}}
+Referencia: {{reference}}
+Fecha y hora: {{time}}
+
+Ver detalles: {{actionUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

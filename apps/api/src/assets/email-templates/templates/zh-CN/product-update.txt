@@ -1,0 +1,11 @@
+RWA.LAT 产品更新
+
+查看本次更新包含的新功能。
+
+
+查看更新: {{actionUrl}}
+
+RWA.LAT 不会向你索取密码、验证码或私钥。
+RWA.LAT
+帮助与支持: {{supportUrl}}
+取消订阅: {{unsubscribeUrl}}

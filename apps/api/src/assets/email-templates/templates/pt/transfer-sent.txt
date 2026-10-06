@@ -1,0 +1,16 @@
+Transferência interna concluída
+
+A transferência foi creditada no saldo da conta do destinatário.
+
+{{amount}} {{currency}}
+Enviado
+
+Destinatário: {{recipient}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

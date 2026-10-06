@@ -1,0 +1,16 @@
+Você recebeu uma transferência interna
+
+Os fundos recebidos foram creditados no seu saldo disponível.
+
+{{amount}} {{currency}}
+Recebido
+
+Remetente: {{sender}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

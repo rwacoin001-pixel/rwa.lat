@@ -1,0 +1,18 @@
+Marché de prédiction réglé
+
+Le montant du règlement et le résultat sont indiqués ci-dessous.
+
+{{amount}} {{currency}}
+Réglé
+
+Marché: {{market}}
+Résultat: {{outcome}}
+Frais: {{fee}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

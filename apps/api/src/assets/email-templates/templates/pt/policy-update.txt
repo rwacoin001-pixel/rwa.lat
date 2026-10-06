@@ -1,0 +1,12 @@
+Os termos foram atualizados
+
+Revise as alterações e a data de vigência.
+
+Data de vigência: {{effectiveDate}}
+Versão: {{version}}
+
+Revisar termos: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

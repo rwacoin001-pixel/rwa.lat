@@ -138,8 +138,8 @@ export class IdentityService {
   async registerEmail(email: string, locale = 'en', consentInput?: unknown): Promise<{ accepted: true }> {
     const userId = await this.prepareEmailRegistration(email, locale, consentInput)
     const normalized = email.toLowerCase().trim()
-    const token = await this.issueOneTimeToken(userId, 'email_verification')
-    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', token })
+    const issued = await this.issueOneTimeToken(userId, 'email_verification')
+    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', ...issued, locale })
     return { accepted: true }
   }
 
@@ -494,8 +494,9 @@ export class IdentityService {
     if (!identity) {
       return { accepted: true }
     }
-    const token = await this.issueOneTimeToken(identity.userId, 'account_recovery')
-    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'account_recovery', token })
+    const issued = await this.issueOneTimeToken(identity.userId, 'account_recovery')
+    const user = await this.users.findOne({ where: { id: identity.userId } })
+    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'account_recovery', ...issued, locale: user?.locale })
     return { accepted: true }
   }
 
@@ -513,12 +514,13 @@ export class IdentityService {
     if (!identity || identity.state === 'revoked' || identity.revokedAt) {
       return { accepted: true }
     }
+    const user = await this.users.findOne({ where: { id: identity.userId } })
     if (identity.state === 'verified') {
-      const token = await this.issueOneTimeToken(identity.userId, 'email_login')
-      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_login', token })
+      const issued = await this.issueOneTimeToken(identity.userId, 'email_login')
+      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_login', ...issued, locale: user?.locale })
     } else {
-      const token = await this.issueOneTimeToken(identity.userId, 'email_verification')
-      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', token })
+      const issued = await this.issueOneTimeToken(identity.userId, 'email_verification')
+      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', ...issued, locale: user?.locale })
     }
     return { accepted: true }
   }
@@ -913,21 +915,22 @@ export class IdentityService {
     return { userId, sessionId: session.id, token, emailVerified }
   }
 
-  private async issueOneTimeToken(userId: string, purpose: IdentityOneTimeTokenPurpose): Promise<string> {
+  private async issueOneTimeToken(userId: string, purpose: IdentityOneTimeTokenPurpose): Promise<{ token: string; expiresAt: Date }> {
     await this.oneTimeTokens.update(
       { userId, purpose, consumedAt: IsNull() },
       { consumedAt: new Date() },
     )
     const token = this.crypto.generateSessionToken()
+    const expiresAt = new Date(Date.now() + ONE_TIME_TOKEN_TTL_MS)
     await this.oneTimeTokens.save(this.oneTimeTokens.create({
       id: randomUUID(),
       userId,
       purpose,
       tokenHash: this.crypto.hashToken(token),
-      expiresAt: new Date(Date.now() + ONE_TIME_TOKEN_TTL_MS),
+      expiresAt,
       consumedAt: null,
     }))
-    return token
+    return { token, expiresAt }
   }
 
   private async consumeOneTimeToken(

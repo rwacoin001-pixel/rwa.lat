@@ -1,0 +1,18 @@
+Mercado de previsão liquidado
+
+O valor da liquidação e o resultado são apresentados abaixo.
+
+{{amount}} {{currency}}
+Liquidado
+
+Mercado: {{market}}
+Resultado: {{outcome}}
+Taxa: {{fee}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

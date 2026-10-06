@@ -1,0 +1,16 @@
+Nuevo acceso a tu cuenta
+
+El dispositivo que se indica a continuación acaba de acceder a tu cuenta.
+
+Dispositivo: {{device}}
+Ubicación (aproximada): {{location}}
+Fecha y hora: {{time}}
+
+Revisar seguridad: {{actionUrl}}
+
+¿No has sido tú? Revisa la seguridad de tu cuenta y contacta con el soporte oficial.
+{{securityUrl}}
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}

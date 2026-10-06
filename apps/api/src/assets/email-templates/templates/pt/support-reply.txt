@@ -1,0 +1,12 @@
+Há uma resposta ao seu chamado
+
+O suporte respondeu. Leia a resposta completa na sua conta.
+
+Chamado: {{ticket}}
+Data e hora: {{time}}
+
+Ver chamado: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

@@ -1,0 +1,16 @@
+Order submitted
+
+Your order was submitted. Check its details for execution status.
+
+{{amount}} {{currency}}
+Awaiting execution
+
+Product: {{product}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

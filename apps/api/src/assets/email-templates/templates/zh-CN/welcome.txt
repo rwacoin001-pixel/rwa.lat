@@ -1,0 +1,10 @@
+账户已创建
+
+你已完成邮箱验证，可以开始使用 RWA.LAT。
+
+
+打开账户: {{actionUrl}}
+
+RWA.LAT 不会向你索取密码、验证码或私钥。
+RWA.LAT
+帮助与支持: {{supportUrl}}

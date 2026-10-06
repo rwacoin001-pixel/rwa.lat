@@ -1,0 +1,15 @@
+Ordem não executada
+
+Sua ordem não foi executada. Consulte o motivo e a situação dos fundos.
+
+Produto: {{product}}
+Motivo: {{reason}}
+Situação dos fundos: {{fundsStatus}}
+Referência: {{reference}}
+Data e hora: {{time}}
+
+Ver detalhes: {{actionUrl}}
+
+A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
+RWA.LAT
+Ajuda e suporte: {{supportUrl}}

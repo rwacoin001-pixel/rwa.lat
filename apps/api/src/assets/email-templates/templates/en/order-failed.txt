@@ -1,0 +1,15 @@
+Order not executed
+
+Your order was not executed. Review the reason and funds status.
+
+Product: {{product}}
+Reason: {{reason}}
+Funds status: {{fundsStatus}}
+Reference: {{reference}}
+Time: {{time}}
+
+View details: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

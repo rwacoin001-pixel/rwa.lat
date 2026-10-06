@@ -1,0 +1,11 @@
+Your account statement is ready
+
+View or download this period’s statement in your account.
+
+Period: {{period}}
+
+View statement: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

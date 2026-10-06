@@ -130,7 +130,7 @@ export class AuthFlowService {
     const token = this.crypto.generateSessionToken()
     // email_bind flows begin without a target address; bindEmail() sends the code once one is supplied.
     const awaitingEmail = payload.steps[0] === 'email' && payload.purpose === 'email_bind' && !payload.bindingEmail
-    if (payload.steps[0] === 'email' && !awaitingEmail) await this.deliver(manager, payload, token)
+    if (payload.steps[0] === 'email' && !awaitingEmail) await this.deliver(manager, payload, token, expiresAt)
     const encrypted = this.crypto.encrypt(JSON.stringify(payload))
     await manager.query(`INSERT INTO app.auth_flows(token_hash,user_id,payload_ciphertext,encryption_key_version,expires_at)
       VALUES($1,$2,$3,$4,$5)`, [this.crypto.hashToken(token), payload.userId ?? null, encrypted.ciphertext, encrypted.keyVersion, expiresAt])
@@ -146,10 +146,13 @@ export class AuthFlowService {
     return this.crypto.decrypt(row.identifier_ciphertext, row.encryption_key_version)
   }
 
-  private async deliver(manager: EntityManager, payload: Payload, token: string) {
+  private async deliver(manager: EntityManager, payload: Payload, token: string, expiresAt: Date) {
     const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
     const [user] = payload.userId ? await manager.query('SELECT locale FROM app.users WHERE id=$1', [payload.userId]) as { locale: string }[] : []
-    await this.delivery.sendEmailCode({ email: payload.bindingEmail ?? await this.emailFor(manager, payload.userId!), code, intent: 'login', locale: user?.locale || 'en' })
+    const purpose = payload.purpose === 'email_bind' || payload.purpose === 'email_change' ? payload.purpose
+      : payload.purpose === 'reset' || payload.purpose === 'setup' ? 'reset' : 'login'
+    await this.delivery.sendEmailCode({ email: payload.bindingEmail ?? await this.emailFor(manager, payload.userId!), code,
+      intent: 'login', purpose, locale: user?.locale || 'en', expiresAt })
     payload.emailHash = this.crypto.hashToken(`auth-flow:${token}:${code}`).toString('hex')
     payload.sentAt = Date.now()
     payload.sends = (payload.sends ?? 0) + 1
@@ -160,7 +163,7 @@ export class AuthFlowService {
       const { row, payload } = await this.read(manager, token)
       if (payload.steps[0] !== 'email' || row.attempts >= 5 || (payload.sends ?? 0) >= 5) throw fail()
       if (Date.now() - (payload.sentAt ?? 0) < 60_000) throw new HttpException({ code: 'AUTH_EMAIL_CODE_RATE_LIMIT', message: 'Please wait before resending.' }, 429)
-      await this.deliver(manager, payload, token)
+      await this.deliver(manager, payload, token, new Date(row.expires_at))
       const encrypted = this.crypto.encrypt(JSON.stringify(payload))
       await manager.query('UPDATE app.auth_flows SET payload_ciphertext=$2,encryption_key_version=$3 WHERE token_hash=$1',
         [this.crypto.hashToken(token), encrypted.ciphertext, encrypted.keyVersion])
@@ -195,7 +198,7 @@ export class AuthFlowService {
         payload.sends = 0
         payload.bindingEmail = bindingEmail
       }
-      await this.deliver(manager, payload, continuationToken)
+      await this.deliver(manager, payload, continuationToken, new Date(row.expires_at))
       const encrypted = this.crypto.encrypt(JSON.stringify(payload))
       await manager.query('UPDATE app.auth_flows SET payload_ciphertext=$2,encryption_key_version=$3 WHERE token_hash=$1',
         [this.crypto.hashToken(continuationToken), encrypted.ciphertext, encrypted.keyVersion])

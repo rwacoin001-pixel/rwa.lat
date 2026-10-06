@@ -1,0 +1,12 @@
+More information is needed
+
+Review the required information on the verification page.
+
+Reason: {{reason}}
+Reference: {{reference}}
+
+Continue verification: {{actionUrl}}
+
+RWA.LAT never asks for your password, verification codes or private keys.
+RWA.LAT
+Help & support: {{supportUrl}}

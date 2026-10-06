@@ -1,0 +1,16 @@
+Transfert interne terminé
+
+Le transfert a été crédité sur le solde du compte du destinataire.
+
+{{amount}} {{currency}}
+Envoyé
+
+Destinataire: {{recipient}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

@@ -1,0 +1,17 @@
+Demande de retrait reçue
+
+Votre demande a été envoyée. Le transfert n’est pas encore terminé.
+
+{{amount}} {{currency}}
+En cours de traitement
+
+Frais: {{fee}}
+Adresse de destination: {{destination}}
+Référence: {{reference}}
+Date et heure: {{time}}
+
+Voir les détails: {{actionUrl}}
+
+RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+RWA.LAT
+Aide et assistance: {{supportUrl}}

@@ -1,0 +1,12 @@
+Accede a RWA.LAT
+
+Usa este enlace de un solo uso para completar el acceso.
+
+
+Continuar el acceso: {{actionUrl}}
+
+Este enlace caduca en {{expiryText}} y solo se puede usar una vez. Si no lo solicitaste, ignora este correo.
+
+RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+RWA.LAT
+Ayuda y soporte: {{supportUrl}}
