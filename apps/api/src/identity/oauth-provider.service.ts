@@ -239,7 +239,12 @@ export class OAuthProviderService {
       redirect_uri: config.redirectUri,
       code_verifier: verifier,
     })
-    const headers: Record<string, string> = { 'content-type': 'application/x-www-form-urlencoded' }
+    const headers: Record<string, string> = {
+      'content-type': 'application/x-www-form-urlencoded',
+      // GitHub's token endpoint returns form-encoded unless we explicitly ask for JSON;
+      // without this the response is parsed as JSON and throws a SyntaxError (HTTP 500).
+      accept: 'application/json',
+    }
     if (provider === 'google') {
       body.set('client_id', config.clientId)
       body.set('client_secret', config.clientSecret)
