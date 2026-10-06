@@ -103,7 +103,7 @@ export class BasketRebalanceService {
 
     const [portfolio] = (await this.ds.query(
       `SELECT id, strategy_version_id AS "strategyVersionId", trim_scale(aum_usd)::text AS aum,
-              trim_scale(nav_per_unit)::text AS nav, status
+              trim_scale(nav_per_unit)::text AS nav, trim_scale(cash_balance_usd)::text AS cash, status
        FROM app.basket_portfolios WHERE id = $1`,
       [portfolioId],
     )) as Array<Record<string, any>>
@@ -117,6 +117,10 @@ export class BasketRebalanceService {
        FROM app.basket_strategy_assets sa WHERE sa.strategy_version_id = $1`,
       [portfolio.strategyVersionId],
     )) as Array<{ assetId: string; targetWeightPct: string }>
+    // 无目标配置时不推断「全部清仓」
+    if (!targets.length) {
+      return { skipped: true, reason: 'Strategy version has no target assets.', drift }
+    }
     const holdings = (await this.ds.query(
       `SELECT h.asset_id AS "assetId", trim_scale(h.quantity)::text AS quantity,
               trim_scale(h.market_value_usd)::text AS "marketValueUsd",
@@ -128,31 +132,68 @@ export class BasketRebalanceService {
     const holdingByAsset = new Map(holdings.map((holding) => [holding.assetId as string, holding]))
 
     type PlannedOrder = { assetId: string; side: 'buy' | 'sell'; quantity: string; price: string }
-    const planned: PlannedOrder[] = []
-    let turnover = 0n
-    for (const target of targets) {
-      const holding = holdingByAsset.get(target.assetId)
-      if (!holding) continue
+    type Candidate = { assetId: string; side: 'buy' | 'sell'; quantity: bigint; price: string; price18: bigint; absDelta: bigint; required: boolean }
+    const targetWeightByAsset = new Map(targets.map((target) => [target.assetId, target.targetWeightPct]))
+    // 持仓中不在目标配置里的腿 = 目标权重 0（需卖出），否则策略切换后旧腿永远不会被卖
+    const assetIds = new Set<string>([...targetWeightByAsset.keys(), ...holdingByAsset.keys()])
+    const candidates: Candidate[] = []
+    for (const assetId of assetIds) {
+      const holding = holdingByAsset.get(assetId)
+      if (!holding) continue // 无持仓行无法回填成交（recordFill 要求持仓行存在）
       const price = (holding.price as string | null) ?? null
       if (!price) continue // 无行情不生成订单（风控会以数据覆盖率为由提示）
       const price18 = parse18(price)
-      const targetValue = div18(mul18(net, parse18(target.targetWeightPct)), parse18('100'))
+      const exiting = !targetWeightByAsset.has(assetId)
+      const targetValue = div18(mul18(net, parse18(targetWeightByAsset.get(assetId) ?? '0')), parse18('100'))
       const current = parse18((holding.marketValueUsd ?? '0') as string)
       const delta = sub18(targetValue, current)
       const absDelta = delta < 0n ? -delta : delta
       if (absDelta <= minTrade18) continue
       const driftPct = net > 0n ? Number(weightPct18(absDelta, net)) : 0
-      if (driftPct <= thresholdPct) continue
-      let quantity = div18(absDelta, price18)
       const side: 'buy' | 'sell' = delta > 0n ? 'buy' : 'sell'
-      if (side === 'sell') {
-        const available = parse18(holding.quantity as string)
-        if (quantity > available) quantity = available
-      }
+      const available = parse18(holding.quantity as string)
+      let quantity = exiting ? available : div18(absDelta, price18)
+      if (side === 'sell' && quantity > available) quantity = available
       if (quantity <= 0n) continue
       if (mul18(quantity, price18) <= minTrade18) continue
-      planned.push({ assetId: target.assetId, side, quantity: format18(quantity), price })
-      turnover = add18(turnover, absDelta)
+      candidates.push({ assetId, side, quantity, price, price18, absDelta, required: exiting || driftPct > thresholdPct })
+    }
+
+    // 资金配平：阈值只决定「哪些腿必须调」，但买单所需资金须由现金 + 卖出回款覆盖
+    // （与风控 INSUFFICIENT_FUNDING 同口径：卖出回款按 98% 折算）
+    const notionalOf = (candidate: Candidate) => mul18(candidate.quantity, candidate.price18)
+    const sellHaircut = parse18('0.98')
+    const selected = candidates.filter((candidate) => candidate.required)
+    const sumNotional = (side: 'buy' | 'sell') =>
+      selected.filter((candidate) => candidate.side === side).reduce((sum, candidate) => add18(sum, notionalOf(candidate)), 0n)
+    const cash = parse18((portfolio.cash ?? '0') as string)
+    const buys = sumNotional('buy')
+    let funding = add18(cash, mul18(sumNotional('sell'), sellHaircut))
+    if (buys > funding) {
+      // ① 先从未过阈值的超配腿补卖（超配最多的优先），卖到够为止
+      const optionalSells = candidates
+        .filter((candidate) => !candidate.required && candidate.side === 'sell')
+        .sort((a, b) => (b.absDelta > a.absDelta ? 1 : b.absDelta < a.absDelta ? -1 : 0))
+      for (const candidate of optionalSells) {
+        if (buys <= funding) break
+        selected.push(candidate)
+        funding = add18(funding, mul18(notionalOf(candidate), sellHaircut))
+      }
+    }
+    if (buys > funding && buys > 0n) {
+      // ② 仍不足（如折算缓冲造成的尾差）则按比例缩减买单，保证计划可执行
+      for (const candidate of selected) {
+        if (candidate.side === 'buy') candidate.quantity = div18(mul18(candidate.quantity, funding), buys)
+      }
+    }
+
+    const planned: PlannedOrder[] = []
+    let turnover = 0n
+    for (const candidate of selected) {
+      const notional = notionalOf(candidate)
+      if (candidate.quantity <= 0n || notional <= minTrade18) continue
+      planned.push({ assetId: candidate.assetId, side: candidate.side, quantity: format18(candidate.quantity), price: candidate.price })
+      turnover = add18(turnover, notional)
     }
 
     const runId = await this.ds.transaction(async (manager) => {
@@ -403,7 +444,11 @@ export class BasketRebalanceService {
 
     let executed = 0
     let pending = 0
-    for (const order of (run.orders as Array<Record<string, any>>).filter((item) => item.status === 'planned')) {
+    // 先卖后买：买单回填要求现金已到账（recordFill 校验现金），否则卖出筹款的计划会在买单处失败
+    const plannedOrders = (run.orders as Array<Record<string, any>>)
+      .filter((item) => item.status === 'planned')
+      .sort((a, b) => (a.side === b.side ? 0 : a.side === 'sell' ? -1 : 1))
+    for (const order of plannedOrders) {
       const fill = await this.adapter.executeOrder({
         id: order.id as string,
         assetId: order.assetId as string,
