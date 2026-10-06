@@ -12,6 +12,9 @@ export class PasswordLoginDto {
 export class AuthFlowTokenDto {
   @ApiProperty() @IsString() @Matches(/^[a-f0-9]{64}$/) continuationToken!: string
 }
+export class AuthFlowEmailDto extends AuthFlowTokenDto {
+  @ApiProperty() @IsEmail() @MaxLength(254) email!: string
+}
 export class AuthFlowCompleteDto extends AuthFlowTokenDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Matches(/^\d{6}$/) code?: string
   @ApiPropertyOptional({ minLength: 12, maxLength: 128 }) @IsOptional() @IsString() @Length(12, 128) password?: string

@@ -6,17 +6,19 @@ import { IdentityDeliveryService } from './identity-delivery.service'
 import { assertPassword, hashPassword, verifyPassword } from './password-hash'
 import type { RegistrationConsentAcceptance } from './consent-policy'
 import { LoginIdentity } from './login-identity.entity'
+import { IDENTITY_ERROR_CODES } from './identity.errors'
+import { maskEmail } from '../data-governance/data-masking.util'
 
 export type AuthDevice = { fingerprint?: string; name?: string }
 type Step = 'totp' | 'email' | 'password' | 'consent'
 export type AuthProof = 'primary' | 'passkey' | 'password' | 'recovery'
 type OAuthSubject = { provider: 'google' | 'github' | 'x'; subject: string; locale?: string; verifiedEmail?: string; referralAttribution?: string }
 type Payload = {
-  userId?: string; device?: AuthDevice; steps: Step[]; purpose: 'login' | 'reset' | 'setup' | 'oauth' | 'email_change';
+  userId?: string; device?: AuthDevice; steps: Step[]; purpose: 'login' | 'reset' | 'setup' | 'oauth' | 'email_change' | 'email_bind';
   version: number; factorIds: string[]; oauth?: OAuthSubject; emailHash?: string; sentAt?: number; sends?: number; bindingEmail?: string;
   previousEmailHash?: string | null;
 }
-export type AuthFlowView = { continuationToken: string; step: Step; expiresIn: number; retryAfter?: number }
+export type AuthFlowView = { continuationToken: string; step: Step; expiresIn: number; retryAfter?: number; emailRequired?: boolean }
 type Row = { payload_ciphertext: Buffer; encryption_key_version: number; attempts: number; expires_at: Date; consumed_at: Date | null }
 type Policy = { status: string; version: number; password_required: boolean; password_hash: string | null }
 const fail = () => new UnauthorizedException({ code: 'AUTH_FLOW_INVALID', message: 'Verification expired or failed. Start again.' })
@@ -109,18 +111,32 @@ export class AuthFlowService {
       factorIds, bindingEmail, previousEmailHash: existing?.identifierHash.toString('hex') ?? null }))
   }
 
+  /**
+   * GitHub and wallet sign-ins prove control of a third-party account or a key, not of an inbox.
+   * Hold the session open on an email step until the account owns a verified address.
+   * The address and its code arrive later through bindEmail().
+   */
+  async beginEmailBinding(userId: string, device?: AuthDevice): Promise<never> {
+    const { policy, factorIds } = await this.policy(this.db.manager, userId)
+    this.required(await this.begin({ userId, device, steps: ['email'], purpose: 'email_bind',
+      version: policy.version, factorIds }))
+  }
+
   private async begin(payload: Payload): Promise<AuthFlowView> {
     return this.db.transaction(manager => this.insert(manager, payload))
   }
 
   private async insert(manager: EntityManager, payload: Payload, expiresAt = new Date(Date.now() + 600_000)): Promise<AuthFlowView> {
     const token = this.crypto.generateSessionToken()
-    if (payload.steps[0] === 'email') await this.deliver(manager, payload, token)
+    // email_bind flows begin without a target address; bindEmail() sends the code once one is supplied.
+    const awaitingEmail = payload.steps[0] === 'email' && payload.purpose === 'email_bind' && !payload.bindingEmail
+    if (payload.steps[0] === 'email' && !awaitingEmail) await this.deliver(manager, payload, token)
     const encrypted = this.crypto.encrypt(JSON.stringify(payload))
     await manager.query(`INSERT INTO app.auth_flows(token_hash,user_id,payload_ciphertext,encryption_key_version,expires_at)
       VALUES($1,$2,$3,$4,$5)`, [this.crypto.hashToken(token), payload.userId ?? null, encrypted.ciphertext, encrypted.keyVersion, expiresAt])
     return { continuationToken: token, step: payload.steps[0], expiresIn: Math.max(0, Math.floor((expiresAt.getTime() - Date.now()) / 1000)),
-      ...(payload.steps[0] === 'email' ? { retryAfter: 60 } : {}) }
+      ...(payload.steps[0] === 'email' && !awaitingEmail ? { retryAfter: 60 } : {}),
+      ...(awaitingEmail ? { emailRequired: true } : {}) }
   }
 
   private async emailFor(manager: EntityManager, userId: string): Promise<string> {
@@ -152,6 +168,42 @@ export class AuthFlowService {
     })
   }
 
+  /**
+   * Supply the address for a pending email-binding flow and send its one-time code.
+   * The flow — and therefore the session — only completes after that code is verified.
+   */
+  async bindEmail(continuationToken: string, rawEmail: string): Promise<AuthFlowView> {
+    const bindingEmail = rawEmail.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bindingEmail)) {
+      throw new BadRequestException({ code: 'AUTH_EMAIL_INVALID', message: 'Enter a valid email address.' })
+    }
+    return this.db.transaction(async manager => {
+      const { row, payload } = await this.read(manager, continuationToken)
+      if (payload.purpose !== 'email_bind' || payload.steps[0] !== 'email' || !payload.userId) throw fail()
+      const identifierHash = this.crypto.hashIdentifier(bindingEmail)
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`email:${identifierHash.toString('hex')}`])
+      const owner = await manager.getRepository(LoginIdentity).findOne({ where: { kind: 'email', identifierHash } })
+      if (owner && owner.userId !== payload.userId) {
+        throw new ConflictException({ code: IDENTITY_ERROR_CODES.EMAIL_TAKEN, message: 'An account with this email already exists.' })
+      }
+      if (payload.bindingEmail === bindingEmail) {
+        if ((payload.sends ?? 0) >= 5) throw fail()
+        if (Date.now() - (payload.sentAt ?? 0) < 60_000) {
+          throw new HttpException({ code: 'AUTH_EMAIL_CODE_RATE_LIMIT', message: 'Please wait before resending.', details: { retryAfter: 60 } }, 429)
+        }
+      } else {
+        payload.sends = 0
+        payload.bindingEmail = bindingEmail
+      }
+      await this.deliver(manager, payload, continuationToken)
+      const encrypted = this.crypto.encrypt(JSON.stringify(payload))
+      await manager.query('UPDATE app.auth_flows SET payload_ciphertext=$2,encryption_key_version=$3 WHERE token_hash=$1',
+        [this.crypto.hashToken(continuationToken), encrypted.ciphertext, encrypted.keyVersion])
+      return { continuationToken, step: 'email', emailRequired: false, email: maskEmail(bindingEmail),
+        expiresIn: Math.max(0, Math.floor((new Date(row.expires_at).getTime() - Date.now()) / 1000)), retryAfter: 60 }
+    })
+  }
+
   private async read(manager: EntityManager, token: string): Promise<{ row: Row; payload: Payload }> {
     const [row] = await manager.query('SELECT * FROM app.auth_flows WHERE token_hash=$1 FOR UPDATE', [this.crypto.hashToken(token)]) as Row[]
     if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now() || row.attempts >= 5) throw fail()
@@ -180,7 +232,13 @@ export class AuthFlowService {
           await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`email:${identifierHash.toString('hex')}`])
           const identities = manager.getRepository(LoginIdentity)
           const existing = await identities.findOne({ where: { kind: 'email', userId: payload.userId } })
-          if (await identities.findOne({ where: { kind: 'email', identifierHash } }) ||
+          const owner = await identities.findOne({ where: { kind: 'email', identifierHash } })
+          if (payload.purpose === 'email_bind') {
+            // GitHub/wallet accounts may have no email identity yet, so only a foreign owner blocks the bind.
+            if (owner && owner.userId !== payload.userId) {
+              throw new ConflictException({ code: IDENTITY_ERROR_CODES.EMAIL_TAKEN, message: 'An account with this email already exists.' })
+            }
+          } else if (owner ||
             (payload.purpose !== 'email_change' && existing) ||
             (payload.purpose === 'email_change' && (existing?.identifierHash.toString('hex') ?? null) !== payload.previousEmailHash)) {
             throw new ConflictException({ code: 'AUTH_EMAIL_BIND_CONFLICT', message: 'This email cannot be linked. Sign in with its existing account.' })

@@ -2,7 +2,7 @@ import { BadRequestException, Body, Controller, Get, Header, Headers, Param, Pos
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { IdentityService } from './identity.service'
 import { RegisterEmailDto } from './dto/register-email.dto'
-import { PasswordLoginDto, PasswordManageDto, ChangeEmailDto, AuthFlowCompleteDto, AuthFlowTokenDto } from './dto/password-auth.dto'
+import { PasswordLoginDto, PasswordManageDto, ChangeEmailDto, AuthFlowCompleteDto, AuthFlowTokenDto, AuthFlowEmailDto } from './dto/password-auth.dto'
 import { LoginEmailDto } from './dto/login-email.dto'
 import { PasskeyLoginChallengeDto, PasskeyLoginVerifyDto } from './dto/passkey-login.dto'
 import { VerifyEmailDto } from './dto/verify-email.dto'
@@ -32,6 +32,10 @@ export class IdentityController {
   @Post('flow/resend')
   @ApiOperation({ summary: 'Resend the email code for a pending authentication step' })
   resendFlow(@Body() dto: AuthFlowTokenDto) { return this.identity.resendAuthFlow(dto.continuationToken) }
+
+  @Post('flow/email')
+  @ApiOperation({ summary: 'Attach a sign-in email to a pending verification flow and send its code' })
+  flowEmail(@Body() dto: AuthFlowEmailDto) { return this.identity.bindAuthFlowEmail(dto.continuationToken, dto.email) }
 
   @Post('password/manage')
   @ApiOperation({ summary: 'Begin verified password setup or change for the signed-in account' })

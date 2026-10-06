@@ -98,6 +98,11 @@ export class IdentityService {
 
   resendAuthFlow(token: string) { return this.authFlows.resend(token) }
 
+  /** POST /v1/auth/flow/email — supply the address for an email-binding flow and send its code. */
+  bindAuthFlowEmail(continuationToken: string, email: string) {
+    return this.authFlows.bindEmail(continuationToken, email)
+  }
+
   async completeAuthFlow(input: Parameters<AuthFlowService['complete']>[0]) {
     return this.authFlows.complete(input, async (payload, manager) => {
       if (payload.oauth) {
@@ -309,6 +314,8 @@ export class IdentityService {
       return userId
     })
 
+    // A wallet proves key ownership, not an inbox. Hold the session until an address is verified.
+    if (!await this.hasVerifiedEmail(userId)) return this.authFlows.beginEmailBinding(userId, device)
     return this.issueSession(userId, device)
   }
 
@@ -387,6 +394,8 @@ export class IdentityService {
       await this.persistRegistrationConsents(manager, userId, consents, meta.consentedAt, randomUUID())
       return userId
     })
+    // GitHub sign-ins must also prove an inbox before a session is issued.
+    if (provider === 'github' && !await this.hasVerifiedEmail(userId)) return this.authFlows.beginEmailBinding(userId, meta.device)
     return this.issueSession(userId, meta.device)
   }
 
@@ -831,6 +840,11 @@ export class IdentityService {
     const googleEmail = verifiedGoogleEmail(this.crypto, googleIdentity)
     const emailVerified = emailIdentity ? emailIdentity.state === 'verified' && !emailIdentity.revokedAt : Boolean(googleEmail)
     return { emailIdentity, googleIdentity, googleEmail, emailVerified }
+  }
+
+  /** True when the account already owns a verified email (email identity or server-verified Google email). */
+  private async hasVerifiedEmail(userId: string): Promise<boolean> {
+    return (await this.emailStatus(userId)).emailVerified
   }
 
   /** Only masked identifiers or a provider name leave the service. */
