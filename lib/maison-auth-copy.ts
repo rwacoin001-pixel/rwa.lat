@@ -10,6 +10,17 @@ export const authCardCaption: Record<AppLocale, string> = {
   pt: 'Conecte-se a ativos reais.',
 }
 
+/** The sign-in poster's two-line title; the second line takes the gold. */
+export const authPosterTitle: Record<AppLocale, [string, string]> = {
+  en: ['Connect to', 'real assets.'],
+  'zh-CN': ['从这里，', '连接真实资产'],
+  hi: ['वास्तविक संपत्तियों से', 'जुड़ें।'],
+  es: ['Conecta con', 'activos reales.'],
+  ar: ['تواصل مع', 'الأصول الحقيقية.'],
+  fr: ['Accédez aux', 'actifs réels.'],
+  pt: ['Conecte-se a', 'ativos reais.'],
+}
+
 /** Extra strings for the Maison sign-in card; the base auth strings stay in auth-visual-copy. */
 export type AuthSheetCopy = {
   kicker: string; modes: string; wallet: string; passkeyNote: string

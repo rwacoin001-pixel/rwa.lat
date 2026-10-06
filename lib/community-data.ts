@@ -17,6 +17,9 @@ export type CommunityAuthor = {
   city: string | null
   countryCode: string | null
   timezone?: string | null
+  /** Optional until the API ships it (see 后端需求.md); the profile hides the join date when absent. */
+  joinedAt?: string | null
+  coverUrl?: string | null
 }
 
 export type CommunityPost = {

@@ -1,0 +1,116 @@
+/* Full-screen funds pages (deposit / withdraw / transfer / receive + receipts). Every rule hangs off .page, which only these routes pass to MaisonPage.
+   Tokens come from the page root (--m-*); flat rows, hairlines, no glow or texture. */
+
+.page.page { --qr-paper: #fff; --qr-ink: #16130f; background: var(--m-bg); }
+.page.page::before { content: none; }
+.page.page > div[aria-hidden='true'] { display: none; }
+.page.page[data-cta='true'] { padding-bottom: calc(184px + env(safe-area-inset-bottom)); }
+.page.page > div:last-child { padding-top: 4px; padding-inline: max(var(--m-gutter), env(safe-area-inset-left)) max(var(--m-gutter), env(safe-area-inset-right)); }
+.page.page > div:last-child > * { animation: none; }
+
+:global(.rwa-mobile) .page.page.page.page > :global(.rwa-topbar) {
+  background: var(--m-bg);
+  box-shadow: 0 .5px 0 var(--m-line);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Headings + labels */
+.page .label { display: block; margin: 20px 0 0; color: var(--m-muted); font-size: 12px; font-weight: 600; letter-spacing: .02em; text-transform: none; }
+.page .label::before { display: none; }
+.page .first { margin-top: 8px; }
+.page .net { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 14px 0 0; min-height: 44px; border-bottom: 1px solid var(--m-line); }
+.page .net span { color: var(--m-muted); font-size: 12px; }
+.page .net b { font-size: 20px; font-weight: 600; letter-spacing: -.01em; overflow-wrap: anywhere; }
+
+/* Flat rows */
+.page .rows { margin: 12px 0 0; border-top: 1px solid var(--m-line); }
+.page .rows > div { min-height: 44px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--m-line-soft); }
+.page .rows dt { font-size: 13px; }
+.page .rows dd { font-size: 14px; }
+.page .rows > div[data-strong='true'] dd { font-size: 17px; }
+.page .quote { margin: 8px 0 0; color: var(--m-muted); font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.page .quote:empty { display: none; }
+.page .quote button { min-height: 44px; padding-inline: 4px; }
+
+/* Fields */
+.page .field { margin-top: 12px; gap: 6px; }
+.page .field > span { font-size: 12px; letter-spacing: .02em; text-transform: none; }
+.page .field input { min-height: 52px; padding: 0; border: 0; border-bottom: 1px solid var(--m-line); border-radius: 0; background: none; box-shadow: none; font-size: 15px; }
+.page .field input:focus-visible { border-bottom-color: var(--m-accent); box-shadow: none; outline: 0; }
+.page .field input[aria-invalid='true'] { border-bottom-color: var(--m-down); }
+.page .field input, .page .amount input { direction: ltr; text-align: start; }
+.page .amount { padding: 6px 0 4px; }
+.page .amount input { font-size: clamp(32px, 9vw, 40px); }
+.page .maxRow { display: flex; margin-top: 4px; }
+.page .maxChip { min-height: 44px; min-width: 64px; border-radius: 10px; }
+.page .meta { margin-top: 4px; font-size: 12.5px; }
+.page .meta button { min-height: 44px; }
+.page .hint { display: block; margin-top: 6px; color: var(--m-muted); font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere; }
+
+.page .actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; margin-top: 8px; }
+.page .actions > button { min-width: 0; min-height: 44px; line-height: 1.2; }
+.page .flow { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.page .flow:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+/* Destination picks: flat radio rows */
+.page .pickList { gap: 0; margin-top: 6px; border-top: 1px solid var(--m-line); }
+.page .pickRow { min-height: 56px; padding: 8px 0; border: 0; border-bottom: 1px solid var(--m-line-soft); border-radius: 0; background: none; box-shadow: none; }
+.page .pickRow[aria-checked='true'] { box-shadow: none; }
+.page .pickRow[aria-checked='true'] b { color: var(--m-accent); }
+
+/* Notices, consent: flat, no card */
+.page .note { margin-top: 12px; padding: 10px 0; border: 0; border-block: 1px solid var(--m-line-soft); border-radius: 0; background: none; font-size: 13px; }
+.page .note[data-tone='error'] { border-color: color-mix(in srgb, var(--m-down) 40%, transparent); }
+.page .consent { align-items: flex-start; min-height: 44px; margin: 0 0 10px; padding: 0; color: var(--m-ink); font-size: 13px; line-height: 1.5; }
+.page .consent input { width: 22px; height: 22px; margin: 0; }
+
+/* Native details */
+.page .more { margin-top: 12px; border-top: 1px solid var(--m-line-soft); }
+.page .more > summary { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; color: var(--m-muted); font-size: 13px; font-weight: 600; list-style: none; cursor: pointer; user-select: none; }
+.page .more > summary::-webkit-details-marker { display: none; }
+.page .more > summary > span { display: inline-flex; align-items: center; gap: 8px; min-width: 0; }
+.page .more > summary > span svg { flex: none; color: var(--m-warn); }
+.page .more > summary::after { content: ''; flex: none; width: 7px; height: 7px; margin-inline-end: 4px; border: solid currentColor; border-width: 0 1.5px 1.5px 0; transform: rotate(45deg); transition: transform var(--dur-micro) var(--ease-out); }
+.page .more[open] > summary::after { transform: rotate(225deg); }
+.page .more > summary:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+.page .moreBody { display: grid; gap: 8px; padding: 0 0 8px; color: var(--m-muted); font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; }
+.page .moreBody p { margin: 0; }
+.page .moreBody .link { color: var(--m-accent); }
+.page .warning { color: var(--m-ink); }
+.page .linkText { font-family: var(--m-mono); font-size: 12px; direction: ltr; text-align: start; word-break: break-all; user-select: all; }
+
+/* QR + address */
+.page .qrWrap { display: grid; justify-items: center; margin: 14px 0 12px; }
+.page .qr { display: grid; place-items: center; width: min(232px, 100%); padding: 12px; border-radius: 16px; background: var(--qr-paper); color: var(--qr-ink); box-sizing: border-box; }
+.page .qr svg { display: block; width: 100%; max-width: 208px; height: auto; }
+.page .empty { display: grid; justify-items: center; gap: 8px; margin: 14px 0 0; padding: 20px 12px; border: 1px dashed var(--m-line); border-radius: 12px; color: var(--m-muted); text-align: center; font-size: 13px; }
+.page .empty > button { width: 100%; }
+.page .addrRow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; padding: 10px 0; border-bottom: 1px solid var(--m-line-soft); }
+.page .addrRow > div { flex: 1 1 180px; min-width: 0; }
+.page .addrRow small { display: block; color: var(--m-muted); font-size: 12px; }
+.page .addrText { margin: 2px 0 0; font-size: 14px; line-height: 1.45; direction: ltr; text-align: start; overflow-wrap: anywhere; word-break: break-all; user-select: all; }
+.page .addrRow > button { flex: none; min-width: 44px; min-height: 44px; }
+.page .scope { margin: 10px 0 0; color: var(--m-muted); font-size: 13px; line-height: 1.5; text-align: center; }
+
+/* Fixed CTA */
+.page .fixedCta { z-index: 20; max-height: 60dvh; overflow-y: auto; padding: 12px max(var(--m-gutter), env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(var(--m-gutter), env(safe-area-inset-left)); border-top: 1px solid var(--m-line); background: var(--m-bg); }
+.page .fixedCta .note { margin: 0 0 10px; }
+.page .fixedCta .actions { margin-top: 0; }
+.page .fixedCta .cta { min-height: 52px; }
+
+/* Receipt (shared component, flattened here only) */
+.page [data-receipt] > :first-child { padding: 0; border-radius: 0; background: none; box-shadow: none; color: var(--m-ink); overflow: visible; }
+.page [data-receipt] > :first-child::before, .page [data-receipt] > :first-child::after { content: none; }
+.page [data-receipt] > :first-child dl > div { border-bottom-color: var(--m-line-soft); }
+.page [data-receipt] > :first-child dt { color: var(--m-muted); }
+.page [data-receipt] > :first-child svg { color: var(--m-up); }
+.page [data-receipt] > :first-child p { color: var(--m-muted); }
+.page [data-receipt] button { min-height: 44px; }
+
+@media (max-width: 400px) {
+  .page .qr { width: min(208px, 100%); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .page .more > summary::after { transition: none; }
+}

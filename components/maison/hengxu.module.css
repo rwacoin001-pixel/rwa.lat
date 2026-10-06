@@ -8,6 +8,15 @@
 .introLede { margin: 8px 0 0; color: var(--m-muted); font-size: 12.5px; line-height: 1.55; }
 .conceptLine { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; padding: 5px 10px; border: 1px solid color-mix(in srgb, var(--m-warn) 40%, transparent); border-radius: 999px; color: var(--m-warn); font-size: 11px; font-weight: 600; line-height: 1.3; }
 .conceptLine svg { flex: none; }
+/* Three counts that frame the whole shelf: open now, candidates, in research. */
+.tally { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 14px 0 0; border-block: 1px solid var(--m-line); }
+.tally > div { min-width: 0; padding: 10px 0; }
+.tally > div + div { padding-inline-start: 12px; border-inline-start: 1px solid var(--m-line); }
+.tally dt { color: var(--m-muted); font-size: 10.5px; font-weight: 600; letter-spacing: .05em; }
+.tally dd { margin: 5px 0 0; font-family: var(--m-display); font-size: 24px; font-weight: 400; line-height: 1; }
+.tally > div:first-child dd { color: var(--m-accent); }
+.seriesTitle { margin: 6px 0 0; font-family: var(--m-display); font-size: 20px; font-weight: 400; line-height: 1.2; text-wrap: balance; }
+.series[data-lead='true'] { margin-top: 10px; padding-top: 0; border-top: 0; }
 
 /* ── Shared bits ─────────────────────────────────── */
 .picture { position: relative; display: block; overflow: hidden; aspect-ratio: 16 / 7; border-radius: 12px; background: var(--m-glass-deep); }
@@ -40,7 +49,7 @@
 .featuredFacts small { color: var(--m-lacquer-muted); font-size: 10px; font-weight: 600; letter-spacing: .06em; }
 .featuredFacts b { font-size: 12.5px; font-weight: 600; line-height: 1.3; }
 .featured .risk { flex-wrap: wrap; row-gap: 4px; }
-.featured .riskTicks i { background: rgba(255, 255, 255, .16); }
+.featured .riskTicks i { background: var(--m-lacquer-tick); }
 .featured .riskTicks i[data-on='true'] { background: var(--m-lacquer-accent); }
 .featuredFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
 .learn { display: inline-flex; align-items: center; gap: 4px; min-height: 32px; color: var(--m-lacquer-accent); font-size: 12.5px; font-weight: 700; }
@@ -55,9 +64,14 @@
 .bandHead small { margin-inline-start: auto; color: var(--m-faint); font-family: var(--m-mono); font-size: 10px; letter-spacing: .04em; }
 .rows { margin: 0; padding: 0; list-style: none; }
 .rows > li + li { border-top: 1px solid var(--m-line-soft); }
-.row { display: grid; grid-template-columns: minmax(0, 1fr) 38%; align-items: center; gap: 14px; padding: 14px 0; color: inherit; text-decoration: none; }
-.row .picture { border-radius: 10px; box-shadow: 0 0 0 .5px var(--m-line); }
+/* Dense row: thumbnail · name/one-liner/tier · fee and minimum, like a fund list rather than a gallery. */
+.row { display: grid; grid-template-columns: 76px minmax(0, 1fr) auto; align-items: start; gap: 12px; padding: 14px 0; color: inherit; text-decoration: none; }
+.row .picture { aspect-ratio: 4 / 3; margin-top: 2px; border-radius: 8px; box-shadow: 0 0 0 .5px var(--m-line); }
 .rowText { display: grid; gap: 6px; min-width: 0; }
+.rowFig { display: grid; justify-items: end; gap: 4px; padding-top: 3px; text-align: end; white-space: nowrap; }
+.rowFig b { font-size: 13.5px; font-weight: 600; line-height: 1.2; }
+.rowFig b small { margin-inline-start: 1px; color: var(--m-muted); font-size: 10.5px; font-weight: 500; }
+.rowFig > small { color: var(--m-faint); font-size: 10.5px; }
 .rowLine { display: -webkit-box; overflow: hidden; color: var(--m-muted); font-size: 12px; line-height: 1.5; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 .rowFoot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .row:active { opacity: .75; }
@@ -85,7 +99,7 @@
 .factGrid dd { display: grid; gap: 2px; margin: 5px 0 0; font-size: 14px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
 .factGrid dd small { color: var(--m-lacquer-muted); font-size: 10.5px; font-weight: 500; }
 .facts .tba { color: var(--m-lacquer-muted); }
-.facts .riskTicks i { background: rgba(255, 255, 255, .16); }
+.facts .riskTicks i { background: var(--m-lacquer-tick); }
 .facts .riskTicks i[data-on='true'] { background: var(--m-lacquer-accent); }
 .facts .risk { flex-wrap: wrap; }
 .facts .risk[data-graded='false'] > span:last-child { color: var(--m-lacquer-accent); }
@@ -139,7 +153,7 @@
 [dir='rtl'] .pager svg { transform: scaleX(-1); }
 
 @media (max-width: 359px) {
-  .row { grid-template-columns: minmax(0, 1fr) 34%; gap: 10px; }
+  .row { grid-template-columns: 58px minmax(0, 1fr) auto; gap: 10px; }
   .featuredFacts { grid-template-columns: 1fr 1fr; }
   .featuredFacts > span:first-child { grid-column: 1 / -1; padding-inline-end: 0; border-bottom: 1px solid var(--m-lacquer-line); }
   .featuredFacts > span:nth-child(2) { padding-inline-start: 0; border-inline-start: 0; }

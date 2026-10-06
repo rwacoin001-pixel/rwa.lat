@@ -165,14 +165,14 @@ function PairScreen({ symbol }: { symbol: string }) {
         : <StateBlock title={t.noTrades} />}
     </section>
 
-    <SectionHead index="04" title={t.place} />
-    <div className={s.notice} data-tone="error" role="note"><AlertTriangle size={16} /><span>{t.settlement}</span></div>
+    <SectionHead title={t.place} />
+    <div className={s.notice} role="note"><AlertTriangle size={16} /><span>{t.settlement}</span></div>
     {!active ? <div style={{ marginTop: 12 }}><StateBlock tone="unavailable" title={t.paused} /></div>
       : signedIn ? <Ticket pair={p} digits={digits} bestBid={bestBid} bestAsk={bestAsk} picked={picked} />
       : <button type="button" className={s.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => signInThenReturn()}><span>{t.signIn}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>}
 
     {signedIn && <>
-      <SectionHead index="05" title={t.myOrders} action={mine.length ? <small className={`${s.muted} ${s.num}`}>{mine.length}</small> : undefined} />
+      <SectionHead title={t.myOrders} action={mine.length ? <small className={`${s.muted} ${s.num}`}>{mine.length}</small> : undefined} />
       {!orders.data && !orders.error ? <Skeleton rows={2} />
         : orders.error && !orders.data ? <StateBlock tone="error" title={copy.common.errorGeneric} body={orders.error.message} retry={orders.refetch} retryLabel={copy.common.retry} />
         : mine.length ? <MyOrders orders={mine} digits={digits} />

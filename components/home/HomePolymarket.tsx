@@ -1,14 +1,15 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { ArrowUpRight, ChartNoAxesCombined, Coins, Landmark, Waves } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { openPath } from '@/lib/maison-nav'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, request } from '@/lib/api/_http'
 import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fmtUsdCompact } from '@/lib/money'
 import { polymarketTranslationCopy } from '@/lib/polymarket-translation-copy'
+import { HomeSectionHeading } from './HomeSectionHeading'
 import styles from './HomePolymarket.module.css'
 
 type Market = {
@@ -33,11 +34,14 @@ const copy: Record<AppLocale, { title: string; eyebrow: string; empty: string; r
   pt: { title: 'O que o mercado espera', eyebrow: 'MERCADOS DE PREVISÃO', empty: 'Dados públicos indisponíveis', retry: 'Tentar novamente', volume: 'Volume 24 h', probability: 'Probabilidade implícita', source: 'Cotações ao vivo · negocie no app', macro: 'Macro', crypto: 'Cripto', commodities: 'Commodities', other: 'Em alta' },
 }
 
+const translateAction: Record<AppLocale, string> = { en: 'Show translation', 'zh-CN': '显示翻译', hi: 'अनुवाद दिखाएँ', es: 'Mostrar traducción', ar: 'عرض الترجمة', fr: 'Afficher la traduction', pt: 'Mostrar tradução' }
+const allMarkets: Record<AppLocale, string> = { en: 'All markets', 'zh-CN': '全部预测', hi: 'सभी बाज़ार', es: 'Todos los mercados', ar: 'جميع الأسواق', fr: 'Tous les marchés', pt: 'Todos os mercados' }
+function translationKey(locale: AppLocale, market: Market) { return JSON.stringify([locale, market.id, market.question, market.outcomes.map(outcome => outcome.label)]) }
+
 const categoryIcon = { macro: Landmark, crypto: Coins, commodities: Waves, other: ChartNoAxesCombined }
 
 export function HomePolymarket() {
   const { locale } = useI18n()
-  const router = useRouter()
   const label = copy[locale]
   const result = useQuery('polymarket:public-preview:finance', () => request<Preview>('/v1/polymarket/public-preview?scope=finance'), { staleTime: 60_000, pollInterval: POLL.quote })
   const fetched = result.data?.fetchedAt && !Number.isNaN(Date.parse(result.data.fetchedAt))
@@ -49,38 +53,58 @@ export function HomePolymarket() {
   const translationLabel = polymarketTranslationCopy[locale]
   const [translations, setTranslations] = useState<Record<string, PolymarketTranslation>>({})
   const attempts = useRef(new Map<string, number>())
-
-  useEffect(() => {
+  const inFlight = useRef(new Set<string>())
+  const [pending, setPending] = useState(() => new Set<string>())
+  const [originals, setOriginals] = useState(() => new Set<string>())
+  const translate = useCallback(async (markets: Market[], force = false) => {
     if (locale === 'en') return
-    const pending = (result.data?.items ?? [])
-      .map((item) => item.id)
-      .filter((id) => /^\d{1,20}$/.test(id))
-      .filter((id) => (attempts.current.get(`${locale}:${id}`) ?? 0) < 2)
-    if (!pending.length) return
-    for (const id of pending) attempts.current.set(`${locale}:${id}`, (attempts.current.get(`${locale}:${id}`) ?? 0) + 1)
-    void translatePolymarketMarkets(pending.slice(0, 20), locale).then((response) => {
+    const batch = markets.filter(market => /^\d{1,20}$/.test(market.id)).filter(market => {
+      const key = translationKey(locale, market)
+      return !inFlight.current.has(key) && (force || (attempts.current.get(key) ?? 0) < 2)
+    }).slice(0, 20)
+    if (!batch.length) return
+    const keys = batch.map(market => translationKey(locale, market))
+    for (const key of keys) { inFlight.current.add(key); attempts.current.set(key, (attempts.current.get(key) ?? 0) + 1) }
+    setPending(previous => new Set([...previous, ...keys]))
+    try {
+      const response = await translatePolymarketMarkets(batch.map(market => market.id), locale)
       if (!response.ok || !response.data.available) return
-      setTranslations((previous) => {
-        const next = { ...previous }
-        for (const item of response.data.items) next[`${locale}:${item.id}`] = item
-        return next
-      })
-      for (const item of response.data.items) attempts.current.set(`${locale}:${item.id}`, 99)
-    })
-  }, [locale, result.data])
+      const translatedById = new Map(response.data.items.map(item => [item.id, item]))
+      const additions: Record<string, PolymarketTranslation> = {}
+      for (const market of batch) {
+        const item = translatedById.get(market.id)
+        if (item) { const key = translationKey(locale, market); additions[key] = item; attempts.current.set(key, 99) }
+      }
+      setTranslations(previous => ({ ...previous, ...additions }))
+    } catch { /* Keep the original body and a retry action. */ }
+    finally {
+      for (const key of keys) inFlight.current.delete(key)
+      setPending(previous => { const next = new Set(previous); for (const key of keys) next.delete(key); return next })
+    }
+  }, [locale])
+
+  useEffect(() => { void translate(result.data?.items ?? []) }, [translate, result.data])
 
   return <section className={styles.root} aria-label={label.title}>
-    <div className={styles.heading}><div><span className={styles.eyebrow}>{label.eyebrow}</span><h2>{label.title}</h2></div><span className={styles.mark}>P</span></div>
-    {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : result.error || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{result.data.items.map(market => {
+    <HomeSectionHeading index="05" title={label.title} more={allMarkets[locale]} onMore={() => openPath('/markets?tab=predictions')} />
+    {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : (result.error && !result.data) || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{result.data.items.map(market => {
       const Icon = categoryIcon[market.category]
-      const translated = translations[`${locale}:${market.id}`]
-      return <button type="button" className={styles.card} key={market.id} onClick={() => router.push(`/prediction/${encodeURIComponent(market.id)}`)}>
-        <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}<ArrowUpRight size={16} /></span>
+      const key = translationKey(locale, market)
+      const cached = translations[key]
+      const translated = originals.has(key) ? undefined : cached
+      return <div className={styles.card} key={market.id}>
+      <button type="button" className={styles.cardLink} onClick={() => openPath(`/prediction/${encodeURIComponent(market.id)}`)}>
+        <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}<ArrowUpRight size={16} aria-hidden="true" /></span>
         <strong className={styles.question} lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>
         <span className={styles.outcomes}>{market.outcomes.slice(0, 2).map((outcome, index) => <span className={styles.outcome} key={`${market.id}-${index}`}><span lang={translated ? locale : 'en'}>{translated?.outcomes[index] ?? outcome.label}</span><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(outcome.impliedProbability)}</b></span>)}</span>
-        <span className={styles.probabilityBar} aria-hidden="true"><span style={{ width: `${market.outcomes[0].impliedProbability * 100}%` }} /></span>
+        <span className={styles.probabilityBar} aria-hidden="true"><span style={{ width: `${(market.outcomes[0]?.impliedProbability ?? 0) * 100}%` }} /></span>
         <span className={styles.foot}><span>{label.probability}</span><span>{label.volume} <b dir="ltr">{market.volume24hUsd === null ? '—' : fmtUsdCompact(market.volume24hUsd, { locale, digits: 1 })}</b></span></span>
       </button>
+      {locale !== 'en' && <button type="button" className={styles.translate} disabled={pending.has(key)} aria-live="polite" onClick={() => {
+        if (cached) setOriginals(previous => { const next = new Set(previous); if (next.has(key)) next.delete(key); else next.add(key); return next })
+        else void translate([market], true)
+      }}>{pending.has(key) ? translationLabel.loading + '…' : translated ? translationLabel.original : translateAction[locale]}</button>}
+      </div>
     })}</div>}
     <p className={styles.source}>{label.source}{fetched ? ` · ${fetched}` : ''}</p>
   </section>

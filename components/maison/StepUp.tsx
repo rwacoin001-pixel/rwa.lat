@@ -1,6 +1,5 @@
 'use client'
 
-import { Dialog } from '@base-ui/react/dialog'
 import { Fingerprint, KeyRound, ShieldCheck } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useI18n } from '@/lib/i18n'
@@ -13,6 +12,10 @@ import { marketCopy } from '@/lib/maison-market-copy'
 import { openPath } from '@/lib/maison-nav'
 import { Skeleton, StateBlock, maison as s } from './primitives'
 import { Segmented } from './motion'
+import { Sheet } from './Sheet'
+
+/** One line of what is about to be authorised, shown under the title so the factor is entered against the real intent. */
+export type StepUpLine = { label: string; value: ReactNode }
 
 type Method = 'totp' | 'recovery' | 'passkey'
 
@@ -24,14 +27,16 @@ export const stepUpRequired = (integration: WalletIntegration | null | undefined
  * `run` asks for it up front when required and once more if the server still answers STEP_UP_REQUIRED.
  * The action receives the token and must keep its idempotency key independent of it, so the retry replays the same intent.
  */
-export function useStepUp(): { run: <T>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>) => Promise<ApiResult<T> | null>; sheet: ReactNode } {
+export function useStepUp(): { run: <T>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>, summary?: StepUpLine[]) => Promise<ApiResult<T> | null>; sheet: ReactNode } {
   const waiter = useRef<((value: string | null) => void) | null>(null)
   const [open, setOpen] = useState(false)
+  const [summary, setSummary] = useState<StepUpLine[] | undefined>()
 
-  const obtain = useCallback(() => {
+  const obtain = useCallback((lines?: StepUpLine[]) => {
     return new Promise<string | null>((resolve) => {
       waiter.current?.(null)
       waiter.current = resolve
+      setSummary(lines)
       setOpen(true)
     })
   }, [])
@@ -45,37 +50,33 @@ export function useStepUp(): { run: <T>(required: boolean, action: (reauthentica
 
   useEffect(() => () => { waiter.current?.(null); waiter.current = null }, [])
 
-  const run = useCallback(async <T,>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>) => {
-    let reauthentication = required ? await obtain() : null
+  const run = useCallback(async <T,>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>, lines?: StepUpLine[]) => {
+    let reauthentication = required ? await obtain(lines) : null
     if (required && !reauthentication) return null
     let result = await action(reauthentication ?? undefined)
     if (!result.ok && result.error.code === 'STEP_UP_REQUIRED') {
-      reauthentication = await obtain()
+      reauthentication = await obtain(lines)
       if (!reauthentication) return null
       result = await action(reauthentication)
     }
     return result
   }, [obtain])
 
-  return { run, sheet: <StepUpSheet open={open} onDone={settle} /> }
+  return { run, sheet: <StepUpSheet open={open} summary={summary} onDone={settle} /> }
 }
 
-function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpResult | null) => void }) {
+function StepUpSheet({ open, summary, onDone }: { open: boolean; summary?: StepUpLine[]; onDone: (result: StepUpResult | null) => void }) {
   const { locale } = useI18n()
   const f = fundsCopy[locale]
   const t = f.stepUp
   const common = marketCopy[locale].common
   const factors = useQuery(open ? 'security:factors' : null, listSecurityFactors, { staleTime: 30_000 })
-  const anchor = useRef<HTMLSpanElement>(null)
-  const [container, setContainer] = useState<HTMLElement | null>(null)
   const [method, setMethod] = useState<Method | null>(null)
   const [code, setCode] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const verification = useRef<AbortController | null>(null)
 
-  // Portal into the Maison page so the sheet inherits theme tokens; the page root has no transform, so fixed stays viewport-relative.
-  useEffect(() => { setContainer(anchor.current?.closest<HTMLElement>('[data-maison-page]') ?? null) }, [])
   useEffect(() => { if (open) { setCode(''); setError(null); setBusy(false); setMethod(null) } }, [open])
   useEffect(() => { if (!open) verification.current?.abort(); return () => verification.current?.abort() }, [open])
 
@@ -105,17 +106,12 @@ function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpR
   }
   const pick = (next: Method) => { setMethod(next); setCode(''); setError(null) }
 
-  return <>
-    <span ref={anchor} hidden />
-    <Dialog.Root open={open} onOpenChange={(next) => { if (!next) { verification.current?.abort(); onDone(null) } }}>
-      <Dialog.Portal container={container}>
-        <Dialog.Backdrop className={s.sheetBackdrop} />
-        <Dialog.Popup className={s.sheet} data-step-up="" data-sheet="">
-          <i className={s.sheetGrip} aria-hidden="true" />
-          <p className={s.kicker}><ShieldCheck size={13} aria-hidden="true" />{t.required}</p>
-          <Dialog.Title className={s.sheetTitle}>{t.title}</Dialog.Title>
-          <Dialog.Description className={s.muted} style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.5 }}>{t.body}</Dialog.Description>
-
+  // Not `busy`-locked: closing mid-passkey aborts the pending verification, as before.
+  return <Sheet open={open} onClose={() => { verification.current?.abort(); onDone(null) }} data-step-up=""
+    kicker={<><ShieldCheck size={13} aria-hidden="true" />{t.required}</>} title={t.title} description={t.body}>
+          {summary && summary.length > 0 && <dl className={s.summary} style={{ marginTop: 14 }}>
+            {summary.map((line) => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}
+          </dl>}
           {factors.error && !factors.data ? <StateBlock tone="error" title={t.loadError} body={factors.error.message} retry={factors.refetch} retryLabel={common.retry} />
             : !factors.data ? <Skeleton rows={2} />
             : !active ? <StateBlock tone="unavailable" title={t.noFactors} body={t.noFactorsBody}
@@ -136,9 +132,5 @@ function StepUpSheet({ open, onDone }: { open: boolean; onDone: (result: StepUpR
                 <span className={s.ctaIcon}>{active === 'passkey' ? <Fingerprint size={17} /> : <KeyRound size={17} />}</span>
               </button>
             </form>}
-          <Dialog.Close className={s.ghost} style={{ width: '100%', marginTop: 10 }}>{t.cancel}</Dialog.Close>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
-  </>
+  </Sheet>
 }

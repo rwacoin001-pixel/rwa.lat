@@ -1,41 +1,20 @@
-/* Maison · For You. Colours come from the --home-* tokens set on the Home root. */
-.root { display: grid; gap: 12px; min-width: 0; }
-
-.lead { position: relative; display: block; width: 100%; aspect-ratio: 4 / 4.2; max-height: 440px; padding: 0; overflow: hidden; border: 1px solid var(--home-line); border-radius: 22px; color: #f7f2ea; background: #1b1813; text-align: start; font: inherit; cursor: pointer; box-shadow: var(--home-shadow); }
-.leadImage { position: absolute; inset: 0; background: url('/media/home/ai-basket-warm.webp') center / cover no-repeat; }
+/* Reuse Maison materials; keep the recommendation short and its text readable. */
+.root { min-width: 0; }
+.lead { position: relative; display: grid; align-content: space-between; gap: 12px; width: 100%; min-height: 172px; padding: 18px; overflow: hidden; border: 1px solid var(--home-line); border-radius: 20px; color: #f7f2ea; background: #1b1813; text-align: start; font: inherit; cursor: pointer; touch-action: manipulation; }
+.leadImage { position: absolute; inset: 0; background: url('/media/home/ai-basket-warm.webp') 70% 48% / cover no-repeat; opacity: .56; }
 :global(.rwa-mobile[data-theme='dark']) .leadImage { background-image: url('/media/home/ai-basket-cool.webp'); }
-.lead[data-image='treasury'] .leadImage { background-image: url('/media/generated/design-v2/treasury-architecture-v1.png'); background-position: 40% center; }
-.lead::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 8, 5, .12) 30%, rgba(10, 8, 5, .8) 100%); }
-.badge { position: absolute; z-index: 1; top: 18px; left: 18px; padding: 6px 11px; border: 1px solid rgba(255, 255, 255, .3); border-radius: 999px; background: rgba(20, 16, 11, .28); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); font-size: 10px; font-weight: 600; letter-spacing: .16em; text-transform: uppercase; }
-.leadBody { position: absolute; z-index: 1; right: 76px; bottom: 22px; left: 22px; display: grid; gap: 8px; }
-.leadBody strong { font-family: var(--home-display); font-size: 32px; font-weight: 400; line-height: 1.02; }
-.leadBody small { font-size: 12px; line-height: 1.5; font-variant-numeric: tabular-nums; }
-.leadArrow { position: absolute; z-index: 1; right: 20px; bottom: 22px; display: grid; place-items: center; width: 44px; height: 44px; border-radius: 999px; background: #f5eee2; transition: transform .5s var(--home-ease); }
+.lead[data-image='treasury'] .leadImage { background-image: url('/media/generated/design-v2/treasury-architecture-v1.png'); }
+.lead::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10, 8, 5, .88), rgba(10, 8, 5, .25)); pointer-events: none; }
+.badge { position: relative; z-index: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-inline-end: 24px; font-size: 11px; font-weight: 500; line-height: 1.4; letter-spacing: .03em; }
+.risk { padding: 3px 7px; border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; font-size: 11px; }
+.leadBody { position: relative; z-index: 1; display: grid; gap: 6px; min-width: 0; padding-inline-end: 48px; }
+.leadBody strong { display: -webkit-box; overflow: hidden; font-family: var(--home-display); font-size: 25px; font-weight: 400; line-height: 1.14; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
+.leadBody small { display: -webkit-box; overflow: hidden; font-size: 12px; line-height: 1.45; font-variant-numeric: tabular-nums; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.leadArrow { position: absolute; z-index: 1; inset-inline-end: 18px; bottom: 18px; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 999px; background: #f5eee2; transition: transform .25s var(--home-ease); }
 .lead:hover .leadArrow { transform: rotate(45deg); }
-
-.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.pair > :only-child { grid-column: 1 / -1; }
-.tile { position: relative; display: flex; flex-direction: column; gap: 10px; min-width: 0; min-height: 212px; padding: 16px; overflow: hidden; border: 1px solid var(--home-line); border-radius: 22px; color: var(--home-ink); background: var(--home-glass); -webkit-backdrop-filter: blur(20px) saturate(140%); backdrop-filter: blur(20px) saturate(140%); text-align: start; text-decoration: none; font: inherit; cursor: pointer; }
-.eyebrow { font-size: 9.5px; font-weight: 600; letter-spacing: .14em; line-height: 1.4; text-transform: uppercase; }
-.question { display: -webkit-box; overflow: hidden; font-family: var(--home-display); font-size: 17px; font-weight: 400; line-height: 1.18; -webkit-line-clamp: 4; -webkit-box-orient: vertical; }
-.betFigure { display: flex; align-items: baseline; gap: 6px; margin-top: auto; }
-.betFigure b { font-size: 26px; font-weight: 300; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.betFigure em { font-size: 11px; font-style: normal; }
-.bar { display: block; height: 3px; overflow: hidden; border-radius: 999px; background: var(--home-line); }
-.bar span { display: block; height: 100%; border-radius: inherit; background: var(--home-accent); transform-origin: 0 50%; }
-.goldValue { margin-top: 6px; font-size: 30px; font-weight: 300; letter-spacing: -.04em; line-height: 1; font-variant-numeric: tabular-nums; }
-.change { font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.chartLink { display: inline-flex; align-items: center; gap: 4px; margin-top: auto; font-size: 12px; font-weight: 500; }
-.meta { font-size: 10px; }
-
-/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); set text colours at 0,4,0. */
+.lead:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; }
 :global(.rwa-mobile) .root.root .badge, :global(.rwa-mobile) .root.root .leadBody strong { color: #f7f2ea; }
-:global(.rwa-mobile) .root.root .leadBody small { color: rgba(247, 242, 234, .76); }
+:global(.rwa-mobile) .root.root .leadBody small { color: rgba(247, 242, 234, .84); }
 :global(.rwa-mobile) .root.root .leadArrow { color: #1b1712; }
-:global(.rwa-mobile) .root.root .eyebrow, :global(.rwa-mobile) .root.root .chartLink { color: var(--home-accent); }
-:global(.rwa-mobile) .root.root .betFigure em, :global(.rwa-mobile) .root.root .meta { color: var(--home-faint); }
-:global(.rwa-mobile) .root.root .up { color: var(--home-up); }
-:global(.rwa-mobile) .root.root .down { color: var(--home-down); }
-:global(.rwa-mobile) .root.root .flat { color: var(--home-muted); }
-
-@media (max-width: 350px) { .pair { grid-template-columns: 1fr; } .tile { min-height: 0; } }
+:global([dir='rtl']) .lead::after { background: linear-gradient(270deg, rgba(10, 8, 5, .88), rgba(10, 8, 5, .25)); }
+@media (prefers-reduced-motion: reduce) { .leadArrow { transition: none; } .lead:hover .leadArrow { transform: none; } }

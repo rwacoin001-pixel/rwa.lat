@@ -1,17 +1,35 @@
 /* /ai conversation. Lives inside MaisonPage (.root), so every colour comes from the --m-* palette.
    Layout: sticky bar · scrolling thread · composer pinned to the bottom of the app column. */
-.shell { position: relative; min-height: 100dvh; display: flex; flex-direction: column; }
+.shell { --ai-bar-h: calc(44px + var(--app-chrome-air, 10px) + env(safe-area-inset-top)); position: relative; min-height: 100dvh; display: flex; flex-direction: column; }
 
-/* ---- Bar ---- */
+/* ---- Bar: back · capsule tabs · avatar ---- */
 .bar {
-  position: sticky; top: 0; z-index: 5;
+  position: sticky; top: 0; z-index: 7;
   /* The shared app inset is added once around the 44px touch row. */
   display: grid; grid-template-columns: 44px 1fr 44px; align-items: center; box-sizing: border-box;
-  height: calc(44px + var(--app-chrome-air, 10px) + env(safe-area-inset-top)); padding: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
-  /* Frosted rather than filled, so the page's ambient light runs under the bar with no visible box edge. */
-  background: color-mix(in srgb, var(--m-bg) 55%, transparent); backdrop-filter: blur(16px) saturate(1.1); -webkit-backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-mask-image: linear-gradient(to bottom, #000 72%, transparent); mask-image: linear-gradient(to bottom, #000 72%, transparent);
+  height: var(--ai-bar-h); padding: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px)) max(12px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
+  /* Near-solid with a hairline: quieter than a fading mask, and the community dock can butt against it. */
+  background: color-mix(in srgb, var(--m-bg) 88%, transparent); backdrop-filter: blur(18px) saturate(1.1); -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  box-shadow: 0 .5px 0 var(--m-line-soft, var(--m-line));
+  transition: transform .42s var(--spring, var(--m-ease));
 }
+/* Community tab: reading down hides the bar along with the feed dock. */
+.bar[data-hidden] { transform: translateY(-100%); }
+/* Segmented capsule: a recessed track and a raised thumb that slides; the selected label is full ink. */
+.capsule { position: relative; justify-self: center; display: grid; grid-template-columns: 1fr 1fr; width: min(100%, 236px); height: 36px; padding: 3px; box-sizing: border-box; border-radius: 999px; background: color-mix(in srgb, var(--m-ink) 6%, transparent); box-shadow: inset 0 0 0 .5px var(--m-line); }
+.capsule button { position: relative; z-index: 1; min-width: 0; padding: 0 10px; overflow: hidden; border: 0; border-radius: 999px; background: none; color: var(--m-muted); font: 550 13.5px/1 var(--m-sans); letter-spacing: -.005em; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; transition: color .22s var(--m-ease); }
+.capsule button[aria-selected='true'] { color: var(--m-ink); font-weight: 650; }
+.capsuleThumb { position: absolute; top: 3px; bottom: 3px; inset-inline-start: 3px; width: calc(50% - 3px); border-radius: 999px; background: var(--m-bg); box-shadow: 0 0 0 .5px var(--m-line), 0 1px 3px rgba(0, 0, 0, .08); transition: transform .38s var(--spring, var(--m-ease)); }
+.capsule[data-tab='community'] .capsuleThumb { transform: translateX(100%); }
+:global([dir='rtl']) .capsule[data-tab='community'] .capsuleThumb { transform: translateX(-100%); }
+/* Dark A′: the thumb is a raised navy plate and the selected label takes the gold. */
+:global(.rwa-mobile[data-theme='dark']) .capsuleThumb { background: color-mix(in srgb, var(--m-ink) 12%, var(--m-bg)); box-shadow: 0 0 0 .5px color-mix(in srgb, var(--m-accent) 40%, transparent); }
+:global(.rwa-mobile[data-theme='dark']) .capsule button[aria-selected='true'] { color: var(--m-accent); }
+.account { width: 44px; height: 44px; display: grid; place-items: center; justify-self: center; margin-inline-end: -7px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-ink); cursor: pointer; transition: transform .2s var(--m-ease); }
+.account > :first-child { border-radius: 50%; box-shadow: 0 0 0 1px var(--m-line); }
+.account > svg { width: 32px; height: 32px; padding: 6px; box-sizing: border-box; background: color-mix(in srgb, var(--m-ink) 6%, transparent); }
+.account:active { transform: scale(.92); }
+.communityPanel { display: block; width: 100%; max-width: 680px; margin-inline: auto; }
 .barTitle { margin: 0; text-align: center; font: 600 15px/1.2 var(--m-sans); letter-spacing: -.01em; color: var(--m-ink); }
 .barTitle span { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: middle; }
 .icon {
@@ -66,7 +84,8 @@ button.icon:active { transform: scale(.92); }
 .mark { position: relative; width: 26px; height: 26px; flex: none; display: grid; place-items: center; border-radius: 50%; background: var(--m-lacquer); box-shadow: inset 0 0 0 1px var(--m-lacquer-line); isolation: isolate; }
 .mark[data-size='lg'] { width: 64px; height: 64px; box-shadow: inset 0 0 0 1px var(--m-lacquer-line), var(--m-shadow-soft); }
 .markLogo { width: 72%; height: 72%; }
-.mark::before { content: ''; position: absolute; z-index: -1; inset: -3px; border-radius: 50%; opacity: 0; background: conic-gradient(from 0deg, transparent 0 55%, var(--m-accent) 80%, transparent 100%); transition: opacity .4s var(--m-ease); }
+/* Busy: a hairline arc orbits the mark — an instrument, not a glow. */
+.mark::before { content: ''; position: absolute; z-index: -1; inset: -3px; border: 1.5px solid transparent; border-top-color: var(--m-accent); border-radius: 50%; opacity: 0; transition: opacity .4s var(--m-ease); }
 .mark[data-size='lg']::before { inset: -5px; }
 .mark[data-busy]::before { opacity: .9; animation: spin 1.6s linear infinite; }
 .mark[data-size='lg']::after { content: ''; position: absolute; z-index: -2; inset: -14px; border-radius: 50%; background: radial-gradient(circle, color-mix(in srgb, var(--m-accent) 22%, transparent), transparent 70%); animation: breathe 4.8s ease-in-out infinite; }
@@ -75,12 +94,17 @@ button.icon:active { transform: scale(.92); }
 .messages { display: grid; gap: 26px; margin: 12px 0 0; padding: 0; list-style: none; }
 .user { justify-self: end; max-width: 84%; animation: rise .35s var(--m-ease) both; }
 .user p {
-  margin: 0; padding: 11px 15px; border: 1px solid var(--m-line); border-radius: 20px; border-end-end-radius: 6px;
-  background: var(--m-glass-deep); color: var(--m-ink); font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
+  margin: 0; padding: 10px 15px; border: 0; border-radius: 18px; border-end-end-radius: 6px;
+  background: color-mix(in srgb, var(--m-ink) 7%, var(--m-bg)); color: var(--m-ink); font-size: 15px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere;
 }
+/* Assistant replies are unboxed text under a small instrument label; sources read as quiet chips. */
 .assistant { min-width: 0; }
-.who { display: flex; align-items: center; gap: 9px; margin-bottom: 10px; }
-.who b { font: 600 13px/1 var(--m-sans); letter-spacing: .01em; color: var(--m-ink); }
+.who { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.who b { font: 600 11px/1 var(--m-mono); letter-spacing: .08em; text-transform: uppercase; color: var(--m-muted); }
+.assistant > a { display: inline-flex; align-items: center; max-width: 100%; min-height: 30px; margin: 12px 6px 0 0; padding: 0 11px; overflow: hidden; border: 1px solid var(--m-line); border-radius: 999px; color: var(--m-muted); font: 500 12px/1 var(--m-sans); text-decoration: none; text-overflow: ellipsis; white-space: nowrap; transition: color .2s var(--m-ease), border-color .2s var(--m-ease); }
+.assistant > a::before { content: '↗'; margin-inline-end: 6px; color: var(--m-accent); font-family: var(--m-mono); }
+.assistant > a:hover { border-color: color-mix(in srgb, var(--m-accent) 50%, var(--m-line)); color: var(--m-ink); }
+.assistant > a:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 
 .answer { color: var(--m-ink); font-size: 15px; line-height: 1.68; overflow-wrap: anywhere; }
 .answer > * { margin: 0; }
@@ -111,12 +135,8 @@ button.icon:active { transform: scale(.92); }
 /* ---- Thinking ---- */
 .thinking { display: grid; gap: 10px; }
 .thinkingHead { display: flex; align-items: baseline; gap: 6px; min-height: 22px; }
-.shimmer {
-  font: 500 15px/1.4 var(--m-sans);
-  background: linear-gradient(100deg, var(--m-muted) 0 38%, var(--m-ink) 50%, var(--m-muted) 62% 100%);
-  background-size: 250% 100%; -webkit-background-clip: text; background-clip: text; color: transparent;
-  animation: sweep 2.2s cubic-bezier(.45, 0, .55, 1) infinite;
-}
+/* Plain text that breathes; no gradient-clipped type. */
+.shimmer { font: 500 15px/1.4 var(--m-sans); color: var(--m-muted); animation: breatheText 2.2s ease-in-out infinite; }
 .dots { display: inline-flex; gap: 3px; }
 .dots i { width: 3.5px; height: 3.5px; border-radius: 50%; background: var(--m-muted); animation: dot 1.4s ease-in-out infinite; }
 .dots i:nth-child(2) { animation-delay: .16s; }
@@ -124,7 +144,7 @@ button.icon:active { transform: scale(.92); }
 .elapsed { margin-inline-start: 6px; color: var(--m-faint); font: 500 11.5px/1 var(--m-mono); font-variant-numeric: tabular-nums; }
 .thinkingHint { margin: 0; color: var(--m-muted); font-size: 12.5px; line-height: 1.5; animation: fadeIn .5s var(--m-ease) both; }
 .ghost { display: grid; gap: 9px; padding-top: 2px; }
-.ghost i { height: 10px; border-radius: 5px; background: linear-gradient(90deg, var(--m-line-soft) 0%, var(--m-line) 45%, var(--m-line-soft) 90%); background-size: 220% 100%; animation: sweep 1.8s ease-in-out infinite; }
+.ghost i { height: 8px; border-radius: 4px; background: var(--m-line-soft, var(--m-line)); animation: breatheText 1.8s ease-in-out infinite; }
 .ghost i:nth-child(1) { width: 92%; }
 .ghost i:nth-child(2) { width: 78%; animation-delay: .12s; }
 .ghost i:nth-child(3) { width: 54%; animation-delay: .24s; }
@@ -179,7 +199,7 @@ button.icon:active { transform: scale(.92); }
 
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-.icon:focus-visible, .suggest li button:focus-visible, .planCard:focus-visible, .tools button:focus-visible, .notice button:focus-visible, .send:focus-visible {
+.icon:focus-visible, .capsule button:focus-visible, .account:focus-visible, .suggest li button:focus-visible, .planCard:focus-visible, .tools button:focus-visible, .notice button:focus-visible, .send:focus-visible {
   outline: 2px solid var(--m-accent); outline-offset: 2px;
 }
 
@@ -189,6 +209,7 @@ button.icon:active { transform: scale(.92); }
 @keyframes sweep { from { background-position: 100% 0; } to { background-position: -100% 0; } }
 @keyframes dot { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2.5px); } }
 @keyframes spin { to { transform: rotate(360deg); } }
+@keyframes breatheText { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @keyframes breathe { 0%, 100% { opacity: .55; transform: scale(.92); } 50% { opacity: 1; transform: scale(1.06); } }
 @keyframes orbFloat { 0%, 100% { transform: translateY(4px) scale(.96); } 50% { transform: translateY(-9px) scale(1.04); } }
 
@@ -197,6 +218,7 @@ button.icon:active { transform: scale(.92); }
   .mark[data-busy]::before, .mark[data-size='lg']::after, .dots i, .ghost i { animation: none; }
   .mark[data-busy]::before { opacity: .6; }
   .shimmer { animation: none; background: none; color: var(--m-muted); }
+  .bar, .capsuleThumb, .capsule button { transition: none; }
 }
 .dockWrap>section{bottom:calc(100% - 18px)}
 .dockWrap[data-keyboard]{padding-bottom:8px}.dockWrap[data-keyboard] .disclaimer{display:none}

@@ -41,10 +41,10 @@ export function PredictionBetForm(props: PredictionBetFormProps) {
     </div>
     <div className={ui.ticketOutcomes} role="group" aria-label={copy.review.outcome}>{props.outcomes.map((outcome,index)=><button key={index} type="button" data-side={index?'no':'yes'} aria-pressed={props.outcome===index} disabled={outcome.disabled || props.pending} onClick={()=>props.onOutcome(index)}><span>{outcome.label}</span><small>{outcome.probability}</small></button>)}</div>
     <div className={ui.netWin} aria-live="polite"><span>{labels.netPayout}</span><b className={s.num}>{props.netPayout}</b></div>
+    <p className={ui.netCost}>{t.feeEstimate} <bdi dir="ltr">{props.fees}</bdi> · {t.price} <bdi dir="ltr">{props.price}</bdi> · {t.shares} <bdi dir="ltr">{props.shares}</bdi></p>
     <div className={ui.quickAmounts}>{[1,5,10,100].map(amount=><button key={amount} type="button" className={s.chip} disabled={props.pending} onClick={()=>props.onAdd(amount)}>+{amount}</button>)}</div>
     {props.fieldError && props.walletAction !== 'deposit' && <p className={ui.ticketIssue} role="alert">{props.fieldError}</p>}
     <details className={ui.ticketDetails}><summary><span>{labels.details} · {labels.market}</span><ChevronDown size={14}/></summary><dl>
-      <div><dt>{t.price}</dt><dd>{props.price}</dd></div><div><dt>{t.shares}</dt><dd>{props.shares}</dd></div><div><dt>{t.feeEstimate}</dt><dd>{props.fees}</dd></div>
       {props.limit && <div><dt>{t.stake}</dt><dd>{props.limit}</dd></div>}
       <div><dt>{copy.common.updated.replace('{t}', '').trim()}</dt><dd>{props.updatedAt}</dd></div>
     </dl></details>

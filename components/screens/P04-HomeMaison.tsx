@@ -14,9 +14,8 @@
  * /v1/polymarket/public-preview, /v1/community/*. Account calls only when signed in.
  */
 
-import { useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, Gift, ShieldCheck, X } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { ArrowUpRight, Gift, ShieldCheck, Smartphone, X } from 'lucide-react'
 import { Instrument_Serif } from 'next/font/google'
 import { GeistSans } from 'geist/font/sans'
 import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion'
@@ -25,7 +24,7 @@ import { useQuery } from '@/lib/api/_query'
 import { getRwaOverview } from '@/lib/api/rwa'
 import { getMarketContextView } from '@/lib/api/market-context'
 import { POLL, request } from '@/lib/api/_http'
-import { fmtPct, fmtUsd, fromAtomic } from '@/lib/money'
+import { fmtUsd, fromAtomic } from '@/lib/money'
 import { getWallet, toUnits as walletUnits, type WalletView } from '@/lib/wallet-data'
 import { resolveHomeState, heroCta } from '@/lib/home-lifecycle'
 import { getSessionView, getKycStatus, type SessionView, type KycStatusView } from '@/lib/session-data'
@@ -40,10 +39,12 @@ import { ErrorBlock } from '@/components/ui/ErrorBlock'
 import { HomeSocialFeed } from '@/components/home/HomeSocialFeed'
 import { HomeMarkets } from '@/components/home/HomeMarkets'
 import { HomeForYou } from '@/components/home/HomeForYou'
+import { HomeSectionHeading as SectionHead } from '@/components/home/HomeSectionHeading'
 import { HomePolymarket } from '@/components/home/HomePolymarket'
 import { homeStateCopy } from '@/components/home/home-state-copy'
 import { CountUp, EASE, MaskLines, Rise } from '@/components/home/maison-motion'
 import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
+import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { homeDataCopy } from '@/lib/route-copy'
 import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home'
@@ -64,9 +65,24 @@ const maisonCopy: Record<AppLocale, MaisonCopy> = {
   pt: { allocation: 'Distribuição por classe', other: 'Outros', trust: 'Custódia · Divulgação · Segurança', rank: 'N.º', strategy: 'Estratégia', invite: 'Convide amigos e ganhem recompensas juntos', inviteBody: 'Links de uso único · recompensas conforme lançamento', inviteEarned: '{v} ganhos', inviteDismiss: 'Ocultar por 30 dias', inviteOpen: 'Convites e recompensas' },
 }
 
-const classLabels: Record<'en' | 'zh-CN', Record<string, string>> = {
+const classLabels: Record<AppLocale, Record<string, string>> = {
   en: { treasury: 'Treasuries', stable_value: 'Stable value', private_credit: 'Private credit', real_estate: 'Real estate', fund: 'Funds', bond: 'Bonds', equity: 'Equity', commodity: 'Commodities', infrastructure: 'Infrastructure' },
   'zh-CN': { treasury: '国债', stable_value: '稳定价值', private_credit: '私人信贷', real_estate: '房地产', fund: '基金', bond: '债券', equity: '股权', commodity: '大宗商品', infrastructure: '基础设施' },
+  hi: { treasury: 'ट्रेज़री', stable_value: 'स्थिर मूल्य', private_credit: 'निजी ऋण', real_estate: 'रियल एस्टेट', fund: 'फंड', bond: 'बॉन्ड', equity: 'इक्विटी', commodity: 'कमोडिटी', infrastructure: 'अवसंरचना' },
+  es: { treasury: 'Tesoro', stable_value: 'Valor estable', private_credit: 'Crédito privado', real_estate: 'Inmuebles', fund: 'Fondos', bond: 'Bonos', equity: 'Acciones', commodity: 'Materias primas', infrastructure: 'Infraestructura' },
+  ar: { treasury: 'سندات الخزانة', stable_value: 'قيمة مستقرة', private_credit: 'ائتمان خاص', real_estate: 'عقارات', fund: 'صناديق', bond: 'سندات', equity: 'أسهم', commodity: 'سلع', infrastructure: 'بنية تحتية' },
+  fr: { treasury: 'Trésor', stable_value: 'Valeur stable', private_credit: 'Crédit privé', real_estate: 'Immobilier', fund: 'Fonds', bond: 'Obligations', equity: 'Actions', commodity: 'Matières premières', infrastructure: 'Infrastructure' },
+  pt: { treasury: 'Tesouro', stable_value: 'Valor estável', private_credit: 'Crédito privado', real_estate: 'Imóveis', fund: 'Fundos', bond: 'Títulos', equity: 'Ações', commodity: 'Commodities', infrastructure: 'Infraestrutura' },
+}
+
+const lowerCopy: Record<AppLocale, { assets: string; community: string }> = {
+  en: { assets: 'All assets', community: 'Enter community' },
+  'zh-CN': { assets: '全部资产', community: '进入社区' },
+  hi: { assets: 'सभी परिसंपत्तियाँ', community: 'समुदाय में जाएँ' },
+  es: { assets: 'Todos los activos', community: 'Ir a comunidad' },
+  ar: { assets: 'جميع الأصول', community: 'دخول المجتمع' },
+  fr: { assets: 'Tous les actifs', community: 'Voir la communauté' },
+  pt: { assets: 'Todos os ativos', community: 'Entrar na comunidade' },
 }
 
 const tickerSymbols: Record<string, string> = { '^TNX': 'US10Y', 'DX-Y.NYB': 'DXY', 'GC=F': 'GOLD', '^GSPC': 'S&P 500', BTC: 'BTC', ETH: 'ETH' }
@@ -75,7 +91,7 @@ type FeaturedAsset = { slug: string; name: string; symbol?: string; assetClass?:
 type Distribution = { assetClass: string; assetCount: number; totalMarketCapUsd: string }
 
 function classLabel(assetClass: string, locale: AppLocale) {
-  return (locale === 'zh-CN' ? classLabels['zh-CN'] : classLabels.en)[assetClass] ?? assetClass.replace(/_/g, ' ')
+  return classLabels[locale][assetClass] ?? assetClass.replace(/_/g, ' ')
 }
 
 function toNumber(input: unknown) {
@@ -98,19 +114,12 @@ function walletTotalAtomic(wallet: WalletView) {
 function FeaturedAssetPhoto({ src }: { src: string }) {
   const [failed, setFailed] = useState(false)
   // Decorative imagery: the adjacent name already identifies the asset.
-  return <img className={styles.assetPhoto} src={failed ? HOME_ASSET_FALLBACK : src} alt="" loading="lazy" decoding="async" onError={() => setFailed(true)} style={{ objectFit: 'cover', objectPosition: 'center' }} />
+  return <img className={styles.assetPhoto} src={failed ? HOME_ASSET_FALLBACK : src} alt="" width={44} height={44} loading="lazy" decoding="async" onError={() => setFailed(true)} />
 }
 
 function changeTone(value: string | null | undefined) {
   const number = toNumber(value)
-  return number === null || number === 0 ? styles.flat : number < 0 ? styles.down : styles.up
-}
-
-function SectionHead({ index, title, more, onMore }: { index: string; title: string; more?: string; onMore?: () => void }) {
-  return <div className={styles.sectionHead}>
-    <h2><span className={styles.sectionIndex}>{index}</span>{title}</h2>
-    {onMore && <button type="button" onClick={onMore}>{more}<ArrowUpRight size={15} /></button>}
-  </div>
+  return number === null || Math.abs(number) < .005 ? styles.flat : number < 0 ? styles.down : styles.up
 }
 
 function Ticker({ quotes, locale }: { quotes: MarketQuote[]; locale: AppLocale }) {
@@ -197,13 +206,37 @@ function InviteStrip({ copy, locale }: { copy: MaisonCopy; locale: AppLocale }) 
   </motion.div>
 }
 
+/** Install entry in the invite-strip material; tap opens the per-browser guide sheet. */
+function InstallStrip({ locale }: { locale: AppLocale }) {
+  const reduced = useReducedMotion()
+  const { env, canPrompt, dismiss } = useHomeInstall()
+  const [open, setOpen] = useState(false)
+  const close = useCallback(() => setOpen(false), [])
+  if (!env) return null
+  const copy = installCopy[locale]
+  const sub = env.kind === 'wechat-ios' || env.kind === 'wechat-android' || env.kind === 'inapp'
+    ? copy.stripInApp.replace('{app}', env.app ?? (locale === 'zh-CN' ? '应用' : 'this app'))
+    : copy.stripSub
+  return <>
+    <motion.div className={styles.invite} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .9, ease: EASE, delay: .6 }}>
+      <button type="button" className={styles.inviteMain} onClick={() => setOpen(true)} aria-haspopup="dialog">
+        <span className={styles.inviteIcon} aria-hidden="true"><Smartphone size={16} strokeWidth={1.6} /></span>
+        <span className={styles.inviteText}><b>{copy.strip}</b><small>{sub}</small></span>
+        <ArrowUpRight size={16} className={styles.inviteGo} aria-hidden="true" />
+      </button>
+      <button type="button" className={styles.inviteClose} onClick={dismiss} aria-label={copy.dismiss}><X size={14} strokeWidth={1.8} /></button>
+    </motion.div>
+    <InstallSheet open={open} env={env} canPrompt={canPrompt} copy={copy} onClose={close} />
+  </>
+}
+
 export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const { locale } = useI18n()
   const copy = copyByLocale[locale]
   const extra = maisonCopy[locale]
   const utility = utilityCopy[locale]
   const dataCopy = homeDataCopy[locale]
-  const router = useRouter()
+  const lowerLabel = lowerCopy[locale]
   const reduced = useReducedMotion()
   const overview = useQuery('rwa:overview', getRwaOverview, { pollInterval: POLL.quote })
   const featured = useQuery('rwa:featured:8', () => request<{ items: FeaturedAsset[] }>('/v1/rwa/assets?featured=true&limit=8'), { staleTime: 60_000, pollInterval: POLL.list })
@@ -214,6 +247,14 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const [walletSnapshot, setWalletSnapshot] = useState<{ available: number; locked: number; pending: number; invested: number } | null>(null)
   const [positionsCount, setPositionsCount] = useState<number | null>(null)
   const [topbarHidden, setTopbarHidden] = useState(false)
+  // While the community tabs are pinned they own the top edge: the topbar stays tucked away.
+  const [feedPinned, setFeedPinned] = useState(false)
+  const feedPinnedRef = useRef(false)
+  const onFeedPinned = useCallback((pinned: boolean) => {
+    feedPinnedRef.current = pinned
+    setFeedPinned(pinned)
+    if (pinned) setTopbarHidden(true)
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -287,7 +328,8 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
         const y = window.scrollY
         const el = heroBgRef.current
         if (el) el.style.transform = reducedMotion ? '' : `translate3d(0,${(-Math.min(y, 900) * .08).toFixed(1)}px,0) scale(${(1 + Math.min(y, 600) / 6000).toFixed(4)})`
-        if (y < 36) setTopbarHidden(false)
+        if (feedPinnedRef.current) setTopbarHidden(true)
+        else if (y < 36) setTopbarHidden(false)
         else if (Math.abs(y - previousY) > 5) setTopbarHidden(y > previousY)
         previousY = y
       })
@@ -305,7 +347,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const openMainCta = () => {
     if (!mainCta) return
     const path = routePath(mainCta.routeKey as never)
-    router.push(mainCta.query ? `${path}?${mainCta.query}` : path)
+    openPath(mainCta.query ? `${path}?${mainCta.query}` : path)
   }
 
   const overviewData = (overview.data ?? {}) as Record<string, unknown>
@@ -317,14 +359,14 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     : '—'
   const compactUsd = (value: number) => fmtUsd(String(value), { compact: true, locale })
   const integer = (value: number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(value)
-  const featuredItems = featured.data?.items?.slice(0, 6) ?? []
+  const featuredItems = featured.data?.items?.slice(0, 3) ?? []
   const tickerQuotes = [...(context.data?.anchors ?? []), ...(context.data?.secondary ?? [])].filter((quote, index, all) => quote.value !== null && all.findIndex(other => other.symbol === quote.symbol) === index)
   const stateLabels = homeStateCopy[locale]
   const statusLabel = state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
   const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' ? account : null
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
 
-  return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden}>
+  return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
     <div className={styles.heroBg} ref={heroBgRef} aria-hidden="true" />
     <div className={styles.grain} aria-hidden="true" />
     <RwaTopbar screen="home" surface="transparent-over-media" action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/profile/referral') }} />
@@ -348,22 +390,26 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
 
     <div className={styles.content}>
 
+      <InstallStrip locale={locale} />
+
       {(state.lifecycle === 'funded' || state.lifecycle === 'invested') && <InviteStrip copy={extra} locale={locale} />}
 
       <Rise as="section" className={styles.pulse}>
         <SectionHead index="01" title={copy.pulse} />
-        <p className={styles.metricLabel}>{copy.tracked}</p>
-        <CountUp className={styles.pulseValue} value={marketCap} format={compactUsd} duration={1.8} />
-        {overview.error && <ErrorBlock message={overview.error.message} retry={overview.refetch} />}
-        {marketCap !== null && distribution.length > 0 && <>
-          <p className={styles.allocationLabel}>{extra.allocation}</p>
-          <AllocationBar items={distribution} total={marketCap} locale={locale} otherLabel={extra.other} />
-        </>}
-        <dl className={styles.stats}>
+        <dl className={styles.pulseMetrics}>
+          <div><dt>{copy.tracked}</dt><dd><CountUp className={styles.pulseValue} value={marketCap} format={compactUsd} duration={1.8} /></dd></div>
           <div><dt>{copy.volume}</dt><dd><CountUp value={volume24h} format={compactUsd} /></dd></div>
+        </dl>
+        {overview.error && !overview.data && <ErrorBlock message={overview.error.message} retry={overview.refetch} />}
+        <dl className={styles.stats}>
           <div><dt>{copy.assets}</dt><dd><CountUp value={toNumber(overviewData.assetCount)} format={integer} duration={1.2} /></dd></div>
           <div><dt>{copy.issuers}</dt><dd><CountUp value={toNumber(overviewData.issuerCount)} format={integer} duration={1.2} /></dd></div>
         </dl>
+        {marketCap !== null && marketCap > 0 && distribution.length > 0 && <>
+          <p className={styles.allocationLabel}>{extra.allocation}</p>
+          <AllocationBar items={distribution} total={marketCap} locale={locale} otherLabel={extra.other} />
+        </>}
+        {overview.error && overview.data && <button type="button" className={styles.retry} onClick={() => void overview.refetch()}>{utility.retry}</button>}
         <div className={styles.pulseFoot}>
           <span>{copy.updated} <time>{asOf}</time></span>
           <button type="button" onClick={() => go('trust-center')}><ShieldCheck size={14} strokeWidth={1.6} />{extra.trust}</button>
@@ -376,28 +422,25 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       </Rise>
 
       <Rise as="section" className={styles.section}>
-        <SectionHead index="03" title={copy.featured} onMore={() => go('invest')} more={copy.all} />
-        {featured.loading && !featured.data ? <div className={styles.skeletonRow}><span /><span /></div> : featured.error ? <ErrorBlock message={featured.error.message} retry={featured.refetch} /> : featuredItems.length ? <div className={styles.rail}>
-          {featuredItems.map((asset, index) => {
-            const image = homeAssetImage(asset, index)
-            const symbol = asset.symbol && asset.symbol !== '-' ? asset.symbol : null
-            return <motion.button type="button" key={asset.slug} className={styles.asset} onClick={() => router.push(`/asset/${encodeURIComponent(asset.slug)}`)} whileTap={reduced ? undefined : { scale: .97 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-              <span className={styles.assetMedia} data-fallback={image ? undefined : 'true'}>
-                <FeaturedAssetPhoto src={image} />
-                <span className={styles.assetRank} dir="ltr">{String(asset.rank ?? index + 1).padStart(2, '0')}</span>
-                <span className={styles.assetClass}>{classLabel(asset.assetClass ?? 'rwa', locale)}</span>
-              </span>
-              <span className={styles.assetInfo}>
-                <b>{asset.name}</b>
-                <small>{[symbol, asset.issuer?.name].filter(Boolean).join(' · ') || 'RWA'}</small>
-                <span className={styles.assetFigures}>
-                  <span><em>{copy.marketCap}</em><strong dir="ltr">{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</strong></span>
-                  <span><em>{copy.change24h}</em><strong dir="ltr" className={changeTone(asset.change24hPct)}>{fmtPct(asset.change24hPct, { signed: true })}</strong></span>
+        <SectionHead index="03" title={copy.featured} onMore={() => openPath('/markets?tab=assets')} more={lowerLabel.assets} />
+        {featured.loading && !featured.data ? <div className={styles.skeletonRow} aria-busy="true"><span /><span /><span /></div> : featured.error && !featured.data ? <ErrorBlock message={featured.error.message} retry={featured.refetch} /> : featuredItems.length ? <>
+          <div className={styles.assetColumns} aria-hidden="true"><span /><span>{copy.marketCap}</span><span>{copy.change24h}</span></div>
+          <div className={styles.rail}>
+            {featuredItems.map((asset, index) => {
+              const symbol = asset.symbol && asset.symbol !== '-' ? asset.symbol : null
+              const change = toNumber(asset.change24hPct)
+              return <motion.button type="button" key={asset.slug} className={styles.asset} onClick={() => openPath('/asset/' + encodeURIComponent(asset.slug))} whileTap={reduced ? undefined : { scale: .99 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
+                <span className={styles.assetIdentity}>
+                  <span className={styles.assetMedia}><FeaturedAssetPhoto src={homeAssetImage(asset, index)} /></span>
+                  <span className={styles.assetInfo}><b>{asset.name}</b><small>{[symbol, asset.issuer?.name || classLabel(asset.assetClass ?? 'rwa', locale)].filter(Boolean).join(' · ')}</small></span>
                 </span>
-              </span>
-            </motion.button>
-          })}
-        </div> : <p className={styles.empty}>{dataCopy.priceUnavailable}</p>}
+                <span className={styles.assetValue} dir="ltr"><span className={styles.srOnly}>{copy.marketCap} </span>{fmtUsd(asset.marketCapUsd, { compact: true, locale, digits: 1 })}</span>
+                <span className={styles.assetChange + ' ' + changeTone(asset.change24hPct)} dir="ltr"><span className={styles.srOnly}>{copy.change24h} </span>{change === null ? '—' : new Intl.NumberFormat(locale, { signDisplay: 'exceptZero', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(change) + '%'}</span>
+              </motion.button>
+            })}
+          </div>
+        </> : <p className={styles.empty}>{dataCopy.priceUnavailable}</p>}
+        {featured.error && featured.data && <button type="button" className={styles.retry} onClick={() => void featured.refetch()}>{utility.retry}</button>}
       </Rise>
 
       <Rise as="section" className={styles.section}><HomeMarkets /></Rise>
@@ -405,8 +448,8 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       <Rise as="section" className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></Rise>
 
       <section className={`${styles.section} ${styles.community}`}>
-        <SectionHead index="06" title={copy.community} onMore={() => go('community')} more={copy.all} />
-        <HomeSocialFeed onOpen={post => router.push(`/community/post/${encodeURIComponent(post.id)}`)} labels={{ all: feedAll[locale], loading: utility.loading, retry: utility.retry, end: utility.end, emptyTitle: copy.communityEmpty, emptyBody: copy.communityBody }} />
+        <SectionHead index="06" title={copy.community} onMore={() => go('community')} more={lowerLabel.community} />
+        <HomeSocialFeed onPinnedChange={onFeedPinned} onOpen={post => openPath(`/community/post/${encodeURIComponent(post.id)}`)} onAuthor={post => { const handle = post.author?.handle || post.author?.id; if (handle) openPath('/community/member/' + encodeURIComponent(handle)) }} labels={{ all: feedAll[locale], loading: utility.loading, retry: utility.retry, end: utility.end, emptyTitle: copy.communityEmpty, emptyBody: copy.communityBody }} />
       </section>
     </div>
   </section>

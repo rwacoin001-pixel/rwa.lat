@@ -1,7 +1,11 @@
 .root { min-width:0; }
+.text { position:relative; }
 .body { margin:0; white-space:pre-wrap; overflow-wrap:anywhere; }
 .body[data-collapsed="true"] { display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden; }
-.controls { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; margin-top:5px; color:var(--home-muted,var(--m-muted)); font-size:11px; line-height:1.5; }
-.controls button { border:0; padding:4px 0; color:var(--home-accent,var(--m-accent)); background:transparent; font:inherit; cursor:pointer; }
+.open { position:absolute; inset:0; z-index:0; width:100%; height:100%; padding:0; border:0; border-radius:6px; background:transparent; cursor:pointer; -webkit-tap-highlight-color:transparent; }
+.open:focus-visible { outline:2px solid var(--home-accent,var(--m-accent)); outline-offset:2px; }
+.controls { position:relative; z-index:1; display:flex; flex-wrap:wrap; align-items:center; color:var(--home-muted,var(--m-muted)); font-size:13px; line-height:1.4; }
+.controls span { margin-inline-end:6px; }
+.controls button { display:inline-flex; align-items:center; justify-content:flex-start; min-width:44px; min-height:44px; margin-inline-start:-10px; padding:0 10px; border:0; color:var(--home-accent,var(--m-accent)); background:transparent; font:inherit; text-align:start; cursor:pointer; touch-action:manipulation; }
 .controls button:disabled { opacity:.6; cursor:wait; }
-.controls button:focus-visible { outline:2px solid currentColor; outline-offset:3px; border-radius:3px; }
+.controls button:focus-visible { outline:2px solid currentColor; outline-offset:-4px; border-radius:8px; }

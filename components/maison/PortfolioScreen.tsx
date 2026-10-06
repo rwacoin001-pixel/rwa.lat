@@ -1,7 +1,7 @@
 'use client'
 import { usePageState } from '@/lib/app-navigation'
 
-import { ArrowRight, ArrowUpFromLine, ChevronRight } from 'lucide-react'
+import { ArrowRight, ArrowUpFromLine, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -9,16 +9,24 @@ import { POLL } from '@/lib/api/_http'
 import { useQuery } from '@/lib/api/_query'
 import { getWallet, isListed, listProducts, TERMINAL_ORDER_STATES, type CatalogProduct, type Order } from '@/lib/api/markets'
 import { getPortfolioHistory, listOrders, listPositions, listYield, share, totalsFor, type PositionRow, type YieldCredit } from '@/lib/api/portfolio'
+import { basketMarketValue, formatAtomicDecimal, holdingsTotal, listBasketPositions, sortBasketPositions, type BasketPosition } from '@/lib/api/basket-positions'
 import { fromAtomic, fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
+import { basketPositionsCopy } from '@/lib/maison-basket-positions-copy'
 import { portfolioCopy } from '@/lib/maison-portfolio-copy'
+import { myPredictionsCopy } from '@/lib/maison-my-predictions-copy'
+import { heroCardCopy } from '@/lib/hero-card-copy'
+import { AMOUNT_MASK, useAmountMask } from '@/lib/use-amount-mask'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Figure, Lacquer, PollBar, PriceChart, Segmented, StatStrip, useAutoAnimate } from './motion'
+import { MyPredictionsCard } from './MyPredictionsCard'
 import { RedeemDone, RedeemSheet, RedemptionsSection } from './RedeemSheet'
 import { assetToolsCopy } from '@/lib/maison-assets-tools-copy'
 import type { Redemption } from '@/lib/api/portfolio'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
+import bp from './basket-positions.module.css'
+import h from './hero-card.module.css'
 import { playMoment } from '@/lib/moment'
 
 // Portfolio amounts are in the platform unit (USDT / USD quote, 6 decimals).
@@ -53,6 +61,13 @@ function usePortfolio() {
   return { positions, wallet, totals }
 }
 
+/** Basket holdings load on their own; `rows` is undefined until a read succeeds and again after a failed read. */
+function useBasketPositions() {
+  const query = useQuery('basket:positions', listBasketPositions, { staleTime: 15_000 })
+  const rows = useMemo(() => query.data && !query.error ? sortBasketPositions(query.data) : undefined, [query.data, query.error])
+  return { query, rows }
+}
+
 function orderTone(state: string) {
   return state === 'filled' ? 'live' : state === 'failed' || state === 'cancelled' ? 'down' : state === 'partially_filled' ? 'warn' : 'accent'
 }
@@ -61,6 +76,7 @@ function orderTone(state: string) {
 export function PortfolioScreen({ query }: { query: string }) {
   const { locale } = useI18n()
   const p = portfolioCopy[locale]
+  const bc = basketPositionsCopy[locale]
   const common = marketCopy[locale].common
   const initial = new URLSearchParams(query).get('tab')
   const [tab, setTabState] = usePageState<Tab>('portfolio:tab', TABS.includes(initial as Tab) ? initial as Tab : 'overview')
@@ -73,13 +89,33 @@ export function PortfolioScreen({ query }: { query: string }) {
   }
   const products = useProducts()
   const { positions, wallet, totals } = usePortfolio()
+  const { query: baskets, rows: basketRows } = useBasketPositions()
   const balances = wallet.data?.balances
   const cash = balances ? BigInt(balances.availableAtomic) + BigInt(balances.lockedAtomic) : null
-  // Only a complete total is shown as a total: positions and wallet must both be loaded.
-  const total = totals && cash !== null ? totals.value + cash : null
+  // Only a complete total is shown as a total: products, baskets and wallet must all be loaded and priced.
+  const holdings = totals && !positions.error && basketRows ? holdingsTotal(totals.value, totals.unpriced, basketRows) : null
+  const total = holdings !== null && cash !== null && !wallet.error ? holdings + cash : null
   const pnlRatio = totals && totals.cost > BigInt(0) ? Number(totals.pnl * BigInt(1_000_000) / totals.cost) / 1_000_000 : null
-  const retryAll = () => { positions.refetch(); wallet.refetch() }
+  const retryAll = () => { positions.refetch(); wallet.refetch(); baskets.refetch() }
   const bothFailed = positions.error && wallet.error
+  const anyFailed = Boolean(positions.error || wallet.error || baskets.error)
+  const loadingAny = !anyFailed && (!positions.data || !wallet.data || !baskets.data)
+  const incomplete = Boolean(totals && basketRows && holdings === null)
+  // Cost, P&L and yield only exist for products; say so whenever baskets are or may be present.
+  const scoped = Boolean(basketRows?.length) || Boolean(baskets.error)
+  const basketsEmpty = basketRows?.length === 0
+  const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
+  const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
+  const { masked, toggle: toggleMask } = useAmountMask()
+  const hc = heroCardCopy[locale]
+  const hide = (text: string) => masked ? AMOUNT_MASK : text
+  const holdingsNote = holdings !== null && holdingsCount !== null ? `${holdingsCount} · ${hide(fmtUsdt(holdings.toString(), { locale }))}` : undefined
+  // The value-trend section only exists once two snapshots do, so the numbering below follows what is actually on screen.
+  const historyShown = useHistoryPoints().length >= 2
+  const section = (n: number) => String(n).padStart(2, '0')
+  const positionsIndex = section(historyShown ? 3 : 2)
+  const basketsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1))
+  const toolsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1) + (basketsEmpty ? 0 : 1))
 
   return <MaisonPage page="portfolio" dock topbar={<RwaTopbar screen="portfolio" title={p.title} />}>
     <header className={s.hero}>
@@ -89,70 +125,130 @@ export function PortfolioScreen({ query }: { query: string }) {
 
     {bothFailed ? <StateBlock tone="error" title={common.errorGeneric} body={positions.error?.message} retry={retryAll} retryLabel={common.retry} />
       : <Lacquer aria-live="polite">
-        <span className={s.kicker}>{p.total} · USDT</span>
-        {total === null && !positions.error && !wallet.error ? <Skeleton rows={1} />
-          : <p className={`${s.bigFigure} ${s.num}`}>{total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}<small>USDT</small></p>}
+        <div className={h.capRow}>
+          <span className={s.kicker}>{p.total} · USDT</span>
+          <button type="button" className={h.eye} aria-pressed={masked} aria-label={masked ? hc.showAmounts : hc.hideAmounts} title={masked ? hc.showAmounts : hc.hideAmounts} onClick={toggleMask}>{masked ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}</button>
+        </div>
+        {total === null && loadingAny ? <Skeleton rows={1} />
+          : <p className={`${s.bigFigure} ${s.num}`}>{masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}<small>USDT</small></p>}
         <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5 }}>
-          {totals && totals.rows.length > 0 && <span dir="ltr" className={toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{signed(totals.pnl, locale)}{pnlRatio !== null && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span>}
+          {totals && totals.rows.length > 0 && <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span>}
           {p.totalNote}
         </p>
         {/* Cards set into the total: holdings and income side by side, cash below with its three balances. */}
         <div className={s.nest}>
           <div>
             <span>{p.positions}</span>
-            <b className={s.num}>{bare(totals?.value)}</b>
-            <small className={s.num}>{p.cost} {bare(totals?.cost)}</small>
+            <b className={s.num}>{hide(holdings === null ? '—' : bare(holdings))}</b>
+            <small className={s.num}>{scoped ? bc.productCost : p.cost} {hide(bare(totals?.cost))}</small>
           </div>
           <div>
-            <span>{p.yield}</span>
-            <b className={`${s.num} ${totals && toneOfBig(totals.yield) === 'up' ? s.up : totals && toneOfBig(totals.yield) === 'down' ? s.down : ''}`}>{bare(totals?.yield, true)}</b>
-            <small className={s.num}>{p.pnl} {bare(totals?.pnl, true)}</small>
+            <span>{scoped ? bc.productYield : p.yield}</span>
+            <b className={`${s.num} ${!masked && totals && toneOfBig(totals.yield) === 'up' ? s.up : !masked && totals && toneOfBig(totals.yield) === 'down' ? s.down : ''}`}>{hide(bare(totals?.yield, true))}</b>
+            <small className={s.num}>{scoped ? bc.productPnl : p.pnl} {hide(bare(totals?.pnl, true))}</small>
           </div>
           <div data-wide="true">
             <span>{p.cash}</span>
             <StatStrip fit items={[
-              { label: p.available, value: bare(balances?.availableAtomic) },
-              { label: p.locked, value: bare(balances?.lockedAtomic) },
-              { label: p.pending, value: bare(balances?.pendingAtomic) },
+              { label: p.available, value: hide(bare(balances?.availableAtomic)) },
+              { label: p.locked, value: hide(bare(balances?.lockedAtomic)) },
+              { label: p.pending, value: hide(bare(balances?.pendingAtomic)) },
             ]} />
           </div>
         </div>
-        {(positions.error || wallet.error) && <p className={s.muted} role="alert" style={{ margin: '10px 0 0', fontSize: 11.5 }}>
-          {p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
-        </p>}
+        {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '10px 0 0', fontSize: 11.5 }}>
+          {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
+        </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
       </Lacquer>}
+
+    <div className={h.maskScope} data-masked={masked}><MyPredictionsCard /></div>
 
     <div style={{ marginTop: 20 }}>
       <Segmented value={tab} onChange={setTab} label={p.title} sticky options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />
     </div>
 
     {tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
-      <Allocation rows={totals?.rows} cash={cash} loading={positions.loading || wallet.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} />
-      <History />
-      <SectionHead index="03" title={p.positions} action={totals && totals.rows.length > 3 ? <button type="button" className={s.sectionMore} onClick={() => setTab('positions')}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
-      <PositionTable rows={totals?.rows.slice(0, 3)} whole={totals?.value ?? BigInt(0)} state={positions} products={products.data} />
-      <SectionHead index="04" title={p.tools.cash} />
+      <Allocation rows={totals?.rows} baskets={basketRows} cash={cash} loading={positions.loading || wallet.loading || baskets.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} partial={incomplete} />
+      {historyShown && <History index="02" />}
+      {!productsHidden && <>
+        <SectionHead index={positionsIndex} title={p.positions} action={totals && totals.rows.length > 3 ? <button type="button" className={s.sectionMore} onClick={() => setTab('positions')}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
+        <PositionTable rows={totals?.rows.slice(0, 3)} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
+      </>}
+      {!basketsEmpty && <BasketPositions index={basketsIndex} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} limit={3} onMore={() => setTab('positions')} />}
+      <SectionHead index={toolsIndex} title={p.tools.cash} />
       <Tools />
     </div>}
     {tab === 'positions' && <div className={s.tabPanel} role="tabpanel">
-      <SectionHead index="01" title={p.positions} note={totals ? `${totals.rows.length} · ${fmtUsdt(totals.value.toString(), { locale })}` : undefined} />
-      <PositionTable rows={totals?.rows} whole={totals?.value ?? BigInt(0)} state={positions} products={products.data} />
+      {productsHidden ? <BasketPositions index="01" note={holdingsNote} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} /> : <>
+        <SectionHead index="01" title={p.positions} note={holdingsNote} />
+        <PositionTable rows={totals?.rows} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
+        {!basketsEmpty && <BasketPositions index="02" rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} />}
+      </>}
     </div>}
     {tab === 'income' && <div className={s.tabPanel} role="tabpanel"><Income products={products.data} /></div>}
     {tab === 'orders' && <div className={s.tabPanel} role="tabpanel"><OpenOrders /></div>}
   </MaisonPage>
 }
 
-function Allocation({ rows, cash, loading, error, retry, products }: { rows: PositionRow[] | undefined; cash: bigint | null; loading: boolean; error: boolean; retry: () => void; products: CatalogProduct[] | undefined }) {
+function BasketRow({ row }: { row: BasketPosition }) {
+  const { locale } = useI18n()
+  const { masked } = useAmountMask()
+  const bc = basketPositionsCopy[locale]
+  const value = basketMarketValue(row)
+  const units = formatAtomicDecimal(row.unitsAtomicAmount, row.unitsDecimals, locale)
+  const nav = formatAtomicDecimal(row.navAtomicAmount, row.navDecimals, locale, 2, 6)
+  const valued = row.valuedAt ? fmtDateTime(row.valuedAt, locale, { dateStyle: 'short', timeStyle: 'short' }) : null
+  const quality = value !== null ? null : row.valuationQuality === 'ok' ? bc.quality.unavailable : bc.quality[row.valuationQuality]
+  return <li>
+    <button type="button" className={s.row} onClick={() => openPath(`/basket/${encodeURIComponent(row.portfolioId)}`)}>
+      <Logo name={row.portfolioName} />
+      <span className={s.rowMain}>
+        <b>{row.portfolioName}</b>
+        <small className={bp.line} title={masked ? undefined : `${units} ${bc.units}`}><bdi className={s.num}>{masked ? AMOUNT_MASK : units}</bdi> {bc.units}</small>
+        <small className={bp.line}>{bc.nav} <bdi className={s.num}>{nav}</bdi>{valued && <> · <bdi>{valued}</bdi></>}</small>
+      </span>
+      <span className={`${s.rowFig} ${bp.fig}`}>
+        <b className={s.num}>{value === null ? '—' : masked ? AMOUNT_MASK : fmtUsdt(value.toString(), { locale })}</b>
+        {quality && <small className={bp.quality}>{quality}</small>}
+      </span>
+    </button>
+  </li>
+}
+
+/** Net basket holdings; every row opens its own `/basket/:portfolioId` page and nothing here touches product flows. */
+function BasketPositions({ index, rows, error, retry, limit, onMore, note }: { index: string; rows: BasketPosition[] | undefined; error: boolean; retry: () => void; limit?: number; onMore?: () => void; note?: string }) {
   const { locale } = useI18n()
   const p = portfolioCopy[locale]
+  const bc = basketPositionsCopy[locale]
+  const common = marketCopy[locale].common
+  const [list] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
+  const shown = limit ? rows?.slice(0, limit) : rows
+  const hasUnknown = Boolean(rows?.some((row) => basketMarketValue(row) === null))
+  return <>
+    <SectionHead index={index} title={bc.title} note={note ?? bc.note}
+      action={onMore && !error && rows && limit && rows.length > limit ? <button type="button" className={s.sectionMore} onClick={onMore}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
+    {error ? <StateBlock tone="error" title={bc.loadError} retry={retry} retryLabel={common.retry} />
+      : !shown ? <Skeleton rows={2} />
+      : <>
+        <ul className={`${s.list} ${s.listCard}`} ref={list}>{shown.map((row) => <BasketRow key={row.portfolioId} row={row} />)}</ul>
+        {hasUnknown && <p className={bp.hint} role="status">{bc.partial}</p>}
+      </>}
+  </>
+}
+
+function Allocation({ rows, baskets, cash, loading, error, retry, products, partial }: { rows: PositionRow[] | undefined; baskets: BasketPosition[] | undefined; cash: bigint | null; loading: boolean; error: boolean; retry: () => void; products: CatalogProduct[] | undefined; partial: boolean }) {
+  const { locale } = useI18n()
+  const p = portfolioCopy[locale]
+  const bc = basketPositionsCopy[locale]
   const common = marketCopy[locale].common
   const slices = useMemo(() => {
     const priced = (rows ?? []).filter((row) => row.value !== null && row.value > BigInt(0)).map((row) => ({ key: row.position.productId + row.position.outcomeKey, label: nameFor(products, row.position.productId, p.product), value: row.value as bigint, cash: false }))
-    const all = cash !== null && cash > BigInt(0) ? [...priced, { key: 'cash', label: p.cash, value: cash, cash: true }] : priced
+    const held = (baskets ?? []).flatMap((row) => { const value = basketMarketValue(row); return value !== null && value > BigInt(0) ? [{ key: `basket:${row.portfolioId}`, label: row.portfolioName, value, cash: false }] : [] })
+    const all = cash !== null && cash > BigInt(0) ? [...priced, ...held, { key: 'cash', label: p.cash, value: cash, cash: true }] : [...priced, ...held]
     const whole = all.reduce((sum, slice) => sum + slice.value, BigInt(0))
     return { whole, items: all.sort((a, b) => a.value === b.value ? 0 : a.value > b.value ? -1 : 1).map((slice) => ({ ...slice, ratio: share(slice.value, whole) })) }
-  }, [cash, p.cash, p.product, products, rows])
+  }, [baskets, cash, p.cash, p.product, products, rows])
+  const { masked } = useAmountMask()
   return <>
     <SectionHead index="01" title={p.allocation} note={p.allocationNote} />
     {error ? <StateBlock tone="error" title={p.loadError} retry={retry} retryLabel={common.retry} />
@@ -165,17 +261,15 @@ function Allocation({ rows, cash, loading, error, retry, products }: { rows: Pos
         <ul className={s.allocLegend}>{slices.items.map((slice) => <li key={slice.key} data-cash={slice.cash || undefined}>
           <span className={s.allocKey} aria-hidden="true" />
           <span>{slice.label}</span>
-          <small className={s.num}>{bare(slice.value)}</small>
+          <small className={s.num}>{masked ? AMOUNT_MASK : bare(slice.value)}</small>
           <b className={s.num}>{pct(slice.ratio, locale)}</b>
         </li>)}</ul>
+        {partial && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
       </>}
   </>
 }
 
-function History({ productId }: { productId?: string }) {
-  const { locale } = useI18n()
-  const p = portfolioCopy[locale]
-  const common = marketCopy[locale].common
+function useHistory(productId?: string) {
   const history = useQuery(`portfolio:history:${productId ?? 'all'}`, () => getPortfolioHistory(productId), { staleTime: 60_000 })
   const points = useMemo(() => (history.data ?? [])
     .map((point) => ({ time: Date.parse(point.capturedAt) / 1000, value: /^-?\d+$/.test(point.totalValueAtomicAmount) ? Number(fromAtomic(point.totalValueAtomicAmount, DECIMALS)) : NaN }))
@@ -183,8 +277,20 @@ function History({ productId }: { productId?: string }) {
     .sort((a, b) => a.time - b.time)
     // lightweight-charts needs strictly increasing times.
     .filter((point, index, all) => index === 0 || point.time > all[index - 1].time), [history.data])
+  return { history, points }
+}
+
+function useHistoryPoints() {
+  return useHistory().points
+}
+
+function History({ productId, index = '02' }: { productId?: string; index?: string }) {
+  const { locale } = useI18n()
+  const p = portfolioCopy[locale]
+  const common = marketCopy[locale].common
+  const { history, points } = useHistory(productId)
   return <>
-    <SectionHead index="02" title={p.history} note={p.historyNote} />
+    <SectionHead index={index} title={p.history} note={p.historyNote} />
     {history.error ? <StateBlock tone="error" title={p.loadError} body={history.error.message} retry={history.refetch} retryLabel={common.retry} />
       : !history.data ? <Skeleton rows={3} />
       : points.length < 2 ? <StateBlock title={p.historyEmpty} body={p.historyEmptyBody} />
@@ -195,8 +301,9 @@ function History({ productId }: { productId?: string }) {
   </>
 }
 
-function PositionTable({ rows, whole, state, products }: { rows: PositionRow[] | undefined; whole: bigint; state: { error?: { message: string } | null; refetch: () => void }; products: CatalogProduct[] | undefined }) {
+function PositionTable({ rows, whole, weighted, state, products }: { rows: PositionRow[] | undefined; whole: bigint; weighted: boolean; state: { error?: { message: string } | null; refetch: () => void }; products: CatalogProduct[] | undefined }) {
   const { locale } = useI18n()
+  const { masked } = useAmountMask()
   const p = portfolioCopy[locale]
   const common = marketCopy[locale].common
   const [list] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
@@ -213,12 +320,12 @@ function PositionTable({ rows, whole, state, products }: { rows: PositionRow[] |
           <Logo name={name} />
           <span className={s.rowMain}>
             <b>{name}</b>
-            <small className={s.num}>{fmtAtomic(row.position.quantityAtomicAmount, row.position.assetDecimals, '', 4).trim()} · {pct(weight, locale)}</small>
-            <span className={s.fillMeter} aria-hidden="true"><i style={{ ['--f' as string]: weight }} /></span>
+            <small className={s.num}>{masked ? AMOUNT_MASK : fmtAtomic(row.position.quantityAtomicAmount, row.position.assetDecimals, '', 4).trim()}{weighted && ` · ${pct(weight, locale)}`}</small>
+            {weighted && <span className={s.fillMeter} aria-hidden="true"><i style={{ ['--f' as string]: weight }} /></span>}
           </span>
           <span className={s.rowFig}>
-            <b className={s.num}>{row.value === null ? '—' : fmtUsdt(row.value.toString(), { locale })}</b>
-            <small className={`${s.num} ${toneOfBig(row.pnl) === 'up' ? s.up : toneOfBig(row.pnl) === 'down' ? s.down : s.muted}`}>{signed(row.pnl, locale)}</small>
+            <b className={s.num}>{row.value === null ? '—' : masked ? AMOUNT_MASK : fmtUsdt(row.value.toString(), { locale })}</b>
+            <small className={`${s.num} ${masked ? s.muted : toneOfBig(row.pnl) === 'up' ? s.up : toneOfBig(row.pnl) === 'down' ? s.down : s.muted}`}>{masked ? AMOUNT_MASK : signed(row.pnl, locale)}</small>
           </span>
         </button>
       </li>
@@ -229,12 +336,13 @@ function PositionTable({ rows, whole, state, products }: { rows: PositionRow[] |
 function Tools() {
   const { locale } = useI18n()
   const t = portfolioCopy[locale].tools
-  const items: Array<[string, string]> = [[t.cash, '/assets/cash'], [t.activity, '/assets/activity'], [t.calendar, '/assets/yield-calendar'], [t.rebalance, '/assets/rebalance'], [t.statements, '/assets/statements']]
+  const items: Array<[string, string]> = [[t.cash, '/assets/cash'], [t.activity, '/assets/activity'], [t.calendar, '/assets/yield-calendar'], [t.rebalance, '/assets/rebalance'], [t.statements, '/assets/statements'], [myPredictionsCopy[locale].entry, '/assets/predictions']]
   return <div className={s.toolGrid}>{items.map(([label, path]) => <button key={path} type="button" onClick={() => openPath(path)}><span>{label}</span><ChevronRight size={15} /></button>)}</div>
 }
 
 function Income({ products, productId }: { products: CatalogProduct[] | undefined; productId?: string }) {
   const { locale } = useI18n()
+  const { masked } = useAmountMask()
   const p = portfolioCopy[locale]
   const common = marketCopy[locale].common
   const credits = useQuery('portfolio:yield', listYield, { staleTime: 60_000, pollInterval: 60_000 })
@@ -252,7 +360,7 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
     if (newlyCredited[0]?.id === rows[0]?.id) playMoment(momentNode.current, 'credit')
   }, [credits.data, rows])
   return <>
-    <SectionHead index={productId ? '03' : '01'} title={productId ? p.detail.incomeFor : p.income} note={credits.data && rows.length ? `${rows.length} · ${signed(sum, locale)}` : p.incomeNote} />
+    <SectionHead index={productId ? '03' : '01'} title={productId ? p.detail.incomeFor : p.income} note={credits.data && rows.length ? `${rows.length} · ${masked ? AMOUNT_MASK : signed(sum, locale)}` : p.incomeNote} />
     {credits.error ? <StateBlock tone="error" title={p.loadError} body={credits.error.message} retry={credits.refetch} retryLabel={common.retry} />
       : !credits.data ? <Skeleton rows={3} />
       : !rows.length ? <StateBlock title={p.incomeEmpty} body={p.incomeEmptyBody} />
@@ -261,7 +369,7 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
         <ul className={s.list}>{rows.map((item: YieldCredit) => <li key={item.id}>
           <div ref={item.id === rows[0]?.id ? momentNode : undefined} className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto', cursor: 'default' }}>
             <span className={s.rowMain}><b>{nameFor(products, item.productId, p.product)}</b><small>{fmtDate(item.periodStart, locale)} – {fmtDate(item.periodEnd, locale)}</small></span>
-            <span className={s.rowFig}><b className={`${s.num} ${s.up}`}>{signed(/^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : null, locale)}</b><small className={s.muted}>{fmtDate(item.creditedAt, locale)}</small></span>
+            <span className={s.rowFig}><b className={`${s.num} ${masked ? '' : s.up}`}>{masked ? AMOUNT_MASK : signed(/^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : null, locale)}</b><small className={s.muted}>{fmtDate(item.creditedAt, locale)}</small></span>
           </div>
         </li>)}</ul>
       </>}
@@ -271,6 +379,7 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
 function OrderRows({ orders, empty }: { orders: Order[]; empty: ReactNode }) {
   const { locale } = useI18n()
   const st = marketCopy[locale].status
+  const { masked } = useAmountMask()
   const [list] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
   if (!orders.length) return <>{empty}</>
   return <ul className={s.list} ref={list}>{orders.map((order) => {
@@ -278,7 +387,7 @@ function OrderRows({ orders, empty }: { orders: Order[]; empty: ReactNode }) {
     return <li key={order.id}>
       <button type="button" className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }} onClick={() => openPath(open ? `/orders/status?id=${encodeURIComponent(order.id)}` : `/orders/${encodeURIComponent(order.id)}`)}>
         <span className={s.rowMain}><b>{order.productName}</b><small className={s.num}>{fmtDateTime(order.submittedAt, locale)} · {order.id.slice(0, 8)}</small></span>
-        <span className={s.rowFig}><b className={s.num}>{fmtUsdt(order.requestedAtomicAmount, { locale })}</b><small><span className={s.badge} data-tone={orderTone(order.state)}>{st.states[order.state] ?? order.state}</span></small></span>
+        <span className={s.rowFig}><b className={s.num}>{masked ? AMOUNT_MASK : fmtUsdt(order.requestedAtomicAmount, { locale })}</b><small><span className={s.badge} data-tone={orderTone(order.state)}>{st.states[order.state] ?? order.state}</span></small></span>
       </button>
     </li>
   })}</ul>

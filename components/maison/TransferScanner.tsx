@@ -1,7 +1,7 @@
 'use client'
 
 import { Dialog } from '@base-ui/react/dialog'
-import { CameraOff, Flashlight, FlashlightOff, ImagePlus, LoaderCircle, RotateCw, ScanLine, SwitchCamera, X } from 'lucide-react'
+import { CameraOff, Flashlight, FlashlightOff, ImagePlus, LoaderCircle, RotateCw, SwitchCamera, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { transferScannerCopy } from '@/lib/transfer-scanner-copy'
@@ -172,8 +172,7 @@ export function TransferScanner({ onCode, onClose }: { onCode: (text: string) =>
         <video className={css.video} ref={video} muted playsInline aria-hidden="true" />
         <div className={css.shade} aria-hidden="true" />
         <header className={css.head}>
-          <span className={css.brand} aria-hidden="true"><ScanLine size={18} strokeWidth={1.6} />RWA</span>
-          <Dialog.Close className={css.iconButton} aria-label={c.close}><X size={20} strokeWidth={1.7} aria-hidden="true" /></Dialog.Close>
+          <Dialog.Close className={css.iconButton} style={{ marginInlineStart: 'auto' }} aria-label={c.close}><X size={20} strokeWidth={1.7} aria-hidden="true" /></Dialog.Close>
         </header>
         <div className={css.viewfinder}>
           <Dialog.Title className={css.title}>{c.title}</Dialog.Title>

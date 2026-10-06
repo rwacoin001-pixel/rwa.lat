@@ -13,8 +13,8 @@ const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['n
 
 export { styles as maison }
 
-export function MaisonPage({ page, topbar, children, dock = false, cta = false }: { page: string; topbar?: ReactNode; children: ReactNode; dock?: boolean; cta?: boolean }) {
-  return <section className={`${styles.root} ${display.variable} ${GeistSans.variable} ${GeistMono.variable}`} data-maison-page={page} data-dock={dock} data-cta={cta}>
+export function MaisonPage({ page, topbar, children, dock = false, cta = false, hero = false, className }: { page: string; topbar?: ReactNode; children: ReactNode; dock?: boolean; cta?: boolean; hero?: boolean; className?: string }) {
+  return <section className={`${styles.root} ${display.variable} ${GeistSans.variable} ${GeistMono.variable}${className ? ` ${className}` : ''}`} data-maison-page={page} data-dock={dock} data-cta={cta} data-hero={hero || undefined}>
     {topbar}
     {dock && <PullToRefresh />}
     <div className={styles.grain} aria-hidden="true" />

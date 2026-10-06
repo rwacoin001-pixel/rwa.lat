@@ -194,7 +194,7 @@ function allocationPercent(position: PositionView, total: bigint | null) {
 
 export function RebalanceScreen({ go }: { go: Go }) {
   const { locale } = useI18n(); const [positions, setPositions] = useState<PositionView[]>([]); const [state, setState] = useState<'loading' | 'ready' | 'error'>('loading'); const [error, setError] = useState<string | null>(null); const [targets, setTargets] = useState<Record<string, string>>({}); const [validated, setValidated] = useState(false)
-  const load = () => { setState('loading'); getPositions().then((data) => { setPositions(data); setTargets({}); setValidated(false); setState('ready') }).catch((reason) => { setState('error'); setError(failureMessage(reason, locale)) }) }
+  const load = () => { setState('loading'); getPositions().then((data) => { setPositions(data.filter(position => position.source !== 'basket')); setTargets({}); setValidated(false); setState('ready') }).catch((reason) => { setState('error'); setError(failureMessage(reason, locale)) }) }
   useEffect(load, [locale])
   const total = positions.reduce<bigint | null>((sum, position) => {
     const atomic = position.marketValueAtomicAmount

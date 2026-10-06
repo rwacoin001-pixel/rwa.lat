@@ -120,9 +120,7 @@ export function PredictionFeed() {
     {!loadedOnce && loading ? <Skeleton rows={3} /> : null}
     {error && !visibleItems.length ? <StateBlock tone="error" title={m.loadError} retry={() => setRetry((value) => value + 1)} retryLabel={labels.retry} /> : null}
     {visibleItems.length > 0 && <div aria-live="off">{visibleItems.map((item) => {
-      const layout = item.featured
-        ? 'featured'
-        : item.outcomes.length === 2 && item.outcomes.every(o=>/^(up|down)$/i.test(o.label))
+      const layout = item.outcomes.length === 2 && item.outcomes.every(o=>/^(up|down)$/i.test(o.label))
           ? 'pulse'
         : item.category === 'sports' && item.outcomes.length === 2
           ? 'matchup'
@@ -132,12 +130,11 @@ export function PredictionFeed() {
       const shown = layout === 'multi' ? item.outcomes.slice(0, 4) : item.outcomes.slice(0, 2)
       const remaining = Math.max(0, (item.optionCount ?? item.outcomes.length) - shown.length)
       return <article key={item.id} className={s.predFeedArticle}><button type="button" data-layout={layout} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
-        {layout !== 'featured' && <span className={s.predCardHead}>
+        <span className={s.predCardHead}>
           <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
           {item.image && <img className={s.predThumb} src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
-        </span>}
+        </span>
         <b className={s.predQuestion}>{content(item.question)}</b>
-        {layout === 'featured' && item.image && <span className={s.predFeatureMedia}><img src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" /></span>}
         {layout === 'multi' && <span className={s.predOptions}>{shown.map((outcome, index) => <span key={`${index}:${outcome.label}`} className={s.predOption}>
           <i data-index={index} />
           <span>{content(outcome.label)}</span>
@@ -150,7 +147,7 @@ export function PredictionFeed() {
           <span>{content(outcome.label)}</span>
           <i><span style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></i>
         </span>)}</span>}
-        {layout !== 'featured' && <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>}
+        <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>
       </button><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={[item.question,...item.outcomes.map(o=>o.label)]}/></article>
     })}</div>}
     {loadedOnce && !loading && !error && !visibleItems.length && nextOffset === null ? <StateBlock title={copy.common.empty} /> : null}

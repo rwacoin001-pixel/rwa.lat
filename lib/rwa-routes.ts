@@ -9,7 +9,7 @@ export type RwaScreen =
   | 'trust-center' | 'access-regions' | 'product-disclosures' | 'legal-center' | 'status' | 'disclosures' | 'secondary' | 'trade'
   | 'community' | 'community-post' | 'community-profile' | 'learn' | 'learn-article'
   | 'share-landing'
-  | 'onboarding-overview' | 'valuation' | 'issuer-profile' | 'issuers' | 'search' | 'yield-calendar' | 'rebalance' | 'statements' | 'recurring'
+  | 'onboarding-overview' | 'valuation' | 'issuer-profile' | 'issuers' | 'search' | 'yield-calendar' | 'rebalance' | 'statements' | 'recurring' | 'my-predictions'
 
 const screenPaths: Record<RwaScreen, string> = {
   welcome: '/welcome',
@@ -90,6 +90,7 @@ const screenPaths: Record<RwaScreen, string> = {
   rebalance: '/portfolio/rebalance',
   statements: '/statements',
   recurring: '/assets/recurring',
+  'my-predictions': '/assets/predictions',
 }
 
 const pathScreens = new Map(Object.entries(screenPaths).map(([screen, path]) => [path, screen as RwaScreen]))

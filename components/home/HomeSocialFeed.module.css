@@ -1,6 +1,7 @@
 .root { --feed-line: color-mix(in srgb, var(--home-ink) 13%, transparent); width: 100%; min-width: 0; color: var(--home-ink); }
 .tabs { position: sticky; top: var(--feed-sticky-top, 0px); z-index: 52; display: flex; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; padding: 7px var(--home-gutter, 18px) 0; margin-inline: calc(-1 * var(--home-gutter, 18px)); background: color-mix(in srgb, var(--home-bg) 94%, transparent); -webkit-backdrop-filter: blur(26px) saturate(165%); backdrop-filter: blur(26px) saturate(165%); border-bottom: 1px solid var(--feed-line); transition: top .28s ease; }
 .tabs::-webkit-scrollbar { display: none; }
+.probe { display: block; height: 1px; margin-bottom: -1px; pointer-events: none; }
 .tabs button { position: relative; flex: 0 0 auto; scroll-snap-align: start; height: 44px; padding: 0 13px; border: 0; color: var(--home-muted); background: transparent; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
 .tabs button:active { transform: scale(.92); }
 .tabs button.active { color: var(--home-ink); }
@@ -32,8 +33,18 @@
 @keyframes feed-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .post,.spinner,.loading span { animation: none; } .post,.tabs,.tabs button { transition: none; } }
 
-.avatarLink { padding:0; border:0; border-radius:50%; background:transparent; cursor:pointer; }
-.meta,.actions { padding:0; border:0; background:transparent; text-align:start; cursor:pointer; font-family:inherit; }
-.meta { flex-wrap:wrap; }
-.post { padding-block:14px; grid-template-columns:40px minmax(0,1fr); gap:10px; cursor:default; }
-.postMain { gap:7px; }
+.avatarLink { align-self: start; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; cursor: pointer; }
+.post { padding-block: 14px; grid-template-columns: 44px minmax(0, 1fr); gap: 10px; cursor: default; }
+.postMain { gap: 7px; }
+.meta { display: grid; gap: 2px; min-width: 0; }
+.authorLink { display: flex; align-items: center; gap: 6px; min-width: 0; min-height: 44px; margin-top: -6px; padding: 0; border: 0; color: inherit; background: none; text-align: start; font: inherit; font-size: 11px; cursor: pointer; }
+.authorLink strong { max-width: 48%; color: var(--home-ink); font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.authorLink span { overflow: hidden; min-width: 0; text-overflow: ellipsis; white-space: nowrap; }
+.authorLink svg { margin-inline-start: auto; flex: none; }
+.postContext { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -4px; color: var(--home-muted); font-size: 11px; line-height: 1.4; }
+.actions { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 0; border: 0; color: var(--home-muted); background: none; text-align: start; font: inherit; font-size: 11px; cursor: pointer; }
+.avatarLink:focus-visible, .authorLink:focus-visible, .actions:focus-visible, .tabs button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 2px; border-radius: 8px; }
+:global(.rwa-mobile) .root.root .postContext, :global(.rwa-mobile) .root.root .authorLink > span { color: var(--home-muted); }
+
+.root button { min-width: 44px; min-height: 44px; touch-action: manipulation; }
+.root button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 2px; }

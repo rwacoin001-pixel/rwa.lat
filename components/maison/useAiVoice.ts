@@ -1,7 +1,12 @@
 'use client'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
-type VoiceError = 'denied' | 'empty' | 'failed' | 'unavailable' | 'network' | 'capture' | 'language'
+type VoiceError = 'denied' | 'empty' | 'failed' | 'unavailable' | 'network' | 'capture' | 'language' | 'timeout'
+export type VoicePhase = 'idle' | 'connecting' | 'listening' | 'processing'
+// The engine must report audio within this window, or the hold ends with a retryable timeout.
+const CONNECT_MS = 4500
+// Android ends a silent recognizer after a few seconds; a held button restarts it at most this often.
+const MAX_RESTARTS = 12
 type Recognition = {
   lang: string; interimResults: boolean; continuous: boolean
   onresult: ((event: { results: ArrayLike<ArrayLike<{ transcript: string }> & { isFinal?: boolean }> }) => void) | null
@@ -26,14 +31,16 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
   const active = useRef(false), recognition = useRef<Recognition | null>(null), receive = useRef(onText), timer = useRef<ReturnType<typeof setTimeout> | null>(null), run = useRef(0)
   const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null), restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const deferred = useRef(!!options.deferResult), transcript = useRef(''), completed = useRef(''), released = useRef(false), ended = useRef(false), delivered = useRef(false)
+  const connectTimer = useRef<ReturnType<typeof setTimeout> | null>(null), readyRef = useRef(false), restarts = useRef(0), permission = useRef<PermissionState | null>(null)
   receive.current = onText; deferred.current = !!options.deferResult
   const textSoFar = useCallback(() => [completed.current, transcript.current].filter(Boolean).join(' ').trim().slice(0, 4000), [])
+  const markReady = useCallback(() => {
+    readyRef.current = true; setReady(true)
+    if (connectTimer.current) { clearTimeout(connectTimer.current); connectTimer.current = null }
+  }, [])
   const settle = useCallback(() => {
-    active.current = false; recognition.current = null; setListening(false); setProcessing(false); setReady(false); setSpeaking(false)
-    if (timer.current) clearTimeout(timer.current)
-    if (releaseTimer.current) clearTimeout(releaseTimer.current)
-    if (restartTimer.current) clearTimeout(restartTimer.current)
-    timer.current = releaseTimer.current = restartTimer.current = null
+    active.current = false; recognition.current = null; readyRef.current = false; setListening(false); setProcessing(false); setReady(false); setSpeaking(false)
+    for (const ref of [timer, releaseTimer, restartTimer, connectTimer]) { if (ref.current) clearTimeout(ref.current); ref.current = null }
   }, [])
   const cancel = useCallback(() => {
     const item = recognition.current, wasActive = active.current
@@ -55,8 +62,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
   const stop = useCallback(() => {
     if (!active.current || released.current) return
     released.current = true; setListening(false); setSpeaking(false); setProcessing(deferred.current)
-    if (timer.current) clearTimeout(timer.current)
-    timer.current = null
+    for (const ref of [timer, connectTimer]) { if (ref.current) clearTimeout(ref.current); ref.current = null }
     if (ended.current) { finish(); return }
     try {
       if (recognition.current) recognition.current.stop(); else (window as VoiceWindow).RwaNativeVoice?.stop()
@@ -70,9 +76,9 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
     const native = (event: Event) => {
       if (!active.current || recognition.current || cancelActiveVoice !== cancel) return
       const detail = (event as CustomEvent<{ type: string; text?: string; error?: string; final?: boolean }>).detail
-      if (detail?.type === 'ready' || detail?.type === 'speechstart') { setReady(true); setSpeaking(detail.type === 'speechstart') }
+      if (detail?.type === 'ready' || detail?.type === 'speechstart') { markReady(); setSpeaking(detail.type === 'speechstart') }
       if (detail?.type === 'result' && detail.text) {
-        setReady(true); setSpeaking(true)
+        markReady(); setSpeaking(true)
         transcript.current = detail.text.trim().slice(0, 4000)
         if (!deferred.current && detail.final !== false) { delivered.current = true; receive.current(transcript.current) }
       }
@@ -88,18 +94,30 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
     const hide = () => { if (document.visibilityState === 'hidden') cancel() }
     if (typeof document !== 'undefined') document.addEventListener('visibilitychange', hide)
     window.addEventListener('pagehide', cancel)
-    return () => { window.removeEventListener('rwa-native-voice', native); window.removeEventListener('pagehide', cancel); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', hide); cancel() }
-  }, [cancel, finish, textSoFar])
+    // Cache the microphone permission without opening the device; a query inside start() would lose the user gesture.
+    let status: PermissionStatus | null = null
+    const sync = () => { permission.current = status?.state ?? null }
+    try {
+      void w.navigator.permissions?.query({ name: 'microphone' as PermissionName }).then(result => { status = result; sync(); result.addEventListener?.('change', sync) }).catch(() => undefined)
+    } catch { /* Older WebViews have no Permissions API; the engine reports denial instead. */ }
+    return () => { status?.removeEventListener?.('change', sync); window.removeEventListener('rwa-native-voice', native); window.removeEventListener('pagehide', cancel); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', hide); cancel() }
+  }, [cancel, finish, markReady, textSoFar])
   const start = useCallback(() => {
     if (active.current) { if (!deferred.current) stop(); return false }
     const w = window as VoiceWindow, Constructor = w.SpeechRecognition ?? w.webkitSpeechRecognition
     setAvailable(!!(w.RwaNativeVoice ?? Constructor))
     if (!w.RwaNativeVoice && !Constructor) { setError('unavailable'); return false }
+    if (permission.current === 'denied') { setError('denied'); return false }
     cancelActiveVoice?.(); cancelActiveVoice = cancel
     const runId = ++run.current, android = /Android/i.test(w.navigator?.userAgent ?? '')
     setError(null); transcript.current = completed.current = ''; released.current = ended.current = delivered.current = false
-    active.current = true; setListening(true); setProcessing(false); setReady(false); setSpeaking(false)
+    active.current = true; readyRef.current = false; restarts.current = 0; setListening(true); setProcessing(false); setReady(false); setSpeaking(false)
     timer.current = setTimeout(() => { cancel(); setError(previous => previous ?? 'failed') }, 60000)
+    // A WebView can expose the constructor yet never deliver audio; never leave the hold on "connecting".
+    connectTimer.current = setTimeout(() => {
+      connectTimer.current = null
+      if (active.current && run.current === runId && !readyRef.current && !released.current) { cancel(); setError('timeout') }
+    }, w.RwaNativeVoice ? CONNECT_MS * 2 : CONNECT_MS)
     const begin = () => {
       if (!active.current || run.current !== runId || released.current || !Constructor) return
       const item = new Constructor(); recognition.current = item; ended.current = false
@@ -108,14 +126,14 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
       // Chromium's Android recognizer does not implement continuous=true or shared audio tracks.
       item.continuous = deferred.current && !android
       const current = () => active.current && run.current === runId && recognition.current === item
-      item.onaudiostart = () => { if (current()) setReady(true) }
-      item.onspeechstart = () => { if (current()) { setReady(true); setSpeaking(true) } }
+      item.onaudiostart = () => { if (current()) markReady() }
+      item.onspeechstart = () => { if (current()) { markReady(); setSpeaking(true) } }
       item.onspeechend = () => { if (current()) setSpeaking(false) }
       item.onresult = event => {
         if (!current()) return
         // Keep the latest full hypothesis; a later final event replaces it, never duplicates it.
         const text = Array.from(event.results).map(result => result[0]?.transcript ?? '').join(' ').trim().slice(0, 4000)
-        if (text) { transcript.current = text; setReady(true); setSpeaking(true) }
+        if (text) { transcript.current = text; markReady(); setSpeaking(true) }
         if (!deferred.current) {
           const final = Array.from(event.results).filter(result => result.isFinal !== false).map(result => result[0]?.transcript ?? '').join(' ').trim()
           if (final) { delivered.current = true; receive.current(final) }
@@ -129,13 +147,17 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
       }
       item.onend = () => {
         if (!current()) return
-        ended.current = true; setReady(false); setSpeaking(false)
-        if (!deferred.current || released.current) { finish(); return }
-        // Android ends at each pause. Continue the same hold without losing previous sentences.
-        if (android && transcript.current) {
+        ended.current = true; setSpeaking(false)
+        if (!deferred.current || released.current) { setReady(false); finish(); return }
+        // Android ends at every pause, including silence before the first word. Previously an empty end left the
+        // hold with a dead recognizer and the overlay stuck on "connecting"; restart within the same hold instead.
+        if (restarts.current++ < MAX_RESTARTS) {
           completed.current = textSoFar(); transcript.current = ''; recognition.current = null; detach(item)
           restartTimer.current = setTimeout(() => { restartTimer.current = null; try { begin() } catch { cancel(); setError('failed') } }, 120)
+          return
         }
+        setReady(false)
+        if (!textSoFar()) { cancel(); setError(readyRef.current ? 'empty' : 'timeout') }
       }
       item.start()
     }
@@ -143,6 +165,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
       if (w.RwaNativeVoice) { w.RwaNativeVoice.start({ locale }); return true }
       begin(); return true
     } catch { cancel(); setError('failed'); return false }
-  }, [cancel, locale, stop, finish, textSoFar])
-  return { available, listening, processing, ready, speaking, error, start, stop, cancel }
+  }, [cancel, locale, stop, finish, markReady, textSoFar])
+  const phase: VoicePhase = processing ? 'processing' : listening ? ready ? 'listening' : 'connecting' : 'idle'
+  return { available, listening, processing, ready, speaking, error, phase, start, stop, cancel }
 }

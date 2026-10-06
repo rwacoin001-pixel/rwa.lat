@@ -364,15 +364,17 @@
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock {
   --dock-h: var(--app-dock-height);
   --dock-orb: 46px;
-  --dock-bar: linear-gradient(180deg, rgba(46, 39, 30, .94) 0%, rgba(24, 20, 15, .95) 100%);
-  --dock-bar-line: rgba(255, 238, 212, .12);
-  --dock-bar-shadow: inset 0 1px 0 rgba(255, 240, 216, .16), inset 0 -8px 16px rgba(0, 0, 0, .28), 0 18px 36px -14px rgba(40, 26, 14, .55), 0 3px 8px rgba(40, 26, 14, .14);
-  --dock-tab: rgba(244, 234, 216, .6);
-  --dock-tab-hover: rgba(250, 243, 230, .88);
-  --dock-cap: linear-gradient(180deg, #fffbf3 0%, #f3e8d4 100%);
-  --dock-cap-ink: var(--bar-ink);
-  --dock-cap-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -3px 6px rgba(138, 106, 59, .14), 0 4px 12px -4px rgba(0, 0, 0, .45);
-  --dock-plus: #f6ecd9;
+  /* --dock-a-* is only set by the white-mode scheme A scope in app/globals.css; everywhere else the fallbacks apply.
+     The dark rule below redefines all of these, so dark mode never reads --dock-a-*. */
+  --dock-bar: var(--dock-a-bg, linear-gradient(180deg, rgba(46, 39, 30, .94) 0%, rgba(24, 20, 15, .95) 100%));
+  --dock-bar-line: var(--dock-a-line, rgba(255, 238, 212, .12));
+  --dock-bar-shadow: var(--dock-a-bar-shadow, inset 0 1px 0 rgba(255, 240, 216, .16), inset 0 -8px 16px rgba(0, 0, 0, .28), 0 18px 36px -14px rgba(40, 26, 14, .55), 0 3px 8px rgba(40, 26, 14, .14));
+  --dock-tab: var(--dock-a-muted, rgba(244, 234, 216, .6));
+  --dock-tab-hover: var(--dock-a-ink, rgba(250, 243, 230, .88));
+  --dock-cap: var(--dock-a-cap, linear-gradient(180deg, #fffbf3 0%, #f3e8d4 100%));
+  --dock-cap-ink: var(--dock-a-on-ink, var(--bar-ink));
+  --dock-cap-shadow: var(--dock-a-cap-shadow, inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 -3px 6px rgba(138, 106, 59, .14), 0 4px 12px -4px rgba(0, 0, 0, .45));
+  --dock-plus: var(--dock-a-ink, #f6ecd9);
   bottom: max(var(--app-dock-air, 12px), env(safe-area-inset-bottom));
   gap: 10px;
 }
@@ -515,9 +517,9 @@
   width: var(--orb); height: var(--orb); min-width: var(--orb); min-height: var(--orb); max-width: var(--orb); max-height: var(--orb);
   flex: 0 0 var(--orb);
   overflow: hidden;
-  border: .5px solid rgba(255, 255, 255, .78);
-  background: radial-gradient(circle at 30% 18%, #fffaf2 0%, #f1dec2 13%, #c8a882 31%, #865f48 63%, #3b302b 81%, #dbba92 98%);
-  box-shadow: inset 0 2px 3px rgba(255, 255, 255, .85), inset 0 -5px 10px rgba(93, 56, 37, .42), 0 18px 38px -14px rgba(68, 46, 32, .42), 0 2px 6px rgba(68, 46, 32, .1);
+  border: .5px solid var(--dock-a-orb-line, rgba(255, 255, 255, .78));
+  background: var(--dock-a-orb-bg, radial-gradient(circle at 30% 18%, #fffaf2 0%, #f1dec2 13%, #c8a882 31%, #865f48 63%, #3b302b 81%, #dbba92 98%));
+  box-shadow: var(--dock-a-orb-shadow, inset 0 2px 3px rgba(255, 255, 255, .85), inset 0 -5px 10px rgba(93, 56, 37, .42), 0 18px 38px -14px rgba(68, 46, 32, .42), 0 2px 6px rgba(68, 46, 32, .1));
   transition: width var(--spring-dur) var(--spring), height var(--spring-dur) var(--spring), min-width var(--spring-dur) var(--spring), min-height var(--spring-dur) var(--spring), max-width var(--spring-dur) var(--spring), max-height var(--spring-dur) var(--spring), flex-basis var(--spring-dur) var(--spring);
 }
 .rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock .ai-orb {
@@ -526,10 +528,10 @@
   box-shadow: inset 0 2px 4px rgba(255, 255, 255, .67), inset 0 -6px 11px rgba(5, 19, 27, .66), 0 18px 40px -12px rgba(0, 0, 0, .66), 0 0 22px rgba(150, 196, 214, .1);
 }
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock.is-compact { --dock-orb: 42px; }
-.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb__orb { width: calc(var(--orb) - 4px); height: calc(var(--orb) - 4px); opacity: .34; mix-blend-mode: screen; filter: contrast(1.35) saturate(.72); }
+.rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb__orb { width: calc(var(--orb) - 4px); height: calc(var(--orb) - 4px); opacity: var(--dock-a-orb-core, .34); mix-blend-mode: screen; filter: contrast(1.35) saturate(.72); }
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb::before {
   z-index: 2; inset: 2px; border-radius: 50%; opacity: 1; transform: none;
-  background: radial-gradient(ellipse 48% 31% at 33% 20%, rgba(255, 255, 255, .9), transparent 82%), radial-gradient(ellipse 24% 14% at 69% 77%, rgba(255, 240, 209, .72), transparent 95%);
+  background: var(--dock-a-orb-spec, radial-gradient(ellipse 48% 31% at 33% 20%, rgba(255, 255, 255, .9), transparent 82%), radial-gradient(ellipse 24% 14% at 69% 77%, rgba(255, 240, 209, .72), transparent 95%));
 }
 .rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock .ai-orb::before { background: radial-gradient(ellipse 50% 31% at 32% 19%, rgba(248, 254, 255, .94), transparent 82%), radial-gradient(ellipse 27% 16% at 71% 78%, rgba(171, 225, 236, .67), transparent 95%); }
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb::after {

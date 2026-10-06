@@ -1,0 +1,54 @@
+/* Install guide sheet. Portaled into the Home root, so every colour comes from the
+   --home-* tokens there (light lacquer A / dark A′); no theme overrides needed here. */
+.scrim {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: rgba(12, 10, 7, .42);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+.sheet {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  max-height: 86vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px var(--home-gutter, 22px) calc(22px + env(safe-area-inset-bottom));
+  border-radius: 22px 22px 0 0;
+  color: var(--home-lacquer-ink);
+  background: var(--home-lacquer);
+  box-shadow: inset 0 .5px 0 var(--home-card-rim-glow), inset 0 0 0 .5px var(--home-lacquer-line), var(--home-shadow);
+  font-family: var(--home-sans);
+}
+.grip { display: block; width: 36px; height: 4px; margin: 0 auto 14px; border-radius: 999px; background: var(--home-lacquer-line); }
+.close { position: absolute; top: 12px; inset-inline-end: 12px; display: grid; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 999px; color: var(--home-lacquer-muted); background: var(--home-lacquer-press); cursor: pointer; }
+.close:hover { color: var(--home-lacquer-ink); }
+.title { margin: 6px 0 6px; font-family: var(--home-display); font-size: 26px; font-weight: 400; line-height: 1.15; letter-spacing: -.01em; }
+.lede { margin: 0 0 16px; color: var(--home-lacquer-muted); font-size: 13px; line-height: 1.55; }
+
+.benefits { display: grid; gap: 8px; margin: 0 0 18px; padding: 0; list-style: none; }
+.benefits li { display: flex; align-items: flex-start; gap: 9px; font-size: 13px; line-height: 1.5; }
+.benefits svg { flex: none; margin-top: 3px; color: var(--home-lacquer-accent); }
+
+.native { display: grid; justify-items: center; gap: 7px; margin: 0 0 18px; }
+.native small { color: var(--home-lacquer-muted); font-size: 11px; }
+.primary, .secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 46px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.primary { color: var(--home-cta-ink); background: var(--home-cta); box-shadow: inset 0 .5px 0 var(--home-cta-rim); }
+.secondary { margin-top: 14px; color: var(--home-lacquer-accent); background: none; box-shadow: inset 0 0 0 .5px var(--home-lacquer-line); }
+.primary:focus-visible, .secondary:focus-visible, .close:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 2px; }
+
+.stepsLabel { margin: 0 0 8px; color: var(--home-lacquer-muted); font-size: 11px; letter-spacing: .06em; }
+.steps { display: grid; margin: 0; padding: 0; list-style: none; }
+.steps li { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-top: .5px solid var(--home-lacquer-line); }
+.steps li:first-child { border-top: 0; }
+.stepNo { display: grid; flex: none; place-items: center; width: 22px; height: 22px; border-radius: 999px; color: var(--home-lacquer-accent); box-shadow: inset 0 0 0 .5px var(--home-lacquer-line); font-size: 11px; font-variant-numeric: tabular-nums; }
+.stepText { flex: 1 1 auto; min-width: 0; font-size: 13px; line-height: 1.55; }
+.stepText b { font-weight: 600; }
+.stepIcon { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--home-lacquer-accent); background: var(--home-lacquer-press); }
+
+.note { margin: 14px 0 0; color: var(--home-lacquer-muted); font-size: 11px; line-height: 1.55; }

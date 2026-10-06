@@ -10,7 +10,7 @@ export type FundsCopy = {
   errors: Record<string, string>
   common: {
     available: string; amount: string; max: string; min: string; network: string; confirm: string; submitting: string; reference: string; state: string
-    replay: string; activity: string; cash: string; again: string; stubNote: string; after: string; fee: string; cancelled: string
+    replay: string; activity: string; cash: string; again: string; stubNote: string; after: string; fee: string; cancelled: string; done: string; more: string
   }
   withdraw: {
     kicker: string; title: string; destination: string; saved: string; manual: string; bookEmpty: string; manageBook: string; address: string; addressInvalid: string
@@ -20,10 +20,12 @@ export type FundsCopy = {
   transfer: {
     kicker: string; title: string; recipient: string; recipientHint: string; recipientInvalid: string; self: string; feeValue: string
     consent: string; submit: string; done: string; to: string; myCode: string; paste: string; pasteFailed: string
+    /** `idTail` takes `{d}` = the recipient id's last 4 characters, appended to the consent line. */
+    scan: string; idTail: string
   }
   receive: {
     kicker: string; title: string; lede: string; qr: string; idLabel: string; copy: string; copied: string; share: string; shareText: string
-    note: string; safety: string; unavailable: string; signIn: string; transfer: string
+    note: string; safety: string; unavailable: string; signIn: string; transfer: string; action: string; scope: string
   }
   book: {
     kicker: string; title: string; note: string; add: string; label: string; labelHint: string; address: string; save: string; saving: string
@@ -50,7 +52,7 @@ const en: FundsCopy = {
   },
   common: {
     available: 'Available {v}', amount: 'Amount', max: 'MAX', min: 'Min {v}', network: 'Network', confirm: 'Confirm', submitting: 'Submitting…', reference: 'Reference', state: 'State',
-    replay: 'Already submitted — showing the original request.', activity: 'View activity', cash: 'Back to cash', again: 'New request', stubNote: 'Stub custodian: nothing is broadcast on-chain.', after: 'Available after', fee: 'Fee', cancelled: 'Security check cancelled — nothing was sent.',
+    replay: 'Already submitted — showing the original request.', activity: 'View activity', cash: 'Back to cash', again: 'New request', stubNote: 'Stub custodian: nothing is broadcast on-chain.', after: 'Available after', fee: 'Fee', cancelled: 'Security check cancelled — nothing was sent.', done: 'Done', more: 'More info',
   },
   withdraw: {
     kicker: 'Withdraw', title: 'Withdraw USDT', destination: 'Destination', saved: 'Saved', manual: 'New address', bookEmpty: 'No saved address on {n}.', manageBook: 'Manage address book', address: 'Address on {n}', addressInvalid: 'Not a valid {n} address.',
@@ -60,10 +62,10 @@ const en: FundsCopy = {
   transfer: {
     kicker: 'Internal transfer', title: 'Transfer USDT', recipient: 'Recipient user ID', recipientHint: 'The recipient’s account ID (UUID). Internal transfers post instantly.', recipientInvalid: 'Enter a valid user ID (UUID).', self: 'You cannot transfer to yourself.', feeValue: 'None',
     consent: 'I confirmed the recipient ID. Posted transfers cannot be undone by me.', submit: 'Send transfer', done: 'Transfer posted', to: 'Recipient',
-    myCode: 'My receive code', paste: 'Paste', pasteFailed: 'Clipboard unavailable — paste into the field.',
+    myCode: 'My receive code', paste: 'Paste', pasteFailed: 'Clipboard unavailable — paste into the field.', scan: 'Scan receive code', idTail: 'The recipient ID ends in {d}.',
   },
   receive: {
-    kicker: 'Receive', title: 'Receive USDT', lede: 'Internal transfers between accounts post instantly and carry no fee.', qr: 'Scan to transfer to this account', idLabel: 'Your user ID', copy: 'Copy ID', copied: 'Copied', share: 'Share', shareText: 'Send me USDT on RWA.LAT', note: 'Others scan this code, or paste your user ID on their transfer screen, to send you USDT.', safety: 'Share only your user ID. We never ask for passwords, codes or keys.', unavailable: 'Sign in to see your receive code.', signIn: 'Sign in', transfer: 'Send a transfer',
+    kicker: 'Receive', title: 'Internal receive', lede: 'Internal transfers between accounts post instantly and carry no fee.', qr: 'Scan to transfer to this account', idLabel: 'Your user ID', copy: 'Copy ID', copied: 'Copied', share: 'Share', shareText: 'Send me USDT on RWA.LAT', note: 'Others scan this code, or paste your user ID on their transfer screen, to send you USDT.', safety: 'Share only your user ID. We never ask for passwords, codes or keys.', unavailable: 'Sign in to see your receive code.', signIn: 'Sign in', transfer: 'Send a transfer', action: 'Receive', scope: 'Internal accounts only. Not an on-chain deposit address.',
   },
   book: {
     kicker: 'Security', title: 'Address book', note: 'New addresses are screened and become usable after a {h}-hour cooldown.', add: 'Add address', label: 'Label', labelHint: 'e.g. Cold wallet', address: 'Address', save: 'Save address', saving: 'Saving…',
@@ -90,7 +92,7 @@ const zh: FundsCopy = {
   },
   common: {
     available: '可用 {v}', amount: '金额', max: '最大', min: '最低 {v}', network: '网络', confirm: '确认', submitting: '提交中…', reference: '编号', state: '状态',
-    replay: '此前已提交，显示的是原始请求。', activity: '查看流水', cash: '返回现金', again: '再发起一笔', stubNote: '模拟托管：不会在链上广播。', after: '操作后可用', fee: '手续费', cancelled: '已取消安全验证，未发送任何请求。',
+    replay: '此前已提交，显示的是原始请求。', activity: '查看流水', cash: '返回现金', again: '再发起一笔', stubNote: '模拟托管：不会在链上广播。', after: '操作后可用', fee: '手续费', cancelled: '已取消安全验证，未发送任何请求。', done: '完成', more: '更多信息',
   },
   withdraw: {
     kicker: '提现', title: '提现 USDT', destination: '收款地址', saved: '已保存', manual: '新地址', bookEmpty: '{n} 上没有已保存的地址。', manageBook: '管理地址簿', address: '{n} 地址', addressInvalid: '不是有效的 {n} 地址。',
@@ -100,10 +102,10 @@ const zh: FundsCopy = {
   transfer: {
     kicker: '内部转账', title: '转账 USDT', recipient: '收款人用户 ID', recipientHint: '收款人的账户 ID（UUID）。内部转账即时入账。', recipientInvalid: '请输入有效的用户 ID（UUID）。', self: '不能转账给自己。', feeValue: '无',
     consent: '我已核对收款人 ID。已入账的转账无法由我撤回。', submit: '发送转账', done: '转账已入账', to: '收款人',
-    myCode: '我的收款码', paste: '粘贴', pasteFailed: '无法读取剪贴板，请长按输入框粘贴。',
+    myCode: '我的收款码', paste: '粘贴', pasteFailed: '无法读取剪贴板，请长按输入框粘贴。', scan: '扫描收款码', idTail: '收款 ID 末 4 位是 {d}。',
   },
   receive: {
-    kicker: '收款', title: '收款 USDT', lede: '账户间内部转账即时入账，不收手续费。', qr: '扫码向此账户转账', idLabel: '你的用户 ID', copy: '复制 ID', copied: '已复制', share: '分享', shareText: '在 RWA.LAT 向我转账 USDT', note: '对方扫描此码，或在转账页粘贴你的用户 ID，即可向你转账。', safety: '只需分享用户 ID。我们不会索要密码、验证码或私钥。', unavailable: '登录后查看你的收款码。', signIn: '登录', transfer: '去转账',
+    kicker: '收款', title: '站内收款', lede: '账户间内部转账即时入账，不收手续费。', qr: '扫码向此账户转账', idLabel: '你的用户 ID', copy: '复制 ID', copied: '已复制', share: '分享', shareText: '在 RWA.LAT 向我转账 USDT', note: '对方扫描此码，或在转账页粘贴你的用户 ID，即可向你转账。', safety: '只需分享用户 ID。我们不会索要密码、验证码或私钥。', unavailable: '登录后查看你的收款码。', signIn: '登录', transfer: '去转账', action: '收款', scope: '仅限站内账户，不是链上充值地址。',
   },
   book: {
     kicker: '安全', title: '地址簿', note: '新地址需经过筛查，并在 {h} 小时冷却期后才能使用。', add: '添加地址', label: '备注名', labelHint: '例如：冷钱包', address: '地址', save: '保存地址', saving: '保存中…',
@@ -130,7 +132,7 @@ const hi: FundsCopy = {
   },
   common: {
     available: 'उपलब्ध {v}', amount: 'राशि', max: 'MAX', min: 'न्यूनतम {v}', network: 'नेटवर्क', confirm: 'पुष्टि करें', submitting: 'सबमिट हो रहा है…', reference: 'संदर्भ', state: 'स्थिति',
-    replay: 'पहले ही सबमिट किया गया — मूल अनुरोध दिखाया जा रहा है।', activity: 'गतिविधि देखें', cash: 'कैश पर वापस', again: 'नया अनुरोध', stubNote: 'स्टब कस्टोडियन: ऑन-चेन कुछ भी प्रसारित नहीं होता।', after: 'बाद में उपलब्ध', fee: 'शुल्क', cancelled: 'सुरक्षा जाँच रद्द — कुछ नहीं भेजा गया।',
+    replay: 'पहले ही सबमिट किया गया — मूल अनुरोध दिखाया जा रहा है।', activity: 'गतिविधि देखें', cash: 'कैश पर वापस', again: 'नया अनुरोध', stubNote: 'स्टब कस्टोडियन: ऑन-चेन कुछ भी प्रसारित नहीं होता।', after: 'बाद में उपलब्ध', fee: 'शुल्क', cancelled: 'सुरक्षा जाँच रद्द — कुछ नहीं भेजा गया।', done: 'हो गया', more: 'अधिक जानकारी',
   },
   withdraw: {
     kicker: 'निकासी', title: 'USDT निकालें', destination: 'गंतव्य', saved: 'सहेजे गए', manual: 'नया पता', bookEmpty: '{n} पर कोई सहेजा गया पता नहीं।', manageBook: 'पता पुस्तिका प्रबंधित करें', address: '{n} पर पता', addressInvalid: 'मान्य {n} पता नहीं।',
@@ -140,10 +142,10 @@ const hi: FundsCopy = {
   transfer: {
     kicker: 'आंतरिक ट्रांसफ़र', title: 'USDT ट्रांसफ़र करें', recipient: 'प्राप्तकर्ता यूज़र ID', recipientHint: 'प्राप्तकर्ता की खाता ID (UUID)। आंतरिक ट्रांसफ़र तुरंत पोस्ट होते हैं।', recipientInvalid: 'मान्य यूज़र ID (UUID) दर्ज करें।', self: 'आप स्वयं को ट्रांसफ़र नहीं कर सकते।', feeValue: 'कोई नहीं',
     consent: 'मैंने प्राप्तकर्ता ID की पुष्टि कर ली है। पोस्ट हुए ट्रांसफ़र मैं वापस नहीं ले सकता।', submit: 'ट्रांसफ़र भेजें', done: 'ट्रांसफ़र पोस्ट हुआ', to: 'प्राप्तकर्ता',
-    myCode: 'मेरा रिसीव कोड', paste: 'पेस्ट', pasteFailed: 'क्लिपबोर्ड उपलब्ध नहीं — फ़ील्ड में पेस्ट करें।',
+    myCode: 'मेरा रिसीव कोड', paste: 'पेस्ट', pasteFailed: 'क्लिपबोर्ड उपलब्ध नहीं — फ़ील्ड में पेस्ट करें।', scan: 'रिसीव कोड स्कैन करें', idTail: 'प्राप्तकर्ता ID के अंतिम 4 अक्षर {d} हैं।',
   },
   receive: {
-    kicker: 'प्राप्त करें', title: 'USDT प्राप्त करें', lede: 'खातों के बीच आंतरिक ट्रांसफ़र तुरंत पोस्ट होते हैं, कोई शुल्क नहीं।', qr: 'इस खाते में ट्रांसफ़र के लिए स्कैन करें', idLabel: 'आपकी यूज़र ID', copy: 'ID कॉपी करें', copied: 'कॉपी हुआ', share: 'शेयर करें', shareText: 'RWA.LAT पर मुझे USDT भेजें', note: 'दूसरे यह कोड स्कैन करें, या अपनी ट्रांसफ़र स्क्रीन पर आपकी यूज़र ID पेस्ट करें।', safety: 'केवल यूज़र ID साझा करें। हम कभी पासवर्ड, कोड या कुंजी नहीं माँगते।', unavailable: 'अपना रिसीव कोड देखने के लिए साइन इन करें।', signIn: 'साइन इन', transfer: 'ट्रांसफ़र भेजें',
+    kicker: 'प्राप्त करें', title: 'आंतरिक प्राप्ति', lede: 'खातों के बीच आंतरिक ट्रांसफ़र तुरंत पोस्ट होते हैं, कोई शुल्क नहीं।', qr: 'इस खाते में ट्रांसफ़र के लिए स्कैन करें', idLabel: 'आपकी यूज़र ID', copy: 'ID कॉपी करें', copied: 'कॉपी हुआ', share: 'शेयर करें', shareText: 'RWA.LAT पर मुझे USDT भेजें', note: 'दूसरे यह कोड स्कैन करें, या अपनी ट्रांसफ़र स्क्रीन पर आपकी यूज़र ID पेस्ट करें।', safety: 'केवल यूज़र ID साझा करें। हम कभी पासवर्ड, कोड या कुंजी नहीं माँगते।', unavailable: 'अपना रिसीव कोड देखने के लिए साइन इन करें।', signIn: 'साइन इन', transfer: 'ट्रांसफ़र भेजें', action: 'प्राप्त करें', scope: 'केवल ऐप के भीतर के खाते। यह ऑन-चेन जमा पता नहीं है।',
   },
   book: {
     kicker: 'सुरक्षा', title: 'पता पुस्तिका', note: 'नए पते जाँचे जाते हैं और {h} घंटे के कूलडाउन के बाद उपयोग योग्य होते हैं।', add: 'पता जोड़ें', label: 'लेबल', labelHint: 'जैसे कोल्ड वॉलेट', address: 'पता', save: 'पता सहेजें', saving: 'सहेजा जा रहा है…',
@@ -170,7 +172,7 @@ const es: FundsCopy = {
   },
   common: {
     available: 'Disponible {v}', amount: 'Importe', max: 'MÁX', min: 'Mín. {v}', network: 'Red', confirm: 'Confirmar', submitting: 'Enviando…', reference: 'Referencia', state: 'Estado',
-    replay: 'Ya se envió: se muestra la solicitud original.', activity: 'Ver actividad', cash: 'Volver a efectivo', again: 'Nueva solicitud', stubNote: 'Custodio simulado: no se emite nada en cadena.', after: 'Disponible después', fee: 'Comisión', cancelled: 'Verificación cancelada: no se envió nada.',
+    replay: 'Ya se envió: se muestra la solicitud original.', activity: 'Ver actividad', cash: 'Volver a efectivo', again: 'Nueva solicitud', stubNote: 'Custodio simulado: no se emite nada en cadena.', after: 'Disponible después', fee: 'Comisión', cancelled: 'Verificación cancelada: no se envió nada.', done: 'Listo', more: 'Más información',
   },
   withdraw: {
     kicker: 'Retirar', title: 'Retirar USDT', destination: 'Destino', saved: 'Guardadas', manual: 'Nueva dirección', bookEmpty: 'No hay direcciones guardadas en {n}.', manageBook: 'Gestionar libreta', address: 'Dirección en {n}', addressInvalid: 'No es una dirección {n} válida.',
@@ -180,10 +182,10 @@ const es: FundsCopy = {
   transfer: {
     kicker: 'Transferencia interna', title: 'Transferir USDT', recipient: 'ID de usuario destinatario', recipientHint: 'El ID de cuenta del destinatario (UUID). Las transferencias internas se registran al instante.', recipientInvalid: 'Introduce un ID de usuario válido (UUID).', self: 'No puedes transferirte a ti mismo.', feeValue: 'Ninguna',
     consent: 'He confirmado el ID del destinatario. No puedo deshacer una transferencia registrada.', submit: 'Enviar transferencia', done: 'Transferencia registrada', to: 'Destinatario',
-    myCode: 'Mi código de cobro', paste: 'Pegar', pasteFailed: 'Portapapeles no disponible: pega en el campo.',
+    myCode: 'Mi código de cobro', paste: 'Pegar', pasteFailed: 'Portapapeles no disponible: pega en el campo.', scan: 'Escanear código de cobro', idTail: 'El ID del destinatario termina en {d}.',
   },
   receive: {
-    kicker: 'Recibir', title: 'Recibir USDT', lede: 'Las transferencias internas entre cuentas se registran al instante y sin comisión.', qr: 'Escanea para transferir a esta cuenta', idLabel: 'Tu ID de usuario', copy: 'Copiar ID', copied: 'Copiado', share: 'Compartir', shareText: 'Envíame USDT en RWA.LAT', note: 'Otros escanean este código o pegan tu ID de usuario en su pantalla de transferencia para enviarte USDT.', safety: 'Comparte solo tu ID de usuario. Nunca pedimos contraseñas, códigos ni claves.', unavailable: 'Inicia sesión para ver tu código de cobro.', signIn: 'Iniciar sesión', transfer: 'Enviar transferencia',
+    kicker: 'Recibir', title: 'Cobro interno', lede: 'Las transferencias internas entre cuentas se registran al instante y sin comisión.', qr: 'Escanea para transferir a esta cuenta', idLabel: 'Tu ID de usuario', copy: 'Copiar ID', copied: 'Copiado', share: 'Compartir', shareText: 'Envíame USDT en RWA.LAT', note: 'Otros escanean este código o pegan tu ID de usuario en su pantalla de transferencia para enviarte USDT.', safety: 'Comparte solo tu ID de usuario. Nunca pedimos contraseñas, códigos ni claves.', unavailable: 'Inicia sesión para ver tu código de cobro.', signIn: 'Iniciar sesión', transfer: 'Enviar transferencia', action: 'Recibir', scope: 'Solo cuentas internas. No es una dirección de depósito en cadena.',
   },
   book: {
     kicker: 'Seguridad', title: 'Libreta de direcciones', note: 'Las nuevas direcciones se verifican y se pueden usar tras {h} horas de espera.', add: 'Añadir dirección', label: 'Etiqueta', labelHint: 'p. ej. Billetera fría', address: 'Dirección', save: 'Guardar dirección', saving: 'Guardando…',
@@ -210,7 +212,7 @@ const ar: FundsCopy = {
   },
   common: {
     available: 'المتاح {v}', amount: 'المبلغ', max: 'الحد الأقصى', min: 'الحد الأدنى {v}', network: 'الشبكة', confirm: 'تأكيد', submitting: 'جارٍ الإرسال…', reference: 'المرجع', state: 'الحالة',
-    replay: 'أُرسل مسبقًا — يُعرض الطلب الأصلي.', activity: 'عرض النشاط', cash: 'العودة إلى النقد', again: 'طلب جديد', stubNote: 'أمين حفظ تجريبي: لا يُبث أي شيء على السلسلة.', after: 'المتاح بعد العملية', fee: 'الرسوم', cancelled: 'أُلغي التحقق الأمني — لم يُرسل شيء.',
+    replay: 'أُرسل مسبقًا — يُعرض الطلب الأصلي.', activity: 'عرض النشاط', cash: 'العودة إلى النقد', again: 'طلب جديد', stubNote: 'أمين حفظ تجريبي: لا يُبث أي شيء على السلسلة.', after: 'المتاح بعد العملية', fee: 'الرسوم', cancelled: 'أُلغي التحقق الأمني — لم يُرسل شيء.', done: 'تم', more: 'مزيد من المعلومات',
   },
   withdraw: {
     kicker: 'سحب', title: 'سحب USDT', destination: 'الوجهة', saved: 'محفوظة', manual: 'عنوان جديد', bookEmpty: 'لا يوجد عنوان محفوظ على {n}.', manageBook: 'إدارة دفتر العناوين', address: 'العنوان على {n}', addressInvalid: 'ليس عنوان {n} صالحًا.',
@@ -220,10 +222,10 @@ const ar: FundsCopy = {
   transfer: {
     kicker: 'تحويل داخلي', title: 'تحويل USDT', recipient: 'معرّف المستخدم المستلم', recipientHint: 'معرّف حساب المستلم (UUID). تُقيَّد التحويلات الداخلية فورًا.', recipientInvalid: 'أدخل معرّف مستخدم صالحًا (UUID).', self: 'لا يمكنك التحويل إلى نفسك.', feeValue: 'لا شيء',
     consent: 'تأكدت من معرّف المستلم. لا يمكنني التراجع عن تحويل مقيَّد.', submit: 'إرسال التحويل', done: 'تم قيد التحويل', to: 'المستلم',
-    myCode: 'رمز الاستلام الخاص بي', paste: 'لصق', pasteFailed: 'الحافظة غير متاحة — الصق في الحقل.',
+    myCode: 'رمز الاستلام الخاص بي', paste: 'لصق', pasteFailed: 'الحافظة غير متاحة — الصق في الحقل.', scan: 'مسح رمز الاستلام', idTail: 'ينتهي معرّف المستلم بـ {d}.',
   },
   receive: {
-    kicker: 'استلام', title: 'استلام USDT', lede: 'تُقيَّد التحويلات الداخلية بين الحسابات فورًا وبلا رسوم.', qr: 'امسح للتحويل إلى هذا الحساب', idLabel: 'معرّف المستخدم الخاص بك', copy: 'نسخ المعرّف', copied: 'تم النسخ', share: 'مشاركة', shareText: 'أرسل لي USDT على RWA.LAT', note: 'يمسح الآخرون هذا الرمز أو يلصقون معرّفك في شاشة التحويل لإرسال USDT إليك.', safety: 'شارك معرّف المستخدم فقط. لا نطلب كلمات المرور أو الرموز أو المفاتيح أبدًا.', unavailable: 'سجّل الدخول لعرض رمز الاستلام.', signIn: 'تسجيل الدخول', transfer: 'إرسال تحويل',
+    kicker: 'استلام', title: 'استلام داخلي', lede: 'تُقيَّد التحويلات الداخلية بين الحسابات فورًا وبلا رسوم.', qr: 'امسح للتحويل إلى هذا الحساب', idLabel: 'معرّف المستخدم الخاص بك', copy: 'نسخ المعرّف', copied: 'تم النسخ', share: 'مشاركة', shareText: 'أرسل لي USDT على RWA.LAT', note: 'يمسح الآخرون هذا الرمز أو يلصقون معرّفك في شاشة التحويل لإرسال USDT إليك.', safety: 'شارك معرّف المستخدم فقط. لا نطلب كلمات المرور أو الرموز أو المفاتيح أبدًا.', unavailable: 'سجّل الدخول لعرض رمز الاستلام.', signIn: 'تسجيل الدخول', transfer: 'إرسال تحويل', action: 'استلام', scope: 'للحسابات الداخلية فقط. ليس عنوان إيداع على السلسلة.',
   },
   book: {
     kicker: 'الأمان', title: 'دفتر العناوين', note: 'تُفحص العناوين الجديدة وتصبح قابلة للاستخدام بعد انتظار {h} ساعة.', add: 'إضافة عنوان', label: 'التسمية', labelHint: 'مثل: محفظة باردة', address: 'العنوان', save: 'حفظ العنوان', saving: 'جارٍ الحفظ…',
@@ -250,7 +252,7 @@ const fr: FundsCopy = {
   },
   common: {
     available: 'Disponible {v}', amount: 'Montant', max: 'MAX', min: 'Min. {v}', network: 'Réseau', confirm: 'Confirmer', submitting: 'Envoi…', reference: 'Référence', state: 'État',
-    replay: 'Déjà envoyé — affichage de la demande d’origine.', activity: 'Voir l’activité', cash: 'Retour aux liquidités', again: 'Nouvelle demande', stubNote: 'Dépositaire simulé : rien n’est diffusé on-chain.', after: 'Disponible après', fee: 'Frais', cancelled: 'Vérification annulée — rien n’a été envoyé.',
+    replay: 'Déjà envoyé — affichage de la demande d’origine.', activity: 'Voir l’activité', cash: 'Retour aux liquidités', again: 'Nouvelle demande', stubNote: 'Dépositaire simulé : rien n’est diffusé on-chain.', after: 'Disponible après', fee: 'Frais', cancelled: 'Vérification annulée — rien n’a été envoyé.', done: 'Terminé', more: 'Plus d’infos',
   },
   withdraw: {
     kicker: 'Retrait', title: 'Retirer des USDT', destination: 'Destination', saved: 'Enregistrées', manual: 'Nouvelle adresse', bookEmpty: 'Aucune adresse enregistrée sur {n}.', manageBook: 'Gérer le carnet', address: 'Adresse sur {n}', addressInvalid: 'Adresse {n} non valide.',
@@ -260,10 +262,10 @@ const fr: FundsCopy = {
   transfer: {
     kicker: 'Virement interne', title: 'Transférer des USDT', recipient: 'ID utilisateur du destinataire', recipientHint: 'L’ID de compte du destinataire (UUID). Les virements internes sont comptabilisés immédiatement.', recipientInvalid: 'Saisissez un ID utilisateur valide (UUID).', self: 'Vous ne pouvez pas vous virer des fonds.', feeValue: 'Aucun',
     consent: 'J’ai vérifié l’ID du destinataire. Je ne peux pas annuler un virement comptabilisé.', submit: 'Envoyer le virement', done: 'Virement comptabilisé', to: 'Destinataire',
-    myCode: 'Mon code de réception', paste: 'Coller', pasteFailed: 'Presse-papiers indisponible — collez dans le champ.',
+    myCode: 'Mon code de réception', paste: 'Coller', pasteFailed: 'Presse-papiers indisponible — collez dans le champ.', scan: 'Scanner un code de réception', idTail: 'L’ID du destinataire se termine par {d}.',
   },
   receive: {
-    kicker: 'Recevoir', title: 'Recevoir des USDT', lede: 'Les virements internes entre comptes sont comptabilisés immédiatement, sans frais.', qr: 'Scannez pour virer vers ce compte', idLabel: 'Votre ID utilisateur', copy: 'Copier l’ID', copied: 'Copié', share: 'Partager', shareText: 'Envoyez-moi des USDT sur RWA.LAT', note: 'Les autres scannent ce code ou collent votre ID utilisateur dans leur écran de virement pour vous envoyer des USDT.', safety: 'Partagez uniquement votre ID utilisateur. Nous ne demandons jamais de mot de passe, code ou clé.', unavailable: 'Connectez-vous pour voir votre code de réception.', signIn: 'Connexion', transfer: 'Faire un virement',
+    kicker: 'Recevoir', title: 'Réception interne', lede: 'Les virements internes entre comptes sont comptabilisés immédiatement, sans frais.', qr: 'Scannez pour virer vers ce compte', idLabel: 'Votre ID utilisateur', copy: 'Copier l’ID', copied: 'Copié', share: 'Partager', shareText: 'Envoyez-moi des USDT sur RWA.LAT', note: 'Les autres scannent ce code ou collent votre ID utilisateur dans leur écran de virement pour vous envoyer des USDT.', safety: 'Partagez uniquement votre ID utilisateur. Nous ne demandons jamais de mot de passe, code ou clé.', unavailable: 'Connectez-vous pour voir votre code de réception.', signIn: 'Connexion', transfer: 'Faire un virement', action: 'Recevoir', scope: 'Comptes internes uniquement. Pas une adresse de dépôt on-chain.',
   },
   book: {
     kicker: 'Sécurité', title: 'Carnet d’adresses', note: 'Les nouvelles adresses sont contrôlées et utilisables après un délai de {h} heures.', add: 'Ajouter une adresse', label: 'Libellé', labelHint: 'ex. Portefeuille froid', address: 'Adresse', save: 'Enregistrer', saving: 'Enregistrement…',
@@ -290,7 +292,7 @@ const pt: FundsCopy = {
   },
   common: {
     available: 'Disponível {v}', amount: 'Valor', max: 'MÁX', min: 'Mín. {v}', network: 'Rede', confirm: 'Confirmar', submitting: 'Enviando…', reference: 'Referência', state: 'Estado',
-    replay: 'Já enviado — exibindo a solicitação original.', activity: 'Ver atividade', cash: 'Voltar ao caixa', again: 'Nova solicitação', stubNote: 'Custodiante simulado: nada é transmitido on-chain.', after: 'Disponível depois', fee: 'Taxa', cancelled: 'Verificação cancelada — nada foi enviado.',
+    replay: 'Já enviado — exibindo a solicitação original.', activity: 'Ver atividade', cash: 'Voltar ao caixa', again: 'Nova solicitação', stubNote: 'Custodiante simulado: nada é transmitido on-chain.', after: 'Disponível depois', fee: 'Taxa', cancelled: 'Verificação cancelada — nada foi enviado.', done: 'Concluir', more: 'Mais informações',
   },
   withdraw: {
     kicker: 'Saque', title: 'Sacar USDT', destination: 'Destino', saved: 'Salvos', manual: 'Novo endereço', bookEmpty: 'Nenhum endereço salvo em {n}.', manageBook: 'Gerenciar agenda', address: 'Endereço em {n}', addressInvalid: 'Endereço {n} inválido.',
@@ -300,10 +302,10 @@ const pt: FundsCopy = {
   transfer: {
     kicker: 'Transferência interna', title: 'Transferir USDT', recipient: 'ID de usuário do destinatário', recipientHint: 'O ID da conta do destinatário (UUID). Transferências internas são lançadas na hora.', recipientInvalid: 'Digite um ID de usuário válido (UUID).', self: 'Você não pode transferir para si mesmo.', feeValue: 'Nenhuma',
     consent: 'Conferi o ID do destinatário. Não posso desfazer uma transferência lançada.', submit: 'Enviar transferência', done: 'Transferência lançada', to: 'Destinatário',
-    myCode: 'Meu código de recebimento', paste: 'Colar', pasteFailed: 'Área de transferência indisponível — cole no campo.',
+    myCode: 'Meu código de recebimento', paste: 'Colar', pasteFailed: 'Área de transferência indisponível — cole no campo.', scan: 'Escanear código de recebimento', idTail: 'O ID do destinatário termina em {d}.',
   },
   receive: {
-    kicker: 'Receber', title: 'Receber USDT', lede: 'Transferências internas entre contas são lançadas na hora e sem taxa.', qr: 'Escaneie para transferir a esta conta', idLabel: 'Seu ID de usuário', copy: 'Copiar ID', copied: 'Copiado', share: 'Compartilhar', shareText: 'Envie-me USDT na RWA.LAT', note: 'Outras pessoas escaneiam este código ou colam seu ID de usuário na tela de transferência para enviar USDT a você.', safety: 'Compartilhe só seu ID de usuário. Nunca pedimos senhas, códigos ou chaves.', unavailable: 'Entre para ver seu código de recebimento.', signIn: 'Entrar', transfer: 'Enviar transferência',
+    kicker: 'Receber', title: 'Recebimento interno', lede: 'Transferências internas entre contas são lançadas na hora e sem taxa.', qr: 'Escaneie para transferir a esta conta', idLabel: 'Seu ID de usuário', copy: 'Copiar ID', copied: 'Copiado', share: 'Compartilhar', shareText: 'Envie-me USDT na RWA.LAT', note: 'Outras pessoas escaneiam este código ou colam seu ID de usuário na tela de transferência para enviar USDT a você.', safety: 'Compartilhe só seu ID de usuário. Nunca pedimos senhas, códigos ou chaves.', unavailable: 'Entre para ver seu código de recebimento.', signIn: 'Entrar', transfer: 'Enviar transferência', action: 'Receber', scope: 'Somente contas internas. Não é um endereço de depósito on-chain.',
   },
   book: {
     kicker: 'Segurança', title: 'Agenda de endereços', note: 'Novos endereços são verificados e ficam utilizáveis após {h} horas de carência.', add: 'Adicionar endereço', label: 'Rótulo', labelHint: 'ex.: Carteira fria', address: 'Endereço', save: 'Salvar endereço', saving: 'Salvando…',

@@ -1,0 +1,53 @@
+/* Funds pages only (deposit / withdraw / transfer / receive / cash entry). Scoped by CSS modules; inherits the Maison tokens from the page root. */
+
+.srTitle { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+.balance { display: flex; align-items: baseline; justify-content: space-between; flex-wrap: wrap; gap: 4px 12px; margin: 2px 0 12px; padding: 0 2px; color: var(--m-muted); font-size: 12px; }
+.balance b { color: var(--m-ink); font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.touchSeg { margin-top: 6px; }
+.touchSeg > div button { min-height: 44px; }
+.touchSeg + .touchSeg { margin-top: 12px; }
+
+.warn { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 44px; margin-top: 12px; padding: 10px 13px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-glass-deep); color: var(--m-muted); font: inherit; font-size: 12px; line-height: 1.45; text-align: start; cursor: pointer; box-sizing: border-box; }
+.warn b { color: var(--m-ink); font-weight: 600; }
+.warn svg { flex: none; margin-top: 1px; color: var(--m-accent); }
+.warn span { min-width: 0; overflow-wrap: anywhere; }
+.warn:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+/* Full network warning inside the deposit card, above the code: never clamped. */
+.depositWarn { display: flex; align-items: flex-start; gap: 8px; margin: 10px 0 0; color: var(--m-lacquer-ink); font-size: 12.5px; line-height: 1.5; text-align: start; overflow-wrap: anywhere; }
+.depositWarn svg { flex: none; margin-top: 2px; color: var(--m-warn); }
+
+.addressBlock { display: grid; justify-items: center; gap: 12px; margin-top: 14px; text-align: center; }
+.addressText { max-width: 100%; margin: 0; font-size: 13px; line-height: 1.55; overflow-wrap: anywhere; word-break: break-all; user-select: all; }
+.memo { max-width: 100%; margin: 0; font-size: 12px; overflow-wrap: anywhere; }
+
+.qrTile { display: grid; place-items: center; width: min(100%, 212px); padding: 16px; border-radius: 18px; background: var(--m-qr-paper); color: #16130f; box-shadow: inset 0 0 0 .5px rgba(22, 19, 15, .18), 0 8px 18px -14px rgba(0, 0, 0, .7); box-sizing: border-box; }
+.qrTile svg { display: block; width: 100%; max-width: 180px; height: auto; }
+
+.wide { width: 100%; }
+.touch { min-height: 44px; }
+
+.actionGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(132px, 1fr)); gap: 8px; width: 100%; }
+.actionGrid > button { min-width: 0; min-height: 44px; padding-inline: 12px; text-align: center; line-height: 1.2; }
+
+.receiveCard { display: grid; justify-items: center; gap: 14px; padding-block: 20px 18px; text-align: center; }
+.receiveCaption { display: grid; gap: 4px; max-width: 100%; }
+.receiveCaption b { color: var(--m-lacquer-ink); font-size: 13.5px; font-weight: 600; line-height: 1.35; overflow-wrap: anywhere; }
+.receiveCaption span { color: var(--m-lacquer-muted); font-size: 11.5px; line-height: 1.45; overflow-wrap: anywhere; }
+.actionGrid > button.onLacquer { border-color: var(--m-lacquer-edge); background: var(--m-lacquer-fill); color: var(--m-lacquer-ink); }
+
+.cashLinks { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 6px; }
+.cashLinks > button { min-height: 44px; }
+
+.quoteNote:empty { display: none; }
+
+.hint { display: block; margin-top: 6px; color: var(--m-muted); font-size: 11.5px; line-height: 1.45; overflow-wrap: anywhere; }
+
+.flowLink { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin-top: 4px; padding: 0; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; }
+.flowLink:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+@media (max-width: 400px) {
+  .qrTile { width: min(100%, 196px); padding: 14px; }
+  .receiveCard { padding-inline: 12px; }
+}

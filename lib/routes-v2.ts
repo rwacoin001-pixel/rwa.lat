@@ -101,6 +101,7 @@ export const ROUTES = {
   yieldCalendar: R('/assets/yield-calendar', { domain: 'assets', dock: 'assets', showDock: true, auth: 'required' }),
   rebalance: R('/assets/rebalance', { domain: 'assets', dock: 'assets', showDock: true, auth: 'required' }),
   recurring: R('/assets/recurring', { domain: 'assets', dock: 'assets', showDock: true, auth: 'required' }),
+  myPredictions: R('/assets/predictions', { domain: 'assets', dock: 'assets', showDock: true, auth: 'required' }),
   orderReview: R('/orders/review', { domain: 'assets', dock: 'assets', showDock: false, auth: 'required', titleKey: 'orders.review' }),
   orderStatus: R('/orders/status', { domain: 'assets', dock: 'assets', showDock: false, auth: 'required', titleKey: 'orders.status' }),
   orderDetail: R('/orders/:id', { domain: 'assets', dock: 'assets', showDock: false, auth: 'required', titleKey: 'orders.detail' }),

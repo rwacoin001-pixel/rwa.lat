@@ -1,5 +1,5 @@
 'use client'
-import {useRef,useState} from 'react'
+import {useEffect,useRef,useState} from 'react'
 import {useI18n} from '@/lib/i18n'
 import {request} from '@/lib/api/_http'
 import {communityExperienceCopy} from '@/lib/community-experience-copy'
@@ -11,8 +11,11 @@ export function CommunityText({body,targetId,targetType='post',className,compact
   const {locale}=useI18n(),copy=communityExperienceCopy[locale]
   const targetLang=locale==='zh-CN'?'zh-Hans':locale
   const key=JSON.stringify([targetType,targetId,body,targetLang])
-  const [shown,setShown]=useState<string|null>(null),[state,setState]=useState<{key:string;value?:Translation;busy?:boolean;failed?:boolean}|null>(null),[expanded,setExpanded]=useState(false)
+  const [shown,setShown]=useState<string|null>(null),[state,setState]=useState<{key:string;value?:Translation;busy?:boolean;failed?:boolean}|null>(null)
   const current=useRef(key);current.current=key
+  const identity=JSON.stringify([targetType,targetId,body]),bodyRef=useRef<HTMLParagraphElement>(null)
+  const [expandedFor,setExpandedFor]=useState<string|null>(null),[measured,setMeasured]=useState<{key:string;overflow:boolean}|null>(null)
+  const expanded=expandedFor===identity,collapsed=compact&&!expanded
   const value=(state?.key===key?state.value:undefined)??cache.get(key),translated=shown===key&&Boolean(value),busy=state?.key===key&&state.busy&&flights.has(key),failed=state?.key===key&&state.failed
   const text=translated?value!.text:body
   const translate=async()=>{
@@ -23,12 +26,26 @@ export function CommunityText({body,targetId,targetType='post',className,compact
     if(!flights.has(key))flights.set(key,request<Translation>('/v1/community/translate',{method:'POST',body:JSON.stringify({targetType,targetId,targetLang}),loading:'silent',timeoutMs:35000}).then(r=>{if(!r.ok)throw new Error(r.error.code);cache.set(key,r.data);if(cache.size>300)cache.delete(cache.keys().next().value!);return r.data}).finally(()=>flights.delete(key)))
     try{const result=await flights.get(key)!;if(current.current===key){setState({key,value:result});setShown(key)}}catch{if(current.current===key)setState({key,failed:true})}
   }
+  useEffect(()=>{
+    const el=bodyRef.current
+    if(!collapsed||!el)return
+    const measure=()=>{const overflow=el.scrollHeight>el.clientHeight+1;setMeasured(prev=>prev?.key===identity&&prev.overflow===overflow?prev:{key:identity,overflow})}
+    measure()
+    const observer=typeof ResizeObserver==='undefined'?null:new ResizeObserver(measure),fonts=typeof document==='undefined'?undefined:document.fonts
+    observer?.observe(el)
+    fonts?.addEventListener?.('loadingdone',measure)
+    return()=>{observer?.disconnect();fonts?.removeEventListener?.('loadingdone',measure)}
+  },[collapsed,identity,text])
+  const canExpand=compact&&(expanded||(measured?.key===identity&&measured.overflow))
   let language=value?.sourceLang??''
   try{language=new Intl.DisplayNames([locale],{type:'language'}).of(language)||language}catch{}
   return <div className={styles.root}>
-    <p className={`${className??''} ${styles.body}`} onClick={onOpen} data-collapsed={compact&&!expanded} dir="auto">{text}</p>
+    <div className={styles.text}>
+      <p ref={bodyRef} className={`${className??''} ${styles.body}`} data-collapsed={collapsed} dir="auto">{text}</p>
+      {onOpen&&<button type="button" className={styles.open} aria-label={copy.open} onClick={onOpen}/>}
+    </div>
     <div className={styles.controls} onClick={e=>e.stopPropagation()}>
-      {compact&&(text.length>140||text.split('\n').length>4)&&<button type="button" onClick={()=>setExpanded(!expanded)} aria-expanded={expanded}>{expanded?copy.collapse:copy.expand}</button>}
+      {canExpand&&<button type="button" onClick={()=>setExpandedFor(expanded?null:identity)} aria-expanded={expanded}>{expanded?copy.collapse:copy.expand}</button>}
       {translated&&<span>{copy.from.replace('{language}',language)}</span>}
       {body.trim()&&<button type="button" disabled={Boolean(busy)} onClick={()=>void translate()}>{busy?copy.translating:translated?copy.original:failed?copy.retry:copy.translate}</button>}
     </div>

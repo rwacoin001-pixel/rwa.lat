@@ -18,11 +18,21 @@
   --m-up: #3f7a57;
   --m-down: #b0533f;
   --m-warn: #a4701f;
-  --m-lacquer: linear-gradient(160deg, #2a241d, #16130f 70%);
-  --m-lacquer-ink: #f5eee2;
-  --m-lacquer-muted: rgba(245, 238, 226, .58);
-  --m-lacquer-line: rgba(232, 205, 158, .2);
-  --m-lacquer-accent: #d9b77e;
+  /* White-mode scheme A (ivory lacquer): the "lacquer" cards are ivory paper in light mode; dark keeps its navy lacquer below. */
+  --m-lacquer: linear-gradient(165deg, #fffdf8, #f8f1e4 75%);
+  --m-lacquer-ink: #1b1813;
+  --m-lacquer-muted: #7a6f62;
+  --m-lacquer-line: rgba(138, 106, 59, .26);
+  --m-lacquer-accent: #a27a3f;
+  --m-lacquer-hi: rgba(255, 255, 255, .95);
+  --m-lacquer-down: #b0533f;
+  --m-lacquer-tip: rgba(255, 252, 246, .94);
+  --m-lacquer-shadow: 0 18px 36px -24px rgba(56, 38, 20, .32), 0 2px 6px -3px rgba(56, 38, 20, .1);
+  /* On-lacquer status green, ghost-button edge/fill and risk-tick track (dark-only literals before scheme A). */
+  --m-lacquer-up: #3f7a57;
+  --m-lacquer-edge: rgba(138, 106, 59, .26);
+  --m-lacquer-fill: rgba(138, 106, 59, .06);
+  --m-lacquer-tick: rgba(27, 24, 19, .14);
   --m-shadow: 0 30px 60px -28px rgba(56, 38, 20, .45), 0 8px 18px -10px rgba(56, 38, 20, .2);
   --m-shadow-soft: 0 18px 36px -26px rgba(56, 38, 20, .35);
   /* Gyro-lit shadow: the same two layers as --m-shadow, offset away from the light (styles/material.css). */
@@ -33,10 +43,29 @@
   --m-mono: var(--font-geist-mono), ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
   --m-ease: cubic-bezier(.22, .8, .18, 1);
   --m-spring: cubic-bezier(.34, 1.56, .64, 1);
+  /* Named motion tokens (设计规范/motion.md): enter, leave, toggle; three duration buckets. */
+  --ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ease-in: cubic-bezier(.7, 0, .84, 0);
+  --ease-in-out: cubic-bezier(.65, 0, .35, 1);
+  --dur-micro: 120ms;
+  --dur-short: 220ms;
+  --dur-long: 420ms;
+  /* One scrim and one QR paper for every sheet / code across both themes. */
+  --m-scrim: rgba(8, 6, 4, .42);
+  --m-qr-paper: #fbf7ee;
   --m-gutter: 16px;
   --m-radius: 18px;
-  --m-cta: linear-gradient(180deg, #ecd3a4, #cfa769);
-  --m-cta-ink: #1b1712;
+  /* White mode: the primary CTA is bronze (the light --m-accent family), not the dark theme's pale gold,
+     so it reads as one commit action on ivory instead of a yellow wash. Quiet = secondary, outlined bronze.
+     --m-cta-rim is light-only; dark resets it so each button keeps its own highlight literal. */
+  --m-cta: linear-gradient(180deg, #94713f, #7a5c33);
+  --m-cta-ink: #fbf6ec;
+  --m-cta-rim: rgba(255, 236, 204, .3);
+  /* Price well inside the bronze CTA: a recessed bronze with the CTA's ivory ink, not an espresso chip with pale-gold digits. */
+  --m-cta-chip: rgba(27, 23, 18, .24);
+  --m-cta-chip-ink: #fbf6ec;
+  --m-cta-quiet: rgba(138, 106, 59, .08);
+  --m-cta-quiet-ink: #7a5c33;
   --m-topbar-bg: rgba(244, 239, 230, .74);
   position: relative;
   width: 100%;
@@ -74,12 +103,31 @@
   --m-lacquer-ink: #eef1f6;
   --m-lacquer-muted: rgba(215, 224, 238, .56);
   --m-lacquer-line: rgba(227, 187, 122, .18);
-  --m-lacquer-accent: #e3bb7a;
+  --m-lacquer-accent: #dcc196;
+  /* Explicitly restore the pre-A dark values (they were hero-card.module.css fallbacks) so .root's ivory ones don't leak in. */
+  --m-lacquer-hi: rgba(255, 244, 220, .22);
+  --m-lacquer-down: #f29b8b;
+  --m-lacquer-tip: rgba(9, 15, 28, .82);
+  --m-lacquer-shadow: var(--m-shadow-soft);
+  --m-lacquer-up: #8fd9b3;
+  --m-lacquer-edge: rgba(241, 223, 189, .28);
+  --m-lacquer-fill: rgba(241, 223, 189, .08);
+  --m-lacquer-tick: rgba(255, 255, 255, .16);
   --m-shadow: 0 34px 70px -30px rgba(0, 0, 0, .8), 0 10px 22px -12px rgba(0, 0, 0, .5);
   --m-shadow-soft: 0 18px 36px -24px rgba(0, 0, 0, .7);
   --m-shadow-lit: var(--light-dx) calc(34px + var(--light-dy)) 70px -30px rgba(0, 0, 0, .8), calc(var(--light-dx) * .4) 10px 22px -12px rgba(0, 0, 0, .5);
   --m-rim: rgba(214, 228, 240, .16);
   --m-topbar-bg: rgba(7, 12, 22, .66);
+  --m-scrim: rgba(7, 12, 22, .48);
+  /* Champagne, not butter: lower chroma so the one gold action reads as metal on navy rather than yellow. */
+  --m-cta: linear-gradient(180deg, #e9d5ae, #cfb07a);
+  --m-cta-ink: #1b1712;
+  --m-cta-rim: initial;
+  /* The price chip inside the CTA: navy from the page, not a warm-brown hole. */
+  --m-cta-chip: #0d1526;
+  --m-cta-chip-ink: #efe2c8;
+  --m-cta-quiet: var(--m-cta);
+  --m-cta-quiet-ink: var(--m-cta-ink);
 }
 @keyframes mFade { from { opacity: 0; } to { opacity: 1; } }
 @keyframes mEnter { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
@@ -132,6 +180,14 @@
   backdrop-filter: blur(24px) saturate(1.8);
 }
 :global(.rwa-mobile) .root.root > :global(.rwa-topbar) :global(button) { color: inherit; }
+
+/* Hero pages: the clear bar floats over a full-bleed lacquer card, so its ink follows the card until content scrolls under it. */
+.root[data-hero='true'] { --hero-bar-h: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px) + var(--app-topbar-row-height, 44px)); }
+:global(.rwa-mobile) .root[data-hero='true'] > :global(.rwa-topbar.rwa-topbar--s1[data-template]:not([data-scrolled='true'])),
+:global(.rwa-mobile) .root[data-hero='true'] > :global(.rwa-topbar.rwa-topbar--s1[data-template]:not([data-scrolled='true'])) :global(button.rwa-topbar__slot) { color: var(--m-lacquer-ink); }
+
+/* The hero card is inset by one gutter, so the bar's glyphs move in to sit on the card's own padding instead of on its rim. */
+:global(.rwa-mobile) .root[data-hero='true'] > :global(.rwa-topbar.rwa-topbar--s1[data-template]) :global(.rwa-topbar__grid) { padding-inline: max(calc(var(--m-gutter) + 13px), env(safe-area-inset-left)) max(calc(var(--m-gutter) + 13px), env(safe-area-inset-right)); }
 
 /* The topbar is sticky and in flow above the body, so the body only needs breathing room below it. */
 .body { position: relative; z-index: 1; padding: 6px var(--m-gutter) 0; }
@@ -215,6 +271,8 @@
   top: 0;
   padding-top: calc(env(safe-area-inset-top) + 6px);
 }
+/* Markets has no bar above it, so its sticky dock pins to the very top, clear of the status bar. */
+.root[data-maison-page='markets'] .segmentDock { top: 0; padding-top: calc(env(safe-area-inset-top) + 6px); }
 .segment[data-sticky='true'] { box-shadow: 0 10px 24px -18px rgba(0, 0, 0, .45); }
 @media (prefers-reduced-motion: reduce) { .segmentDock { transition: none; } }
 .segmentTrack { display: contents; }
@@ -307,18 +365,16 @@
   font-size: 14.5px;
   font-weight: 700;
   letter-spacing: .01em;
-  box-shadow: 0 16px 30px -18px rgba(143, 104, 45, .8), inset 0 1px 0 rgba(255, 255, 255, .55);
+  /* A close contact shadow, not a glow: the primary action sits still while the user checks the numbers above it. */
+  box-shadow: inset 0 1px 0 var(--m-cta-rim, rgba(255, 255, 255, .55)), 0 1px 2px rgba(0, 0, 0, .25);
   cursor: pointer;
-  transition: transform .2s var(--m-ease), opacity .2s var(--m-ease);
+  transition: transform var(--dur-micro) var(--ease-out), opacity var(--dur-short) var(--ease-out);
 }
 .cta > * { position: relative; z-index: 1; }
-/* Sheen sweeps across an available primary action every few seconds. */
-.cta:not(:disabled)::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .5) 50%, transparent 62%); transform: translateX(-120%); animation: mSheen 4.2s var(--m-ease) 1.4s infinite; pointer-events: none; }
-@keyframes mSheen { 0%, 64% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
 .cta:active { transform: scale(.985); }
 .cta:disabled { cursor: not-allowed; opacity: .45; box-shadow: none; }
 .cta[aria-busy='true'] .ctaIcon svg { animation: mSpin 1s linear infinite; }
-.ctaIcon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #1b1712; color: #f1dfbd; transition: transform .35s var(--m-spring); }
+.ctaIcon { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: #1b1712; color: #f1dfbd; transition: transform var(--dur-short) var(--ease-out); }
 .cta:not(:disabled):hover .ctaIcon { transform: translateX(3px); }
 :global([dir='rtl']) .ctaIcon svg { transform: scaleX(-1); }
 :global([dir='rtl']) .cta:not(:disabled):hover .ctaIcon { transform: translateX(-3px); }
@@ -370,7 +426,7 @@
   border-radius: var(--m-radius);
   background: var(--m-lacquer);
   color: var(--m-lacquer-ink);
-  box-shadow: 0 0 0 .5px var(--m-lacquer-line), inset 0 .5px 0 rgba(255, 244, 220, .22), var(--m-shadow-lit);
+  box-shadow: 0 0 0 .5px var(--m-lacquer-line), inset 0 .5px 0 var(--m-lacquer-hi), var(--m-shadow-lit);
   transition: transform var(--spring-dur, 520ms) var(--spring, ease), box-shadow .3s ease;
 }
 /* Press: a slight 3D lean toward the finger, with the highlight following (from <Lacquer>). Idle surfaces stay untransformed. */
@@ -392,6 +448,11 @@
 .lacquer > * { position: relative; }
 .lacquer .muted { color: var(--m-lacquer-muted); }
 .lacquer .kicker { color: var(--m-lacquer-accent); }
+/* Page-tone controls re-inked for the dark lacquer, so nothing lands as dark text on a dark card. */
+.lacquer .link { color: var(--m-lacquer-accent); }
+.lacquer .foot { color: var(--m-lacquer-muted); }
+.lacquer .field > span { color: var(--m-lacquer-muted); }
+.lacquer .field input { border-color: transparent; background: rgba(255, 244, 222, .055); box-shadow: inset 0 0 0 .5px var(--m-lacquer-line); color: var(--m-lacquer-ink); }
 
 /* ── Lists / tables ───────────────────────────────────── */
 .list { margin: 0; padding: 0; list-style: none; border-top: 1px solid var(--m-line); }
@@ -489,11 +550,11 @@
 .predCardHead { display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:28px; }
 .predCardMeta { display:flex; flex:1; flex-wrap:wrap; gap:5px 10px; min-width:0; color:var(--m-muted); font-size:9px; font-weight:650; letter-spacing:.1em; text-transform:uppercase; }
 .predThumb { width:30px; height:30px; flex:0 0 30px; border-radius:9px; object-fit:cover; }
-.predFeatureMedia { display:block; height:190px; margin:12px 0 0; overflow:hidden; border-radius:12px; }
-.predFeatureMedia img { display:block; width:100%; height:100%; object-fit:contain; }
 .predFeedArticle { position:relative; margin-top:10px; }
 .predFeedArticle .predCard { margin-top:0; }
-.predTranslate { display:inline-flex; align-items:center; gap:5px; min-height:32px; margin:3px 5px; padding:4px 6px; border:0; color:var(--m-accent); background:none; font:inherit; font-size:11px; cursor:pointer; }
+/* Auxiliary action: small glyph + label, 28px tap height, no margin of its own so it never pushes layout. */
+.predTranslate { display:inline-flex; align-items:center; gap:3px; min-height:28px; margin:0 2px; padding:0 4px; border:0; border-radius:6px; color:var(--m-accent); background:none; font:inherit; font-size:10.5px; font-weight:500; line-height:1; white-space:nowrap; vertical-align:middle; cursor:pointer; }
+.predTranslate:focus-visible { outline:2px solid var(--m-accent); outline-offset:1px; }
 .predTranslate:disabled { color:var(--m-muted); cursor:wait; }
 .predFeedCard[data-layout='pulse'] { position:relative; }
 .predFeedCard[data-layout='pulse'] .predQuestion { padding-inline-end:86px; min-height:40px; }
@@ -510,7 +571,6 @@
 .predPulseTime i { width:6px; height:6px; background:var(--m-up); border-radius:50%; }
 @keyframes tradeRise { from { opacity:0; translate:0 14px; } 30%,80% { opacity:1; } to { opacity:.5; translate:0 -5px; } }
 @media(prefers-reduced-motion:reduce) { .predTradeColumns i { animation:none; } }
-.predCard[data-layout='featured'] .predQuestion { margin:0 0 10px; font-size:17px; line-height:1.18; }
 .predFeatureOutcomes { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:7px 12px; }
 .predFeatureOutcome { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px 8px; align-items:center; min-width:0; font-size:11px; }
 .predFeatureLabel { display:flex; align-items:center; gap:6px; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
@@ -567,7 +627,7 @@
 .summary > div { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; padding: 9px 0; border-bottom: 1px solid var(--m-line-soft); }
 .summary > div:last-child { border-bottom: 0; }
 .summary dt { color: var(--m-muted); font-size: 12px; }
-.summary dd { margin: 0; font-size: 13px; font-weight: 600; text-align: end; overflow-wrap: anywhere; }
+.summary dd { margin: 0; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; text-align: end; overflow-wrap: anywhere; }
 .summary > div[data-strong='true'] dd { font-size: 15.5px; }
 .lacquer .summary > div { border-bottom-color: var(--m-lacquer-line); }
 .lacquer .summary dt { color: var(--m-lacquer-muted); }
@@ -642,8 +702,8 @@
 .badge[data-tone='down'] { color: var(--m-down); border-color: color-mix(in srgb, var(--m-down) 45%, transparent); }
 .badge[data-tone='accent'] { color: var(--m-accent); border-color: color-mix(in srgb, var(--m-accent) 45%, transparent); }
 .lacquer .badge { border-color: var(--m-lacquer-line); color: var(--m-lacquer-muted); }
-.lacquer .badge[data-tone='live'] { color: #8fd9b3; }
-.lacquer .badge[data-tone='warn'] { color: #f0c46e; }
+.lacquer .badge[data-tone='live'] { color: var(--m-lacquer-up); }
+.lacquer .badge[data-tone='warn'] { color: var(--m-warn); }
 
 .prob { display: grid; gap: 6px; margin-top: 10px; }
 .probRow { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; font-size: 12px; }
@@ -696,9 +756,9 @@
 .notice b { color: var(--m-ink); font-weight: 600; }
 .dayHead { position: sticky; top: calc(var(--topbar-h, 56px) + env(safe-area-inset-top) + 50px); z-index: 2; padding: 10px 0 6px; border-bottom: 1px solid var(--m-line); background: var(--m-bg); color: var(--m-faint); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
 .addressCard { display: grid; justify-items: center; gap: 12px; margin-top: 14px; text-align: center; }
-.qr { display: grid; place-items: center; padding: 12px; border-radius: 14px; background: #f7f1e6; color: #16130f; }
+.qr { display: grid; place-items: center; padding: 12px; border-radius: 14px; background: var(--m-qr-paper); color: #16130f; }
 .addressCard .mono { max-width: 100%; margin: 0; font-size: 12.5px; line-height: 1.55; overflow-wrap: anywhere; user-select: all; }
-.lacquer .addressCard .ghost { border-color: rgba(241, 223, 189, .28); background: rgba(241, 223, 189, .08); color: inherit; }
+.lacquer .addressCard .ghost { border-color: var(--m-lacquer-edge); background: var(--m-lacquer-fill); color: inherit; }
 @media (prefers-reduced-motion: reduce) { .quickActions button span { transition: none; } .quickActions button:hover span { transform: none; } }
 
 /* ── Tabs inside a page ───────────────────────────────── */
@@ -731,7 +791,7 @@
 /* ── Order form ───────────────────────────────────────── */
 .amount { display: flex; align-items: baseline; gap: 10px; padding: 12px 0 10px; border-bottom: 1px solid var(--m-line); transition: border-color .25s var(--m-ease); }
 .amount:focus-within { border-bottom-color: var(--m-accent); }
-.amount input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: var(--m-ink); font: inherit; font-size: clamp(34px, 10.6vw, 44px); font-weight: 500; letter-spacing: -.03em; direction: ltr; }
+.amount input { flex: 1; min-width: 0; padding: 0; border: 0; outline: 0; background: transparent; color: var(--m-ink); font: inherit; font-size: clamp(36px, 11vw, 48px); font-weight: 400; letter-spacing: -.03em; font-variant-numeric: tabular-nums; direction: ltr; }
 .amount input::placeholder { color: var(--m-faint); }
 .amount span { color: var(--m-muted); font-size: 13px; font-weight: 700; }
 .fieldMeta { display: flex; justify-content: space-between; gap: 10px; margin-top: 8px; color: var(--m-muted); font-size: 11.5px; }
@@ -770,9 +830,9 @@
 .timeline small { display: block; margin-top: 2px; color: var(--m-muted); font-size: 11px; }
 
 .statusMark { position: relative; display: grid; place-items: center; width: 56px; height: 56px; margin-bottom: 14px; border: 1px solid var(--m-lacquer-line); border-radius: 50%; color: var(--m-lacquer-accent); animation: mPop .6s var(--m-spring) both; }
-.statusMark[data-tone='up'] { color: #8fd9b3; }
-.statusMark[data-tone='warn'] { color: #f0c46e; }
-.statusMark[data-tone='down'] { color: #ef8f7d; }
+.statusMark[data-tone='up'] { color: var(--m-lacquer-up); }
+.statusMark[data-tone='warn'] { color: var(--m-warn); }
+.statusMark[data-tone='down'] { color: var(--m-down); }
 .statusMark[data-tone='pending']::after { content: ''; position: absolute; inset: -1px; border: 1px solid transparent; border-top-color: currentColor; border-radius: 50%; animation: mSpin 1.4s linear infinite; }
 @keyframes mSpin { to { transform: rotate(360deg); } }
 @keyframes mPop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: none; } }
@@ -886,8 +946,8 @@ span.compareName { padding-top: 28px; cursor: default; }
 }
 @media (prefers-reduced-motion: reduce) {
   .root, .tabPanel, .body > *, .timeline li, .statusMark, .fieldError, .probBar i { animation: none; }
-  .liveDot, .statusMark[data-tone='pending']::after, .skeleton i, .flash, .cta::after, .cta[aria-busy='true'] .ctaIcon svg { animation: none; }
-  .cta::after, .flash { display: none; }
+  .liveDot, .statusMark[data-tone='pending']::after, .skeleton i, .flash, .cta[aria-busy='true'] .ctaIcon svg { animation: none; }
+  .flash { display: none; }
   .pollBar i { animation: none; transform: scaleX(1); opacity: .5; }
   .tape { overflow-x: auto; scrollbar-width: none; }
   .tape > div { animation: none; }
@@ -896,12 +956,34 @@ span.compareName { padding-top: 28px; cursor: default; }
 }
 
 /* ── Step-up sheet + money-out (batch 2b) ─────────────── */
-.sheetBackdrop { position: fixed; z-index: 60; inset: 0; background: rgba(8, 6, 4, .42); -webkit-backdrop-filter: blur(3px); backdrop-filter: blur(3px); transition: opacity .24s var(--m-ease); }
+/* One sheet for the whole App (StepUp, Redeem, prediction, deposit help): radius 28, --m-scrim + blur 4, grip on top,
+   44px ✕ top-right, drag down to dismiss, a single primary action — no stacked ghost "cancel". */
+.sheetBackdrop { position: fixed; z-index: 60; inset: 0; background: var(--m-scrim); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: opacity var(--dur-long) var(--ease-out); }
+.sheetBackdrop[data-ending-style] { transition-duration: calc(var(--dur-long) * .75); transition-timing-function: var(--ease-in); }
 .sheetBackdrop[data-starting-style], .sheetBackdrop[data-ending-style] { opacity: 0; }
-.sheet { position: fixed; z-index: 61; inset-inline: 0; bottom: 0; box-sizing: border-box; width: min(100%, var(--app-max)); max-height: calc(100dvh - 48px); margin-inline: auto; padding: 10px var(--m-gutter) calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; border: 1px solid var(--m-line); border-bottom: 0; border-radius: 22px 22px 0 0; background: var(--m-bg); color: var(--m-ink); box-shadow: var(--m-shadow); outline: 0; overscroll-behavior: contain; transition: transform var(--spring-dur, .52s) var(--spring, var(--m-ease)); }
-.sheet[data-ending-style] { transition-duration: .26s; transition-timing-function: cubic-bezier(.4, 0, 1, 1); }
+.sheet { position: fixed; z-index: 61; inset-inline: 0; bottom: 0; box-sizing: border-box; width: min(100%, var(--app-max)); max-height: calc(100dvh - 48px); margin-inline: auto; padding: 10px var(--m-gutter) calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; border: 1px solid var(--m-line); border-bottom: 0; border-radius: 28px 28px 0 0; background: var(--m-bg); color: var(--m-ink); box-shadow: var(--m-shadow); outline: 0; overscroll-behavior: contain; transition: transform var(--dur-long) var(--ease-out); }
+.sheet[data-ending-style] { transition-duration: calc(var(--dur-long) * .75); transition-timing-function: var(--ease-in); }
 .sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(100%); }
+.sheet[data-dragging] { transition: none; }
 .sheetGrip { display: block; width: 38px; height: 4px; margin: 0 auto 14px; border-radius: 4px; background: var(--m-line); }
+/* Tall enough to grab with a thumb; vertical drags belong to the sheet, not the page. */
+.sheetGripArea { margin: -10px 56px 0; padding: 10px 0 0; touch-action: none; cursor: grab; }
+.sheetHeader { padding-inline-end: 40px; }
+.sheetClose { position: absolute; z-index: 2; inset-block-start: 8px; inset-inline-end: 8px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted); cursor: pointer; transition: opacity var(--dur-micro) var(--ease-out); }
+.sheetClose:active { opacity: .6; }
+.sheetClose:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -4px; }
+/* What the user is confirming, restated inside the sheet (amount, destination, fee). */
+.sheet .summary { margin-top: 14px; padding: 2px 14px; border-radius: 14px; background: var(--m-glass-deep); box-shadow: inset 0 0 0 .5px var(--m-line); }
+/* An address shown for checking against a wallet: head and tail strong, middle elided. */
+.addr { font-family: var(--m-mono); direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+.addr b { font-weight: 600; }
+.addr i { font-style: normal; color: var(--m-muted); }
+.lacquer .addr b { color: var(--m-lacquer-ink); }
+.lacquer .addr i { color: var(--m-lacquer-muted); }
+@media (prefers-reduced-motion: reduce) {
+  .sheet, .sheetBackdrop, .sheet[data-ending-style], .sheetBackdrop[data-ending-style] { transition: opacity 150ms linear; }
+  .sheet[data-starting-style], .sheet[data-ending-style] { transform: none; opacity: 0; }
+}
 .sheetTitle { margin: 6px 0 0; font-family: var(--m-display); font-size: 26px; font-weight: 400; line-height: 1.05; }
 .sheet .state { margin-top: 14px; }
 .pickList { display: grid; gap: 8px; margin: 10px 0 0; padding: 0; list-style: none; }
@@ -1064,13 +1146,13 @@ span.compareName { padding-top: 28px; cursor: default; }
 .swatch i:nth-child(3) { inset-block-end: 8px; inset-inline-start: 8px; width: 40%; height: 6px; border-radius: 3px; }
 [data-swatch='light'] .swatch i:nth-child(1) { background: #f4efe6; }
 [data-swatch='light'] .swatch i:nth-child(2) { background: linear-gradient(160deg, #2a241d, #16130f); }
-[data-swatch='light'] .swatch i:nth-child(3) { background: #cfa769; }
+[data-swatch='light'] .swatch i:nth-child(3) { background: linear-gradient(180deg, #94713f, #7a5c33); }
 [data-swatch='dark'] .swatch i:nth-child(1) { background: #070c16; }
 [data-swatch='dark'] .swatch i:nth-child(2) { border: 1px solid rgba(227, 187, 122, .25); background: linear-gradient(160deg, #1c2842, #090f1c); }
 [data-swatch='dark'] .swatch i:nth-child(3) { background: #e3bb7a; }
 [data-swatch='system'] .swatch i:nth-child(1) { background: linear-gradient(90deg, #f4efe6 50%, #070c16 50%); }
 [data-swatch='system'] .swatch i:nth-child(2) { background: linear-gradient(90deg, #2a241d 50%, #1c2842 50%); }
-[data-swatch='system'] .swatch i:nth-child(3) { background: linear-gradient(90deg, #cfa769 50%, #e3bb7a 50%); }
+[data-swatch='system'] .swatch i:nth-child(3) { background: linear-gradient(90deg, #8a6a3b 50%, #e3bb7a 50%); }
 
 /* Fees: rate meters, source tags, numbered notes. */
 .meters { margin: 10px 0 0; padding: 0; list-style: none; }
@@ -1116,8 +1198,7 @@ span.compareName { padding-top: 28px; cursor: default; }
     repeating-radial-gradient(circle at -14% 122%, transparent 0 13px, rgba(232, 205, 158, .05) 13px 14px);
   -webkit-mask-image: linear-gradient(120deg, #000 10%, transparent 75%); mask-image: linear-gradient(120deg, #000 10%, transparent 75%); }
 /* Foil: a slow holographic sweep, only once access is fully granted. */
-.lacquer > .guilloche[data-foil='true']::after { content: ''; position: absolute; inset: -40% -60%; background: linear-gradient(105deg, transparent 38%, rgba(255, 236, 196, .16) 46%, rgba(170, 220, 255, .1) 50%, rgba(255, 236, 196, .14) 54%, transparent 62%); animation: mFoil 6.5s var(--m-ease) infinite; }
-@keyframes mFoil { 0% { transform: translateX(-35%); } 60%, 100% { transform: translateX(35%); } }
+.lacquer > .guilloche[data-foil='true']::after { content: ''; position: absolute; inset: -40% -60%; background: linear-gradient(105deg, transparent 38%, rgba(255, 236, 196, .16) 46%, rgba(170, 220, 255, .1) 50%, rgba(255, 236, 196, .14) 54%, transparent 62%); }
 .lacquer > .guilloche ~ * { z-index: 1; }
 
 .credential { display: grid; gap: 14px; min-height: 212px; padding: 18px; }
@@ -1128,8 +1209,6 @@ span.compareName { padding-top: 28px; cursor: default; }
 .credRing b { position: relative; color: var(--m-lacquer-ink); font-size: 17px; font-weight: 600; }
 .credRing small { color: var(--m-lacquer-muted); font-size: 10px; font-weight: 500; }
 /* EMV-style chip: decorative, reads as "a card you hold". */
-.lacquer > .credChip { position: absolute; inset-block-start: 78px; inset-inline-end: 18px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; width: 34px; height: 26px; padding: 3px; box-sizing: border-box; border-radius: 6px; background: linear-gradient(135deg, #e8cf9e, #9a7a44 55%, #d9b77e); opacity: .85; }
-.credChip i { border: 1px solid rgba(40, 28, 10, .35); border-radius: 2px; }
 .credMain { display: grid; justify-items: start; gap: 4px; min-width: 0; padding-inline-end: 48px; }
 .credMain small { color: var(--m-lacquer-muted); font-size: 10px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; }
 .credMain b { font-family: var(--m-display); font-size: clamp(26px, 8vw, 34px); font-weight: 400; line-height: 1.05; overflow-wrap: anywhere; }
@@ -1153,9 +1232,9 @@ span.compareName { padding-top: 28px; cursor: default; }
 .signal[data-tone='live'] i[data-on='true'] { background: var(--m-up); }
 .signal[data-tone='warn'] i[data-on='true'] { background: var(--m-warn); }
 .signal[data-tone='down'] i[data-on='true'] { background: var(--m-down); }
-.lacquer .signal[data-tone='live'] i[data-on='true'] { background: #8fd9b3; }
-.lacquer .signal[data-tone='warn'] i[data-on='true'] { background: #f0c46e; }
-.lacquer .signal[data-tone='down'] i[data-on='true'] { background: #ef8f7d; }
+.lacquer .signal[data-tone='live'] i[data-on='true'] { background: var(--m-lacquer-up); }
+.lacquer .signal[data-tone='warn'] i[data-on='true'] { background: var(--m-warn); }
+.lacquer .signal[data-tone='down'] i[data-on='true'] { background: var(--m-down); }
 .row > .signal { width: 32px; justify-content: center; }
 
 /* Step track: numbered cards on a hairline spine. */
@@ -1250,7 +1329,7 @@ span.compareName { padding-top: 28px; cursor: default; }
   .gaugeRead b { font-size: 22px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .lacquer > .guilloche[data-foil='true']::after, .credRing, .gaugeNeedle { animation: none; }
+  .credRing, .gaugeNeedle { animation: none; }
   .stepCard, .signal i, .gaugeArc, .qProgress i { transition: none; }
 }
 @media (prefers-reduced-motion: reduce) { .lacquer { transform: none; transition: none; } }
@@ -1332,7 +1411,7 @@ span.compareName { padding-top: 28px; cursor: default; }
 
 /* Receive code */
 .receiveCard { display: grid; justify-items: center; gap: 16px; padding-block: 22px 20px; text-align: center; }
-.receiveQr { padding: 16px; border-radius: 18px; background: #f7f1e6; box-shadow: inset 0 0 0 .5px rgba(22, 19, 15, .18), 0 18px 34px -22px rgba(0, 0, 0, .7); }
+.receiveQr { padding: 16px; border-radius: 18px; background: var(--m-qr-paper); box-shadow: inset 0 0 0 .5px rgba(22, 19, 15, .18), 0 8px 18px -14px rgba(0, 0, 0, .7); }
 .receiveQr svg { display: block; }
 .receiveId { display: grid; gap: 5px; width: 100%; padding-top: 14px; border-top: 1px solid var(--m-lacquer-line); }
 .receiveId > small { color: var(--m-lacquer-muted); font-size: 9.5px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; }

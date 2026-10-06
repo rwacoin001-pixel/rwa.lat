@@ -132,7 +132,6 @@ export function DocumentsScreen() {
           <b className={s.num}>{loaded ? counts.completed : '·'}<small>/{counts.all}</small></b>
         </span>
       </div>
-      <span className={s.credChip} aria-hidden="true"><i /><i /><i /></span>
       <div className={s.credMain}>
         <small>{c.vault.requested}</small>
         <b className={s.num}>{figure(fmtAtomic(requested, DECIMALS, 'USDT'))}</b>

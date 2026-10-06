@@ -575,6 +575,26 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .rwa-mobile[data-theme="light"] .liquid-dock__compact-button { border-color: rgba(24,72,72,.24); color: #f6fffd; background: #164642; box-shadow: inset 0 1px rgba(255,255,255,.32), inset 0 -10px 21px rgba(5,30,28,.24), 0 0 18px rgba(83,139,139,.2), 0 14px 32px rgba(32,75,75,.2); }
 .rwa-mobile[data-theme="light"] .liquid-dock__compact-button span { color: #f6fffd; }
 .rwa-mobile[data-theme="light"] .ai-orb { border: 0; background: transparent; box-shadow: none; }
+/* White-mode scheme A (ivory lacquer): the light-theme dock on every page. */
+.rwa-mobile[data-theme="light"] {
+  /* "Paper + lacquer": the bar is the same ivory paper as the Markets cards; the current tab (and the compact
+     button it folds into) is a chip of the warm brown lacquer. Gold only appears as the lacquer's hairline edge
+     and in the AI orb's live core, the one place that earns it. Values mirror --m-lacquer* in maison.module.css. */
+  --dock-a-bg: linear-gradient(165deg, rgba(255, 253, 248, .9), rgba(248, 241, 228, .9) 75%); --dock-a-line: rgba(138, 106, 59, .26); --dock-a-hi: rgba(255, 255, 255, .95);
+  --dock-a-shadow: 0 16px 32px -18px rgba(56, 38, 20, .34), 0 2px 6px -3px rgba(56, 38, 20, .1);
+  --dock-a-ink: #1b1813; --dock-a-muted: #7a6f62;
+  --dock-a-on: linear-gradient(160deg, #2a241d, #16130f 70%); --dock-a-on-ink: #f5eee2; --dock-a-on-line: rgba(217, 183, 126, .4);
+  /* Consumed by the iOS dock tokens in styles/ios.css (bar, capsule, compact button, quick "+", AI orb). */
+  --dock-a-bar-shadow: inset 0 .5px 0 var(--dock-a-hi), var(--dock-a-shadow);
+  --dock-a-cap: var(--dock-a-on); --dock-a-cap-shadow: inset 0 0 0 .5px var(--dock-a-on-line), inset 0 1px 0 rgba(255, 240, 216, .12), 0 4px 12px -6px rgba(40, 26, 14, .45);
+  /* AI orb · a lacquer pearl with a gold rim; the screen-blended LiquidMetal core reads as moving gold on the dark shell. */
+  --dock-a-orb-line: rgba(217, 183, 126, .42);
+  --dock-a-orb-bg: radial-gradient(circle at 30% 18%, #8a7660 0%, #4a3e31 16%, #2a241d 38%, #16130f 72%, #3a3024 92%, #8c7352 99%);
+  --dock-a-orb-shadow: inset 0 1px 2px rgba(255, 240, 216, .35), inset 0 -5px 10px rgba(0, 0, 0, .4), 0 14px 28px -14px rgba(40, 26, 14, .5), 0 2px 6px rgba(40, 26, 14, .12);
+  --dock-a-orb-spec: radial-gradient(ellipse 44% 26% at 33% 20%, rgba(255, 246, 230, .5), transparent 80%), radial-gradient(ellipse 24% 14% at 69% 77%, rgba(217, 183, 126, .4), transparent 95%);
+  --dock-a-orb-core: .55;
+}
+.rwa-mobile[data-theme="light"] .liquid-dock__shine { background: linear-gradient(180deg, var(--dock-a-hi), transparent); }
 
 .toast { position: fixed; z-index: 60; top: max(14px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 8px; max-width: calc(100vw - 28px); padding: 11px 15px; border: 1px solid rgb(var(--accent-rgb)/.34); border-radius: 999px; color: #eafff9; background: rgba(6,12,12,.9); box-shadow: 0 13px 40px rgba(0,0,0,.65); backdrop-filter: blur(22px); font-size: 12px; white-space: nowrap; }.toast svg { color: var(--mint); }
 .connection-banner { position: fixed; z-index: 56; top: max(10px, env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); width: min(calc(100vw - 24px), 402px); display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 10px; padding: 11px 14px; border: 1px solid rgba(255,173,61,.42); border-radius: 17px; color: var(--ink); background: rgba(18,13,7,.92); box-shadow: 0 14px 40px rgba(0,0,0,.65); backdrop-filter: blur(24px) saturate(140%); }.connection-banner > svg { color: var(--high); }.connection-banner span { display: grid; gap: 2px; }.connection-banner b { font-size: 11px; }.connection-banner small { color: var(--muted); font-size: 9px; line-height: 1.35; }
@@ -882,6 +902,19 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .basket-card__metrics { min-width: 78px; text-align: end; }
 .basket-card__metrics strong { font-size: 16px; letter-spacing: -.04em; }
 .basket-card > svg { color: var(--muted); }
+.basket-tiers { display: grid; gap: 20px; }
+.basket-tier { display: grid; gap: 9px; }
+.basket-tier__head { display: grid; gap: 5px; padding: 0 3px; }
+.basket-tier__head > div { display: flex; align-items: center; gap: 8px; }
+.basket-tier__head h2 { margin: 0; font-size: 17px; letter-spacing: -.03em; }
+.basket-tier__head .risk { padding: 3px 8px; font-size: 10px; }
+.basket-tier__head p { margin: 0; color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+.basket-tier__empty { padding: 14px; border-radius: 18px; color: var(--muted); font-size: 11px; text-align: center; }
+.notice-banner { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 10px; align-items: start; margin: 4px 0 14px; padding: 12px 8px 12px 14px; border: 1px solid rgb(var(--accent-rgb)/.22); border-radius: 18px; background: rgb(var(--accent-rgb)/.06); }
+.notice-banner > svg { margin-top: 1px; color: var(--mint); }
+.notice-banner b { font-size: 13px; }
+.notice-banner p { margin: 3px 0 0; color: var(--muted); font-size: 11.5px; line-height: 1.5; }
+.notice-banner button { display: grid; place-items: center; width: 28px; height: 28px; border: 0; border-radius: 999px; color: var(--muted); background: transparent; cursor: pointer; }
 .basket-empty { display: grid; justify-items: center; gap: 8px; padding: 28px 18px; border-radius: 21px; text-align: center; }
 .basket-empty > svg { color: var(--mint); }
 .basket-empty b { font-size: 15px; }

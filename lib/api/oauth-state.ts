@@ -1,4 +1,4 @@
-type OAuthProvider = 'google' | 'x'
+type OAuthProvider = 'google' | 'github' | 'x'
 type StateStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 const key = (provider: OAuthProvider) => `rwa.oauth-state.${provider}`
 const TTL = 10 * 60 * 1000

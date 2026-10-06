@@ -1,7 +1,7 @@
 'use client'
 import AppLoading from '@/components/app-loading'
 import { aiPageContext, type AiPageContext } from '@/lib/ai-page-context'
-import { captureWalletBackdrop, WalletPageBackdrop } from './wallet-page-backdrop'
+import { captureWalletBackdrop } from './wallet-page-backdrop'
 import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
 
 import dynamic from 'next/dynamic'
@@ -53,6 +53,7 @@ import {
   Moon,
   Network,
   Plus,
+  QrCode,
   ReceiptText,
   Search,
   Settings,
@@ -101,6 +102,7 @@ import { pathForDynamicScreen, pathForScreen, screenForSegments, type RwaScreen 
 import { resolveRoute } from '@/lib/routes-v2'
 import { screenForV2Query, screenForV2Segments } from '@/lib/routes-v2-adapter'
 import { PATH_EVENT, openPath, queryParam, type PathNavigation } from '@/lib/maison-nav'
+import { fundsCopy } from '@/lib/maison-funds-copy'
 import { AiChatScreen } from '@/components/maison/AiChatScreen'
 import { MaisonBridge } from '@/components/maison/MaisonBridge'
 import { trustCopy as trustPageCopy, scamCopy } from '@/lib/maison-trust-copy'
@@ -122,6 +124,7 @@ const MaisonPortfolioScreen = dynamic(() => import('./maison/PortfolioScreen').t
 const MaisonPositionDetailScreen = dynamic(() => import('./maison/PortfolioScreen').then((m) => ({ default: m.PositionDetailScreen })), { ssr: false, loading: AppLoading })
 const MaisonRebalanceScreen = dynamic(() => import('./maison/AssetToolsScreen').then((m) => ({ default: m.RebalanceScreen })), { ssr: false, loading: AppLoading })
 const MaisonRecurringScreen = dynamic(() => import('./maison/AssetToolsScreen').then((m) => ({ default: m.RecurringScreen })), { ssr: false, loading: AppLoading })
+const MaisonMyPredictionsScreen = dynamic(() => import('./maison/MyPredictionsScreen').then((m) => ({ default: m.MyPredictionsScreen })), { ssr: false, loading: AppLoading })
 const MaisonStatementsScreen = dynamic(() => import('./maison/AssetToolsScreen').then((m) => ({ default: m.StatementsScreen })), { ssr: false, loading: AppLoading })
 const MaisonYieldCalendarScreen = dynamic(() => import('./maison/AssetToolsScreen').then((m) => ({ default: m.YieldCalendarScreen })), { ssr: false, loading: AppLoading })
 const MaisonActivityScreen = dynamic(() => import('./maison/CashScreen').then((m) => ({ default: m.ActivityScreen })), { ssr: false, loading: AppLoading })
@@ -210,7 +213,7 @@ function minimumValue(product: DemoProduct) {
 function isOpenProduct(product: DemoProduct) {
   return /open|daily|market open/i.test(product.availability)
 }
-const protectedScreens: Screen[] = ['portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'basket-subscribe', 'basket-redeem']
+const protectedScreens: Screen[] = ['portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem']
 const routeRequiresAuth = (pathname: string) => resolveRoute(pathname)?.def.auth === 'required'
 
 const homeOpportunities: Array<{ category: DemoCategory; kind: AssetSceneKind }> = [
@@ -261,6 +264,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
     { label: t('wallet.deposit'), path: '/assets/cash/deposit', icon: ArrowDownToLine },
     { label: t('wallet.withdraw'), path: '/assets/cash/withdraw', icon: ArrowUpFromLine },
     { label: t('wallet.transfer'), path: '/assets/cash/transfer', icon: ArrowRightLeft },
+    { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', icon: QrCode },
   ]
   const items: Array<{ id: PrimaryScreen; label: string; icon: typeof House }> = [
     { id: 'home', label: t('nav.home'), icon: House },
@@ -1819,7 +1823,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       }
       ;(document.activeElement as HTMLElement | null)?.blur()
       // Fresh state object: Next only syncs its router for history writes that lack its own `__NA` marker.
-      if (/^\/(?:wallet|assets\/cash)\/(deposit|withdraw|transfer)(?:\/|$)/.test(url.pathname)) captureWalletBackdrop()
+      if (/^\/(?:wallet|assets\/cash)\/(deposit|withdraw|transfer|receive)(?:\/|$)/.test(url.pathname)) captureWalletBackdrop()
       const state = nextNavigationState(Boolean(replace))
       if (replace) window.history.replaceState(state, '', url.pathname + url.search)
       else window.history.pushState(state, '', url.pathname + url.search)
@@ -1845,7 +1849,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       window.sessionStorage.setItem('rwa-overlay-base', screen)
     }
     setProfileBaseScreen(null)
-    if (next === 'deposit' || next === 'withdraw' || next === 'transfer') captureWalletBackdrop()
+    if (next === 'deposit' || next === 'withdraw' || next === 'transfer' || next === 'receive') captureWalletBackdrop()
     setScreen(next)
     setRouteQuery('')
     setRouteParams({})
@@ -1967,11 +1971,10 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   }
   const setAuthenticated = () => { setSessionMode('authenticated'); window.localStorage.setItem('rwa-session-mode', 'authenticated') }
   const setSignedOut = () => setSessionMode('guest')
-  // The Dock stays behind the D3.4 order and wallet sheets so those actions visibly rise from it.
-  const isWalletAction = screen === 'deposit' || screen === 'withdraw' || screen === 'transfer'
-  const isFloatingSheet = screen === 'order-review' || isWalletAction
+  // The order sheet keeps the Dock behind it; funds routes occupy the full screen.
+  const isFloatingSheet = screen === 'order-review'
   const showDock = ['home', 'invest', 'portfolio'].includes(screen) || isFloatingSheet
-  const dockActiveScreen: PrimaryScreen | undefined = screen === 'order-review' ? 'invest' : isWalletAction ? 'portfolio' : undefined
+  const dockActiveScreen: PrimaryScreen | undefined = screen === 'order-review' ? 'invest' : undefined
   const isProtectedWaiting = (protectedScreens.includes(screen) || routeRequiresAuth(routePath || initialPath)) && !sessionReady
   return (
     <>
@@ -1979,7 +1982,6 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
       <main id="main-content" className="rwa-shell" tabIndex={-1}>
       {!isOnline && <div className="connection-banner" role="status"><AlertTriangle size={16} /><span><b>{shellCopy.offlineTitle}</b><small>{shellCopy.offlineBody}</small></span></div>}
       <div className="rwa-mobile" data-theme={theme} data-mode={mode} data-screen={screen} data-dock={showDock ? 'true' : 'false'} data-sheet={isFloatingSheet ? 'true' : 'false'}>
-        {isWalletAction && <WalletPageBackdrop />}
         <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen} motion={navigationMotion}>
         {isProtectedWaiting ? <AppLoading /> : <ScreenRouter screen={screen} routes={{
           welcome: <MaisonBridge page="welcome"><BootScreen go={go} /></MaisonBridge>,
@@ -2022,6 +2024,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'rebalance' && <MaisonRebalanceScreen />}
         {screen === 'statements' && <MaisonStatementsScreen query={routeQuery} />}
         {screen === 'recurring' && <MaisonRecurringScreen />}
+        {screen === 'my-predictions' && <MaisonMyPredictionsScreen />}
         {screen === 'order-review' && <MaisonOrderReviewScreen query={queryParam(routeQuery, 'product') || !isOrderableId(selectedProduct.id) ? routeQuery : `product=${selectedProduct.id}`} />}
         {screen === 'order-processing' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
         {screen === 'order-success' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
@@ -2064,7 +2067,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'legal-center' && <MaisonBridge page="trust"><TrustCenterScreen kind="legal-center" go={go} notify={notify} /></MaisonBridge>}
         </ScreenRouter>}
         </ScreenTransition>
-        {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home'} />}
+        {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home' && screen !== 'invest'} />}
       </div>
       {toast && <div className="toast" role="status"><Check size={17} />{toast}</div>}
       </main>

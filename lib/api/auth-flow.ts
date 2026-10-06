@@ -1,7 +1,16 @@
 import { request, type ApiError } from './_http'
 
-export type AuthFlow = { continuationToken: string; step: 'email' | 'totp' | 'password' | 'consent'; expiresIn: number; retryAfter?: number }
+/** step 'email': `emailRequired` = the account has no email on file yet (GitHub / wallet), so the user adds one
+ *  before the code is sent; `email` = masked address the code went to, for display only. */
+export type AuthFlow = { continuationToken: string; step: 'email' | 'totp' | 'password' | 'consent'; expiresIn: number; retryAfter?: number; emailRequired?: boolean; email?: string }
 const KEY = 'rwa.auth-flow'
+/** Keeps the stored flow in step with in-page progress (e.g. email added) so a reload resumes at the code. */
+export function patchAuthFlow(patch: Partial<Pick<AuthFlow, 'emailRequired' | 'email' | 'retryAfter'>>) {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(KEY) ?? 'null')
+    if (value) sessionStorage.setItem(KEY, JSON.stringify({ ...value, ...patch }))
+  } catch { /* Optional browser storage. */ }
+}
 export function readAuthFlow(): AuthFlow | null {
   try {
     const value = JSON.parse(sessionStorage.getItem(KEY) ?? 'null')
@@ -37,4 +46,7 @@ export const managePassword = (email?: string, reauthentication?: string) => req
 export const changeAccountEmail = (email: string, reauthentication: string) => request('/v1/auth/email/change', { method: 'POST', body: JSON.stringify({ email, reauthentication }) })
 export const completeAuthFlow = (flow: AuthFlow, input: { code?: string; password?: string; consents?: unknown[] }) =>
   request<{ token?: string; userId?: string; sessionId?: string; requiresLogin?: boolean }>('/v1/auth/flow/complete', { method: 'POST', body: JSON.stringify({ continuationToken: flow.continuationToken, ...input }) })
+/** Adds (or replaces) the address for an email step whose account has none; the API sends the code to it. */
+export const submitAuthFlowEmail = (flow: AuthFlow, email: string) =>
+  request<{ retryAfter: number; email?: string }>('/v1/auth/flow/email', { method: 'POST', body: JSON.stringify({ continuationToken: flow.continuationToken, email }) })
 export const resendAuthFlow = (flow: AuthFlow) => request<{ retryAfter: number }>('/v1/auth/flow/resend', { method: 'POST', body: JSON.stringify({ continuationToken: flow.continuationToken }) })

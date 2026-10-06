@@ -3,21 +3,21 @@
 import { ArrowUpRight, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
-import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
-import { isListed, listBaskets, listPairs, listProducts, listRwaAssets, type CatalogProduct, type RwaSort } from '@/lib/api/markets'
+import { isListed, listPairs, listProducts, listRwaAssets, type CatalogProduct, type RwaSort } from '@/lib/api/markets'
 import { fmtUsd, fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { proCopy } from '@/lib/maison-pro-copy'
 import { openPath } from '@/lib/maison-nav'
 import { usePageState } from '@/lib/app-navigation'
 import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
-import { Figure, PollBar, Segmented, StatStrip, TickerTape, useAutoAnimate } from './motion'
+import { Figure, PollBar, Segmented, TickerTape, useAutoAnimate } from './motion'
 import { fmtDate, fmtDateTime } from './format'
-import { HengxuPanel } from './HengxuScreen'
+import { BasketShelf } from './HengxuScreen'
+import { MarketHero } from './MarketHero'
 import { PredictionFeed } from './PredictionFeed'
 
 const TABS = ['predictions', 'baskets', 'trade', 'assets'] as const
@@ -54,7 +54,7 @@ export function MarketsScreen({ query }: { query: string }) {
   // Keep tab + search in the URL without adding history entries per keystroke.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (tab === 'assets') params.delete('tab'); else params.set('tab', tab)
+    params.set('tab', tab)
     if (term) params.set('q', term); else params.delete('q')
     const next = `${window.location.pathname}${params.size ? `?${params}` : ''}`
     if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState({ ...window.history.state, rwaNavigation: Boolean(window.history.state?.rwaNavigation) }, '', next)
@@ -81,17 +81,8 @@ export function MarketsScreen({ query }: { query: string }) {
   })), [directory.data, locale])
   const counts = useMemo(() => Object.fromEntries(CLASSES.map((key) => [key, listed.filter((product) => product.assetClassId !== 'prediction' && (key === 'all' || product.assetClassId === key)).length])), [listed])
 
-  return <MaisonPage page="markets" dock topbar={<RwaTopbar screen="invest" title={m.title} />}>
-    <header className={s.hero}>
-      <p className={s.kicker}><span className={s.liveDot} aria-hidden="true" />{m.kicker}</p>
-      <h1 className={s.display}>{m.title}</h1>
-      <p className={s.lede}>{products.data || directory.data ? fill(m.lede, { n: listed.length, m: directory.data?.total ?? '—' }) : ' '}</p>
-      {(products.data || directory.data) && <StatStrip items={[
-        { label: m.investable, value: products.data ? <Figure value={listed.length} locale={locale} flash={false} /> : '—' },
-        { label: m.directory, value: directory.data ? <Figure value={directory.data.total} locale={locale} flash={false} /> : '—' },
-        { label: pro.time, value: directory.data?.items[0]?.dataTimestamp ? fmtDateTime(directory.data.items[0].dataTimestamp, locale, { timeStyle: 'short' }) : '—' },
-      ]} />}
-    </header>
+  return <MaisonPage page="markets" dock>
+    <MarketHero />
 
     <TickerTape items={tape} label={pro.tape} />
 
@@ -104,7 +95,7 @@ export function MarketsScreen({ query }: { query: string }) {
         {search && <button type="button" onClick={() => setSearch('')} aria-label={copy.common.clear}><X size={14} /></button>}
       </label>
 
-      <SectionHead index="01" title={m.investable} note={m.investableNote} />
+      <SectionHead title={m.investable} note={m.investableNote} />
       <div className={s.chips} role="group" aria-label={m.investable}>
         {CLASSES.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={klass === key} onClick={() => setKlass(key)}>{m.classes[key]}{products.data && <small className={s.num}>{counts[key]}</small>}</button>)}
       </div>
@@ -115,7 +106,7 @@ export function MarketsScreen({ query }: { query: string }) {
           : <StateBlock title={term ? fill(m.noMatch, { q: term }) : copy.common.empty} />}
       </div>
 
-      <SectionHead index="02" title={m.directory} note={m.directoryNote} action={<span style={{ display: 'flex', gap: 12 }}><button type="button" className={s.sectionMore} onClick={() => openPath('/issuers')}>{m.issuers}</button><button type="button" className={s.sectionMore} onClick={() => openPath('/compare')}>{m.compare}</button></span>} />
+      <SectionHead title={m.directory} note={m.directoryNote} action={<span style={{ display: 'flex', gap: 12 }}><button type="button" className={s.sectionMore} onClick={() => openPath('/issuers')}>{m.issuers}</button><button type="button" className={s.sectionMore} onClick={() => openPath('/compare')}>{m.compare}</button></span>} />
       <div className={s.chips} role="group" aria-label={m.directory}>
         {SORTS.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={sort === key} onClick={() => setSort(key)}>{m.sort[key as keyof typeof m.sort]}</button>)}
       </div>
@@ -137,7 +128,7 @@ export function MarketsScreen({ query }: { query: string }) {
       </div>
     </div>}
 
-    {tab === 'baskets' && <BasketsPanel />}
+    {tab === 'baskets' && <BasketShelf />}
     {tab === 'trade' && <TradePanel />}
     {tab === 'predictions' && <PredictionsPanel listed={listed} loading={!products.data && !products.error} />}
   </MaisonPage>
@@ -201,28 +192,6 @@ function ProductCard({ product, tone }: { product: CatalogProduct; tone?: 'lacqu
   </button>
 }
 
-function BasketsPanel() {
-  const { locale } = useI18n()
-  const copy = marketCopy[locale]
-  const pro = proCopy[locale]
-  const baskets = useQuery('markets:baskets', listBaskets, { staleTime: 60_000, pollInterval: POLL.list })
-  return <div className={s.tabPanel} role="tabpanel">
-    <SectionHead index="01" title={copy.markets.tabs[1]} />
-    {!baskets.data && !baskets.error ? <Skeleton rows={2} />
-      : baskets.error && !baskets.data ? <StateBlock tone="error" title={copy.markets.loadError} body={baskets.error.message} retry={baskets.refetch} retryLabel={copy.common.retry} />
-      : baskets.data?.length ? <><div className={s.tableHead} aria-hidden="true"><span>{pro.name}</span><span>{pro.nav} · AUM</span></div><ul className={s.list}>{baskets.data.map((basket) => <li key={basket.id}>
-        <button type="button" className={s.row} onClick={() => openPath(`/basket/${encodeURIComponent(basket.id)}`)}>
-          <Logo name={basket.name || basket.strategyName || 'B'} />
-          <span className={s.rowMain}><b>{basket.name || basket.strategyName || basket.id}</b><small>{[basket.strategyName, basket.riskLevel].filter(Boolean).join(' · ')}</small></span>
-          <span className={s.rowFig}><b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b><small className={s.muted}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</small></span>
-        </button>
-      </li>)}</ul></>
-      : <StateBlock title={copy.markets.basketsEmpty} body={copy.markets.basketsEmptyBody} />}
-
-    <HengxuPanel />
-  </div>
-}
-
 function TradePanel() {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
@@ -232,7 +201,7 @@ function TradePanel() {
   useEffect(() => { if (pairs.data) setBeat((value) => value + 1) }, [pairs.data])
   const [pairList] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
   return <div className={s.tabPanel} role="tabpanel">
-    <SectionHead index="01" title={copy.markets.tabs[2]} note={fill(pro.refresh, { s: POLL.market / 1000 })} />
+    <SectionHead title={copy.markets.tabs[2]} note={fill(pro.refresh, { s: POLL.market / 1000 })} />
     {pairs.data && <PollBar every={POLL.market} stamp={beat} label={fill(pro.refresh, { s: POLL.market / 1000 })} />}
     {!pairs.data && !pairs.error ? <Skeleton />
       : pairs.error && !pairs.data ? <StateBlock tone="error" title={copy.markets.loadError} body={pairs.error.message} retry={pairs.refetch} retryLabel={copy.common.retry} />
@@ -257,7 +226,7 @@ function PredictionsPanel({ listed, loading }: { listed: CatalogProduct[]; loadi
   const orderable = listed.filter((product) => product.assetClassId === 'prediction')
   return <div className={s.tabPanel} role="tabpanel">
     {(loading || orderable.length > 0) && <>
-      <SectionHead index="01" title={m.predictionOpen} />
+      <SectionHead title={m.predictionOpen} />
       {loading ? <Skeleton rows={1} /> : <div className={s.productGrid}>{orderable.map((product) => <ProductCard key={product.id} product={product} tone="lacquer" />)}</div>}
     </>}
     <PredictionFeed />

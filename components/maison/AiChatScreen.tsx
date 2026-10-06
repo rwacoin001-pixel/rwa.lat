@@ -1,5 +1,6 @@
 'use client'
 import { containsWalletSecret } from '@/lib/ai-input-guard'
+import { accountScopesFor } from '@/lib/ai-account-intent'
 import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { aiNavigationLink } from '@/lib/ai-navigation-link'
@@ -7,7 +8,13 @@ import type { Citation, AiQuestion } from '@/lib/api/ai-customer'
 import AiQuestionCard from './AiQuestionCard'
 
 import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
-import { AlertCircle, ChevronLeft, RotateCcw } from 'lucide-react'
+import { AlertCircle, ChevronLeft, RotateCcw, UserRound } from 'lucide-react'
+import { CommunityAvatar } from '../community-avatar'
+import { useCommunityMe } from '../community-compose'
+import { useSignedIn } from '@/hooks/useAccount'
+import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
+import { openPath } from '@/lib/maison-nav'
+import { navigate } from '@/lib/routes'
 import { request, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
 import { aiChatCopy } from '@/lib/maison-content-copy'
@@ -24,6 +31,10 @@ import ParticleLogoIcon from '../particle-logo-icon'
 import { MaisonPage } from './primitives'
 import a from './ai-chat.module.css'
 const LiquidMetal = dynamic(() => import('@paper-design/shaders-react').then(module => module.LiquidMetal), { ssr: false })
+// The 社区 tab loads the feed only when first opened, so the assistant stays light.
+const CommunityFeed = dynamic(() => import('../community-screens').then(module => module.CommunityFeedScreen), { ssr: false })
+const TAB_KEY = 'rwa-ai-tab'
+const memberPath = (id: string) => '/community/member/' + encodeURIComponent(id)
 
 type Message = { id: number; messageId?: string; role: 'user' | 'assistant'; content: string; citations?: Citation[]; questions?: AiQuestion[]; attachments?: AiAttachment[] }
 type SendError = { text: string; tone: 'error' | 'info'; retry: string | null; attachments?: AiAttachment[] }
@@ -124,6 +135,24 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const nextId = useRef(1)
   const end = useRef<HTMLDivElement>(null)
   const dock = useRef<HTMLDivElement>(null)
+  const signedIn = useSignedIn(), me = useCommunityMe(!signedIn)
+  const [tab, setTab] = useState<'ai' | 'community'>('ai')
+  const chromeHidden = useScrollChrome()
+  // Returning from a post or profile restores the tab the reader left.
+  useEffect(() => { try { if (sessionStorage.getItem(TAB_KEY) === 'community') setTab('community') } catch { /* Storage can be blocked. */ } }, [])
+  const switchTab = (next: 'ai' | 'community') => {
+    if (next === tab) { if (next === 'community') window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' }); return }
+    setTab(next); expandChrome()
+    try { sessionStorage.setItem(TAB_KEY, next) } catch { /* Storage can be blocked. */ }
+    requestAnimationFrame(() => { if (next === 'community') window.scrollTo({ top: 0 }); else end.current?.scrollIntoView({ block: 'end' }) })
+  }
+  // The avatar is the reader's community profile (with its edit entry); guests sign in first.
+  const openMe = () => {
+    if (!signedIn) { navigate({ id: 'auth.login' }); return }
+    const id = me?.handle || me?.id
+    if (id) openPath(memberPath(id)); else navigate({ id: 'profile' })
+  }
+  const community = tab === 'community'
 
   useEffect(() => {
     let active = true
@@ -148,7 +177,10 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     const userId = nextId.current++
     setError(null); setSending(true); setRevealId(null); setStarted(true)
     setMessages((current) => [...current, { id: userId, role: 'user', content: message, attachments }])
-    const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(attachments.length ? { attachments } : {}), ...(pageContext ? { context: pageContext } : {}), ...(sessionId ? { sessionId } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
+    // Signed-in readers asking about their own account get only the snapshot slices the question
+    // names; guests never send scopes, so the assistant can only point them to sign in.
+    const accountScopes = signedIn ? accountScopesFor(message) : []
+    const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(attachments.length ? { attachments } : {}), ...(pageContext ? { context: pageContext } : {}), ...(sessionId ? { sessionId } : {}), ...(accountScopes.length ? { accountScopes } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
     // Stop / New chat already settled the UI; a late result from an abandoned request is dropped.
     if (controller.signal.aborted || inflight.current !== controller) return false
     inflight.current = null
@@ -169,7 +201,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     if (answer) { const id = nextId.current++; setRevealId(id); const citations = Array.isArray(data.citations) ? data.citations.filter((c): c is Citation => typeof c?.id === 'string' && typeof c?.title === 'string' && Number.isInteger(c?.revision)) : []; const questions = Array.isArray(data.questions) ? data.questions as AiQuestion[] : []; setMessages((current) => [...current, { id, messageId: typeof data.messageId === 'string' ? data.messageId : undefined, role: 'assistant', content: answer, citations, questions }]); return true }
     else { setMessages(current => current.filter(item => item.id !== userId)); setError({ text: chat.badFormat, tone: 'error', retry: null }) }
     return false
-  }, [chat, locale, sending, sessionId, status, pageContext])
+  }, [chat, locale, sending, sessionId, status, pageContext, signedIn])
 
   // Stopping settles the UI at once rather than waiting for the aborted fetch to unwind.
   const stop = () => {
@@ -188,13 +220,24 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
 
   return <MaisonPage page="ai">
     <div className={a.shell}>
-      <header className={a.bar}>
+      <header className={a.bar} data-hidden={(community && chromeHidden) || undefined} onFocusCapture={expandChrome}>
         <button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><ChevronLeft size={23} strokeWidth={1.85} /></button>
-        <h1 className={a.barTitle}><span>{voiceCopy.title}</span></h1>
-        <span className={a.icon} aria-hidden="true" />
+        <h1 className={a.srOnly}>{community ? voiceCopy.communityTab : voiceCopy.title}</h1>
+        <div className={a.capsule} role="tablist" aria-label={voiceCopy.tabs} data-tab={tab}>
+          <i className={a.capsuleThumb} aria-hidden="true" />
+          <button type="button" role="tab" id="ai-tab-ai" aria-controls="ai-panel-ai" aria-selected={!community} onClick={() => switchTab('ai')}>{voiceCopy.assistantTab}</button>
+          <button type="button" role="tab" id="ai-tab-community" aria-controls="ai-panel-community" aria-selected={community} onClick={() => switchTab('community')}>{voiceCopy.communityTab}</button>
+        </div>
+        <button type="button" className={a.account} aria-label={signedIn ? voiceCopy.account : voiceCopy.signIn} title={signedIn ? voiceCopy.account : voiceCopy.signIn} onClick={openMe}>
+          {signedIn && me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle} size={32} /> : <UserRound size={19} strokeWidth={1.8} aria-hidden="true" />}
+        </button>
       </header>
 
-      <div className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
+      {community && <section id="ai-panel-community" role="tabpanel" aria-labelledby="ai-tab-community" className={a.communityPanel}>
+        <CommunityFeed embedded isGuest={!signedIn} go={(screen) => { if (screen === 'login') navigate({ id: 'auth.login' }); else openPath('/community') }} openPost={(id) => openPath('/community/post/' + encodeURIComponent(id))} openProfile={(id) => openPath(memberPath(id))} />
+      </section>}
+
+      <div id="ai-panel-ai" role="tabpanel" aria-labelledby="ai-tab-ai" hidden={community} className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
         {empty && !started ? <section className={a.welcome} aria-label={voiceCopy.title}>
           <span className={a.welcomeOrb} aria-hidden="true"><LiquidMetal shape="circle" colorBack="#00000000" colorTint={theme === 'light' ? '#D8B89B' : '#B9D5DE'} repetition={2.4} shiftRed={.28} shiftBlue={.28} contour={.45} softness={.65} distortion={1.25} angle={60} speed={reduceMotion ? 0 : 1.25} className={a.orbShader}/></span>
         </section> : <ol className={a.messages}>
@@ -219,7 +262,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
         <div ref={end} className={a.end} style={{ scrollMarginBottom: dockHeight + keyboard + 16 }}/>
       </div>
 
-      <div ref={dock} className={a.dockWrap} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
+      <div ref={dock} className={a.dockWrap} hidden={community} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
         <AiComposer key={generation} value={input} onChange={setInput} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}

@@ -1,11 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ArrowUpRight, Eye, EyeOff } from 'lucide-react'
+import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ArrowUpRight, Eye, EyeOff, QrCode } from 'lucide-react'
 import { motion, useReducedMotion } from 'framer-motion'
 import type { HomeState } from '@/lib/home-lifecycle'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fmtUsd, fromAtomic } from '@/lib/money'
+import { fundsCopy } from '@/lib/maison-funds-copy'
 import { EASE, useSheen } from './maison-motion'
 import styles from '@/components/screens/P04-HomeMaison.module.css'
 
@@ -53,6 +54,7 @@ export function HomePortfolioCard({ state, account, labels, status, ctaLabel, on
     { label: t('wallet.deposit'), path: '/assets/cash/deposit', Icon: ArrowDownToLine },
     { label: t('wallet.withdraw'), path: '/assets/cash/withdraw', Icon: ArrowUpFromLine },
     { label: t('wallet.transfer'), path: '/assets/cash/transfer', Icon: ArrowRightLeft },
+    { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', Icon: QrCode },
   ]
 
   return <motion.div ref={cardRef} className={styles.card} data-lifecycle={state.lifecycle} data-account={Boolean(account)} initial={reduced ? false : { opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .8, ease: EASE, delay: .25 }}>

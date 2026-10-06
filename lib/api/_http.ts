@@ -95,7 +95,7 @@ export async function request<T>(path: string, options: RequestInit & { idempote
   headers.set('x-request-id', crypto.randomUUID())
   if (token) headers.set('Authorization', `Bearer ${token}`)
   // Carry the signed landing attribution across the app/API domains for registration and OAuth.
-  if (/^\/v1\/auth\/(?:register\/email|wallet\/verify|oauth\/(?:google|x)(?:\/start)?)$/.test(path) && typeof window !== 'undefined') {
+  if (/^\/v1\/auth\/(?:register\/email|wallet\/verify|oauth\/(?:google|github|x)(?:\/start)?)$/.test(path) && typeof window !== 'undefined') {
     try {
       const attribution = await fetch('/api/referral/attribution', { cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(3000) }).then(r => r.ok ? r.json() : null)
       if (typeof attribution?.token === 'string') headers.set('x-referral-attribution', attribution.token)
@@ -122,6 +122,12 @@ export async function request<T>(path: string, options: RequestInit & { idempote
     const error = parseApiError(response.status, body, response.headers)
     if (response.status === 401 && shouldExpireSessionOn401(path, Boolean(token), error.code)) handleSessionUnauthorized()
     if (isKycEligibilityError(error) && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('rwa:kyc-required', { detail: error }))
+    // A money-moving action asked a signed-in account (GitHub / wallet) to add an email first:
+    // bind it on /auth/continue, then come back here so the user can confirm the action again.
+    if (error.code === 'AUTH_FLOW_REQUIRED' && token && !path.startsWith('/v1/auth/') && typeof window !== 'undefined') {
+      try { sessionStorage.setItem('rwa.return-to', window.location.pathname + window.location.search) } catch { /* Optional browser storage. */ }
+      void import('./auth-flow').then(flow => flow.continueAuth(error))
+    }
     return { ok: false, error }
   } catch (error) {
     return { ok: false, error: { status: 0, code: timedOut ? 'REQUEST_TIMEOUT' : error instanceof Error && error.name === 'AbortError' ? 'ABORTED' : 'NETWORK_ERROR', message: timedOut ? '请求超时，请重试' : '网络不可用，请重试' } }

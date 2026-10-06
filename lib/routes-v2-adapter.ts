@@ -51,6 +51,7 @@ const KEY_TO_SCREEN: Partial<Record<RouteKey, RwaScreen>> = {
   yieldCalendar: 'yield-calendar',
   rebalance: 'rebalance',
   recurring: 'recurring',
+  myPredictions: 'my-predictions',
   orderReview: 'order-review',
   orderStatus: 'order-processing',
   orderDetail: 'order-detail',

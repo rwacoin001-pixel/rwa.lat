@@ -1,0 +1,14 @@
+/* Basket holdings on /assets only. Inherits the Maison tokens (deep and light brand styles) from the page root. */
+
+.fig { min-width: 0; max-width: min(46vw, 11.5rem); }
+.fig b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quality { color: var(--m-warn); font-weight: 600; line-height: 1.3; white-space: normal; overflow-wrap: anywhere; }
+
+.line { font-variant-numeric: tabular-nums; }
+.line bdi { unicode-bidi: isolate; }
+
+.hint { margin: 10px 2px 0; color: var(--m-muted); font-size: 11.5px; line-height: 1.5; }
+
+@media (max-width: 359px) {
+  .fig { max-width: 40vw; }
+}

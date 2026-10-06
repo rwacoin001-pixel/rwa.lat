@@ -44,9 +44,16 @@ export type PredictionBet = {
   tokenId: string
   side: string
   stakeAtomic: string
+  feeAtomic?: string
+  payoutFeeAtomic?: string
+  riskStakeAtomic?: string
   shares: string
   price: string
   status: 'placed' | 'won' | 'lost' | 'void' | string
+  /** toBetView() 返回；市场映射查不到时为 null，旧后端则缺失。 */
+  marketQuestion?: string | null
+  marketSlug?: string | null
+  tokenOutcome?: string | null
   settledAt: string | null
   createdAt: string
 }

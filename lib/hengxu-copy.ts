@@ -20,6 +20,15 @@ export type HengxuCopy = {
   heroCaption: string; notFound: string; notFoundBody: string; back: string
   prev: string; next: string; jump: string; sleeves: Record<HengxuSleeve, string>
   empty: string
+  /** Markets → Baskets: live portfolios and the series in one list. */
+  shelf: { kicker: string; title: string; lede: string; open: string; openNote: string; candidates: string }
+  /** Intro and CTA note once at least one strategy is listed, replacing the "nothing is issued" wording. */
+  ledeLive: string; listedNote: string
+  terms: {
+    mgmtFee: string; subFee: string; redFee: string; perYear: string; days: string; provisional: string
+    benchmark: string; target: string; scenario: string; nav: string; notPromise: string
+    conditions: string; blocked: string; closed: string
+  }
 }
 
 const enSleeves: Record<HengxuSleeve, string> = {
@@ -50,6 +59,19 @@ const en: HengxuCopy = {
   heroCaption: 'Concept artwork. Not an asset or reserve proof.', notFound: 'Strategy not found', notFoundBody: 'This Hengxu strategy does not exist.', back: 'Back to Hengxu',
   prev: 'Previous', next: 'Next', jump: 'On this page', sleeves: enSleeves,
   empty: 'No strategies in this view.',
+  shelf: {
+    kicker: 'Portfolios · Baskets', title: 'Every portfolio, one list',
+    lede: 'Live portfolios subscribe at NAV. The Hengxu series is arranged by when you need the money and moves into Open once listed.',
+    open: 'Open', openNote: 'Subscribe and redeem at the latest NAV per unit', candidates: 'Candidates',
+  },
+  ledeLive: 'From 30-day cash to holdings of five years or more. Listed strategies can be subscribed; the rest are still candidates or in research.',
+  listedNote: 'Read the product disclosure and risk statement before subscribing. Past performance does not indicate future results.',
+  terms: {
+    mgmtFee: 'Management fee', subFee: 'Subscription fee', redFee: 'Redemption fee', perYear: '/yr', days: '{n} days', provisional: 'Proposed · to be confirmed',
+    benchmark: 'Performance benchmark', target: 'Long-run central range', scenario: 'Scenario analysis', nav: 'NAV disclosure',
+    notPromise: 'The benchmark, central range and scenarios only describe the risk and return profile. They are not a promise or an expected return, and short track records are never annualised.',
+    conditions: 'Conditions for launch', blocked: 'Not launching yet', closed: 'Not open',
+  },
 }
 
 const zh: HengxuCopy = {
@@ -79,6 +101,19 @@ const zh: HengxuCopy = {
     semis: '半导体', cloud: '云与网络', power: '电力和数据中心设备', issued: '平台自发行资产代币', tbillCash: '超短债及现金',
   },
   empty: '当前筛选下没有策略。',
+  shelf: {
+    kicker: '组合 · 篮子', title: '所有组合，一张清单',
+    lede: '已上线组合按单位净值申购；衡序系列按用钱的时间排列，上线后自动进入「可申购」。',
+    open: '可申购', openNote: '按最新单位净值申购与赎回', candidates: '候选',
+  },
+  ledeLive: '从 30 天的短期资金到五年以上的长期持有。已上线的策略可直接认购，其余仍在候选或研究阶段。',
+  listedNote: '认购前请阅读产品披露与风险说明。过往表现不代表未来收益。',
+  terms: {
+    mgmtFee: '管理费', subFee: '申购费', redFee: '赎回费', perYear: '/年', days: '{n} 天', provisional: '拟定 · 待确认',
+    benchmark: '业绩比较基准', target: '长期中枢区间', scenario: '情景分析', nav: '净值披露',
+    notPromise: '业绩比较基准、中枢区间与情景分析仅用于说明风险收益特征，不是收益承诺，也不是预期收益；短期历史不做年化外推。',
+    conditions: '上线条件', blocked: '暂不上线', closed: '暂不可认购',
+  },
 }
 
 const hi: HengxuCopy = {
@@ -100,6 +135,19 @@ const hi: HengxuCopy = {
   learn: 'रणनीति देखें', soon: 'जल्द आ रहा है', subscribe: 'सदस्यता देखें', ctaNote: 'अवधारणा मसौदा। प्रस्ताव, रिटर्न पूर्वानुमान या संपत्ति प्रमाण नहीं।',
   heroCaption: 'अवधारणा चित्र। संपत्ति या रिज़र्व प्रमाण नहीं।', notFound: 'रणनीति नहीं मिली', notFoundBody: 'यह हेंगशू रणनीति मौजूद नहीं है।', back: 'हेंगशू पर लौटें',
   prev: 'पिछली', next: 'अगली', jump: 'इस पृष्ठ पर', empty: 'इस दृश्य में कोई रणनीति नहीं।',
+  shelf: {
+    kicker: 'पोर्टफोलियो · बास्केट', title: 'सभी पोर्टफोलियो, एक सूची',
+    lede: 'लाइव पोर्टफोलियो NAV पर सब्सक्राइब होते हैं। हेंगशू श्रृंखला पैसे की ज़रूरत के समय के अनुसार है और सूचीबद्ध होते ही "खुला" में आती है।',
+    open: 'खुला', openNote: 'नवीनतम प्रति यूनिट NAV पर सदस्यता और रिडेम्प्शन', candidates: 'उम्मीदवार',
+  },
+  ledeLive: '30 दिन की नकदी से पाँच साल+ की होल्डिंग तक। सूचीबद्ध रणनीतियों में सदस्यता ली जा सकती है; बाकी उम्मीदवार या शोध में हैं।',
+  listedNote: 'सदस्यता से पहले उत्पाद प्रकटीकरण और जोखिम विवरण पढ़ें। पिछला प्रदर्शन भविष्य के परिणामों का संकेत नहीं है।',
+  terms: {
+    mgmtFee: 'प्रबंधन शुल्क', subFee: 'सदस्यता शुल्क', redFee: 'रिडेम्प्शन शुल्क', perYear: '/वर्ष', days: '{n} दिन', provisional: 'प्रस्तावित · पुष्टि बाकी',
+    benchmark: 'प्रदर्शन बेंचमार्क', target: 'दीर्घकालिक केंद्रीय दायरा', scenario: 'परिदृश्य विश्लेषण', nav: 'NAV प्रकटीकरण',
+    notPromise: 'बेंचमार्क, केंद्रीय दायरा और परिदृश्य केवल जोखिम और रिटर्न का स्वरूप बताते हैं; ये न वादा हैं, न अपेक्षित रिटर्न। छोटे इतिहास को वार्षिक नहीं किया जाता।',
+    conditions: 'लॉन्च की शर्तें', blocked: 'अभी लॉन्च नहीं', closed: 'सदस्यता बंद',
+  },
 }
 
 const es: HengxuCopy = {
@@ -121,6 +169,19 @@ const es: HengxuCopy = {
   learn: 'Ver estrategia', soon: 'Próximamente', subscribe: 'Ver suscripción', ctaNote: 'Borrador conceptual. No es una oferta, previsión de rendimiento ni prueba de activos.',
   heroCaption: 'Imagen conceptual. No prueba activos ni reservas.', notFound: 'Estrategia no encontrada', notFoundBody: 'Esta estrategia Hengxu no existe.', back: 'Volver a Hengxu',
   prev: 'Anterior', next: 'Siguiente', jump: 'En esta página', empty: 'No hay estrategias en esta vista.',
+  shelf: {
+    kicker: 'Carteras · Cestas', title: 'Todas las carteras, una lista',
+    lede: 'Las carteras activas se suscriben al valor liquidativo. La serie Hengxu se ordena por cuándo necesitas el dinero y pasa a «Abiertas» al listarse.',
+    open: 'Abiertas', openNote: 'Suscripción y rescate al último valor liquidativo por unidad', candidates: 'Candidatas',
+  },
+  ledeLive: 'Desde liquidez a 30 días hasta cinco años o más. Las estrategias listadas admiten suscripción; el resto siguen como candidatas o en estudio.',
+  listedNote: 'Lee la divulgación del producto y la declaración de riesgos antes de suscribir. La rentabilidad pasada no garantiza resultados futuros.',
+  terms: {
+    mgmtFee: 'Comisión de gestión', subFee: 'Comisión de suscripción', redFee: 'Comisión de rescate', perYear: '/año', days: '{n} días', provisional: 'Propuesta · por confirmar',
+    benchmark: 'Índice de referencia', target: 'Rango central a largo plazo', scenario: 'Análisis de escenarios', nav: 'Publicación del valor liquidativo',
+    notPromise: 'El índice de referencia, el rango central y los escenarios solo describen el perfil de riesgo y rendimiento. No son una promesa ni un rendimiento esperado, y los historiales cortos nunca se anualizan.',
+    conditions: 'Condiciones para el lanzamiento', blocked: 'Aún no se lanza', closed: 'Sin suscripción',
+  },
 }
 
 const ar: HengxuCopy = {
@@ -142,6 +203,19 @@ const ar: HengxuCopy = {
   learn: 'استكشف الاستراتيجية', soon: 'قريبًا', subscribe: 'عرض الاكتتاب', ctaNote: 'مسودة مفاهيمية. ليست عرضًا ولا توقعًا للعائد ولا إثباتًا للأصول.',
   heroCaption: 'صورة مفاهيمية، لا تثبت أصولًا أو احتياطيات.', notFound: 'الاستراتيجية غير موجودة', notFoundBody: 'لا توجد هذه الاستراتيجية في سلسلة هنغشو.', back: 'العودة إلى هنغشو',
   prev: 'السابقة', next: 'التالية', jump: 'في هذه الصفحة', empty: 'لا توجد استراتيجيات في هذا العرض.',
+  shelf: {
+    kicker: 'المحافظ · السلال', title: 'كل المحافظ في قائمة واحدة',
+    lede: 'يُكتتب في المحافظ النشطة بصافي قيمة الأصول. سلسلة هنغشو مرتبة حسب موعد حاجتك إلى المال، وتنتقل إلى «متاحة» عند إدراجها.',
+    open: 'متاحة', openNote: 'الاكتتاب والاسترداد بآخر صافي قيمة للوحدة', candidates: 'مرشحة',
+  },
+  ledeLive: 'من سيولة 30 يومًا حتى الاحتفاظ لخمس سنوات فأكثر. الاستراتيجيات المدرجة متاحة للاكتتاب، والبقية مرشحة أو قيد البحث.',
+  listedNote: 'اقرأ إفصاح المنتج وبيان المخاطر قبل الاكتتاب. الأداء السابق لا يدل على النتائج المستقبلية.',
+  terms: {
+    mgmtFee: 'رسوم الإدارة', subFee: 'رسوم الاكتتاب', redFee: 'رسوم الاسترداد', perYear: '/سنة', days: '{n} يوم', provisional: 'مقترح · قيد التأكيد',
+    benchmark: 'المؤشر المرجعي للأداء', target: 'النطاق المركزي طويل الأجل', scenario: 'تحليل السيناريوهات', nav: 'الإفصاح عن صافي قيمة الأصول',
+    notPromise: 'المؤشر المرجعي والنطاق المركزي والسيناريوهات تصف طبيعة المخاطر والعائد فقط، وليست وعدًا ولا عائدًا متوقعًا، ولا يُحوَّل السجل القصير إلى عائد سنوي.',
+    conditions: 'شروط الإطلاق', blocked: 'لم يُطلق بعد', closed: 'الاكتتاب غير متاح',
+  },
 }
 
 const fr: HengxuCopy = {
@@ -163,6 +237,19 @@ const fr: HengxuCopy = {
   learn: 'Découvrir la stratégie', soon: 'Bientôt', subscribe: 'Voir la souscription', ctaNote: 'Brouillon conceptuel. Ni offre, ni prévision de rendement, ni preuve d’actifs.',
   heroCaption: 'Visuel conceptuel. Pas une preuve d’actifs ou de réserves.', notFound: 'Stratégie introuvable', notFoundBody: 'Cette stratégie Hengxu n’existe pas.', back: 'Retour à Hengxu',
   prev: 'Précédente', next: 'Suivante', jump: 'Sur cette page', empty: 'Aucune stratégie dans cette vue.',
+  shelf: {
+    kicker: 'Portefeuilles · Paniers', title: 'Tous les portefeuilles, une seule liste',
+    lede: 'Les portefeuilles actifs se souscrivent à la VL. La série Hengxu est classée selon le moment où vous aurez besoin de l’argent et passe dans « Ouverts » une fois listée.',
+    open: 'Ouverts', openNote: 'Souscription et rachat à la dernière VL par part', candidates: 'Candidates',
+  },
+  ledeLive: 'De la trésorerie à 30 jours aux placements de cinq ans et plus. Les stratégies listées sont ouvertes à la souscription ; les autres restent candidates ou en recherche.',
+  listedNote: 'Lisez le document d’information et l’avertissement sur les risques avant de souscrire. Les performances passées ne préjugent pas des résultats futurs.',
+  terms: {
+    mgmtFee: 'Frais de gestion', subFee: 'Frais de souscription', redFee: 'Frais de rachat', perYear: '/an', days: '{n} jours', provisional: 'Proposé · à confirmer',
+    benchmark: 'Indice de référence', target: 'Fourchette centrale à long terme', scenario: 'Analyse de scénarios', nav: 'Publication de la VL',
+    notPromise: 'L’indice de référence, la fourchette centrale et les scénarios décrivent seulement le profil risque/rendement. Ce n’est ni une promesse ni un rendement attendu, et les historiques courts ne sont jamais annualisés.',
+    conditions: 'Conditions de lancement', blocked: 'Pas encore lancé', closed: 'Souscription fermée',
+  },
 }
 
 const pt: HengxuCopy = {
@@ -184,6 +271,19 @@ const pt: HengxuCopy = {
   learn: 'Conhecer a estratégia', soon: 'Em breve', subscribe: 'Ver subscrição', ctaNote: 'Rascunho conceitual. Não é oferta, previsão de retorno nem prova de ativos.',
   heroCaption: 'Imagem conceitual. Não prova ativos nem reservas.', notFound: 'Estratégia não encontrada', notFoundBody: 'Esta estratégia Hengxu não existe.', back: 'Voltar ao Hengxu',
   prev: 'Anterior', next: 'Próxima', jump: 'Nesta página', empty: 'Nenhuma estratégia nesta visualização.',
+  shelf: {
+    kicker: 'Carteiras · Cestas', title: 'Todas as carteiras, uma lista',
+    lede: 'Carteiras ativas são subscritas pelo valor da cota. A série Hengxu é ordenada por quando você vai precisar do dinheiro e passa para «Abertas» ao ser listada.',
+    open: 'Abertas', openNote: 'Subscrição e resgate pelo último valor da cota', candidates: 'Candidatas',
+  },
+  ledeLive: 'Do caixa de 30 dias a posições de cinco anos ou mais. Estratégias listadas aceitam subscrição; as demais seguem como candidatas ou em pesquisa.',
+  listedNote: 'Leia a divulgação do produto e o aviso de riscos antes de subscrever. Desempenho passado não garante resultados futuros.',
+  terms: {
+    mgmtFee: 'Taxa de administração', subFee: 'Taxa de subscrição', redFee: 'Taxa de resgate', perYear: '/ano', days: '{n} dias', provisional: 'Proposta · a confirmar',
+    benchmark: 'Índice de referência', target: 'Faixa central de longo prazo', scenario: 'Análise de cenários', nav: 'Divulgação da cota',
+    notPromise: 'O índice de referência, a faixa central e os cenários apenas descrevem o perfil de risco e retorno. Não são promessa nem retorno esperado, e históricos curtos nunca são anualizados.',
+    conditions: 'Condições para lançamento', blocked: 'Ainda não lançado', closed: 'Sem subscrição',
+  },
 }
 
 export const hengxuCopy: Record<AppLocale, HengxuCopy> = { en, 'zh-CN': zh, hi, es, ar, fr, pt }

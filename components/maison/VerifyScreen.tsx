@@ -131,7 +131,6 @@ export function VerificationCenterScreen() {
           <b className={s.num}>{loaded ? count : '·'}<small>/3</small></b>
         </span>
       </div>
-      <span className={s.credChip} aria-hidden="true"><i /><i /><i /></span>
       <div className={s.credMain}>
         <small>{t.access}</small>
         <b>{accessTitle}</b>

@@ -1,8 +1,8 @@
 'use client'
 
-import { AlertTriangle, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, BookUser, Check, ChevronRight, Copy, Info, X } from 'lucide-react'
+import { AlertTriangle, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, BookUser, Check, ChevronRight, Copy, Info, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
-import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -10,11 +10,14 @@ import { getDepositAddress, getWalletDetail, ledgerDeltas, ledgerGroup, ledgerHe
 import { fromAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { walletCopy } from '@/lib/maison-wallet-copy'
+import { fundsCopy } from '@/lib/maison-funds-copy'
 import { backOr, openPath, queryParam } from '@/lib/maison-nav'
 import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Figure, Lacquer, Segmented, StatStrip, useAutoAnimate } from './motion'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
-import helpStyles from './deposit-help.module.css'
+import { Sheet } from './Sheet'
+import fp from './funds-polish.module.css'
+import fs from './funds-fullscreen.module.css'
 
 const DECIMALS = 6
 const ZERO = BigInt(0)
@@ -42,10 +45,7 @@ export function CashScreen() {
   const [funding] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
 
   return <MaisonPage page="cash" dock topbar={<RwaTopbar screen="wallet" title={c.title} onBack={() => backOr('/assets')} />}>
-    <header className={s.hero}>
-      <p className={s.kicker}><span className={s.liveDot} aria-hidden="true" />{c.kicker}</p>
-      <h1 className={s.display}>{c.title}</h1>
-    </header>
+    <h1 className={fp.srTitle}>{c.title}</h1>
 
     {wallet.error && !wallet.data ? <StateBlock tone="error" title={common.errorGeneric} body={wallet.error.message} retry={wallet.refetch} retryLabel={common.retry} />
       : <Lacquer aria-live="polite">
@@ -64,11 +64,14 @@ export function CashScreen() {
       <button type="button" onClick={() => openPath('/assets/cash/deposit')}><span><ArrowDownToLine size={18} /></span>{c.deposit}</button>
       <button type="button" onClick={() => openPath('/assets/cash/withdraw')}><span><ArrowUpFromLine size={18} /></span>{c.withdraw}</button>
       <button type="button" onClick={() => openPath('/assets/cash/transfer')}><span><ArrowRightLeft size={18} /></span>{c.transfer}</button>
-      <button type="button" onClick={() => openPath('/assets/cash/address-book')}><span><BookUser size={18} /></span>{c.addressBook}</button>
+      <button type="button" onClick={() => openPath('/assets/cash/receive')}><span><QrCode size={18} /></span>{fundsCopy[locale].receive.action}</button>
+    </div>
+    <div className={fp.cashLinks}>
+      <button type="button" className={s.link} onClick={() => openPath('/assets/cash/address-book')}><BookUser size={14} aria-hidden="true" />{c.addressBook}<ChevronRight size={14} aria-hidden="true" /></button>
     </div>
     {integration && !integration.realFunds && <div className={s.notice} data-tone="info"><Info size={16} /><span><b>{c.testMode}</b> · {c.testModeBody}</span></div>}
 
-    <SectionHead index="01" title={c.networks} note={c.networksNote} />
+    <SectionHead title={c.networks} note={c.networksNote} />
     {networks.error && !networks.data ? <StateBlock tone="error" title={c.loadError} body={networks.error.message} retry={networks.refetch} retryLabel={common.retry} />
       : !networks.data ? <Skeleton rows={3} />
       : <>
@@ -81,7 +84,7 @@ export function CashScreen() {
         </li>)}</ul>
       </>}
 
-    <SectionHead index="02" title={c.funding} note={c.fundingNote} />
+    <SectionHead title={c.funding} note={c.fundingNote} />
     {wallet.error && !wallet.data ? <StateBlock tone="error" title={c.loadError} retry={wallet.refetch} retryLabel={common.retry} />
       : !wallet.data ? <Skeleton rows={3} />
       : !wallet.data.recentActivity.length ? <StateBlock title={c.fundingEmpty} body={c.fundingEmptyBody} />
@@ -92,7 +95,7 @@ export function CashScreen() {
         </div>
       </li>)}</ul>}
 
-    <SectionHead index="03" title={c.ledger} note={c.ledgerNote} action={<button type="button" className={s.sectionMore} onClick={() => openPath('/assets/activity')}>{c.viewAll}<ChevronRight size={14} /></button>} />
+    <SectionHead title={c.ledger} note={c.ledgerNote} action={<button type="button" className={s.sectionMore} onClick={() => openPath('/assets/activity')}>{c.viewAll}<ChevronRight size={14} /></button>} />
     {ledger.error && !ledger.data ? <StateBlock tone="error" title={c.loadError} body={ledger.error.message} retry={ledger.refetch} retryLabel={common.retry} />
       : !ledger.data ? <Skeleton rows={3} />
       : <LedgerRows rows={ledger.data.transactions.slice(0, 5)} />}
@@ -187,6 +190,7 @@ export function DepositScreen({ query }: { query: string }) {
   const c = w.cash
   const common = marketCopy[locale].common
   const networks = useQuery('wallet:networks', listNetworks, { staleTime: 300_000 })
+  const wallet = useQuery('wallet:detail', getWalletDetail, { staleTime: 15_000 })
   const [picked, setPicked] = useState<string | null>(() => queryParam(query, 'network'))
   const list = networks.data?.networks ?? []
   const network = list.find((item) => item.id === picked) ?? list[0]
@@ -195,17 +199,8 @@ export function DepositScreen({ query }: { query: string }) {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [helpOpen, setHelpOpen] = useState(false)
-  const helpDialog = useRef<HTMLDialogElement>(null)
-  const helpTitle = useId()
   const inflight = useRef(false)
   const address = network ? addresses[network.id] : undefined
-  // Native top layer preserves Maison tokens and escapes route-animation transforms.
-  useEffect(() => {
-    const dialog = helpDialog.current
-    if (!dialog) return
-    if (helpOpen && !dialog.open) dialog.showModal()
-    else if (!helpOpen && dialog.open) dialog.close()
-  }, [helpOpen])
 
   const choose = (id: string) => {
     setPicked(id)
@@ -233,53 +228,50 @@ export function DepositScreen({ query }: { query: string }) {
   }
   const topbar = <RwaTopbar screen="deposit" title={d.title} r2={network ? 'info' : null} action={network ? { label: d.before, Icon: Info, onClick: () => setHelpOpen(true) } : undefined} onBack={() => backOr('/assets/cash')} />
 
-  return <MaisonPage page="deposit" topbar={topbar}>
-    <header className={s.hero}>
-      <p className={s.kicker}>{d.kicker}</p>
-      <h1 className={s.titleL}>{d.title}</h1>
-    </header>
+  return <MaisonPage page="deposit" className={fs.page} topbar={topbar}>
+    <h1 className={fp.srTitle}>{d.title}</h1>
+    {wallet.data && <p className={fp.balance}><span>{c.available}</span><b dir="ltr">{bare(wallet.data.balances.availableAtomic)} {wallet.data.asset.code}</b></p>}
     {networks.error && !networks.data ? <StateBlock tone="error" title={common.errorGeneric} body={networks.error.message} retry={networks.refetch} retryLabel={common.retry} />
       : !network ? <Skeleton rows={4} />
       : <>
-        <p className={s.kicker}>{d.network}</p>
-        <Segmented value={network.id} onChange={choose} label={d.network} role="group" options={list.map((item) => ({ value: item.id, label: item.displayName }))} />
-        <StatStrip fit items={[
-          { label: `${c.minDeposit} · ${network.assetCode}`, value: fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, '', 2).trim() },
-          { label: c.confirmations, value: String(network.requiredConfirmations) },
-          { label: c.eta, value: fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') }) },
-        ]} />
-        <div className={s.notice}><AlertTriangle size={16} /><span><b>{d.before}</b> · {network.warning}</span></div>
-
-        <Lacquer style={{ marginTop: 18 }} aria-live="polite">
-          <span className={s.kicker}>{d.address} · {network.displayName}</span>
-          {address ? <div className={s.addressCard}>
-            <div className={s.qr} role="img" aria-label={d.qr}><QRCodeSVG value={address.address} size={132} bgColor="transparent" fgColor="currentColor" level="M" /></div>
-            <p className={s.mono} dir="ltr" data-address="">{address.address}</p>
-            {address.memo && <p className={s.muted} dir="ltr" style={{ margin: 0, fontSize: 12 }}>{d.memo}: <span className={s.mono}>{address.memo}</span></p>}
-            <button type="button" className={s.ghost} onClick={copy} aria-live="polite">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? d.copied : d.copy}</button>
+        <div className={fp.touchSeg}><Segmented value={network.id} onChange={choose} label={d.network} role="group" options={list.map((item) => ({ value: item.id, label: item.displayName }))} /></div>
+        <p className={fs.net}><span>{d.network}</span><b>{network.displayName}</b></p>
+        <dl className={`${s.summary} ${fs.rows}`}>
+          <div><dt>{c.minDeposit} · {network.assetCode}</dt><dd className={s.num}>{fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, '', 2).trim()}</dd></div>
+          <div><dt>{c.confirmations}</dt><dd className={s.num}>{network.requiredConfirmations}</dd></div>
+          <div><dt>{c.eta}</dt><dd className={s.num}>{fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') })}</dd></div>
+        </dl>
+        <div aria-live="polite">
+          {address ? <>
+            <div className={fs.qrWrap}><div className={fs.qr} role="img" aria-label={d.qr}><QRCodeSVG value={address.address} size={232} bgColor="transparent" fgColor="#16130f" level="M" /></div></div>
+            <div className={fs.addrRow}>
+              <div><small>{d.address} · {network.displayName}</small><p className={`${s.mono} ${fs.addrText}`} dir="ltr" data-address="">{address.address}</p></div>
+              <button type="button" className={s.ghost} onClick={copy} aria-live="polite">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? d.copied : d.copy}</button>
+            </div>
+            {address.memo && <div className={fs.addrRow}><div><small>{d.memo}</small><p className={`${s.mono} ${fs.addrText}`} dir="ltr">{address.memo}</p></div></div>}
+          </>
+            : <div className={fs.empty}>
+              <span>{d.address} · {network.displayName}</span>
+              <button type="button" className={s.cta} onClick={reveal} disabled={pending} aria-busy={pending}><span>{pending ? d.revealing : d.reveal}</span><span className={s.ctaIcon}><ArrowDownToLine size={17} /></span></button>
+            </div>}
+          {error && <div className={`${s.notice} ${fs.note}`} data-tone="error" role="alert"><AlertTriangle size={16} aria-hidden="true" /><span>{d.loadError} · {error} · <button type="button" className={s.link} style={{ minHeight: 44 }} onClick={reveal}>{common.retry}</button></span></div>}
+        </div>
+        {(address?.integration ?? networks.data?.integration)?.realFunds === false && <div className={`${s.notice} ${fs.note}`} data-tone="info"><Info size={16} /><span>{d.testAddress}</span></div>}
+        <details className={fs.more}>
+          <summary><span><AlertTriangle size={15} aria-hidden="true" />{d.before}</span></summary>
+          <div className={fs.moreBody}>
+            <p className={fs.warning}>{network.warning}</p>
+            <p>{fill(d.afterNote, { n: String(network.requiredConfirmations) })}</p>
           </div>
-            : <button type="button" className={s.cta} style={{ marginTop: 14 }} onClick={reveal} disabled={pending} aria-busy={pending}><span>{pending ? d.revealing : d.reveal}</span><span className={s.ctaIcon}><ArrowDownToLine size={17} /></span></button>}
-          {error && <p className={s.muted} role="alert" style={{ margin: '12px 0 0', fontSize: 12 }}>{d.loadError} · {error} · <button type="button" className={s.link} onClick={reveal}>{common.retry}</button></p>}
-        </Lacquer>
-        {(address?.integration ?? networks.data?.integration)?.realFunds === false && <div className={s.notice} data-tone="info"><Info size={16} /><span>{d.testAddress}</span></div>}
-        <p className={s.foot}><span>{fill(d.afterNote, { n: String(network.requiredConfirmations) })}</span></p>
-        <button type="button" className={s.link} style={{ marginTop: 12 }} onClick={() => openPath('/assets/cash')}>{d.backCash}<ChevronRight size={13} /></button>
+        </details>
       </>}
-    {network && <dialog ref={helpDialog} className={helpStyles.help} aria-labelledby={helpTitle} onClose={() => setHelpOpen(false)} onCancel={() => setHelpOpen(false)} onClick={(event) => {
-      if (event.target !== event.currentTarget) return
-      const box = event.currentTarget.getBoundingClientRect()
-      if (event.clientX < box.left || event.clientX > box.right || event.clientY < box.top || event.clientY > box.bottom) setHelpOpen(false)
-    }}>
-      <i className={s.sheetGrip} aria-hidden="true" />
-      <div className={helpStyles.head}><h2 id={helpTitle} className={s.sheetTitle}>{d.before}</h2><button type="button" className={helpStyles.close} onClick={() => setHelpOpen(false)} aria-label={common.close}><X size={20} /></button></div>
-      <p className={helpStyles.network}>{network.assetCode} · {network.displayName}</p>
-      <dl className={helpStyles.facts}>
-        <div><dt>{c.minDeposit}</dt><dd>{fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, network.assetCode, 2)}</dd></div>
-        <div><dt>{c.confirmations}</dt><dd>{network.requiredConfirmations}</dd></div>
-        <div><dt>{c.eta}</dt><dd>{fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') })}</dd></div>
+    {network && <Sheet open={helpOpen} onClose={() => setHelpOpen(false)} kicker={`${network.assetCode} · ${network.displayName}`} title={d.before}>
+      <dl className={s.summary} style={{ marginTop: 14 }}>
+        <div><dt>{c.minDeposit}</dt><dd className={s.num}>{fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, network.assetCode, 2)}</dd></div>
+        <div><dt>{c.confirmations}</dt><dd className={s.num}>{network.requiredConfirmations}</dd></div>
+        <div><dt>{c.eta}</dt><dd className={s.num}>{fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') })}</dd></div>
       </dl>
-      <p className={helpStyles.warning}><AlertTriangle size={17} aria-hidden="true" /><span>{network.warning}</span></p>
-      {(address?.integration ?? networks.data?.integration)?.realFunds === false && <p className={helpStyles.warning}><Info size={17} aria-hidden="true" /><span>{d.testAddress}</span></p>}
-    </dialog>}
+      <p className={s.foot}><Info size={13} aria-hidden="true" /><span>{fill(d.afterNote, { n: String(network.requiredConfirmations) })}</span></p>
+    </Sheet>}
   </MaisonPage>
 }

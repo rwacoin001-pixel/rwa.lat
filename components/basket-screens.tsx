@@ -8,6 +8,7 @@ import { request } from '@/lib/api/_http'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import { useI18n } from '@/lib/i18n'
 import RwaTopbar from './rwa-topbar'
+import NoticeBanner from './notice-banner'
 
 export type BasketKind = 'list' | 'detail' | 'subscribe' | 'redeem' | 'disclosures' | 'recommend'
 type JsonRecord = Record<string, unknown>
@@ -31,12 +32,65 @@ function SelectField({ label, value, onChange, options }: { label: string; value
   return <label className="basket-field"><span>{label}</span><select value={value} onChange={(event) => onChange(event.target.value)}>{options.map(([option, title]) => <option key={option} value={option}>{title}</option>)}</select></label>
 }
 
-function BasketCard({ item, copy, onOpen }: { item: JsonRecord; copy: BasketCopy; onOpen: () => void }) {
+type RiskTier = 'steady' | 'balanced' | 'growth'
+type TierCopy = { tiers: Record<RiskTier, { name: string; risk: string; line: string }>; other: string; empty: string; minimum: string; fees: string; feesPending: string; noticeTitle: string; noticeBody: string; close: string }
+const tierCopy: Record<'zh-CN' | 'en', TierCopy> = {
+  'zh-CN': {
+    tiers: {
+      steady: { name: '稳健档', risk: '低风险', line: '适合偏好低波动、重视本金稳定的投资者。' },
+      balanced: { name: '均衡档', risk: '中风险', line: '在稳定与增长之间分散配置。' },
+      growth: { name: '进取档', risk: '较高风险', line: '适合能够承受较大净值波动的投资者。' },
+    },
+    other: '其他', empty: '该档暂无可申购产品', minimum: '起投', fees: '费率', feesPending: '待公布',
+    noticeTitle: '产品重组通知',
+    noticeBody: '篮子产品已按风险档重组为三档（稳健 / 均衡 / 进取），各产品的目标配置也已按新权重更新。您的持有份额目前保持不变；等值转换会随调仓执行一并完成，届时会在应用内另行通知并提供转换明细。',
+    close: '关闭',
+  },
+  en: {
+    tiers: {
+      steady: { name: 'Steady', risk: 'Low risk', line: 'For investors who prefer low volatility and capital stability.' },
+      balanced: { name: 'Balanced', risk: 'Medium risk', line: 'Diversified between stability and growth.' },
+      growth: { name: 'Growth', risk: 'Higher risk', line: 'For investors who can accept larger NAV swings.' },
+    },
+    other: 'Other', empty: 'No basket available in this tier yet', minimum: 'Min.', fees: 'Fees', feesPending: 'To be announced',
+    noticeTitle: 'Product restructuring',
+    noticeBody: 'Baskets have been reorganised into three risk tiers (Steady / Balanced / Growth), and each product\u2019s target allocation has been updated accordingly. Your units are unchanged for now; the equal-value conversion happens together with the rebalance, and we will notify you with a conversion breakdown at that time.',
+    close: 'Close',
+  },
+}
+const tierOrder: RiskTier[] = ['steady', 'balanced', 'growth']
+const tierPill: Record<RiskTier, string> = { steady: 'risk risk--low', balanced: 'risk risk--medium', growth: 'risk risk--high' }
+/** Maps the API's free-form `riskLevel` onto a tier; anything unrecognised stays visible under "Other". */
+function riskTierOf(value: unknown): RiskTier | null {
+  const level = typeof value === 'string' ? value.trim().toLowerCase() : ''
+  if (/^(low|conservative|steady|stable|稳健|低)/.test(level)) return 'steady'
+  if (/^(medium|moderate|balanced|mid|均衡|中)/.test(level)) return 'balanced'
+  if (/^(high|growth|aggressive|进取|高)/.test(level)) return 'growth'
+  return null
+}
+/** Fee entries from `terms` as published by the API (…Bps → %, …Pct → %); nothing is filled in client-side. */
+function feesOf(terms: unknown): string | null {
+  const parts = Object.entries(record(terms)).flatMap(([key, value]) => {
+    if (!/fee/i.test(key) || (typeof value !== 'string' && typeof value !== 'number') || String(value).trim() === '') return []
+    const number = Number(value)
+    const label = key.replace(/(Bps|Pct|Percent|Rate)$/i, '').replace(/fee$/i, '').replace(/([a-z])([A-Z])/g, '$1 $2').trim() || key
+    if (/Bps$/i.test(key) && Number.isFinite(number)) return [`${label} ${(number / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })}%`]
+    if (/(Pct|Percent)$/i.test(key) && Number.isFinite(number)) return [`${label} ${number.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`]
+    return [`${label} ${String(value)}`]
+  })
+  return parts.length ? parts.join(' · ') : null
+}
+
+function BasketCard({ item, copy, tiers, onOpen }: { item: JsonRecord; copy: BasketCopy; tiers?: TierCopy; onOpen: () => void }) {
   const name = textOf(item.name, textOf(item.strategyName, copy.title))
   const status = textOf(item.status)
+  const minimum = Number(item.minimumSubscriptionUsd)
   return <button type="button" className="basket-card glass" onClick={onOpen}>
     <span className="basket-card__icon"><Layers3 size={22} /></span>
-    <span className="basket-card__copy"><small>{textOf(item.strategySlug, 'strategy')}</small><b>{name}</b><em>{copy.risk}: {textOf(item.riskLevel, '—')}</em></span>
+    <span className="basket-card__copy"><small>{textOf(item.strategySlug, 'strategy')}</small><b>{name}</b>
+      {tiers
+        ? <em>{tiers.minimum} {Number.isFinite(minimum) && item.minimumSubscriptionUsd != null ? `$${money(minimum)}` : '—'} · {tiers.fees} {feesOf(item.terms) ?? tiers.feesPending}</em>
+        : <em>{copy.risk}: {textOf(item.riskLevel, '—')}</em>}</span>
     <span className="basket-card__metrics"><small>{copy.nav}</small><strong>{money(item.navPerUnit)}</strong><small>{copy.status} · {status}</small></span>
     <ChevronRight size={18} />
   </button>
@@ -45,6 +99,7 @@ function BasketCard({ item, copy, onOpen }: { item: JsonRecord; copy: BasketCopy
 export function BasketScreen({ kind, basketId, go, openBasket }: { kind: BasketKind; basketId: string | null; go: (screen: RwaScreen) => void; openBasket: (id: string, next?: BasketKind) => void }) {
   const { locale } = useI18n()
   const copy = basketRouteCopy[locale]
+  const tiers = tierCopy[locale === 'zh-CN' ? 'zh-CN' : 'en']
   const [portfolios, setPortfolios] = useState<JsonRecord[]>([])
   const [portfolio, setPortfolio] = useState<JsonRecord | null>(null)
   const [disclosures, setDisclosures] = useState<JsonRecord[]>([])
@@ -119,15 +174,31 @@ export function BasketScreen({ kind, basketId, go, openBasket }: { kind: BasketK
     [copy.status, textOf(portfolio.status)],
     [copy.risk, textOf(portfolio.riskLevel)],
   ] : [], [copy, portfolio])
+  const tierGroups = useMemo(() => {
+    const groups = new Map<RiskTier | null, JsonRecord[]>([...tierOrder.map((tier) => [tier, []] as [RiskTier, JsonRecord[]]), [null, []]])
+    for (const item of portfolios) groups.get(riskTierOf(item.riskLevel))?.push(item)
+    return groups
+  }, [portfolios])
+  const renderCards = (items: JsonRecord[]) => items.map((item, index) => <BasketCard item={item} copy={copy} tiers={tiers} key={String(item.id ?? index)} onOpen={() => openBasket(String(item.id), 'detail')} />)
 
   return <section className="screen basket-screen">
     <RwaTopbar screen="invest" template="T-Child" l1="back" title={title} onBack={() => go(kind === 'list' || kind === 'recommend' ? 'invest' : 'basket-list')} />
     {kind === 'list' && <>
       <div className="basket-hero"><span>{copy.eyebrow}</span><h1>{copy.title}</h1><p>{copy.subtitle}</p></div>
+      <NoticeBanner id="basket-three-tier-restructure-2026-10" title={tiers.noticeTitle} closeLabel={tiers.close}>{tiers.noticeBody}</NoticeBanner>
       {loadState === 'loading' && <div className="address-book-list">{[0, 1, 2].map((item) => <div className="address-skel" style={{ height: 82 }} key={item} />)}</div>}
       {loadState === 'error' && <div className="address-book-empty is-error"><CircleAlert size={20} /><b>{copy.unavailable}</b><button type="button" onClick={() => void load()}><RefreshCw size={14} /> {copy.retry}</button></div>}
       {loadState === 'ready' && portfolios.length === 0 && <div className="basket-empty glass"><Layers3 size={26} /><b>{copy.emptyTitle}</b><small>{copy.emptyBody}</small></div>}
-      <div className="basket-stack">{portfolios.map((item, index) => <BasketCard item={item} copy={copy} key={String(item.id ?? index)} onOpen={() => openBasket(String(item.id), 'detail')} />)}</div>
+      {loadState === 'ready' && portfolios.length > 0 && <div className="basket-tiers">
+        {tierOrder.map((tier) => {
+          const items = tierGroups.get(tier) ?? []
+          return <section className="basket-tier" key={tier}>
+            <header className="basket-tier__head"><div><h2>{tiers.tiers[tier].name}</h2><span className={tierPill[tier]}>{tiers.tiers[tier].risk}</span></div><p>{tiers.tiers[tier].line}</p></header>
+            {items.length ? <div className="basket-stack">{renderCards(items)}</div> : <div className="basket-tier__empty glass">{tiers.empty}</div>}
+          </section>
+        })}
+        {(tierGroups.get(null)?.length ?? 0) > 0 && <section className="basket-tier"><header className="basket-tier__head"><div><h2>{tiers.other}</h2></div></header><div className="basket-stack">{renderCards(tierGroups.get(null) ?? [])}</div></section>}
+      </div>}
       <button type="button" className="basket-recommend glass" onClick={() => go('basket-recommend')}><Sparkles size={20} /><span><b>{copy.recommend}</b><small>{copy.recommendationBody}</small></span><ChevronRight size={18} /></button>
     </>}
 

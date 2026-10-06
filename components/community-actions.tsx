@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { Heart } from 'lucide-react'
 import { request, type ApiError } from '@/lib/api/_http'
-import { useI18n } from '@/lib/i18n'
+import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityCopy, type CommunityCopy } from '@/lib/maison-content-copy'
 
 // Server messages are not localized; map by status so every locale reads its own copy.
@@ -40,6 +41,88 @@ export function CommunityComposer({ guest, postId, onPublished, onLogin, topic }
     {feedback && <p className="community-feedback" data-tone={feedback.tone} role={feedback.tone === 'error' ? 'alert' : 'status'}>{feedback.text}</p>}
     <button type="submit" disabled={busy || !body.trim()}>{busy ? c.busy : postId ? c.reply : c.post}</button>
   </form>
+}
+
+const srOnly: CSSProperties = { position: 'absolute', width: 1, height: 1, overflow: 'hidden', clipPath: 'inset(50%)', whiteSpace: 'nowrap' }
+const followCopy: Record<AppLocale, { follow: string; following: string; unfollow: string }> = {
+  'zh-CN': { follow: '关注', following: '已关注', unfollow: '取消关注' },
+  en: { follow: 'Follow', following: 'Following', unfollow: 'Unfollow' },
+  es: { follow: 'Seguir', following: 'Siguiendo', unfollow: 'Dejar de seguir' },
+  fr: { follow: 'Suivre', following: 'Abonné', unfollow: 'Ne plus suivre' },
+  pt: { follow: 'Seguir', following: 'Seguindo', unfollow: 'Deixar de seguir' },
+  ar: { follow: 'متابعة', following: 'تتابعه', unfollow: 'إلغاء المتابعة' },
+  hi: { follow: 'फ़ॉलो करें', following: 'फ़ॉलो कर रहे हैं', unfollow: 'अनफ़ॉलो करें' },
+}
+async function readState(query: Record<string, string>) {
+  const result = await request<{ liked: boolean; following: boolean }>('/v1/community/me/state?' + new URLSearchParams(query))
+  return result.ok ? result.data : null
+}
+// Feed responses carry no viewer flags; remember what this session learned so rows agree with the detail page.
+const likedCache = new Map<string, boolean>()
+
+/**
+ * Heart with count. Optimistic: the tap shows at once and reverts on failure. Unknown state never locks the
+ * button (the old toggle stayed disabled whenever /me/state failed); PUT is idempotent, so "assume not liked" is safe.
+ */
+export function CommunityLike({ postId, count, guest, onLogin, onChanged, probe = false, className, size = 18, format = String }: { postId: string; count: number; guest: boolean; onLogin: () => void; onChanged?: () => void; probe?: boolean; className?: string; size?: number; format?: (value: number) => string }) {
+  const { locale } = useI18n(); const c = communityCopy[locale]
+  const [liked, setLiked] = useState<boolean | null>(() => likedCache.get(postId) ?? null)
+  const [delta, setDelta] = useState(0), [busy, setBusy] = useState(false), [error, setError] = useState('')
+  useEffect(() => { setDelta(0) }, [count])
+  useEffect(() => {
+    setLiked(likedCache.get(postId) ?? null)
+    if (guest || !probe || likedCache.has(postId)) return
+    let live = true
+    void readState({ postId }).then(state => { if (state && live) { likedCache.set(postId, state.liked); setLiked(state.liked) } })
+    return () => { live = false }
+  }, [guest, postId, probe])
+  useEffect(() => { if (!error) return; const timer = setTimeout(() => setError(''), 2600); return () => clearTimeout(timer) }, [error])
+  const toggle = async () => {
+    if (guest) { onLogin(); return }
+    if (busy) return
+    setBusy(true); setError('')
+    const was = liked ?? (await readState({ postId }))?.liked ?? false, next = !was, step = next ? 1 : -1
+    setLiked(next); setDelta(value => value + step); likedCache.set(postId, next)
+    const result = await request(`/v1/community/me/posts/${encodeURIComponent(postId)}/like`, { method: next ? 'PUT' : 'DELETE' })
+    setBusy(false)
+    if (!result.ok) { setLiked(was); setDelta(value => value - step); likedCache.set(postId, was); setError(communityError(result.error, c)); return }
+    onChanged?.()
+  }
+  const shown = Math.max(0, count + delta)
+  return <button type="button" className={className} aria-pressed={Boolean(liked)} aria-busy={busy} data-liked={liked ? 'true' : undefined} data-error={error ? 'true' : undefined} title={error || undefined} onClick={event => { event.stopPropagation(); void toggle() }}>
+    <Heart size={size} strokeWidth={1.7} fill={liked ? 'currentColor' : 'none'} aria-hidden="true" />
+    {shown > 0 && <span aria-hidden="true">{format(shown)}</span>}
+    <span style={srOnly}>{liked ? c.unlike : c.like} {shown}</span>
+    <span style={srOnly} role="status">{error}</span>
+  </button>
+}
+
+/** Follow / following pill. The state probe only decides the label; a failed probe still leaves it tappable. */
+export function CommunityFollowButton({ handle, guest, onLogin, onChanged, className }: { handle: string; guest: boolean; onLogin: () => void; onChanged?: () => void; className?: string }) {
+  const { locale } = useI18n(); const c = communityCopy[locale], f = followCopy[locale]
+  const [following, setFollowing] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('')
+  useEffect(() => {
+    setFollowing(false)
+    if (guest) return
+    let live = true
+    void readState({ handle }).then(state => { if (state && live) setFollowing(state.following) })
+    return () => { live = false }
+  }, [guest, handle])
+  useEffect(() => { if (!error) return; const timer = setTimeout(() => setError(''), 2600); return () => clearTimeout(timer) }, [error])
+  const toggle = async () => {
+    if (guest) { onLogin(); return }
+    if (busy) return
+    const next = !following
+    setBusy(true); setError(''); setFollowing(next)
+    const result = await request(`/v1/community/me/profiles/${encodeURIComponent(handle)}/follow`, { method: next ? 'PUT' : 'DELETE' })
+    setBusy(false)
+    if (!result.ok) { setFollowing(!next); setError(communityError(result.error, c)); return }
+    onChanged?.()
+  }
+  return <button type="button" className={className} aria-pressed={following} aria-busy={busy} data-error={error ? 'true' : undefined} title={error || undefined} onClick={() => void toggle()}>
+    {following ? <><span data-rest="">{f.following}</span><span data-hover="">{f.unfollow}</span></> : <span>{f.follow}</span>}
+    <span style={srOnly} role="status">{error}</span>
+  </button>
 }
 
 export function CommunityToggle({ guest, postId, handle, onChanged }: { guest: boolean; postId?: string; handle?: string; onChanged: () => void }) {

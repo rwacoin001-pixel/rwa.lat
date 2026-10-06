@@ -1,20 +1,24 @@
 'use client'
 
 import { ArrowLeft, ArrowRight, ArrowUpRight, Clock3, Info } from 'lucide-react'
-import { useMemo, useState, type MouseEvent } from 'react'
+import { useMemo, type MouseEvent } from 'react'
 import Image from 'next/image'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { isListed, listProducts, type CatalogProduct } from '@/lib/api/markets'
-import { fill } from '@/lib/maison-market-copy'
+import { POLL } from '@/lib/api/_http'
+import { isListed, listBaskets, listProducts, type BasketPortfolio, type CatalogProduct } from '@/lib/api/markets'
+import { fmtUsd } from '@/lib/money'
+import { fill, marketCopy } from '@/lib/maison-market-copy'
+import { proCopy } from '@/lib/maison-pro-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
-import { HENGXU_FEATURED, HENGXU_PRODUCTS, hengxuById, hengxuImage, type HengxuFilter, type HengxuHorizon, type HengxuProduct, type HengxuRisk } from '@/lib/hengxu-products'
+import { usePageState } from '@/lib/app-navigation'
+import { HENGXU_FEATURED, HENGXU_PRODUCTS, hengxuById, hengxuImage, type HengxuHorizon, type HengxuProduct, type HengxuRisk, type HengxuTerms } from '@/lib/hengxu-products'
 import { hengxuCopy, hengxuText, type HengxuCopy } from '@/lib/hengxu-copy'
-import { MaisonPage, SectionHead, StateBlock, maison as s } from './primitives'
+import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import h from './hengxu.module.css'
 
-const FILTERS = ['all', 'short', 'long', 'digital', 'research'] as const
+const FILTERS = ['all', 'open', 'short', 'long', 'digital', 'research'] as const
 type Filter = typeof FILTERS[number]
 const HORIZONS: HengxuHorizon[] = ['d90', 'm12', 'y3', 'y5', 'terms']
 const SECTION_IDS = ['strategy', 'allocation', 'sources', 'risks', 'exit', 'documents'] as const
@@ -56,9 +60,15 @@ function RiskMeter({ risk, copy }: { risk: HengxuRisk; copy: HengxuCopy }) {
   </span>
 }
 
+/** Research and special-research strategies are never launch candidates; say so wherever they appear. */
+const inResearch = (product: HengxuProduct) => product.stage === 'research' || product.stage === 'special'
+
+const minText = (product: HengxuProduct, copy: HengxuCopy) => product.terms?.minInvestment === undefined ? copy.minValue : `${product.terms.minInvestment} USDT`
+
 function StageBadge({ product, listing, copy }: { product: HengxuProduct; listing?: CatalogProduct; copy: HengxuCopy }) {
   if (listing) return <span className={s.badge} data-tone="live">{copy.listed}</span>
-  return <span className={s.badge} data-tone={product.stage === 'first' || product.stage === 'second' ? 'accent' : 'warn'}>{copy.stage[product.stage]}</span>
+  if (inResearch(product)) return <span className={s.badge} data-tone="warn">{copy.stage[product.stage]} · {copy.terms.closed}</span>
+  return <span className={s.badge} data-tone="accent">{copy.stage[product.stage]}</span>
 }
 
 /** Chinese strategy name leads in every locale; other locales add the romanised name to the subtitle. */
@@ -74,39 +84,92 @@ function Picture({ product, locale, sizes, priority, ratio }: { product: HengxuP
   </span>
 }
 
-/** Markets → Baskets → 衡序 section: one flagship up top, the rest laid out along a ruler of holding periods. */
-export function HengxuPanel() {
+/** Markets → Baskets: live portfolios and the 衡序 series in one list. A strategy leaves its holding-period band
+ *  and joins "Open" as soon as the catalog lists it, so nothing is shown twice. */
+export function BasketShelf() {
   const { locale } = useI18n()
   const copy = hengxuCopy[locale]
+  const market = marketCopy[locale]
+  const pro = proCopy[locale]
   const listings = useListings()
-  const [filter, setFilter] = useState<Filter>('all')
-  const visible = HENGXU_PRODUCTS.filter((product) => filter === 'all' || product.filters.includes(filter as HengxuFilter))
-  const featured = visible.find((product) => product.id === HENGXU_FEATURED)
-  const rest = visible.filter((product) => product !== featured)
+  const baskets = useQuery('markets:baskets', listBaskets, { staleTime: 60_000, pollInterval: POLL.list })
+  const [filter, setFilter] = usePageState<Filter>('markets:baskets:filter', 'all')
+  const live = baskets.data ?? []
+  const listed = HENGXU_PRODUCTS.filter((product) => listings.has(product.id))
+  const showOpen = filter === 'all' || filter === 'open'
+  const series = filter === 'open' ? [] : HENGXU_PRODUCTS.filter((product) => (filter === 'all' || product.filters.includes(filter)) && !(showOpen && listings.has(product.id)))
+  const featured = series.find((product) => product.id === HENGXU_FEATURED)
+  const rest = series.filter((product) => product !== featured)
   const bands = HORIZONS.map((horizon) => ({ horizon, items: rest.filter((product) => product.horizon === horizon) })).filter((band) => band.items.length)
-  const count = (key: Filter) => key === 'all' ? HENGXU_PRODUCTS.length : HENGXU_PRODUCTS.filter((product) => product.filters.includes(key)).length
+  const openCount = live.length + listed.length
+  const candidates = HENGXU_PRODUCTS.filter((product) => !listings.has(product.id) && !inResearch(product)).length
+  const researching = HENGXU_PRODUCTS.filter((product) => !listings.has(product.id) && inResearch(product)).length
+  const count = (key: Filter) => key === 'all' ? live.length + HENGXU_PRODUCTS.length : key === 'open' ? openCount : HENGXU_PRODUCTS.filter((product) => product.filters.includes(key)).length
+  const termsHead = <div className={s.tableHead} aria-hidden="true"><span>{copy.sections[0]} · {copy.fields.risk}</span><span>{copy.terms.mgmtFee} · {copy.fields.min}</span></div>
 
-  return <section id="hengxu" className={h.series} aria-labelledby="hx-title">
+  return <div className={s.tabPanel} role="tabpanel">
     <header className={h.intro}>
-      <p className={s.kicker}>{copy.kicker}</p>
-      <h2 className={h.introTitle} id="hx-title">{copy.title}</h2>
-      <p className={h.introLede}>{copy.lede}</p>
-      <p className={h.conceptLine}><Info size={13} strokeWidth={1.8} aria-hidden="true" />{copy.conceptLong}</p>
+      <p className={s.kicker}>{copy.shelf.kicker}</p>
+      <h2 className={h.introTitle}>{copy.shelf.title}</h2>
+      <p className={h.introLede}>{copy.shelf.lede}</p>
+      <dl className={h.tally}>
+        <div><dt>{copy.shelf.open}</dt><dd className={s.num}>{baskets.data || baskets.error ? openCount : '—'}</dd></div>
+        <div><dt>{copy.shelf.candidates}</dt><dd className={s.num}>{candidates}</dd></div>
+        <div><dt>{copy.filters.research}</dt><dd className={s.num}>{researching}</dd></div>
+      </dl>
     </header>
 
-    <div className={s.chips} role="group" aria-label={copy.series}>
-      {FILTERS.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={filter === key} onClick={() => setFilter(key)}>{copy.filters[key]}<small className={s.num}>{count(key)}</small></button>)}
+    <div className={s.chips} role="group" aria-label={copy.shelf.kicker}>
+      {FILTERS.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={filter === key} onClick={() => setFilter(key)}>{key === 'open' ? copy.shelf.open : copy.filters[key]}<small className={s.num}>{count(key)}</small></button>)}
     </div>
 
-    {featured && <FeaturedCard product={featured} listing={listings.get(featured.id)} />}
+    {showOpen && <section aria-label={copy.shelf.open}>
+      <SectionHead title={copy.shelf.open} note={copy.shelf.openNote} />
+      {!baskets.data && !baskets.error && <Skeleton rows={2} />}
+      {baskets.error && !baskets.data && <StateBlock tone="error" title={market.markets.loadError} body={baskets.error.message} retry={baskets.refetch} retryLabel={market.common.retry} />}
+      {live.length > 0 && <>
+        <div className={s.tableHead} aria-hidden="true"><span>{pro.name}</span><span>{pro.nav} · AUM</span></div>
+        <ul className={s.list}>{live.map((basket) => <li key={basket.id}><LiveRow basket={basket} /></li>)}</ul>
+      </>}
+      {listed.length > 0 && <>
+        {termsHead}
+        <ul className={h.rows}>{listed.map((product) => <li key={product.id}><StrategyRow product={product} listing={listings.get(product.id)} /></li>)}</ul>
+      </>}
+      {baskets.data && !openCount && <StateBlock title={market.markets.basketsEmpty} body={market.markets.basketsEmptyBody} />}
+    </section>}
 
-    {bands.map((band) => <section key={band.horizon} className={h.band} aria-labelledby={`hx-band-${band.horizon}`}>
-      <h3 className={h.bandHead} id={`hx-band-${band.horizon}`}><Clock3 size={12} strokeWidth={1.8} aria-hidden="true" /><span>{copy.horizon[band.horizon]}</span><small className={s.num}>{fill(band.items.length === 1 ? copy.countOne : copy.count, { n: band.items.length })}</small></h3>
-      <ul className={h.rows}>{band.items.map((product) => <li key={product.id}><StrategyRow product={product} listing={listings.get(product.id)} /></li>)}</ul>
-    </section>)}
+    {series.length > 0 && <section id="hengxu" className={h.series} data-lead={!showOpen} aria-labelledby="hx-title">
+      <header>
+        <p className={s.kicker}>{copy.series} · <span className={s.num}>{HENGXU_PRODUCTS.length - listed.length}</span></p>
+        <h3 className={h.seriesTitle} id="hx-title">{copy.title}</h3>
+        <p className={h.introLede}>{listings.size ? copy.ledeLive : copy.lede}</p>
+        {!listings.size && <p className={h.conceptLine}><Info size={13} strokeWidth={1.8} aria-hidden="true" />{copy.conceptLong}</p>}
+      </header>
 
-    {!visible.length && <StateBlock title={copy.empty} />}
-  </section>
+      {featured && <FeaturedCard product={featured} listing={listings.get(featured.id)} />}
+
+      {bands.length > 0 && <div style={{ marginTop: 18 }}>{termsHead}</div>}
+      {bands.map((band) => <section key={band.horizon} className={h.band} aria-labelledby={`hx-band-${band.horizon}`}>
+        <h4 className={h.bandHead} id={`hx-band-${band.horizon}`}><Clock3 size={12} strokeWidth={1.8} aria-hidden="true" /><span>{copy.horizon[band.horizon]}</span><small className={s.num}>{fill(band.items.length === 1 ? copy.countOne : copy.count, { n: band.items.length })}</small></h4>
+        <ul className={h.rows}>{band.items.map((product) => <li key={product.id}><StrategyRow product={product} listing={listings.get(product.id)} /></li>)}</ul>
+      </section>)}
+    </section>}
+
+    {filter !== 'open' && !series.length && <StateBlock title={copy.empty} />}
+  </div>
+}
+
+/** A live basket portfolio: NAV per unit leads, AUM under it, the minimum ticket in the subtitle when the API sends one. */
+function LiveRow({ basket }: { basket: BasketPortfolio }) {
+  const { locale } = useI18n()
+  const market = marketCopy[locale]
+  const name = basket.name || basket.strategyName || basket.id
+  const sub = [basket.strategyName && basket.strategyName !== name ? basket.strategyName : null, basket.riskLevel, basket.minimumSubscriptionUsd ? fill(market.markets.from, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) }) : null]
+  return <button type="button" className={s.row} onClick={() => openPath(`/basket/${encodeURIComponent(basket.id)}`)}>
+    <Logo src={basket.strategySlug ? `/baskets/${encodeURIComponent(basket.strategySlug)}_thumb.webp` : null} name={name} />
+    <span className={s.rowMain}><b>{name}</b><small>{sub.filter(Boolean).join(' · ')}</small></span>
+    <span className={s.rowFig}><b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b><small className={s.muted}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</small></span>
+  </button>
 }
 
 function FeaturedCard({ product, listing }: { product: HengxuProduct; listing?: CatalogProduct }) {
@@ -123,7 +186,7 @@ function FeaturedCard({ product, listing }: { product: HengxuProduct; listing?: 
       <span className={h.featuredFacts}>
         <span><small>{copy.fields.risk}</small><RiskMeter risk={product.risk} copy={copy} /></span>
         <span><small>{copy.fields.hold}</small><b>{copy.horizon[product.horizon]}</b></span>
-        <span><small>{copy.fields.min}</small><b>{copy.minValue}</b></span>
+        <span><small>{copy.fields.min}</small><b>{minText(product, copy)}</b></span>
       </span>
       <span className={h.featuredFoot}><StageBadge product={product} listing={listing} copy={copy} /><span className={h.learn}>{copy.learn}<ArrowUpRight size={15} aria-hidden="true" /></span></span>
     </span>
@@ -135,13 +198,18 @@ function StrategyRow({ product, listing }: { product: HengxuProduct; listing?: C
   const copy = hengxuCopy[locale]
   const text = hengxuText(product, locale)
   const { mark, sub } = names(product, locale)
+  const fee = product.terms?.mgmtFeePct
   return <a href={detailPath(product)} className={h.row} onClick={(event) => go(event, detailPath(product))}>
+    <Picture product={product} locale={locale} sizes="96px" />
     <span className={h.rowText}>
       <span className={h.nameLine}><b className={h.markS} lang="zh-CN">{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
       <span className={h.rowLine} {...bodyProps(locale)}>{text.oneLiner}</span>
       <span className={h.rowFoot}><RiskMeter risk={product.risk} copy={copy} /><StageBadge product={product} listing={listing} copy={copy} /></span>
     </span>
-    <Picture product={product} locale={locale} sizes="180px" />
+    <span className={h.rowFig}>
+      {fee === undefined ? <b className={h.tba}>{copy.tba}</b> : <b className={s.num}>{fee.toFixed(2)}%<small>{copy.terms.perYear}</small></b>}
+      <small className={s.num}>{minText(product, copy)}</small>
+    </span>
   </a>
 }
 
@@ -165,6 +233,12 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const prev = HENGXU_PRODUCTS[(index + HENGXU_PRODUCTS.length - 1) % HENGXU_PRODUCTS.length]
   const next = HENGXU_PRODUCTS[(index + 1) % HENGXU_PRODUCTS.length]
   const tba = <span className={h.tba}>{copy.tba}</span>
+  const terms: HengxuTerms = product.terms ?? {}
+  const pct = (value: number | undefined, suffix = '') => value === undefined ? tba : `${value.toFixed(2)}%${suffix}`
+  const mgmtFee = pct(terms.mgmtFeePct, copy.terms.perYear)
+  const lockup = terms.lockupDays === undefined ? tba : fill(copy.terms.days, { n: terms.lockupDays })
+  const settle = terms.settleDays === undefined ? tba : `T+${terms.settleDays}`
+  const researching = inResearch(product)
   const jump = (target: string) => document.getElementById(`hx-${target}`)?.scrollIntoView({ behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' })
   const summary = product.allocation.map(([sleeve, weight]) => `${copy.sleeves[sleeve]} ${weight}%`).join(', ')
 
@@ -178,26 +252,27 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
       <p className={s.kicker}>{copy.series} · <span className={s.num}>{product.no} / 10</span></p>
       <h1 className={h.title}><span className={h.markL} lang="zh-CN">{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
       <p className={h.badges}>
-        <span className={s.badge} data-tone="warn">{copy.concept}</span>
+        {!listing && <span className={s.badge} data-tone="warn">{copy.concept}</span>}
         <StageBadge product={product} listing={listing} copy={copy} />
         <span className={h.shortTag} lang="en" dir="ltr">{product.short}</span>
       </p>
       <p className={h.lead} {...body}>{text.oneLiner}</p>
+      {researching && text.blocker && <p className={s.notice}><Info size={15} aria-hidden="true" /><span><b>{copy.terms.blocked}</b> <span {...body}>{text.blocker}</span></span></p>}
     </header>
 
     <section className={`${s.lacquer} ${h.facts}`} aria-label={copy.sections[4]}>
       <dl className={h.factGrid}>
         <div><dt>{copy.fields.risk}</dt><dd><RiskMeter risk={product.risk} copy={copy} /></dd></div>
         <div><dt>{copy.fields.hold}</dt><dd>{copy.horizon[product.horizon]}</dd></div>
-        <div><dt>{copy.fields.lock}</dt><dd>{tba}</dd></div>
-        <div><dt>{copy.fields.redeem}</dt><dd>{tba}</dd></div>
-        <div><dt>{copy.fields.min}</dt><dd>{copy.minValue}<small>{copy.minNote}</small></dd></div>
-        <div><dt>{copy.fields.fees}</dt><dd>{tba}</dd></div>
+        <div><dt>{copy.fields.lock}</dt><dd>{lockup}</dd></div>
+        <div><dt>{copy.fields.redeem}</dt><dd>{settle}</dd></div>
+        <div><dt>{copy.fields.min}</dt><dd>{minText(product, copy)}<small>{terms.provisional ? copy.terms.provisional : copy.minNote}</small></dd></div>
+        <div><dt>{copy.fields.fees}</dt><dd>{mgmtFee}{terms.mgmtFeePct !== undefined && <small>{terms.provisional ? copy.terms.provisional : copy.terms.mgmtFee}</small>}</dd></div>
       </dl>
       {listing
         ? <button type="button" className={s.cta} onClick={() => openPath(`/asset/${encodeURIComponent(listing.externalRef ?? listing.id)}`)}><span>{copy.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>
-        : <button type="button" className={`${s.cta} ${h.soon}`} disabled aria-describedby="hx-cta-note"><span>{copy.soon}</span><span className={s.ctaIcon}><Clock3 size={16} /></span></button>}
-      <p className={h.ctaNote} id="hx-cta-note">{copy.ctaNote}</p>
+        : <button type="button" className={`${s.cta} ${h.soon}`} disabled aria-describedby="hx-cta-note"><span>{researching ? `${copy.stage[product.stage]} · ${copy.terms.closed}` : copy.soon}</span><span className={s.ctaIcon}><Clock3 size={16} /></span></button>}
+      <p className={h.ctaNote} id="hx-cta-note">{listing ? copy.listedNote : copy.ctaNote}</p>
     </section>
 
     <nav className={s.chips} aria-label={copy.jump}>
@@ -228,6 +303,13 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
       <SectionHead index="03" title={copy.sections[2]} note={copy.sourcesNote} />
       <ol className={h.numbered}>{text.sources.map((line) => <li key={line} {...body}>{line}</li>)}</ol>
       <dl className={h.pairs}><div><dt>{copy.netReturn}</dt><dd>{tba}</dd></div></dl>
+      <dl className={h.pairs} data-align="start">
+        <div><dt>{copy.terms.benchmark}</dt><dd {...body}>{text.benchmark ?? tba}</dd></div>
+        <div><dt>{copy.terms.target}</dt><dd {...body}>{text.target ?? tba}</dd></div>
+        {text.scenario && <div><dt>{copy.terms.scenario}</dt><dd {...body}>{text.scenario}</dd></div>}
+        <div><dt>{copy.terms.nav}</dt><dd {...body}>{text.nav ?? tba}</dd></div>
+      </dl>
+      <p className={s.notice}><Info size={15} aria-hidden="true" /><span>{copy.terms.notPromise}</span></p>
     </section>
 
     <section id="hx-risks" className={h.section}>
@@ -239,13 +321,18 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
     <section id="hx-exit" className={h.section}>
       <SectionHead index="05" title={copy.sections[4]} />
       <dl className={h.pairs}>
-        <div><dt>{copy.exit.platformFee}</dt><dd>{tba}</dd></div>
+        <div><dt>{copy.terms.mgmtFee}</dt><dd>{mgmtFee}</dd></div>
+        <div><dt>{copy.terms.subFee}</dt><dd>{pct(terms.subFeePct)}</dd></div>
+        <div><dt>{copy.terms.redFee}</dt><dd>{pct(terms.redFeePct)}</dd></div>
         <div><dt>{copy.exit.fundFee}</dt><dd>{tba}</dd></div>
         <div><dt>{copy.fields.hold}</dt><dd>{copy.horizon[product.horizon]}</dd></div>
-        <div><dt>{copy.fields.lock}</dt><dd>{tba}</dd></div>
+        <div><dt>{copy.fields.lock}</dt><dd>{lockup}</dd></div>
         <div><dt>{copy.exit.window}</dt><dd>{tba}</dd></div>
-        <div><dt>{copy.fields.redeem}</dt><dd>{tba}</dd></div>
+        <div><dt>{copy.fields.redeem}</dt><dd>{settle}</dd></div>
+        <div><dt>{copy.fields.min}</dt><dd>{terms.minInvestment === undefined ? tba : `${terms.minInvestment} USDT`}</dd></div>
       </dl>
+      {terms.provisional && <p className={s.notice}><Info size={15} aria-hidden="true" /><span>{copy.terms.provisional}</span></p>}
+      {text.feeNote && <p className={s.notice}><Info size={15} aria-hidden="true" /><span {...body}>{text.feeNote}</span></p>}
       <p className={h.prose}><b>{copy.exit.how}</b><span {...body}>{text.exit}</span></p>
     </section>
 
@@ -254,6 +341,10 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
       <StateBlock tone="unavailable" title={copy.docsTitle} body={copy.docsBody} />
       <h3 className={h.subhead}>{copy.beforeLaunch}</h3>
       <ul className={h.checklist}>{text.focus.map((line) => <li key={line} {...body}>{line}</li>)}</ul>
+      {text.conditions && <>
+        <h3 className={h.subhead}>{copy.terms.conditions}</h3>
+        <ul className={h.checklist}>{text.conditions.map((line) => <li key={line} {...body}>{line}</li>)}</ul>
+      </>}
     </section>
 
     <nav className={h.pager} aria-label={copy.series}>

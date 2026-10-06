@@ -327,15 +327,26 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
 /* ── Post detail reply bar ── */
 
 export function CommunityReplyBar({ me, guest, onOpen, onLogin }: { me: CommunityMe | null; guest: boolean; onOpen: (files?: File[]) => void; onLogin: () => void }) {
+  return guest ? <GuestReplyBar onLogin={onLogin} /> : <MemberReplyBar me={me} onOpen={onOpen} />
+}
+
+function GuestReplyBar({ onLogin }: { onLogin: () => void }) {
+  const { t } = useI18n()
+  return <div className={x.replyBar} data-guest="true">
+    <span className={x.guestPrompt}>{t('community.joinTitle')}</span>
+    <button type="button" className={x.guestSignin} onClick={onLogin}>{t('guest.signin')}</button>
+  </div>
+}
+
+function MemberReplyBar({ me, onOpen }: { me: CommunityMe | null; onOpen: (files?: File[]) => void }) {
   const { locale } = useI18n(); const k = communityComposeCopy[locale]
   const picker = useRef<HTMLInputElement>(null)
-  const open = (files?: File[]) => (guest ? onLogin() : onOpen(files))
   return <div className={x.replyBar}>
     <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'guest'} size={32} />
-    <button type="button" className={x.replyPrompt} onClick={() => open()}>{k.replyBar}</button>
-    <button type="button" className={x.toolBtn} aria-label={k.addImage} onClick={() => (guest ? onLogin() : picker.current?.click())}><ImagePlus size={20} strokeWidth={1.8} /></button>
-    <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={event => { const files = [...(event.target.files ?? [])]; event.target.value = ''; if (files.length) open(files) }} />
-    <button type="button" className={x.toolBtn} aria-label={k.expand} onClick={() => open()}><Maximize2 size={18} strokeWidth={1.9} /></button>
+    <button type="button" className={x.replyPrompt} onClick={() => onOpen()}>{k.replyBar}</button>
+    <button type="button" className={x.toolBtn} aria-label={k.addImage} onClick={() => picker.current?.click()}><ImagePlus size={20} strokeWidth={1.8} /></button>
+    <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={event => { const files = [...(event.target.files ?? [])]; event.target.value = ''; if (files.length) onOpen(files) }} />
+    <button type="button" className={x.toolBtn} aria-label={k.expand} onClick={() => onOpen()}><Maximize2 size={18} strokeWidth={1.9} /></button>
   </div>
 }
 

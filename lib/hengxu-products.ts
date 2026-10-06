@@ -2,8 +2,8 @@
  * 衡序 · ten concept strategies (design handoff v2, 2026-09-29).
  *
  * Research content only: weights are research allocations, not holdings; stages are a suggested
- * release order, not a backend status. Anything the handoff leaves open (fees, lock-up, redemption,
- * documents, NAV, yield) is deliberately absent here so the UI renders "TBA" instead of a number.
+ * release order, not a backend status. Terms come from the 2026-10-06 条款设计书; anything still open
+ * (documents, NAV, yield, unset fees) is deliberately absent so the UI renders "TBA" instead of a number.
  */
 
 export type HengxuId = 'chengyuan' | 'liujin' | 'zhongheng' | 'runheng' | 'hengcha' | 'yuanjian' | 'qiyuan' | 'xinghe' | 'tuojie' | 'shiyuan'
@@ -28,6 +28,39 @@ export type HengxuText = {
   /** What must be disclosed before launch (the handoff's 页面重点). */
   focus: string[]
   alt: string
+  /** 业绩比较基准, built only from this product's own weights. */
+  benchmark?: string
+  /** Long-run central range, or why none is given. Never an expected return. */
+  target?: string
+  /** Bear / base / bull scenarios. */
+  scenario?: string
+  nav?: string
+  /** Fee and lock-up framework when the numbers are set per series. */
+  feeNote?: string
+  /** Why a research product cannot launch yet. */
+  blocker?: string
+  /** Conditions to clear before launch or grading, beyond the disclosure list in `focus`. */
+  conditions?: string[]
+}
+
+/** Fees in % (management per year), days, and minimum in USDT. Missing keys render "TBA". */
+export type HengxuTerms = {
+  mgmtFeePct?: number
+  subFeePct?: number
+  redFeePct?: number
+  lockupDays?: number
+  settleDays?: number
+  minInvestment?: number
+  /** Proposed before stress tests or execution acceptance; shown as "to be confirmed". */
+  provisional?: boolean
+}
+
+/** Site-wide fee ladder by risk tier (条款设计书 §1, 2026-10-06); R4 matches the live AI RWA Core. */
+const TIER: Record<1 | 2 | 3 | 4, HengxuTerms> = {
+  1: { mgmtFeePct: 0.3, subFeePct: 0.1, redFeePct: 0.1, lockupDays: 0, settleDays: 2, minInvestment: 50 },
+  2: { mgmtFeePct: 0.6, subFeePct: 0.2, redFeePct: 0.2, lockupDays: 7, settleDays: 2, minInvestment: 100 },
+  3: { mgmtFeePct: 1, subFeePct: 0.3, redFeePct: 0.3, lockupDays: 7, settleDays: 2, minInvestment: 100 },
+  4: { mgmtFeePct: 1.2, subFeePct: 0.3, redFeePct: 0.3, lockupDays: 7, settleDays: 2, minInvestment: 100 },
 }
 
 export type HengxuProduct = {
@@ -41,6 +74,7 @@ export type HengxuProduct = {
   /** Research weights in % of principal, sum 100, largest first. */
   allocation: [HengxuSleeve, number][]
   image: { src: string; width: number; height: number; focus: string }
+  terms?: HengxuTerms
   zh: HengxuText
   en: HengxuText
 }
@@ -56,6 +90,7 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
     id: 'chengyuan', no: '01', short: 'Reserve', filters: ['short'], horizon: 'd90', risk: 1, stage: 'first',
     allocation: [['tbill', 90], ['cash', 10]],
     image: img('chengyuan-reserve', 1536, 1024, '50% 62%'),
+    terms: TIER[1],
     zh: {
       name: '澄源', subtitle: '美元短债',
       oneLiner: '把短期暂不用的资金配置到期限较短、透明度较高的美元工具。',
@@ -82,9 +117,10 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
     },
   },
   {
-    id: 'liujin', no: '02', short: 'Gold', filters: ['long'], horizon: 'y3', risk: 2, stage: 'second',
+    id: 'liujin', no: '02', short: 'Gold', filters: ['long'], horizon: 'y3', risk: 2, stage: 'first',
     allocation: [['tbill', 60], ['gold', 35], ['cash', 5]],
     image: img('liujin-gold', 2048, 768, '44% 50%'),
+    terms: TIER[2],
     zh: {
       name: '鎏金', subtitle: '黄金配置',
       oneLiner: '用黄金和短债构建价格表现不同的长期配置。',
@@ -95,6 +131,9 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['黄金价格下跌', '工具与金价之间的追踪偏差', '代币发行方与托管风险'],
       focus: ['黄金价格收益与短债收益分开披露', '所选黄金工具与托管方', '再平衡阈值'],
       alt: '深色丝绒与大理石台座上的一块金矿石微距',
+      benchmark: '60% × 短期美债（1–3 月期，扣费后）+ 35% × 伦敦金现（LBMA Gold PM，仅价格收益）+ 5% × 现金',
+      scenario: '保守 −8%（黄金回撤 20% 且短债利率下行）/ 基准 +6% / 乐观 +15%（黄金上行）',
+      nav: '成立后按日公布，不预填历史；黄金价格收益与短债利息分开披露。',
     },
     en: {
       name: 'Liujin', subtitle: 'Gold Allocation',
@@ -106,12 +145,16 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['Gold price declines', 'Tracking error against spot gold', 'Token issuer and custody risk'],
       focus: ['Gold price return and treasury yield shown separately', 'Chosen gold vehicle and custodian', 'Rebalancing thresholds'],
       alt: 'Macro of a gold nugget on a marble plinth against dark velvet',
+      benchmark: '60% × short US Treasuries (1–3 month, after fees) + 35% × spot gold (LBMA Gold PM, price return only) + 5% × cash',
+      scenario: 'Bear −8% (gold down 20% and short rates falling) / Base +6% / Bull +15% (gold rallies)',
+      nav: 'Published daily from inception, with no back-filled history; gold price return and treasury interest shown separately.',
     },
   },
   {
     id: 'zhongheng', no: '03', short: 'Balance', filters: ['long'], horizon: 'y3', risk: 2, stage: 'first',
     allocation: [['equity', 40], ['tbill', 35], ['gold', 15], ['trend', 10]],
     image: img('zhongheng-balance', 2046, 769, '52% 50%'),
+    terms: TIER[2],
     zh: {
       name: '中衡', subtitle: '全球多资产',
       oneLiner: '用全球股票、短债、黄金和趋势策略形成长期核心持仓。',
@@ -139,6 +182,7 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
     id: 'runheng', no: '04', short: 'Income', filters: ['short', 'digital', 'research'], horizon: 'm12', risk: 'pending', stage: 'research',
     allocation: [['tbill', 75], ['lending', 10], ['cash', 10], ['fixedTerm', 5]],
     image: img('runheng-income', 1536, 1024, '42% 55%'),
+    terms: { mgmtFeePct: 0.8, subFeePct: 0.2, redFeePct: 0.2, lockupDays: 0, settleDays: 2, minInvestment: 100, provisional: true },
     zh: {
       name: '润衡', subtitle: '链上收益',
       oneLiner: '在短债基础上，小幅配置链上借贷与到期型收益头寸。',
@@ -150,6 +194,9 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       riskNote: '压力测试完成前不标注为稳健。',
       focus: ['逐策略净收益来源', '可退出余额', '压力测试结果'],
       alt: '水彩画：山间两座圆形水池，金色水流从上层流入下层',
+      target: '不提供年化：利率浮动且叠加协议风险，净收益来源逐项披露。',
+      blocker: '链上借贷（Aave 类）与到期工具（Pendle 类）的网络、合约、资金池和到期日尚未逐项核验。',
+      conditions: ['逐个协议核验网络、合约、资金池与到期日', '压力测试通过：稳定币脱锚、流动性枯竭、合约暂停', '明确「可退出余额」的计量与展示口径', '以上完成后，由待定级确定为均衡或进取档'],
     },
     en: {
       name: 'Runheng', subtitle: 'On-chain Income',
@@ -162,12 +209,16 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       riskNote: 'Not labelled conservative until stress tests are complete.',
       focus: ['Net return by strategy', 'Withdrawable balance', 'Stress-test results'],
       alt: 'Watercolour of two round hillside pools, golden water flowing from the upper to the lower',
+      target: 'No annualised figure: rates float and carry protocol risk, so net return is disclosed source by source.',
+      blocker: 'The networks, contracts, pools and maturities of the Aave-style lending and Pendle-style fixed-maturity tools have not yet been checked one by one.',
+      conditions: ['Each protocol’s network, contract, pool and maturity verified', 'Stress tests passed: stablecoin de-peg, liquidity drought, contract pause', 'How the withdrawable balance is measured and shown is defined', 'Then graded from pending to Balanced or Growth'],
     },
   },
   {
     id: 'hengcha', no: '05', short: 'Carry', filters: ['short', 'research'], horizon: 'm12', risk: 'pending', stage: 'research',
     allocation: [['tbill', 55], ['basis', 30], ['margin', 15]],
     image: img('hengcha-carry', 1916, 821, '50% 50%'),
+    terms: { mgmtFeePct: 0.9, subFeePct: 0.3, redFeePct: 0.3, lockupDays: 7, settleDays: 2, minInvestment: 200, provisional: true },
     zh: {
       name: '衡差', subtitle: '期现策略',
       oneLiner: '在严格匹配现货与期货的前提下，研究扣费后的价差收益。',
@@ -179,6 +230,8 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       riskNote: '真实执行与监控链路验收前，仅展示研究页。',
       focus: ['价差来源', '资金占用', '压力情景', '赎回限制'],
       alt: '藏蓝底上的技术版画：金、银两条线路汇合为一点',
+      blocker: '真实执行与监控链路（两条腿的成交、对冲误差、停机规则）尚未验收。',
+      conditions: ['保证金与强平规则写入产品页', '固化最小净价差、平仓阈值与停机规则', '实测跨场所转账延迟', '执行链路验收后才定级（基差策略通常为均衡至进取档）；定级前不放入稳健档'],
     },
     en: {
       name: 'Hengcha', subtitle: 'Cash-and-Carry',
@@ -191,12 +244,15 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       riskNote: 'Shown as research only until live execution and monitoring are accepted.',
       focus: ['Where the spread comes from', 'Capital in use', 'Stress scenarios', 'Redemption limits'],
       alt: 'Technical print on navy: a gold line and a silver line converging to one point',
+      blocker: 'Live execution and monitoring (fills on both legs, hedge error, kill-switch rules) have not yet been accepted.',
+      conditions: ['Margin and liquidation rules written into the product page', 'Minimum net spread, unwind thresholds and kill-switch rules fixed', 'Transfer delays between venues measured', 'Graded only after execution is accepted (basis strategies usually land Balanced to Growth); never in the conservative tier before then'],
     },
   },
   {
     id: 'yuanjian', no: '06', short: 'Growth', filters: ['long'], horizon: 'y5', risk: 3, stage: 'first',
     allocation: [['equity', 60], ['tech', 15], ['tbill', 15], ['btc', 10]],
     image: img('yuanjian-growth', 1916, 821, '50% 50%'),
+    terms: TIER[3],
     zh: {
       name: '远见', subtitle: '全球成长',
       oneLiner: '以全球股票为主，有限加入科技和 BTC，争取长期增长。',
@@ -221,9 +277,10 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
     },
   },
   {
-    id: 'qiyuan', no: '07', short: 'Innovation', filters: ['long'], horizon: 'y5', risk: 3, stage: 'second',
+    id: 'qiyuan', no: '07', short: 'Innovation', filters: ['long'], horizon: 'y5', risk: 3, stage: 'first',
     allocation: [['semis', 30], ['cloud', 20], ['equity', 20], ['power', 15], ['tbill', 15]],
     image: img('qiyuan-innovation', 1918, 820, '62% 50%'),
+    terms: TIER[3],
     zh: {
       name: '启元', subtitle: '科技基础设施',
       oneLiner: '集中研究计算、网络及电力基础设施相关企业。',
@@ -234,6 +291,10 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['估值收缩', '技术周期下行', '出口限制', '电力需求兑现不及预期'],
       focus: ['主题与非主题配置', '前十大公司穿透持仓', '与远见的重叠度'],
       alt: '数据中心设备纪实微距：铜制散热鳍片与管道，旁边是机柜长廊',
+      benchmark: '30% × 半导体指数 + 20% × 云与软件指数 + 20% × MSCI 世界 + 15% × 电力基础设施指数 + 15% × 短期美债',
+      target: '10% – 18% / 年（重权益 + 主题溢价，波动大）',
+      scenario: '保守 −30%（估值收缩 + 技术周期下行）/ 基准 +12% / 乐观 +35%',
+      conditions: ['四个子行业的具体基金或股票篮子', '单一公司穿透权重不高于净值 8%，经回测确认'],
     },
     en: {
       name: 'Qiyuan', subtitle: 'Tech Infrastructure',
@@ -245,12 +306,17 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['Valuation compression', 'Technology down-cycles', 'Export controls', 'Power demand falling short'],
       focus: ['Theme vs non-theme weights', 'Top-ten look-through holdings', 'Overlap with Yuanjian'],
       alt: 'Documentary macro of data-centre hardware: copper cooling fins and pipes beside a row of racks',
+      benchmark: '30% × semiconductor index + 20% × cloud & software index + 20% × MSCI World + 15% × power infrastructure index + 15% × short US Treasuries',
+      target: '10% – 18% a year (equity-heavy plus a theme premium; highly volatile)',
+      scenario: 'Bear −30% (valuation compression and a tech down-cycle) / Base +12% / Bull +35%',
+      conditions: ['A defined fund or stock basket for each of the four sub-sectors', 'Single-company look-through weight capped at 8% of NAV, confirmed by backtest'],
     },
   },
   {
-    id: 'xinghe', no: '08', short: 'Digital', filters: ['long', 'digital'], horizon: 'y5', risk: 3, stage: 'second',
+    id: 'xinghe', no: '08', short: 'Digital', filters: ['long', 'digital'], horizon: 'y5', risk: 4, stage: 'first',
     allocation: [['btc', 40], ['eth', 25], ['tbill', 20], ['sol', 10], ['cash', 5]],
     image: img('xinghe-digital', 1916, 821, '40% 50%'),
+    terms: TIER[4],
     zh: {
       name: '星河', subtitle: '数字核心',
       oneLiner: '以 BTC、ETH 为主，加入少量 SOL 和短债的数字资产组合。',
@@ -260,6 +326,10 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['币价大幅下跌', '交易所暂停服务', '链上与托管故障', '持有短债不构成最大亏损保证'],
       focus: ['24 小时行情与可执行报价分开展示', '持仓与托管信息', '币价与组合净值'],
       alt: '深蓝空间中两根发光的石柱，倒映在光滑地面上',
+      benchmark: '40% × BTC + 25% × ETH + 10% × SOL + 20% × 短期美债 + 5% × 现金',
+      target: '不设年度中枢：加密资产没有稳定的长期中枢。',
+      scenario: '保守 −70% / 基准 −20% ~ +25% / 乐观 +80%（区间之宽本身就是该产品的风险特征）',
+      conditions: ['交易所与托管方', '链上与托管敞口分别计量并公布'],
     },
     en: {
       name: 'Xinghe', subtitle: 'Digital Core',
@@ -270,12 +340,17 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['Sharp crypto price falls', 'Exchange suspensions', 'On-chain and custody failures', 'Holding treasuries does not cap the maximum loss'],
       focus: ['24h market data kept apart from executable quotes', 'Holdings and custody', 'Coin prices vs portfolio NAV'],
       alt: 'Two lit stone pillars in a deep blue hall, reflected in a polished floor',
+      benchmark: '40% × BTC + 25% × ETH + 10% × SOL + 20% × short US Treasuries + 5% × cash',
+      target: 'No annual central range: crypto has no stable long-run centre.',
+      scenario: 'Bear −70% / Base −20% to +25% / Bull +80% (the width of the range is itself the risk profile)',
+      conditions: ['Exchanges and custodians', 'On-chain and custody exposure measured and published separately'],
     },
   },
   {
     id: 'tuojie', no: '09', short: 'Frontier', filters: ['digital', 'research'], horizon: 'y5', risk: 4, stage: 'research',
     allocation: [['btc', 25], ['eth', 25], ['sol', 15], ['tbillCash', 15], ['link', 10], ['aave', 5], ['ondo', 5]],
     image: img('tuojie-frontier', 2043, 770, '50% 50%'),
+    terms: { mgmtFeePct: 1.5, subFeePct: 0.5, redFeePct: 0.5, lockupDays: 15, settleDays: 2, minInvestment: 200, provisional: true },
     zh: {
       name: '拓界', subtitle: '数字创新',
       oneLiner: '在主流币基础上，选择具有可核验用途与流动性的公链和协议代币。',
@@ -286,6 +361,8 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['代币解锁与稀释', '资产间相关性上升', '项目失败', '交易深度不足'],
       focus: ['项目代币与收益资产的区别', '流通与解锁资料', '集中度'],
       alt: '藏蓝底上的多色套印抽象画：几何节点由细线连成网络',
+      blocker: '候选代币（LINK、AAVE、ONDO）的流通量、解锁、持有人实际权益与可成交深度尚未核验。',
+      conditions: ['逐币核验并公开流通量与解锁资料', '明确项目代币不等于收益资产', '单一非 BTC/ETH 代币上限与最低流动性规则落地', '重大解锁、合约风险或无法估值时暂停加仓的机制完成验收'],
     },
     en: {
       name: 'Tuojie', subtitle: 'Digital Frontier',
@@ -297,6 +374,8 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       risks: ['Unlocks and dilution', 'Rising correlation', 'Project failure', 'Thin trading depth'],
       focus: ['Project tokens vs yield-bearing assets', 'Supply and unlock data', 'Concentration'],
       alt: 'Multi-colour overprint abstract on navy: geometric nodes joined by fine lines',
+      blocker: 'Supply, unlocks, real holder rights and tradable depth for the candidate tokens (LINK, AAVE, ONDO) are not yet verified.',
+      conditions: ['Each token verified, with supply and unlock data published', 'Project tokens clearly separated from yield-bearing assets', 'Caps on any non-BTC/ETH token and minimum liquidity rules in force', 'The pause-on-unlock, contract-risk or no-price mechanism accepted'],
     },
   },
   {
@@ -314,6 +393,9 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       riskNote: '尚未定级，不默认放入稳健档。',
       focus: ['发行人与关联关系', '底层资产清单、权属与现金流证据', '持有人拥有资产权益、收入分成权、赎回权中的哪几项', '偿付顺序', '总发行量与剩余可发行量', '估值、减值与审计方法', '合同期限与赎回条件'],
       alt: '暖白墙前木台上的一块石英棱柱与一把铜钥匙',
+      feeNote: '每期单独定价与披露：管理费按基础费加业绩报酬逐期确定，锁定期按底层资产期限确定。',
+      blocker: '按「实源 01 · 资产类型」逐期发行，目前没有已确认的资产类型，因此没有可上线的标的。',
+      conditions: ['以上披露项须逐期满足，方可发行该期'],
     },
     en: {
       name: 'Shiyuan', subtitle: 'Real Asset Income',
@@ -326,6 +408,9 @@ export const HENGXU_PRODUCTS: HengxuProduct[] = [
       riskNote: 'Not yet graded, and not placed in a conservative tier by default.',
       focus: ['Issuer and related parties', 'Asset list, title and cash-flow evidence', 'Which of asset claim, revenue share and redemption right holders get', 'Payment priority', 'Total and remaining issuance', 'Valuation, impairment and audit method', 'Term and redemption conditions'],
       alt: 'A quartz prism and a copper key on a wooden block before a warm white wall',
+      feeNote: 'Each series is priced and disclosed on its own: the management fee (a base fee plus a performance fee) and the lock-up, which follows the underlying asset’s term, are set per series.',
+      blocker: 'Issued series by series as “Shiyuan 01 · asset type”; no asset type is confirmed yet, so there is nothing to launch.',
+      conditions: ['Every disclosure above must be met for each series before it is issued'],
     },
   },
 ]

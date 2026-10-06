@@ -9,18 +9,21 @@ import { getMarketContextView } from '@/lib/api/market-context'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import type { MarketQuote } from '@/lib/p0a-data'
 import { HomeTradingView } from './HomeTradingView'
+import { HomeSectionHeading } from './HomeSectionHeading'
 import { CountUp, EASE } from './maison-motion'
 import styles from './HomeMarkets.module.css'
 
 const copy: Record<AppLocale, { eyebrow: string; title: string; macro: string; gold: string; unavailable: string; note: string; retrieved: string; delayed: string }> = {
-  en: { eyebrow: 'The world in motion', title: 'Markets', macro: 'Macro', gold: 'Gold chart', unavailable: 'Market data unavailable · tap to retry', note: 'Context only · not an executable quote', retrieved: 'Retrieved', delayed: 'Delayed' },
-  'zh-CN': { eyebrow: '观察世界的脉搏', title: '市场', macro: '宏观', gold: '黄金图表', unavailable: '行情暂不可用 · 点击重试', note: '仅供参考 · 非可执行报价', retrieved: '获取时间', delayed: '延迟' },
-  hi: { eyebrow: 'बदलती दुनिया', title: 'बाज़ार', macro: 'मैक्रो', gold: 'सोना चार्ट', unavailable: 'बाज़ार डेटा उपलब्ध नहीं · फिर प्रयास करें', note: 'केवल संदर्भ · निष्पादन योग्य भाव नहीं', retrieved: 'प्राप्त', delayed: 'विलंबित' },
-  es: { eyebrow: 'El mundo en movimiento', title: 'Mercados', macro: 'Macro', gold: 'Gráfico del oro', unavailable: 'Datos no disponibles · reintentar', note: 'Solo contexto · no es una cotización ejecutable', retrieved: 'Consultado', delayed: 'Retrasado' },
-  ar: { eyebrow: 'العالم يتحرك', title: 'الأسواق', macro: 'الاقتصاد الكلي', gold: 'رسم الذهب', unavailable: 'بيانات السوق غير متاحة · أعد المحاولة', note: 'للاسترشاد فقط · ليس سعراً قابلاً للتنفيذ', retrieved: 'تم الجلب', delayed: 'متأخر' },
-  fr: { eyebrow: 'Le monde en mouvement', title: 'Marchés', macro: 'Macro', gold: 'Graphique de l’or', unavailable: 'Données indisponibles · réessayer', note: 'Contexte uniquement · cotation non exécutable', retrieved: 'Relevé', delayed: 'Différé' },
-  pt: { eyebrow: 'O mundo em movimento', title: 'Mercados', macro: 'Macro', gold: 'Gráfico do ouro', unavailable: 'Dados indisponíveis · tentar novamente', note: 'Apenas contexto · cotação não executável', retrieved: 'Consultado', delayed: 'Atrasado' },
+  en: { eyebrow: 'The world in motion', title: 'Markets', macro: 'Macro', gold: 'Gold spot', unavailable: 'Market data unavailable · tap to retry', note: 'Context only · not an executable quote', retrieved: 'Retrieved', delayed: 'Delayed' },
+  'zh-CN': { eyebrow: '观察世界的脉搏', title: '市场', macro: '宏观', gold: '黄金现货', unavailable: '行情暂不可用 · 点击重试', note: '仅供参考 · 非可执行报价', retrieved: '获取时间', delayed: '延迟' },
+  hi: { eyebrow: 'बदलती दुनिया', title: 'बाज़ार', macro: 'मैक्रो', gold: 'हाजिर सोना', unavailable: 'बाज़ार डेटा उपलब्ध नहीं · फिर प्रयास करें', note: 'केवल संदर्भ · निष्पादन योग्य भाव नहीं', retrieved: 'प्राप्त', delayed: 'विलंबित' },
+  es: { eyebrow: 'El mundo en movimiento', title: 'Mercados', macro: 'Macro', gold: 'Oro al contado', unavailable: 'Datos no disponibles · reintentar', note: 'Solo contexto · no es una cotización ejecutable', retrieved: 'Consultado', delayed: 'Retrasado' },
+  ar: { eyebrow: 'العالم يتحرك', title: 'الأسواق', macro: 'الاقتصاد الكلي', gold: 'الذهب الفوري', unavailable: 'بيانات السوق غير متاحة · أعد المحاولة', note: 'للاسترشاد فقط · ليس سعراً قابلاً للتنفيذ', retrieved: 'تم الجلب', delayed: 'متأخر' },
+  fr: { eyebrow: 'Le monde en mouvement', title: 'Marchés', macro: 'Macro', gold: 'Or au comptant', unavailable: 'Données indisponibles · réessayer', note: 'Contexte uniquement · cotation non exécutable', retrieved: 'Relevé', delayed: 'Différé' },
+  pt: { eyebrow: 'O mundo em movimento', title: 'Mercados', macro: 'Macro', gold: 'Ouro à vista', unavailable: 'Dados indisponíveis · tentar novamente', note: 'Apenas contexto · cotação não executável', retrieved: 'Consultado', delayed: 'Atrasado' },
 }
+
+const goldFutures: Record<AppLocale, string> = { en: 'Gold futures', 'zh-CN': '黄金期货', hi: 'सोना फ्यूचर्स', es: 'Futuros de oro', ar: 'عقود الذهب الآجلة', fr: 'Contrats à terme or', pt: 'Futuros de ouro' }
 
 const symbolLabels: Record<string, string> = { '^TNX': 'US 10Y', 'DX-Y.NYB': 'DXY', 'GC=F': 'GOLD', '^GSPC': 'S&P 500', BTC: 'BTC', ETH: 'ETH' }
 
@@ -68,24 +71,23 @@ export function HomeMarkets() {
   const tabs = [{ id: 'macro' as const, text: label.macro }, { id: 'gold' as const, text: label.gold }]
 
   return <section ref={rootRef} className={styles.root} aria-label={label.title}>
-    <div className={styles.head}>
-      <div><span className={styles.eyebrow}>{label.eyebrow}</span><h2>{label.title}</h2></div>
+    <HomeSectionHeading index="04" title={label.title}>
       <div className={styles.tabs} role="tablist" aria-label={label.title}>
         {tabs.map(item => <button key={item.id} type="button" role="tab" aria-selected={tab === item.id} onClick={() => setTab(item.id)}>
           {tab === item.id && <motion.span className={styles.tabPill} layoutId="home-markets-tab" transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 34 }} />}
           <span className={styles.tabText}>{item.text}</span>
         </button>)}
       </div>
-    </div>
+    </HomeSectionHeading>
 
     {tab === 'macro' ? <motion.div key="macro" initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
       {result.loading && !data ? <div className={styles.loading}><span /><span /><span /></div> : result.error && !data ? <button type="button" className={styles.error} onClick={() => void result.refetch()}>{label.unavailable}</button> : <>
         <div className={styles.featured}>
           {featured.map(quote => <div className={styles.featuredQuote} key={quote.symbol}>
-            <span className={styles.symbol}>{symbolLabels[quote.symbol] ?? quote.name}{quote.stale && <i>{label.delayed}</i>}</span>
+            <span className={styles.symbol}>{quote.symbol === 'GC=F' ? goldFutures[locale] : symbolLabels[quote.symbol] ?? quote.name}{quote.stale && <i>{label.delayed}</i>}</span>
             <CountUp className={styles.bigValue} value={quote.value} format={value => formatQuote(quote, value, locale)} />
             <span className={`${styles.change} ${tone(quote)}`} dir="ltr">{formatChange(quote)}</span>
-            <small>{quote.source}</small>
+            <small>{quote.source}{quote.asOf && !Number.isNaN(Date.parse(quote.asOf)) ? ' · ' + new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(quote.asOf)) : ''}</small>
           </div>)}
         </div>
         <ul className={styles.list}>

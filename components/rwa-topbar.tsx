@@ -24,7 +24,7 @@ import actionStyles from './topbar-actions.module.css'
 export type { Slot }
 export type TopbarCenter = { kind: 'title'; text: ReactNode } | { kind: 'segment'; items: string[]; value: number; onChange: (index: number) => void } | { kind: 'steps'; total: number; current: number } | null
 export type RwaTopbarAction = { label: string; onClick: () => void; Icon?: LucideIcon; badge?: boolean; disabled?: boolean; busy?: boolean }
-type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; action?: RwaTopbarAction; className?: string; badge?: { slot: 'R2' | 'R1'; count: number } }
+type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; account?: boolean; action?: RwaTopbarAction; className?: string; badge?: { slot: 'R2' | 'R1'; count: number } }
 const icons: Record<Exclude<Slot, null | 'logo' | 'language'>, LucideIcon> = { back: ChevronLeft, close: X, theme: Moon, filter: SlidersHorizontal, search: Search, bell: Bell, share: Share2, star: Star, avatar: UserRound, gear: Settings, more: MoreHorizontal, help: CircleHelp, edit: Pencil, calendar: Calendar, ledger: ReceiptText, export: Download, plus: Plus, follow: UserPlus, readall: CheckCheck, book: BookOpen, info: Info }
 type TopbarCopy = { slots: Record<Exclude<Slot, null>, string>; account: string; signIn: string; steps: string; unread: string; themeTo: Record<'light' | 'dark', string>; ring: Record<Exclude<KycRing, null>, string> }
 const topbarCopy: Record<AppLocale, TopbarCopy> = {
@@ -85,7 +85,8 @@ export default function RwaTopbar(props: Props) {
   const transparent = config.surface === 'transparent-over-media'
   const kind = props.kind ?? (props.screen ? rwaScreenTopbarKinds[props.screen] : undefined)
   // A pushed page (back button) never carries the account entry, even when its screen is a tab kind (wallet).
-  const showAccount = Boolean(kind && accountKinds.has(kind)) && config.l1 !== 'back'
+  // `account` opts a pushed page in explicitly (community: the avatar is its profile and edit entry).
+  const showAccount = props.account ?? (Boolean(kind && accountKinds.has(kind)) && config.l1 !== 'back')
   const unread = useUnread(signedIn && showAccount).unread
   const largeTitle = useLargeTitle(props.screen ?? props.title)
   const center: TopbarCenter = props.c !== undefined ? props.c : config.template === 'T-Flow' ? (props.title ? { kind: 'title', text: props.title } : null) : config.template === 'T-Root' && props.title === undefined ? null : { kind: 'title', text: props.title ?? '' }

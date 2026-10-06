@@ -142,6 +142,10 @@ export const OPEN_TRADING_STATES = new Set(['open', 'partial'])
 // ── Prediction (internal market A) ──
 export const getPredictionStatus = () => request<PredictionStatus>('/v1/predictions/status')
 export const placePredictionBet = (body: PlaceBetBody) => request<PredictionBet & { duplicate?: boolean }>('/v1/predictions/bets', { method: 'POST', body: JSON.stringify(body) })
+/** Starred prediction events, per account (≤200, newest first). Toggles are silent: the star is optimistic. */
+export type PredictionFavorite = { eventId: string; createdAt: string }
+export const listPredictionFavorites = () => request<PredictionFavorite[]>('/v1/predictions/favorites')
+export const setPredictionFavorite = (eventId: string, favorite: boolean) => request<{ eventId: string; favorite: boolean }>(`/v1/predictions/favorites/${encodeURIComponent(eventId)}`, { method: favorite ? 'POST' : 'DELETE', loading: 'silent' })
 /** Same-origin Next route, not /v1: it proxies public Polymarket data and never carries the session. */
 export async function getPolymarketMarket(id: string, period = 'max', fresh = false): Promise<ApiResult<PolymarketMarket>> {
   try {

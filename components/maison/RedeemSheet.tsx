@@ -1,6 +1,5 @@
 'use client'
 
-import { Dialog } from '@base-ui/react/dialog'
 import { ArrowUpFromLine, Check, Info } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useI18n } from '@/lib/i18n'
@@ -11,7 +10,9 @@ import type { ApiError } from '@/lib/api/_http'
 import { fromAtomic, toAtomic } from '@/lib/money'
 import { assetToolsCopy } from '@/lib/maison-assets-tools-copy'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
+import { fundsCopy } from '@/lib/maison-funds-copy'
 import { SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
+import { Sheet } from './Sheet'
 import { useAutoAnimate } from './motion'
 import { fmtAtomic, fmtDateTime } from './format'
 
@@ -32,7 +33,8 @@ export function redeemableFor(positions: Position[], redemptions: Redemption[] |
 }
 
 /** Redemption requests for one product, newest first, with a two-step cancel while requested/queued. */
-export function RedemptionsSection({ productId, decimals, index }: { productId: string; decimals: number; index: string }) {
+/** `index` is accepted for existing callers but no longer drawn: numbered section heads read as a form, not a portfolio. */
+export function RedemptionsSection({ productId, decimals }: { productId: string; decimals: number; index?: string }) {
   const { locale } = useI18n()
   const t = assetToolsCopy[locale].redeem
   const common = marketCopy[locale].common
@@ -56,7 +58,7 @@ export function RedemptionsSection({ productId, decimals, index }: { productId: 
   }
 
   return <>
-    <SectionHead index={index} title={t.list} note={t.listNote} />
+    <SectionHead title={t.list} note={t.listNote} />
     {redemptions.error && !redemptions.data ? <StateBlock tone="error" title={common.errorGeneric} body={redemptions.error.message} retry={redemptions.refetch} retryLabel={common.retry} />
       : !redemptions.data ? <Skeleton rows={2} />
       : !rows.length ? <StateBlock title={t.empty} />
@@ -94,9 +96,6 @@ export function RedeemSheet({ open, onClose, onDone, productId, name, positions,
   const t = assetToolsCopy[locale].redeem
   const common = marketCopy[locale].common
   const redemptions = useRedemptions()
-  const anchor = useRef<HTMLSpanElement>(null)
-  const [container, setContainer] = useState<HTMLElement | null>(null)
-  useEffect(() => { setContainer(anchor.current?.closest<HTMLElement>('[data-maison-page]') ?? null) }, [])
   const long = positions.find((row) => row.productId === productId && row.outcomeKey === 'long')
   const decimals = long?.assetDecimals ?? 6
   const unit = long?.assetCode ?? ''
@@ -139,15 +138,7 @@ export function RedeemSheet({ open, onClose, onDone, productId, name, positions,
     onDone(result.data)
   }
 
-  return <>
-    <span ref={anchor} hidden />
-    <Dialog.Root open={open} onOpenChange={(next) => { if (!next && !pending) onClose() }}>
-      <Dialog.Portal container={container}>
-        <Dialog.Backdrop className={s.sheetBackdrop} />
-        <Dialog.Popup className={s.sheet} data-redeem="" data-sheet="">
-          <i className={s.sheetGrip} aria-hidden="true" />
-          <p className={s.kicker}>{t.kicker}</p>
-          <Dialog.Title className={s.sheetTitle}>{t.title} · {name}</Dialog.Title>
+  return <Sheet open={open} onClose={onClose} busy={pending} data-redeem="" kicker={<>{t.kicker} · {name}</>} title={t.title}>
           {redemptions.error && !redemptions.data ? <StateBlock tone="error" title={common.errorGeneric} body={redemptions.error.message} retry={redemptions.refetch} retryLabel={common.retry} />
             : !redemptions.data ? <Skeleton rows={3} />
             : <form onSubmit={(event) => { event.preventDefault(); void submit() }}>
@@ -158,15 +149,16 @@ export function RedeemSheet({ open, onClose, onDone, productId, name, positions,
               </dl>
               {redeemable <= ZERO ? <div className={s.notice} data-tone="info"><Info size={16} /><span>{t.nothing}</span></div>
                 : <>
-                  <label className={s.field}>
-                    <span>{t.qty} · {unit}</span>
-                    <input value={qty} name="redeem-quantity" inputMode="decimal" autoComplete="off" placeholder="0" aria-invalid={Boolean(fieldError)} aria-describedby="redeem-error"
+                  <label className={s.kicker} htmlFor="redeem-quantity" style={{ marginTop: 18 }}>{t.qty}</label>
+                  <div className={s.amount}>
+                    <input id="redeem-quantity" value={qty} name="redeem-quantity" inputMode="decimal" autoComplete="off" placeholder="0" aria-invalid={Boolean(fieldError)} aria-describedby="redeem-error"
                       onChange={(event) => { setQty(event.target.value.replace(',', '.').replace(/[^\d.]/g, '')); setServerError(null) }} />
-                  </label>
-                  <div className={s.chips} data-dense="true" role="group" aria-label={t.qty} style={{ marginTop: 8 }}>
-                    <button type="button" className={s.chip} onClick={() => setPart(BigInt(1), BigInt(4))}>25%</button>
-                    <button type="button" className={s.chip} onClick={() => setPart(BigInt(1), BigInt(2))}>50%</button>
-                    <button type="button" className={s.chip} onClick={() => setPart(BigInt(1), BigInt(1))}>MAX</button>
+                    <span>{unit}</span>
+                  </div>
+                  <div className={s.chips} role="group" aria-label={t.qty} style={{ marginTop: 8 }}>
+                    <button type="button" className={s.chip} style={{ minHeight: 44, minWidth: 64 }} onClick={() => setPart(BigInt(1), BigInt(4))}>25%</button>
+                    <button type="button" className={s.chip} style={{ minHeight: 44, minWidth: 64 }} onClick={() => setPart(BigInt(1), BigInt(2))}>50%</button>
+                    <button type="button" className={s.chip} style={{ minHeight: 44, minWidth: 64 }} onClick={() => setPart(BigInt(1), BigInt(1))}>{fundsCopy[locale].common.max}</button>
                   </div>
                   {fieldError && <p className={s.fieldError} id="redeem-error" role="alert">{fieldError}</p>}
                   <dl className={s.summary} style={{ marginTop: 12 }}>
@@ -185,11 +177,7 @@ export function RedeemSheet({ open, onClose, onDone, productId, name, positions,
                   </button>
                 </>}
             </form>}
-          <Dialog.Close className={s.ghost} style={{ width: '100%', marginTop: 10 }} disabled={pending}>{t.close}</Dialog.Close>
-        </Dialog.Popup>
-      </Dialog.Portal>
-    </Dialog.Root>
-  </>
+  </Sheet>
 }
 
 const errorText = (errors: Record<string, string>, error: ApiError, fallback: string) => errors[error.code] ?? (error.message || fallback)

@@ -4,7 +4,6 @@ import { AlertTriangle, ArrowRight, ArrowUpFromLine, BookUser, Check, ChevronRig
 import { QRCodeSVG } from 'qrcode.react'
 import {TransferScanner} from './TransferScanner'
 import {transferRecipientFromCode} from '@/lib/transfer-code'
-import {useContentTranslation} from '@/lib/use-content-translation'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -24,6 +23,8 @@ import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Lacquer, Segmented, useAutoAnimate } from './motion'
 import { fmtAtomic, fmtDateTime } from './format'
 import { stepUpRequired, useStepUp } from './StepUp'
+import fp from './funds-polish.module.css'
+import fs from './funds-fullscreen.module.css'
 
 const WITHDRAW_PATH = '/v1/wallet/withdrawals'
 const TRANSFER_PATH = '/v1/wallet/transfers'
@@ -46,30 +47,38 @@ function AmountField({ id, value, onChange, unit, available, min, max, error, to
   id: string; value: string; onChange: (value: string) => void; unit: string; available: ReactNode; min?: ReactNode; max?: string | null; error: string | null; touched: boolean; onBlur: () => void; label: string; maxLabel: string
 }) {
   return <>
-    <label className={s.kicker} htmlFor={id} style={{ marginTop: 18 }}>{label}</label>
-    <div className={s.amount}>
+    <label className={`${s.kicker} ${fs.label}`} htmlFor={id}>{label}</label>
+    <div className={`${s.amount} ${fs.amount}`}>
       <input id={id} inputMode="decimal" autoComplete="off" placeholder="0.00" value={value} aria-invalid={Boolean(error && touched)} aria-describedby={`${id}-meta`} onChange={(event) => onChange(sanitize(event.target.value))} onBlur={onBlur} />
       <span>{unit}</span>
     </div>
-    <div className={s.fieldMeta} id={`${id}-meta`}><span>{available}</span>{min && <span className={s.num}>{min}</span>}</div>
+    <div className={`${s.fieldMeta} ${fs.meta}`} id={`${id}-meta`}><span>{available}</span>{min && <span className={s.num}>{min}</span>}</div>
     {touched && error && <p className={s.fieldError} role="alert">{error}</p>}
-    {max && <div className={s.chips}><button type="button" className={s.chip} aria-pressed={value === max} onClick={() => onChange(max)}>{maxLabel}</button></div>}
+    {max && <div className={fs.maxRow}><button type="button" className={`${s.chip} ${fs.maxChip}`} style={{ minHeight: 44, minWidth: 64 }} aria-pressed={value === max} onClick={() => onChange(max)}>{maxLabel}</button></div>}
   </>
 }
 
+/** Address-like ids read by their ends: `head…tail`, isolated LTR so it never reorders inside RTL copy. */
+function Addr({ value, head = 6, tail = 6 }: { value: string; head?: number; tail?: number }) {
+  if (value.length <= head + tail + 1) return <bdi className={s.addr} dir="ltr"><b>{value}</b></bdi>
+  return <bdi className={s.addr} dir="ltr"><b>{value.slice(0, head)}</b><i>…</i><b>{value.slice(-tail)}</b></bdi>
+}
+
+/** One card, one exit: notes sit inside the card as a quiet line; secondary paths are text links. */
 function Receipt({ title, rows, created, integration, onAgain, f }: { title: string; rows: { label: string; value: ReactNode }[]; created: boolean; integration?: { realFunds: boolean } | null; onAgain: () => void; f: FundsCopy }) {
+  const notes = [!created && f.common.replay, integration && !integration.realFunds && f.common.stubNote].filter(Boolean)
   return <div data-receipt="">
     <Lacquer aria-live="polite">
       <div className={s.receiptHead}><Check size={20} aria-hidden="true" /><b className={s.sheetTitle} style={{ margin: 0, fontSize: 24 }}>{title}</b></div>
       <dl className={s.summary}>{rows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd className={s.num}>{row.value}</dd></div>)}</dl>
+      {notes.length > 0 && <p className={s.foot} role={created ? undefined : 'status'} style={{ marginTop: 12 }}><Info size={13} aria-hidden="true" /><span>{notes.join(' · ')}</span></p>}
     </Lacquer>
-    {!created && <div className={s.notice} data-tone="info" role="status"><Info size={16} /><span>{f.common.replay}</span></div>}
-    {integration && !integration.realFunds && <div className={s.notice} data-tone="info"><Info size={16} /><span>{f.common.stubNote}</span></div>}
-    <div className={s.actionsRow}>
-      <button type="button" className={s.ghost} onClick={() => openPath('/assets/activity?type=funding')}>{f.common.activity}<ChevronRight size={14} /></button>
-      <button type="button" className={s.ghost} onClick={() => openPath('/assets/cash')}>{f.common.cash}</button>
-      <button type="button" className={s.link} onClick={onAgain}>{f.common.again}</button>
-    </div>
+    <button type="button" className={s.ghost} style={{ width: '100%', marginTop: 16 }} onClick={() => openPath('/assets/cash')}>{f.common.done}</button>
+    <p className={s.foot} style={{ justifyContent: 'center', gap: 4 }}>
+      <button type="button" className={s.link} style={{ minHeight: 44 }} onClick={() => openPath('/assets/activity?type=funding')}>{f.common.activity}</button>
+      <span aria-hidden="true">·</span>
+      <button type="button" className={s.link} style={{ minHeight: 44 }} onClick={onAgain}>{f.common.again}</button>
+    </p>
   </div>
 }
 
@@ -141,6 +150,9 @@ export function WithdrawScreen({ query }: { query: string }) {
   const insufficient = current?.data ? !current.data.sufficientBalance : false
   const ready = Boolean(network && atomic && !fieldError && addressOk && consent && current?.data && !insufficient && !pending)
 
+  const target = mode === 'saved' ? entry?.destination ?? '' : addressOk ? destination.trim() : ''
+  const destinationLine = target ? <>{mode === 'saved' && entry ? <>{entry.label} · </> : null}<Addr value={target} /></> : '—'
+
   const choose = (id: string) => { setPicked(id); setEntryId(null); setDestination(''); setServerError(null); setQuery('network', id) }
 
   const submit = async () => {
@@ -152,7 +164,11 @@ export function WithdrawScreen({ query }: { query: string }) {
     inflight.current = true
     setPending(true)
     setServerError(null)
-    const result = await run(stepUpRequired(integration), (reauthentication) => createWithdrawal(reauthentication ? { ...body, reauthentication } : body, key))
+    const result = await run(stepUpRequired(integration), (reauthentication) => createWithdrawal(reauthentication ? { ...body, reauthentication } : body, key), [
+      { label: f.common.amount, value: <strong className={s.num}>{fmtAtomic(atomic, decimals, unit)}</strong> },
+      { label: w.to, value: destinationLine },
+      { label: f.common.fee, value: <span className={s.num}>{fmtAtomic(current?.data?.feeAtomicAmount ?? network.withdrawalFeeAtomic, decimals, unit)}</span> },
+    ])
     inflight.current = false
     setPending(false)
     if (!result) { setServerError(f.common.cancelled); return }
@@ -167,8 +183,8 @@ export function WithdrawScreen({ query }: { query: string }) {
   const again = () => { keys.current.clear(); setReceipt(null); setAmount(''); setConsent(false); setTouched(false); setServerError(null) }
 
   const topbar = <RwaTopbar screen="withdraw" title={w.title} onBack={() => backOr('/assets/cash')} />
-  if (receipt) return <MaisonPage page="withdraw" topbar={topbar}>
-    <header className={s.hero}><p className={s.kicker}>{w.kicker}</p><h1 className={s.titleL}>{w.title}</h1></header>
+  if (receipt) return <MaisonPage page="withdraw" className={fs.page} topbar={topbar}>
+    <h1 className={fp.srTitle}>{w.title}</h1>
     <Receipt f={f} title={w.done} created={receipt.created} integration={receipt.integration} onAgain={again} rows={[
       { label: f.common.reference, value: <span className={s.mono} dir="ltr" data-ref="">{receipt.id.slice(0, 8)}</span> },
       { label: f.common.state, value: <span className={s.badge} data-tone={stateTone(receipt.state)}>{stateLabel(states, receipt.state)}</span> },
@@ -180,26 +196,23 @@ export function WithdrawScreen({ query }: { query: string }) {
     ]} />
   </MaisonPage>
 
-  return <MaisonPage page="withdraw" topbar={topbar} cta>
-    <header className={s.hero}>
-      <p className={s.kicker}>{w.kicker}</p>
-      <h1 className={s.titleL}>{w.title}</h1>
-    </header>
+  return <MaisonPage page="withdraw" className={fs.page} topbar={topbar} cta>
+    <h1 className={fp.srTitle}>{w.title}</h1>
     {networks.error && !networks.data ? <StateBlock tone="error" title={common.errorGeneric} body={networks.error.message} retry={networks.refetch} retryLabel={common.retry} />
       : !network ? <Skeleton rows={5} />
       : <>
-        <p className={s.kicker}>{f.common.network}</p>
-        <Segmented value={network.id} onChange={choose} label={f.common.network} role="group" options={list.map((item) => ({ value: item.id, label: item.displayName }))} />
+        <p className={`${s.kicker} ${fs.label} ${fs.first}`}>{f.common.network}</p>
+        <div className={fp.touchSeg}><Segmented value={network.id} onChange={choose} label={f.common.network} role="group" options={list.map((item) => ({ value: item.id, label: item.displayName }))} /></div>
 
-        <p className={s.kicker} style={{ marginTop: 18 }}>{w.destination}</p>
-        {!bookRequired && <Segmented value={mode} onChange={(next) => { setModePick(next); setServerError(null) }} label={w.destination} role="group" options={[{ value: 'saved', label: w.saved }, { value: 'manual', label: w.manual }]} />}
-        {bookRequired && <div className={s.notice} data-tone="info"><Info size={16} /><span>{w.bookRequired}</span></div>}
+        <p className={`${s.kicker} ${fs.label}`}>{w.destination}</p>
+        {!bookRequired && <div className={fp.touchSeg}><Segmented value={mode} onChange={(next) => { setModePick(next); setServerError(null) }} label={w.destination} role="group" options={[{ value: 'saved', label: w.saved }, { value: 'manual', label: w.manual }]} /></div>}
+        {bookRequired && <div className={`${s.notice} ${fs.note}`} data-tone="info"><Info size={16} /><span>{w.bookRequired}</span></div>}
         {mode === 'saved' ? (book.error && !book.data ? <StateBlock tone="error" title={f.book.loadError} body={book.error.message} retry={book.refetch} retryLabel={common.retry} />
           : !book.data ? <Skeleton rows={2} />
-          : !entries.length ? <StateBlock title={fill(w.bookEmpty, { n: network.displayName })} action={<button type="button" className={s.link} onClick={() => openPath('/assets/cash/address-book')}><BookUser size={13} />{w.manageBook}</button>} />
-          : <ul className={s.pickList} ref={picks} role="radiogroup" aria-label={w.destination}>{entries.map((item) => {
+          : !entries.length ? <StateBlock title={fill(w.bookEmpty, { n: network.displayName })} action={<button type="button" className={s.link} style={{ minHeight: 44 }} onClick={() => openPath('/assets/cash/address-book')}><BookUser size={13} />{w.manageBook}</button>} />
+          : <ul className={`${s.pickList} ${fs.pickList}`} ref={picks} role="radiogroup" aria-label={w.destination}>{entries.map((item) => {
             const ok = usable(item)
-            return <li key={item.id}><button type="button" role="radio" className={s.pick} aria-checked={entry?.id === item.id} disabled={!ok} onClick={() => { setEntryId(item.id); setServerError(null) }}>
+            return <li key={item.id}><button type="button" role="radio" className={`${s.pick} ${fs.pickRow}`} aria-checked={entry?.id === item.id} disabled={!ok} onClick={() => { setEntryId(item.id); setServerError(null) }}>
               <i aria-hidden="true" />
               <span><b>{item.label}</b><small className={s.mono} dir="ltr">{mask(item.destination)}</small>
                 {item.state === 'pending' && <small>{fill(w.usableFrom, { t: fmtDateTime(item.cooldownUntil, locale) })}</small>}</span>
@@ -209,40 +222,43 @@ export function WithdrawScreen({ query }: { query: string }) {
               </span>
             </button></li>
           })}</ul>)
-          : <label className={s.field}>
+          : <label className={`${s.field} ${fs.field}`}>
             <span>{fill(w.address, { n: network.displayName })}</span>
             <input value={destination} autoComplete="off" spellCheck={false} placeholder={network.id === 'tron' ? 'T…' : '0x…'} aria-invalid={destination.length > 0 && !addressOk} aria-describedby="withdraw-address-error"
               onChange={(event) => { setDestination(event.target.value.replace(/\s/g, '')); setServerError(null) }} />
           </label>}
         {mode === 'manual' && destination.length > 0 && !addressOk && <p className={s.fieldError} id="withdraw-address-error" role="alert">{fill(w.addressInvalid, { n: network.displayName })}</p>}
-        {mode === 'saved' && entries.length > 0 && <button type="button" className={s.link} style={{ marginTop: 10 }} onClick={() => openPath('/assets/cash/address-book')}><BookUser size={13} />{w.manageBook}</button>}
+        {mode === 'saved' && entries.length > 0 && <button type="button" className={s.link} style={{ marginTop: 6, minHeight: 44 }} onClick={() => openPath('/assets/cash/address-book')}><BookUser size={13} />{w.manageBook}</button>}
 
         <AmountField id="withdraw-amount" label={f.common.amount} unit={unit} value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} touched={touched || amount.length > 0} onBlur={() => setTouched(true)} error={fieldError} maxLabel={f.common.max}
           max={maxAtomic ? fromAtomic(maxAtomic, decimals) : null}
           available={!wallet.data && !wallet.error ? '…' : wallet.error && !wallet.data ? <button type="button" className={s.link} onClick={wallet.refetch}>{common.unavailable} · {common.retry}</button> : fill(f.common.available, { v: fmtAtomic(available, decimals, unit) })}
           min={fill(f.common.min, { v: fmtAtomic(network.minimumWithdrawalAtomic, decimals, '', 0).trim() })} />
 
-        <Lacquer style={{ marginTop: 22 }} aria-live="polite">
-          <dl className={s.summary}>
+        <div aria-live="polite">
+          <dl className={`${s.summary} ${fs.rows}`}>
+            <div><dt>{w.to}</dt><dd>{destinationLine}</dd></div>
             <div><dt>{f.common.amount}</dt><dd className={s.num}>{atomic && !fieldError ? fmtAtomic(atomic, decimals, unit) : '—'}</dd></div>
             <div><dt>{f.common.fee}</dt><dd className={s.num}>{current?.data ? fmtAtomic(current.data.feeAtomicAmount, decimals, unit) : fmtAtomic(network.withdrawalFeeAtomic, decimals, unit)}</dd></div>
             <div data-strong="true"><dt>{w.total}</dt><dd className={s.num}>{current?.data ? fmtAtomic(current.data.totalDebitAtomic, decimals, unit) : '—'}</dd></div>
             <div><dt>{f.common.after}</dt><dd className={s.num}>{current?.data && !insufficient ? fmtAtomic((BigInt(current.data.availableAtomic) - BigInt(current.data.totalDebitAtomic)).toString(), decimals, unit) : '—'}</dd></div>
           </dl>
-          <p className={s.muted} style={{ margin: '12px 0 0', fontSize: 11.5, color: 'var(--m-lacquer-muted)' }} data-quote-state={!quoteKey ? 'idle' : !current ? 'loading' : current.error ? 'error' : 'ready'}>
-            {!quoteKey ? w.indicative : !current ? w.quoting : current.error ? <>{w.quoteError} · {current.error} · <button type="button" className={s.link} style={{ color: 'var(--m-lacquer-accent)' }} onClick={() => setQuoteNonce((n) => n + 1)}>{common.retry}</button></> : insufficient ? w.insufficient : w.indicative}
+          <p className={`${s.muted} ${fp.quoteNote} ${fs.quote}`} data-quote-state={!quoteKey ? 'idle' : !current ? 'loading' : current.error ? 'error' : 'ready'}>
+            {!quoteKey ? null : !current ? w.quoting : current.error ? <>{w.quoteError} · {current.error} · <button type="button" className={s.link} onClick={() => setQuoteNonce((n) => n + 1)}>{common.retry}</button></> : insufficient ? w.insufficient : w.indicative}
           </p>
-        </Lacquer>
-        {integration && !integration.realFunds && <div className={s.notice} data-tone="info"><Info size={16} /><span>{f.common.stubNote}</span></div>}
-        <p className={s.foot}><span>{stepUpRequired(integration) ? f.stepUp.required : f.stepUp.waived}</span></p>
+        </div>
+        {integration && !integration.realFunds && <div className={`${s.notice} ${fs.note}`} data-tone="info"><Info size={16} /><span>{f.common.stubNote}</span></div>}
+        <details className={fs.more}>
+          <summary><span>{f.common.more}</span></summary>
+          <div className={fs.moreBody}><p>{stepUpRequired(integration) ? f.stepUp.required : f.stepUp.waived}</p></div>
+        </details>
 
-        <label className={s.consent}>
-          <input type="checkbox" checked={consent} onChange={(event) => { setConsent(event.target.checked); setServerError(null) }} />
-          <span>{w.consent}</span>
-        </label>
-        {serverError && <div className={s.notice} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
-
-        <div className={s.stickyCta}>
+        <div className={`${s.stickyCta} ${fs.fixedCta}`}>
+          <label className={`${s.consent} ${fs.consent}`}>
+            <input type="checkbox" checked={consent} onChange={(event) => { setConsent(event.target.checked); setServerError(null) }} />
+            <span>{w.consent}</span>
+          </label>
+          {serverError && <div className={`${s.notice} ${fs.note}`} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
           <button type="button" className={s.cta} onClick={submit} disabled={!ready} aria-busy={pending}>
             <span>{pending ? f.common.submitting : w.submit}</span>
             <span className={s.ctaIcon}><ArrowUpFromLine size={17} /></span>
@@ -275,32 +291,34 @@ export function ReceiveScreen() {
     try { await navigator.clipboard.writeText(link); setCopied(true); window.setTimeout(() => setCopied(false), 1600) } catch { setCopied(false) }
   }
 
-  const topbar = <RwaTopbar screen="receive" template="T-Child" l1="back" title={r.title} onBack={() => backOr('/assets/cash')} />
-  return <MaisonPage page="receive" topbar={topbar}>
-    <header className={s.hero}>
-      <p className={s.kicker}>{r.kicker}</p>
-      <h1 className={s.titleL}>{r.title}</h1>
-      <p className={s.lede}>{r.lede}</p>
-    </header>
+  const topbar = <RwaTopbar screen="receive" template="T-Child" l1="close" title={r.title} onBack={() => backOr('/assets/cash')} />
+  return <MaisonPage page="receive" className={fs.page} topbar={topbar} cta={typeof userId === 'string'}>
+    <h1 className={fp.srTitle}>{r.title}</h1>
     {userId === undefined ? <Skeleton rows={4} />
-      : userId === null ? <StateBlock tone="unavailable" title={r.unavailable} body={r.note}
+      : userId === null ? <StateBlock tone="unavailable" title={r.unavailable}
         action={<button type="button" className={s.ghost} onClick={() => signInThenReturn('/assets/cash/receive')}>{r.signIn}<ChevronRight size={15} className={s.chev} /></button>} />
       : <>
-        <Lacquer className={s.receiveCard}>
-          <p className={s.kicker} style={{ margin: 0 }}>{r.qr}</p>
-          <span className={`${s.qr} ${s.receiveQr}`}><QRCodeSVG value={link} size={176} level="M" bgColor="transparent" fgColor="#16130f" title={r.qr} /></span>
-          <div className={s.receiveId}>
-            <small>{r.idLabel}</small>
-            <bdi dir="ltr" className={s.mono}>{userId}</bdi>
+        <div className={fs.qrWrap}><div className={fs.qr} role="img" aria-label={r.qr}><QRCodeSVG value={link} size={232} level="M" bgColor="transparent" fgColor="#16130f" /></div></div>
+        <p className={fs.scope}><b>{r.qr}</b><br />{r.scope}</p>
+        <div className={fs.addrRow}>
+          <div><small>{r.idLabel}</small><p className={`${s.mono} ${fs.addrText}`} dir="ltr">{userId}</p></div>
+        </div>
+        <p className={s.foot}><ShieldCheck size={13} aria-hidden="true" /><span>{r.safety}</span></p>
+        <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/transfer')}><Send size={13} aria-hidden="true" />{r.transfer}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
+        <details className={fs.more}>
+          <summary><span>{fundsCopy[locale].common.more}</span></summary>
+          <div className={fs.moreBody}>
+            <p>{r.lede}</p>
+            <p>{r.note}</p>
+            <p className={fs.linkText}>{link}</p>
           </div>
-          <div className={s.receiveActions}>
-            <button type="button" className={s.ghost} data-size="s" onClick={() => void copy()} aria-live="polite">{copied ? <Check size={13} /> : <Copy size={13} />}{copied ? r.copied : r.copy}</button>
-            <button type="button" className={s.ghost} data-size="s" onClick={() => void share()}><Share2 size={13} />{r.share}</button>
+        </details>
+        <div className={`${s.stickyCta} ${fs.fixedCta}`}>
+          <div className={fs.actions}>
+            <button type="button" className={s.ghost} onClick={() => void copy()} aria-live="polite">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? r.copied : r.copy}</button>
+            <button type="button" className={s.ghost} onClick={() => void share()}><Share2 size={15} />{r.share}</button>
           </div>
-        </Lacquer>
-        <p className={s.lede} style={{ marginTop: 16 }}>{r.note}</p>
-        <div className={s.notice} data-tone="info"><ShieldCheck size={16} /><span>{r.safety}</span></div>
-        <button type="button" className={s.link} style={{ marginTop: 14 }} onClick={() => openPath('/assets/cash/transfer')}><Send size={13} aria-hidden="true" />{r.transfer}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
+        </div>
       </>}
   </MaisonPage>
 }
@@ -309,7 +327,6 @@ export function ReceiveScreen() {
 export function TransferScreen({ query }: { query: string }) {
   const { locale } = useI18n()
   const [scanning,setScanning]=useState(false)
-  const tr=useContentTranslation(['Scan receive code'])
   const f = fundsCopy[locale]
   const t = f.transfer
   const states = walletCopy[locale].states
@@ -351,7 +368,11 @@ export function TransferScreen({ query }: { query: string }) {
     inflight.current = true
     setPending(true)
     setServerError(null)
-    const result = await run(stepUpRequired(integration), (reauthentication) => createTransfer(reauthentication ? { ...body, reauthentication } : body, key))
+    const result = await run(stepUpRequired(integration), (reauthentication) => createTransfer(reauthentication ? { ...body, reauthentication } : body, key), [
+      { label: f.common.amount, value: <strong className={s.num}>{fmtAtomic(atomic, decimals, unit)}</strong> },
+      { label: t.to, value: <Addr value={id} head={8} tail={4} /> },
+      { label: f.common.fee, value: t.feeValue },
+    ])
     inflight.current = false
     setPending(false)
     if (!result) { setServerError(f.common.cancelled); return }
@@ -369,13 +390,14 @@ export function TransferScreen({ query }: { query: string }) {
       try { value = new URL(text).searchParams.get('to') ?? text } catch { /* not a URL */ }
       setRecipient(value.replace(/\s/g, ''))
       setServerError(null)
+      setConsent(false)
       setPasteFailed(false)
     } catch { setPasteFailed(true) }
   }
 
   const topbar = <RwaTopbar screen="transfer" title={t.title} onBack={() => backOr('/assets/cash')} />
-  if (receipt) return <MaisonPage page="transfer" topbar={topbar}>
-    <header className={s.hero}><p className={s.kicker}>{t.kicker}</p><h1 className={s.titleL}>{t.title}</h1></header>
+  if (receipt) return <MaisonPage page="transfer" className={fs.page} topbar={topbar}>
+    <h1 className={fp.srTitle}>{t.title}</h1>
     <Receipt f={f} title={t.done} created={receipt.created} integration={receipt.integration} onAgain={again} rows={[
       { label: f.common.reference, value: <span className={s.mono} dir="ltr" data-ref="">{receipt.id.slice(0, 8)}</span> },
       { label: f.common.state, value: <span className={s.badge} data-tone={stateTone(receipt.state)}>{stateLabel(states, receipt.state)}</span> },
@@ -385,46 +407,49 @@ export function TransferScreen({ query }: { query: string }) {
     ]} />
   </MaisonPage>
 
-  return <MaisonPage page="transfer" topbar={topbar} cta>
+  return <MaisonPage page="transfer" className={fs.page} topbar={topbar} cta>
     {scanning&&<TransferScanner onClose={()=>setScanning(false)} onCode={code=>{const value=transferRecipientFromCode(code,window.location.origin);if(!value)return false;setRecipient(value);setServerError(null);setConsent(false);return true}}/>}
-    <header className={s.hero}>
-      <p className={s.kicker}>{t.kicker}</p>
-      <h1 className={s.titleL}>{t.title}</h1>
-      <button type="button" className={s.link} style={{ marginTop: 10 }} onClick={() => openPath('/assets/cash/receive')}><QrCode size={14} aria-hidden="true" />{t.myCode}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
-    </header>
+    <h1 className={fp.srTitle}>{t.title}</h1>
     {wallet.error && !wallet.data ? <StateBlock tone="error" title={common.errorGeneric} body={wallet.error.message} retry={wallet.refetch} retryLabel={common.retry} />
       : !wallet.data ? <Skeleton rows={4} />
       : <>
-        <label className={s.field}>
+        <label className={`${s.field} ${fs.field} ${fs.first}`}>
           <span>{t.recipient}</span>
-          <span className={s.pasteField}>
-            <input value={recipient} autoComplete="off" spellCheck={false} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-invalid={Boolean(recipientError)} aria-describedby="transfer-recipient-meta"
-              onChange={(event) => { setRecipient(event.target.value.replace(/\s/g, '')); setServerError(null); setPasteFailed(false) }} />
-            <button type="button" className={s.pasteButton} onClick={() => void paste()}><ClipboardPaste size={14} aria-hidden="true" />{t.paste}</button>
-            <button type="button" className={s.pasteButton} onClick={()=>setScanning(true)}><QrCode size={14} aria-hidden="true"/>{tr('Scan receive code')}</button>
-          </span>
+          <input value={recipient} autoComplete="off" spellCheck={false} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-invalid={Boolean(recipientError)} aria-describedby="transfer-recipient-meta"
+            onChange={(event) => { setRecipient(event.target.value.replace(/\s/g, '')); setServerError(null); setPasteFailed(false); setConsent(false) }} />
         </label>
-        {recipientError ? <p className={s.fieldError} id="transfer-recipient-meta" role="alert">{recipientError}</p> : <p className={s.fieldMeta} id="transfer-recipient-meta" style={{ display: 'block' }} role={pasteFailed ? 'status' : undefined}>{pasteFailed ? t.pasteFailed : t.recipientHint}</p>}
+        <div className={fs.actions}>
+          <button type="button" className={s.ghost} onClick={() => void paste()}><ClipboardPaste size={15} aria-hidden="true" />{t.paste}</button>
+          <button type="button" className={s.ghost} onClick={() => setScanning(true)}><QrCode size={15} aria-hidden="true" />{t.scan}</button>
+        </div>
+        {recipientError ? <p className={s.fieldError} id="transfer-recipient-meta" role="alert">{recipientError}</p> : pasteFailed ? <p className={fs.hint} id="transfer-recipient-meta" role="status">{t.pasteFailed}</p> : null}
+        <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/receive')}><QrCode size={14} aria-hidden="true" />{t.myCode}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
 
         <AmountField id="transfer-amount" label={f.common.amount} unit={unit} value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} touched={touched || amount.length > 0} onBlur={() => setTouched(true)} error={fieldError} maxLabel={f.common.max}
           max={available && BigInt(available) > ZERO ? fromAtomic(available, decimals) : null} available={fill(f.common.available, { v: fmtAtomic(available, decimals, unit) })} />
 
-        <Lacquer style={{ marginTop: 22 }} aria-live="polite">
-          <dl className={s.summary}>
-            <div><dt>{t.to}</dt><dd className={s.num}><bdi dir="ltr">{id && !recipientError ? mask(id) : '—'}</bdi></dd></div>
-            <div><dt>{f.common.fee}</dt><dd>{t.feeValue}</dd></div>
+        <div aria-live="polite">
+          <dl className={`${s.summary} ${fs.rows}`}>
+            <div><dt>{t.to}</dt><dd>{id && !recipientError ? <Addr value={id} head={8} tail={4} /> : '—'}</dd></div>
+            <div><dt>{f.common.fee}</dt><dd className={s.num}>{t.feeValue}</dd></div>
             <div data-strong="true"><dt>{f.common.amount}</dt><dd className={s.num}>{atomic && !fieldError ? fmtAtomic(atomic, decimals, unit) : '—'}</dd></div>
             <div><dt>{f.common.after}</dt><dd className={s.num}>{atomic && !fieldError && available !== null ? fmtAtomic((BigInt(available) - BigInt(atomic)).toString(), decimals, unit) : '—'}</dd></div>
           </dl>
-        </Lacquer>
-        {integration && !integration.realFunds && <div className={s.notice} data-tone="info"><Info size={16} /><span>{f.common.stubNote}</span></div>}
-        <p className={s.foot}><span>{stepUpRequired(integration) ? f.stepUp.required : f.stepUp.waived}</span></p>
-        <label className={s.consent}>
-          <input type="checkbox" checked={consent} onChange={(event) => { setConsent(event.target.checked); setServerError(null) }} />
-          <span>{t.consent}</span>
-        </label>
-        {serverError && <div className={s.notice} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
-        <div className={s.stickyCta}>
+        </div>
+        {integration && !integration.realFunds && <div className={`${s.notice} ${fs.note}`} data-tone="info"><Info size={16} /><span>{f.common.stubNote}</span></div>}
+        <details className={fs.more}>
+          <summary><span>{f.common.more}</span></summary>
+          <div className={fs.moreBody}>
+            {!recipientError && !pasteFailed && <p id="transfer-recipient-meta">{t.recipientHint}</p>}
+            <p>{stepUpRequired(integration) ? f.stepUp.required : f.stepUp.waived}</p>
+          </div>
+        </details>
+        <div className={`${s.stickyCta} ${fs.fixedCta}`}>
+          <label className={`${s.consent} ${fs.consent}`}>
+            <input type="checkbox" checked={consent} onChange={(event) => { setConsent(event.target.checked); setServerError(null) }} />
+            <span>{t.consent}{id && !recipientError && <> {fill(t.idTail, { d: id.slice(-4) })}</>}</span>
+          </label>
+          {serverError && <div className={`${s.notice} ${fs.note}`} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
           <button type="button" className={s.cta} onClick={submit} disabled={!ready} aria-busy={pending}>
             <span>{pending ? f.common.submitting : t.submit}</span>
             <span className={s.ctaIcon}><Send size={17} /></span>
@@ -470,7 +495,9 @@ export function AddressBookScreen() {
     if (!net || !addressOk || !labelOk || busy) return
     setBusy('add')
     setNotice(null)
-    const result = await run(true, (reauthentication) => addAddress({ network: net.id, destination, label: label.trim(), reauthentication: reauthentication ?? '' }))
+    const result = await run(true, (reauthentication) => addAddress({ network: net.id, destination, label: label.trim(), reauthentication: reauthentication ?? '' }), [
+      { label: b.label, value: label.trim() }, { label: f.common.network, value: net.displayName }, { label: f.withdraw.to, value: <Addr value={destination} /> },
+    ])
     setBusy(null)
     if (!result) { setNotice({ tone: 'error', text: f.common.cancelled }); return }
     if (!result.ok) { setNotice({ tone: 'error', text: errorText(f, result.error, common.errorGeneric) }); return }
@@ -482,7 +509,9 @@ export function AddressBookScreen() {
     if (busy) return
     setBusy(entry.id)
     setNotice(null)
-    const result = await run(true, (reauthentication) => revokeAddress(entry.id, reauthentication ?? ''))
+    const result = await run(true, (reauthentication) => revokeAddress(entry.id, reauthentication ?? ''), [
+      { label: b.revoke, value: entry.label }, { label: f.common.network, value: nameOf(entry.network) }, { label: f.withdraw.to, value: <Addr value={entry.destination} /> },
+    ])
     setBusy(null)
     setConfirming(null)
     if (!result) { setNotice({ tone: 'error', text: f.common.cancelled }); return }
@@ -517,7 +546,7 @@ export function AddressBookScreen() {
 
     {!adding ? <button type="button" className={s.ghost} style={{ width: '100%', marginTop: 12 }} onClick={() => { setAdding(true); setNotice(null) }}><Plus size={15} />{b.add}</button>
       : !net ? (networks.error ? <StateBlock tone="error" title={common.errorGeneric} body={networks.error.message} retry={networks.refetch} retryLabel={common.retry} /> : <Skeleton rows={3} />)
-      : <Lacquer style={{ marginTop: 12 }} as="div">
+      : <div className={s.card} style={{ marginTop: 12 }}>
         <p className={s.kicker}>{b.add}</p>
         <div style={{ marginTop: 8 }}><Segmented value={net.id} onChange={(id) => { setNetwork(id); setDestination('') }} label={f.common.network} role="group" options={list.map((n) => ({ value: n.id, label: n.displayName }))} /></div>
         <form onSubmit={(event) => { event.preventDefault(); void save() }} data-book-form="">
@@ -535,7 +564,7 @@ export function AddressBookScreen() {
           </button>
           <button type="button" className={s.link} style={{ marginTop: 10 }} onClick={() => { setAdding(false); setTouched(false) }}>{b.close}</button>
         </form>
-      </Lacquer>}
+      </div>}
 
     <div style={{ marginTop: 18 }}>
       {book.error && !book.data ? <StateBlock tone="error" title={b.loadError} body={book.error.message} retry={book.refetch} retryLabel={common.retry} />

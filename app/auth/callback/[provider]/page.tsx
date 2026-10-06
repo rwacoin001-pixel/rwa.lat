@@ -1,10 +1,10 @@
 'use client'
 
 /**
- * 认证回调页：/auth/callback/google · /auth/callback/x · /auth/callback/email
+ * 认证回调页：/auth/callback/google · /auth/callback/github · /auth/callback/x · /auth/callback/email
  *
  * 流程：
- *  · OAuth（google/x）：?code=...&state=... → 换取会话 → 存本地 → 跳首页
+ *  · OAuth（google/github/x）：?code=...&state=... → 换取会话 → 存本地 → 跳首页
  *  · 魔法链接（email）：?token=... → POST /v1/auth/login/email/confirm → 同上
  */
 
@@ -107,7 +107,7 @@ export default function OAuthCallbackPage() {
       setMessage(err === 'access_denied' ? authErrorMessage({ code: 'OAUTH_CANCELLED', status: 400 }, locale) : failure)
       return () => { active = false }
     }
-    if (provider !== 'google' && provider !== 'x' && provider !== 'email') {
+    if (provider !== 'google' && provider !== 'github' && provider !== 'x' && provider !== 'email') {
       setPhase('error')
       setMessage(failure)
       return () => { active = false }

@@ -3,6 +3,7 @@
  */
 import { apiClient } from './api-client'
 import { shortId } from './display/labels'
+import { basketMarketValue, BASKET_UNIT_DECIMALS, listBasketPositions, type BasketPosition } from './api/basket-positions'
 
 export type ApiPosition = {
   productId: string
@@ -78,9 +79,37 @@ export const toUnits = (atomic: string | number | null | undefined, decimals = 6
   return n / 10 ** decimals
 }
 
-/** 拉持仓并 join 产品目录（产品名/类别） */
+/** One legacy row per basket portfolio; atomics stay exact strings, floats are display-only, cost/yield are unknown. */
+export function basketPositionToView(basket: BasketPosition): PositionView {
+  const marketValueAtomicAmount = basketMarketValue(basket)?.toString() ?? null
+  return {
+    productId: basket.portfolioId,
+    outcomeKey: 'basket',
+    assetCode: 'BASKET',
+    assetDecimals: BASKET_UNIT_DECIMALS,
+    quantityAtomicAmount: basket.unitsAtomicAmount,
+    unitPriceAtomicAmount: basket.navAtomicAmount ?? '0',
+    unitPriceDecimals: BASKET_UNIT_DECIMALS,
+    currency: basket.currency,
+    valuedAt: basket.valuedAt ?? '',
+    source: 'basket',
+    productName: basket.portfolioName,
+    productClass: 'basket',
+    quantity: toUnits(basket.unitsAtomicAmount, BASKET_UNIT_DECIMALS),
+    cost: 0,
+    costKnown: false,
+    yield: 0,
+    yieldKnown: false,
+    unitPrice: toUnits(basket.navAtomicAmount, BASKET_UNIT_DECIMALS),
+    marketValue: marketValueAtomicAmount === null ? 0 : Number(marketValueAtomicAmount) / 1_000_000,
+    marketValueAtomicAmount,
+  }
+}
+
+/** 拉持仓（产品 + 篮子）并 join 产品目录（产品名/类别）。篮子读取失败时整体失败，避免返回不完整的合计。 */
 export async function getPositions(): Promise<PositionView[]> {
-  const r = await apiClient.axios.get('/v1/portfolio/positions')
+  const [r, basketResult] = await Promise.all([apiClient.axios.get('/v1/portfolio/positions'), listBasketPositions()])
+  if (!basketResult.ok) throw Object.assign(new Error(basketResult.error.message), { status: basketResult.error.status, code: basketResult.error.code })
   const raw: ApiPosition[] = Array.isArray(r.data) ? (r.data as ApiPosition[]) : ((r.data as { items?: ApiPosition[] })?.items ?? [])
   let items: Array<{ id: string; displayName?: string; assetClassId?: string }> = []
   try {
@@ -93,7 +122,7 @@ export async function getPositions(): Promise<PositionView[]> {
   for (const p of items) {
     productMap.set(p.id, { name: p.displayName ?? p.id, cls: p.assetClassId ?? 'rwa' })
   }
-  return raw.map((pos) => {
+  const products = raw.map((pos) => {
     const meta = productMap.get(pos.productId)
     const units = toUnits(pos.quantityAtomicAmount, pos.assetDecimals)
     const cost = toUnits(pos.costAtomicAmount, 6)
@@ -113,6 +142,7 @@ export async function getPositions(): Promise<PositionView[]> {
       marketValueAtomicAmount,
     }
   })
+  return [...products, ...basketResult.data.map(basketPositionToView)]
 }
 
 export type PortfolioHistoryPoint = { date: string; value: number }

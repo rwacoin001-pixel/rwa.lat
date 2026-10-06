@@ -12,7 +12,7 @@ import {
 import { useI18n } from '@/lib/i18n'
 import { authRouteCopy, interpolateRouteCopy } from '@/lib/route-copy'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
-import { authSheetCopy, authCardCaption } from '@/lib/maison-auth-copy'
+import { authSheetCopy, authPosterTitle } from '@/lib/maison-auth-copy'
 import { authEmailCopy, normalizeEmailCode } from '@/lib/auth-email-copy'
 import styles from './P02-Login.module.css'
 import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
@@ -118,6 +118,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     if (supported) void PublicKeyCredential.isConditionalMediationAvailable?.().then(setAutofill, () => setAutofill(false))
     const target = safeReturnTo(new URLSearchParams(location.search).get('returnTo'))
     if (target) sessionStorage.setItem(RETURN_TO, target)
+    // Desktop gets the caret at once; on touch the keyboard would cover the poster before it is read.
+    if (matchMedia('(pointer: fine)').matches) input.current?.focus({ preventScroll: true })
   }, [])
 
   useEffect(() => {
@@ -285,7 +287,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   }
 
   // Providers start as sign-in for everyone: a first-time identity gets the terms step in the auth flow.
-  const startProvider = async (provider: 'google' | 'x') => {
+  const startProvider = async (provider: 'google' | 'github' | 'x') => {
     if (pending || busy.current) return
     stopPasskey()
     busy.current = true; setPending(true); setError('')
@@ -309,7 +311,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       }
       markNewAccount(sessionStorage, Boolean(walletChallenge))
       const result = await completeWalletLogin(started.data, walletChallenge ? consents : [])
-      if (!result.ok) { showAuthError(result.error); return }
+      // No verified email yet: the API withholds the session and hands back an email step.
+      if (!result.ok) { if (continueAuth(result.error)) return; showAuthError(result.error); return }
       notify(copy.loginSuccess)
       finish(Boolean(walletChallenge))
     })
@@ -344,7 +347,10 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   }, [step, pending])
 
   const cta = (label: string) => <><span>{label}</span><span className={styles.ctaIcon} data-ready={Boolean(email.trim())} aria-hidden="true"><ArrowRight size={21} strokeWidth={1.6} /></span></>
-  const title = sheet.modes
+  // The email step shows the poster title; every later step names where the lookup sent the user.
+  // No ledes: the title, the address chip and the one action say enough.
+  const poster = authPosterTitle[locale]
+  const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
     <span>{visual.consentStart} <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span>
@@ -374,12 +380,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a>
   </>
 
-  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true' }} footer={footer}
+  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} footer={footer}
     topAction={<button type="button" className={styles.topLink} onClick={browse}>{visual.browse}</button>}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
     <header className={styles.cardHead}>
-      <h1 className={styles.cardTitle}>{title}</h1>
-      {!walletChallenge && step === 'email' && <p className={styles.cardLede}>{authCardCaption[locale]}</p>}
+      <h1 className={styles.cardTitle}>{heading ?? <>{poster[0]} <em>{poster[1]}</em></>}</h1>
+      <span className={styles.posterRule} aria-hidden="true" />
     </header>
 
     {walletChallenge ? <>
@@ -389,17 +395,23 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       <button className={styles.primary} type="button" disabled={pending || !agreed || !requirements} onClick={useWallet}>{cta(pending ? copy.sending : visual.wallet)}</button>
       <button className={styles.textLink} type="button" onClick={() => { setWalletChallenge(null); setAgreed(false); setError('') }}>{sheet.signIn}</button>
     </> : <form onSubmit={submit} noValidate aria-busy={pending}>
-      {step === 'email' ? <label className={styles.field}>
+      {/* The poster's lead: one field, its confirm inside on the end edge. The lookup decides sign-in or registration. */}
+      {step === 'email' ? <label className={`${styles.field} ${styles.emailField}`}>
         <span className={styles.fieldLabel}>{visual.emailAddress}</span>
-        <input ref={input} type="email" inputMode="email" autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} placeholder="name@example.com" value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="next" dir="ltr" autoFocus />
+        <input ref={input} type="email" inputMode="email" autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
+        <button type="submit" className={styles.inlineSubmit} disabled={pending || retryAfter > 0} aria-label={pending ? pendingLabel : retryAfter > 0 ? cooldownLabel : sheet.continue} title={sheet.continue}>
+          {pending ? <LoaderCircle className={styles.spinner} size={18} aria-hidden="true" />
+            : <span className={styles.inlineArrow} data-ready={EMAIL.test(email.trim())} aria-hidden="true"><ArrowRight size={19} strokeWidth={1.7} /></span>}
+        </button>
       </label> : identity}
+      {step === 'email' && retryAfter > 0 && <p className={styles.hint} role="status">{cooldownLabel}</p>}
 
       {step === 'password' && account && <div className={styles.field}>
         {/* Lets password managers pair the saved password with this address. */}
         <input type="email" name="username" autoComplete="username" value={account.email} readOnly hidden />
         <label className={styles.fieldLabel} htmlFor="auth-password">{passwordCopy.password}</label>
         <button type="button" className={styles.fieldAction} disabled={pending} onClick={() => go('recovery')}>{passwordCopy.forgot}</button>
-        <input ref={passwordInput} id="auth-password" type={showPassword ? 'text' : 'password'} name="password" autoComplete="current-password" enterKeyHint="go" maxLength={128} placeholder="••••••••••••" value={password} onChange={event => { setPassword(event.target.value); setError('') }} aria-invalid={Boolean(error)} disabled={pending} dir="ltr" />
+        <input ref={passwordInput} id="auth-password" type={showPassword ? 'text' : 'password'} name="password" autoComplete="current-password" enterKeyHint="go" maxLength={128} value={password} onChange={event => { setPassword(event.target.value); setError('') }} aria-invalid={Boolean(error)} disabled={pending} dir="ltr" />
         <button type="button" className={styles.reveal} aria-label={showPassword ? sheet.hidePassword : sheet.showPassword} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
       </div>}
 
@@ -411,11 +423,11 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </label>}
 
       {errors}
-      <button className={styles.primary} type="submit" disabled={primaryDisabled}>
+      {step !== 'email' && <button className={styles.primary} type="submit" disabled={primaryDisabled}>
         {pending ? <><LoaderCircle className={styles.spinner} size={20} aria-hidden="true" /><span className={styles.srOnly}>{pendingLabel}</span></>
           : step === 'passkey' ? <><span>{primaryLabel}</span><span className={styles.ctaIcon} aria-hidden="true"><Fingerprint size={18} strokeWidth={1.8} /></span></>
           : cta(step !== 'code' && retryAfter > 0 ? cooldownLabel : primaryLabel)}
-      </button>
+      </button>}
 
       {step === 'passkey' && <>
         {account?.password && <button className={styles.textLink} type="button" disabled={pending} onClick={usePasswordInstead}>{sheet.usePassword}</button>}
@@ -429,13 +441,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
+    {/* Three equal alternatives. Passkeys stay reachable through the email field's autofill and the step after lookup. */}
     {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <div className={styles.divider} aria-hidden="true" />
-      <div className={styles.methods}>
-        <button type="button" disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={20} height={20} style={{ width: 20, height: 20 }} /></button>
-        <button type="button" disabled={pending} onClick={() => void startProvider('x')} aria-label={visual.x} title={visual.x}><Image data-mono="" src="/auth/icon-x.svg" alt="" width={16} height={16} style={{ width: 16, height: 16 }} /></button>
-        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={20} height={20} style={{ width: 20, height: 20 }} /></button>
-        {passkeySupported && !autofill && <button type="button" disabled={pending} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passwordCopy.passkey}><Fingerprint size={20} strokeWidth={1.6} aria-hidden="true" /></button>}
+      <p className={styles.divider} aria-hidden="true" />
+      <div className={styles.altMethods}>
+        <button type="button" disabled={pending} onClick={() => void startProvider('google')} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={18} height={18} style={{ width: 18, height: 18 }} /><span>Google</span></button>
+        <button type="button" disabled={pending} onClick={() => void startProvider('github')} title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={18} height={18} style={{ width: 18, height: 18 }} /><span>GitHub</span></button>
+        <button type="button" disabled={pending} onClick={useWallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={18} height={18} style={{ width: 18, height: 18 }} /><span>{sheet.wallet}</span></button>
       </div>
     </div>}
     </div>

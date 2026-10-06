@@ -47,7 +47,7 @@ export async function confirmEmailCode(email: string, intent: 'login' | 'registe
   return mapped
 }
 
-export async function startOAuth(provider: 'google' | 'x', intent: 'login' | 'register', consents: AuthConsent[] = []): Promise<ApiResult<string>> {
+export async function startOAuth(provider: 'google' | 'github' | 'x', intent: 'login' | 'register', consents: AuthConsent[] = []): Promise<ApiResult<string>> {
   const result = await request<{ authorizationUrl?: string; intent?: string }>(`/v1/auth/oauth/${provider}/start`, { method: 'POST', body: JSON.stringify({ intent, ...(intent === 'register' ? { consents } : {}) }) })
   if (!result.ok) return result
   if (result.data.intent !== intent) return { ok: false, error: { status: 200, code: 'AUTH_FLOW_VERSION_MISMATCH', message: '认证服务尚未支持此注册流程，请稍后重试' } }
@@ -67,7 +67,7 @@ export async function confirmLoginEmail(token: string): Promise<ApiResult<AuthSe
   return mapped
 }
 
-export async function confirmOAuth(provider: 'google' | 'x', code: string, state: string): Promise<ApiResult<AuthSession>> {
+export async function confirmOAuth(provider: 'google' | 'github' | 'x', code: string, state: string): Promise<ApiResult<AuthSession>> {
   // Best-effort cross-context guard only: an installed PWA and the browser that returns from the
   // provider can hold different storage, so a missing entry must NOT block the exchange — the API
   // validates the state itself (single use, 10-minute TTL, redirect-URI binding).

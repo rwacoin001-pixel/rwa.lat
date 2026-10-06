@@ -10,6 +10,6 @@ export function PredictionTranslationButton({translation,original,onOriginal,sou
   const complete=sources.filter(Boolean).every(translation.hasTranslation)
   const busy=sources.some(translation.isPending)
   return <button type="button" className={s.predTranslate} onClick={()=>{if(!complete){onOriginal(false);translation.retry(sources)}else onOriginal(!original)}} disabled={busy} aria-busy={busy}>
-    <Languages size={13}/>{busy?copy.translating:!complete&&translation.error?copy.retry:complete&&!original?copy.original:copy.translate}
+    <Languages size={11} strokeWidth={2.2} aria-hidden="true"/>{busy?copy.translating:!complete&&translation.error?copy.retry:complete&&!original?copy.original:copy.translate}
   </button>
 }
