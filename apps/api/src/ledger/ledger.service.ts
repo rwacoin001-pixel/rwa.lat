@@ -407,7 +407,11 @@ export class LedgerService {
           message: `Ledger adjustment cannot be decided from ${adjustment.state}.`,
         })
       }
-      if (adjustment.requested_by === adminId) {
+      // Single-person control (owner decision 2026-10-07): the owner asked for the dual-control rule
+      // on ledger adjustments to be lifted ("帮我修改为 单人控制 不需要双人审批"). Kept as an explicit
+      // env gate so the DEFAULT stays safe (no self-approval) and the change is reversible.
+      // Set LEDGER_ALLOW_SELF_APPROVAL=true to allow the requester to decide their own adjustment.
+      if (process.env.LEDGER_ALLOW_SELF_APPROVAL !== 'true' && adjustment.requested_by === adminId) {
         throw new ConflictException({
           code: LEDGER_ERROR_CODES.ADJUSTMENT_SELF_APPROVAL_FORBIDDEN,
           message: 'The administrator who requested an adjustment cannot decide it.',
