@@ -2,6 +2,23 @@ import { ConflictException, Injectable, NotFoundException } from '@nestjs/common
 import { DataSource } from 'typeorm'
 import { BASKET_ERROR_CODES } from './basket.constants'
 import { BasketStrategyService } from './strategy.service'
+import { parse18 } from './basket.decimals'
+
+export type BasketPositionView = {
+  portfolioId: string
+  portfolioName: string
+  portfolioStatus: string
+  units: string
+  unitsAtomicAmount: string
+  unitsDecimals: 18
+  navPerUnit: string | null
+  navAtomicAmount: string | null
+  navDecimals: 18
+  marketValueAtomicAmount: string | null
+  currency: 'USDT'
+  valuedAt: string | null
+  valuationQuality: 'ok' | 'partial' | 'stale' | 'unavailable'
+}
 
 export type CreatePortfolioInput = {
   strategyId?: string
@@ -136,6 +153,52 @@ export class BasketPortfolioService {
       [portfolioId, userId],
     )) as Array<{ units: string }>
     return row?.units ?? '0'
+  }
+
+  /** Complete session-owned net holdings, independently of history limits or portfolio status. */
+  async listUserPositions(userId: string): Promise<BasketPositionView[]> {
+    const rows = await this.ds.query(
+      `WITH movements AS (
+         SELECT portfolio_id, COALESCE(units_issued, 0) AS units
+         FROM app.basket_subscriptions WHERE user_id = $1 AND status = 'settled'
+         UNION ALL
+         SELECT portfolio_id, -units AS units
+         FROM app.basket_redemptions WHERE user_id = $1 AND status = 'settled'
+       ), owned AS (
+         SELECT portfolio_id, SUM(units) AS units FROM movements
+         GROUP BY portfolio_id HAVING SUM(units) > 0
+       )
+       SELECT p.id AS "portfolioId", p.name AS "portfolioName", p.status AS "portfolioStatus",
+              p.base_currency AS "baseCurrency", trim_scale(o.units)::text AS units,
+              trim_scale(n.nav_per_unit)::text AS "navPerUnit", n.timestamp AS "valuedAt",
+              CASE WHEN n.timestamp > now() THEN 'unavailable'
+                   WHEN n.timestamp < now() - interval '48 hours' THEN 'stale'
+                   ELSE n.data_quality END AS "valuationQuality"
+       FROM owned o JOIN app.basket_portfolios p ON p.id = o.portfolio_id
+       LEFT JOIN LATERAL (
+         SELECT nav_per_unit, timestamp, data_quality FROM app.basket_nav_snapshots
+         WHERE portfolio_id = p.id ORDER BY timestamp DESC, id DESC LIMIT 1
+       ) n ON true
+       ORDER BY p.created_at, p.id`,
+      [userId],
+    ) as Array<{ portfolioId: string; portfolioName: string; portfolioStatus: string; baseCurrency: string; units: string; navPerUnit: string | null; valuedAt: Date | string | null; valuationQuality: string | null }>
+    return rows.map(row => {
+      const units = parse18(row.units)
+      let nav: bigint | null = null
+      try { if (row.navPerUnit !== null) nav = parse18(row.navPerUnit) } catch { /* Invalid NAV remains unavailable. */ }
+      const validNav = nav !== null && nav > 0n && row.baseCurrency === 'USDT'
+      const quality: BasketPositionView['valuationQuality'] = validNav && ['ok', 'partial', 'stale'].includes(row.valuationQuality ?? '')
+        ? row.valuationQuality as BasketPositionView['valuationQuality'] : 'unavailable'
+      return {
+        portfolioId: row.portfolioId, portfolioName: row.portfolioName, portfolioStatus: row.portfolioStatus,
+        units: row.units, unitsAtomicAmount: units.toString(), unitsDecimals: 18,
+        navPerUnit: validNav ? row.navPerUnit : null, navAtomicAmount: validNav ? nav!.toString() : null, navDecimals: 18,
+        // Two scale-18 factors -> scale-6 USDT, rounding down once, without floating point.
+        marketValueAtomicAmount: quality === 'ok' ? (units * nav! / (10n ** 30n)).toString() : null,
+        currency: 'USDT', valuedAt: row.valuedAt ? new Date(row.valuedAt).toISOString() : null,
+        valuationQuality: quality,
+      }
+    })
   }
 
   async getPortfolioDetail(portfolioId: string, userId?: string) {

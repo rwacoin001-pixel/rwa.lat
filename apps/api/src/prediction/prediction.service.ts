@@ -254,7 +254,11 @@ export class PredictionService {
   async listBets(userId: string, page: number, limit: number) {
     const offset = (page - 1) * limit
     const rows = await this.dataSource.query(
-      `SELECT * FROM app.prediction_bets WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3`,
+      `SELECT b.*, m.question AS market_question, m.slug AS market_slug, t.outcome AS token_outcome
+       FROM app.prediction_bets b
+       LEFT JOIN app.polymarket_market_mappings m ON m.id = b.market_mapping_id
+       LEFT JOIN app.polymarket_token_mappings t ON t.token_id = b.token_id
+       WHERE b.user_id = $1 ORDER BY b.created_at DESC LIMIT $2 OFFSET $3`,
       [userId, limit, offset],
     )
     const [count] = await this.dataSource.query(
@@ -445,6 +449,9 @@ export class PredictionService {
       shares: String(row.shares),
       price: String(row.price),
       status: row.status,
+      marketQuestion: row.market_question ?? null,
+      marketSlug: row.market_slug ?? null,
+      tokenOutcome: row.token_outcome ?? null,
       settledAt: row.settled_at ?? null,
       createdAt: row.created_at,
       duplicate,

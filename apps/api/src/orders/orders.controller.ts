@@ -3,6 +3,7 @@ import { ApiBearerAuth, ApiTags, ApiExcludeController, ApiOkResponse } from '@ne
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
+import { VerifiedEmailGuard } from '../security/verified-email.guard'
 import { AdvanceOrderDto, CreateOrderDto } from './orders.dto'
 import { OrdersService } from './orders.service'
 import { OrderResponseDto } from './orders.response.dto'
@@ -27,6 +28,7 @@ export class OrdersController {
   }
 
   @Post()
+  @UseGuards(VerifiedEmailGuard)
   @ApiOkResponse({ type: OrderResponseDto })
   create(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateOrderDto, @Headers('idempotency-key') key: string, @Req() request: AuthenticatedRequest) {
     return this.orders.create(actor.userId, dto, key, request.requestId ?? 'unknown')

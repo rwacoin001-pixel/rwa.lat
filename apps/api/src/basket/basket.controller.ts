@@ -4,6 +4,7 @@ import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
 import { OptionalSessionAuthGuard } from '../security/optional-session-auth.guard'
+import { VerifiedEmailGuard } from '../security/verified-email.guard'
 import { AcknowledgeDisclosureDto, BasketLimitQueryDto, BasketRedeemDto, BasketSubscribeDto, CreateRecommendationDto } from './basket.dto'
 import { BasketPortfolioService } from './portfolio.service'
 import { BasketRecommendationService } from './recommendation.service'
@@ -44,6 +45,13 @@ export class BasketController {
     return this.subscriptions.listUserSubscriptions(actor.userId, query.limit)
   }
 
+  @Get('me/positions')
+  @UseGuards(SessionAuthGuard)
+  @ApiOperation({ summary: 'Your complete current basket net holdings and NAV valuation' })
+  myPositions(@CurrentAuth() actor: SecurityActor) {
+    return this.portfolios.listUserPositions(actor.userId)
+  }
+
   @Get('me/redemptions')
   @UseGuards(SessionAuthGuard)
   @ApiOperation({ summary: 'Your basket redemption history' })
@@ -52,7 +60,7 @@ export class BasketController {
   }
 
   @Post('portfolios/:id/subscriptions')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(SessionAuthGuard, VerifiedEmailGuard)
   @ApiOperation({ summary: 'Subscribe USDT into a basket portfolio (idempotent; requires basket.subscriptions switch)' })
   subscribe(
     @CurrentAuth() actor: SecurityActor,
@@ -65,7 +73,7 @@ export class BasketController {
   }
 
   @Post('portfolios/:id/redemptions')
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(SessionAuthGuard, VerifiedEmailGuard)
   @ApiOperation({ summary: 'Redeem basket units for USDT (idempotent; requires basket.redemptions switch)' })
   redeem(
     @CurrentAuth() actor: SecurityActor,

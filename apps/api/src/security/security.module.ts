@@ -11,6 +11,7 @@ import { SecurityService } from './security.service'
 import { SessionAuthGuard } from './session-auth.guard'
 import { SessionAuthService } from './session-auth.service'
 import { TotpFactor } from './totp-factor.entity'
+import { VerifiedEmailGuard } from './verified-email.guard'
 
 @Module({
   imports: [
@@ -18,7 +19,7 @@ import { TotpFactor } from './totp-factor.entity'
     TypeOrmModule.forFeature([Session, Device, TotpFactor, PasskeyCredential, SecurityChallenge, AuditLog]),
   ],
   controllers: [SecurityController],
-  providers: [SecurityService, SessionAuthService, SessionAuthGuard],
-  exports: [SecurityService, SessionAuthService, SessionAuthGuard],
+  providers: [SecurityService, SessionAuthService, SessionAuthGuard, VerifiedEmailGuard],
+  exports: [SecurityService, SessionAuthService, SessionAuthGuard, VerifiedEmailGuard],
 })
 export class SecurityModule {}

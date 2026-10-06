@@ -17,11 +17,13 @@ export async function persistGoogleEmail(manager: EntityManager, crypto: Identit
     identifierCiphertext: profile.ciphertext, encryptionKeyVersion: profile.keyVersion,
   })
 
-  // Do not merge accounts by email or undo an explicit email change/revocation.
+  // Serialize email acquisition against registration and first Google linking.
+  const hash = crypto.hashIdentifier(normalized)
+  await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`account-email:${hash.toString('hex')}`])
+  // Keep already-linked accounts stable and preserve explicit email changes/revocations.
   await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`user-email:${identity.userId}`])
   const identities = manager.getRepository(LoginIdentity)
   const existing = await identities.findOne({ where: { userId: identity.userId, kind: 'email' } })
-  const hash = crypto.hashIdentifier(normalized)
   if (existing) {
     if (existing.state === 'pending' && !existing.revokedAt && existing.identifierHash.equals(hash)) {
       await identities.update({ id: existing.id, state: 'pending', identifierHash: hash, revokedAt: IsNull() }, { state: 'verified', verifiedAt: new Date() })

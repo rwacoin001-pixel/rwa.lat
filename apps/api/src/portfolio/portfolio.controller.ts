@@ -3,6 +3,7 @@ import { ApiOkResponse } from '@nestjs/swagger'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
+import { VerifiedEmailGuard } from '../security/verified-email.guard'
 import { PortfolioService } from './portfolio.service'
 import { CaptureSnapshotDto, HistoryQueryDto, RequestRedemptionDto } from './portfolio.dto'
 import { PortfolioHistoryPointResponseDto, PortfolioPositionResponseDto, PortfolioRedemptionResponseDto, PortfolioSnapshotBatchResponseDto } from './portfolio.response.dto'
@@ -40,6 +41,7 @@ export class PortfolioController {
   }
 
   @Post('redemptions')
+  @UseGuards(VerifiedEmailGuard)
   @ApiOkResponse({ type: PortfolioRedemptionResponseDto })
   requestRedemption(@CurrentAuth() actor: SecurityActor, @Body() dto: RequestRedemptionDto) {
     return this.svc.requestRedemption({
@@ -74,6 +76,7 @@ export class PortfolioController {
   }
 
   @Post('rebalances')
+  @UseGuards(VerifiedEmailGuard)
   createRebalance(
     @CurrentAuth() actor: SecurityActor,
     @Body() dto: CreateRebalancePlanDto,
@@ -84,6 +87,7 @@ export class PortfolioController {
   }
 
   @Post('rebalances/:id/confirm-buys')
+  @UseGuards(VerifiedEmailGuard)
   confirmRebalanceBuys(
     @CurrentAuth() actor: SecurityActor,
     @Param('id') id: string,

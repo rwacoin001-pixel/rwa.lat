@@ -314,8 +314,7 @@ export class IdentityService {
       return userId
     })
 
-    // A wallet proves key ownership, not an inbox. Hold the session until an address is verified.
-    if (!await this.hasVerifiedEmail(userId)) return this.authFlows.beginEmailBinding(userId, device)
+    // Sign-in never waits on an email; money-moving actions ask for one (requireVerifiedEmail).
     return this.issueSession(userId, device)
   }
 
@@ -394,8 +393,6 @@ export class IdentityService {
       await this.persistRegistrationConsents(manager, userId, consents, meta.consentedAt, randomUUID())
       return userId
     })
-    // GitHub sign-ins must also prove an inbox before a session is issued.
-    if (provider === 'github' && !await this.hasVerifiedEmail(userId)) return this.authFlows.beginEmailBinding(userId, meta.device)
     return this.issueSession(userId, meta.device)
   }
 
@@ -842,9 +839,14 @@ export class IdentityService {
     return { emailIdentity, googleIdentity, googleEmail, emailVerified }
   }
 
-  /** True when the account already owns a verified email (email identity or server-verified Google email). */
-  private async hasVerifiedEmail(userId: string): Promise<boolean> {
-    return (await this.emailStatus(userId)).emailVerified
+  /**
+   * Gate for money-moving / legally binding actions (VerifiedEmailGuard). Sign-in stays open;
+   * an account without a verified email (GitHub, wallet) gets AUTH_FLOW_REQUIRED step='email'
+   * and binds one through POST /v1/auth/flow/email + /v1/auth/flow/complete before retrying.
+   */
+  async requireVerifiedEmail(userId: string): Promise<void> {
+    if ((await this.emailStatus(userId)).emailVerified) return
+    await this.authFlows.beginEmailBinding(userId)
   }
 
   /** Only masked identifiers or a provider name leave the service. */

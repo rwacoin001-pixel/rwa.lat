@@ -13,6 +13,11 @@ export interface WalletNetworkConfig {
   withdrawalFeeAtomic: string
   estimatedArrivalMinutes: [number, number]
   warning: string
+  /**
+   * Stable machine-readable kind of `warning`, so a client can pick the icon and
+   * tone without parsing prose. The `warning` text stays authoritative.
+   */
+  warningCode: 'wrong_network_loss' | 'bridged_variant_loss' | 'memo_required'
   configurationSource: 'demo-policy'
 }
 
@@ -22,6 +27,7 @@ const NETWORKS: Readonly<Record<WalletNetwork, WalletNetworkConfig>> = Object.fr
     requiredConfirmations: 20, minimumDepositAtomic: '1000000', minimumWithdrawalAtomic: '10000000',
     withdrawalFeeAtomic: '1000000', estimatedArrivalMinutes: [2, 10],
     warning: 'Send TRC-20 USDT only. Other assets or networks require manual recovery review.',
+    warningCode: 'wrong_network_loss',
     configurationSource: 'demo-policy',
   },
   ethereum: {
@@ -29,6 +35,7 @@ const NETWORKS: Readonly<Record<WalletNetwork, WalletNetworkConfig>> = Object.fr
     requiredConfirmations: 64, minimumDepositAtomic: '10000000', minimumWithdrawalAtomic: '50000000',
     withdrawalFeeAtomic: '12000000', estimatedArrivalMinutes: [12, 30],
     warning: 'Send ERC-20 USDT only. Network fees can change before approval.',
+    warningCode: 'wrong_network_loss',
     configurationSource: 'demo-policy',
   },
   arbitrum: {
@@ -36,6 +43,7 @@ const NETWORKS: Readonly<Record<WalletNetwork, WalletNetworkConfig>> = Object.fr
     requiredConfirmations: 60, minimumDepositAtomic: '1000000', minimumWithdrawalAtomic: '10000000',
     withdrawalFeeAtomic: '500000', estimatedArrivalMinutes: [2, 10],
     warning: 'Send native Arbitrum USDT only. Bridged variants are not automatically credited.',
+    warningCode: 'bridged_variant_loss',
     configurationSource: 'demo-policy',
   },
 })

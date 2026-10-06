@@ -113,7 +113,7 @@ export class AuthFlowService {
 
   /**
    * GitHub and wallet sign-ins prove control of a third-party account or a key, not of an inbox.
-   * Hold the session open on an email step until the account owns a verified address.
+   * Raised for a signed-in user at the first money-moving action, never at sign-in.
    * The address and its code arrive later through bindEmail().
    */
   async beginEmailBinding(userId: string, device?: AuthDevice): Promise<never> {

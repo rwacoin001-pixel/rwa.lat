@@ -4,6 +4,7 @@ import type { RequestWithContext } from '../common/request-context.middleware'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
+import { VerifiedEmailGuard } from '../security/verified-email.guard'
 import { ListPredictionBetsQueryDto, PlacePredictionBetDto } from './prediction.dto'
 import { PredictionFavoriteService } from './prediction-favorite.service'
 import { PredictionService } from './prediction.service'
@@ -31,6 +32,7 @@ export class PredictionUserController {
   ) {}
 
   @Post('bets')
+  @UseGuards(VerifiedEmailGuard)
   @ApiOperation({ summary: 'Place a prediction bet using the account balance (internal market)' })
   place(
     @CurrentAuth() actor: SecurityActor,

@@ -9,6 +9,7 @@ import type { AuthenticatedRequest } from '../security/session-auth.guard'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
+import { VerifiedEmailGuard } from '../security/verified-email.guard'
 import {
   AddWithdrawalAddressDto,
   AdminWithdrawalDecisionDto,
@@ -76,6 +77,7 @@ export class WalletController {
   }
 
   @Post('withdrawal-addresses')
+  @UseGuards(VerifiedEmailGuard)
   @ApiOperation({ summary: 'Add and screen a withdrawal destination after recent step-up verification' })
   addWithdrawalAddress(
     @CurrentAuth() actor: SecurityActor,
@@ -97,6 +99,7 @@ export class WalletController {
   }
 
   @Post('withdrawals')
+  @UseGuards(VerifiedEmailGuard)
   @ApiOperation({ summary: 'Create an idempotent withdrawal after recent step-up verification' })
   withdrawal(
     @CurrentAuth() actor: SecurityActor,
@@ -107,7 +110,25 @@ export class WalletController {
     return this.wallet.createWithdrawal(actor, dto, idempotencyKey, this.requestId(request))
   }
 
+  @Get('transfers/quote')
+  @ApiOperation({ summary: 'Quote an internal transfer without moving funds' })
+  transferQuote(@CurrentAuth() actor: SecurityActor, @Query('atomicAmount') atomicAmount: string) {
+    return this.wallet.quoteTransfer(actor.userId, atomicAmount)
+  }
+
+  /**
+   * Answers "did I type the right recipient id" for an irreversible-ish money
+   * move. Complements `/transfers/quote` so the summary, the step-up sheet and
+   * the receipt all read the same numbers.
+   */
+  @Get('transfer-recipients/:userId')
+  @ApiOperation({ summary: 'Resolve a transfer recipient to a masked display hint' })
+  transferRecipient(@CurrentAuth() actor: SecurityActor, @Param('userId', new ParseUUIDPipe()) userId: string) {
+    return this.wallet.transferRecipient(actor.userId, userId)
+  }
+
   @Post('transfers')
+  @UseGuards(VerifiedEmailGuard)
   @ApiOperation({ summary: 'Post an idempotent internal USDT transfer after recent step-up verification' })
   transfer(
     @CurrentAuth() actor: SecurityActor,

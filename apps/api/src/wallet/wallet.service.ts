@@ -10,7 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config'
 import { InjectRepository } from '@nestjs/typeorm'
 import { randomUUID } from 'node:crypto'
-import { FindOptionsWhere, In, Repository } from 'typeorm'
+import { DataSource, FindOptionsWhere, In, Repository } from 'typeorm'
 import { Device } from '../identity/device.entity'
 import { IdentityCrypto } from '../identity/identity-crypto.service'
 import { AuditLog } from '../security/audit-log.entity'
@@ -84,6 +84,7 @@ export class WalletService {
     private readonly fundsSwitch: FundsOperationalSwitchService,
     private readonly whitelist: WithdrawalWhitelistService,
     private readonly operations: OperationalCapabilityService,
+    private readonly db: DataSource,
     config: ConfigService,
   ) {
     this.executionRequested = config.get<string>('WALLET_EXECUTION_ENABLED') === 'true'
@@ -299,6 +300,75 @@ export class WalletService {
       requiresAddressScreening: true,
       expiresAt: new Date(Date.now() + 60_000),
       integration: this.integrationState(),
+    }
+  }
+
+  /**
+   * Internal transfers settle inside our own ledger, so there is no network fee to
+   * quote. The screen still needs the debit total and the resulting available
+   * balance from one place — otherwise the summary, the step-up sheet and the
+   * receipt can each print a different number.
+   */
+  async quoteTransfer(userId: string, atomicAmount: string) {
+    this.assertAtomicAmount(atomicAmount)
+    const account = await this.ledgerAccounts.findOne({ where: { userId, purpose: 'available', assetCode: 'USDT', state: 'active' } })
+    const balance = account ? await this.balances.findOne({ where: { accountId: account.id } }) : null
+    const available = BigInt(balance?.currentAtomicBalance ?? '0')
+    const total = BigInt(atomicAmount)
+    return {
+      assetCode: 'USDT',
+      assetDecimals: 6,
+      atomicAmount,
+      feeAtomicAmount: '0',
+      totalDebitAtomic: total.toString(),
+      availableAtomic: available.toString(),
+      sufficientBalance: available >= total,
+    }
+  }
+
+  /**
+   * Resolve a transfer recipient to a *hint*, never to an identity.
+   *
+   * Internal transfers post instantly, so the sender gets one last chance to
+   * notice a mistyped id. This answers only "does the account exist, can it
+   * receive, and roughly whose is it" and deliberately returns nothing else —
+   * no email, no phone, no registration date. The display name is masked and is
+   * null whenever the recipient has no community profile (which is the common
+   * case), so the client falls back to the id itself.
+   */
+  async transferRecipient(callerUserId: string, recipientUserId: string) {
+    if (callerUserId === recipientUserId) {
+      return { userId: recipientUserId, exists: true, receivable: false, reason: 'self', displayName: null, avatarInitial: null }
+    }
+    const rows = (await this.db.query(
+      `SELECT u.status AS status, cp.display_name AS display_name
+         FROM app.users u
+         LEFT JOIN app.community_profiles cp ON cp.user_id = u.id AND cp.kind = 'member'
+        WHERE u.id = $1
+        LIMIT 1`,
+      [recipientUserId],
+    )) as Array<{ status: string; display_name: string | null }>
+    const row = rows[0]
+    if (!row) {
+      throw new NotFoundException({ code: WALLET_ERROR_CODES.TRANSFER_RECIPIENT_UNAVAILABLE, message: 'Recipient account does not exist.' })
+    }
+    // Community names default to "Member <hex>"; those carry no information, so treat them as absent.
+    const raw = (row.display_name ?? '').trim()
+    const usable = raw && !/^Member [0-9a-f]{6}$/.test(raw) ? raw : ''
+    const chars = Array.from(usable)
+    const displayName = chars.length === 0
+      ? null
+      : chars.length <= 2
+        ? `${chars[0]}*`
+        : `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`
+    const active = row.status === 'active'
+    return {
+      userId: recipientUserId,
+      exists: true,
+      receivable: active,
+      reason: active ? null : row.status,
+      displayName,
+      avatarInitial: chars.length > 0 ? chars[0] : null,
     }
   }
 

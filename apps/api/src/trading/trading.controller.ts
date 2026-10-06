@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Post, Query, UseGuards } from '@n
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import { SessionAuthGuard } from '../security/session-auth.guard'
+import { VerifiedEmailGuard } from '../security/verified-email.guard'
 import type { SecurityActor } from '../security/security.service'
 import { CandlesQueryDto, MyOrdersQueryDto, OrderBookQueryDto, PlaceTradingOrderDto, TradesQueryDto } from './dto/trading.dto'
 import { TradingService } from './trading.service'
@@ -43,7 +44,7 @@ export class TradingController {
 
   @Post('orders')
   @ApiBearerAuth()
-  @UseGuards(SessionAuthGuard)
+  @UseGuards(SessionAuthGuard, VerifiedEmailGuard)
   @ApiOperation({ summary: 'Place a limit or market order (matching engine executes immediately)' })
   place(@CurrentAuth() actor: SecurityActor, @Body() dto: PlaceTradingOrderDto) {
     return this.trading.placeOrder(actor.userId, dto)
