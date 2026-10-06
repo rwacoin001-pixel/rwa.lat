@@ -133,7 +133,7 @@ export class IdentityController {
   @ApiOperation({ summary: 'Exchange Google OAuth 2 code or verified X OAuth 1.0a verifier' })
   @ApiOkResponse({ description: 'OAuth identity resolved after server-side provider verification.' })
   async oauth(@Param('provider') provider: string, @Body() dto: OAuthCallbackDto) {
-    if (provider !== 'google' && provider !== 'x') {
+    if (provider !== 'google' && provider !== 'github' && provider !== 'x') {
       throw new BadRequestException({ code: 'OAUTH_PROVIDER_UNSUPPORTED', message: 'Unsupported OAuth provider' })
     }
     return this.identity.exchangeOAuthCode(provider, dto.code, dto.state, dto.redirectUri, dto.device)
@@ -142,7 +142,7 @@ export class IdentityController {
   @Post('oauth/:provider/start')
   @ApiOperation({ summary: 'Create a server-bound Google OAuth 2 or X OAuth 1.0a authorization URL' })
   async oauthStart(@Param('provider') provider: string, @Body() dto?: OAuthStartDto) {
-    if (provider !== 'google' && provider !== 'x') {
+    if (provider !== 'google' && provider !== 'github' && provider !== 'x') {
       throw new BadRequestException({ code: 'OAUTH_PROVIDER_UNSUPPORTED', message: 'Unsupported OAuth provider' })
     }
     return this.identity.beginOAuth(provider, dto?.intent ?? 'login', dto?.consents)

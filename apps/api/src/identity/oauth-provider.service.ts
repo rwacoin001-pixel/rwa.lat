@@ -5,7 +5,7 @@ import { DataSource } from 'typeorm'
 import { IdentityCrypto } from './identity-crypto.service'
 import { loadRegistrationConsents, validateRegistrationConsents, type RegistrationConsentAcceptance } from './consent-policy'
 
-export type OAuthProviderName = 'google' | 'x'
+export type OAuthProviderName = 'google' | 'github' | 'x'
 
 export type VerifiedOAuthProfile = {
   subject: string; displayName?: string; locale?: string; verifiedEmail?: string;
@@ -94,7 +94,10 @@ export class OAuthProviderService {
     authorization.searchParams.set('response_type', 'code')
     authorization.searchParams.set('client_id', providerConfig.clientId)
     authorization.searchParams.set('redirect_uri', providerConfig.redirectUri)
-    authorization.searchParams.set('scope', 'openid email profile')
+    authorization.searchParams.set(
+      'scope',
+      provider === 'github' ? 'read:user user:email' : 'openid email profile',
+    )
     authorization.searchParams.set('state', state)
     authorization.searchParams.set('code_challenge', challenge)
     authorization.searchParams.set('code_challenge_method', 'S256')
@@ -131,6 +134,33 @@ export class OAuthProviderService {
         displayName: readOptionalString(profile, 'name'),
         locale: readOptionalString(profile, 'locale'),
         verifiedEmail: profile.email_verified === true && email && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : undefined,
+        ...this.registrationSnapshot(flow),
+      }
+    }
+    if (provider === 'github') {
+      const userAgent = 'rwalat-oauth'
+      const profile = await this.getJson('https://api.github.com/user', token, userAgent)
+      const id = profile.id
+      if (typeof id !== 'number' && typeof id !== 'string') throw invalidOAuth('GitHub profile response did not contain a user')
+      // Scope read:user user:email. /user hides private emails, so read /user/emails and take the
+      // verified primary one. With no verified email, registration cannot complete.
+      let verifiedEmail: string | undefined
+      const emailsResponse = await this.fetchProvider('https://api.github.com/user/emails', {
+        headers: { authorization: `Bearer ${token}`, accept: 'application/json', 'user-agent': userAgent },
+      })
+      if (emailsResponse.ok) {
+        const raw = (await emailsResponse.json()) as unknown
+        const entries = Array.isArray(raw) ? (raw as Array<Record<string, unknown>>) : []
+        const preferred = entries.find((entry) => entry.primary === true && entry.verified === true)
+          ?? entries.find((entry) => entry.verified === true)
+        const candidate = typeof preferred?.email === 'string' ? preferred.email.trim().toLowerCase() : undefined
+        if (candidate && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate)) verifiedEmail = candidate
+      }
+      return {
+        subject: String(id),
+        displayName: readOptionalString(profile, 'name') ?? readOptionalString(profile, 'login'),
+        locale: undefined,
+        verifiedEmail,
         ...this.registrationSnapshot(flow),
       }
     }
@@ -227,9 +257,13 @@ export class OAuthProviderService {
     return { accessToken }
   }
 
-  private async getJson(url: string, accessToken: string): Promise<Record<string, unknown>> {
+  private async getJson(url: string, accessToken: string, userAgent?: string): Promise<Record<string, unknown>> {
     const response = await this.fetchProvider(url, {
-      headers: { authorization: `Bearer ${accessToken}`, accept: 'application/json' },
+      headers: {
+        authorization: `Bearer ${accessToken}`,
+        accept: 'application/json',
+        ...(userAgent ? { 'user-agent': userAgent } : {}),
+      },
     })
     const payload = await response.json()
     if (!payload || typeof payload !== 'object' || Array.isArray(payload)) throw invalidOAuth('OAuth profile response was invalid')
@@ -322,7 +356,7 @@ export class OAuthProviderService {
   }
 
   private providerConfig(provider: OAuthProviderName) {
-    const prefix = provider === 'google' ? 'GOOGLE' : 'X'
+    const prefix = provider === 'google' ? 'GOOGLE' : provider === 'github' ? 'GITHUB' : 'X'
     if (this.config.get<string>(`${prefix}_OAUTH_ENABLED`) !== 'true') throw oauthUnavailable()
     const clientId = this.config.get<string>(`${prefix}_OAUTH_CLIENT_ID`) ?? ''
     const clientSecret = this.config.get<string>(`${prefix}_OAUTH_CLIENT_SECRET`) ?? ''
@@ -336,10 +370,14 @@ export class OAuthProviderService {
       redirectUri,
       authorizationEndpoint: provider === 'google'
         ? 'https://accounts.google.com/o/oauth2/v2/auth'
-        : 'https://x.com/i/oauth2/authorize',
+        : provider === 'github'
+          ? 'https://github.com/login/oauth/authorize'
+          : 'https://x.com/i/oauth2/authorize',
       tokenEndpoint: provider === 'google'
         ? 'https://oauth2.googleapis.com/token'
-        : 'https://api.x.com/2/oauth2/token',
+        : provider === 'github'
+          ? 'https://github.com/login/oauth/access_token'
+          : 'https://api.x.com/2/oauth2/token',
     }
   }
 }

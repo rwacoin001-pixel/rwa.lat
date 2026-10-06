@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm'
 
-export type LoginIdentityKind = 'email' | 'google' | 'x' | 'external_wallet'
+export type LoginIdentityKind = 'email' | 'google' | 'github' | 'x' | 'external_wallet'
 export type LoginIdentityState = 'pending' | 'verified' | 'revoked'
 
 @Entity({ schema: 'app', name: 'login_identities' })

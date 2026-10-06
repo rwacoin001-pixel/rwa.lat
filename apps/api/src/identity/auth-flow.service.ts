@@ -10,7 +10,7 @@ import { LoginIdentity } from './login-identity.entity'
 export type AuthDevice = { fingerprint?: string; name?: string }
 type Step = 'totp' | 'email' | 'password' | 'consent'
 export type AuthProof = 'primary' | 'passkey' | 'password' | 'recovery'
-type OAuthSubject = { provider: 'google' | 'x'; subject: string; locale?: string; verifiedEmail?: string; referralAttribution?: string }
+type OAuthSubject = { provider: 'google' | 'github' | 'x'; subject: string; locale?: string; verifiedEmail?: string; referralAttribution?: string }
 type Payload = {
   userId?: string; device?: AuthDevice; steps: Step[]; purpose: 'login' | 'reset' | 'setup' | 'oauth' | 'email_change';
   version: number; factorIds: string[]; oauth?: OAuthSubject; emailHash?: string; sentAt?: number; sends?: number; bindingEmail?: string;

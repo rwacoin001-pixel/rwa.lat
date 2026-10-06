@@ -109,6 +109,11 @@ export class IdentityService {
         const identities = manager.getRepository(LoginIdentity)
         const existing = await identities.findOne({ where: { kind: provider, identifierHash: hash } })
         if (existing) throw new ConflictException({ code: 'AUTH_RESTART_LOGIN', message: 'Account already exists. Sign in again.' })
+        // An email account may have been created while the consent screen was open.
+        // Restart through normal login so its existing second-factor policy still runs.
+        if (await this.googleEmailAccount(manager, provider, verifiedEmail)) {
+          throw new ConflictException({ code: 'AUTH_RESTART_LOGIN', message: 'An account with this email already exists. Sign in again.' })
+        }
         const userId = randomUUID()
         await manager.getRepository(User).save({ id: userId, status: 'active', locale: locale ?? 'en' })
         await this.referral?.bindNewUser(manager,userId,referralAttribution)
@@ -141,6 +146,7 @@ export class IdentityService {
       const consents = validateRegistrationConsents(consentInput, await loadRegistrationConsents(manager, this.config, true))
       const loginIdentities = manager.getRepository(LoginIdentity)
       const users = manager.getRepository(User)
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`account-email:${hash.toString('hex')}`])
       const existing = await loginIdentities.findOne({
         where: { kind: 'email', identifierHash: hash },
       })
@@ -307,7 +313,7 @@ export class IdentityService {
   }
 
   private async upsertVerifiedOAuthSubject(
-    provider: 'google' | 'x',
+    provider: 'google' | 'github' | 'x',
     subject: string,
     meta: {
       displayName?: string
@@ -330,6 +336,20 @@ export class IdentityService {
         if (identity.state !== 'verified' || identity.revokedAt) throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
         await persistGoogleEmail(manager, this.crypto, identity, meta.verifiedEmail)
         return identity.userId
+      }
+
+      // Google proof attaches a new sign-in method to an existing verified Gmail
+      // account. It never relocates an already-linked Google identity or its assets.
+      const emailAccount = await this.googleEmailAccount(manager, provider, meta.verifiedEmail)
+      if (emailAccount) {
+        const encrypted = this.crypto.encrypt(key)
+        const linked = await loginIdentities.save(loginIdentities.create({
+          id: randomUUID(), userId: emailAccount, kind: provider, state: 'verified',
+          identifierHash: hash, identifierCiphertext: encrypted.ciphertext,
+          encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date(),
+        }))
+        await persistGoogleEmail(manager, this.crypto, linked, meta.verifiedEmail)
+        return emailAccount
       }
 
       if (meta.intent !== 'register') {
@@ -370,6 +390,34 @@ export class IdentityService {
     return this.issueSession(userId, meta.device)
   }
 
+  /** Only server-verified Gmail ownership can automatically link existing accounts. */
+  private async googleEmailAccount(manager: EntityManager, provider: OAuthProviderName, verifiedEmail?: string): Promise<string | null> {
+    if (provider !== 'google' || !verifiedEmail) return null
+    const normalized = verifiedEmail.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) return null
+    const hash = this.crypto.hashIdentifier(normalized)
+    await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`account-email:${hash.toString('hex')}`])
+    const identities = manager.getRepository(LoginIdentity)
+    const email = await identities.findOne({ where: { kind: 'email', identifierHash: hash } })
+    if (!email) return null
+    if (email.state === 'revoked' || email.revokedAt) {
+      throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
+    }
+    // A third-party address may have changed owners since Google verified it.
+    // A pending email signup may contain credentials set by somebody else.
+    if (!normalized.endsWith('@gmail.com') || email.state !== 'verified') {
+      throw new ConflictException({ code: 'AUTH_ACCOUNT_LINK_REQUIRED', message: 'Sign in to the existing email account to link this Google account.' })
+    }
+    const owner = await manager.getRepository(User).findOne({ where: { id: email.userId } })
+    if (!owner || owner.status === 'closed' || owner.status === 'suspended') {
+      throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
+    }
+    if (await identities.findOne({ where: { userId: email.userId, kind: 'google' } })) {
+      throw new ConflictException({ code: 'AUTH_ACCOUNT_LINK_REQUIRED', message: 'This email account already has a Google sign-in method.' })
+    }
+    return email.userId
+  }
+
   async beginOAuth(provider: OAuthProviderName, intent: 'login' | 'register' = 'login', consentInput?: unknown) {
     const consents = intent === 'register' ? validateRegistrationConsents(consentInput, await loadRegistrationConsents(this.dataSource, this.config)) : undefined
     const flow=await this.oauthProvider.begin(provider, intent, consents)
@@ -388,9 +436,20 @@ export class IdentityService {
   ): Promise<AuthResult> {
     const verified = await this.oauthProvider.exchange(provider, code, state, redirectUri)
     const referralAttribution=await this.referral?.oauthAttribution(this.crypto.hashToken(state))
-    if (verified.intent === 'login') {
-      const existing = await this.loginIdentities.findOne({ where: { kind: provider, identifierHash: this.crypto.hashIdentifier(`${provider}:${verified.subject}`) } })
-      if (!existing) {
+    try {
+      return await this.upsertVerifiedOAuthSubject(provider, verified.subject, {
+        displayName: verified.displayName,
+        locale: verified.locale,
+        verifiedEmail: verified.verifiedEmail,
+        device,
+        intent: verified.intent,
+        referralAttribution,
+        registrationConsents: verified.registrationConsents,
+        consentedAt: verified.consentedAt,
+      })
+    } catch (error) {
+      if (verified.intent === 'login' && error instanceof ConflictException
+        && (error.getResponse() as { code?: string }).code === IDENTITY_ERROR_CODES.REGISTRATION_REQUIRED) {
         return this.authFlows.beginOAuth({
           provider,
           subject: verified.subject,
@@ -399,17 +458,8 @@ export class IdentityService {
           referralAttribution,
         }, device)
       }
+      throw error
     }
-    return this.upsertVerifiedOAuthSubject(provider, verified.subject, {
-      displayName: verified.displayName,
-      locale: verified.locale,
-      verifiedEmail: verified.verifiedEmail,
-      device,
-      intent: verified.intent,
-      referralAttribution,
-      registrationConsents: verified.registrationConsents,
-      consentedAt: verified.consentedAt,
-    })
   }
 
   private async persistRegistrationConsents(
