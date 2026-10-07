@@ -39,5 +39,6 @@
   .ptr, .ptr[data-phase] { transition: none; }
   .ptr[data-phase='armed'] .mark, .ptr[data-phase='done'] .mark, .ptr[data-phase='refreshing'] .mark svg { transform: none; animation: none; }
 }
-/* Our pull replaces the browser's own, so the two never fire together. */
-:global(html):has(.ptr) { overscroll-behavior-y: contain; }
+/* Custom refresh owns the pull indicator. Also suppress native edge bounce,
+   which can visually move viewport-fixed controls; contain still allows it. */
+:global(html):has(.ptr) { overscroll-behavior-y: none; }
