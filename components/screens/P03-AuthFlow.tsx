@@ -13,6 +13,7 @@ import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
 import styles from './P02-Login.module.css'
 import flow from './P03-AuthFlow.module.css'
 import { AuthShell } from './AuthShell'
+import { getSessionToken } from '@/lib/api/_http'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const authFlowCopy: Record<AppLocale, { security: string; recoverTitle: string; verifyTitle: string; recoverBody: string; verifyBody: string; done: string; processing: string; resend: string; send: string; sentPrefix: string; recovered: string; verified: string }> = {
@@ -49,8 +50,12 @@ export function AuthFlowScreen({ step, go, notify, onAuthenticated }: { step: 'v
   const handlers = useRef({ go, notify, onAuthenticated, locale, copy })
   handlers.current = { go, notify, onAuthenticated, locale, copy }
   useEffect(() => {
+    if (step === 'verify' && !new URLSearchParams(location.search).get('token') && getSessionToken()) {
+      location.replace('/home?bindEmail=1')
+      return
+    }
     setEmail(sessionStorage.getItem('rwa.pending-email') ?? '')
-  }, [])
+  }, [step])
   useEffect(() => {
     let active = true
     if (!attempt.current || attempt.current.step !== step) {

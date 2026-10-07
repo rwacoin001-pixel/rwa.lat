@@ -23,7 +23,7 @@ import type { RwaScreen } from '@/lib/rwa-routes'
 import { useQuery } from '@/lib/api/_query'
 import { getRwaOverview } from '@/lib/api/rwa'
 import { getMarketContextView } from '@/lib/api/market-context'
-import { POLL, request } from '@/lib/api/_http'
+import { POLL, request, getSessionToken, SESSION_CHANGED } from '@/lib/api/_http'
 import { fmtUsd, fromAtomic } from '@/lib/money'
 import { getWallet, toUnits as walletUnits, type WalletView } from '@/lib/wallet-data'
 import { resolveHomeState, heroCta } from '@/lib/home-lifecycle'
@@ -44,6 +44,7 @@ import { HomePolymarket } from '@/components/home/HomePolymarket'
 import { homeStateCopy } from '@/components/home/home-state-copy'
 import { CountUp, EASE, MaskLines, Rise } from '@/components/home/maison-motion'
 import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
+import { focusHomeEmailBinding } from '@/components/home/HomeEmailBinding'
 import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { homeDataCopy } from '@/lib/route-copy'
@@ -255,6 +256,17 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     setFeedPinned(pinned)
     if (pinned) setTopbarHidden(true)
   }, [])
+  // Only the session probe is refreshed after an in-place email bind; wallet and positions are left alone.
+  const refreshSessionView = useCallback(() => {
+    void getSessionView().then(view => setSessionProbe(prev => prev.view && view.userId !== prev.view.userId ? prev : { status: 'ok', view })).catch(() => undefined)
+  }, [])
+  useEffect(() => {
+    const initialToken = getSessionToken()
+    const accountChanged = () => { if (getSessionToken() !== initialToken) location.reload() }
+    window.addEventListener('storage', accountChanged)
+    window.addEventListener(SESSION_CHANGED, accountChanged)
+    return () => { window.removeEventListener('storage', accountChanged); window.removeEventListener(SESSION_CHANGED, accountChanged) }
+  }, [])
 
   useEffect(() => {
     let cancelled = false
@@ -346,6 +358,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const ctaLabel = mainCta ? ctaText[locale][mainCta.kind] : null
   const openMainCta = () => {
     if (!mainCta) return
+    if (mainCta.kind === 'verifyEmail') { focusHomeEmailBinding(); return }
     const path = routePath(mainCta.routeKey as never)
     openPath(mainCta.query ? `${path}?${mainCta.query}` : path)
   }
@@ -363,7 +376,17 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const tickerQuotes = [...(context.data?.anchors ?? []), ...(context.data?.secondary ?? [])].filter((quote, index, all) => quote.value !== null && all.findIndex(other => other.symbol === quote.symbol) === index)
   const stateLabels = homeStateCopy[locale]
   const statusLabel = state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
-  const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' ? account : null
+  const sessionUserId = sessionProbe.status === 'ok' ? sessionProbe.view?.userId : undefined
+  const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' || sessionUserId ? account : null
+  const emailBinding = sessionProbe.status === 'ok' && sessionProbe.view && !sessionProbe.view.emailVerified && sessionUserId ? { userId: sessionUserId, onVerified: refreshSessionView } : undefined
+  useEffect(() => {
+    if (!sessionUserId || new URLSearchParams(location.search).get('bindEmail') !== '1') return
+    const url = new URL(location.href)
+    url.searchParams.delete('bindEmail')
+    history.replaceState(history.state, '', url.pathname + url.search + url.hash)
+    const timer = window.setTimeout(focusHomeEmailBinding, 0)
+    return () => window.clearTimeout(timer)
+  }, [sessionUserId])
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
 
   return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
@@ -385,7 +408,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       <Ticker quotes={tickerQuotes} locale={locale} />
     </header>
 
-      <HomePortfolioCard state={state} account={portfolioAccount} labels={{ portfolio: copy.portfolio, available: copy.available, holdings: copy.holdings, showBalance: utility.showBalance, hideBalance: utility.hideBalance }} status={statusLabel} ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} />
+      <HomePortfolioCard state={state} account={portfolioAccount} labels={{ portfolio: copy.portfolio, available: copy.available, holdings: copy.holdings, showBalance: utility.showBalance, hideBalance: utility.hideBalance }} status={statusLabel} ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
     </div>
 
     <div className={styles.content}>

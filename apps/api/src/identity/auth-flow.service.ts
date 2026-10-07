@@ -12,11 +12,13 @@ import { maskEmail } from '../data-governance/data-masking.util'
 export type AuthDevice = { fingerprint?: string; name?: string }
 type Step = 'totp' | 'email' | 'password' | 'consent'
 export type AuthProof = 'primary' | 'passkey' | 'password' | 'recovery'
+export type EmailBindingContext = { userId: string; purpose: 'email_bind' }
 type OAuthSubject = { provider: 'google' | 'github' | 'x'; subject: string; locale?: string; verifiedEmail?: string; referralAttribution?: string }
 type Payload = {
   userId?: string; device?: AuthDevice; steps: Step[]; purpose: 'login' | 'reset' | 'setup' | 'oauth' | 'email_change' | 'email_bind';
   version: number; factorIds: string[]; oauth?: OAuthSubject; emailHash?: string; sentAt?: number; sends?: number; bindingEmail?: string;
   previousEmailHash?: string | null;
+  inlineBinding?: boolean;
 }
 export type AuthFlowView = { continuationToken: string; step: Step; expiresIn: number; retryAfter?: number; emailRequired?: boolean }
 type Row = { payload_ciphertext: Buffer; encryption_key_version: number; attempts: number; expires_at: Date; consumed_at: Date | null }
@@ -122,6 +124,35 @@ export class AuthFlowService {
       version: policy.version, factorIds }))
   }
 
+  async startEmailBinding(userId: string): Promise<AuthFlowView> {
+    return this.db.transaction(async manager => {
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`auth:${userId}`])
+      const { policy, factorIds } = await this.policy(manager, userId)
+      if ((await this.recentBindings(manager, userId)).length >= 5) throw this.bindingRateLimit(600)
+      return this.insert(manager, { userId, steps: ['email'], purpose: 'email_bind', inlineBinding: true,
+        version: policy.version, factorIds })
+    })
+  }
+
+  private bindingRateLimit(retryAfter: number) {
+    return new HttpException({ code: 'AUTH_EMAIL_CODE_RATE_LIMIT', message: 'Please wait before trying again.', details: { retryAfter } }, 429)
+  }
+
+  private async recentBindings(manager: EntityManager, userId: string): Promise<Payload[]> {
+    const rows = await manager.query(`SELECT payload_ciphertext,encryption_key_version FROM app.auth_flows
+      WHERE user_id=$1 AND created_at > now() - interval '10 minutes'`, [userId]) as Row[]
+    return rows.map(row => JSON.parse(this.crypto.decrypt(row.payload_ciphertext, row.encryption_key_version)) as Payload)
+      .filter(payload => payload.inlineBinding && payload.purpose === 'email_bind')
+  }
+
+  private async assertBindingDelivery(manager: EntityManager, payload: Payload) {
+    if (!payload.inlineBinding || !payload.userId) return
+    const recent = await this.recentBindings(manager, payload.userId)
+    const last = Math.max(0, ...recent.map(flow => flow.sentAt ?? 0))
+    if (Date.now() - last < 60_000) throw this.bindingRateLimit(Math.ceil((60_000 - (Date.now() - last)) / 1000))
+    if (recent.reduce((sum, flow) => sum + (flow.sends ?? 0), 0) >= 5) throw this.bindingRateLimit(600)
+  }
+
   private async begin(payload: Payload): Promise<AuthFlowView> {
     return this.db.transaction(manager => this.insert(manager, payload))
   }
@@ -158,11 +189,12 @@ export class AuthFlowService {
     payload.sends = (payload.sends ?? 0) + 1
   }
 
-  async resend(token: string): Promise<{ retryAfter: number }> {
+  async resend(token: string, expected?: EmailBindingContext): Promise<{ retryAfter: number }> {
     return this.db.transaction(async manager => {
-      const { row, payload } = await this.read(manager, token)
+      const { row, payload } = await this.read(manager, token, expected)
       if (payload.steps[0] !== 'email' || row.attempts >= 5 || (payload.sends ?? 0) >= 5) throw fail()
       if (Date.now() - (payload.sentAt ?? 0) < 60_000) throw new HttpException({ code: 'AUTH_EMAIL_CODE_RATE_LIMIT', message: 'Please wait before resending.' }, 429)
+      await this.assertBindingDelivery(manager, payload)
       await this.deliver(manager, payload, token, new Date(row.expires_at))
       const encrypted = this.crypto.encrypt(JSON.stringify(payload))
       await manager.query('UPDATE app.auth_flows SET payload_ciphertext=$2,encryption_key_version=$3 WHERE token_hash=$1',
@@ -175,27 +207,29 @@ export class AuthFlowService {
    * Supply the address for a pending email-binding flow and send its one-time code.
    * The flow — and therefore the session — only completes after that code is verified.
    */
-  async bindEmail(continuationToken: string, rawEmail: string): Promise<AuthFlowView> {
+  async bindEmail(continuationToken: string, rawEmail: string, expected?: EmailBindingContext): Promise<AuthFlowView> {
     const bindingEmail = rawEmail.trim().toLowerCase()
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bindingEmail)) {
       throw new BadRequestException({ code: 'AUTH_EMAIL_INVALID', message: 'Enter a valid email address.' })
     }
     return this.db.transaction(async manager => {
-      const { row, payload } = await this.read(manager, continuationToken)
+      const { row, payload } = await this.read(manager, continuationToken, expected)
       if (payload.purpose !== 'email_bind' || payload.steps[0] !== 'email' || !payload.userId) throw fail()
       const identifierHash = this.crypto.hashIdentifier(bindingEmail)
-      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`email:${identifierHash.toString('hex')}`])
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`account-email:${identifierHash.toString('hex')}`])
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`user-email:${payload.userId}`])
       const owner = await manager.getRepository(LoginIdentity).findOne({ where: { kind: 'email', identifierHash } })
       if (owner && owner.userId !== payload.userId) {
         throw new ConflictException({ code: IDENTITY_ERROR_CODES.EMAIL_TAKEN, message: 'An account with this email already exists.' })
       }
+      await this.assertBindingDelivery(manager, payload)
       if (payload.bindingEmail === bindingEmail) {
         if ((payload.sends ?? 0) >= 5) throw fail()
         if (Date.now() - (payload.sentAt ?? 0) < 60_000) {
           throw new HttpException({ code: 'AUTH_EMAIL_CODE_RATE_LIMIT', message: 'Please wait before resending.', details: { retryAfter: 60 } }, 429)
         }
       } else {
-        payload.sends = 0
+        if (!payload.inlineBinding) payload.sends = 0
         payload.bindingEmail = bindingEmail
       }
       await this.deliver(manager, payload, continuationToken, new Date(row.expires_at))
@@ -207,10 +241,12 @@ export class AuthFlowService {
     })
   }
 
-  private async read(manager: EntityManager, token: string): Promise<{ row: Row; payload: Payload }> {
+  private async read(manager: EntityManager, token: string, expected?: EmailBindingContext): Promise<{ row: Row; payload: Payload }> {
     const [row] = await manager.query('SELECT * FROM app.auth_flows WHERE token_hash=$1 FOR UPDATE', [this.crypto.hashToken(token)]) as Row[]
     if (!row || row.consumed_at || new Date(row.expires_at).getTime() <= Date.now() || row.attempts >= 5) throw fail()
     const payload = JSON.parse(this.crypto.decrypt(row.payload_ciphertext, row.encryption_key_version)) as Payload
+    if ((expected && (payload.userId !== expected.userId || payload.purpose !== expected.purpose))
+      || (payload.inlineBinding && !expected)) throw fail()
     if (payload.userId) {
       await manager.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`auth:${payload.userId}`])
       const { policy, factorIds } = await this.policy(manager, payload.userId)
@@ -220,10 +256,10 @@ export class AuthFlowService {
   }
 
   async complete(input: { continuationToken: string; code?: string; password?: string; consents?: RegistrationConsentAcceptance[] },
-    finish: (payload: Payload, manager: EntityManager) => Promise<unknown>): Promise<unknown> {
+    finish: (payload: Payload, manager: EntityManager) => Promise<unknown>, expected?: EmailBindingContext): Promise<unknown> {
     // Hash only for a password step, never spend scrypt work on an unverified request.
     const result = await this.db.transaction(async manager => {
-      const { row, payload } = await this.read(manager, input.continuationToken)
+      const { row, payload } = await this.read(manager, input.continuationToken, expected)
       const step = payload.steps[0]
       let valid = false
       if (step === 'email') {
@@ -232,7 +268,8 @@ export class AuthFlowService {
         valid = expected.length === actual.length && timingSafeEqual(expected, actual)
         if (valid && payload.bindingEmail) {
           const identifierHash = this.crypto.hashIdentifier(payload.bindingEmail)
-          await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`email:${identifierHash.toString('hex')}`])
+          await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`account-email:${identifierHash.toString('hex')}`])
+          await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`user-email:${payload.userId}`])
           const identities = manager.getRepository(LoginIdentity)
           const existing = await identities.findOne({ where: { kind: 'email', userId: payload.userId } })
           const owner = await identities.findOne({ where: { kind: 'email', identifierHash } })
@@ -240,6 +277,10 @@ export class AuthFlowService {
             // GitHub/wallet accounts may have no email identity yet, so only a foreign owner blocks the bind.
             if (owner && owner.userId !== payload.userId) {
               throw new ConflictException({ code: IDENTITY_ERROR_CODES.EMAIL_TAKEN, message: 'An account with this email already exists.' })
+            }
+            if (existing && (existing.revokedAt || existing.state === 'revoked'
+              || (existing.state === 'verified' && !existing.identifierHash.equals(identifierHash)))) {
+              throw new ConflictException({ code: 'AUTH_EMAIL_BIND_CONFLICT', message: 'Use account security settings to change an existing email.' })
             }
           } else if (owner ||
             (payload.purpose !== 'email_change' && existing) ||

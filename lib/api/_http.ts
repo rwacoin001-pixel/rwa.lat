@@ -86,20 +86,32 @@ export function handleSessionUnauthorized() {
   if (window.location.pathname !== '/login') window.location.assign(`/login?returnTo=${encodeURIComponent(target)}`)
 }
 
-export async function request<T>(path: string, options: RequestInit & { idempotencyKey?: string; token?: string | null; timeoutMs?: number; loading?: 'overlay' | 'silent' } = {}): Promise<ApiResult<T>> {
+// Begin during wallet selection so referral lookup does not sit between signing and login.
+const attributionRequests = new WeakMap<Window, { at: number; result: Promise<string | null> }>()
+export function prefetchAuthAttribution(): Promise<string | null> {
+  if (typeof window === 'undefined') return Promise.resolve(null)
+  const cached = attributionRequests.get(window)
+  if (cached && Date.now() - cached.at < 30_000) return cached.result
+  const result = fetch('/api/referral/attribution', { cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(3000) })
+    .then(async response => response.ok ? await response.json() : null)
+    .then(value => typeof value?.token === 'string' ? value.token as string : null)
+    .catch(() => null)
+  attributionRequests.set(window, { at: Date.now(), result })
+  return result
+}
+
+export async function request<T>(path: string, options: RequestInit & { idempotencyKey?: string; token?: string | null; timeoutMs?: number; loading?: 'overlay' | 'silent'; referralAttribution?: 'skip' | 'include' } = {}): Promise<ApiResult<T>> {
   if (!path.startsWith('/v1/') || /\/v1\/(?:demo-admin|admin|[^/?]*-internal)(?:[/?]|$)/.test(path) || path.includes('..') || path.includes('\\')) {
     return { ok: false, error: { status: 0, code: 'INVALID_API_PATH', message: '仅允许 C 端 /v1 接口' } }
   }
-  const { idempotencyKey, token = getSessionToken(), timeoutMs = 20_000, loading, ...init } = options
+  const { idempotencyKey, token = getSessionToken(), timeoutMs = 20_000, loading, referralAttribution, ...init } = options
   const headers = new Headers(init.headers)
   headers.set('x-request-id', crypto.randomUUID())
   if (token) headers.set('Authorization', `Bearer ${token}`)
   // Carry the signed landing attribution across the app/API domains for registration and OAuth.
-  if (/^\/v1\/auth\/(?:register\/email|wallet\/verify|oauth\/(?:google|github|x)(?:\/start)?)$/.test(path) && typeof window !== 'undefined') {
-    try {
-      const attribution = await fetch('/api/referral/attribution', { cache: 'no-store', credentials: 'same-origin', signal: AbortSignal.timeout(3000) }).then(r => r.ok ? r.json() : null)
-      if (typeof attribution?.token === 'string') headers.set('x-referral-attribution', attribution.token)
-    } catch { /* Registration remains available without an invitation. */ }
+  if (referralAttribution !== 'skip' && /^\/v1\/auth\/(?:register\/email|wallet\/verify|oauth\/(?:google|github|x)(?:\/start)?)$/.test(path)) {
+    const attribution = await prefetchAuthAttribution()
+    if (attribution) headers.set('x-referral-attribution', attribution)
   }
   if (idempotencyKey) headers.set('Idempotency-Key', idempotencyKey)
   if (init.body && !(init.body instanceof FormData)) headers.set('Content-Type', 'application/json')

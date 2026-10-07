@@ -14,12 +14,48 @@ import { RegisterEmailRequestDto } from './dto/register-email-request.dto'
 import { WalletChallengeDto, WalletVerifyDto } from './dto/wallet.dto'
 import { SessionViewDto } from './dto/session-view.dto'
 import { EmailCodeService } from './email-code.service'
+import { EmailBindingStartDto, EmailBindingSendDto, EmailBindingTokenDto, EmailBindingCompleteDto } from './dto/email-binding.dto'
 import { ConfirmEmailCodeDto, EmailCodeChallengeDto, EmailLookupDto, EmailLookupResultDto, RequestEmailCodeDto } from './dto/email-code.dto'
 
 @ApiTags('identity')
 @Controller('auth')
 export class IdentityController {
   constructor(private readonly identity: IdentityService, private readonly emailCodes: EmailCodeService) {}
+
+  private sessionToken(authorization?: string): string {
+    const token = authorization?.match(/^Bearer\s+(.+)$/i)?.[1]
+    if (!token) throw new UnauthorizedException({ code: 'AUTHENTICATION_REQUIRED', message: 'Sign in first.' })
+    return token
+  }
+
+  @Post('email/bind/start')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Start email binding for the current signed-in account' })
+  startEmailBinding(@Headers('authorization') authorization: string | undefined, @Body() dto: EmailBindingStartDto) {
+    return this.identity.startEmailBinding(this.sessionToken(authorization), dto.userId)
+  }
+
+  @Post('email/bind/send')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Send a binding code without switching the signed-in account' })
+  sendEmailBinding(@Headers('authorization') authorization: string | undefined, @Body() dto: EmailBindingSendDto) {
+    return this.identity.sendEmailBinding(this.sessionToken(authorization), dto.continuationToken, dto.email, dto.userId)
+  }
+
+  @Post('email/bind/resend')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Resend the current signed-in account email binding code' })
+  resendEmailBinding(@Headers('authorization') authorization: string | undefined, @Body() dto: EmailBindingTokenDto) {
+    return this.identity.resendEmailBinding(this.sessionToken(authorization), dto.continuationToken, dto.userId)
+  }
+
+  @Post('email/bind/complete')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Complete email binding while preserving the current session' })
+  completeEmailBinding(@Headers('authorization') authorization: string | undefined, @Body() dto: EmailBindingCompleteDto) {
+    if (!dto.code) throw new BadRequestException({ code: 'AUTH_CODE_INVALID', message: 'Enter a six-digit code.' })
+    return this.identity.completeEmailBinding(this.sessionToken(authorization), dto.continuationToken, dto.code, dto.userId)
+  }
 
   @Post('login/password')
   @ApiOperation({ summary: 'Verify password and require account second-factor verification' })

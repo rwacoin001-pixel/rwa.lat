@@ -1,0 +1,73 @@
+.wrap {
+  --b-ink: var(--home-lacquer-ink, #1b1813);
+  --b-muted: var(--home-lacquer-muted, #7a6f62);
+  --b-accent: var(--home-lacquer-accent, #7a5c33);
+  --b-press: var(--home-lacquer-press, rgba(27, 24, 19, .05));
+  --b-cta: var(--home-cta, linear-gradient(180deg, #94713f, #7a5c33));
+  --b-cta-ink: var(--home-cta-ink, #fbf6ec);
+  position: relative;
+  min-width: 0;
+  margin-block: 4px 2px;
+  padding-block-end: 24px;
+  scroll-margin-block: 120px;
+  font-family: inherit;
+}
+.sr { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+.slot {
+  display: flex; align-items: center; gap: 8px; width: 100%; height: 44px; min-width: 0; margin: 0;
+  padding-block: 0; padding-inline-start: 12px; padding-inline-end: 4px;
+  border-radius: 12px; color: var(--b-muted); background: var(--b-press);
+  font-size: 12px; transition: box-shadow .25s ease;
+}
+.slot > svg { flex: none; }
+.form { padding-inline-start: 2px; }
+.slot:focus-within, .wrap[data-ring='true'] .slot { box-shadow: inset 0 0 0 1px var(--b-accent); }
+.slotText { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+div.slot[role='status'] .slotText { color: var(--b-ink); }
+.okDot { display: grid; flex: none; width: 18px; height: 18px; place-items: center; border-radius: 999px; color: var(--b-cta-ink); background: var(--b-cta); }
+
+.slotBtn {
+  position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 10px;
+  border: 0; color: var(--b-accent); background: none; font: inherit; font-size: 12.5px; font-weight: 500; white-space: nowrap; cursor: pointer;
+}
+.pill { min-width: 84px; height: 32px; padding: 0 12px; border-radius: 999px; color: var(--b-cta-ink); background: var(--b-cta); }
+.pill::after { content: ''; position: absolute; inset: -6px -2px; }
+.slotBtn[aria-disabled='true'] { opacity: .75; cursor: progress; }
+.slotIcon { display: grid; flex: none; width: 44px; height: 44px; place-items: center; padding: 0; border: 0; color: var(--b-muted); background: none; cursor: pointer; }
+.slotIcon:hover { color: var(--b-ink); }
+:global([dir='rtl']) .slotIcon svg { transform: scaleX(-1); }
+
+.slotInput {
+  flex: 1; min-width: 0; height: 32px; padding: 0; border: 0; border-radius: 0; color: var(--b-ink); background: transparent;
+  font: inherit; font-size: 16px; outline: none; appearance: none; -webkit-appearance: none;
+}
+.slotInput::placeholder { color: var(--b-muted); opacity: .85; }
+.code { font-variant-numeric: tabular-nums; letter-spacing: .24em; }
+.code::placeholder { letter-spacing: 0; }
+.slotInput[aria-invalid='true'] { text-decoration: underline wavy var(--b-accent) 1px; text-underline-offset: 4px; }
+
+.msg {
+  position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 24px;
+  padding-block: 3px 0; padding-inline-start: 14px; padding-inline-end: 4px; color: var(--b-muted); font-size: 11px; line-height: 1.4;
+}
+.msg[hidden] { display: none; }
+.err { color: var(--b-accent); font-weight: 500; }
+.msgText { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.msg em { flex: none; font-style: normal; font-variant-numeric: tabular-nums; }
+.linkBtn {
+  position: relative; flex: none; min-height: 28px; padding: 0 2px; border: 0; color: var(--b-accent); background: none;
+  font: inherit; font-size: 11px; font-weight: 500; text-decoration: underline; text-underline-offset: 3px; cursor: pointer;
+}
+.linkBtn::after { content: ''; position: absolute; inset: -4px -6px -12px; }
+
+.slotBtn:focus-visible, .slotIcon:focus-visible, .linkBtn:focus-visible { outline: 2px solid var(--b-accent); outline-offset: 2px; border-radius: 8px; }
+.pill:focus-visible { border-radius: 999px; }
+
+.spin { animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .slot { transition: none; }
+  .spin { animation: none; opacity: .6; }
+}

@@ -136,11 +136,13 @@ export async function beginWalletLogin(selectedProvider?: WalletProvider): Promi
   } catch (failure) { return walletOperationFailure(failure, 'WALLET_CONNECTION_FAILED') }
 }
 
-export async function completeWalletLogin(challenge: WalletLoginChallenge, consents: AuthConsent[] = []): Promise<ApiResult<AuthSession>> {
+export type WalletLoginStage = 'checking' | 'signing' | 'verifying'
+export async function completeWalletLogin(challenge: WalletLoginChallenge, consents: AuthConsent[] = [], onStage?: (stage: WalletLoginStage) => void): Promise<ApiResult<AuthSession>> {
   const provider = walletChallengeProviders.get(challenge)
   if (!provider) return { ok: false, error: { status: 0, code: 'WALLET_MISSING', message: '未检测到兼容的钱包' } }
   let failureCode = 'WALLET_CONNECTION_FAILED'
   try {
+    onStage?.('checking')
     const chainId = walletChainId(await provider.request({ method: 'eth_chainId' }))
     const accounts = await provider.request({ method: 'eth_accounts' })
     const address = Array.isArray(accounts) && typeof accounts[0] === 'string' ? accounts[0] : ''
@@ -149,9 +151,11 @@ export async function completeWalletLogin(challenge: WalletLoginChallenge, conse
     }
     const encoded = '0x' + Array.from(new TextEncoder().encode(challenge.nonce), byte => byte.toString(16).padStart(2, '0')).join('')
     failureCode = 'WALLET_SIGNATURE_FAILED'
+    onStage?.('signing')
     const signature = await provider.request({ method: 'personal_sign', params: [encoded, challenge.address] })
     if (typeof signature !== 'string') return { ok: false, error: { status: 0, code: 'WALLET_SIGNATURE_MISSING', message: '钱包未返回签名' } }
-    const verified = await request<AuthResponse>('/v1/auth/wallet/verify', { method: 'POST', body: JSON.stringify({ address: challenge.address, signature, nonce: challenge.nonce, device: authDevice(), ...(consents.length ? { consents } : {}) }) })
+    onStage?.('verifying')
+    const verified = await request<AuthResponse>('/v1/auth/wallet/verify', { method: 'POST', loading: 'silent', referralAttribution: challenge.registrationRequired ? 'include' : 'skip', body: JSON.stringify({ address: challenge.address, signature, nonce: challenge.nonce, device: authDevice(), ...(consents.length ? { consents } : {}) }) })
     if (!verified.ok) return verified
     const mapped = mapLogin(verified.data)
     failureCode = 'AUTH_SESSION_STORAGE_FAILED'

@@ -26,7 +26,7 @@ import { User } from './user.entity'
 import { IdentityOneTimeToken, type IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
 import { IdentityDeliveryService } from './identity-delivery.service'
 import { OAuthProviderService, type OAuthProviderName } from './oauth-provider.service'
-import { persistGoogleEmail, verifiedGoogleEmail } from './google-email'
+import { persistProviderEmail, verifiedGoogleEmail } from './google-email'
 import { AuthFlowService, type AuthProof, type AuthDevice } from './auth-flow.service'
 import { assertReauthentication } from '../security/reauthentication'
 import { ReferralBindingService } from '../referral/referral-binding.service'
@@ -103,6 +103,36 @@ export class IdentityService {
     return this.authFlows.bindEmail(continuationToken, email)
   }
 
+  private assertBindingUser(actualUserId: string, expectedUserId?: string) {
+    if (expectedUserId && actualUserId !== expectedUserId) throw new UnauthorizedException({ code: 'AUTH_ACCOUNT_CHANGED', message: 'Account changed. Return to the current account.' })
+  }
+
+  async startEmailBinding(rawToken: string, expectedUserId?: string) {
+    const session = await this.getSessionViewByToken(rawToken)
+    this.assertBindingUser(session.userId, expectedUserId)
+    if (session.emailVerified) return { userId: session.userId, emailVerified: true as const }
+    return { ...await this.authFlows.startEmailBinding(session.userId), userId: session.userId }
+  }
+
+  async sendEmailBinding(rawToken: string, continuationToken: string, email: string, expectedUserId?: string) {
+    const session = await this.getSessionViewByToken(rawToken)
+    this.assertBindingUser(session.userId, expectedUserId)
+    return this.authFlows.bindEmail(continuationToken, email, { userId: session.userId, purpose: 'email_bind' })
+  }
+
+  async resendEmailBinding(rawToken: string, continuationToken: string, expectedUserId?: string) {
+    const session = await this.getSessionViewByToken(rawToken)
+    this.assertBindingUser(session.userId, expectedUserId)
+    return this.authFlows.resend(continuationToken, { userId: session.userId, purpose: 'email_bind' })
+  }
+
+  async completeEmailBinding(rawToken: string, continuationToken: string, code: string, expectedUserId?: string) {
+    const session = await this.getSessionViewByToken(rawToken)
+    this.assertBindingUser(session.userId, expectedUserId)
+    return this.authFlows.complete({ continuationToken, code }, async () => ({ userId: session.userId, emailVerified: true as const }),
+      { userId: session.userId, purpose: 'email_bind' })
+  }
+
   async completeAuthFlow(input: Parameters<AuthFlowService['complete']>[0]) {
     return this.authFlows.complete(input, async (payload, manager) => {
       if (payload.oauth) {
@@ -125,7 +155,7 @@ export class IdentityService {
         const encrypted = this.crypto.encrypt(key)
         const identity = await identities.save({ id: randomUUID(), userId, kind: provider, state: 'verified', identifierHash: hash,
           identifierCiphertext: encrypted.ciphertext, encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date() })
-        await persistGoogleEmail(manager, this.crypto, identity, verifiedEmail)
+        await persistProviderEmail(manager, this.crypto, identity, verifiedEmail)
         await this.persistRegistrationConsents(manager, userId, consents, new Date(), randomUUID())
         return this.createSession(userId, payload.device, manager)
       }
@@ -340,7 +370,7 @@ export class IdentityService {
       const identity = await loginIdentities.findOne({ where: { kind: provider, identifierHash: hash } })
       if (identity) {
         if (identity.state !== 'verified' || identity.revokedAt) throw new UnauthorizedException({ code: 'IDENTITY_NOT_FOUND', message: 'This sign-in method is unavailable.' })
-        await persistGoogleEmail(manager, this.crypto, identity, meta.verifiedEmail)
+        await persistProviderEmail(manager, this.crypto, identity, meta.verifiedEmail)
         return identity.userId
       }
 
@@ -354,7 +384,7 @@ export class IdentityService {
           identifierHash: hash, identifierCiphertext: encrypted.ciphertext,
           encryptionKeyVersion: encrypted.keyVersion, verifiedAt: new Date(),
         }))
-        await persistGoogleEmail(manager, this.crypto, linked, meta.verifiedEmail)
+        await persistProviderEmail(manager, this.crypto, linked, meta.verifiedEmail)
         return emailAccount
       }
 
@@ -389,7 +419,7 @@ export class IdentityService {
         encryptionKeyVersion: keyVersion,
         verifiedAt: new Date(),
       }))
-      await persistGoogleEmail(manager, this.crypto, savedIdentity, meta.verifiedEmail)
+      await persistProviderEmail(manager, this.crypto, savedIdentity, meta.verifiedEmail)
       await this.persistRegistrationConsents(manager, userId, consents, meta.consentedAt, randomUUID())
       return userId
     })

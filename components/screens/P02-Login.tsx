@@ -16,7 +16,7 @@ import { authSheetCopy, authPosterTitle, authPosterIntro } from '@/lib/maison-au
 import { authEmailCopy, normalizeEmailCode } from '@/lib/auth-email-copy'
 import styles from './P02-Login.module.css'
 import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
-import type { ApiError } from '@/lib/api/_http'
+import { prefetchAuthAttribution, type ApiError } from '@/lib/api/_http'
 import { NEW_ACCOUNT_KEY, consumeAuthDestination, markNewAccount, markPasskeyOfferSeen, safeAuthReturnPath } from '@/lib/api/auth-navigation'
 import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
@@ -73,7 +73,18 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
-  useUiLoading(pending && !passkeyPending)
+  const [walletPhase, setWalletPhase] = useState<'connecting' | 'checking' | 'signing' | 'verifying' | null>(null)
+  useUiLoading(pending && !passkeyPending && !walletPhase)
+  const walletProgress = {
+    'zh-CN': ['连接钱包…', '检查账户…', '请在钱包确认签名', '验证签名并登录…'],
+    en: ['Connecting wallet…', 'Checking account…', 'Confirm the signature in your wallet', 'Verifying and signing in…'],
+    hi: ['वॉलेट से जुड़ रहा है…', 'खाता जाँचा जा रहा है…', 'वॉलेट में हस्ताक्षर की पुष्टि करें', 'सत्यापन और लॉगिन जारी…'],
+    pt: ['Conectando carteira…', 'Verificando conta…', 'Confirme a assinatura na carteira', 'Verificando e entrando…'],
+    es: ['Conectando cartera…', 'Comprobando cuenta…', 'Confirma la firma en tu cartera', 'Verificando e iniciando sesión…'],
+    fr: ['Connexion au portefeuille…', 'Vérification du compte…', 'Confirmez la signature dans votre portefeuille', 'Vérification et connexion…'],
+    ar: ['جارٍ توصيل المحفظة…', 'جارٍ التحقق من الحساب…', 'أكد التوقيع في محفظتك', 'جارٍ التحقق وتسجيل الدخول…'],
+  }[locale]
+  useEffect(() => { void prefetchAuthAttribution() }, [])
   const [retryAfter, setRetryAfter] = useState(0)
   const [agreed, setAgreed] = useState(false)
   const [requirements, setRequirements] = useState<AuthConsentRequirements | null>(null)
@@ -303,6 +314,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const useWallet = () => {
     if (walletChallenge && !consentReady) { setError(visual.consentRequired); return }
     void run(async () => {
+      setWalletPhase('connecting')
+      try {
       let started: Awaited<ReturnType<typeof beginWalletLogin>>
       try {
         started = walletChallenge ? { ok: true as const, data: walletChallenge } : await beginWalletLogin(await connectLoginWallet())
@@ -318,11 +331,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         return
       }
       markNewAccount(sessionStorage, Boolean(walletChallenge))
-      const result = await completeWalletLogin(started.data, walletChallenge ? consents : [])
-      // No verified email yet: the API withholds the session and hands back an email step.
+      const result = await completeWalletLogin(started.data, walletChallenge ? consents : [], setWalletPhase)
+      // Email binding happens in the signed-in account; preserve any required security steps.
       if (!result.ok) { if (continueAuth(result.error)) return; showAuthError(result.error); return }
       notify(copy.loginSuccess)
       finish(Boolean(walletChallenge))
+      } finally { setWalletPhase(null) }
     })
   }
 
@@ -462,6 +476,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         <button type="button" disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
       </div>
     </div>}
+    {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}
     </div>
   </AuthShell>
 }

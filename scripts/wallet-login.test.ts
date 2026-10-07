@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, mock, test } from 'node:test'
 import assert from 'node:assert/strict'
 import { beginWalletLogin, completeWalletLogin } from '../lib/api/auth'
+import * as http from '../lib/api/_http'
 
 // A mobile provider returned by the connector, without any browser extension.
 const address = '0x2222222222222222222222222222222222222222'
@@ -75,6 +76,43 @@ test('a mobile connector provider signs in without window.ethereum', async () =>
   assert.equal(requests[0].body.chainId, 1)
   assert.equal(requests[1].body.nonce, started.data.nonce)
   assert.equal(Buffer.from(String(calls.at(-1)?.params?.[0]).slice(2), 'hex').toString(), started.data.nonce)
+})
+
+test('wallet login reports checking, signing and server verification in order', async () => {
+  const started = await beginWalletLogin(provider)
+  if (!started.ok) throw Error('challenge missing')
+  const stages: string[] = []
+  await (completeWalletLogin as Function)(started.data, [], (stage: string) => stages.push(stage))
+  assert.deepEqual(stages, ['checking', 'signing', 'verifying'])
+})
+
+test('existing wallet login does not wait for an in-flight referral attribution fetch', async () => {
+  let release: (response: Response) => void = () => {}
+  const oldFetch = globalThis.fetch
+  mock.method(globalThis, 'fetch', async (input: unknown, init?: RequestInit) => String(input) === '/api/referral/attribution'
+    ? new Promise<Response>(resolve => { release = resolve }) : oldFetch(input as Request, init))
+  const preload = (http as unknown as { prefetchAuthAttribution: () => Promise<string | null> }).prefetchAuthAttribution()
+  const started = await beginWalletLogin(provider)
+  if (!started.ok) throw Error('challenge missing')
+  let timer: ReturnType<typeof setTimeout> | undefined
+  const result = await Promise.race([completeWalletLogin(started.data), new Promise<never>((_, reject) => { timer = setTimeout(() => reject(Error('wallet waited for referral')), 500) })])
+  clearTimeout(timer); release(new Response(JSON.stringify({ token: 'signed-attribution' }))); await preload
+  assert.equal(result.ok, true)
+})
+
+test('new wallet registration retains server-signed referral attribution', async () => {
+  registrationRequired = true
+  let header: string | null = null
+  const oldFetch = globalThis.fetch
+  mock.method(globalThis, 'fetch', async (input: unknown, init?: RequestInit) => {
+    if (String(input) === '/api/referral/attribution') return new Response(JSON.stringify({ token: 'signed-attribution' }))
+    if (String(input).endsWith('/wallet/verify')) header = new Headers(init?.headers).get('x-referral-attribution')
+    return oldFetch(input as Request, init)
+  })
+  const started = await beginWalletLogin(provider)
+  if (!started.ok) throw Error('challenge missing')
+  assert.equal((await completeWalletLogin(started.data)).ok, true)
+  assert.equal(header, 'signed-attribution')
 })
 
 test('WalletConnect numeric chain IDs sign in instead of immediately reporting cancellation', async () => {
