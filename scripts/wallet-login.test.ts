@@ -9,7 +9,8 @@ let writes: Map<string, string>
 let calls: Array<{ method: string; params?: unknown[] }>
 let requests: Array<{ path: string; body: Record<string, unknown> }>
 let activeAddress: string
-let chain: string
+let chain: unknown
+let accountError: unknown
 let signatureError: unknown
 let responseOrigin: string
 let responseExpiry: number
@@ -22,7 +23,10 @@ function message() {
 }
 const provider = { async request(args: { method: string; params?: unknown[] }) {
   calls.push(args)
-  if (args.method === 'eth_requestAccounts' || args.method === 'eth_accounts') return [activeAddress]
+  if (args.method === 'eth_requestAccounts' || args.method === 'eth_accounts') {
+    if (accountError) throw accountError
+    return [activeAddress]
+  }
   if (args.method === 'eth_chainId') return chain
   if (args.method === 'personal_sign') {
     if (signatureError) throw signatureError
@@ -33,7 +37,7 @@ const provider = { async request(args: { method: string; params?: unknown[] }) {
 
 beforeEach(() => {
   writes = new Map(); calls = []; requests = []
-  activeAddress = address; chain = '0x1'; signatureError = null
+  activeAddress = address; chain = '0x1'; signatureError = null; accountError = null
   responseOrigin = 'https://rwa.lat'; responseExpiry = 240000
   verificationStatus = 200; registrationRequired = false
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { dispatchEvent() {} } })
@@ -71,6 +75,82 @@ test('a mobile connector provider signs in without window.ethereum', async () =>
   assert.equal(requests[0].body.chainId, 1)
   assert.equal(requests[1].body.nonce, started.data.nonce)
   assert.equal(Buffer.from(String(calls.at(-1)?.params?.[0]).slice(2), 'hex').toString(), started.data.nonce)
+})
+
+test('WalletConnect numeric chain IDs sign in instead of immediately reporting cancellation', async () => {
+  // UniversalProvider 2.23.7 returns the chain as a number, unlike injected EIP-1193 providers.
+  chain = 1
+  const started = await beginWalletLogin(provider)
+  assert.equal(started.ok, true)
+  if (!started.ok) return
+  assert.equal(requests[0].body.chainId, 1)
+  assert.equal((await completeWalletLogin(started.data)).ok, true)
+  assert.equal(writes.get('rwa-session-token'), 'test-session')
+})
+
+test('numeric chain IDs remain valid when rechecking an existing login challenge', async () => {
+  const started = await beginWalletLogin(provider)
+  assert.equal(started.ok, true)
+  if (!started.ok) return
+  chain = 1
+  assert.equal((await completeWalletLogin(started.data)).ok, true)
+  assert.equal(writes.get('rwa-session-token'), 'test-session')
+})
+
+test('invalid chain IDs never request a challenge or sign a message', async () => {
+  for (const invalid of [0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '0x20000000000000', '', null]) {
+    chain = invalid
+    const started = await beginWalletLogin(provider)
+    assert.equal(started.ok, false)
+    if (!started.ok) assert.equal(started.error.code, 'WALLET_CHAIN_INVALID')
+  }
+  assert.equal(requests.length, 0)
+  assert.equal(calls.some(call => call.method === 'personal_sign'), false)
+})
+
+test('account RPC failures are distinguished from explicit user rejection', async () => {
+  accountError = { code: -32603, message: 'Internal error' }
+  const started = await beginWalletLogin(provider)
+  assert.equal(started.ok, false)
+  if (!started.ok) {
+    assert.equal(started.error.code, 'WALLET_CONNECTION_FAILED')
+    assert.equal(started.error.details?.providerCode, -32603)
+  }
+  assert.equal(requests.length, 0)
+})
+
+test('explicit account permission rejection remains cancellation', async () => {
+  for (const code of [4001, 5000]) {
+    accountError = { code }
+    const started = await beginWalletLogin(provider)
+    assert.equal(started.ok, false)
+    if (!started.ok) assert.equal(started.error.code, 'WALLET_CANCELLED')
+  }
+  assert.equal(requests.length, 0)
+})
+
+test('signature transport failures do not claim that the user cancelled', async () => {
+  const started = await beginWalletLogin(provider)
+  assert.equal(started.ok, true)
+  if (!started.ok) return
+  signatureError = { code: -32000, message: 'Transport failed' }
+  const result = await completeWalletLogin(started.data)
+  assert.equal(result.ok, false)
+  if (!result.ok) assert.equal(result.error.code, 'WALLET_SIGNATURE_FAILED')
+  assert.equal(requests.length, 1)
+  assert.equal(writes.has('rwa.session'), false)
+})
+
+test('a disconnected provider while rechecking accounts is a connection failure', async () => {
+  const started = await beginWalletLogin(provider)
+  assert.equal(started.ok, true)
+  if (!started.ok) return
+  accountError = { code: 4900 }
+  const result = await completeWalletLogin(started.data)
+  assert.equal(result.ok, false)
+  if (!result.ok) assert.equal(result.error.code, 'WALLET_CONNECTION_FAILED')
+  assert.equal(requests.length, 1)
+  assert.equal(calls.some(call => call.method === 'personal_sign'), false)
 })
 test('registration waits for consent and signs with the same selected provider', async () => {
   registrationRequired = true

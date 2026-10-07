@@ -84,6 +84,24 @@ export type WalletLoginChallenge = { address: string; nonce: string; registratio
 // Retain the selected mobile/extension provider through the registration consent step.
 const walletChallengeProviders = new WeakMap<WalletLoginChallenge, WalletProvider>()
 
+// AppKit's UniversalProvider returns a number; injected EIP-1193 wallets return hex.
+function walletChainId(value: unknown): number | undefined {
+  const chainId = typeof value === 'number' ? value
+    : typeof value === 'string' && /^0x[0-9a-f]+$/i.test(value) ? Number(value) : NaN
+  return Number.isSafeInteger(chainId) && chainId > 0 ? chainId : undefined
+}
+
+function walletOperationFailure(failure: unknown, fallbackCode: string) {
+  const rawCode = typeof failure === 'object' && failure !== null && 'code' in failure ? failure.code : undefined
+  const numericCode = typeof rawCode === 'number' ? rawCode
+    : typeof rawCode === 'string' && /^-?\d+$/.test(rawCode) ? Number(rawCode) : NaN
+  const providerCode = Number.isSafeInteger(numericCode) ? numericCode : undefined
+  // Only explicit EIP-1193 / WalletConnect user rejection is a cancellation.
+  const code = providerCode === 4001 || providerCode === 5000 ? 'WALLET_CANCELLED' : fallbackCode
+  return { ok: false as const, error: { status: 0, code, message: 'Wallet sign-in failed',
+    ...(providerCode !== undefined ? { details: { providerCode } } : {}) } }
+}
+
 function validWalletMessage(challenge: WalletLoginChallenge, address: string, chainId: number): boolean {
   const lines = challenge.nonce.split('\n')
   const field = (name: string) => lines.find(line => line.startsWith(name + ': '))?.slice(name.length + 2)
@@ -104,9 +122,8 @@ export async function beginWalletLogin(selectedProvider?: WalletProvider): Promi
     const accounts = await provider.request({ method: 'eth_requestAccounts' })
     const address = Array.isArray(accounts) && typeof accounts[0] === 'string' ? accounts[0] : null
     if (!address) return { ok: false, error: { status: 0, code: 'WALLET_MISSING', message: '请先连接钱包' } }
-    const chain = await provider.request({ method: 'eth_chainId' })
-    const chainId = typeof chain === 'string' && /^0x[0-9a-f]+$/i.test(chain) ? Number(BigInt(chain)) : NaN
-    if (!Number.isSafeInteger(chainId) || chainId <= 0) throw new Error('Invalid wallet chain')
+    const chainId = walletChainId(await provider.request({ method: 'eth_chainId' }))
+    if (chainId === undefined) return { ok: false, error: { status: 0, code: 'WALLET_CHAIN_INVALID', message: '钱包未返回有效网络，请重新连接' } }
     const result = await request<WalletLoginChallenge>('/v1/auth/wallet/challenge', { method: 'POST', body: JSON.stringify({ address, chainId }) })
     if (!result.ok) return result
     const challenge = result.data
@@ -116,28 +133,31 @@ export async function beginWalletLogin(selectedProvider?: WalletProvider): Promi
     if (!validWalletMessage(challenge, address, chainId)) return { ok: false, error: { status: 0, code: 'WALLET_NONCE_MISMATCH', message: '钱包登录请求无效或已过期，请重新连接' } }
     walletChallengeProviders.set(challenge, provider)
     return result
-  } catch { return { ok: false, error: { status: 0, code: 'WALLET_CANCELLED', message: '钱包连接未完成' } } }
+  } catch (failure) { return walletOperationFailure(failure, 'WALLET_CONNECTION_FAILED') }
 }
 
 export async function completeWalletLogin(challenge: WalletLoginChallenge, consents: AuthConsent[] = []): Promise<ApiResult<AuthSession>> {
   const provider = walletChallengeProviders.get(challenge)
   if (!provider) return { ok: false, error: { status: 0, code: 'WALLET_MISSING', message: '未检测到兼容的钱包' } }
+  let failureCode = 'WALLET_CONNECTION_FAILED'
   try {
-    const chain = await provider.request({ method: 'eth_chainId' })
+    const chainId = walletChainId(await provider.request({ method: 'eth_chainId' }))
     const accounts = await provider.request({ method: 'eth_accounts' })
     const address = Array.isArray(accounts) && typeof accounts[0] === 'string' ? accounts[0] : ''
-    if (typeof chain !== 'string' || !/^0x[0-9a-f]+$/i.test(chain) || !validWalletMessage(challenge, address, Number(BigInt(chain)))) {
+    if (chainId === undefined || !validWalletMessage(challenge, address, chainId)) {
       return { ok: false, error: { status: 0, code: 'WALLET_NONCE_MISMATCH', message: '钱包账户、网络或登录请求已变化，请重新连接' } }
     }
     const encoded = '0x' + Array.from(new TextEncoder().encode(challenge.nonce), byte => byte.toString(16).padStart(2, '0')).join('')
+    failureCode = 'WALLET_SIGNATURE_FAILED'
     const signature = await provider.request({ method: 'personal_sign', params: [encoded, challenge.address] })
     if (typeof signature !== 'string') return { ok: false, error: { status: 0, code: 'WALLET_SIGNATURE_MISSING', message: '钱包未返回签名' } }
     const verified = await request<AuthResponse>('/v1/auth/wallet/verify', { method: 'POST', body: JSON.stringify({ address: challenge.address, signature, nonce: challenge.nonce, device: authDevice(), ...(consents.length ? { consents } : {}) }) })
     if (!verified.ok) return verified
     const mapped = mapLogin(verified.data)
+    failureCode = 'AUTH_SESSION_STORAGE_FAILED'
     if (mapped.ok) saveSession(mapped.data.token, { sessionId: mapped.data.sessionId, userId: mapped.data.userId })
     return mapped
-  } catch { return { ok: false, error: { status: 0, code: 'WALLET_CANCELLED', message: '钱包连接或签名未完成' } } }
+  } catch (failure) { return walletOperationFailure(failure, failureCode) }
 }
 
 const decodeBase64Url = (value: string): ArrayBuffer => {

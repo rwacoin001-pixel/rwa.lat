@@ -23,18 +23,29 @@ const providerUnavailable: Record<AppLocale, string> = {
 }
 const walletReturn: Record<AppLocale, string> = {
   en: 'No wallet connection was received. Finish approval in your wallet, return here, and try again.',
-  'zh-CN': '尚未收到钱包连接。请在欧易完成授权后返回；若已授权，请重新点钱包图标连接。',
+  'zh-CN': '尚未收到钱包连接。请在钱包完成授权后返回，再点钱包图标连接。',
   hi: 'वॉलेट कनेक्शन नहीं मिला। वॉलेट में अनुमति पूरी करें, यहाँ लौटें और फिर प्रयास करें।',
   es: 'No se recibió la conexión de la cartera. Completa la aprobación, vuelve aquí e inténtalo de nuevo.',
   ar: 'لم يصل اتصال المحفظة. أكمل الموافقة في المحفظة، ثم عُد إلى هنا وحاول مجددًا.',
   fr: 'Aucune connexion au portefeuille reçue. Terminez l’approbation, revenez ici et réessayez.',
   pt: 'A conexão da carteira não chegou. Conclua a aprovação, volte aqui e tente novamente.',
 }
+const walletFailure: Record<AppLocale, { connection: string; signature: string }> = {
+  en: { connection: 'The wallet connection is unavailable. Reconnect and try again.', signature: 'No sign-in signature was received. Check your wallet connection and try again.' },
+  'zh-CN': { connection: '钱包连接暂不可用，请重新连接后重试。', signature: '未收到登录签名，请检查钱包连接后重试。' },
+  hi: { connection: 'वॉलेट कनेक्शन उपलब्ध नहीं है। फिर जोड़कर प्रयास करें।', signature: 'साइन-इन हस्ताक्षर नहीं मिला। वॉलेट कनेक्शन जाँचकर फिर प्रयास करें।' },
+  es: { connection: 'La conexión de la cartera no está disponible. Vuelve a conectarla e inténtalo de nuevo.', signature: 'No se recibió la firma de acceso. Revisa la conexión de la cartera e inténtalo de nuevo.' },
+  ar: { connection: 'اتصال المحفظة غير متاح. أعد الاتصال وحاول مجددًا.', signature: 'لم يصل توقيع تسجيل الدخول. تحقق من اتصال المحفظة وحاول مجددًا.' },
+  fr: { connection: 'La connexion au portefeuille est indisponible. Reconnectez-le et réessayez.', signature: 'Aucune signature de connexion reçue. Vérifiez la connexion au portefeuille et réessayez.' },
+  pt: { connection: 'A conexão da carteira está indisponível. Reconecte e tente novamente.', signature: 'Nenhuma assinatura de acesso recebida. Verifique a conexão da carteira e tente novamente.' },
+}
 export function authErrorMessage(error: Pick<ApiError, 'code' | 'status'>, locale: AppLocale): string {
   const text = copy[locale]
   if (isConsentError(error)) return text.consent
   if (error.status === 429) return text.limited
   if (error.code === 'WALLET_CONNECTION_NOT_FOUND') return walletReturn[locale]
+  if (['WALLET_CONNECTION_FAILED', 'WALLET_CHAIN_INVALID'].includes(error.code)) return walletFailure[locale].connection
+  if (error.code === 'WALLET_SIGNATURE_FAILED') return walletFailure[locale].signature
   if (error.code === 'WALLET_CANCELLED' || error.code === '4001') return text.cancelled
   if (/^WALLET_NONCE_/.test(error.code)) return text.restart
   if (/^OAUTH_PROVIDER_(?:NOT_CONFIGURED|UNAVAILABLE|ACCESS_DENIED|BILLING_REQUIRED)$/.test(error.code)) return providerUnavailable[locale]
