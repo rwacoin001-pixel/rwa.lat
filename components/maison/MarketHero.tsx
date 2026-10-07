@@ -1,6 +1,7 @@
 'use client'
 
 import { ChevronRight } from 'lucide-react'
+import { AnimatePresence, motion } from 'motion/react'
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type RefObject } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -17,7 +18,10 @@ import { openPredictionItems } from '@/lib/prediction-lifecycle'
 import { openPath } from '@/lib/maison-nav'
 import { Figure } from './motion'
 import { MiniTrend, type TrendPoint } from './MiniTrend'
+import { AssetAlmanac, BasketPoster, TradeGauge, useBasketNote } from './MarketHeroBodies'
 import h from './hero-card.module.css'
+
+export type HeroTab = 'predictions' | 'baskets' | 'trade' | 'assets'
 
 const PERIODS = ['1d', '1w', '1m'] as const
 const SPAN_LABEL = { '1d': '24h', '1w': '7d', '1m': '30d' } as const
@@ -150,10 +154,38 @@ function Countdown({ endAt }: { endAt: string | null }) {
   </span>
 }
 
-/** First screen of Markets (A′): the day's top prediction event as one lacquer card — one figure, one gold action.
+/** First screen of Markets: one fixed-size frame (--mk-hero-h) whose body follows the active tab — same frame, four
+ *  pictures. The frame owns the scroll drawer and never animates itself, so switching tabs cannot move the tab bar;
+ *  only the body cross-fades. Each body mounts only while its tab is active, so only that tab's data is fetched. */
+export function MarketHero({ tab = 'predictions' }: { tab?: HeroTab }) {
+  const { locale } = useI18n()
+  const copy = marketCopy[locale]
+  const text = heroCardCopy[locale]
+  const basketNote = useBasketNote()
+  const stowRef = useRef<HTMLElement>(null)
+  useHeroStow(stowRef)
+  const note = tab === 'baskets' ? basketNote : tab === 'trade' ? text.tradeNote : tab === 'assets' ? text.assetsNote : text.noteShort
+
+  return <>
+  <section ref={stowRef} className={`${h.hero} ${h.frame}`} data-kind={tab} aria-label={copy.markets.title}>
+    <h1 className={h.srOnly}>{copy.markets.title}</h1>
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div key={tab} className={h.body} initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: .22, ease: 'easeOut' } }} exit={{ opacity: 0, transition: { duration: .14, ease: 'easeIn' } }}>
+        {tab === 'baskets' ? <BasketPoster /> : tab === 'trade' ? <TradeGauge /> : tab === 'assets' ? <AssetAlmanac /> : <PredictionHero />}
+      </motion.div>
+    </AnimatePresence>
+    {/* After the body, so the dark-theme edge light also rides over the poster's full-bleed image. */}
+    <span className={h.halo} aria-hidden="true" />
+  </section>
+  {/* Risk line sits just under the card, not in it, and is always present so nothing below shifts while data loads. */}
+  <p key={tab} className={`${h.note} ${h.reveal}`} style={{ '--i': 6 } as CSSProperties}>{note}</p>
+  </>
+}
+
+/** Predictions body (A′): the day's top prediction event — one figure, one gold action.
  *  Binary events: gold goes to the side the figure describes; the other side is a same-height outline pill, so gold
  *  never doubles up and never silently follows the favourite. */
-export function MarketHero() {
+function PredictionHero() {
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const labels = polymarketFeedCopy[locale]
@@ -187,15 +219,9 @@ export function MarketHero() {
   // pill, so named or multi-option events get one gold "买入" (the cap line names the side) plus the all-options pill.
   const yesNo = (label: string) => /^(yes|no)$/i.test(label.trim())
   const split = binary && other && primary && yesNo(primary.label) && yesNo(other.label)
-  const stowRef = useRef<HTMLElement>(null)
-  useHeroStow(stowRef)
 
   // Tiers are what the scroll drawer fades (top first); `.reveal` children carry the one entrance.
-  return <>
-  <section ref={stowRef} className={h.hero} aria-label={copy.markets.title}>
-    <span className={h.halo} aria-hidden="true" />
-    <div className={h.inner}>
-      <h1 className={h.srOnly}>{copy.markets.title}</h1>
+  return <div className={h.inner}>
       {!item && !feed.error && !feed.data ? <div className={h.skeleton} aria-busy="true"><i /><i /><i /></div>
         : !item ? <div className={h.state} role={feed.error ? 'alert' : 'status'}>
           <span>{feed.error ? copy.markets.loadError : copy.common.empty}</span>
@@ -257,8 +283,4 @@ export function MarketHero() {
           </div>
         </>}
     </div>
-  </section>
-  {/* Risk line sits just under the card, not in it: the card stays one figure and one action. */}
-  {item && <p className={`${h.note} ${h.reveal}`} style={at(6)}>{text.noteShort}</p>}
-  </>
 }

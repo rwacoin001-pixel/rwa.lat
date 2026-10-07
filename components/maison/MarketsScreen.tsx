@@ -82,7 +82,7 @@ export function MarketsScreen({ query }: { query: string }) {
   const counts = useMemo(() => Object.fromEntries(CLASSES.map((key) => [key, listed.filter((product) => product.assetClassId !== 'prediction' && (key === 'all' || product.assetClassId === key)).length])), [listed])
 
   return <MaisonPage page="markets" dock>
-    <MarketHero />
+    <MarketHero tab={tab} />
 
     <TickerTape items={tape} label={pro.tape} />
 

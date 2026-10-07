@@ -123,6 +123,89 @@
   .seg button[aria-pressed='false']:hover { color: var(--m-lacquer-ink); }
 }
 
+/* ── Frame: one size for all four Markets tabs ───────────
+   --mk-hero-h is the A′ predictions card measured at 375px wide; every body is cropped to it, never grows it, so the
+   tab bar below cannot move. Predictions pins its action tier to the bottom so a one-line question leaves the gap
+   above the buttons, not under them. `clip` (not `hidden`) keeps the frame from becoming a scroll container. */
+.frame { --mk-hero-h: 420px; height: var(--mk-hero-h); overflow: hidden; overflow: clip; }
+.body { position: relative; height: 100%; }
+.frame .inner { height: 100%; grid-template-rows: auto auto 1fr; align-content: start; }
+.frame .inner > .tier[data-tier='3'] { align-self: end; }
+
+/* ── Baskets: the poster ──────────────────────────────────
+   Full-bleed art, scrims only where text sits (functional, not decorative), billing block bottom-up. Text is a fixed
+   warm white because it sits on a photograph in both themes; before the art loads the lacquer surface shows instead. */
+.poster { --p-ink: #f7f1e6; position: relative; height: 100%; color: var(--p-ink); }
+.posterArt { position: absolute; inset: 0; opacity: 0; transform: scale(1.06); transition: opacity 700ms var(--ease-out), transform 700ms var(--ease-out); }
+.poster[data-loaded] .posterArt { opacity: 1; transform: none; }
+.posterScrim { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(180deg, rgba(10, 9, 8, .42) 0%, rgba(10, 9, 8, 0) 20%, rgba(10, 9, 8, 0) 32%, rgba(10, 9, 8, .58) 52%, rgba(10, 9, 8, .9) 100%); }
+.posterBody { position: relative; display: flex; flex-direction: column; justify-content: space-between; height: 100%; padding: 16px; }
+.posterTop { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; }
+.posterNo { min-width: 0; overflow: hidden; color: color-mix(in srgb, var(--p-ink) 86%, transparent); font-family: var(--m-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .14em; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.posterMark { display: block; max-width: 100%; margin: 0; padding: 0; overflow: hidden; border: 0; background: none; color: inherit; font: inherit; font-size: clamp(48px, 15vw, 62px); font-weight: 600; letter-spacing: .02em; line-height: 1.04; text-align: start; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.posterSub, .posterLine { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.posterSub { margin: 6px 0 0; color: color-mix(in srgb, var(--p-ink) 90%, transparent); font-size: 13px; font-weight: 300; letter-spacing: .08em; line-height: 18px; }
+.posterLine { margin: 8px 0 0; color: color-mix(in srgb, var(--p-ink) 80%, transparent); font-size: 12.5px; line-height: 18px; }
+.posterCredits { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); column-gap: 12px; margin: 14px 0 0; }
+.posterCredits > div { min-width: 0; padding-top: 8px; border-top: 1px solid color-mix(in srgb, var(--p-ink) 22%, transparent); }
+.posterCredits dt { margin-bottom: 2px; overflow: hidden; color: color-mix(in srgb, var(--p-ink) 64%, transparent); font-size: 9.5px; font-weight: 600; letter-spacing: .06em; line-height: 13px; text-overflow: ellipsis; white-space: nowrap; }
+.posterCredits dd { margin: 0; overflow: hidden; font-size: 12px; font-weight: 600; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
+.posterTicks { display: inline-flex; gap: 2px; margin-inline-end: 5px; vertical-align: -1px; }
+.posterTicks i { width: 3px; height: 9px; border-radius: 1px; background: color-mix(in srgb, var(--p-ink) 28%, transparent); }
+.posterTicks i[data-on] { background: var(--m-cta); }
+.posterActions { display: flex; justify-content: flex-end; margin-top: 12px; }
+.posterCta { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding-block: 0; padding-inline: 18px 14px; border: 0; border-radius: 999px; background: var(--m-cta); color: var(--m-cta-ink); box-shadow: inset 0 1px var(--m-cta-rim, rgba(255, 255, 255, .55)); font: inherit; font-size: 14px; font-weight: 600; line-height: 1; white-space: nowrap; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform var(--dur-micro) var(--ease-out); }
+.posterCta:active { transform: scale(.985); }
+[dir='rtl'] .posterCta svg { transform: scaleX(-1); }
+.posterCta:focus-visible, .posterMark:focus-visible { outline: 2px solid var(--m-cta); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .posterArt { transform: none; transition: opacity 150ms linear; }
+  .posterCta { transition: none; }
+}
+
+/* ── Trade + Assets: shared bits ─────────────────────────
+   A price or a dollar total runs longer than "62%", so the figure steps down one size and may shrink instead of
+   pushing the delta out of the card. */
+.bigPrice { min-width: 0; overflow: hidden; font-size: clamp(34px, 10.5vw, 44px); white-space: nowrap; }
+.live { display: inline-flex; flex: none; align-items: center; gap: 6px; color: var(--m-lacquer-muted); font-size: 11px; font-weight: 600; line-height: 16px; white-space: nowrap; }
+.live::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .6; }
+.live[data-on]::before { background: var(--m-lacquer-accent); opacity: 1; }
+.solid { background: var(--m-cta); color: var(--m-cta-ink); box-shadow: inset 0 1px var(--m-cta-rim, rgba(255, 255, 255, .55)); }
+.more.solid svg { color: inherit; }
+.facts dd[data-tone='down'] { color: var(--h-down); }
+
+/* Trade: 24 hourly candles (up = accent, down = --h-down), then the book's buy/sell weight as one split bar. */
+.candles { display: block; width: 100%; height: 72px; overflow: visible; direction: ltr; }
+.candles g { color: var(--m-lacquer-accent); animation: trendFade 360ms var(--ease-out) backwards; animation-delay: calc(240ms + var(--i, 0) * 16ms); }
+.candles g[data-tone='down'] { color: var(--h-down); }
+.candles line { stroke: currentColor; stroke-width: 1; }
+.candles rect { fill: currentColor; }
+.power { margin-top: 2px; }
+.powerBar { display: flex; gap: 2px; height: 6px; overflow: hidden; border-radius: 999px; }
+.powerBar i { flex-basis: 0; min-width: 2px; background: var(--m-lacquer-accent); transition: flex-grow 420ms var(--ease-out); }
+.powerBar i + i { background: var(--h-down); opacity: .75; }
+.powerBar[data-empty] i { background: var(--m-lacquer-line); opacity: 1; }
+.powerLegend { display: flex; justify-content: space-between; gap: 8px; margin-top: 5px; color: var(--m-lacquer-muted); font-size: 10.5px; font-weight: 600; line-height: 14px; white-space: nowrap; }
+.powerLegend > span:nth-child(2) { min-width: 0; overflow: hidden; font-weight: 400; text-overflow: ellipsis; }
+.powerLegend [data-side='bid'] { color: var(--m-lacquer-accent); }
+.powerLegend [data-side='ask'] { color: var(--h-down); }
+
+/* Assets: one proportion bar, ranks fading by step, and a two-column legend read down each column (1–4, 5–8). */
+.shareBar { display: flex; gap: 2px; height: 10px; overflow: hidden; border-radius: 4px; }
+.shareBar i, .legend i { background: var(--m-lacquer-accent); opacity: calc(1 - var(--k, 0) * .1); }
+.shareBar i { flex-basis: 0; min-width: 2px; }
+.legend { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-template-rows: repeat(4, auto); grid-auto-flow: column; column-gap: 16px; margin: 4px 0 0; padding: 0; list-style: none; }
+.legend button { display: flex; align-items: center; gap: 8px; width: 100%; min-width: 0; height: 24px; padding: 0; border: 0; background: none; color: inherit; font: inherit; font-size: 12px; line-height: 16px; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.legend i { flex: none; width: 8px; height: 8px; border-radius: 2px; }
+.legend span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legend b { flex: none; color: var(--m-lacquer-muted); font-size: 11.5px; font-weight: 600; }
+.legend button:focus-visible { outline: 2px solid var(--m-lacquer-accent); outline-offset: 1px; }
+@media (hover: hover) { .legend button:hover span { color: var(--m-lacquer-accent); } }
+@media (prefers-reduced-motion: reduce) {
+  .candles g { animation: none; }
+  .powerBar i { transition: none; }
+}
+
 /* ── Drawer: the card folds away as the page scrolls ──────
    Bound to the card's own exit from the scrollport, so it tracks the finger 1:1 (linear mapping is the point of a
    scrubbed timeline) and has two hard stops: untouched at rest, fully stowed once the last tier has gone. The surface

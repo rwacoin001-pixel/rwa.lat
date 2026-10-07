@@ -26,7 +26,7 @@ const SECTION_IDS = ['strategy', 'allocation', 'sources', 'risks', 'exit', 'docu
 const detailPath = (product: HengxuProduct) => `/strategy/${product.id}`
 
 /** A concept only becomes subscribable when the real catalog lists a product with the matching externalRef. */
-function useListings() {
+export function useListings() {
   const products = useQuery('markets:catalog', listProducts, { staleTime: 60_000 })
   return useMemo(() => {
     const map = new Map<string, CatalogProduct>()
@@ -47,7 +47,7 @@ function go(event: MouseEvent<HTMLAnchorElement>, path: string) {
 /** Body copy only exists in zh/en; other locales read English, so mark it and let each block pick its own direction. */
 const bodyProps = (locale: AppLocale) => locale === 'zh-CN' || locale === 'en' ? {} : { lang: 'en', dir: 'auto' as const }
 
-function riskLabel(copy: HengxuCopy, risk: HengxuRisk) {
+export function riskLabel(copy: HengxuCopy, risk: HengxuRisk) {
   return risk === 'pending' ? copy.riskPending : risk === 'unrated' ? copy.riskUnrated : copy.risk[risk - 1]
 }
 
@@ -63,7 +63,7 @@ function RiskMeter({ risk, copy }: { risk: HengxuRisk; copy: HengxuCopy }) {
 /** Research and special-research strategies are never launch candidates; say so wherever they appear. */
 const inResearch = (product: HengxuProduct) => product.stage === 'research' || product.stage === 'special'
 
-const minText = (product: HengxuProduct, copy: HengxuCopy) => product.terms?.minInvestment === undefined ? copy.minValue : `${product.terms.minInvestment} USDT`
+export const minText = (product: HengxuProduct, copy: HengxuCopy) => product.terms?.minInvestment === undefined ? copy.minValue : `${product.terms.minInvestment} USDT`
 
 function StageBadge({ product, listing, copy }: { product: HengxuProduct; listing?: CatalogProduct; copy: HengxuCopy }) {
   if (listing) return <span className={s.badge} data-tone="live">{copy.listed}</span>
@@ -72,7 +72,7 @@ function StageBadge({ product, listing, copy }: { product: HengxuProduct; listin
 }
 
 /** Chinese strategy name leads in every locale; other locales add the romanised name to the subtitle. */
-function names(product: HengxuProduct, locale: AppLocale) {
+export function names(product: HengxuProduct, locale: AppLocale) {
   const text = hengxuText(product, locale)
   return { mark: product.zh.name, sub: locale === 'zh-CN' ? text.subtitle : `${product.en.name} · ${text.subtitle}` }
 }
