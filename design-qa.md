@@ -1,63 +1,67 @@
-# Homepage asset card design QA — 2026-10-05
+# Auth poster layout QA — 2026-10-07
 
-## Scope and evidence
+Scope: selected login/register layout and mobile wallet connectivity. Existing background image/video assets and email, OAuth, passkey and registration flows are retained. The user subsequently authorized completing wallet login and deploying this batch.
 
-- Baseline: `8e5733015d57ee9dab373893428e6ec3ccfe0ed6`.
-- Source visual truth: `C:/Users/30396/.codex/generated_images/01a0df16-ba46-7431-9584-cc87a5d37b62/exec-7cfada50-5a36-4d30-a86e-997fe00e9e73.png` — the first displayed concept selected by the user.
-- Implementation: `http://localhost:3036/dev/home-card`, using the production `HomePortfolioCard`, existing hero CSS/assets and `BottomDock`.
-- Implementation capture: `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/screenshots/03-home-final-light-390x844.jpg`.
-- Full comparison: `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/screenshots/03-home-concept-implementation.png`.
-- Focused card comparison: `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/screenshots/03-home-card-focused-comparison.png`.
-- Previous project-root QA report preserved at `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/03-previous-design-qa.md`.
+Source visual truth: `C:/Users/30396/AppData/Local/Temp/codex-clipboard-aa7dba7b-d49b-4502-aed0-bc7aaf4febb3.png` (1463 × 1075, two theme panels).
 
-## Comparison conditions
+Implementation: `http://localhost:3037/login` and `/register`, production Next build, in-app browser.
 
-- Source: 852 × 1847 pixels. Render: 375 × 812 pixels from a 390 × 844 CSS-pixel browser viewport. Both are normalized to 390 × 844 in the comparison board; the implementation retains the browser scrollbar. This is browser emulation, not a physical device.
-- State: warm/light theme, Simplified Chinese, top of the page, invested sample account, visible balance 12,680.00 USDT, available 2,680.00, three holdings. No authentication token or session is fabricated.
-- The development controls and sample-data label belong only to the preview. The topbar truthfully displays Login because the local browser is unauthenticated; the reference's avatar is not reproduced with fake authentication.
-- User constraints take precedence over full-page pixel cloning: preserve the current hero art and brand font; align the compact card 16px above the expanded dock; keep normal document scrolling; use the first concept's three direct cash actions.
+Evidence directory: `C:/Users/30396/Desktop/rwa/artifacts/auth-layout-advice-20261007/`.
+
+Previous homepage QA report preserved byte-for-byte from HEAD in that directory as `previous-design-qa.md`; its source history and homepage implementation are unchanged.
+
+- `implemented-dark-390.png`, `implemented-light-390.png`: 390 × 844 CSS / screenshot pixels.
+- `implemented-dark-360.png`, `implemented-dark-360-error.png`: 360 × 640.
+- `implemented-english-360.png`: English register entry, 360 × 640.
+- `implemented-arabic-375.png`: RTL register entry, 375 × 812.
+- `implemented-light-430.png`: light register entry, 430 × 932.
+
+The source is a paired design board, not a specified CSS viewport. Review compares the two panels' hierarchy and relative alignment against actual mobile screenshots, retaining a responsive taller viewport and bottom-aligned controls. No device bezel or synthetic home indicator was added. Source and both implementation screenshots were opened together in one comparison input. The 390px captures resolve the mark, title, field and icon row clearly; separate close-up crops were not needed.
+
+## Findings and comparison history
+
+- Initial light capture: second headline and subtitle had weak contrast over the existing stone film. Changed headline accent to #795225 and subtitle to #514338 with restrained light text shadow. Recaptured light mode and compared again.
+- A transient screenshot taken during concurrent local dev/build had missing CSS. Stopped the dev process, completed the production build and started a production preview. Replaced that screenshot with production-rendered evidence; it is not a product acceptance result.
+- Final comparison: no actionable P0/P1/P2 layout findings in the verified states. Existing moving backgrounds have deliberately different framing from the generated reference, per the user's explicit instruction. Footer and controls fit short and long viewports; no horizontal overflow observed.
 
 ## Required fidelity surfaces
 
-- **Typography:** existing Instrument Serif/Geist and locale fallbacks retained. Chinese hero scale, wrapping and weight remain unchanged on regular-height phones. Short phones reduce vertical spacing and longer headline sizing to preserve the full card. The gold balance uses exact atomic formatting, a moderate weight and a 28–36px scale; small labels, counts, tabular figures, ellipsis for exceptionally large values and the full unmasked amount title were inspected.
-- **Spacing/layout:** approximately 198/199/202px card heights at 375/390/430 widths; 20px corners, restrained elevation and three equal action columns. All three action targets are at least 52px high. Card-title and privacy controls are at least 44px high. Available funds and holdings share one line. The 16px card/dock gap is verified at 375×667, 390×844 and 430×932, and all seven locales on the shortest viewport.
-- **Colors/tokens:** warm charcoal/champagne and cool navy/gold follow the existing theme tokens; muted currency/labels, gold balance/icons, logical separators and focus styles are retained. No alternate brand palette was introduced.
-- **Assets/icons:** existing coastal day/night raster images, real RWA topbar assets and animated dock sphere are preserved. Cash/privacy controls use the existing Lucide family. No placeholder avatar, recreated logo, CSS picture or additional asset dependency was introduced.
-- **Copy/content:** localized deposit/withdraw/transfer names and original account guidance remain. Missing total, available funds or holdings display an em dash, never a invented zero. Critical restricted/degraded/locked guidance remains visible. Sample numbers are labeled and confined to a development route.
+- Typography: existing brand serif / sans stacks retained; two-line title left-aligned (RTL start-aligned), concise localized subtitle. All seven locales render; English and Arabic inspected in screenshots.
+- Layout: logo-only header, 24px mobile gutters, upper title separated from lower email/provider controls, 50px circular touch targets. Short-screen rules preserve visibility.
+- Colors: official W's mint #2FE6BF preserved; dark navy/champagne and warm/ink treatment follow existing auth themes. Monochrome provider icons invert only in dark mode.
+- Assets: existing official W geometry, Google raster, GitHub/wallet SVG assets and Lucide fingerprint reused. No background asset changes. Wallet SDK dependencies are listed below.
+- Copy: reference Chinese title/subtitle, seven localized variants, icon-only visible alternatives with accessible names; legal links retained.
 
-## Comparison history and fixes
+## Verification
 
-1. **P2 — Short-phone card could meet or overlap the dock.** The initial layout combined an inaccurate topbar subtraction with intrinsic translated headline height. Shared dock/topbar tokens and the first-screen grid fixed the origin and gap. A later 375×667 pass still found Hindi overflow and insufficient spacing for Spanish/French/Portuguese. A short-height-only spacing/headline rule corrected these cases. Revised evidence: `03-home-final-hi-375x667.jpg`, `03-home-final-light-375x667.jpg`, and the seven-locale geometry in `03-home-final-checks.json`; each now measures a 16px gap.
-2. **P2 — An expanded holdings click target could overlap a locked-order CTA.** Independent code review caught the overlap. Holdings are now plain text; the full-size asset-title button provides portfolio access. Locked account guidance keeps its separate View orders button. Button rectangles are saved in `03-home-final-checks.json`.
-3. **P2 — The asset-title accessible name differed from its visible text.** Removed the overriding aria label. Its accessible name now comes from the localized visible title.
-4. **P3 — Mock and rendered optical weight/layout differ slightly.** The implementation uses the actual app font, a lighter balance weight, right-aligned holdings and the original hero crop. These are accepted adaptations for the user's requested compact card and preserved hero, not unresolved functional mismatches.
-
-## Interactions and verification
-
-- Actual `/home` guest page uses the new component, keeps its Create account CTA, measures the same 16px gap and contains no homepage quick-action plus.
-- Deposit, withdrawal, transfer and asset-title clicks navigate to the existing routes. In the unauthenticated local browser they lead to the existing Login screen. No financial submission or authenticated account acceptance was performed.
-- Privacy hides both total and available balance and removes the full-amount title. Restoring visibility works.
-- Scrolling approximately 398px moves the card upward by the same amount; the card is relative in normal flow, not fixed over subsequent content.
-- Seven locales including Arabic RTL: no horizontal overflow on 375×667. Ten account fixtures: guest, email verification, KYC, unfunded, funded, restricted, missing data, locked funds, very large balance and invested account preserve their meaningful state/CTA.
-- Warm and cool themes captured. Final viewport geometry and button checks saved in `C:/Users/30396/Desktop/rwa/artifacts/frontend-page-review-20261005/03-home-final-checks.json`.
-- Production route renders the Next not-found result and no sample content. Its streamed HTTP envelope is 200 with `NEXT_HTTP_ERROR_FALLBACK;404`, so this is not reported as a transport-level 404.
-- TypeScript, scoped lint and production Next build checked. No dependency or API/database/auth/business changes.
-- The final sample-preview browser tab reports no warnings or errors and renders the full card/dock. After one development build restart, an earlier tab logged a transient layout-script parse error; the generated script passed `node --check`, a normal reload rendered correctly and the final fresh tab is clean. No source change was made to disguise this local startup observation.
-- Real homepage/API checks locally show the pre-existing unavailable-local-API warnings. The sample preview is independent of live account data. No claim is made that these warnings or production API availability were fixed by this layout change.
-
-## Remaining acceptance boundaries
-
-- Android/iOS hardware, installed-PWA safe-area insets and authenticated balances/financial operations require real-device/production acceptance after approved deployment. CSS respects the existing safe-area variables, but hardware behavior was not simulated as proof.
-- No merge, push or deployment is included in this iteration; source remains on the review branch until explicit user approval.
+- Next production build: passed, including build TypeScript.
+- Full root TypeScript check: passed.
+- Targeted ESLint (AuthShell, P02-Login, auth copy): passed.
+- git diff --check: passed.
+- Email, Google/GitHub and passkey handlers remain unchanged; fingerprint calls existing usePasskey without an email scope. Wallet connection now uses the selected AppKit provider before the existing server challenge/signature flow. Unsupported browsers disable the passkey entry with an existing localized explanation.
+- Browser: login/register entry, theme switch, seven-language menu, empty-email validation, icon dimensions/accessibility and horizontal overflow checked.
+- Console reviewed: pre-existing desktop GSAP warnings after desktop redirect and generic local API-unavailable warnings. No UI rendering error found in the final login captures. Actual account authentication was not completed; no credentials or verification codes submitted.
+- Physical Android/iOS PWA, keyboard behavior and genuine provider/passkey authentication remain unverified; viewport simulation is not device acceptance.
 
 ## Implementation checklist
 
-- [x] Use the first concept's compact balance and three direct actions.
-- [x] Preserve hero imagery, font families, themes and localized account states.
-- [x] Remove the home-only quick plus.
-- [x] Align to the expanded dock and keep normal scrolling.
-- [x] Check responsive layout, privacy, status fixtures and existing navigation.
-- [x] Compare source and render together in full and focused images.
-- [ ] Merge/push/deploy only after the user confirms.
+- [x] Preserve existing authentication handlers and background assets.
+- [x] Apply layout to shared login/register entry only; other AuthShell uses retain their wordmark.
+- [x] Four icon-only login entries; accessible names, focus states, press feedback and reduced-motion transitions.
+- [x] Light/dark and mobile/language visual checks.
+- [x] User approval: complete wallet login, then deploy.
+- [ ] Post-deployment real-device / real-auth acceptance.
 
 final result: passed
+
+## Mobile wallet connectivity verification
+
+- Reown project `2defc1dee243f5dd45ecbe0bbe5b4919`, allowlist `https://rwa.lat` and `https://www.rwa.lat` verified in the logged-in dashboard. Identifier is public; no secret was read or added.
+- AppKit and Ethers adapter 1.8.24, ethers 6.16.0, lazy imports on wallet action. The SDK's Coinbase dependency requires optional x402 peers for webpack resolution; pinned 2.25.0 peers are installed, but payments, swaps, onramp, social/email and analytics features are disabled in the app configuration.
+- The existing backend accepts EVM externally owned account signatures. This does not add Solana, Bitcoin or smart-contract wallet signature verification.
+- Wallet provider is retained through consent, then account, chain, origin and challenge expiry are checked again before signing. No payment or transfer request is issued.
+- Red/green regression: new provider tests failed against the original injected-only implementation, then passed after integration. Final wallet/email/OAuth/account client tests: 18 passed, 0 failed. Existing email test fixture updated for the already deployed device-fingerprint contract.
+- Root TypeScript, targeted lint and full OpenNext Cloudflare production build passed. Lockfile audit found no version/specifier changes to pre-existing direct dependencies in any workspace; added optional-peer contexts are package-manager metadata.
+- Actual 390×844 production preview: wallet selector opened with 560+ searchable wallets; OKX, MetaMask and Trust Wallet appeared. Closing the selector restored enabled login controls with a cancellation message; reopening worked.
+- Evidence in `wallet/`: domain settings, connection selector, final login page. No wallet addresses, pair tokens or secrets included in evidence.
+- A transient hydration error was logged during the earlier failed development compile; subsequent production reload did not log a new rendering error. Full physical Android/iOS PWA connect, wallet launch/return and successful user signature remain unverified.

@@ -25,6 +25,8 @@ export function authErrorMessage(error: Pick<ApiError, 'code' | 'status'>, local
   const text = copy[locale]
   if (isConsentError(error)) return text.consent
   if (error.status === 429) return text.limited
+  if (error.code === 'WALLET_CANCELLED' || error.code === '4001') return text.cancelled
+  if (/^WALLET_NONCE_/.test(error.code)) return text.restart
   if (/^OAUTH_PROVIDER_(?:NOT_CONFIGURED|UNAVAILABLE|ACCESS_DENIED|BILLING_REQUIRED)$/.test(error.code)) return providerUnavailable[locale]
   if (['NETWORK_ERROR', 'ABORTED', 'REQUEST_TIMEOUT'].includes(error.code)) return text.network
   if (/VERIFICATION_TOKEN|RECOVERY_TOKEN|EMAIL_TOKEN|TOKEN_EXPIRED/.test(error.code)) return text.expired

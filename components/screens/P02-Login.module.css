@@ -313,14 +313,18 @@
 .root[data-auth-poster='true'][data-auth-theme='cool'] .sceneWash { background:
   linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
   linear-gradient(180deg, transparent 30%, rgba(7, 12, 22, .5) 52%, rgba(7, 12, 22, .9) 74%, #070c16 100%); }
-.root[data-auth-poster='true'] .stage { width: min(380px, calc(100% - 48px)); padding-top: 40px; }
+.root[data-auth-poster='true'] .stage { width: min(380px, calc(100% - 48px)); padding-top: 36px; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+.root[data-auth-poster='true'] .topbar { padding-inline: 24px 14px; }
+.root[data-auth-poster='true'] .heroCopy { display: block; width: min(380px, calc(100% - 48px)); margin: clamp(32px, 7svh, 64px) auto 24px; text-align: start; }
+.root[data-auth-poster='true'] .heroCopy .cardTitle { font-size: clamp(34px, 9.7vw, 42px); line-height: 1.18; text-wrap: initial; }
+.root[data-auth-poster='true'] .heroCopy .cardLede { margin: 16px 0 0; max-width: none; color: var(--auth-muted); font-size: 13px; }
 .root[data-auth-poster='true'] .authSheet { overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; animation: none; }
 /* The compact cool sheet carries one more attribute, so the poster has to clear its panel there too. */
 .root[data-auth-poster='true'][data-auth-theme='cool'] .authSheet { background: none; }
 .root[data-auth-poster='true'] .grain { display: none; }
 .root[data-auth-poster='true'] .sheetInner { padding: 0; }
 
-.root[data-auth-poster='true'] .cardHead { margin-bottom: 44px; text-align: center; }
+.root[data-auth-poster='true'] .cardHead { margin-bottom: 32px; text-align: start; }
 .root[data-auth-poster='true']:not([data-auth-step='email']) .cardHead { margin-bottom: 32px; }
 .root[data-auth-poster='true'] .kicker { justify-content: center; margin-bottom: 18px; color: var(--auth-accent); opacity: 1; }
 .root[data-auth-poster='true'] .cardTitle { color: var(--ink); font: 400 clamp(36px, 10.4vw, 44px)/1.1 var(--display); letter-spacing: .01em; animation: rise .8s .08s var(--ease) both; }
@@ -328,7 +332,6 @@
 .root[data-auth-poster='true']:not([data-auth-step='email']) .cardTitle { font-size: clamp(30px, 8.4vw, 34px); }
 .root[data-auth-poster='true'] .cardTitle em { display: block; color: var(--auth-accent); font-style: normal; }
 .root[data-auth-poster='true'][data-auth-script='latin'] .cardTitle em { font-style: italic; }
-.posterRule { display: block; width: 32px; height: 1px; margin: 24px auto 0; background: var(--auth-accent); opacity: .75; transform-origin: center; animation: ruleDraw .7s .32s var(--ease) both; }
 :global(.rwa-mobile) .root.root[data-auth-poster='true'] .cardLede, .root[data-auth-poster='true'] .cardLede { max-width: 28em; margin: 16px auto 0; color: var(--auth-muted); font-size: 12.5px; line-height: 1.6; text-wrap: pretty; }
 
 /* The lead: label and address on the start edge, a gold confirm seated inside the end edge. */
@@ -336,8 +339,8 @@
 .root[data-auth-poster='true'][data-auth-theme='cool'] .field { background: rgba(5, 9, 18, .36); }
 .root[data-auth-poster='true'] .field:focus-within { border-color: rgba(232, 205, 158, .7); box-shadow: 0 0 0 3px rgba(227, 187, 122, .12); }
 .root[data-auth-poster='true'] .fieldLabel { font-size: 10.5px; letter-spacing: .14em; }
-.emailField { padding-block: 10px; padding-inline-end: 8px; }
-.emailField .inlineSubmit { grid-column: 2; grid-row: 1 / span 2; }
+.emailField { min-height: 58px; padding-block: 7px; padding-inline-end: 8px; }
+.emailField .inlineSubmit { grid-column: 2; grid-row: 1; width: 40px; height: 40px; }
 .inlineSubmit { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: linear-gradient(145deg, #f2deb0, #d5b27c); color: #1b1813; box-shadow: inset 0 1px rgba(255, 251, 232, .7); cursor: pointer; transition: transform .16s var(--ease), opacity .2s var(--ease); }
 .inlineSubmit:not(:disabled):active { transform: scale(.94); }
 .inlineSubmit:disabled { opacity: .5; cursor: default; }
@@ -350,25 +353,34 @@
 .inlineSubmit:focus-visible, .altMethods button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 2px; }
 .hint { margin: 10px 2px 0; color: var(--auth-muted); font-size: 12.5px; line-height: 1.45; text-align: center; }
 
-/* Google, GitHub and wallet: three equal, quieter pills under a labelled hairline. */
-.root[data-auth-poster='true'] .otherMethods { margin-top: 36px; }
-/* A bare hairline: the two pills under it need no caption. */
-.root[data-auth-poster='true'] .divider { gap: 0; opacity: .8; }
-.root[data-auth-poster='true'] .divider::after { content: none; }
-.altMethods { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
-.altMethods button { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-width: 0; min-height: 48px; padding: 0 10px; border: .5px solid rgba(232, 205, 158, .26); border-radius: 999px; background: none; color: var(--ink); font: 500 14px/1 var(--sans); letter-spacing: .01em; cursor: pointer; transition: border-color .25s var(--ease), background .25s var(--ease), transform .16s var(--ease); }
-.altMethods button span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Four icon-only entry points, with full accessible names on the buttons. */
+.root[data-auth-poster='true'] .otherMethods { margin-top: 20px; }
+.altMethods { display: flex; align-items: center; justify-content: space-around; gap: 12px; }
+.altMethods button { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 50px; height: 50px; padding: 0; border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); border-radius: 50%; background: none; color: var(--ink); cursor: pointer; transition: border-color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease); }
 .altMethods img { flex: none; display: block; object-fit: contain; }
-.altMethods img[data-mono] { filter: invert(1); }
-.altMethods button:not(:disabled):active { transform: scale(.97); }
+.root[data-auth-theme='cool'] .altMethods img[data-mono] { filter: invert(1); }
+.altMethods button:not(:disabled):active { transform: scale(.94); border-color: var(--auth-accent); }
 .altMethods button:disabled { opacity: .42; cursor: default; }
 @media (hover: hover) and (pointer: fine) {
-  .altMethods button:not(:disabled):hover { border-color: rgba(232, 205, 158, .6); background: rgba(255, 246, 228, .04); }
+  .altMethods button:not(:disabled):hover { border-color: var(--auth-accent); background: color-mix(in srgb, var(--ink) 5%, transparent); }
 }
 
 /* Billing block: the legal line in small, even type under the lead. */
-.root[data-auth-poster='true'] .outerFooter { padding-top: 32px; color: rgba(245, 238, 226, .5); font-size: 11px; letter-spacing: .04em; }
-.root[data-auth-poster='true'] .outerFooter a:hover { color: #f5eee2; }
+.root[data-auth-poster='true'] .outerFooter { padding-top: 28px; color: var(--auth-muted); font-size: 11px; letter-spacing: .04em; }
+.root[data-auth-poster='true'] .outerFooter a:hover { color: var(--hero-ink); }
+
+/* The existing warm film stays in place; its controls use the light-theme ink. */
+.root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet {
+  --ink: #1b1813; --auth-muted: #6b6257; --auth-faint: #6b6257;
+  --auth-accent: #8a6a3b; --field-edge: rgba(27, 24, 19, .25);
+}
+.root[data-auth-poster='true'][data-auth-theme='warm'] .sceneWash { background:
+  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
+  linear-gradient(180deg, transparent 40%, rgba(239, 228, 212, .65) 100%); }
+.root[data-auth-poster='true'][data-auth-theme='warm'] .field { border-color: var(--field-edge); background: rgba(251, 247, 240, .34); }
+.root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardTitle em { color: #795225; }
+.root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardLede { color: #514338; text-shadow: 0 1px 8px rgba(255, 251, 244, .6); }
+.root[data-auth-poster='true'] .emailField input::placeholder { color: var(--auth-muted); opacity: 1; }
 
 /* One entrance, in reading order, then still. */
 .root[data-auth-poster='true'] .kicker { animation: rise .7s var(--ease) both; }
@@ -377,13 +389,22 @@
 .root[data-auth-poster='true'][data-auth-step='email'] form { animation-delay: .38s; }
 .root[data-auth-poster='true'] .otherMethods { animation-delay: .5s; }
 .root[data-auth-poster='true'] .outerFooter { animation-delay: .6s; }
-@keyframes ruleDraw { from { opacity: 0; transform: scaleX(0); } }
 
 @media (min-width: 960px) {
   .root[data-auth-poster='true'] .stage { width: 400px; margin: auto auto 6svh; }
 }
+@media (max-height: 640px) {
+  .root[data-auth-poster='true'] .heroCopy { margin-block: 24px 16px; }
+  .root[data-auth-poster='true'] .heroCopy .cardTitle { font-size: 32px; }
+  .root[data-auth-poster='true'] .stage { padding-top: 20px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
+  .root[data-auth-poster='true'] .outerFooter { padding-top: 18px; }
+}
+@media (pointer: coarse) {
+  .root[data-auth-poster='true']:has(.emailField input:focus) .heroCopy { margin-block: 16px; }
+  .root[data-auth-poster='true']:has(.emailField input:focus) .heroCopy .cardTitle { font-size: 28px; }
+}
 @media (prefers-reduced-motion: reduce) {
-  .root[data-auth-poster='true'] .kicker, .root[data-auth-poster='true'] .cardTitle, .posterRule,
+  .root[data-auth-poster='true'] .kicker, .root[data-auth-poster='true'] .cardTitle,
   .root[data-auth-poster='true'][data-auth-step='email'] .cardLede, .root[data-auth-poster='true'][data-auth-step='email'] form, .root[data-auth-poster='true'] .otherMethods, .root[data-auth-poster='true'] .outerFooter { animation: none; }
   .inlineSubmit, .inlineArrow svg, .altMethods button { transition: none; }
 }

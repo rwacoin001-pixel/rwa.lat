@@ -3,6 +3,7 @@ packages:
   - packages/*
 
 allowBuilds:
+  '@reown/appkit': false
   '@scarf/scarf': false
   esbuild: true
   msw: false

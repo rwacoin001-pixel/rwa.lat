@@ -29,7 +29,10 @@ test('mobile challenges carry form intent; failed code confirmations never save 
   assert.deepEqual(calls[0].body, { email: 'user@example.com', intent: 'register', locale: 'zh-CN', consents })
   const result = await confirmEmailCode('user@example.com', 'register', 'challenge', '012345')
   assert.equal(result.ok, false)
-  assert.deepEqual(calls[1].body, { email: 'user@example.com', intent: 'register', challengeId: 'challenge', code: '012345', device: { name: 'h5-mobile' } })
+  const confirmation = calls[1].body as { device: { name: string; fingerprint: string } }
+  assert.match(confirmation.device.fingerprint, /^[a-f0-9-]{36}$/)
+  assert.equal(confirmation.device.name, 'Web browser')
+  assert.deepEqual(calls[1].body, { email: 'user@example.com', intent: 'register', challengeId: 'challenge', code: '012345', device: confirmation.device })
   await loginEmail('user@example.com')
   assert.equal(calls[2].path, '/v1/auth/login/email')
 })

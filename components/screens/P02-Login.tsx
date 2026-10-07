@@ -12,7 +12,7 @@ import {
 import { useI18n } from '@/lib/i18n'
 import { authRouteCopy, interpolateRouteCopy } from '@/lib/route-copy'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
-import { authSheetCopy, authPosterTitle } from '@/lib/maison-auth-copy'
+import { authSheetCopy, authPosterTitle, authPosterIntro } from '@/lib/maison-auth-copy'
 import { authEmailCopy, normalizeEmailCode } from '@/lib/auth-email-copy'
 import styles from './P02-Login.module.css'
 import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
@@ -22,6 +22,7 @@ import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
+import { connectLoginWallet } from '@/lib/api/wallet-connection'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PENDING_CONSENTS = 'rwa.pending-consents'
@@ -302,7 +303,14 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const useWallet = () => {
     if (walletChallenge && !consentReady) { setError(visual.consentRequired); return }
     void run(async () => {
-      const started = walletChallenge ? { ok: true as const, data: walletChallenge } : await beginWalletLogin()
+      let started: Awaited<ReturnType<typeof beginWalletLogin>>
+      try {
+        started = walletChallenge ? { ok: true as const, data: walletChallenge } : await beginWalletLogin(await connectLoginWallet())
+      } catch (failure) {
+        const code = typeof failure === 'object' && failure !== null && 'code' in failure ? String(failure.code) : 'WALLET_CONNECTION_FAILED'
+        showAuthError({ status: 0, code, message: 'Wallet connection failed' })
+        return
+      }
       if (!started.ok) { showAuthError(started.error); return }
       if (started.data.registrationRequired && !walletChallenge) {
         setWalletChallenge(started.data)
@@ -380,13 +388,17 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a>
   </>
 
-  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} footer={footer}
+  const posterHero = !heading && <>
+    <h1 className={styles.cardTitle}>{poster[0]} <em>{poster[1]}</em></h1>
+    <p className={styles.cardLede}>{authPosterIntro[locale]}</p>
+  </>
+
+  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer}
     topAction={<button type="button" className={styles.topLink} onClick={browse}>{visual.browse}</button>}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
-    <header className={styles.cardHead}>
-      <h1 className={styles.cardTitle}>{heading ?? <>{poster[0]} <em>{poster[1]}</em></>}</h1>
-      <span className={styles.posterRule} aria-hidden="true" />
-    </header>
+    {heading && <header className={styles.cardHead}>
+      <h1 className={styles.cardTitle}>{heading}</h1>
+    </header>}
 
     {walletChallenge ? <>
       <div className={styles.walletIdentity}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} style={{ width: 22, height: 22 }} /><span>{walletChallenge.address.slice(0, 6)}…{walletChallenge.address.slice(-4)}</span></div>
@@ -397,8 +409,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     </> : <form onSubmit={submit} noValidate aria-busy={pending}>
       {/* The poster's lead: one field, its confirm inside on the end edge. The lookup decides sign-in or registration. */}
       {step === 'email' ? <label className={`${styles.field} ${styles.emailField}`}>
-        <span className={styles.fieldLabel}>{visual.emailAddress}</span>
-        <input ref={input} type="email" inputMode="email" autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
+        <span className={styles.srOnly}>{visual.emailAddress}</span>
+        <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
         <button type="submit" className={styles.inlineSubmit} disabled={pending || retryAfter > 0} aria-label={pending ? pendingLabel : retryAfter > 0 ? cooldownLabel : sheet.continue} title={sheet.continue}>
           {pending ? <LoaderCircle className={styles.spinner} size={18} aria-hidden="true" />
             : <span className={styles.inlineArrow} data-ready={EMAIL.test(email.trim())} aria-hidden="true"><ArrowRight size={19} strokeWidth={1.7} /></span>}
@@ -441,13 +453,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
-    {/* Three equal alternatives. Passkeys stay reachable through the email field's autofill and the step after lookup. */}
+    {/* Each icon reuses the existing sign-in handler; email autofill remains available. */}
     {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <p className={styles.divider} aria-hidden="true" />
       <div className={styles.altMethods}>
-        <button type="button" disabled={pending} onClick={() => void startProvider('google')} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={18} height={18} style={{ width: 18, height: 18 }} /><span>Google</span></button>
-        <button type="button" disabled={pending} onClick={() => void startProvider('github')} title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={18} height={18} style={{ width: 18, height: 18 }} /><span>GitHub</span></button>
-        <button type="button" disabled={pending} onClick={useWallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={18} height={18} style={{ width: 18, height: 18 }} /><span>{sheet.wallet}</span></button>
+        <button type="button" disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /></button>
+        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
+        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
+        <button type="button" disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
       </div>
     </div>}
     </div>

@@ -48,7 +48,8 @@ export function AuthShell({ children, hero, onBrand, footer, topAction, attrs }:
   }, [localeOpen])
   const cool = theme === 'dark'
   const media = cool ? 'cool' : 'warm'
-  const brand = <><BrandMark /><span>RWA<i>.</i>LAT</span></>
+  const poster = attrs?.['data-auth-poster'] === 'true'
+  const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>RWA<i>.</i>LAT</span>}</>
   return <section className={`screen ${styles.root}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     <div className={styles.scene} aria-hidden="true">
       {mediaReady && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>

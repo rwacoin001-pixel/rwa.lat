@@ -2,6 +2,7 @@ import { clearSession, readSession, request, saveSession, type ApiResult } from 
 import { consumeOAuthState, rememberOAuthState } from './oauth-state'
 import { authDevice } from './auth-flow'
 import type { ApiSchemas } from './types'
+import type { WalletProvider } from './wallet-connection'
 
 export type AuthSession = { token: string; sessionId?: string; userId?: string }
 export type AuthConsent = ApiSchemas['ConsentAcceptanceDto'] & { accepted: true }
@@ -79,8 +80,9 @@ export async function confirmOAuth(provider: 'google' | 'github' | 'x', code: st
   return mapped
 }
 
-type WalletProvider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
 export type WalletLoginChallenge = { address: string; nonce: string; registrationRequired: boolean }
+// Retain the selected mobile/extension provider through the registration consent step.
+const walletChallengeProviders = new WeakMap<WalletLoginChallenge, WalletProvider>()
 
 function validWalletMessage(challenge: WalletLoginChallenge, address: string, chainId: number): boolean {
   const lines = challenge.nonce.split('\n')
@@ -95,8 +97,8 @@ function validWalletMessage(challenge: WalletLoginChallenge, address: string, ch
     && issued <= Date.now() + 30000 && expiry > Date.now() && expiry - issued <= 300000
 }
 
-export async function beginWalletLogin(): Promise<ApiResult<WalletLoginChallenge>> {
-  const provider = (window as Window & { ethereum?: WalletProvider }).ethereum
+export async function beginWalletLogin(selectedProvider?: WalletProvider): Promise<ApiResult<WalletLoginChallenge>> {
+  const provider = selectedProvider ?? (window as Window & { ethereum?: WalletProvider }).ethereum
   if (!provider) return { ok: false, error: { status: 0, code: 'WALLET_MISSING', message: '未检测到兼容的钱包' } }
   try {
     const accounts = await provider.request({ method: 'eth_requestAccounts' })
@@ -111,13 +113,14 @@ export async function beginWalletLogin(): Promise<ApiResult<WalletLoginChallenge
     if (typeof challenge?.address !== 'string' || typeof challenge.nonce !== 'string' || typeof challenge.registrationRequired !== 'boolean') {
       return { ok: false, error: { status: 200, code: 'AUTH_FLOW_VERSION_MISMATCH', message: '认证服务尚未支持钱包注册同意步骤，请稍后重试' } }
     }
-    if (!validWalletMessage(challenge, address, chainId)) throw new Error('Unexpected sign-in message')
+    if (!validWalletMessage(challenge, address, chainId)) return { ok: false, error: { status: 0, code: 'WALLET_NONCE_MISMATCH', message: '钱包登录请求无效或已过期，请重新连接' } }
+    walletChallengeProviders.set(challenge, provider)
     return result
   } catch { return { ok: false, error: { status: 0, code: 'WALLET_CANCELLED', message: '钱包连接未完成' } } }
 }
 
 export async function completeWalletLogin(challenge: WalletLoginChallenge, consents: AuthConsent[] = []): Promise<ApiResult<AuthSession>> {
-  const provider = (window as Window & { ethereum?: WalletProvider }).ethereum
+  const provider = walletChallengeProviders.get(challenge)
   if (!provider) return { ok: false, error: { status: 0, code: 'WALLET_MISSING', message: '未检测到兼容的钱包' } }
   try {
     const chain = await provider.request({ method: 'eth_chainId' })
