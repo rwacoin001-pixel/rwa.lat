@@ -33,6 +33,7 @@
     "@rwa-lat/api-client": "workspace:*",
     "@tremor/react": "^3.18.7",
     "@vercel/analytics": "1.6.1",
+    "@walletconnect/universal-provider": "2.23.7",
     "@web3icons/react": "^4.1.22",
     "@x402/core": "2.25.0",
     "@x402/evm": "2.25.0",

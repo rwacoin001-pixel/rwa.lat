@@ -21,10 +21,20 @@ const providerUnavailable: Record<AppLocale, string> = {
   fr: 'Cette méthode de connexion est indisponible. Choisissez-en une autre.',
   pt: 'Este método de acesso está indisponível. Use outro.',
 }
+const walletReturn: Record<AppLocale, string> = {
+  en: 'No wallet connection was received. Finish approval in your wallet, return here, and try again.',
+  'zh-CN': '尚未收到钱包连接。请在欧易完成授权后返回；若已授权，请重新点钱包图标连接。',
+  hi: 'वॉलेट कनेक्शन नहीं मिला। वॉलेट में अनुमति पूरी करें, यहाँ लौटें और फिर प्रयास करें।',
+  es: 'No se recibió la conexión de la cartera. Completa la aprobación, vuelve aquí e inténtalo de nuevo.',
+  ar: 'لم يصل اتصال المحفظة. أكمل الموافقة في المحفظة، ثم عُد إلى هنا وحاول مجددًا.',
+  fr: 'Aucune connexion au portefeuille reçue. Terminez l’approbation, revenez ici et réessayez.',
+  pt: 'A conexão da carteira não chegou. Conclua a aprovação, volte aqui e tente novamente.',
+}
 export function authErrorMessage(error: Pick<ApiError, 'code' | 'status'>, locale: AppLocale): string {
   const text = copy[locale]
   if (isConsentError(error)) return text.consent
   if (error.status === 429) return text.limited
+  if (error.code === 'WALLET_CONNECTION_NOT_FOUND') return walletReturn[locale]
   if (error.code === 'WALLET_CANCELLED' || error.code === '4001') return text.cancelled
   if (/^WALLET_NONCE_/.test(error.code)) return text.restart
   if (/^OAUTH_PROVIDER_(?:NOT_CONFIGURED|UNAVAILABLE|ACCESS_DENIED|BILLING_REQUIRED)$/.test(error.code)) return providerUnavailable[locale]
