@@ -53,7 +53,7 @@ export function AuthShell({ children, hero, onBrand, footer, topAction, attrs }:
   return <section className={`screen ${styles.root}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     <div className={styles.scene} aria-hidden="true">
       {mediaReady && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
-        <source src={`/auth/auth-${media}-loop.mp4`} type="video/mp4" />
+        <source src={`/auth/auth-${media}-loop-h264.mp4`} type="video/mp4" />
       </video>}
     </div>
     <div className={styles.sceneWash} aria-hidden="true" />
