@@ -37,6 +37,7 @@ import { GeneratedDocumentsModule } from './generated-documents/generated-docume
 import { PublicShareModule } from './sharing/public-share.module'
 import { LegalModule } from './legal/legal.module'
 import { ReferralHttpModule } from './referral/referral-http.module'
+import { AdminUsersModule } from './admin-users/admin-users.module'
 
 @Module({
   imports: [
@@ -81,6 +82,7 @@ import { ReferralHttpModule } from './referral/referral-http.module'
     PublicShareModule,
     LegalModule,
     ReferralHttpModule,
+    AdminUsersModule,
   ],
 })
 export class AppModule {}

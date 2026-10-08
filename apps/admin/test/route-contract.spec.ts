@@ -18,6 +18,8 @@ describe('Admin API route contract', () => {
     expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.listUsers)).toEqual(['users.read'])
     expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.listRedemptions)).toEqual(['redemptions.read'])
     expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.getRedemption)).toEqual(['redemptions.read'])
+    expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.getUser)).toEqual(['users.read'])
+    expect(Reflect.getMetadata(ADMIN_REQUIRED_PERMISSIONS, AdminController.prototype.adjustUserBalance)).toEqual(['users.read', 'ledger.adjustments.manage', 'ledger.adjustments.post'])
   })
 
   it('enforces platform permissions before editing or publishing operator information', () => {

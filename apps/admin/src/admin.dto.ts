@@ -1,4 +1,4 @@
-import { IsOptional, IsIn, IsInt, Min, Max } from 'class-validator'
+import { IsOptional, IsIn, IsInt, Min, Max, IsString, MaxLength } from 'class-validator'
 import { Type } from 'class-transformer'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 
@@ -25,4 +25,10 @@ export class RedemptionListQueryDto extends ListQueryDto {
   @IsOptional()
   @IsIn(['requested', 'queued', 'executing', 'completed', 'canceled', 'failed'])
   state?: 'requested' | 'queued' | 'executing' | 'completed' | 'canceled' | 'failed'
+}
+
+export class UserListQueryDto extends ListQueryDto {
+  @Max(100) limit?: number = 50
+  @IsOptional() @IsString() @MaxLength(200) q?: string
+  @IsOptional() @IsIn(['active', 'restricted', 'suspended', 'closed']) status?: string
 }

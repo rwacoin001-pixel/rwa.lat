@@ -9,6 +9,14 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const target = new URL(`${adminApiBase}/admin/${path.join('/')}`)
   target.search = request.nextUrl.search
   const hasBody = !['GET', 'HEAD'].includes(request.method)
+  if (hasBody && path[0] === 'users') {
+    const protocol = request.headers.get('x-forwarded-proto')?.split(',')[0]?.trim() ?? request.nextUrl.protocol.replace(':', '')
+    const publicOrigin = `${protocol}://${request.headers.get('host') ?? request.nextUrl.host}`
+    const allowedOrigin = (process.env.PUBLIC_ADMIN_FRONTEND_ORIGIN ?? publicOrigin).replace(/\/$/, '')
+    if (request.headers.get('origin') !== allowedOrigin) {
+      return NextResponse.json({ message: '请从管理后台提交操作。' }, { status: 403 })
+    }
+  }
   const upstream = await fetch(target, {
     method: request.method,
     headers: {
@@ -19,6 +27,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     cache: 'no-store',
   })
   const headers = new Headers()
+  if (path[0] === 'users') headers.set('cache-control', 'private, no-store')
   const contentType = upstream.headers.get('content-type')
   if (contentType) headers.set('content-type', contentType)
   return new NextResponse(await upstream.text(), { status: upstream.status, headers })
