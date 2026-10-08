@@ -8,7 +8,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 30px;
+  min-height: 44px;
   padding: 0 12px;
   border: 1px solid var(--m-line);
   border-radius: 999px;
@@ -21,50 +21,47 @@
   cursor: pointer;
   transition: color .25s var(--m-ease), background-color .25s var(--m-ease), border-color .25s var(--m-ease), transform .2s var(--m-ease);
 }
-/* The pill stays 30px tall; the invisible halo brings the touch target to 44px. */
-.filter::after { content: ''; position: absolute; inset: -7px -2px; }
 .filter:active { transform: scale(.96); }
 .filter:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 .filter[aria-pressed='true'] { color: var(--m-on-accent); background: var(--m-ink); border-color: var(--m-ink); }
 .filter small { color: inherit; opacity: .6; font-family: var(--m-mono); font-size: 10px; }
 
-.list { margin: 0; padding: 0; list-style: none; }
-.card {
-  margin-top: 10px;
-  padding: 14px;
-  border: 1px solid var(--m-line);
-  border-radius: var(--m-radius);
-  background: var(--m-glass);
-  box-shadow: var(--m-shadow-soft);
-}
-.card[data-status='placed'] { border-inline-start: 3px solid var(--m-accent); }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
-.head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
-.title { flex: 1; min-width: 0; }
-.question {
-  display: block;
-  width: 100%;
-  min-height: 44px;
-  margin: -6px 0 0;
-  padding: 6px 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
-  text-align: start;
-  overflow-wrap: anywhere;
-  unicode-bidi: plaintext;
-}
-button.question { display: flex; align-items: flex-start; gap: 4px; cursor: pointer; }
-.question svg { flex: none; margin-top: 3px; color: var(--m-faint); }
-[dir='rtl'] .question svg { transform: scaleX(-1); }
+/* Summary: one lightweight card, three columns; money totals cover the loaded rows only (see .scopeNote). */
+.summary { margin-top: 6px; padding: 14px 16px 16px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); box-shadow: var(--m-shadow-soft); }
+.eyebrow { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--m-accent); font-size: 11px; font-weight: 600; letter-spacing: .08em; }
+.eyebrow::before { content: ''; flex: none; width: 16px; height: 1px; background: currentColor; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 12px 0 0; }
+.stats div { min-width: 0; }
+.stats div + div { padding-inline-start: 12px; border-inline-start: 1px solid var(--m-line); }
+.stats dt { color: var(--m-muted); font-size: 11px; line-height: 1.3; }
+.stats dd { margin: 4px 0 0; font-size: 20px; font-weight: 650; line-height: 1.15; overflow-wrap: anywhere; }
+.stats dd[data-tone='up'] { color: var(--m-up); }
+
+.scope { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 4px 2px 0; color: var(--m-muted); font-size: 11.5px; }
+.scope > span { min-width: 0; overflow-wrap: anywhere; }
+.icon { flex: none; display: grid; place-items: center; width: 44px; height: 44px; margin-inline-end: -12px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted); cursor: pointer; }
+.icon[aria-expanded='true'] { color: var(--m-accent); }
+.icon:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -2px; }
+.scopeNote { margin: 0 2px; color: var(--m-muted); font-size: 11.5px; line-height: 1.6; animation: mpRise .18s var(--m-ease); }
+
+.list { display: grid; gap: 10px; margin: 8px 0 0; padding: 0; list-style: none; }
+.card { min-width: 0; padding: 12px 14px 2px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); box-shadow: var(--m-shadow-soft); }
+
+.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--m-muted); font-size: 11.5px; }
+.meta time { margin-inline-start: auto; }
+.state { color: var(--m-accent); font-weight: 600; }
+.card[data-status='won'] .state { color: var(--m-up); }
+.card[data-status='lost'] .state, .card[data-status='unknown'] .state { color: var(--m-muted); }
+
+/* Two-line title; the whole line is the market link when a slug exists. Full title lives in the details. */
+.question { display: block; width: 100%; min-height: 44px; margin: 6px 0 0; padding: 4px 0; border: 0; background: none; color: inherit; font: inherit; font-size: 15px; font-weight: 600; line-height: 1.4; text-align: start; unicode-bidi: plaintext; }
+.question > span { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow-wrap: anywhere; }
+button.question { cursor: pointer; }
 button.question:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 6px; }
 .question[data-unnamed='true'] { color: var(--m-muted); }
 
-.meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 2px; color: var(--m-muted); font-size: 11px; }
 .side {
   display: inline-flex;
   align-items: center;
@@ -78,36 +75,49 @@ button.question:focus-visible { outline: 2px solid var(--m-accent); outline-offs
   letter-spacing: .04em;
   unicode-bidi: plaintext;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
 }
 .side[data-side='yes'] { background: color-mix(in srgb, var(--m-up) 14%, transparent); color: var(--m-up); }
 .side[data-side='no'] { background: color-mix(in srgb, var(--m-down) 14%, transparent); color: var(--m-down); }
 
-.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; margin: 12px 0 0; padding-top: 12px; border-top: 1px solid var(--m-line-soft); }
-.facts div { min-width: 0; }
-.facts dt { color: var(--m-faint); font-size: 9.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-.facts dd { margin: 3px 0 0; overflow: hidden; font-size: 12.5px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+/* Main data pair: stake on the start side, payout / refund on the end side. Values wrap rather than truncate. */
+.pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 8px; padding-top: 10px; border-top: 1px solid var(--m-line-soft); }
+.pair div { min-width: 0; }
+.pair div + div { text-align: end; }
+.pair span { display: block; color: var(--m-muted); font-size: 11.5px; line-height: 1.35; }
+.pair b { display: block; margin-top: 2px; font-size: 16px; font-weight: 650; line-height: 1.25; overflow-wrap: anywhere; }
+.pair b[data-tone='up'] { color: var(--m-up); }
+.pair b[data-tone='muted'] { color: var(--m-muted); }
 
-.result {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-top: 12px;
-  padding: 10px 12px;
-  border-radius: 12px;
-  background: var(--m-line-soft);
+.sub { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0 8px; color: var(--m-muted); font-size: 12px; }
+.sub > span { min-width: 0; overflow-wrap: anywhere; }
+.toggle { display: inline-flex; align-items: center; gap: 4px; min-width: 44px; min-height: 44px; margin-inline-start: auto; padding: 0; padding-inline-start: 12px; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.toggle svg { flex: none; transition: transform .18s var(--m-ease); }
+.toggle[aria-expanded='true'] svg { transform: rotate(180deg); }
+.toggle:focus-visible, .acts button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 8px; }
+
+.detail { padding: 10px 0 12px; border-top: 1px solid var(--m-line-soft); animation: mpRise .18s var(--m-ease); }
+.detail dl { display: grid; gap: 6px; margin: 0; font-size: 12.5px; }
+.detail dl div { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 2px 12px; min-width: 0; }
+.detail dt { flex: none; color: var(--m-muted); }
+.detail dd { flex: 1 1 auto; min-width: 0; margin: 0; text-align: end; overflow-wrap: anywhere; }
+.detail .wide { display: block; }
+.detail .wide dd { margin-top: 2px; text-align: start; font-weight: 600; line-height: 1.4; unicode-bidi: plaintext; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+.acts button { flex: 1 1 140px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px; padding: 6px 12px; border: 1px solid var(--m-line); border-radius: 12px; background: none; color: inherit; font: inherit; font-size: 13px; text-align: center; cursor: pointer; }
+.acts button svg { flex: none; }
+.acts button[aria-expanded='true'] { color: var(--m-accent); border-color: color-mix(in srgb, var(--m-accent) 45%, transparent); }
+[dir='rtl'] .acts button svg:last-child:not(:first-child) { transform: scaleX(-1); }
+.why { margin-top: 8px; color: var(--m-muted); font-size: 12px; line-height: 1.6; animation: mpRise .18s var(--m-ease); }
+.why p { margin: 0; }
+.why p + p { margin-top: 4px; }
+.detail[hidden], .why[hidden], .scopeNote[hidden] { display: none; }
+
+@keyframes mpRise { from { opacity: 0; transform: translateY(-4px); } }
+@media (prefers-reduced-motion: reduce) {
+  .detail, .why, .scopeNote { animation: none; }
+  .toggle svg, .filter { transition: none; }
 }
-.result[data-status='won'] { background: color-mix(in srgb, var(--m-up) 12%, transparent); }
-.result[data-status='lost'] { background: color-mix(in srgb, var(--m-down) 10%, transparent); }
-.result > span { min-width: 0; }
-.result small { display: block; color: var(--m-muted); font-size: 11px; line-height: 1.4; }
-.result b { display: block; color: var(--m-ink); font-size: 12.5px; font-weight: 600; }
-.result > strong { flex: none; font-size: 15px; font-weight: 650; text-align: end; }
-.result > strong[data-tone='up'] { color: var(--m-up); }
-.result > strong[data-tone='muted'] { color: var(--m-muted); }
 
 .foot { margin: 10px 0 0; color: var(--m-faint); font-size: 10.5px; line-height: 1.5; }
 .more { display: grid; margin-top: 16px; }
@@ -148,6 +158,7 @@ button.question:focus-visible { outline: 2px solid var(--m-accent); outline-offs
 .entryStats dd[data-tone='up'] { color: var(--m-up); }
 .entryNote { display: block; margin-top: 8px; color: var(--m-faint); font-size: 10.5px; line-height: 1.5; }
 
-@media (max-width: 359px) {
-  .facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (max-width: 389px) {
+  .stats dd { font-size: 17px; }
+  .stats div + div { padding-inline-start: 10px; }
 }
