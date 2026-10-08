@@ -4,8 +4,9 @@ import { Instrument_Serif } from 'next/font/google'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { AlertTriangle, CircleSlash, Inbox, RotateCw } from 'lucide-react'
-import { useId, useState, type ReactNode } from 'react'
+import { useId, type ReactNode } from 'react'
 import { fmtPct } from '@/lib/money'
+import { PredictionImage } from '@/components/prediction-image'
 import styles from './maison.module.css'
 import { PullToRefresh } from './PullToRefresh'
 
@@ -64,10 +65,8 @@ export function DeltaPill({ value }: { value: string | null | undefined }) {
 }
 
 export function Logo({ src, name }: { src?: string | null; name: string }) {
-  const [failed, setFailed] = useState(false)
-  const initial = (name.trim()[0] ?? '·').toUpperCase()
   return <span className={styles.logo} aria-hidden="true">
-    {src && !failed ? <img src={src} alt="" loading="lazy" onError={() => setFailed(true)} /> : initial}
+    <PredictionImage src={src} name={name} />
   </span>
 }
 

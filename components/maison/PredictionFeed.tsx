@@ -12,6 +12,7 @@ import { fmtUsd } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { openPath } from '@/lib/maison-nav'
 import { polymarketFeedCopy } from '@/lib/polymarket-feed-copy'
+import { PredictionImage } from '@/components/prediction-image'
 import { Figure } from './motion'
 import { fmtDate, fmtDateTime } from './format'
 import { Skeleton, StateBlock, maison as s } from './primitives'
@@ -132,7 +133,7 @@ export function PredictionFeed() {
       return <article key={item.id} className={s.predFeedArticle}><button type="button" data-layout={layout} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
         <span className={s.predCardHead}>
           <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
-          {item.image && <img className={s.predThumb} src={item.image} alt="" loading="lazy" referrerPolicy="no-referrer" />}
+          {item.image && <PredictionImage className={s.predThumb} src={item.image} name={item.question} />}
         </span>
         <b className={s.predQuestion}>{content(item.question)}</b>
         {layout === 'multi' && <span className={s.predOptions}>{shown.map((outcome, index) => <span key={`${index}:${outcome.label}`} className={s.predOption}>
