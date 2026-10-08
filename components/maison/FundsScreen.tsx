@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, ArrowRight, ArrowUpFromLine, BookUser, Check, ChevronRight, ClipboardPaste, Copy, Info, Plus, QrCode, Send, Share2, ShieldCheck } from 'lucide-react'
+import { AlertTriangle, ArrowRight, ArrowUpFromLine, BookUser, Check, ChevronRight, ClipboardPaste, Copy, Info, Loader2, Plus, QrCode, Send, Share2, ShieldCheck } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import {TransferScanner} from './TransferScanner'
 import {transferRecipientFromCode} from '@/lib/transfer-code'
@@ -25,6 +25,7 @@ import { fmtAtomic, fmtDateTime } from './format'
 import { stepUpRequired, useStepUp } from './StepUp'
 import fp from './funds-polish.module.css'
 import fs from './funds-fullscreen.module.css'
+import tf from './transfer-feedback.module.css'
 
 const WITHDRAW_PATH = '/v1/wallet/withdrawals'
 const TRANSFER_PATH = '/v1/wallet/transfers'
@@ -43,18 +44,20 @@ const setQuery = (name: string, value: string | null) => {
 }
 
 /** Shared amount field: sanitized decimal input, available + minimum line, optional MAX. */
-function AmountField({ id, value, onChange, unit, available, min, max, error, touched, onBlur, label, maxLabel }: {
+function AmountField({ id, value, onChange, unit, available, min, max, error, touched, onBlur, label, maxLabel, preserveRaw = false, disabled = false }: {
   id: string; value: string; onChange: (value: string) => void; unit: string; available: ReactNode; min?: ReactNode; max?: string | null; error: string | null; touched: boolean; onBlur: () => void; label: string; maxLabel: string
+  /** Keep the typed text (comma → dot only) so toAtomic rejects signs and stray characters instead of silently dropping them. */
+  preserveRaw?: boolean; disabled?: boolean
 }) {
   return <>
     <label className={`${s.kicker} ${fs.label}`} htmlFor={id}>{label}</label>
     <div className={`${s.amount} ${fs.amount}`}>
-      <input id={id} inputMode="decimal" autoComplete="off" placeholder="0.00" value={value} aria-invalid={Boolean(error && touched)} aria-describedby={`${id}-meta`} onChange={(event) => onChange(sanitize(event.target.value))} onBlur={onBlur} />
+      <input id={id} inputMode="decimal" autoComplete="off" placeholder="0.00" value={value} disabled={disabled} aria-invalid={Boolean(error && touched)} aria-describedby={`${id}-meta`} onChange={(event) => onChange(preserveRaw ? event.target.value.replace(',', '.') : sanitize(event.target.value))} onBlur={onBlur} />
       <span>{unit}</span>
     </div>
     <div className={`${s.fieldMeta} ${fs.meta}`} id={`${id}-meta`}><span>{available}</span>{min && <span className={s.num}>{min}</span>}</div>
     {touched && error && <p className={s.fieldError} role="alert">{error}</p>}
-    {max && <div className={fs.maxRow}><button type="button" className={`${s.chip} ${fs.maxChip}`} style={{ minHeight: 44, minWidth: 64 }} aria-pressed={value === max} onClick={() => onChange(max)}>{maxLabel}</button></div>}
+    {max && <div className={fs.maxRow}><button type="button" className={`${s.chip} ${fs.maxChip}`} style={{ minHeight: 44, minWidth: 64 }} aria-pressed={value === max} disabled={disabled} onClick={() => onChange(max)}>{maxLabel}</button></div>}
   </>
 }
 
@@ -359,31 +362,45 @@ export function TransferScreen({ query }: { query: string }) {
     return null
   }, [amount, atomic, available, f.errors])
   const ready = Boolean(id && !recipientError && atomic && !fieldError && consent && wallet.data && !pending)
+  /** Display-only: never rounds a non-zero micro amount to 0.00; widens to the significant fraction digits. Math stays BigInt. */
+  const exact = (value: string | null | undefined) => {
+    let digits = 2
+    try { if (value) digits = Math.max(2, fromAtomic(value, decimals).split('.')[1]?.length ?? 0) } catch { /* fmtAtomic renders '—' */ }
+    return fmtAtomic(value, decimals, unit, digits)
+  }
 
   const submit = async () => {
     setTouched(true)
     if (!ready || !atomic || inflight.current) return
     const body: TransferBody = { recipientUserId: id, atomicAmount: atomic }
+    // Same intent → same key, so a retry after failure or re-authentication replays rather than duplicates.
     const key = idempotencyKeyForIntent(keys.current, 'POST', TRANSFER_PATH, body)
     inflight.current = true
     setPending(true)
     setServerError(null)
-    const result = await run(stepUpRequired(integration), (reauthentication) => createTransfer(reauthentication ? { ...body, reauthentication } : body, key), [
-      { label: f.common.amount, value: <strong className={s.num}>{fmtAtomic(atomic, decimals, unit)}</strong> },
-      { label: t.to, value: <Addr value={id} head={8} tail={4} /> },
-      { label: f.common.fee, value: t.feeValue },
-    ])
-    inflight.current = false
-    setPending(false)
-    if (!result) { setServerError(f.common.cancelled); return }
-    if (!result.ok) { setServerError(errorText(f, result.error, common.errorGeneric)); return }
-    invalidate(['wallet:', 'portfolio:', 'home:'])
-    setReceipt(result.data)
+    try {
+      const result = await run(stepUpRequired(integration), (reauthentication) => createTransfer(reauthentication ? { ...body, reauthentication } : body, key), [
+        { label: f.common.amount, value: <strong className={s.num}>{exact(atomic)}</strong> },
+        { label: t.to, value: <Addr value={id} head={8} tail={4} /> },
+        { label: f.common.fee, value: t.feeValue },
+      ])
+      if (!result) { setServerError(f.common.cancelled); return }
+      if (!result.ok) { setServerError(errorText(f, result.error, common.errorGeneric)); return }
+      invalidate(['wallet:', 'portfolio:', 'home:'])
+      setReceipt(result.data)
+    } catch {
+      // Fields and key are kept; retrying sends the same idempotent intent.
+      setServerError(common.errorGeneric)
+    } finally {
+      inflight.current = false
+      setPending(false)
+    }
   }
   const again = () => { keys.current.clear(); setReceipt(null); setAmount(''); setConsent(false); setTouched(false); setServerError(null) }
   const [pasteFailed, setPasteFailed] = useState(false)
   /** Accepts a bare user id or a scanned receive link (`…/assets/cash/transfer?to=<id>`). */
   const paste = async () => {
+    if (inflight.current) return
     try {
       const text = (await navigator.clipboard.readText()).trim()
       let value = text
@@ -398,42 +415,46 @@ export function TransferScreen({ query }: { query: string }) {
   const topbar = <RwaTopbar screen="transfer" title={t.title} onBack={() => backOr('/assets/cash')} />
   if (receipt) return <MaisonPage page="transfer" className={fs.page} topbar={topbar}>
     <h1 className={fp.srTitle}>{t.title}</h1>
-    <Receipt f={f} title={t.done} created={receipt.created} integration={receipt.integration} onAgain={again} rows={[
-      { label: f.common.reference, value: <span className={s.mono} dir="ltr" data-ref="">{receipt.id.slice(0, 8)}</span> },
-      { label: f.common.state, value: <span className={s.badge} data-tone={stateTone(receipt.state)}>{stateLabel(states, receipt.state)}</span> },
-      { label: f.common.amount, value: fmtAtomic(receipt.atomicAmount, decimals, unit) },
-      { label: f.common.fee, value: t.feeValue },
-      { label: t.to, value: <bdi dir="ltr" className={s.mono}>{mask(receipt.recipientUserId)}</bdi> },
-    ]} />
+    <div className={tf.receipt} data-tone={stateTone(receipt.state)}>
+      <Receipt f={f} title={['completed', 'posted'].includes(receipt.state) ? t.done : stateLabel(states, receipt.state)} created={receipt.created} integration={receipt.integration} onAgain={again} rows={[
+        { label: f.common.reference, value: <span className={s.mono} dir="ltr" data-ref="">{receipt.id.slice(0, 8)}</span> },
+        { label: f.common.state, value: <span className={s.badge} data-tone={stateTone(receipt.state)}>{stateLabel(states, receipt.state)}</span> },
+        { label: f.common.amount, value: exact(receipt.atomicAmount) },
+        { label: f.common.fee, value: t.feeValue },
+        { label: t.to, value: <bdi dir="ltr" className={s.mono}>{mask(receipt.recipientUserId)}</bdi> },
+      ]} />
+    </div>
   </MaisonPage>
 
-  return <MaisonPage page="transfer" className={fs.page} topbar={topbar} cta>
-    {scanning&&<TransferScanner onClose={()=>setScanning(false)} onCode={code=>{const value=transferRecipientFromCode(code,window.location.origin);if(!value)return false;setRecipient(value);setServerError(null);setConsent(false);return true}}/>}
+  return <MaisonPage page="transfer" className={`${fs.page} ${tf.form}`} topbar={topbar} cta>
+    {scanning&&<TransferScanner onClose={()=>setScanning(false)} onCode={code=>{if(inflight.current)return false;const value=transferRecipientFromCode(code,window.location.origin);if(!value)return false;setRecipient(value);setServerError(null);setConsent(false);return true}}/>}
     <h1 className={fp.srTitle}>{t.title}</h1>
     {wallet.error && !wallet.data ? <StateBlock tone="error" title={common.errorGeneric} body={wallet.error.message} retry={wallet.refetch} retryLabel={common.retry} />
       : !wallet.data ? <Skeleton rows={4} />
       : <>
-        <label className={`${s.field} ${fs.field} ${fs.first}`}>
+        <label className={`${s.field} ${fs.field} ${fs.first} ${tf.field}`} data-invalid={Boolean(recipientError) || undefined} data-valid={(id && !recipientError) || undefined}>
           <span>{t.recipient}</span>
-          <input value={recipient} autoComplete="off" spellCheck={false} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-invalid={Boolean(recipientError)} aria-describedby="transfer-recipient-meta"
+          <input value={recipient} disabled={pending} autoComplete="off" spellCheck={false} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-invalid={Boolean(recipientError)} aria-describedby="transfer-recipient-meta"
             onChange={(event) => { setRecipient(event.target.value.replace(/\s/g, '')); setServerError(null); setPasteFailed(false); setConsent(false) }} />
         </label>
         <div className={fs.actions}>
-          <button type="button" className={s.ghost} onClick={() => void paste()}><ClipboardPaste size={15} aria-hidden="true" />{t.paste}</button>
-          <button type="button" className={s.ghost} onClick={() => setScanning(true)}><QrCode size={15} aria-hidden="true" />{t.scan}</button>
+          <button type="button" className={s.ghost} disabled={pending} onClick={() => void paste()}><ClipboardPaste size={15} aria-hidden="true" />{t.paste}</button>
+          <button type="button" className={s.ghost} disabled={pending} onClick={() => setScanning(true)}><QrCode size={15} aria-hidden="true" />{t.scan}</button>
         </div>
         {recipientError ? <p className={s.fieldError} id="transfer-recipient-meta" role="alert">{recipientError}</p> : pasteFailed ? <p className={fs.hint} id="transfer-recipient-meta" role="status">{t.pasteFailed}</p> : null}
         <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/receive')}><QrCode size={14} aria-hidden="true" />{t.myCode}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
 
-        <AmountField id="transfer-amount" label={f.common.amount} unit={unit} value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} touched={touched || amount.length > 0} onBlur={() => setTouched(true)} error={fieldError} maxLabel={f.common.max}
-          max={available && BigInt(available) > ZERO ? fromAtomic(available, decimals) : null} available={fill(f.common.available, { v: fmtAtomic(available, decimals, unit) })} />
+        <div className={tf.amount} data-invalid={Boolean(fieldError && (touched || amount.length > 0)) || undefined}>
+          <AmountField id="transfer-amount" label={f.common.amount} unit={unit} value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} touched={touched || amount.length > 0} onBlur={() => setTouched(true)} error={fieldError} maxLabel={f.common.max} preserveRaw disabled={pending}
+            max={available && BigInt(available) > ZERO ? fromAtomic(available, decimals) : null} available={fill(f.common.available, { v: exact(available) })} />
+        </div>
 
         <div aria-live="polite">
           <dl className={`${s.summary} ${fs.rows}`}>
             <div><dt>{t.to}</dt><dd>{id && !recipientError ? <Addr value={id} head={8} tail={4} /> : '—'}</dd></div>
             <div><dt>{f.common.fee}</dt><dd className={s.num}>{t.feeValue}</dd></div>
-            <div data-strong="true"><dt>{f.common.amount}</dt><dd className={s.num}>{atomic && !fieldError ? fmtAtomic(atomic, decimals, unit) : '—'}</dd></div>
-            <div><dt>{f.common.after}</dt><dd className={s.num}>{atomic && !fieldError && available !== null ? fmtAtomic((BigInt(available) - BigInt(atomic)).toString(), decimals, unit) : '—'}</dd></div>
+            <div data-strong="true"><dt>{f.common.amount}</dt><dd className={s.num}>{atomic && !fieldError ? exact(atomic) : '—'}</dd></div>
+            <div><dt>{f.common.after}</dt><dd className={s.num}>{atomic && !fieldError && available !== null ? exact((BigInt(available) - BigInt(atomic)).toString()) : '—'}</dd></div>
           </dl>
         </div>
         {integration && !integration.realFunds && <div className={`${s.notice} ${fs.note}`} data-tone="info"><Info size={16} /><span>{f.common.stubNote}</span></div>}
@@ -446,13 +467,13 @@ export function TransferScreen({ query }: { query: string }) {
         </details>
         <div className={`${s.stickyCta} ${fs.fixedCta}`}>
           <label className={`${s.consent} ${fs.consent}`}>
-            <input type="checkbox" checked={consent} onChange={(event) => { setConsent(event.target.checked); setServerError(null) }} />
+            <input type="checkbox" checked={consent} disabled={pending} onChange={(event) => { setConsent(event.target.checked); setServerError(null) }} />
             <span>{t.consent}{id && !recipientError && <> {fill(t.idTail, { d: id.slice(-4) })}</>}</span>
           </label>
-          {serverError && <div className={`${s.notice} ${fs.note}`} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
-          <button type="button" className={s.cta} onClick={submit} disabled={!ready} aria-busy={pending}>
+          {serverError && <div className={`${s.notice} ${fs.note} ${tf.error}`} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
+          <button type="button" className={`${s.cta} ${tf.cta}`} onClick={submit} disabled={!ready} aria-busy={pending}>
             <span>{pending ? f.common.submitting : t.submit}</span>
-            <span className={s.ctaIcon}><Send size={17} /></span>
+            <span className={s.ctaIcon}>{pending ? <Loader2 size={17} className={tf.spin} aria-hidden="true" /> : <Send size={17} aria-hidden="true" />}</span>
           </button>
         </div>
       </>}

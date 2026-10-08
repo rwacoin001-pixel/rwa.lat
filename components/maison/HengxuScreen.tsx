@@ -13,6 +13,7 @@ import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { proCopy } from '@/lib/maison-pro-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { usePageState } from '@/lib/app-navigation'
+import { sharedBack, sharedOpen } from '@/lib/market-shared-transition'
 import { HENGXU_FEATURED, HENGXU_PRODUCTS, hengxuById, hengxuImage, type HengxuHorizon, type HengxuProduct, type HengxuRisk, type HengxuTerms } from '@/lib/hengxu-products'
 import { hengxuCopy, hengxuText, type HengxuCopy } from '@/lib/hengxu-copy'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
@@ -41,8 +42,10 @@ export function useListings() {
 function go(event: MouseEvent<HTMLAnchorElement>, path: string) {
   if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
   event.preventDefault()
-  openPath(path)
+  sharedOpen(event.currentTarget, () => openPath(path))
 }
+
+const sharedKey = (product: HengxuProduct, part: 'title' | 'image') => `strategy:${product.id}:${part}`
 
 /** Body copy only exists in zh/en; other locales read English, so mark it and let each block pick its own direction. */
 const bodyProps = (locale: AppLocale) => locale === 'zh-CN' || locale === 'en' ? {} : { lang: 'en', dir: 'auto' as const }
@@ -79,7 +82,7 @@ export function names(product: HengxuProduct, locale: AppLocale) {
 
 function Picture({ product, locale, sizes, priority, ratio }: { product: HengxuProduct; locale: AppLocale; sizes: string; priority?: boolean; ratio?: 'card' | 'natural' }) {
   const text = hengxuText(product, locale)
-  return <span className={h.picture} data-ratio={ratio ?? 'card'} style={ratio === 'natural' ? { aspectRatio: `${product.image.width} / ${product.image.height}` } : undefined}>
+  return <span className={h.picture} data-shared={sharedKey(product, 'image')} data-ratio={ratio ?? 'card'} style={ratio === 'natural' ? { aspectRatio: `${product.image.width} / ${product.image.height}` } : undefined}>
     <Image src={hengxuImage(product, ratio === 'natural' ? 1440 : 720)} alt={text.alt} fill sizes={sizes} priority={priority} style={{ objectFit: 'cover', objectPosition: product.image.focus }} />
   </span>
 }
@@ -165,9 +168,9 @@ function LiveRow({ basket }: { basket: BasketPortfolio }) {
   const market = marketCopy[locale]
   const name = basket.name || basket.strategyName || basket.id
   const sub = [basket.strategyName && basket.strategyName !== name ? basket.strategyName : null, basket.riskLevel, basket.minimumSubscriptionUsd ? fill(market.markets.from, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) }) : null]
-  return <button type="button" className={s.row} onClick={() => openPath(`/basket/${encodeURIComponent(basket.id)}`)}>
+  return <button type="button" className={s.row} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/basket/${encodeURIComponent(basket.id)}`))}>
     <Logo src={basket.strategySlug ? `/baskets/${encodeURIComponent(basket.strategySlug)}_thumb.webp` : null} name={name} />
-    <span className={s.rowMain}><b>{name}</b><small>{sub.filter(Boolean).join(' · ')}</small></span>
+    <span className={s.rowMain}><b data-shared={`basket:${basket.id}:title`}>{name}</b><small>{sub.filter(Boolean).join(' · ')}</small></span>
     <span className={s.rowFig}><b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b><small className={s.muted}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</small></span>
   </button>
 }
@@ -181,7 +184,7 @@ function FeaturedCard({ product, listing }: { product: HengxuProduct; listing?: 
     <Picture product={product} locale={locale} sizes="(max-width: 480px) 100vw, 480px" priority />
     <span className={h.featuredBody}>
       <span className={h.meta}><span>{copy.flagship}</span><span className={s.num}>{product.no} / 10</span></span>
-      <span className={h.nameLine}><b className={h.mark} lang="zh-CN">{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
+      <span className={h.nameLine}><b className={h.mark} lang="zh-CN" data-shared={sharedKey(product, 'title')}>{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
       <span className={h.oneLiner} {...bodyProps(locale)}>{text.oneLiner}</span>
       <span className={h.featuredFacts}>
         <span><small>{copy.fields.risk}</small><RiskMeter risk={product.risk} copy={copy} /></span>
@@ -202,7 +205,7 @@ function StrategyRow({ product, listing }: { product: HengxuProduct; listing?: C
   return <a href={detailPath(product)} className={h.row} onClick={(event) => go(event, detailPath(product))}>
     <Picture product={product} locale={locale} sizes="96px" />
     <span className={h.rowText}>
-      <span className={h.nameLine}><b className={h.markS} lang="zh-CN">{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
+      <span className={h.nameLine}><b className={h.markS} lang="zh-CN" data-shared={sharedKey(product, 'title')}>{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
       <span className={h.rowLine} {...bodyProps(locale)}>{text.oneLiner}</span>
       <span className={h.rowFoot}><RiskMeter risk={product.risk} copy={copy} /><StageBadge product={product} listing={listing} copy={copy} /></span>
     </span>
@@ -219,7 +222,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const copy = hengxuCopy[locale]
   const listings = useListings()
   const product = hengxuById(id)
-  const topbar = <RwaTopbar screen="strategy-detail" title={product ? product.zh.name : copy.series} onBack={() => backOr('/markets?tab=baskets')} />
+  const topbar = <RwaTopbar screen="strategy-detail" title={product ? product.zh.name : copy.series} onBack={() => product ? sharedBack(`strategy:${product.id}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
   if (!product) return <MaisonPage page="strategy" dock topbar={topbar}><div className={s.hero}>
     <StateBlock title={copy.notFound} body={copy.notFoundBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets?tab=baskets')}>{copy.back}</button>} />
@@ -250,7 +253,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
 
     <header className={h.head}>
       <p className={s.kicker}>{copy.series} · <span className={s.num}>{product.no} / 10</span></p>
-      <h1 className={h.title}><span className={h.markL} lang="zh-CN">{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
+      <h1 className={h.title}><span className={h.markL} lang="zh-CN" data-shared={sharedKey(product, 'title')}>{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
       <p className={h.badges}>
         {!listing && <span className={s.badge} data-tone="warn">{copy.concept}</span>}
         <StageBadge product={product} listing={listing} copy={copy} />

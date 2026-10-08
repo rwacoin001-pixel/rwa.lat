@@ -19,7 +19,8 @@ import { heroCardCopy } from '@/lib/hero-card-copy'
 import { AMOUNT_MASK, useAmountMask } from '@/lib/use-amount-mask'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
-import { Figure, Lacquer, PollBar, PriceChart, Segmented, StatStrip, useAutoAnimate } from './motion'
+import { Figure, Lacquer, PollBar, Segmented, StatStrip, useAutoAnimate } from './motion'
+import { PortfolioHistoryChart } from './PortfolioHistoryChart'
 import { MyPredictionsCard } from './MyPredictionsCard'
 import { RedeemDone, RedeemSheet, RedemptionsSection } from './RedeemSheet'
 import { assetToolsCopy } from '@/lib/maison-assets-tools-copy'
@@ -295,8 +296,8 @@ function History({ productId, index = '02' }: { productId?: string; index?: stri
       : !history.data ? <Skeleton rows={3} />
       : points.length < 2 ? <StateBlock title={p.historyEmpty} body={p.historyEmptyBody} />
       : <>
-        <PriceChart points={points} digits={2} locale={locale} label={p.history} unit="USDT" height={180} />
-        <p className={s.foot}><span>{fill(p.valued, { t: fmtDateTime(new Date(points[points.length - 1].time * 1000).toISOString(), locale) })}</span><span>{fmtDate(new Date(points[0].time * 1000).toISOString(), locale)} – {fmtDate(new Date(points[points.length - 1].time * 1000).toISOString(), locale)}</span></p>
+        <PortfolioHistoryChart points={points} locale={locale} unit="USDT" />
+        <p className={s.foot}><span>{fill(p.valued, { t: fmtDateTime(new Date(points[points.length - 1].time * 1000).toISOString(), locale) })}</span></p>
       </>}
   </>
 }

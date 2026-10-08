@@ -12,6 +12,7 @@ import { fmtUsd, fromAtomic, toAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { tradeCopy } from '@/lib/maison-trade-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
+import { sharedBack } from '@/lib/market-shared-transition'
 import { Logo, MaisonPage, SectionHead, Skeleton, Sparkline, StateBlock, maison as s } from './primitives'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 
@@ -61,7 +62,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   const detail = useBasket(validId)
   const basket = detail.data
   const content=useContentTranslation(basket?[basket.name,basket.strategyName,...basket.holdings.map(h=>h.name)]:[])
-  const topbar = <RwaTopbar screen="basket-detail" title={basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => backOr('/markets?tab=baskets')} />
+  const topbar = <RwaTopbar screen="basket-detail" title={basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => validId ? sharedBack(`basket:${validId}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
   if (!validId) return <Missing page="basket" topbar={topbar} />
   if (!basket && !detail.error) return <MaisonPage page="basket" dock topbar={topbar}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
@@ -75,7 +76,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   return <MaisonPage page="basket" dock topbar={topbar} cta={open}>
     <header className={s.hero}>
       <p className={s.kicker}>{b.kicker}</p>
-      <h1 className={s.titleL}>{content(basket.name)}</h1>
+      <h1 className={s.titleL} data-shared={`basket:${basket.id}:title`}>{content(basket.name)}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <span className={s.badge} data-tone={open ? 'live' : 'warn'}>{statusLabel(b, basket.status)}</span>
         {basket.riskLevel && <span className={s.badge}>{b.risk} · {basket.riskLevel}</span>}

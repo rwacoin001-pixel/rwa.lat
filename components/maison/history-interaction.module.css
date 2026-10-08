@@ -1,0 +1,55 @@
+/* Portfolio history chart: reading mode + range switch. Tokens only; no new palette. */
+.panel { display: grid; gap: 10px; }
+
+.caption { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 12px; }
+.caption > div { display: grid; gap: 2px; min-width: 0; flex: 1 1 auto; }
+.caption p { margin: 0; }
+.value { font-size: 20px; font-weight: 600; color: var(--m-ink); }
+.value small { font-size: 11px; color: var(--m-faint); font-weight: 500; }
+.delta { font-size: 11.5px; color: var(--m-faint); }
+.delta[data-sign='up'] bdi { color: var(--m-up); }
+.delta[data-sign='down'] bdi { color: var(--m-down); }
+.time { font-size: 11.5px; color: var(--m-faint); min-width: 0; max-width: 100%; overflow-wrap: anywhere; text-align: end; }
+
+.graph { position: relative; border-radius: var(--m-radius, 12px); outline-offset: 2px; }
+.graph svg {
+  display: block; width: 100%; height: 180px; overflow: visible;
+  -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  animation: fade 220ms ease-out both;
+}
+.graph svg:focus-visible { outline: 2px solid var(--m-accent); border-radius: var(--m-radius, 12px); }
+.panel[data-active] .graph { background: color-mix(in srgb, var(--m-accent) 5%, transparent); }
+
+.grid { stroke: var(--m-line-soft); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.area { fill: color-mix(in srgb, var(--m-accent) 12%, transparent); stroke: none; }
+.line {
+  fill: none; stroke: var(--m-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
+  vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0;
+  animation: draw 460ms cubic-bezier(.2, .7, .2, 1) both;
+}
+.cross { stroke: var(--m-faint); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
+.dot { fill: var(--m-accent); stroke: var(--m-bg); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.end { opacity: .85; }
+
+.dates { display: flex; justify-content: space-between; gap: 8px; font-size: 11px; color: var(--m-faint); }
+
+.ranges button { min-height: 44px; }
+
+.toggle {
+  display: flex; align-items: center; gap: 8px; flex-wrap: wrap; min-height: 44px; width: 100%;
+  padding: 8px 14px; border: 1px solid var(--m-line-soft); border-radius: var(--m-radius, 12px);
+  background: transparent; color: var(--m-ink); font: inherit; font-size: 13px; text-align: start; cursor: pointer;
+}
+.toggle span { color: var(--m-faint); font-size: 11.5px; margin-inline-start: auto; }
+.toggle[aria-pressed='true'] { border-color: var(--m-accent); color: var(--m-accent); }
+.toggle:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+.srOnly { position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes draw { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .graph svg, .line { animation: none; }
+}
+:global([data-motion='off']) .graph svg, :global([data-motion='off']) .line { animation: none; }
