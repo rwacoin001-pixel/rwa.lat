@@ -1,16 +1,18 @@
-import { Controller, Get, Param, ParseArrayPipe, ParseUUIDPipe, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, ParseArrayPipe, ParseUUIDPipe, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger'
 import { AdminService } from './admin.service'
 import { AdminPublic } from './admin.guard.decorator'
-import { ListQueryDto, RedemptionListQueryDto } from './admin.dto'
+import { RedemptionListQueryDto, UserListQueryDto } from './admin.dto'
 import { AdminPermissionGuard, RequireAdminPermissions } from './admin-permission.guard'
+import { AdminCoreOpsService } from './admin-core-ops.service'
+import type { AdminRequest } from './admin-session.guard'
 
 @ApiTags('admin')
 @ApiBearerAuth()
 @Controller('admin')
 @UseGuards(AdminPermissionGuard)
 export class AdminController {
-  constructor(private readonly admin: AdminService) {}
+  constructor(private readonly admin: AdminService, private readonly core: AdminCoreOpsService) {}
 
   @AdminPublic()
   @Get('health')
@@ -20,10 +22,21 @@ export class AdminController {
 
   @Get('users')
   @RequireAdminPermissions('users.read')
-  @ApiOperation({ summary: 'List registered users (read-only)' })
-  async listUsers(@Query() q: ListQueryDto) {
-    const users = await this.admin.listUsers(q.limit, q.offset)
-    return { count: users.length, users }
+  @ApiOperation({ summary: 'Search registered users, identity information and ledger balances' })
+  async listUsers(@Req() r: AdminRequest, @Query() q: UserListQueryDto) {
+    return this.core.get(r.admin!.id, '/user-management', { limit: q.limit, offset: q.offset, q: q.q, status: q.status })
+  }
+
+  @Get('users/:id')
+  @RequireAdminPermissions('users.read')
+  async getUser(@Req() r: AdminRequest, @Param('id', new ParseUUIDPipe()) id: string) {
+    return this.core.get(r.admin!.id, `/user-management/${id}`)
+  }
+
+  @Post('users/:id/balance-adjustments')
+  @RequireAdminPermissions('users.read', 'ledger.adjustments.manage', 'ledger.adjustments.post')
+  async adjustUserBalance(@Req() r: AdminRequest, @Param('id', new ParseUUIDPipe()) id: string, @Body() body: Record<string, unknown>) {
+    return this.core.post(r.admin!.id, `/user-management/${id}/balance-adjustments`, body)
   }
 
   @Get('redemptions')

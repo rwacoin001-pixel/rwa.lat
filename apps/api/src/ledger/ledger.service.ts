@@ -26,6 +26,17 @@ interface CreateLedgerAdjustmentInput {
   requestId: string
 }
 
+export interface UserBalanceAdjustmentInput {
+  userId: string
+  adminId: string
+  operationId: string
+  mode: 'credit' | 'debit' | 'set'
+  amount: string
+  expectedAtomicBalance: string
+  reason: string
+  requestId: string
+}
+
 interface LedgerTransactionCursor {
   effectiveAt: string
   id: string
@@ -444,7 +455,78 @@ export class LedgerService {
   }
 
   async postLedgerAdjustment(adjustmentId: string, adminId: string, requestId: string) {
+    return this.transaction((runner) => this.postAdjustment(runner, adjustmentId, adminId, requestId))
+  }
+
+  /** One explicit administrator confirmation; all request, approval and posting writes commit together. */
+  async adjustUserBalance(input: UserBalanceAdjustmentInput) {
+    const invalid = () => new BadRequestException({ code: 'USER_ADJUSTMENT_INVALID', message: '请输入有效金额（最多 6 位小数）、操作编号和至少 3 个字的调整原因。' })
+    if (!/^(0|[1-9]\d{0,71})(?:\.\d{1,6})?$/.test(input.amount)
+      || !/^(0|[1-9]\d{0,77})$/.test(input.expectedAtomicBalance)
+      || !LEDGER_TRANSACTION_ID.test(input.operationId) || !['credit', 'debit', 'set'].includes(input.mode)
+      || input.reason.trim().length < 3 || input.reason.trim().length > 240) throw invalid()
+    const [whole, fraction = ''] = input.amount.split('.')
+    const amount = BigInt(whole) * 1_000_000n + BigInt(fraction.padEnd(6, '0'))
+    if (input.mode !== 'set' && amount === 0n) throw invalid()
     return this.transaction(async (runner) => {
+      await runner.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`admin-user-balance:${input.adminId}:${input.operationId}`])
+      const [existing] = await runner.query(`SELECT id, state, evidence, posted_ledger_transaction_id
+        FROM app.ledger_adjustment_requests WHERE requested_by = $1 AND request_id = $2
+          AND evidence->>'origin' = 'admin-user-management' LIMIT 1`, [input.adminId, input.operationId])
+      if (existing) {
+        const e = existing.evidence
+        if (existing.state !== 'posted' || e.userId !== input.userId || e.mode !== input.mode
+          || e.amountAtomic !== amount.toString() || e.reason !== input.reason.trim() || e.beforeAtomic !== input.expectedAtomicBalance) {
+          throw new ConflictException({ code: 'USER_ADJUSTMENT_DUPLICATE_CONFLICT', message: '此操作编号已用于另一笔调整，请刷新后重试。' })
+        }
+        return { id: existing.id, userId: input.userId, state: 'posted', ledgerTransactionId: existing.posted_ledger_transaction_id,
+          beforeAtomic: e.beforeAtomic, afterAtomic: e.afterAtomic, duplicate: true }
+      }
+      if (process.env.LEDGER_ALLOW_SELF_APPROVAL !== 'true') {
+        throw new ConflictException({ code: 'USER_ADJUSTMENT_SINGLE_OPERATOR_DISABLED', message: '当前未启用单人调账，请联系系统管理员。' })
+      }
+      const [user] = await runner.query('SELECT id, status FROM app.users WHERE id = $1 FOR SHARE', [input.userId])
+      if (!user) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: '用户不存在。' })
+      if (user.status !== 'active') throw new ConflictException({ code: 'USER_ADJUSTMENT_UNAVAILABLE', message: '只能调整状态正常的用户。' })
+      await runner.query(`INSERT INTO app.ledger_accounts (owner_type, user_id, purpose, asset_code, asset_decimals, normal_side)
+        VALUES ('user', $1, 'available', 'USDT', 6, 'credit') ON CONFLICT DO NOTHING`, [input.userId])
+      const [account] = await runner.query(`SELECT id, normal_side, asset_decimals, state FROM app.ledger_accounts
+        WHERE owner_type = 'user' AND user_id = $1 AND purpose = 'available' AND asset_code = 'USDT' AND network IS NULL FOR SHARE`, [input.userId])
+      if (!account || account.state !== 'active' || account.asset_decimals !== 6) {
+        throw new ConflictException({ code: 'USER_ADJUSTMENT_UNAVAILABLE', message: '用户的 USDT 可用账户不可调账。' })
+      }
+      await runner.query(`INSERT INTO app.ledger_account_balances (account_id)
+        SELECT $1 WHERE NOT EXISTS (SELECT 1 FROM app.ledger_entries WHERE account_id = $1) ON CONFLICT DO NOTHING`, [account.id])
+      const [balance] = await runner.query('SELECT current_atomic_balance::text AS "atomicBalance" FROM app.ledger_account_balances WHERE account_id = $1 FOR UPDATE', [account.id])
+      if (!balance) throw new ConflictException({ code: 'USER_ADJUSTMENT_UNAVAILABLE', message: '账本余额投影缺失，请先完成账本核对。' })
+      const before = BigInt(balance.atomicBalance)
+      if (before.toString() !== input.expectedAtomicBalance) {
+        throw new ConflictException({ code: 'USER_BALANCE_CHANGED', message: '用户余额已变化，请刷新并重新核对金额。' })
+      }
+      const delta = input.mode === 'set' ? amount - before : input.mode === 'credit' ? amount : -amount
+      const after = before + delta
+      if (after < 0n) throw new ConflictException({ code: 'USER_BALANCE_INSUFFICIENT', message: '扣减金额超过当前可用余额。' })
+      if (after.toString().length > 78) throw invalid()
+      if (delta === 0n) throw new BadRequestException({ code: 'USER_ADJUSTMENT_NO_CHANGE', message: '目标余额与当前余额相同，无需调账。' })
+      const side = delta > 0n ? account.normal_side : account.normal_side === 'credit' ? 'debit' : 'credit'
+      const atomicAmount = (delta < 0n ? -delta : delta).toString()
+      const reasonCode = input.mode === 'set' ? 'manual_set_balance' : `manual_${input.mode}`
+      const evidence = { origin: 'admin-user-management', userId: input.userId, mode: input.mode, amountAtomic: amount.toString(),
+        reason: input.reason.trim(), beforeAtomic: before.toString(), afterAtomic: after.toString() }
+      const id = randomUUID()
+      await runner.query(`INSERT INTO app.ledger_adjustment_requests
+        (id, ledger_account_id, side, atomic_amount, reason_code, evidence, requested_by, request_id)
+        VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING id, state`,
+      [id, account.id, side, atomicAmount, reasonCode, JSON.stringify(evidence), input.adminId, input.operationId])
+      await this.auditAdmin(runner, input.adminId, input.requestId, 'ledger.adjustment.requested', id, { ...evidence, ledgerAccountId: account.id, side, atomicAmount })
+      await runner.query(`UPDATE app.ledger_adjustment_requests SET state = 'approved', approved_by = $2, decided_at = now() WHERE id = $1`, [id, input.adminId])
+      await this.auditAdmin(runner, input.adminId, input.requestId, 'ledger.adjustment.approved', id, { singleOperator: true, requestedBy: input.adminId })
+      const posted = await this.postAdjustment(runner, id, input.adminId, input.requestId)
+      return { ...posted, userId: input.userId, beforeAtomic: before.toString(), afterAtomic: after.toString() }
+    })
+  }
+
+  private async postAdjustment(runner: QueryRunner, adjustmentId: string, adminId: string, requestId: string) {
       const [adjustment] = await runner.query(
         `SELECT * FROM app.ledger_adjustment_requests WHERE id = $1 FOR UPDATE`,
         [adjustmentId],
@@ -467,7 +549,7 @@ export class LedgerService {
         })
       }
       const [target] = await runner.query(
-        `SELECT id, owner_type, asset_code, asset_decimals, network, state
+        `SELECT id, owner_type, user_id, purpose, asset_code, asset_decimals, network, state
          FROM app.ledger_accounts WHERE id = $1 FOR SHARE`,
         [adjustment.ledger_account_id],
       )
@@ -476,6 +558,17 @@ export class LedgerService {
           code: LEDGER_ERROR_CODES.ACCOUNT_NOT_FOUND,
           message: 'Adjustment target account is missing or inactive.',
         })
+      }
+      // A user-targeted adjustment must still match the confirmed account and balance at posting.
+      if (adjustment.evidence?.origin === 'admin-user-management') {
+        if (target.owner_type !== 'user' || target.user_id !== adjustment.evidence.userId || target.purpose !== 'available'
+          || target.asset_code !== 'USDT' || target.asset_decimals !== 6 || target.network !== null) {
+          throw new ConflictException({ code: 'USER_ADJUSTMENT_UNAVAILABLE', message: '调整目标账户已变化。' })
+        }
+        const [balance] = await runner.query('SELECT current_atomic_balance::text AS "atomicBalance" FROM app.ledger_account_balances WHERE account_id = $1 FOR UPDATE', [target.id])
+        if (!balance || balance.atomicBalance !== adjustment.evidence.beforeAtomic) {
+          throw new ConflictException({ code: 'USER_BALANCE_CHANGED', message: '用户余额已变化，请重新核对金额。' })
+        }
       }
       await runner.query(
         `INSERT INTO app.ledger_accounts
@@ -546,7 +639,6 @@ export class LedgerService {
         approvedBy: adjustment.approved_by as string,
       })
       return { id: adjustmentId, state: 'posted', ledgerTransactionId: persistedTransactionId, duplicate: !inserted.length }
-    })
   }
 
   /**

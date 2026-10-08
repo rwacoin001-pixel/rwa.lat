@@ -29,7 +29,7 @@ describeDatabase('ledger reconciliation schema', () => {
     )).rejects.toMatchObject({ code: '23514' })
   })
 
-  it('prevents one person from requesting and approving an adjustment', async () => {
+  it('allows recorded single-operator approval while requiring approval evidence and a valid posting state', async () => {
     const [user] = await dataSource.query(`INSERT INTO app.users DEFAULT VALUES RETURNING id`)
     const [account] = await dataSource.query(
       `INSERT INTO app.ledger_accounts
@@ -38,12 +38,16 @@ describeDatabase('ledger reconciliation schema', () => {
       [user.id],
     )
     const actor = randomUUID()
-    await expect(dataSource.query(
+    const rows = await dataSource.query(
       `INSERT INTO app.ledger_adjustment_requests
         (ledger_account_id, side, atomic_amount, reason_code, state,
          requested_by, approved_by, request_id, decided_at)
-       VALUES ($1, 'credit', 1, 'test_adjustment', 'approved', $2, $2, $3, now())`,
+       VALUES ($1, 'credit', 1, 'test_adjustment', 'approved', $2, $2, $3, now()) RETURNING state`,
       [account.id, actor, randomUUID()],
-    )).rejects.toMatchObject({ code: '23514' })
+    )
+    expect(rows[0].state).toBe('approved')
+    await expect(dataSource.query(`INSERT INTO app.ledger_adjustment_requests
+      (ledger_account_id, side, atomic_amount, reason_code, state, requested_by, request_id)
+      VALUES ($1, 'credit', 1, 'test_adjustment', 'approved', $2, $3)`, [account.id, actor, randomUUID()])).rejects.toMatchObject({ code: '23514' })
   })
 })
