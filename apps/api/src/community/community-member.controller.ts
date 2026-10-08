@@ -46,6 +46,12 @@ export class CommunityMediaController {
 @Controller('admin/community/publications') @UseGuards(AdminSessionGuard)
 export class AdminCommunityMemberController {
   constructor(private readonly member: CommunityMemberService, private readonly rbac: AdminRbacService) {}
-  @Get() async list(@CurrentAdmin() a: AuthenticatedAdmin) { await this.rbac.assertPermission(a.id, 'community.content.review'); return this.member.publications() }
-  @Post('moderate') async moderate(@CurrentAdmin() a: AuthenticatedAdmin, @Body() dto: ModerateMemberContentDto) { await this.rbac.assertPermission(a.id, 'community.content.review'); return this.member.moderate(dto, a.id) }
+  private async authorize(a: AuthenticatedAdmin) {
+    // AdminSessionGuard verifies the service token; the admin gateway checks the actor's RBAC.
+    // The core database retains that actor only as an audit principal.
+    const delegated = a.roleId === 'service-channel' && a.sessionId === `service:${a.id}` && a.permissions.includes('*')
+    if (!delegated) await this.rbac.assertPermission(a.id, 'community.content.review')
+  }
+  @Get() async list(@CurrentAdmin() a: AuthenticatedAdmin) { await this.authorize(a); return this.member.publications() }
+  @Post('moderate') async moderate(@CurrentAdmin() a: AuthenticatedAdmin, @Body() dto: ModerateMemberContentDto) { await this.authorize(a); return this.member.moderate(dto, a.id) }
 }
