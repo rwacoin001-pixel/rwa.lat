@@ -1,23 +1,21 @@
 'use client'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
+import { Fingerprint } from 'lucide-react'
 import AppLoading from './app-loading'
+import RwaLogoMark from './rwa-logo'
 import { clearSession, readSession, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
 import { clearAiChatSession } from '@/lib/ai-chat-session'
 import { logout } from '@/lib/api/auth'
 import { listSecurityFactors, stepUpWithPasskey } from '@/lib/api/security'
 import { useI18n } from '@/lib/i18n'
 import { needsIdleVerification } from '@/lib/session-idle'
-import { fundsCopy } from '@/lib/maison-funds-copy'
-import { MaisonPage, maison as s } from './maison/primitives'
+import { useRwaTheme } from '@/lib/rwa-theme'
+import { sessionUnlockCopy } from '@/lib/session-unlock-copy'
+import { MaisonPage } from './maison/primitives'
 import { useStepUp } from './maison/StepUp'
-
-const labels = {
-  en: ['Unlock', 'Sign in again'], 'zh-CN': ['解锁', '重新登录'], hi: ['अनलॉक करें', 'फिर से लॉग इन करें'],
-  es: ['Desbloquear', 'Iniciar sesión de nuevo'], ar: ['فتح القفل', 'تسجيل الدخول مجددًا'],
-  fr: ['Déverrouiller', 'Se reconnecter'], pt: ['Desbloquear', 'Entrar novamente'],
-} as const
+import styles from './session-privacy-gate.module.css'
 
 /** Local privacy lock. It does not replace server-side session and money-out authorization. */
 export default function SessionPrivacyGate({ children }: { children: ReactNode }) {
@@ -31,6 +29,8 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
   const leaving = useRef(false)
   const pending = useRef<AbortController | null>(null)
   const { run, sheet } = useStepUp()
+  const { theme } = useRwaTheme()
+  const titleId = useId()
 
   useEffect(() => {
     const clearStoredAiThread = () => { try { clearAiChatSession(window.sessionStorage) } catch { /* Privacy cleanup must not block the session transition. */ } }
@@ -113,7 +113,6 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
       window.removeEventListener('pointerdown', activity); window.removeEventListener('keydown', activity)
     }
   // Route changes re-check the clock; verification closures only read refs and locale-independent state.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, publicAuth])
 
   const verify = async () => {
@@ -139,16 +138,23 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
     (current.current?.key === sessionKey && !needsIdleVerification(current.current?.last)))
   if ((status === 'open' && (checkedPath === pathname || canKeepMounted)) || publicAuth) return children
   if (status !== 'locked') return <AppLoading />
-  const t = fundsCopy[locale].stepUp
-  const text = labels[locale]
-  return <MaisonPage page="locked">
-    <div style={{ minHeight: '85dvh', display: 'grid', placeContent: 'center', justifyItems: 'center', gap: 20 }} aria-busy={busy}>
-      {status === 'locked' && <>
-        <p className={s.muted}>{t.title}</p>
-        <button type="button" className={s.cta} onClick={() => void verify()} disabled={busy}>{busy ? t.verifying : text[0]}</button>
-        <button type="button" className={s.link} onClick={() => void signIn()} disabled={busy}>{text[1]}</button>
-      </>}
-    </div>
-    {sheet}
-  </MaisonPage>
+  const text = sessionUnlockCopy[locale]
+  return <div className={`rwa-mobile ${styles.shell}`} data-theme={theme} data-screen="locked">
+    <MaisonPage page="locked" className={styles.page}>
+      <main className={styles.screen} dir={locale === 'ar' ? 'rtl' : 'ltr'} aria-labelledby={titleId}>
+        <div className={styles.top}><RwaLogoMark className={styles.logo} width={40} height={22} label="RWA.LAT" accentColor="#2FE6BF" /></div>
+        <div className={styles.mid}>
+          <div className={styles.mark} aria-hidden="true"><Fingerprint size={32} strokeWidth={1.5} /></div>
+          <h1 id={titleId} className={styles.title}>{text.title}</h1>
+          <p className={styles.description}>{text.description}</p>
+        </div>
+        <div className={styles.actions}>
+          <button type="button" className={styles.cta} onClick={() => void verify()} disabled={busy}>{busy ? text.verifying : text.unlock}</button>
+          <button type="button" className={styles.alt} onClick={() => void signIn()} disabled={busy}>{text.signInAgain}</button>
+        </div>
+        <p className={styles.live} role="status" aria-live="polite">{busy ? text.verifying : ''}</p>
+      </main>
+      {sheet}
+    </MaisonPage>
+  </div>
 }

@@ -11,6 +11,7 @@ global.localStorage = { getItem: key => data.get(key) ?? null, setItem: (key, va
 global.window = { isSecureContext: false, addEventListener: (name, fn) => { listeners[name] = fn }, removeEventListener() {}, location: { replace: value => { window.destination = value } } }
 let session = { userId: 'alice', sessionId: 'session-1', loggedInAt: new Date(now).toISOString() }
 const react = {
+  useId: () => 'unlock-title-fixture',
   useState: initial => { const i = cursor++; if (!(i in states)) states[i] = initial; return [states[i], value => { states[i] = value }] },
   useRef: initial => { const i = cursor++; return refs[i] ??= { current: initial } },
   useEffect: fn => { effects.push(fn) },
@@ -23,10 +24,20 @@ fixture.require = name => {
   if (name === 'next/navigation') return { usePathname: () => pathname }
   if (name === 'lucide-react') return { Fingerprint: 'Fingerprint' }
   if (name === './app-loading') return { default: 'AppLoading' }
+  if (name === './rwa-logo') return { default: 'RwaLogoMark' }
   if (name === '@/lib/api/_http') return { readSession: () => session, SESSION_CHANGED: 'session', clearSession: () => { session = null; listeners.session?.() } }
   if (name === '@/lib/api/auth') return { logout: async () => { session = null; listeners.session?.() } }
+  if (name === '@/lib/ai-chat-session') return { clearAiChatSession() {} }
   if (name === '@/lib/api/security') return { listSecurityFactors: async () => ({ ok: true, data: { passkeys: [{ state: 'active' }] } }), stepUpWithPasskey: async () => { assert.equal(window.isSecureContext, true); nativeCalls++; return nativeSuccess ? { ok: true, data: { reauthentication: 'native-proof' } } : { ok: false, error: { code: 'PASSKEY_CANCELLED' } } } }
   if (name === '@/lib/i18n') return { useI18n: () => ({ locale: 'en' }) }
+  if (name === '@/lib/rwa-theme') return { useRwaTheme: () => ({ theme: 'light' }) }
+  if (name.endsWith('.module.css')) return { default: {} }
+  if (name === '@/lib/session-unlock-copy') {
+    const copyFile = require('node:path').resolve(__dirname, '../lib/session-unlock-copy.ts')
+    const copy = new Module(copyFile)
+    copy._compile(ts.transpileModule(fs.readFileSync(copyFile, 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, copyFile)
+    return copy.exports
+  }
   if (name === '@/lib/maison-funds-copy') return { fundsCopy: { en: { stepUp: { title: 'Confirm', verifying: 'Verifying' } } } }
   if (name === './maison/primitives') return { MaisonPage: 'MaisonPage', maison: {} }
   if (name === './maison/StepUp') return { useStepUp: () => ({ run: async (_required, action) => proof ? action(proof) : null, sheet: 'sheet' }) }
@@ -44,7 +55,7 @@ function buttons(node, result = []) {
 async function click(index) { buttons(render())[index].props.onClick(); await new Promise(resolve => setImmediate(resolve)) }
 ;(async () => {
   assert.equal(render().type, 'AppLoading', 'Initial clock check has no fingerprint screen or private content')
-  effects[0]()
+  effects.at(-1)()
   assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT')
   pathname = '/markets'
   assert.equal(render(), 'ACCOUNT_PRIVATE_CONTENT', 'Fresh session navigation must preserve the mounted application before effects')
