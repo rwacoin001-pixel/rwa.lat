@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -12,6 +12,7 @@ import { Pagination } from '@/components/ui/pagination';
 import { Search, Filter, Eye, MoreHorizontal, AlertTriangle, CheckCircle, XCircle, Clock, DollarSign, Copy, RefreshCw, Play, Pause, ShieldCheck } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { adminErrorMessage } from '@/lib/admin-errors';
 
 type UiStatus = 'pending' | 'reviewing' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'cancelled';
 
@@ -165,6 +166,9 @@ export default function WithdrawalsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [funds, setFunds] = useState<FundsSwitchView | null>(null);
+  const [fundsLoading, setFundsLoading] = useState(true);
+  const [fundsError, setFundsError] = useState('');
+  const fundsRequest = useRef(0);
 
   useEffect(() => {
     fetchWithdrawals();
@@ -178,7 +182,7 @@ export default function WithdrawalsPage() {
       const res = await fetch('/api/admin/wallet/withdrawals?limit=200', { credentials: 'include' });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
-        throw new Error(body?.message || `获取提现列表失败 (HTTP ${res.status})`);
+        throw new Error(adminErrorMessage(body, res.status));
       }
       const data = await res.json();
       const rows = Array.isArray(data) ? data : data.items || [];
@@ -192,10 +196,15 @@ export default function WithdrawalsPage() {
   };
 
   const fetchFunds = async () => {
+    const requestId = ++fundsRequest.current;
+    setFundsLoading(true);
+    setFundsError('');
     try {
       const res = await fetch('/api/admin/operations/funds/withdrawal-execution', { credentials: 'include' });
-      if (!res.ok) return setFunds(null);
-      const data = await res.json();
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(adminErrorMessage(data, res.status));
+      if (!data || !('current' in data) || !Array.isArray(data.pending) || typeof data.environmentAllowsExecution !== 'boolean') throw new Error('未能读取提现执行状态，请刷新重试。');
+      if (requestId !== fundsRequest.current) return;
       setFunds({
         current: data.current
           ? { enabled: Boolean(data.current.enabled), reason: data.current.reason ?? null, updatedAt: data.current.updatedAt ?? null }
@@ -203,8 +212,13 @@ export default function WithdrawalsPage() {
         pending: Array.isArray(data.pending) ? data.pending : [],
         environmentAllowsExecution: Boolean(data.environmentAllowsExecution),
       });
-    } catch {
-      setFunds(null);
+    } catch (err) {
+      if (requestId === fundsRequest.current) {
+        setFunds(null);
+        setFundsError(err instanceof Error ? err.message : '无法读取提现执行状态');
+      }
+    } finally {
+      if (requestId === fundsRequest.current) setFundsLoading(false);
     }
   };
 
@@ -235,7 +249,7 @@ export default function WithdrawalsPage() {
     try {
       const res = await fetch(path, { credentials: 'include', ...init });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.message || `操作失败 (HTTP ${res.status})`);
+      if (!res.ok) throw new Error(adminErrorMessage(body, res.status));
       return body;
     } finally {
       setBusy(false);
@@ -342,9 +356,10 @@ export default function WithdrawalsPage() {
               <div>
                 <p className="text-sm font-medium">
                   提现执行开关：
-                  {funds?.current ? (funds.current.enabled ? '执行中' : '已暂停') : '未配置'}
+                  {fundsLoading ? '读取中…' : fundsError ? '读取失败' : funds?.current ? (funds.current.enabled ? '执行中' : '已暂停') : '未配置'}
                   {funds && !funds.environmentAllowsExecution && '（环境变量未开启资金执行）'}
                 </p>
+                {fundsError && <p role="alert" className="text-xs text-amber-600">{fundsError}</p>}
                 <p className="text-xs text-muted-foreground">
                   {funds?.current?.updatedAt ? `最近变更: ${new Date(funds.current.updatedAt).toLocaleString('zh-CN')}` : ''}
                   {funds?.pending?.length ? ` ｜ 待批准恢复申请: ${funds.pending.length}` : ''}
@@ -356,7 +371,7 @@ export default function WithdrawalsPage() {
                 <>
                   <Button
                     className="flex items-center gap-2"
-                    disabled={busy}
+                    disabled={busy || fundsLoading || Boolean(fundsError) || !funds.environmentAllowsExecution}
                     onClick={async () => {
                       const target = funds.pending[0];
                       if (!target) return;
@@ -376,7 +391,7 @@ export default function WithdrawalsPage() {
                   <Button
                     variant="outline"
                     className="flex items-center gap-2"
-                    disabled={busy}
+                    disabled={busy || fundsLoading || Boolean(fundsError)}
                     onClick={async () => {
                       const target = funds.pending[0];
                       if (!target) return;
@@ -395,11 +410,11 @@ export default function WithdrawalsPage() {
                   </Button>
                 </>
               ) : null}
-              <Button variant="outline" className="flex items-center gap-2" onClick={pauseFunds} disabled={busy || !funds?.current?.enabled}>
+              <Button variant="outline" className="flex items-center gap-2" onClick={pauseFunds} disabled={busy || fundsLoading || Boolean(fundsError) || !funds?.current?.enabled}>
                 <Pause className="w-4 h-4" />
                 紧急暂停
               </Button>
-              <Button className="flex items-center gap-2" onClick={requestResume} disabled={busy || !funds?.current || funds.current.enabled}>
+              <Button className="flex items-center gap-2" onClick={requestResume} disabled={busy || fundsLoading || Boolean(fundsError) || !funds?.current || funds.current.enabled || !funds.environmentAllowsExecution}>
                 <Play className="w-4 h-4" />
                 申请恢复
               </Button>
@@ -410,7 +425,7 @@ export default function WithdrawalsPage() {
         {error && (
           <Card className="glass-strong border-amber-500/40">
             <CardContent className="p-4 text-sm text-amber-600">
-              提现数据加载失败：{error}（确认核心服务已配置 CORE_API_URL / ADMIN_SERVICE_TOKEN）
+              提现数据加载失败：{error}
             </CardContent>
           </Card>
         )}

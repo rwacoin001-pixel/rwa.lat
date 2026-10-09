@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
@@ -48,20 +49,20 @@ export class AdminNotificationController {
 
   @Get()
   async list(@CurrentAdmin() admin: AuthenticatedAdmin, @Query('limit') limit?: string, @Query('kind') kind?: string) {
-    await this.rbac.assertPermission(admin.id, 'notifications.manage')
+    await assertAdminPermission(admin, this.rbac, 'notifications.manage')
     return this.svc.listForAdmin(limit ? Number(limit) : 100, kind)
   }
 
   @Post()
   async create(@CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: CreateNotificationDto) {
-    await this.rbac.assertPermission(admin.id, 'notifications.manage')
+    await assertAdminPermission(admin, this.rbac, 'notifications.manage')
     const note = await this.delivery.enqueue(dto, admin.id)
     return { id: note.id, recipientUserId: note.recipient_user_id, channel: note.channel, kind: note.kind, title: note.title, body: note.body, payload: note.payload, readAt: note.read_at, createdAt: note.created_at }
   }
 
   @Get('channels')
   async channels(@CurrentAdmin() admin: AuthenticatedAdmin) {
-    await this.rbac.assertPermission(admin.id, 'notifications.manage')
+    await assertAdminPermission(admin, this.rbac, 'notifications.manage')
     return this.delivery.channels()
   }
 }

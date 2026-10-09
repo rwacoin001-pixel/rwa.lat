@@ -1,5 +1,7 @@
 'use client'
 
+import { adminErrorMessage } from '@/lib/admin-errors'
+
 import { useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
@@ -71,7 +73,7 @@ export default function JobQueuePage() {
     try {
       const res = await fetch(`/api/admin/job-queue/jobs/${row.id}/replay`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}' })
       const body = await res.json().catch(() => null)
-      if (!res.ok) throw new Error((body?.message as string) || `重放失败 (HTTP ${res.status})`)
+      if (!res.ok) throw new Error(adminErrorMessage(body, res.status))
       showNotice('作业已重置为 pending，等待 worker 领取')
       list.reload()
     } catch (err) {

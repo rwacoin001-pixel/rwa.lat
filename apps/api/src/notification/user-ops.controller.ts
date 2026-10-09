@@ -27,6 +27,7 @@ import {
 } from './user-ops.dto'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 
@@ -157,6 +158,6 @@ export class AdminSupportController {
   }
 
   private authorize(admin: AuthenticatedAdmin) {
-    return this.rbac.assertPermission(admin.id, 'support.tickets.manage')
+    return assertAdminPermission(admin, this.rbac, 'support.tickets.manage')
   }
 }

@@ -1,5 +1,7 @@
 'use client'
 
+import { adminErrorMessage } from '@/lib/admin-errors'
+
 import { useRef, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, PageHeader, Panel, RefreshButton, formatDateTime, shortId, useApi } from '@/components/console/framework'
@@ -55,7 +57,7 @@ export default function NotificationsPage() {
         body: JSON.stringify({ ...input, idempotencyKey: intent.current.key }),
       })
       const data = await res.json().catch(() => null)
-      if (!res.ok) throw new Error((data?.message as string) || `发送失败 (HTTP ${res.status})`)
+      if (!res.ok) throw new Error(adminErrorMessage(data, res.status))
       showNotice(form.channel === 'email' ? '邮件已进入投递队列，请查看实际投递状态。' : '站内通知已送达')
       intent.current = null
       setForm((prev) => ({ ...prev, title: '', body: '' }))

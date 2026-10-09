@@ -1,6 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { adminErrorMessage } from '@/lib/admin-errors'
+
+import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
 
@@ -40,19 +43,64 @@ const RESPOND_STATUS = [
   { value: 'closed', label: '关闭工单（closed）' },
 ]
 
-export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute' }) {
+/* 与后端 user-ops.dto.ts 的 category 枚举保持一致；'' 表示全部 */
+export type TicketCategory = '' | 'support' | 'appeal' | 'dispute' | 'scam_report'
+
+const CATEGORY_TABS: Array<{ value: TicketCategory; label: string }> = [
+  { value: '', label: '全部' },
+  { value: 'support', label: '客服' },
+  { value: 'appeal', label: '申诉' },
+  { value: 'dispute', label: '争议' },
+  { value: 'scam_report', label: '举报' },
+]
+
+const categoryLabel = (value: string) => CATEGORY_TABS.find((tab) => tab.value === value)?.label ?? value
+
+export function SupportWorkspace({ initialCategory = '' }: { initialCategory?: TicketCategory }) {
+  const router = useRouter()
+  const [category, setCategory] = useState<TicketCategory>(initialCategory)
+  const [syncedCategory, setSyncedCategory] = useState<TicketCategory>(initialCategory)
   const [status, setStatus] = useState('')
   const [openId, setOpenId] = useState<string | null>(null)
   const [replyBody, setReplyBody] = useState('')
   const [replyStatus, setReplyStatus] = useState('waiting_user')
   const [busy, setBusy] = useState(false)
   const [notice, setNotice] = useState('')
+  const openIdRef = useRef<string | null>(null)
+  useEffect(() => {
+    openIdRef.current = openId
+  }, [openId])
+
+  const closeDetail = () => {
+    setOpenId(null)
+    setReplyBody('')
+    setReplyStatus('waiting_user')
+  }
+
+  // 浏览器前进/后退会让服务端页面带着新的 category 重新渲染：同步分类并关闭旧详情，避免对旧分类工单误操作
+  if (initialCategory !== syncedCategory) {
+    setSyncedCategory(initialCategory)
+    if (initialCategory !== category) {
+      setCategory(initialCategory)
+      closeDetail()
+    }
+  }
+
+  const changeCategory = (next: string) => {
+    const value = CATEGORY_TABS.find((tab) => tab.value === next)?.value ?? ''
+    if (value === category) return
+    setCategory(value)
+    closeDetail()
+    router.push(value ? `/support?category=${value}` : '/support', { scroll: false })
+  }
 
   const query = new URLSearchParams()
   if (status) query.set('status', status)
   if (category) query.set('category', category)
   const tickets = useApi<Ticket[]>(`/api/admin/support/tickets?${query}`)
   const timeline = useApi<Timeline>(openId ? `/api/admin/support/tickets/${openId}/timeline` : null)
+  // 只展示与当前打开工单一致的时间线，避免切换工单时短暂显示/操作上一张工单
+  const detail = timeline.data && timeline.data.ticket.id === openId ? timeline.data : null
 
   const showNotice = (text: string) => {
     setNotice(text)
@@ -60,26 +108,32 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
   }
 
   const open = (ticket: Ticket) => {
+    // 重复打开同一工单时保留已输入的回复
+    if (ticket.id === openId) return
     setOpenId(ticket.id)
     setReplyBody('')
     setReplyStatus('waiting_user')
   }
 
   const respond = async () => {
-    if (!openId || !replyBody.trim()) return
+    if (busy || !openId || !detail || !replyBody.trim()) return
+    const ticketId = openId
     setBusy(true)
     try {
-      const res = await fetch(`/api/admin/support/tickets/${openId}/respond`, {
+      const res = await fetch(`/api/admin/support/tickets/${ticketId}/respond`, {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ body: replyBody.trim(), status: replyStatus }),
       })
       const body = await res.json().catch(() => null)
-      if (!res.ok) throw new Error((body?.message as string) || `回复失败 (HTTP ${res.status})`)
+      if (!res.ok) throw new Error(adminErrorMessage(body, res.status))
       showNotice('回复已发送，工单状态已更新')
-      setReplyBody('')
-      timeline.reload()
+      // 请求期间若已切换到其他工单/分类，不清空、不刷新新详情
+      if (openIdRef.current === ticketId) {
+        setReplyBody('')
+        timeline.reload()
+      }
       tickets.reload()
     } catch (err) {
       showNotice(err instanceof Error ? err.message : '回复失败')
@@ -96,7 +150,7 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
         <button type="button" onClick={() => open(row)} className="text-left">
           <span className="block font-medium hover:text-mint">{row.subject}</span>
           <span className="block text-xs text-text-faint">
-            {row.category} · 用户 {shortId(row.authorUserId)} · {row.reference}
+            {categoryLabel(row.category)} · 用户 {shortId(row.authorUserId)} · {row.reference}
           </span>
         </button>
       ),
@@ -121,10 +175,12 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
     <AdminLayout>
       <div className="space-y-5">
         <PageHeader
-          title={category === 'appeal' ? '申诉处理' : category === 'dispute' ? '争议处理' : '客服工单'}
-          subtitle={category ? '分类工单支持受理、调查、回复、解决和关闭；资金调整另行处理，工单操作不会改变余额。' : '用户咨询、投诉与技术支持工单；回复将同步到用户的工单时间线'}
+          title="工单中心"
+          subtitle="客服、申诉、争议与举报工单统一受理；回复同步到用户工单时间线，工单操作不改变余额，资金调整另行处理"
           actions={<RefreshButton loading={tickets.loading} onClick={tickets.reload} />}
         />
+
+        <FilterTabs options={CATEGORY_TABS} value={category} onChange={changeCategory} />
 
         {notice && <div role="status" className="animate-pop rounded-xl bg-ink/5 px-4 py-3 text-sm">{notice}</div>}
 
@@ -136,12 +192,12 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
 
         {openId && (
           <Panel
-            title={`工单详情 — ${timeline.data?.ticket.subject ?? shortId(openId)}`}
-            subtitle={timeline.data ? `${timeline.data.ticket.category} · ${timeline.data.ticket.reference} · 提交于 ${formatDateTime(timeline.data.ticket.createdAt)}` : ''}
+            title={`工单详情 — ${detail?.ticket.subject ?? shortId(openId)}`}
+            subtitle={detail ? `${categoryLabel(detail.ticket.category)} · ${detail.ticket.reference} · 提交于 ${formatDateTime(detail.ticket.createdAt)}` : ''}
             actions={
               <>
-                {timeline.data && <StatusPill value={timeline.data.ticket.status} />}
-                <button type="button" onClick={() => setOpenId(null)} className="rounded-lg px-2.5 py-1 text-xs font-medium text-text-secondary hover:bg-ink/[0.05]">
+                {detail && <StatusPill value={detail.ticket.status} />}
+                <button type="button" onClick={closeDetail} className="rounded-lg px-2.5 py-1 text-xs font-medium text-text-secondary hover:bg-ink/[0.05]">
                   收起
                 </button>
               </>
@@ -150,10 +206,10 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
           >
             {timeline.loading && <p className="py-6 text-center text-sm text-text-faint">加载中…</p>}
             {timeline.error && <p className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-600">{timeline.error}</p>}
-            {timeline.data && (
+            {detail && (
               <div className="space-y-4">
                 <div className="max-h-96 space-y-2.5 overflow-y-auto rounded-2xl bg-ink/[0.03] p-4">
-                  {timeline.data.messages.map((message) => (
+                  {detail.messages.map((message) => (
                     <div
                       key={message.id}
                       className={
@@ -166,11 +222,12 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
                       <p className="whitespace-pre-wrap">{message.body}</p>
                     </div>
                   ))}
-                  {!timeline.data.messages.length && <p className="text-center text-sm text-text-faint">暂无消息</p>}
+                  {!detail.messages.length && <p className="text-center text-sm text-text-faint">暂无消息</p>}
                 </div>
-                {timeline.data.ticket.status !== 'closed' ? (
+                {detail.ticket.status !== 'closed' ? (
                   <div className="space-y-2.5">
                     <textarea
+                      disabled={busy}
                       value={replyBody}
                       onChange={(event) => setReplyBody(event.target.value)}
                       rows={3}
@@ -179,6 +236,7 @@ export function SupportWorkspace({ category }: { category?: 'appeal' | 'dispute'
                     />
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <select
+                        disabled={busy}
                         value={replyStatus}
                         onChange={(event) => setReplyStatus(event.target.value)}
                         className="rounded-xl border border-ink/10 bg-white/80 px-3 py-2 text-[13px] shadow-sm"

@@ -42,15 +42,16 @@ export default function NetworksPage() {
           <span className="text-xs text-text-faint">—</span>
         ),
     },
-    { key: 'active', label: '状态', render: () => <span className="pill bg-emerald-500/12 text-emerald-600">启用中</span> },
+    { key: 'active', label: '状态', render: (row) =>
+        row.active ? <span className="pill bg-emerald-500/12 text-emerald-600">启用中</span> : <span className="pill bg-ink/[0.06] text-text-faint">未启用</span> },
   ]
 
   return (
     <AdminLayout>
       <div className="space-y-5">
         <PageHeader
-          title="网络配置"
-          subtitle="RWA 资产目录覆盖的区块链网络（用于资产页筛选与链上数据关联）"
+          title="资产目录网络"
+          subtitle="RWA 资产目录覆盖的区块链网络（用于资产页筛选与链上数据关联），不决定钱包充值/提现网络"
           actions={<RefreshButton loading={list.loading} onClick={list.reload} />}
         />
 

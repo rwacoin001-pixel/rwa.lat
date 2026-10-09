@@ -4,6 +4,7 @@ import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 import { NativeKycService } from './native-kyc.service'
 import { ComplianceService } from './compliance.service'
 import { DecideKycDto } from './dto/compliance.dto'
@@ -17,13 +18,13 @@ export class AdminNativeKycController {
 
   @Get(':id/checks')
   async checks(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', ParseUUIDPipe) id: string) {
-    await this.rbac.assertPermission(admin.id, 'compliance.manage')
+    await assertAdminPermission(admin, this.rbac, 'compliance.manage')
     return this.native.reviewEvidence(id)
   }
 
   @Post(':id/decision')
   async decide(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', ParseUUIDPipe) id: string, @Body() dto: DecideKycDto) {
-    await this.rbac.assertPermission(admin.id, 'compliance.manage')
+    await assertAdminPermission(admin, this.rbac, 'compliance.manage')
     const result = await this.compliance.decideKyc(id, dto.decision, dto.reasonCode, admin.id)
     return this.compliance.toPublicKycCase(result)
   }

@@ -1,4 +1,5 @@
 'use client'
+import { adminErrorMessage } from '@/lib/admin-errors'
 import { useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { PageHeader, Panel, RefreshButton, StatChip, useApi, formatDateTime } from '@/components/console/framework'
@@ -18,7 +19,7 @@ export default function ReferralPage() {
   const mutate=async(path:string,body:unknown)=>{
     setBusy(true);setMessage('')
     try {const response=await fetch(`/api/admin/referral/settings/${path}`,{method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',body:JSON.stringify(body)})
-      const result=await response.json();if(!response.ok)throw new Error(result.message??'操作失败')
+      const result=await response.json().catch(()=>null);if(!response.ok)throw new Error(adminErrorMessage(result,response.status))
       setDraft(null);setConfirmVersion(null);setMessage(`已创建版本 ${result.version}，历史记录保持原样`);reload()
     }catch(e){setMessage(e instanceof Error?e.message:'操作失败')}finally{setBusy(false)}
   }
