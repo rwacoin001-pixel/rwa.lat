@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Header, Headers, Param, ParseUUIDPipe, Post, Put, Query, Req, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiExcludeController } from '@nestjs/swagger'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
@@ -45,6 +45,10 @@ export class WalletPublicController {
 @Controller('wallet')
 export class WalletController {
   constructor(private readonly wallet: WalletService) {}
+
+  @Get('transfer-eligibility')
+  @Header('Cache-Control', 'no-store')
+  transferEligibility(@CurrentAuth() actor: SecurityActor) { return this.wallet.transferEligibility(actor.userId) }
 
   @Get()
   @ApiOperation({ summary: 'Read exact USDT balances and recent wallet activity' })

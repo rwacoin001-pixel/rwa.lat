@@ -27,6 +27,8 @@ import type {
 } from './dto/wallet.dto'
 import { WALLET_ERROR_CODES } from './wallet.errors'
 import { WalletLedgerBridge } from './wallet-ledger.bridge'
+import { TransactionPinService } from './transaction-pin.service'
+import { hasQualifyingDeposit } from './transfer-eligibility'
 import { LedgerService } from '../ledger/ledger.service'
 import { WalletNetworkRegistry } from './wallet-network.registry'
 import { FundsOperationalSwitchService } from './funds-operational-switch.service'
@@ -86,6 +88,7 @@ export class WalletService {
     private readonly operations: OperationalCapabilityService,
     private readonly db: DataSource,
     config: ConfigService,
+    private readonly transactionPin: TransactionPinService,
   ) {
     this.executionRequested = config.get<string>('WALLET_EXECUTION_ENABLED') === 'true'
     this.demoCreditEnabled = config.get<string>('APP_ENV') !== 'production'
@@ -361,18 +364,42 @@ export class WalletService {
         ? `${chars[0]}*`
         : `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`
     const active = row.status === 'active'
+    const qualified = active && await hasQualifyingDeposit(this.db, recipientUserId)
     return {
       userId: recipientUserId,
       exists: true,
-      receivable: active,
-      reason: active ? null : row.status,
+      receivable: qualified,
+      reason: active ? qualified ? null : 'deposit_threshold' : row.status,
       displayName,
       avatarInitial: chars.length > 0 ? chars[0] : null,
     }
   }
 
+  async transferEligibility(userId: string) {
+    const [user] = await this.db.query('SELECT status FROM app.users WHERE id=$1', [userId])
+    if (!user || user.status !== 'active') return { receivable: false, reason: 'account_unavailable' }
+    const receivable = await hasQualifyingDeposit(this.db, userId)
+    return { receivable, reason: receivable ? null : 'deposit_threshold' }
+  }
+
   async createWithdrawal(actor: SecurityActor, dto: CreateWithdrawalDto, idempotencyKey: string, requestId: string) {
     this.assertIdempotencyKey(idempotencyKey)
+    this.assertAtomicAmount(dto.atomicAmount)
+    // A genuine retry reads the original receipt, even after cooldown or fee/address-policy changes.
+    // Resolve only the original address; never expose a receipt for a different intent using the same key.
+    const existing = await this.withdrawals.findOne({ where: { userId: actor.userId, idempotencyKey } })
+    if (existing) {
+      let retryDestination = dto.destination
+      if (dto.addressBookId) {
+        const saved = await this.withdrawalAddresses.findOne({ where: { id: dto.addressBookId, userId: actor.userId } })
+        retryDestination = saved ? this.crypto.decrypt(saved.addressCiphertext, saved.encryptionKeyVersion) : undefined
+      }
+      if (!retryDestination || existing.network !== dto.network || BigInt(existing.atomicAmount) !== BigInt(dto.atomicAmount)
+        || !existing.destinationHash.equals(this.crypto.hmac(this.normalizeAddress(dto.network, retryDestination)))) {
+        throw new ConflictException({ code: WALLET_ERROR_CODES.IDEMPOTENCY_CONFLICT, message: 'This request key was used for a different withdrawal.' })
+      }
+      return this.withdrawalResponse(existing, false)
+    }
     await this.operations.assertEnabled(
       OPERATIONAL_SWITCH_KEYS.withdrawals,
       'New withdrawal requests are currently paused by the operator.',
@@ -400,14 +427,13 @@ export class WalletService {
     if (!quote.sufficientBalance) {
       throw new ConflictException({ code: WALLET_ERROR_CODES.INSUFFICIENT_BALANCE, message: 'Available USDT balance is insufficient.' })
     }
-    const existing = await this.withdrawals.findOne({ where: { userId: actor.userId, idempotencyKey } })
-    if (existing) return this.withdrawalResponse(existing, false)
     const wallet = await this.wallets.findOne({ where: { userId: actor.userId, state: 'active' } })
     if (!wallet) throw new NotFoundException({ code: WALLET_ERROR_CODES.WALLET_UNAVAILABLE, message: 'An active custody wallet is required.' })
     const screening = await this.custody.screenAddress(dto.network, destination)
     if (screening.decision === 'blocked') {
       throw new ForbiddenException({ code: WALLET_ERROR_CODES.CALLBACK_PAYLOAD_INVALID, message: 'The destination address did not pass risk screening.' })
     }
+    const transactionPinVersion = await this.transactionPin.verifyWithdrawal(actor.userId, dto.transactionPin)
     const encrypted = this.crypto.encrypt(destination)
     const id = randomUUID()
     const autoApprove = this.financialMode && screening.decision === 'clear'
@@ -436,6 +462,7 @@ export class WalletService {
       perTransactionLimitAtomic: this.perTransactionLimitAtomic,
       dailyLimitAtomic: this.dailyLimitAtomic,
       enqueueExecution: autoApprove,
+      transactionPinVersion,
       reasonCode: screening.reasonCode ?? (this.financialMode && !autoApprove ? 'awaiting_admin_approvals' : null), requestId,
     })
     const withdrawal = await this.withdrawals.findOne({ where: { id: result.id, userId: actor.userId } })

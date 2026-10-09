@@ -4,7 +4,7 @@ import { Fingerprint, KeyRound, ShieldCheck } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import type { ApiResult } from '@/lib/api/_http'
+import { SESSION_CHANGED, SESSION_EXPIRED, type ApiResult } from '@/lib/api/_http'
 import { listSecurityFactors, stepUpWithPasskey, stepUpWithRecoveryCode, stepUpWithTotp, type StepUpResult } from '@/lib/api/security'
 import type { WalletIntegration } from '@/lib/api/wallet'
 import { fundsCopy } from '@/lib/maison-funds-copy'
@@ -48,7 +48,11 @@ export function useStepUp(): { run: <T>(required: boolean, action: (reauthentica
     resolve?.(result?.reauthentication ?? null)
   }, [])
 
-  useEffect(() => () => { waiter.current?.(null); waiter.current = null }, [])
+  useEffect(() => {
+    const clear = () => { waiter.current?.(null); waiter.current = null; setOpen(false); setSummary(undefined) }
+    window.addEventListener(SESSION_CHANGED, clear); window.addEventListener(SESSION_EXPIRED, clear)
+    return () => { waiter.current?.(null); waiter.current = null; window.removeEventListener(SESSION_CHANGED, clear); window.removeEventListener(SESSION_EXPIRED, clear) }
+  }, [])
 
   const run = useCallback(async <T,>(required: boolean, action: (reauthentication?: string) => Promise<ApiResult<T>>, lines?: StepUpLine[]) => {
     let reauthentication = required ? await obtain(lines) : null

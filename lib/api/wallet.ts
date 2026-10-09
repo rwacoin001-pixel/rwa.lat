@@ -65,7 +65,9 @@ export type WithdrawalQuote = {
   network: string; assetCode: string; assetDecimals: number; atomicAmount: string; feeAtomicAmount: string; totalDebitAtomic: string
   availableAtomic: string; sufficientBalance: boolean; requiresStepUp: boolean; requiresAddressScreening: boolean; expiresAt: string; integration: WalletIntegration
 }
-export type WithdrawalBody = { network: string; atomicAmount: string; addressBookId?: string; destination?: string; reauthentication?: string }
+/** The intent only: idempotency fingerprints it, so the PIN and step-up token are passed separately and never land in it. */
+export type WithdrawalBody = { network: string; atomicAmount: string; addressBookId?: string; destination?: string }
+export type WithdrawalSecrets = { transactionPin: string; reauthentication?: string }
 export type WithdrawalReceipt = { id: string; state: string; network: string; atomicAmount: string; feeAtomicAmount: string; reasonCode: string | null; created: boolean; integration: WalletIntegration }
 export type WithdrawalStatus = {
   id: string; state: string; network: string; assetCode: string; assetDecimals: number; atomicAmount: string; feeAtomicAmount: string
@@ -81,9 +83,19 @@ export type AddressBook = { entries: AddressBookEntry[]; policy: { cooldownSecon
 
 /** Read-only: nothing is locked. The server rejects amounts under the network minimum. */
 export const quoteWithdrawal = (network: string, atomicAmount: string) => request<WithdrawalQuote>('/v1/wallet/withdrawals/quote', { method: 'POST', body: JSON.stringify({ network, atomicAmount }) })
-export const createWithdrawal = (body: WithdrawalBody, idempotencyKey: string) => request<WithdrawalReceipt>('/v1/wallet/withdrawals', { method: 'POST', body: JSON.stringify(body), idempotencyKey })
+/** Every new request carries this attempt's PIN; it is serialised straight into the request and kept nowhere else. */
+export const createWithdrawal = (body: WithdrawalBody, secrets: WithdrawalSecrets, idempotencyKey: string) => request<WithdrawalReceipt>('/v1/wallet/withdrawals', {
+  method: 'POST', idempotencyKey,
+  body: JSON.stringify({ ...body, transactionPin: secrets.transactionPin, ...(secrets.reauthentication ? { reauthentication: secrets.reauthentication } : {}) }),
+})
 /** Read-only owner-scoped status; the destination address and internal chain IDs are not returned. */
 export const getWithdrawalStatus = (id: string) => request<WithdrawalStatus>(`/v1/wallet/withdrawals/${encodeURIComponent(id)}`)
+/** Whether the signed-in account itself can receive internal transfers (current user only). */
+export type TransferEligibility = { receivable: boolean; reason: null | 'deposit_threshold' | 'account_unavailable' }
+export const getTransferEligibility = () => request<TransferEligibility>('/v1/wallet/transfer-eligibility')
+/** Recipient pre-check: existence + receivability only, masked name; never the recipient's deposit details. */
+export type TransferRecipient = { userId: string; exists: boolean; receivable: boolean; reason: string | null; displayName: string | null; avatarInitial: string | null }
+export const getTransferRecipient = (userId: string) => request<TransferRecipient>(`/v1/wallet/transfer-recipients/${encodeURIComponent(userId)}`, { loading: 'silent' })
 export const createTransfer = (body: TransferBody, idempotencyKey: string) => request<TransferReceipt>('/v1/wallet/transfers', { method: 'POST', body: JSON.stringify(body), idempotencyKey })
 /** Listing also activates entries whose cooldown has passed with a clear screening (server side). */
 export const listAddressBook = () => request<AddressBook>('/v1/wallet/withdrawal-addresses')

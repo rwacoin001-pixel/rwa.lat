@@ -18,6 +18,8 @@ import { FundsOperationalSwitchService } from './funds-operational-switch.servic
 import { WalletLedgerBridge } from './wallet-ledger.bridge'
 import { WalletNetworkRegistry } from './wallet-network.registry'
 import { WalletService } from './wallet.service'
+import { TransactionPinService } from './transaction-pin.service'
+import { TransactionPinController } from './transaction-pin.controller'
 import { WithdrawalExecutionWorker } from './withdrawal-execution.worker'
 import { ChainWatcherService } from './manual/chain-watcher.service'
 import { DepositPoolService } from './manual/deposit-pool.service'
@@ -65,6 +67,7 @@ import {
     ]),
   ],
   controllers: [
+    TransactionPinController,
     WalletPublicController,
     WalletController,
     WalletCallbackController,
@@ -74,6 +77,7 @@ import {
     InternalWalletController,
   ],
   providers: [
+    TransactionPinService,
     WalletService,
     WalletNetworkRegistry,
     WalletLedgerBridge,

@@ -8,10 +8,10 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
-import { readSession, type ApiError } from '@/lib/api/_http'
+import { readSession, SESSION_CHANGED, SESSION_EXPIRED, type ApiError } from '@/lib/api/_http'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import {
-  addAddress, createTransfer, createWithdrawal, getWalletDetail, isUuid, isValidAddress, listAddressBook, listNetworks, quoteWithdrawal, revokeAddress,
+  addAddress, createTransfer, createWithdrawal, getTransferEligibility, getTransferRecipient, getWalletDetail, isUuid, isValidAddress, listAddressBook, listNetworks, quoteWithdrawal, revokeAddress,
   type AddressBookEntry, type TransferBody, type TransferReceipt, type WalletNetwork, type WithdrawalBody, type WithdrawalQuote, type WithdrawalReceipt,
 } from '@/lib/api/wallet'
 import { fromAtomic, toAtomic } from '@/lib/money'
@@ -23,6 +23,9 @@ import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Lacquer, Segmented, useAutoAnimate } from './motion'
 import { fmtAtomic, fmtDateTime } from './format'
 import { stepUpRequired, useStepUp } from './StepUp'
+import { getTransactionPinStatus, pinErrorDetails, pinGate } from '@/lib/api/transaction-pin'
+import { transactionPinCopy } from '@/lib/maison-transaction-pin-copy'
+import { TransactionPinManager, TransactionPinPrompt } from './TransactionPin'
 import fp from './funds-polish.module.css'
 import fs from './funds-fullscreen.module.css'
 import tf from './transfer-feedback.module.css'
@@ -87,6 +90,18 @@ function Receipt({ title, rows, created, integration, onAgain, f }: { title: str
 
 function usable(entry: AddressBookEntry) { return entry.state === 'active' && entry.riskState === 'clear' }
 
+function useFundsSessionBoundary(reset: () => void) {
+  const generation = useRef(0)
+  const resetRef = useRef(reset)
+  resetRef.current = reset
+  useEffect(() => {
+    const clear = () => { generation.current++; resetRef.current() }
+    window.addEventListener(SESSION_CHANGED, clear); window.addEventListener(SESSION_EXPIRED, clear)
+    return () => { generation.current++; window.removeEventListener(SESSION_CHANGED, clear); window.removeEventListener(SESSION_EXPIRED, clear) }
+  }, [])
+  return generation
+}
+
 /** `/assets/cash/withdraw` — network, destination (saved or new), amount, server quote, consent, then an idempotent request behind step-up. */
 export function WithdrawScreen({ query }: { query: string }) {
   const { locale } = useI18n()
@@ -94,6 +109,10 @@ export function WithdrawScreen({ query }: { query: string }) {
   const w = f.withdraw
   const states = walletCopy[locale].states
   const common = marketCopy[locale].common
+  const p = transactionPinCopy[locale]
+  const pinStatus = useQuery('security:transaction-pin', getTransactionPinStatus, { staleTime: 0, loading: 'silent' })
+  const [pinManager, setPinManager] = useState(false)
+  const [pinPrompt, setPinPrompt] = useState(false)
   const wallet = useQuery('wallet:detail', getWalletDetail, { staleTime: 15_000 })
   const networks = useQuery('wallet:networks', listNetworks, { staleTime: 300_000 })
   const book = useQuery('wallet:address-book', listAddressBook, { staleTime: 30_000 })
@@ -158,30 +177,62 @@ export function WithdrawScreen({ query }: { query: string }) {
 
   const choose = (id: string) => { setPicked(id); setEntryId(null); setDestination(''); setServerError(null); setQuery('network', id) }
 
+  const generation = useFundsSessionBoundary(() => {
+    setPinManager(false); setPinPrompt(false); setReceipt(null); setAmount(''); setDestination(''); setConsent(false); setServerError(null)
+    setEntryId(null); setQuote(null); setTouched(false)
+    keys.current.clear(); inflight.current = false; setPending(false)
+  })
+  const knownGate = pinStatus.error ? 'unavailable' : pinStatus.data ? pinGate(pinStatus.data) : null
   const submit = async () => {
+    if (inflight.current || (!ready && knownGate !== 'unset')) return
+    const epoch = generation.current
+    inflight.current = true
+    setPending(true)
+    try {
+      const state = await getTransactionPinStatus()
+      if (epoch !== generation.current) return
+      if (!state.ok) { setServerError(errorText(f, state.error, common.errorGeneric)); return }
+      const gate = pinGate(state.data)
+      if (gate === 'unset') { setPinManager(true); return }
+      if (gate !== 'ready') { setServerError(p.gate[gate]); return }
+      setServerError(null); setPinPrompt(true)
+    } catch { if (epoch === generation.current) setServerError(common.errorGeneric) }
+    finally { if (epoch === generation.current) { inflight.current = false; setPending(false) } }
+  }
+  const confirmPin = async (transactionPin: string) => {
     setTouched(true)
     if (!ready || !network || !atomic || inflight.current) return
+    const epoch = generation.current
     const body: WithdrawalBody = { network: network.id, atomicAmount: atomic, ...(mode === 'saved' && entry ? { addressBookId: entry.id } : { destination: destination.trim() }) }
     // Keyed on the body without the step-up token, so a retry after re-authentication replays the same request.
     const key = idempotencyKeyForIntent(keys.current, 'POST', WITHDRAW_PATH, body)
     inflight.current = true
     setPending(true)
     setServerError(null)
-    const result = await run(stepUpRequired(integration), (reauthentication) => createWithdrawal(reauthentication ? { ...body, reauthentication } : body, key), [
+    try {
+    const result = await run(stepUpRequired(integration), (reauthentication) => {
+      if (epoch !== generation.current) return Promise.resolve({ ok: false as const, error: { status: 0, code: 'SESSION_CHANGED', message: common.errorGeneric } })
+      return createWithdrawal(body, { transactionPin, reauthentication }, key)
+    }, [
       { label: f.common.amount, value: <strong className={s.num}>{fmtAtomic(atomic, decimals, unit)}</strong> },
       { label: w.to, value: destinationLine },
       { label: f.common.fee, value: <span className={s.num}>{fmtAtomic(current?.data?.feeAtomicAmount ?? network.withdrawalFeeAtomic, decimals, unit)}</span> },
     ])
-    inflight.current = false
-    setPending(false)
+    if (epoch !== generation.current) return
+    setPinPrompt(false)
     if (!result) { setServerError(f.common.cancelled); return }
     if (!result.ok) {
-      setServerError(errorText(f, result.error, common.errorGeneric))
+      const details = pinErrorDetails(result.error)
+      setServerError([p.errors[result.error.code] ?? errorText(f, result.error, common.errorGeneric),
+        details.remainingAttempts === undefined ? null : p.attempts(details.remainingAttempts)].filter(Boolean).join(' · '))
+      void pinStatus.refetch()
       if (['WALLET_INSUFFICIENT_BALANCE', 'WALLET_AMOUNT_BELOW_MINIMUM'].includes(result.error.code)) setQuoteNonce((n) => n + 1)
       return
     }
     invalidate(['wallet:', 'portfolio:', 'home:'])
     setReceipt({ ...result.data, to: mode === 'saved' && entry ? `${entry.label} · ${mask(entry.destination)}` : mask(destination.trim()) })
+    } catch { if (epoch === generation.current) { setPinPrompt(false); setServerError(common.errorGeneric) } }
+    finally { if (epoch === generation.current) { inflight.current = false; setPending(false) } }
   }
   const again = () => { keys.current.clear(); setReceipt(null); setAmount(''); setConsent(false); setTouched(false); setServerError(null) }
 
@@ -200,6 +251,12 @@ export function WithdrawScreen({ query }: { query: string }) {
   </MaisonPage>
 
   return <MaisonPage page="withdraw" className={fs.page} topbar={topbar} cta>
+    {pinManager && <TransactionPinManager open mode="setup" onClose={() => setPinManager(false)} onDone={() => { setPinManager(false); void pinStatus.refetch() }} />}
+    {pinPrompt && <TransactionPinPrompt open busy={pending} onClose={() => setPinPrompt(false)} onConfirm={confirmPin} summary={[
+      { label: f.common.amount, value: network && atomic ? fmtAtomic(atomic, decimals, unit) : '—' },
+      { label: f.common.network, value: network?.displayName ?? '—' }, { label: w.to, value: destinationLine },
+      { label: f.common.fee, value: fmtAtomic(current?.data?.feeAtomicAmount ?? network?.withdrawalFeeAtomic, decimals, unit) },
+    ]} />}
     <h1 className={fp.srTitle}>{w.title}</h1>
     {networks.error && !networks.data ? <StateBlock tone="error" title={common.errorGeneric} body={networks.error.message} retry={networks.refetch} retryLabel={common.retry} />
       : !network ? <Skeleton rows={5} />
@@ -262,10 +319,15 @@ export function WithdrawScreen({ query }: { query: string }) {
             <span>{w.consent}</span>
           </label>
           {serverError && <div className={`${s.notice} ${fs.note}`} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
-          <button type="button" className={s.cta} onClick={submit} disabled={!ready} aria-busy={pending}>
-            <span>{pending ? f.common.submitting : w.submit}</span>
+          {knownGate && knownGate !== 'ready' && knownGate !== 'unset' && <p className={s.foot} role="status">{p.gate[knownGate]}{pinStatus.data && (knownGate === 'locked' ? pinStatus.data.lockedUntil : knownGate === 'cooldown' ? pinStatus.data.withdrawalBlockedUntil : null) && <> · {fmtDateTime((knownGate === 'locked' ? pinStatus.data.lockedUntil : pinStatus.data.withdrawalBlockedUntil)!, locale)}</>}</p>}
+          <button type="button" className={s.cta} onClick={submit} disabled={pending || (knownGate !== null && !['ready', 'unset'].includes(knownGate)) || (!ready && knownGate !== 'unset')} aria-busy={pending}>
+            <span>{pending ? f.common.submitting : knownGate === 'unset' ? p.title.setup : w.submit}</span>
             <span className={s.ctaIcon}><ArrowUpFromLine size={17} /></span>
           </button>
+          <p className={s.foot} style={{ justifyContent: 'center', gap: 16 }}>
+            <button type="button" className={s.link} style={{ minHeight: 44 }} disabled={pending || pinStatus.loading} onClick={() => void pinStatus.refetch()}>{p.refresh}</button>
+            {pinStatus.data?.configured && <button type="button" className={s.link} style={{ minHeight: 44 }} disabled={pending} onClick={() => openPath('/profile/security')}>{p.forgot}</button>}
+          </p>
         </div>
       </>}
     {sheet}
@@ -276,10 +338,14 @@ export function WithdrawScreen({ query }: { query: string }) {
 export function ReceiveScreen() {
   const { locale } = useI18n()
   const r = fundsCopy[locale].receive
+  const p = transactionPinCopy[locale]
+  const common = marketCopy[locale].common
   const [userId, setUserId] = useState<string | null | undefined>(undefined)
   const [origin, setOrigin] = useState('')
   const [copied, setCopied] = useState(false)
   useEffect(() => { setUserId(readSession()?.userId ?? null); setOrigin(window.location.origin) }, [])
+  useFundsSessionBoundary(() => { setUserId(readSession()?.userId ?? null); setCopied(false) })
+  const eligibility = useQuery(typeof userId === 'string' ? 'wallet:transfer-eligibility' : null, getTransferEligibility, { staleTime: 0, loading: 'silent' })
   const link = userId ? `${origin}/assets/cash/transfer?to=${encodeURIComponent(userId)}` : ''
 
   const copy = async () => {
@@ -303,6 +369,11 @@ export function ReceiveScreen() {
       : <>
         <div className={fs.qrWrap}><div className={fs.qr} role="img" aria-label={r.qr}><QRCodeSVG value={link} size={232} level="M" bgColor="transparent" fgColor="#16130f" /></div></div>
         <p className={fs.scope}><b>{r.qr}</b><br />{r.scope}</p>
+        <div className={`${s.notice} ${fs.note}`} data-tone={eligibility.error ? 'error' : eligibility.data?.receivable ? 'info' : 'warn'} role="status">
+          <ShieldCheck size={16} aria-hidden="true" /><span>{eligibility.error ? common.unavailable : eligibility.loading || !eligibility.data ? p.eligibility.checking : eligibility.data.receivable ? p.eligibility.eligible : p.receiveLocked}</span>
+          {eligibility.error && <button type="button" className={s.link} style={{ minHeight: 44 }} onClick={() => void eligibility.refetch()}>{common.retry}</button>}
+        </div>
+        {!eligibility.error && eligibility.data?.reason === 'deposit_threshold' && <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/deposit')}>{p.deposit}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>}
         <div className={fs.addrRow}>
           <div><small>{r.idLabel}</small><p className={`${s.mono} ${fs.addrText}`} dir="ltr">{userId}</p></div>
         </div>
@@ -311,6 +382,7 @@ export function ReceiveScreen() {
         <details className={fs.more}>
           <summary><span>{fundsCopy[locale].common.more}</span></summary>
           <div className={fs.moreBody}>
+            <p>{p.depositRule}</p>
             <p>{r.lede}</p>
             <p>{r.note}</p>
             <p className={fs.linkText}>{link}</p>
@@ -332,6 +404,7 @@ export function TransferScreen({ query }: { query: string }) {
   const [scanning,setScanning]=useState(false)
   const f = fundsCopy[locale]
   const t = f.transfer
+  const p = transactionPinCopy[locale]
   const states = walletCopy[locale].states
   const common = marketCopy[locale].common
   const wallet = useQuery('wallet:detail', getWalletDetail, { staleTime: 15_000 })
@@ -355,13 +428,18 @@ export function TransferScreen({ query }: { query: string }) {
   const atomic = amount ? toAtomic(amount, decimals) : null
   const id = recipient.trim().toLowerCase()
   const recipientError = !id ? null : !isUuid(id) ? t.recipientInvalid : self && id === self.toLowerCase() ? t.self : null
+  const recipientStatus = useQuery(id && !recipientError && self ? `wallet:recipient:${id}` : null, () => getTransferRecipient(id), { staleTime: 0, loading: 'silent' })
   const fieldError = useMemo(() => {
     if (!amount) return null
     if (!atomic || atomic === '0') return f.errors.WALLET_AMOUNT_INVALID
     if (available !== null && BigInt(atomic) > BigInt(available)) return f.errors.WALLET_INSUFFICIENT_BALANCE
     return null
   }, [amount, atomic, available, f.errors])
-  const ready = Boolean(id && !recipientError && atomic && !fieldError && consent && wallet.data && !pending)
+  const ready = Boolean(id && !recipientError && recipientStatus.data?.receivable && !recipientStatus.error && !recipientStatus.loading && atomic && !fieldError && consent && wallet.data && !pending)
+  const generation = useFundsSessionBoundary(() => {
+    setRecipient(''); setAmount(''); setConsent(false); setTouched(false); setPending(false); setServerError(null); setReceipt(null); setScanning(false)
+    setSelf(readSession()?.userId ?? null); keys.current.clear(); inflight.current = false
+  })
   /** Display-only: never rounds a non-zero micro amount to 0.00; widens to the significant fraction digits. Math stays BigInt. */
   const exact = (value: string | null | undefined) => {
     let digits = 2
@@ -372,6 +450,7 @@ export function TransferScreen({ query }: { query: string }) {
   const submit = async () => {
     setTouched(true)
     if (!ready || !atomic || inflight.current) return
+    const epoch = generation.current
     const body: TransferBody = { recipientUserId: id, atomicAmount: atomic }
     // Same intent → same key, so a retry after failure or re-authentication replays rather than duplicates.
     const key = idempotencyKeyForIntent(keys.current, 'POST', TRANSFER_PATH, body)
@@ -379,21 +458,24 @@ export function TransferScreen({ query }: { query: string }) {
     setPending(true)
     setServerError(null)
     try {
-      const result = await run(stepUpRequired(integration), (reauthentication) => createTransfer(reauthentication ? { ...body, reauthentication } : body, key), [
+      const result = await run(stepUpRequired(integration), (reauthentication) => {
+        if (epoch !== generation.current) return Promise.resolve({ ok: false as const, error: { status: 0, code: 'SESSION_CHANGED', message: common.errorGeneric } })
+        return createTransfer(reauthentication ? { ...body, reauthentication } : body, key)
+      }, [
         { label: f.common.amount, value: <strong className={s.num}>{exact(atomic)}</strong> },
         { label: t.to, value: <Addr value={id} head={8} tail={4} /> },
         { label: f.common.fee, value: t.feeValue },
       ])
+      if (epoch !== generation.current) return
       if (!result) { setServerError(f.common.cancelled); return }
-      if (!result.ok) { setServerError(errorText(f, result.error, common.errorGeneric)); return }
+      if (!result.ok) { setServerError(p.errors[result.error.code] ?? errorText(f, result.error, common.errorGeneric)); void recipientStatus.refetch(); return }
       invalidate(['wallet:', 'portfolio:', 'home:'])
       setReceipt(result.data)
     } catch {
       // Fields and key are kept; retrying sends the same idempotent intent.
-      setServerError(common.errorGeneric)
+      if (epoch === generation.current) setServerError(common.errorGeneric)
     } finally {
-      inflight.current = false
-      setPending(false)
+      if (epoch === generation.current) { inflight.current = false; setPending(false) }
     }
   }
   const again = () => { keys.current.clear(); setReceipt(null); setAmount(''); setConsent(false); setTouched(false); setServerError(null) }
@@ -401,15 +483,17 @@ export function TransferScreen({ query }: { query: string }) {
   /** Accepts a bare user id or a scanned receive link (`…/assets/cash/transfer?to=<id>`). */
   const paste = async () => {
     if (inflight.current) return
+    const epoch = generation.current
     try {
       const text = (await navigator.clipboard.readText()).trim()
+      if (epoch !== generation.current) return
       let value = text
       try { value = new URL(text).searchParams.get('to') ?? text } catch { /* not a URL */ }
       setRecipient(value.replace(/\s/g, ''))
       setServerError(null)
       setConsent(false)
       setPasteFailed(false)
-    } catch { setPasteFailed(true) }
+    } catch { if (epoch === generation.current) setPasteFailed(true) }
   }
 
   const topbar = <RwaTopbar screen="transfer" title={t.title} onBack={() => backOr('/assets/cash')} />
@@ -432,7 +516,7 @@ export function TransferScreen({ query }: { query: string }) {
     {wallet.error && !wallet.data ? <StateBlock tone="error" title={common.errorGeneric} body={wallet.error.message} retry={wallet.refetch} retryLabel={common.retry} />
       : !wallet.data ? <Skeleton rows={4} />
       : <>
-        <label className={`${s.field} ${fs.field} ${fs.first} ${tf.field}`} data-invalid={Boolean(recipientError) || undefined} data-valid={(id && !recipientError) || undefined}>
+        <label className={`${s.field} ${fs.field} ${fs.first} ${tf.field}`} data-invalid={Boolean(recipientError) || undefined} data-valid={(!recipientStatus.error && recipientStatus.data?.receivable) || undefined}>
           <span>{t.recipient}</span>
           <input value={recipient} disabled={pending} autoComplete="off" spellCheck={false} placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" aria-invalid={Boolean(recipientError)} aria-describedby="transfer-recipient-meta"
             onChange={(event) => { setRecipient(event.target.value.replace(/\s/g, '')); setServerError(null); setPasteFailed(false); setConsent(false) }} />
@@ -442,6 +526,9 @@ export function TransferScreen({ query }: { query: string }) {
           <button type="button" className={s.ghost} disabled={pending} onClick={() => setScanning(true)}><QrCode size={15} aria-hidden="true" />{t.scan}</button>
         </div>
         {recipientError ? <p className={s.fieldError} id="transfer-recipient-meta" role="alert">{recipientError}</p> : pasteFailed ? <p className={fs.hint} id="transfer-recipient-meta" role="status">{t.pasteFailed}</p> : null}
+        {id && !recipientError && <p className={fs.hint} role="status" data-recipient-status="">
+          {recipientStatus.error ? <>{common.unavailable} · <button type="button" className={s.link} style={{ minHeight: 44 }} onClick={() => void recipientStatus.refetch()}>{common.retry}</button></> : recipientStatus.loading || !recipientStatus.data ? p.eligibility.checking : recipientStatus.data.receivable ? p.eligibility.eligible : recipientStatus.data.reason === 'deposit_threshold' ? p.depositRule : p.eligibility.ineligible}
+        </p>}
         <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/receive')}><QrCode size={14} aria-hidden="true" />{t.myCode}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
 
         <div className={tf.amount} data-invalid={Boolean(fieldError && (touched || amount.length > 0)) || undefined}>
