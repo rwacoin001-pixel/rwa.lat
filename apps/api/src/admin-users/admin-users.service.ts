@@ -56,7 +56,7 @@ export class AdminUsersService {
         FROM app.ledger_adjustment_requests r JOIN app.ledger_accounts a ON a.id = r.ledger_account_id
         WHERE a.user_id = $1 ORDER BY r.requested_at DESC, r.id DESC LIMIT 20`, [id]),
     ])
-    return { user: this.present(row), ...history, adjustments, singleOperatorEnabled: process.env.LEDGER_ALLOW_SELF_APPROVAL === 'true' }
+    return { user: this.present(row), ...history, adjustments, singleOperatorEnabled: true }
   }
 
   private present(row: Record<string, any>) {

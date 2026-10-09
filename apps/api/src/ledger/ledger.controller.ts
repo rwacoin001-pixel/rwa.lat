@@ -86,10 +86,16 @@ export class AdminLedgerController {
     private readonly rbac: AdminRbacService,
   ) {}
 
+  private async authorize(admin: AuthenticatedAdmin, permission: string) {
+    // The authenticated admin gateway checks RBAC before supplying its audit actor.
+    const delegated = admin.roleId === 'service-channel' && admin.sessionId === `service:${admin.id}` && admin.permissions.includes('*')
+    if (!delegated) await this.rbac.assertPermission(admin.id, permission)
+  }
+
   @Get('reconciliations')
   @ApiOperation({ summary: 'List custody reconciliation runs and their difference cases' })
   async reconciliations(@CurrentAdmin() admin: AuthenticatedAdmin, @Query() query: ListReconciliationQueryDto) {
-    await this.rbac.assertPermission(admin.id, 'ledger.reconciliation.manage')
+    await this.authorize(admin, 'ledger.reconciliation.manage')
     return this.ledger.listReconciliationRuns(query.state, query.limit ? Number(query.limit) : 50)
   }
 
@@ -100,7 +106,7 @@ export class AdminLedgerController {
     @Body() dto: RunCustodyReconciliationDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'ledger.reconciliation.manage')
+    await this.authorize(admin, 'ledger.reconciliation.manage')
     return this.ledger.reconcileCustody({
       provider: dto.provider.trim(),
       network: dto.network,
@@ -116,7 +122,7 @@ export class AdminLedgerController {
   @Get('adjustments')
   @ApiOperation({ summary: 'List controlled ledger adjustment requests' })
   async list(@CurrentAdmin() admin: AuthenticatedAdmin, @Query() query: ListLedgerAdjustmentsQueryDto) {
-    await this.rbac.assertPermission(admin.id, 'ledger.adjustments.manage')
+    await this.authorize(admin, 'ledger.adjustments.manage')
     return this.ledger.listLedgerAdjustments(query.state, query.limit ? Number(query.limit) : 50)
   }
 
@@ -127,7 +133,7 @@ export class AdminLedgerController {
     @Body() dto: CreateLedgerAdjustmentDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'ledger.adjustments.manage')
+    await this.authorize(admin, 'ledger.adjustments.manage')
     return this.ledger.createLedgerAdjustment({
       ledgerAccountId: dto.ledgerAccountId,
       side: dto.side,
@@ -140,26 +146,26 @@ export class AdminLedgerController {
   }
 
   @Put('adjustments/:id/approve')
-  @ApiOperation({ summary: 'Approve an adjustment as a different administrator from the requester' })
+  @ApiOperation({ summary: 'Explicitly approve an adjustment as an authorized administrator, including its requester' })
   async approve(
     @CurrentAdmin() admin: AuthenticatedAdmin,
     @Param('id') id: string,
     @Body() dto: DecideLedgerAdjustmentDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'ledger.adjustments.manage')
+    await this.authorize(admin, 'ledger.adjustments.manage')
     return this.ledger.decideLedgerAdjustment(id, admin.id, true, dto.reason, request.requestId ?? 'admin-ledger-approval')
   }
 
   @Put('adjustments/:id/reject')
-  @ApiOperation({ summary: 'Reject an adjustment as a different administrator from the requester' })
+  @ApiOperation({ summary: 'Reject an adjustment as an authorized administrator, including its requester' })
   async reject(
     @CurrentAdmin() admin: AuthenticatedAdmin,
     @Param('id') id: string,
     @Body() dto: DecideLedgerAdjustmentDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'ledger.adjustments.manage')
+    await this.authorize(admin, 'ledger.adjustments.manage')
     return this.ledger.decideLedgerAdjustment(id, admin.id, false, dto.reason, request.requestId ?? 'admin-ledger-rejection')
   }
 
@@ -170,7 +176,7 @@ export class AdminLedgerController {
     @Param('id') id: string,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'ledger.adjustments.post')
+    await this.authorize(admin, 'ledger.adjustments.post')
     return this.ledger.postLedgerAdjustment(id, admin.id, request.requestId ?? 'admin-ledger-post')
   }
 }

@@ -418,16 +418,6 @@ export class LedgerService {
           message: `Ledger adjustment cannot be decided from ${adjustment.state}.`,
         })
       }
-      // Single-person control (owner decision 2026-10-07): the owner asked for the dual-control rule
-      // on ledger adjustments to be lifted ("帮我修改为 单人控制 不需要双人审批"). Kept as an explicit
-      // env gate so the DEFAULT stays safe (no self-approval) and the change is reversible.
-      // Set LEDGER_ALLOW_SELF_APPROVAL=true to allow the requester to decide their own adjustment.
-      if (process.env.LEDGER_ALLOW_SELF_APPROVAL !== 'true' && adjustment.requested_by === adminId) {
-        throw new ConflictException({
-          code: LEDGER_ERROR_CODES.ADJUSTMENT_SELF_APPROVAL_FORBIDDEN,
-          message: 'The administrator who requested an adjustment cannot decide it.',
-        })
-      }
       const state = approve ? 'approved' : 'rejected'
       const [updated] = await runner.query(
         `UPDATE app.ledger_adjustment_requests
@@ -481,9 +471,6 @@ export class LedgerService {
         }
         return { id: existing.id, userId: input.userId, state: 'posted', ledgerTransactionId: existing.posted_ledger_transaction_id,
           beforeAtomic: e.beforeAtomic, afterAtomic: e.afterAtomic, duplicate: true }
-      }
-      if (process.env.LEDGER_ALLOW_SELF_APPROVAL !== 'true') {
-        throw new ConflictException({ code: 'USER_ADJUSTMENT_SINGLE_OPERATOR_DISABLED', message: '当前未启用单人调账，请联系系统管理员。' })
       }
       const [user] = await runner.query('SELECT id, status FROM app.users WHERE id = $1 FOR SHARE', [input.userId])
       if (!user) throw new NotFoundException({ code: 'USER_NOT_FOUND', message: '用户不存在。' })

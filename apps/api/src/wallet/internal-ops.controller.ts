@@ -188,7 +188,7 @@ export class InternalWalletController {
   }
 
   @Post('funds/withdrawal-execution/resume-requests')
-  @ApiOperation({ summary: 'Request resumption of withdrawal execution (second admin approves)' })
+  @ApiOperation({ summary: 'Request resumption of withdrawal execution (explicit authorized administrator approval required)' })
   requestFundsResume(@Body() dto: RequestFundsResumeDto, @Req() request: InternalRequest) {
     return this.fundsSwitch.requestResume(actorOf(request), dto.changeId, dto.reason, requestIdOf(request))
   }

@@ -121,10 +121,13 @@ describe('LedgerService', () => {
     expect(query.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO app.ledger_entries'))).toBe(false)
   })
 
-  it('forbids an adjustment requester from approving their own request', async () => {
+  it('records an explicit approval by the adjustment requester without posting funds', async () => {
     const query = jest.fn(async (sql: string) => {
-      if (sql.includes('FROM app.ledger_adjustment_requests')) {
+      if (sql.includes('SELECT * FROM app.ledger_adjustment_requests')) {
         return [{ id: 'adjustment-1', state: 'requested', requested_by: 'admin-1' }]
+      }
+      if (sql.includes('UPDATE app.ledger_adjustment_requests')) {
+        return [{ id: 'adjustment-1', state: 'approved', approvedBy: 'admin-1' }]
       }
       return []
     })
@@ -133,10 +136,10 @@ describe('LedgerService', () => {
 
     await expect(service.decideLedgerAdjustment(
       'adjustment-1', 'admin-1', true, undefined, 'request-1',
-    )).rejects.toMatchObject({
-      response: expect.objectContaining({ code: 'LEDGER_ADJUSTMENT_SELF_APPROVAL_FORBIDDEN' }),
-    })
-    expect(runner.rollbackTransaction).toHaveBeenCalled()
+    )).resolves.toMatchObject({ state: 'approved', approvedBy: 'admin-1' })
+    expect(runner.commitTransaction).toHaveBeenCalled()
+    expect(runner.rollbackTransaction).not.toHaveBeenCalled()
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO app.ledger_entries'))).toBe(false)
   })
 
   it('posts an approved adjustment as two equal and opposite immutable entries', async () => {

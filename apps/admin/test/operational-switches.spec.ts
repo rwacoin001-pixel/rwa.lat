@@ -24,7 +24,7 @@ describe('deposit switch administration', () => {
     await expect(service.updateSwitch('wallet.deposits.crediting', { enabled: true, reason: 'operator enabled' }, 'admin')).rejects.toMatchObject({ response: expect.objectContaining({ code: 'OPERATIONAL_SWITCH_ENVIRONMENT_BLOCKED' }) })
     expect(query).not.toHaveBeenCalled()
   })
-  it('keeps withdrawal execution behind the two-person approval flow', async () => {
+  it('keeps withdrawal execution behind an explicit administrator approval instead of a direct switch write', async () => {
     const { service, query } = setup({ CORE_DATABASE_URL: 'postgres://unused', ADMIN_LIVE_OPERATIONS_ENABLED: 'true', CORE_WALLET_EXECUTION_ENABLED: 'true' })
     await expect(service.updateSwitch('wallet.withdrawals.execution', { enabled: true, reason: 'operator enabled' }, 'admin')).rejects.toMatchObject({ response: expect.objectContaining({ code: 'OPERATIONAL_SWITCH_ENVIRONMENT_BLOCKED' }) })
     expect(query).not.toHaveBeenCalled()

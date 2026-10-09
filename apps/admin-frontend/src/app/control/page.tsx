@@ -557,7 +557,7 @@ export default function ControlPage() {
             <CardContent className="flex items-start gap-2 p-4 text-sm text-amber-800">
               <ShieldCheck className="mt-0.5 h-4 w-4 flex-shrink-0" />
               <p>
-                充值入账可由授权管理员在此启停，实际入账仍由 Core API 的资金运行门禁控制；提现执行继续走双人审批。
+                充值入账可由授权管理员启停；提现执行在提现页确认恢复，均保留资金运行门禁和审计。
               </p>
             </CardContent>
           </Card>

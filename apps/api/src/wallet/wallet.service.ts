@@ -56,7 +56,7 @@ export class WalletService {
   private readonly financialMode: boolean
   private readonly addressCooldownSeconds: number
   private readonly newDeviceCooldownSeconds: number
-  private readonly approvalsRequired: number
+  private readonly approvalsRequired = 1
   private readonly executionLeaseSeconds: number
   private readonly perTransactionLimitAtomic: string | null
   private readonly dailyLimitAtomic: string | null
@@ -95,7 +95,6 @@ export class WalletService {
     this.financialMode = config.get<string>('PRODUCTION_FINANCIAL_FEATURES_ENABLED') === 'true'
     this.addressCooldownSeconds = readPositiveInteger(config.get<string>('WITHDRAWAL_ADDRESS_COOLDOWN_SECONDS'), 86_400)
     this.newDeviceCooldownSeconds = readPositiveInteger(config.get<string>('WITHDRAWAL_NEW_DEVICE_COOLDOWN_SECONDS'), 86_400)
-    this.approvalsRequired = readPositiveInteger(config.get<string>('WITHDRAWAL_ADMIN_APPROVALS_REQUIRED'), 2)
     this.executionLeaseSeconds = readPositiveInteger(config.get<string>('WITHDRAWAL_EXECUTION_LEASE_SECONDS'), 120)
     this.perTransactionLimitAtomic = readOptionalAtomic(config.get<string>('WITHDRAWAL_PER_TRANSACTION_LIMIT_ATOMIC'))
     this.dailyLimitAtomic = readOptionalAtomic(config.get<string>('WITHDRAWAL_DAILY_LIMIT_ATOMIC'))
@@ -544,6 +543,7 @@ export class WalletService {
       chainTransactionId: withdrawal.chainTransactionId,
       transactionHash: withdrawal.chainTransactionId ? chainById.get(withdrawal.chainTransactionId)?.transactionHash ?? null : null,
       approvals: approvalCounts.get(withdrawal.id) ?? 0,
+      approvalsRequired: this.financialMode && withdrawal.policySnapshot?.autoApprovedByWhitelist !== true ? this.approvalsRequired : 0,
       policySnapshot: withdrawal.policySnapshot,
     }))
   }
@@ -629,15 +629,6 @@ export class WalletService {
   }
 
   async executeApprovedWithdrawal(withdrawalId: string, adminId: string, requestId: string) {
-    if (this.financialMode) {
-      const executorDecision = await this.withdrawalApprovals.findOne({ where: { withdrawalId, adminUserId: adminId } })
-      if (executorDecision) {
-        throw new ConflictException({
-          code: WALLET_ERROR_CODES.WITHDRAWAL_EXECUTOR_CONFLICT,
-          message: 'An administrator who reviewed this withdrawal cannot execute it.',
-        })
-      }
-    }
     return this.executeWithdrawal(withdrawalId, { type: 'admin', id: adminId }, requestId)
   }
 

@@ -297,7 +297,7 @@ describeDatabase('wallet and ledger schema', () => {
     )).rejects.toMatchObject({ code: '23505' })
   })
 
-  it('enforces four-eyes decisions for funds execution resume requests', async () => {
+  it('allows a recorded single-administrator decision for funds execution resume requests', async () => {
     const [role] = await dataSource.query(
       `INSERT INTO app.admin_roles (name, description) VALUES ($1, 'funds switch test') RETURNING id`,
       [`funds-switch-${randomUUID()}`],
@@ -323,7 +323,7 @@ describeDatabase('wallet and ledger schema', () => {
           SET state = 'approved', decided_by = $2, decided_at = now()
         WHERE id = $1`,
       [request.id, requester.id],
-    )).rejects.toMatchObject({ code: '23514' })
+    )).resolves.toBeDefined()
 
     await expect(dataSource.query(
       `UPDATE app.operational_switch_change_requests

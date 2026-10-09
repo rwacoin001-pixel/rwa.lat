@@ -200,7 +200,7 @@ export default function LedgerPage() {
       <div className="space-y-5">
         <PageHeader
           title="账本明细"
-          subtitle="托管对账记录与受控账本调整单（调整需双人审批，通过后过账写入不可变账本）"
+          subtitle="托管对账与账本调整；批准后过账，保留完整流水"
           actions={<RefreshButton loading={recon.loading || adjustments.loading} onClick={() => { recon.reload(); adjustments.reload() }} />}
         />
 
@@ -214,7 +214,7 @@ export default function LedgerPage() {
 
         <Panel
           title={`调整单（${adjustments.data?.adjustments?.length ?? 0}）`}
-          subtitle="requested → approved → posted；请求人与审批人必须不同（双人控制）"
+          subtitle="申请 → 批准 → 过账；同一授权管理员可完成，操作全程留档"
           actions={<FilterTabs options={ADJ_TABS} value={adjState} onChange={setAdjState} />}
           delay={90}
           pad={false}

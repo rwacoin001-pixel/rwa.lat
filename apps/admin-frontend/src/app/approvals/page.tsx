@@ -53,7 +53,7 @@ export default function ApprovalsPage() {
       })
       const body = await res.json().catch(() => null)
       if (!res.ok) throw new Error((body?.message as string) || `创建失败 (HTTP ${res.status})`)
-      showNotice('审批请求已创建（需由另一位管理员通过）')
+      showNotice('审批请求已创建，请核对后批准')
       approvals.reload()
     } catch (err) {
       showNotice(err instanceof Error ? err.message : '创建失败')
@@ -63,7 +63,8 @@ export default function ApprovalsPage() {
   }
 
   const decide = async (row: Approval, approve: boolean) => {
-    const reasonCode = window.prompt(approve ? '通过备注（可选）' : '驳回理由（可选）', '') ?? ''
+    const reasonCode = window.prompt(approve ? '确认批准，备注（可选）' : '确认驳回，理由（可选）', '')
+    if (reasonCode === null) return
     setBusy(row.id)
     try {
       const res = await fetch(`/api/admin/approvals/${row.id}/${approve ? 'decide' : 'reject'}`, {
@@ -143,7 +144,7 @@ export default function ApprovalsPage() {
       <div className="space-y-5">
         <PageHeader
           title="审批中心"
-          subtitle="管理员双人复核队列：关键动作需由另一位管理员通过（请求人与审批人不可相同）"
+          subtitle="有权限的管理员核对后批准，操作全程留档"
           actions={
             <>
               <button

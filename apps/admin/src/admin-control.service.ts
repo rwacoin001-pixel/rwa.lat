@@ -408,7 +408,7 @@ export class AdminControlService implements OnModuleDestroy {
       throw new ConflictException({
         code: 'OPERATIONAL_SWITCH_ENVIRONMENT_BLOCKED',
         message: definition.key === 'wallet.withdrawals.execution'
-          ? 'Withdrawal execution must be resumed through the existing two-person approval flow.'
+          ? 'Withdrawal execution must be resumed through an explicit authorized-administrator approval.'
           : `The Core API environment gate ${definition.environmentKey} is not ready.`,
       })
     }

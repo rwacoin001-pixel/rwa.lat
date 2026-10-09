@@ -64,7 +64,7 @@ export class FundsOperationalSwitchService {
       await runner.query(
         `UPDATE app.operational_switch_change_requests
             SET state = 'rejected',
-                decided_by = CASE WHEN requested_by = $2 THEN NULL ELSE $2 END,
+                decided_by = $2,
                 decided_at = now()
           WHERE switch_key = $1 AND state = 'requested'`,
         [WITHDRAWAL_EXECUTION_SWITCH, adminId],
@@ -143,12 +143,6 @@ export class FundsOperationalSwitchService {
         throw new ConflictException({
           code: WALLET_ERROR_CODES.WITHDRAWAL_SWITCH_CONFLICT,
           message: `Funds resume request cannot be decided from ${change.state}.`,
-        })
-      }
-      if (change.requested_by === adminId) {
-        throw new ConflictException({
-          code: WALLET_ERROR_CODES.WITHDRAWAL_SWITCH_CONFLICT,
-          message: 'The administrator who requested funds execution cannot approve its resumption.',
         })
       }
       const state = approve ? 'approved' : 'rejected'

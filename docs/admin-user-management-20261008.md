@@ -28,7 +28,7 @@
 - 管理网关读权限：`users.read`。
 - 调账需同时具有 `users.read`、`ledger.adjustments.manage`、`ledger.adjustments.post`。
 - 核心接口由 `AdminSessionGuard` 验证真实管理员会话或服务通道。仅守卫产生的服务通道身份委托管理网关 RBAC；没有修改全局 RBAC，也没有给审计影子管理员增加权限。
-- `LEDGER_ALLOW_SELF_APPROVAL=true` 才能创建新的单人调账。已完成的同编号重试可以查询原结果。
+- 2026-10-09 起统一采用单人审批；`LEDGER_ALLOW_SELF_APPROVAL` 为历史配置，不再限制单人调账。已完成的同编号重试可以查询原结果。详见 `single-admin-approvals-20261009.md`。
 - 金额用 6 位原子单位和 BigInt 计算；设置余额生成差额复式流水，不直接改写余额投影。
 - 请求、单人批准、入账与审计在同一事务提交；禁止扣成负数，禁止调整不可用用户或账户。
 - 数据库余额锁与确认快照避免并发覆盖；缺失历史投影不会用零代替。

@@ -155,7 +155,7 @@ describe('production environment validation', () => {
     }))).toThrow(/ALLOWED_REGIONS/)
   })
 
-  it('requires explicit financial withdrawal limits, cooldowns, leases and dual approval', () => {
+  it('requires explicit financial withdrawal limits, cooldowns, leases and exactly one approval', () => {
     const base = {
       PRODUCTION_FINANCIAL_FEATURES_ENABLED: 'true',
       KYC_PROVIDER: 'live-kyc',
@@ -169,13 +169,13 @@ describe('production environment validation', () => {
       WITHDRAWAL_NEW_DEVICE_COOLDOWN_SECONDS: '86400',
       WITHDRAWAL_PER_TRANSACTION_LIMIT_ATOMIC: '1000000000',
       WITHDRAWAL_DAILY_LIMIT_ATOMIC: '5000000000',
-      WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: '2',
+      WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: '1',
       WITHDRAWAL_EXECUTION_LEASE_SECONDS: '120',
       WALLET_EXECUTION_QUEUE_LEASE_SECONDS: '300',
       WALLET_EXECUTION_WORKER_POLL_MS: '5000',
     }
     expect(validateEnvironment(production(base))).toMatchObject({ PRODUCTION_FINANCIAL_FEATURES_ENABLED: 'true' })
-    expect(() => validateEnvironment(production({ ...base, WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: '1' }))).toThrow(/APPROVALS_REQUIRED/)
+    for (const count of ['0', '2', 'bad']) expect(() => validateEnvironment(production({ ...base, WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: count }))).toThrow(/APPROVALS_REQUIRED/)
     expect(() => validateEnvironment(production({ ...base, WITHDRAWAL_DAILY_LIMIT_ATOMIC: '1' }))).toThrow(/DAILY_LIMIT/)
     expect(() => validateEnvironment(production({ ...base, WALLET_EXECUTION_WORKER_ENABLED: 'false' }))).toThrow(/WORKER_ENABLED/)
     expect(() => validateEnvironment(production({ ...base, WALLET_EXECUTION_QUEUE_LEASE_SECONDS: '60' }))).toThrow(/QUEUE_LEASE_SECONDS/)
@@ -195,7 +195,7 @@ describe('production environment validation', () => {
       WITHDRAWAL_NEW_DEVICE_COOLDOWN_SECONDS: '86400',
       WITHDRAWAL_PER_TRANSACTION_LIMIT_ATOMIC: '1000000000',
       WITHDRAWAL_DAILY_LIMIT_ATOMIC: '5000000000',
-      WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: '2',
+      WITHDRAWAL_ADMIN_APPROVALS_REQUIRED: '1',
       WITHDRAWAL_EXECUTION_LEASE_SECONDS: '120',
       WALLET_EXECUTION_QUEUE_LEASE_SECONDS: '300',
       WALLET_EXECUTION_WORKER_POLL_MS: '5000',

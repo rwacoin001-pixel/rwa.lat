@@ -35,7 +35,7 @@ interface Withdrawal {
   reasonCode?: string | null;
   approvals: number;
   approvalsRequired: number;
-  requiresDualApproval: boolean;
+  requiresApproval: boolean;
   rawState: string;
 }
 
@@ -125,7 +125,7 @@ function formatAtomic(atomic: string, decimals = 6): string {
 
 function mapWithdrawal(raw: Record<string, any>): Withdrawal {
   const snapshot = (raw.policySnapshot || {}) as Record<string, unknown>;
-  const approvalsRequired = Number(snapshot.approvalsRequired ?? 0);
+  const approvalsRequired = Number(raw.approvalsRequired ?? snapshot.approvalsRequired ?? 1);
   const amount = formatAtomic(String(raw.atomicAmount || '0'));
   const fee = formatAtomic(String(raw.feeAtomicAmount || '0'));
   const uiStatus = DB_TO_UI[String(raw.state)] ?? 'pending';
@@ -149,7 +149,7 @@ function mapWithdrawal(raw: Record<string, any>): Withdrawal {
     reasonCode: raw.reasonCode ?? null,
     approvals: Number(raw.approvals ?? 0),
     approvalsRequired,
-    requiresDualApproval: approvalsRequired >= 2,
+    requiresApproval: approvalsRequired > 0,
     rawState: String(raw.state),
   };
 }
@@ -254,7 +254,7 @@ export default function WithdrawalsPage() {
           const result = await callAction(`/api/admin/wallet/withdrawals/${withdrawal.id}/approve`, {
             method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({}),
           });
-          alert(result?.state === 'approved' ? '审批已满足，提现进入执行队列' : `已记录审批 ${result?.approvalCount ?? ''}/${result?.approvalsRequired ?? ''}，还需其他管理员批准`);
+          alert(result?.state === 'approved' ? '审批已通过，提现进入执行队列' : `审批记录已更新 ${result?.approvalCount ?? ''}/${result?.approvalsRequired ?? 1}，请刷新查看状态`);
           await fetchWithdrawals();
           break;
         }
@@ -309,7 +309,7 @@ export default function WithdrawalsPage() {
       await callAction('/api/admin/operations/funds/withdrawal-execution/resume-requests', {
         method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ changeId, reason }),
       });
-      alert('已提交恢复申请，需由另一位管理员批准后生效');
+      alert('已提交恢复申请，请核对后点击批准恢复');
       await fetchFunds();
     } catch (err) {
       alert(err instanceof Error ? err.message : '提交失败');
@@ -360,7 +360,7 @@ export default function WithdrawalsPage() {
                     onClick={async () => {
                       const target = funds.pending[0];
                       if (!target) return;
-                      if (!confirm(`批准恢复申请 ${target.changeId} 吗？（需由发起人以外的管理员操作）`)) return;
+                      if (!confirm(`确认批准恢复申请 ${target.changeId} 并恢复提现执行吗？`)) return;
                       try {
                         await callAction(`/api/admin/operations/funds/withdrawal-execution/resume-requests/${target.id}/approve`, { method: 'PUT' });
                         alert('已批准，提现执行恢复启用');
@@ -454,8 +454,8 @@ export default function WithdrawalsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">需双人审批</p>
-                  <p className="text-2xl font-bold mt-1 text-purple-400">{withdrawals.filter((w) => w.requiresDualApproval && w.status === 'reviewing').length}</p>
+                  <p className="text-sm text-muted-foreground">待人工审批</p>
+                  <p className="text-2xl font-bold mt-1 text-purple-400">{withdrawals.filter((w) => w.requiresApproval && w.status === 'reviewing').length}</p>
                 </div>
                 <DollarSign className="w-10 h-10 text-purple-400/50" />
               </div>
@@ -598,13 +598,13 @@ export default function WithdrawalsPage() {
                           {w.destinationAddress.slice(0, 10)}...{w.destinationAddress.slice(-8)}
                         </TableCell>
                         <TableCell className="text-sm">
-                          <span className={cn(w.requiresDualApproval ? 'text-purple-400' : 'text-muted-foreground')}>
+                          <span className={cn(w.requiresApproval ? 'text-purple-400' : 'text-muted-foreground')}>
                             {w.approvals}/{w.approvalsRequired || 1}
                           </span>
-                          {w.requiresDualApproval && (
+                          {w.requiresApproval && (
                             <span className="ml-1 inline-flex items-center gap-1 text-xs text-purple-400">
                               <span className="w-2 h-2 rounded-full bg-purple-400" />
-                              双审
+                              人工审批
                             </span>
                           )}
                         </TableCell>

@@ -93,7 +93,7 @@ export function validateEnvironment(input: Environment): Environment {
     if (dailyLimit < perTransactionLimit) {
       throw new Error('WITHDRAWAL_DAILY_LIMIT_ATOMIC must be greater than or equal to WITHDRAWAL_PER_TRANSACTION_LIMIT_ATOMIC')
     }
-    requireInteger(input, 'WITHDRAWAL_ADMIN_APPROVALS_REQUIRED', 2, 5)
+    requireInteger(input, 'WITHDRAWAL_ADMIN_APPROVALS_REQUIRED', 1, 1)
     const withdrawalLease = requireInteger(input, 'WITHDRAWAL_EXECUTION_LEASE_SECONDS', 30, 900)
     const queueLease = requireInteger(input, 'WALLET_EXECUTION_QUEUE_LEASE_SECONDS', 60, 900)
     requireInteger(input, 'WALLET_EXECUTION_WORKER_POLL_MS', 1_000, 60_000)

@@ -1,5 +1,7 @@
 # RWA.LAT 开发任务表
 
+> 2026-10-09：审批策略统一为单个授权管理员明确批准；下列历史双人审批记录不代表当前要求。范围与发布条件见 [单人审批策略](single-admin-approvals-20261009.md)。
+
 ## 2026-07-15 financial production hardening update
 
 | ID | Status | Evidence |

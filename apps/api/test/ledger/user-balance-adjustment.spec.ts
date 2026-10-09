@@ -86,9 +86,9 @@ describe('Single-operator user USDT adjustments', () => {
     await expect((harness().service as any).adjustUserBalance({ ...input, amount })).rejects.toMatchObject({ response: { code: 'USER_ADJUSTMENT_INVALID' } })
   })
 
-  it('does not silently enable single-operator control when the explicit gate is off', async () => {
+  it('keeps the current single-operator policy even when the obsolete self-approval flag is off', async () => {
     process.env.LEDGER_ALLOW_SELF_APPROVAL = 'false'
-    await expect((harness().service as any).adjustUserBalance(input)).rejects.toMatchObject({ response: { code: 'USER_ADJUSTMENT_SINGLE_OPERATOR_DISABLED' } })
+    await expect((harness().service as any).adjustUserBalance(input)).resolves.toMatchObject({ state: 'posted', duplicate: false })
   })
 
   it('returns the original completed operation on a retry without writing more entries', async () => {

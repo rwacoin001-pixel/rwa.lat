@@ -87,7 +87,7 @@ describe('API-013 admin RBAC HTTP (Pg + guard)', () => {
     expect(doubled.status).toBe(404)
   })
 
-  it('creates and approves a redemption approval through HTTP (four-eyes)', async () => {
+  it('creates and approves a request through HTTP with the same authorized administrator', async () => {
     const create = await fetch(`${url()}/admin/approvals`, {
       method: 'POST',
       headers: { authorization: `Bearer ${TOKEN_A}`, 'content-type': 'application/json' },
@@ -98,17 +98,17 @@ describe('API-013 admin RBAC HTTP (Pg + guard)', () => {
 
     const approve = await fetch(`${url()}/admin/approvals/${created.id}/decide`, {
       method: 'PUT',
-      headers: { authorization: `Bearer ${TOKEN_B}`, 'content-type': 'application/json' },
+      headers: { authorization: `Bearer ${TOKEN_A}`, 'content-type': 'application/json' },
       body: JSON.stringify({ reasonCode: 'ok' }),
     })
     expect(approve.status).toBe(200)
     const decided = await approve.json()
     expect(decided.state).toBe('approved')
-    expect(decided.approvedBy).toBe(ADMIN_B)
+    expect(decided.approvedBy).toBe(ADMIN_A)
     const audit = await ds.query(`SELECT action, actor_id FROM app.audit_logs WHERE object_id = $1 ORDER BY occurred_at ASC`, [created.id])
     expect(audit).toEqual([
       expect.objectContaining({ action: 'admin.approval.requested', actor_id: ADMIN_A }),
-      expect.objectContaining({ action: 'admin.approval.approved', actor_id: ADMIN_B }),
+      expect.objectContaining({ action: 'admin.approval.approved', actor_id: ADMIN_A }),
     ])
   })
 })

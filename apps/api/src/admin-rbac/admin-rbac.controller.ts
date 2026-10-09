@@ -19,6 +19,12 @@ import {
 export class AdminRbacController {
   constructor(private readonly svc: AdminRbacService) {}
 
+  private async authorize(admin: AuthenticatedAdmin, permission: string) {
+    // Verified service-channel requests are permission-checked by the admin gateway.
+    const delegated = admin.roleId === 'service-channel' && admin.sessionId === `service:${admin.id}` && admin.permissions.includes('*')
+    if (!delegated) await this.svc.assertPermission(admin.id, permission)
+  }
+
   @Get('me')
   me(@CurrentAdmin() admin: AuthenticatedAdmin) {
     return this.svc.getProfile(admin.id)
@@ -26,13 +32,13 @@ export class AdminRbacController {
 
   @Get('approvals')
   async listApprovals(@CurrentAdmin() admin: AuthenticatedAdmin, @Query() q: ListApprovalsQueryDto) {
-    await this.svc.assertPermission(admin.id, 'approvals.manage')
+    await this.authorize(admin, 'approvals.manage')
     return this.svc.listApprovals(q.state, q.limit ? Number(q.limit) : 50)
   }
 
   @Post('approvals')
   async createApproval(@CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: CreateApprovalDto, @Req() request: RequestWithContext) {
-    await this.svc.assertPermission(admin.id, 'approvals.manage')
+    await this.authorize(admin, 'approvals.manage')
     return this.svc.createApproval({
       actorId: admin.id,
       action: dto.action,
@@ -45,19 +51,19 @@ export class AdminRbacController {
 
   @Put('approvals/:id/decide')
   async decide(@Param('id') id: string, @CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: DecideApprovalDto, @Req() request: RequestWithContext) {
-    await this.svc.assertPermission(admin.id, 'approvals.manage')
+    await this.authorize(admin, 'approvals.manage')
     return this.svc.decideApproval(id, admin.id, true, dto.reasonCode, this.auditContext(request))
   }
 
   @Put('approvals/:id/reject')
   async reject(@Param('id') id: string, @CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: DecideApprovalDto, @Req() request: RequestWithContext) {
-    await this.svc.assertPermission(admin.id, 'approvals.manage')
+    await this.authorize(admin, 'approvals.manage')
     return this.svc.decideApproval(id, admin.id, false, dto.reasonCode, this.auditContext(request))
   }
 
   @Get('audit')
   async exportAudit(@CurrentAdmin() admin: AuthenticatedAdmin, @Query() q: AuditExportQueryDto) {
-    await this.svc.assertPermission(admin.id, 'audit.read')
+    await this.authorize(admin, 'audit.read')
     return this.svc.exportAudit({
       actorType: q.actorType,
       userId: q.userId,

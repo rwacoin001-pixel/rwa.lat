@@ -106,7 +106,6 @@ export class AdminRbacService {
     const r = await this.approvals.findOne({ where: { id } })
     if (!r) throw AdminRbacError.approvalNotFound(id)
     if (r.state !== 'requested') throw AdminRbacError.approvalStateInvalid(id, r.state)
-    if (r.requestedBy === adminActorId) throw AdminRbacError.selfApprovalForbidden()
     r.state = approve ? 'approved' : 'rejected'
     r.approvedBy = adminActorId
     r.decidedAt = new Date()

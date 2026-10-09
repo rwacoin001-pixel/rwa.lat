@@ -24,6 +24,16 @@ function serviceWith(query: jest.Mock) {
 }
 
 describe('FundsOperationalSwitchService', () => {
+  it('still refuses a single-person resume approval when the environment execution gate is off', async () => {
+    const query = jest.fn(async (sql: string) => sql.includes('SELECT * FROM app.operational_switch_change_requests')
+      ? [{ id: 'resume-1', state: 'requested', requested_by: 'admin-1', change_id: 'CHG-1' }] : [])
+    const runner = runnerWith(query)
+    const service = new FundsOperationalSwitchService({ createQueryRunner: () => runner } as never, { get: () => 'false' } as never)
+    await expect(service.decideResume('resume-1', 'admin-1', true, 'trace-1')).rejects.toMatchObject({ response: { code: 'WALLET_EXECUTION_DISABLED' } })
+    expect(runner.rollbackTransaction).toHaveBeenCalled()
+    expect(query.mock.calls.some(([sql]) => sql.includes('SET enabled = true'))).toBe(false)
+  })
+
   it('lets one authorized administrator immediately pause execution', async () => {
     const query = jest.fn(async (sql: string) => {
       if (sql.includes('SELECT enabled, version FROM app.operational_switches')) return [{ enabled: true, version: 4 }]
@@ -39,7 +49,7 @@ describe('FundsOperationalSwitchService', () => {
     expect(runner.commitTransaction).toHaveBeenCalled()
   })
 
-  it('forbids the resume requester from approving their own request', async () => {
+  it('allows the resume requester to approve their own request with an audit trail', async () => {
     const query = jest.fn(async (sql: string) => {
       if (sql.includes('SELECT * FROM app.operational_switch_change_requests')) {
         return [{ id: 'resume-1', state: 'requested', requested_by: 'admin-1', change_id: 'CHG-1' }]
@@ -48,15 +58,13 @@ describe('FundsOperationalSwitchService', () => {
     })
     const { service, runner } = serviceWith(query)
 
-    await expect(service.decideResume('resume-1', 'admin-1', true, 'request-2')).rejects.toMatchObject({
-      response: expect.objectContaining({ code: 'WALLET_WITHDRAWAL_SWITCH_CONFLICT' }),
-    })
-
-    expect(runner.rollbackTransaction).toHaveBeenCalled()
-    expect(query.mock.calls.some(([sql]) => String(sql).includes('SET enabled = true'))).toBe(false)
+    await expect(service.decideResume('resume-1', 'admin-1', true, 'request-2')).resolves.toEqual({ id: 'resume-1', state: 'approved', enabled: true })
+    expect(runner.commitTransaction).toHaveBeenCalled()
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('SET enabled = true'))).toBe(true)
+    expect(query.mock.calls.some(([sql]) => String(sql).includes('INSERT INTO app.audit_logs'))).toBe(true)
   })
 
-  it('enables execution only after a different administrator approves the change', async () => {
+  it('also permits another authorized administrator to approve the change', async () => {
     const query = jest.fn(async (sql: string) => {
       if (sql.includes('SELECT * FROM app.operational_switch_change_requests')) {
         return [{ id: 'resume-1', state: 'requested', requested_by: 'admin-1', change_id: 'CHG-1' }]

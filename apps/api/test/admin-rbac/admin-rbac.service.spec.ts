@@ -72,14 +72,12 @@ describe('AdminRbacService', () => {
     })
   })
 
-  it('four-eyes: requester cannot self-approve', async () => {
+  it('single-operator: requester can approve with recorded decision evidence', async () => {
     const req = await svc.createApproval({ actorId: ADMIN_A, action: 'redeem', objectType: 'redemption', objectId: 'r1', auditContext: { requestId: 'request-self' } })
-    await expect(svc.decideApproval(req.id, ADMIN_A, true)).rejects.toMatchObject({
-      response: { code: 'admin.approval.self_forbidden' },
-    })
+    await expect(svc.decideApproval(req.id, ADMIN_A, true)).resolves.toMatchObject({ state: 'approved', requestedBy: ADMIN_A, approvedBy: ADMIN_A, decidedAt: expect.any(Date) })
   })
 
-  it('four-eyes: other admin can approve and state flips to approved', async () => {
+  it('another authorized admin can also approve and state flips to approved', async () => {
     const req = await svc.createApproval({ actorId: ADMIN_A, action: 'redeem', objectType: 'redemption', objectId: 'r2', auditContext: { requestId: 'request-approve' } })
     const decided = await svc.decideApproval(req.id, ADMIN_B, true, 'approved_by_ops')
     expect(decided.state).toBe('approved')

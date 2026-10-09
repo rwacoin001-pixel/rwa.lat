@@ -155,7 +155,7 @@ export class AdminFundsOpsController {
 
   @Post('withdrawal-execution/resume-requests')
   @RequireAdminPermissions('operations.funds.switch.manage')
-  @ApiOperation({ summary: 'Request resumption of withdrawal execution (a second admin must approve)' })
+  @ApiOperation({ summary: 'Request resumption of withdrawal execution (explicit authorized administrator approval required)' })
   requestResume(@Req() request: AdminRequest, @Body() body: Record<string, unknown>) {
     return this.ops.requestFundsResume(adminId(request), body)
   }

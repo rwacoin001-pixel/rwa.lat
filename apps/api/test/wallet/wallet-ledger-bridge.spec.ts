@@ -57,13 +57,13 @@ describe('WalletLedgerBridge financial decisions', () => {
     })).rejects.toMatchObject({ response: expect.objectContaining({ code: 'WALLET_IDEMPOTENCY_CONFLICT' }) })
   })
 
-  it('serializes distinct approvals on the withdrawal row before marking it approved', async () => {
+  it('serializes one explicit approval and queues execution in the same transaction', async () => {
     const query = jest.fn(async (sql: string) => {
       if (sql.includes('SELECT id, user_id, state FROM app.withdrawals')) {
         return [{ id: 'withdrawal-1', user_id: 'user-1', state: 'risk_review' }]
       }
       if (sql.includes('INSERT INTO app.withdrawal_approval_decisions')) return [{ id: 'decision-2' }]
-      if (sql.includes('SELECT COUNT(*)')) return [{ count: 2 }]
+      if (sql.includes('SELECT COUNT(*)')) return [{ count: 1 }]
       return []
     })
     const runner = runnerWith(query)
@@ -72,11 +72,11 @@ describe('WalletLedgerBridge financial decisions', () => {
     await expect(bridge.recordWithdrawalApproval({
       withdrawalId: 'withdrawal-1',
       adminId: 'admin-2',
-      approvalsRequired: 2,
+      approvalsRequired: 1,
       enqueueExecution: true,
       reasonCode: null,
       requestId: 'request-1',
-    })).resolves.toMatchObject({ state: 'approved', approvalCount: 2 })
+    })).resolves.toMatchObject({ state: 'approved', approvalCount: 1, approvalsRequired: 1 })
 
     expect(query.mock.calls.some(([sql]) => /withdrawals WHERE id = \$1 FOR UPDATE/.test(String(sql)))).toBe(true)
     expect(query.mock.calls.some(([sql]) => String(sql).includes("SET state = 'approved'"))).toBe(true)

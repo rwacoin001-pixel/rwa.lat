@@ -91,6 +91,7 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
     fundsSwitch as never,
     whitelist as never,
     operations as never,
+    { query: jest.fn().mockResolvedValue([]) } as never,
     config as unknown as ConfigService,
   )
   return {
@@ -100,6 +101,15 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
 }
 
 describe('WalletService', () => {
+  it('reports the current single-approval requirement for a pending withdrawal with an old policy snapshot', async () => {
+    const liveAdapter = { name: 'test-live-custody', mode: 'live' } as CustodyAdapter
+    const { service, withdrawals } = buildService({ financial: true, adapter: liveAdapter })
+    withdrawals.find.mockResolvedValue([{ id: 'withdrawal-1', state: 'risk_review', destinationCiphertext: Buffer.from('address'), policySnapshot: { approvalsRequired: 2 } }])
+    const [row] = await service.listRecentWithdrawals()
+    expect(row.approvalsRequired).toBe(1)
+    expect(row.policySnapshot).toEqual({ approvalsRequired: 2 })
+  })
+
   it('publishes three network policies while keeping the stub integration read-only', () => {
     const { service } = buildService()
     const response = service.listNetworks()
@@ -244,11 +254,11 @@ describe('WalletService', () => {
     expect(ledger.createWithdrawalWithLock).toHaveBeenCalledWith(expect.objectContaining({
       addressBookEntryId: '10000000-0000-4000-8000-000000000001',
       state: 'risk_review',
-      policySnapshot: expect.objectContaining({ financialMode: true, approvalsRequired: 2 }),
+      policySnapshot: expect.objectContaining({ financialMode: true, approvalsRequired: 1 }),
     }))
   })
 
-  it('records distinct administrator approvals before changing financial withdrawal state', async () => {
+  it('requires one explicit approval before changing financial withdrawal state', async () => {
     const liveAdapter: CustodyAdapter = {
       name: 'test-live-custody', mode: 'live',
       provisionWallet: jest.fn(), provisionAddress: jest.fn(), screenAddress: jest.fn(), broadcastWithdrawal: jest.fn(),
@@ -256,31 +266,24 @@ describe('WalletService', () => {
     const { service, withdrawals, withdrawalApprovals, ledger } = buildService({ financial: true, adapter: liveAdapter })
     withdrawals.findOne.mockResolvedValue({ id: 'withdrawal-1', state: 'risk_review' })
     withdrawalApprovals.findOne.mockResolvedValue(null)
-    ledger.recordWithdrawalApproval
-      .mockResolvedValueOnce({ id: 'withdrawal-1', state: 'risk_review', approvalCount: 1, approvalsRequired: 2 })
-      .mockResolvedValueOnce({ id: 'withdrawal-1', state: 'approved', approvalCount: 2, approvalsRequired: 2 })
-
-    const first = await service.decideWithdrawal('withdrawal-1', 'admin-1', true, undefined, 'request-1')
-    const second = await service.decideWithdrawal('withdrawal-1', 'admin-2', true, undefined, 'request-2')
-
-    expect(first.state).toBe('risk_review')
-    expect(second.state).toBe('approved')
-    expect(ledger.recordWithdrawalApproval).toHaveBeenCalledTimes(2)
+    ledger.recordWithdrawalApproval.mockImplementation(async input => ({ id: input.withdrawalId, state: input.approvalsRequired === 1 ? 'approved' : 'risk_review', approvalCount: 1, approvalsRequired: input.approvalsRequired }))
+    const result = await service.decideWithdrawal('withdrawal-1', 'admin-1', true, undefined, 'request-1')
+    expect(result).toMatchObject({ state: 'approved', approvalsRequired: 1 })
+    expect(ledger.recordWithdrawalApproval).toHaveBeenCalledWith(expect.objectContaining({ adminId: 'admin-1', approvalsRequired: 1, enqueueExecution: true }))
+    expect(ledger.recordWithdrawalApproval).toHaveBeenCalledTimes(1)
     expect(withdrawalApprovals.save).not.toHaveBeenCalled()
   })
 
-  it('prevents an approving administrator from manually executing the same financial withdrawal', async () => {
+  it('allows an approving administrator to explicitly execute the same financial withdrawal', async () => {
     const liveAdapter: CustodyAdapter = {
       name: 'test-live-custody', mode: 'live',
       provisionWallet: jest.fn(), provisionAddress: jest.fn(), screenAddress: jest.fn(), broadcastWithdrawal: jest.fn(),
     }
-    const { service, withdrawalApprovals, ledger } = buildService({ execution: true, financial: true, adapter: liveAdapter })
+    const { service, withdrawalApprovals } = buildService({ execution: true, financial: true, adapter: liveAdapter })
     withdrawalApprovals.findOne.mockResolvedValue({ decision: 'approved' })
-
-    await expect(service.executeApprovedWithdrawal('withdrawal-1', 'admin-1', 'request-1')).rejects.toMatchObject({
-      response: expect.objectContaining({ code: 'WALLET_WITHDRAWAL_EXECUTOR_CONFLICT' }),
-    })
-    expect(ledger.claimWithdrawalExecution).not.toHaveBeenCalled()
+    const execute = jest.spyOn(service as any, 'executeWithdrawal').mockResolvedValue({ state: 'broadcast' })
+    await expect(service.executeApprovedWithdrawal('withdrawal-1', 'admin-1', 'request-1')).resolves.toEqual({ state: 'broadcast' })
+    expect(execute).toHaveBeenCalledWith('withdrawal-1', { type: 'admin', id: 'admin-1' }, 'request-1')
   })
 
   it('blocks manual financial execution while the runtime funds switch is paused', async () => {
