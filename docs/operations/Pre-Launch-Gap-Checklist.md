@@ -1,5 +1,7 @@
 # RWA.LAT 上线缺口清单
 
+> 2026-10-09 审批策略更新：后台应用审批统一为单名授权管理员明确批准；本清单中的旧双人审批描述由[当前单人审批策略](../single-admin-approvals-20261009.md)覆盖。
+
 更新时间：2026-07-19。基准提交 `8ac2a70` 的 GitHub Actions 运行 `29545804295` 四组门禁全部通过。本清单只记录有证据的状态，不把“已有接口/示例配置”写成“外部服务已就绪”。
 
 ## 当前可以发布的模式
@@ -42,7 +44,7 @@ OBJECT_STORAGE_ENABLED=false
 | P1 | Didit 控制台 | API Key、Workflow ID、Webhook Destination Secret | Sandbox 会话和 Try Webhook 通过后再切 live application |
 | P1 | S3/KMS/扫描器 | 区域、桶、IAM/KMS、扫描供应商与回调密钥 | 三桶隔离、恶意文件隔离和删除/保留策略演练通过 |
 | P1 | 制裁/PEP/钱包风险 | 合同、API 参数、处置流程 | 真实适配器、误报复核和回调/降级演练通过 |
-| P1 | 托管钱包 | 合同、网络、幂等规则和回调参数 | 充值、提现、确认、失败退款、对账和双人审批全链路通过 |
+| P1 | 托管钱包 | 合同、网络、幂等规则和回调参数 | 充值、提现、确认、失败退款、对账和单人审批全链路通过 |
 | P1 | 地区与法律 | 地区白名单、条款、隐私、风险披露及书面审批 | 法务/合规/风控签署并版本化归档 |
 | P1 | X OAuth | 解除账号冻结并获开发者应用批准 | 在此之前 `X_OAUTH_ENABLED=false` |
 | P2 | Polymarket 交易 | 正式合作、地区许可、交易授权 | 在此之前交易功能继续硬关闭 |
@@ -61,6 +63,6 @@ OBJECT_STORAGE_ENABLED=false
 2. 在隔离 `_test` 库执行迁移与数据库门禁，在 staging 做登录/KYC/回调演练。
 3. 配置监控、告警、备份恢复和回滚值班。
 4. Locked 模式上线，只开放浏览、账户和 KYC；所有资金执行保持关闭。
-5. 制裁、托管、地区、法律和双人审批全部签署并演练后，另开真实资金变更单。
+5. 制裁、托管、地区、法律和单人审批全部签署并演练后，另开真实资金变更单。
 
 详细发布命令见 `docs/operations/Financial-Production-Deployment.md`，数据库步骤见 `docs/operations/Database-Setup-SOP.md`。

@@ -128,7 +128,7 @@
 |---|---|---|---|---|---|
 | ADMIN-001 | 后台应用骨架、登录、RBAC 和工作台 | 待完成 | Codex + Claude Code | API-013 | 桌面操作台、权限边界和待办队列可用 |
 | ADMIN-002 | 用户、KYC、资格、风险、申诉和地域策略页面 | 待完成 | Codex + Claude Code | API-004、API-013 | 受控证件访问、原因码、补件与审计可用 |
-| ADMIN-003 | 钱包、提现、归集、网络状态、账本和对账页面 | 待完成 | Codex + Claude Code | API-005、API-007、API-013 | 高风险操作双人审批；差异可闭环 |
+| ADMIN-003 | 钱包、提现、归集、网络状态、账本和对账页面 | 待完成 | Codex + Claude Code | API-005、API-007、API-013 | 高风险操作由单名授权管理员明确审批并留痕；差异可闭环 |
 | ADMIN-004 | 资产、供应方、文件、上架、价格与 Polymarket 市场管理 | 待完成 | Codex + Claude Code | API-006、API-009、API-013 | 配置可版本化、审批、回滚且不破坏已有持仓 |
 | ADMIN-005 | 订单、结算、收益、争议、客服、AI 运营和审计导出 | 待完成 | Codex + Claude Code | API-008 至 API-013 | 人工操作幂等、留痕、可按角色分工 |
 | ADMIN-006 | 后台桌面原型图：工作台、KYC 审核、财资/对账 | 进行中 | Codex | GOV-002 | 输出到 `assets/generated/原型图/` 并与前台风格统一 |

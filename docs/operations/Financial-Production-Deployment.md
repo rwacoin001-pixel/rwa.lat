@@ -1,5 +1,7 @@
 # 资金生产模式部署手册
 
+> 2026-10-09 审批策略更新：后台需要审批的操作统一由一名具备相应权限的管理员明确批准，申请人与批准人可以是同一人；旧版双人要求由[当前单人审批策略](../single-admin-approvals-20261009.md)覆盖。审批授权之外的生产资金门禁保持独立。
+
 ## 1. 两种发布模式
 
 `Locked` 是当前允许的首次生产发布：生产域名、数据库、Admin MFA、监控等按生产方式运行，但资金写入、提现广播和 Polymarket 交易全部关闭。
@@ -61,11 +63,11 @@ pnpm --dir apps/api test:database:low-memory
 - KYC、制裁和托管适配器均有真实代码、生产凭据、超时/重试/熔断和签名回调测试。
 - `S3_BUCKET_MAP_JSON` 为三个逻辑桶映射三个不同的正式物理桶。
 - 提现冷静期和新设备限制均至少 86400 秒。
-- 单笔限额、24 小时限额和至少两名管理员审批已由合规负责人批准。
-- 审核角色已授予 `wallet.withdrawals.manage`，独立执行角色使用 `wallet.withdrawals.execute`；急停角色使用 `operations.funds.pause`，恢复审批角色使用 `operations.funds.switch.manage`；至少两名不同管理员已完成 MFA。
+- 单笔限额、24 小时限额和单名授权管理员审批已由合规负责人批准。
+- 审核角色已授予 `wallet.withdrawals.manage`，独立执行角色使用 `wallet.withdrawals.execute`；急停角色使用 `operations.funds.pause`，恢复审批角色使用 `operations.funds.switch.manage`；执行审批的管理员已完成 MFA。
 - `WALLET_EXECUTION_WORKER_ENABLED=true`，队列租约不短于提现广播租约；已演练 Worker 崩溃、租约回收、重试和死信告警。
 - 托管供应商书面保证 `withdrawalId` 是广播幂等键。
-- 预发布完成地址筛查、双审批、广播超时重试、确认、失败退款和对账演练。
+- 预发布完成地址筛查、单人明确审批、广播超时重试、确认、失败退款和对账演练。
 - `POLYMARKET_TRADING_ENABLED=false` 继续保持不变。
 
 ## 7. 真实资金发布
@@ -81,7 +83,7 @@ pnpm --dir apps/api test:database:low-memory
 
 配置中还必须提供 `FINANCIAL_RELEASE_CHANGE_ID`。它只保存审批/变更单编号，不保存密钥。
 
-发布完成后，数据库资金开关仍保持暂停。管理员 A 使用同一变更单调用 `POST /v1/admin/operations/funds/withdrawal-execution/resume-requests`，管理员 B 再调用对应的 `PUT .../:id/approve`。请求人与批准人相同会被数据库和服务同时拒绝；批准前 Worker 不领取提现任务。
+发布完成后，数据库资金开关仍保持暂停。具备权限的管理员使用同一变更单调用 `POST /v1/admin/operations/funds/withdrawal-execution/resume-requests`，核对后调用对应的 `PUT .../:id/approve`。批准前 Worker 不领取提现任务。
 
 ## 8. 事故停机
 
@@ -92,4 +94,4 @@ pnpm --dir apps/api test:database:low-memory
 3. 保持 API 只读和审计查询可用，不删除提现、账本或回调记录。
 4. 禁止用数据库手工 UPDATE “修余额”；必须走受控退款/调整凭证。
 5. 导出审计、任务租约、提现执行租约、供应商引用哈希和链交易证据。
-6. 完成签名余额快照对账和根因确认后，使用新的变更单及两人审批恢复。
+6. 完成签名余额快照对账和根因确认后，使用新的变更单并由具备权限的管理员明确批准恢复。
