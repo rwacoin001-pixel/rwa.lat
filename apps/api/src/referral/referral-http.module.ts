@@ -13,6 +13,7 @@ import { SessionAuthGuard, AuthenticatedRequest } from '../security/session-auth
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 
@@ -64,21 +65,21 @@ export class ReferralUserFoundationController {
 export class ReferralAdminFoundationController {
   constructor(private readonly core: ReferralFoundationService,private readonly rbac: AdminRbacService,private readonly read:ReferralReadService) {}
   @Get('overview') async overview(@CurrentAdmin() admin:AuthenticatedAdmin,@Query('page') page?:string,@Query('pageSize') size?:string) {
-    await this.rbac.assertPermission(admin.id,'platform.manage'); return this.read.overview(page,size)
+    await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.read.overview(page,size)
   }
-  @Get('settings') async settings(@CurrentAdmin() admin: AuthenticatedAdmin) { await this.rbac.assertPermission(admin.id,'platform.manage'); return this.core.settings() }
+  @Get('settings') async settings(@CurrentAdmin() admin: AuthenticatedAdmin) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.settings() }
   @Post('settings/save') async save(@CurrentAdmin() admin: AuthenticatedAdmin,@Body() dto: SettingsDto) {
-    await this.rbac.assertPermission(admin.id,'platform.manage'); return this.core.saveSettings(dto.config,admin.id)
+    await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.saveSettings(dto.config,admin.id)
   }
   @Get('settings/versions') async versions(@CurrentAdmin() admin: AuthenticatedAdmin) { return this.settings(admin) }
   @Post('settings/rollback') async rollback(@CurrentAdmin() admin: AuthenticatedAdmin,@Body() dto: RollbackDto) {
-    await this.rbac.assertPermission(admin.id,'platform.manage'); return this.core.rollbackSettings(dto.version,admin.id)
+    await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.rollbackSettings(dto.version,admin.id)
   }
   @Get('reconciliation') async reconcile(@CurrentAdmin() admin: AuthenticatedAdmin) {
-    await this.rbac.assertPermission(admin.id,'platform.manage'); return this.core.reconcile()
+    await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.reconcile()
   }
   @Get('runtime') async runtime(@CurrentAdmin() admin: AuthenticatedAdmin) {
-    await this.rbac.assertPermission(admin.id,'platform.manage'); return {stage:0,payoutsEnabled:false,budgetEnforcementEnabled:false}
+    await assertAdminPermission(admin,this.rbac,'platform.manage'); return {stage:0,payoutsEnabled:false,budgetEnforcementEnabled:false}
   }
 }
 @Module({imports:[ReferralModule,SecurityModule,AdminRbacModule],

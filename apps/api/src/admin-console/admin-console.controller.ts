@@ -1,6 +1,7 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 import { AdminSessionGuard } from '../admin-rbac/admin-session.guard'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
@@ -39,7 +40,7 @@ export class AdminConsoleController {
   ) {}
 
   private authorize(admin: AuthenticatedAdmin) {
-    return this.rbac.assertPermission(admin.id, 'console.view')
+    return assertAdminPermission(admin, this.rbac, 'console.view')
   }
 
   @Get('orders')

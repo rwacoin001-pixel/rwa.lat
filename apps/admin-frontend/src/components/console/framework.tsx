@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState, type ComponentType, type ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { AlertTriangle, Inbox, RefreshCw } from 'lucide-react'
+import { adminErrorMessage } from '@/lib/admin-errors'
 
 /* ─────────────────────────────────────────────────────────────
  * 管理台数据页框架（列表页共用）：
@@ -21,6 +22,7 @@ export function useApi<T>(url: string | null) {
     if (!url) {
       setData(null)
       setLoading(false)
+      setError('')
       return
     }
     let alive = true
@@ -29,7 +31,7 @@ export function useApi<T>(url: string | null) {
     fetch(url, { credentials: 'include' })
       .then(async (res) => {
         const body = await res.json().catch(() => null)
-        if (!res.ok) throw new Error((body?.message as string) || `请求失败 (HTTP ${res.status})`)
+        if (!res.ok) throw new Error(adminErrorMessage(body, res.status))
         return body
       })
       .then((body) => {

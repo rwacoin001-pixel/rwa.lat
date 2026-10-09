@@ -55,8 +55,8 @@ export default function CollectionsPage() {
     <AdminLayout>
       <div className="space-y-5">
         <PageHeader
-          title="归集管理"
-          subtitle="用户充值入账全流程观察（链上检测 → 确认数满足 → 入账账本）— 资金动作由提现/充值开关控制"
+          title="充值入账"
+          subtitle="用户充值从链上检测、确认数满足到入账账本的只读记录；资金动作由提现/充值开关控制"
           actions={<RefreshButton loading={data.loading} onClick={data.reload} />}
         />
 
@@ -75,8 +75,7 @@ export default function CollectionsPage() {
 
         <Panel title="说明" delay={260}>
           <p className="text-[13px] leading-relaxed text-text-secondary">
-            充值地址为每用户独立派发（地址池管理见「钱包财资」）；用户充值到账依赖链上回调与确认数策略。归集（将分散充值地址资金集中）当前按运营流程人工/脚本执行，
-            自动化归集任务的调度界面规划中。
+            充值地址为每用户独立派发（地址池管理见「钱包财资」）；用户充值到账依赖链上回调与确认数策略。本页不执行资金归集，仅展示充值检测与入账状态。
           </p>
         </Panel>
       </div>

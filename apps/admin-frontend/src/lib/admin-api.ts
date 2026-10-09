@@ -1,3 +1,5 @@
+import { adminErrorMessage } from './admin-errors'
+
 const API_BASE = '/api/admin'
 
 async function request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -11,8 +13,7 @@ async function request<T>(endpoint: string, options: RequestInit = {}): Promise<
   })
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Request failed' }))
-    const message = typeof error.message === 'string' ? error.message : Array.isArray(error.message) ? error.message.join('；') : `HTTP ${response.status}`
-    throw new Error(message)
+    throw new Error(adminErrorMessage(error, response.status))
   }
   if (response.status === 204) return undefined as T
   return response.json()

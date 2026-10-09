@@ -1,5 +1,5 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { SupportWorkspace } from '@/components/support-workspace'
-
-export default function Page() { return <SupportWorkspace category="appeal" /> }
+export default function Page() {
+  redirect('/support?category=appeal')
+}
