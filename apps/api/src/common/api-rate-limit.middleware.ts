@@ -25,6 +25,10 @@ const MAX_BUCKETS = 50_000
 
 const RULES: RateLimitRule[] = [
   {
+    name: 'transaction-password', limit: 10, windowMs: MINUTE,
+    matches: (method, path) => method === 'POST' && (path === '/v1/wallet/withdrawals' || /^\/v1\/security\/transaction-password\/(setup|change|reset)$/.test(path)),
+  },
+  {
     name: 'global',
     limit: 1_000,
     windowMs: MINUTE,

@@ -15,6 +15,12 @@ export class WithdrawalQuoteDto {
 }
 
 export class CreateWithdrawalDto extends WithdrawalQuoteDto {
+  @ApiPropertyOptional({ description: 'Six-digit independent transaction password; required for every new withdrawal.' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(6)
+  transactionPin?: string
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsUUID()

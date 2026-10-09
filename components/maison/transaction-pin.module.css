@@ -1,0 +1,12 @@
+.pad { margin: 22px auto; width: min(100%, 320px); outline: none; }
+.slots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 22px; }
+.slots span { height: 48px; display: grid; place-items: center; border: 1px solid var(--m-line); border-radius: 9px; background: var(--m-glass); color: var(--m-ink); font: 26px/1 var(--m-sans); transition: border-color 120ms, background 120ms; }
+.slots span[data-filled="true"] { border-color: var(--m-accent); }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.keys button { min-height: 54px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-glass); color: var(--m-ink); font: 25px/1 var(--m-sans); display: grid; place-items: center; cursor: pointer; touch-action: manipulation; transition: transform 120ms, background 120ms; }
+.keys button:active:not(:disabled) { transform: scale(.96); background: var(--m-cta-quiet); }
+.keys button:focus-visible, .pad:focus-visible .slots { outline: 2px solid var(--m-accent); outline-offset: 3px; border-radius: 9px; }
+.keys button:disabled { opacity: .38; cursor: default; }
+.summary { margin-top: 12px; }
+.step { font: 14px/1.5 var(--m-sans); color: var(--m-muted); margin-top: 16px; text-align: center; }
+@media (prefers-reduced-motion: reduce) { .slots span, .keys button { transition: none; } .keys button:active:not(:disabled) { transform: none; } }

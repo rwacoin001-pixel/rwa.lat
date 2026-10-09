@@ -68,6 +68,7 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
   const fundsSwitch = { isWithdrawalExecutionEnabled: jest.fn().mockResolvedValue(true) }
   const whitelist = { isActive: jest.fn().mockResolvedValue(false) }
   const operations = { isEnabled: jest.fn().mockResolvedValue(true), assertEnabled: jest.fn() }
+  const pin = { verifyWithdrawal: jest.fn().mockResolvedValue(1) }
   const service = new WalletService(
     wallets as never,
     addresses as never,
@@ -93,10 +94,11 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
     operations as never,
     { query: jest.fn().mockResolvedValue([]) } as never,
     config as unknown as ConfigService,
+    pin as never,
   )
   return {
     service, wallets, addresses, chains, deposits, withdrawals, transfers, accounts, balances,
-    withdrawalAddresses, withdrawalApprovals, devices, auditLogs, ledger, security, fundsSwitch, whitelist, operations, secret,
+    withdrawalAddresses, withdrawalApprovals, devices, auditLogs, ledger, security, fundsSwitch, whitelist, operations, secret, pin,
   }
 }
 
@@ -219,7 +221,7 @@ describe('WalletService', () => {
       broadcastWithdrawal: jest.fn(),
     }
     const {
-      service, wallets, accounts, balances, withdrawals, withdrawalAddresses, devices, ledger,
+      service, wallets, accounts, balances, withdrawals, withdrawalAddresses, devices, ledger, pin,
     } = buildService({ execution: true, financial: true, adapter: liveAdapter })
     const destination = '0x1111111111111111111111111111111111111111'
     withdrawalAddresses.findOne.mockResolvedValue({
@@ -245,17 +247,49 @@ describe('WalletService', () => {
       {
         network: 'arbitrum', atomicAmount: '10000000',
         addressBookId: '10000000-0000-4000-8000-000000000001', reauthentication: 'reauthentication-token',
+        transactionPin: '001234',
       },
       'withdrawal-key-financial-1',
       'request-financial-1',
     )
 
     expect(response.state).toBe('risk_review')
+    expect(pin.verifyWithdrawal).toHaveBeenCalledWith('user-1', '001234')
     expect(ledger.createWithdrawalWithLock).toHaveBeenCalledWith(expect.objectContaining({
+      transactionPinVersion: 1,
       addressBookEntryId: '10000000-0000-4000-8000-000000000001',
       state: 'risk_review',
       policySnapshot: expect.objectContaining({ financialMode: true, approvalsRequired: 1 }),
     }))
+  })
+
+  it('never creates a new withdrawal when transaction PIN verification rejects it', async () => {
+    const adapter = { name: 'test-live', mode: 'live', screenAddress: jest.fn().mockResolvedValue({ decision: 'clear' }) } as unknown as CustodyAdapter
+    const { service, wallets, accounts, balances, pin, ledger } = buildService({ execution: true, adapter })
+    wallets.findOne.mockResolvedValue({ id: 'wallet-1', userId: 'user-1', state: 'active' })
+    accounts.findOne.mockResolvedValue({ id: 'available-1' })
+    balances.findOne.mockResolvedValue({ currentAtomicBalance: '20000000' })
+    pin.verifyWithdrawal.mockRejectedValue(new Error('TRANSACTION_PIN_REQUIRED'))
+    await expect(service.createWithdrawal({ userId: 'user-1', sessionId: 'session-1', deviceId: null },
+      { network: 'arbitrum', atomicAmount: '10000000', destination: '0x1111111111111111111111111111111111111111', reauthentication: 'step-up' }, 'missing-pin', 'request-pin'))
+      .rejects.toThrow('TRANSACTION_PIN_REQUIRED')
+    expect(pin.verifyWithdrawal).toHaveBeenCalledWith('user-1', undefined)
+    expect(ledger.createWithdrawalWithLock).not.toHaveBeenCalled()
+  })
+
+  it('only replays a matching original withdrawal intent without checking new credentials', async () => {
+    const { service, withdrawals, pin, ledger, security } = buildService()
+    const destination = '0x1111111111111111111111111111111111111111'
+    withdrawals.findOne.mockResolvedValue({ id: 'old-1', userId: 'user-1', network: 'arbitrum', atomicAmount: '10000000',
+      feeAtomicAmount: '500000', destinationHash: Buffer.from(`hmac:${destination}`), state: 'completed', reasonCode: null })
+    const actor = { userId: 'user-1', sessionId: 'session-1', deviceId: null }
+    const body = { network: 'arbitrum' as const, atomicAmount: '10000000', destination, reauthentication: '' }
+    await expect(service.createWithdrawal(actor, body, 'original-key', 'replay')).resolves.toMatchObject({ id: 'old-1', created: false })
+    await expect(service.createWithdrawal(actor, { ...body, atomicAmount: '11000000' }, 'original-key', 'mismatch'))
+      .rejects.toMatchObject({ response: expect.objectContaining({ code: 'WALLET_IDEMPOTENCY_CONFLICT' }) })
+    expect(pin.verifyWithdrawal).not.toHaveBeenCalled()
+    expect(security.assertRecentStepUp).not.toHaveBeenCalled()
+    expect(ledger.createWithdrawalWithLock).not.toHaveBeenCalled()
   })
 
   it('requires one explicit approval before changing financial withdrawal state', async () => {

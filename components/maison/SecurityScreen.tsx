@@ -4,10 +4,10 @@ import {
   BadgeCheck, Check, ChevronRight, Copy, Fingerprint, History, Info, KeyRound, Laptop, LogOut, Plus, RotateCw, ShieldCheck, ShieldEllipsis, Smartphone, Trash2,
 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
-import { useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useState, type CSSProperties, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
-import { clearSession, type ApiError, type ApiResult } from '@/lib/api/_http'
+import { clearSession, SESSION_CHANGED, SESSION_EXPIRED, type ApiError, type ApiResult } from '@/lib/api/_http'
 import { clearQueryCache, invalidate, useQuery } from '@/lib/api/_query'
 import { logout } from '@/lib/api/auth'
 import { changeAccountEmail, continueAuth, managePassword } from '@/lib/api/auth-flow'
@@ -25,6 +25,9 @@ import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './pr
 import { Lacquer, Segmented, StatStrip } from './motion'
 import { fmtDate, fmtDateTime } from './format'
 import { useStepUp } from './StepUp'
+import { getTransactionPinStatus, pinGate } from '@/lib/api/transaction-pin'
+import { transactionPinCopy, type TransactionPinMode } from '@/lib/maison-transaction-pin-copy'
+import { TransactionPinManager } from './TransactionPin'
 import x from './security.module.css'
 
 type Tab = 'methods' | 'devices' | 'sessions'
@@ -90,6 +93,14 @@ export function SecurityScreen({ query = '', onSignedOut }: { query?: string; on
   const factors = useQuery('security:factors', listSecurityFactors, { staleTime: 20_000 })
   const devices = useQuery('security:devices', listDevices, { staleTime: 20_000 })
   const sessions = useQuery('security:sessions', listSessions, { staleTime: 20_000 })
+  const pin = useQuery('security:transaction-pin', getTransactionPinStatus, { staleTime: 0, loading: 'silent' })
+  const [pinMode, setPinMode] = useState<TransactionPinMode | null>(null)
+  const p = transactionPinCopy[locale]
+  useEffect(() => {
+    const clear = () => setPinMode(null)
+    window.addEventListener(SESSION_CHANGED, clear); window.addEventListener(SESSION_EXPIRED, clear)
+    return () => { window.removeEventListener(SESSION_CHANGED, clear); window.removeEventListener(SESSION_EXPIRED, clear) }
+  }, [])
   const { run, sheet } = useStepUp()
   const [flash, setFlash] = useState<Flash>(null)
   const [pending, setPending] = useState<Pending>(null)
@@ -198,6 +209,17 @@ export function SecurityScreen({ query = '', onSignedOut }: { query?: string; on
     <FlashNote flash={flash} />
 
     {panel('methods', <>
+      <SectionHead title={p.securityLabel} />
+      <div className={s.row} data-static="true" data-transaction-pin-status="">
+        <span className={s.logo}><KeyRound size={16} aria-hidden="true" /></span>
+        <span className={s.rowMain}><b>{p.securityLabel}</b><small>{pin.error ? common.unavailable : !pin.data ? '…' : !pin.data.available ? p.gate.unavailable : pin.data.configured ? p.configured : p.gate.unset}</small></span>
+        <span className={s.rowEnd}><button type="button" className={s.ghost} data-size="s" style={{ minHeight: 44 }} disabled={Boolean(busy) || pin.loading || Boolean(pin.error) || !pin.data?.available} onClick={() => setPinMode(pin.data?.configured ? 'change' : 'setup')}>{pin.data?.configured ? p.title.change : p.title.setup}</button></span>
+      </div>
+      {pin.data && ['locked', 'cooldown'].includes(pinGate(pin.data)) && <p className={s.foot} role="status">{p.gate[pinGate(pin.data) as 'locked' | 'cooldown']} · {fmtDateTime((pinGate(pin.data) === 'locked' ? pin.data.lockedUntil : pin.data.withdrawalBlockedUntil)!, locale)}</p>}
+      <div className={s.foot} style={{ gap: 16 }}>
+        <button type="button" className={s.link} style={{ minHeight: 44 }} disabled={pin.loading || Boolean(busy)} onClick={() => void pin.refetch()}>{p.refresh}</button>
+        {pin.data?.configured && !pin.error && pin.data.available && <button type="button" className={s.link} style={{ minHeight: 44 }} disabled={Boolean(busy)} onClick={() => setPinMode('reset')}>{p.forgot}</button>}
+      </div>
       <SectionHead index="00" title={emailText.title} action={<button type="button" className={s.ghost} data-size="s"
         disabled={Boolean(busy)} onClick={() => setEmailEditor(value => !value)}>{emailEditor ? emailText.cancel : emailText.change}</button>} />
       {emailEditor && <form onSubmit={async event => {
@@ -300,6 +322,7 @@ export function SecurityScreen({ query = '', onSignedOut }: { query?: string; on
     <SectionHead title={t.tips} note={t.tipsNote} />
     <ol className={s.notes}>{t.tipItems.map((item) => <li key={item}>{item}</li>)}</ol>
     <button type="button" className={s.link} onClick={() => openPath('/trust/official-channels')}><ShieldCheck size={13} />{t.channels}<ChevronRight size={13} className={x.flip} /></button>
+    {pinMode && <TransactionPinManager open mode={pinMode} onClose={() => setPinMode(null)} onDone={() => { const doneMode = pinMode; setPinMode(null); setFlash({ tone: 'info', text: p.done[doneMode] }); invalidate(['security:transaction-pin', 'security:events']) }} />}
     {sheet}
   </MaisonPage>
 }

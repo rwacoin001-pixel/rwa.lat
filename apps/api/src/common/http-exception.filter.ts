@@ -12,6 +12,9 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const context = host.switchToHttp()
     const request = context.getRequest<Request>()
     const response = context.getResponse<Response>()
+    if (request.path?.startsWith('/v1/security/transaction-password') || request.path === '/v1/wallet/withdrawals' || request.path === '/v1/wallet/transfer-eligibility') {
+      response.setHeader('Cache-Control', 'no-store')
+    }
     const isHttpException = normalized instanceof HttpException
     const status = isHttpException ? normalized.getStatus() : HttpStatus.INTERNAL_SERVER_ERROR
     const exceptionResponse = isHttpException ? normalized.getResponse() : undefined
@@ -29,7 +32,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
     }
     // Only public remediation data belongs in the response, never arbitrary exception metadata.
     const details = Object.fromEntries(
-      ['requiredConsents', 'reasonCodes', 'decision']
+      ['requiredConsents', 'reasonCodes', 'decision', ...(typeof code === 'string' && code.startsWith('TRANSACTION_PIN_')
+        ? ['remainingAttempts', 'lockedUntil', 'withdrawalBlockedUntil', 'serverTime'] : [])]
         .filter((key) => payload[key] !== undefined)
         .map((key) => [key, payload[key]]),
     )

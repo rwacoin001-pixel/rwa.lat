@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { DataSource, QueryRunner } from 'typeorm'
 import type { WalletNetwork, WithdrawalState } from './wallet.entities'
 import { WALLET_ERROR_CODES } from './wallet.errors'
+import { hasQualifyingDeposit } from './transfer-eligibility'
+import { pinWithdrawalGate } from './transaction-pin-policy'
 
 interface CreateWithdrawalInput {
   id: string
@@ -22,6 +24,7 @@ interface CreateWithdrawalInput {
   state: Extract<WithdrawalState, '2fa_verified' | 'risk_review' | 'approved'>
   reasonCode: string | null
   requestId: string
+  transactionPinVersion: number
   /** Enqueue the execution job in the same transaction (whitelist auto-approval path). */
   enqueueExecution?: boolean
 }
@@ -94,13 +97,22 @@ export class WalletLedgerBridge {
     try {
       await runner.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`withdrawal-policy:${input.userId}`])
       const [existing] = await runner.query(
-        `SELECT id FROM app.withdrawals WHERE user_id = $1 AND idempotency_key = $2`,
+        `SELECT id, network, atomic_amount::text AS "atomicAmount", fee_atomic_amount::text AS "feeAtomicAmount", destination_hash AS "destinationHash"
+         FROM app.withdrawals WHERE user_id = $1 AND idempotency_key = $2`,
         [input.userId, input.idempotencyKey],
       )
       if (existing) {
+        this.assertWithdrawalReplay(existing, input)
         await runner.commitTransaction()
         return { id: existing.id as string, created: false }
       }
+
+      await runner.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', [`transaction-pin:${input.userId}`])
+      const [credential] = await runner.query(`SELECT credential_version AS "credentialVersion", locked_until AS "lockedUntil",
+        withdrawal_blocked_until AS "withdrawalBlockedUntil", clock_timestamp() AS "serverTime"
+        FROM app.transaction_password_credentials WHERE user_id=$1 FOR UPDATE`, [input.userId])
+      const pinError = pinWithdrawalGate(credential ?? null, input.transactionPinVersion, credential?.serverTime ?? new Date())
+      if (pinError) throw new ConflictException({ code: pinError, message: 'Confirm your current transaction password before withdrawing.' })
 
       const amount = BigInt(input.atomicAmount)
       if (input.perTransactionLimitAtomic && amount > BigInt(input.perTransactionLimitAtomic)) {
@@ -142,9 +154,11 @@ export class WalletLedgerBridge {
       )
       if (!inserted.length) {
         const [existing] = await runner.query(
-          `SELECT id FROM app.withdrawals WHERE user_id = $1 AND idempotency_key = $2`,
+          `SELECT id, network, atomic_amount::text AS "atomicAmount", fee_atomic_amount::text AS "feeAtomicAmount", destination_hash AS "destinationHash"
+           FROM app.withdrawals WHERE user_id = $1 AND idempotency_key = $2`,
           [input.userId, input.idempotencyKey],
         )
+        this.assertWithdrawalReplay(existing, input)
         await runner.commitTransaction()
         return { id: existing.id as string, created: false }
       }
@@ -493,14 +507,18 @@ export class WalletLedgerBridge {
       if (prior) return await this.resolveTransferReplay(runner, prior, input)
 
       const [recipientUser] = await runner.query(
-        `SELECT id FROM app.users WHERE id = $1`,
+        `SELECT id, status FROM app.users WHERE id = $1 FOR SHARE`,
         [input.recipientUserId],
       )
-      if (!recipientUser) {
+      if (!recipientUser || recipientUser.status !== 'active') {
         throw new BadRequestException({
           code: WALLET_ERROR_CODES.TRANSFER_RECIPIENT_UNAVAILABLE,
           message: 'This transfer could not be completed. Check the recipient details and try again.',
         })
+      }
+
+      if (!await hasQualifyingDeposit(runner, input.recipientUserId, true)) {
+        throw new BadRequestException({ code: 'WALLET_TRANSFER_DEPOSIT_REQUIRED', message: 'The recipient has not enabled internal transfers.' })
       }
 
       const inserted = await runner.query(
@@ -569,6 +587,14 @@ export class WalletLedgerBridge {
     }
     await runner.commitTransaction()
     return { id: existing.id, created: false }
+  }
+
+  private assertWithdrawalReplay(existing: { network: string; atomicAmount: string; feeAtomicAmount: string; destinationHash: Buffer } | undefined, input: CreateWithdrawalInput) {
+    if (!existing || existing.network !== input.network || BigInt(existing.atomicAmount) !== BigInt(input.atomicAmount)
+      || !Buffer.isBuffer(existing.destinationHash) || !existing.destinationHash.equals(input.destinationHash)) {
+      throw new ConflictException({ code: WALLET_ERROR_CODES.IDEMPOTENCY_CONFLICT, message: 'This request key was used for a different withdrawal.' })
+    }
+    // Replay retains the original recorded fee/policy; never re-lock at a newly quoted fee.
   }
 
   private async ensureUserAccount(runner: QueryRunner, userId: string, purpose: 'available' | 'locked') {

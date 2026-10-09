@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { buildDatabaseOptions } from '../../src/database/database-options'
 import { WalletLedgerBridge } from '../../src/wallet/wallet-ledger.bridge'
+import { realDeposit } from './funds-security-fixture'
 
 const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
 
@@ -97,6 +98,7 @@ describeDatabase('internal wallet transfers (PostgreSQL)', () => {
   it('rolls back the transfer when the sender balance is insufficient', async () => {
     const senderUserId = await createUser()
     const recipientUserId = await createUser()
+    await realDeposit(dataSource, recipientUserId)
     await seedAvailableBalance(senderUserId, '1000000')
     const input = {
       id: randomUUID(),
@@ -109,12 +111,13 @@ describeDatabase('internal wallet transfers (PostgreSQL)', () => {
 
     await expect(bridge.postInternalTransfer(input)).rejects.toMatchObject({ code: '23514' })
     await expect(transferRows(input)).resolves.toEqual({ transfer_count: 0, transaction_count: 0, audit_count: 0 })
-    await expect(balances([senderUserId, recipientUserId])).resolves.toEqual({ [senderUserId]: '1000000' })
+    await expect(balances([senderUserId, recipientUserId])).resolves.toEqual({ [senderUserId]: '1000000', [recipientUserId]: '300000001' })
   })
 
   it('posts a balanced transfer and replays only the same intent without duplicate entries', async () => {
     const senderUserId = await createUser()
     const recipientUserId = await createUser()
+    await realDeposit(dataSource, recipientUserId)
     await seedAvailableBalance(senderUserId, '5000000')
     const input = {
       id: randomUUID(),
@@ -141,7 +144,7 @@ describeDatabase('internal wallet transfers (PostgreSQL)', () => {
     await expect(transferRows(input)).resolves.toEqual({ transfer_count: 1, transaction_count: 1, audit_count: 1 })
     await expect(balances([senderUserId, recipientUserId])).resolves.toEqual({
       [senderUserId]: '3750000',
-      [recipientUserId]: '1250000',
+      [recipientUserId]: '301250001',
     })
 
     await expect(
