@@ -26,7 +26,7 @@ export class PolymarketDiscoveryController {
     const request = this.request(req)
     return this.reply(request,res,0,()=>market(request,{params:Promise.resolve({id:String(req.params.id)})}))
   }
-  private request(req:ExpressRequest) {return new Request(new URL(req.originalUrl,'https://api.rwa.lat'))}
+  private request(req:ExpressRequest) {return new Request(new URL(req.originalUrl,'https://api.a-reit.com'))}
 
   private async reply(request:Request,res:ExpressResponse,ttl:number,handler:PublicHandler) {
     const key=request.url,hit=this.cache.get(key)

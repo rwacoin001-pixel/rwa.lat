@@ -21,11 +21,11 @@ for (const name of selected === 'all' ? Object.keys(commands) : [selected]) {
   const cwd = name === 'frontend' ? root : resolve(root, 'apps', name)
   const env = { ...process.env }
   if (name === 'frontend') Object.assign(env, {
-    NEXT_PUBLIC_API_URL: 'https://rwa.lat',
-    NEXT_PUBLIC_API_BASE_URL: 'https://rwa.lat',
-    API_INTERNAL_URL: 'https://api.rwa.lat',
+    NEXT_PUBLIC_API_URL: '',
+    NEXT_PUBLIC_API_BASE_URL: '',
+    API_INTERNAL_URL: 'https://api.a-reit.com',
     RWA_LOCAL_PROXY: '1',
-    RWA_PROXY_TARGET: 'https://api.rwa.lat',
+    RWA_PROXY_TARGET: 'https://api.a-reit.com',
   })
   for (const step of commands[name]) {
     const [script, ...args] = step

@@ -7,7 +7,7 @@ export type DocumentSnapshot = {
   kind: DocumentKind; documentNo: string; userId: string; generatedAt: string;
   fields: Array<[string, string]>; columns?: string[]; rows?: string[][]; notes: string[];
 }
-export const DEFAULT_COMPANY: Company = { companyName: 'rwa.lat', registration: '', contact: '', website: 'https://rwa.lat' }
+export const DEFAULT_COMPANY: Company = { companyName: 'rwa.lat', registration: '', contact: '', website: 'https://a-reit.com' }
 export const DEFAULT_TEMPLATES: Record<DocumentKind, Template> = {
   trade_confirmation: { title: '成交确认书', introduction: '依据实际成交凭证与平台入账记录生成。', terms: ['本文件供对账与存档使用，不构成投资建议或收益承诺。', '本文件不是用户签署记录；管理员事后复核状态以生成时点为准。'], enabled: true },
   statement: { title: '账户结单', introduction: '按所选自然月 UTC 时区汇总 USDT 现金账本。', terms: ['结单包括可用及锁定现金；不将持仓估值计入现金余额。', '本文件反映生成时点可见的账务记录，后续更正应联系平台核实。'], enabled: true },

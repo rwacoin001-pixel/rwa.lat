@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(req:NextRequest,{params}:{params:Promise<{code:string}>}) {
   const {code}=await params
   if (!/^[a-zA-Z0-9]{6,16}$/.test(code)) return NextResponse.json({message:'Invalid invitation code'},{status:400})
-  const base=(process.env.API_INTERNAL_URL||'https://api.rwa.lat').replace(/\/$/,'')
+  const base=(process.env.API_INTERNAL_URL||'https://api.a-reit.com').replace(/\/$/,'')
   const old=req.cookies.get('rwa_referral')?.value
   try {
     const upstream=await fetch(`${base}/r/${encodeURIComponent(code)}`,{headers:old?{cookie:`rwa_referral=${encodeURIComponent(old)}`}:{},cache:'no-store',signal:AbortSignal.timeout(20000)})

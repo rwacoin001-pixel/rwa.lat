@@ -18,8 +18,8 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
         <Section n="1" title="Who We Are">
           <p>
             RWA.LAT (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates the RWA.LAT platform available at{' '}
-            <a href="https://rwa.lat">
-              https://rwa.lat
+            <a href="https://a-reit.com">
+              https://a-reit.com
             </a>{' '}
             and related applications and services (the &ldquo;Service&rdquo;). This Privacy Policy explains what
             personal information we collect, how we use and share it, and the choices available to you.

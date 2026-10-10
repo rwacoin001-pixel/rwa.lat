@@ -18,8 +18,8 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
         <Section n="1" title="Acceptance of These Terms">
           <p>
             These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the RWA.LAT platform at{' '}
-            <a href="https://rwa.lat">
-              https://rwa.lat
+            <a href="https://a-reit.com">
+              https://a-reit.com
             </a>{' '}
             and related applications and services (the &ldquo;Service&rdquo;). By accessing or using the Service, you
             agree to be bound by these Terms. If you do not agree, you must not use the Service.

@@ -5,7 +5,12 @@ import {proxyPredictionImage} from '../../lib/prediction-image-delivery'
 // Public discovery bypasses the Next runtime entirely, keeping Worker CPU small.
 export default {
   async fetch(request,env,ctx) {
-    const path=new URL(request.url).pathname
+    const url=new URL(request.url)
+    if(url.hostname==='www.a-reit.com'){
+      url.hostname='a-reit.com'
+      return Response.redirect(url.toString(),308)
+    }
+    const path=url.pathname
     if(request.method==='GET'){
       const matched=/^\/api\/polymarket\/(feed|(?:event|market)\/[^/]+)$/.exec(path)
       if(matched)return proxyPublicPrediction(request,matched[1],env.API_INTERNAL_URL)

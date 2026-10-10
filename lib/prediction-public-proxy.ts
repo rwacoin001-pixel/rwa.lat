@@ -1,5 +1,5 @@
 // The edge streams compact, public API results; large Gamma payloads stay on the backend.
-export async function proxyPublicPrediction(request:Request,path:string,base=process.env.API_INTERNAL_URL||'https://api.rwa.lat') {
+export async function proxyPublicPrediction(request:Request,path:string,base=process.env.API_INTERNAL_URL||'https://api.a-reit.com') {
   if(!/^(?:feed|(?:event|market)\/\d{1,20})$/.test(path))return Response.json({error:'Invalid prediction parameters'},{status:400})
   const input=new URL(request.url)
   if(input.search.length>2048)return Response.json({error:'Invalid prediction parameters'},{status:400})
