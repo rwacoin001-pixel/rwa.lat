@@ -50,7 +50,7 @@ export class AdminSessionGuard implements CanActivate {
         }
         request.admin = {
           id: actor,
-          email: 'console-service@rwa.lat',
+          email: 'console-service@a-reit.com',
           roleId: 'service-channel',
           roleName: 'service-channel',
           permissions: ['*'],

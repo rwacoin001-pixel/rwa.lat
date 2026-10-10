@@ -1,5 +1,5 @@
 /**
- * Type definitions for RWA.LAT API
+ * Type definitions for A-REIT API
  * 
  * These types match the OpenAPI spec from the Core API and Admin API
  */

@@ -1,5 +1,5 @@
 /**
- * @rwa-lat/api-client - Shared API client for RWA.LAT
+ * @rwa-lat/api-client - Shared API client for A-REIT
  * 
  * Provides typed API clients for:
  * - User-facing Core API (v1/*)

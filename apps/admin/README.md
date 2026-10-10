@@ -1,4 +1,4 @@
-# RWA.LAT Admin API
+# A-REIT Admin API
 
 The Admin API is a separate NestJS boundary for privileged operations. Every route is protected by the global administrator session guard except `POST /v1/admin/auth/login`, which is explicitly public and separately rate limited.
 

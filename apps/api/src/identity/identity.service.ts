@@ -714,7 +714,7 @@ export class IdentityService {
 
   /**
    * Demo login: bypass email verification, create or restore user session.
-   * Fixed demo user: demo@user.rwa.lat → userId 22222222-2222-2222-2222-222222222222
+   * Fixed demo user: demo@user.a-reit.com → userId 22222222-2222-2222-2222-222222222222
    */
   async demoLogin(
     email: string,
@@ -723,7 +723,7 @@ export class IdentityService {
     this.assertDemoAdapter()
     const normalized = email.toLowerCase().trim()
 
-    if (type === 'admin' || normalized === 'demo@admin.rwa.lat') {
+    if (type === 'admin' || normalized === 'demo@admin.a-reit.com') {
       throw new BadRequestException({
         code: 'ADMIN_LOGIN_NOT_SUPPORTED',
         message: 'Demo admin login requires a separate admin auth flow.',
@@ -735,11 +735,20 @@ export class IdentityService {
       where: { kind: 'email', identifierHash: hash },
     })
 
+    // The historical seeded administrator remains excluded from user sessions,
+    // regardless of the domain attached to its demo login identity.
+    if (identity?.userId === '11111111-1111-1111-1111-111111111111') {
+      throw new BadRequestException({
+        code: 'ADMIN_LOGIN_NOT_SUPPORTED',
+        message: 'Demo admin login requires a separate admin auth flow.',
+      })
+    }
+
     // Registered Demo accounts must keep their own user ID after sign-out.
     // The fixed seeded account remains available only for the documented
-    // demo@user.rwa.lat quick-preview path.
+    // demo@user.a-reit.com quick-preview path.
     const userId = identity?.userId
-      ?? (normalized === 'demo@user.rwa.lat'
+      ?? (normalized === 'demo@user.a-reit.com'
         ? '22222222-2222-2222-2222-222222222222'
         : randomUUID())
 

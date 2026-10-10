@@ -20,7 +20,7 @@ if(!Number.isSafeInteger(version)||version<1||typeof keyText!=='string'||Buffer.
 function qrMarkup(secret){
   const uiRequire=createRequire(resolve(root,'package.json'))
   const {createElement}=uiRequire('react'),{renderToStaticMarkup}=uiRequire('react-dom/server'),{QRCodeSVG}=uiRequire('qrcode.react')
-  const uri=`otpauth://totp/${encodeURIComponent('rwa.lat 本地后台:管理员')}?secret=${secret}&issuer=${encodeURIComponent('rwa.lat 本地后台')}&algorithm=SHA1&digits=6&period=30`
+  const uri=`otpauth://totp/${encodeURIComponent('A-REIT 本地后台:管理员')}?secret=${secret}&issuer=${encodeURIComponent('A-REIT 本地后台')}&algorithm=SHA1&digits=6&period=30`
   return renderToStaticMarkup(createElement(QRCodeSVG,{value:uri,size:300,level:'M',marginSize:4,title:'本地管理员 MFA 绑定二维码'}))
 }
 async function startQrPage(){
@@ -39,7 +39,7 @@ async function startQrPage(){
     if(request.url!=='/'){response.writeHead(404);response.end();return}
     const message=state.completed?'绑定完成，请关闭此页面。':state.failed?'绑定未完成，请查看本机窗口。':state.markup?'用手机验证器扫描二维码，再回到本机窗口输入新验证码。':'请先在本机绑定窗口输入当前密码，此页面将自动显示二维码。'
     response.setHeader('Content-Type','text/html; charset=utf-8')
-    response.end(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${state.completed||state.failed?'':'<meta http-equiv="refresh" content="2">'}<title>本地后台 MFA 绑定</title><style>body{font-family:system-ui;margin:0;background:#11151b;color:#eef0f4;display:grid;place-items:center;min-height:100vh}main{text-align:center;max-width:560px;padding:32px}h1{font-size:24px}.qr{display:inline-block;background:#fff;padding:12px;border-radius:16px;margin:20px 0}.note{font-size:14px;color:#b8c0cb;line-height:1.7}</style></head><body><main><h1>rwa.lat 本地后台 · 动态验证</h1><p>${message}</p>${state.markup?`<div class="qr">${state.markup}</div>`:''}<p class="note">此二维码仅用于本地管理员绑定，请勿转发或截图到聊天。<br>密码和权限保留。新验证码通过后，原绑定失效。</p></main></body></html>`)
+    response.end(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${state.completed||state.failed?'':'<meta http-equiv="refresh" content="2">'}<title>本地后台 MFA 绑定</title><style>body{font-family:system-ui;margin:0;background:#11151b;color:#eef0f4;display:grid;place-items:center;min-height:100vh}main{text-align:center;max-width:560px;padding:32px}h1{font-size:24px}.qr{display:inline-block;background:#fff;padding:12px;border-radius:16px;margin:20px 0}.note{font-size:14px;color:#b8c0cb;line-height:1.7}</style></head><body><main><h1>A-REIT 本地后台 · 动态验证</h1><p>${message}</p>${state.markup?`<div class="qr">${state.markup}</div>`:''}<p class="note">此二维码仅用于本地管理员绑定，请勿转发或截图到聊天。<br>密码和权限保留。新验证码通过后，原绑定失效。</p></main></body></html>`)
   })
   await new Promise((resolveReady,reject)=>{server.once('error',reject);server.listen(3111,'127.0.0.1',resolveReady)})
   return {state,server}
@@ -116,14 +116,14 @@ async function main(){
     }
     const before=rows[0]
     qrPage=await startQrPage()
-    console.log('RWA.LAT 本地后台：重新绑定动态验证码（只修改本地账户）')
+    console.log('A-REIT 本地后台：重新绑定动态验证码（只修改本地账户）')
     let password=await privatePrompt('请输入当前管理员密码（输入不回显）：')
     const passwordOk=validPassword(password,before.password_hash);password=''
     if(!passwordOk)throw new Error('Current password could not be verified')
     let secret=generateSecret()
     const ciphertext=encryptAdminMfaSecret(secret,keyText,version)
     qrPage.state.markup=qrMarkup(secret)
-    console.log('\n请用手机验证器扫描本机页面二维码：http://127.0.0.1:3111/\n账号：rwa.lat 本地后台；基于时间；6 位；30 秒；SHA1。')
+    console.log('\n请用手机验证器扫描本机页面二维码：http://127.0.0.1:3111/\n账号：A-REIT 本地后台；基于时间；6 位；30 秒；SHA1。')
     console.log('二维码仅保存在进程内存中；请勿发送到聊天。验证通过后，旧绑定失效。')
     let verified=false
     for(let attempt=0;attempt<3;attempt++){

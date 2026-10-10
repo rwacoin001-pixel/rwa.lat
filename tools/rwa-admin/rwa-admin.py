@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """
-rwa-admin — RWA.LAT 运营工具集 v1（只读）
+rwa-admin — A-REIT 运营工具集 v1（只读）
 =========================================
 手机控制后端的前置工具层：给运营/巡检/日报提供统一入口。
 将来可整体搬到服务器（微信助手）使用。
@@ -32,8 +32,8 @@ sys.path.insert(0, SECRETS_HELPER)
 import rwa_secrets  # noqa: E402
 import psycopg2  # noqa: E402
 
-CORE = 'https://api.rwa.lat'
-ADMIN = 'https://admin-api.rwa.lat'
+CORE = 'https://api.a-reit.com'
+ADMIN = 'https://admin-api.a-reit.com'
 WORKER = 'https://rwa-lat.rwacoin001.workers.dev'
 
 _conn = None
@@ -75,7 +75,7 @@ def probe(url, timeout=60):
 
 # ---------------------------------------------------------------- status
 def cmd_status():
-    print('RWA.LAT 服务状态 · %s' % time.strftime('%Y-%m-%d %H:%M'))
+    print('A-REIT 服务状态 · %s' % time.strftime('%Y-%m-%d %H:%M'))
     for label, url in [
         ('核心 API', CORE + '/v1/health'),
         ('管理 API', ADMIN + '/v1/admin/health'),
@@ -111,7 +111,7 @@ def gather_stats():
 
 def cmd_stats():
     s = gather_stats()
-    print('RWA.LAT 运营统计 · %s' % time.strftime('%Y-%m-%d %H:%M'))
+    print('A-REIT 运营统计 · %s' % time.strftime('%Y-%m-%d %H:%M'))
     print(' 用户: 总 %s | 今日 +%s | 7日 +%s | 24h 活跃 %s' % (
         s['users_total'], s['users_today'], s['users_7d'], s['active_24h']))
     print(' KYC : %s' % (s['kyc'] or '无'))
@@ -174,7 +174,7 @@ def cmd_report(send=False):
     core_code, core_ms = probe(CORE + '/v1/health')
     admin_code, admin_ms = probe(ADMIN + '/v1/admin/health')
     L = []
-    L.append('📊 RWA.LAT 日报 · %s' % time.strftime('%m-%d'))
+    L.append('📊 A-REIT 日报 · %s' % time.strftime('%m-%d'))
     L.append('')
     L.append('▪️ 服务: 核心API %s(%dms) · 管理API %s(%dms)' % (
         '✓' if core_code == 200 else core_code, core_ms,

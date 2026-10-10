@@ -57,7 +57,7 @@ import java.util.Set;
 
 /** Installable trial shell. Business state and authentication remain in the website. */
 public final class MainActivity extends Activity {
-    private static final String HOME = "https://rwa.lat/home";
+    private static final String HOME = "https://a-reit.com/home";
     private static final int MEDIA_PERMISSION = 101, GEO_PERMISSION = 102, VOICE_PERMISSION = 103, CAMERA_PERMISSION = 104, FILE_PICK = 201, CAMERA_PICK = 202;
     private WebView webView;
     private LinearLayout nativeChrome;
@@ -156,11 +156,11 @@ public final class MainActivity extends Activity {
         stopVoice(true);
         if (errorPanel != null) { hideError(); webView.loadUrl(HOME); }
         else if (webView.canGoBack()) webView.goBack();
-        else new AlertDialog.Builder(this).setMessage("退出 RWA.LAT 试用客户端？").setNeutralButton("客户端选项", (dialog, which) -> showMenu()).setNegativeButton("继续使用", null).setPositiveButton("退出", (dialog, which) -> finish()).show();
+        else new AlertDialog.Builder(this).setMessage("退出 A-REIT 试用客户端？").setNeutralButton("客户端选项", (dialog, which) -> showMenu()).setNegativeButton("继续使用", null).setPositiveButton("退出", (dialog, which) -> finish()).show();
     }
     @Override public void onBackPressed() { navigateBack(); }
     private void showMenu() {
-        new AlertDialog.Builder(this).setTitle("RWA.LAT 试用客户端")
+        new AlertDialog.Builder(this).setTitle("A-REIT 试用客户端")
             .setItems(new String[]{"重新加载", "用浏览器打开当前页面", "浏览器登录", "清除应用内登录与缓存", "设备信息", "开源许可"}, (dialog, item) -> {
                 if (item == 0) { hideError(); webView.reload(); }
                 if (item == 1) openBrowser(UrlPolicy.safeBrowserPage(webView.getUrl()));
@@ -194,7 +194,7 @@ public final class MainActivity extends Activity {
     private void showBrowserAuth() {
         new AlertDialog.Builder(this).setTitle("在浏览器登录")
             .setMessage("Google、X 和通行密钥在系统浏览器中完成。登录后继续在浏览器使用；此试用版不会把浏览器会话同步到应用。应用内可使用邮箱密码或验证码。")
-            .setNegativeButton("留在应用", null).setPositiveButton("打开浏览器", (dialog, which) -> openBrowser("https://rwa.lat/login")).show();
+            .setNegativeButton("留在应用", null).setPositiveButton("打开浏览器", (dialog, which) -> openBrowser("https://a-reit.com/login")).show();
     }
     private void openBrowser(String url) {
         try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)); }
@@ -364,7 +364,7 @@ public final class MainActivity extends Activity {
     private void installVoiceBridge() {
         if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) || !SpeechRecognizer.isRecognitionAvailable(this)) return;
         voiceBridge = true;
-        WebViewCompat.addWebMessageListener(webView, "RwaNativeVoiceChannel", java.util.Collections.singleton("https://rwa.lat"), (view, message, sourceOrigin, isMainFrame, reply) -> {
+        WebViewCompat.addWebMessageListener(webView, "RwaNativeVoiceChannel", java.util.Collections.singleton("https://a-reit.com"), (view, message, sourceOrigin, isMainFrame, reply) -> {
             if (!isMainFrame || !UrlPolicy.trustedOrigin(sourceOrigin.toString()) || !trustedCurrentPage()) return;
             try {
                 JSONObject payload = new JSONObject(message.getData());
@@ -372,7 +372,7 @@ public final class MainActivity extends Activity {
                 else if ("stop".equals(payload.optString("type"))) stopVoice(false);
             } catch (Exception error) { emitVoice("error", null, "invalid-request", true); }
         });
-        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) WebViewCompat.addDocumentStartJavaScript(webView, voiceScript(), java.util.Collections.singleton("https://rwa.lat"));
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) WebViewCompat.addDocumentStartJavaScript(webView, voiceScript(), java.util.Collections.singleton("https://a-reit.com"));
     }
     private String voiceScript() {
         return "(()=>{if(!window.RwaNativeVoiceChannel)return;window.RwaNativeVoice=Object.freeze({start:({locale}={})=>window.RwaNativeVoiceChannel.postMessage(JSON.stringify({type:'start',locale:locale||'zh-CN'})),stop:()=>window.RwaNativeVoiceChannel.postMessage(JSON.stringify({type:'stop'}))});})()";

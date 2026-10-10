@@ -31,7 +31,7 @@ export class AiModelClient {
     this.endpoint = (config.get<string>('AI_MODEL_ENDPOINT') ?? '').trim().replace(/\/+$/, '')
     this.apiKey = config.get<string>('AI_MODEL_API_KEY') ?? ''
     this.model = config.get<string>('AI_MODEL_NAME') ?? 'deepseek-chat'
-    this.userAgent = config.get<string>('AI_MODEL_USER_AGENT') ?? 'rwa-lat-api/1.0'
+    this.userAgent = config.get<string>('AI_MODEL_USER_AGENT') ?? 'a-reit-api/1.0'
     this.timeoutMs = Number(config.get<string>('AI_MODEL_TIMEOUT_MS') ?? '90000')
     // API style: explicit AI_MODEL_API_STYLE wins; otherwise infer from endpoint.
     const explicit = (config.get<string>('AI_MODEL_API_STYLE') ?? '').trim().toLowerCase()

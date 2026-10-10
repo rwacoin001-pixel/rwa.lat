@@ -18,7 +18,7 @@ const fields={
   tax_document:[['账户持有人 / 税号 / 税务居民地区','商务核实录入'],['税年 / 税务辖区 / 收入统计口径','商务核实录入'],['报告币种 / 金额小数位','商务按原始报告填写，不自动换汇'],['收入总额 / 实际预扣税额 / 净额','按报告精度保留核实金额，不推断税率'],['依据凭证与哈希','真实资料经上传与扫描后填写']],
 }
 for(const kind of DOCUMENT_KINDS){
-  const template={...DEFAULT_TEMPLATES[kind],title:`${DEFAULT_TEMPLATES[kind].title} - 排版预览`,introduction:'排版预览，非正式文件。下列文字说明字段来源，不代表已经发生交易、签署或税务申报。',terms:['标题、说明和条款均可在后台编辑。公司名称默认 rwa.lat，修改一处即可用于后续文件。','已发放文件保留生成时的模板、主体资料和业务快照。']}
+  const template={...DEFAULT_TEMPLATES[kind],title:`${DEFAULT_TEMPLATES[kind].title} - 排版预览`,introduction:'排版预览，非正式文件。下列文字说明字段来源，不代表已经发生交易、签署或税务申报。',terms:['标题、说明和条款均可在后台编辑。公司名称默认 A-REIT，修改一处即可用于后续文件。','已发放文件保留生成时的模板、主体资料和业务快照。']}
   const bytes=await renderer.render({company:DEFAULT_COMPANY,companyRevision:1,template,templateRevision:1,kind,documentNo:'PREVIEW - NOT AN ISSUED DOCUMENT',userId:'真实账户生成时填充',generatedAt:new Date().toISOString(),fields:fields[kind],notes:['此文件只展示首版字段和排版，不是任何用户的正式成交、签署或税务记录。']})
   await writeFile(resolve(dir,`${kind}.pdf`),bytes)
   console.log(JSON.stringify({kind,bytes:bytes.length,pdfHeader:bytes.subarray(0,5).toString()==='%PDF-'}))

@@ -1,7 +1,7 @@
 {
   "_meta": {
     "version": "1.0",
-    "note": "RWA.LAT 社区内容账号库。用于把 N 个线上社区人设的资料档案同步到 community service。seeding 走 scripts/community/seed-personas.mjs（内部通道 API）。披露策略：默认②简介披露（演示期先不加，公开 Beta 前在社区守则页加一行最小披露）。",
+    "note": "A-REIT 社区内容账号库。用于把 N 个线上社区人设的资料档案同步到 community service。seeding 走 scripts/community/seed-personas.mjs（内部通道 API）。披露策略：默认②简介披露（演示期先不加，公开 Beta 前在社区守则页加一行最小披露）。",
     "red_lines": [
       "所有账号不得承诺、暗示、保证任何收益或回报",
       "不得扮演『已经赚到钱』的用户，不得晒收益截图",

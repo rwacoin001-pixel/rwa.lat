@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * scan-worker.mjs -- RWA.LAT 对象存储恶意文件扫描 worker（ClamAV）
+ * scan-worker.mjs -- A-REIT 对象存储恶意文件扫描 worker（ClamAV）
  *
  * 职责：把 object_storage_objects 里 scan_status='pending' 的对象，
  *       下载 → ClamAV 扫描 → 以 HMAC 签名回调 POST /v1/object-storage/scan

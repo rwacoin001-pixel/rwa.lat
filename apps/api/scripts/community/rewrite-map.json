@@ -1,6 +1,6 @@
 {
   "_meta": {
-    "purpose": "RWA.LAT 社区多语言改写映射（原文→人设母语）。apply_multilingual.py 依据 (handle, publishedAt/createdAt) 精确定位更新。",
+    "purpose": "A-REIT 社区多语言改写映射（原文→人设母语）。apply_multilingual.py 依据 (handle, publishedAt/createdAt) 精确定位更新。",
     "languages": "en×7 personas / zh-Hans×2 / zh-Hant×2 / ja×1"
   },
   "posts": [

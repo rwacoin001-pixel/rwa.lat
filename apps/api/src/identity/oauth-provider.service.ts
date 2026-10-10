@@ -138,7 +138,7 @@ export class OAuthProviderService {
       }
     }
     if (provider === 'github') {
-      const userAgent = 'rwalat-oauth'
+      const userAgent = 'a-reit-oauth'
       const profile = await this.getJson('https://api.github.com/user', token, userAgent)
       const id = profile.id
       if (typeof id !== 'number' && typeof id !== 'string') throw invalidOAuth('GitHub profile response did not contain a user')

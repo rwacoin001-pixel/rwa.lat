@@ -13,7 +13,7 @@
     const r = await fetch('/v1/auth/demo/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'demo@user.rwa.lat', type: 'user' }),
+      body: JSON.stringify({ email: 'demo@user.a-reit.com', type: 'user' }),
     })
     const s = await r.json()
     if (!s || !s.token) throw new Error('no token: ' + JSON.stringify(s))

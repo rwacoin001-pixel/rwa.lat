@@ -2,7 +2,7 @@
 
 > 交付方：Hermes · 2026-09-27
 > 用途：后台可编辑的正式文件模板（成交确认 / 结单 / 协议 / 税务文件）
-> 默认主体：**RWA.LAT**（运营主体可在后台改成公司名）
+> 默认主体：**A-REIT**（运营主体可在后台改成公司名）
 
 ---
 
@@ -31,9 +31,9 @@ apps/api/src/documents/templates/
 
 | 占位符 | 含义 | 默认值 / 来源 |
 |---|---|---|
-| `companyName` | 运营主体名称 | **默认 `RWA.LAT`**（后台可改） |
-| `companyUrl` | 官网 | `rwa.lat` |
-| `companyContact` | 客服邮箱 | `support@rwa.lat` |
+| `companyName` | 运营主体名称 | **默认 `A-REIT`**（后台可改） |
+| `companyUrl` | 官网 | `a-reit.com` |
+| `companyContact` | 客服邮箱 | `support@a-reit.com` |
 | `brandMark` | 徽标字母/字符 | `R`（可换 logo 图片） |
 | `companyRegistration` | 主体注册信息 | 后台配置 |
 | `documentNo` | 文件编号 | 系统生成（前缀见下） |
@@ -94,7 +94,7 @@ apps/api/src/documents/templates/
 · 渲染：读取该 kind 的当前模板 → {{key}} 字符串替换 → HTML → PDF
 ```
 
-**主体名称可改**：后台配置项 `legalEntity.companyName` 默认 `RWA.LAT`；
+**主体名称可改**：后台配置项 `legalEntity.companyName` 默认 `A-REIT`；
 渲染时注入 `companyName`，因此**换主体只需改一处**，无需改模板。
 
 **PDF 生成建议**：`puppeteer`（HTML→PDF·A4·`printBackground:true`）或 `wkhtmltopdf`。

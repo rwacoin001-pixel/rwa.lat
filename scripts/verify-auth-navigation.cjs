@@ -5,7 +5,7 @@ const source = fs.readFileSync('lib/api/auth-navigation.ts', 'utf8')
 const exportsObject = {}
 new Function('exports', ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText)(exportsObject)
 const { safeAuthReturnPath, consumeAuthDestination, markPasskeyOfferSeen, snoozePasskeyOffer, completePasskeyOffer } = exportsObject
-const origin = 'https://rwa.lat'
+const origin = 'https://a-reit.com'
 for (const target of ['/login', '/register', '/auth/callback/google', '/recovery?token=x', '/verify-email', '//evil.test', '/\\evil.test', '/', '/%6cogin', '/%2f%2fevil.test']) assert.equal(safeAuthReturnPath(target, origin), null, target)
 assert.equal(safeAuthReturnPath('/portfolio?tab=orders#recent', origin), '/portfolio?tab=orders#recent')
 for (const oauth of [true, false]) {

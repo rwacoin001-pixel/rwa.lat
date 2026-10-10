@@ -39,7 +39,7 @@ export class AdminCorePrincipalService implements OnModuleDestroy {
           ON CONFLICT (name) DO UPDATE SET name=EXCLUDED.name RETURNING id`)
         const inserted = await client.query(`INSERT INTO app.admin_users(id,email,role_id,disabled_at,password_hash,mfa_state)
           VALUES ($1,$2,$3,now(),NULL,'disabled') ON CONFLICT (id) DO NOTHING RETURNING id`,
-          [actor.id, `audit-${actor.id}@control-plane.rwa.lat.invalid`, role.rows[0].id])
+          [actor.id, `audit-${actor.id}@control-plane.a-reit.com.invalid`, role.rows[0].id])
         if (inserted.rowCount) await client.query(`INSERT INTO app.audit_logs
           (actor_type,action,object_type,object_id,request_id,metadata)
           VALUES ('service','admin.control_plane.principal_registered','admin_principal',$1,gen_random_uuid()::text,$2::jsonb)`,

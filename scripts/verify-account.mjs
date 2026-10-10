@@ -91,5 +91,5 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`))
   process.exitCode = 1
 } else {
-  console.log(`\nRWA.LAT account verification passed for ${email} (token omitted)`)
+  console.log(`\nA-REIT account verification passed for ${email} (token omitted)`)
 }

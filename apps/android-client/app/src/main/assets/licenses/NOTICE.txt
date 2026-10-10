@@ -1,4 +1,4 @@
-RWA.LAT Android Trial 0.1.0
+A-REIT Android Trial 0.1.0
 
 AndroidX WebKit, Core and transitive Jetpack libraries
 Copyright The Android Open Source Project
@@ -10,7 +10,7 @@ Copyright JetBrains s.r.o. and Kotlin Programming Language contributors
 https://github.com/JetBrains/kotlin
 Apache License, Version 2.0
 
-The app icon is copied from the RWA.LAT application's existing first-party
+The app icon is copied from the A-REIT application's existing first-party
 public/icons/rwa-pwa-v2-512.png asset.
 
 See Apache-2.0.txt for the full license. Android System WebView and the

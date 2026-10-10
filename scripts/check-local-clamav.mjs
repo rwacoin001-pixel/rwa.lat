@@ -10,7 +10,7 @@ const start = source.indexOf('function clamdScanBuffer(buf) {')
 const end = source.indexOf('async function loadPg()', start)
 if (start < 0 || end < start) throw new Error('Delivered scanner entry point changed; inspect before testing')
 const scan = new Function('net', 'CLAMD_HOST', 'CLAMD_PORT', 'SCAN_TIMEOUT_MS', `${source.slice(start, end)}\nreturn clamdScanBuffer;`)(net, '127.0.0.1', 3310, 30_000)
-const clean = await scan(Buffer.from('RWA.LAT isolated ClamAV health fixture. No business or personal information.'))
+const clean = await scan(Buffer.from('A-REIT isolated ClamAV health fixture. No business or personal information.'))
 assert.equal(clean.status, 'clean')
 // Public harmless antivirus test signature, assembled solely in memory.
 const eicar = Buffer.from(['X5O!P%@AP[4\\PZX54(P^)7CC)7}', '$EICAR-STANDARD-ANTIVIRUS-TEST-FILE!$H+H*'].join(''))

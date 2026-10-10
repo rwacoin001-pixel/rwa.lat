@@ -34,18 +34,18 @@ public final class UrlPolicy {
     }
     public static boolean trustedOrigin(String url) {
         URI uri = secureUri(url);
-        return uri != null && "rwa.lat".equalsIgnoreCase(uri.getHost());
+        return uri != null && "a-reit.com".equalsIgnoreCase(uri.getHost());
     }
     public static boolean trustedDownload(String url) {
         URI uri = secureUri(url);
-        return uri != null && !containsSession(uri) && (trustedOrigin(url) || "api.rwa.lat".equalsIgnoreCase(uri.getHost()));
+        return uri != null && !containsSession(uri) && (trustedOrigin(url) || "api.a-reit.com".equalsIgnoreCase(uri.getHost()));
     }
     public static String safeBrowserPage(String url) {
         URI uri = secureUri(url);
-        if (uri == null || !trustedOrigin(url)) return "https://rwa.lat/home";
+        if (uri == null || !trustedOrigin(url)) return "https://a-reit.com/home";
         String path = uri.getRawPath();
         if (path == null || path.isEmpty()) path = "/home";
         if (path.startsWith("/auth/") || path.startsWith("/__native/")) path = "/login";
-        return "https://rwa.lat" + path;
+        return "https://a-reit.com" + path;
     }
 }

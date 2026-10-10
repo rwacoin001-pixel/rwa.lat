@@ -20,7 +20,7 @@ let registrationRequired: boolean
 
 function message() {
   const now = Date.now()
-  return `${responseOrigin} wants you to sign in with your Ethereum account:\n${address}\n\nSign in to RWA.LAT. This does not authorize a transaction.\n\nURI: ${responseOrigin}/login\nVersion: 1\nChain ID: 1\nNonce: abcdef12345678\nIssued At: ${new Date(now - 1000).toISOString()}\nExpiration Time: ${new Date(now + responseExpiry).toISOString()}`
+  return `${responseOrigin} wants you to sign in with your Ethereum account:\n${address}\n\nSign in to A-REIT. This does not authorize a transaction.\n\nURI: ${responseOrigin}/login\nVersion: 1\nChain ID: 1\nNonce: abcdef12345678\nIssued At: ${new Date(now - 1000).toISOString()}\nExpiration Time: ${new Date(now + responseExpiry).toISOString()}`
 }
 const provider = { async request(args: { method: string; params?: unknown[] }) {
   calls.push(args)
@@ -39,10 +39,10 @@ const provider = { async request(args: { method: string; params?: unknown[] }) {
 beforeEach(() => {
   writes = new Map(); calls = []; requests = []
   activeAddress = address; chain = '0x1'; signatureError = null; accountError = null
-  responseOrigin = 'https://rwa.lat'; responseExpiry = 240000
+  responseOrigin = 'https://a-reit.com'; responseExpiry = 240000
   verificationStatus = 200; registrationRequired = false
   Object.defineProperty(globalThis, 'window', { configurable: true, value: { dispatchEvent() {} } })
-  Object.defineProperty(globalThis, 'location', { configurable: true, value: { origin: 'https://rwa.lat' } })
+  Object.defineProperty(globalThis, 'location', { configurable: true, value: { origin: 'https://a-reit.com' } })
   Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: {
     getItem: (key: string) => writes.get(key) ?? null,
     setItem: (key: string, value: string) => writes.set(key, value),
@@ -223,7 +223,7 @@ test('a network switch never signs the original challenge', async () => {
   assert.equal(calls.some(call => call.method === 'personal_sign'), false)
 })
 test('wrong origins and expired challenges cannot reach a signature prompt', async () => {
-  for (const [origin, expiry] of [['https://other.example', 240000], ['https://rwa.lat', -1000]] as const) {
+  for (const [origin, expiry] of [['https://other.example', 240000], ['https://a-reit.com', -1000]] as const) {
     responseOrigin = origin; responseExpiry = expiry
     assert.equal((await beginWalletLogin(provider)).ok, false)
   }

@@ -81,7 +81,7 @@ for (const route of routes) {
   try {
     const response = await fetch(`${baseUrl}${route}`)
     const html = await response.text()
-    if (!response.ok || html.length < 500 || !html.includes('RWA.LAT')) {
+    if (!response.ok || html.length < 500 || !html.includes('A-REIT')) {
       failures.push(`${route}: HTTP ${response.status}, incomplete application shell`)
     } else {
       console.log(`PASS ${route} (${response.status})`)
@@ -120,5 +120,5 @@ if (failures.length) {
   failures.forEach((failure) => console.error(`- ${failure}`))
   process.exitCode = 1
 } else {
-  console.log(`\nRWA.LAT Demo verification passed against ${baseUrl}`)
+  console.log(`\nA-REIT Demo verification passed against ${baseUrl}`)
 }

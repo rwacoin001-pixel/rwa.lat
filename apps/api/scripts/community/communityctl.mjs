@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * RWA.LAT community operations CLI (content engine + operator tooling).
+ * A-REIT community operations CLI (content engine + operator tooling).
  *
  * All writes go through the Core API internal channel (/v1/internal/community/*)
  * with the shared service token + actor id, so posts flow through the same

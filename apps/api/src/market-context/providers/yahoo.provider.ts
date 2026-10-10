@@ -73,7 +73,7 @@ export class YahooProvider {
         signal: controller.signal,
         headers: {
           // Yahoo 对无 UA 的请求可能 429；带浏览器化 UA 提升稳定性
-          'User-Agent': 'Mozilla/5.0 (compatible; RwaLat-MarketContext/1.0)',
+          'User-Agent': 'Mozilla/5.0 (compatible; AReit-MarketContext/1.0)',
           Accept: 'application/json',
         },
       })

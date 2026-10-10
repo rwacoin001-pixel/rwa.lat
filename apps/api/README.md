@@ -1,6 +1,6 @@
-# RWA.LAT API
+# A-REIT API
 
-NestJS API boundary for RWA.LAT. It currently provides versioned routes, request IDs, consistent errors, input validation, security headers, CORS, OpenAPI, the PostgreSQL/migration baseline, and the identity/security foundation. Domain modules are added by the numbered tasks in `docs/Task-Board.md`.
+NestJS API boundary for A-REIT. It currently provides versioned routes, request IDs, consistent errors, input validation, security headers, CORS, OpenAPI, the PostgreSQL/migration baseline, and the identity/security foundation. Domain modules are added by the numbered tasks in `docs/Task-Board.md`.
 
 ## Local use
 
