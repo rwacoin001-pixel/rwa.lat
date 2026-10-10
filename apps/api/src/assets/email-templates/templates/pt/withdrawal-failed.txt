@@ -12,6 +12,6 @@ Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
-RWA.LAT
+A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
+A-REIT
 Ajuda e suporte: {{supportUrl}}

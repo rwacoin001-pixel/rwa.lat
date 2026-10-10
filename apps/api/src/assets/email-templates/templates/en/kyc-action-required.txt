@@ -7,6 +7,6 @@ Reference: {{reference}}
 
 Continue verification: {{actionUrl}}
 
-RWA.LAT never asks for your password, verification codes or private keys.
-RWA.LAT
+A-REIT never asks for your password, verification codes or private keys.
+A-REIT
 Help & support: {{supportUrl}}

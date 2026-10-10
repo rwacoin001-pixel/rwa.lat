@@ -182,7 +182,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
         <Section n="17" title="Contact">
           <p>
             For questions about these Terms, contact us at{' '}
-            <a href="mailto:support@rwa.lat">
+            <a href="mailto:support@a-reit.com">
               Contact support
             </a>
             .

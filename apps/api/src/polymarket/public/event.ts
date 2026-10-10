@@ -2,7 +2,7 @@ import {publicFetch} from './public-fetch'
 import { eventMarkets, HISTORY_PERIODS, historyQuery, stringArray, type GammaEventData, type HistoryPeriod } from './polymarket-data'
 import {isPredictionDiscoverable,predictionEndAt} from './prediction-lifecycle'
 export const revalidate = 30
-const GAMMA_HEADERS={accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}
+const GAMMA_HEADERS={accept:'application/json','user-agent':'A-REIT/0.1 market-data'}
 // Umbrella tags match half the catalogue; related events key off the first specific one.
 const BROAD_TAGS=new Set(['all','featured','recurring','hide-from-new','politics','sports','crypto','pop-culture','business','science','world','elections','global-elections','economy','tech','culture'])
 type EventTag={id:string;slug:string;label:string}

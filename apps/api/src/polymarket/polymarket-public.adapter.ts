@@ -130,7 +130,7 @@ export class PolymarketPublicAdapter implements PolymarketReadAdapter {
     let response: Response
     try {
       response = await fetch(url, {
-        headers: { accept: 'application/json', 'user-agent': 'RWA.LAT/0.1 market-data' },
+        headers: { accept: 'application/json', 'user-agent': 'A-REIT/0.1 market-data' },
         signal: AbortSignal.timeout(this.timeoutMs),
       })
     } catch {

@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   if(sort==='endDate')query.set('end_date_min',new Date().toISOString())
   if(search)query.set('title_search',search)
   try {
-    const upstream = await publicFetch(`https://gamma-api.polymarket.com/events?${query}`, { headers: {accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}, next: { revalidate }, signal: AbortSignal.timeout(8_000) })
+    const upstream = await publicFetch(`https://gamma-api.polymarket.com/events?${query}`, { headers: {accept:'application/json','user-agent':'A-REIT/0.1 market-data'}, next: { revalidate }, signal: AbortSignal.timeout(8_000) })
     if (!upstream.ok) throw new Error('Gamma unavailable')
     const rows: unknown = await upstream.json()
     if (!Array.isArray(rows)) throw new Error('Invalid Gamma response')

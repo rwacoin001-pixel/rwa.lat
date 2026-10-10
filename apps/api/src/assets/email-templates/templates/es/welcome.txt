@@ -1,10 +1,10 @@
 Tu cuenta está lista
 
-Tu correo está verificado. Ya puedes usar RWA.LAT.
+Tu correo está verificado. Ya puedes usar A-REIT.
 
 
 Abrir cuenta: {{actionUrl}}
 
-RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-RWA.LAT
+A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+A-REIT
 Ayuda y soporte: {{supportUrl}}

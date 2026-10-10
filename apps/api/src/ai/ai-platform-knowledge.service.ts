@@ -36,7 +36,7 @@ function source(key: string, title: string, body: string, locale: string, url: s
 export class AiPlatformKnowledgeService {
   constructor(private readonly ds: DataSource) {}
   async retrieve(question: string, locale: string): Promise<LiveKnowledgeSource[]> {
-    const navigation = source('pages', 'RWA.LAT 页面与操作入口', JSON.stringify({
+    const navigation = source('pages', 'A-REIT 页面与操作入口', JSON.stringify({
       pages: PAGE_DIRECTORY,
       additionalPages: [{ title: 'AI 客服与投资授权', path: '/ai-assistant' }, { title: '条款 Terms', path: '/terms' }, { title: '隐私 Privacy', path: '/privacy' }],
       note: 'Navigation only. A route is not proof of an enabled execution channel. Replace placeholders only with supplied record URLs.'

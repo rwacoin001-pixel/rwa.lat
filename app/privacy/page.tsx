@@ -141,7 +141,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
           </p>
           <p>
             To exercise any of these rights, contact us at{' '}
-            <a href="mailto:support@rwa.lat">
+            <a href="mailto:support@a-reit.com">
               Contact support
             </a>
             . We may need to verify your identity before fulfilling a request. You may also have the right to lodge a
@@ -169,7 +169,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
           <p>
             If you have questions or concerns about this Privacy Policy or our handling of your personal information,
             contact us at{' '}
-            <a href="mailto:support@rwa.lat">
+            <a href="mailto:support@a-reit.com">
               Contact support
             </a>
             .

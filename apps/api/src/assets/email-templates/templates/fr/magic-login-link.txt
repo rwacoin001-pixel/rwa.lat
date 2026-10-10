@@ -1,4 +1,4 @@
-Connectez-vous à RWA.LAT
+Connectez-vous à A-REIT
 
 Utilisez ce lien à usage unique pour terminer la connexion.
 
@@ -7,6 +7,6 @@ Continuer la connexion: {{actionUrl}}
 
 Ce lien expire dans {{expiryText}} et ne peut être utilisé qu’une fois. Si vous ne l’avez pas demandé, ignorez cet e-mail.
 
-RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-RWA.LAT
+A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+A-REIT
 Aide et assistance: {{supportUrl}}

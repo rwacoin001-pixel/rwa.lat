@@ -6,6 +6,6 @@ Periodo: {{period}}
 
 Ver extracto: {{actionUrl}}
 
-RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-RWA.LAT
+A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+A-REIT
 Ayuda y soporte: {{supportUrl}}

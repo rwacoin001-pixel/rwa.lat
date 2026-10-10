@@ -11,6 +11,6 @@ Revisar seguridad: {{actionUrl}}
 ¿No has sido tú? Revisa la seguridad de tu cuenta y contacta con el soporte oficial.
 {{securityUrl}}
 
-RWA.LAT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-RWA.LAT
+A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
+A-REIT
 Ayuda y soporte: {{supportUrl}}

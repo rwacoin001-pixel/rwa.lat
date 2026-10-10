@@ -1,6 +1,6 @@
 Verifique seu e-mail
 
-Insira este código para continuar criando sua conta na RWA.LAT.
+Insira este código para continuar criando sua conta na A-REIT.
 
 {{code}}
 Válido por {{expiryMinutes}} minutos
@@ -8,6 +8,6 @@ Válido por {{expiryMinutes}} minutos
 
 Use este código apenas para a ação que você solicitou. Não o compartilhe. Se não fez a solicitação, ignore este e-mail.
 
-A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
-RWA.LAT
+A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
+A-REIT
 Ajuda e suporte: {{supportUrl}}

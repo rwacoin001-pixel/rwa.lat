@@ -29,7 +29,7 @@ async function bootstrap() {
   server.maxHeadersCount = 100
   server.maxRequestsPerSocket = 500
   // eslint-disable-next-line no-console
-  console.log(`RWA.LAT Admin listening on :${port} (prefix=${prefix})`)
+  console.log(`A-REIT Admin listening on :${port} (prefix=${prefix})`)
 }
 
 function proxyHops(value: string | undefined): number {

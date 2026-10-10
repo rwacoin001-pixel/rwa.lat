@@ -69,7 +69,7 @@ function verifiedReplyLinks(reply: string, sources: KnowledgeSource[]): string {
     } catch { /* Authored prose is not a navigation authority. */ }
   }
   return reply.replace(/\[([^\]\n]+)\]\(([^\s)]+)\)/g, (_match, label, href) => {
-    const origin = ['https://a-reit.com', 'https://www.a-reit.com', 'https://rwa.lat', 'https://www.rwa.lat'].find(value => href.startsWith(`${value}/`))
+    const origin = ['https://a-reit.com', 'https://www.a-reit.com'].find(value => href.startsWith(`${value}/`))
     const local = origin ? href.slice(origin.length) : href
     return allowed.has(local) ? `[${label}](${local})` : label
   })

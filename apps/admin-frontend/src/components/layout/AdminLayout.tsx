@@ -159,11 +159,7 @@ function sectionOf(pathname: string): { section: NavSection; item: NavItem } | n
 
 function BrandMark({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="140 188 226 124" fill="none" aria-hidden="true">
-      <path fill="#141830" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
-      <path fill="#141830" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
-      <path fill="#5b6cf9" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
-    </svg>
+    <svg className={className} viewBox="0 0 500 280" fill="none" aria-hidden="true"><g transform="translate(126 0)"><path fill="#141830" d="M4 78Q4 69 13 65L139 8Q146 5 153 8L213 37Q222 42 222 53V144L154 113V71L77 106V199Q77 207 70 211L16 242Q4 248 4 235Z" /><path fill="#19C7AA" d="M113 95L238 152Q247 156 247 167V258Q247 270 236 265L121 213Q113 210 113 199Z" /></g></svg>
   )
 }
 
@@ -254,7 +250,7 @@ function AccountMenu({ align }: { align: 'start' | 'end' }) {
       <DropdownMenuContent align={align} className="w-56">
         <div className="border-b border-ink/[0.08] px-4 py-3">
           <p className="text-sm font-medium">管理员账号</p>
-          <p className="text-xs text-muted-foreground">RWA.LAT Admin</p>
+          <p className="text-xs text-muted-foreground">A-REIT Admin</p>
         </div>
         <DropdownMenuItem asChild>
           <Link href="/settings" className="flex w-full items-center gap-2">
@@ -325,12 +321,12 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
         {/* ── Desktop sidebar（分组 + 二级菜单）───────────────── */}
         <aside className="glass-strong sticky top-4 hidden h-[calc(100vh-32px)] w-[252px] shrink-0 flex-col overflow-hidden rounded-[24px] lg:flex">
           {/* 品牌 */}
-          <Link href="/dashboard" className="flex items-center gap-3 px-4 pb-3 pt-4" aria-label="RWA.LAT Admin">
+          <Link href="/dashboard" className="flex items-center gap-3 px-4 pb-3 pt-4" aria-label="A-REIT Admin">
             <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-white shadow-sm ring-1 ring-ink/[0.06]">
               <BrandMark className="h-5 w-7" />
             </span>
             <span>
-              <span className="block text-[13px] font-bold tracking-tight">RWA.LAT Admin</span>
+              <span className="block text-[13px] font-bold tracking-tight">A-REIT Admin</span>
               <span className="block text-[10.5px] font-medium uppercase tracking-[0.16em] text-text-faint">Operations Console</span>
             </span>
           </Link>
@@ -404,7 +400,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </Sheet>
               <div className="min-w-0">
                 <p className="truncate text-[11px] font-semibold uppercase tracking-[0.16em] text-text-faint">
-                  {current ? `${current.section.title} · RWA.LAT ADMIN` : 'RWA.LAT ADMIN'}
+                  {current ? `${current.section.title} · A-REIT ADMIN` : 'A-REIT ADMIN'}
                 </p>
                 <p className="truncate text-sm font-semibold">{current?.item.name ?? '运营后台'}</p>
               </div>
@@ -436,7 +432,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <BrandMark className="h-5 w-8" />
             </span>
             <div>
-              <p className="text-sm font-semibold">RWA.LAT Admin</p>
+              <p className="text-sm font-semibold">A-REIT Admin</p>
               <p className="text-xs text-muted-foreground">全部页面</p>
             </div>
           </div>

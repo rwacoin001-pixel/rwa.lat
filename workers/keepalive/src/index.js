@@ -1,9 +1,9 @@
 // Check the canonical Oracle endpoints every 4 minutes.
 
 const TARGETS = [
-  'https://api.rwa.lat/v1/health/ready',
-  'https://admin-api.rwa.lat/v1/admin/health',
-  'https://admin.rwa.lat/login',
+  'https://api.a-reit.com/v1/health/ready',
+  'https://admin-api.a-reit.com/v1/admin/health',
+  'https://admin.a-reit.com/login',
 ];
 
 async function ping(url) {

@@ -13,13 +13,13 @@ export async function GET(request: Request, context: {params: Promise<{id:string
   const bookCache = fresh ? {cache: 'no-store' as const} : {next:{revalidate}}
   const integration = publicIntegration()
   try {
-    const response = await publicFetch(`https://gamma-api.polymarket.com/markets/${id}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},...bookCache,signal:AbortSignal.timeout(8000)})
+    const response = await publicFetch(`https://gamma-api.polymarket.com/markets/${id}`,{headers:{accept:'application/json','user-agent':'A-REIT/0.1 market-data'},...bookCache,signal:AbortSignal.timeout(8000)})
     if (!response.ok) throw new Error('Unavailable')
     const market = await response.json() as GammaMarketData
     const tokenIds = stringArray(market.clobTokenIds)
     const outcomeBooks = await Promise.all(tokenIds.slice(0,2).map(async tokenId => {
       try {
-        const r = await publicFetch(`https://clob.polymarket.com/book?token_id=${encodeURIComponent(tokenId)}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},...bookCache,signal:AbortSignal.timeout(8000)})
+        const r = await publicFetch(`https://clob.polymarket.com/book?token_id=${encodeURIComponent(tokenId)}`,{headers:{accept:'application/json','user-agent':'A-REIT/0.1 market-data'},...bookCache,signal:AbortSignal.timeout(8000)})
         if (!r.ok) return null
         const b = await r.json() as Book
         if (b.asset_id && b.asset_id !== tokenId) return null
@@ -33,7 +33,7 @@ export async function GET(request: Request, context: {params: Promise<{id:string
     let history: Array<{time:number;price:number}> = []
     try {
       if (tokenIds[0]) {
-        const r = await publicFetch(`https://clob.polymarket.com/prices-history?market=${encodeURIComponent(tokenIds[0])}&${historyQuery(period as HistoryPeriod)}`,{headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},next:{revalidate},signal:AbortSignal.timeout(8000)})
+        const r = await publicFetch(`https://clob.polymarket.com/prices-history?market=${encodeURIComponent(tokenIds[0])}&${historyQuery(period as HistoryPeriod)}`,{headers:{accept:'application/json','user-agent':'A-REIT/0.1 market-data'},next:{revalidate},signal:AbortSignal.timeout(8000)})
         if (r.ok) {const h = await r.json() as {history?:Array<{t:number;p:number}>}; history=(h.history??[]).filter(x=>Number.isFinite(x.t)&&x.t>0&&Number.isFinite(x.p)&&x.p>=0&&x.p<=1).map(x=>({time:x.t,price:x.p})).sort((a,b)=>a.time-b.time)}
       }
     } catch {/* Never fabricate missing price points. */}

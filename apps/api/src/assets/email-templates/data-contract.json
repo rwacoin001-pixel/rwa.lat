@@ -2,7 +2,7 @@
   {
     "id": "registration-code",
     "locale": "zh-CN",
-    "subject": "验证你的邮箱 · RWA.LAT",
+    "subject": "验证你的邮箱 · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -15,7 +15,7 @@
   {
     "id": "registration-code",
     "locale": "en",
-    "subject": "Verify your email · RWA.LAT",
+    "subject": "Verify your email · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -28,7 +28,7 @@
   {
     "id": "registration-code",
     "locale": "hi",
-    "subject": "अपना ईमेल सत्यापित करें · RWA.LAT",
+    "subject": "अपना ईमेल सत्यापित करें · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -41,7 +41,7 @@
   {
     "id": "registration-code",
     "locale": "es",
-    "subject": "Verifica tu correo · RWA.LAT",
+    "subject": "Verifica tu correo · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -54,7 +54,7 @@
   {
     "id": "registration-code",
     "locale": "ar",
-    "subject": "تحقق من بريدك الإلكتروني · RWA.LAT",
+    "subject": "تحقق من بريدك الإلكتروني · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -67,7 +67,7 @@
   {
     "id": "registration-code",
     "locale": "fr",
-    "subject": "Vérifiez votre e-mail · RWA.LAT",
+    "subject": "Vérifiez votre e-mail · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -80,7 +80,7 @@
   {
     "id": "registration-code",
     "locale": "pt",
-    "subject": "Verifique seu e-mail · RWA.LAT",
+    "subject": "Verifique seu e-mail · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -93,7 +93,7 @@
   {
     "id": "login-code",
     "locale": "zh-CN",
-    "subject": "确认本次登录 · RWA.LAT",
+    "subject": "确认本次登录 · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -106,7 +106,7 @@
   {
     "id": "login-code",
     "locale": "en",
-    "subject": "Confirm your sign-in · RWA.LAT",
+    "subject": "Confirm your sign-in · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -119,7 +119,7 @@
   {
     "id": "login-code",
     "locale": "hi",
-    "subject": "अपने लॉगिन की पुष्टि करें · RWA.LAT",
+    "subject": "अपने लॉगिन की पुष्टि करें · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -132,7 +132,7 @@
   {
     "id": "login-code",
     "locale": "es",
-    "subject": "Confirma tu acceso · RWA.LAT",
+    "subject": "Confirma tu acceso · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -145,7 +145,7 @@
   {
     "id": "login-code",
     "locale": "ar",
-    "subject": "أكد تسجيل الدخول · RWA.LAT",
+    "subject": "أكد تسجيل الدخول · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -158,7 +158,7 @@
   {
     "id": "login-code",
     "locale": "fr",
-    "subject": "Confirmez votre connexion · RWA.LAT",
+    "subject": "Confirmez votre connexion · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -171,7 +171,7 @@
   {
     "id": "login-code",
     "locale": "pt",
-    "subject": "Confirme seu acesso · RWA.LAT",
+    "subject": "Confirme seu acesso · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -184,7 +184,7 @@
   {
     "id": "verification-link",
     "locale": "zh-CN",
-    "subject": "验证邮箱地址 · RWA.LAT",
+    "subject": "验证邮箱地址 · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -197,7 +197,7 @@
   {
     "id": "verification-link",
     "locale": "en",
-    "subject": "Verify your email address · RWA.LAT",
+    "subject": "Verify your email address · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -210,7 +210,7 @@
   {
     "id": "verification-link",
     "locale": "hi",
-    "subject": "ईमेल पते की पुष्टि करें · RWA.LAT",
+    "subject": "ईमेल पते की पुष्टि करें · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -223,7 +223,7 @@
   {
     "id": "verification-link",
     "locale": "es",
-    "subject": "Verifica tu dirección de correo · RWA.LAT",
+    "subject": "Verifica tu dirección de correo · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -236,7 +236,7 @@
   {
     "id": "verification-link",
     "locale": "ar",
-    "subject": "تحقق من عنوان البريد · RWA.LAT",
+    "subject": "تحقق من عنوان البريد · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -249,7 +249,7 @@
   {
     "id": "verification-link",
     "locale": "fr",
-    "subject": "Vérifiez votre adresse e-mail · RWA.LAT",
+    "subject": "Vérifiez votre adresse e-mail · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -262,7 +262,7 @@
   {
     "id": "verification-link",
     "locale": "pt",
-    "subject": "Verifique seu endereço de e-mail · RWA.LAT",
+    "subject": "Verifique seu endereço de e-mail · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -275,7 +275,7 @@
   {
     "id": "magic-login-link",
     "locale": "zh-CN",
-    "subject": "登录 RWA.LAT · RWA.LAT",
+    "subject": "登录 A-REIT · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -288,7 +288,7 @@
   {
     "id": "magic-login-link",
     "locale": "en",
-    "subject": "Sign in to RWA.LAT · RWA.LAT",
+    "subject": "Sign in to A-REIT · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -301,7 +301,7 @@
   {
     "id": "magic-login-link",
     "locale": "hi",
-    "subject": "RWA.LAT में लॉगिन करें · RWA.LAT",
+    "subject": "A-REIT में लॉगिन करें · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -314,7 +314,7 @@
   {
     "id": "magic-login-link",
     "locale": "es",
-    "subject": "Accede a RWA.LAT · RWA.LAT",
+    "subject": "Accede a A-REIT · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -327,7 +327,7 @@
   {
     "id": "magic-login-link",
     "locale": "ar",
-    "subject": "سجل الدخول إلى RWA.LAT · RWA.LAT",
+    "subject": "سجل الدخول إلى A-REIT · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -340,7 +340,7 @@
   {
     "id": "magic-login-link",
     "locale": "fr",
-    "subject": "Connectez-vous à RWA.LAT · RWA.LAT",
+    "subject": "Connectez-vous à A-REIT · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -353,7 +353,7 @@
   {
     "id": "magic-login-link",
     "locale": "pt",
-    "subject": "Entre na RWA.LAT · RWA.LAT",
+    "subject": "Entre na A-REIT · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -366,7 +366,7 @@
   {
     "id": "recovery-link",
     "locale": "zh-CN",
-    "subject": "恢复账户访问 · RWA.LAT",
+    "subject": "恢复账户访问 · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -379,7 +379,7 @@
   {
     "id": "recovery-link",
     "locale": "en",
-    "subject": "Recover account access · RWA.LAT",
+    "subject": "Recover account access · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -392,7 +392,7 @@
   {
     "id": "recovery-link",
     "locale": "hi",
-    "subject": "खाते की पहुँच पुनर्प्राप्त करें · RWA.LAT",
+    "subject": "खाते की पहुँच पुनर्प्राप्त करें · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -405,7 +405,7 @@
   {
     "id": "recovery-link",
     "locale": "es",
-    "subject": "Recupera el acceso a tu cuenta · RWA.LAT",
+    "subject": "Recupera el acceso a tu cuenta · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -418,7 +418,7 @@
   {
     "id": "recovery-link",
     "locale": "ar",
-    "subject": "استعد الوصول إلى حسابك · RWA.LAT",
+    "subject": "استعد الوصول إلى حسابك · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -431,7 +431,7 @@
   {
     "id": "recovery-link",
     "locale": "fr",
-    "subject": "Récupérez l’accès à votre compte · RWA.LAT",
+    "subject": "Récupérez l’accès à votre compte · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -444,7 +444,7 @@
   {
     "id": "recovery-link",
     "locale": "pt",
-    "subject": "Recupere o acesso à conta · RWA.LAT",
+    "subject": "Recupere o acesso à conta · A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -457,7 +457,7 @@
   {
     "id": "reset-password-code",
     "locale": "zh-CN",
-    "subject": "确认重置密码 · RWA.LAT",
+    "subject": "确认重置密码 · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -470,7 +470,7 @@
   {
     "id": "reset-password-code",
     "locale": "en",
-    "subject": "Confirm password reset · RWA.LAT",
+    "subject": "Confirm password reset · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -483,7 +483,7 @@
   {
     "id": "reset-password-code",
     "locale": "hi",
-    "subject": "पासवर्ड रीसेट की पुष्टि करें · RWA.LAT",
+    "subject": "पासवर्ड रीसेट की पुष्टि करें · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -496,7 +496,7 @@
   {
     "id": "reset-password-code",
     "locale": "es",
-    "subject": "Confirma el cambio de contraseña · RWA.LAT",
+    "subject": "Confirma el cambio de contraseña · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -509,7 +509,7 @@
   {
     "id": "reset-password-code",
     "locale": "ar",
-    "subject": "أكد إعادة تعيين كلمة المرور · RWA.LAT",
+    "subject": "أكد إعادة تعيين كلمة المرور · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -522,7 +522,7 @@
   {
     "id": "reset-password-code",
     "locale": "fr",
-    "subject": "Confirmez la réinitialisation · RWA.LAT",
+    "subject": "Confirmez la réinitialisation · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -535,7 +535,7 @@
   {
     "id": "reset-password-code",
     "locale": "pt",
-    "subject": "Confirme a redefinição de senha · RWA.LAT",
+    "subject": "Confirme a redefinição de senha · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -548,7 +548,7 @@
   {
     "id": "bind-email-code",
     "locale": "zh-CN",
-    "subject": "绑定邮箱地址 · RWA.LAT",
+    "subject": "绑定邮箱地址 · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -561,7 +561,7 @@
   {
     "id": "bind-email-code",
     "locale": "en",
-    "subject": "Link your email address · RWA.LAT",
+    "subject": "Link your email address · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -574,7 +574,7 @@
   {
     "id": "bind-email-code",
     "locale": "hi",
-    "subject": "अपना ईमेल पता जोड़ें · RWA.LAT",
+    "subject": "अपना ईमेल पता जोड़ें · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -587,7 +587,7 @@
   {
     "id": "bind-email-code",
     "locale": "es",
-    "subject": "Vincula tu correo · RWA.LAT",
+    "subject": "Vincula tu correo · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -600,7 +600,7 @@
   {
     "id": "bind-email-code",
     "locale": "ar",
-    "subject": "اربط بريدك الإلكتروني · RWA.LAT",
+    "subject": "اربط بريدك الإلكتروني · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -613,7 +613,7 @@
   {
     "id": "bind-email-code",
     "locale": "fr",
-    "subject": "Associez votre adresse e-mail · RWA.LAT",
+    "subject": "Associez votre adresse e-mail · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -626,7 +626,7 @@
   {
     "id": "bind-email-code",
     "locale": "pt",
-    "subject": "Vincule seu e-mail · RWA.LAT",
+    "subject": "Vincule seu e-mail · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -639,7 +639,7 @@
   {
     "id": "change-email-code",
     "locale": "zh-CN",
-    "subject": "验证新邮箱 · RWA.LAT",
+    "subject": "验证新邮箱 · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -652,7 +652,7 @@
   {
     "id": "change-email-code",
     "locale": "en",
-    "subject": "Verify your new email · RWA.LAT",
+    "subject": "Verify your new email · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -665,7 +665,7 @@
   {
     "id": "change-email-code",
     "locale": "hi",
-    "subject": "अपना नया ईमेल सत्यापित करें · RWA.LAT",
+    "subject": "अपना नया ईमेल सत्यापित करें · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -678,7 +678,7 @@
   {
     "id": "change-email-code",
     "locale": "es",
-    "subject": "Verifica tu nuevo correo · RWA.LAT",
+    "subject": "Verifica tu nuevo correo · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -691,7 +691,7 @@
   {
     "id": "change-email-code",
     "locale": "ar",
-    "subject": "تحقق من بريدك الجديد · RWA.LAT",
+    "subject": "تحقق من بريدك الجديد · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -704,7 +704,7 @@
   {
     "id": "change-email-code",
     "locale": "fr",
-    "subject": "Vérifiez votre nouvel e-mail · RWA.LAT",
+    "subject": "Vérifiez votre nouvel e-mail · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -717,7 +717,7 @@
   {
     "id": "change-email-code",
     "locale": "pt",
-    "subject": "Verifique seu novo e-mail · RWA.LAT",
+    "subject": "Verifique seu novo e-mail · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -730,7 +730,7 @@
   {
     "id": "welcome",
     "locale": "zh-CN",
-    "subject": "账户已创建 · RWA.LAT",
+    "subject": "账户已创建 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -742,7 +742,7 @@
   {
     "id": "welcome",
     "locale": "en",
-    "subject": "Your account is ready · RWA.LAT",
+    "subject": "Your account is ready · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -754,7 +754,7 @@
   {
     "id": "welcome",
     "locale": "hi",
-    "subject": "आपका खाता तैयार है · RWA.LAT",
+    "subject": "आपका खाता तैयार है · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -766,7 +766,7 @@
   {
     "id": "welcome",
     "locale": "es",
-    "subject": "Tu cuenta está lista · RWA.LAT",
+    "subject": "Tu cuenta está lista · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -778,7 +778,7 @@
   {
     "id": "welcome",
     "locale": "ar",
-    "subject": "حسابك جاهز · RWA.LAT",
+    "subject": "حسابك جاهز · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -790,7 +790,7 @@
   {
     "id": "welcome",
     "locale": "fr",
-    "subject": "Votre compte est prêt · RWA.LAT",
+    "subject": "Votre compte est prêt · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -802,7 +802,7 @@
   {
     "id": "welcome",
     "locale": "pt",
-    "subject": "Sua conta está pronta · RWA.LAT",
+    "subject": "Sua conta está pronta · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -814,7 +814,7 @@
   {
     "id": "new-login",
     "locale": "zh-CN",
-    "subject": "账户有新的登录 · RWA.LAT",
+    "subject": "账户有新的登录 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -830,7 +830,7 @@
   {
     "id": "new-login",
     "locale": "en",
-    "subject": "A new sign-in to your account · RWA.LAT",
+    "subject": "A new sign-in to your account · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -846,7 +846,7 @@
   {
     "id": "new-login",
     "locale": "hi",
-    "subject": "आपके खाते में नया लॉगिन · RWA.LAT",
+    "subject": "आपके खाते में नया लॉगिन · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -862,7 +862,7 @@
   {
     "id": "new-login",
     "locale": "es",
-    "subject": "Nuevo acceso a tu cuenta · RWA.LAT",
+    "subject": "Nuevo acceso a tu cuenta · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -878,7 +878,7 @@
   {
     "id": "new-login",
     "locale": "ar",
-    "subject": "تسجيل دخول جديد إلى حسابك · RWA.LAT",
+    "subject": "تسجيل دخول جديد إلى حسابك · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -894,7 +894,7 @@
   {
     "id": "new-login",
     "locale": "fr",
-    "subject": "Nouvelle connexion à votre compte · RWA.LAT",
+    "subject": "Nouvelle connexion à votre compte · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -910,7 +910,7 @@
   {
     "id": "new-login",
     "locale": "pt",
-    "subject": "Novo acesso à sua conta · RWA.LAT",
+    "subject": "Novo acesso à sua conta · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -926,7 +926,7 @@
   {
     "id": "password-changed",
     "locale": "zh-CN",
-    "subject": "账户密码已更新 · RWA.LAT",
+    "subject": "账户密码已更新 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -940,7 +940,7 @@
   {
     "id": "password-changed",
     "locale": "en",
-    "subject": "Your password was updated · RWA.LAT",
+    "subject": "Your password was updated · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -954,7 +954,7 @@
   {
     "id": "password-changed",
     "locale": "hi",
-    "subject": "आपका पासवर्ड अपडेट हुआ · RWA.LAT",
+    "subject": "आपका पासवर्ड अपडेट हुआ · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -968,7 +968,7 @@
   {
     "id": "password-changed",
     "locale": "es",
-    "subject": "Tu contraseña se ha actualizado · RWA.LAT",
+    "subject": "Tu contraseña se ha actualizado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -982,7 +982,7 @@
   {
     "id": "password-changed",
     "locale": "ar",
-    "subject": "تم تحديث كلمة المرور · RWA.LAT",
+    "subject": "تم تحديث كلمة المرور · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -996,7 +996,7 @@
   {
     "id": "password-changed",
     "locale": "fr",
-    "subject": "Votre mot de passe a été modifié · RWA.LAT",
+    "subject": "Votre mot de passe a été modifié · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1010,7 +1010,7 @@
   {
     "id": "password-changed",
     "locale": "pt",
-    "subject": "Sua senha foi atualizada · RWA.LAT",
+    "subject": "Sua senha foi atualizada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1024,7 +1024,7 @@
   {
     "id": "email-changed",
     "locale": "zh-CN",
-    "subject": "账户邮箱已更新 · RWA.LAT",
+    "subject": "账户邮箱已更新 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1040,7 +1040,7 @@
   {
     "id": "email-changed",
     "locale": "en",
-    "subject": "Your account email was updated · RWA.LAT",
+    "subject": "Your account email was updated · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1056,7 +1056,7 @@
   {
     "id": "email-changed",
     "locale": "hi",
-    "subject": "खाते का ईमेल अपडेट हुआ · RWA.LAT",
+    "subject": "खाते का ईमेल अपडेट हुआ · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1072,7 +1072,7 @@
   {
     "id": "email-changed",
     "locale": "es",
-    "subject": "El correo de tu cuenta se ha actualizado · RWA.LAT",
+    "subject": "El correo de tu cuenta se ha actualizado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1088,7 +1088,7 @@
   {
     "id": "email-changed",
     "locale": "ar",
-    "subject": "تم تحديث بريد الحساب · RWA.LAT",
+    "subject": "تم تحديث بريد الحساب · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1104,7 +1104,7 @@
   {
     "id": "email-changed",
     "locale": "fr",
-    "subject": "L’e-mail du compte a été modifié · RWA.LAT",
+    "subject": "L’e-mail du compte a été modifié · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1120,7 +1120,7 @@
   {
     "id": "email-changed",
     "locale": "pt",
-    "subject": "O e-mail da conta foi atualizado · RWA.LAT",
+    "subject": "O e-mail da conta foi atualizado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1136,7 +1136,7 @@
   {
     "id": "security-factor-changed",
     "locale": "zh-CN",
-    "subject": "安全验证方式已更新 · RWA.LAT",
+    "subject": "安全验证方式已更新 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1152,7 +1152,7 @@
   {
     "id": "security-factor-changed",
     "locale": "en",
-    "subject": "Security verification was updated · RWA.LAT",
+    "subject": "Security verification was updated · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1168,7 +1168,7 @@
   {
     "id": "security-factor-changed",
     "locale": "hi",
-    "subject": "सुरक्षा सत्यापन अपडेट हुआ · RWA.LAT",
+    "subject": "सुरक्षा सत्यापन अपडेट हुआ · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1184,7 +1184,7 @@
   {
     "id": "security-factor-changed",
     "locale": "es",
-    "subject": "Verificación de seguridad actualizada · RWA.LAT",
+    "subject": "Verificación de seguridad actualizada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1200,7 +1200,7 @@
   {
     "id": "security-factor-changed",
     "locale": "ar",
-    "subject": "تم تحديث التحقق الأمني · RWA.LAT",
+    "subject": "تم تحديث التحقق الأمني · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1216,7 +1216,7 @@
   {
     "id": "security-factor-changed",
     "locale": "fr",
-    "subject": "Vérification de sécurité modifiée · RWA.LAT",
+    "subject": "Vérification de sécurité modifiée · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1232,7 +1232,7 @@
   {
     "id": "security-factor-changed",
     "locale": "pt",
-    "subject": "Verificação de segurança atualizada · RWA.LAT",
+    "subject": "Verificação de segurança atualizada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1248,7 +1248,7 @@
   {
     "id": "recovery-completed",
     "locale": "zh-CN",
-    "subject": "账户恢复已完成 · RWA.LAT",
+    "subject": "账户恢复已完成 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1262,7 +1262,7 @@
   {
     "id": "recovery-completed",
     "locale": "en",
-    "subject": "Account recovery completed · RWA.LAT",
+    "subject": "Account recovery completed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1276,7 +1276,7 @@
   {
     "id": "recovery-completed",
     "locale": "hi",
-    "subject": "खाता पुनर्प्राप्ति पूरी हुई · RWA.LAT",
+    "subject": "खाता पुनर्प्राप्ति पूरी हुई · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1290,7 +1290,7 @@
   {
     "id": "recovery-completed",
     "locale": "es",
-    "subject": "Recuperación de cuenta completada · RWA.LAT",
+    "subject": "Recuperación de cuenta completada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1304,7 +1304,7 @@
   {
     "id": "recovery-completed",
     "locale": "ar",
-    "subject": "اكتملت استعادة الحساب · RWA.LAT",
+    "subject": "اكتملت استعادة الحساب · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1318,7 +1318,7 @@
   {
     "id": "recovery-completed",
     "locale": "fr",
-    "subject": "Récupération du compte terminée · RWA.LAT",
+    "subject": "Récupération du compte terminée · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1332,7 +1332,7 @@
   {
     "id": "recovery-completed",
     "locale": "pt",
-    "subject": "Recuperação da conta concluída · RWA.LAT",
+    "subject": "Recuperação da conta concluída · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1346,7 +1346,7 @@
   {
     "id": "account-closed",
     "locale": "zh-CN",
-    "subject": "账户已关闭 · RWA.LAT",
+    "subject": "账户已关闭 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1360,7 +1360,7 @@
   {
     "id": "account-closed",
     "locale": "en",
-    "subject": "Your account was closed · RWA.LAT",
+    "subject": "Your account was closed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1374,7 +1374,7 @@
   {
     "id": "account-closed",
     "locale": "hi",
-    "subject": "आपका खाता बंद हो गया · RWA.LAT",
+    "subject": "आपका खाता बंद हो गया · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1388,7 +1388,7 @@
   {
     "id": "account-closed",
     "locale": "es",
-    "subject": "Tu cuenta se ha cerrado · RWA.LAT",
+    "subject": "Tu cuenta se ha cerrado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1402,7 +1402,7 @@
   {
     "id": "account-closed",
     "locale": "ar",
-    "subject": "تم إغلاق حسابك · RWA.LAT",
+    "subject": "تم إغلاق حسابك · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1416,7 +1416,7 @@
   {
     "id": "account-closed",
     "locale": "fr",
-    "subject": "Votre compte a été fermé · RWA.LAT",
+    "subject": "Votre compte a été fermé · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1430,7 +1430,7 @@
   {
     "id": "account-closed",
     "locale": "pt",
-    "subject": "Sua conta foi encerrada · RWA.LAT",
+    "subject": "Sua conta foi encerrada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1444,7 +1444,7 @@
   {
     "id": "deposit-received",
     "locale": "zh-CN",
-    "subject": "充值已入账 · RWA.LAT",
+    "subject": "充值已入账 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1461,7 +1461,7 @@
   {
     "id": "deposit-received",
     "locale": "en",
-    "subject": "Deposit credited · RWA.LAT",
+    "subject": "Deposit credited · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1478,7 +1478,7 @@
   {
     "id": "deposit-received",
     "locale": "hi",
-    "subject": "जमा राशि खाते में आ गई · RWA.LAT",
+    "subject": "जमा राशि खाते में आ गई · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1495,7 +1495,7 @@
   {
     "id": "deposit-received",
     "locale": "es",
-    "subject": "Depósito abonado · RWA.LAT",
+    "subject": "Depósito abonado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1512,7 +1512,7 @@
   {
     "id": "deposit-received",
     "locale": "ar",
-    "subject": "تمت إضافة الإيداع · RWA.LAT",
+    "subject": "تمت إضافة الإيداع · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1529,7 +1529,7 @@
   {
     "id": "deposit-received",
     "locale": "fr",
-    "subject": "Dépôt crédité · RWA.LAT",
+    "subject": "Dépôt crédité · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1546,7 +1546,7 @@
   {
     "id": "deposit-received",
     "locale": "pt",
-    "subject": "Depósito creditado · RWA.LAT",
+    "subject": "Depósito creditado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1563,7 +1563,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "zh-CN",
-    "subject": "提现申请已收到 · RWA.LAT",
+    "subject": "提现申请已收到 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1581,7 +1581,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "en",
-    "subject": "Withdrawal request received · RWA.LAT",
+    "subject": "Withdrawal request received · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1599,7 +1599,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "hi",
-    "subject": "निकासी का अनुरोध मिला · RWA.LAT",
+    "subject": "निकासी का अनुरोध मिला · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1617,7 +1617,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "es",
-    "subject": "Solicitud de retiro recibida · RWA.LAT",
+    "subject": "Solicitud de retiro recibida · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1635,7 +1635,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "ar",
-    "subject": "تم استلام طلب السحب · RWA.LAT",
+    "subject": "تم استلام طلب السحب · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1653,7 +1653,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "fr",
-    "subject": "Demande de retrait reçue · RWA.LAT",
+    "subject": "Demande de retrait reçue · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1671,7 +1671,7 @@
   {
     "id": "withdrawal-submitted",
     "locale": "pt",
-    "subject": "Solicitação de saque recebida · RWA.LAT",
+    "subject": "Solicitação de saque recebida · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1689,7 +1689,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "zh-CN",
-    "subject": "提现已完成 · RWA.LAT",
+    "subject": "提现已完成 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1707,7 +1707,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "en",
-    "subject": "Withdrawal completed · RWA.LAT",
+    "subject": "Withdrawal completed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1725,7 +1725,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "hi",
-    "subject": "निकासी पूरी हुई · RWA.LAT",
+    "subject": "निकासी पूरी हुई · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1743,7 +1743,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "es",
-    "subject": "Retiro completado · RWA.LAT",
+    "subject": "Retiro completado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1761,7 +1761,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "ar",
-    "subject": "اكتمل السحب · RWA.LAT",
+    "subject": "اكتمل السحب · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1779,7 +1779,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "fr",
-    "subject": "Retrait terminé · RWA.LAT",
+    "subject": "Retrait terminé · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1797,7 +1797,7 @@
   {
     "id": "withdrawal-completed",
     "locale": "pt",
-    "subject": "Saque concluído · RWA.LAT",
+    "subject": "Saque concluído · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1815,7 +1815,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "zh-CN",
-    "subject": "提现未完成 · RWA.LAT",
+    "subject": "提现未完成 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1833,7 +1833,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "en",
-    "subject": "Withdrawal not completed · RWA.LAT",
+    "subject": "Withdrawal not completed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1851,7 +1851,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "hi",
-    "subject": "निकासी पूरी नहीं हुई · RWA.LAT",
+    "subject": "निकासी पूरी नहीं हुई · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1869,7 +1869,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "es",
-    "subject": "Retiro no completado · RWA.LAT",
+    "subject": "Retiro no completado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1887,7 +1887,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "ar",
-    "subject": "لم يكتمل السحب · RWA.LAT",
+    "subject": "لم يكتمل السحب · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1905,7 +1905,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "fr",
-    "subject": "Retrait non terminé · RWA.LAT",
+    "subject": "Retrait non terminé · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1923,7 +1923,7 @@
   {
     "id": "withdrawal-failed",
     "locale": "pt",
-    "subject": "Saque não concluído · RWA.LAT",
+    "subject": "Saque não concluído · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1941,7 +1941,7 @@
   {
     "id": "transfer-sent",
     "locale": "zh-CN",
-    "subject": "站内转账已完成 · RWA.LAT",
+    "subject": "站内转账已完成 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1958,7 +1958,7 @@
   {
     "id": "transfer-sent",
     "locale": "en",
-    "subject": "Account transfer completed · RWA.LAT",
+    "subject": "Account transfer completed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1975,7 +1975,7 @@
   {
     "id": "transfer-sent",
     "locale": "hi",
-    "subject": "खाते का हस्तांतरण पूरा हुआ · RWA.LAT",
+    "subject": "खाते का हस्तांतरण पूरा हुआ · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -1992,7 +1992,7 @@
   {
     "id": "transfer-sent",
     "locale": "es",
-    "subject": "Transferencia interna completada · RWA.LAT",
+    "subject": "Transferencia interna completada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2009,7 +2009,7 @@
   {
     "id": "transfer-sent",
     "locale": "ar",
-    "subject": "اكتمل التحويل الداخلي · RWA.LAT",
+    "subject": "اكتمل التحويل الداخلي · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2026,7 +2026,7 @@
   {
     "id": "transfer-sent",
     "locale": "fr",
-    "subject": "Transfert interne terminé · RWA.LAT",
+    "subject": "Transfert interne terminé · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2043,7 +2043,7 @@
   {
     "id": "transfer-sent",
     "locale": "pt",
-    "subject": "Transferência interna concluída · RWA.LAT",
+    "subject": "Transferência interna concluída · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2060,7 +2060,7 @@
   {
     "id": "transfer-received",
     "locale": "zh-CN",
-    "subject": "收到一笔站内转账 · RWA.LAT",
+    "subject": "收到一笔站内转账 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2077,7 +2077,7 @@
   {
     "id": "transfer-received",
     "locale": "en",
-    "subject": "You received an account transfer · RWA.LAT",
+    "subject": "You received an account transfer · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2094,7 +2094,7 @@
   {
     "id": "transfer-received",
     "locale": "hi",
-    "subject": "आपको खाते में हस्तांतरण मिला · RWA.LAT",
+    "subject": "आपको खाते में हस्तांतरण मिला · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2111,7 +2111,7 @@
   {
     "id": "transfer-received",
     "locale": "es",
-    "subject": "Has recibido una transferencia interna · RWA.LAT",
+    "subject": "Has recibido una transferencia interna · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2128,7 +2128,7 @@
   {
     "id": "transfer-received",
     "locale": "ar",
-    "subject": "استلمت تحويلًا داخليًا · RWA.LAT",
+    "subject": "استلمت تحويلًا داخليًا · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2145,7 +2145,7 @@
   {
     "id": "transfer-received",
     "locale": "fr",
-    "subject": "Vous avez reçu un transfert interne · RWA.LAT",
+    "subject": "Vous avez reçu un transfert interne · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2162,7 +2162,7 @@
   {
     "id": "transfer-received",
     "locale": "pt",
-    "subject": "Você recebeu uma transferência interna · RWA.LAT",
+    "subject": "Você recebeu uma transferência interna · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2179,7 +2179,7 @@
   {
     "id": "order-submitted",
     "locale": "zh-CN",
-    "subject": "订单已提交 · RWA.LAT",
+    "subject": "订单已提交 · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2196,7 +2196,7 @@
   {
     "id": "order-submitted",
     "locale": "en",
-    "subject": "Order submitted · RWA.LAT",
+    "subject": "Order submitted · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2213,7 +2213,7 @@
   {
     "id": "order-submitted",
     "locale": "hi",
-    "subject": "ऑर्डर जमा हुआ · RWA.LAT",
+    "subject": "ऑर्डर जमा हुआ · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2230,7 +2230,7 @@
   {
     "id": "order-submitted",
     "locale": "es",
-    "subject": "Orden enviada · RWA.LAT",
+    "subject": "Orden enviada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2247,7 +2247,7 @@
   {
     "id": "order-submitted",
     "locale": "ar",
-    "subject": "تم تقديم الأمر · RWA.LAT",
+    "subject": "تم تقديم الأمر · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2264,7 +2264,7 @@
   {
     "id": "order-submitted",
     "locale": "fr",
-    "subject": "Ordre envoyé · RWA.LAT",
+    "subject": "Ordre envoyé · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2281,7 +2281,7 @@
   {
     "id": "order-submitted",
     "locale": "pt",
-    "subject": "Ordem enviada · RWA.LAT",
+    "subject": "Ordem enviada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2298,7 +2298,7 @@
   {
     "id": "order-completed",
     "locale": "zh-CN",
-    "subject": "订单已成交 · RWA.LAT",
+    "subject": "订单已成交 · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2317,7 +2317,7 @@
   {
     "id": "order-completed",
     "locale": "en",
-    "subject": "Order executed · RWA.LAT",
+    "subject": "Order executed · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2336,7 +2336,7 @@
   {
     "id": "order-completed",
     "locale": "hi",
-    "subject": "ऑर्डर निष्पादित हुआ · RWA.LAT",
+    "subject": "ऑर्डर निष्पादित हुआ · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2355,7 +2355,7 @@
   {
     "id": "order-completed",
     "locale": "es",
-    "subject": "Orden ejecutada · RWA.LAT",
+    "subject": "Orden ejecutada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2374,7 +2374,7 @@
   {
     "id": "order-completed",
     "locale": "ar",
-    "subject": "تم تنفيذ الأمر · RWA.LAT",
+    "subject": "تم تنفيذ الأمر · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2393,7 +2393,7 @@
   {
     "id": "order-completed",
     "locale": "fr",
-    "subject": "Ordre exécuté · RWA.LAT",
+    "subject": "Ordre exécuté · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2412,7 +2412,7 @@
   {
     "id": "order-completed",
     "locale": "pt",
-    "subject": "Ordem executada · RWA.LAT",
+    "subject": "Ordem executada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2431,7 +2431,7 @@
   {
     "id": "order-failed",
     "locale": "zh-CN",
-    "subject": "订单未成交 · RWA.LAT",
+    "subject": "订单未成交 · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2448,7 +2448,7 @@
   {
     "id": "order-failed",
     "locale": "en",
-    "subject": "Order not executed · RWA.LAT",
+    "subject": "Order not executed · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2465,7 +2465,7 @@
   {
     "id": "order-failed",
     "locale": "hi",
-    "subject": "ऑर्डर निष्पादित नहीं हुआ · RWA.LAT",
+    "subject": "ऑर्डर निष्पादित नहीं हुआ · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2482,7 +2482,7 @@
   {
     "id": "order-failed",
     "locale": "es",
-    "subject": "Orden no ejecutada · RWA.LAT",
+    "subject": "Orden no ejecutada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2499,7 +2499,7 @@
   {
     "id": "order-failed",
     "locale": "ar",
-    "subject": "لم يتم تنفيذ الأمر · RWA.LAT",
+    "subject": "لم يتم تنفيذ الأمر · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2516,7 +2516,7 @@
   {
     "id": "order-failed",
     "locale": "fr",
-    "subject": "Ordre non exécuté · RWA.LAT",
+    "subject": "Ordre non exécuté · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2533,7 +2533,7 @@
   {
     "id": "order-failed",
     "locale": "pt",
-    "subject": "Ordem não executada · RWA.LAT",
+    "subject": "Ordem não executada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2550,7 +2550,7 @@
   {
     "id": "redemption-completed",
     "locale": "zh-CN",
-    "subject": "赎回已完成 · RWA.LAT",
+    "subject": "赎回已完成 · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2568,7 +2568,7 @@
   {
     "id": "redemption-completed",
     "locale": "en",
-    "subject": "Redemption completed · RWA.LAT",
+    "subject": "Redemption completed · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2586,7 +2586,7 @@
   {
     "id": "redemption-completed",
     "locale": "hi",
-    "subject": "रिडेम्पशन पूरा हुआ · RWA.LAT",
+    "subject": "रिडेम्पशन पूरा हुआ · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2604,7 +2604,7 @@
   {
     "id": "redemption-completed",
     "locale": "es",
-    "subject": "Reembolso completado · RWA.LAT",
+    "subject": "Reembolso completado · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2622,7 +2622,7 @@
   {
     "id": "redemption-completed",
     "locale": "ar",
-    "subject": "اكتمل الاسترداد · RWA.LAT",
+    "subject": "اكتمل الاسترداد · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2640,7 +2640,7 @@
   {
     "id": "redemption-completed",
     "locale": "fr",
-    "subject": "Rachat terminé · RWA.LAT",
+    "subject": "Rachat terminé · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2658,7 +2658,7 @@
   {
     "id": "redemption-completed",
     "locale": "pt",
-    "subject": "Resgate concluído · RWA.LAT",
+    "subject": "Resgate concluído · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2676,7 +2676,7 @@
   {
     "id": "dividend-paid",
     "locale": "zh-CN",
-    "subject": "收益已入账 · RWA.LAT",
+    "subject": "收益已入账 · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2694,7 +2694,7 @@
   {
     "id": "dividend-paid",
     "locale": "en",
-    "subject": "Distribution credited · RWA.LAT",
+    "subject": "Distribution credited · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2712,7 +2712,7 @@
   {
     "id": "dividend-paid",
     "locale": "hi",
-    "subject": "आय का वितरण जमा हुआ · RWA.LAT",
+    "subject": "आय का वितरण जमा हुआ · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2730,7 +2730,7 @@
   {
     "id": "dividend-paid",
     "locale": "es",
-    "subject": "Distribución abonada · RWA.LAT",
+    "subject": "Distribución abonada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2748,7 +2748,7 @@
   {
     "id": "dividend-paid",
     "locale": "ar",
-    "subject": "تمت إضافة التوزيع · RWA.LAT",
+    "subject": "تمت إضافة التوزيع · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2766,7 +2766,7 @@
   {
     "id": "dividend-paid",
     "locale": "fr",
-    "subject": "Distribution créditée · RWA.LAT",
+    "subject": "Distribution créditée · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2784,7 +2784,7 @@
   {
     "id": "dividend-paid",
     "locale": "pt",
-    "subject": "Distribuição creditada · RWA.LAT",
+    "subject": "Distribuição creditada · A-REIT",
     "connection": "inapp",
     "fields": [
       "actionUrl",
@@ -2802,7 +2802,7 @@
   {
     "id": "prediction-settled",
     "locale": "zh-CN",
-    "subject": "预测市场已结算 · RWA.LAT",
+    "subject": "预测市场已结算 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2821,7 +2821,7 @@
   {
     "id": "prediction-settled",
     "locale": "en",
-    "subject": "Prediction market settled · RWA.LAT",
+    "subject": "Prediction market settled · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2840,7 +2840,7 @@
   {
     "id": "prediction-settled",
     "locale": "hi",
-    "subject": "पूर्वानुमान बाज़ार का निपटान हुआ · RWA.LAT",
+    "subject": "पूर्वानुमान बाज़ार का निपटान हुआ · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2859,7 +2859,7 @@
   {
     "id": "prediction-settled",
     "locale": "es",
-    "subject": "Mercado de predicción liquidado · RWA.LAT",
+    "subject": "Mercado de predicción liquidado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2878,7 +2878,7 @@
   {
     "id": "prediction-settled",
     "locale": "ar",
-    "subject": "تمت تسوية سوق التوقعات · RWA.LAT",
+    "subject": "تمت تسوية سوق التوقعات · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2897,7 +2897,7 @@
   {
     "id": "prediction-settled",
     "locale": "fr",
-    "subject": "Marché de prédiction réglé · RWA.LAT",
+    "subject": "Marché de prédiction réglé · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2916,7 +2916,7 @@
   {
     "id": "prediction-settled",
     "locale": "pt",
-    "subject": "Mercado de previsão liquidado · RWA.LAT",
+    "subject": "Mercado de previsão liquidado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2935,7 +2935,7 @@
   {
     "id": "kyc-approved",
     "locale": "zh-CN",
-    "subject": "身份认证已通过 · RWA.LAT",
+    "subject": "身份认证已通过 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2949,7 +2949,7 @@
   {
     "id": "kyc-approved",
     "locale": "en",
-    "subject": "Identity verification approved · RWA.LAT",
+    "subject": "Identity verification approved · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2963,7 +2963,7 @@
   {
     "id": "kyc-approved",
     "locale": "hi",
-    "subject": "पहचान सत्यापन स्वीकृत · RWA.LAT",
+    "subject": "पहचान सत्यापन स्वीकृत · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2977,7 +2977,7 @@
   {
     "id": "kyc-approved",
     "locale": "es",
-    "subject": "Verificación de identidad aprobada · RWA.LAT",
+    "subject": "Verificación de identidad aprobada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -2991,7 +2991,7 @@
   {
     "id": "kyc-approved",
     "locale": "ar",
-    "subject": "تم قبول التحقق من الهوية · RWA.LAT",
+    "subject": "تم قبول التحقق من الهوية · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3005,7 +3005,7 @@
   {
     "id": "kyc-approved",
     "locale": "fr",
-    "subject": "Vérification d’identité approuvée · RWA.LAT",
+    "subject": "Vérification d’identité approuvée · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3019,7 +3019,7 @@
   {
     "id": "kyc-approved",
     "locale": "pt",
-    "subject": "Verificação de identidade aprovada · RWA.LAT",
+    "subject": "Verificação de identidade aprovada · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3033,7 +3033,7 @@
   {
     "id": "kyc-action-required",
     "locale": "zh-CN",
-    "subject": "身份认证需要补充资料 · RWA.LAT",
+    "subject": "身份认证需要补充资料 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3047,7 +3047,7 @@
   {
     "id": "kyc-action-required",
     "locale": "en",
-    "subject": "More information is needed · RWA.LAT",
+    "subject": "More information is needed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3061,7 +3061,7 @@
   {
     "id": "kyc-action-required",
     "locale": "hi",
-    "subject": "अतिरिक्त जानकारी आवश्यक है · RWA.LAT",
+    "subject": "अतिरिक्त जानकारी आवश्यक है · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3075,7 +3075,7 @@
   {
     "id": "kyc-action-required",
     "locale": "es",
-    "subject": "Se necesita más información · RWA.LAT",
+    "subject": "Se necesita más información · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3089,7 +3089,7 @@
   {
     "id": "kyc-action-required",
     "locale": "ar",
-    "subject": "نحتاج إلى معلومات إضافية · RWA.LAT",
+    "subject": "نحتاج إلى معلومات إضافية · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3103,7 +3103,7 @@
   {
     "id": "kyc-action-required",
     "locale": "fr",
-    "subject": "Informations supplémentaires requises · RWA.LAT",
+    "subject": "Informations supplémentaires requises · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3117,7 +3117,7 @@
   {
     "id": "kyc-action-required",
     "locale": "pt",
-    "subject": "Precisamos de mais informações · RWA.LAT",
+    "subject": "Precisamos de mais informações · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3131,7 +3131,7 @@
   {
     "id": "kyc-expiring",
     "locale": "zh-CN",
-    "subject": "身份认证即将到期 · RWA.LAT",
+    "subject": "身份认证即将到期 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3145,7 +3145,7 @@
   {
     "id": "kyc-expiring",
     "locale": "en",
-    "subject": "Identity verification is expiring · RWA.LAT",
+    "subject": "Identity verification is expiring · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3159,7 +3159,7 @@
   {
     "id": "kyc-expiring",
     "locale": "hi",
-    "subject": "पहचान सत्यापन समाप्त होने वाला है · RWA.LAT",
+    "subject": "पहचान सत्यापन समाप्त होने वाला है · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3173,7 +3173,7 @@
   {
     "id": "kyc-expiring",
     "locale": "es",
-    "subject": "Tu verificación está por vencer · RWA.LAT",
+    "subject": "Tu verificación está por vencer · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3187,7 +3187,7 @@
   {
     "id": "kyc-expiring",
     "locale": "ar",
-    "subject": "التحقق من الهوية قارب الانتهاء · RWA.LAT",
+    "subject": "التحقق من الهوية قارب الانتهاء · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3201,7 +3201,7 @@
   {
     "id": "kyc-expiring",
     "locale": "fr",
-    "subject": "Votre vérification va expirer · RWA.LAT",
+    "subject": "Votre vérification va expirer · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3215,7 +3215,7 @@
   {
     "id": "kyc-expiring",
     "locale": "pt",
-    "subject": "Sua verificação está para vencer · RWA.LAT",
+    "subject": "Sua verificação está para vencer · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3229,7 +3229,7 @@
   {
     "id": "support-reply",
     "locale": "zh-CN",
-    "subject": "你的工单有新回复 · RWA.LAT",
+    "subject": "你的工单有新回复 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3243,7 +3243,7 @@
   {
     "id": "support-reply",
     "locale": "en",
-    "subject": "Your support ticket has a reply · RWA.LAT",
+    "subject": "Your support ticket has a reply · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3257,7 +3257,7 @@
   {
     "id": "support-reply",
     "locale": "hi",
-    "subject": "आपके सहायता टिकट का जवाब आया · RWA.LAT",
+    "subject": "आपके सहायता टिकट का जवाब आया · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3271,7 +3271,7 @@
   {
     "id": "support-reply",
     "locale": "es",
-    "subject": "Hay una respuesta a tu ticket · RWA.LAT",
+    "subject": "Hay una respuesta a tu ticket · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3285,7 +3285,7 @@
   {
     "id": "support-reply",
     "locale": "ar",
-    "subject": "وصل رد على تذكرة الدعم · RWA.LAT",
+    "subject": "وصل رد على تذكرة الدعم · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3299,7 +3299,7 @@
   {
     "id": "support-reply",
     "locale": "fr",
-    "subject": "Une réponse à votre ticket · RWA.LAT",
+    "subject": "Une réponse à votre ticket · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3313,7 +3313,7 @@
   {
     "id": "support-reply",
     "locale": "pt",
-    "subject": "Há uma resposta ao seu chamado · RWA.LAT",
+    "subject": "Há uma resposta ao seu chamado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3327,7 +3327,7 @@
   {
     "id": "statement-ready",
     "locale": "zh-CN",
-    "subject": "账户账单已生成 · RWA.LAT",
+    "subject": "账户账单已生成 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3340,7 +3340,7 @@
   {
     "id": "statement-ready",
     "locale": "en",
-    "subject": "Your account statement is ready · RWA.LAT",
+    "subject": "Your account statement is ready · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3353,7 +3353,7 @@
   {
     "id": "statement-ready",
     "locale": "hi",
-    "subject": "खाते का विवरण-पत्र तैयार है · RWA.LAT",
+    "subject": "खाते का विवरण-पत्र तैयार है · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3366,7 +3366,7 @@
   {
     "id": "statement-ready",
     "locale": "es",
-    "subject": "Tu extracto está listo · RWA.LAT",
+    "subject": "Tu extracto está listo · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3379,7 +3379,7 @@
   {
     "id": "statement-ready",
     "locale": "ar",
-    "subject": "كشف حسابك جاهز · RWA.LAT",
+    "subject": "كشف حسابك جاهز · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3392,7 +3392,7 @@
   {
     "id": "statement-ready",
     "locale": "fr",
-    "subject": "Votre relevé est prêt · RWA.LAT",
+    "subject": "Votre relevé est prêt · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3405,7 +3405,7 @@
   {
     "id": "statement-ready",
     "locale": "pt",
-    "subject": "Seu extrato está pronto · RWA.LAT",
+    "subject": "Seu extrato está pronto · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3418,7 +3418,7 @@
   {
     "id": "policy-update",
     "locale": "zh-CN",
-    "subject": "服务条款有更新 · RWA.LAT",
+    "subject": "服务条款有更新 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3432,7 +3432,7 @@
   {
     "id": "policy-update",
     "locale": "en",
-    "subject": "Our service terms have changed · RWA.LAT",
+    "subject": "Our service terms have changed · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3446,7 +3446,7 @@
   {
     "id": "policy-update",
     "locale": "hi",
-    "subject": "सेवा की शर्तें बदली हैं · RWA.LAT",
+    "subject": "सेवा की शर्तें बदली हैं · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3460,7 +3460,7 @@
   {
     "id": "policy-update",
     "locale": "es",
-    "subject": "Las condiciones han cambiado · RWA.LAT",
+    "subject": "Las condiciones han cambiado · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3474,7 +3474,7 @@
   {
     "id": "policy-update",
     "locale": "ar",
-    "subject": "تم تحديث شروط الخدمة · RWA.LAT",
+    "subject": "تم تحديث شروط الخدمة · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3488,7 +3488,7 @@
   {
     "id": "policy-update",
     "locale": "fr",
-    "subject": "Les conditions ont changé · RWA.LAT",
+    "subject": "Les conditions ont changé · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3502,7 +3502,7 @@
   {
     "id": "policy-update",
     "locale": "pt",
-    "subject": "Os termos foram atualizados · RWA.LAT",
+    "subject": "Os termos foram atualizados · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3516,7 +3516,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "zh-CN",
-    "subject": "投资配置状态已更新 · RWA.LAT",
+    "subject": "投资配置状态已更新 · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3531,7 +3531,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "en",
-    "subject": "Investment allocation status updated · RWA.LAT",
+    "subject": "Investment allocation status updated · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3546,7 +3546,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "hi",
-    "subject": "निवेश आवंटन की स्थिति अपडेट हुई · RWA.LAT",
+    "subject": "निवेश आवंटन की स्थिति अपडेट हुई · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3561,7 +3561,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "es",
-    "subject": "Asignación de inversión actualizada · RWA.LAT",
+    "subject": "Asignación de inversión actualizada · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3576,7 +3576,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "ar",
-    "subject": "تم تحديث حالة تخصيص الاستثمار · RWA.LAT",
+    "subject": "تم تحديث حالة تخصيص الاستثمار · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3591,7 +3591,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "fr",
-    "subject": "Allocation d’investissement mise à jour · RWA.LAT",
+    "subject": "Allocation d’investissement mise à jour · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3606,7 +3606,7 @@
   {
     "id": "ai-allocation-update",
     "locale": "pt",
-    "subject": "Alocação de investimento atualizada · RWA.LAT",
+    "subject": "Alocação de investimento atualizada · A-REIT",
     "connection": "conditional",
     "fields": [
       "actionUrl",
@@ -3621,7 +3621,7 @@
   {
     "id": "product-update",
     "locale": "zh-CN",
-    "subject": "RWA.LAT 产品更新 · RWA.LAT",
+    "subject": "A-REIT 产品更新 · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3634,7 +3634,7 @@
   {
     "id": "product-update",
     "locale": "en",
-    "subject": "What’s new at RWA.LAT · RWA.LAT",
+    "subject": "What’s new at A-REIT · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3647,7 +3647,7 @@
   {
     "id": "product-update",
     "locale": "hi",
-    "subject": "RWA.LAT में नया क्या है · RWA.LAT",
+    "subject": "A-REIT में नया क्या है · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3660,7 +3660,7 @@
   {
     "id": "product-update",
     "locale": "es",
-    "subject": "Novedades de RWA.LAT · RWA.LAT",
+    "subject": "Novedades de A-REIT · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3673,7 +3673,7 @@
   {
     "id": "product-update",
     "locale": "ar",
-    "subject": "الجديد في RWA.LAT · RWA.LAT",
+    "subject": "الجديد في A-REIT · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3686,7 +3686,7 @@
   {
     "id": "product-update",
     "locale": "fr",
-    "subject": "Les nouveautés de RWA.LAT · RWA.LAT",
+    "subject": "Les nouveautés de A-REIT · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3699,7 +3699,7 @@
   {
     "id": "product-update",
     "locale": "pt",
-    "subject": "Novidades da RWA.LAT · RWA.LAT",
+    "subject": "Novidades da A-REIT · A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",

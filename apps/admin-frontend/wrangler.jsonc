@@ -4,16 +4,16 @@
   "main": ".open-next/worker.js",
   "compatibility_date": "2026-07-15",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
+  "workers_dev": false,
   "routes": [
-    { "pattern": "admin.rwa.lat", "custom_domain": true }
+    { "pattern": "admin.a-reit.com", "custom_domain": true }
   ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
   "vars": {
-    "ADMIN_API_URL": "https://admin-api.rwa.lat/v1"
+    "ADMIN_API_URL": "https://admin-api.a-reit.com/v1"
   },
   "observability": {
     "enabled": true

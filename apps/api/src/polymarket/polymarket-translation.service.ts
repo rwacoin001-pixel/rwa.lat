@@ -125,7 +125,7 @@ export class PolymarketTranslationService {
     for (const id of ids) url.searchParams.append('id', id)
     url.searchParams.set('limit', String(ids.length))
     try {
-      const response = await fetch(url, { headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}, signal: AbortSignal.timeout(10_000) })
+      const response = await fetch(url, { headers:{accept:'application/json','user-agent':'A-REIT/0.1 market-data'}, signal: AbortSignal.timeout(10_000) })
       if (!response.ok) throw new Error(`Gamma HTTP ${response.status}`)
       const payload: unknown = await response.json()
       if (!Array.isArray(payload)) throw new Error('Invalid Gamma market list')

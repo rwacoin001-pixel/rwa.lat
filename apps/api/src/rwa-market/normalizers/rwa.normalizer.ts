@@ -7,7 +7,7 @@ import type {
 } from '../providers/rwa-data-provider'
 import type { CmcIssuerListItem, CmcRwaAssetListItem, CmcRwaInfoEntry, CmcRwaToken } from '../providers/coinmarketcap/coinmarketcap.types'
 
-/** CMC asset_type → RWA.LAT asset_class（实测类型：commodity / stock / …，未知一律 other） */
+/** CMC asset_type → A-REIT asset_class（实测类型：commodity / stock / …，未知一律 other） */
 const ASSET_CLASS_MAP: Record<string, RwaAssetClass> = {
   commodity: 'commodity',
   stock: 'equity',

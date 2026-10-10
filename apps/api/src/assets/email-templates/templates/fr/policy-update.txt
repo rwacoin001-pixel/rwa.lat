@@ -7,6 +7,6 @@ Version: {{version}}
 
 Consulter les conditions: {{actionUrl}}
 
-RWA.LAT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-RWA.LAT
+A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
+A-REIT
 Aide et assistance: {{supportUrl}}

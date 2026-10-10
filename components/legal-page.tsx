@@ -48,7 +48,7 @@ export default function LegalPage({ kind, title, updated, effectiveDate, childre
 
       <footer className={styles.footer}>
         <p>© 2026 A-REIT</p>
-        <a href="mailto:support@rwa.lat">Contact support</a>
+        <a href="mailto:support@a-reit.com">Contact support</a>
       </footer>
     </div>
   )

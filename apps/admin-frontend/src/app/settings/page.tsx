@@ -247,7 +247,7 @@ export default function SettingsPage() {
             <AdminPasswordForm />
             {/* 关于 */}
             <section className="animate-rise rounded-card border border-mint/20 bg-gradient-to-br from-mint/10 via-white/50 to-accent-2/10 p-5" style={{ animationDelay: '210ms' }}>
-              <p className="text-sm font-semibold">RWA.LAT Admin Console</p>
+              <p className="text-sm font-semibold">A-REIT Admin Console</p>
               <p className="mt-1.5 text-xs leading-relaxed text-text-secondary">
                 运营管理台 v0.1.0 · 资金执行与真实交易默认关闭，所有高危动作需通过审批流与审计留痕。
               </p>

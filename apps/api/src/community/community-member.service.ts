@@ -126,7 +126,7 @@ export class CommunityMemberService {
       if(existing.state !== 'published') throw new NotFoundException('Discussion is not public')
       return id
     }
-    const response = await fetch(`https://gamma-api.polymarket.com/events/${eventId}`, { headers: {accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}, signal: AbortSignal.timeout(5000) })
+    const response = await fetch(`https://gamma-api.polymarket.com/events/${eventId}`, { headers: {accept:'application/json','user-agent':'A-REIT/0.1 market-data'}, signal: AbortSignal.timeout(5000) })
     if (!response.ok) throw new ServiceUnavailableException('Cannot verify prediction event')
     const event = await response.json() as {id?: string; title?: string}
     if (String(event.id) !== eventId || !event.title) throw new BadRequestException('Invalid event')
@@ -136,7 +136,7 @@ export class CommunityMemberService {
       await m.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['prediction-discussion:official'])
       const profiles=m.getRepository(CommunityProfile)
       let official=await profiles.findOneBy({handle:'rwalat-predictions'})
-      if(!official) official=await profiles.save(profiles.create({handle:'rwalat-predictions',display_name:'RWA.LAT · Predictions',kind:'official',is_active:true}))
+      if(!official) official=await profiles.save(profiles.create({handle:'rwalat-predictions',display_name:'A-REIT · Predictions',kind:'official',is_active:true}))
       await m.save(m.create(CommunityPost,{id,profile_id:official.id,body:event.title!.slice(0,4000),images:[],topics:[],lang:'en',source:'event',state:'published',published_at:new Date()}))
     })
     return id

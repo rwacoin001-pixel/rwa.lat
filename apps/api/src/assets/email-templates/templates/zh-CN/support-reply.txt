@@ -7,6 +7,6 @@
 
 查看工单: {{actionUrl}}
 
-RWA.LAT 不会向你索取密码、验证码或私钥。
-RWA.LAT
+A-REIT 不会向你索取密码、验证码或私钥。
+A-REIT
 帮助与支持: {{supportUrl}}

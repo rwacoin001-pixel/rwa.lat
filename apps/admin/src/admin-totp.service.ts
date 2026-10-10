@@ -75,7 +75,7 @@ export class AdminTotpService {
     })
     if(send){
       try{
-        const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${this.config.get('RESEND_API_KEY')}`,'content-type':'application/json','Idempotency-Key':`admin-recovery-${id}`},body:JSON.stringify({from:`RWA.LAT <${this.config.get('EMAIL_FROM')}>`,to:[send.email],subject:'RWA.LAT 管理员验证器恢复',text:`恢复验证码：${code}\n10 分钟内有效。验证后可绑定新的验证器，原验证器和旧登录会话将失效。\n如果不是你发起的请求，请不要提供验证码。`}),signal:AbortSignal.timeout(10000)})
+        const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${this.config.get('RESEND_API_KEY')}`,'content-type':'application/json','Idempotency-Key':`admin-recovery-${id}`},body:JSON.stringify({from:`A-REIT <${this.config.get('EMAIL_FROM')}>`,to:[send.email],subject:'A-REIT 管理员验证器恢复',text:`恢复验证码：${code}\n10 分钟内有效。验证后可绑定新的验证器，原验证器和旧登录会话将失效。\n如果不是你发起的请求，请不要提供验证码。`}),signal:AbortSignal.timeout(10000)})
         if(!response.ok) throw new Error('Delivery failed')
       }catch{
         await this.ds.query('UPDATE app.admin_mfa_recovery SET consumed_at=now() WHERE id=$1',[id])
@@ -97,7 +97,7 @@ export class AdminTotpService {
       const cipher=encryptAdminMfaSecret(secret,ring.keys.get(ring.activeVersion)!.toString('base64'),ring.activeVersion)
       await em.query(`UPDATE app.admin_mfa_recovery SET code_used_at=now(),attempts=0,token_hash=$2,pending_secret_ciphertext=$3,expires_at=now()+interval '10 minutes' WHERE id=$1`,[r.id,this.hash(token),cipher])
       await this.audit(em,u.id,'admin.mfa.recovery_email_verified')
-      return {recoveryToken:token,secret,otpauthUri:`otpauth://totp/${encodeURIComponent('RWA.LAT:'+u.email)}?secret=${secret}&issuer=RWA.LAT&algorithm=SHA1&digits=6&period=30`}
+      return {recoveryToken:token,secret,otpauthUri:`otpauth://totp/${encodeURIComponent('A-REIT:'+u.email)}?secret=${secret}&issuer=A-REIT&algorithm=SHA1&digits=6&period=30`}
     })
     if(!result) throw new UnauthorizedException(INVALID)
     return result

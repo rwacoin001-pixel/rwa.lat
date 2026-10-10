@@ -37,8 +37,8 @@ async function bootstrap() {
   app.useGlobalFilters(new HttpExceptionFilter())
 
   const openApiConfig = new DocumentBuilder()
-    .setTitle('RWA.LAT API')
-    .setDescription('Versioned API contracts for the RWA.LAT investment application.')
+    .setTitle('A-REIT API')
+    .setDescription('Versioned API contracts for the A-REIT investment application.')
     .setVersion('0.1.0')
     .addBearerAuth()
     .build()

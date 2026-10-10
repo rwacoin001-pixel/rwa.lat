@@ -5,7 +5,7 @@ export const EMAIL_LOCALES = ['zh-CN', 'en', 'hi', 'es', 'ar', 'fr', 'pt'] as co
 export type EmailLocale = typeof EMAIL_LOCALES[number]
 export const EMAIL_ASSET_BASE_URL = 'https://api.a-reit.com/v1/media/email-v1'
 const RESOURCE_ROOT = join(__dirname, '..', 'assets', 'email-templates')
-const ALLOWED_HOSTS = new Set(['a-reit.com', 'www.a-reit.com', 'rwa.lat', 'www.rwa.lat', 'app.rwa.lat'])
+const ALLOWED_HOSTS = new Set(['a-reit.com', 'www.a-reit.com'])
 const COMMON_FIELDS = new Set(['assetBaseUrl', 'supportUrl', 'year'])
 type Contract = { id: string; locale: EmailLocale; subject: string; fields: string[] }
 let contracts: Map<string, Contract> | undefined
@@ -69,8 +69,7 @@ export function renderEmailTemplate(id: string, locale: string | undefined, data
   })
   const template = templates.get(key)!
   const replace = (content: string, html: boolean) => {
-    // Update authored footer URLs before interpolating user/event fields.
-    const rendered = content.replace(/https:\/\/rwa\.lat(?=\/|["\s]|$)/g, 'https://a-reit.com').replace(/\{\{([A-Za-z]+)\}\}/g, (_match, field: string) => {
+    const rendered = content.replace(/\{\{([A-Za-z]+)\}\}/g, (_match, field: string) => {
       if (!contract.fields.includes(field)) throw new Error('Unknown email variable')
       return html ? escapeHtml(String(values[field])) : String(values[field])
     })

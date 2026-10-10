@@ -53,7 +53,7 @@ export class SecurityService {
   ) {
     this.rpId = config.get<string>('PASSKEY_RP_ID') ?? 'localhost'
     this.origin = config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3030'
-    this.rpName = config.get<string>('PASSKEY_RP_NAME') ?? 'RWA.LAT'
+    this.rpName = config.get<string>('PASSKEY_RP_NAME') ?? 'A-REIT'
   }
 
   async listSessions(actor: SecurityActor) {

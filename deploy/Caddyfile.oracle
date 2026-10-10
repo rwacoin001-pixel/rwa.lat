@@ -1,4 +1,4 @@
-api.rwa.lat, api.a-reit.com {
+api.a-reit.com {
     tls {
         issuer acme {
             disable_tlsalpn_challenge
@@ -9,7 +9,7 @@ api.rwa.lat, api.a-reit.com {
         header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
     }
 }
-admin-api.rwa.lat, admin-api.a-reit.com {
+admin-api.a-reit.com {
     tls {
         issuer acme {
             disable_tlsalpn_challenge
@@ -20,7 +20,7 @@ admin-api.rwa.lat, admin-api.a-reit.com {
         header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
     }
 }
-admin.rwa.lat, admin.a-reit.com {
+admin.a-reit.com {
     tls {
         issuer acme {
             disable_tlsalpn_challenge

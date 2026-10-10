@@ -22,7 +22,7 @@ export class EmailDeliveryClient {
   constructor(private readonly config: ConfigService) {
     this.provider = config.get<string>('EMAIL_PROVIDER') ?? ''
     this.fromAddress = config.get<string>('EMAIL_FROM') ?? ''
-    this.fromName = sanitizeDisplayName(config.get<string>('EMAIL_FROM_NAME') ?? 'RWA.LAT')
+    this.fromName = sanitizeDisplayName(config.get<string>('EMAIL_FROM_NAME') ?? 'A-REIT')
     this.resendApiKey = config.get<string>('RESEND_API_KEY') ?? ''
     this.resendTimeoutMs = readPositiveInteger(config.get<string>('RESEND_HTTP_TIMEOUT_MS'), 10_000)
     this.smtpTransporter = this.createSmtpTransport()
@@ -108,5 +108,5 @@ function readPositiveInteger(value: string | undefined, fallback: number): numbe
 }
 
 function sanitizeDisplayName(value: string): string {
-  return value.replace(/[\r\n<>]/g, '').trim() || 'RWA.LAT'
+  return value.replace(/[\r\n<>]/g, '').trim() || 'A-REIT'
 }

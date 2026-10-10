@@ -213,7 +213,7 @@ export class PolymarketService {
     const market = token ? await this.markets.findOne({ where: { id: token.marketMappingId } }) : null
     if (!token || !market) return null
     try {
-      const response = await fetch(`https://gamma-api.polymarket.com/markets/${encodeURIComponent(market.gammaMarketId)}`, { headers: {accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'}, signal: AbortSignal.timeout(5000) })
+      const response = await fetch(`https://gamma-api.polymarket.com/markets/${encodeURIComponent(market.gammaMarketId)}`, { headers: {accept:'application/json','user-agent':'A-REIT/0.1 market-data'}, signal: AbortSignal.timeout(5000) })
       if (!response.ok) return null
       const row = await response.json() as {clobTokenIds?: string | string[]; outcomePrices?: string | string[]; acceptingOrders?: boolean; closed?: boolean}
       if (row.closed || row.acceptingOrders !== true) return null

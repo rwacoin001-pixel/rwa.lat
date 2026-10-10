@@ -4,10 +4,8 @@
   "main": "workers/frontend/index.mjs",
   "compatibility_date": "2026-07-15",
   "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": true,
+  "workers_dev": false,
   "routes": [
-    { "pattern": "rwa.lat/*", "zone_name": "rwa.lat" },
-    { "pattern": "www.rwa.lat/*", "zone_name": "rwa.lat" },
     { "pattern": "a-reit.com", "custom_domain": true },
     { "pattern": "www.a-reit.com", "custom_domain": true }
   ],

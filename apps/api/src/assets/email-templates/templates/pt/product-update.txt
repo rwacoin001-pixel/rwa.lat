@@ -1,11 +1,11 @@
-Novidades da RWA.LAT
+Novidades da A-REIT
 
 Explore as funcionalidades incluídas nesta atualização.
 
 
 Ver novidades: {{actionUrl}}
 
-A RWA.LAT nunca pede sua senha, códigos de verificação ou chaves privadas.
-RWA.LAT
+A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
+A-REIT
 Ajuda e suporte: {{supportUrl}}
 Cancelar inscrição: {{unsubscribeUrl}}

@@ -61,13 +61,9 @@ export default function LoginPage() {
         {/* Brand */}
         <div className="mb-7 text-center">
           <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-[20px] bg-white shadow-glass ring-1 ring-ink/[0.06]">
-            <svg className="h-7 w-11" viewBox="140 188 226 124" fill="none" aria-hidden="true">
-              <path fill="#141830" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
-              <path fill="#141830" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
-              <path fill="#5b6cf9" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
-            </svg>
+            <svg className="h-7 w-11" viewBox="0 0 500 280" fill="none" aria-hidden="true"><g transform="translate(126 0)"><path fill="#141830" d="M4 78Q4 69 13 65L139 8Q146 5 153 8L213 37Q222 42 222 53V144L154 113V71L77 106V199Q77 207 70 211L16 242Q4 248 4 235Z" /><path fill="#19C7AA" d="M113 95L238 152Q247 156 247 167V258Q247 270 236 265L121 213Q113 210 113 199Z" /></g></svg>
           </span>
-          <h1 className="text-xl font-semibold tracking-tight">RWA.LAT Admin</h1>
+          <h1 className="text-xl font-semibold tracking-tight">A-REIT Admin</h1>
           <p className="mt-1 text-sm text-muted-foreground">运营后台管理系统</p>
         </div>
 
@@ -113,7 +109,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="admin@rwa.lat"
+                  placeholder="admin@a-reit.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -167,7 +163,7 @@ export default function LoginPage() {
 
           <div className="mt-6 border-t border-ink/[0.08] pt-4">
             <p className="text-center text-xs text-muted-foreground">
-              RWA.LAT 后台运营管理系统 · 请勿在公共设备上保存登录状态
+              A-REIT 后台运营管理系统 · 请勿在公共设备上保存登录状态
             </p>
           </div>
         </div>

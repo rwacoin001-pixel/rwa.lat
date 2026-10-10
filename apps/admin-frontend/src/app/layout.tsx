@@ -17,12 +17,12 @@ const spaceGrotesk = Space_Grotesk({
 });
 
 export const metadata: Metadata = {
-  title: 'RWA.LAT Admin',
-  description: 'RWA.LAT 后台运营管理系统',
+  title: 'A-REIT Admin',
+  description: 'A-REIT 后台运营管理系统',
   keywords: ['RWA', 'Admin', 'Dashboard', 'Web3', 'Asset Management'],
-  authors: [{ name: 'RWA.LAT Team' }],
+  authors: [{ name: 'A-REIT Team' }],
   openGraph: {
-    title: 'RWA.LAT Admin',
+    title: 'A-REIT Admin',
     description: '后台运营管理系统',
     type: 'website',
   },
