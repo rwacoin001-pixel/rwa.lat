@@ -1,5 +1,7 @@
 'use client'
 
+import RwaLogoMark from '@/components/rwa-logo'
+
 import { useEffect, useRef, useState } from 'react'
 import { invalidate } from '@/lib/api/_query'
 import { useI18n } from '@/lib/i18n'
@@ -90,11 +92,7 @@ export function PullToRefresh() {
   const label = phase === 'armed' ? copy.release : phase === 'refreshing' ? copy.refreshing : phase === 'done' ? copy.done : phase === 'failed' ? copy.failed : copy.pull
   return <div ref={host} className={styles.ptr} data-phase={phase} aria-hidden={phase === 'idle' ? true : undefined}>
     <span className={styles.mark}>
-      <svg viewBox="140 188 226 124" aria-hidden="true" focusable="false">
-        <path pathLength={1} d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
-        <path pathLength={1} d="m228.3 251.1 12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
-        <path pathLength={1} data-accent="" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
-      </svg>
+      <RwaLogoMark label="" />
     </span>
     {/* Announce only the result states; the pull itself is a gesture, not news. */}
     <span className={styles.label} role="status">{phase === 'refreshing' || phase === 'done' || phase === 'failed' ? label : ''}</span>

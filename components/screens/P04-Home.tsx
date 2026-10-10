@@ -237,7 +237,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     <div className={styles.heroBg} ref={heroBgRef} aria-hidden="true" />
     <RwaTopbar screen="home" surface="transparent-over-media" badge={{ slot: 'R1', count: unread }} />
     <div className={styles.hero}>
-      <div className={styles.heroMeta}><span>RWA.LAT / 01</span></div>
+      <div className={styles.heroMeta}><span>A-REIT / 01</span></div>
       <div className={styles.heroCopy}>
         <span className={styles.heroKicker}>{copy.kicker}</span>
         <h1 className={styles.heroTitle}>{copy.headline}<br />{copy.perspective}</h1>

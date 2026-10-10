@@ -17,7 +17,7 @@ export default function LoadingPreview() {
       <button onClick={() => { setBusy(false); setInitial(value => !value) }}>首次加载</button>
     </nav>
     {initial ? <AppLoading /> : <main style={{ minHeight: '100dvh', padding: '110px 24px 24px', background: theme === 'light' ? '#f4efe6' : '#070c16', color: theme === 'light' ? '#1b1813' : '#e9edf3' }}>
-      <h1 style={{ fontSize: 28, fontWeight: 500 }}>RWA.LAT</h1>
+      <h1 style={{ fontSize: 28, fontWeight: 500 }}>A-REIT</h1>
       {[0, 1, 2].map(row => <div key={row} style={{ marginTop: 20, height: row === 0 ? 180 : 90, borderRadius: 18, background: theme === 'light' ? 'rgba(138,106,59,.10)' : 'rgba(169,184,208,.10)', border: '1px solid rgba(138,106,59,.14)' }} />)}
     </main>}
   </>

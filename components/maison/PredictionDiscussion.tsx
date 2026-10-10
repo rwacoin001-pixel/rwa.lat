@@ -36,7 +36,7 @@ export function PredictionDiscussion({eventId}:{eventId:string}) {
   const report=async(c:Comment)=>{const r=await request('/v1/community/reports',{method:'POST',body:JSON.stringify({targetType:'comment',targetId:c.id,reason:'Prediction discussion content report'})});setError(r.ok?(tr('Report submitted')):r.error.message)}
   return <section id="prediction-discussion" style={{marginTop:30}}>
     <div className={s.chips} role="group" aria-label={tr('Discussion')} style={{position:'sticky',top:0,zIndex:2,backdropFilter:'blur(18px)'}}>
-      <button className={s.chip} aria-pressed={source==='polymarket'} onClick={()=>change('polymarket')}>Polymarket · {tr('Read only')}</button><button className={s.chip} aria-pressed={source==='rwa'} onClick={()=>change('rwa')}>RWA.LAT · {t('community.comments')}</button>
+      <button className={s.chip} aria-pressed={source==='polymarket'} onClick={()=>change('polymarket')}>Polymarket · {tr('Read only')}</button><button className={s.chip} aria-pressed={source==='rwa'} onClick={()=>change('rwa')}>A-REIT · {t('community.comments')}</button>
     </div>
     {source==='rwa'&&(signedIn?<div style={{padding:'12px 0'}}>
       {parent&&<p className={s.foot}>{tr('Reply to')} {parent.author?.displayName}<button className={s.link} onClick={()=>setParent(null)}> × </button></p>}

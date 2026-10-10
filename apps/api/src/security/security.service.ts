@@ -283,7 +283,7 @@ export class SecurityService {
       rpID: this.rpId,
       userName: email ?? actor.userId,
       userID: new TextEncoder().encode(actor.userId),
-      userDisplayName: email ?? 'RWA.LAT account',
+      userDisplayName: email ?? 'A-REIT account',
       attestationType: 'none',
       authenticatorSelection: { residentKey: 'required', userVerification: 'required' },
       excludeCredentials: passkeys.map((passkey) => ({ id: passkey.credentialId, transports: passkey.transports as never })),

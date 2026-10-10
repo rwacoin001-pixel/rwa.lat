@@ -35,7 +35,7 @@ function createBrowserPageLifecycle(): WalletPageLifecycle {
 const walletError = (code: string, message: string) => Object.assign(new Error(message), { code })
 
 export function buildWalletConnectMetadata(origin: string) {
-  const metadata = { name: 'RWA.LAT', description: 'Sign in to RWA.LAT', url: origin, icons: [`${origin}/icons/rwa-pwa-v2-512.png`] }
+  const metadata = { name: 'A-REIT', description: 'Sign in to A-REIT', url: origin, icons: [`${origin}/icons/a-reit-v1-512.png`] }
   return { ...metadata, redirect: { universal: new URL('/login', origin).href } }
 }
 
@@ -169,7 +169,7 @@ async function getModal(): Promise<WalletModal> {
         import('@reown/appkit'), import('@reown/appkit-adapter-ethers'), import('@reown/appkit/networks'),
         import('@walletconnect/universal-provider'),
       ])
-      const metadata = { name: 'RWA.LAT', description: 'Sign in to RWA.LAT', url: location.origin, icons: [`${location.origin}/icons/rwa-pwa-v2-512.png`] }
+      const metadata = { name: 'A-REIT', description: 'Sign in to A-REIT', url: location.origin, icons: [`${location.origin}/icons/a-reit-v1-512.png`] }
       // AppKit 1.8.24 rebuilds UniversalProvider metadata and omits `redirect`; provide the instance
       // ourselves so mobile wallets such as OKX know where to return after WalletConnect approval.
       const universalProvider = await UniversalProvider.init({

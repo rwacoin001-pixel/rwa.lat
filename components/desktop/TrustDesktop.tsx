@@ -1,5 +1,7 @@
 'use client'
 
+import RwaLogoMark from '@/components/rwa-logo'
+
 import dynamic from 'next/dynamic'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { gsap } from 'gsap'
@@ -23,13 +25,13 @@ const chapters = [
   { key: 'fracture', plate: 'crisis', year: '2008-09-15', detail: 'Lehman Brothers', object: null },
   { key: 'record', plate: null, year: '2009-01-03', detail: 'BLOCK #0', object: null },
   { key: 'today', plate: 'today', year: 'TODAY', detail: '', object: null },
-  { key: 'signature', plate: 'earth', year: 'RWA.LAT', detail: '', object: null },
+  { key: 'signature', plate: 'earth', year: 'A-REIT', detail: '', object: null },
 ] as const
 const STEP = 2.2
 const TOTAL = (chapters.length - 1) * STEP + 1.7
 
 function Mark() {
-  return <svg viewBox="140 188 226 124" aria-hidden="true"><path fill="currentColor" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z"/><path fill="currentColor" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z"/><path fill="#2FE6BF" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z"/></svg>
+  return <RwaLogoMark label="" />
 }
 
 export default function TrustDesktop() {
@@ -51,7 +53,7 @@ export default function TrustDesktop() {
   useEffect(() => { setReady(null) }, [active])
 
   useEffect(() => {
-    const origin = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'https://rwa.lat' : location.origin
+    const origin = /^(localhost|127\.0\.0\.1)$/.test(location.hostname) ? 'https://a-reit.com' : location.origin
     setPhoneLink(origin + phonePath(new URLSearchParams(location.search).get('from')))
   }, [])
 
@@ -118,7 +120,7 @@ export default function TrustDesktop() {
 
   return <main ref={root} className={s.page} data-desktop-trust data-reduced={reduced} dir="ltr" lang={locale}>
     <header className={s.header}>
-      <a href="/desktop" className={s.brand} aria-label="RWA.LAT"><Mark/><span>RWA.LAT</span></a>
+      <a href="/desktop" className={s.brand} aria-label="A-REIT"><Mark/><span>A-REIT</span></a>
       <div className={s.headerEnd} dir={direction}>
         <label className={s.language}><span className={s.srOnly}>{c.language}</span><select aria-label={c.language} value={locale} onChange={e => setLocale(e.target.value as AppLocale)}>{localeOptions.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}</select><span aria-hidden="true">⌄</span></label>
         <button className={s.phoneButton} onClick={() => jump(9)}>{c.phone}<span aria-hidden="true">↗</span></button>

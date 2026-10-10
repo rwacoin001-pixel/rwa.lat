@@ -1,5 +1,5 @@
 /**
- * RWA.LAT — S1 路由注册表 v2（路由定义层）
+ * A-REIT — S1 路由注册表 v2（路由定义层）
  *
  * ⚠️ 与 `lib/routes.ts` 的关系（两者互补·不要混淆）：
  *   · lib/routes.ts      = 导航动作层（navigate/useNav/NAV_EVENT·桥接旧 72 屏）

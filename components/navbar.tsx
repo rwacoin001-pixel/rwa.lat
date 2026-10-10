@@ -49,7 +49,7 @@ export default function Navbar() {
         <a
           href="#"
           className="mr-3 flex min-h-8 items-center px-3"
-          aria-label="RWA.LAT home"
+          aria-label="A-REIT home"
         >
           <AnimatedBrand compact />
         </a>

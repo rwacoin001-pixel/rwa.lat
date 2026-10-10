@@ -47,8 +47,8 @@ export default function LegalPage({ kind, title, updated, effectiveDate, childre
       </main>
 
       <footer className={styles.footer}>
-        <p>© 2026 RWA.LAT</p>
-        <a href="mailto:support@rwa.lat">support@rwa.lat</a>
+        <p>© 2026 A-REIT</p>
+        <a href="mailto:support@rwa.lat">Contact support</a>
       </footer>
     </div>
   )

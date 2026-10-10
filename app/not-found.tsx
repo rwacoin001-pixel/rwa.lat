@@ -6,7 +6,7 @@ export default function NotFound() {
     <main className="not-found-page">
       <section className="not-found-card">
         <div className="not-found-radar" aria-hidden="true"><i /><i /><i /><span /></div>
-        <p className="not-found-brand">RWA.LAT <b>•</b> ROUTE MONITOR</p>
+        <p className="not-found-brand">A-REIT <b>•</b> ROUTE MONITOR</p>
         <p className="not-found-code">404 / UNAVAILABLE ROUTE</p>
         <h1>This workspace route is not available.</h1>
         <p className="not-found-body">The address may be outdated or restricted. Your wallet and account state have not changed.</p>

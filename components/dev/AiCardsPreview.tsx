@@ -35,7 +35,7 @@ export default function AiCardsPreview() {
       <label><input type="checkbox" checked={failure} onChange={e => setFailure(e.target.checked)} />模拟请求失败</label>
     </nav>
     <div style={{ width: '100%', maxWidth: width, margin: '0 auto', '--background': dark ? '#181818' : '#fff', '--foreground': dark ? '#ebebeb' : '#202020' } as React.CSSProperties}>
-      <p style={{ fontSize: 13, fontWeight: 600 }}>RWA.LAT AI</p>
+      <p style={{ fontSize: 13, fontWeight: 600 }}>A-REIT AI</p>
       <p style={{ fontSize: 14, lineHeight: 1.7 }}>先确认一下你的需求。</p>
       <div style={{height:520,display:'flex',flexDirection:'column',justifyContent:'flex-end'}}>
         <div style={{position:'fixed',bottom:20,left:'50%',transform:'translateX(-50%)',width:'calc(100% - 32px)',maxWidth:width,'--m-gutter':'0px'} as React.CSSProperties}>

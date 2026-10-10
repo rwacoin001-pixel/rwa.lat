@@ -47,7 +47,7 @@ export function PublicShareLanding({token}:{token:string|null}) {
   // 404/400/410 mean the token itself is dead: no retry. Network and server errors can be retried.
   const dead=!token||status===404||status===400||status===410
   const path=shared.data?safePath(shared.data.path):null
-  return <MaisonPage page="share"><header className={s.hero}><p className={s.kicker}>rwa.lat</p><h1 className={s.titleL}>{c.title}</h1></header>
+  return <MaisonPage page="share"><header className={s.hero}><p className={s.kicker}>a-reit.com</p><h1 className={s.titleL}>{c.title}</h1></header>
     {dead?<StateBlock tone="error" title={c.invalid} body={c.invalidBody}/>
     :shared.error?<StateBlock tone="error" title={c.unavailable} body={status===0?c.network:c.failed} retry={shared.refetch} retryLabel={c.retry}/>
     :!shared.data?<Skeleton rows={3}/>

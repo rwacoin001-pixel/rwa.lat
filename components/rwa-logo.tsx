@@ -6,15 +6,16 @@ type RwaLogoMarkProps = SVGProps<SVGSVGElement> & {
   accentColor?: string
 }
 
-/** Transparent RWA mark for product UI. The square PWA icon remains a separate asset. */
-export default function RwaLogoMark({ label = 'RWA', primaryColor = 'currentColor', accentColor = 'var(--rwa-logo-accent)', ...props }: RwaLogoMarkProps) {
+/** A-REIT folded portal mark. The compatibility name keeps existing imports stable. */
+export default function RwaLogoMark({ label = 'A-REIT', primaryColor = 'currentColor', accentColor = '#19C7AA', ...props }: RwaLogoMarkProps) {
   const titleId = props.id ? `${props.id}-title` : undefined
   return (
-    <svg {...props} viewBox="140 188 226 124" role={label ? 'img' : undefined} aria-hidden={label ? undefined : true} aria-labelledby={titleId} focusable="false">
+    <svg {...props} viewBox="0 0 500 280" role={label ? 'img' : undefined} aria-hidden={label ? undefined : true} aria-label={titleId ? undefined : label || undefined} aria-labelledby={titleId} focusable="false">
       {label && <title id={titleId}>{label}</title>}
-      <path fill={primaryColor} d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
-      <path fill={primaryColor} d="m228.3 251.1 12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
-      <path fill={accentColor} d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
+      <g transform="translate(126 0)">
+        <path pathLength={1} fill={primaryColor} d="M4 78Q4 69 13 65L139 8Q146 5 153 8L213 37Q222 42 222 53V144L154 113V71L77 106V199Q77 207 70 211L16 242Q4 248 4 235Z" />
+        <path pathLength={1} fill={accentColor} data-accent="" d="M113 95L238 152Q247 156 247 167V258Q247 270 236 265L121 213Q113 210 113 199Z" />
+      </g>
     </svg>
   )
 }

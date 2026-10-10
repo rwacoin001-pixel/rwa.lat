@@ -399,7 +399,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     <header className={styles.hero} data-chrome="">
       <motion.div className={styles.heroCopy} style={reduced ? undefined : { opacity: heroOpacity, y: heroLift }}>
         <motion.div className={styles.heroMeta} initial={reduced ? false : { opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.2, delay: 0.1 }}>
-          <span>RWA.LAT</span><span className={styles.heroRule} /><span>{dateline}</span>
+          <span>A-REIT</span><span className={styles.heroRule} /><span>{dateline}</span>
         </motion.div>
         <motion.p className={styles.heroKicker} initial={reduced ? false : { opacity: 0, letterSpacing: '.5em' }} animate={{ opacity: 1, letterSpacing: '.28em' }} transition={{ duration: 1.4, ease: EASE, delay: 0.2 }}>{copy.kicker}</motion.p>
         <h1 className={styles.heroTitle}><MaskLines lines={[copy.headline, copy.perspective]} lineClassName={index => index === 1 ? styles.heroItalic : undefined} delay={0.3} /></h1>

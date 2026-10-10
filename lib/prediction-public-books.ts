@@ -12,7 +12,7 @@ export async function readPredictionPublicBooks(tokens:readonly string[],fetcher
     while(next<tokens.length){
       const token=tokens[next++]
       try {
-        const options={headers:{accept:'application/json','user-agent':'RWA.LAT/0.1 market-data'},next:{revalidate:20},signal:AbortSignal.timeout(6000)}
+        const options={headers:{accept:'application/json','user-agent':'A-REIT/0.1 market-data'},next:{revalidate:20},signal:AbortSignal.timeout(6000)}
         const response=await fetcher(`https://clob.polymarket.com/book?token_id=${encodeURIComponent(token)}`,options)
         // An HTTP/network failure is unknown, not proof of an illiquid market.
         if(!response.ok){results[token]=null;continue}

@@ -96,7 +96,7 @@ const en: VerifyCopy = {
   scopes: { default: 'All products', trading: 'Spot trading', basket: 'Baskets', prediction: 'Prediction markets', stocks: 'Tokenised stocks', rwa: 'Real-world assets', compute: 'Compute' },
   center: {
     kicker: 'Verification', titleA: 'Your', titleB: 'credentials', lede: 'Identity, eligibility and risk profile — the three records that decide what you can invest in.',
-    card: 'Investor credential', holder: 'RWA.LAT account', access: 'Access', identity: 'Identity', risk: 'Risk profile',
+    card: 'Investor credential', holder: 'A-REIT account', access: 'Access', identity: 'Identity', risk: 'Risk profile',
     progress: '{n} of 3 complete', assessed: 'Assessed {t}', policy: 'Policy {v}', next: 'Next step', open: 'Open', allSet: 'All three records are complete and current.',
     nextKyc: 'Verify your identity to unlock new investments', nextRisk: 'Complete your risk profile — six questions', nextRiskStale: 'Your risk profile has expired — retake it', nextEligibility: 'Run an eligibility check',
     steps: 'Your records', stepsNote: 'Each record is kept separately and can be refreshed at any time.',
@@ -219,7 +219,7 @@ const zh: VerifyCopy = {
   scopes: { default: '全部产品', trading: '现货交易', basket: '组合篮子', prediction: '预测市场', stocks: '代币化股票', rwa: '现实世界资产', compute: '算力' },
   center: {
     kicker: '身份与资格', titleA: '你的', titleB: '投资凭证', lede: '身份验证、投资资格与风险测评——三项记录共同决定你能投资什么。',
-    card: '投资者凭证', holder: 'RWA.LAT 账户', access: '权限', identity: '身份', risk: '风险测评',
+    card: '投资者凭证', holder: 'A-REIT 账户', access: '权限', identity: '身份', risk: '风险测评',
     progress: '已完成 {n}/3', assessed: '评估于 {t}', policy: '政策 {v}', next: '下一步', open: '前往', allSet: '三项记录均已完成且在有效期内。',
     nextKyc: '验证身份以开通新投资', nextRisk: '完成风险测评——共 6 题', nextRiskStale: '风险测评已过期，请重新测评', nextEligibility: '运行一次资格检查',
     steps: '你的记录', stepsNote: '每项记录独立保存，可随时刷新。',
@@ -333,7 +333,7 @@ const hi: VerifyCopy = {
   scopes: { default: 'सभी उत्पाद', trading: 'स्पॉट ट्रेडिंग', basket: 'बास्केट', prediction: 'प्रेडिक्शन मार्केट', stocks: 'टोकनाइज़्ड स्टॉक', rwa: 'वास्तविक संपत्तियाँ', compute: 'कंप्यूट' },
   center: {
     kicker: 'सत्यापन', titleA: 'आपके', titleB: 'प्रमाण', lede: 'पहचान, पात्रता और जोखिम प्रोफ़ाइल — ये तीन रिकॉर्ड तय करते हैं कि आप किसमें निवेश कर सकते हैं।',
-    card: 'निवेशक प्रमाणपत्र', holder: 'RWA.LAT खाता', access: 'पहुँच', identity: 'पहचान', risk: 'जोखिम प्रोफ़ाइल',
+    card: 'निवेशक प्रमाणपत्र', holder: 'A-REIT खाता', access: 'पहुँच', identity: 'पहचान', risk: 'जोखिम प्रोफ़ाइल',
     progress: '3 में से {n} पूरे', assessed: '{t} को आकलित', policy: 'नीति {v}', next: 'अगला कदम', open: 'खोलें', allSet: 'तीनों रिकॉर्ड पूरे और वर्तमान हैं।',
     nextKyc: 'नए निवेश खोलने के लिए पहचान सत्यापित करें', nextRisk: 'जोखिम प्रोफ़ाइल पूरी करें — छह प्रश्न', nextRiskStale: 'आपकी जोखिम प्रोफ़ाइल समाप्त हो गई है — फिर से भरें', nextEligibility: 'पात्रता जाँच चलाएँ',
     steps: 'आपके रिकॉर्ड', stepsNote: 'हर रिकॉर्ड अलग रखा जाता है और कभी भी रीफ़्रेश किया जा सकता है।',
@@ -447,7 +447,7 @@ const es: VerifyCopy = {
   scopes: { default: 'Todos los productos', trading: 'Trading al contado', basket: 'Cestas', prediction: 'Mercados de predicción', stocks: 'Acciones tokenizadas', rwa: 'Activos reales', compute: 'Cómputo' },
   center: {
     kicker: 'Verificación', titleA: 'Tus', titleB: 'credenciales', lede: 'Identidad, elegibilidad y perfil de riesgo: los tres registros que deciden en qué puedes invertir.',
-    card: 'Credencial de inversor', holder: 'Cuenta RWA.LAT', access: 'Acceso', identity: 'Identidad', risk: 'Perfil de riesgo',
+    card: 'Credencial de inversor', holder: 'Cuenta A-REIT', access: 'Acceso', identity: 'Identidad', risk: 'Perfil de riesgo',
     progress: '{n} de 3 completos', assessed: 'Evaluado {t}', policy: 'Política {v}', next: 'Siguiente paso', open: 'Abrir', allSet: 'Los tres registros están completos y vigentes.',
     nextKyc: 'Verifica tu identidad para habilitar nuevas inversiones', nextRisk: 'Completa tu perfil de riesgo: seis preguntas', nextRiskStale: 'Tu perfil de riesgo caducó: vuelve a hacerlo', nextEligibility: 'Ejecuta una comprobación de elegibilidad',
     steps: 'Tus registros', stepsNote: 'Cada registro se guarda por separado y puede actualizarse en cualquier momento.',
@@ -561,7 +561,7 @@ const ar: VerifyCopy = {
   scopes: { default: 'كل المنتجات', trading: 'التداول الفوري', basket: 'السلال', prediction: 'أسواق التوقع', stocks: 'أسهم مرمّزة', rwa: 'أصول حقيقية', compute: 'قدرة حوسبة' },
   center: {
     kicker: 'التحقق', titleA: 'اعتماداتك', titleB: 'الاستثمارية', lede: 'الهوية والأهلية وملف المخاطر — السجلات الثلاثة التي تحدد ما يمكنك الاستثمار فيه.',
-    card: 'اعتماد المستثمر', holder: 'حساب RWA.LAT', access: 'الوصول', identity: 'الهوية', risk: 'ملف المخاطر',
+    card: 'اعتماد المستثمر', holder: 'حساب A-REIT', access: 'الوصول', identity: 'الهوية', risk: 'ملف المخاطر',
     progress: 'اكتمل {n} من 3', assessed: 'قُيّم {t}', policy: 'السياسة {v}', next: 'الخطوة التالية', open: 'فتح', allSet: 'السجلات الثلاثة مكتملة وسارية.',
     nextKyc: 'تحقّق من هويتك لفتح الاستثمارات الجديدة', nextRisk: 'أكمل ملف المخاطر — ستة أسئلة', nextRiskStale: 'انتهت صلاحية ملف المخاطر — أعد تعبئته', nextEligibility: 'شغّل فحص الأهلية',
     steps: 'سجلاتك', stepsNote: 'يُحفظ كل سجل بشكل منفصل ويمكن تحديثه في أي وقت.',
@@ -675,7 +675,7 @@ const fr: VerifyCopy = {
   scopes: { default: 'Tous les produits', trading: 'Trading au comptant', basket: 'Paniers', prediction: 'Marchés prédictifs', stocks: 'Actions tokenisées', rwa: 'Actifs réels', compute: 'Calcul' },
   center: {
     kicker: 'Vérification', titleA: 'Vos', titleB: 'accréditations', lede: 'Identité, éligibilité et profil de risque : les trois dossiers qui déterminent ce dans quoi vous pouvez investir.',
-    card: 'Accréditation investisseur', holder: 'Compte RWA.LAT', access: 'Accès', identity: 'Identité', risk: 'Profil de risque',
+    card: 'Accréditation investisseur', holder: 'Compte A-REIT', access: 'Accès', identity: 'Identité', risk: 'Profil de risque',
     progress: '{n} sur 3 complétés', assessed: 'Évalué le {t}', policy: 'Politique {v}', next: 'Prochaine étape', open: 'Ouvrir', allSet: 'Les trois dossiers sont complets et à jour.',
     nextKyc: 'Vérifiez votre identité pour débloquer les nouveaux investissements', nextRisk: 'Complétez votre profil de risque — six questions', nextRiskStale: 'Votre profil de risque a expiré — refaites-le', nextEligibility: 'Lancez une vérification d’éligibilité',
     steps: 'Vos dossiers', stepsNote: 'Chaque dossier est conservé séparément et peut être actualisé à tout moment.',
@@ -789,7 +789,7 @@ const pt: VerifyCopy = {
   scopes: { default: 'Todos os produtos', trading: 'Negociação à vista', basket: 'Cestas', prediction: 'Mercados de previsão', stocks: 'Ações tokenizadas', rwa: 'Ativos reais', compute: 'Computação' },
   center: {
     kicker: 'Verificação', titleA: 'Suas', titleB: 'credenciais', lede: 'Identidade, elegibilidade e perfil de risco — os três registros que decidem em que você pode investir.',
-    card: 'Credencial de investidor', holder: 'Conta RWA.LAT', access: 'Acesso', identity: 'Identidade', risk: 'Perfil de risco',
+    card: 'Credencial de investidor', holder: 'Conta A-REIT', access: 'Acesso', identity: 'Identidade', risk: 'Perfil de risco',
     progress: '{n} de 3 concluídos', assessed: 'Avaliado em {t}', policy: 'Política {v}', next: 'Próximo passo', open: 'Abrir', allSet: 'Os três registros estão completos e vigentes.',
     nextKyc: 'Verifique sua identidade para liberar novos investimentos', nextRisk: 'Complete seu perfil de risco — seis perguntas', nextRiskStale: 'Seu perfil de risco expirou — refaça', nextEligibility: 'Execute uma verificação de elegibilidade',
     steps: 'Seus registros', stepsNote: 'Cada registro é mantido separadamente e pode ser atualizado a qualquer momento.',

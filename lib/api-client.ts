@@ -1,6 +1,6 @@
 /**
- * API Client for RWA.LAT H5 Frontend
- * 
+ * API Client for A-REIT H5 Frontend
+ *
  * This wraps the shared @rwa-lat/api-client package with H5-specific configuration
  * using NEXT_PUBLIC_API_URL from environment variables.
  */
@@ -125,7 +125,7 @@ export function isAuthenticated(): boolean {
 
 // Demo login helper - uses the Core API demo login endpoint
 export async function demoLogin(
-  email: string = 'demo@user.rwa.lat', 
+  email: string = 'demo@user.a-reit.com',
   type: 'user' | 'admin' = 'user'
 ): Promise<{ token: string; userId: string; expiresAt: string }> {
   const response = await apiClient.axios.post('/v1/auth/demo/login', { email, type })

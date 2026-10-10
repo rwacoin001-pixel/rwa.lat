@@ -142,7 +142,7 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
   return <div className={`rwa-mobile ${styles.shell}`} data-theme={theme} data-screen="locked">
     <MaisonPage page="locked" className={styles.page}>
       <main className={styles.screen} dir={locale === 'ar' ? 'rtl' : 'ltr'} aria-labelledby={titleId}>
-        <div className={styles.top}><RwaLogoMark className={styles.logo} width={40} height={22} label="RWA.LAT" accentColor="#2FE6BF" /></div>
+        <div className={styles.top}><RwaLogoMark className={styles.logo} width={40} height={22} label="A-REIT" accentColor="#2FE6BF" /></div>
         <div className={styles.mid}>
           <div className={styles.mark} aria-hidden="true"><Fingerprint size={32} strokeWidth={1.5} /></div>
           <h1 id={titleId} className={styles.title}>{text.title}</h1>

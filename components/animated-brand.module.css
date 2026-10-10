@@ -19,6 +19,10 @@
   width: 82px;
 }
 
+.brand .lightLockup { display: none; }
+:global(html[data-theme='light']) .brand .lightLockup { display: block; }
+:global(html[data-theme='light']) .brand .darkLockup { display: none; }
+
 .brand.markOnly .lockup {
   width: 108px;
 }

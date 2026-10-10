@@ -38,7 +38,7 @@ const en: MarketCopy = {
   common: { back: 'Back', close: 'Close', clear: 'Clear', retry: 'Retry', unavailable: 'Unavailable', updated: 'Updated {t}', source: 'Source', signIn: 'Sign in to invest', errorGeneric: 'Something went wrong. Please retry.', empty: 'Nothing here yet' },
   markets: {
     kicker: 'Markets · Live', title: 'Markets', lede: '{n} investable · {m} tracked', tabs: ['Assets', 'Baskets', 'Trade', 'Predictions'], search: 'Search name, symbol or issuer',
-    investable: 'Investable', investableNote: 'Quoted by RWA.LAT and open for subscription.', directory: 'Market directory', directoryNote: 'Third-party market data · research only',
+    investable: 'Investable', investableNote: 'Quoted by A-REIT and open for subscription.', directory: 'Market directory', directoryNote: 'Third-party market data · research only',
     classes: { all: 'All', rwa: 'Real assets', compute: 'Compute', stocks: 'Equities', prediction: 'Predictions' },
     from: 'From {v}', sort: { market_cap: 'Market cap', change_24h: '24h', name: 'Name' }, noMatch: 'No results for “{q}”', issuers: 'Issuers', compare: 'Compare',
     basketsEmpty: 'No baskets are open', basketsEmptyBody: 'Managed baskets appear here when a strategy is published.', pairsEmpty: 'No trading pairs are listed.', last: 'Last', active: 'Active', paused: 'Paused',
@@ -47,7 +47,7 @@ const en: MarketCopy = {
   detail: {
     investable: 'Investable', research: 'Research only', unitPrice: 'Indicative unit price', stale: 'Stale', live: 'Live quote', validUntil: 'Valid until {t}',
     min: 'Minimum', max: 'Maximum', settlement: 'Settlement', network: 'Network', assetClass: 'Asset class', version: 'Terms version',
-    tabs: ['Overview', 'Valuation', 'Disclosures'], noDisclosures: 'No disclosure documents have been published for this product.', invest: 'Invest', researchNote: 'Tracked from public market data. Not available for subscription on RWA.LAT.',
+    tabs: ['Overview', 'Valuation', 'Disclosures'], noDisclosures: 'No disclosure documents have been published for this product.', invest: 'Invest', researchNote: 'Tracked from public market data. Not available for subscription on A-REIT.',
     marketCap: 'Market cap', change24h: '24h', change7d: '7d', change30d: '30d', volume: '24h volume', score: 'Score', risk: 'Risk',
     history: 'Market cap · 90 days', noHistory: 'The source has not published a history for this asset.', issuer: 'Issuer', region: 'Region', website: 'Website', sources: 'Data sources', synced: 'Synced {t}',
     notFound: 'Asset not found', notFoundBody: 'This link may be out of date.', quoteUnavailable: 'Quote unavailable', about: 'About', orderRules: 'Order rules', orderRulesBody: 'Orders lock the amount from your available balance and settle at the quoted unit price. Eligibility is checked by the server when you confirm.',
@@ -73,7 +73,7 @@ const zh: MarketCopy = {
   common: { back: '返回', close: '关闭', clear: '清除', retry: '重试', unavailable: '暂不可用', updated: '更新于 {t}', source: '来源', signIn: '登录后投资', errorGeneric: '出现问题，请重试。', empty: '暂无内容' },
   markets: {
     kicker: '市场 · 实时', title: '市场', lede: '{n} 个可投资 · {m} 个追踪', tabs: ['资产', '篮子', '交易', '预测'], search: '搜索名称、代码或发行方',
-    investable: '可投资', investableNote: '由 RWA.LAT 报价，开放申购。', directory: '市场名录', directoryNote: '第三方市场数据 · 仅供研究',
+    investable: '可投资', investableNote: '由 A-REIT 报价，开放申购。', directory: '市场名录', directoryNote: '第三方市场数据 · 仅供研究',
     classes: { all: '全部', rwa: '实物资产', compute: '算力', stocks: '股票', prediction: '预测' },
     from: '{v} 起投', sort: { market_cap: '市值', change_24h: '24 小时', name: '名称' }, noMatch: '没有与“{q}”匹配的结果', issuers: '发行方', compare: '比较',
     basketsEmpty: '暂无开放的篮子', basketsEmptyBody: '策略发布后，托管篮子会显示在这里。', pairsEmpty: '暂无上线的交易对。', last: '最新', active: '交易中', paused: '已暂停',
@@ -82,7 +82,7 @@ const zh: MarketCopy = {
   detail: {
     investable: '可投资', research: '仅供研究', unitPrice: '参考单价', stale: '报价过期', live: '实时报价', validUntil: '有效至 {t}',
     min: '最低', max: '最高', settlement: '结算资产', network: '网络', assetClass: '资产类别', version: '条款版本',
-    tabs: ['概览', '估值', '披露'], noDisclosures: '该产品尚未发布披露文件。', invest: '投资', researchNote: '数据来自公开市场，RWA.LAT 暂不提供申购。',
+    tabs: ['概览', '估值', '披露'], noDisclosures: '该产品尚未发布披露文件。', invest: '投资', researchNote: '数据来自公开市场，A-REIT 暂不提供申购。',
     marketCap: '市值', change24h: '24 小时', change7d: '7 天', change30d: '30 天', volume: '24h 成交量', score: '评分', risk: '风险',
     history: '市值 · 90 天', noHistory: '数据源尚未发布该资产的历史数据。', issuer: '发行方', region: '地区', website: '官网', sources: '数据来源', synced: '同步于 {t}',
     notFound: '未找到该资产', notFoundBody: '链接可能已失效。', quoteUnavailable: '报价暂不可用', about: '简介', orderRules: '下单规则', orderRulesBody: '下单时从可用余额锁定金额，并按报价单价成交。确认时由服务端校验投资资格。',
@@ -108,7 +108,7 @@ const hi: MarketCopy = {
   common: { back: 'वापस', close: 'बंद करें', clear: 'साफ़ करें', retry: 'फिर कोशिश करें', unavailable: 'उपलब्ध नहीं', updated: '{t} अपडेट', source: 'स्रोत', signIn: 'निवेश के लिए लॉग इन करें', errorGeneric: 'कुछ गलत हुआ। फिर कोशिश करें।', empty: 'अभी कुछ नहीं' },
   markets: {
     kicker: 'बाज़ार · लाइव', title: 'बाज़ार', lede: '{n} निवेश योग्य · {m} ट्रैक', tabs: ['संपत्ति', 'बास्केट', 'ट्रेड', 'पूर्वानुमान'], search: 'नाम, प्रतीक या जारीकर्ता खोजें',
-    investable: 'निवेश योग्य', investableNote: 'RWA.LAT द्वारा कोट किया गया, सदस्यता के लिए खुला।', directory: 'बाज़ार निर्देशिका', directoryNote: 'तृतीय-पक्ष बाज़ार डेटा · केवल शोध',
+    investable: 'निवेश योग्य', investableNote: 'A-REIT द्वारा कोट किया गया, सदस्यता के लिए खुला।', directory: 'बाज़ार निर्देशिका', directoryNote: 'तृतीय-पक्ष बाज़ार डेटा · केवल शोध',
     classes: { all: 'सभी', rwa: 'वास्तविक संपत्ति', compute: 'कंप्यूट', stocks: 'इक्विटी', prediction: 'पूर्वानुमान' },
     from: '{v} से', sort: { market_cap: 'मार्केट कैप', change_24h: '24 घं', name: 'नाम' }, noMatch: '“{q}” के लिए कोई परिणाम नहीं', issuers: 'जारीकर्ता', compare: 'तुलना',
     basketsEmpty: 'कोई बास्केट खुली नहीं', basketsEmptyBody: 'रणनीति प्रकाशित होने पर प्रबंधित बास्केट यहाँ दिखेंगी।', pairsEmpty: 'कोई ट्रेडिंग जोड़ी सूचीबद्ध नहीं।', last: 'अंतिम', active: 'सक्रिय', paused: 'रुका हुआ',
@@ -117,7 +117,7 @@ const hi: MarketCopy = {
   detail: {
     investable: 'निवेश योग्य', research: 'केवल शोध', unitPrice: 'संकेतक इकाई मूल्य', stale: 'पुराना', live: 'लाइव कोट', validUntil: '{t} तक मान्य',
     min: 'न्यूनतम', max: 'अधिकतम', settlement: 'निपटान', network: 'नेटवर्क', assetClass: 'संपत्ति वर्ग', version: 'शर्तों का संस्करण',
-    tabs: ['अवलोकन', 'मूल्यांकन', 'प्रकटीकरण'], noDisclosures: 'इस उत्पाद के लिए कोई प्रकटीकरण दस्तावेज़ प्रकाशित नहीं हुआ है।', invest: 'निवेश करें', researchNote: 'सार्वजनिक बाज़ार डेटा से ट्रैक। RWA.LAT पर सदस्यता उपलब्ध नहीं।',
+    tabs: ['अवलोकन', 'मूल्यांकन', 'प्रकटीकरण'], noDisclosures: 'इस उत्पाद के लिए कोई प्रकटीकरण दस्तावेज़ प्रकाशित नहीं हुआ है।', invest: 'निवेश करें', researchNote: 'सार्वजनिक बाज़ार डेटा से ट्रैक। A-REIT पर सदस्यता उपलब्ध नहीं।',
     marketCap: 'मार्केट कैप', change24h: '24 घं', change7d: '7 दिन', change30d: '30 दिन', volume: '24घं वॉल्यूम', score: 'स्कोर', risk: 'जोखिम',
     history: 'मार्केट कैप · 90 दिन', noHistory: 'स्रोत ने इस संपत्ति का इतिहास प्रकाशित नहीं किया है।', issuer: 'जारीकर्ता', region: 'क्षेत्र', website: 'वेबसाइट', sources: 'डेटा स्रोत', synced: '{t} सिंक',
     notFound: 'संपत्ति नहीं मिली', notFoundBody: 'यह लिंक पुराना हो सकता है।', quoteUnavailable: 'कोट उपलब्ध नहीं', about: 'परिचय', orderRules: 'ऑर्डर नियम', orderRulesBody: 'ऑर्डर आपकी उपलब्ध शेष राशि से रकम लॉक करता है और कोट किए गए इकाई मूल्य पर निपटता है। पुष्टि पर सर्वर पात्रता जाँचता है।',
@@ -143,7 +143,7 @@ const es: MarketCopy = {
   common: { back: 'Atrás', close: 'Cerrar', clear: 'Borrar', retry: 'Reintentar', unavailable: 'No disponible', updated: 'Actualizado {t}', source: 'Fuente', signIn: 'Entra para invertir', errorGeneric: 'Algo salió mal. Reintenta.', empty: 'Aún no hay nada' },
   markets: {
     kicker: 'Mercados · En vivo', title: 'Mercados', lede: '{n} invertibles · {m} seguidos', tabs: ['Activos', 'Cestas', 'Trading', 'Predicciones'], search: 'Buscar nombre, símbolo o emisor',
-    investable: 'Invertibles', investableNote: 'Cotizados por RWA.LAT y abiertos a suscripción.', directory: 'Directorio de mercado', directoryNote: 'Datos de terceros · solo investigación',
+    investable: 'Invertibles', investableNote: 'Cotizados por A-REIT y abiertos a suscripción.', directory: 'Directorio de mercado', directoryNote: 'Datos de terceros · solo investigación',
     classes: { all: 'Todo', rwa: 'Activos reales', compute: 'Cómputo', stocks: 'Acciones', prediction: 'Predicciones' },
     from: 'Desde {v}', sort: { market_cap: 'Capitalización', change_24h: '24 h', name: 'Nombre' }, noMatch: 'Sin resultados para «{q}»', issuers: 'Emisores', compare: 'Comparar',
     basketsEmpty: 'No hay cestas abiertas', basketsEmptyBody: 'Las cestas gestionadas aparecerán cuando se publique una estrategia.', pairsEmpty: 'No hay pares listados.', last: 'Último', active: 'Activo', paused: 'Pausado',
@@ -152,7 +152,7 @@ const es: MarketCopy = {
   detail: {
     investable: 'Invertible', research: 'Solo investigación', unitPrice: 'Precio unitario indicativo', stale: 'Desactualizada', live: 'Cotización en vivo', validUntil: 'Válida hasta {t}',
     min: 'Mínimo', max: 'Máximo', settlement: 'Liquidación', network: 'Red', assetClass: 'Clase de activo', version: 'Versión de términos',
-    tabs: ['Resumen', 'Valoración', 'Divulgaciones'], noDisclosures: 'No se han publicado documentos de divulgación para este producto.', invest: 'Invertir', researchNote: 'Seguido con datos públicos de mercado. No disponible para suscripción en RWA.LAT.',
+    tabs: ['Resumen', 'Valoración', 'Divulgaciones'], noDisclosures: 'No se han publicado documentos de divulgación para este producto.', invest: 'Invertir', researchNote: 'Seguido con datos públicos de mercado. No disponible para suscripción en A-REIT.',
     marketCap: 'Capitalización', change24h: '24 h', change7d: '7 d', change30d: '30 d', volume: 'Volumen 24 h', score: 'Puntuación', risk: 'Riesgo',
     history: 'Capitalización · 90 días', noHistory: 'La fuente no ha publicado historial para este activo.', issuer: 'Emisor', region: 'Región', website: 'Sitio web', sources: 'Fuentes de datos', synced: 'Sincronizado {t}',
     notFound: 'Activo no encontrado', notFoundBody: 'Este enlace puede estar desactualizado.', quoteUnavailable: 'Cotización no disponible', about: 'Acerca de', orderRules: 'Reglas de orden', orderRulesBody: 'La orden bloquea el importe de tu saldo disponible y se liquida al precio cotizado. El servidor comprueba la elegibilidad al confirmar.',
@@ -178,7 +178,7 @@ const ar: MarketCopy = {
   common: { back: 'رجوع', close: 'إغلاق', clear: 'مسح', retry: 'إعادة المحاولة', unavailable: 'غير متاح', updated: 'حُدّث {t}', source: 'المصدر', signIn: 'سجّل الدخول للاستثمار', errorGeneric: 'حدث خطأ. أعد المحاولة.', empty: 'لا يوجد شيء بعد' },
   markets: {
     kicker: 'الأسواق · مباشر', title: 'الأسواق', lede: '{n} قابلة للاستثمار · {m} متابَعة', tabs: ['الأصول', 'السلال', 'التداول', 'التوقعات'], search: 'ابحث بالاسم أو الرمز أو المُصدِر',
-    investable: 'قابلة للاستثمار', investableNote: 'مسعّرة من RWA.LAT ومتاحة للاكتتاب.', directory: 'دليل السوق', directoryNote: 'بيانات سوق من طرف ثالث · للبحث فقط',
+    investable: 'قابلة للاستثمار', investableNote: 'مسعّرة من A-REIT ومتاحة للاكتتاب.', directory: 'دليل السوق', directoryNote: 'بيانات سوق من طرف ثالث · للبحث فقط',
     classes: { all: 'الكل', rwa: 'أصول حقيقية', compute: 'الحوسبة', stocks: 'الأسهم', prediction: 'التوقعات' },
     from: 'ابتداءً من {v}', sort: { market_cap: 'القيمة السوقية', change_24h: '24 س', name: 'الاسم' }, noMatch: 'لا نتائج لـ «{q}»', issuers: 'المُصدِرون', compare: 'مقارنة',
     basketsEmpty: 'لا توجد سلال مفتوحة', basketsEmptyBody: 'تظهر السلال المُدارة هنا عند نشر استراتيجية.', pairsEmpty: 'لا توجد أزواج تداول مدرجة.', last: 'الأخير', active: 'نشط', paused: 'متوقف',
@@ -187,7 +187,7 @@ const ar: MarketCopy = {
   detail: {
     investable: 'قابل للاستثمار', research: 'للبحث فقط', unitPrice: 'سعر الوحدة الاسترشادي', stale: 'قديم', live: 'تسعير مباشر', validUntil: 'صالح حتى {t}',
     min: 'الحد الأدنى', max: 'الحد الأقصى', settlement: 'التسوية', network: 'الشبكة', assetClass: 'فئة الأصل', version: 'إصدار الشروط',
-    tabs: ['نظرة عامة', 'التقييم', 'الإفصاحات'], noDisclosures: 'لم تُنشر وثائق إفصاح لهذا المنتج.', invest: 'استثمر', researchNote: 'متابَع من بيانات السوق العامة. غير متاح للاكتتاب على RWA.LAT.',
+    tabs: ['نظرة عامة', 'التقييم', 'الإفصاحات'], noDisclosures: 'لم تُنشر وثائق إفصاح لهذا المنتج.', invest: 'استثمر', researchNote: 'متابَع من بيانات السوق العامة. غير متاح للاكتتاب على A-REIT.',
     marketCap: 'القيمة السوقية', change24h: '24 س', change7d: '7 أيام', change30d: '30 يومًا', volume: 'حجم 24 س', score: 'التقييم', risk: 'المخاطر',
     history: 'القيمة السوقية · 90 يومًا', noHistory: 'لم ينشر المصدر سجلًا لهذا الأصل.', issuer: 'المُصدِر', region: 'المنطقة', website: 'الموقع', sources: 'مصادر البيانات', synced: 'مُزامَن {t}',
     notFound: 'الأصل غير موجود', notFoundBody: 'قد يكون هذا الرابط قديمًا.', quoteUnavailable: 'التسعير غير متاح', about: 'نبذة', orderRules: 'قواعد الأوامر', orderRulesBody: 'يحجز الأمر المبلغ من رصيدك المتاح ويُسوّى بسعر الوحدة المسعّر. يتحقق الخادم من الأهلية عند التأكيد.',
@@ -213,7 +213,7 @@ const fr: MarketCopy = {
   common: { back: 'Retour', close: 'Fermer', clear: 'Effacer', retry: 'Réessayer', unavailable: 'Indisponible', updated: 'Mis à jour {t}', source: 'Source', signIn: 'Connectez-vous pour investir', errorGeneric: 'Une erreur est survenue. Réessayez.', empty: 'Rien pour le moment' },
   markets: {
     kicker: 'Marchés · En direct', title: 'Marchés', lede: '{n} investissables · {m} suivis', tabs: ['Actifs', 'Paniers', 'Trading', 'Prédictions'], search: 'Rechercher nom, symbole ou émetteur',
-    investable: 'Investissables', investableNote: 'Cotés par RWA.LAT et ouverts à la souscription.', directory: 'Annuaire du marché', directoryNote: 'Données tierces · recherche uniquement',
+    investable: 'Investissables', investableNote: 'Cotés par A-REIT et ouverts à la souscription.', directory: 'Annuaire du marché', directoryNote: 'Données tierces · recherche uniquement',
     classes: { all: 'Tout', rwa: 'Actifs réels', compute: 'Calcul', stocks: 'Actions', prediction: 'Prédictions' },
     from: 'Dès {v}', sort: { market_cap: 'Capitalisation', change_24h: '24 h', name: 'Nom' }, noMatch: 'Aucun résultat pour « {q} »', issuers: 'Émetteurs', compare: 'Comparer',
     basketsEmpty: 'Aucun panier ouvert', basketsEmptyBody: 'Les paniers gérés apparaîtront lorsqu’une stratégie sera publiée.', pairsEmpty: 'Aucune paire listée.', last: 'Dernier', active: 'Actif', paused: 'En pause',
@@ -222,7 +222,7 @@ const fr: MarketCopy = {
   detail: {
     investable: 'Investissable', research: 'Recherche uniquement', unitPrice: 'Prix unitaire indicatif', stale: 'Périmée', live: 'Cotation en direct', validUntil: 'Valable jusqu’à {t}',
     min: 'Minimum', max: 'Maximum', settlement: 'Règlement', network: 'Réseau', assetClass: 'Classe d’actifs', version: 'Version des conditions',
-    tabs: ['Aperçu', 'Valorisation', 'Informations'], noDisclosures: 'Aucun document d’information n’a été publié pour ce produit.', invest: 'Investir', researchNote: 'Suivi à partir de données publiques. Non disponible à la souscription sur RWA.LAT.',
+    tabs: ['Aperçu', 'Valorisation', 'Informations'], noDisclosures: 'Aucun document d’information n’a été publié pour ce produit.', invest: 'Investir', researchNote: 'Suivi à partir de données publiques. Non disponible à la souscription sur A-REIT.',
     marketCap: 'Capitalisation', change24h: '24 h', change7d: '7 j', change30d: '30 j', volume: 'Volume 24 h', score: 'Score', risk: 'Risque',
     history: 'Capitalisation · 90 jours', noHistory: 'La source n’a pas publié d’historique pour cet actif.', issuer: 'Émetteur', region: 'Région', website: 'Site web', sources: 'Sources de données', synced: 'Synchronisé {t}',
     notFound: 'Actif introuvable', notFoundBody: 'Ce lien est peut-être obsolète.', quoteUnavailable: 'Cotation indisponible', about: 'À propos', orderRules: 'Règles d’ordre', orderRulesBody: 'L’ordre bloque le montant sur votre solde disponible et se règle au prix unitaire coté. Le serveur vérifie l’éligibilité à la confirmation.',
@@ -248,7 +248,7 @@ const pt: MarketCopy = {
   common: { back: 'Voltar', close: 'Fechar', clear: 'Limpar', retry: 'Tentar novamente', unavailable: 'Indisponível', updated: 'Atualizado {t}', source: 'Fonte', signIn: 'Entre para investir', errorGeneric: 'Algo deu errado. Tente novamente.', empty: 'Nada por aqui ainda' },
   markets: {
     kicker: 'Mercados · Ao vivo', title: 'Mercados', lede: '{n} investíveis · {m} acompanhados', tabs: ['Ativos', 'Cestas', 'Negociação', 'Previsões'], search: 'Buscar nome, símbolo ou emissor',
-    investable: 'Investíveis', investableNote: 'Cotados pela RWA.LAT e abertos para subscrição.', directory: 'Diretório de mercado', directoryNote: 'Dados de terceiros · apenas pesquisa',
+    investable: 'Investíveis', investableNote: 'Cotados pela A-REIT e abertos para subscrição.', directory: 'Diretório de mercado', directoryNote: 'Dados de terceiros · apenas pesquisa',
     classes: { all: 'Todos', rwa: 'Ativos reais', compute: 'Computação', stocks: 'Ações', prediction: 'Previsões' },
     from: 'A partir de {v}', sort: { market_cap: 'Valor de mercado', change_24h: '24 h', name: 'Nome' }, noMatch: 'Nenhum resultado para “{q}”', issuers: 'Emissores', compare: 'Comparar',
     basketsEmpty: 'Nenhuma cesta aberta', basketsEmptyBody: 'As cestas geridas aparecem aqui quando uma estratégia é publicada.', pairsEmpty: 'Nenhum par listado.', last: 'Último', active: 'Ativo', paused: 'Pausado',
@@ -257,7 +257,7 @@ const pt: MarketCopy = {
   detail: {
     investable: 'Investível', research: 'Apenas pesquisa', unitPrice: 'Preço unitário indicativo', stale: 'Desatualizada', live: 'Cotação ao vivo', validUntil: 'Válida até {t}',
     min: 'Mínimo', max: 'Máximo', settlement: 'Liquidação', network: 'Rede', assetClass: 'Classe de ativo', version: 'Versão dos termos',
-    tabs: ['Visão geral', 'Avaliação', 'Divulgações'], noDisclosures: 'Nenhum documento de divulgação foi publicado para este produto.', invest: 'Investir', researchNote: 'Acompanhado com dados públicos de mercado. Não disponível para subscrição na RWA.LAT.',
+    tabs: ['Visão geral', 'Avaliação', 'Divulgações'], noDisclosures: 'Nenhum documento de divulgação foi publicado para este produto.', invest: 'Investir', researchNote: 'Acompanhado com dados públicos de mercado. Não disponível para subscrição na A-REIT.',
     marketCap: 'Valor de mercado', change24h: '24 h', change7d: '7 d', change30d: '30 d', volume: 'Volume 24 h', score: 'Pontuação', risk: 'Risco',
     history: 'Valor de mercado · 90 dias', noHistory: 'A fonte não publicou histórico para este ativo.', issuer: 'Emissor', region: 'Região', website: 'Site', sources: 'Fontes de dados', synced: 'Sincronizado {t}',
     notFound: 'Ativo não encontrado', notFoundBody: 'Este link pode estar desatualizado.', quoteUnavailable: 'Cotação indisponível', about: 'Sobre', orderRules: 'Regras da ordem', orderRulesBody: 'A ordem bloqueia o valor do seu saldo disponível e liquida ao preço unitário cotado. O servidor verifica a elegibilidade ao confirmar.',
