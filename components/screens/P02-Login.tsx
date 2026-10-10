@@ -68,8 +68,6 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   // Saved passkeys appear in the email field's autofill; the fingerprint button is only the fallback.
   const [autofill, setAutofill] = useState(false)
   const [autofillRound, setAutofillRound] = useState(0)
-  // Guests may look around: Home and Markets are public, protected screens still route back here.
-  const browse = () => { sessionStorage.removeItem(RETURN_TO); markNewAccount(sessionStorage, false); go('home') }
   const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
@@ -407,8 +405,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <p className={styles.cardLede}>{authPosterIntro[locale]}</p>
   </>
 
-  return <AuthShell onBrand={browse} attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer}
-    topAction={<button type="button" className={styles.topLink} onClick={browse}>{visual.browse}</button>}>
+  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
     {heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>

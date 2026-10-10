@@ -60,7 +60,7 @@ export const ROUTES = {
   shareLanding: R('/share/:token', { domain: 'public', dock: null, showDock: false, auth: 'public' }),
 
   // ═══ Tab 1 · 首页域（10）═══
-  home: R('/home', { domain: 'home', dock: 'home', showDock: true, auth: 'optional' }),
+  home: R('/home', { domain: 'home', dock: 'home', showDock: true, auth: 'required' }),
   search: R('/search', { domain: 'home', dock: 'home', showDock: false, auth: 'optional' }),
   notifications: R('/notifications', { domain: 'home', dock: 'home', showDock: true, auth: 'required' }),
   community: R('/community', { domain: 'home', dock: 'home', showDock: true, auth: 'optional' }),

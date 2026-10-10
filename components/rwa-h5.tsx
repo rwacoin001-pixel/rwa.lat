@@ -213,7 +213,7 @@ function minimumValue(product: DemoProduct) {
 function isOpenProduct(product: DemoProduct) {
   return /open|daily|market open/i.test(product.availability)
 }
-const protectedScreens: Screen[] = ['portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem']
+const protectedScreens: Screen[] = ['home', 'portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem']
 const routeRequiresAuth = (pathname: string) => resolveRoute(pathname)?.def.auth === 'required'
 
 const homeOpportunities: Array<{ category: DemoCategory; kind: AssetSceneKind }> = [

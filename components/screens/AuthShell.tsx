@@ -15,13 +15,10 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 }
 
 /** Shared frame for every sign-in surface: the scene film, the wordmark bar, and a centred plaque above the card. */
-export function AuthShell({ children, hero, onBrand, footer, topAction, attrs }: {
+export function AuthShell({ children, hero, footer, attrs }: {
   children: ReactNode
   hero?: ReactNode
   footer?: ReactNode
-  /** A quiet text action at the start of the top bar's end cluster (e.g. browse as a guest). */
-  topAction?: ReactNode
-  onBrand?: () => void
   attrs?: Record<`data-${string}`, string>
 }) {
   const { locale, setLocale, t } = useI18n()
@@ -56,10 +53,8 @@ export function AuthShell({ children, hero, onBrand, footer, topAction, attrs }:
     <div className={styles.sceneWash} aria-hidden="true" />
 
     <header className={styles.topbar}>
-      {onBrand ? <button type="button" className={styles.brand} aria-label="A-REIT" onClick={onBrand}>{brand}</button>
-        : <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>}
+      <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>
       <div className={styles.topActions}>
-        {topAction}
         <button type="button" className={styles.iconButton} onClick={(event) => revealTheme(toggleTheme, cool ? 'light' : 'dark', event)} aria-label={visual.switchTheme} title={visual.switchTheme}>{cool ? <Sun size={19} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}</button>
         <div className={styles.localeWrap} ref={localeWrap}>
           <button type="button" className={styles.iconButton} aria-label={t('common.language')} aria-haspopup="menu" aria-expanded={localeOpen} onClick={() => setLocaleOpen(value => !value)}>
