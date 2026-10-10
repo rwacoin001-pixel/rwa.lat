@@ -7,14 +7,16 @@
   "workers_dev": true,
   "routes": [
     { "pattern": "rwa.lat/*", "zone_name": "rwa.lat" },
-    { "pattern": "www.rwa.lat/*", "zone_name": "rwa.lat" }
+    { "pattern": "www.rwa.lat/*", "zone_name": "rwa.lat" },
+    { "pattern": "a-reit.com", "custom_domain": true },
+    { "pattern": "www.a-reit.com", "custom_domain": true }
   ],
   "assets": {
     "directory": ".open-next/assets",
     "binding": "ASSETS"
   },
   "vars": {
-    "API_INTERNAL_URL": "https://api.rwa.lat"
+    "API_INTERNAL_URL": "https://api.a-reit.com"
   },
   "observability": {
     "enabled": true

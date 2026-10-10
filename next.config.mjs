@@ -157,7 +157,7 @@ const legacyRedirects = [
 /** @type {import('next').NextConfig} */
 const localProxy = process.env.RWA_LOCAL_PROXY === '1'
 // 代理目标可配置：默认线上；本地联调时用 RWA_PROXY_TARGET=http://127.0.0.1:4000
-const proxyTarget = process.env.RWA_PROXY_TARGET || 'https://api.rwa.lat'
+const proxyTarget = process.env.RWA_PROXY_TARGET || 'https://api.a-reit.com'
 
 const nextConfig = {
   // OpenNext consumes the standalone server output for Cloudflare Workers builds.

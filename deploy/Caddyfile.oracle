@@ -1,9 +1,34 @@
-api.rwa.lat {
-    reverse_proxy 127.0.0.1:4000
+api.rwa.lat, api.a-reit.com {
+    tls {
+        issuer acme {
+            disable_tlsalpn_challenge
+        }
+    }
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:4000 {
+        header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+    }
 }
-admin-api.rwa.lat {
-    reverse_proxy 127.0.0.1:4100
+admin-api.rwa.lat, admin-api.a-reit.com {
+    tls {
+        issuer acme {
+            disable_tlsalpn_challenge
+        }
+    }
+    encode zstd gzip
+    reverse_proxy 127.0.0.1:4100 {
+        header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+    }
 }
-admin.rwa.lat {
-    reverse_proxy 127.0.0.1:3100
+admin.rwa.lat, admin.a-reit.com {
+    tls {
+        issuer acme {
+            disable_tlsalpn_challenge
+        }
+    }
+    encode zstd gzip
+    header Cache-Control "no-store"
+    reverse_proxy 127.0.0.1:3100 {
+        header_up X-Forwarded-For {http.request.header.CF-Connecting-IP}
+    }
 }

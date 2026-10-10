@@ -21,8 +21,9 @@ export function parseApiError(status: number, body: unknown, headers: Headers): 
 }
 
 export function apiUrl(path: string): string {
-  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL
-  const baseUrl = (configuredBaseUrl || (process.env.NODE_ENV === 'production' ? 'https://api.rwa.lat' : '')).trim().replace(/\/+$/, '')
+  // An explicitly empty base uses the current site's /v1 proxy on both domains.
+  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL
+  const baseUrl = (configuredBaseUrl ?? (process.env.NODE_ENV === 'production' ? 'https://api.a-reit.com' : '')).trim().replace(/\/+$/, '')
   return baseUrl ? `${baseUrl}${path}` : path
 }
 
