@@ -1,5 +1,7 @@
 'use client'
 
+import RwaLogoMark from '@/components/rwa-logo'
+
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
 import { Instrument_Serif } from 'next/font/google'
 import { gsap } from 'gsap'
@@ -193,9 +195,9 @@ export default function DesktopShowcase() {
   return (
     <main ref={root} className={`${d.page} ${display.variable}`} data-desktop-showcase dir="ltr">
       <header className={d.nav}>
-        <a className={d.brand} href="/desktop" aria-label="RWA.LAT">
-          <svg viewBox="140 188 226 124" aria-hidden="true"><path fill="currentColor" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" /><path fill="currentColor" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" /><path fill="#2FE6BF" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" /></svg>
-          <span>RWA.LAT</span>
+        <a className={d.brand} href="/desktop" aria-label="A-REIT">
+          <RwaLogoMark label="" />
+          <span>A-REIT</span>
         </a>
         <div className={d.navEnd}>
           <label className={d.lang}>

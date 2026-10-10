@@ -1,7 +1,7 @@
 'use client'
 
 /**
- * iPhone runs RWA.LAT only as a Home Screen web app. In a Safari tab (or any in-app browser)
+ * iPhone runs A-REIT only as a Home Screen web app. In a Safari tab (or any in-app browser)
  * this full-screen gate teaches the install instead of showing the App.
  *
  * Never shown: off iPhone, when standalone (opened from the icon), on auth callbacks / email
@@ -30,16 +30,16 @@ const SAFARI_EXIT_DELAY_MS = 30_000
 
 type GateCopy = { kicker: string; title: string; lede: string; safari: string; inApp: string; webApp: string; privateMode: string; done: string; exit: string }
 const zh: GateCopy = {
-  kicker: 'iPhone', title: '请从主屏幕打开', lede: '在 iPhone 上，RWA.LAT 以主屏幕 App 运行。添加一次，之后从图标直接进入。',
+  kicker: 'iPhone', title: '请从主屏幕打开', lede: '在 iPhone 上，A-REIT 以主屏幕 App 运行。添加一次，之后从图标直接进入。',
   safari: '当前浏览器无法完成添加。请复制链接，在 Safari 中打开本页。', inApp: '当前在 {app} 内，无法添加到主屏幕。请先在 Safari 中打开。',
   webApp: 'iOS 26 及以上：添加时请保持 [作为网页 App 打开] 为开启。', privateMode: '看不到 [添加到主屏幕]？请先关闭无痕浏览。',
-  done: '添加完成后，请从主屏幕的 RWA.LAT 图标打开。', exit: '试过仍无法添加？暂时在浏览器中继续',
+  done: '添加完成后，请从主屏幕的 A-REIT 图标打开。', exit: '试过仍无法添加？暂时在浏览器中继续',
 }
 const en: GateCopy = {
-  kicker: 'iPhone', title: 'Open from your Home Screen', lede: 'On iPhone, RWA.LAT runs as a Home Screen app. Add it once, then open it from the icon.',
+  kicker: 'iPhone', title: 'Open from your Home Screen', lede: 'On iPhone, A-REIT runs as a Home Screen app. Add it once, then open it from the icon.',
   safari: 'This browser can’t finish the install. Copy the link and open this page in Safari.', inApp: 'You’re inside {app}, which can’t add to the Home Screen. Open this page in Safari first.',
   webApp: 'iOS 26 or later: keep [Open as Web App] switched on when adding.', privateMode: 'No [Add to Home Screen]? Turn off Private Browsing first.',
-  done: 'Once added, open RWA.LAT from its Home Screen icon.', exit: 'Tried and still can’t add it? Continue in the browser for now',
+  done: 'Once added, open A-REIT from its Home Screen icon.', exit: 'Tried and still can’t add it? Continue in the browser for now',
 }
 // Same policy as the Home install guide: other locales use English until the Safari labels are reviewed.
 const gateCopy: Record<AppLocale, GateCopy> = { en, 'zh-CN': zh, hi: en, es: en, ar: en, fr: en, pt: en }
@@ -103,7 +103,7 @@ export default function IosInstallGate() {
 
   return <div className={styles.gate} data-theme={theme === 'dark' ? 'dark' : 'light'} role="dialog" aria-modal="true" aria-labelledby="ios-gate-title" dir={locale === 'ar' ? 'rtl' : 'ltr'}>
     <div className={styles.inner}>
-      <p className={styles.brand}>RWA<i>.</i>LAT</p>
+      <p className={styles.brand}>A<i>-</i>REIT</p>
       <header className={styles.head}>
         <p className={styles.kicker}><span aria-hidden="true" />{copy.kicker}<span aria-hidden="true" /></p>
         <h1 id="ios-gate-title" className={styles.title}>{copy.title}</h1>

@@ -1,4 +1,4 @@
-/* Pull-to-refresh capsule: drops from under the nav bar and traces the W as the page is pulled. */
+/* Pull-to-refresh capsule: traces the shared A-REIT mark as the page is pulled. */
 .ptr {
   --ptr: 0;
   --ptr-y: 0px;
@@ -23,10 +23,9 @@
 .mark svg { width: 26px; height: 15px; overflow: visible; }
 .mark path { fill: currentColor; fill-opacity: 0; stroke: currentColor; stroke-width: 7; stroke-linejoin: round; stroke-dasharray: 1; transition: fill-opacity .3s var(--m-ease); }
 .mark path[data-accent] { color: var(--m-accent, var(--rwa-logo-accent, #c9a063)); }
-/* Each stroke of the W draws in its own slice of the pull, so the mark writes itself left to right. */
+/* The frame and mint panel draw in successive slices of the pull. */
 .mark path:nth-child(1) { stroke-dashoffset: calc(1 - clamp(0, var(--ptr) / .45, 1)); }
 .mark path:nth-child(2) { stroke-dashoffset: calc(1 - clamp(0, (var(--ptr) - .3) / .45, 1)); }
-.mark path:nth-child(3) { stroke-dashoffset: calc(1 - clamp(0, (var(--ptr) - .6) / .4, 1)); }
 .ptr[data-phase='armed'] .mark { transform: scale(1.06); transition: transform .3s var(--m-spring, var(--m-ease)); }
 .ptr:is([data-phase='armed'], [data-phase='refreshing'], [data-phase='done']) .mark path { stroke-dashoffset: 0; fill-opacity: 1; }
 .ptr[data-phase='refreshing'] .mark svg { animation: ptrBreathe 1s var(--m-ease) infinite; }

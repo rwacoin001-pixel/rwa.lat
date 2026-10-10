@@ -65,7 +65,7 @@ export default function HomeCardPreview() {
       <div className={styles.firstScreen}>
         <header className={styles.hero} data-chrome="">
           <div className={styles.heroCopy}>
-            <div className={styles.heroMeta}><span>RWA.LAT</span><span className={styles.heroRule} /><span>{new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())}</span></div>
+            <div className={styles.heroMeta}><span>A-REIT</span><span className={styles.heroRule} /><span>{new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())}</span></div>
             <p className={styles.heroKicker}>{copy.kicker}</p>
             <h1 className={styles.heroTitle}><MaskLines lines={[copy.headline, copy.perspective]} lineClassName={index => index === 1 ? styles.heroItalic : undefined} /></h1>
             <p className={styles.heroSub}>{copy.sub}</p>

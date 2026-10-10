@@ -5,7 +5,7 @@ export type TrustDesktopCopy = { title: string; language: string; chaptersLabel:
 const copy = (title: string, ui: [string,string,string,string,string,string,string], rows: [string,string,string][]): TrustDesktopCopy => ({ title, language: ui[0], chaptersLabel: ui[1], scroll: ui[2], phone: ui[3], scan: ui[4], endBody: ui[5], reference: ui[6], chapters: rows.map(([name,title,body]) => ({name,title,body})) })
 
 export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
-  en: copy('The Shape\nof Trust', ['Language','Chapters','Scroll to travel through time','Open on phone','Scan with your phone camera','Continue with RWA.LAT on your phone.','Historical sources'], [
+  en: copy('The Shape\nof Trust', ['Language','Chapters','Scroll to travel through time','Open on phone','Scan with your phone camera','Continue with A-REIT on your phone.','Historical sources'], [
     ['Prologue','The Shape\nof Trust','Every age writes trust in its own hand.'],
     ['Clay','A promise,\npressed into clay.','Someone pressed it into clay, so it could not be forgotten.'],
     ['Gold','Trust,\nstruck into gold.','A king struck it into gold, so it could not be denied.'],
@@ -15,9 +15,9 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['Fracture','And then,\nthe pen slipped.','The towers of trust stood empty.'],
     ['A new record','Written\nanother way.','A record anyone can check, and no one can quietly rewrite.'],
     ['Today','The things\nwe own.','Now the things we own can be written there too.'],
-    ['RWA.LAT','The Shape\nof Trust','This age writes it in mathematics.'],
+    ['A-REIT','The Shape\nof Trust','This age writes it in mathematics.'],
   ]),
-  'zh-CN': copy('信任\n自有其形', ['语言','章节','向下滚动，穿过时间','用手机打开','用手机相机扫码','在手机端继续探索 RWA.LAT。','历史资料'], [
+  'zh-CN': copy('信任\n自有其形', ['语言','章节','向下滚动，穿过时间','用手机打开','用手机相机扫码','在手机端继续探索 A-REIT。','历史资料'], [
     ['序','信任\n自有其形','每个时代，都以自己的方式书写信任。'],
     ['泥土','把承诺\n压进泥土','有人把它压进泥土，好让它无法被遗忘。'],
     ['黄金','把信任\n铸进黄金','君王把它铸进黄金，好让它无法被否认。'],
@@ -27,9 +27,9 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['失手','然后\n那支笔失手了','信任的高塔，人去楼空。'],
     ['重写','换一种\n写法','人人可以查验，无人能悄悄改写。'],
     ['今天','我们拥有\n的一切','如今，我们拥有的一切，也能写在这里。'],
-    ['RWA.LAT','信任\n自有其形','这个时代，以数学书写。'],
+    ['A-REIT','信任\n自有其形','这个时代，以数学书写。'],
   ]),
-  es: copy('La forma\nde la confianza', ['Idioma','Capítulos','Desplázate para viajar en el tiempo','Abrir en el móvil','Escanea con la cámara de tu móvil','Continúa explorando RWA.LAT en tu móvil.','Fuentes históricas'], [
+  es: copy('La forma\nde la confianza', ['Idioma','Capítulos','Desplázate para viajar en el tiempo','Abrir en el móvil','Escanea con la cámara de tu móvil','Continúa explorando A-REIT en tu móvil.','Fuentes históricas'], [
     ['Prólogo','La forma\nde la confianza','Cada época escribe la confianza a su manera.'],
     ['Arcilla','Una promesa\nen arcilla.','Alguien la grabó en arcilla para que no se olvidara.'],
     ['Oro','La confianza\nacuñada en oro.','Un rey la acuñó en oro para que no pudiera negarse.'],
@@ -39,9 +39,9 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['Ruptura','Y entonces,\nla pluma falló.','Las torres de la confianza quedaron vacías.'],
     ['Nuevo registro','Otra forma\nde escribir.','Un registro que cualquiera puede verificar y nadie puede reescribir en secreto.'],
     ['Hoy','Lo que\nposeemos.','Ahora lo que poseemos también puede escribirse allí.'],
-    ['RWA.LAT','La forma\nde la confianza','Esta época escribe con matemáticas.'],
+    ['A-REIT','La forma\nde la confianza','Esta época escribe con matemáticas.'],
   ]),
-  fr: copy('La forme\nde la confiance', ['Langue','Chapitres','Faites défiler pour traverser le temps','Ouvrir sur mobile','Scannez avec la caméra de votre téléphone','Continuez à découvrir RWA.LAT sur votre téléphone.','Sources historiques'], [
+  fr: copy('La forme\nde la confiance', ['Langue','Chapitres','Faites défiler pour traverser le temps','Ouvrir sur mobile','Scannez avec la caméra de votre téléphone','Continuez à découvrir A-REIT sur votre téléphone.','Sources historiques'], [
     ['Prologue','La forme\nde la confiance','Chaque époque écrit la confiance à sa manière.'],
     ['Argile','Une promesse\ndans l’argile.','On l’a gravée dans l’argile pour qu’elle ne soit pas oubliée.'],
     ['Or','La confiance\nfrappée dans l’or.','Un roi l’a frappée dans l’or pour qu’elle ne puisse être niée.'],
@@ -51,9 +51,9 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['Rupture','Puis,\nla plume a dérapé.','Les tours de la confiance étaient vides.'],
     ['Nouveau registre','Une autre\nécriture.','Un registre que chacun peut vérifier, et que personne ne peut réécrire en secret.'],
     ['Aujourd’hui','Ce que\nnous possédons.','Aujourd’hui, ce que nous possédons peut aussi y être inscrit.'],
-    ['RWA.LAT','La forme\nde la confiance','Cette époque écrit en mathématiques.'],
+    ['A-REIT','La forme\nde la confiance','Cette époque écrit en mathématiques.'],
   ]),
-  pt: copy('A forma\nda confiança', ['Idioma','Capítulos','Role para atravessar o tempo','Abrir no celular','Leia o código com a câmera do celular','Continue explorando a RWA.LAT no celular.','Fontes históricas'], [
+  pt: copy('A forma\nda confiança', ['Idioma','Capítulos','Role para atravessar o tempo','Abrir no celular','Leia o código com a câmera do celular','Continue explorando a A-REIT no celular.','Fontes históricas'], [
     ['Prólogo','A forma\nda confiança','Cada época escreve a confiança à sua maneira.'],
     ['Argila','Uma promessa\nna argila.','Alguém a gravou na argila para que não fosse esquecida.'],
     ['Ouro','A confiança\ncunhada em ouro.','Um rei a cunhou em ouro para que não pudesse ser negada.'],
@@ -63,9 +63,9 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['Ruptura','Então,\na pena falhou.','As torres da confiança ficaram vazias.'],
     ['Novo registro','Outra forma\nde escrever.','Um registro que qualquer pessoa pode verificar e ninguém pode reescrever em segredo.'],
     ['Hoje','O que\npossuímos.','Agora, o que possuímos também pode ser registrado ali.'],
-    ['RWA.LAT','A forma\nda confiança','Esta época escreve com matemática.'],
+    ['A-REIT','A forma\nda confiança','Esta época escreve com matemática.'],
   ]),
-  ar: copy('للثقة\nشكلها', ['اللغة','الفصول','مرّر لتسافر عبر الزمن','افتح على الهاتف','امسح الرمز بكاميرا هاتفك','تابع استكشاف RWA.LAT على هاتفك.','المصادر التاريخية'], [
+  ar: copy('للثقة\nشكلها', ['اللغة','الفصول','مرّر لتسافر عبر الزمن','افتح على الهاتف','امسح الرمز بكاميرا هاتفك','تابع استكشاف A-REIT على هاتفك.','المصادر التاريخية'], [
     ['البداية','للثقة\nشكلها','كل عصر يكتب الثقة بطريقته.'],
     ['الطين','وعد\nفي الطين','نقشه أحدهم في الطين كي لا يُنسى.'],
     ['الذهب','الثقة\nفي الذهب','سكّه ملك في الذهب كي لا يمكن إنكاره.'],
@@ -75,9 +75,9 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['الانكسار','ثم\nزلّ القلم','وقفت أبراج الثقة خالية.'],
     ['سجل جديد','كتابة\nبطريقة أخرى','سجل يستطيع الجميع التحقق منه ولا يستطيع أحد تغييره سرًا.'],
     ['اليوم','ما\nنملكه','الآن يمكن أيضًا تسجيل ما نملكه هناك.'],
-    ['RWA.LAT','للثقة\nشكلها','هذا العصر يكتب بالرياضيات.'],
+    ['A-REIT','للثقة\nشكلها','هذا العصر يكتب بالرياضيات.'],
   ]),
-  hi: copy('विश्वास\nका स्वरूप', ['भाषा','अध्याय','समय की यात्रा के लिए स्क्रॉल करें','फ़ोन पर खोलें','अपने फ़ोन के कैमरे से स्कैन करें','अपने फ़ोन पर RWA.LAT को आगे जानें।','ऐतिहासिक स्रोत'], [
+  hi: copy('विश्वास\nका स्वरूप', ['भाषा','अध्याय','समय की यात्रा के लिए स्क्रॉल करें','फ़ोन पर खोलें','अपने फ़ोन के कैमरे से स्कैन करें','अपने फ़ोन पर A-REIT को आगे जानें।','ऐतिहासिक स्रोत'], [
     ['आरंभ','विश्वास\nका स्वरूप','हर युग विश्वास को अपने ढंग से लिखता है।'],
     ['मिट्टी','मिट्टी में\nएक वादा','किसी ने उसे मिट्टी में अंकित किया, ताकि उसे भुलाया न जा सके।'],
     ['सोना','सोने में\nढला विश्वास','एक राजा ने उसे सोने में ढाला, ताकि उसे नकारा न जा सके।'],
@@ -87,6 +87,6 @@ export const trustDesktopCopy: Record<AppLocale, TrustDesktopCopy> = {
     ['दरार','फिर,\nकलम चूक गई।','विश्वास के ऊँचे भवन खाली खड़े थे।'],
     ['नया लेखा','लिखने का\nएक और तरीका','ऐसा रिकॉर्ड जिसे हर कोई जाँच सकता है, और जिसे कोई चुपचाप बदल नहीं सकता।'],
     ['आज','हम जो\nरखते हैं','अब हमारी संपत्तियाँ भी वहाँ दर्ज हो सकती हैं।'],
-    ['RWA.LAT','विश्वास\nका स्वरूप','यह युग गणित में लिखता है।'],
+    ['A-REIT','विश्वास\nका स्वरूप','यह युग गणित में लिखता है।'],
   ]),
 }

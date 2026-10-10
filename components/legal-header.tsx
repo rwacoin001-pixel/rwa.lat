@@ -15,7 +15,7 @@ export default function LegalHeader({ kind }: { kind: 'terms' | 'privacy' }) {
 
   return <header className={styles.header}>
     <div className={styles.topbar}>
-      <Link href="/" className={styles.brand} aria-label="RWA.LAT" translate="no">RWA<i>.</i>LAT</Link>
+      <Link href="/" className={styles.brand} aria-label="A-REIT" translate="no">A<i>-</i>REIT</Link>
       <div className={styles.actions}>
         <button className={styles.themeButton} type="button" onClick={toggleTheme} aria-label={copy.switchTheme}>
           {theme === 'dark' ? <Sun size={18} aria-hidden="true" /> : <Moon size={18} aria-hidden="true" />}

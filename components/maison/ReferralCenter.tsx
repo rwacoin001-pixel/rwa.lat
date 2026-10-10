@@ -103,7 +103,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const share = async () => {
     if (!link) return
     if (!navigator.share) return copy()
-    try { await navigator.share({ title: 'RWA.LAT', url: link }) } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) await copy() }
+    try { await navigator.share({ title: 'A-REIT', url: link }) } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) await copy() }
   }
   const openEdit = () => { bumpEdit(); setEditError(''); setSheet('edit') }
   const save = async (next: string) => {

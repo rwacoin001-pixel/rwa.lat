@@ -3,8 +3,8 @@ import LegalPage, { Section, RiskNote } from '@/components/legal-page'
 import PublishedLegalPage from '@/components/published-legal-page'
 
 export const metadata: Metadata = {
-  title: 'Terms of Service — RWA.LAT',
-  description: 'The terms governing your use of the RWA.LAT platform.',
+  title: 'Terms of Service — A-REIT',
+  description: 'The terms governing your use of the A-REIT platform.',
 }
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +17,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
       <div>
         <Section n="1" title="Acceptance of These Terms">
           <p>
-            These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the RWA.LAT platform at{' '}
+            These Terms of Service (&ldquo;Terms&rdquo;) govern your access to and use of the A-REIT platform at{' '}
             <a href="https://a-reit.com">
               https://a-reit.com
             </a>{' '}
@@ -36,7 +36,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
 
         <Section n="3" title="About the Service">
           <p>
-            RWA.LAT provides technology that allows users to explore information about tokenized real-world assets,
+            A-REIT provides technology that allows users to explore information about tokenized real-world assets,
             market data, and AI-assisted analysis and portfolio tools, as well as community features. The Service is
             evolving: features may be added, changed, limited, or suspended over time, and some features may not be
             available in all jurisdictions or to all users.
@@ -89,7 +89,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
             <li>Use the Service in violation of any applicable law or regulation, or to facilitate fraud or market manipulation;</li>
             <li>Interfere with, disrupt, or attempt to gain unauthorized access to the Service, its systems, or other users&rsquo; accounts;</li>
             <li>Scrape, copy, or extract data from the Service at scale without our prior written consent;</li>
-            <li>Infringe the rights of RWA.LAT or any third party, including intellectual property rights;</li>
+            <li>Infringe the rights of A-REIT or any third party, including intellectual property rights;</li>
             <li>Circumvent geographic or access restrictions, including by providing false eligibility information; or</li>
             <li>Use the Service to transmit unlawful, harmful, or misleading content.</li>
           </ul>
@@ -106,7 +106,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
         <Section n="9" title="Intellectual Property">
           <p>
             The Service, including its software, design, trademarks, and content provided by us (excluding your content
-            and third-party content), is owned by RWA.LAT or its licensors and is protected by applicable intellectual
+            and third-party content), is owned by A-REIT or its licensors and is protected by applicable intellectual
             property laws. You are granted a limited, non-exclusive, non-transferable, revocable license to use the
             Service in accordance with these Terms.
           </p>
@@ -136,7 +136,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
 
         <Section n="12" title="Limitation of Liability">
           <p>
-            To the maximum extent permitted by applicable law, RWA.LAT and its affiliates shall not be liable for any
+            To the maximum extent permitted by applicable law, A-REIT and its affiliates shall not be liable for any
             indirect, incidental, special, consequential, or punitive damages, or for any loss of profits, data,
             assets, or goodwill, arising out of or related to your use of the Service. Our aggregate liability for all
             claims relating to the Service shall not exceed the greater of (a) the amounts you paid for the Service
@@ -146,7 +146,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
 
         <Section n="13" title="Indemnification">
           <p>
-            You agree to indemnify and hold harmless RWA.LAT and its affiliates from and against any claims, damages,
+            You agree to indemnify and hold harmless A-REIT and its affiliates from and against any claims, damages,
             liabilities, and expenses (including reasonable legal fees) arising from your use of the Service, your
             violation of these Terms, or your violation of any rights of a third party.
           </p>
@@ -171,9 +171,9 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
 
         <Section n="16" title="Governing Law and Dispute Resolution">
           <p>
-            These Terms are governed by the laws of the jurisdiction in which the RWA.LAT platform operator is
+            These Terms are governed by the laws of the jurisdiction in which the A-REIT platform operator is
             organized, without regard to conflict-of-law principles. Before commencing any formal proceeding, you and
-            RWA.LAT agree to attempt in good faith to resolve any dispute through informal negotiation. Subject to the
+            A-REIT agree to attempt in good faith to resolve any dispute through informal negotiation. Subject to the
             foregoing, the courts located in that jurisdiction shall have exclusive jurisdiction over disputes arising
             from these Terms, unless mandatory protections in your country of residence provide otherwise.
           </p>
@@ -183,7 +183,7 @@ export default async function TermsOfServicePage({ searchParams }: { searchParam
           <p>
             For questions about these Terms, contact us at{' '}
             <a href="mailto:support@rwa.lat">
-              support@rwa.lat
+              Contact support
             </a>
             .
           </p>

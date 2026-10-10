@@ -134,14 +134,14 @@ type InstallCopy = {
 }
 
 const zh: InstallCopy = {
-  strip: '把 RWA.LAT 添加到主屏幕', stripSub: '像 App 一样一键打开 · 全屏浏览', stripInApp: '当前在{app}内，需先用浏览器打开', dismiss: '14 天内不再提示',
-  title: '安装 RWA.LAT', lede: '无需应用商店，添加后从主屏幕图标直接打开。',
+  strip: '把 A-REIT 添加到主屏幕', stripSub: '像 App 一样一键打开 · 全屏浏览', stripInApp: '当前在{app}内，需先用浏览器打开', dismiss: '14 天内不再提示',
+  title: '安装 A-REIT', lede: '无需应用商店，添加后从主屏幕图标直接打开。',
   benefits: ['主屏幕图标一键进入，不用再输入网址', '全屏显示，没有浏览器地址栏和工具栏', '不经应用商店，长按图标即可删除'],
   iosNote: 'iPhone 上主屏幕版与 Safari 的登录状态互不共享，首次打开需登录一次。',
   steps: '按以下步骤操作', manual: '没有弹出安装窗口？也可以手动安装：', install: '立即安装', installHint: '将弹出浏览器的安装确认',
   copyLink: '复制本页链接', copied: '已复制', close: '知道了',
   guide: {
-    'ios-safari': ['点 Safari 的 [分享] 按钮（底部工具栏中间；若看不到工具栏，先点地址栏旁的 [···]）', '在菜单中向下滑，选择 [添加到主屏幕]', '点右上角 [添加]，主屏幕就会出现 RWA.LAT 图标'],
+    'ios-safari': ['点 Safari 的 [分享] 按钮（底部工具栏中间；若看不到工具栏，先点地址栏旁的 [···]）', '在菜单中向下滑，选择 [添加到主屏幕]', '点右上角 [添加]，主屏幕就会出现 A-REIT 图标'],
     'ios-other': ['点地址栏或菜单中的 [分享] 按钮', '选择 [添加到主屏幕]，再点 [添加]', '找不到该选项时：复制链接，用 [Safari] 打开后按同样步骤添加'],
     'android-chrome': ['点右上角 [⋮] 菜单', '选择 [安装应用] 或 [添加到主屏幕]', '在弹窗中点 [安装]'],
     'android-samsung': ['点底部工具栏右侧的 [≡] 菜单', '选择 [添加页面至]，再选 [主屏幕]', '确认 [添加]'],
@@ -159,14 +159,14 @@ const zh: InstallCopy = {
 }
 
 const en: InstallCopy = {
-  strip: 'Add RWA.LAT to your home screen', stripSub: 'Opens like an app · full screen', stripInApp: 'Inside {app} — open in your browser first', dismiss: 'Hide for 14 days',
-  title: 'Install RWA.LAT', lede: 'No app store needed. Open it straight from your home screen icon.',
+  strip: 'Add A-REIT to your home screen', stripSub: 'Opens like an app · full screen', stripInApp: 'Inside {app} — open in your browser first', dismiss: 'Hide for 14 days',
+  title: 'Install A-REIT', lede: 'No app store needed. Open it straight from your home screen icon.',
   benefits: ['One tap from your home screen, no typing the address', 'Full screen, without the browser address bar or toolbars', 'Not from an app store — long-press the icon to remove it'],
   iosNote: 'On iPhone, the home screen app does not share sign-in with Safari, so you sign in once on first launch.',
   steps: 'Follow these steps', manual: 'No install window? You can also do it manually:', install: 'Install now', installHint: 'Your browser will ask you to confirm',
   copyLink: 'Copy page link', copied: 'Copied', close: 'Got it',
   guide: {
-    'ios-safari': ['Tap Safari’s [Share] button (middle of the bottom bar; if the bar is hidden, tap [···] next to the address bar first)', 'Scroll down and choose [Add to Home Screen]', 'Tap [Add] in the top corner — the RWA.LAT icon appears on your home screen'],
+    'ios-safari': ['Tap Safari’s [Share] button (middle of the bottom bar; if the bar is hidden, tap [···] next to the address bar first)', 'Scroll down and choose [Add to Home Screen]', 'Tap [Add] in the top corner — the A-REIT icon appears on your home screen'],
     'ios-other': ['Tap the [Share] button in the address bar or menu', 'Choose [Add to Home Screen], then [Add]', 'Not there? Copy the link, open it in [Safari] and repeat'],
     'android-chrome': ['Tap the [⋮] menu at the top right', 'Choose [Install app] or [Add to Home screen]', 'Tap [Install] in the dialog'],
     'android-samsung': ['Tap the [≡] menu at the bottom right', 'Choose [Add page to], then [Home screen]', 'Confirm with [Add]'],

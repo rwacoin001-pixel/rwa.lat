@@ -7,14 +7,11 @@ import { useRwaTheme } from '@/lib/rwa-theme'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
 import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
+import RwaLogoMark from '../rwa-logo'
 
-/** The official W mark (RWA-LOGO/RWA-mark): two strokes in ink, the mint parallelogram fixed. */
+/** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
-  return <svg className={styles.brandMark} viewBox="140 188 226 124" width={size * 1.82} height={size} aria-hidden="true">
-    <path fill="currentColor" d="M150 198h51l27.3 53.1-13.1 24.4c-2.8 5.2-7.2 8.1-12.5 8.1-6.1 0-11.4-3.6-14.3-9.2L150 198Z" />
-    <path fill="currentColor" d="M228.3 251.1l12.4-26.2c2.8-5.9 7.4-9.1 13.1-9.1 6.2 0 10.9 3.5 13.7 9.4L304 302h-51.2l-24.5-50.9Z" />
-    <path fill="#2FE6BF" d="M305.4 198H356l-25.9 51.9h-28.2c-5.3 0-9.5-2.2-12.2-6.3-2.8-4.2-3.1-8.9-.8-13.6l16.5-32Z" />
-  </svg>
+  return <RwaLogoMark className={styles.brandMark} width={size * 1.82} height={size} label="" />
 }
 
 /** Shared frame for every sign-in surface: the scene film, the wordmark bar, and a centred plaque above the card. */
@@ -49,7 +46,7 @@ export function AuthShell({ children, hero, onBrand, footer, topAction, attrs }:
   const cool = theme === 'dark'
   const media = cool ? 'cool' : 'warm'
   const poster = attrs?.['data-auth-poster'] === 'true'
-  const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>RWA<i>.</i>LAT</span>}</>
+  const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>A<i>-</i>REIT</span>}</>
   return <section className={`screen ${styles.root}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     <div className={styles.scene} aria-hidden="true">
       {mediaReady && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
@@ -59,8 +56,8 @@ export function AuthShell({ children, hero, onBrand, footer, topAction, attrs }:
     <div className={styles.sceneWash} aria-hidden="true" />
 
     <header className={styles.topbar}>
-      {onBrand ? <button type="button" className={styles.brand} aria-label="RWA.LAT" onClick={onBrand}>{brand}</button>
-        : <a href="/login" className={styles.brand} aria-label="RWA.LAT">{brand}</a>}
+      {onBrand ? <button type="button" className={styles.brand} aria-label="A-REIT" onClick={onBrand}>{brand}</button>
+        : <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>}
       <div className={styles.topActions}>
         {topAction}
         <button type="button" className={styles.iconButton} onClick={(event) => revealTheme(toggleTheme, cool ? 'light' : 'dark', event)} aria-label={visual.switchTheme} title={visual.switchTheme}>{cool ? <Sun size={19} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}</button>

@@ -830,7 +830,7 @@ function ProfileScreen({ go, notify, sessionMode, onClose, onOpenSection, onSign
   return (
     <section className="profile-sheet">
       <RwaTopbar screen="profile" title={t('profile.title')} onBack={onClose} />
-      <div className="profile-head"><div className="profile-orb profile-orb--large"><ParticleLogoIcon className="profile-orb__particle-logo" label="RWA AI" /></div><h1>{sessionMode === 'guest' ? t('guest.badge') : '0x82...92A'}</h1><p><ShieldCheck size={15} /> {sessionMode === 'guest' ? copy.publicSession : t('profile.verified')}</p></div>
+      <div className="profile-head"><div className="profile-orb profile-orb--large"><ParticleLogoIcon className="profile-orb__particle-logo" label="A-REIT AI" /></div><h1>{sessionMode === 'guest' ? t('guest.badge') : '0x82...92A'}</h1><p><ShieldCheck size={15} /> {sessionMode === 'guest' ? copy.publicSession : t('profile.verified')}</p></div>
       <div className="profile-menu glass">{rows.map(([title, subtitle, Icon, screen]) => <button type="button" key={title} onClick={() => onOpenSection(screen)}><span><Icon size={21} /></span><p><b>{title}</b><small>{subtitle}</small></p><ChevronRight size={19} /></button>)}</div>
       <button className="sign-out-button" type="button" onClick={() => void (async () => { await logout(); window.sessionStorage.removeItem('rwa-selected-product'); window.sessionStorage.removeItem('rwa-wallet-flow-mode'); onSignedOut(); notify(copy.signedOut); go('login') })()}><LogOut size={19} />{t('profile.signout')}</button>
       <button className="close-account-link" type="button" onClick={() => onOpenSection('close-account')}>{copy.closeAccount}</button>
@@ -1358,13 +1358,13 @@ function sessionDisplay(item: Record<string, unknown>, index: number, locale: st
 }
 
 const referralStepCopies: Record<string, Array<[string, string]>> = {
-  en: [['Share your link', 'Invite a friend to explore RWA.LAT.'], ['Friend verifies', 'Their account completes the required checks.'], ['Earn fee credit', 'The reward is recorded after the first allocation.']],
-  'zh-CN': [['分享链接', '邀请好友了解 RWA.LAT。'], ['好友认证', '好友完成账户所需的认证。'], ['获得奖励', '首次投资完成后记录手续费抵扣。']],
-  hi: [['लिंक साझा करें', 'किसी मित्र को RWA.LAT देखने के लिए आमंत्रित करें।'], ['मित्र सत्यापित हो', 'मित्र आवश्यक खाते की जाँच पूरी करे।'], ['शुल्क क्रेडिट पाएँ', 'पहले निवेश के बाद पुरस्कार दर्ज होगा।']],
-  es: [['Comparte el enlace', 'Invita a un amigo a explorar RWA.LAT.'], ['Tu amigo verifica', 'Completa las comprobaciones necesarias.'], ['Gana crédito', 'La recompensa se registra tras la primera inversión.']],
-  ar: [['شارك الرابط', 'ادعُ صديقًا لاستكشاف RWA.LAT.'], ['يتحقق الصديق', 'يكمل فحوصات الحساب المطلوبة.'], ['اكسب رصيد رسوم', 'يسجل المكافأة بعد أول تخصيص.']],
-  fr: [['Partager le lien', 'Invitez un ami à découvrir RWA.LAT.'], ['Vérification', 'Votre ami termine les contrôles requis.'], ['Crédit de frais', 'La récompense est enregistrée après le premier investissement.']],
-  pt: [['Compartilhe o link', 'Convide um amigo para conhecer a RWA.LAT.'], ['Amigo verifica', 'A conta conclui as verificações necessárias.'], ['Ganhe crédito', 'A recompensa é registrada após o primeiro investimento.']],
+  en: [['Share your link', 'Invite a friend to explore A-REIT.'], ['Friend verifies', 'Their account completes the required checks.'], ['Earn fee credit', 'The reward is recorded after the first allocation.']],
+  'zh-CN': [['分享链接', '邀请好友了解 A-REIT。'], ['好友认证', '好友完成账户所需的认证。'], ['获得奖励', '首次投资完成后记录手续费抵扣。']],
+  hi: [['लिंक साझा करें', 'किसी मित्र को A-REIT देखने के लिए आमंत्रित करें।'], ['मित्र सत्यापित हो', 'मित्र आवश्यक खाते की जाँच पूरी करे।'], ['शुल्क क्रेडिट पाएँ', 'पहले निवेश के बाद पुरस्कार दर्ज होगा।']],
+  es: [['Comparte el enlace', 'Invita a un amigo a explorar A-REIT.'], ['Tu amigo verifica', 'Completa las comprobaciones necesarias.'], ['Gana crédito', 'La recompensa se registra tras la primera inversión.']],
+  ar: [['شارك الرابط', 'ادعُ صديقًا لاستكشاف A-REIT.'], ['يتحقق الصديق', 'يكمل فحوصات الحساب المطلوبة.'], ['اكسب رصيد رسوم', 'يسجل المكافأة بعد أول تخصيص.']],
+  fr: [['Partager le lien', 'Invitez un ami à découvrir A-REIT.'], ['Vérification', 'Votre ami termine les contrôles requis.'], ['Crédit de frais', 'La récompense est enregistrée après le premier investissement.']],
+  pt: [['Compartilhe o link', 'Convide um amigo para conhecer a A-REIT.'], ['Amigo verifica', 'A conta conclui as verificações necessárias.'], ['Ganhe crédito', 'A recompensa é registrada após o primeiro investimento.']],
 }
 
 function sessionToggleLabel(locale: string, expanded: boolean, count: number) {

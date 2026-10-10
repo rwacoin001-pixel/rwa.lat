@@ -86,7 +86,7 @@ const SUPPORT_FAQ: SupportFaq[] = [
   },
   {
     question: '如何保护账户和提现地址？',
-    answer: '请启用多重验证，确认设备和会话列表，并只使用账户内显示的地址。RWA.LAT 不会索要密码、验证码或私钥。',
+    answer: '请启用多重验证，确认设备和会话列表，并只使用账户内显示的地址。A-REIT 不会索要密码、验证码或私钥。',
     keywords: '安全 MFA 地址 白名单 验证码 私钥 防诈骗',
     Icon: ShieldCheck,
   },
@@ -105,7 +105,7 @@ const SUPPORT_FAQ_EN: SupportFaq[] = [
   { question: 'Why has my withdrawal not arrived?', answer: 'A withdrawal may be in security review, chain processing or network confirmation. Check the withdrawal record for status, fees, transaction hash and timing.', keywords: 'withdrawal arrival review transaction hash fee', Icon: Clock3 },
   { question: 'What should I do if an order is still processing?', answer: 'Order status follows the execution result. Review the order timeline and product trading window; if it remains unchanged, open a support case with the order attached.', keywords: 'order processing buy redeem trading window', Icon: MessageCircle },
   { question: 'Where can I see fees, minimums and exit windows?', answer: 'Each product detail page lists minimums, fees, lockups, exit windows and settlement cycles. The order review shows them again before confirmation.', keywords: 'fees minimum exit lockup liquidity', Icon: FileText },
-  { question: 'How do I protect my account and withdrawal addresses?', answer: 'Enable multi-factor protection, review device sessions and use only addresses shown in your account. RWA.LAT never asks for passwords, codes or private keys.', keywords: 'security MFA address whitelist code private key fraud', Icon: ShieldCheck },
+  { question: 'How do I protect my account and withdrawal addresses?', answer: 'Enable multi-factor protection, review device sessions and use only addresses shown in your account. A-REIT never asks for passwords, codes or private keys.', keywords: 'security MFA address whitelist code private key fraud', Icon: ShieldCheck },
   { question: 'Where can I view ledger activity and receipts?', answer: 'Wallet and activity pages show ledger movements. Order details include status history and downloadable transaction receipts.', keywords: 'ledger receipt order PDF CSV activity', Icon: FileText },
 ]
 

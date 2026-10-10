@@ -19,28 +19,28 @@ import AppStartup from '@/components/app-startup'
 import IosInstallGate from '@/components/ios-install-gate'
 
 export const metadata: Metadata = {
-  title: 'RWA.LAT — AI Investment OS',
+  title: 'A-REIT — AI Investment OS',
   description: 'A premium USDT-first investment experience for AI Compute, RWA, global stocks and prediction markets.',
-  applicationName: 'RWA.LAT',
+  applicationName: 'A-REIT',
   manifest: '/manifest.webmanifest',
   keywords: ['AI investment', 'digital assets', 'AI Compute', 'RWA', 'portfolio intelligence'],
-  authors: [{ name: 'RWA.LAT' }],
+  authors: [{ name: 'A-REIT' }],
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'RWA.LAT',
+    title: 'A-REIT',
   },
   formatDetection: { telephone: false },
   icons: {
     icon: [
-      { url: '/icons/rwa-pwa-v2-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/rwa-pwa-v2-512.png', sizes: '512x512', type: 'image/png' },
-      { url: '/rwa-mark.svg', type: 'image/svg+xml' },
+      { url: '/icons/a-reit-v1-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icons/a-reit-v1-512.png', sizes: '512x512', type: 'image/png' },
+      { url: '/brand/a-reit/app-icon.svg', type: 'image/svg+xml' },
     ],
-    apple: [{ url: '/icons/rwa-pwa-v2-apple-180.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: '/icons/a-reit-v1-apple-180.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
-    title: 'RWA.LAT — Invest with intelligence.',
+    title: 'A-REIT — Invest with intelligence.',
     description: 'One USDT wallet. Global opportunities. AI-guided decisions.',
     type: 'website',
   },

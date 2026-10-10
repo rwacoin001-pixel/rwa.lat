@@ -3,8 +3,8 @@ import LegalPage, { Section } from '@/components/legal-page'
 import PublishedLegalPage from '@/components/published-legal-page'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — RWA.LAT',
-  description: 'How RWA.LAT collects, uses, stores, and protects personal information.',
+  title: 'Privacy Policy — A-REIT',
+  description: 'How A-REIT collects, uses, stores, and protects personal information.',
 }
 
 export const dynamic = 'force-dynamic'
@@ -17,7 +17,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
       <div>
         <Section n="1" title="Who We Are">
           <p>
-            RWA.LAT (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates the RWA.LAT platform available at{' '}
+            A-REIT (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates the A-REIT platform available at{' '}
             <a href="https://a-reit.com">
               https://a-reit.com
             </a>{' '}
@@ -83,7 +83,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
             <li>
               <span className="font-medium">Legal requirements.</span> We may disclose information if required to
               do so by law, regulation, legal process, or governmental request, or if we believe disclosure is
-              necessary to protect the rights, property, or safety of RWA.LAT, our users, or the public.
+              necessary to protect the rights, property, or safety of A-REIT, our users, or the public.
             </li>
             <li>
               <span className="font-medium">Business transfers.</span> If we are involved in a merger, acquisition,
@@ -142,7 +142,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
           <p>
             To exercise any of these rights, contact us at{' '}
             <a href="mailto:support@rwa.lat">
-              support@rwa.lat
+              Contact support
             </a>
             . We may need to verify your identity before fulfilling a request. You may also have the right to lodge a
             complaint with your local data protection authority.
@@ -170,7 +170,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
             If you have questions or concerns about this Privacy Policy or our handling of your personal information,
             contact us at{' '}
             <a href="mailto:support@rwa.lat">
-              support@rwa.lat
+              Contact support
             </a>
             .
           </p>

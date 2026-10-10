@@ -140,7 +140,7 @@ export default function CTASection() {
               className="text-base md:text-lg leading-relaxed mb-10 max-w-xl mx-auto"
               style={{ color: 'rgba(255,255,255,0.45)' }}
             >
-              Join thousands of investors already using RWA.LAT to make smarter,
+              Join thousands of investors already using A-REIT to make smarter,
               faster, and more confident investment decisions powered by AI.
             </p>
 
@@ -165,7 +165,7 @@ export default function CTASection() {
                 className="w-2 h-2 rounded-full"
                 style={{ background: '#2EE88E', boxShadow: '0 0 10px #2EE88E' }}
               />
-              Join RWA.LAT
+              Join A-REIT
               <ArrowRight size={16} strokeWidth={1.5} />
             </motion.a>
 
@@ -206,7 +206,7 @@ export default function CTASection() {
           transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
         >
           <motion.img
-            src="/media/brand/rwa-logo-v2.svg"
+            src="/brand/a-reit/mark-dark.svg"
             alt=""
             aria-hidden="true"
             className="block h-auto"
@@ -259,7 +259,7 @@ export default function CTASection() {
             className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t text-xs"
             style={{ borderColor: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.25)' }}
           >
-            <span>© 2026 RWA.LAT. All rights reserved.</span>
+            <span>© 2026 A-REIT. All rights reserved.</span>
             <span>Investment intelligence powered by artificial intelligence. Not financial advice.</span>
           </div>
         </div>

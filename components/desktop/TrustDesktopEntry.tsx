@@ -10,7 +10,7 @@ const TrustDesktop = dynamic(() => import('./TrustDesktop'), { ssr: false })
 export function phonePath(raw: string | null) {
   if (!raw?.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '/home'
   try {
-    const base = 'https://rwa.lat'
+    const base = 'https://a-reit.com'
     const url = new URL(raw, base)
     if (url.origin !== base || /^\/desktop(?:\/|$)/.test(url.pathname)) return '/home'
     return url.pathname + url.search + url.hash

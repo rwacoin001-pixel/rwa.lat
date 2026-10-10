@@ -1,18 +1,16 @@
-const CACHE_NAME = 'rwa-lat-offline-v12'
+const CACHE_NAME = 'a-reit-offline-v1'
 const OFFLINE_ASSETS = [
   '/offline',
-  '/rwa-mark.svg',
-  '/icons/rwa-pwa-v2-192.png',
-  '/icons/rwa-pwa-v2-512.png',
-  '/icons/rwa-pwa-v2-maskable-512.png',
+  '/brand/a-reit/app-icon.svg',
+  '/icons/a-reit-v1-192.png',
+  '/icons/a-reit-v1-512.png',
+  '/icons/a-reit-v1-maskable-512.png',
   '/home',
   '/media/generated/project-assets/home-asset-hero-v1.png',
   '/media/generated/project-assets/home-solar-cover-v2.webp',
   '/media/generated/project-assets/home-residential-cover-v2.webp',
   '/media/generated/project-assets/markets-collection-v1.png',
   '/media/generated/project-assets/rwa-collection-v1.png',
-  '/media/ai-particle-icon/rwa-particle-alpha.webm',
-  '/media/ai-particle-icon/rwa-particle-icon-alpha-512.png',
 ]
 
 // Precache one URL at a time instead of a single atomic addAll().
@@ -37,7 +35,7 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => Promise.all(keys.filter((key) => key.startsWith('rwa-lat-offline-') && key !== CACHE_NAME).map((key) => caches.delete(key)))),
+    caches.keys().then((keys) => Promise.all(keys.filter((key) => (key.startsWith('rwa-lat-offline-') || key.startsWith('a-reit-offline-')) && key !== CACHE_NAME).map((key) => caches.delete(key)))),
   )
   self.clients.claim()
 })
