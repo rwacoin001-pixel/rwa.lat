@@ -18,8 +18,8 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ['finance', 'productivity'],
     shortcuts: [
       { name: 'Home', short_name: 'Home', url: '/home', icons: [{ src: '/icons/a-reit-v1-192.png', sizes: '192x192' }] },
-      { name: 'Invest', short_name: 'Invest', url: '/invest', icons: [{ src: '/icons/a-reit-v1-192.png', sizes: '192x192' }] },
-      { name: 'Portfolio', short_name: 'Portfolio', url: '/portfolio', icons: [{ src: '/icons/a-reit-v1-192.png', sizes: '192x192' }] },
+      { name: 'Markets', short_name: 'Markets', url: '/markets', icons: [{ src: '/icons/a-reit-v1-192.png', sizes: '192x192' }] },
+      { name: 'Assets', short_name: 'Assets', url: '/assets', icons: [{ src: '/icons/a-reit-v1-192.png', sizes: '192x192' }] },
     ],
     icons: [
       { src: '/icons/a-reit-v1-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },

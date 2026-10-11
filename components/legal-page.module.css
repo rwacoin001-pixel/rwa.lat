@@ -28,7 +28,7 @@
 .header { max-width: 1120px; margin-inline: auto; padding: env(safe-area-inset-top) max(24px, env(safe-area-inset-right)) 0 max(24px, env(safe-area-inset-left)); }
 .topbar { display: flex; align-items: center; justify-content: space-between; min-height: 76px; gap: 16px; }
 .brand { white-space: nowrap; font-size: 17px; font-weight: 600; letter-spacing: -.02em; }
-.brand i { color: #2fe6bf; font-style: normal; }
+.brand i { color: #19c7aa; font-style: normal; }
 .actions { display: flex; align-items: center; gap: 4px; }
 .themeButton { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: transparent; color: inherit; cursor: pointer; }
 .themeButton:hover { background: color-mix(in srgb, var(--legal-ink) 7%, transparent); }

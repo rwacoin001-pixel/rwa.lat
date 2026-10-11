@@ -81,8 +81,7 @@
 .topbar { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: calc(10px + env(safe-area-inset-top)) 10px 0 18px; color: var(--hero-ink); }
 .brand { display: inline-flex; align-items: center; gap: 9px; min-height: 44px; padding: 0; border: 0; background: none; color: inherit; direction: ltr; text-decoration: none; cursor: pointer; }
 .brand > span { font: 600 16px/1 var(--sans); letter-spacing: -.01em; }
-.brand i { color: #2fe6bf; font-style: normal; }
-.root[data-auth-theme='warm'] .brand i { color: #08765e; }
+.brand i { color: #19c7aa; font-style: normal; }
 .brandMark { flex: none; display: block; }
 .topActions { display: flex; align-items: center; gap: 2px; }
 .iconButton { display: inline-grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: inherit; cursor: pointer; transition: transform .16s var(--ease), background .2s var(--ease); }

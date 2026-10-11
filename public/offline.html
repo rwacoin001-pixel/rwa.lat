@@ -1,13 +1,77 @@
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#000000"><title>A-REIT</title><style>
-    :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100dvh;padding:max(24px,env(safe-area-inset-top)) 18px max(24px,env(safe-area-inset-bottom));display:grid;place-items:center;background:radial-gradient(circle at 80% 10%,rgba(47,230,191,.14),transparent 34%),#020405;color:#f4fbfa;font:16px/1.45 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{width:min(100%,390px);position:relative;overflow:hidden;padding:34px 24px 27px;border:1px solid rgba(200,231,229,.2);border-radius:30px;background:linear-gradient(145deg,rgba(15,29,32,.9),rgba(5,10,12,.94));box-shadow:inset 0 1px rgba(255,255,255,.15),0 28px 80px rgba(0,0,0,.62);text-align:center}main:before{content:"";width:190px;height:190px;position:absolute;right:-84px;top:-120px;border-radius:50%;background:rgba(47,230,191,.18);filter:blur(36px)}.mark{width:80px;height:80px;display:grid;place-items:center;margin:0 auto 22px;border:1px solid rgba(47,230,191,.4);border-radius:24px;background:rgba(47,230,191,.06);box-shadow:0 0 28px rgba(47,230,191,.13)}.mark img{width:49px;height:49px;object-fit:contain}.eyebrow{position:relative;margin:0;color:#2fe6bf;letter-spacing:.16em;font-size:11px;font-weight:700}.status{position:relative;display:inline-flex;align-items:center;gap:7px;margin:18px 0 0;padding:6px 10px;border:1px solid rgba(47,230,191,.26);border-radius:999px;color:#8ba0a3;font-size:10px}.status i{width:6px;height:6px;border-radius:50%;background:#f2b15a;box-shadow:0 0 8px rgba(242,177,90,.8)}h1{position:relative;font-size:31px;line-height:1.04;letter-spacing:-.06em;margin:18px 0 10px}#body{position:relative;margin:0;color:#8ba0a3;font-size:13px;line-height:1.55}.link{position:relative;display:inline-flex;align-items:center;justify-content:center;min-height:46px;margin-top:24px;padding:0 22px;border:1px solid rgba(196,255,238,.8);border-radius:999px;color:#03211a;background:#2fe6bf;font-size:13px;font-weight:700;text-decoration:none;box-shadow:inset 0 2px rgba(255,255,255,.45),0 10px 24px rgba(0,0,0,.3)}
-    html { touch-action: pan-x pan-y; }
-  </style></head>
-  <body><main><div class="mark"><img src="/brand/a-reit/mark-light.svg" alt="A-REIT"></div><p class="eyebrow">A-REIT</p><span class="status"><i></i><span id="status">Offline mode</span></span><h1 id="title">You’re offline.</h1><p id="body">Your saved pages remain available. Reconnect to refresh market data.</p><a class="link" href="/home" id="link">Open saved home</a></main>
+  <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="theme-color" content="#f3ece0"><title>A-REIT</title>
     <script>
-      const copy={zh:['当前处于离线状态','已保存的页面仍可浏览；重新联网后可刷新市场数据。','离线模式','打开已保存首页'],hi:['आप ऑफ़लाइन हैं।','सहेजे गए पेज उपलब्ध हैं। बाज़ार डेटा ताज़ा करने के लिए दोबारा कनेक्ट करें।','ऑफ़लाइन मोड','सहेजा गया होम खोलें'],es:['Estás sin conexión.','Las páginas guardadas siguen disponibles. Vuelve a conectarte para actualizar los datos.','Modo sin conexión','Abrir inicio guardado'],ar:['أنت غير متصل بالإنترنت.','تظل الصفحات المحفوظة متاحة. أعد الاتصال لتحديث بيانات السوق.','وضع عدم الاتصال','فتح الصفحة الرئيسية المحفوظة'],fr:['Vous êtes hors ligne.','Les pages enregistrées restent disponibles. Reconnectez-vous pour actualiser les données.','Mode hors ligne','Ouvrir l’accueil enregistré'],pt:['Você está offline.','As páginas salvas continuam disponíveis. Reconecte-se para atualizar os dados.','Modo offline','Abrir início salvo']};
-      const language=(navigator.language||'en').split('-')[0]; if(copy[language]){document.documentElement.lang=language;document.documentElement.dir=language==='ar'?'rtl':'ltr';document.getElementById('title').textContent=copy[language][0];document.getElementById('body').textContent=copy[language][1];document.getElementById('status').textContent=copy[language][2];document.getElementById('link').textContent=copy[language][3]}
+      // Resolve the app's theme before first paint so the page never flashes the wrong palette.
+      try { var m = localStorage.getItem('rwa.mode') || localStorage.getItem('rwa.theme'); if (m !== 'light' && m !== 'dark') m = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'; document.documentElement.dataset.theme = m === 'dark' ? 'cool' : 'warm' } catch (e) { document.documentElement.dataset.theme = 'warm' }
+    </script>
+    <style>
+      /* Maison recovery surface: ivory + lacquer (warm), navy + gold (cool). Self-contained: no network needed. */
+      :root{--bg:#f3ece0;--hi:#fbf7ef;--ink:#221d16;--muted:#6f6253;--gold:#9b7742;--edge:rgba(155,119,66,.22);--panel:rgba(255,252,245,.62);--card:linear-gradient(172deg,#fbf7ef,#f1e8d8 78%);--card-line:rgba(155,119,66,.3);--shadow:0 40px 100px -40px rgba(60,38,12,.45),inset 0 2px 0 rgba(255,255,255,.6);--btn:linear-gradient(145deg,#2a241c,#15120e);--btn-ink:#f5eee2;--chip:linear-gradient(145deg,#f2deb0,#d5b27c);--chip-ink:#1b1813;--mark:#101416;color-scheme:light}
+      [data-theme=cool]{--bg:#0b1220;--hi:#1b2538;--ink:#eef1f6;--muted:#a9b4c6;--gold:#e3bb7a;--edge:rgba(227,187,122,.2);--panel:rgba(8,13,24,.38);--card:linear-gradient(172deg,#1b2538,#0d1424 80%);--card-line:rgba(227,187,122,.22);--shadow:0 40px 100px -36px rgba(0,0,0,.8),inset 0 1px 0 rgba(235,243,255,.1);--btn:linear-gradient(145deg,#f2deb0,#d5b27c);--btn-ink:#1b1813;--chip:#1b1813;--chip-ink:#f2deb0;--mark:#eef1f6;color-scheme:dark}
+      *{box-sizing:border-box}html{touch-action:pan-x pan-y}
+      body{margin:0;min-height:100dvh;display:flex;flex-direction:column;align-items:center;padding:calc(22px + env(safe-area-inset-top)) 20px calc(28px + env(safe-area-inset-bottom));background:radial-gradient(120% 70% at 50% 0%,var(--hi),var(--bg) 70%);color:var(--ink);font:400 14px/1.5 -apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+      .brand{display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600;line-height:1;letter-spacing:.18em}
+      .brand svg{width:22px;height:24px}.brand .m{fill:var(--mark)}
+      main{position:relative;isolation:isolate;width:min(420px,100%);margin:auto 0;padding:24px 22px 22px;overflow:hidden;border:.5px solid var(--card-line);border-radius:28px;background:radial-gradient(90% 55% at 100% 0%,rgba(214,178,118,.2),transparent 62%),var(--card);box-shadow:var(--shadow);animation:in .5s cubic-bezier(.22,.8,.18,1) both}
+      .head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:22px}
+      .seal{display:grid;width:44px;height:44px;place-items:center;border-radius:50%;color:var(--gold);background:linear-gradient(150deg,rgba(214,178,118,.26),rgba(155,119,66,.08));box-shadow:inset 0 0 0 .5px var(--card-line),0 0 0 4px rgba(155,119,66,.06)}
+      .status{display:inline-flex;align-items:center;gap:7px;padding:5px 10px;border-radius:999px;color:var(--gold);background:color-mix(in srgb,var(--gold) 9%,transparent);box-shadow:inset 0 0 0 .5px color-mix(in srgb,var(--gold) 32%,transparent);font:500 11px/1 ui-monospace,SFMono-Regular,monospace;letter-spacing:.06em}
+      .status i{width:6px;height:6px;border-radius:50%;background:currentColor;animation:pulse 1.8s ease-in-out infinite}
+      .kicker{margin:0 0 8px;color:var(--gold);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+      h1{margin:0;font:400 28px/1.18 Georgia,"Noto Serif SC","Songti SC",serif;letter-spacing:-.02em;text-wrap:balance}
+      .body{margin:10px 0 0;color:var(--muted);font-size:13.5px;line-height:1.6}
+      .safe{display:flex;gap:10px;margin:20px 0 0;padding:13px 14px;border-radius:16px;background:var(--panel);box-shadow:inset 0 0 0 .5px var(--edge);font-size:12.5px;line-height:1.5}
+      .safe svg{flex:none;margin-top:1px;color:var(--gold)}
+      .actions{display:grid;gap:4px;margin-top:20px}
+      button{display:flex;width:100%;min-height:52px;align-items:center;justify-content:space-between;gap:16px;padding:6px 6px 6px 22px;border:0;border-radius:999px;background:var(--btn);color:var(--btn-ink);font:inherit;font-size:14px;font-weight:500;cursor:pointer;box-shadow:inset 0 1px rgba(255,242,214,.14),0 10px 24px -14px rgba(30,20,8,.7)}
+      [dir=rtl] button{padding:6px 22px 6px 6px}
+      button span:last-child{display:grid;width:40px;height:40px;place-items:center;border-radius:50%;background:var(--chip);color:var(--chip-ink)}
+      button[aria-busy=true] svg{animation:spin 1s linear infinite}
+      a{display:flex;min-height:44px;align-items:center;justify-content:center;border-radius:999px;color:var(--muted);font-size:13px;font-weight:500;text-decoration:none}
+      a:hover{color:var(--ink)}button:focus-visible,a:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+      @keyframes in{from{opacity:0;transform:translateY(18px) scale(.985)}to{opacity:1;transform:none}}
+      @keyframes spin{to{transform:rotate(360deg)}}@keyframes pulse{50%{opacity:.35}}
+      @media (prefers-reduced-motion:reduce){main,.status i,button[aria-busy=true] svg{animation:none}}
+    </style></head>
+  <body>
+    <header class="brand"><svg viewBox="0 0 256 280" aria-hidden="true"><path class="m" d="M4 78Q4 69 13 65L139 8Q146 5 153 8L213 37Q222 42 222 53V144L154 113V71L77 106V199Q77 207 70 211L16 242Q4 248 4 235Z"/><path fill="#19C7AA" d="M113 95L238 152Q247 156 247 167V258Q247 270 236 265L121 213Q113 210 113 199Z"/></svg>A-REIT</header>
+    <main aria-labelledby="title">
+      <div class="head">
+        <span class="seal" aria-hidden="true"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h.01"/><path d="M8.5 16.43a5 5 0 0 1 7 0"/><path d="M5 12.86a10 10 0 0 1 5.17-2.69"/><path d="M19 12.86a10 10 0 0 0-2-1.43"/><path d="M2 8.82a15 15 0 0 1 4.18-2.65"/><path d="M22 8.82a15 15 0 0 0-11.29-3.76"/><path d="m2 2 20 20"/></svg></span>
+        <span class="status" dir="ltr"><i></i><span id="status">OFFLINE</span></span>
+      </div>
+      <p class="kicker" id="kicker">Connection paused</p>
+      <h1 id="title">We can’t reach A-REIT right now.</h1>
+      <p class="body" id="body">Your network may be unstable, or the service is updating. This page refreshes on its own once the connection is back.</p>
+      <p class="safe"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg><span id="safe">Your account and holdings are unaffected. Nothing was submitted.</span></p>
+      <div class="actions">
+        <button type="button" id="retry"><span id="retryLabel">Try again</span><span aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></span></button>
+        <a href="/home" id="home">Open saved home</a>
+      </div>
+    </main>
+    <script>
+      var copy = {
+        en: ['OFFLINE', 'Connection paused', 'We can’t reach A-REIT right now.', 'Your network may be unstable, or the service is updating. This page refreshes on its own once the connection is back.', 'Your account and holdings are unaffected. Nothing was submitted.', 'Try again', 'Reconnecting…', 'Open saved home'],
+        'zh-CN': ['离线', '连接中断', '暂时连不上 A-REIT', '可能是网络不稳定，或服务正在更新。连接恢复后，此页会自动刷新。', '你的账户和资产不受影响，没有提交任何操作。', '重新连接', '正在重新连接…', '打开已保存的首页'],
+        hi: ['ऑफ़लाइन', 'कनेक्शन रुका', 'अभी A-REIT से जुड़ नहीं पा रहे हैं।', 'आपका नेटवर्क अस्थिर हो सकता है या सेवा अपडेट हो रही है। कनेक्शन लौटते ही यह पेज अपने आप रीफ़्रेश होगा।', 'आपका खाता और होल्डिंग सुरक्षित हैं। कुछ भी सबमिट नहीं हुआ।', 'फिर कोशिश करें', 'फिर से जोड़ रहे हैं…', 'सहेजा गया होम खोलें'],
+        es: ['SIN CONEXIÓN', 'Conexión en pausa', 'No podemos conectar con A-REIT ahora.', 'Puede que tu red sea inestable o que el servicio se esté actualizando. La página se recargará sola al volver la conexión.', 'Tu cuenta y tus posiciones no se ven afectadas. No se envió nada.', 'Reintentar', 'Reconectando…', 'Abrir inicio guardado'],
+        ar: ['غير متصل', 'الاتصال متوقف', 'تعذّر الوصول إلى A-REIT الآن.', 'قد تكون الشبكة غير مستقرة أو أن الخدمة قيد التحديث. ستُحدَّث هذه الصفحة تلقائيًا عند عودة الاتصال.', 'حسابك وأصولك لم تتأثر، ولم يُرسَل أي طلب.', 'إعادة المحاولة', 'جارٍ إعادة الاتصال…', 'فتح الصفحة الرئيسية المحفوظة'],
+        fr: ['HORS LIGNE', 'Connexion interrompue', 'Impossible de joindre A-REIT pour le moment.', 'Votre réseau est peut-être instable ou le service est en cours de mise à jour. La page se rechargera dès le retour de la connexion.', 'Votre compte et vos avoirs ne sont pas affectés. Rien n’a été envoyé.', 'Réessayer', 'Reconnexion…', 'Ouvrir l’accueil enregistré'],
+        pt: ['OFFLINE', 'Conexão interrompida', 'Não conseguimos acessar a A-REIT agora.', 'Sua rede pode estar instável ou o serviço está sendo atualizado. A página recarrega sozinha quando a conexão voltar.', 'Sua conta e seus ativos não foram afetados. Nada foi enviado.', 'Tentar novamente', 'Reconectando…', 'Abrir início salvo']
+      }
+      var saved = null; try { saved = localStorage.getItem('rwa-language') } catch (e) {}
+      var nav = (navigator.language || 'en').toLowerCase()
+      var locale = copy[saved] ? saved : nav.indexOf('zh') === 0 ? 'zh-CN' : copy[nav.split('-')[0]] ? nav.split('-')[0] : 'en'
+      var c = copy[locale]
+      ;['status', 'kicker', 'title', 'body', 'safe', 'retryLabel', null, 'home'].forEach(function (id, i) { if (id) document.getElementById(id).textContent = c[i] })
+      document.documentElement.lang = locale
+      document.documentElement.dir = locale === 'ar' ? 'rtl' : 'ltr'
+      document.querySelector('meta[name=theme-color]').content = document.documentElement.dataset.theme === 'cool' ? '#0b1220' : '#f3ece0'
+      var retry = document.getElementById('retry')
+      function reconnect() { retry.setAttribute('aria-busy', 'true'); document.getElementById('retryLabel').textContent = c[6]; location.reload() }
+      retry.addEventListener('click', reconnect)
+      window.addEventListener('online', reconnect)
     </script>
   </body>
 </html>

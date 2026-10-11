@@ -30,11 +30,10 @@ export function LogoStartupVisual({ theme, leaving = false, replay = false }: { 
     return () => { alive = false; scope?.revert() }
   }, [theme, replay])
   const primary = theme === 'dark' ? '#FFFFFF' : '#0D0D0D'
-  const accent = theme === 'dark' ? '#2FE6BF' : '#0E8F7A'
   return <div className={styles.root} data-theme={theme} data-leaving={leaving || undefined} data-startup-visual aria-hidden="true">
     <div className={styles.logoStage} ref={host}>
       {[0, 1, 2].map(piece => <div key={piece} className={styles.piece} data-logo-piece={piece}>
-        <RwaLogoMark label="" primaryColor={primary} accentColor={accent} />
+        <RwaLogoMark label="" primaryColor={primary} />
       </div>)}
       <div className={styles.sheen} data-logo-sheen><RwaLogoMark label="" primaryColor="#FFFFFF" accentColor="#FFFFFF" /></div>
     </div>

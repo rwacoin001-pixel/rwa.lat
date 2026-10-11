@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { notFound } from 'next/navigation'
 import DesignPreview from '@/components/design-preview'
 
 export const metadata: Metadata = {
@@ -7,5 +8,6 @@ export const metadata: Metadata = {
 }
 
 export default function DesignPreviewPage() {
+  if (process.env.NODE_ENV === 'production') notFound()
   return <DesignPreview />
 }

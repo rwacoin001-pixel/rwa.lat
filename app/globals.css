@@ -640,6 +640,13 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
   .invest-cta, .flow-cta { bottom: 42px; width: 390px; }
   .quiet-action { bottom: calc(42px + var(--bottom-action-height) + 10px); }
 }
+/* Wide screens: the frame and gutters take the Maison paper/navy instead of black and the legacy grey. */
+@media (min-width: 700px) {
+  .rwa-shell { background: #e4dbcc; }
+  .rwa-shell:has(.rwa-mobile[data-theme='dark']) { background: #03060c; }
+  .rwa-mobile[data-theme='light'] { border-color: rgba(155,119,66,.18); box-shadow: 0 30px 90px -30px rgba(60,38,12,.35); }
+  .rwa-mobile[data-theme='dark'] { border-color: rgba(227,187,122,.12); background: #070c16; }
+}
 
 @media (max-width: 390px) {
   .rwa-mobile { padding-left: var(--mobile-gutter-compact); padding-right: var(--mobile-gutter-compact); }
@@ -676,7 +683,7 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 
 /* Trust and disclosure surfaces stay content-led; glass is reserved for functional grouping. */
 .home-action-panel > button:nth-of-type(2) > span { color: var(--high); border-color: rgba(255,173,61,.28); background: rgba(255,173,61,.055); }
-.rwa-mobile[data-theme="light"] { background-color: #f3f7f6 !important; background-image: none !important; }
+.rwa-mobile[data-theme="light"] { background-color: #f4efe6 !important; background-image: none !important; }
 [dir="rtl"] .language-popover__list button { direction: ltr; grid-template-columns: 26px minmax(0, 1fr); padding-left: 9px; padding-right: 12px; text-align: right; }
 [dir="rtl"] .language-popover__list button > span { grid-column: 2; grid-row: 1; direction: rtl; justify-self: stretch; text-align: right; }
 [dir="rtl"] .language-popover__list i { grid-column: 1; grid-row: 1; justify-self: start; }

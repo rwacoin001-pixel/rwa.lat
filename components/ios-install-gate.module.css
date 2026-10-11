@@ -30,8 +30,7 @@
 }
 .inner { display: flex; flex-direction: column; min-height: 100%; max-width: 440px; margin: 0 auto; padding: calc(18px + env(safe-area-inset-top)) 24px calc(20px + env(safe-area-inset-bottom)); }
 .brand { margin: 0; font: 600 15px/1 var(--font-geist-sans, system-ui), system-ui, sans-serif; letter-spacing: -.01em; }
-.brand i { color: #08765e; font-style: normal; }
-.gate[data-theme='dark'] .brand i { color: #2fe6bf; }
+.brand i { color: #19c7aa; font-style: normal; }
 
 .head { margin: clamp(36px, 9svh, 72px) 0 28px; text-align: center; }
 .kicker { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 0 0 16px; color: var(--g-gold); font: 500 10.5px/1.2 var(--font-geist-sans, system-ui), system-ui, sans-serif; letter-spacing: .22em; text-transform: uppercase; }

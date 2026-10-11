@@ -2016,7 +2016,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'prediction-detail' && predictionId && <MaisonPredictionScreen key={predictionId} id={predictionId} />}
         {screen === 'prediction-detail' && !predictionId && <AssetDetailScreen asset="prediction" product={selectedProduct.category === 'Prediction' ? localizedSelectedProduct : { id: 'polymarket-live', title: 'Polymarket market discovery', subtitle: 'Public market data · execution eligibility required', category: 'Prediction', risk: 'High Risk', kind: 'prediction', returnMetric: 'Live', returnLabel: 'market data', minimum: '10 USDT', liquidity: 'Variable', availability: 'Public discovery', note: 'Live public data; execution access is required', isDemo: true }} go={go} openOrder={openOrder} notify={notify} openDynamic={openDynamicScreen} />}
         {screen === 'onboarding-overview' && <MaisonBridge page="onboarding-overview"><OnboardingOverviewScreen go={go} /></MaisonBridge>}
-        {screen === 'valuation' && <ValuationScreen go={go} />}
+        {screen === 'valuation' && <MaisonBridge page="valuation"><ValuationScreen go={go} /></MaisonBridge>}
         {screen === 'issuer-profile' && <MaisonIssuerProfileScreen key={routeParams.slug ?? ''} slug={routeParams.slug ?? null} />}
         {screen === 'issuers' && <MaisonIssuersScreen />}
         {screen === 'search' && <MaisonSearchScreen query={routeQuery} />}
@@ -2057,7 +2057,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'secondary' && <SecondaryScreen go={go} />}
         {screen === 'trade' && (routePath === '/markets' ? <MaisonMarketsScreen query={routeQuery} /> : <MaisonTradeScreen symbol={routeParams.symbol ?? routeSymbol ?? null} />)}
         {screen === 'settings' && <MaisonSettingsScreen />}
-        {screen === 'marketing' && <MarketingPreferencesScreen go={go} />}
+        {screen === 'marketing' && <MaisonBridge page="marketing"><MarketingPreferencesScreen go={go} /></MaisonBridge>}
         {screen === 'official-channels' && <MaisonBridge page="official-channels"><OfficialChannelsScreen go={go} /></MaisonBridge>}
         {screen === 'scam-report' && <MaisonBridge page="scam-report"><ScamReportScreen go={go} isGuest={sessionMode === 'guest'} onCreated={openSupportTicket} /></MaisonBridge>}
         {screen === 'close-account' && <MaisonCloseAccountScreen />}

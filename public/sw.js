@@ -1,4 +1,4 @@
-const CACHE_NAME = 'a-reit-offline-v2'
+const CACHE_NAME = 'a-reit-offline-v3'
 const OFFLINE_ASSETS = [
   '/offline',
   '/brand/a-reit/app-icon.svg',
