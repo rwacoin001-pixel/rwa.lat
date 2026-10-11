@@ -10,6 +10,7 @@ const selected = process.argv[2] || 'all'
 // same output, stable on Windows. Each entry is a list of steps run in order.
 const commands = {
   frontend: [
+    ['node_modules/typescript/bin/tsc', '-p', 'packages/api-client/tsconfig.json'],
     ['node_modules/@opennextjs/cloudflare/dist/cli/index.js', 'build'],
   ],
   api: [['apps/api/node_modules/@nestjs/cli/bin/nest.js', 'build']],

@@ -1,4 +1,5 @@
 import { beginUiLoading } from '../ui-loading'
+import { getApiBaseUrl } from './base-url'
 export type ApiError = { status: number; code: string; message: string; details?: Record<string, unknown>; retryAfter?: number; requestId?: string }
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 export const SESSION_KEY = 'rwa.session'
@@ -21,9 +22,7 @@ export function parseApiError(status: number, body: unknown, headers: Headers): 
 }
 
 export function apiUrl(path: string): string {
-  // An explicitly empty base uses the current site's /v1 proxy on both domains.
-  const configuredBaseUrl = process.env.NEXT_PUBLIC_API_URL ?? process.env.NEXT_PUBLIC_API_BASE_URL
-  const baseUrl = (configuredBaseUrl ?? (process.env.NODE_ENV === 'production' ? 'https://api.a-reit.com' : '')).trim().replace(/\/+$/, '')
+  const baseUrl = getApiBaseUrl()
   return baseUrl ? `${baseUrl}${path}` : path
 }
 

@@ -409,8 +409,9 @@ export function createUserApiClient(
   options: Pick<ApiClientConfig, 'getAuthToken' | 'onUnauthorized'> = {}
 ): ApiClient {
   return new ApiClient({
-    baseUrl: baseUrl || (isBrowser 
-      ? (getWindow() as any).__NEXT_PUBLIC_API_URL__ || 'http://localhost:4000' 
+    // An explicit empty base means same-origin; only missing configuration falls back.
+    baseUrl: baseUrl ?? (isBrowser
+      ? (getWindow() as any).__NEXT_PUBLIC_API_URL__ ?? 'http://localhost:4000'
       : 'http://localhost:4000'),
     getAuthToken: options.getAuthToken ?? (() => {
       if (isBrowser) {

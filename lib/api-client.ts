@@ -7,12 +7,10 @@
 
 import { createUserApiClient, ApiClient, ApiClientError } from '@rwa-lat/api-client'
 import { clearSession, getSessionToken, handleSessionUnauthorized, isKycEligibilityError, saveSession, shouldExpireSessionOn401 } from './api/_http'
-
-// Get base URL from environment variable (falls back to localhost:4000 for development)
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || ''
+import { getApiBaseUrl } from './api/base-url'
 
 // Create the API client instance
-export const apiClient = createUserApiClient(API_BASE_URL, {
+export const apiClient = createUserApiClient(getApiBaseUrl(), {
   getAuthToken: getSessionToken,
   onUnauthorized: (error) => {
     const headers = error.config?.headers as unknown as {
