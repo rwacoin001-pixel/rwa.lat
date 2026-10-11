@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { X } from 'lucide-react'
+import { ArrowUpRight, BadgeCheck, ScrollText, ShieldCheck, X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { authLegalCopy, type AuthLegalKind } from '@/lib/auth-legal-copy'
@@ -36,6 +36,7 @@ const readLicenceDetails = (): LicenceDetails | null => {
 
 function AuthLegalDialog({
   kind,
+  select,
   close,
   termsHref,
   privacyHref,
@@ -44,6 +45,7 @@ function AuthLegalDialog({
   licence,
 }: {
   kind: AuthLegalKind
+  select: (kind: AuthLegalKind) => void
   close: () => void
   termsHref: string
   privacyHref: string
@@ -96,10 +98,16 @@ function AuthLegalDialog({
     }
   }
 
-  const title = kind === 'terms' ? copy.termsTitle : kind === 'privacy' ? copy.privacyTitle : copy.licence
+  const kinds: AuthLegalKind[] = licence ? ['terms', 'privacy', 'licence'] : ['terms', 'privacy']
+  const label = (item: AuthLegalKind) => item === 'terms' ? copy.termsTitle : item === 'privacy' ? copy.privacyTitle : copy.licence
   const version = kind === 'terms' ? termsVersion : kind === 'privacy' ? privacyVersion : undefined
   const docHref = kind === 'terms' ? termsHref : privacyHref
   const summary = kind === 'terms' ? copy.terms : kind === 'privacy' ? copy.privacy : undefined
+  const Seal = kind === 'terms' ? ScrollText : kind === 'privacy' ? ShieldCheck : BadgeCheck
+  const index = `${String(kinds.indexOf(kind) + 1).padStart(2, '0')} / ${String(kinds.length).padStart(2, '0')}`
+  const action = (href: string, text: string, ariaLabel?: string) => <a className={styles.legalAction} href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel}>
+    <span>{text}</span><span className={styles.legalActionIcon} aria-hidden="true"><ArrowUpRight size={18} strokeWidth={1.7} /></span>
+  </a>
 
   return createPortal(
     <div className={styles.legalOverlay} data-auth-theme={theme === 'dark' ? 'cool' : 'warm'}>
@@ -115,39 +123,47 @@ function AuthLegalDialog({
         tabIndex={-1}
         onKeyDown={onKeyDown}
       >
+        <span className={styles.grain} aria-hidden="true" />
         <span className={styles.legalHandle} aria-hidden="true" />
-        <header className={styles.legalHeader}>
-          <div>
-            <h2 id={`${id}-title`} className={styles.legalTitle}>{title}</h2>
-            <p id={`${id}-lede`} className={styles.legalLede}>{summary?.lede ?? copy.licenceSheet.lede}</p>
+        <div className={styles.legalBar}>
+          <div className={styles.legalTabs} data-count={kinds.length}>
+            {kinds.map(item => <button key={item} type="button" aria-pressed={item === kind} onClick={() => select(item)}>{label(item)}</button>)}
           </div>
           <button ref={closeRef} type="button" className={styles.legalClose} onClick={close} aria-label={copy.close}>
-            <X size={18} strokeWidth={1.8} aria-hidden="true" />
+            <X size={17} strokeWidth={1.8} aria-hidden="true" />
           </button>
-        </header>
+        </div>
 
-        {summary && <>
-          <p className={styles.legalMeta}>{copy.updated} {copy.updatedDate}{version ? ` · v${version}` : ''}</p>
-          <ul className={styles.legalList}>
-            {summary.points.map(point => <li key={point}>{point}</li>)}
-          </ul>
-          <a className={styles.legalAction} href={docHref} target="_blank" rel="noopener noreferrer">
-            <span>{copy.readFull}</span><span aria-hidden="true">↗</span>
-          </a>
-        </>}
+        <div className={styles.legalBody} key={kind}>
+          <header className={styles.legalHeader}>
+            <span className={styles.legalSeal} aria-hidden="true"><Seal size={20} strokeWidth={1.5} /></span>
+            <p className={styles.legalEyebrow} dir="ltr"><span>{index}</span>{version && <span className={styles.legalChip}>v{version}</span>}</p>
+          </header>
+          <h2 id={`${id}-title`} className={styles.legalTitle}>{label(kind)}</h2>
+          <p id={`${id}-lede`} className={styles.legalLede}>{summary?.lede ?? copy.licenceSheet.lede}</p>
 
-        {kind === 'licence' && licence && <>
-          <dl className={styles.legalDetails}>
-            <div><dt>{copy.licenceSheet.entity}</dt><dd>{licence.entity}</dd></div>
-            <div><dt>{copy.licenceSheet.regulator}</dt><dd>{licence.regulator}</dd></div>
-            <div><dt>{copy.licenceSheet.type}</dt><dd>{licence.type}</dd></div>
-            <div><dt>{copy.licenceSheet.number}</dt><dd dir="ltr">{licence.number}</dd></div>
-          </dl>
-          <a className={styles.legalAction} href={licence.url} target="_blank" rel="noopener noreferrer" aria-label={`${copy.verify}. ${copy.opensIn}`}>
-            <span>{copy.verify}</span><span aria-hidden="true">↗</span>
-          </a>
-          <p className={styles.legalMeta}>{copy.opensIn} {new URL(licence.url).hostname}</p>
-        </>}
+          {summary && <>
+            <ol className={styles.legalList}>
+              {summary.points.map((point, at) => <li key={point}><span dir="ltr">{String(at + 1).padStart(2, '0')}</span><p>{point}</p></li>)}
+            </ol>
+            <p className={styles.legalMeta}>{copy.updated} {copy.updatedDate}</p>
+            {action(docHref, copy.readFull)}
+          </>}
+
+          {kind === 'licence' && licence && <>
+            <div className={styles.legalCert}>
+              <small>{copy.licenceSheet.entity}</small>
+              <strong>{licence.entity}</strong>
+              <dl className={styles.legalDetails}>
+                <div><dt>{copy.licenceSheet.regulator}</dt><dd>{licence.regulator}</dd></div>
+                <div><dt>{copy.licenceSheet.type}</dt><dd>{licence.type}</dd></div>
+                <div><dt>{copy.licenceSheet.number}</dt><dd className={styles.legalNumber} dir="ltr">{licence.number}</dd></div>
+              </dl>
+            </div>
+            <p className={styles.legalMeta}>{copy.opensIn} · <span dir="ltr">{new URL(licence.url).hostname}</span></p>
+            {action(licence.url, copy.verify, `${copy.verify}. ${copy.opensIn}`)}
+          </>}
+        </div>
       </div>
     </div>,
     document.body,
@@ -182,6 +198,7 @@ export function AuthLegalFooter({
     {licence && <><span aria-hidden="true">·</span>{button('licence', copy.licence)}</>}
     {openKind && <AuthLegalDialog
       kind={openKind}
+      select={setOpenKind}
       close={() => setOpenKind(null)}
       termsHref={termsHref}
       privacyHref={privacyHref}
