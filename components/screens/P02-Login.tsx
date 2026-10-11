@@ -22,6 +22,7 @@ import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
+import { AuthLegalFooter } from './AuthLegalFooter'
 import { connectLoginWallet } from '@/lib/api/wallet-connection'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -394,11 +395,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     || (step === 'code' ? code.length !== 6 : step !== 'passkey' && retryAfter > 0)
     || (step === 'new' && (!agreed || !requirements))
 
-  const footer = <>
-    <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a>
-    <span aria-hidden="true">·</span>
-    <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a>
-  </>
+  const footer = <AuthLegalFooter
+    termsHref={termsHref}
+    privacyHref={privacyHref}
+    termsVersion={requirements?.required.find(item => item.documentType === 'terms')?.version}
+    privacyVersion={requirements?.required.find(item => item.documentType === 'privacy')?.version}
+  />
 
   const posterHero = !heading && <>
     <h1 className={styles.cardTitle}>{poster[0]} <em>{poster[1]}</em></h1>
