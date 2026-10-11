@@ -1,4 +1,4 @@
-const CACHE_NAME = 'a-reit-offline-v1'
+const CACHE_NAME = 'a-reit-offline-v2'
 const OFFLINE_ASSETS = [
   '/offline',
   '/brand/a-reit/app-icon.svg',
@@ -82,9 +82,19 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
+  // Only immutable files are cache-first. Everything else (RSC payloads, route data) goes to the
+  // network so an old build's payload can never be replayed against a newer set of chunks.
+  const immutable = url.pathname.startsWith('/_next/static/') || /\.(?:png|jpe?g|webp|avif|gif|svg|ico|woff2?|mp4)$/.test(url.pathname)
+  if (!immutable) {
+    event.respondWith(fetch(event.request).catch(() => caches.match(event.request)))
+    return
+  }
+
+  // A missing build chunk used to come back as a 200 HTML page; caching that under a .js URL
+  // broke the page on every visit. Only cache real assets (v2 also drops the poisoned v1 cache).
   event.respondWith(
     caches.match(event.request).then((cached) => cached || fetch(event.request).then((response) => {
-      if (response.ok) {
+      if (response.ok && !(response.headers.get('content-type') || '').includes('text/html')) {
         const copy = response.clone()
         event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)))
       }

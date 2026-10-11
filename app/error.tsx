@@ -1,21 +1,37 @@
 'use client'
 
-import Link from 'next/link'
-import { ArrowRight, RotateCw, ShieldAlert } from 'lucide-react'
+import { startTransition, useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { SystemState } from '@/components/system-state'
 
-export default function GlobalError({ reset }: { error: Error & { digest?: string }; reset: () => void }) {
-  return (
-    <main className="system-state-page">
-      <section className="system-state-card system-state-card--error">
-        <span className="system-state-icon"><ShieldAlert size={29} /></span>
-        <p>A-REIT · SAFE RECOVERY</p>
-        <h1>This view could not be loaded.</h1>
-        <small>No order, transfer, or account change was submitted. You can safely retry the view or return to your workspace.</small>
-        <div className="system-state-actions">
-          <button type="button" onClick={reset}><RotateCw size={18} />Retry view</button>
-          <Link href="/home">Return to Home <ArrowRight size={18} /></Link>
-        </div>
-      </section>
-    </main>
-  )
+const RELOAD_KEY = 'a-reit.chunk-reload-at'
+// After a deploy, an open page can ask for a chunk the new build no longer ships.
+const STALE_BUILD = /ChunkLoadError|Loading (?:CSS )?chunk|dynamically imported module|Importing a module script failed|Unexpected token '<'/i
+
+export default function RouteError({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
+  const router = useRouter()
+  const stale = STALE_BUILD.test(`${error.name} ${error.message}`)
+  const [reloading, setReloading] = useState(false)
+
+  const reload = () => {
+    setReloading(true)
+    try { sessionStorage.setItem(RELOAD_KEY, String(Date.now())) } catch { /* Storage is optional. */ }
+    window.location.reload()
+  }
+
+  useEffect(() => {
+    console.error(error)
+    if (!stale) return
+    // Reload once to pick up the current build; the timestamp stops a loop if the chunk is truly gone.
+    let last = 0
+    try { last = Number(sessionStorage.getItem(RELOAD_KEY) ?? 0) } catch { /* Storage is optional. */ }
+    if (Date.now() - last > 30_000) reload()
+  }, [error])
+
+  const retry = () => {
+    if (stale) return reload()
+    startTransition(() => { router.refresh(); reset() })
+  }
+
+  return <SystemState kind="error" reference={error.digest} onRetry={retry} retrying={reloading} />
 }
