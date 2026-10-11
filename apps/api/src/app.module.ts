@@ -38,8 +38,10 @@ import { PublicShareModule } from './sharing/public-share.module'
 import { LegalModule } from './legal/legal.module'
 import { ReferralHttpModule } from './referral/referral-http.module'
 import { AdminUsersModule } from './admin-users/admin-users.module'
+import { RobotsController } from './common/robots.controller'
 
 @Module({
+  controllers: [RobotsController],
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,

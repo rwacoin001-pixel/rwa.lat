@@ -19,8 +19,8 @@ import AppStartup from '@/components/app-startup'
 import IosInstallGate from '@/components/ios-install-gate'
 
 export const metadata: Metadata = {
-  title: 'A-REIT — AI Investment OS',
-  description: 'A premium USDT-first investment experience for AI Compute, RWA, global stocks and prediction markets.',
+  title: 'A-REIT｜以智能科技提升投资体验',
+  description: '凭借人工智能与持续创新，A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。',
   applicationName: 'A-REIT',
   manifest: '/manifest.webmanifest',
   keywords: ['AI investment', 'digital assets', 'AI Compute', 'RWA', 'portfolio intelligence'],
@@ -40,9 +40,14 @@ export const metadata: Metadata = {
     apple: [{ url: '/icons/a-reit-v1-apple-180.png', sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
-    title: 'A-REIT — Invest with intelligence.',
-    description: 'One USDT wallet. Global opportunities. AI-guided decisions.',
+    title: 'A-REIT｜以智能科技提升投资体验',
+    description: '凭借人工智能与持续创新，A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。',
     type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'A-REIT｜以智能科技提升投资体验',
+    description: '凭借人工智能与持续创新，A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。',
   },
 }
 

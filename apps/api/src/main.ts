@@ -32,7 +32,7 @@ async function bootstrap() {
   app.enableCors(createApiCorsOptions(parseOrigins(process.env.CORS_ORIGINS)))
   app.use(new RequestContextMiddleware().use)
   app.use(createApiRateLimitMiddleware())
-  app.setGlobalPrefix(prefix,{exclude:[{path:'r/:code',method:RequestMethod.GET}]})
+  app.setGlobalPrefix(prefix,{exclude:[{path:'r/:code',method:RequestMethod.GET},{path:'robots.txt',method:RequestMethod.GET}]})
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   app.useGlobalFilters(new HttpExceptionFilter())
 

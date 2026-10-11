@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation'
+import type { Metadata } from 'next'
 import RwaH5 from '@/components/rwa-app-entry'
 import { screenForSegments } from '@/lib/rwa-routes'
 import { screenForV2Query, screenForV2Segments } from '@/lib/routes-v2-adapter'
@@ -7,6 +8,27 @@ import { resolveRoute } from '@/lib/routes-v2'
 type RoutePageProps = {
   params: Promise<{ rwa?: string[] }>
   searchParams: Promise<Record<string, string | string[] | undefined>>
+}
+
+const privateLegacyScreens = new Set([
+  'home', 'portfolio', 'wallet', 'order-review', 'order-processing', 'order-success',
+  'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw',
+  'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail',
+  'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile',
+  'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings',
+  'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements',
+  'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem',
+])
+
+export async function generateMetadata({ params }: Pick<RoutePageProps, 'params'>): Promise<Metadata> {
+  const { rwa = [] } = await params
+  const pathname = '/' + rwa.join('/')
+  const routeRequiresSession = resolveRoute(pathname)?.def.auth === 'required'
+  const legacyScreenRequiresSession = privateLegacyScreens.has(screenForSegments(rwa) ?? '')
+
+  return routeRequiresSession || legacyScreenRequiresSession
+    ? { robots: { index: false, follow: false } }
+    : {}
 }
 
 export default async function RoutePage({ params, searchParams }: RoutePageProps) {
