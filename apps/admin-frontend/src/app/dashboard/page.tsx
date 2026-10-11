@@ -1,11 +1,13 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type ComponentType, type ReactNode } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/layout/AdminLayout'
+import { ErrorState, useApi } from '@/components/console/framework'
+import { denies, useAdminProfile } from '@/components/rbac-gate'
 import { MiniBars, ProgressBar, ProgressRing, StatCard } from '@/components/ui/visuals'
 import { cn } from '@/lib/utils'
-import { Activity, ArrowUpRight, MessageCircle, PieChart, RefreshCw, ShieldCheck, Sparkles, Store } from 'lucide-react'
+import { Activity, ArrowUpRight, CheckCircle2, MessageCircle, PieChart, Receipt, RefreshCw, ShieldCheck, Sparkles, Store, Wallet } from 'lucide-react'
 
 type FacetClass = { assetClass: string; total: number; priced: number; scored: number; aboveMinScore: number; maxScore: number | null; inDefaultSet: boolean }
 type Facets = { minScore: number; totalCandidates: number; classes: FacetClass[] }
@@ -34,6 +36,90 @@ const STATE_LABELS: Record<string, { label: string; className: string }> = {
   differences_found: { label: '有差异', className: 'bg-rose-500/12 text-rose-600' },
 }
 
+const QUEUE_LIMIT = 200
+
+type Source<T> = { data: T | null; loading: boolean; error: string; denied: boolean; reload: () => void }
+type SourceStatus = Pick<Source<unknown>, 'loading' | 'error' | 'denied'> & { ready: boolean }
+
+/** 已知无权限时不发请求并标记 denied；其余情况照常请求，由后端裁决。 */
+function useSource<T>(url: string, anyOf: string[]): Source<T> {
+  const denied = denies(useAdminProfile(), anyOf)
+  const api = useApi<T>(denied ? null : url)
+  return { ...api, denied }
+}
+
+function status(...sources: Source<unknown>[]): SourceStatus {
+  return {
+    ready: sources.every((source) => source.data !== null),
+    loading: sources.some((source) => source.loading),
+    error: sources.map((source) => source.error).filter(Boolean).join('；'),
+    denied: sources.some((source) => source.denied),
+  }
+}
+
+function listOf<T>(value: unknown, key: string): T[] | null {
+  if (Array.isArray(value)) return value as T[]
+  if (value && typeof value === 'object' && Array.isArray((value as Record<string, unknown>)[key])) return (value as Record<string, T[]>)[key]
+  return null
+}
+
+/** 卡片数值：加载中 …；失败/无权限 —；数据就绪时照常显示（含 0）。 */
+function show(state: SourceStatus, render: () => ReactNode): ReactNode {
+  if (state.denied || state.error) return '—'
+  if (state.loading || !state.ready) return '…'
+  return render()
+}
+
+function SourceNote({ sources, fallback }: { sources: Source<unknown>[]; fallback?: ReactNode }) {
+  if (sources.some((source) => source.denied)) return <span className="text-text-faint">无权限查看</span>
+  const failed = sources.filter((source) => source.error)
+  if (!failed.length) return <>{fallback}</>
+  return (
+    <span className="text-rose-600" title={failed.map((source) => source.error).join('；')}>
+      加载失败 ·{' '}
+      <button type="button" onClick={() => failed.forEach((source) => source.reload())} className="font-medium underline underline-offset-2">
+        重试
+      </button>
+    </span>
+  )
+}
+
+function QueueCard({
+  label,
+  href,
+  source,
+  count,
+  icon: Icon,
+  delay,
+}: {
+  label: string
+  href: string
+  source: Source<unknown>
+  count: number | null
+  icon: ComponentType<{ className?: string }>
+  delay: number
+}) {
+  const state = status(source)
+  const value = show(state, () => (count === null ? '—' : count >= QUEUE_LIMIT ? `${QUEUE_LIMIT}+` : count.toLocaleString()))
+  const waiting = !state.error && !state.denied && (count ?? 0) > 0
+  return (
+    <div className="glass-strong card-lift animate-rise rounded-card p-4" style={{ animationDelay: `${delay}ms` }}>
+      <Link href={href} className="group flex items-start justify-between gap-3">
+        <span className="min-w-0">
+          <span className="block truncate text-[12px] font-medium text-text-secondary">{label}</span>
+          <span className={cn('mt-1 block text-2xl font-bold tabular-nums', waiting ? 'text-amber-600' : 'text-ink')}>{value}</span>
+        </span>
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-ink/[0.04] transition-colors group-hover:bg-mint/12">
+          <Icon className="h-4 w-4 text-text-faint transition-colors group-hover:text-mint" />
+        </span>
+      </Link>
+      <p className="mt-1.5 truncate text-[11px] text-text-faint">
+        <SourceNote sources={[source]} fallback={state.loading ? '加载中…' : waiting ? '待处理，点击进入' : '当前无待办'} />
+      </p>
+    </div>
+  )
+}
+
 function greeting(hour: number) {
   if (hour < 6) return '凌晨好'
   if (hour < 12) return '早上好'
@@ -43,47 +129,29 @@ function greeting(hour: number) {
 }
 
 export default function DashboardPage() {
-  const [facets, setFacets] = useState<Facets | null>(null)
-  const [community, setCommunity] = useState<CommunityStats | null>(null)
-  const [strategies, setStrategies] = useState<StrategyRow[]>([])
-  const [portfolios, setPortfolios] = useState<PortfolioRow[]>([])
-  const [recons, setRecons] = useState<ReconRow[]>([])
-  const [loading, setLoading] = useState(true)
+  const facetsSrc = useSource<Facets>('/api/admin/basket/candidate-facets', ['basket.operations.manage'])
+  const communitySrc = useSource<CommunityStats>('/api/admin/community/stats', ['community.content.review'])
+  const strategiesSrc = useSource<unknown>('/api/admin/basket/strategies', ['basket.operations.manage'])
+  const portfoliosSrc = useSource<unknown>('/api/admin/basket/portfolios?includeClosed=true', ['basket.operations.manage'])
+  const reconsSrc = useSource<unknown>('/api/admin/basket/reconciliations?limit=50', ['basket.operations.manage'])
+  const withdrawalQueue = useSource<unknown[]>(`/api/admin/wallet/withdrawals/reviews?limit=${QUEUE_LIMIT}`, ['wallet.withdrawals.manage'])
+  const kycQueue = useSource<unknown[]>(`/api/admin/console/kyc?state=submitted&limit=${QUEUE_LIMIT}`, ['core.console.view'])
+  const settlementQueue = useSource<Array<{ reviewState?: string }>>('/api/admin/manual-settlements', ['orders.settlement.review'])
+  const approvalQueue = useSource<unknown[]>(`/api/admin/approvals?state=requested&limit=${QUEUE_LIMIT}`, ['approvals.manage'])
   const [now, setNow] = useState('')
 
-  const load = async () => {
-    setLoading(true)
-    const [facetsRes, communityRes, strategiesRes, portfoliosRes, reconsRes] = await Promise.allSettled([
-      fetch('/api/admin/basket/candidate-facets', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
-      fetch('/api/admin/community/stats', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
-      fetch('/api/admin/basket/strategies', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
-      fetch('/api/admin/basket/portfolios?includeClosed=true', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
-      fetch('/api/admin/basket/reconciliations?limit=50', { credentials: 'include' }).then((res) => (res.ok ? res.json() : null)),
-    ])
-    if (facetsRes.status === 'fulfilled' && facetsRes.value) setFacets(facetsRes.value as Facets)
-    if (communityRes.status === 'fulfilled' && communityRes.value) setCommunity(communityRes.value as CommunityStats)
-    if (strategiesRes.status === 'fulfilled') {
-      const value = strategiesRes.value as unknown
-      if (Array.isArray(value)) setStrategies(value as StrategyRow[])
-      else if (value && Array.isArray((value as { strategies?: unknown }).strategies)) setStrategies((value as { strategies: StrategyRow[] }).strategies)
-    }
-    if (portfoliosRes.status === 'fulfilled') {
-      const value = portfoliosRes.value as unknown
-      if (Array.isArray(value)) setPortfolios(value as PortfolioRow[])
-      else if (value && Array.isArray((value as { portfolios?: unknown }).portfolios)) setPortfolios((value as { portfolios: PortfolioRow[] }).portfolios)
-    }
-    if (reconsRes.status === 'fulfilled') {
-      const value = reconsRes.value as unknown
-      if (Array.isArray(value)) setRecons(value as ReconRow[])
-      else if (value && Array.isArray((value as { runs?: unknown }).runs)) setRecons((value as { runs: ReconRow[] }).runs)
-    }
-    setLoading(false)
-  }
+  const allSources: Source<unknown>[] = [facetsSrc, communitySrc, strategiesSrc, portfoliosSrc, reconsSrc, withdrawalQueue, kycQueue, settlementQueue, approvalQueue]
+  const loading = allSources.some((source) => source.loading)
+  const load = () => allSources.forEach((source) => { if (!source.denied) source.reload() })
+
+  const facets = facetsSrc.data
+  const community = communitySrc.data
+  const strategies = useMemo(() => listOf<StrategyRow>(strategiesSrc.data, 'strategies') ?? [], [strategiesSrc.data])
+  const portfolios = useMemo(() => listOf<PortfolioRow>(portfoliosSrc.data, 'portfolios') ?? [], [portfoliosSrc.data])
+  const recons = useMemo(() => listOf<ReconRow>(reconsSrc.data, 'runs') ?? [], [reconsSrc.data])
 
   useEffect(() => {
-    void load()
     setNow(new Date().toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' }))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const totals = useMemo(() => {
@@ -119,6 +187,7 @@ export default function DashboardPage() {
 
   const activeStrategies = strategies.filter((row) => row.status === 'active').length
   const activePortfolios = portfolios.filter((row) => row.status === 'active' || row.status === 'pilot').length
+  const settlementPending = settlementQueue.data ? settlementQueue.data.filter((row) => row.reviewState === 'pending').length : null
 
   return (
     <AdminLayout>
@@ -128,7 +197,7 @@ export default function DashboardPage() {
 
           <button
             type="button"
-            onClick={() => void load()}
+            onClick={load}
             disabled={loading}
             className="glass-strong card-lift flex w-fit items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium disabled:opacity-60"
           >
@@ -140,36 +209,44 @@ export default function DashboardPage() {
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             label="资产目录规模"
-            value={totals ? totals.total.toLocaleString() : loading ? '…' : '—'}
-            sub={totals ? `有行情报价 ${totals.priced.toLocaleString()} 个` : 'RWA 标准化目录'}
+            value={show(status(facetsSrc), () => totals?.total.toLocaleString())}
+            sub={<SourceNote sources={[facetsSrc]} fallback={totals ? `有行情报价 ${totals.priced.toLocaleString()} 个` : 'RWA 标准化目录'} />}
             icon={Store}
             tone="mint"
             delay={40}
           />
           <StatCard
             label={`可入篮候选（评分 ≥ ${facets?.minScore ?? 60}）`}
-            value={facets ? facets.totalCandidates.toLocaleString() : loading ? '…' : '—'}
-            sub="确定性评分驱动 · 供目标配置使用"
+            value={show(status(facetsSrc), () => facets?.totalCandidates.toLocaleString())}
+            sub={<SourceNote sources={[facetsSrc]} fallback="确定性评分驱动 · 供目标配置使用" />}
             icon={Sparkles}
             tone="violet"
             delay={90}
           />
           <StatCard
             label="策略 / 组合"
-            value={loading && !strategies.length ? '…' : `${strategies.length} / ${portfolios.length}`}
-            sub={`运行中策略 ${activeStrategies} · 在管组合 ${activePortfolios}`}
+            value={show(status(strategiesSrc, portfoliosSrc), () => `${strategies.length} / ${portfolios.length}`)}
+            sub={<SourceNote sources={[strategiesSrc, portfoliosSrc]} fallback={`运行中策略 ${activeStrategies} · 在管组合 ${activePortfolios}`} />}
             icon={PieChart}
             tone="sky"
             delay={140}
           />
           <StatCard
             label="社区帖子"
-            value={community ? community.posts.toLocaleString() : loading ? '…' : '—'}
-            sub={community ? `近 24 小时 +${community.postsLast24h} · 待审 ${community.queuePending}` : '内容雷达自动巡查'}
+            value={show(status(communitySrc), () => community?.posts.toLocaleString())}
+            sub={<SourceNote sources={[communitySrc]} fallback={community ? `近 24 小时 +${community.postsLast24h} · 待审 ${community.queuePending}` : '内容雷达自动巡查'} />}
             icon={MessageCircle}
             tone="emerald"
             delay={190}
           />
+        </div>
+
+        {/* ── 待办队列 ─────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+          <QueueCard label="待审提现" href="/withdrawals" icon={Wallet} source={withdrawalQueue} count={withdrawalQueue.data?.length ?? null} delay={200} />
+          <QueueCard label="待审 KYC" href="/kyc" icon={ShieldCheck} source={kycQueue} count={kycQueue.data?.length ?? null} delay={220} />
+          <QueueCard label="待复核结算" href="/orders" icon={Receipt} source={settlementQueue} count={settlementPending} delay={240} />
+          <QueueCard label="待审批" href="/approvals" icon={CheckCircle2} source={approvalQueue} count={approvalQueue.data?.length ?? null} delay={260} />
         </div>
 
         {/* ── 柱状图 + 覆盖健康 ────────────────────────── */}
@@ -179,17 +256,23 @@ export default function DashboardPage() {
               <div>
                 <h2 className="text-base font-semibold">资产目录构成</h2>
                 <p className="mt-0.5 text-xs text-text-faint">
-                  按资产类别分布（共 {facets?.classes.length ?? '—'} 类 · {(totals?.total ?? 0).toLocaleString()} 个资产）
+                  按资产类别分布（共 {facets?.classes.length ?? '—'} 类 · {totals ? totals.total.toLocaleString() : '—'} 个资产）
                 </p>
               </div>
               <Link href="/basket" className="flex items-center gap-1 text-xs font-medium text-mint transition-colors hover:text-accent-2">
                 生成目标配置 <ArrowUpRight className="h-3.5 w-3.5" />
               </Link>
             </div>
-            {barData.length ? (
+            {facetsSrc.error ? (
+              <div className="flex h-[190px] items-center">
+                <div className="w-full"><ErrorState error={facetsSrc.error} onRetry={facetsSrc.reload} /></div>
+              </div>
+            ) : facetsSrc.denied ? (
+              <div className="flex h-[190px] items-center justify-center text-sm text-muted-foreground">无权限查看资产目录</div>
+            ) : barData.length ? (
               <MiniBars data={barData} height={190} tone="mint" />
             ) : (
-              <div className="flex h-[190px] items-center justify-center text-sm text-muted-foreground">{loading ? '加载中…' : '暂无目录数据（等待市场同步）'}</div>
+              <div className="flex h-[190px] items-center justify-center text-sm text-muted-foreground">{facetsSrc.loading ? '加载中…' : '暂无目录数据（等待市场同步）'}</div>
             )}
             <p className="mt-3 border-t border-ink/[0.06] pt-3 text-[11px] leading-relaxed text-text-faint">
               高亮柱 = 该类别存在达到评分线（≥{facets?.minScore ?? 60} 分）且带行情价格的候选资产；灰柱 = 仅有目录记录，暂不可入篮。
@@ -198,7 +281,9 @@ export default function DashboardPage() {
 
           <div className="glass-strong card-lift animate-rise flex flex-col rounded-card p-5" style={{ animationDelay: '260ms' }}>
             <h2 className="text-base font-semibold">目录数据覆盖</h2>
-            <p className="mt-0.5 text-xs text-text-faint">同步管线对目录资产的行情 / 评分覆盖</p>
+            <p className="mt-0.5 text-xs text-text-faint">
+              <SourceNote sources={[facetsSrc]} fallback="同步管线对目录资产的行情 / 评分覆盖" />
+            </p>
             <div className="mt-4 flex-1 space-y-4">
               <ProgressBar
                 value={totals?.scoreCoverage ?? null}
@@ -235,6 +320,7 @@ export default function DashboardPage() {
               </Link>
             </div>
             <div className="space-y-1.5">
+              {reconsSrc.error && <ErrorState error={reconsSrc.error} onRetry={reconsSrc.reload} />}
               {recons.slice(0, 5).map((row) => {
                 const state = STATE_LABELS[row.state] ?? { label: row.state, className: 'bg-ink/[0.06] text-text-secondary' }
                 return (
@@ -251,10 +337,10 @@ export default function DashboardPage() {
                   </div>
                 )
               })}
-              {!recons.length && (
+              {!recons.length && !reconsSrc.error && (
                 <div className="flex items-center gap-3 rounded-xl bg-ink/[0.03] px-4 py-6 text-sm text-muted-foreground">
                   <ShieldCheck className="h-4 w-4" />
-                  {loading ? '加载中…' : '暂无对账记录 — 在 Basket 运营页对组合执行「对账」后展示。'}
+                  {reconsSrc.loading ? '加载中…' : reconsSrc.denied ? '无权限查看对账记录' : '暂无对账记录 — 在 Basket 运营页对组合执行「对账」后展示。'}
                 </div>
               )}
             </div>
@@ -269,7 +355,10 @@ export default function DashboardPage() {
               <ProgressRing value={reconStats.rate} tone={reconStats.rate === null ? 'slate' : reconStats.rate >= 99 ? 'emerald' : reconStats.rate >= 90 ? 'amber' : 'rose'} label="对账一致率" />
             </div>
             <p className="mt-3 border-t border-ink/[0.06] pt-3 text-center text-xs text-text-faint">
-              {reconStats.total ? `近 ${reconStats.total} 次对账 · 一致 ${reconStats.matched} 次` : '暂无对账数据'}
+              <SourceNote
+                sources={[reconsSrc]}
+                fallback={reconStats.total ? `近 ${reconStats.total} 次对账 · 一致 ${reconStats.matched} 次` : reconsSrc.loading ? '加载中…' : '暂无对账数据'}
+              />
             </p>
           </div>
         </div>
@@ -277,7 +366,12 @@ export default function DashboardPage() {
         {/* ── 社区概览 ─────────────────────────────────── */}
         <div className="glass-strong card-lift animate-rise rounded-card p-5" style={{ animationDelay: '380ms' }}>
           <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-base font-semibold">社区概览</h2>
+            <h2 className="text-base font-semibold">
+              社区概览
+              {(communitySrc.error || communitySrc.denied) && (
+                <span className="ml-2 text-xs font-normal"><SourceNote sources={[communitySrc]} /></span>
+              )}
+            </h2>
             <Link href="/community" className="flex items-center gap-1 text-xs font-medium text-mint transition-colors hover:text-accent-2">
               审核台 <ArrowUpRight className="h-3.5 w-3.5" />
             </Link>
@@ -292,7 +386,7 @@ export default function DashboardPage() {
               <div key={entry.label} className="rounded-2xl bg-ink/[0.03] px-4 py-3.5 transition-colors hover:bg-ink/[0.05]">
                 <p className="text-xs text-text-faint">{entry.label}</p>
                 <p className={cn('mt-1 text-xl font-bold tabular-nums', entry.warn && (entry.value ?? 0) > 0 ? 'text-amber-600' : 'text-ink')}>
-                  {entry.value ?? (loading ? '…' : '—')}
+                  {show(status(communitySrc), () => (entry.value ?? 0).toLocaleString())}
                 </p>
               </div>
             ))}

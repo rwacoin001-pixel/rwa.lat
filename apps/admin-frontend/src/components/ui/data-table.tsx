@@ -9,6 +9,9 @@ import { Pagination } from "@/components/ui/pagination";
 import { Search, Filter, ChevronDown, ChevronUp, MoreHorizontal } from "lucide-react";
 import { forwardRef } from "react";
 
+// Radix Select forbids empty-string item values; this sentinel maps back to "" for callers.
+const ALL_FILTER = "__all__";
+
 interface Column<T> {
   key: string;
   header: string;
@@ -93,12 +96,16 @@ function DataTable<T>({
             </div>
           )}
           {filters.map((filter) => (
-            <Select key={filter.key} value={filter.value} onValueChange={filter.onChange}>
+            <Select
+              key={filter.key}
+              value={filter.value || ALL_FILTER}
+              onValueChange={(v) => filter.onChange(v === ALL_FILTER ? "" : v)}
+            >
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder={filter.label} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">全部</SelectItem>
+                <SelectItem value={ALL_FILTER}>全部</SelectItem>
                 {filter.options.map((opt) => (
                   <SelectItem key={opt.value} value={opt.value}>
                     {opt.label}

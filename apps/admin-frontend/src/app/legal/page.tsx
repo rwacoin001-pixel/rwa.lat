@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { PageHeader } from '@/components/console/framework'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -20,6 +21,7 @@ export default function LegalEditorPage() {
   const [notice, setNotice] = useState('')
   const [failed, setFailed] = useState(false)
   const [preview, setPreview] = useState<LegalContent | null>(null)
+  const [discardOpen, setDiscardOpen] = useState(false)
   const apply = (value: LegalConfiguration) => { setConfiguration(value); setForm({ ...empty(value.kind), ...value.draft }); setDirty(false) }
   useEffect(() => {
     let active = true
@@ -36,16 +38,14 @@ export default function LegalEditorPage() {
     try { await work() } catch(e) { setFailed(true); setNotice(e instanceof Error ? e.message : '操作失败') }
     finally { setBusy(false) }
   }
+  const reload = () => void act(async () => { const [value,versions]=await Promise.all([adminApi.getLegal(kind),adminApi.legalVersions(kind)]);apply(value);setHistory(versions);setPreview(null) })
   return <AdminLayout><div className="space-y-5">
     <PageHeader title="服务条款与隐私" subtitle="发布后仅新注册用户确认；历史版本保留。" />
     <div className="flex flex-wrap gap-2" role="group" aria-label="法律文件">
       {(['terms','privacy'] as const).map(value => <Button key={value} variant={kind === value ? 'default' : 'outline'} disabled={busy || dirty} onClick={() => setKind(value)} aria-pressed={kind === value}>{names[value]}</Button>)}
     </div>
     <div className="flex flex-wrap items-center gap-3">
-      <Button variant="outline" disabled={busy} onClick={() => {
-        if (dirty && !window.confirm('放弃未保存修改？')) return
-        void act(async () => { const [value,versions]=await Promise.all([adminApi.getLegal(kind),adminApi.legalVersions(kind)]);apply(value);setHistory(versions);setPreview(null) })
-      }}>重新加载</Button>
+      <Button variant="outline" disabled={busy} onClick={() => { if (dirty) setDiscardOpen(true); else reload() }}>重新加载</Button>
       <Button disabled={busy || !configuration} onClick={() => void act(async () => {
         if (configuration) { apply(await adminApi.saveLegal(kind, configuration.revision, form)); setNotice('草稿已保存') }
       })}>保存草稿</Button>
@@ -76,5 +76,6 @@ export default function LegalEditorPage() {
     {!!history.length && <section className="space-y-2"><h2 className="text-sm font-medium">已发布版本</h2>{history.map(row => <div key={row.version} className="flex flex-wrap items-center gap-3 rounded-xl border p-3 text-sm">
       <span>{row.version}</span><time dateTime={row.publishedAt}>{new Date(row.publishedAt).toLocaleString()}</time><Button variant="ghost" onClick={() => setPreview(row.content)}>查看正文</Button>
     </div>)}</section>}
+    <ConfirmDialog open={discardOpen} onOpenChange={setDiscardOpen} title="放弃未保存修改？" description={`${names[kind]}草稿有未保存的修改，重新加载后将丢失。`} confirmLabel="放弃并重新加载" destructive onConfirm={reload} />
   </div></AdminLayout>
 }

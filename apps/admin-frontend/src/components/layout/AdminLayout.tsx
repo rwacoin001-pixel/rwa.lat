@@ -34,8 +34,8 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  ShoppingCart,
   SlidersHorizontal,
-  Tag,
   TrendingUp,
   Users,
   Wallet,
@@ -50,6 +50,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { RbacGate, allows, routePermissions, useAdminProfile, type ProfileState } from '@/components/rbac-gate'
 
 type NavItem = { name: string; href: string; icon: React.ComponentType<{ className?: string }> }
 type NavSection = { id: string; title: string; icon: React.ComponentType<{ className?: string }>; items: NavItem[] }
@@ -70,8 +71,7 @@ const NAV_SECTIONS: NavSection[] = [
       { name: '运营控制', href: '/control', icon: SlidersHorizontal },
       { name: 'Basket 运营', href: '/basket', icon: PieChart },
       { name: '资产分析', href: '/assets', icon: TrendingUp },
-      { name: '资产目录', href: '/listings', icon: FileText },
-      { name: '定价管理', href: '/pricing', icon: Tag },
+      { name: '订单', href: '/orders', icon: ShoppingCart },
       { name: '收益管理', href: '/yields', icon: Percent },
       { name: '结算管理', href: '/settlements', icon: Receipt },
       { name: '预测市场', href: '/polymarket', icon: Activity },
@@ -121,8 +121,8 @@ const NAV_SECTIONS: NavSection[] = [
     icon: Settings,
     items: [
       { name: 'AI 运维', href: '/ai-ops', icon: Bot },
-        { name: '客服知识库', href: '/ai-knowledge', icon: BookOpen },
-        { name: 'AI 投资管理', href: '/ai-investment', icon: PieChart },
+      { name: '客服知识库', href: '/ai-knowledge', icon: BookOpen },
+      { name: 'AI 投资管理', href: '/ai-investment', icon: PieChart },
       { name: '审批中心', href: '/approvals', icon: CheckCircle2 },
       { name: '作业队列', href: '/job-queue', icon: Workflow },
       { name: '通知管理', href: '/notifications', icon: BellRing },
@@ -144,6 +144,10 @@ const DOCK_ITEMS: NavItem[] = [
   { name: '社区审核', href: '/community', icon: MessageCircle },
   { name: '钱包', href: '/wallets', icon: Wallet },
 ]
+
+function visibleItems(items: NavItem[], access: ProfileState) {
+  return items.filter((item) => allows(access, routePermissions(item.href)))
+}
 
 function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(href + '/')
@@ -235,7 +239,7 @@ function SidebarSection({
   )
 }
 
-function AccountMenu({ align }: { align: 'start' | 'end' }) {
+function AccountMenu({ align, canAudit }: { align: 'start' | 'end'; canAudit: boolean }) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -257,11 +261,13 @@ function AccountMenu({ align }: { align: 'start' | 'end' }) {
             <Settings className="h-4 w-4" /> 系统设置
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/audit" className="flex w-full items-center gap-2">
-            <ScrollText className="h-4 w-4" /> 审计日志
-          </Link>
-        </DropdownMenuItem>
+        {canAudit && (
+          <DropdownMenuItem asChild>
+            <Link href="/audit" className="flex w-full items-center gap-2">
+              <ScrollText className="h-4 w-4" /> 审计日志
+            </Link>
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem className="text-negative" asChild>
           <form action="/api/auth/logout" method="POST" className="w-full">
@@ -279,18 +285,15 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
   const [closedSections, setClosedSections] = useState<Record<string, boolean>>({})
   const [allOpen, setAllOpen] = useState(false)
-  const [adminIdentity, setAdminIdentity] = useState<{email: string} | null>(null)
-
-  useEffect(() => {
-    const controller = new AbortController()
-    void fetch('/api/admin/auth/me', {credentials: 'include', cache: 'no-store', signal: controller.signal})
-      .then(async response => {
-        if (!response.ok) return
-        const profile = await response.json()
-        if (!controller.signal.aborted && typeof profile?.email === 'string') setAdminIdentity({email: profile.email})
-      }).catch(() => { /* Keep a neutral label when identity cannot be loaded. */ })
-    return () => controller.abort()
-  }, [])
+  const access = useAdminProfile()
+  const adminIdentity = access.profile
+  const sections = useMemo(
+    () => NAV_SECTIONS.map((section) => ({ ...section, items: visibleItems(section.items, access) })).filter((section) => section.items.length > 0),
+    [access],
+  )
+  const dockItems = useMemo(() => visibleItems(DOCK_ITEMS, access), [access])
+  const canAudit = allows(access, routePermissions('/audit'))
+  const pagePermissions = routePermissions(pathname)
 
   // 全局 401 拦截：管理会话过期/失效时统一回到登录页并提示重新登录，
   // 而不是让每个页面的数据请求各自显示 "Admin session is invalid or expired"。
@@ -333,7 +336,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
 
           {/* 导航（可滚动，隐藏滚动条） */}
           <nav className="scrollbar-hide flex-1 overflow-y-auto px-2.5 pb-3">
-            {NAV_SECTIONS.map((section) => (
+            {sections.map((section) => (
               <SidebarSection
                 key={section.id}
                 section={section}
@@ -368,11 +371,13 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                       <Settings className="h-4 w-4" /> 系统设置
                     </Link>
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/audit" className="flex w-full items-center gap-2">
-                      <ScrollText className="h-4 w-4" /> 审计日志
-                    </Link>
-                  </DropdownMenuItem>
+                  {canAudit && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/audit" className="flex w-full items-center gap-2">
+                        <ScrollText className="h-4 w-4" /> 审计日志
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem className="text-negative" asChild>
                     <form action="/api/auth/logout" method="POST" className="w-full">
@@ -406,21 +411,25 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
             <div className="flex shrink-0 items-center gap-1.5">
-              <Link
-                href="/audit"
-                title="审计日志"
-                aria-label="审计日志"
-                className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:bg-ink/[0.05] hover:text-ink"
-              >
-                <Bell className="h-[18px] w-[18px]" />
-              </Link>
+              {canAudit && (
+                <Link
+                  href="/audit"
+                  title="审计日志"
+                  aria-label="审计日志"
+                  className="flex h-10 w-10 items-center justify-center rounded-full text-text-secondary transition-all duration-200 hover:bg-ink/[0.05] hover:text-ink"
+                >
+                  <Bell className="h-[18px] w-[18px]" />
+                </Link>
+              )}
               <div className="hidden sm:block">
-                <AccountMenu align="end" />
+                <AccountMenu align="end" canAudit={canAudit} />
               </div>
             </div>
           </header>
 
-          <div className="pb-24 lg:pb-6">{children}</div>
+          <div className="pb-24 lg:pb-6">
+            <RbacGate anyOf={pagePermissions}>{children}</RbacGate>
+          </div>
         </div>
       </div>
 
@@ -436,7 +445,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
               <p className="text-xs text-muted-foreground">全部页面</p>
             </div>
           </div>
-          {NAV_SECTIONS.map((section) => (
+          {sections.map((section) => (
             <div key={section.id} className="mb-1">
               <p className="px-3 pb-1 pt-3 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-text-faint">{section.title}</p>
               <nav className="flex flex-col gap-0.5">
@@ -467,7 +476,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       {/* ── Mobile bottom dock ──────────────────────────────── */}
       <nav className="glass-strong fixed bottom-3 left-3 right-3 z-40 rounded-[22px] px-1.5 py-1.5 lg:hidden">
         <div className="flex items-center justify-around">
-          {DOCK_ITEMS.map((item) => {
+          {dockItems.map((item) => {
             const active = isActive(pathname, item.href)
             const Icon = item.icon
             return (

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 type ReconRun = {
   id: string
@@ -36,6 +37,14 @@ type Adjustment = {
   assetCode: string
 }
 
+const ACTION_COPY = {
+  approve: { title: '通过调整单', description: '通过后等待过账。', confirm: '确认通过' },
+  reject: { title: '驳回调整单', description: '驳回后该调整单不可再过账。', confirm: '确认驳回' },
+  post: { title: '过账调整单', description: '将通过不可变账本写入一笔记账分录，过账后不可撤销。', confirm: '确认过账' },
+} as const
+
+const FIELD = 'w-full rounded-xl border border-ink/10 bg-white/80 px-3 py-2 text-[13px] shadow-sm'
+
 const RECON_TABS = [
   { value: '', label: '全部' },
   { value: 'matched', label: '一致' },
@@ -56,6 +65,8 @@ export default function LedgerPage() {
   const [adjState, setAdjState] = useState('')
   const [busy, setBusy] = useState('')
   const [notice, setNotice] = useState('')
+  const [pending, setPending] = useState<{ row: Adjustment; action: 'approve' | 'reject' | 'post' } | null>(null)
+  const [reason, setReason] = useState('')
 
   const recon = useApi<{ runs: ReconRun[] }>(`/api/admin/ledger/reconciliations${reconState ? `?state=${reconState}` : ''}`)
   const adjustments = useApi<{ adjustments: Adjustment[] }>(`/api/admin/ledger/adjustments${adjState ? `?state=${adjState}` : ''}`)
@@ -65,14 +76,14 @@ export default function LedgerPage() {
     window.setTimeout(() => setNotice(''), 6000)
   }
 
+  const openAct = (row: Adjustment, action: 'approve' | 'reject' | 'post') => {
+    setReason('')
+    setPending({ row, action })
+  }
+
+  // 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const act = async (row: Adjustment, action: 'approve' | 'reject' | 'post') => {
-    let reason: string | null = null
-    if (action === 'post') {
-      if (!window.confirm('确认过账该调整单？将通过不可变账本写入一笔记账分录。')) return
-    } else {
-      reason = window.prompt(action === 'approve' ? '通过理由（可选）' : '驳回理由（必填）', '')
-      if (action === 'reject' && !reason) return
-    }
+    if (action === 'reject' && !reason) throw new Error('请填写驳回理由')
     setBusy(row.id)
     try {
       const res = await fetch(`/api/admin/ledger/adjustments/${row.id}/${action}`, {
@@ -85,8 +96,6 @@ export default function LedgerPage() {
       if (!res.ok) throw new Error((body?.message as string) || `操作失败 (HTTP ${res.status})`)
       showNotice(action === 'approve' ? '已通过（等待过账）' : action === 'reject' ? '已驳回' : '已过账（写入账本）')
       await adjustments.reload()
-    } catch (err) {
-      showNotice(err instanceof Error ? err.message : '操作失败')
     } finally {
       setBusy('')
     }
@@ -165,7 +174,7 @@ export default function LedgerPage() {
               <button
                 type="button"
                 disabled={busy === row.id}
-                onClick={() => void act(row, 'approve')}
+                onClick={() => openAct(row, 'approve')}
                 className="rounded-lg bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-500/20 disabled:opacity-50"
               >
                 通过
@@ -173,7 +182,7 @@ export default function LedgerPage() {
               <button
                 type="button"
                 disabled={busy === row.id}
-                onClick={() => void act(row, 'reject')}
+                onClick={() => openAct(row, 'reject')}
                 className="rounded-lg bg-rose-500/10 px-2.5 py-1 text-xs font-medium text-rose-600 hover:bg-rose-500/20 disabled:opacity-50"
               >
                 驳回
@@ -184,7 +193,7 @@ export default function LedgerPage() {
             <button
               type="button"
               disabled={busy === row.id}
-              onClick={() => void act(row, 'post')}
+              onClick={() => openAct(row, 'post')}
               className="rounded-lg bg-mint/10 px-2.5 py-1 text-xs font-medium text-mint hover:bg-mint/20 disabled:opacity-50"
             >
               过账
@@ -231,6 +240,34 @@ export default function LedgerPage() {
           </div>
         </Panel>
       </div>
+
+      <ConfirmDialog
+        open={pending !== null}
+        onOpenChange={(open) => { if (!open) setPending(null) }}
+        title={pending ? ACTION_COPY[pending.action].title : ''}
+        description={pending ? ACTION_COPY[pending.action].description : undefined}
+        details={pending ? [
+          { label: '调整单', value: pending.row.id, mono: true },
+          { label: '目标账户', value: `${pending.row.purpose} · ${pending.row.ownerType === 'user' ? `用户 ${pending.row.userId ?? '—'}` : pending.row.ownerReference || pending.row.ownerType}`, mono: true },
+          { label: '资产', value: pending.row.assetCode, mono: true },
+          { label: '方向 / 金额', value: `${pending.row.side === 'credit' ? '+ 入账' : '− 出账'} ${pending.row.atomicAmount}（原子）`, emphasis: true },
+          { label: '申请理由', value: pending.row.reasonCode },
+          { label: '申请人', value: pending.row.requestedBy, mono: true },
+        ] : []}
+        typeToConfirm={pending && pending.action !== 'reject' ? pending.row.atomicAmount : undefined}
+        typeToConfirmLabel={pending && pending.action !== 'reject' ? '请输入原子金额以确认' : undefined}
+        confirmLabel={pending ? ACTION_COPY[pending.action].confirm : '确认'}
+        destructive={pending?.action !== 'approve'}
+        confirmDisabled={pending?.action === 'reject' && !reason}
+        onConfirm={async () => { if (pending) await act(pending.row, pending.action) }}
+      >
+        {pending && pending.action !== 'post' && (
+          <label className="block">
+            <span className="mb-1 block text-xs text-text-secondary">{pending.action === 'approve' ? '通过理由（可选）' : '驳回理由（必填）'}</span>
+            <textarea rows={3} value={reason} onChange={(e) => setReason(e.target.value)} className={FIELD} />
+          </label>
+        )}
+      </ConfirmDialog>
     </AdminLayout>
   )
 }

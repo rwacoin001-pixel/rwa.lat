@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminLayout } from '@/components/layout/AdminLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/table';
@@ -11,7 +11,9 @@ import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/ui/pagination';
 import { Search, Filter, MoreHorizontal, Wallet, Copy, Ban, Activity, RefreshCw, KeyRound, Plus } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { cn } from '@/lib/utils';
+import { addressExplorerUrl, networkLabel, WALLET_NETWORKS } from '@/lib/chains';
 
 interface PoolAddress {
   id: string;
@@ -39,6 +41,10 @@ interface PoolStats {
   keyMissing: number;
 }
 
+const ALL = 'all';
+// Backend list endpoint caps at 200 rows and has no offset/cursor.
+const LIST_LIMIT = 200;
+
 const STATE_LABELS: Record<string, string> = {
   available: '可用',
   assigned: '已分配',
@@ -51,50 +57,77 @@ const STATE_STYLES: Record<string, string> = {
   disabled: 'bg-gray-500/20 text-slate-500',
 };
 
-const EXPLORERS: Record<string, string> = {
-  tron: 'https://tronscan.org/#/address/',
-};
-
 export default function WalletsPage() {
   const [addresses, setAddresses] = useState<PoolAddress[]>([]);
-  const [stats, setStats] = useState<PoolStats | null>(null);
+  const [networkStats, setNetworkStats] = useState<PoolStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const [search, setSearch] = useState('');
-  const [stateFilter, setStateFilter] = useState('');
+  const [stateFilter, setStateFilter] = useState(ALL);
+  const [networkFilter, setNetworkFilter] = useState(ALL);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [busy, setBusy] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [generateNetwork, setGenerateNetwork] = useState<string>('tron');
+  const [generateCount, setGenerateCount] = useState('20');
+  const [disableTarget, setDisableTarget] = useState<PoolAddress | null>(null);
+  const [disableReason, setDisableReason] = useState('');
 
-  useEffect(() => {
-    fetchPool();
-  }, []);
-
-  const fetchPool = async () => {
+  const fetchPool = useCallback(async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('/api/admin/wallet/deposit-pool?limit=200', { credentials: 'include' });
+      const params = new URLSearchParams({ limit: String(LIST_LIMIT) });
+      if (networkFilter !== ALL) params.set('network', networkFilter);
+      if (stateFilter !== ALL) params.set('state', stateFilter);
+      const res = await fetch(`/api/admin/wallet/deposit-pool?${params}`, { credentials: 'include' });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.message || `获取地址池失败 (HTTP ${res.status})`);
       }
       const data = await res.json();
       setAddresses(data.addresses || []);
-      setStats((data.stats?.networks || [])[0] ?? null);
+      setNetworkStats(Array.isArray(data.stats?.networks) ? data.stats.networks : []);
     } catch (err) {
       setAddresses([]);
-      setStats(null);
+      setNetworkStats([]);
       setError(err instanceof Error ? err.message : '获取地址池失败');
     } finally {
       setLoading(false);
     }
-  };
+  }, [networkFilter, stateFilter]);
+
+  useEffect(() => {
+    void fetchPool();
+  }, [fetchPool]);
+
+  const networkOptions = useMemo(() => {
+    const ids = new Set<string>(WALLET_NETWORKS.map((n) => n.id));
+    networkStats.forEach((s) => ids.add(s.network));
+    return Array.from(ids);
+  }, [networkStats]);
+
+  // Counts come from the backend's per-network aggregate, not the (capped) list.
+  const stats = useMemo(() => {
+    const rows = networkFilter === ALL ? networkStats : networkStats.filter((s) => s.network === networkFilter);
+    return rows.reduce(
+      (acc, s) => ({
+        available: acc.available + s.available,
+        assigned: acc.assigned + s.assigned,
+        disabled: acc.disabled + s.disabled,
+        keyHeld: acc.keyHeld + s.keyHeld,
+        keyMissing: acc.keyMissing + s.keyMissing,
+      }),
+      { available: 0, assigned: 0, disabled: 0, keyHeld: 0, keyMissing: 0 },
+    );
+  }, [networkStats, networkFilter]);
+  const totalAddresses = stats.available + stats.assigned + stats.disabled;
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return addresses.filter((row) => {
-      if (stateFilter && row.state !== stateFilter) return false;
       if (!keyword) return true;
       return (
         row.address.toLowerCase().includes(keyword) ||
@@ -102,7 +135,7 @@ export default function WalletsPage() {
         (row.label || '').toLowerCase().includes(keyword)
       );
     });
-  }, [addresses, search, stateFilter]);
+  }, [addresses, search]);
 
   const totalCount = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
@@ -116,39 +149,47 @@ export default function WalletsPage() {
     setCurrentPage(1);
   };
 
+  const countValid = /^\d+$/.test(generateCount.trim()) && Number(generateCount) >= 1 && Number(generateCount) <= 100;
+
+  const openGenerate = () => {
+    setNotice(null);
+    setGenerateNetwork(networkFilter !== ALL ? networkFilter : 'tron');
+    setGenerateCount('20');
+    setGenerateOpen(true);
+  };
+
   const handleGenerate = async () => {
-    const input = prompt('生成数量 (1-100)：', '20');
-    if (!input) return;
-    const count = Number(input);
-    if (!Number.isInteger(count) || count < 1 || count > 100) {
-      alert('数量必须是 1-100 的整数');
-      return;
-    }
+    if (!countValid) throw new Error('数量必须是 1-100 的整数');
     setBusy(true);
     try {
+      const count = Number(generateCount);
       const res = await fetch('/api/admin/wallet/deposit-pool/generate', {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ network: 'tron', count }),
+        body: JSON.stringify({ network: generateNetwork, count }),
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.message || `生成失败 (HTTP ${res.status})`);
-      alert(`已生成 ${body?.generated ?? count} 个地址`);
+      setNotice({ kind: 'ok', text: `已在 ${networkLabel(generateNetwork)} 生成 ${body?.generated ?? count} 个地址` });
       await fetchPool();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : '生成失败');
     } finally {
       setBusy(false);
     }
   };
 
-  const handleDisable = async (row: PoolAddress) => {
-    if (!confirm(`确定停用地址 ${row.address.slice(0, 12)}... 吗？仅未分配的地址可停用。`)) return;
-    const reason = prompt('停用原因（可选）：') || undefined;
+  const openDisable = (row: PoolAddress) => {
+    setNotice(null);
+    setDisableReason('');
+    setDisableTarget(row);
+  };
+
+  const handleDisable = async () => {
+    if (!disableTarget) return;
     setBusy(true);
     try {
-      const res = await fetch(`/api/admin/wallet/deposit-pool/${row.id}/disable`, {
+      const reason = disableReason.trim();
+      const res = await fetch(`/api/admin/wallet/deposit-pool/${disableTarget.id}/disable`, {
         method: 'PUT',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
@@ -156,9 +197,8 @@ export default function WalletsPage() {
       });
       const body = await res.json().catch(() => null);
       if (!res.ok) throw new Error(body?.message || `停用失败 (HTTP ${res.status})`);
+      setNotice({ kind: 'ok', text: '地址已停用' });
       await fetchPool();
-    } catch (err) {
-      alert(err instanceof Error ? err.message : '停用失败');
     } finally {
       setBusy(false);
     }
@@ -167,9 +207,9 @@ export default function WalletsPage() {
   const handleCopy = async (row: PoolAddress) => {
     try {
       await navigator.clipboard.writeText(row.address);
-      alert('地址已复制');
+      setNotice({ kind: 'ok', text: '地址已复制' });
     } catch {
-      alert(row.address);
+      setNotice({ kind: 'error', text: `复制失败，请手动复制：${row.address}` });
     }
   };
 
@@ -180,16 +220,24 @@ export default function WalletsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4">
 
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => { setCurrentPage(1); fetchPool(); }} disabled={busy} className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => { setCurrentPage(1); void fetchPool(); }} disabled={busy} className="flex items-center gap-2">
               <RefreshCw className="w-4 h-4" />
               刷新
             </Button>
-            <Button className="flex items-center gap-2" onClick={handleGenerate} disabled={busy}>
+            <Button className="flex items-center gap-2" onClick={openGenerate} disabled={busy}>
               <Plus className="w-4 h-4" />
               生成地址
             </Button>
           </div>
         </div>
+
+        {notice && (
+          <Card className={cn('glass-strong', notice.kind === 'error' && 'border-amber-500/40')}>
+            <CardContent role="status" className={cn('p-4 text-sm break-all', notice.kind === 'error' ? 'text-amber-600' : 'text-mint')}>
+              {notice.text}
+            </CardContent>
+          </Card>
+        )}
 
         {error && (
           <Card className="glass-strong border-amber-500/40">
@@ -205,8 +253,8 @@ export default function WalletsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">总地址数</p>
-                  <p className="text-2xl font-bold mt-1">{addresses.length}</p>
+                  <p className="text-sm text-muted-foreground">总地址数{networkFilter !== ALL ? `（${networkLabel(networkFilter)}）` : ''}</p>
+                  <p className="text-2xl font-bold mt-1">{totalAddresses}</p>
                 </div>
                 <Wallet className="w-10 h-10 text-mint/50" />
               </div>
@@ -217,7 +265,7 @@ export default function WalletsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">可用地址</p>
-                  <p className="text-2xl font-bold mt-1 text-mint">{stats?.available ?? 0}</p>
+                  <p className="text-2xl font-bold mt-1 text-mint">{stats.available}</p>
                 </div>
                 <Activity className="w-10 h-10 text-mint/50" />
               </div>
@@ -228,7 +276,7 @@ export default function WalletsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">已分配</p>
-                  <p className="text-2xl font-bold mt-1 text-blue-600">{stats?.assigned ?? 0}</p>
+                  <p className="text-2xl font-bold mt-1 text-blue-600">{stats.assigned}</p>
                 </div>
                 <Wallet className="w-10 h-10 text-blue-600/50" />
               </div>
@@ -239,7 +287,7 @@ export default function WalletsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">已停用</p>
-                  <p className="text-2xl font-bold mt-1 text-slate-500">{stats?.disabled ?? 0}</p>
+                  <p className="text-2xl font-bold mt-1 text-slate-500">{stats.disabled}</p>
                 </div>
                 <Ban className="w-10 h-10 text-slate-500/50" />
               </div>
@@ -250,8 +298,8 @@ export default function WalletsPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">密钥托管</p>
-                  <p className="text-2xl font-bold mt-1">{stats?.keyHeld ?? 0}</p>
-                  {stats && stats.keyMissing > 0 && (
+                  <p className="text-2xl font-bold mt-1">{stats.keyHeld}</p>
+                  {stats.keyMissing > 0 && (
                     <p className="text-xs text-amber-600 mt-1">{stats.keyMissing} 个仅收币（无密钥）</p>
                   )}
                 </div>
@@ -274,12 +322,23 @@ export default function WalletsPage() {
                   className="pl-10"
                 />
               </div>
+              <Select value={networkFilter} onValueChange={(v) => { setNetworkFilter(v); setCurrentPage(1); }}>
+                <SelectTrigger className="w-full sm:w-40">
+                  <SelectValue placeholder="链" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={ALL}>全部链</SelectItem>
+                  {networkOptions.map((n) => (
+                    <SelectItem key={n} value={n}>{networkLabel(n)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
               <Select value={stateFilter} onValueChange={(v) => { setStateFilter(v); setCurrentPage(1); }}>
                 <SelectTrigger className="w-full sm:w-40">
                   <SelectValue placeholder="状态" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">全部</SelectItem>
+                  <SelectItem value={ALL}>全部状态</SelectItem>
                   <SelectItem value="available">可用</SelectItem>
                   <SelectItem value="assigned">已分配</SelectItem>
                   <SelectItem value="disabled">已停用</SelectItem>
@@ -296,7 +355,7 @@ export default function WalletsPage() {
         {/* Address Table */}
         <Card className="glass-strong">
           <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>地址列表 (共 {totalCount} 条)</CardTitle>
+            <CardTitle>地址列表 (共 {totalCount} 条{addresses.length >= LIST_LIMIT ? `，仅显示最近 ${LIST_LIMIT} 条` : ''})</CardTitle>
             <div className="flex items-center gap-2">
               <span className="text-sm text-muted-foreground">每页</span>
               <Select value={String(pageSize)} onValueChange={(v) => { setPageSize(Number(v)); setCurrentPage(1); }}>
@@ -320,7 +379,7 @@ export default function WalletsPage() {
             ) : paged.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
                 <Wallet className="w-12 h-12 mb-4 opacity-50" />
-                <p>{addresses.length === 0 ? '地址池为空，点击右上角「生成地址」开始' : '没有符合筛选条件的地址'}</p>
+                <p>{totalAddresses === 0 && networkFilter === ALL ? '地址池为空，点击右上角「生成地址」开始' : '没有符合筛选条件的地址'}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -339,82 +398,85 @@ export default function WalletsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {paged.map((row) => (
-                      <TableRow key={row.id} className="hover:bg-ink/[0.05]">
-                        <TableCell>
-                          <Badge variant="outline">TRON</Badge>
-                        </TableCell>
-                        <TableCell className="font-mono text-xs">
-                          <button
-                            className="text-left hover:text-mint"
-                            title="点击复制"
-                            onClick={() => handleCopy(row)}
-                          >
-                            {row.address.slice(0, 10)}...{row.address.slice(-8)}
-                          </button>
-                          {row.label && <p className="text-muted-foreground">{row.label}</p>}
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {row.assignedUserId ? (
-                            <span className="font-mono text-xs">用户 {row.assignedUserId.slice(0, 8)}</span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="bg-cyan-500/20 text-sky-600">
-                            {row.source === 'generated' ? '系统生成' : '导入'}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className={cn(STATE_STYLES[row.state])}>
-                            {STATE_LABELS[row.state]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {row.keyHeld ? (
-                            <span className="text-mint">已托管</span>
-                          ) : (
-                            <span className="text-amber-600">仅收币</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {row.assignedAt ? new Date(row.assignedAt).toLocaleDateString('zh-CN') : '—'}
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {new Date(row.createdAt).toLocaleDateString('zh-CN')}
-                        </TableCell>
-                        <TableCell>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreHorizontal className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleCopy(row)}>
-                                <Copy className="w-4 h-4 mr-2" />
-                                复制地址
-                              </DropdownMenuItem>
-                              {EXPLORERS[row.network] && (
-                                <DropdownMenuItem onClick={() => window.open(`${EXPLORERS[row.network]}${row.address}`, '_blank')}>
-                                  浏览器查看
+                    {paged.map((row) => {
+                      const explorerUrl = addressExplorerUrl(row.network, row.address);
+                      return (
+                        <TableRow key={row.id} className="hover:bg-ink/[0.05]">
+                          <TableCell>
+                            <Badge variant="outline">{networkLabel(row.network)}</Badge>
+                          </TableCell>
+                          <TableCell className="font-mono text-xs">
+                            <button
+                              className="text-left hover:text-mint"
+                              title={`${row.address}（点击复制）`}
+                              onClick={() => handleCopy(row)}
+                            >
+                              {row.address.slice(0, 10)}...{row.address.slice(-8)}
+                            </button>
+                            {row.label && <p className="text-muted-foreground">{row.label}</p>}
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {row.assignedUserId ? (
+                              <span className="font-mono text-xs">用户 {row.assignedUserId.slice(0, 8)}</span>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className="bg-cyan-500/20 text-sky-600">
+                              {row.source === 'generated' ? '系统生成' : '导入'}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="outline" className={cn(STATE_STYLES[row.state])}>
+                              {STATE_LABELS[row.state] ?? row.state}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-sm">
+                            {row.keyHeld ? (
+                              <span className="text-mint">已托管</span>
+                            ) : (
+                              <span className="text-amber-600">仅收币</span>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {row.assignedAt ? new Date(row.assignedAt).toLocaleDateString('zh-CN') : '—'}
+                          </TableCell>
+                          <TableCell className="text-sm text-muted-foreground">
+                            {new Date(row.createdAt).toLocaleDateString('zh-CN')}
+                          </TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" disabled={busy}>
+                                  <MoreHorizontal className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => handleCopy(row)}>
+                                  <Copy className="w-4 h-4 mr-2" />
+                                  复制地址
                                 </DropdownMenuItem>
-                              )}
-                              {row.state === 'available' && (
-                                <>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem onClick={() => handleDisable(row)} className="text-destructive">
-                                    <Ban className="w-4 h-4 mr-2" />
-                                    停用
+                                {explorerUrl && (
+                                  <DropdownMenuItem onClick={() => window.open(explorerUrl, '_blank', 'noopener,noreferrer')}>
+                                    浏览器查看
                                   </DropdownMenuItem>
-                                </>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                                )}
+                                {row.state === 'available' && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={() => openDisable(row)} className="text-destructive">
+                                      <Ban className="w-4 h-4 mr-2" />
+                                      停用
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
@@ -436,6 +498,57 @@ export default function WalletsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <ConfirmDialog
+        open={generateOpen}
+        onOpenChange={setGenerateOpen}
+        title="生成充值地址"
+        description="新地址进入地址池，按需分配给用户。由后端校验该网络是否支持系统生成。"
+        confirmLabel="确认生成"
+        confirmDisabled={!countValid}
+        onConfirm={handleGenerate}
+      >
+        <div className="grid grid-cols-2 gap-3">
+          <label className="grid gap-1.5 text-sm">
+            <span>网络</span>
+            <Select value={generateNetwork} onValueChange={setGenerateNetwork}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {networkOptions.map((n) => (
+                  <SelectItem key={n} value={n}>{networkLabel(n)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </label>
+          <label className="grid gap-1.5 text-sm">
+            <span>数量（1-100）</span>
+            <Input inputMode="numeric" value={generateCount} onChange={(e) => setGenerateCount(e.target.value)} />
+          </label>
+        </div>
+        {!countValid && generateCount.trim() !== '' && <p className="text-xs text-negative">数量必须是 1-100 的整数</p>}
+      </ConfirmDialog>
+
+      <ConfirmDialog
+        open={disableTarget !== null}
+        onOpenChange={(open) => { if (!open) setDisableTarget(null); }}
+        title="停用地址"
+        description="仅未分配的地址可停用，停用后不再分配给用户。"
+        details={disableTarget ? [
+          { label: '网络', value: networkLabel(disableTarget.network) },
+          { label: '地址', value: disableTarget.address, mono: true },
+          ...(disableTarget.label ? [{ label: '标签', value: disableTarget.label }] : []),
+        ] : []}
+        confirmLabel="确认停用"
+        destructive
+        onConfirm={handleDisable}
+      >
+        <label className="grid gap-1.5 text-sm">
+          <span>停用原因（可选）</span>
+          <Input value={disableReason} maxLength={240} onChange={(e) => setDisableReason(e.target.value)} />
+        </label>
+      </ConfirmDialog>
     </AdminLayout>
   );
 }

@@ -1,10 +1,11 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, type ReactNode } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { StatCard } from '@/components/ui/visuals'
 import { AllocationDialog } from './allocation-dialog'
+import { ConfirmDialog, type ConfirmDetail } from '@/components/confirm-dialog'
 import { cn } from '@/lib/utils'
 import {
   RefreshCw,
@@ -42,6 +43,21 @@ type PortfolioRow = {
   minimumSubscriptionUsd: string | null
   createdAt: string
 }
+
+type BasketAction =
+  | { kind: 'createStrategy' }
+  | { kind: 'createVersion'; strategy: StrategyRow }
+  | { kind: 'activateVersion'; strategy: StrategyRow; version: Record<string, any> }
+  | { kind: 'createDisclosure'; strategy: StrategyRow }
+  | { kind: 'createPortfolio' }
+  | { kind: 'planRebalance'; portfolio: PortfolioRow }
+  | { kind: 'executeRun'; run: Record<string, any> }
+  | { kind: 'recordFill'; order: Record<string, any> }
+
+type ActionForm = { name: string; strategySlug: string; title: string; content: string; qty: string; price: string; external: string }
+const EMPTY_FORM: ActionForm = { name: '', strategySlug: '', title: '', content: '', qty: '', price: '', external: '' }
+
+const FIELD = 'w-full rounded-xl border border-ink/10 bg-white/80 px-3 py-2 text-[13px] shadow-sm'
 
 const TABS = [
   { key: 'strategies', label: '策略与目标配置' },
@@ -82,24 +98,33 @@ export default function BasketOpsPage() {
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
   const [allocTarget, setAllocTarget] = useState<{ strategy: StrategyRow; version: Record<string, any> } | null>(null)
+  const [action, setAction] = useState<BasketAction | null>(null)
+  const [form, setForm] = useState<ActionForm>(EMPTY_FORM)
+
+  // request 抛错（供确认弹窗内显示）；call 吞掉错误并显示在页面顶部
+  const request = useCallback(async (path: string, init?: RequestInit) => {
+    setBusy(true)
+    setError('')
+    try {
+      const res = await fetch(`/api/admin/basket${path}`, { credentials: 'include', ...init })
+      const body = await res.json().catch(() => null)
+      if (!res.ok) throw new Error((body?.message as string) || `操作失败 (HTTP ${res.status})`)
+      return body
+    } finally {
+      setBusy(false)
+    }
+  }, [])
 
   const call = useCallback(
     async (path: string, init?: RequestInit) => {
-      setBusy(true)
-      setError('')
       try {
-        const res = await fetch(`/api/admin/basket${path}`, { credentials: 'include', ...init })
-        const body = await res.json().catch(() => null)
-        if (!res.ok) throw new Error((body?.message as string) || `操作失败 (HTTP ${res.status})`)
-        return body
+        return await request(path, init)
       } catch (err) {
         setError(err instanceof Error ? err.message : '请求失败')
         return null
-      } finally {
-        setBusy(false)
       }
     },
-    [],
+    [request],
   )
 
   const loadStrategies = useCallback(async () => {
@@ -172,13 +197,16 @@ export default function BasketOpsPage() {
     if (detail) setStrategyDetail(detail as Record<string, any>)
   }
 
+  const openAction = (next: BasketAction, initial: Partial<ActionForm> = {}) => {
+    setForm({ ...EMPTY_FORM, ...initial })
+    setAction(next)
+  }
+
   const createStrategy = async () => {
-    const name = window.prompt('策略名称（例如：AI RWA Core 核心篮子）：')
-    if (!name) return
-    const result = await call('/strategies', {
+    const result = await request('/strategies', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name }),
+      body: JSON.stringify({ name: form.name }),
     })
     if (result) {
       showNotice('策略已创建')
@@ -187,8 +215,7 @@ export default function BasketOpsPage() {
   }
 
   const createVersion = async (strategy: StrategyRow) => {
-    if (!window.confirm(`为「${strategy.name}」创建新的草稿版本？`)) return
-    const result = await call(`/strategies/${strategy.id}/versions`, {
+    const result = await request(`/strategies/${strategy.id}/versions`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({}),
@@ -224,8 +251,7 @@ export default function BasketOpsPage() {
   }
 
   const activateVersion = async (strategy: StrategyRow, version: Record<string, any>) => {
-    if (!window.confirm(`激活版本 v${version.version}？当前激活版本将退役。`)) return
-    const result = await call(`/strategies/${strategy.id}/activate`, {
+    const result = await request(`/strategies/${strategy.id}/activate`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ versionId: version.id }),
@@ -239,14 +265,10 @@ export default function BasketOpsPage() {
   }
 
   const createDisclosure = async (strategy: StrategyRow) => {
-    const title = window.prompt('风险披露标题', `${strategy.name} 风险披露`)
-    if (!title) return
-    const content = window.prompt('风险披露内容（将展示给申购用户，需其确认后放行）：')
-    if (!content) return
-    const result = await call('/disclosures', {
+    const result = await request('/disclosures', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ title, content, strategyId: strategy.id }),
+      body: JSON.stringify({ title: form.title, content: form.content, strategyId: strategy.id }),
     })
     if (result) showNotice('披露已创建（申购前需用户确认）')
   }
@@ -254,14 +276,10 @@ export default function BasketOpsPage() {
   // ---- 组合动作 ----
 
   const createPortfolio = async () => {
-    const name = window.prompt('组合名称（例如：AI RWA Core 一号组合）：')
-    if (!name) return
-    const strategySlug = window.prompt('绑定策略 slug（见策略列表）')
-    if (!strategySlug) return
-    const result = await call('/portfolios', {
+    const result = await request('/portfolios', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, strategySlug, status: 'pilot' }),
+      body: JSON.stringify({ name: form.name, strategySlug: form.strategySlug, status: 'pilot' }),
     })
     if (result) {
       showNotice('组合已创建（pilot）')
@@ -326,8 +344,7 @@ export default function BasketOpsPage() {
   }
 
   const planRebalance = async (portfolio: PortfolioRow) => {
-    if (!window.confirm(`为「${portfolio.name}」生成调仓计划？（仅生成计划与风险验证，不执行）`)) return
-    const result = await call(`/portfolios/${portfolio.id}/rebalance-plans`, {
+    const result = await request(`/portfolios/${portfolio.id}/rebalance-plans`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ trigger: 'manual' }),
@@ -342,8 +359,7 @@ export default function BasketOpsPage() {
   }
 
   const executeRun = async (runId: string) => {
-    if (!window.confirm('通过已配置的执行适配器执行该调仓运行？（manual=仅登记人工执行；生产默认关闭执行开关）')) return
-    const result = await call(`/runs/${runId}/execute`, {
+    const result = await request(`/runs/${runId}/execute`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({}),
@@ -356,12 +372,8 @@ export default function BasketOpsPage() {
   }
 
   const recordFill = async (order: Record<string, any>) => {
-    const qty = window.prompt('实际成交数量（份额）', String(order.target_quantity ?? order.targetQuantity ?? ''))
-    if (!qty) return
-    const price = window.prompt('实际成交单价（USDT）', String(order.estimated_price ?? order.estimatedPrice ?? ''))
-    if (!price) return
-    const external = window.prompt('外部成交单号（可选）', '') ?? ''
-    const result = await call(`/orders/${order.id}/fills`, {
+    const { qty, price, external } = form
+    const result = await request(`/orders/${order.id}/fills`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ executedQuantity: qty, averageFillPrice: price, ...(external ? { externalOrderId: external } : {}) }),
@@ -392,6 +404,161 @@ export default function BasketOpsPage() {
     const result = await call(`/runs/${runId}`)
     if (result) setRunDetail(result as Record<string, any>)
   }
+
+  const field = (key: keyof ActionForm, label: string, opts: { placeholder?: string; mono?: boolean; rows?: number; inputMode?: 'decimal' } = {}) => (
+    <label className="block">
+      <span className="mb-1 block text-xs text-text-secondary">{label}</span>
+      {opts.rows ? (
+        <textarea rows={opts.rows} value={form[key]} placeholder={opts.placeholder} onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))} className={FIELD} />
+      ) : (
+        <input value={form[key]} placeholder={opts.placeholder} inputMode={opts.inputMode} onChange={(e) => setForm((prev) => ({ ...prev, [key]: e.target.value }))} className={cn(FIELD, opts.mono && 'font-mono')} />
+      )}
+    </label>
+  )
+
+  const positive = (value: string) => value.trim() !== '' && Number.isFinite(Number(value)) && Number(value) > 0
+
+  const dialog = ((): {
+    title: string
+    description?: string
+    details?: ConfirmDetail[]
+    typeToConfirm?: string
+    confirmLabel: string
+    destructive?: boolean
+    confirmDisabled?: boolean
+    run: () => Promise<void>
+    body?: ReactNode
+  } | null => {
+    if (!action) return null
+    switch (action.kind) {
+      case 'createStrategy':
+        return {
+          title: '新建策略',
+          confirmLabel: '创建',
+          confirmDisabled: !form.name.trim(),
+          run: createStrategy,
+          body: field('name', '策略名称', { placeholder: '例如：AI RWA Core 核心篮子' }),
+        }
+      case 'createVersion':
+        return {
+          title: '创建草稿版本',
+          description: `为「${action.strategy.name}」创建新的草稿版本。`,
+          details: [
+            { label: '策略', value: action.strategy.name },
+            { label: 'slug', value: action.strategy.slug, mono: true },
+            { label: '现有版本数', value: action.strategy.versionCount },
+          ],
+          confirmLabel: '创建版本',
+          run: () => createVersion(action.strategy),
+        }
+      case 'activateVersion':
+        return {
+          title: '激活策略版本',
+          description: '激活后当前激活版本将退役，新的目标配置将用于后续调仓。',
+          details: [
+            { label: '策略', value: action.strategy.name },
+            { label: '版本', value: `v${action.version.version}`, emphasis: true },
+            { label: '版本 ID', value: action.version.id, mono: true },
+          ],
+          typeToConfirm: `v${action.version.version}`,
+          confirmLabel: '确认激活',
+          destructive: true,
+          run: () => activateVersion(action.strategy, action.version),
+        }
+      case 'createDisclosure':
+        return {
+          title: '新建风险披露',
+          description: '披露内容将展示给申购用户，需其确认后放行。',
+          details: [{ label: '策略', value: action.strategy.name }],
+          confirmLabel: '创建披露',
+          confirmDisabled: !form.title.trim() || !form.content.trim(),
+          run: () => createDisclosure(action.strategy),
+          body: (
+            <div className="space-y-3">
+              {field('title', '风险披露标题')}
+              {field('content', '风险披露内容', { rows: 6 })}
+            </div>
+          ),
+        }
+      case 'createPortfolio':
+        return {
+          title: '新建组合',
+          description: '组合将以 pilot 状态创建。',
+          confirmLabel: '创建组合',
+          confirmDisabled: !form.name.trim() || !form.strategySlug.trim(),
+          run: createPortfolio,
+          body: (
+            <div className="space-y-3">
+              {field('name', '组合名称', { placeholder: '例如：AI RWA Core 一号组合' })}
+              <label className="block">
+                <span className="mb-1 block text-xs text-text-secondary">绑定策略 slug</span>
+                <input list="basket-strategy-slugs" value={form.strategySlug} onChange={(e) => setForm((prev) => ({ ...prev, strategySlug: e.target.value }))} className={cn(FIELD, 'font-mono')} />
+                <datalist id="basket-strategy-slugs">
+                  {strategies.map((row) => <option key={row.id} value={row.slug}>{row.name}</option>)}
+                </datalist>
+              </label>
+            </div>
+          ),
+        }
+      case 'planRebalance':
+        return {
+          title: '生成调仓计划',
+          description: '仅生成计划与风险验证，不执行。',
+          details: [
+            { label: '组合', value: action.portfolio.name },
+            { label: '组合 ID', value: action.portfolio.id, mono: true },
+            { label: '策略', value: action.portfolio.strategyName || action.portfolio.strategySlug },
+            { label: 'AUM', value: action.portfolio.aumUsd ? `${action.portfolio.aumUsd} USDT` : '—' },
+          ],
+          confirmLabel: '生成计划',
+          run: () => planRebalance(action.portfolio),
+        }
+      case 'executeRun': {
+        const runId = String(action.run.id)
+        return {
+          title: '执行调仓运行',
+          description: '通过已配置的执行适配器执行该调仓运行（manual=仅登记人工执行；生产默认关闭执行开关）。',
+          details: [
+            { label: '运行 ID', value: runId, mono: true },
+            { label: '状态', value: action.run.status },
+            { label: '触发', value: action.run.trigger_type ?? action.run.triggerType ?? '—' },
+            { label: '预计换手', value: `${action.run.estimated_turnover_pct ?? action.run.estimatedTurnoverPct ?? '-'}%`, emphasis: true },
+          ],
+          typeToConfirm: runId.slice(0, 8),
+          confirmLabel: '确认执行',
+          destructive: true,
+          run: () => executeRun(runId),
+        }
+      }
+      case 'recordFill': {
+        const order = action.order
+        const asset = order.asset_slug ?? order.assetSlug ?? String(order.asset_id).slice(0, 8)
+        const notional = positive(form.qty) && positive(form.price) ? (Number(form.qty) * Number(form.price)).toFixed(2) : '—'
+        return {
+          title: '回填成交',
+          description: '回填后将更新持仓与 NAV。请再次输入成交数量以确认。',
+          details: [
+            { label: '订单 ID', value: order.id, mono: true },
+            { label: '方向 / 资产', value: `${order.side === 'buy' ? '买入' : '卖出'} · ${asset}` },
+            { label: '目标数量', value: order.target_quantity ?? order.targetQuantity ?? '-' },
+            { label: '预估价', value: order.estimated_price ?? order.estimatedPrice ?? '-' },
+            { label: '成交金额', value: `${notional} USDT`, emphasis: true },
+          ],
+          typeToConfirm: form.qty.trim() || undefined,
+          confirmLabel: '确认回填',
+          confirmDisabled: !positive(form.qty) || !positive(form.price),
+          run: () => recordFill(order),
+          body: (
+            <div className="space-y-3">
+              {field('qty', '实际成交数量（份额）', { mono: true, inputMode: 'decimal' })}
+              {field('price', '实际成交单价（USDT）', { mono: true, inputMode: 'decimal' })}
+              {field('external', '外部成交单号（可选）', { mono: true })}
+            </div>
+          ),
+        }
+      }
+    }
+  })()
 
   const activeAllocRows = ((strategyDetail?.targetAllocation ?? []) as Array<Record<string, any>>)
   const allocMaxWeight = Math.max(...activeAllocRows.map((row) => Number(row.targetWeightPct ?? row.target_weight_pct ?? 0)), 1)
@@ -464,7 +631,7 @@ export default function BasketOpsPage() {
               <CardTitle className="text-lg">策略（{strategies.length}）</CardTitle>
               <button
                 type="button"
-                onClick={() => void createStrategy()}
+                onClick={() => openAction({ kind: 'createStrategy' })}
                 className="flex items-center gap-2 rounded-xl bg-mint px-4 py-2 text-sm font-medium text-white"
               >
                 <PlusCircle className="h-4 w-4" /> 新建策略
@@ -486,14 +653,14 @@ export default function BasketOpsPage() {
                       </span>
                       <button
                         type="button"
-                        onClick={() => void createVersion(strategy)}
+                        onClick={() => openAction({ kind: 'createVersion', strategy })}
                         className="rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium ring-1 ring-ink/10 hover:bg-ink/5"
                       >
                         新版本
                       </button>
                       <button
                         type="button"
-                        onClick={() => void createDisclosure(strategy)}
+                        onClick={() => openAction({ kind: 'createDisclosure', strategy }, { title: `${strategy.name} 风险披露` })}
                         className="rounded-lg bg-white px-2.5 py-1.5 text-xs font-medium ring-1 ring-ink/10 hover:bg-ink/5"
                       >
                         新建披露
@@ -527,7 +694,7 @@ export default function BasketOpsPage() {
                                   {version.status !== 'active' && (
                                     <button
                                       type="button"
-                                      onClick={() => void activateVersion(strategy, version)}
+                                      onClick={() => openAction({ kind: 'activateVersion', strategy, version })}
                                       className="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/20"
                                     >
                                       <Rocket className="h-3.5 w-3.5" /> 激活
@@ -596,7 +763,7 @@ export default function BasketOpsPage() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => void createPortfolio()}
+                  onClick={() => openAction({ kind: 'createPortfolio' })}
                   className="flex items-center gap-2 rounded-xl bg-mint px-4 py-2 text-sm font-medium text-white"
                 >
                   <PlusCircle className="h-4 w-4" /> 新建组合
@@ -653,7 +820,7 @@ export default function BasketOpsPage() {
                             <button type="button" onClick={() => void loadRisk(portfolio)} className="flex items-center gap-1 rounded-lg bg-slate-500/10 px-2 py-1 text-xs font-medium text-slate-600 hover:bg-slate-500/20">
                               <ClipboardCheck className="h-3.5 w-3.5" /> 风控
                             </button>
-                            <button type="button" onClick={() => void planRebalance(portfolio)} className="flex items-center gap-1 rounded-lg bg-violet-500/10 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-500/20">
+                            <button type="button" onClick={() => openAction({ kind: 'planRebalance', portfolio })} className="flex items-center gap-1 rounded-lg bg-violet-500/10 px-2 py-1 text-xs font-medium text-violet-600 hover:bg-violet-500/20">
                               <Play className="h-3.5 w-3.5" /> 调仓计划
                             </button>
                             <button type="button" onClick={() => void reconcile(portfolio)} className="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600 hover:bg-emerald-500/20">
@@ -750,7 +917,7 @@ export default function BasketOpsPage() {
                               详情
                             </button>
                             {(run.status === 'planned' || run.status === 'running') && (
-                              <button type="button" onClick={() => void executeRun(run.id)} className="rounded-lg bg-emerald-500/10 px-2 py-1 font-medium text-emerald-600 hover:bg-emerald-500/20">
+                              <button type="button" onClick={() => openAction({ kind: 'executeRun', run })} className="rounded-lg bg-emerald-500/10 px-2 py-1 font-medium text-emerald-600 hover:bg-emerald-500/20">
                                 执行
                               </button>
                             )}
@@ -797,7 +964,12 @@ export default function BasketOpsPage() {
                               </td>
                               <td className="py-1.5 text-right">
                                 {order.status !== 'filled' && order.status !== 'cancelled' && (
-                                  <button type="button" onClick={() => void recordFill(order)} className="rounded-lg bg-sky-500/10 px-2 py-1 font-medium text-sky-600 hover:bg-sky-500/20">
+                                  <button type="button" onClick={() =>
+                                      openAction(
+                                        { kind: 'recordFill', order },
+                                        { qty: String(order.target_quantity ?? order.targetQuantity ?? ''), price: String(order.estimated_price ?? order.estimatedPrice ?? '') },
+                                      )
+                                    } className="rounded-lg bg-sky-500/10 px-2 py-1 font-medium text-sky-600 hover:bg-sky-500/20">
                                     回填成交
                                   </button>
                                 )}
@@ -867,6 +1039,21 @@ export default function BasketOpsPage() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={dialog !== null}
+        onOpenChange={(open) => { if (!open) setAction(null) }}
+        title={dialog?.title ?? ''}
+        description={dialog?.description}
+        details={dialog?.details}
+        typeToConfirm={dialog?.typeToConfirm}
+        confirmLabel={dialog?.confirmLabel}
+        destructive={dialog?.destructive}
+        confirmDisabled={dialog?.confirmDisabled}
+        onConfirm={async () => { await dialog?.run() }}
+      >
+        {dialog?.body}
+      </ConfirmDialog>
 
       <AllocationDialog
         open={allocTarget !== null}

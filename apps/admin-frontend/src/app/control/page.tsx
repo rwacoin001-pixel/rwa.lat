@@ -35,7 +35,10 @@ import {
   type ProductState,
   type StorageReadiness,
   type TreasuryAddress,
+  type TreasuryAddressInput,
 } from '@/lib/admin-api'
+import { networkLabel, validateAddress, WALLET_NETWORKS } from '@/lib/chains'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 import { describeYield, type YieldTerms } from '@/lib/yield-terms'
 import { ProductEditor } from './product-editor'
 import { AdminLayout } from '@/components/layout/AdminLayout'
@@ -74,6 +77,7 @@ export default function ControlPage() {
 
   const [products, setProducts] = useState<AdminProduct[]>([])
   const [classes, setClasses] = useState<AssetClass[]>([])
+  const [classDeprecate, setClassDeprecate] = useState<AssetClass | null>(null)
   const [switches, setSwitches] = useState<OperationalSwitch[]>([])
   const [treasury, setTreasury] = useState<TreasuryAddress[]>([])
   const [readiness, setReadiness] = useState<StorageReadiness | null>(null)
@@ -98,6 +102,8 @@ export default function ControlPage() {
     address: '',
     memo: '',
   })
+  const [treasuryConfirm, setTreasuryConfirm] = useState<{ input: TreasuryAddressInput; previous?: TreasuryAddress } | null>(null)
+  const [treasuryDeactivate, setTreasuryDeactivate] = useState<TreasuryAddress | null>(null)
 
   const [busy, setBusy] = useState('')
 
@@ -198,15 +204,13 @@ export default function ControlPage() {
     }
   }
 
+  // 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const deprecateClass = async (id: string) => {
-    if (!window.confirm(`停用分类「${id}」？停用后不可再关联新产品（不影响已关联产品）。`)) return
     setBusy(`class-dep-${id}`)
     try {
       await adminApi.deprecateAssetClass(id)
       await loadAll()
       showOk('分类已停用')
-    } catch (e) {
-      showError(e, '停用失败')
     } finally {
       setBusy('')
     }
@@ -230,40 +234,51 @@ export default function ControlPage() {
     }
   }
 
-  const saveTreasury = async () => {
-    setBusy('treasury')
+  const treasuryInput = (): TreasuryAddressInput => {
+    const assetCode = treasuryForm.assetCode.trim().toUpperCase()
+    if (!/^[A-Z][A-Z0-9._-]{1,15}$/.test(assetCode)) throw new Error('资产代码格式不正确')
+    if (!treasuryForm.label.trim()) throw new Error('请填写地址标签')
+    const addressError = validateAddress(treasuryForm.network, treasuryForm.address)
+    if (addressError) throw new Error(addressError)
+    return {
+      network: treasuryForm.network as TreasuryAddressInput['network'],
+      assetCode,
+      purpose: treasuryForm.purpose as TreasuryAddressInput['purpose'],
+      label: treasuryForm.label.trim(),
+      address: treasuryForm.address.trim(),
+      memo: treasuryForm.memo.trim() || undefined,
+    }
+  }
+
+  const saveTreasury = () => {
     setNotice(null)
     try {
-      if (!/^[A-Z][A-Z0-9._-]{1,15}$/.test(treasuryForm.assetCode.trim().toUpperCase())) throw new Error('资产代码格式不正确')
-      if (!treasuryForm.label.trim()) throw new Error('请填写地址标签')
-      if (treasuryForm.address.trim().length < 8) throw new Error('请填写有效的公开地址（禁止私钥/助记词）')
-      await adminApi.saveTreasuryAddress({
-        network: treasuryForm.network as 'tron' | 'ethereum' | 'arbitrum',
-        assetCode: treasuryForm.assetCode.trim().toUpperCase(),
-        purpose: treasuryForm.purpose as 'deposit' | 'withdrawal' | 'collection' | 'operational',
-        label: treasuryForm.label.trim(),
-        address: treasuryForm.address.trim(),
-        memo: treasuryForm.memo.trim() || undefined,
-      })
+      const input = treasuryInput()
+      const previous = treasury.find((t) => t.network === input.network && t.assetCode === input.assetCode && t.purpose === input.purpose)
+      setTreasuryConfirm({ input, previous })
+    } catch (e) {
+      showError(e, '保存失败')
+    }
+  }
+
+  const confirmSaveTreasury = async () => {
+    if (!treasuryConfirm) return
+    setBusy('treasury')
+    try {
+      await adminApi.saveTreasuryAddress(treasuryConfirm.input)
       setTreasuryForm({ network: 'tron', assetCode: '', purpose: 'deposit', label: '', address: '', memo: '' })
       await loadAll()
       showOk('财资地址已保存')
-    } catch (e) {
-      showError(e, '保存失败')
     } finally {
       setBusy('')
     }
   }
 
-  const deactivateTreasury = async (id: string) => {
-    if (!window.confirm('停用该地址？')) return
-    try {
-      await adminApi.deactivateTreasuryAddress(id)
-      await loadAll()
-      showOk('地址已停用')
-    } catch (e) {
-      showError(e, '停用失败')
-    }
+  const deactivateTreasury = async () => {
+    if (!treasuryDeactivate) return
+    await adminApi.deactivateTreasuryAddress(treasuryDeactivate.id)
+    await loadAll()
+    showOk('地址已停用')
   }
 
   return (
@@ -455,7 +470,7 @@ export default function ControlPage() {
                           variant="ghost"
                           size="sm"
                           className="text-negative"
-                          onClick={() => void deprecateClass(c.id)}
+                          onClick={() => setClassDeprecate(c)}
                           disabled={busy === `class-dep-${c.id}`}
                         >
                           停用
@@ -589,7 +604,7 @@ export default function ControlPage() {
                         <p className="mt-1 truncate font-mono text-xs text-text-secondary">{t.address}</p>
                       </div>
                       {t.state === 'active' && (
-                        <Button variant="ghost" size="sm" className="text-negative" onClick={() => void deactivateTreasury(t.id)}>
+                        <Button variant="ghost" size="sm" className="text-negative" onClick={() => setTreasuryDeactivate(t)}>
                           停用
                         </Button>
                       )}
@@ -614,9 +629,9 @@ export default function ControlPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="tron">TRON</SelectItem>
-                      <SelectItem value="ethereum">Ethereum</SelectItem>
-                      <SelectItem value="arbitrum">Arbitrum</SelectItem>
+                      {WALLET_NETWORKS.map((n) => (
+                        <SelectItem key={n.id} value={n.id}>{n.label}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -652,18 +667,64 @@ export default function ControlPage() {
                 <Input
                   value={treasuryForm.address}
                   onChange={(e) => setTreasuryForm({ ...treasuryForm, address: e.target.value })}
-                  placeholder="T… / 0x…"
+                  placeholder={treasuryForm.network === 'tron' ? 'T…（34 位）' : '0x…（42 位）'}
+                  className="font-mono"
+                  spellCheck={false}
+                  autoComplete="off"
                 />
+                {treasuryForm.address.trim() && validateAddress(treasuryForm.network, treasuryForm.address) && (
+                  <p className="text-xs text-negative">{validateAddress(treasuryForm.network, treasuryForm.address)}</p>
+                )}
               </div>
               <div className="grid gap-1.5">
                 <Label>备注（可选）</Label>
                 <Input value={treasuryForm.memo} onChange={(e) => setTreasuryForm({ ...treasuryForm, memo: e.target.value })} />
               </div>
-              <Button className="w-full" onClick={() => void saveTreasury()} disabled={busy === 'treasury'}>
+              <Button className="w-full" onClick={saveTreasury} disabled={busy === 'treasury' || treasuryConfirm !== null}>
                 {busy === 'treasury' && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}保存地址
               </Button>
             </CardContent>
           </Card>
+          <ConfirmDialog
+            open={treasuryConfirm !== null}
+            onOpenChange={(open) => { if (!open) setTreasuryConfirm(null) }}
+            title={treasuryConfirm?.previous ? '确认替换财资地址' : '确认新增财资地址'}
+            description="资金将按此地址收付。请与可信来源逐字核对完整地址。"
+            details={treasuryConfirm ? [
+              { label: '网络', value: networkLabel(treasuryConfirm.input.network) },
+              { label: '资产', value: treasuryConfirm.input.assetCode },
+              { label: '用途', value: treasuryConfirm.input.purpose },
+              { label: '标签', value: treasuryConfirm.input.label },
+              {
+                label: '原地址',
+                value: treasuryConfirm.previous
+                  ? `${treasuryConfirm.previous.address}${treasuryConfirm.previous.state !== 'active' ? '（已停用）' : ''}`
+                  : '—（新增）',
+                mono: true,
+              },
+              { label: '新地址', value: treasuryConfirm.input.address, mono: true, emphasis: true },
+              ...(treasuryConfirm.input.memo ? [{ label: '备注', value: treasuryConfirm.input.memo }] : []),
+            ] : []}
+            typeToConfirm={treasuryConfirm?.input.address.slice(-6)}
+            typeToConfirmLabel={treasuryConfirm ? '请输入新地址的最后 6 位以确认' : undefined}
+            confirmLabel="确认保存"
+            destructive={Boolean(treasuryConfirm?.previous)}
+            onConfirm={confirmSaveTreasury}
+          />
+          <ConfirmDialog
+            open={treasuryDeactivate !== null}
+            onOpenChange={(open) => { if (!open) setTreasuryDeactivate(null) }}
+            title="停用财资地址"
+            details={treasuryDeactivate ? [
+              { label: '网络', value: networkLabel(treasuryDeactivate.network) },
+              { label: '资产', value: treasuryDeactivate.assetCode },
+              { label: '用途', value: treasuryDeactivate.purpose },
+              { label: '地址', value: treasuryDeactivate.address, mono: true },
+            ] : []}
+            confirmLabel="确认停用"
+            destructive
+            onConfirm={deactivateTreasury}
+          />
         </div>
       )}
 
@@ -815,6 +876,20 @@ export default function ControlPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmDialog
+        open={classDeprecate !== null}
+        onOpenChange={(open) => { if (!open) setClassDeprecate(null) }}
+        title="停用资产分类"
+        description="停用后不可再关联新产品（不影响已关联产品）。"
+        details={classDeprecate ? [
+          { label: '分类', value: classDeprecate.displayName },
+          { label: 'ID', value: classDeprecate.id, mono: true },
+        ] : []}
+        confirmLabel="确认停用"
+        destructive
+        onConfirm={async () => { if (classDeprecate) await deprecateClass(classDeprecate.id) }}
+      />
     </div>
     </AdminLayout>
   )
