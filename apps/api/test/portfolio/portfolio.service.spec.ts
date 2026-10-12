@@ -45,16 +45,15 @@ describe('PortfolioService (unit)', () => {
     }) } })
   })
 
-  it('listPositions maps ledger accounts to positions', async () => {
+  it('listPositions never reports cash ledger accounts as product positions', async () => {
+    snapshotRepo.query.mockResolvedValue([])
     ledger.listUserBalances.mockResolvedValue({
       accounts: [
         { accountId: PRODUCT, assetCode: 'USDT', assetDecimals: 6, atomicBalance: '1000000', purpose: 'available', updatedAt: new Date() },
       ],
     })
-    const r = await svc.listPositions(USER)
-    expect(r).toHaveLength(1)
-    expect(r[0].quantityAtomicAmount).toBe('1000000')
-    expect(r[0].source).toBe('immutable-ledger-projection')
+    expect(await svc.listPositions(USER)).toEqual([])
+    expect(ledger.listUserBalances).not.toHaveBeenCalled()
   })
 
   it('does not capture a market-value snapshot in a currency without a configured USD/USDT conversion', async () => {
@@ -90,18 +89,18 @@ describe('PortfolioService (unit)', () => {
     expect(snapshotRepo.save).not.toHaveBeenCalled()
   })
 
-  it('rejects a legacy ledger snapshot when its scale differs from the catalog', async () => {
+  it('does not snapshot cash balances as a product holding', async () => {
     catalog.getProduct.mockResolvedValue({ assetClassId: 'real_estate', assetCode: 'USDT', assetDecimals: 6 })
     catalog.getLatestQuote.mockResolvedValue({ unitPriceAtomicAmount: '1000000', unitPriceDecimals: 6, currency: 'USD', stale: false })
     snapshotRepo.query.mockResolvedValue([{
       quantity: '0', min_asset_code: null, max_asset_code: null, min_asset_decimals: null, max_asset_decimals: null,
     }])
     ledger.listUserBalances.mockResolvedValue({
-      accounts: [{ assetCode: 'USDT', assetDecimals: 8, purpose: 'available', atomicBalance: '1000000' }],
+      accounts: [{ assetCode: 'USDT', assetDecimals: 6, purpose: 'available', atomicBalance: '1000000' }],
     })
 
     await expect(svc.captureSnapshot(USER, PRODUCT)).rejects.toMatchObject({
-      status: 409, response: { code: 'PORTFOLIO_POSITION_SCALE_MISMATCH' },
+      status: 409, response: { code: 'PORTFOLIO_POSITION_EMPTY' },
     })
     expect(snapshotRepo.save).not.toHaveBeenCalled()
   })

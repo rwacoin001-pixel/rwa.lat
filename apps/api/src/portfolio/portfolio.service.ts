@@ -61,11 +61,8 @@ export class PortfolioService {
     private readonly catalog: CatalogService,
   ) {}
 
-  // 持仓余额：复用 ledger 不可变投影，可追溯到不可变凭证
+  // 产品持仓：仅来自订单成交写入的 app.positions；现金账户不是持仓。
   async listPositions(userId: string): Promise<PositionView[]> {
-    // API-008 writes durable product positions after a Demo order is filled.
-    // Keep the older ledger projection as a compatibility fallback for users
-    // who have not yet placed an order or for historical migration tests.
     const stored = await this.snapshotRepo.query(
       `SELECT p.product_id AS "productId", p.outcome_key AS "outcomeKey", p.asset_code AS "assetCode",
               p.asset_decimals AS "assetDecimals", p.quantity_atomic_amount::text AS "quantityAtomicAmount",
@@ -92,22 +89,8 @@ export class PortfolioService {
        ORDER BY p.updated_at DESC`,
       [userId],
     ) as Array<Omit<PositionView, 'source'>> | undefined
-    if (stored?.length) return stored.map((position) => ({ ...position, source: 'demo-order-position' }))
-    const { accounts } = await this.ledger.listUserBalances(userId)
-    const owned = accounts.filter(
-      (a: Record<string, unknown>) => a.purpose === 'available' || a.purpose === 'locked',
-    )
-    return owned.map((a: Record<string, unknown>) => ({
-      productId: a.accountId as string,
-      assetCode: a.assetCode as string,
-      assetDecimals: Number(a.assetDecimals),
-      quantityAtomicAmount: a.atomicBalance as string,
-      unitPriceAtomicAmount: '0',
-      unitPriceDecimals: 6,
-      currency: 'USD',
-      valuedAt: (a.updatedAt as Date) ?? new Date(0),
-      source: 'immutable-ledger-projection',
-    }))
+    // Cash ledger accounts (available/locked USDT) are cash, not product holdings; never project them as positions.
+    return (stored ?? []).map((position) => ({ ...position, source: 'demo-order-position' }))
   }
 
   // 落一个持仓时点快照（历史表现溯源）。价格来自最新报价快照。
@@ -146,20 +129,6 @@ export class PortfolioService {
     }
     if (stored?.min_asset_decimals != null && assetDecimals !== product.assetDecimals) {
       throw new ConflictException({ code: 'PORTFOLIO_POSITION_SCALE_MISMATCH', message: 'The active position scale no longer matches the catalog scale and cannot be valued safely.' })
-    }
-    if (quantity === '0') {
-      // Compatibility for legacy seed users that only own a ledger projection.
-      const { accounts } = await this.ledger.listUserBalances(userId)
-      const holdings = accounts.filter((account: Record<string, unknown>) =>
-        account.assetCode === product.assetCode
-        && (account.purpose === 'available' || account.purpose === 'locked'),
-      )
-      if (holdings.some((account: Record<string, unknown>) => Number(account.assetDecimals) !== product.assetDecimals)) {
-        throw new ConflictException({ code: 'PORTFOLIO_POSITION_SCALE_MISMATCH', message: 'The legacy ledger holding scale does not match the catalog scale and cannot be valued safely.' })
-      }
-      quantity = holdings
-        .reduce((total: bigint, account: Record<string, unknown>) => total + BigInt(account.atomicBalance as string), 0n)
-        .toString()
     }
     if (BigInt(quantity) <= BigInt(0)) {
       throw new ConflictException({ code: 'PORTFOLIO_POSITION_EMPTY', message: 'There is no positive position quantity to capture for this product.' })

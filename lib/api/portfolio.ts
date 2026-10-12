@@ -27,7 +27,12 @@ export type ExpectedDistribution = {
 
 export const SETTLEMENT_DECIMALS = 6
 
-export const listPositions = () => request<PortfolioPositionsDto>('/v1/portfolio/positions')
+// Older API builds projected cash ledger accounts as positions; cash is shown from the wallet, never as a holding.
+const LEDGER_CASH_SOURCE = 'immutable-ledger-projection'
+export const listPositions = async () => {
+  const result = await request<PortfolioPositionsDto>('/v1/portfolio/positions')
+  return result.ok ? { ...result, data: result.data.filter((position) => position.source !== LEDGER_CASH_SOURCE) } : result
+}
 export const getPortfolioHistory = (productId?: string) => request<PortfolioHistoryDto>(`/v1/portfolio/history${productId ? `?productId=${encodeURIComponent(productId)}` : ''}`)
 export const listYield = () => request<YieldDto>('/v1/yield')
 export const listExpectedDistributions = () => request<ExpectedDistribution[]>('/v1/yield/schedule')

@@ -66,7 +66,7 @@ describe('API-010 portfolio integration (PG)', () => {
     await ds.query(`TRUNCATE TABLE app.position_snapshots, app.redemptions RESTART IDENTITY CASCADE`)
   })
 
-  it('listPositions returns ledger-projected balance', async () => {
+  it('listPositions does not turn a cash ledger balance into a position', async () => {
     ledger = new LedgerService(ds)
     catalog = new CatalogService(
       ds.getRepository('AssetClass' as never) as never,
@@ -81,9 +81,7 @@ describe('API-010 portfolio integration (PG)', () => {
       ledger,
       catalog,
     )
-    const positions = await svc.listPositions(USER)
-    expect(positions.length).toBeGreaterThanOrEqual(1)
-    expect(positions[0].source).toBe('immutable-ledger-projection')
+    expect(await svc.listPositions(USER)).toEqual([])
   })
 
   it('does not present expired or wrong-asset quotes as current position prices', async () => {

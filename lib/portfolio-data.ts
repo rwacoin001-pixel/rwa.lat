@@ -110,7 +110,8 @@ export function basketPositionToView(basket: BasketPosition): PositionView {
 export async function getPositions(): Promise<PositionView[]> {
   const [r, basketResult] = await Promise.all([apiClient.axios.get('/v1/portfolio/positions'), listBasketPositions()])
   if (!basketResult.ok) throw Object.assign(new Error(basketResult.error.message), { status: basketResult.error.status, code: basketResult.error.code })
-  const raw: ApiPosition[] = Array.isArray(r.data) ? (r.data as ApiPosition[]) : ((r.data as { items?: ApiPosition[] })?.items ?? [])
+  const raw: ApiPosition[] = (Array.isArray(r.data) ? (r.data as ApiPosition[]) : ((r.data as { items?: ApiPosition[] })?.items ?? []))
+    .filter((position) => (position as { source?: string }).source !== 'immutable-ledger-projection')
   let items: Array<{ id: string; displayName?: string; assetClassId?: string }> = []
   try {
     const pr = await apiClient.axios.get('/v1/catalog/products')
