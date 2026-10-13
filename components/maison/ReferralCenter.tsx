@@ -1,11 +1,11 @@
 'use client'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, Check, CircleHelp, Copy, LockKeyhole, Pencil, Share2 } from 'lucide-react'
+import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { getSessionToken, SESSION_CHANGED } from '@/lib/api/_http'
-import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode } from '@/lib/api/referral'
+import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode, claimReferralRewards } from '@/lib/api/referral'
 import { backOr } from '@/lib/maison-nav'
 import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
@@ -53,6 +53,8 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const [sheet, setSheet] = useState<SheetKind>(null)
   const [copied, setCopied] = useState(false), [copyError, setCopyError] = useState('')
   const [saving, setSaving] = useState(false), [editError, setEditError] = useState('')
+  const [claiming, setClaiming] = useState(false), [claimNote, setClaimNote] = useState(''), [claimError, setClaimError] = useState('')
+  const claimKey = useRef<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null), copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const theme = useHostTheme(rootRef)
   const balanceId = useId()
@@ -79,7 +81,9 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const money = (atomic?: string) => fmtAtomic(atomic, sum?.decimals ?? 6, '', 2).trim()
   const levelCount = (value: number) => sum ? String(sum.levels.find(row => row.level === value)?.count ?? 0) : '—'
   const totalCount = sum ? String(sum.levels.filter(row => row.level >= 1 && row.level <= 3).reduce((total, row) => total + row.count, 0)) : '—'
-  const states: Record<string, string> = { candidate: t('待计算', 'Candidate'), pending_review: t('待审核', 'Pending review'), approved: t('已批准', 'Approved'), available: t('可领取', 'Available'), frozen: t('已冻结', 'Frozen'), claimed_credit: t('已领额度', 'Credit claimed'), claimed_cash: t('已领现金', 'Cash claimed'), rejected: t('已拒绝', 'Rejected'), revoked: t('已撤销', 'Revoked') }
+  const states: Record<string, string> = { earned: t('可领取', 'Claimable'), claimed: t('已领取', 'Claimed') }
+  const kinds: Record<string, string> = { purchase: t('买入返佣', 'Purchase rebate'), fee: t('手续费返佣', 'Fee rebate') }
+  const claimable = sum ? BigInt(sum.balances.available) > BigInt(0) : false
   const list = tab === 'team' ? members : awards
   const pages = list.data ? Math.max(1, Math.ceil(list.data.total / PAGE_SIZE)) : 1
   // Each edit session gets a generation; a completion from an older one must not touch the current sheet.
@@ -124,6 +128,28 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
     } finally { if (current()) setSaving(false) }
   }
 
+  const claim = async () => {
+    if (claiming || !claimable) return
+    const token = getSessionToken()
+    // One key per claim attempt: a retry after a lost response replays the same claim instead of a new one.
+    claimKey.current ??= `referral-claim-${crypto.randomUUID()}`
+    setClaiming(true); setClaimError(''); setClaimNote('')
+    try {
+      const result = await claimReferralRewards(claimKey.current)
+      if (getSessionToken() !== token || !mounted.current) return
+      if (!result.ok) {
+        if (result.error.code === 'REFERRAL_NOTHING_TO_CLAIM') claimKey.current = null
+        setClaimError(result.error.message)
+        return
+      }
+      claimKey.current = null
+      setClaimNote(t(`已领取 ${money(result.data.amountAtomic)} ${unit} 到可用余额`, `${money(result.data.amountAtomic)} ${unit} added to your available balance`))
+      await invalidate(['referral:v2:summary', 'referral:v2:awards', 'wallet:', 'portfolio:', 'home:'])
+    } catch {
+      if (mounted.current) setClaimError(t('领取失败，请重试', 'Unable to claim. Please try again.'))
+    } finally { if (mounted.current) setClaiming(false) }
+  }
+
   const copyLabel = copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')
   const CopyIcon = copied ? Check : Copy
   const retryLabel = t('重试', 'Retry')
@@ -137,18 +163,23 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
       <section className={x.balance} aria-labelledby={balanceId}>
         <div className={x.balanceHead}>
           <h2 id={balanceId}>{t('可领取奖励', 'Available rewards')}</h2>
-          {sum && (sum.payoutsEnabled
-            ? <button type="button" className={x.chipButton} aria-haspopup="dialog" onClick={() => setSheet('rules')}>{t('查看状态与规则', 'View status & rules')}</button>
-            : <span className={x.chip}><LockKeyhole size={12} strokeWidth={1.75} aria-hidden="true" />{t('奖励领取尚未开放', 'Reward claims are not open yet')}</span>)}
+          {sum && <button type="button" className={x.chipButton} aria-haspopup="dialog" onClick={() => setSheet('rules')}>{t('查看规则', 'View rules')}</button>}
         </div>
         {summary.error
           ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
           : !sum ? <Skeleton rows={2} /> : <>
             <p className={x.amount}><span>{money(sum.balances.available)}</span><small>{unit}</small></p>
             <dl className={x.meta}>
-              <div><dt>{t('待审核', 'Pending review')}</dt><dd>{money(sum.balances.pending)} <small>{unit}</small></dd></div>
-              <div><dt>{t('已冻结', 'Frozen')}</dt><dd>{money(sum.balances.frozen)} <small>{unit}</small></dd></div>
+              <div><dt>{t('已领取', 'Claimed')}</dt><dd>{money(sum.balances.claimed)} <small>{unit}</small></dd></div>
+              <div><dt>{t('累计奖励', 'Total earned')}</dt><dd>{money(sum.balances.total)} <small>{unit}</small></dd></div>
             </dl>
+            {sum.payoutsEnabled && <div className={x.actions}>
+              <button type="button" className={x.primary} disabled={!claimable || claiming} aria-busy={claiming} onClick={() => void claim()}>
+                {claiming ? t('领取中', 'Claiming') : t('领取到余额', 'Claim to balance')}
+              </button>
+            </div>}
+            <p className={x.feedback} role="status">{claimNote}</p>
+            {claimError && <p className={x.error} role="alert">{claimError}</p>}
           </>}
       </section>
 
@@ -198,7 +229,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
                   <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
                 </li>)}</ul>
                 : <ul className={x.list}>{awards.data?.items.map(row => <li className={x.row} key={row.id}>
-                  <div><b className={x.reward}>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><span>{t(`第 ${row.level} 级`, `Level ${row.level}`)} · {fmtDate(row.occurredAt, locale)} · v{row.settingsVersion}</span></div>
+                  <div><b className={x.reward}>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><span>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {row.memberLabel} · {fmtDate(row.occurredAt, locale)}</span></div>
                   <span className={x.state}>{states[row.state] ?? row.state}</span>
                 </li>)}</ul>}
             {list.data.total > PAGE_SIZE && <nav className={x.pager} aria-label={t('分页', 'Pagination')}>
