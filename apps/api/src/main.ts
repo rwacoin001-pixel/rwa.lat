@@ -10,6 +10,7 @@ import { HttpExceptionFilter } from './common/http-exception.filter'
 import { RequestContextMiddleware } from './common/request-context.middleware'
 import { CORE_API_PREFIX } from './route-contract'
 import { createApiRateLimitMiddleware } from './common/api-rate-limit.middleware'
+import { createEdgeClientMiddleware } from './common/edge-client'
 import { createApiCorsOptions } from './common/cors-options'
 import type { Server } from 'node:http'
 
@@ -31,6 +32,7 @@ async function bootstrap() {
   app.use(helmet())
   app.enableCors(createApiCorsOptions(parseOrigins(process.env.CORS_ORIGINS)))
   app.use(new RequestContextMiddleware().use)
+  app.use(createEdgeClientMiddleware())
   app.use(createApiRateLimitMiddleware())
   app.setGlobalPrefix(prefix,{exclude:[{path:'r/:code',method:RequestMethod.GET},{path:'robots.txt',method:RequestMethod.GET}]})
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))

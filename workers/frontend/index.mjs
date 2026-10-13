@@ -23,7 +23,7 @@ export default {
       }
     }
     // /v1 is proxied to the API from this Worker, so the API would otherwise see the Worker as the visitor.
-    if(path.startsWith('/v1/'))return nextWorker.fetch(withClientHeaders(request),env,ctx)
+    if(path.startsWith('/v1/'))return nextWorker.fetch(await withClientHeaders(request,env.EDGE_CLIENT_SIGNING_SECRET),env,ctx)
     return nextWorker.fetch(request,env,ctx)
   },
 }
