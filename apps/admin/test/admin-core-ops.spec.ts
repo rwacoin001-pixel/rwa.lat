@@ -73,3 +73,14 @@ describe('Admin funds overview route', () => {
     expect(String(fetchMock.mock.calls[0][0])).toBe('http://core.test/v1/admin/funds/summary?days=7')
   })
 })
+
+describe('Admin activity overview route', () => {
+  it('requires users.read and forwards to the core activity summary', async () => {
+    const required = new Reflector().get<string[]>('admin:required-permissions', AdminCoreOpsController.prototype.consoleActivity)
+    expect(required).toEqual(['users.read'])
+    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify({ series: [] }), { status: 200 }))
+    global.fetch = fetchMock
+    await new AdminCoreOpsController(service()).consoleActivity({ admin: { id: '00000000-0000-4000-8000-000000000001' } } as never, { days: '30' })
+    expect(String(fetchMock.mock.calls[0][0])).toBe('http://core.test/v1/admin/activity/summary?days=30')
+  })
+})

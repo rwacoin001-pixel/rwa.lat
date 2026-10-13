@@ -1,3 +1,4 @@
+import { ActivityModule } from './analytics/activity.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { DatabaseModule } from './database/database.module'
@@ -54,6 +55,7 @@ import { RobotsController } from './common/robots.controller'
     ComplianceModule,
     SecurityModule,
     WalletModule,
+    ActivityModule,
     LedgerModule,
     CatalogModule,
     NotificationModule,
