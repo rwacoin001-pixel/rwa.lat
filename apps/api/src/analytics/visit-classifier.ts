@@ -139,6 +139,19 @@ export function sourceHost(origin: HeaderValue, referer: HeaderValue): string | 
   return null
 }
 
+/** App page the request came from (Referer), as a normalized route: no query, host or ids. Null if absent/invalid. */
+export function refererPage(referer: HeaderValue): string | null {
+  const value = firstHeader(referer)?.trim()
+  if (!value) return null
+  try {
+    const url = new URL(value)
+    if (url.protocol !== 'http:' && url.protocol !== 'https:') return null
+    return normalizeRoutePath(url.pathname)
+  } catch {
+    return null
+  }
+}
+
 /** Visitor country: the frontend Worker's x-client-country first, then Cloudflare's CF-IPCountry. */
 export function clientCountry(headers: Record<string, HeaderValue>): string | null {
   return countryCode(headers[EDGE_CLIENT_COUNTRY_HEADER]) ?? countryCode(headers['cf-ipcountry'])

@@ -19,6 +19,9 @@ export interface ActivityHit {
   userId: string | null
   country: string | null
   device: ActivityDevice
+  /** Visit log only: raw user agent (truncated) and the app page the request came from. */
+  userAgent?: string | null
+  page?: string | null
 }
 
 interface Aggregate {

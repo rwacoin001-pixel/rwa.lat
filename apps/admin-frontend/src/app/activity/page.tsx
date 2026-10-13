@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatCard } from '@/components/ui/visuals';
 import { BarList, MultiLineChart, type SeriesSpec } from '@/components/activity-charts';
+import { VisitLog } from '@/components/visit-log';
 import { cn } from '@/lib/utils';
 
 interface ActivityDay { day: string; activeUsers: number; anonymousVisitors: number; logins: number; loginUsers: number; registrations: number }
@@ -150,9 +151,12 @@ export default function ActivityPage() {
               </Card>
             </div>
 
-            <p className="text-xs text-muted-foreground">访客按日去重：已登录用户按账号计，未登录访客按当日加密后的 IP 计（不保存原始 IP，跨日不可关联）。地区来自 Cloudflare。</p>
+            <p className="text-xs text-muted-foreground">上方统计按日去重：已登录用户按账号计，未登录访客按当日加密后的 IP 计。地区来自 Cloudflare。</p>
           </>
         )}
+
+        <VisitLog countryName={(code) => countryName(code, names)} />
+        <p className="text-xs text-muted-foreground">访客记录含原始 IP 与浏览器信息，属于个人数据：仅有“查看用户”权限的管理员可见，保存 180 天后自动删除。</p>
       </div>
     </AdminLayout>
   );
