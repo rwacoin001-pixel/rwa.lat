@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Pagination } from '@/components/ui/pagination';
-import { Search, Filter, MoreHorizontal, Wallet, Copy, Ban, Activity, RefreshCw, KeyRound, Plus } from 'lucide-react';
+import { Search, Filter, MoreHorizontal, Wallet, Copy, Ban, Activity, RefreshCw, KeyRound, Upload, History } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@/components/ui/dropdown-menu';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { cn } from '@/lib/utils';
@@ -19,7 +19,7 @@ interface PoolAddress {
   id: string;
   network: string;
   address: string;
-  state: 'available' | 'assigned' | 'disabled';
+  state: 'available' | 'assigned' | 'retired' | 'disabled';
   source: 'generated' | 'imported';
   keyHeld: boolean;
   label: string | null;
@@ -30,12 +30,15 @@ interface PoolAddress {
   createdAt: string;
   disabledAt: string | null;
   disabledReason: string | null;
+  retiredAt?: string | null;
+  watchUntil?: string | null;
 }
 
 interface PoolStats {
   network: string;
   available: number;
   assigned: number;
+  retired?: number;
   disabled: number;
   keyHeld: number;
   keyMissing: number;
@@ -47,13 +50,34 @@ const LIST_LIMIT = 200;
 
 const STATE_LABELS: Record<string, string> = {
   available: '可用',
-  assigned: '已分配',
+  assigned: '使用中',
+  retired: '已轮换',
   disabled: '已停用',
 };
+
+// Below this many unassigned addresses the operator should upload more.
+const LOW_STOCK = 20;
+const MAX_UPLOAD = 1000;
+
+type UploadRejection = { line: number; address: string; reason: 'invalid_address' | 'duplicate_in_upload' | 'already_in_pool' };
+const REJECTION_LABELS: Record<UploadRejection['reason'], string> = {
+  invalid_address: '格式无效',
+  duplicate_in_upload: '本次重复',
+  already_in_pool: '已在地址池',
+};
+
+/** One address per line; commas, semicolons and spaces also separate. A CSV's first column is used. */
+function parseAddresses(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((line) => line.split(/[,;\t ]+/)[0]?.trim() ?? '')
+    .filter((value) => value && !/^address$/i.test(value));
+}
 
 const STATE_STYLES: Record<string, string> = {
   available: 'bg-mint/20 text-mint',
   assigned: 'bg-blue-500/20 text-blue-600',
+  retired: 'bg-amber-500/15 text-amber-700',
   disabled: 'bg-gray-500/20 text-slate-500',
 };
 
@@ -69,9 +93,9 @@ export default function WalletsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [busy, setBusy] = useState(false);
-  const [generateOpen, setGenerateOpen] = useState(false);
-  const [generateNetwork, setGenerateNetwork] = useState<string>('tron');
-  const [generateCount, setGenerateCount] = useState('20');
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [uploadText, setUploadText] = useState('');
+  const [uploadLabel, setUploadLabel] = useState('');
   const [disableTarget, setDisableTarget] = useState<PoolAddress | null>(null);
   const [disableReason, setDisableReason] = useState('');
 
@@ -116,14 +140,16 @@ export default function WalletsPage() {
       (acc, s) => ({
         available: acc.available + s.available,
         assigned: acc.assigned + s.assigned,
+        retired: acc.retired + (s.retired ?? 0),
         disabled: acc.disabled + s.disabled,
         keyHeld: acc.keyHeld + s.keyHeld,
         keyMissing: acc.keyMissing + s.keyMissing,
       }),
-      { available: 0, assigned: 0, disabled: 0, keyHeld: 0, keyMissing: 0 },
+      { available: 0, assigned: 0, retired: 0, disabled: 0, keyHeld: 0, keyMissing: 0 },
     );
   }, [networkStats, networkFilter]);
-  const totalAddresses = stats.available + stats.assigned + stats.disabled;
+  const totalAddresses = stats.available + stats.assigned + stats.retired + stats.disabled;
+  const lowStock = !loading && !error && stats.available < LOW_STOCK;
 
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -149,29 +175,40 @@ export default function WalletsPage() {
     setCurrentPage(1);
   };
 
-  const countValid = /^\d+$/.test(generateCount.trim()) && Number(generateCount) >= 1 && Number(generateCount) <= 100;
+  const uploadAddresses = useMemo(() => parseAddresses(uploadText), [uploadText]);
+  const uploadValid = uploadAddresses.length > 0 && uploadAddresses.length <= MAX_UPLOAD;
 
-  const openGenerate = () => {
+  const openUpload = () => {
     setNotice(null);
-    setGenerateNetwork(networkFilter !== ALL ? networkFilter : 'tron');
-    setGenerateCount('20');
-    setGenerateOpen(true);
+    setUploadText('');
+    setUploadLabel('');
+    setUploadOpen(true);
   };
 
-  const handleGenerate = async () => {
-    if (!countValid) throw new Error('数量必须是 1-100 的整数');
+  const loadUploadFile = async (file: File | undefined) => {
+    if (!file) return;
+    setUploadText(await file.text());
+  };
+
+  const handleUpload = async () => {
+    if (!uploadValid) throw new Error(`请粘贴 1-${MAX_UPLOAD} 个地址`);
     setBusy(true);
     try {
-      const count = Number(generateCount);
-      const res = await fetch('/api/admin/wallet/deposit-pool/generate', {
+      const label = uploadLabel.trim();
+      const res = await fetch('/api/admin/wallet/deposit-pool/import', {
         method: 'POST',
         credentials: 'include',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ network: generateNetwork, count }),
+        body: JSON.stringify({ network: 'tron', addresses: uploadAddresses, ...(label ? { label } : {}) }),
       });
       const body = await res.json().catch(() => null);
-      if (!res.ok) throw new Error(body?.message || `生成失败 (HTTP ${res.status})`);
-      setNotice({ kind: 'ok', text: `已在 ${networkLabel(generateNetwork)} 生成 ${body?.generated ?? count} 个地址` });
+      if (!res.ok) throw new Error(body?.message || `上传失败 (HTTP ${res.status})`);
+      const rejected: UploadRejection[] = Array.isArray(body?.rejected) ? body.rejected : [];
+      const summary = rejected.slice(0, 8).map((r) => `第 ${r.line} 行 ${r.address.slice(0, 12)}… ${REJECTION_LABELS[r.reason] ?? r.reason}`).join('；');
+      setNotice({
+        kind: rejected.length ? 'error' : 'ok',
+        text: `已上传 ${body?.imported ?? 0} 个地址` + (rejected.length ? `，${rejected.length} 行未导入：${summary}${rejected.length > 8 ? ' …' : ''}` : ''),
+      });
       await fetchPool();
     } finally {
       setBusy(false);
@@ -224,9 +261,9 @@ export default function WalletsPage() {
               <RefreshCw className="w-4 h-4" />
               刷新
             </Button>
-            <Button className="flex items-center gap-2" onClick={openGenerate} disabled={busy}>
-              <Plus className="w-4 h-4" />
-              生成地址
+            <Button className="flex items-center gap-2" onClick={openUpload} disabled={busy}>
+              <Upload className="w-4 h-4" />
+              上传地址
             </Button>
           </div>
         </div>
@@ -248,7 +285,7 @@ export default function WalletsPage() {
         )}
 
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-5">
+        <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-6">
           <Card className="glass-strong">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -264,8 +301,9 @@ export default function WalletsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">可用地址</p>
-                  <p className="text-2xl font-bold mt-1 text-mint">{stats.available}</p>
+                  <p className="text-sm text-muted-foreground">待分配</p>
+                  <p className={cn('text-2xl font-bold mt-1', lowStock ? 'text-amber-600' : 'text-mint')}>{stats.available}</p>
+                  {lowStock && <p className="text-xs text-amber-600 mt-1">库存不足 {LOW_STOCK}，请上传</p>}
                 </div>
                 <Activity className="w-10 h-10 text-mint/50" />
               </div>
@@ -275,10 +313,22 @@ export default function WalletsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">已分配</p>
+                  <p className="text-sm text-muted-foreground">使用中</p>
                   <p className="text-2xl font-bold mt-1 text-blue-600">{stats.assigned}</p>
                 </div>
                 <Wallet className="w-10 h-10 text-blue-600/50" />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="glass-strong">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">已轮换</p>
+                  <p className="text-2xl font-bold mt-1 text-amber-700">{stats.retired}</p>
+                  <p className="text-xs text-muted-foreground mt-1">仍归原用户并持续监听</p>
+                </div>
+                <History className="w-10 h-10 text-amber-600/40" />
               </div>
             </CardContent>
           </Card>
@@ -339,8 +389,9 @@ export default function WalletsPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value={ALL}>全部状态</SelectItem>
-                  <SelectItem value="available">可用</SelectItem>
-                  <SelectItem value="assigned">已分配</SelectItem>
+                  <SelectItem value="available">待分配</SelectItem>
+                  <SelectItem value="assigned">使用中</SelectItem>
+                  <SelectItem value="retired">已轮换</SelectItem>
                   <SelectItem value="disabled">已停用</SelectItem>
                 </SelectContent>
               </Select>
@@ -379,7 +430,7 @@ export default function WalletsPage() {
             ) : paged.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-12 text-muted-foreground">
                 <Wallet className="w-12 h-12 mb-4 opacity-50" />
-                <p>{totalAddresses === 0 && networkFilter === ALL ? '地址池为空，点击右上角「生成地址」开始' : '没有符合筛选条件的地址'}</p>
+                <p>{totalAddresses === 0 && networkFilter === ALL ? '地址池为空，点击右上角「上传地址」开始' : '没有符合筛选条件的地址'}</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -424,13 +475,16 @@ export default function WalletsPage() {
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className="bg-cyan-500/20 text-sky-600">
-                              {row.source === 'generated' ? '系统生成' : '导入'}
+                              {row.source === 'generated' ? '系统生成' : '上传'}
                             </Badge>
                           </TableCell>
                           <TableCell>
                             <Badge variant="outline" className={cn(STATE_STYLES[row.state])}>
                               {STATE_LABELS[row.state] ?? row.state}
                             </Badge>
+                            {row.watchUntil && new Date(row.watchUntil).getTime() > Date.now() && (
+                              <p className="text-xs text-mint mt-1">监听中</p>
+                            )}
                           </TableCell>
                           <TableCell className="text-sm">
                             {row.keyHeld ? (
@@ -500,34 +554,37 @@ export default function WalletsPage() {
       </div>
 
       <ConfirmDialog
-        open={generateOpen}
-        onOpenChange={setGenerateOpen}
-        title="生成充值地址"
-        description="新地址进入地址池，按需分配给用户。由后端校验该网络是否支持系统生成。"
-        confirmLabel="确认生成"
-        confirmDisabled={!countValid}
-        onConfirm={handleGenerate}
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+        title="上传充值地址"
+        description="只上传地址，不上传私钥。按上传顺序分配给用户；地址收到充值后，该用户下次充值会换用下一个地址，旧地址仍归该用户并持续监听。"
+        details={[
+          { label: '网络', value: 'TRON (TRC-20 USDT)' },
+          { label: '识别到', value: `${uploadAddresses.length} 个地址`, emphasis: true },
+        ]}
+        confirmLabel="确认上传"
+        confirmDisabled={!uploadValid}
+        onConfirm={handleUpload}
       >
-        <div className="grid grid-cols-2 gap-3">
-          <label className="grid gap-1.5 text-sm">
-            <span>网络</span>
-            <Select value={generateNetwork} onValueChange={setGenerateNetwork}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {networkOptions.map((n) => (
-                  <SelectItem key={n} value={n}>{networkLabel(n)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </label>
-          <label className="grid gap-1.5 text-sm">
-            <span>数量（1-100）</span>
-            <Input inputMode="numeric" value={generateCount} onChange={(e) => setGenerateCount(e.target.value)} />
-          </label>
+        <label className="grid gap-1.5 text-sm">
+          <span>地址（每行一个，或选择 .txt / .csv 文件）</span>
+          <textarea
+            value={uploadText}
+            onChange={(e) => setUploadText(e.target.value)}
+            rows={8}
+            spellCheck={false}
+            placeholder={'T...\nT...'}
+            className="w-full rounded-input border border-ink/[0.14] bg-white/70 px-3 py-2 font-mono text-xs text-ink shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-mint focus:border-transparent focus:bg-white"
+          />
+        </label>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <input type="file" accept=".txt,.csv,text/plain,text/csv" onChange={(e) => void loadUploadFile(e.target.files?.[0])} className="text-xs" />
+          {uploadAddresses.length > MAX_UPLOAD && <span className="text-xs text-negative">单次最多 {MAX_UPLOAD} 个</span>}
         </div>
-        {!countValid && generateCount.trim() !== '' && <p className="text-xs text-negative">数量必须是 1-100 的整数</p>}
+        <label className="grid gap-1.5 text-sm">
+          <span>批次备注（可选）</span>
+          <Input value={uploadLabel} maxLength={120} onChange={(e) => setUploadLabel(e.target.value)} placeholder="例如：2026-10 第一批" />
+        </label>
       </ConfirmDialog>
 
       <ConfirmDialog

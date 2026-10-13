@@ -5,6 +5,7 @@ import type { CustodyAdapter } from '../../src/wallet/custody-adapter.interface'
 import { StubCustodyAdapter } from '../../src/wallet/stub-custody.adapter'
 import { WalletNetworkRegistry } from '../../src/wallet/wallet-network.registry'
 import { WalletService } from '../../src/wallet/wallet.service'
+import { generateTronKeypair } from '../../src/wallet/manual/tron-address.util'
 
 function repo(overrides: Record<string, unknown> = {}) {
   return {
@@ -118,6 +119,55 @@ describe('WalletService', () => {
     expect(response.networks.map((network) => network.id)).toEqual(['tron', 'ethereum', 'arbitrum'])
     expect(response.networks.every((network) => network.configurationSource === 'demo-policy')).toBe(true)
     expect(response.integration).toMatchObject({ adapterMode: 'stub', executionEnabled: false, realFunds: false })
+  })
+
+  describe('manual custody deposit addresses', () => {
+    const USER = '00000000-0000-4000-8000-0000000000aa'
+    const address = generateTronKeypair().address
+    const watchUntil = new Date(Date.now() + 3_600_000)
+    function manual(rotated: boolean, watch: { watchUntil: Date; nextScanAt: Date } | null = { watchUntil, nextScanAt: new Date() }) {
+      const adapter = {
+        name: 'manual-custody', mode: 'manual',
+        provisionWallet: jest.fn(),
+        provisionAddress: jest.fn().mockResolvedValue({ address, memo: null, rotated }),
+        startDepositWatch: jest.fn().mockResolvedValue(watch),
+      } as unknown as CustodyAdapter
+      const built = buildService({ adapter })
+      built.wallets.findOne.mockResolvedValue({ id: 'wallet-1', userId: USER, state: 'active', providerWalletCiphertext: Buffer.from(`manual:${USER}`) })
+      return { ...built, adapter }
+    }
+
+    it('returns the current pool address, records it once, and opens a watch window', async () => {
+      const { service, addresses, adapter } = manual(true)
+      const response = await service.depositAddress(USER, 'tron')
+      expect(response).toMatchObject({ address, addressRotated: true, watchUntil })
+      expect(adapter.provisionAddress).toHaveBeenCalledWith(`manual:${USER}`, 'tron', 'USDT')
+      expect(addresses.findOne).toHaveBeenCalledWith({ where: { network: 'tron', addressHash: Buffer.from(`hmac:${address}`) } })
+      expect(addresses.save).toHaveBeenCalledTimes(1)
+    })
+
+    it('reuses the existing wallet address row for the same user (old addresses stay active)', async () => {
+      const { service, addresses } = manual(false)
+      addresses.findOne.mockResolvedValue({ id: 'addr-1', userId: USER, state: 'active' })
+      const response = await service.depositAddress(USER, 'tron')
+      expect(response).toMatchObject({ id: 'addr-1', address, addressRotated: false })
+      expect(addresses.save).not.toHaveBeenCalled()
+    })
+
+    it('refuses an address recorded for another user', async () => {
+      const { service, addresses } = manual(false)
+      addresses.findOne.mockResolvedValue({ id: 'addr-1', userId: '00000000-0000-4000-8000-0000000000bb', state: 'active' })
+      await expect(service.depositAddress(USER, 'tron')).rejects.toMatchObject({ response: { code: 'WALLET_ADDRESS_POOL_CONFLICT' } })
+    })
+
+    it('"check now" extends the watch, and needs an address first', async () => {
+      const { service } = manual(false)
+      await expect(service.watchDeposit(USER, 'tron')).resolves.toMatchObject({ watchUntil })
+      const { service: empty } = manual(false, null)
+      await expect(empty.watchDeposit(USER, 'tron')).rejects.toMatchObject({ response: { code: 'WALLET_ADDRESS_NOT_FOUND' } })
+      const { service: stub } = buildService()
+      await expect(stub.watchDeposit(USER, 'tron')).resolves.toEqual({ watchUntil: null, nextScanAt: null })
+    })
   })
 
   it('provisions a deterministic encrypted deposit address without enabling real funds', async () => {

@@ -20,6 +20,9 @@ export type WalletCopy = {
   deposit: {
     kicker: string; title: string; network: string; reveal: string; revealing: string; address: string; memo: string; copy: string; copied: string
     before: string; afterNote: string; testAddress: string; backCash: string; loadError: string; qr: string
+    /** On-demand watching and address rotation. `{m}` minutes left, `{n}` confirmations, `{v}` amount. */
+    newAddress: string; newAddressBody: string; watching: string; watchEnded: string; checkNow: string; checkQueued: string
+    detected: string; arrived: string; inReview: string
   }
 }
 
@@ -43,6 +46,7 @@ const en: WalletCopy = {
   deposit: {
     kicker: 'Deposit', title: 'Deposit USDT', network: 'Network', reveal: 'Show deposit address', revealing: 'Preparing address…', address: 'Deposit address', memo: 'Memo / tag', copy: 'Copy', copied: 'Copied',
     before: 'Before you send', afterNote: 'Credits appear in Activity after {n} network confirmations.', testAddress: 'Test address from a stub custodian — do not send real funds.', backCash: 'Back to cash', loadError: 'Could not prepare an address', qr: 'QR code of the deposit address',
+    newAddress: 'New deposit address', newAddressBody: 'Your previous address already received a deposit. Use this one from now on; transfers to an old address still credit you.', watching: 'Watching for your deposit · {m} min left', watchEnded: 'Live watching ended. Deposits are still detected automatically, less often.', checkNow: 'I\'ve sent it — check now', checkQueued: 'Checking within seconds', detected: 'Deposit detected · waiting for {n} confirmations', arrived: 'Deposit credited · {v} USDT', inReview: 'Deposit received · under review',
   },
 }
 
@@ -66,6 +70,7 @@ const zh: WalletCopy = {
   deposit: {
     kicker: '充值', title: '充值 USDT', network: '网络', reveal: '显示充值地址', revealing: '正在准备地址…', address: '充值地址', memo: '备注 / 标签', copy: '复制', copied: '已复制',
     before: '转账前请确认', afterNote: '网络确认 {n} 次后，入账记录会出现在资金流水中。', testAddress: '模拟托管生成的测试地址，请勿转入真实资金。', backCash: '返回现金', loadError: '无法准备充值地址', qr: '充值地址二维码',
+    newAddress: '新的充值地址', newAddressBody: '上一个地址已收到过充值，已为你分配新地址。请使用此地址；转入旧地址的款项仍会入账。', watching: '正在监听到账 · 剩余 {m} 分钟', watchEnded: '实时监听已结束，到账仍会自动检测，频率较低。', checkNow: '我已转账，立即检查', checkQueued: '几秒内开始检查', detected: '已检测到充值 · 等待 {n} 个确认', arrived: '充值已入账 · {v} USDT', inReview: '已收到充值 · 审核中',
   },
 }
 
@@ -89,6 +94,7 @@ const hi: WalletCopy = {
   deposit: {
     kicker: 'जमा', title: 'USDT जमा करें', network: 'नेटवर्क', reveal: 'जमा पता दिखाएँ', revealing: 'पता तैयार हो रहा है…', address: 'जमा पता', memo: 'मेमो / टैग', copy: 'कॉपी', copied: 'कॉपी हुआ',
     before: 'भेजने से पहले', afterNote: '{n} नेटवर्क पुष्टियों के बाद जमा गतिविधि में दिखेगा।', testAddress: 'स्टब कस्टोडियन का टेस्ट पता — असली धन न भेजें।', backCash: 'नकद पर लौटें', loadError: 'पता तैयार नहीं हो सका', qr: 'जमा पते का QR कोड',
+    newAddress: 'नया जमा पता', newAddressBody: 'आपके पिछले पते पर जमा हो चुका है। अब यही पता इस्तेमाल करें; पुराने पते पर भेजी राशि भी आपके खाते में आएगी।', watching: 'आपकी जमा पर नज़र · {m} मिनट बाकी', watchEnded: 'लाइव निगरानी समाप्त। जमा अब भी अपने आप पहचानी जाती है, कम बार।', checkNow: 'मैंने भेज दिया — अभी जाँचें', checkQueued: 'कुछ सेकंड में जाँच', detected: 'जमा मिली · {n} पुष्टियों की प्रतीक्षा', arrived: 'जमा क्रेडिट हुई · {v} USDT', inReview: 'जमा प्राप्त · समीक्षा में',
   },
 }
 
@@ -112,6 +118,7 @@ const es: WalletCopy = {
   deposit: {
     kicker: 'Depósito', title: 'Depositar USDT', network: 'Red', reveal: 'Mostrar dirección de depósito', revealing: 'Preparando dirección…', address: 'Dirección de depósito', memo: 'Memo / etiqueta', copy: 'Copiar', copied: 'Copiado',
     before: 'Antes de enviar', afterNote: 'El abono aparece en Actividad tras {n} confirmaciones de red.', testAddress: 'Dirección de prueba de un custodio simulado: no envíes fondos reales.', backCash: 'Volver a efectivo', loadError: 'No se pudo preparar una dirección', qr: 'Código QR de la dirección de depósito',
+    newAddress: 'Nueva dirección de depósito', newAddressBody: 'Tu dirección anterior ya recibió un depósito. Usa esta a partir de ahora; lo enviado a una dirección anterior también se te abona.', watching: 'Vigilando tu depósito · quedan {m} min', watchEnded: 'La vigilancia en vivo terminó. Los depósitos se siguen detectando, con menos frecuencia.', checkNow: 'Ya lo envié: comprobar ahora', checkQueued: 'Comprobando en segundos', detected: 'Depósito detectado · esperando {n} confirmaciones', arrived: 'Depósito abonado · {v} USDT', inReview: 'Depósito recibido · en revisión',
   },
 }
 
@@ -135,6 +142,7 @@ const ar: WalletCopy = {
   deposit: {
     kicker: 'إيداع', title: 'إيداع USDT', network: 'الشبكة', reveal: 'عرض عنوان الإيداع', revealing: 'جارٍ تجهيز العنوان…', address: 'عنوان الإيداع', memo: 'مذكرة / وسم', copy: 'نسخ', copied: 'تم النسخ',
     before: 'قبل الإرسال', afterNote: 'يظهر الإيداع في النشاط بعد {n} تأكيدًا على الشبكة.', testAddress: 'عنوان تجريبي من أمين حفظ تجريبي — لا ترسل أموالًا حقيقية.', backCash: 'العودة إلى النقد', loadError: 'تعذر تجهيز عنوان', qr: 'رمز QR لعنوان الإيداع',
+    newAddress: 'عنوان إيداع جديد', newAddressBody: 'تلقّى عنوانك السابق إيداعًا بالفعل. استخدم هذا العنوان من الآن؛ وما يُرسل إلى عنوان سابق يُضاف إلى حسابك أيضًا.', watching: 'نراقب وصول إيداعك · متبقٍ {m} دقيقة', watchEnded: 'انتهت المراقبة المباشرة. ما زال الإيداع يُكتشف تلقائيًا بوتيرة أقل.', checkNow: 'أرسلتُ المبلغ — تحقّق الآن', checkQueued: 'التحقق خلال ثوانٍ', detected: 'تم رصد الإيداع · بانتظار {n} تأكيدًا', arrived: 'أُضيف الإيداع · {v} USDT', inReview: 'تم استلام الإيداع · قيد المراجعة',
   },
 }
 
@@ -158,6 +166,7 @@ const fr: WalletCopy = {
   deposit: {
     kicker: 'Dépôt', title: 'Déposer des USDT', network: 'Réseau', reveal: 'Afficher l’adresse de dépôt', revealing: 'Préparation de l’adresse…', address: 'Adresse de dépôt', memo: 'Mémo / tag', copy: 'Copier', copied: 'Copié',
     before: 'Avant d’envoyer', afterNote: 'Le crédit apparaît dans Activité après {n} confirmations réseau.', testAddress: 'Adresse de test d’un dépositaire simulé — n’envoyez pas de fonds réels.', backCash: 'Retour aux liquidités', loadError: 'Impossible de préparer une adresse', qr: 'QR code de l’adresse de dépôt',
+    newAddress: 'Nouvelle adresse de dépôt', newAddressBody: 'Votre adresse précédente a déjà reçu un dépôt. Utilisez désormais celle-ci ; un envoi vers une ancienne adresse vous est aussi crédité.', watching: 'Surveillance de votre dépôt · {m} min restantes', watchEnded: 'Surveillance en direct terminée. Les dépôts restent détectés automatiquement, moins souvent.', checkNow: 'C\'est envoyé — vérifier', checkQueued: 'Vérification dans quelques secondes', detected: 'Dépôt détecté · {n} confirmations attendues', arrived: 'Dépôt crédité · {v} USDT', inReview: 'Dépôt reçu · en vérification',
   },
 }
 
@@ -181,6 +190,7 @@ const pt: WalletCopy = {
   deposit: {
     kicker: 'Depósito', title: 'Depositar USDT', network: 'Rede', reveal: 'Mostrar endereço de depósito', revealing: 'Preparando endereço…', address: 'Endereço de depósito', memo: 'Memo / tag', copy: 'Copiar', copied: 'Copiado',
     before: 'Antes de enviar', afterNote: 'O crédito aparece em Atividade após {n} confirmações de rede.', testAddress: 'Endereço de teste de um custodiante simulado — não envie fundos reais.', backCash: 'Voltar ao caixa', loadError: 'Não foi possível preparar um endereço', qr: 'QR code do endereço de depósito',
+    newAddress: 'Novo endereço de depósito', newAddressBody: 'Seu endereço anterior já recebeu um depósito. Use este daqui em diante; envios a um endereço anterior também são creditados.', watching: 'Monitorando seu depósito · faltam {m} min', watchEnded: 'O monitoramento ao vivo terminou. Os depósitos continuam sendo detectados, com menos frequência.', checkNow: 'Já enviei — verificar agora', checkQueued: 'Verificando em segundos', detected: 'Depósito detectado · aguardando {n} confirmações', arrived: 'Depósito creditado · {v} USDT', inReview: 'Depósito recebido · em análise',
   },
 }
 

@@ -13,7 +13,11 @@ export type WalletIntegration = WalletNetworksDto['integration']
 export type WalletDetail = WalletOverview & { recentActivity: FundingActivity[]; integration: WalletIntegration }
 export type WalletNetwork = WalletNetworksDto['networks'][number]
 export type LedgerTransaction = LedgerTransactionsDto['transactions'][number]
-export type DepositAddress = { id: string; network: string; assetCode: string; address: string; memo: string | null; requiredConfirmations: number; minimumDepositAtomic: string; estimatedArrivalMinutes: number[]; warning: string; integration: WalletIntegration }
+export type DepositAddress = { id: string; network: string; assetCode: string; address: string; memo: string | null; requiredConfirmations: number; minimumDepositAtomic: string; estimatedArrivalMinutes: number[]; warning: string; integration: WalletIntegration
+  /** Manual custody: the previous address received a deposit and this fresh one replaced it. */
+  addressRotated?: boolean
+  /** Manual custody: live watching runs until this instant (ISO); null/absent when not watched. */
+  watchUntil?: string | null }
 
 export const getWalletDetail = () => request<WalletDetail>('/v1/wallet')
 export const listNetworks = () => request<WalletNetworksDto>('/v1/wallet/networks')
@@ -25,6 +29,8 @@ export const listLedger = (limit = 100, cursor?: string) => {
 }
 /** Get-or-provision: the server returns the existing active address when there is one. */
 export const getDepositAddress = (network: string) => request<DepositAddress>(`/v1/wallet/deposit-addresses/${encodeURIComponent(network)}`, { method: 'POST' })
+/** "I have sent it": extends live watching and asks for a scan within seconds. */
+export const watchDeposit = (network: string) => request<{ watchUntil: string | null; nextScanAt: string | null }>(`/v1/wallet/deposit-addresses/${encodeURIComponent(network)}/watch`, { method: 'POST' })
 
 export type LedgerGroup = 'funding' | 'investing' | 'income' | 'other'
 export function ledgerGroup(type: string): LedgerGroup {

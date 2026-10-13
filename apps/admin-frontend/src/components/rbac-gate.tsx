@@ -36,6 +36,7 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/legal': ['platform.manage'],
   '/wallets': ['wallet.addresses.manage'],
   '/withdrawals': ['wallet.withdrawals.manage', 'operations.funds.switch.manage'],
+  '/withdrawal-whitelist': ['wallet.withdrawals.manage'],
   '/ledger': ['ledger.adjustments.manage', 'ledger.reconciliation.manage'],
   '/reconciliation': ['ledger.reconciliation.manage'],
   '/users': ['users.read'],

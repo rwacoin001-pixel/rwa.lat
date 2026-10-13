@@ -89,6 +89,7 @@ const NAV_SECTIONS: NavSection[] = [
       { name: '钱包财资', href: '/wallets', icon: Wallet },
       { name: '账本明细', href: '/ledger', icon: BookOpen },
       { name: '提现管理', href: '/withdrawals', icon: ArrowUpRight },
+      { name: '提现白名单', href: '/withdrawal-whitelist', icon: ShieldCheck },
       { name: '对账中心', href: '/reconciliation', icon: Scale },
       { name: '充值入账', href: '/collections', icon: Boxes },
       { name: '资产目录网络', href: '/networks', icon: Network },
