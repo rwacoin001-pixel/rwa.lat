@@ -59,8 +59,8 @@ describeDatabase('referral rewards (PostgreSQL)', () => {
   async function purchase(user: string, amount: bigint) {
     return db.transaction(async (m) => {
       const [order] = await m.query(`INSERT INTO app.orders (user_id, product_id, side, requested_atomic_amount, filled_atomic_amount,
-          unit_price_atomic_amount, state, idempotency_key, request_id, completed_at)
-        VALUES ($1, $2, 'buy', $3, $3, 1000000, 'filled', $4, 'referral-test', now()) RETURNING id`, [user, product, amount.toString(), randomUUID()])
+          unit_price_atomic_amount, state, idempotency_key, request_id, completed_at, product_asset_code, product_asset_decimals, quote_currency, quote_decimals)
+        VALUES ($1, $2, 'buy', $3, $3, 1000000, 'filled', $4, 'referral-test', now(), 'USDT', 6, 'USD', 6) RETURNING id`, [user, product, amount.toString(), randomUUID()])
       const created = await recordReferralRewards(m, { kind: 'purchase', sourceType: 'order', sourceId: order.id, sourceUserId: user, baseAtomic: amount })
       return { orderId: order.id as string, created }
     })
