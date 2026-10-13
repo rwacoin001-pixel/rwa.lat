@@ -34,6 +34,7 @@ import {
   Settings,
   ShieldAlert,
   ShieldCheck,
+  BarChart3,
   ShoppingCart,
   SlidersHorizontal,
   TrendingUp,
@@ -86,6 +87,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: '资金',
     icon: Wallet,
     items: [
+      { name: '资金统计', href: '/funds', icon: BarChart3 },
       { name: '钱包财资', href: '/wallets', icon: Wallet },
       { name: '账本明细', href: '/ledger', icon: BookOpen },
       { name: '提现管理', href: '/withdrawals', icon: ArrowUpRight },

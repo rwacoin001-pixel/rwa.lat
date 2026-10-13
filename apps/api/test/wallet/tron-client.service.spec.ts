@@ -1,5 +1,6 @@
 import type { ConfigService } from '@nestjs/config'
 import { TronClientService, TronRateLimitedError } from '../../src/wallet/manual/tron-client.service'
+import { generateTronKeypair } from '../../src/wallet/manual/tron-address.util'
 
 function config(values: Record<string, string | undefined>): ConfigService {
   return { get: (key: string) => values[key] } as unknown as ConfigService
@@ -120,5 +121,29 @@ describe('TronClientService rate limiting', () => {
     const client = new TronClientService(config({ ...fast, TRON_NODE_URL: 'https://go.getblock.io/secret-token' }))
     await expect(client.getNowBlockNumber()).rejects.toThrow(/HTTP 400/)
     await client.getNowBlockNumber().catch((error: Error) => expect(error.message).not.toContain('secret-token'))
+  })
+})
+
+describe('TronClientService balances', () => {
+  it('reads a TRC-20 balance from the constant-call result', async () => {
+    const { calls } = mockFetch(() => ({ status: 200, body: { constant_result: ['0000000000000000000000000000000000000000000000000000000005f5e100'] } }))
+    const client = new TronClientService(config({ ...fast }))
+    await expect(client.getTrc20Balance(generateTronKeypair().address)).resolves.toBe(100000000n)
+    expect(calls[0].url).toMatch(/\/wallet\/triggerconstantcontract$/)
+  })
+
+  it('rejects a malformed TRC-20 balance instead of reporting zero', async () => {
+    mockFetch(() => ({ status: 200, body: { result: { result: false } } }))
+    const client = new TronClientService(config({ ...fast }))
+    await expect(client.getTrc20Balance(generateTronKeypair().address)).rejects.toThrow(/invalid TRC-20 balance/)
+  })
+
+  it('reads TRX in sun and treats an unactivated account as zero', async () => {
+    let body: unknown = { balance: 123456789 }
+    mockFetch(() => ({ status: 200, body }))
+    const client = new TronClientService(config({ ...fast }))
+    await expect(client.getTrxBalance('TXYZ')).resolves.toBe(123456789n)
+    body = {}
+    await expect(client.getTrxBalance('TXYZ')).resolves.toBe(0n)
   })
 })
