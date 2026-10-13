@@ -10,7 +10,9 @@ import { PortfolioError } from '../../src/portfolio/portfolio.errors'
 const USER = '66666666-6666-6666-6666-666666666666'
 const PRODUCT = '77777777-7777-7777-7777-777777777777'
 
-describe('API-010 portfolio integration (PG)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('API-010 portfolio integration (PG)', () => {
   let ds: DataSource
   let svc: PortfolioService
   let ledger: LedgerService

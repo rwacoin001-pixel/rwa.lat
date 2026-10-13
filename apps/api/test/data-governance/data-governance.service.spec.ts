@@ -6,7 +6,9 @@ import { BackupDrill, DataDeletionRequest } from '../../src/data-governance/data
 const ADMIN_1 = '00000000-0000-4000-8000-000000000001'
 const ADMIN_2 = '00000000-0000-4000-8000-000000000002'
 
-describe('DataGovernanceService (Pg)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('DataGovernanceService (Pg)', () => {
   let ds: DataSource
   let svc: DataGovernanceService
 
@@ -28,7 +30,7 @@ describe('DataGovernanceService (Pg)', () => {
   })
 
   afterAll(async () => {
-    await ds.destroy()
+    if (ds?.isInitialized) await ds.destroy()
   })
 
   it('requestDeletion sets retention window and requested state', async () => {

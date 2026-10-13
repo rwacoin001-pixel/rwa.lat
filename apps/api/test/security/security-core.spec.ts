@@ -38,9 +38,11 @@ describe('Security core', () => {
     const request = {
       header: (name: string) => (name === 'authorization' ? `Bearer ${token}` : undefined),
     } as AuthenticatedRequest
-    const context = { switchToHttp: () => ({ getRequest: () => request }) } as any
+    const response = { setHeader: jest.fn() }
+    const context = { switchToHttp: () => ({ getRequest: () => request, getResponse: () => response }) } as any
 
     await expect(guard.canActivate(context)).resolves.toBe(true)
+    expect(response.setHeader).toHaveBeenCalledWith('Cache-Control', 'private, no-store')
     expect(request.auth).toEqual({ userId: 'user-1', sessionId: 'session-1', deviceId: 'device-1' })
     expect(sessions.save).toHaveBeenCalled()
   })

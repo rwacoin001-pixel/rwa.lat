@@ -5,7 +5,9 @@ import { JobQueueEntry, InboundCallbackEvent } from '../../src/job-queue/job-que
 
 const Q = 'test-queue'
 
-describe('JobQueueService (Pg)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('JobQueueService (Pg)', () => {
   let ds: DataSource
   let svc: JobQueueService
 
@@ -26,7 +28,7 @@ describe('JobQueueService (Pg)', () => {
     )
   })
 
-  afterAll(async () => { await ds.destroy() })
+  afterAll(async () => { if (ds?.isInitialized) await ds.destroy() })
 
   it('enqueue dedup: same dedupKey returns existing job', async () => {
     const j1 = await svc.enqueue({ queueName: Q, payload: { x: 1 }, dedupKey: 'k1' })

@@ -15,7 +15,9 @@ const ADMIN_B = 'bbbbbbbb-0000-0000-0000-0000000000b2'
 const TOKEN_A = 'ras_test_admin_session_a_012345678901234567890123456789'
 const TOKEN_B = 'ras_test_admin_session_b_012345678901234567890123456789'
 
-describe('API-013 admin RBAC HTTP (Pg + guard)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('API-013 admin RBAC HTTP (Pg + guard)', () => {
   let app: INestApplication
   let ds: DataSource
   let moduleRef: any
@@ -62,7 +64,7 @@ describe('API-013 admin RBAC HTTP (Pg + guard)', () => {
 
   afterAll(async () => {
     await app?.close()
-    await ds.destroy()
+    if (ds?.isInitialized) await ds.destroy()
     if (moduleRef) await moduleRef.close()
   })
 

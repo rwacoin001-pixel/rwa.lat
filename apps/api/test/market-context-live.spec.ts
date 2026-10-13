@@ -1,17 +1,21 @@
 /**
  * market-context LIVE 集成测试（真实网络）
  *
- * 运行：npx jest test/market-context-live.spec.ts --runInBand
+ * 运行：MARKET_CONTEXT_LIVE=1 npx jest test/market-context-live.spec.ts --runInBand
+ * 默认跳过：依赖外部网络，不应让常规单测因第三方接口波动失败。
  * 目的：验证统一适配层能从 4 个免费源拉到真实数据并正确标准化
  */
 import { MarketCacheService } from '../src/market-context/market-cache.service'
 import { YahooProvider } from '../src/market-context/providers/yahoo.provider'
 import { FrankfurterProvider } from '../src/market-context/providers/frankfurter.provider'
+import { OkxProvider } from '../src/market-context/providers/okx.provider'
 import { CoinGeckoProvider } from '../src/market-context/providers/coingecko.provider'
 import { DefiLlamaProvider } from '../src/market-context/providers/defillama.provider'
 import { MarketContextService } from '../src/market-context/market-context.service'
 
-describe('market-context live providers', () => {
+const describeLive = process.env.MARKET_CONTEXT_LIVE === '1' ? describe : describe.skip
+
+describeLive('market-context live providers', () => {
   jest.setTimeout(120_000)
 
   function buildService(): MarketContextService {
@@ -19,6 +23,7 @@ describe('market-context live providers', () => {
       new MarketCacheService(),
       new YahooProvider(),
       new FrankfurterProvider(),
+      new OkxProvider(),
       new CoinGeckoProvider(),
       new DefiLlamaProvider(),
     )

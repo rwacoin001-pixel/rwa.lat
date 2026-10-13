@@ -14,7 +14,9 @@ import { createHash } from 'crypto'
 const USER = '33333333-3333-3333-3333-333333333333'
 const INVITEE = '44444444-4444-4444-4444-444444444444'
 
-describe('API-012 user-ops integration (PG)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('API-012 user-ops integration (PG)', () => {
   let ds: DataSource
   let svc: UserOpsService
 
