@@ -20,10 +20,10 @@ import IosInstallGate from '@/components/ios-install-gate'
 
 export const metadata: Metadata = {
   title: 'A-REIT｜以智能科技提升投资体验',
-  description: '凭借人工智能与持续创新，A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。',
+  description: 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。',
   applicationName: 'A-REIT',
   manifest: '/manifest.webmanifest',
-  keywords: ['AI investment', 'digital assets', 'AI Compute', 'RWA', 'portfolio intelligence'],
+  keywords: ['A-REIT', '投资体验', 'CapitaLand Ascendas REIT（SGX: A17U）', '工业及商业地产投资'],
   authors: [{ name: 'A-REIT' }],
   appleWebApp: {
     capable: true,
@@ -41,13 +41,13 @@ export const metadata: Metadata = {
   },
   openGraph: {
     title: 'A-REIT｜以智能科技提升投资体验',
-    description: '凭借人工智能与持续创新，A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。',
+    description: 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'A-REIT｜以智能科技提升投资体验',
-    description: '凭借人工智能与持续创新，A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。',
+    description: 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。',
   },
 }
 
