@@ -143,6 +143,12 @@ describeDatabase('API-010 portfolio integration (PG)', () => {
       ds.getRepository('PriceSnapshot') as never,
     )
     svc = new PortfolioService(ds.getRepository(PositionSnapshot), ds.getRepository(Redemption), ledger, catalog)
+    // Holdings come from app.positions; a cash ledger balance alone is not a position (cefb57a).
+    await ds.query(
+      `INSERT INTO app.positions (user_id, product_id, outcome_key, asset_code, asset_decimals, quantity_atomic_amount, cost_atomic_amount)
+       VALUES ($1, $2, 'long', 'USDT', 6, 1000000, 1000000)`,
+      [USER, PRODUCT],
+    )
     const snap = await svc.captureSnapshot(USER, PRODUCT)
     expect(snap.source).toBe('snapshot')
     expect(snap.quantityAtomicAmount).toBe('1000000')
