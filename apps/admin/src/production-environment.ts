@@ -16,7 +16,8 @@ export function validateAdminEnvironment(input: Environment): Environment {
   assertProductionDatabase(read(input, 'ADMIN_DATABASE_URL'))
   if (read(input, 'CORE_DATABASE_URL')) assertProductionDatabase(read(input, 'CORE_DATABASE_URL'), 'CORE_DATABASE_URL')
   if (read(input, 'CORE_API_URL')) {
-    assertHttps(input, 'CORE_API_URL')
+    // The admin and core APIs share a private Docker network in production (CORE_API_URL=http://api:4000/v1).
+    assertHttpsOrInternal(input, 'CORE_API_URL')
     if (read(input, 'ADMIN_SERVICE_TOKEN').length < 32) {
       throw new Error('ADMIN_SERVICE_TOKEN must contain at least 32 characters when CORE_API_URL is configured')
     }
@@ -43,6 +44,27 @@ function assertHttps(input: Environment, key: string) {
     throw new Error(`${key} must be a valid URL`)
   }
   if (url.protocol !== 'https:') throw new Error(`${key} must use HTTPS in production`)
+}
+
+/**
+ * HTTPS, or plain HTTP only to an internal service name (no dot, e.g. Docker's `api`) or a private
+ * IPv4 address. Mirrors the hotfix that has been running in production since 2026-10-09.
+ */
+function assertHttpsOrInternal(input: Environment, key: string) {
+  let url: URL
+  try {
+    url = new URL(read(input, key))
+  } catch {
+    throw new Error(`${key} must be a valid URL`)
+  }
+  if (url.protocol === 'https:') return
+  if (url.protocol !== 'http:') throw new Error(`${key} must use HTTPS in production`)
+  const host = url.hostname
+  const isServiceName = !host.includes('.')
+  const isPrivate = /^(10\.|127\.|172\.(1[6-9]|2\d|3[01])\.|192\.168\.)/.test(host)
+  if (!isServiceName && !isPrivate) {
+    throw new Error(`${key} must use HTTPS in production (plain http is only allowed for an internal service name or a private address)`)
+  }
 }
 
 function assertProductionDatabase(value: string, key = 'ADMIN_DATABASE_URL') {

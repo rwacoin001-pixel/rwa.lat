@@ -34,6 +34,17 @@ describe('admin edge security', () => {
     expect(() => validateAdminEnvironment(production({ TRUST_PROXY_HOPS: 'true' }))).toThrow(/TRUST_PROXY_HOPS/)
   })
 
+  it('allows plain HTTP to the core API only over the private service network', () => {
+    const token = { ADMIN_SERVICE_TOKEN: 's'.repeat(40) }
+    // Production runs CORE_API_URL=http://api:4000/v1 on the shared Docker network.
+    expect(() => validateAdminEnvironment(production({ ...token, CORE_API_URL: 'http://api:4000/v1' }))).not.toThrow()
+    expect(() => validateAdminEnvironment(production({ ...token, CORE_API_URL: 'http://10.0.0.5:4000/v1' }))).not.toThrow()
+    expect(() => validateAdminEnvironment(production({ ...token, CORE_API_URL: 'https://api.a-reit.com/v1' }))).not.toThrow()
+    expect(() => validateAdminEnvironment(production({ ...token, CORE_API_URL: 'http://api.a-reit.com/v1' }))).toThrow(/internal service name or a private address/)
+    expect(() => validateAdminEnvironment(production({ ...token, CORE_API_URL: 'http://8.8.8.8/v1' }))).toThrow(/internal service name/)
+    expect(() => validateAdminEnvironment(production({ ...token, CORE_API_URL: 'ftp://api/v1' }))).toThrow(/HTTPS/)
+  })
+
   it('accepts an explicit production admin boundary', () => {
     expect(validateAdminEnvironment(production())).toMatchObject({ APP_ENV: 'production', ADMIN_MFA_REQUIRED: 'true' })
   })
