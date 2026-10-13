@@ -28,6 +28,7 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
   let marketId: string
   let yesTokenId: string
   let noTokenId: string
+  let inviterId: string
 
   const polymarket = {
     getOutcomeProbability: async () => 0.60,
@@ -42,6 +43,7 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
       lastTradePrice: '0.60',
       negRisk: false,
       asOf: new Date(),
+      fetchedAt: new Date(),
       stale: false,
     }),
   } as unknown as PolymarketService
@@ -126,6 +128,12 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
     const [u2] = await ds.query(`INSERT INTO app.users DEFAULT VALUES RETURNING id`)
     userId = u1.id
     userId2 = u2.id
+    // u1 was invited by inviterId, so every platform fee u1 pays earns inviterId a level-1 fee rebate.
+    const [inviter] = await ds.query(`INSERT INTO app.users DEFAULT VALUES RETURNING id`)
+    inviterId = inviter.id
+    const code = `p${inviterId.replace(/-/g, '').slice(0, 10)}`
+    await ds.query(`INSERT INTO app.referral_code_aliases (code, user_id) VALUES ($1, $2)`, [code, inviterId])
+    await ds.query(`INSERT INTO app.referral_edges (invitee_user_id, inviter_user_id, code) VALUES ($1, $2, $3)`, [userId, inviterId, code])
 
     const [market] = await ds.query(
       `INSERT INTO app.polymarket_market_mappings
@@ -185,6 +193,9 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
     const after = await availableBalance(userId)
     expect(before - after).toBe(10_000_000n)
     expect(await feeRevenueBalance() - feeBefore).toBe(300_000n)
+    // Fee rebate: the inviter earns 20% of the 0.3 USDT placement fee at level 1.
+    const rewards = await ds.query(`SELECT kind, level, base_atomic::text AS base, amount_atomic::text AS amount, state FROM app.referral_rewards WHERE user_id = $1`, [inviterId])
+    expect(rewards).toEqual([{ kind: 'fee', level: 1, base: '300000', amount: '60000', state: 'earned' }])
   })
 
   it('相同幂等键重复提交只记一笔', async () => {
@@ -353,5 +364,18 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
     const list = await prediction.listBets(userId, 1, 20)
     expect(list.total).toBeGreaterThanOrEqual(1)
     expect(list.items[0]).toHaveProperty('stakeAtomic')
+  })
+
+  it('pays a level-1 fee rebate on every platform fee the invited user paid (placement and payout)', async () => {
+    const fees = await ds.query(
+      `SELECT e.id, e.atomic_amount::text AS amount FROM app.ledger_entries e
+         JOIN app.ledger_accounts a ON a.id = e.account_id JOIN app.ledger_transactions t ON t.id = e.transaction_id
+        WHERE a.owner_reference = 'prediction_fee' AND a.purpose = 'fee_revenue' AND e.side = 'credit' AND t.actor_id = $1`,
+      [userId],
+    ) as Array<{ id: string; amount: string }>
+    const rewards = await ds.query(`SELECT source_id, amount_atomic::text AS amount FROM app.referral_rewards WHERE user_id = $1 AND kind = 'fee'`, [inviterId]) as Array<{ source_id: string; amount: string }>
+    expect(fees.length).toBeGreaterThan(0)
+    expect(rewards.map((row) => [row.source_id, row.amount]).sort()).toEqual(fees.map((fee) => [fee.id, (BigInt(fee.amount) * 2000n / 10000n).toString()]).sort())
+    expect(await ds.query(`SELECT 1 FROM app.referral_rewards WHERE source_user_id = $1`, [userId2])).toEqual([])
   })
 })
