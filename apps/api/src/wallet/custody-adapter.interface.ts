@@ -7,6 +7,8 @@ export interface ProvisionedWallet {
 export interface ProvisionedAddress {
   address: string
   memo: string | null
+  /** True when the previous deposit address received funds and a fresh one replaced it. */
+  rotated?: boolean
 }
 
 export interface AddressScreeningResult {
@@ -51,4 +53,9 @@ export interface CustodyAdapter {
    * candidates against recorded chain transactions before trusting one.
    */
   findRecentBroadcast?(input: { network: WalletNetwork; destination: string; atomicAmount: string }): Promise<RecentBroadcastCandidate[]>
+  /**
+   * Optional on-demand deposit watching (manual custody): opens or extends the user's watch
+   * window so their current address is scanned frequently. Null when the user has no address.
+   */
+  startDepositWatch?(userId: string, network: WalletNetwork): Promise<{ watchUntil: Date; nextScanAt: Date } | null>
 }

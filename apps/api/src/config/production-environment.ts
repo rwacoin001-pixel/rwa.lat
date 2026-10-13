@@ -1,4 +1,5 @@
 import { validateProductionRuntimeCapabilities } from './production-runtime-capabilities'
+import { DEPOSIT_WATCH_LIMITS } from '../wallet/manual/deposit-watch.policy'
 
 type Environment = Record<string, unknown>
 
@@ -80,6 +81,14 @@ export function validateEnvironment(input: Environment): Environment {
       if (watcherDepositBatch) requireInteger(input, 'WALLET_CHAIN_WATCHER_DEPOSIT_BATCH', 1, 50)
       const watcherConfirmationBatch = read(input, 'WALLET_CHAIN_WATCHER_CONFIRMATION_BATCH')
       if (watcherConfirmationBatch) requireInteger(input, 'WALLET_CHAIN_WATCHER_CONFIRMATION_BATCH', 1, 100)
+      for (const [key, limit] of [
+        ['WALLET_CHAIN_WATCHER_TICK_MS', DEPOSIT_WATCH_LIMITS.tickMs],
+        ['WALLET_DEPOSIT_WATCH_MINUTES', DEPOSIT_WATCH_LIMITS.watchMinutes],
+        ['WALLET_DEPOSIT_WATCH_SCAN_SECONDS', DEPOSIT_WATCH_LIMITS.watchScanSeconds],
+        ['WALLET_DEPOSIT_IDLE_SCAN_MINUTES', DEPOSIT_WATCH_LIMITS.idleScanMinutes],
+      ] as const) {
+        if (read(input, key)) requireInteger(input, key, limit.min, limit.max)
+      }
     }
     if (read(input, 'WALLET_EXECUTION_ENABLED') !== 'true') {
       throw new Error('WALLET_EXECUTION_ENABLED=true is required when production financial features are enabled')

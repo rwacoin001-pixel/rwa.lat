@@ -235,6 +235,21 @@ describe('production environment validation', () => {
       TRON_INDEX_URL: 'https://api.trongrid.io',
       TRON_NODE_MIN_INTERVAL_MS: '100',
     }))).toMatchObject({ WALLET_CUSTODY_ADAPTER: 'manual' })
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      WALLET_DEPOSIT_WATCH_SCAN_SECONDS: '5',
+    }))).toThrow(/WALLET_DEPOSIT_WATCH_SCAN_SECONDS/)
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      WALLET_CHAIN_WATCHER_TICK_MS: '1000',
+    }))).toThrow(/WALLET_CHAIN_WATCHER_TICK_MS/)
+    expect(validateEnvironment(production({
+      ...manualBase,
+      WALLET_CHAIN_WATCHER_TICK_MS: '15000',
+      WALLET_DEPOSIT_WATCH_MINUTES: '60',
+      WALLET_DEPOSIT_WATCH_SCAN_SECONDS: '30',
+      WALLET_DEPOSIT_IDLE_SCAN_MINUTES: '360',
+    }))).toMatchObject({ WALLET_CUSTODY_ADAPTER: 'manual' })
     expect(validateEnvironment(production(manualBase))).toMatchObject({ WALLET_CUSTODY_ADAPTER: 'manual' })
   })
 })

@@ -1,4 +1,4 @@
-import { IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min, MinLength, ValidateIf } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import type { WalletNetwork } from '../wallet.entities'
 
@@ -216,21 +216,30 @@ export class GenerateDepositPoolDto {
   label?: string
 }
 
+/**
+ * Upload operator-held deposit addresses (address only). Private keys are never accepted:
+ * the global ValidationPipe forbids undeclared fields, so a `privateKey` field is rejected.
+ * Order is preserved; users are assigned addresses in upload order.
+ */
 export class ImportDepositPoolAddressDto {
   @ApiProperty()
   @IsIn(networks)
   network!: WalletNetwork
 
-  @ApiProperty()
+  @ApiPropertyOptional({ description: 'Single address (kept for compatibility)' })
+  @IsOptional()
   @IsString()
   @MinLength(26)
   @MaxLength(64)
-  address!: string
+  address?: string
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: [String], description: 'Bulk upload, up to 1000 addresses in assignment order' })
   @IsOptional()
-  @Matches(/^[0-9a-fA-F]{64}$/)
-  privateKey?: string
+  @IsArray()
+  @ArrayMaxSize(1000)
+  @IsString({ each: true })
+  @MaxLength(64, { each: true })
+  addresses?: string[]
 
   @ApiPropertyOptional()
   @IsOptional()

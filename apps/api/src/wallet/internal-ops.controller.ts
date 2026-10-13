@@ -23,7 +23,6 @@ import {
   AddWithdrawalWhitelistDto,
   AdminWithdrawalDecisionDto,
   DisableDepositPoolAddressDto,
-  GenerateDepositPoolDto,
   ImportDepositPoolAddressDto,
   PauseFundsExecutionDto,
   RequestFundsResumeDto,
@@ -104,15 +103,15 @@ export class InternalWalletController {
   }
 
   @Post('deposit-pool/generate')
-  @ApiOperation({ summary: 'Generate new deposit addresses into the pool' })
-  generateDepositPool(@Body() dto: GenerateDepositPoolDto, @Req() request: InternalRequest) {
-    return this.pools.generate(actorOf(request), dto, requestIdOf(request))
+  @ApiOperation({ summary: 'Disabled: deposit addresses are uploaded by the operator' })
+  generateDepositPool() {
+    return this.pools.generate()
   }
 
   @Post('deposit-pool/import')
-  @ApiOperation({ summary: 'Import an operator-held address (with its key) into the pool' })
+  @ApiOperation({ summary: 'Upload operator-held deposit addresses (address only, upload order = assignment order)' })
   importDepositPoolAddress(@Body() dto: ImportDepositPoolAddressDto, @Req() request: InternalRequest) {
-    return this.pools.importAddress(actorOf(request), dto, requestIdOf(request))
+    return this.pools.importAddresses(actorOf(request), dto, requestIdOf(request))
   }
 
   @Put('deposit-pool/:id/disable')

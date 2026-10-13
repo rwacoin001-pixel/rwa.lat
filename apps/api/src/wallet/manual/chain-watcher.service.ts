@@ -5,6 +5,7 @@ import { IdentityCrypto } from '../../identity/identity-crypto.service'
 import { WalletNetworkRegistry } from '../wallet-network.registry'
 import { WalletService } from '../wallet.service'
 import { DepositPoolService } from './deposit-pool.service'
+import { readDepositWatchPolicy, type DepositWatchPolicy } from './deposit-watch.policy'
 import { TronClientService, TronRateLimitedError } from './tron-client.service'
 
 const SCAN_OVERLAP_MS = 10 * 60_000
@@ -13,14 +14,15 @@ const SCAN_OVERLAP_MS = 10 * 60_000
  * Free TRON polling watcher for manual custody. Passes per tick:
  * 1. Only while something is in flight: read the latest block, advance deposit
  *    confirmations (crediting once ready) and track broadcast withdrawals.
- * 2. Detect incoming TRC-20 USDT transfers on assigned deposit addresses.
+ * 2. Detect incoming TRC-20 USDT transfers on deposit addresses that are due: frequently while
+ *    the user's watch window is open, backing off to an idle sweep (current and retired addresses).
  * A rate-limited provider ends the current pass; skipped work retries next tick.
  */
 @Injectable()
 export class ChainWatcherService implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly log = new Logger(ChainWatcherService.name)
   private readonly enabled: boolean
-  private readonly pollMs: number
+  private readonly policy: DepositWatchPolicy
   private readonly depositBatch: number
   private readonly confirmationBatch: number
   private timer: NodeJS.Timeout | null = null
@@ -40,15 +42,17 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
     if (config.get<string>('WALLET_CHAIN_WATCHER_ENABLED') === 'true' && adapterMode !== 'manual') {
       this.log.warn('Chain watcher is enabled but the custody adapter is not "manual"; watcher stays off.')
     }
-    this.pollMs = boundedInteger(config.get<string>('WALLET_CHAIN_WATCHER_POLL_MS'), 120_000, 15_000, 900_000)
+    // WALLET_CHAIN_WATCHER_POLL_MS is superseded: the watcher wakes every tick but only calls TRON
+    // for addresses whose own schedule is due (see deposit-watch.policy.ts).
+    this.policy = readDepositWatchPolicy(config)
     this.depositBatch = boundedInteger(config.get<string>('WALLET_CHAIN_WATCHER_DEPOSIT_BATCH'), 8, 1, 50)
     this.confirmationBatch = boundedInteger(config.get<string>('WALLET_CHAIN_WATCHER_CONFIRMATION_BATCH'), 25, 1, 100)
   }
 
   onApplicationBootstrap() {
     if (!this.enabled) return
-    this.log.log(`Chain watcher started (poll ${this.pollMs}ms, deposit batch ${this.depositBatch}).`)
-    this.timer = setInterval(() => void this.tick(), this.pollMs)
+    this.log.log(`Chain watcher started (tick ${this.policy.tickMs}ms, watch ${this.policy.watchMinutes}min every ${this.policy.watchScanSeconds}s, idle sweep ${this.policy.idleScanMinutes}min, batch ${this.depositBatch}).`)
+    this.timer = setInterval(() => void this.tick(), this.policy.tickMs)
     this.timer.unref()
     void this.tick()
   }
@@ -124,7 +128,10 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
           detected++
           maxSeen = maxSeen === null ? transfer.blockTimestamp : Math.max(maxSeen, transfer.blockTimestamp)
         }
-        await this.pools.markScanned(candidate.id, maxSeen)
+        await this.pools.markScanned(candidate.id, maxSeen, {
+          watchScanSeconds: this.policy.watchScanSeconds,
+          idleScanSeconds: this.policy.idleScanMinutes * 60,
+        })
       } catch (error) {
         // Leave the scan cursor untouched so this address is retried first next tick.
         if (error instanceof TronRateLimitedError) {
@@ -132,6 +139,7 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
           break
         }
         this.log.warn(`Deposit scan failed for pool address ${candidate.id}: ${safeError(error)}`)
+        await this.pools.markScanFailed(candidate.id).catch(() => undefined)
       }
     }
     return detected

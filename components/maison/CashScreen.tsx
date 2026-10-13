@@ -2,11 +2,11 @@
 
 import { AlertTriangle, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, BookUser, Check, ChevronRight, Copy, Info, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { getDepositAddress, getWalletDetail, ledgerDeltas, ledgerGroup, ledgerHeadline, listLedger, listNetworks, type DepositAddress, type FundingActivity, type LedgerGroup, type LedgerTransaction } from '@/lib/api/wallet'
+import { getDepositAddress, getWalletDetail, watchDeposit, ledgerDeltas, ledgerGroup, ledgerHeadline, listLedger, listNetworks, type DepositAddress, type FundingActivity, type LedgerGroup, type LedgerTransaction } from '@/lib/api/wallet'
 import { fromAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { walletCopy } from '@/lib/maison-wallet-copy'
@@ -190,7 +190,19 @@ export function DepositScreen({ query }: { query: string }) {
   const c = w.cash
   const common = marketCopy[locale].common
   const networks = useQuery('wallet:networks', listNetworks, { staleTime: 300_000 })
-  const wallet = useQuery('wallet:detail', getWalletDetail, { staleTime: 15_000 })
+  // Live watch (manual custody): per-network end time from the server, a ticking clock for the countdown,
+  // and the deposit states seen when the address was revealed so only new arrivals are announced.
+  const [watchEnds, setWatchEnds] = useState<Record<string, number>>({})
+  const [now, setNow] = useState(() => Date.now())
+  const [baseline, setBaseline] = useState<Record<string, string> | null>(null)
+  const [checkQueued, setCheckQueued] = useState(false)
+  const watching = Object.values(watchEnds).some((end) => end > now)
+  const wallet = useQuery('wallet:detail', getWalletDetail, { staleTime: 15_000, pollInterval: watching ? 10_000 : undefined })
+  useEffect(() => {
+    if (!watching) return
+    const timer = window.setInterval(() => setNow(Date.now()), 15_000)
+    return () => window.clearInterval(timer)
+  }, [watching])
   const [picked, setPicked] = useState<string | null>(() => queryParam(query, 'network'))
   const list = networks.data?.networks ?? []
   const network = list.find((item) => item.id === picked) ?? list[0]
@@ -221,7 +233,35 @@ export function DepositScreen({ query }: { query: string }) {
     setPending(false)
     if (!result.ok) { setError(result.error.message || d.loadError); return }
     setAddresses((current) => ({ ...current, [network.id]: result.data }))
+    const end = result.data.watchUntil ? Date.parse(result.data.watchUntil) : NaN
+    if (Number.isFinite(end)) {
+      setNow(Date.now())
+      setWatchEnds((current) => ({ ...current, [network.id]: end }))
+      setBaseline((current) => current ?? Object.fromEntries((wallet.data?.recentActivity ?? []).filter((item) => item.kind === 'deposit').map((item) => [item.id, item.state])))
+    }
   }
+  const check = async () => {
+    if (!network || checkQueued) return
+    setCheckQueued(true)
+    window.setTimeout(() => setCheckQueued(false), 20_000)
+    const result = await watchDeposit(network.id)
+    if (!result.ok) { setCheckQueued(false); setError(result.error.message || d.loadError); return }
+    const end = result.data.watchUntil ? Date.parse(result.data.watchUntil) : NaN
+    if (Number.isFinite(end)) { setNow(Date.now()); setWatchEnds((current) => ({ ...current, [network.id]: end })) }
+    void wallet.refetch()
+  }
+  // Newest deposit that appeared or changed state since the address was revealed.
+  const arrival = useMemo(() => {
+    if (!baseline) return null
+    const changed = (wallet.data?.recentActivity ?? []).filter((item) => item.kind === 'deposit' && baseline[item.id] !== item.state)
+    const latest = changed.sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0]
+    if (!latest) return null
+    const text = latest.state === 'credited' ? fill(d.arrived, { v: bare(latest.atomicAmount) })
+      : latest.state === 'manual_review' ? d.inReview
+      : latest.state === 'rejected' ? null
+      : fill(d.detected, { n: String(network?.requiredConfirmations ?? '') })
+    return text ? { state: latest.state, text } : null
+  }, [baseline, wallet.data, d, network?.requiredConfirmations])
   const copy = async () => {
     if (!address) return
     try { await navigator.clipboard.writeText(address.address); setCopied(true); window.setTimeout(() => setCopied(false), 1600) } catch { setCopied(false) }
@@ -249,6 +289,15 @@ export function DepositScreen({ query }: { query: string }) {
               <button type="button" className={s.ghost} onClick={copy} aria-live="polite">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? d.copied : d.copy}</button>
             </div>
             {address.memo && <div className={fs.addrRow}><div><small>{d.memo}</small><p className={`${s.mono} ${fs.addrText}`} dir="ltr">{address.memo}</p></div></div>}
+            {address.addressRotated && <div className={`${s.notice} ${fs.note}`} data-tone="info"><Info size={16} aria-hidden="true" /><span><b>{d.newAddress}</b> · {d.newAddressBody}</span></div>}
+            {arrival && <p className={fs.arrival} data-state={arrival.state} role="status">{arrival.state === 'credited' ? <Check size={16} aria-hidden="true" /> : null}{arrival.text}</p>}
+            {watchEnds[network.id] !== undefined && (() => {
+              const live = watchEnds[network.id] > now
+              return <div className={fs.watch} data-live={live}>
+                <p><span className={fs.watchDot} aria-hidden="true" />{live ? fill(d.watching, { m: String(Math.max(1, Math.ceil((watchEnds[network.id] - now) / 60_000))) }) : d.watchEnded}</p>
+                <button type="button" className={s.ghost} onClick={check} disabled={checkQueued} aria-live="polite">{checkQueued ? d.checkQueued : d.checkNow}</button>
+              </div>
+            })()}
           </>
             : <div className={fs.empty}>
               <span>{d.address} · {network.displayName}</span>
