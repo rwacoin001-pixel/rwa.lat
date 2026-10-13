@@ -1,11 +1,8 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-
-// No imagery or scene bundle is requested until this device passes the desktop gate.
-const TrustDesktop = dynamic(() => import('./TrustDesktop'), { ssr: false })
+import { DESKTOP_MEDIA_QUERY, DESKTOP_REDIRECT_URL } from '@/lib/desktop-redirect'
 
 export function phonePath(raw: string | null) {
   if (!raw?.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '/home'
@@ -19,19 +16,22 @@ export function phonePath(raw: string | null) {
 
 export default function TrustDesktopEntry() {
   const router = useRouter()
-  const [desktop, setDesktop] = useState(false)
   useEffect(() => {
-    const media = window.matchMedia('(min-width: 1024px) and (hover: hover) and (pointer: fine)')
-    const mobileDevice = /iPad|Android|Mobi/i.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1)
+    const media = window.matchMedia(DESKTOP_MEDIA_QUERY)
     const update = () => {
-      if (!media.matches || mobileDevice) {
-        setDesktop(false)
+      if (!media.matches) {
         router.replace(phonePath(new URLSearchParams(window.location.search).get('from')))
-      } else setDesktop(true)
+      } else if (window.top === window.self) {
+        window.location.replace(DESKTOP_REDIRECT_URL)
+      }
     }
     update()
-    media.addEventListener('change', update)
-    return () => media.removeEventListener('change', update)
+    if (typeof media.addEventListener === 'function') {
+      media.addEventListener('change', update)
+      return () => media.removeEventListener('change', update)
+    }
+    media.addListener(update)
+    return () => media.removeListener(update)
   }, [router])
-  return desktop ? <TrustDesktop /> : null
+  return null
 }

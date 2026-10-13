@@ -5,7 +5,7 @@ import vm from 'node:vm'
 
 function worker(fetcher,stored=new Map()){
   const handlers={},writes=[],deleted=[]
-  const caches={match:async request=>stored.get(typeof request==='string'?request:request.url),open:async()=>({put:async(key,value)=>{const url=typeof key==='string'?key:key.url;writes.push(url);stored.set(url,value)}}),keys:async()=>['rwa-lat-offline-v11','rwa-lat-offline-v12','other-app-cache'],delete:async key=>deleted.push(key)}
+  const caches={match:async request=>stored.get(typeof request==='string'?request:request.url),open:async()=>({put:async(key,value)=>{const url=typeof key==='string'?key:key.url;writes.push(url);stored.set(url,value)}}),keys:async()=>['rwa-lat-offline-v11','rwa-lat-offline-v12','a-reit-offline-v3','other-app-cache'],delete:async key=>deleted.push(key)}
   vm.runInNewContext(readFileSync('public/sw.js','utf8'),{self:{location:{origin:'https://rwa.lat'},addEventListener:(key,fn)=>{handlers[key]=fn},skipWaiting(){},clients:{claim(){}}},caches,fetch:fetcher,URL,Promise})
   return {writes,deleted,async request(path,mode='navigate'){
     const tasks=[];let result
@@ -31,5 +31,5 @@ test('manifest loads current start URL instead of replaying an installed legacy 
   assert.equal(await (await sw.request('/manifest.webmanifest','cors')).text(),'current');assert.deepEqual(sw.writes,[url])
 })
 test('PWA activation deletes only its own old shells and does not touch other caches',async()=>{
-  const sw=worker(async()=>new Response('ok'));await sw.activate();assert.deepEqual(sw.deleted,['rwa-lat-offline-v11'])
+  const sw=worker(async()=>new Response('ok'));await sw.activate();assert.deepEqual(sw.deleted,['rwa-lat-offline-v11','rwa-lat-offline-v12'])
 })

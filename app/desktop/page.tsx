@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import TrustDesktopEntry from '@/components/desktop/TrustDesktopEntry'
 
 export const metadata: Metadata = {
-  title: 'A-REIT — The Shape of Trust',
-  description: 'Every age writes trust in its own hand. Explore the story of real-world assets, then continue with A-REIT on your phone.',
+  title: 'A-REIT — Desktop',
+  description: 'Desktop visitors continue to https://www.capitaland-ascendasreit.com/.',
 }
 
 export default function DesktopPage() {
