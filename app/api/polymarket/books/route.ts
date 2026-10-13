@@ -4,5 +4,7 @@ export const revalidate=20
 export async function GET(request:Request) {
   const tokens=predictionBookTokens(new URL(request.url).searchParams.get('tokens'))
   if(!tokens)return NextResponse.json({error:'Invalid tokens'},{status:400})
-  return NextResponse.json({books:await readPredictionPublicBooks(tokens)},{headers:{'Cache-Control':'private, no-store'}})
+  const books=await readPredictionPublicBooks(tokens)
+  // serverTime lets the client judge freshness on its own clock (lib/prediction-clock.ts).
+  return NextResponse.json({books,serverTime:new Date().toISOString()},{headers:{'Cache-Control':'private, no-store'}})
 }

@@ -31,6 +31,8 @@ export type PolymarketFeedMarket = {
   resolved?: boolean
   active?: boolean
   archived?: boolean
+  /** Short recurring rounds (BTC 5-minute up/down): the round being traded, in ISO time. */
+  window?: { start: string; end: string } | null
 }
 
 export type PolymarketFeedPage = {

@@ -23,7 +23,9 @@ export class TranslatePolymarketMarketsDto {
 export class TranslateContentDto {
   @IsIn(['en','zh-CN','hi','es','ar','fr','pt'])
   locale!: 'en' | 'zh-CN' | 'hi' | 'es' | 'ar' | 'fr' | 'pt'
-  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(10)
+  // 30 matches the client batch (lib/use-content-translation.ts). At 10 the API rejected every
+  // card with a long outcome list as 400, which the UI showed as "translation failed" (2026-10-14).
+  @IsArray() @ArrayMinSize(1) @ArrayMaxSize(30)
   @IsString({each:true}) @MinLength(1,{each:true}) @MaxLength(4000,{each:true})
   texts!: string[]
 }

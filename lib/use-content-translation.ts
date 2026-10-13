@@ -7,9 +7,12 @@ const pending=new Map<string,Promise<void>>()
 const listeners=new Set<()=>void>()
 let running=0
 const queue:Array<()=>void>=[]
-// 30 texts per request. At 10 a single market page needed several requests and drained the
-// per-minute allowance on /v1/polymarket/translations/content (2026-10-02).
+// Up to 30 texts per request (the API accepts 30 since 2026-10-14; it rejected anything over 10 before,
+// which showed as "translation failed"). At 10 a single market page needed several requests and drained
+// the per-minute allowance on /v1/polymarket/translations/content (2026-10-02). Batches also stay under a
+// character budget: one model call translates a batch, and long rule texts must not overflow its reply.
 const BATCH=30
+const BATCH_CHARS=6000
 // Only used if the API omits Retry-After; it normally states the exact remaining wait.
 const FALLBACK_RETRY_MS=45_000
 const MAX_RETRY_WAIT_MS=90_000
@@ -32,10 +35,20 @@ async function sendBatch(locale:string,batch:string[],tried=false):Promise<void>
   await sleep(after>0?Math.min(MAX_RETRY_WAIT_MS,after*1000):FALLBACK_RETRY_MS)
   return sendBatch(locale,batch,true)
 }
+/** Splits texts into requests of at most BATCH items and BATCH_CHARS characters (a longer single text goes alone). */
+export function contentBatches(texts:string[]):string[][] {
+  const batches:string[][]=[]
+  let current:string[]=[],size=0
+  for(const text of texts){
+    if(current.length&&(current.length>=BATCH||size+text.length>BATCH_CHARS)){batches.push(current);current=[];size=0}
+    current.push(text);size+=text.length
+  }
+  if(current.length)batches.push(current)
+  return batches
+}
 async function translate(locale:string,texts:string[]) {
   const missing=texts.filter(t=>!cache.has(`${locale}:${t}`)&&!pending.has(`${locale}:${t}`))
-  for(let i=0;i<missing.length;i+=BATCH){
-    const batch=missing.slice(i,i+BATCH)
+  for(const batch of contentBatches(missing)){
     const task=sendBatch(locale,batch).catch(()=>{}).finally(()=>{for(const t of batch)pending.delete(`${locale}:${t}`);listeners.forEach(notify=>notify())})
     for(const t of batch)pending.set(`${locale}:${t}`,task)
   }
