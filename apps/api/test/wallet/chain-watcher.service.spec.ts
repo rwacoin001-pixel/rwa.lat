@@ -11,9 +11,9 @@ function config(values: Record<string, string | undefined>): ConfigService {
   return { get: (key: string) => values[key] } as unknown as ConfigService
 }
 
-const candidate = (id: string): ScanCandidate => ({ id, network: 'tron', address: `T${id}`, cursorMs: null, createdAtMs: 0 })
+const candidate = (id: string, extra: Partial<ScanCandidate> = {}): ScanCandidate => ({ id, network: 'tron', address: `T${id}`, cursorMs: null, assignedAtMs: 0, ...extra })
 
-function setup(options: { pending?: boolean; candidates?: ScanCandidate[]; failScanAt?: number; indexCooldown?: number } = {}) {
+function setup(options: { pending?: boolean; candidates?: ScanCandidate[]; failScanAt?: number; indexCooldown?: number; transfers?: Array<{ transactionId: string; blockTimestamp: number }> } = {}) {
   const events: string[] = []
   const scanned: string[] = []
   let scanCalls = 0
@@ -24,7 +24,7 @@ function setup(options: { pending?: boolean; candidates?: ScanCandidate[]; failS
     listIncomingTransfers: jest.fn(async () => {
       events.push('scan')
       if (options.failScanAt !== undefined && scanCalls++ === options.failScanAt) throw new TronRateLimitedError('index', 5_000)
-      return []
+      return (options.transfers ?? []).map((t) => ({ ...t, from: 'Tsender', to: 'Ta', atomicAmount: '5000000', decimals: 6, contractAddress: '' }))
     }),
   } as unknown as TronClientService
   const pools = {
@@ -39,8 +39,9 @@ function setup(options: { pending?: boolean; candidates?: ScanCandidate[]; failS
       return []
     }),
   } as unknown as DataSource
+  const wallet = { recordDepositObservation: jest.fn(async (_input: { transactionHash: string }) => undefined) }
   const watcher = new ChainWatcherService(
-    {} as WalletService,
+    wallet as unknown as WalletService,
     pools,
     tron,
     { get: () => ({ requiredConfirmations: 20 }) } as unknown as WalletNetworkRegistry,
@@ -48,7 +49,7 @@ function setup(options: { pending?: boolean; candidates?: ScanCandidate[]; failS
     dataSource,
     config({ WALLET_CHAIN_WATCHER_ENABLED: 'true', WALLET_CUSTODY_ADAPTER: 'manual' }),
   )
-  return { watcher, tron, pools, events, scanned }
+  return { watcher, tron, pools, events, scanned, wallet }
 }
 
 describe('ChainWatcherService', () => {
@@ -77,5 +78,32 @@ describe('ChainWatcherService', () => {
     await watcher.runOnce()
     expect(pools.listForScan).not.toHaveBeenCalled()
     expect(events).toEqual(['pendingCheck'])
+  })
+
+  it('starts the first scan at assignment, not upload, and never credits earlier transfers', async () => {
+    const assignedAtMs = Date.UTC(2026, 9, 13, 12, 0, 0)
+    const { watcher, tron, wallet, pools } = setup({
+      candidates: [candidate('a', { assignedAtMs })],
+      transfers: [
+        { transactionId: 'before-upload-window', blockTimestamp: assignedAtMs - 5 * 60_000 },
+        { transactionId: 'within-clock-skew', blockTimestamp: assignedAtMs - 30_000 },
+        { transactionId: 'after-assignment', blockTimestamp: assignedAtMs + 90_000 },
+      ],
+    })
+    await watcher.runOnce()
+    expect(tron.listIncomingTransfers).toHaveBeenCalledWith('Ta', { minTimestampMs: assignedAtMs - 60_000, limit: 100 })
+    expect(wallet.recordDepositObservation.mock.calls.map(([input]) => input.transactionHash))
+      .toEqual(['within-clock-skew', 'after-assignment'])
+    expect(pools.markScanned).toHaveBeenCalledWith('a', assignedAtMs + 90_000, expect.anything())
+  })
+
+  it('keeps the rescan overlap from reaching back past the assignment', async () => {
+    const assignedAtMs = Date.UTC(2026, 9, 13, 12, 0, 0)
+    const { watcher, tron } = setup({ candidates: [candidate('a', { assignedAtMs, cursorMs: assignedAtMs + 2 * 60_000 })] })
+    await watcher.runOnce()
+    expect(tron.listIncomingTransfers).toHaveBeenCalledWith('Ta', { minTimestampMs: assignedAtMs - 60_000, limit: 100 })
+    const later = setup({ candidates: [candidate('a', { assignedAtMs, cursorMs: assignedAtMs + 60 * 60_000 })] })
+    await later.watcher.runOnce()
+    expect(later.tron.listIncomingTransfers).toHaveBeenCalledWith('Ta', { minTimestampMs: assignedAtMs + 50 * 60_000, limit: 100 })
   })
 })

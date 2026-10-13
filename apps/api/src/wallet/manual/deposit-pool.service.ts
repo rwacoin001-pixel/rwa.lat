@@ -62,7 +62,8 @@ export interface ScanCandidate {
   network: WalletNetwork
   address: string
   cursorMs: number | null
-  createdAtMs: number
+  /** When the address was handed to its user; transfers before this belong to no user. */
+  assignedAtMs: number
 }
 
 /**
@@ -322,7 +323,7 @@ export class DepositPoolService {
   async listForScan(limit: number): Promise<ScanCandidate[]> {
     const rows = await this.dataSource.query(
       `SELECT id, network, address_ciphertext, encryption_key_version, last_seen_timestamp,
-              (EXTRACT(EPOCH FROM created_at) * 1000)::bigint AS created_at_ms
+              (EXTRACT(EPOCH FROM COALESCE(assigned_at, created_at)) * 1000)::bigint AS assigned_at_ms
          FROM app.deposit_pool_addresses
         WHERE state IN ('assigned', 'retired') AND network = 'tron'
           AND (next_scan_at IS NULL OR next_scan_at <= now())
@@ -338,7 +339,7 @@ export class DepositPoolService {
         Number(row.encryption_key_version),
       ),
       cursorMs: row.last_seen_timestamp === null || row.last_seen_timestamp === undefined ? null : Number(row.last_seen_timestamp),
-      createdAtMs: Number(row.created_at_ms ?? Date.now()),
+      assignedAtMs: Number(row.assigned_at_ms ?? Date.now()),
     }))
   }
 
