@@ -1,4 +1,4 @@
-import { BadRequestException, Body, CallHandler, Controller, ExecutionContext, Get, Injectable, Module, NestInterceptor, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
+import { BadRequestException, Body, CallHandler, Controller, ExecutionContext, Get, Headers, Injectable, Module, NestInterceptor, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
 import { APP_INTERCEPTOR } from '@nestjs/core'
 import { Observable } from 'rxjs'
 import type { Request, Response } from 'express'
@@ -8,6 +8,7 @@ import { ReferralContext } from './referral-context'
 import { ReferralBindingService } from './referral-binding.service'
 import { ReferralFoundationService } from './referral-foundation.service'
 import { ReferralReadService } from './referral-read.service'
+import { ReferralClaimService } from './referral-claim.service'
 import { SecurityModule } from '../security/security.module'
 import { SessionAuthGuard, AuthenticatedRequest } from '../security/session-auth.guard'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
@@ -52,13 +53,14 @@ export class ReferralLandingController {
 @UseGuards(SessionAuthGuard)
 @Controller('referral')
 export class ReferralUserFoundationController {
-  constructor(private readonly binding: ReferralBindingService,private readonly core: ReferralFoundationService,private readonly read:ReferralReadService) {}
+  constructor(private readonly binding: ReferralBindingService,private readonly read:ReferralReadService,private readonly claims:ReferralClaimService) {}
   @Get('summary') summary(@Req() req:AuthenticatedRequest) { return this.read.summary(req.auth.userId) }
   @Get('invitees') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string) { return this.read.invitees(req.auth.userId,page,size,level) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }
-  @Get('me') async me(@Req() req: AuthenticatedRequest) { return {code:await this.binding.getCode(req.auth.userId),stage:0,payoutsEnabled:false} }
+  @Get('me') async me(@Req() req: AuthenticatedRequest) { return {code:await this.binding.getCode(req.auth.userId),stage:1,payoutsEnabled:true} }
   @Post('code') async code(@Req() req: AuthenticatedRequest,@Body() dto: CodeDto) { return {code:await this.binding.changeCode(req.auth.userId,dto.code)} }
-  @Post('claim') claim() { return this.core.assertPayoutsDisabled() }
+  /** Claims every earned reward into available USDT. Requires an Idempotency-Key header; a replay returns the same claim. */
+  @Post('claim') claim(@Req() req: AuthenticatedRequest,@Headers('idempotency-key') key?: string) { return this.claims.claim(req.auth.userId,key) }
 }
 @UseGuards(AdminSessionGuard)
 @Controller('admin/referral')
@@ -79,7 +81,7 @@ export class ReferralAdminFoundationController {
     await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.reconcile()
   }
   @Get('runtime') async runtime(@CurrentAdmin() admin: AuthenticatedAdmin) {
-    await assertAdminPermission(admin,this.rbac,'platform.manage'); return {stage:0,payoutsEnabled:false,budgetEnforcementEnabled:false}
+    await assertAdminPermission(admin,this.rbac,'platform.manage'); return {stage:1,payoutsEnabled:true,budgetEnforcementEnabled:false}
   }
 }
 @Module({imports:[ReferralModule,SecurityModule,AdminRbacModule],

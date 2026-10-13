@@ -9,6 +9,7 @@ import { BasketNavService } from './basket.nav.service'
 import { BasketPortfolioService } from './portfolio.service'
 import { BasketRiskService } from './risk.service'
 import { ComplianceService } from '../compliance/compliance.service'
+import { recordReferralRewards } from '../referral/referral-rewards'
 
 const AMOUNT_PATTERN = /^\d+(\.\d{1,6})?$/
 const UNITS_PATTERN = /^\d+(\.\d{1,8})?$/
@@ -124,6 +125,7 @@ export class BasketSubscriptionService {
         // 已被并发结算 → 返回当前记录
         return row
       }
+      await recordReferralRewards(manager, { kind: 'purchase', sourceType: 'basket_subscription', sourceId: subscriptionId, sourceUserId: userId, baseAtomic: toAtomic(amount18, 6) })
       await manager.query(
         `UPDATE app.basket_portfolios
          SET cash_balance_usd = cash_balance_usd + $2, total_units = total_units + $3, updated_at = now()

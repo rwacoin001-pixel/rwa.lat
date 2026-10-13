@@ -3,6 +3,8 @@ import { createHmac, randomUUID } from 'node:crypto'
 import { ConfigService } from '@nestjs/config'
 import { buildDatabaseOptions } from '../../src/database/database-options'
 import { ReferralStageZero1790760000000 } from '../../src/database/migrations/1790760000000-referral-stage-zero'
+import { ReferralRewards1792100000000 } from '../../src/database/migrations/1792100000000-referral-rewards'
+import { ReferralClaimService } from '../../src/referral/referral-claim.service'
 import { ReferralBindingService } from '../../src/referral/referral-binding.service'
 import { ReferralContext } from '../../src/referral/referral-context'
 import { ReferralFoundationService } from '../../src/referral/referral-foundation.service'
@@ -44,17 +46,21 @@ suite('referral stage zero isolated PostgreSQL',()=>{
     await db.runMigrations({transaction:'all'})
     const migration=new ReferralStageZero1790760000000(),q=db.createQueryRunner();await q.connect();await q.startTransaction()
     try{
+      // Later referral migrations depend on stage-zero objects: unwind them first, reinstall after.
+      const rewards=new ReferralRewards1792100000000()
+      await rewards.down(q)
       await migration.down(q)
       const [legacyUser]=await q.query('INSERT INTO app.users DEFAULT VALUES RETURNING id')
       const [legacyReward]=await q.query("INSERT INTO app.rewards(user_id,kind,amount_atomic,currency) VALUES($1,'promo',12345,'USD') RETURNING *",[legacyUser.id])
       await migration.up(q)
+      await rewards.up(q)
       expect((await q.query('SELECT * FROM app.rewards WHERE id=$1',[legacyReward.id]))[0]).toEqual(legacyReward)
       await q.commitTransaction();stats.emptyUpDown=true;stats.legacyRewardPreserved=true
     }
     finally{if(q.isTransactionActive)await q.rollbackTransaction();await q.release()}
     context=new ReferralContext();binding=new ReferralBindingService(db,new ConfigService({IDENTITY_HMAC_KEY:'11'.repeat(32)}),context)
     core=new ReferralFoundationService(db)
-    const config=new ConfigService({AUTH_ADAPTER:'demo',IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64)})
+    const config=new ConfigService({AUTH_ADAPTER:'demo',PUBLIC_APP_URL:'http://localhost:3030',IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64)})
     crypto=new IdentityCrypto(config);delivery=new IdentityDeliveryService(config)
     const oauth={
       begin:async (provider:string,intent:string,registrationConsents:unknown)=>{
@@ -73,7 +79,7 @@ suite('referral stage zero isolated PostgreSQL',()=>{
       db.getRepository(IdentityOneTimeToken),db.getRepository(PasskeyCredential),db.getRepository(IdentityPasskeyChallenge),crypto,delivery,oauth,config,db,binding)
     const sessions=new SessionAuthService(db.getRepository(Session),crypto)
     const module=await Test.createTestingModule({controllers:[ReferralLandingController,ReferralUserFoundationController,ReferralAdminFoundationController],providers:[
-      {provide:ReferralReadService,useValue:new ReferralReadService(db)}, {provide:ReferralBindingService,useValue:binding},{provide:ReferralFoundationService,useValue:core},{provide:ReferralContext,useValue:context},
+      {provide:ReferralReadService,useValue:new ReferralReadService(db)},{provide:ReferralClaimService,useValue:new ReferralClaimService(db)}, {provide:ReferralBindingService,useValue:binding},{provide:ReferralFoundationService,useValue:core},{provide:ReferralContext,useValue:context},
       {provide:ConfigService,useValue:config},{provide:SessionAuthService,useValue:sessions},
       {provide:AdminSessionAuthService,useValue:{authenticate:async()=>{throw new UnauthorizedException()}}},
       {provide:AdminRbacService,useValue:{assertPermission:async()=>{throw new ForbiddenException()}}},
@@ -90,7 +96,8 @@ suite('referral stage zero isolated PostgreSQL',()=>{
         JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace
         WHERE n.nspname='app' AND (c.relname LIKE 'referral_%' OR c.relname IN ('credit_balances','credit_entries')) ORDER BY c.relname,con.conname`)
       const fs=await import('node:fs'),path=await import('node:path')
-      fs.writeFileSync(path.join(__dirname,'../../tools/referral-stage0-evidence/schema-tests.json'),JSON.stringify({...stats,constraints},null,2))
+      const out=path.join(__dirname,'../../tools/referral-stage0-evidence');fs.mkdirSync(out,{recursive:true})
+      fs.writeFileSync(path.join(out,'schema-tests.json'),JSON.stringify({...stats,constraints},null,2))
       await db.destroy()
     }
   })
@@ -215,12 +222,14 @@ suite('referral stage zero isolated PostgreSQL',()=>{
     const auth=await identity.exchangeOAuthCode('google','isolated-fixture',state)
     expect((await db.query('SELECT inviter_user_id FROM app.referral_edges WHERE invitee_user_id=$1',[auth.userId]))[0].inviter_user_id).toBe(inviter)
     const claim=await fetch(`${base}/v1/referral/claim`,{method:'POST',headers:{authorization:`Bearer ${auth.token}`}})
-    expect(claim.status).toBe(503)
+    expect(claim.status).toBe(400)  // no Idempotency-Key
+    const empty=await fetch(`${base}/v1/referral/claim`,{method:'POST',headers:{authorization:`Bearer ${auth.token}`,'idempotency-key':'stage0-empty-claim'}})
+    expect(empty.status).toBe(409)  // nothing earned yet
     const me=await fetch(`${base}/v1/referral/me`,{headers:{authorization:`Bearer ${auth.token}`}})
-    expect(me.status).toBe(200);expect((await me.json() as {payoutsEnabled:boolean}).payoutsEnabled).toBe(false)
+    expect(me.status).toBe(200);expect((await me.json() as {payoutsEnabled:boolean}).payoutsEnabled).toBe(true)
       const summary=await fetch(`${base}/v1/referral/summary`,{headers:{authorization:`Bearer ${auth.token}`}})
       expect(summary.status).toBe(200)
-      expect(await summary.json()).toMatchObject({payoutsEnabled:false,balances:{pending:'0',available:'0',frozen:'0'}})
+      expect(await summary.json()).toMatchObject({payoutsEnabled:true,balances:{available:'0',claimed:'0',total:'0'}})
       const badPage=await fetch(`${base}/v1/referral/invitees?page=0`,{headers:{authorization:`Bearer ${auth.token}`}})
       expect(badPage.status).toBe(400)
     expect(await db.query('SELECT 1 FROM app.referral_awards WHERE user_id=$1',[auth.userId])).toHaveLength(0)
@@ -275,7 +284,7 @@ suite('referral stage zero isolated PostgreSQL',()=>{
     expect((await read.invitees(outsider)).total).toBe(0)
     expect((await read.invitees(parent)).items[0]).not.toHaveProperty('email')
     expect((await read.summary(parent)).levels).toContainEqual({level:1,count:1})
-    expect((await read.summary(outsider)).balances).toEqual({pending:'0',available:'0',frozen:'0'})
+    expect((await read.summary(outsider)).balances).toEqual({available:'0',claimed:'0',total:'0'})
     await expect(read.invitees(parent,'0')).rejects.toThrow('pagination')
     await expect(read.invitees(parent,'1','101')).rejects.toThrow('pagination')
     await expect(read.invitees(parent,'1','20','4')).rejects.toThrow('level')

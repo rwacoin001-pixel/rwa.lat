@@ -19,6 +19,7 @@ import {
 import { validatedPredictionPrice } from './prediction-quote'
 import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
 import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
+import { recordReferralRewards } from '../referral/referral-rewards'
 
 // 18 位定标换算已抽到 prediction-hedge-math（纯函数模块，可独立测试）；此处 re-export 保持既有引用不变。
 export { formatDecimal18, parseDecimal18 }
@@ -222,11 +223,12 @@ export class PredictionService {
           [transactionId, available, stake.toString(), pool, riskStake.toString()],
         )
         if (placeFee > 0n) {
-          await runner.query(
+          const [feeEntry] = await runner.query(
             `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
-             VALUES ($1, $2, 'credit', $3)`,
+             VALUES ($1, $2, 'credit', $3) RETURNING id`,
             [transactionId, feeAccount, placeFee.toString()],
           )
+          await recordReferralRewards(runner, { kind: 'fee', sourceType: 'prediction_fee', component: 'prediction_place', sourceId: feeEntry.id, sourceUserId: userId, baseAtomic: placeFee })
         }
       }
 
@@ -378,11 +380,12 @@ export class PredictionService {
                 [txId, pool, grossPayout.toString(), available, netPayout.toString()],
               )
               if (payoutFee > 0n) {
-                await runner.query(
+                const [feeEntry] = await runner.query(
                   `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
-                   VALUES ($1, $2, 'credit', $3)`,
+                   VALUES ($1, $2, 'credit', $3) RETURNING id`,
                   [txId, feeAccount, payoutFee.toString()],
                 )
+                await recordReferralRewards(runner, { kind: 'fee', sourceType: 'prediction_fee', component: 'prediction_payout', sourceId: feeEntry.id, sourceUserId: userId, baseAtomic: payoutFee })
               }
               totalPaid += netPayout
               totalFee += payoutFee

@@ -2,6 +2,7 @@ import { BadRequestException, ServiceUnavailableException } from '@nestjs/common
 import { REFERRAL_DEFAULT_SETTINGS,validateReferralSettings,assertAwardTransition } from '../../src/referral/referral-policy'
 import { ReferralFoundationService } from '../../src/referral/referral-foundation.service'
 import { ReferralContext } from '../../src/referral/referral-context'
+import { ReferralClaimService } from '../../src/referral/referral-claim.service'
 import { ReferralAdminFoundationController,ReferralUserFoundationController } from '../../src/referral/referral-http.module'
 import { DataSource } from 'typeorm'
 
@@ -26,10 +27,12 @@ describe('referral immutable policy',()=>{
     expect(()=>assertAwardTransition('available','frozen')).not.toThrow()
     expect(()=>assertAwardTransition('frozen','available')).not.toThrow()
   })
-  it('cannot enable payments through environment or a user claim endpoint',()=>{
+  it('keeps stage-zero award payouts disabled; claims go through the reward claim service with an idempotency key',async()=>{
     const service=new ReferralFoundationService({} as DataSource)
     expect(()=>service.assertPayoutsDisabled()).toThrow(ServiceUnavailableException)
-    expect(()=>new ReferralUserFoundationController({} as never,service,{} as never).claim()).toThrow(ServiceUnavailableException)
+    const claims=new ReferralClaimService({} as DataSource)
+    const controller=new ReferralUserFoundationController({} as never,{} as never,claims)
+    await expect(controller.claim({auth:{userId:'u'}} as never,undefined)).rejects.toThrow(BadRequestException)
   })
   it('rejects unauthorized settings writes before accessing the database',async()=>{
     const core={saveSettings:jest.fn()},rbac={assertPermission:jest.fn().mockRejectedValue(new Error('denied'))}
