@@ -9,6 +9,9 @@ import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.servic
 import { ActivityRecorderService } from './activity-recorder.service'
 import { ActivitySummaryService } from './activity-summary.service'
 import { ActivityTrackingMiddleware } from './activity-tracking.middleware'
+import { VisitLogService } from './visit-log.service'
+import { VisitQueryService, type VisitQuery } from './visit-query.service'
+import { IdentityModule } from '../identity/identity.module'
 
 /**
  * Admin user-activity overview (read-only). Reached through the admin API service channel; the admin
@@ -21,6 +24,7 @@ import { ActivityTrackingMiddleware } from './activity-tracking.middleware'
 export class ActivitySummaryController {
   constructor(
     private readonly activity: ActivitySummaryService,
+    private readonly visits: VisitQueryService,
     private readonly rbac: AdminRbacService,
   ) {}
 
@@ -31,13 +35,21 @@ export class ActivitySummaryController {
     await assertAdminPermission(admin, this.rbac, 'console.view')
     return this.activity.summary(Number(days ?? 30))
   }
+
+  @Get('visits')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Visit log: one row per visit with time, IP, country, device, account and pages (raw IP; users.read)' })
+  async visitLog(@CurrentAdmin() admin: AuthenticatedAdmin, @Query() query: VisitQuery) {
+    await assertAdminPermission(admin, this.rbac, 'console.view')
+    return this.visits.list(query)
+  }
 }
 
-/** Privacy-preserving daily activity (app.daily_activity) and its admin summary. */
+/** Daily activity (app.daily_activity, no raw IP), the visit log (app.visit_log, raw IP) and their admin views. */
 @Module({
-  imports: [AdminRbacModule],
+  imports: [AdminRbacModule, IdentityModule],
   controllers: [ActivitySummaryController],
-  providers: [ActivityRecorderService, ActivitySummaryService, ActivityTrackingMiddleware],
+  providers: [ActivityRecorderService, ActivitySummaryService, VisitLogService, VisitQueryService, ActivityTrackingMiddleware],
 })
 export class ActivityModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

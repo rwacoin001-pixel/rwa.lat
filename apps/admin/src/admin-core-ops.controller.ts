@@ -332,6 +332,13 @@ export class AdminCoreOpsController {
     return this.core.get(adminId(request), '/activity/summary', query)
   }
 
+  @Get('console/activity/visits')
+  @RequireAdminPermissions('users.read')
+  @ApiOperation({ summary: 'Visit log: time, IP, country, device, account and pages of every visit (read-only)' })
+  consoleActivityVisits(@Req() request: AdminRequest, @Query() query: QueryMap) {
+    return this.core.get(adminId(request), '/activity/visits', query)
+  }
+
   @Get('console/funds')
   @RequireAdminPermissions('ledger.reconciliation.manage')
   @ApiOperation({ summary: 'Funds overview: user liabilities, flows, pending queues, hot wallet, daily series (read-only)' })

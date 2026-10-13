@@ -83,4 +83,13 @@ describe('Admin activity overview route', () => {
     await new AdminCoreOpsController(service()).consoleActivity({ admin: { id: '00000000-0000-4000-8000-000000000001' } } as never, { days: '30' })
     expect(String(fetchMock.mock.calls[0][0])).toBe('http://core.test/v1/admin/activity/summary?days=30')
   })
+
+  it('requires users.read for the visit log and forwards filters to the core', async () => {
+    const required = new Reflector().get<string[]>('admin:required-permissions', AdminCoreOpsController.prototype.consoleActivityVisits)
+    expect(required).toEqual(['users.read'])
+    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify({ items: [] }), { status: 200 }))
+    global.fetch = fetchMock
+    await new AdminCoreOpsController(service()).consoleActivityVisits({ admin: { id: '00000000-0000-4000-8000-000000000001' } } as never, { q: '203.0.113.7', page: '2' })
+    expect(String(fetchMock.mock.calls[0][0])).toBe('http://core.test/v1/admin/activity/visits?q=203.0.113.7&page=2')
+  })
 })
