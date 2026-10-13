@@ -1,4 +1,5 @@
 import { isIP } from 'node:net'
+import { EDGE_CLIENT_COUNTRY_HEADER, EDGE_CLIENT_IP_HEADER } from '../common/edge-client'
 
 /** Pure helpers for server-side activity recording: no I/O, so every rule is unit-testable. Ported from release-asr. */
 
@@ -56,11 +57,10 @@ export function isPrivateIp(ip: string): boolean {
 /**
  * Headers the a-reit.com frontend Worker sets on the /v1 requests it proxies to this API. Browser traffic
  * reaches the API from the Worker, so Cloudflare's own CF-Connecting-IP / CF-IPCountry describe the Worker,
- * not the visitor. The Worker always overwrites these (clients cannot inject them through a-reit.com);
- * a caller hitting the API directly could forge them, which only skews analytics, never access control.
+ * not the visitor. With EDGE_CLIENT_SIGNING_SECRET set, common/edge-client.ts removes these headers unless
+ * the Worker's signature verifies, so by the time they are read here they are trustworthy.
  */
-export const EDGE_CLIENT_IP_HEADER = 'x-client-ip'
-export const EDGE_CLIENT_COUNTRY_HEADER = 'x-client-country'
+export { EDGE_CLIENT_COUNTRY_HEADER, EDGE_CLIENT_IP_HEADER } from '../common/edge-client'
 
 /**
  * Client IP in priority order: the frontend Worker's x-client-ip, CF-Connecting-IP (set by Cloudflare), then Express `request.ip`

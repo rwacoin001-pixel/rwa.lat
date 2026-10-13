@@ -1,4 +1,5 @@
 import type { NextFunction, Request, RequestHandler, Response } from 'express'
+import { verifiedEdgeClient } from './edge-client'
 
 type RateLimitRule = {
   name: string
@@ -167,7 +168,8 @@ export function createApiRateLimitMiddleware(limiter = new ApiRateLimiter()): Re
     const decision = limiter.consume({
       method: request.method,
       path: requestPath(request),
-      ip: request.ip || request.socket.remoteAddress || 'unknown',
+      // Browser traffic arrives from the frontend Worker; key it by the visitor the Worker signed for.
+      ip: verifiedEdgeClient(response)?.ip || request.ip || request.socket.remoteAddress || 'unknown',
     })
     if (decision.allowed) {
       next()

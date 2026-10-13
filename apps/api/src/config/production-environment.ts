@@ -30,6 +30,8 @@ export function validateEnvironment(input: Environment): Environment {
   const encryptionKeys = assertProductionEncryptionKeys(input)
   requireValue(input, 'METRICS_BEARER_TOKEN', 32)
   assertTrustProxyHops(input)
+  // Shared with the frontend Worker; signs the visitor IP it forwards (common/edge-client.ts). Optional until rolled out.
+  if (read(input, 'EDGE_CLIENT_SIGNING_SECRET')) requireValue(input, 'EDGE_CLIENT_SIGNING_SECRET', 32)
   if (read(input, 'AUTH_ADAPTER').toLowerCase() !== 'production') {
     throw new Error('AUTH_ADAPTER=production is required in production')
   }
