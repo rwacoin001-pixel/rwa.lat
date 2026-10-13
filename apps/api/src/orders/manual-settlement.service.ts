@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import { ManualSettlementDto, ReviewSettlementDto } from './manual-settlement.dto'
 import { GeneratedDocumentsService } from '../generated-documents/generated-documents.service'
+import { recordReferralRewards } from '../referral/referral-rewards'
 
 @Injectable()
 export class ManualSettlementService {
@@ -108,6 +109,9 @@ export class ManualSettlementService {
       processed_at=COALESCE(processed_at,now()), completed_at=now(), failure_reason=NULL,
       receipt=jsonb_build_object('settlementId',$5::text,'amountAtomic',($3::numeric)::text,'quantityAtomic',($4::numeric)::text) WHERE id=$1`,
     [order.id, state, input.amountAtomic, input.quantityAtomic, receipt])
+    if (order.side === 'buy') {
+      await recordReferralRewards(em, { kind: 'purchase', sourceType: 'order', sourceId: order.id, sourceUserId: order.user_id, baseAtomic: amount })
+    }
     await em.query(`INSERT INTO app.order_events (id,order_id,previous_state,next_state,actor_type,actor_id,metadata)
       VALUES ($1,$2,$3,$4,'admin',$5,$6::jsonb)`, [randomUUID(), order.id, order.state, state, actor, JSON.stringify({ settlementId: receipt, releasedAtomicAmount: remainder.toString() })])
   }
