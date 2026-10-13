@@ -67,6 +67,11 @@ export function validateEnvironment(input: Environment): Environment {
       }
       requireValue(input, 'TRON_USDT_CONTRACT', 26)
       if (read(input, 'TRON_API_BASE_URL')) assertHttps(input, 'TRON_API_BASE_URL')
+      // TRON_NODE_URL may embed a provider access token (e.g. GetBlock); errors name the key, never the value.
+      if (read(input, 'TRON_NODE_URL')) assertHttps(input, 'TRON_NODE_URL')
+      if (read(input, 'TRON_INDEX_URL')) assertHttps(input, 'TRON_INDEX_URL')
+      if (read(input, 'TRON_NODE_MIN_INTERVAL_MS')) requireInteger(input, 'TRON_NODE_MIN_INTERVAL_MS', 0, 10_000)
+      if (read(input, 'TRON_INDEX_MIN_INTERVAL_MS')) requireInteger(input, 'TRON_INDEX_MIN_INTERVAL_MS', 0, 10_000)
       requireInteger(input, 'TRON_WITHDRAWAL_FEE_LIMIT_SUN', 1_000_000, 1_000_000_000)
       requireInteger(input, 'TRON_BROADCAST_RESCUE_WINDOW_MINUTES', 10, 1_440)
       const watcherPoll = read(input, 'WALLET_CHAIN_WATCHER_POLL_MS')

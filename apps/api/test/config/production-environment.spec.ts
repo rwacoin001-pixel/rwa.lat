@@ -216,6 +216,25 @@ describe('production environment validation', () => {
       ...manualBase,
       TRON_BROADCAST_RESCUE_WINDOW_MINUTES: '5',
     }))).toThrow(/TRON_BROADCAST_RESCUE_WINDOW_MINUTES/)
+    // The node URL can embed an access token: reject plain HTTP and never echo the value.
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      TRON_NODE_URL: 'http://go.getblock.io/secret-token',
+    }))).toThrow(/^TRON_NODE_URL must use HTTPS in production$/)
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      TRON_INDEX_URL: 'not a url',
+    }))).toThrow(/TRON_INDEX_URL/)
+    expect(() => validateEnvironment(production({
+      ...manualBase,
+      TRON_INDEX_MIN_INTERVAL_MS: '99999',
+    }))).toThrow(/TRON_INDEX_MIN_INTERVAL_MS/)
+    expect(validateEnvironment(production({
+      ...manualBase,
+      TRON_NODE_URL: 'https://go.getblock.io/secret-token',
+      TRON_INDEX_URL: 'https://api.trongrid.io',
+      TRON_NODE_MIN_INTERVAL_MS: '100',
+    }))).toMatchObject({ WALLET_CUSTODY_ADAPTER: 'manual' })
     expect(validateEnvironment(production(manualBase))).toMatchObject({ WALLET_CUSTODY_ADAPTER: 'manual' })
   })
 })

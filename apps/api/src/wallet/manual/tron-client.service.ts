@@ -35,16 +35,84 @@ export interface BroadcastResult {
   message: string | null
 }
 
+const DEFAULT_TRON_BASE_URL = 'https://api.trongrid.io'
+const COOLDOWN_INITIAL_MS = 5_000
+const COOLDOWN_MAX_MS = 120_000
+const RETRY_AFTER_MAX_MS = 300_000
+
+export type TronProviderKind = 'node' | 'index'
+
 /**
- * Minimal TRON HTTP client (TronGrid/node API). Read endpoints retry on
- * transient failures; transaction-building retries are safe because a rebuild
- * produces a fresh reference block. Broadcast retries are safe because node
- * de-duplicates identical signed transactions by txID.
+ * Thrown without contacting the provider while it is cooling down after a 429,
+ * so callers can stop the rest of their batch instead of hammering a throttled IP.
+ */
+export class TronRateLimitedError extends Error {
+  constructor(readonly provider: TronProviderKind, readonly retryInMs: number) {
+    super(`TRON ${provider} provider is rate limited; retry in ${Math.ceil(retryInMs / 1000)}s`)
+    this.name = 'TronRateLimitedError'
+  }
+}
+
+/** Request pacing and 429 cooldown for one upstream origin (shared when node and index use the same host). */
+class ProviderGate {
+  private nextSlotAt = 0
+  private cooldownUntil = 0
+  private cooldownMs = 0
+
+  constructor(private readonly minIntervalMs: number) {}
+
+  remainingCooldown(now = Date.now()): number {
+    return Math.max(0, this.cooldownUntil - now)
+  }
+
+  async acquire(provider: TronProviderKind): Promise<void> {
+    const now = Date.now()
+    const waitCooldown = this.remainingCooldown(now)
+    if (waitCooldown > 0) throw new TronRateLimitedError(provider, waitCooldown)
+    const slot = Math.max(now, this.nextSlotAt)
+    this.nextSlotAt = slot + this.minIntervalMs
+    if (slot > now) await delay(slot - now)
+    const afterWait = this.remainingCooldown()
+    if (afterWait > 0) throw new TronRateLimitedError(provider, afterWait)
+  }
+
+  rateLimited(retryAfterMs: number | null): number {
+    this.cooldownMs = this.cooldownMs ? Math.min(this.cooldownMs * 2, COOLDOWN_MAX_MS) : COOLDOWN_INITIAL_MS
+    const wait = Math.max(this.cooldownMs, retryAfterMs ?? 0)
+    this.cooldownUntil = Date.now() + wait
+    return wait
+  }
+
+  succeeded() {
+    this.cooldownMs = 0
+  }
+}
+
+interface ProviderEndpoint {
+  kind: TronProviderKind
+  baseUrl: string
+  /** TronGrid API keys are only ever sent to TronGrid hosts (never to GetBlock or other node URLs). */
+  sendsApiKey: boolean
+  gate: ProviderGate
+}
+
+/**
+ * Minimal TRON HTTP client. Full-node calls (/wallet/*) go to TRON_NODE_URL
+ * (e.g. a GetBlock endpoint whose access token is part of the URL path), while
+ * TronGrid's indexed /v1/* queries go to TRON_INDEX_URL. Both fall back to
+ * TRON_API_BASE_URL and then the public TronGrid host.
+ *
+ * Read endpoints retry on transient failures; transaction-building retries are
+ * safe because a rebuild produces a fresh reference block. Broadcast retries are
+ * safe because the node de-duplicates identical signed transactions by txID.
+ * A 429 puts that provider into an escalating cooldown during which calls fail
+ * fast with TronRateLimitedError.
  */
 @Injectable()
 export class TronClientService {
   private readonly log = new Logger(TronClientService.name)
-  private readonly baseUrl: string
+  private readonly node: ProviderEndpoint
+  private readonly index: ProviderEndpoint
   private readonly apiKey: string | null
   private readonly timeoutMs: number
   private readonly maxRetries: number
@@ -52,12 +120,38 @@ export class TronClientService {
   readonly feeLimitSun: number
 
   constructor(config: ConfigService) {
-    this.baseUrl = (config.get<string>('TRON_API_BASE_URL')?.trim() || 'https://api.trongrid.io').replace(/\/+$/, '')
+    const legacyBase = config.get<string>('TRON_API_BASE_URL')?.trim() || DEFAULT_TRON_BASE_URL
+    const nodeBase = normalizeBaseUrl(config.get<string>('TRON_NODE_URL')?.trim() || legacyBase)
+    const indexBase = normalizeBaseUrl(config.get<string>('TRON_INDEX_URL')?.trim() || legacyBase)
     this.apiKey = config.get<string>('TRON_API_KEY')?.trim() || null
     this.timeoutMs = readBounded(config.get<string>('TRON_API_TIMEOUT_MS'), 12_000, 3_000, 30_000)
     this.maxRetries = readBounded(config.get<string>('TRON_API_MAX_RETRIES'), 2, 0, 3)
     this.usdtContract = config.get<string>('TRON_USDT_CONTRACT')?.trim() || DEFAULT_TRON_USDT_CONTRACT
     this.feeLimitSun = readBounded(config.get<string>('TRON_WITHDRAWAL_FEE_LIMIT_SUN'), 100_000_000, 1_000_000, 1_000_000_000)
+
+    // Keyless TronGrid throttles bursts per IP, so space its calls out; keyed or paid nodes can go faster.
+    const intervalFor = (kind: TronProviderKind, base: string) => {
+      const keyless = isTronGrid(base) && !this.apiKey
+      const configured = config.get<string>(kind === 'node' ? 'TRON_NODE_MIN_INTERVAL_MS' : 'TRON_INDEX_MIN_INTERVAL_MS')
+      return readBounded(configured, keyless ? 1_500 : 100, 0, 10_000)
+    }
+    const gates = new Map<string, ProviderGate>()
+    const gateFor = (kind: TronProviderKind, base: string) => {
+      const origin = new URL(base).origin
+      let gate = gates.get(origin)
+      if (!gate) {
+        gate = new ProviderGate(intervalFor(kind, base))
+        gates.set(origin, gate)
+      }
+      return gate
+    }
+    this.node = { kind: 'node', baseUrl: nodeBase, sendsApiKey: isTronGrid(nodeBase), gate: gateFor('node', nodeBase) }
+    this.index = { kind: 'index', baseUrl: indexBase, sendsApiKey: isTronGrid(indexBase), gate: gateFor('index', indexBase) }
+  }
+
+  /** Milliseconds until the provider accepts requests again (0 when available). */
+  cooldownRemaining(kind: TronProviderKind): number {
+    return (kind === 'node' ? this.node : this.index).gate.remainingCooldown()
   }
 
   async listIncomingTransfers(address: string, input: { minTimestampMs: number; limit?: number }): Promise<NormalizedTrc20Transfer[]> {
@@ -162,11 +256,15 @@ export class TronClientService {
   }
 
   private async request<T>(path: string, options: { method: 'GET' | 'POST'; body?: unknown }): Promise<T> {
+    // TronGrid's indexed queries live under /v1; everything else is the standard full-node API.
+    const provider = path.startsWith('/v1/') ? this.index : this.node
     let lastError: unknown
     for (let attempt = 0; attempt <= this.maxRetries; attempt++) {
       if (attempt > 0) await delay(300 * attempt)
       try {
-        return await this.requestOnce<T>(path, options)
+        const result = await this.requestOnce<T>(provider, path, options)
+        provider.gate.succeeded()
+        return result
       } catch (error) {
         lastError = error
         if (!isRetryableNetworkError(error) || attempt === this.maxRetries) break
@@ -176,14 +274,16 @@ export class TronClientService {
     throw lastError instanceof Error ? lastError : new Error('TRON request failed')
   }
 
-  private async requestOnce<T>(path: string, options: { method: 'GET' | 'POST'; body?: unknown }): Promise<T> {
+  private async requestOnce<T>(provider: ProviderEndpoint, path: string, options: { method: 'GET' | 'POST'; body?: unknown }): Promise<T> {
+    await provider.gate.acquire(provider.kind)
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), this.timeoutMs)
     try {
       const headers: Record<string, string> = { accept: 'application/json' }
       if (options.method === 'POST') headers['content-type'] = 'application/json'
-      if (this.apiKey) headers['TRON-PRO-API-KEY'] = this.apiKey
-      const response = await fetch(`${this.baseUrl}${path}`, {
+      if (this.apiKey && provider.sendsApiKey) headers['TRON-PRO-API-KEY'] = this.apiKey
+      // Never log this URL: node providers such as GetBlock carry the access token in the path.
+      const response = await fetch(`${provider.baseUrl}${path}`, {
         method: options.method,
         headers,
         body: options.method === 'POST' ? JSON.stringify(options.body ?? {}) : undefined,
@@ -191,6 +291,10 @@ export class TronClientService {
       })
       const text = await response.text()
       if (text.length > MAX_RESPONSE_BYTES) throw new Error('TRON response exceeded the size limit')
+      if (response.status === 429) {
+        const wait = provider.gate.rateLimited(parseRetryAfter(response.headers.get('retry-after')))
+        throw new TronRateLimitedError(provider.kind, wait)
+      }
       if (!response.ok) {
         throw new TronHttpError(response.status, `TRON node responded with HTTP ${response.status}`)
       }
@@ -247,6 +351,27 @@ function normalizeTransfer(row: unknown): NormalizedTrc20Transfer | null {
     contractAddress: typeof tokenInfo.address === 'string' ? tokenInfo.address : '',
     blockTimestamp,
   }
+}
+
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, '')
+}
+
+function isTronGrid(baseUrl: string): boolean {
+  try {
+    const host = new URL(baseUrl).hostname
+    return host === 'trongrid.io' || host.endsWith('.trongrid.io')
+  } catch {
+    return false
+  }
+}
+
+/** Retry-After as seconds or an HTTP date, capped; null when absent or unparseable. */
+function parseRetryAfter(value: string | null): number | null {
+  if (!value) return null
+  const trimmed = value.trim()
+  const ms = /^\d+$/.test(trimmed) ? Number(trimmed) * 1000 : Date.parse(trimmed) - Date.now()
+  return Number.isFinite(ms) && ms > 0 ? Math.min(ms, RETRY_AFTER_MAX_MS) : null
 }
 
 function readBounded(value: string | undefined, fallback: number, minimum: number, maximum: number): number {

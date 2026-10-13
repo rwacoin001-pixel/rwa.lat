@@ -5,15 +5,16 @@ import { IdentityCrypto } from '../../identity/identity-crypto.service'
 import { WalletNetworkRegistry } from '../wallet-network.registry'
 import { WalletService } from '../wallet.service'
 import { DepositPoolService } from './deposit-pool.service'
-import { TronClientService } from './tron-client.service'
+import { TronClientService, TronRateLimitedError } from './tron-client.service'
 
 const SCAN_OVERLAP_MS = 10 * 60_000
 
 /**
- * Free TRON polling watcher for manual custody. Three passes per tick:
- * 1. Detect incoming TRC-20 USDT transfers on assigned deposit addresses.
- * 2. Advance deposit confirmations and credit balances once ready.
- * 3. Track broadcast withdrawals to confirmation, settlement, or failure.
+ * Free TRON polling watcher for manual custody. Passes per tick:
+ * 1. Only while something is in flight: read the latest block, advance deposit
+ *    confirmations (crediting once ready) and track broadcast withdrawals.
+ * 2. Detect incoming TRC-20 USDT transfers on assigned deposit addresses.
+ * A rate-limited provider ends the current pass; skipped work retries next tick.
  */
 @Injectable()
 export class ChainWatcherService implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -58,22 +59,48 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
   }
 
   async runOnce(): Promise<{ depositsDetected: number; depositsConfirmed: number; withdrawalsUpdated: number }> {
-    const depositsDetected = await this.detectDeposits()
-    let nowBlockNumber: number | null = null
-    try {
-      nowBlockNumber = await this.tron.getNowBlockNumber()
-    } catch (error) {
-      this.log.warn(`Chain watcher could not read the latest block: ${safeError(error)}`)
+    // Money already in flight first: confirmations and withdrawal tracking must not starve behind address scans.
+    let depositsConfirmed = 0
+    let withdrawalsUpdated = 0
+    if (await this.hasPendingChainWork()) {
+      let nowBlockNumber: number | null = null
+      try {
+        nowBlockNumber = await this.tron.getNowBlockNumber()
+      } catch (error) {
+        this.log.warn(`Chain watcher could not read the latest block: ${safeError(error)}`)
+      }
+      if (nowBlockNumber !== null) {
+        depositsConfirmed = await this.confirmDeposits(nowBlockNumber)
+        withdrawalsUpdated = await this.progressWithdrawals(nowBlockNumber)
+      }
     }
-    const depositsConfirmed = nowBlockNumber === null ? 0 : await this.confirmDeposits(nowBlockNumber)
-    const withdrawalsUpdated = nowBlockNumber === null ? 0 : await this.progressWithdrawals(nowBlockNumber)
+    const depositsDetected = await this.detectDeposits()
     return { depositsDetected, depositsConfirmed, withdrawalsUpdated }
   }
 
+  /** The latest block is only needed while a deposit awaits confirmations or a withdrawal is on-chain. */
+  private async hasPendingChainWork(): Promise<boolean> {
+    const rows = await this.dataSource.query(
+      `SELECT EXISTS (
+                SELECT 1 FROM app.deposits d JOIN app.chain_transactions c ON c.id = d.chain_transaction_id
+                 WHERE c.network = 'tron' AND d.state IN ('detected', 'confirming')
+              ) OR EXISTS (
+                SELECT 1 FROM app.withdrawals w JOIN app.chain_transactions c ON c.id = w.chain_transaction_id
+                 WHERE c.network = 'tron' AND w.state IN ('broadcast', 'confirming') AND c.state IN ('detected', 'confirming')
+              ) AS "pending"`,
+    ) as Array<{ pending: boolean }>
+    return rows[0]?.pending === true
+  }
+
   private async detectDeposits(): Promise<number> {
+    const cooling = this.tron.cooldownRemaining('index')
+    if (cooling > 0) {
+      this.log.warn(`Deposit scan skipped: TRON index provider cooling down for ${Math.ceil(cooling / 1000)}s`)
+      return 0
+    }
     const candidates = await this.pools.listForScan(this.depositBatch)
     let detected = 0
-    for (const candidate of candidates) {
+    for (const [position, candidate] of candidates.entries()) {
       try {
         const cursorMs = candidate.cursorMs ?? candidate.createdAtMs
         const transfers = await this.tron.listIncomingTransfers(candidate.address, {
@@ -100,6 +127,10 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
         await this.pools.markScanned(candidate.id, maxSeen)
       } catch (error) {
         // Leave the scan cursor untouched so this address is retried first next tick.
+        if (error instanceof TronRateLimitedError) {
+          this.log.warn(`Deposit scan paused: ${error.message}; ${candidates.length - position} address(es) deferred to a later tick`)
+          break
+        }
         this.log.warn(`Deposit scan failed for pool address ${candidate.id}: ${safeError(error)}`)
       }
     }
@@ -150,6 +181,10 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
         })
         confirmed++
       } catch (error) {
+        if (error instanceof TronRateLimitedError) {
+          this.log.warn(`Deposit confirmation paused: ${error.message}`)
+          break
+        }
         this.log.warn(`Deposit confirmation failed for ${row.transactionHash as string}: ${safeError(error)}`)
       }
     }
@@ -197,6 +232,10 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
         })
         updated++
       } catch (error) {
+        if (error instanceof TronRateLimitedError) {
+          this.log.warn(`Withdrawal tracking paused: ${error.message}`)
+          break
+        }
         this.log.warn(`Withdrawal confirmation failed for ${transactionHash}: ${safeError(error)}`)
       }
     }
