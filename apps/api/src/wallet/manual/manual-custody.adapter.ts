@@ -11,6 +11,7 @@ import type {
   ProvisionedWallet,
 } from '../custody-adapter.interface'
 import { DepositPoolService } from './deposit-pool.service'
+import { readDepositWatchPolicy, type DepositWatchPolicy } from './deposit-watch.policy'
 import { TronClientService } from './tron-client.service'
 import { isValidTronAddress, parseTronPrivateKey, tronAddressFromPrivateKey } from './tron-address.util'
 import { signTronTransactionHash } from './tron-signer'
@@ -31,6 +32,7 @@ export class ManualCustodyAdapter implements CustodyAdapter {
   private readonly hotWalletPrivateKey: string | null
   private readonly hotWalletAddress: string | null
   private readonly rescueWindowMinutes: number
+  private readonly watchPolicy: DepositWatchPolicy
 
   constructor(
     config: ConfigService,
@@ -50,6 +52,7 @@ export class ManualCustodyAdapter implements CustodyAdapter {
     const windowRaw = config.get<string>('TRON_BROADCAST_RESCUE_WINDOW_MINUTES')
     const window = windowRaw && /^\d+$/.test(windowRaw) ? Number(windowRaw) : 120
     this.rescueWindowMinutes = Number.isSafeInteger(window) && window >= 10 && window <= 1440 ? window : 120
+    this.watchPolicy = readDepositWatchPolicy(config)
   }
 
   getHotWalletAddress(): string | null {
@@ -77,7 +80,12 @@ export class ManualCustodyAdapter implements CustodyAdapter {
         message: 'No deposit address is currently available. Please contact support to top up the deposit address pool.',
       })
     }
-    return { address: assigned.address, memo: null }
+    return { address: assigned.address, memo: null, rotated: assigned.rotated }
+  }
+
+  async startDepositWatch(userId: string, network: WalletNetwork): Promise<{ watchUntil: Date; nextScanAt: Date } | null> {
+    if (network !== 'tron') return null
+    return this.pools.startWatch(network, userId, this.watchPolicy.watchMinutes)
   }
 
   async screenAddress(): Promise<AddressScreeningResult> {

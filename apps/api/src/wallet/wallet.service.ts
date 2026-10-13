@@ -246,6 +246,7 @@ export class WalletService {
   async depositAddress(userId: string, network: WalletNetwork) {
     const config = this.networkRegistry.get(network)
     const wallet = await this.ensureWallet(userId)
+    if (this.custody.mode === 'manual') return this.manualDepositAddress(userId, network, wallet)
     let address = await this.addresses.findOne({ where: { walletId: wallet.id, userId, network, assetCode: 'USDT', state: 'active' } })
     if (!address) {
       // Stub references are deterministically derived from the user ID. Deriving
@@ -277,6 +278,56 @@ export class WalletService {
       warning: config.warning,
       integration: this.integrationState(),
     }
+  }
+
+  /**
+   * Manual custody: the pool decides the current address (rotating to a fresh one after the
+   * previous address received a deposit). Every address the user ever held stays an active
+   * wallet address, so a late transfer to an old address still credits the same user.
+   * Opening the deposit page also opens a watch window.
+   */
+  private async manualDepositAddress(userId: string, network: WalletNetwork, wallet: CustodyWallet) {
+    const config = this.networkRegistry.get(network)
+    const provisioned = await this.custody.provisionAddress(this.crypto.decrypt(wallet.providerWalletCiphertext), network, 'USDT')
+    this.assertAddress(network, provisioned.address)
+    const addressHash = this.crypto.hmac(this.normalizeAddress(network, provisioned.address))
+    let address = await this.addresses.findOne({ where: { network, addressHash } })
+    if (address && address.userId !== userId) {
+      throw new ConflictException({ code: WALLET_ERROR_CODES.ADDRESS_POOL_CONFLICT, message: 'Deposit address ownership conflict; please contact support.' })
+    }
+    if (!address) {
+      const encryptedAddress = this.crypto.encrypt(provisioned.address)
+      address = await this.addresses.save(this.addresses.create({
+        id: randomUUID(), walletId: wallet.id, userId, network, assetCode: 'USDT', assetDecimals: 6,
+        addressHash, addressCiphertext: encryptedAddress.ciphertext,
+        memoCiphertext: null, encryptionKeyVersion: encryptedAddress.keyVersion,
+        state: 'active', disabledAt: null,
+      }))
+    }
+    const watch = await this.custody.startDepositWatch?.(userId, network) ?? null
+    return {
+      id: address.id,
+      network,
+      assetCode: 'USDT',
+      address: provisioned.address,
+      memo: null,
+      requiredConfirmations: config.requiredConfirmations,
+      minimumDepositAtomic: config.minimumDepositAtomic,
+      estimatedArrivalMinutes: config.estimatedArrivalMinutes,
+      warning: config.warning,
+      integration: this.integrationState(),
+      addressRotated: provisioned.rotated === true,
+      watchUntil: watch?.watchUntil ?? null,
+    }
+  }
+
+  /** "I have sent it": extend the watch window so the current address is scanned within seconds. */
+  async watchDeposit(userId: string, network: WalletNetwork) {
+    this.networkRegistry.get(network)
+    if (this.custody.mode !== 'manual' || !this.custody.startDepositWatch) return { watchUntil: null, nextScanAt: null }
+    const watch = await this.custody.startDepositWatch(userId, network)
+    if (!watch) throw new NotFoundException({ code: WALLET_ERROR_CODES.ADDRESS_NOT_FOUND, message: 'Open the deposit page to get a deposit address first.' })
+    return { watchUntil: watch.watchUntil, nextScanAt: watch.nextScanAt }
   }
 
   async quoteWithdrawal(userId: string, dto: WithdrawalQuoteDto) {

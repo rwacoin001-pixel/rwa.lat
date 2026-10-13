@@ -1,7 +1,8 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm'
 import type { WalletNetwork } from '../wallet.entities'
 
-export type DepositPoolAddressState = 'available' | 'assigned' | 'disabled'
+/** 'retired': received a deposit and was replaced by a fresh address; still bound to its user and still watched. */
+export type DepositPoolAddressState = 'available' | 'assigned' | 'retired' | 'disabled'
 export type DepositPoolAddressSource = 'generated' | 'imported'
 export type WithdrawalWhitelistState = 'active' | 'revoked'
 
@@ -69,6 +70,15 @@ export class DepositPoolAddress {
 
   @Column({ name: 'disabled_reason', type: 'varchar', nullable: true })
   disabledReason!: string | null
+
+  @Column({ name: 'retired_at', type: 'timestamptz', nullable: true })
+  retiredAt!: Date | null
+
+  @Column({ name: 'watch_until', type: 'timestamptz', nullable: true })
+  watchUntil!: Date | null
+
+  @Column({ name: 'next_scan_at', type: 'timestamptz', nullable: true })
+  nextScanAt!: Date | null
 }
 
 @Entity({ schema: 'app', name: 'withdrawal_whitelist_entries' })

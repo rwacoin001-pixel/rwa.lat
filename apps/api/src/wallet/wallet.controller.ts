@@ -62,6 +62,13 @@ export class WalletController {
     return this.wallet.depositAddress(actor.userId, network as WalletNetwork)
   }
 
+  @Post('deposit-addresses/:network/watch')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: '"I have sent it": extend the deposit watch window and scan the current address soon' })
+  watchDeposit(@CurrentAuth() actor: SecurityActor, @Param('network') network: string) {
+    return this.wallet.watchDeposit(actor.userId, network as WalletNetwork)
+  }
+
   @Post('withdrawals/quote')
   @ApiOperation({ summary: 'Quote a withdrawal without locking or moving funds' })
   quote(@CurrentAuth() actor: SecurityActor, @Body() dto: WithdrawalQuoteDto) {

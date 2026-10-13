@@ -7,9 +7,11 @@ import { AuditLog } from '../../security/audit-log.entity'
 import { WALLET_ERROR_CODES } from '../wallet.errors'
 import type { WalletNetwork } from '../wallet.entities'
 import { DepositPoolAddress, type DepositPoolAddressState } from './manual-custody.entities'
-import { generateTronKeypair, isValidTronAddress, parseTronPrivateKey, tronAddressFromPrivateKey } from './tron-address.util'
+import { isValidTronAddress } from './tron-address.util'
 
-const MAX_GENERATE_COUNT = 100
+const MAX_IMPORT_COUNT = 1000
+
+type QueryManager = { query: (query: string, parameters?: unknown[]) => Promise<unknown> }
 const MANAGED_NETWORKS: ReadonlyArray<WalletNetwork> = ['tron']
 
 export interface DepositPoolRow {
@@ -28,15 +30,31 @@ export interface DepositPoolRow {
   createdAt: Date
   disabledAt: Date | null
   disabledReason: string | null
+  retiredAt: Date | null
+  watchUntil: Date | null
+  nextScanAt: Date | null
 }
 
 export interface DepositPoolStats {
   network: WalletNetwork
   available: number
   assigned: number
+  retired: number
   disabled: number
   keyHeld: number
   keyMissing: number
+}
+
+/** Scan cadence: hot while the user's watch window is open, backing off to an idle sweep afterwards. */
+export interface DepositScanPolicy {
+  watchScanSeconds: number
+  idleScanSeconds: number
+}
+
+export interface DepositImportRejection {
+  line: number
+  address: string
+  reason: 'invalid_address' | 'duplicate_in_upload' | 'already_in_pool'
 }
 
 export interface ScanCandidate {
@@ -66,6 +84,7 @@ export class DepositPoolService {
       `SELECT network,
               COUNT(*) FILTER (WHERE state = 'available')::int AS available,
               COUNT(*) FILTER (WHERE state = 'assigned')::int AS assigned,
+              COUNT(*) FILTER (WHERE state = 'retired')::int AS retired,
               COUNT(*) FILTER (WHERE state = 'disabled')::int AS disabled,
               COUNT(*) FILTER (WHERE key_held)::int AS "keyHeld",
               COUNT(*) FILTER (WHERE NOT key_held)::int AS "keyMissing"
@@ -77,6 +96,7 @@ export class DepositPoolService {
       network: row.network,
       available: Number(row.available ?? 0),
       assigned: Number(row.assigned ?? 0),
+      retired: Number(row.retired ?? 0),
       disabled: Number(row.disabled ?? 0),
       keyHeld: Number(row.keyHeld ?? 0),
       keyMissing: Number(row.keyMissing ?? 0),
@@ -93,65 +113,74 @@ export class DepositPoolService {
     return { addresses: rows.map((row) => this.toRow(row)) }
   }
 
-  async generate(adminId: string, input: { network: WalletNetwork; count: number; label?: string }, requestId: string) {
-    this.assertManagedNetwork(input.network)
-    const count = Math.trunc(input.count)
-    if (!Number.isInteger(count) || count < 1 || count > MAX_GENERATE_COUNT) {
-      throw new BadRequestException({ code: WALLET_ERROR_CODES.AMOUNT_INVALID, message: `Generation count must be between 1 and ${MAX_GENERATE_COUNT}.` })
-    }
-    const now = new Date()
-    const rows: DepositPoolAddress[] = []
-    for (let index = 0; index < count; index++) {
-      const keypair = generateTronKeypair()
-      rows.push(this.buildRow({ network: input.network, address: keypair.address, privateKeyHex: keypair.privateKeyHex, source: 'generated', label: input.label ?? null, adminId, now }))
-    }
-    await this.dataSource.transaction(async (manager) => {
-      await manager.getRepository(DepositPoolAddress).save(rows)
+  /** Generation is retired: the operator uploads addresses whose keys they hold offline. */
+  async generate(): Promise<never> {
+    throw new BadRequestException({
+      code: WALLET_ERROR_CODES.ADDRESS_POOL_GENERATION_DISABLED,
+      message: 'Generating deposit addresses is disabled. Upload operator-held addresses instead.',
     })
-    await this.audit(adminId, requestId, 'wallet.deposit_pool.generated', null, { network: input.network, count })
-    return { generated: count, network: input.network }
   }
 
-  async importAddress(
+  /**
+   * Uploads operator-held TRON addresses (address only; private keys are never stored).
+   * Valid new addresses are inserted in upload order, which is the order users receive them.
+   */
+  async importAddresses(
     adminId: string,
-    input: { network: WalletNetwork; address: string; privateKey?: string; label?: string },
+    input: { network: WalletNetwork; address?: string; addresses?: string[]; label?: string },
     requestId: string,
-  ) {
+  ): Promise<{ imported: number; rejected: DepositImportRejection[] }> {
     this.assertManagedNetwork(input.network)
-    const address = input.address.trim()
-    if (!isValidTronAddress(address)) {
-      throw new BadRequestException({ code: WALLET_ERROR_CODES.ADDRESS_INVALID, message: 'Imported address is not a valid TRON base58check address.' })
+    const submitted = [...(input.addresses ?? []), ...(input.address ? [input.address] : [])].map((value) => value.trim())
+    if (!submitted.some(Boolean)) {
+      throw new BadRequestException({ code: WALLET_ERROR_CODES.ADDRESS_INVALID, message: 'Provide at least one TRON address to upload.' })
     }
-    const privateKey = input.privateKey?.trim() || null
-    if (privateKey) {
-      let derived: string
-      try {
-        parseTronPrivateKey(privateKey)
-        derived = tronAddressFromPrivateKey(privateKey)
-      } catch {
-        throw new BadRequestException({ code: WALLET_ERROR_CODES.ADDRESS_INVALID, message: 'Imported private key is not a valid TRON secp256k1 key.' })
+    if (submitted.length > MAX_IMPORT_COUNT) {
+      throw new BadRequestException({ code: WALLET_ERROR_CODES.ADDRESS_INVALID, message: `Upload at most ${MAX_IMPORT_COUNT} addresses at a time.` })
+    }
+    const rejected: DepositImportRejection[] = []
+    const accepted: Array<{ line: number; address: string; hash: Buffer }> = []
+    const seen = new Set<string>()
+    submitted.forEach((address, index) => {
+      if (!address) return
+      if (!isValidTronAddress(address)) rejected.push({ line: index + 1, address, reason: 'invalid_address' })
+      else if (seen.has(address)) rejected.push({ line: index + 1, address, reason: 'duplicate_in_upload' })
+      else {
+        seen.add(address)
+        accepted.push({ line: index + 1, address, hash: this.crypto.hmac(address) })
       }
-      if (derived !== address) {
-        throw new BadRequestException({ code: WALLET_ERROR_CODES.ADDRESS_INVALID, message: 'Imported private key does not match the provided address.' })
-      }
-    }
-    const addressHash = this.crypto.hmac(address)
-    const existing = await this.pool.findOne({ where: { network: input.network, addressHash } })
-    if (existing) {
-      throw new ConflictException({ code: WALLET_ERROR_CODES.ADDRESS_POOL_CONFLICT, message: 'This address is already present in the deposit pool.' })
-    }
-    const row = this.buildRow({
-      network: input.network,
-      address,
-      privateKeyHex: privateKey,
-      source: 'imported',
-      label: input.label ?? null,
-      adminId,
-      now: new Date(),
     })
-    await this.pool.save(row)
-    await this.audit(adminId, requestId, 'wallet.deposit_pool.imported', row.id, { network: input.network, keyHeld: row.keyHeld })
-    return this.toRow(row)
+    const existing = accepted.length
+      ? await this.dataSource.query(
+        `SELECT address_hash FROM app.deposit_pool_addresses WHERE network = $1 AND address_hash = ANY($2::bytea[])`,
+        [input.network, accepted.map((row) => row.hash)],
+      ) as Array<{ address_hash: Buffer }>
+      : []
+    const present = new Set(existing.map((row) => Buffer.from(row.address_hash).toString('hex')))
+    const fresh = accepted.filter((row) => {
+      if (!present.has(row.hash.toString('hex'))) return true
+      rejected.push({ line: row.line, address: row.address, reason: 'already_in_pool' })
+      return false
+    })
+    // Millisecond-spaced created_at keeps the upload order as the assignment order.
+    const base = Date.now()
+    const rows = fresh.map((row, index) => this.buildRow({
+      network: input.network,
+      address: row.address,
+      privateKeyHex: null,
+      source: 'imported',
+      label: input.label?.trim() || null,
+      adminId,
+      now: new Date(base + index),
+    }))
+    if (rows.length) {
+      await this.dataSource.transaction(async (manager) => {
+        await manager.getRepository(DepositPoolAddress).save(rows)
+      })
+    }
+    rejected.sort((left, right) => left.line - right.line)
+    await this.audit(adminId, requestId, 'wallet.deposit_pool.imported', null, { network: input.network, imported: rows.length, rejected: rejected.length })
+    return { imported: rows.length, rejected }
   }
 
   async disable(adminId: string, id: string, reason: string | undefined, requestId: string) {
@@ -169,73 +198,135 @@ export class DepositPoolService {
   }
 
   /**
-   * Atomic assignment used by the custody adapter when a user requests a
-   * deposit address. Returns null when the pool has no available address.
+   * Returns the user's current deposit address, assigning one atomically when needed.
+   * Once the current address has received a deposit, the next available address (upload
+   * order, uploaded addresses before legacy generated ones) becomes current and the old one
+   * is retired: still bound to the same user and still watched, so late transfers credit them.
+   * When the pool is empty the current address keeps being used. Returns null only when the
+   * user has no address and none is available.
    */
-  async assignForUser(network: WalletNetwork, userId: string): Promise<{ id: string; address: string } | null> {
+  async assignForUser(network: WalletNetwork, userId: string): Promise<{ id: string; address: string; rotated: boolean } | null> {
+    this.assertManagedNetwork(network)
     return this.dataSource.transaction(async (manager) => {
-      await manager.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`deposit-pool-assign:${userId}`])
       const existing = await manager.query(
-        `SELECT id, address_ciphertext, encryption_key_version
+        `SELECT id, address_hash, address_ciphertext, encryption_key_version
            FROM app.deposit_pool_addresses
-          WHERE network = $1 AND state = 'assigned' AND assigned_user_id = $2`,
+          WHERE network = $1 AND state = 'assigned' AND assigned_user_id = $2
+          FOR UPDATE`,
         [network, userId],
-      )
-      const assignedRow = existing[0] ?? await this.claimAvailableAddress(manager, network, userId)
-      if (!assignedRow) return null
-      const address = this.crypto.decrypt(
-        Buffer.isBuffer(assignedRow.address_ciphertext) ? assignedRow.address_ciphertext : Buffer.from(assignedRow.address_ciphertext),
-        Number(assignedRow.encryption_key_version),
-      )
-      if (!existing[0]) {
-        await this.auditLogs.insert({
-          id: randomUUID(),
-          actorType: 'service',
-          actorId: null,
-          userId,
-          action: 'wallet.deposit_pool.assigned',
-          objectType: 'deposit_pool_address',
-          objectId: assignedRow.id,
-          requestId: 'deposit-pool-assignment',
-          reasonCode: null,
-          metadata: { network } as never,
-        })
+      ) as Array<Record<string, unknown>>
+      const current = existing[0] ?? null
+      let assigned = current
+      let rotated = false
+      if (!current || await this.hasReceivedDeposit(manager, network, current.address_hash as Buffer)) {
+        const candidate = await this.lockNextAvailable(manager, network)
+        if (candidate) {
+          // Retire before assigning: the partial unique index allows one 'assigned' row per user.
+          if (current) {
+            await manager.query(
+              `UPDATE app.deposit_pool_addresses SET state = 'retired', retired_at = now() WHERE id = $1`,
+              [current.id],
+            )
+          }
+          assigned = await this.assignCandidate(manager, candidate, userId)
+          rotated = Boolean(current)
+          await this.auditLogs.insert({
+            id: randomUUID(),
+            actorType: 'service',
+            actorId: null,
+            userId,
+            action: rotated ? 'wallet.deposit_pool.rotated' : 'wallet.deposit_pool.assigned',
+            objectType: 'deposit_pool_address',
+            objectId: candidate,
+            requestId: 'deposit-pool-assignment',
+            reasonCode: null,
+            metadata: { network, ...(rotated ? { retiredId: current?.id } : {}) } as never,
+          })
+        }
       }
-      return { id: assignedRow.id as string, address }
+      if (!assigned) return null
+      const address = this.crypto.decrypt(
+        Buffer.isBuffer(assigned.address_ciphertext) ? assigned.address_ciphertext : Buffer.from(assigned.address_ciphertext as Uint8Array),
+        Number(assigned.encryption_key_version),
+      )
+      return { id: assigned.id as string, address, rotated }
     })
   }
 
-  private async claimAvailableAddress(manager: { query: (query: string, parameters?: unknown[]) => Promise<unknown> }, network: WalletNetwork, userId: string) {
+  /**
+   * Opens (or extends) the user's watch window and asks the watcher to scan soon. Re-scans of
+   * the same address are spaced by at least 20 seconds so "check now" cannot hammer the provider.
+   */
+  async startWatch(network: WalletNetwork, userId: string, minutes: number): Promise<{ watchUntil: Date; nextScanAt: Date } | null> {
+    const raw = await this.dataSource.query(
+      `UPDATE app.deposit_pool_addresses
+          SET watch_until = GREATEST(COALESCE(watch_until, now()), now() + make_interval(mins => $3::int)),
+              next_scan_at = CASE
+                WHEN last_scan_at IS NOT NULL AND last_scan_at > now() - interval '20 seconds'
+                  THEN LEAST(COALESCE(next_scan_at, now()), last_scan_at + interval '20 seconds')
+                ELSE now() END
+        WHERE network = $1 AND assigned_user_id = $2
+          AND (state = 'assigned' OR (state = 'retired' AND retired_at > now() - interval '24 hours'))
+        RETURNING state, watch_until AS "watchUntil", next_scan_at AS "nextScanAt"`,
+      [network, userId, Math.trunc(minutes)],
+    )
+    const rows = (Array.isArray(raw) && raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === 'number' ? raw[0] : raw) as Array<{ state: string; watchUntil: Date; nextScanAt: Date }>
+    const current = rows.find((row) => row.state === 'assigned')
+    return current ? { watchUntil: current.watchUntil, nextScanAt: current.nextScanAt } : null
+  }
+
+  private async hasReceivedDeposit(manager: QueryManager, network: WalletNetwork, addressHash: Buffer): Promise<boolean> {
+    const rows = await manager.query(
+      `SELECT EXISTS (
+         SELECT 1 FROM app.deposits d
+           JOIN app.wallet_addresses a ON a.id = d.wallet_address_id
+          WHERE a.network = $1 AND a.address_hash = $2 AND d.state <> 'rejected'
+       ) AS "used"`,
+      [network, addressHash],
+    ) as Array<{ used: boolean }>
+    return rows[0]?.used === true
+  }
+
+  private async lockNextAvailable(manager: QueryManager, network: WalletNetwork): Promise<string | null> {
+    const rows = await manager.query(
+      `SELECT id FROM app.deposit_pool_addresses
+        WHERE network = $1 AND state = 'available'
+        ORDER BY (source = 'imported') DESC, created_at, id
+        FOR UPDATE SKIP LOCKED
+        LIMIT 1`,
+      [network],
+    ) as Array<{ id: string }>
+    return rows[0]?.id ?? null
+  }
+
+  private async assignCandidate(manager: QueryManager, id: string, userId: string) {
     const raw = await manager.query(
-      `WITH candidate AS (
-         SELECT id FROM app.deposit_pool_addresses
-          WHERE network = $1 AND state = 'available'
-          ORDER BY created_at
-          FOR UPDATE SKIP LOCKED
-          LIMIT 1
-       )
-       UPDATE app.deposit_pool_addresses target
-          SET state = 'assigned', assigned_user_id = $2, assigned_at = now()
-         FROM candidate
-        WHERE target.id = candidate.id
-       RETURNING target.id, target.address_ciphertext, target.encryption_key_version`,
-      [network, userId],
+      `UPDATE app.deposit_pool_addresses
+          SET state = 'assigned', assigned_user_id = $2, assigned_at = now(), next_scan_at = NULL
+        WHERE id = $1 AND state = 'available'
+        RETURNING id, address_ciphertext, encryption_key_version`,
+      [id, userId],
     )
     // TypeORM's PostgreSQL UPDATE result is [rows, affectedCount], unlike SELECT.
     const rows = Array.isArray(raw) && raw.length === 2 && Array.isArray(raw[0]) && typeof raw[1] === 'number'
       ? raw[0] as Array<Record<string, unknown>>
       : raw as Array<Record<string, unknown>>
-    return rows[0] ?? null
+    if (!rows[0]) throw new ConflictException({ code: WALLET_ERROR_CODES.ADDRESS_POOL_CONFLICT, message: 'The deposit address was claimed concurrently; please retry.' })
+    return rows[0]
   }
 
-  /** Rotating scan batch for the chain watcher. */
+  /**
+   * Addresses due for a scan: current and retired addresses whose next_scan_at has passed
+   * (NULL = never scheduled), open watch windows first.
+   */
   async listForScan(limit: number): Promise<ScanCandidate[]> {
     const rows = await this.dataSource.query(
       `SELECT id, network, address_ciphertext, encryption_key_version, last_seen_timestamp,
               (EXTRACT(EPOCH FROM created_at) * 1000)::bigint AS created_at_ms
          FROM app.deposit_pool_addresses
-        WHERE state = 'assigned' AND network = 'tron'
-        ORDER BY last_scan_at ASC NULLS FIRST
+        WHERE state IN ('assigned', 'retired') AND network = 'tron'
+          AND (next_scan_at IS NULL OR next_scan_at <= now())
+        ORDER BY (watch_until IS NOT NULL AND watch_until > now()) DESC, next_scan_at ASC NULLS FIRST, last_scan_at ASC NULLS FIRST
         LIMIT $1`,
       [Math.min(Math.max(Math.trunc(limit), 1), 50)],
     ) as Array<Record<string, unknown>>
@@ -251,15 +342,33 @@ export class DepositPoolService {
     }))
   }
 
-  async markScanned(id: string, cursorMs: number | null): Promise<void> {
+  /**
+   * Records a successful scan and schedules the next one: every watchScanSeconds while the
+   * watch window is open, then 5 min (<1h after), 15 min (<6h), 1 h (<24h), else the idle sweep.
+   */
+  async markScanned(id: string, cursorMs: number | null, policy: DepositScanPolicy): Promise<void> {
     await this.dataSource.query(
       `UPDATE app.deposit_pool_addresses
           SET last_scan_at = now(),
               last_seen_timestamp = CASE WHEN $2::bigint IS NULL THEN last_seen_timestamp
                                          WHEN last_seen_timestamp IS NULL THEN $2::bigint
-                                         ELSE GREATEST(last_seen_timestamp, $2::bigint) END
+                                         ELSE GREATEST(last_seen_timestamp, $2::bigint) END,
+              next_scan_at = now() + CASE
+                WHEN watch_until > now() THEN make_interval(secs => $3::int)
+                WHEN watch_until > now() - interval '1 hour' THEN interval '5 minutes'
+                WHEN watch_until > now() - interval '6 hours' THEN interval '15 minutes'
+                WHEN watch_until > now() - interval '24 hours' THEN interval '1 hour'
+                ELSE make_interval(secs => $4::int) END
         WHERE id = $1`,
-      [id, cursorMs],
+      [id, cursorMs, Math.trunc(policy.watchScanSeconds), Math.trunc(policy.idleScanSeconds)],
+    )
+  }
+
+  /** A non-rate-limit scan failure: keep the cursor, retry in two minutes instead of every tick. */
+  async markScanFailed(id: string): Promise<void> {
+    await this.dataSource.query(
+      `UPDATE app.deposit_pool_addresses SET next_scan_at = now() + interval '2 minutes' WHERE id = $1`,
+      [id],
     )
   }
 
@@ -312,6 +421,9 @@ export class DepositPoolService {
       createdAt: input.now,
       disabledAt: null,
       disabledReason: null,
+      retiredAt: null,
+      watchUntil: null,
+      nextScanAt: null,
     })
   }
 
@@ -332,6 +444,9 @@ export class DepositPoolService {
       createdAt: row.createdAt,
       disabledAt: row.disabledAt,
       disabledReason: row.disabledReason,
+      retiredAt: row.retiredAt,
+      watchUntil: row.watchUntil,
+      nextScanAt: row.nextScanAt,
     }
   }
 
