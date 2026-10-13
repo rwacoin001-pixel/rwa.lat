@@ -7,7 +7,9 @@ import { PriceQuote, PriceSnapshot } from '../../src/catalog/price.entity'
 import { CatalogService } from '../../src/catalog/catalog.service'
 import { CatalogError, CATALOG_ERROR_CODES } from '../../src/catalog/catalog.errors'
 
-describe('CatalogModule (PG integration)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('CatalogModule (PG integration)', () => {
   let dataSource: DataSource
   let catalog: CatalogService
 

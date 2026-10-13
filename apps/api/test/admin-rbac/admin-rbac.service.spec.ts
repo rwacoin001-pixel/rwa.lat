@@ -9,7 +9,9 @@ import { AdminRbacModule } from '../../src/admin-rbac/admin-rbac.module'
 import { AdminRbacService } from '../../src/admin-rbac/admin-rbac.service'
 import { AdminRole, AdminUser, AdminApprovalRequest, AdminRolePermission, AdminSession } from '../../src/admin-rbac/admin-rbac.entities'
 
-describe('AdminRbacService', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('AdminRbacService', () => {
   let svc: AdminRbacService
   let ds: DataSource
 
@@ -52,7 +54,7 @@ describe('AdminRbacService', () => {
   })
 
   afterAll(async () => {
-    await ds.destroy()
+    if (ds?.isInitialized) await ds.destroy()
     if (moduleRef) await moduleRef.close()
   })
 

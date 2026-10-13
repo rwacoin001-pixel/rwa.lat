@@ -5,8 +5,8 @@ const sendMail = jest.fn()
 jest.mock('nodemailer', () => ({ createTransport: jest.fn(() => ({ sendMail, close: jest.fn() })) }))
 
 function service() {
-  return new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production', PUBLIC_APP_URL: 'https://rwa.lat',
-    EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@rwa.lat', SMTP_HOST: 'smtp.example.com', SMTP_AUTH_MODE: 'none' }))
+  return new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production', PUBLIC_APP_URL: 'https://a-reit.com',
+    EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@a-reit.com', SMTP_HOST: 'smtp.example.com', SMTP_AUTH_MODE: 'none' }))
 }
 
 describe('Branded identity emails', () => {
@@ -18,8 +18,8 @@ describe('Branded identity emails', () => {
     await service().sendEmailCode(input)
     const email = sendMail.mock.calls[0][0]
     expect(email.html).toContain(`lang="${locale}"`)
-    expect(email.html).toContain('https://api.rwa.lat/v1/media/email-v1/logo.png')
-    expect(email.html).toContain('https://api.rwa.lat/v1/media/email-v1/identity-envelope.jpg')
+    expect(email.html).toContain('https://api.a-reit.com/v1/media/email-v1/logo.png')
+    expect(email.html).toContain('https://api.a-reit.com/v1/media/email-v1/identity-envelope.jpg')
     expect(email.html).toContain('012345')
     expect(email.text).toContain('012345')
     expect(email.html).not.toMatch(/\{\{|localhost|PREVIEW_NOT_A_VALID_TOKEN|token=/)
@@ -44,7 +44,7 @@ describe('Branded identity emails', () => {
     await service().sendOneTimeLink(input)
     const message = sendMail.mock.calls[0][0]
     expect(message.html).toContain('lang="fr"')
-    expect(message.text).toContain('https://rwa.lat/recovery?token=token%3C%26%22')
+    expect(message.text).toContain('https://a-reit.com/recovery?token=token%3C%26%22')
     expect(message.text).toContain('2 min')
     expect(message.html).not.toMatch(/\{\{|PREVIEW_NOT_A_VALID_TOKEN/)
   })

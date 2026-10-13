@@ -6,7 +6,9 @@ import { AutomaticQuoteWorker } from '../../src/catalog/automatic-quote.worker'
 import { FreeContractPriceClient } from '../../src/catalog/free-contract-price.client'
 import { QuoteBinding, ContractTokenQuote, contractCoin } from '../../src/catalog/automatic-quote'
 
-describe('Automatic quotes (isolated PostgreSQL)', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('Automatic quotes (isolated PostgreSQL)', () => {
   let db: DataSource
   let id: string
   let binding: QuoteBinding

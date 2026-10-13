@@ -6,7 +6,7 @@ const contracts = JSON.parse(readFileSync(join(__dirname, '../../src/assets/emai
   { id: string; locale: string; fields: string[] }[]
 function sample(fields: string[]) {
   return Object.fromEntries(fields.filter(field => !['assetBaseUrl', 'year', 'supportUrl'].includes(field)).map(field =>
-    [field, field === 'code' ? '012345' : field.endsWith('Url') ? 'https://rwa.lat/profile/security'
+    [field, field === 'code' ? '012345' : field.endsWith('Url') ? 'https://a-reit.com/profile/security'
       : field === 'amount' ? '123.45' : field === 'currency' ? 'USDT' : field === 'expiryMinutes' ? '1.5' : 'TEST_VALUE']))
 }
 
@@ -32,8 +32,8 @@ describe('Production email template rendering', () => {
     expect(result.html).not.toContain('<script>')
     expect(result.text).toContain(data[field])
   })
-  it.each(['javascript:alert(1)', 'https://rwa.lat.evil.example/recovery', 'https://user:password@rwa.lat/recovery',
-    'http://rwa.lat/recovery', 'https://rwa.lat:8443/recovery'])(
+  it.each(['javascript:alert(1)', 'https://a-reit.com.evil.example/recovery', 'https://user:password@a-reit.com/recovery',
+    'http://a-reit.com/recovery', 'https://a-reit.com:8443/recovery'])(
     'rejects untrusted action URLs: %s', actionUrl => {
       expect(() => renderEmailTemplate('recovery-link', 'en', { actionUrl, expiryText: '2 min' })).toThrow()
     })

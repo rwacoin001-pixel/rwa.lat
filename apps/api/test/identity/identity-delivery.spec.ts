@@ -18,7 +18,7 @@ describe('IdentityDeliveryService', () => {
 
   it('sends the mobile six-digit code without an authorization link or token', async () => {
     const delivery = new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production',
-      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@rwa.lat', SMTP_HOST: 'smtp.rwa.lat',
+      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@a-reit.com', SMTP_HOST: 'smtp.a-reit.com',
       SMTP_PORT: '465', SMTP_SECURE: 'true', SMTP_AUTH_MODE: 'none' }))
     await delivery.sendEmailCode({ email: 'user@example.com', intent: 'login', code: '012345', locale: 'zh-CN' })
     const message = mockSendMail.mock.calls[0][0]
@@ -31,7 +31,7 @@ describe('IdentityDeliveryService', () => {
   it('keeps code delivery failures generic', async () => {
     mockSendMail.mockRejectedValueOnce(new Error('sensitive provider failure'))
     const delivery = new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production',
-      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@rwa.lat', SMTP_HOST: 'smtp.rwa.lat',
+      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@a-reit.com', SMTP_HOST: 'smtp.a-reit.com',
       SMTP_PORT: '465', SMTP_SECURE: 'true', SMTP_AUTH_MODE: 'none' }))
     await expect(delivery.sendEmailCode({ email: 'user@example.com', intent: 'register', code: '012345', locale: 'en' }))
       .rejects.toMatchObject({ response: { code: 'AUTH_DELIVERY_FAILED', message: 'Account email could not be delivered. Please retry later.' } })
@@ -51,11 +51,11 @@ describe('IdentityDeliveryService', () => {
   it('sends a production one-time URL through the configured TLS SMTP transport', async () => {
     const delivery = new IdentityDeliveryService(new ConfigService({
       AUTH_ADAPTER: 'production',
-      PUBLIC_APP_URL: 'https://app.rwa.lat',
+      PUBLIC_APP_URL: 'https://a-reit.com',
       EMAIL_PROVIDER: 'smtp',
-      EMAIL_FROM: 'no-reply@rwa.lat',
-      EMAIL_FROM_NAME: 'RWA.LAT',
-      SMTP_HOST: 'smtp.rwa.lat',
+      EMAIL_FROM: 'no-reply@a-reit.com',
+      EMAIL_FROM_NAME: 'A-REIT',
+      SMTP_HOST: 'smtp.a-reit.com',
       SMTP_PORT: '587',
       SMTP_SECURE: 'false',
       SMTP_AUTH_MODE: 'plain',
@@ -70,7 +70,7 @@ describe('IdentityDeliveryService', () => {
     expect(mockSendMail).toHaveBeenCalledWith(expect.objectContaining({
       to: 'user@example.com',
       subject: expect.stringContaining('Recover'),
-      text: expect.stringContaining('https://app.rwa.lat/recovery?token=one-time-token'),
+      text: expect.stringContaining('https://a-reit.com/recovery?token=one-time-token'),
     }))
     expect(delivery.lastDemoToken('user@example.com', 'account_recovery')).toBeUndefined()
   })
@@ -78,9 +78,9 @@ describe('IdentityDeliveryService', () => {
   it('fails closed without exposing provider details when SMTP delivery fails', async () => {
     mockSendMail.mockRejectedValueOnce(new Error('SMTP authentication failed with secret detail'))
     const delivery = new IdentityDeliveryService(new ConfigService({
-      AUTH_ADAPTER: 'production', PUBLIC_APP_URL: 'https://app.rwa.lat',
-      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@rwa.lat',
-      SMTP_HOST: 'smtp.rwa.lat', SMTP_PORT: '465', SMTP_SECURE: 'true',
+      AUTH_ADAPTER: 'production', PUBLIC_APP_URL: 'https://a-reit.com',
+      EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@a-reit.com',
+      SMTP_HOST: 'smtp.a-reit.com', SMTP_PORT: '465', SMTP_SECURE: 'true',
       SMTP_AUTH_MODE: 'none',
     }))
 
@@ -93,10 +93,10 @@ describe('IdentityDeliveryService', () => {
     mockFetch.mockResolvedValueOnce({ ok: true } as Response)
     const delivery = new IdentityDeliveryService(new ConfigService({
       AUTH_ADAPTER: 'production',
-      PUBLIC_APP_URL: 'https://rwa.lat',
+      PUBLIC_APP_URL: 'https://a-reit.com',
       EMAIL_PROVIDER: 'resend',
-      EMAIL_FROM: 'no-reply@rwa.lat',
-      EMAIL_FROM_NAME: 'RWA.LAT',
+      EMAIL_FROM: 'no-reply@a-reit.com',
+      EMAIL_FROM_NAME: 'A-REIT',
       RESEND_API_KEY: `re_${'a'.repeat(32)}`,
       RESEND_HTTP_TIMEOUT_MS: '5000',
     }))
@@ -111,9 +111,9 @@ describe('IdentityDeliveryService', () => {
     }))
     const request = mockFetch.mock.calls[0][1] as RequestInit
     expect(JSON.parse(request.body as string)).toEqual(expect.objectContaining({
-      from: 'RWA.LAT <no-reply@rwa.lat>',
+      from: 'A-REIT <no-reply@a-reit.com>',
       to: ['user@example.com'],
-      text: expect.stringContaining('https://rwa.lat/verify-email?token=verify-token'),
+      text: expect.stringContaining('https://a-reit.com/verify-email?token=verify-token'),
     }))
   })
 })

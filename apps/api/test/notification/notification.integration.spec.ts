@@ -6,7 +6,9 @@ import { NotificationError } from '../../src/notification/notification.errors'
 
 const USER = '11111111-1111-1111-1111-111111111111'
 
-describe('DB-005 / API-011 notification integration', () => {
+const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
+
+describeDatabase('DB-005 / API-011 notification integration', () => {
   let dataSource: DataSource
   let svc: NotificationService
 
