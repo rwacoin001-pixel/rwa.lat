@@ -6,6 +6,7 @@ import { CatalogService } from '../catalog/catalog.service'
 import { ComplianceService } from '../compliance/compliance.service'
 import { NotificationService } from '../notification/notification.service'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
+import { recordReferralRewards } from '../referral/referral-rewards'
 import {
   calculateProductQuantityAtomic,
   calculateSettlementPayoutAtomic,
@@ -20,6 +21,7 @@ interface OrderRow {
   user_id: string
   product_id: string
   outcome_key: OutcomeKey
+  side: 'buy' | 'sell'
   requested_atomic_amount: string
   filled_atomic_amount: string
   filled_quantity_atomic_amount: string
@@ -272,6 +274,9 @@ export class OrdersService {
          WHERE id = $1`,
         [order.id, nextState, filled.toString(), filledQuantity.toString(), completedAt, failureReason],
       )
+      if (nextState !== 'failed' && order.side === 'buy') {
+        await recordReferralRewards(runner, { kind: 'purchase', sourceType: 'order', sourceId: order.id, sourceUserId: order.user_id, baseAtomic: filled })
+      }
       await this.event(runner, order.id, order.state, nextState, 'admin', null, failureReason ?? undefined, { releasedAtomicAmount: released.toString() })
       return { userId: order.user_id, state: nextState }
     })
