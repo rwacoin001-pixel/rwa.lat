@@ -347,10 +347,10 @@ export default function WalletsPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-muted-foreground">密钥托管</p>
-                  <p className="text-2xl font-bold mt-1">{stats.keyHeld}</p>
-                  {stats.keyMissing > 0 && (
-                    <p className="text-xs text-amber-600 mt-1">{stats.keyMissing} 个仅收币（无密钥）</p>
+                  <p className="text-sm text-muted-foreground">私钥由你保管</p>
+                  <p className="text-2xl font-bold mt-1">{stats.keyMissing}</p>
+                  {stats.keyHeld > 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">另有 {stats.keyHeld} 个旧版系统生成地址</p>
                   )}
                 </div>
                 <KeyRound className="w-10 h-10 text-sky-600/50" />
@@ -488,9 +488,9 @@ export default function WalletsPage() {
                           </TableCell>
                           <TableCell className="text-sm">
                             {row.keyHeld ? (
-                              <span className="text-mint">已托管</span>
+                              <span className="text-muted-foreground">系统托管（旧）</span>
                             ) : (
-                              <span className="text-amber-600">仅收币</span>
+                              <span>你保管</span>
                             )}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
@@ -571,7 +571,7 @@ export default function WalletsPage() {
           <textarea
             value={uploadText}
             onChange={(e) => setUploadText(e.target.value)}
-            rows={8}
+            rows={6}
             spellCheck={false}
             placeholder={'T...\nT...'}
             className="w-full rounded-input border border-ink/[0.14] bg-white/70 px-3 py-2 font-mono text-xs text-ink shadow-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-mint focus:border-transparent focus:bg-white"
