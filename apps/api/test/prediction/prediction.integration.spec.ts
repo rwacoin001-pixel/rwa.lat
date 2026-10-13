@@ -210,9 +210,12 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
     expect(count.n).toBe(1)
   })
 
-  it('单笔超过 100 USDT 上限被拒', async () => {
+  it('没有单笔上限：超出余额的大额下注按余额不足拒绝，非正金额按金额无效拒绝', async () => {
     await expect(
       prediction.placeBet(userId, 't', { tokenId: yesTokenId, stakeAtomic: '200000000', idempotencyKey: 'bet-over' }),
+    ).rejects.toMatchObject({ response: { code: 'PREDICTION_INSUFFICIENT_BALANCE' } })
+    await expect(
+      prediction.placeBet(userId, 't', { tokenId: yesTokenId, stakeAtomic: '0', idempotencyKey: 'bet-zero' }),
     ).rejects.toMatchObject({ response: { code: 'PREDICTION_STAKE_LIMIT_EXCEEDED' } })
   })
 
