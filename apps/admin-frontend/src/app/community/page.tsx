@@ -5,6 +5,7 @@ import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import { CommunityPublications } from '@/components/community-publications'
+import { ConfirmDialog, type ConfirmDetail } from '@/components/confirm-dialog'
 import {
   RefreshCw,
   CheckCircle2,
@@ -82,6 +83,13 @@ const STATE_LABEL: Record<string, string> = {
   dismissed: '已忽略',
 }
 
+type CommunityAction =
+  | { kind: 'review'; item: QueueItem; action: 'approve' | 'reject' }
+  | { kind: 'publishDue' }
+  | { kind: 'report'; report: ReportItem; action: 'reviewed' | 'dismissed' }
+
+const FIELD = 'w-full rounded-xl border border-ink/10 bg-white/80 px-3 py-2 text-[13px] shadow-sm'
+
 function preview(item: QueueItem): string {
   const payload = item.payload ?? {}
   const text = (payload.title as string) || (payload.text as string) || (payload.body as string) || ''
@@ -104,6 +112,9 @@ export default function CommunityReviewPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const [notice, setNotice] = useState('')
+  const [pendingAction, setPendingAction] = useState<CommunityAction | null>(null)
+  const [note, setNote] = useState('')
 
   const fetchAll = useCallback(async () => {
     setLoading(true)
@@ -143,25 +154,28 @@ export default function CommunityReviewPage() {
       const body = await res.json().catch(() => null)
       if (!res.ok) throw new Error((body?.message as string) || `操作失败 (HTTP ${res.status})`)
       return body
-    } catch (err) {
-      setError(err instanceof Error ? err.message : '操作失败')
-      return null
     } finally {
       setBusy(false)
     }
   }
 
+  const showNotice = (text: string) => {
+    setNotice(text)
+    window.setTimeout(() => setNotice(''), 6000)
+  }
+
+  const openAction = (next: CommunityAction) => {
+    setNote('')
+    setPendingAction(next)
+  }
+
+  // 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const review = async (item: QueueItem, action: 'approve' | 'reject') => {
-    let note: string | undefined
-    if (action === 'reject') {
-      note = window.prompt('驳回原因（可选）：') ?? undefined
-    } else if (!window.confirm(`确认通过该内容（${item.kind}）吗？`)) {
-      return
-    }
+    const reason = action === 'reject' ? note.trim() || undefined : undefined
     const result = await callAction(`/api/admin/community/queue/${item.id}/review`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ action, ...(note ? { note } : {}) }),
+      body: JSON.stringify({ action, ...(reason ? { note: reason } : {}) }),
     })
     if (result) {
       await fetchAll()
@@ -169,20 +183,18 @@ export default function CommunityReviewPage() {
   }
 
   const publishDue = async () => {
-    if (!window.confirm('发布所有已批准且到达计划时间的内容？')) return
     const result = await callAction('/api/admin/community/queue/publish-due', {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ limit: 100 }),
     })
     if (result) {
-      window.alert(`发布完成：成功 ${(result as { published?: number }).published ?? 0} 条`)
+      showNotice(`发布完成：成功 ${(result as { published?: number }).published ?? 0} 条`)
       await fetchAll()
     }
   }
 
   const resolveReport = async (report: ReportItem, action: 'reviewed' | 'dismissed') => {
-    if (!window.confirm(action === 'reviewed' ? '标记为已处理？' : '忽略该举报？')) return
     const result = await callAction(`/api/admin/community/reports/${report.id}`, {
       method: 'PUT',
       headers: { 'content-type': 'application/json' },
@@ -190,6 +202,45 @@ export default function CommunityReviewPage() {
     })
     if (result) await fetchAll()
   }
+
+  const dialog = ((): { title: string; description?: string; details?: ConfirmDetail[]; confirmLabel: string; destructive?: boolean; run: () => Promise<void> } | null => {
+    if (!pendingAction) return null
+    if (pendingAction.kind === 'review') {
+      const { item, action } = pendingAction
+      return {
+        title: action === 'approve' ? '通过该内容' : '驳回该内容',
+        description: action === 'approve' ? '通过后将按计划时间发布。' : '驳回后该内容不会发布。',
+        details: [
+          { label: '类型', value: item.kind },
+          { label: '人设', value: item.profile?.displayName ?? item.profile?.handle ?? '—' },
+          { label: '内容', value: preview(item) },
+          { label: 'ID', value: item.id, mono: true },
+        ],
+        confirmLabel: action === 'approve' ? '确认通过' : '确认驳回',
+        destructive: action === 'reject',
+        run: () => review(item, action),
+      }
+    }
+    if (pendingAction.kind === 'publishDue') {
+      return {
+        title: '发布到期内容',
+        description: '发布所有已批准且到达计划时间的内容（单次最多 100 条）。',
+        confirmLabel: '确认发布',
+        run: publishDue,
+      }
+    }
+    const { report, action } = pendingAction
+    return {
+      title: action === 'reviewed' ? '标记举报为已处理' : '忽略该举报',
+      details: [
+        { label: '对象', value: `${report.targetType} · ${report.targetId}`, mono: true },
+        { label: '原因', value: report.reason },
+      ],
+      confirmLabel: action === 'reviewed' ? '标记已处理' : '确认忽略',
+      destructive: action === 'dismissed',
+      run: () => resolveReport(report, action),
+    }
+  })()
 
   const statCards = useMemo(
     () => [
@@ -218,7 +269,7 @@ export default function CommunityReviewPage() {
             </button>
             <button
               type="button"
-              onClick={() => void publishDue()}
+              onClick={() => openAction({ kind: 'publishDue' })}
               disabled={busy}
               className="flex items-center gap-2 rounded-xl bg-mint px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
@@ -228,6 +279,7 @@ export default function CommunityReviewPage() {
         </div>
 
         {error && <div className="rounded-xl bg-rose-500/10 px-4 py-3 text-sm text-rose-600">{error}</div>}
+        {notice && <div role="status" className="rounded-xl bg-emerald-500/10 px-4 py-3 text-sm text-emerald-600">{notice}</div>}
         <CommunityPublications />
 
         <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
@@ -325,7 +377,7 @@ export default function CommunityReviewPage() {
                                 <button
                                   type="button"
                                   disabled={busy}
-                                  onClick={() => void review(item, 'approve')}
+                                  onClick={() => openAction({ kind: 'review', item, action: 'approve' })}
                                   className="flex items-center gap-1 rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/20 disabled:opacity-50"
                                 >
                                   <CheckCircle2 className="h-3.5 w-3.5" /> 通过
@@ -333,7 +385,7 @@ export default function CommunityReviewPage() {
                                 <button
                                   type="button"
                                   disabled={busy}
-                                  onClick={() => void review(item, 'reject')}
+                                  onClick={() => openAction({ kind: 'review', item, action: 'reject' })}
                                   className="flex items-center gap-1 rounded-lg bg-rose-500/10 px-2.5 py-1.5 text-xs font-medium text-rose-600 hover:bg-rose-500/20 disabled:opacity-50"
                                 >
                                   <XCircle className="h-3.5 w-3.5" /> 驳回
@@ -406,7 +458,7 @@ export default function CommunityReviewPage() {
                               <button
                                 type="button"
                                 disabled={busy}
-                                onClick={() => void resolveReport(report, 'reviewed')}
+                                onClick={() => openAction({ kind: 'report', report, action: 'reviewed' })}
                                 className="rounded-lg bg-emerald-500/10 px-2.5 py-1.5 text-xs font-medium text-emerald-600 hover:bg-emerald-500/20 disabled:opacity-50"
                               >
                                 已处理
@@ -414,7 +466,7 @@ export default function CommunityReviewPage() {
                               <button
                                 type="button"
                                 disabled={busy}
-                                onClick={() => void resolveReport(report, 'dismissed')}
+                                onClick={() => openAction({ kind: 'report', report, action: 'dismissed' })}
                                 className="rounded-lg bg-slate-400/10 px-2.5 py-1.5 text-xs font-medium text-slate-500 hover:bg-slate-400/20 disabled:opacity-50"
                               >
                                 忽略
@@ -440,6 +492,24 @@ export default function CommunityReviewPage() {
           </Card>
         )}
       </div>
+
+      <ConfirmDialog
+        open={dialog !== null}
+        onOpenChange={(open) => { if (!open) setPendingAction(null) }}
+        title={dialog?.title ?? ''}
+        description={dialog?.description}
+        details={dialog?.details}
+        confirmLabel={dialog?.confirmLabel}
+        destructive={dialog?.destructive}
+        onConfirm={async () => { await dialog?.run() }}
+      >
+        {pendingAction?.kind === 'review' && pendingAction.action === 'reject' && (
+          <label className="block">
+            <span className="mb-1 block text-xs text-text-secondary">驳回原因（可选）</span>
+            <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} className={FIELD} />
+          </label>
+        )}
+      </ConfirmDialog>
     </AdminLayout>
   )
 }

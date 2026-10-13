@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, PageHeader, Panel, RefreshButton, StatChip, StatusPill, formatDateTime, useApi } from '@/components/console/framework'
 import { CloudDownload } from 'lucide-react'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 type Stats = {
   counts: { markets: number; tokens: number; orders: number; settlements: number }
@@ -98,6 +99,8 @@ export default function PolymarketPage() {
   const [tab, setTab] = useState<TabKey>('markets')
   const [betStatus, setBetStatus] = useState('')
   const [settling, setSettling] = useState('')
+  const [syncOpen, setSyncOpen] = useState(false)
+  const [settleTarget, setSettleTarget] = useState<PredictionStats['exposureTop'][number] | null>(null)
 
   const bets = useApi<BetList>(`/api/admin/predictions/bets?limit=50${betStatus ? `&status=${betStatus}` : ''}`)
   const settlements = useApi<SettlementList>('/api/admin/predictions/settlements?limit=50')
@@ -107,8 +110,8 @@ export default function PolymarketPage() {
     window.setTimeout(() => setNotice(''), 8000)
   }
 
+  // sync / settle 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const sync = async () => {
-    if (!window.confirm('从 Polymarket Gamma API 同步市场数据？')) return
     setSyncing(true)
     try {
       const res = await fetch('/api/admin/polymarket/sync', {
@@ -122,15 +125,12 @@ export default function PolymarketPage() {
       showNotice(`市场同步完成${body && typeof body === 'object' && 'upserted' in body ? `：更新 ${String((body as Record<string, unknown>).upserted)} 个市场` : ''}`)
       stats.reload()
       prediction.reload()
-    } catch (err) {
-      showNotice(err instanceof Error ? err.message : '同步失败')
     } finally {
       setSyncing(false)
     }
   }
 
-  const settle = async (marketId: string, question: string) => {
-    if (!window.confirm(`手动结算该市场？\n\n${question}\n\n结算后将按开奖结果派彩（幂等，重复触发安全）。`)) return
+  const settle = async (marketId: string) => {
     setSettling(marketId)
     try {
       const res = await fetch(`/api/admin/predictions/settle/${marketId}`, {
@@ -146,8 +146,6 @@ export default function PolymarketPage() {
       prediction.reload()
       settlements.reload()
       bets.reload()
-    } catch (err) {
-      showNotice(err instanceof Error ? err.message : '结算失败')
     } finally {
       setSettling('')
     }
@@ -223,7 +221,7 @@ export default function PolymarketPage() {
             subtitle="外部市场映射与同步水位；交易功能保持关闭，仅做数据面。"
             actions={
               <button
-                onClick={sync}
+                onClick={() => setSyncOpen(true)}
                 disabled={syncing}
                 className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-sm text-text-muted transition-colors hover:text-text disabled:opacity-50"
               >
@@ -288,7 +286,7 @@ export default function PolymarketPage() {
                     <span className="min-w-0 flex-1 truncate text-sm" title={row.question}>{row.question || row.slug}</span>
                     <span className="tabular-nums text-sm text-text-muted">{fmtUsdt(row.openStakeAtomic)} · {row.bets} 笔</span>
                     <button
-                      onClick={() => settle(row.marketId, row.question || row.slug || '')}
+                      onClick={() => setSettleTarget(row)}
                       disabled={settling === row.marketId}
                       className="rounded-md border border-border px-2.5 py-1 text-xs text-text-muted transition-colors hover:text-text disabled:opacity-50"
                     >
@@ -310,6 +308,32 @@ export default function PolymarketPage() {
           </Panel>
         </>
       )}
+
+      <ConfirmDialog
+        open={syncOpen}
+        onOpenChange={setSyncOpen}
+        title="同步市场数据"
+        description="从 Polymarket Gamma API 同步市场数据。"
+        confirmLabel="开始同步"
+        onConfirm={sync}
+      />
+      <ConfirmDialog
+        open={settleTarget !== null}
+        onOpenChange={(open) => { if (!open) setSettleTarget(null) }}
+        title="手动结算该市场"
+        description="结算后将按开奖结果派彩（幂等，重复触发安全）。"
+        details={settleTarget ? [
+          { label: '市场', value: settleTarget.question || settleTarget.slug || '—' },
+          { label: '市场 ID', value: settleTarget.marketId, mono: true },
+          { label: '待开奖投注', value: `${settleTarget.bets} 笔` },
+          { label: '敞口', value: fmtUsdt(settleTarget.openStakeAtomic), emphasis: true },
+        ] : []}
+        typeToConfirm={settleTarget?.marketId.slice(-6)}
+        typeToConfirmLabel={settleTarget ? '请输入市场 ID 的最后 6 位以确认' : undefined}
+        confirmLabel="确认结算"
+        destructive
+        onConfirm={async () => { if (settleTarget) await settle(settleTarget.marketId) }}
+      />
     </AdminLayout>
   )
 }

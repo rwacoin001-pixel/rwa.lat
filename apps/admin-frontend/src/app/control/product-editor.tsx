@@ -25,6 +25,7 @@ import { StorageUpload } from '@/components/storage-upload'
 import { YieldEditor } from './yield-editor'
 import { AutomaticQuoteEditor } from './automatic-quote-editor'
 import { productMediaRefs } from '@/lib/product-media'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 const STATE_LABELS: Record<string, string> = { draft: '草稿', published: '已发布', suspended: '已暂停', retired: '已归档' }
 const STATE_BADGE: Record<string, 'softGray' | 'softGreen' | 'softAmber' | 'softRed'> = {
@@ -166,6 +167,7 @@ export function ProductEditor({
   const [current, setCurrent] = useState(product)
   const [busy, setBusy] = useState('')
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  const [stateTarget, setStateTarget] = useState<'published' | 'suspended' | 'retired' | null>(null)
 
   // 基本信息
   const [basic, setBasic] = useState({
@@ -366,9 +368,9 @@ export function ProductEditor({
     }
   }
 
+  // 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const changeState = async (state: 'published' | 'suspended' | 'retired') => {
     const label = STATE_LABELS[state]
-    if (!window.confirm(`确认将产品状态改为「${label}」？`)) return
     setBusy('state')
     setNotice(null)
     try {
@@ -376,8 +378,6 @@ export function ProductEditor({
       setCurrent(updated)
       showOk(`产品已${label}`)
       onChanged()
-    } catch (e) {
-      showError(e, '状态变更失败')
     } finally {
       setBusy('')
     }
@@ -417,17 +417,17 @@ export function ProductEditor({
         </div>
         <div className="flex items-center gap-2">
           {current.state !== 'published' && (
-            <Button size="sm" onClick={() => void changeState('published')} disabled={busy === 'state'}>
+            <Button size="sm" onClick={() => setStateTarget('published')} disabled={busy === 'state'}>
               发布
             </Button>
           )}
           {current.state === 'published' && (
-            <Button size="sm" variant="outline" onClick={() => void changeState('suspended')} disabled={busy === 'state'}>
+            <Button size="sm" variant="outline" onClick={() => setStateTarget('suspended')} disabled={busy === 'state'}>
               暂停
             </Button>
           )}
           {current.state !== 'retired' && (
-            <Button size="sm" variant="ghost" className="text-negative" onClick={() => void changeState('retired')} disabled={busy === 'state'}>
+            <Button size="sm" variant="ghost" className="text-negative" onClick={() => setStateTarget('retired')} disabled={busy === 'state'}>
               归档
             </Button>
           )}
@@ -858,6 +858,23 @@ export function ProductEditor({
         onOpenChange={setPickerOpen}
         productId={current.id}
         onSelect={(object) => void addMediaRef(object.storageRef)}
+      />
+
+      <ConfirmDialog
+        open={stateTarget !== null}
+        onOpenChange={(open) => { if (!open) setStateTarget(null) }}
+        title={stateTarget ? `确认将产品状态改为「${STATE_LABELS[stateTarget]}」` : ''}
+        description={stateTarget === 'retired' ? '归档后产品将下架，不再接受申购。' : stateTarget === 'suspended' ? '暂停后用户将无法申购该产品。' : undefined}
+        details={[
+          { label: '产品', value: current.displayName },
+          { label: '资产代码', value: current.assetCode, mono: true },
+          { label: '产品 ID', value: current.id, mono: true },
+          { label: '状态', value: `${STATE_LABELS[current.state] ?? current.state} → ${stateTarget ? STATE_LABELS[stateTarget] : ''}`, emphasis: true },
+        ]}
+        typeToConfirm={stateTarget === 'retired' ? current.assetCode : undefined}
+        confirmLabel="确认变更"
+        destructive={stateTarget !== 'published'}
+        onConfirm={async () => { if (stateTarget) await changeState(stateTarget) }}
       />
     </div>
   )

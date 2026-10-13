@@ -30,6 +30,8 @@ export default function KycPage() {
   const [selected, setSelected] = useState<KycCase | null>(null)
   const kyc = useApi<KycCase[]>(`/api/admin/console/kyc${state ? `?state=${state}&limit=200` : '?limit=200'}`)
   const rows = kyc.data ?? []
+  // 加载中显示 …，失败显示 —，加载完成后（含 0）显示真实数值
+  const count = (value: number) => (kyc.loading ? '…' : kyc.error ? '—' : value)
 
   const columns: Col<KycCase>[] = [
     { key: 'id', label: '档案号', render: (row) => <span className="font-mono text-xs">{shortId(row.id, 12)}</span> },
@@ -53,13 +55,13 @@ export default function KycPage() {
         />
 
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-          <StatChip label="档案总数" value={rows.length || '…'} delay={40} />
-          <StatChip label="已通过" value={rows.filter((row) => row.state === 'approved').length} delay={90} />
-          <StatChip label="已驳回" value={rows.filter((row) => row.state === 'rejected').length} delay={140} />
-          <StatChip label="待处理" value={rows.filter((row) => !['approved', 'rejected', 'expired', 'not_started'].includes(row.state)).length} delay={190} />
+          <StatChip label="档案总数" value={count(rows.length)} delay={40} />
+          <StatChip label="已通过" value={count(rows.filter((row) => row.state === 'approved').length)} delay={90} />
+          <StatChip label="已驳回" value={count(rows.filter((row) => row.state === 'rejected').length)} delay={140} />
+          <StatChip label="待处理" value={count(rows.filter((row) => !['approved', 'rejected', 'expired', 'not_started'].includes(row.state)).length)} delay={190} />
         </div>
 
-        <Panel title={`认证档案（${rows.length}）`} actions={<FilterTabs options={TABS} value={state} onChange={setState} />} delay={220} pad={false}>
+        <Panel title={`认证档案（${count(rows.length)}）`} actions={<FilterTabs options={TABS} value={state} onChange={setState} />} delay={220} pad={false}>
           <div className="px-5 pb-5">
             <DataTable columns={columns} rows={kyc.data} loading={kyc.loading} error={kyc.error} onReload={kyc.reload} emptyHint="暂无 KYC 档案" />
           </div>

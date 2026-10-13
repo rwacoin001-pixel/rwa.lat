@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
-
-const adminApiBase = (process.env.ADMIN_API_URL ?? 'http://localhost:4100/v1').replace(/\/$/, '')
+import { ADMIN_SESSION_COOKIE, adminApiBase, adminSessionCookieOptions } from '@/lib/server/admin-session'
+import { rejectCrossOrigin } from '@/lib/server/csrf'
 
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get('rwa-admin-session')?.value
+  const forbidden = rejectCrossOrigin(request)
+  if (forbidden) return forbidden
+  const token = request.cookies.get(ADMIN_SESSION_COOKIE)?.value
   if (token) {
-    await fetch(`${adminApiBase}/admin/auth/logout`, {
+    await fetch(`${adminApiBase()}/admin/auth/logout`, {
       method: 'POST',
       headers: { authorization: `Bearer ${token}` },
       cache: 'no-store',
     }).catch(() => undefined)
   }
   const response = NextResponse.redirect(new URL('/login', request.url), { status: 303 })
-  response.cookies.set('rwa-admin-session', '', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 0, path: '/' })
+  response.cookies.set(ADMIN_SESSION_COOKIE, '', adminSessionCookieOptions(0))
   return response
 }

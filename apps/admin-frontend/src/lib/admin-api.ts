@@ -37,21 +37,11 @@ export const adminApi = {
   getVerifiedAccess: (id: string) => request<VerifiedAccess | null>(`/platform/users/${encodeURIComponent(id)}/access`),
   saveVerifiedAccess: (id: string, data: VerifiedAccess) => request<VerifiedAccess>(`/platform/users/${encodeURIComponent(id)}/access`, { method: 'PUT', body: JSON.stringify(data) }),
   getProfile: () => request<{ id: string; email: string; roleName: string; permissions: string[] }>('/auth/me'),
-  listApprovals: (params?: { state?: string; limit?: number }) => {
-    const qs = new URLSearchParams()
-    if (params?.state) qs.set('state', params.state)
-    if (params?.limit) qs.set('limit', String(params.limit))
-    return request<any[]>(`/approvals${qs.size ? `?${qs}` : ''}`)
-  },
-  createApproval: (data: { action: string; objectType: string; objectId?: string; payload: Record<string, unknown> }) =>
-    request<any>('/approvals', { method: 'POST', body: JSON.stringify(data) }),
+  createApproval: (data: { action: string; objectType: string; objectId?: string; payload?: Record<string, unknown> }) =>
+    request<unknown>('/approvals', { method: 'POST', body: JSON.stringify(data) }),
+  // 管理 API 为 POST /approvals/:id/decide|reject（再转发为核心侧 PUT）
   decideApproval: (id: string, approved: boolean, reasonCode?: string) =>
-    request<any>(`/approvals/${id}/${approved ? 'decide' : 'reject'}`, { method: 'PUT', body: JSON.stringify({ reasonCode }) }),
-  exportAudit: (params: { actorType?: string; userId?: string; action?: string; from?: string; to?: string; limit?: number }) => {
-    const qs = new URLSearchParams()
-    Object.entries(params).forEach(([key, value]) => { if (value !== undefined) qs.set(key, String(value)) })
-    return request<any[]>(`/audit?${qs}`)
-  },
+    request<unknown>(`/approvals/${encodeURIComponent(id)}/${approved ? 'decide' : 'reject'}`, { method: 'POST', body: JSON.stringify({ reasonCode }) }),
   listAssetClasses: () => request<AssetClass[]>('/control/asset-classes'),
   saveAssetClass: (data: AssetClassInput) => request<AssetClass>('/control/asset-classes', { method: 'POST', body: JSON.stringify(data) }),
   deprecateAssetClass: (id: string) => request<AssetClass>(`/control/asset-classes/${encodeURIComponent(id)}/deprecate`, { method: 'PUT' }),
@@ -67,7 +57,6 @@ export const adminApi = {
   addDisclosure: (id: string, data: DisclosureInput) => request<Disclosure[]>(`/control/products/${encodeURIComponent(id)}/disclosures`, { method: 'POST', body: JSON.stringify(data) }),
   listSwitches: () => request<OperationalSwitch[]>('/control/switches'),
   updateSwitch: (key: string, enabled: boolean, reason: string) => request<any>(`/control/switches/${encodeURIComponent(key)}`, { method: 'PUT', body: JSON.stringify({ enabled, reason }) }),
-  getStorageStatus: () => request<StorageStatus>('/control/storage/status'),
   listTreasuryAddresses: () => request<TreasuryAddress[]>('/control/wallet/treasury-addresses'),
   saveTreasuryAddress: (data: TreasuryAddressInput) => request<TreasuryAddress>('/control/wallet/treasury-addresses', { method: 'POST', body: JSON.stringify(data) }),
   deactivateTreasuryAddress: (id: string) => request<TreasuryAddress[]>(`/control/wallet/treasury-addresses/${encodeURIComponent(id)}`, { method: 'DELETE' }),
@@ -139,7 +128,6 @@ export type PriceInput = { unitPriceDecimals?: number; unitPriceAtomicAmount: st
 export type Disclosure = { id: string; productId: string; kind: string; locale: string; title: string; storageRef: string; contentHash: string; state: string; publishedAt: string }
 export type DisclosureInput = { kind: 'prospectus' | 'risk_disclosure' | 'terms' | 'regulatory'; locale: string; title: string; storageRef: string; contentHash: string }
 export type OperationalSwitch = { key: string; label: string; description: string; current: { enabled: boolean; reason: string; updatedAt: string } | null; environmentReady: boolean; canEnable: boolean }
-export type StorageStatus = { enabled: boolean; bucket: string; uploadFlow: string; message: string }
 export type TreasuryAddress = { id: string; network: string; assetCode: string; purpose: string; label: string; address: string; memo: string | null; state: string; updatedAt: string }
 export type TreasuryAddressInput = { network: 'tron' | 'ethereum' | 'arbitrum'; assetCode: string; purpose: 'deposit' | 'withdrawal' | 'collection' | 'operational'; label: string; address: string; memo?: string; state?: 'active' | 'inactive' }
 

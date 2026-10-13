@@ -25,6 +25,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { adminApi, type StorageReadiness, type StoredObject } from '@/lib/admin-api'
 import { StorageUpload } from '@/components/storage-upload'
 import { AdminLayout } from '@/components/layout/AdminLayout'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 const SCAN_LABELS: Record<string, string> = {
   pending: '待扫描',
@@ -63,6 +64,7 @@ export default function FilesPage() {
   const [loading, setLoading] = useState(true)
   const [busyId, setBusyId] = useState('')
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
+  const [deleting, setDeleting] = useState<StoredObject | null>(null)
   const [readiness, setReadiness] = useState<StorageReadiness | null>(null)
 
   const load = useCallback(async () => {
@@ -130,15 +132,13 @@ export default function FilesPage() {
     }
   }
 
+  // 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const remove = async (object: StoredObject) => {
-    if (!window.confirm(`删除文件「${object.key.split('/').pop()}」？该操作不可恢复。`)) return
     setBusyId(object.id)
     try {
       await adminApi.deleteObject(object.id)
       setNotice({ kind: 'ok', text: '文件已删除' })
       await load()
-    } catch (e) {
-      setNotice({ kind: 'error', text: e instanceof Error ? e.message : '删除失败' })
     } finally {
       setBusyId('')
     }
@@ -344,7 +344,7 @@ export default function FilesPage() {
                             size="icon"
                             className="h-8 w-8 text-negative"
                             title="删除"
-                            onClick={() => void remove(item)}
+                            onClick={() => setDeleting(item)}
                             disabled={busyId === item.id}
                           >
                             <Trash2 className="h-4 w-4" />
@@ -383,6 +383,22 @@ export default function FilesPage() {
           </CardContent>
         </Card>
       )}
+
+      <ConfirmDialog
+        open={deleting !== null}
+        onOpenChange={(open) => { if (!open) setDeleting(null) }}
+        title="删除文件"
+        description="该操作不可恢复。"
+        details={deleting ? [
+          { label: '文件名', value: deleting.key.split('/').pop(), emphasis: true },
+          { label: '存储桶', value: BUCKET_LABELS[deleting.bucket] ?? deleting.bucket },
+          { label: '大小', value: formatBytes(deleting.sizeBytes) },
+          { label: '引用', value: deleting.storageRef, mono: true },
+        ] : []}
+        confirmLabel="确认删除"
+        destructive
+        onConfirm={async () => { if (deleting) await remove(deleting) }}
+      />
     </div>
     </AdminLayout>
   )

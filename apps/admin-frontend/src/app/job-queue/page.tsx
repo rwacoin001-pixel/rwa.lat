@@ -6,6 +6,7 @@ import { useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, FilterTabs, PageHeader, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
 import { RotateCcw } from 'lucide-react'
+import { ConfirmDialog } from '@/components/confirm-dialog'
 
 type JobRow = {
   id: string
@@ -53,6 +54,7 @@ export default function JobQueuePage() {
   const [state, setState] = useState('')
   const [busy, setBusy] = useState('')
   const [notice, setNotice] = useState('')
+  const [replaying, setReplaying] = useState<JobRow | null>(null)
 
   const jobsUrl =
     view === 'jobs'
@@ -67,8 +69,8 @@ export default function JobQueuePage() {
     window.setTimeout(() => setNotice(''), 7000)
   }
 
+  // 失败时抛出，由 ConfirmDialog 保持打开并显示错误
   const replay = async (row: JobRow) => {
-    if (!window.confirm('重放该作业？（重置为 pending 并清零失败计数）')) return
     setBusy(row.id)
     try {
       const res = await fetch(`/api/admin/job-queue/jobs/${row.id}/replay`, { method: 'POST', credentials: 'include', headers: { 'content-type': 'application/json' }, body: '{}' })
@@ -76,8 +78,6 @@ export default function JobQueuePage() {
       if (!res.ok) throw new Error(adminErrorMessage(body, res.status))
       showNotice('作业已重置为 pending，等待 worker 领取')
       list.reload()
-    } catch (err) {
-      showNotice(err instanceof Error ? err.message : '重放失败')
     } finally {
       setBusy('')
     }
@@ -107,7 +107,7 @@ export default function JobQueuePage() {
           <button
             type="button"
             disabled={busy === row.id}
-            onClick={() => void replay(row)}
+            onClick={() => setReplaying(row)}
             className="inline-flex items-center gap-1 rounded-lg bg-sky-500/10 px-2.5 py-1 text-xs font-medium text-sky-600 hover:bg-sky-500/20 disabled:opacity-50"
           >
             <RotateCcw className="h-3 w-3" /> 重放
@@ -184,6 +184,21 @@ export default function JobQueuePage() {
           </div>
         </Panel>
       </div>
+
+      <ConfirmDialog
+        open={replaying !== null}
+        onOpenChange={(open) => { if (!open) setReplaying(null) }}
+        title="重放作业"
+        description="将重置为 pending 并清零失败计数。"
+        details={replaying ? [
+          { label: '作业 ID', value: replaying.id, mono: true },
+          { label: '队列', value: replaying.queueName ?? replaying.queue_name ?? '—' },
+          { label: '尝试', value: `${replaying.attempts ?? 0} / ${replaying.maxAttempts ?? replaying.max_attempts ?? '—'}` },
+          { label: '最近错误', value: replaying.lastError ?? replaying.last_error ?? '—' },
+        ] : []}
+        confirmLabel="确认重放"
+        onConfirm={async () => { if (replaying) await replay(replaying) }}
+      />
     </AdminLayout>
   )
 }
