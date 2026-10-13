@@ -60,7 +60,7 @@ suite('referral stage zero isolated PostgreSQL',()=>{
     finally{if(q.isTransactionActive)await q.rollbackTransaction();await q.release()}
     context=new ReferralContext();binding=new ReferralBindingService(db,new ConfigService({IDENTITY_HMAC_KEY:'11'.repeat(32)}),context)
     core=new ReferralFoundationService(db)
-    const config=new ConfigService({AUTH_ADAPTER:'demo',IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64)})
+    const config=new ConfigService({AUTH_ADAPTER:'demo',PUBLIC_APP_URL:'http://localhost:3030',IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64)})
     crypto=new IdentityCrypto(config);delivery=new IdentityDeliveryService(config)
     const oauth={
       begin:async (provider:string,intent:string,registrationConsents:unknown)=>{
@@ -96,7 +96,8 @@ suite('referral stage zero isolated PostgreSQL',()=>{
         JOIN pg_class c ON c.oid=con.conrelid JOIN pg_namespace n ON n.oid=c.relnamespace
         WHERE n.nspname='app' AND (c.relname LIKE 'referral_%' OR c.relname IN ('credit_balances','credit_entries')) ORDER BY c.relname,con.conname`)
       const fs=await import('node:fs'),path=await import('node:path')
-      fs.writeFileSync(path.join(__dirname,'../../tools/referral-stage0-evidence/schema-tests.json'),JSON.stringify({...stats,constraints},null,2))
+      const out=path.join(__dirname,'../../tools/referral-stage0-evidence');fs.mkdirSync(out,{recursive:true})
+      fs.writeFileSync(path.join(out,'schema-tests.json'),JSON.stringify({...stats,constraints},null,2))
       await db.destroy()
     }
   })
