@@ -9,6 +9,12 @@ import { readDepositWatchPolicy, type DepositWatchPolicy } from './deposit-watch
 import { TronClientService, TronRateLimitedError } from './tron-client.service'
 
 const SCAN_OVERLAP_MS = 10 * 60_000
+/**
+ * Clock tolerance between this server and TRON block timestamps. A transfer stamped earlier than
+ * assignment minus this cannot have been sent by the assigned user (they had not seen the address yet),
+ * so it is never attributed to them, even when a rescan overlaps back past the assignment.
+ */
+export const ASSIGNMENT_SKEW_MS = 60_000
 
 /**
  * Free TRON polling watcher for manual custody. Passes per tick:
@@ -106,13 +112,14 @@ export class ChainWatcherService implements OnApplicationBootstrap, OnApplicatio
     let detected = 0
     for (const [position, candidate] of candidates.entries()) {
       try {
-        const cursorMs = candidate.cursorMs ?? candidate.createdAtMs
+        const earliestMs = Math.max(0, candidate.assignedAtMs - ASSIGNMENT_SKEW_MS)
         const transfers = await this.tron.listIncomingTransfers(candidate.address, {
-          minTimestampMs: Math.max(0, cursorMs - SCAN_OVERLAP_MS),
+          minTimestampMs: candidate.cursorMs === null ? earliestMs : Math.max(earliestMs, candidate.cursorMs - SCAN_OVERLAP_MS),
           limit: 100,
         })
         let maxSeen = candidate.cursorMs
         for (const transfer of transfers) {
+          if (transfer.blockTimestamp < earliestMs) continue
           if (transfer.decimals !== 6) continue
           if (this.tron.usdtContract && transfer.contractAddress && transfer.contractAddress !== this.tron.usdtContract) continue
           await this.wallet.recordDepositObservation({
