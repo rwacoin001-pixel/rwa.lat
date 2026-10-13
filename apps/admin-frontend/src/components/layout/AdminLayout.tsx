@@ -103,6 +103,7 @@ const NAV_SECTIONS: NavSection[] = [
     icon: ShieldCheck,
     items: [
       { name: '用户管理', href: '/users', icon: Users },
+      { name: '用户活跃', href: '/activity', icon: Activity },
       { name: 'KYC 审核', href: '/kyc', icon: ShieldCheck },
       { name: '适当性评估', href: '/eligibility', icon: ClipboardCheck },
     ],

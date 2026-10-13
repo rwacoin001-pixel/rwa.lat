@@ -1,6 +1,7 @@
 import nextWorker from '../../.open-next/worker.js'
 import {proxyPublicPrediction} from '../../lib/prediction-public-proxy'
 import {proxyPredictionImage} from '../../lib/prediction-image-delivery'
+import {withClientHeaders} from '../../lib/edge-client-headers.mjs'
 
 // Public discovery bypasses the Next runtime entirely, keeping Worker CPU small.
 export default {
@@ -21,7 +22,10 @@ export default {
         return proxyPredictionImage(request,{cache,waitUntil:ctx?.waitUntil?.bind(ctx)})
       }
     }
+    // /v1 is proxied to the API from this Worker, so the API would otherwise see the Worker as the visitor.
+    if(path.startsWith('/v1/'))return nextWorker.fetch(withClientHeaders(request),env,ctx)
     return nextWorker.fetch(request,env,ctx)
   },
 }
+
 export {DOQueueHandler,DOShardedTagCache,BucketCachePurge} from '../../.open-next/worker.js'
