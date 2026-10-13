@@ -325,6 +325,13 @@ export class AdminCoreOpsController {
     return this.core.get(adminId(request), '/settlements', query)
   }
 
+  @Get('console/funds')
+  @RequireAdminPermissions('ledger.reconciliation.manage')
+  @ApiOperation({ summary: 'Funds overview: user liabilities, flows, pending queues, hot wallet, daily series (read-only)' })
+  consoleFunds(@Req() request: AdminRequest, @Query() query: QueryMap) {
+    return this.core.get(adminId(request), '/funds/summary', query)
+  }
+
   @Get('console/assets')
   @RequireAdminPermissions('core.console.view')
   @ApiOperation({ summary: 'RWA catalog browse (core admin/assets)' })

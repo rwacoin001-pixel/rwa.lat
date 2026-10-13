@@ -171,6 +171,35 @@ export class TronClientService {
     return number
   }
 
+  /** TRC-20 balance (atomic units) via a read-only constant call; no transaction is created. */
+  async getTrc20Balance(address: string): Promise<bigint> {
+    const body = await this.request<{ constant_result?: string[]; result?: { result?: boolean; message?: string } }>(
+      '/wallet/triggerconstantcontract',
+      {
+        method: 'POST',
+        body: {
+          owner_address: address,
+          contract_address: this.usdtContract,
+          function_selector: 'balanceOf(address)',
+          parameter: tronAddressToAbiWord(address),
+          visible: true,
+        },
+      },
+    )
+    const word = body?.constant_result?.[0]
+    if (typeof word !== 'string' || !/^[0-9a-fA-F]{1,64}$/.test(word)) {
+      throw new Error('TRON node returned an invalid TRC-20 balance')
+    }
+    return BigInt(`0x${word}`)
+  }
+
+  /** Native TRX balance in sun (pays transfer energy/bandwidth). An unactivated account is 0. */
+  async getTrxBalance(address: string): Promise<bigint> {
+    const body = await this.request<{ balance?: number }>('/wallet/getaccount', { method: 'POST', body: { address, visible: true } })
+    const balance = body?.balance
+    return typeof balance === 'number' && Number.isSafeInteger(balance) && balance >= 0 ? BigInt(balance) : 0n
+  }
+
   async getTransactionInfo(transactionId: string): Promise<TronTransactionInfo | null> {
     const body = await this.request<{ blockNumber?: number; blockTimeStamp?: number; receipt?: { result?: string } }>(
       '/wallet/gettransactioninfobyid',

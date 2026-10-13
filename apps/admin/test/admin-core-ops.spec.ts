@@ -60,3 +60,16 @@ describe('Admin core operations upstream errors', () => {
     expect(() => guard.canActivate(context)).toThrow(HttpException)
   })
 })
+
+describe('Admin funds overview route', () => {
+  it('requires ledger.reconciliation.manage and forwards to the core funds summary', async () => {
+    const reflector = new Reflector()
+    const required = reflector.get<string[]>('admin:required-permissions', AdminCoreOpsController.prototype.consoleFunds)
+    expect(required).toEqual(['ledger.reconciliation.manage'])
+    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify({ balances: {} }), { status: 200 }))
+    global.fetch = fetchMock
+    const controller = new AdminCoreOpsController(service())
+    await controller.consoleFunds({ admin: { id: '00000000-0000-4000-8000-000000000001' } } as never, { days: '7' })
+    expect(String(fetchMock.mock.calls[0][0])).toBe('http://core.test/v1/admin/funds/summary?days=7')
+  })
+})
