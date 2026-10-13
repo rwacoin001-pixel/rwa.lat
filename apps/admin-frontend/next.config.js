@@ -4,7 +4,9 @@ const repoRoot = path.resolve(__dirname, '../..');
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Browser uploads PUT straight to presigned object-storage URLs; list those origins here.
-const storageConnectSrc = (process.env.ADMIN_CSP_CONNECT_SRC ?? 'https://*.r2.cloudflarestorage.com https://*.amazonaws.com')
+// Production storage is Backblaze B2 (S3_ENDPOINT=https://s3.<region>.backblazeb2.com, path-style).
+// `||` so an empty ADMIN_CSP_CONNECT_SRC (as in .env.example) keeps the defaults instead of blocking uploads.
+const storageConnectSrc = (process.env.ADMIN_CSP_CONNECT_SRC?.trim() || 'https://*.backblazeb2.com https://*.r2.cloudflarestorage.com https://*.amazonaws.com')
   .split(/[\s,]+/)
   .filter(Boolean);
 
