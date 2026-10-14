@@ -5,6 +5,9 @@ import { DataSource } from 'typeorm'
 import { AiModelClient } from '../ai/ai-model.client'
 import { TranslateContentDto, TranslatePolymarketMarketsDto } from './polymarket-translation.dto'
 
+/** Characters per content-translation request; the client splits batches by the same budget. */
+export const CONTENT_BATCH_CHARS = 12_000
+
 type SourceMarket = { id: string; question: string; outcomes: string[]; rules: string }
 type Summary = { question: string; outcomes: string[] }
 type Translation = { id: string; question: string; outcomes: string[]; rules?: string }
@@ -98,6 +101,8 @@ export class PolymarketTranslationService {
   private readonly contentJobs = new Map<string,Promise<{locale:string;available:boolean;items:Array<{source:string;text:string}>}>>()
   async translateContent(dto: TranslateContentDto) {
     const texts=[...new Set(dto.texts)]
+    // One model call translates the whole batch; bound its size so the JSON reply fits the output budget.
+    if(texts.reduce((total,text)=>total+text.length,0)>CONTENT_BATCH_CHARS)throw new BadRequestException({code:'TRANSLATION_BATCH_TOO_LARGE',message:'Too much text in one translation request.'})
     const key=sourceHash([dto.locale,texts])
     const existing=this.contentJobs.get(key)
     if(existing)return existing

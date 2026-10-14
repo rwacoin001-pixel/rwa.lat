@@ -4,6 +4,7 @@
  *   · catalog products (`/v1/catalog/products`) — investable, UUID ids, quoted
  *   · RWA directory (`/v1/rwa/*`) — third-party market data, research only
  */
+import { onDeviceClock } from '../prediction-clock'
 import { request, type ApiResult } from './_http'
 import type { CatalogProductsDto, CatalogQuoteDto, OrdersDto, RwaAssetsDto, RwaDetailDto, RwaHistoryDto, RwaIssuerDto, RwaIssuersDto, WalletDto } from './contracts'
 import { USDT_DECIMALS } from '../money'
@@ -152,7 +153,8 @@ export async function getPolymarketMarket(id: string, period = 'max', fresh = fa
     const response = await fetch(`/api/polymarket/market/${encodeURIComponent(id)}?period=${encodeURIComponent(period)}${fresh ? '&refresh=1' : ''}`, { cache: 'no-store' })
     const data = await response.json().catch(() => null) as PolymarketMarket | null
     if (!response.ok || !data?.market) return { ok: false, error: { status: response.status, code: 'POLYMARKET_UNAVAILABLE', message: 'Market data is unavailable right now.' } }
-    return { ok: true, data }
+    const receivedAt = Date.now()
+    return { ok: true, data: { ...data, outcomeBooks: data.outcomeBooks?.map((book) => onDeviceClock(book, data.fetchedAt, receivedAt)) } }
   } catch {
     return { ok: false, error: { status: 0, code: 'NETWORK_ERROR', message: 'Market data is unavailable right now.' } }
   }

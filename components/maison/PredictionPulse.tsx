@@ -1,29 +1,60 @@
 'use client'
-import {useEffect,useRef,useState} from 'react'
-import {useQuery} from '@/lib/api/_query'
-import type {ApiResult} from '@/lib/api/_http'
+import {useEffect,useState} from 'react'
 import type {PolymarketFeedMarket} from '@/lib/api/polymarket-feed'
-import {useI18n} from '@/lib/i18n'
+import {useI18n,type AppLocale} from '@/lib/i18n'
 import {Figure} from './motion'
 import {maison as s} from './primitives'
-type Trade={id:string;side:number;amount:number;timestamp:number}
-async function readTrades(id:string):Promise<ApiResult<{items:Trade[]}>> {
-  try {const response=await fetch(`/api/polymarket/trades/${id}`);if(!response.ok)throw new Error();return {ok:true,data:await response.json()}}catch{return {ok:false,error:{status:502,code:'TRADES_UNAVAILABLE',message:'Trades unavailable'}}}
+
+/**
+ * Feed card for the current BTC 5-minute up/down round. The upstream title ("Bitcoin Up or Down - October 13,
+ * 2:00PM-2:05PM ET") does not translate well and a 24h volume is meaningless for a 5-minute round, so the card
+ * states what it is, the round in local time with a countdown, and the two sides with their probabilities.
+ */
+const COPY:Record<AppLocale,{title:string;round:string;left:string;ended:string;up:string;down:string}>={
+  en:{title:'Bitcoin · 5-minute up or down',round:'Round {a}–{b}',left:'{t} left',ended:'Round ended',up:'Up',down:'Down'},
+  'zh-CN':{title:'比特币 · 5 分钟涨跌',round:'本轮 {a}–{b}',left:'剩余 {t}',ended:'本轮已结束',up:'涨',down:'跌'},
+  hi:{title:'बिटकॉइन · 5 मिनट ऊपर या नीचे',round:'राउंड {a}–{b}',left:'{t} शेष',ended:'राउंड समाप्त',up:'ऊपर',down:'नीचे'},
+  es:{title:'Bitcoin · sube o baja en 5 minutos',round:'Ronda {a}–{b}',left:'Quedan {t}',ended:'Ronda terminada',up:'Sube',down:'Baja'},
+  ar:{title:'بيتكوين · صعود أو هبوط خلال 5 دقائق',round:'الجولة {a}–{b}',left:'متبقٍ {t}',ended:'انتهت الجولة',up:'صعود',down:'هبوط'},
+  fr:{title:'Bitcoin · hausse ou baisse en 5 minutes',round:'Manche {a}–{b}',left:'{t} restantes',ended:'Manche terminée',up:'Hausse',down:'Baisse'},
+  pt:{title:'Bitcoin · sobe ou desce em 5 minutos',round:'Rodada {a}–{b}',left:'Faltam {t}',ended:'Rodada encerrada',up:'Sobe',down:'Desce'},
 }
-export function PredictionPulse({item,content}:{item:PolymarketFeedMarket;content:(text:string)=>string}) {
-  const {locale}=useI18n(),ref=useRef<HTMLSpanElement>(null),[visible,setVisible]=useState(false)
-  useEffect(()=>{if(!ref.current)return;const observer=new IntersectionObserver(([entry])=>setVisible(entry.isIntersecting));observer.observe(ref.current);return()=>observer.disconnect()},[])
-  const query=useQuery(visible&&item.conditionId?`prediction:trades:${item.conditionId}`:null,()=>readTrades(item.conditionId!),{pollInterval:8000,staleTime:8000,loading:'silent'})
-  const p=item.outcomes[0]?.impliedProbability??0
-  const latest=query.data?.items[0]
-  const live=latest&&Date.now()/1000-latest.timestamp<60
-  return <span ref={ref} className={s.predPulse}>
-    <span className={s.predGauge} aria-label={`${content(item.outcomes[0]?.label??'Up')} ${(p*100).toFixed(0)}%`}>
-      <svg viewBox="0 0 100 60" aria-hidden="true"><path d="M8 52 A42 42 0 0 1 92 52" pathLength="100" fill="none" stroke="var(--m-line)" strokeWidth="7" strokeLinecap="round"/><path d="M8 52 A42 42 0 0 1 92 52" pathLength="100" fill="none" stroke="var(--m-accent)" strokeWidth="7" strokeLinecap="round" strokeDasharray={`${p*100} 100`}/></svg>
-      <b><Figure value={p} format={{style:'percent',maximumFractionDigits:0}} locale={locale}/></b><small>{content(item.outcomes[0]?.label??'Up')}</small>
-    </span>
-    <span className={s.predTradeColumns} aria-hidden="true">{[0,1].map(side=><span key={side} data-side={side}>{query.data?.items.filter(t=>t.side===side).slice(0,3).map((t,index)=><i key={t.id} style={{animationDelay:`${index*.5}s`}}>+{t.amount.toLocaleString(locale,{style:'currency',currency:'USD',maximumFractionDigits:2})}</i>)}</span>)}</span>
-    <span className={s.predBinaryOutcomes}>{item.outcomes.slice(0,2).map((outcome,index)=><span key={outcome.label} className={s.predBinaryOutcome} data-side={index}><b>{content(outcome.label)}</b></span>)}</span>
-    {latest&&<span className={s.predPulseTime}>{live&&<i/>}Polymarket · {new Date(latest.timestamp*1000).toLocaleTimeString(locale)}</span>}
+const fill=(template:string,values:Record<string,string>)=>template.replace(/\{(\w+)\}/g,(_,key:string)=>values[key]??'')
+const clock=(seconds:number)=>`${Math.floor(seconds/60)}:${String(seconds%60).padStart(2,'0')}`
+
+export function pulseTitle(locale:AppLocale) { return COPY[locale].title }
+
+/**
+ * Whole-percent shares for Up and Down, matched by label so an upstream reorder cannot swap the sides.
+ * Rounded together so they always add up to 100 (0.505 / 0.495 must not read 51% / 50%).
+ */
+export function pulseSides(item:Pick<PolymarketFeedMarket,'outcomes'>):[number,number] {
+  const find=(pattern:RegExp)=>item.outcomes.find(outcome=>pattern.test(outcome.label))?.impliedProbability
+  const up=find(/^up$/i)??item.outcomes[0]?.impliedProbability??0.5
+  const down=find(/^down$/i)??item.outcomes[1]?.impliedProbability??1-up
+  const total=up+down
+  const upPercent=total>0&&Number.isFinite(total)?Math.round(up/total*100):50
+  return [upPercent,100-upPercent]
+}
+
+export function PredictionPulse({item}:{item:PolymarketFeedMarket}) {
+  const {locale}=useI18n(),copy=COPY[locale]
+  const [now,setNow]=useState(()=>Date.now())
+  const end=Date.parse(item.window?.end??''),start=Date.parse(item.window?.start??'')
+  const timed=Number.isFinite(start)&&Number.isFinite(end)
+  useEffect(()=>{if(!timed)return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer)},[timed])
+  const left=timed?Math.max(0,Math.ceil((end-now)/1000)):null
+  const [up,down]=pulseSides(item)
+  const time=(ms:number)=>new Date(ms).toLocaleTimeString(locale,{hour:'2-digit',minute:'2-digit'})
+  return <span className={s.predPulse}>
+    {timed&&<span className={s.predPulseRound}>
+      <span>{fill(copy.round,{a:time(start),b:time(end)})}</span>
+      <b className={s.num} data-ended={left===0||undefined}>{left?fill(copy.left,{t:clock(left)}):copy.ended}</b>
+    </span>}
+    <span className={s.predPulseSides}>{[up,down].map((percent,side)=><span key={side} data-side={side}>
+      <small>{side?copy.down:copy.up}</small>
+      <b className={s.num}><Figure value={percent/100} format={{style:'percent',maximumFractionDigits:0}} locale={locale}/></b>
+    </span>)}</span>
+    <span className={s.predPulseSplit} aria-hidden="true"><i style={{width:`${up}%`}}/></span>
   </span>
 }

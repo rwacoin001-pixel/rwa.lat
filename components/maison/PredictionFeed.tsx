@@ -17,7 +17,7 @@ import { Figure } from './motion'
 import { fmtDate, fmtDateTime } from './format'
 import { Skeleton, StateBlock, maison as s } from './primitives'
 import {PredictionTranslationButton} from './PredictionTranslationButton'
-import {PredictionPulse} from './PredictionPulse'
+import { PredictionPulse, pulseTitle } from './PredictionPulse'
 import {openPredictionItems} from '@/lib/prediction-lifecycle'
 import {usePredictionExpiryClock} from '@/lib/use-prediction-expiry-clock'
 
@@ -43,7 +43,8 @@ export function PredictionFeed() {
   const [retry, setRetry] = useState(0)
   const now=usePredictionExpiryClock(items)
   const visibleItems=openPredictionItems(items,now)
-  const sources=visibleItems.flatMap(item=>[item.question,...item.outcomes.map(o=>o.label)])
+  // The BTC 5-minute round has its own localized title; translating its per-round English title would spend a model call every 5 minutes.
+  const sources=visibleItems.filter(item=>!item.window).flatMap(item=>[item.question,...item.outcomes.map(o=>o.label)])
   const translation=useContentTranslation(sources)
   const [original,setOriginal]=useState(false)
   const content=(text:string)=>original?text:translation(text)
@@ -132,24 +133,24 @@ export function PredictionFeed() {
       const remaining = Math.max(0, (item.optionCount ?? item.outcomes.length) - shown.length)
       return <article key={item.id} className={s.predFeedArticle}><button type="button" data-layout={layout} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
         <span className={s.predCardHead}>
-          <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
+          <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && layout !== 'pulse' && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
           {item.image && <PredictionImage className={s.predThumb} src={item.image} name={item.question} />}
         </span>
-        <b className={s.predQuestion}>{content(item.question)}</b>
+        <b className={s.predQuestion}>{layout === 'pulse' ? pulseTitle(locale) : content(item.question)}</b>
         {layout === 'multi' && <span className={s.predOptions}>{shown.map((outcome, index) => <span key={`${index}:${outcome.label}`} className={s.predOption}>
           <i data-index={index} />
           <span>{content(outcome.label)}</span>
           <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
           <span className={s.predMiniBar}><i data-index={index} style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></span>
         </span>)}</span>}
-        {layout === 'pulse' && <PredictionPulse item={item} content={content}/>}
+        {layout === 'pulse' && <PredictionPulse item={item}/>}
         {(layout === 'binary' || layout === 'matchup') && <span className={s.predBinaryOutcomes}>{shown.map((outcome, index) => <span key={`${index}:${outcome.label}`} className={s.predBinaryOutcome} data-side={index}>
           <b><Figure value={outcome.impliedProbability} format={{ style: 'percent', maximumFractionDigits: 0 }} locale={locale} /></b>
           <span>{content(outcome.label)}</span>
           <i><span style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></i>
         </span>)}</span>}
-        <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>
-      </button><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={[item.question,...item.outcomes.map(o=>o.label)]}/></article>
+        {layout !== 'pulse' && <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>}
+      </button>{layout !== 'pulse' && <PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={[item.question,...item.outcomes.map(o=>o.label)]}/>}</article>
     })}</div>}
     {loadedOnce && !loading && !error && !visibleItems.length && nextOffset === null ? <StateBlock title={copy.common.empty} /> : null}
     <div ref={sentinel} className={s.predFeedSentinel} aria-hidden="true" />

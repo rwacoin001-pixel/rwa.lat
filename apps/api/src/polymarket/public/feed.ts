@@ -51,12 +51,16 @@ export async function GET(request: Request) {
       if(clean.length){const slot=Math.floor(now/3_600_000)%clean.length;featured.push(clean[slot]);if(clean.length>1)featured.push(clean[(slot+1)%clean.length])}
     }
     let pulse:GammaEventData|null=null
+    const pulseStart=Math.floor(Date.now()/300000)*300
     if(!search&&sort==='volume24hr'&&rawOffset===0&&(category==='all'||category==='crypto')) {
-      try {const slug=`btc-updown-5m-${Math.floor(Date.now()/300000)*300}`;const response=await publicFetch(`https://gamma-api.polymarket.com/events/slug/${slug}`,{next:{revalidate:8},signal:AbortSignal.timeout(5000)});if(response.ok)pulse=await response.json() as GammaEventData}catch{}
+      try {const slug=`btc-updown-5m-${pulseStart}`;const response=await publicFetch(`https://gamma-api.polymarket.com/events/slug/${slug}`,{next:{revalidate:8},signal:AbortSignal.timeout(5000)});if(response.ok)pulse=await response.json() as GammaEventData}catch{}
     }
     const upstreamRows = (rows as GammaEventData[]).filter(event => !filterMicro || !isMicro(event))
     const candidates=[featured[0],pulse,...featured.slice(1),...upstreamRows].filter((event):event is GammaEventData=>Boolean(event))
+    const round={start:new Date(pulseStart*1000).toISOString(),end:new Date((pulseStart+300)*1000).toISOString()}
     const items=polymarketDiscoveryItems(candidates,category,featured[0]?.id,Date.now())
+      // The feed hides items whose endAt has passed, so the round card disappears when its 5 minutes are up.
+      .map(item=>pulse&&item.id===`event-${pulse.id}`?{...item,window:round,endAt:round.end}:item)
     return Response.json({
       source: 'polymarket-gamma' as const,
       fetchedAt: new Date().toISOString(),

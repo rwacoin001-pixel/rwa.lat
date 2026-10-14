@@ -5,6 +5,7 @@ import type {ApiResult} from './api/_http'
 import type {PredictionBook} from './prediction-quote'
 import {evaluatePredictionDirections,type PredictionAvailabilityMarket} from './prediction-availability'
 import {isPredictionAcceptingOrders} from './prediction-lifecycle'
+import {onDeviceClock} from './prediction-clock'
 
 type CachedBook={book:PredictionBook|null;receivedAt:number}
 const books=new Map<string,CachedBook>()
@@ -22,7 +23,11 @@ const startBatches=()=>{
       let values:Record<string,PredictionBook|null>={}
       try {
         const response=await fetch(`/api/polymarket/books?tokens=${tokens.join(',')}`,{cache:'no-store',signal:AbortSignal.timeout(15000)})
-        if(response.ok)values=((await response.json()) as {books:Record<string,PredictionBook|null>}).books??{}
+        if(response.ok){
+          const body=(await response.json()) as {books?:Record<string,PredictionBook|null>;serverTime?:string}
+          const receivedAt=Date.now()
+          for(const [token,book] of Object.entries(body.books??{}))values[token]=onDeviceClock(book,body.serverTime,receivedAt)
+        }
       }catch{/* Retain rows when public quotes fail. */}
       finally {
         for(const token of tokens){const book=values[token]??null;books.set(token,{book,receivedAt:Date.now()});pending.get(token)?.resolve(book);pending.delete(token)}
