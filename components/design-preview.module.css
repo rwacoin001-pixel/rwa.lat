@@ -191,7 +191,7 @@
 .bottomNav { display: none; }
 
 .overlay { position: fixed; z-index: 40; inset: 0; display: flex; align-items: flex-end; justify-content: flex-end; padding: 24px; background: rgba(2,6,6,.58); backdrop-filter: blur(10px); animation: fadeIn .2s ease both; }
-.assistantPanel, .detailPanel { width: min(440px, 100%); padding: 26px; border: 1px solid rgba(222,239,233,.18); border-radius: 19px; background: linear-gradient(145deg, #182523, #0b1212); box-shadow: 0 28px 90px rgba(0,0,0,.45); animation: panelIn .28s cubic-bezier(.2,.8,.2,1) both; }
+.assistantPanel, .detailPanel { width: min(440px, 100%); padding: 26px; border: 1px solid rgba(222,239,233,.18); border-radius: 19px; background: linear-gradient(145deg, #182523, #0b1212); box-shadow: 0 28px 90px rgba(0,0,0,.45); animation: panelIn .28s var(--ease-house) both; }
 .detailPanelWide { width: min(620px, 100%); }
 .panelTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 18px; }
 .panelKicker { display: inline-flex; align-items: center; gap: 6px; color: var(--mint); }

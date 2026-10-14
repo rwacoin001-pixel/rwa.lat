@@ -554,6 +554,8 @@
 /* ── Page enter · a short rise on the spring instead of a blur-in ─────────────────────── */
 .rwa-screen-transition.rwa-enter { animation: ios-enter .5s var(--spring) backwards; }
 .rwa-screen-transition.rwa-return { animation: ios-return .16s ease-out backwards; }
+.rwa-screen-transition.rwa-tab { animation: ios-tab .18s ease-out backwards; }
+@keyframes ios-tab { from { opacity: 0; } }
 .rwa-screen-transition.rwa-return [data-maison-page] { animation: none; }
 @keyframes ios-return { from { opacity: .85; } }
 @keyframes ios-enter { from { opacity: 0; transform: translateY(10px) scale(.994); } }
@@ -561,7 +563,7 @@
 @media (prefers-reduced-motion: reduce) {
   .rwa-mobile .rwa-topbar__center > span,
   .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__icon,
-  .rwa-screen-transition.rwa-enter, .rwa-screen-transition.rwa-return { animation: none; }
+  .rwa-screen-transition.rwa-enter, .rwa-screen-transition.rwa-return, .rwa-screen-transition.rwa-tab { animation: none; }
   .rwa-mobile .rwa-topbar .rwa-topbar__account .rwa-topbar__count { animation: none; }
   .rwa-mobile:not([data-screen='home']) .rwa-topbar__center > span:not(.rwa-steps) { transition: none; }
   .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__pill,

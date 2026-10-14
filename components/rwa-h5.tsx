@@ -2,7 +2,7 @@
 import AppLoading from '@/components/app-loading'
 import { aiPageContext, type AiPageContext } from '@/lib/ai-page-context'
 import { captureWalletBackdrop } from './wallet-page-backdrop'
-import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
+import { markTabNavigation, nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
 
 import dynamic from 'next/dynamic'
 
@@ -291,6 +291,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
   const select = (id: PrimaryScreen) => {
     if (id === screen) { window.scrollTo({ top: 0, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); return }
     navigator.vibrate?.(6)
+    markTabNavigation()
     setScreen(id)
   }
   return (
@@ -315,7 +316,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
           <Plus size={17} strokeWidth={1.9} />
         </button>
       </>}
-      <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => setScreen('ai')}>
+      <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => { if (screen !== 'ai') markTabNavigation(); setScreen('ai') }}>
         <AiPearl size={46} inset={.48} state="idle" className="ai-orb__orb" />
       </button>
     </nav>

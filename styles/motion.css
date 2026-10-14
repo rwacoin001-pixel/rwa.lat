@@ -1,4 +1,4 @@
-:root { --dur-micro: 120ms; --dur-short: 200ms; --dur-base: 240ms; --dur-long: 400ms; --dur-reveal: 600ms; --dur-pulse: 1200ms; --ease-std: cubic-bezier(.2,0,0,1); --ease-emph: cubic-bezier(.05,.7,.1,1); --ease-exit: cubic-bezier(.3,0,.8,.15); }
+:root { --dur-micro: 120ms; --dur-short: 200ms; --dur-base: 240ms; --dur-long: 400ms; --dur-reveal: 600ms; --dur-pulse: 1200ms; --ease-std: cubic-bezier(.2,0,0,1); --ease-house: cubic-bezier(.22,.8,.18,1); --ease-emph: cubic-bezier(.05,.7,.1,1); --ease-exit: cubic-bezier(.3,0,.8,.15); }
 @keyframes rwa-breathe { 50% { opacity: .5; } }
 @keyframes rwa-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .rwa-enter { animation: rwa-enter var(--dur-base) var(--ease-std) backwards; }
