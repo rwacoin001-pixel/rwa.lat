@@ -13,6 +13,17 @@ export function fmtDateTime(iso: string | null | undefined, locale: string, opti
   return Number.isNaN(date.getTime()) ? '—' : new Intl.DateTimeFormat(locale, options).format(date)
 }
 
+/** A moment as people say it: today shows the time only, earlier days add the date, other years add the year.
+ *  A bare "06:18" on a price last set weeks ago reads as "today", which is wrong. */
+export function fmtWhen(iso: string | null | undefined, locale: string, now = new Date()) {
+  if (!iso) return '—'
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return '—'
+  const sameDay = date.toDateString() === now.toDateString()
+  const sameYear = date.getFullYear() === now.getFullYear()
+  return new Intl.DateTimeFormat(locale, sameDay ? { timeStyle: 'short' } : { month: 'short', day: 'numeric', ...(sameYear ? {} : { year: 'numeric' }), hour: '2-digit', minute: '2-digit' }).format(date)
+}
+
 export function fmtDate(iso: string | null | undefined, locale: string) {
   return fmtDateTime(iso, locale, { month: 'short', day: 'numeric', year: 'numeric' })
 }
