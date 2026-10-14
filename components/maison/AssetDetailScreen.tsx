@@ -6,7 +6,6 @@ import Image from 'next/image'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
-import { assetCover } from '@/lib/home-asset-media'
 import { assetClassLabel, networkLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
@@ -72,7 +71,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
   const klass = assetClassLabel(product.assetClassId, locale)
   const expired = quote.data ? quote.data.stale || Date.parse(quote.data.validUntil) <= now : false
   const invest = () => openPath(`/orders/review?product=${encodeURIComponent(product.id)}`)
-  const cover = product.imageUrl ? apiUrl(product.imageUrl) : assetCover(product.externalRef) ?? coverFor(product.assetClassId, product.displayName)
+  const cover = product.imageUrl ? apiUrl(product.imageUrl) : coverFor(product.assetClassId, product.displayName)
   const keyStats = [
     { label: d.min, value: fmtAtomic(product.minOrderAtomicAmount, product.assetDecimals, product.assetCode) },
     { label: d.max, value: fmtAtomic(product.maxOrderAtomicAmount, product.assetDecimals, product.assetCode, 0) },
@@ -176,8 +175,7 @@ function ResearchDetail({ slug }: { slug: string }) {
   const points = real.map((point) => ({ time: Date.parse(point.date) / 1000, value: Number(point.marketCapUsd) }))
   const symbol = asset.symbol && asset.symbol !== '-' ? asset.symbol : null
   const score = asset.score && typeof asset.score === 'object' ? asset.score.overallScore : null
-  // Same picture as the list row and the home feature, when the asset has one.
-  const cover = assetCover(slug) ?? coverFor(asset.assetClass, asset.name)
+  const cover = coverFor(asset.assetClass, asset.name)
   const moves = [
     { label: d.change24h, value: <Delta value={asset.change24hPct} /> },
     { label: d.change7d, value: <Delta value={asset.change7dPct} /> },
