@@ -6,6 +6,8 @@ export type PortfolioCopy = {
   marketValue: string; cost: string; pnl: string; yield: string; available: string; locked: string; pending: string
   tabs: [string, string, string, string]
   allocation: string; allocationNote: string; cash: string
+  /** First-run guide shown instead of a wall of zeros when the account holds nothing and has no cash. */
+  start: { title: string; steps: [string, string, string]; deposit: string }
   positions: string; positionsEmpty: string; positionsEmptyBody: string; browse: string; qty: string; weight: string; value: string
   history: string; historyNote: string; historyEmpty: string; historyEmptyBody: string
   income: string; incomeNote: string; incomeEmpty: string; incomeEmptyBody: string; period: string
@@ -23,6 +25,7 @@ const en: PortfolioCopy = {
   marketValue: 'Market value', cost: 'Cost basis', pnl: 'Unrealised P&L', yield: 'Cumulative yield', available: 'Available', locked: 'Locked', pending: 'Pending',
   tabs: ['Overview', 'Positions', 'Income', 'Orders'],
   allocation: 'Allocation', allocationNote: 'By market value', cash: 'Cash',
+  start: { title: 'Make your first investment', steps: ['Add USDT', 'Pick a listed product', 'Your holdings and income appear here once you invest'], deposit: 'Add funds' },
   positions: 'Positions', positionsEmpty: 'No positions yet', positionsEmptyBody: 'Invest in a listed product and it will appear here.', browse: 'Browse markets', qty: 'Qty', weight: 'Weight', value: 'Value',
   history: 'Value history', historyNote: 'Position snapshots', historyEmpty: 'Not enough history yet', historyEmptyBody: 'The chart appears once there are two valuation snapshots.',
   income: 'Income', incomeNote: 'Credited distributions', incomeEmpty: 'No income credited yet', incomeEmptyBody: 'Distributions show here once they are credited to your account.', period: 'Period',
@@ -40,6 +43,7 @@ const zh: PortfolioCopy = {
   marketValue: '持仓市值', cost: '持仓成本', pnl: '未实现盈亏', yield: '累计收益', available: '可用', locked: '锁定', pending: '处理中',
   tabs: ['总览', '持仓', '收益', '订单'],
   allocation: '资产配置', allocationNote: '按市值', cash: '现金',
+  start: { title: '开始第一笔投资', steps: ['充值 USDT', '挑选在售产品', '申购后，持仓和收益会显示在这里'], deposit: '去充值' },
   positions: '持仓', positionsEmpty: '暂无持仓', positionsEmptyBody: '申购在售产品后，持仓会显示在这里。', browse: '浏览市场', qty: '数量', weight: '占比', value: '市值',
   history: '价值走势', historyNote: '持仓快照', historyEmpty: '历史数据不足', historyEmptyBody: '至少有两次估值快照后才显示走势。',
   income: '收益', incomeNote: '已入账分配', incomeEmpty: '暂无已入账收益', incomeEmptyBody: '收益分配入账后会显示在这里。', period: '计息期',
@@ -57,6 +61,7 @@ const hi: PortfolioCopy = {
   marketValue: 'बाज़ार मूल्य', cost: 'लागत आधार', pnl: 'अप्राप्त लाभ/हानि', yield: 'संचयी आय', available: 'उपलब्ध', locked: 'लॉक', pending: 'लंबित',
   tabs: ['सारांश', 'पोज़िशन', 'आय', 'ऑर्डर'],
   allocation: 'आवंटन', allocationNote: 'बाज़ार मूल्य के अनुसार', cash: 'नकद',
+  start: { title: 'अपना पहला निवेश करें', steps: ['USDT जोड़ें', 'उपलब्ध प्रोडक्ट चुनें', 'निवेश के बाद आपकी पोज़िशन और आय यहाँ दिखेगी'], deposit: 'फंड जोड़ें' },
   positions: 'पोज़िशन', positionsEmpty: 'अभी कोई पोज़िशन नहीं', positionsEmptyBody: 'किसी सूचीबद्ध उत्पाद में निवेश करें, वह यहाँ दिखेगा।', browse: 'बाज़ार देखें', qty: 'मात्रा', weight: 'भार', value: 'मूल्य',
   history: 'मूल्य इतिहास', historyNote: 'पोज़िशन स्नैपशॉट', historyEmpty: 'अभी पर्याप्त इतिहास नहीं', historyEmptyBody: 'दो मूल्यांकन स्नैपशॉट के बाद चार्ट दिखेगा।',
   income: 'आय', incomeNote: 'जमा वितरण', incomeEmpty: 'अभी कोई आय जमा नहीं', incomeEmptyBody: 'वितरण खाते में जमा होने पर यहाँ दिखेंगे।', period: 'अवधि',
@@ -74,6 +79,7 @@ const es: PortfolioCopy = {
   marketValue: 'Valor de mercado', cost: 'Coste base', pnl: 'P&G no realizado', yield: 'Rendimiento acumulado', available: 'Disponible', locked: 'Bloqueado', pending: 'Pendiente',
   tabs: ['Resumen', 'Posiciones', 'Ingresos', 'Órdenes'],
   allocation: 'Distribución', allocationNote: 'Por valor de mercado', cash: 'Efectivo',
+  start: { title: 'Haz tu primera inversión', steps: ['Añade USDT', 'Elige un producto disponible', 'Tus posiciones e ingresos aparecerán aquí al invertir'], deposit: 'Añadir fondos' },
   positions: 'Posiciones', positionsEmpty: 'Aún no hay posiciones', positionsEmptyBody: 'Invierte en un producto listado y aparecerá aquí.', browse: 'Ver mercados', qty: 'Cant.', weight: 'Peso', value: 'Valor',
   history: 'Histórico de valor', historyNote: 'Instantáneas de posición', historyEmpty: 'Aún no hay suficiente histórico', historyEmptyBody: 'El gráfico aparece cuando hay dos instantáneas de valoración.',
   income: 'Ingresos', incomeNote: 'Distribuciones abonadas', incomeEmpty: 'Aún no hay ingresos abonados', incomeEmptyBody: 'Las distribuciones aparecen aquí cuando se abonan en tu cuenta.', period: 'Periodo',
@@ -91,6 +97,7 @@ const ar: PortfolioCopy = {
   marketValue: 'القيمة السوقية', cost: 'أساس التكلفة', pnl: 'ربح/خسارة غير محققة', yield: 'العائد التراكمي', available: 'متاح', locked: 'محجوز', pending: 'قيد المعالجة',
   tabs: ['نظرة عامة', 'المراكز', 'الدخل', 'الأوامر'],
   allocation: 'التوزيع', allocationNote: 'حسب القيمة السوقية', cash: 'نقد',
+  start: { title: 'ابدأ استثمارك الأول', steps: ['أضف USDT', 'اختر منتجًا متاحًا', 'ستظهر مراكزك وعوائدك هنا بعد الاستثمار'], deposit: 'إضافة أموال' },
   positions: 'المراكز', positionsEmpty: 'لا توجد مراكز بعد', positionsEmptyBody: 'استثمر في منتج مدرج وسيظهر هنا.', browse: 'تصفح الأسواق', qty: 'الكمية', weight: 'الوزن', value: 'القيمة',
   history: 'سجل القيمة', historyNote: 'لقطات المراكز', historyEmpty: 'لا يوجد سجل كافٍ بعد', historyEmptyBody: 'يظهر الرسم بعد لقطتي تقييم على الأقل.',
   income: 'الدخل', incomeNote: 'التوزيعات المضافة', incomeEmpty: 'لم يُضف أي دخل بعد', incomeEmptyBody: 'تظهر التوزيعات هنا عند إضافتها إلى حسابك.', period: 'الفترة',
@@ -108,6 +115,7 @@ const fr: PortfolioCopy = {
   marketValue: 'Valeur de marché', cost: 'Prix de revient', pnl: 'P&L latent', yield: 'Rendement cumulé', available: 'Disponible', locked: 'Bloqué', pending: 'En attente',
   tabs: ['Aperçu', 'Positions', 'Revenus', 'Ordres'],
   allocation: 'Répartition', allocationNote: 'Par valeur de marché', cash: 'Liquidités',
+  start: { title: 'Faites votre premier investissement', steps: ['Ajoutez des USDT', 'Choisissez un produit disponible', 'Vos positions et revenus apparaîtront ici après votre investissement'], deposit: 'Ajouter des fonds' },
   positions: 'Positions', positionsEmpty: 'Aucune position', positionsEmptyBody: 'Investissez dans un produit listé pour le voir ici.', browse: 'Voir les marchés', qty: 'Qté', weight: 'Poids', value: 'Valeur',
   history: 'Historique de valeur', historyNote: 'Instantanés de position', historyEmpty: 'Historique insuffisant', historyEmptyBody: 'Le graphique apparaît après deux instantanés de valorisation.',
   income: 'Revenus', incomeNote: 'Distributions créditées', incomeEmpty: 'Aucun revenu crédité', incomeEmptyBody: 'Les distributions apparaissent ici une fois créditées sur votre compte.', period: 'Période',
@@ -125,6 +133,7 @@ const pt: PortfolioCopy = {
   marketValue: 'Valor de mercado', cost: 'Custo base', pnl: 'L/P não realizado', yield: 'Rendimento acumulado', available: 'Disponível', locked: 'Bloqueado', pending: 'Pendente',
   tabs: ['Visão geral', 'Posições', 'Rendimentos', 'Ordens'],
   allocation: 'Alocação', allocationNote: 'Por valor de mercado', cash: 'Caixa',
+  start: { title: 'Faça seu primeiro investimento', steps: ['Adicione USDT', 'Escolha um produto disponível', 'Suas posições e rendimentos aparecem aqui depois de investir'], deposit: 'Adicionar fundos' },
   positions: 'Posições', positionsEmpty: 'Ainda sem posições', positionsEmptyBody: 'Invista em um produto listado e ele aparecerá aqui.', browse: 'Ver mercados', qty: 'Qtd.', weight: 'Peso', value: 'Valor',
   history: 'Histórico de valor', historyNote: 'Snapshots de posição', historyEmpty: 'Histórico insuficiente', historyEmptyBody: 'O gráfico aparece após dois snapshots de avaliação.',
   income: 'Rendimentos', incomeNote: 'Distribuições creditadas', incomeEmpty: 'Nenhum rendimento creditado', incomeEmptyBody: 'As distribuições aparecem aqui quando creditadas na sua conta.', period: 'Período',
