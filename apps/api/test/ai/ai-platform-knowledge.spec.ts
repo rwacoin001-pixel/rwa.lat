@@ -34,6 +34,14 @@ describe('Live platform knowledge', () => {
     expect(await f.service.stillCurrent(before)).toBe(false)
     f.retire();expect(await f.service.stillCurrent(after)).toBe(false)
   })
+  it('labels order limits as USDT spend amounts instead of product-asset quantities',async()=>{
+    const gold={id:'9f4ec22f-b7e5-49c8-8626-dd007a464a53',name:'Tokenized Gold',symbol:'XAU',decimals:6,state:'published',minimumAtomic:'10000000',maximumAtomic:null,orderableQuote:true}
+    const service=new AiPlatformKnowledgeService({query:jest.fn(async(sql:string)=>sql.includes('FROM app.products p')?[gold]:[])} as any)
+    const body=JSON.parse((await service.retrieve('黄金最低多少','en')).find(s=>s.category==='platform-products')!.body)
+    expect(body.records[0]).toMatchObject({minimumOrder:'10 USDT',maximumOrder:null,symbol:'XAU'})
+    expect(body.records[0]).not.toHaveProperty('minimumAtomic')
+    expect(body.note).toContain('order amounts in USDT')
+  })
   it('uses parameterized public queries without account tables, drafts or credentials',async()=>{
     const f=fixture();await f.service.retrieve("' OR 1=1 -- 黄金",'en')
     for(const [sql] of f.db.query.mock.calls){

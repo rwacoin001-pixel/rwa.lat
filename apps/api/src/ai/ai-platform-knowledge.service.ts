@@ -4,6 +4,7 @@ import { DataSource } from 'typeorm'
 import { KnowledgeSource, knowledgeSearchPatterns } from './ai-knowledge.policy'
 import { PAGE_DIRECTORY, PLATFORM_GUIDES, GUIDE_LOCALE_TERMS } from './ai-platform-guide'
 import { predictionFeeConfig } from '../prediction/prediction-fees'
+import { SETTLEMENT_ASSET_CODE, SETTLEMENT_ASSET_DECIMALS } from '../financial/amounts'
 
 type Query = { kind: 'products' | 'baskets' | 'reference-assets' | 'predictions' | 'articles' | 'profile'; patterns: string[]; locale: string }
 export type LiveKnowledgeSource = KnowledgeSource & { liveQuery?: Query }
@@ -27,6 +28,13 @@ function localTitle(title: string, locale: string) {
   if (locale === 'zh-CN') return title
   const english = title.match(/^.*\p{Script=Han}[^A-Za-z]*\s(\S.*)$/u)?.[1]
   return english ?? title
+}
+/** USDT atomic amount → "10 USDT"; null when the product has no limit. */
+function settlementAmount(atomic: unknown): string | null {
+  if (typeof atomic !== 'string' || !/^\d+$/.test(atomic)) return null
+  const digits = atomic.padStart(SETTLEMENT_ASSET_DECIMALS + 1, '0')
+  const fraction = digits.slice(-SETTLEMENT_ASSET_DECIMALS).replace(/0+$/, '')
+  return `${BigInt(digits.slice(0, -SETTLEMENT_ASSET_DECIMALS))}${fraction ? `.${fraction}` : ''} ${SETTLEMENT_ASSET_CODE}`
 }
 function source(key: string, title: string, body: string, locale: string, url: string, query?: Query): LiveKnowledgeSource {
   const digest = createHash('sha256').update(body).digest('hex')
@@ -80,8 +88,10 @@ export class AiPlatformKnowledgeService {
         FROM app.products p LEFT JOIN LATERAL (SELECT * FROM app.price_quotes pq WHERE pq.product_id=p.id AND pq.asset_code=p.asset_code
         AND (p.quote_binding_json IS NULL OR pq.source = concat('automatic:defillama:binding:',p.quote_binding_json->>'bindingId')) ORDER BY valid_until DESC,id LIMIT 1) q ON true
         WHERE p.state IN ('published','suspended') ORDER BY CASE WHEN p.display_name ILIKE ANY($1::text[]) OR p.asset_code ILIKE ANY($1::text[]) THEN 0 ELSE 1 END,p.published_at DESC NULLS LAST,p.id LIMIT 64`, [patterns])
-      rows = rows.map(row => ({...row, url: `/asset/${encodeURIComponent(row.id)}`}))
-      note = 'Public catalog. Divide atomic amounts by 10^their decimals. orderableQuote is quote readiness, not eligibility, channel readiness or execution proof. Never infer an issuer/broker from a name. Suspended products cannot accept purchases. Bounded snapshot, not proof that unlisted products do not exist.'
+      // Order limits are USDT spend amounts (orders compare them with the USDT order amount), never quantities of
+      // the product asset; send them pre-scaled with their unit so the model cannot pair them with symbol/decimals.
+      rows = rows.map(({ minimumAtomic, maximumAtomic, ...row }) => ({...row, minimumOrder: settlementAmount(minimumAtomic), maximumOrder: settlementAmount(maximumAtomic), url: `/asset/${encodeURIComponent(row.id)}`}))
+      note = 'Public catalog. minimumOrder/maximumOrder are order amounts in USDT (null means no limit), not quantities of the product asset; symbol/decimals describe product units only. Divide quote atomic amounts by 10^quoteDecimals. orderableQuote is quote readiness, not eligibility, channel readiness or execution proof. Never infer an issuer/broker from a name. Suspended products cannot accept purchases. Bounded snapshot, not proof that unlisted products do not exist.'
     } else if (kind === 'baskets') {
       rows = await this.ds.query(`SELECT p.id,p.name,p.status,s.name AS strategy,left(s.description,3000) AS description,s.risk_level AS "riskLevel",s.minimum_subscription_usd::text AS "minimumSubscriptionUsd",s.minimum_redemption_usd::text AS "minimumRedemptionUsd",s.rebalance_frequency AS "rebalanceFrequency",p.nav_per_unit::text AS "navPerUnit",p.updated_at AS "asOf"
         FROM app.basket_portfolios p JOIN app.basket_strategies s ON s.id=p.strategy_id WHERE p.status IN ('pilot','active')
