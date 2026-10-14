@@ -5,6 +5,7 @@ import { useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
+import { assetCover } from '@/lib/home-asset-media'
 import { assetClassLabel } from '@/lib/asset-labels'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
@@ -123,7 +124,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
     <SectionHead index="02" title={b.holdings} action={<small className={`${s.muted} ${s.num}`}>{basket.holdings.length}</small>} />
     {basket.holdings.length ? <ul className={s.list}>{basket.holdings.map((holding) => <li key={holding.assetId}>
       <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(holding.slug)}`)}>
-        <Logo name={content(holding.name)} />
+        <Logo src={assetCover(holding.slug)} name={content(holding.name)} />
         <span className={s.rowMain}><b>{content(holding.name)}</b><small>{[assetClassLabel(holding.assetClass, locale), holding.targetWeightPct ? `${b.target} ${Number(holding.targetWeightPct).toFixed(2)}%` : null].filter(Boolean).join(' · ')}</small></span>
         <span className={s.rowFig}><b className={s.num}>{holding.actualWeightPct ? `${Number(holding.actualWeightPct).toFixed(2)}%` : '—'}</b><small className={s.muted}>{fmtUsd(holding.marketValueUsd, { compact: true, locale })}</small></span>
       </button>

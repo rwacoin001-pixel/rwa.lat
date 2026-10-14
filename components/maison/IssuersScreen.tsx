@@ -4,6 +4,7 @@ import { BadgeCheck, ExternalLink, Info, Search, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
+import { assetCover } from '@/lib/home-asset-media'
 import { assetClassLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { getIssuer, listIssuers } from '@/lib/api/markets'
@@ -111,7 +112,7 @@ export function IssuerProfileScreen({ slug }: { slug: string | null }) {
     {assets.length ? <>
       <ul className={s.list}>{assets.map((asset) => <li key={asset.slug}>
         <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(asset.slug)}`)}>
-          <Logo src={asset.logoUrl} name={asset.name} />
+          <Logo src={asset.logoUrl ?? assetCover(asset.slug)} name={asset.name} />
           <span className={s.rowMain}><b>{asset.name}</b><small>{[asset.symbol && asset.symbol !== '-' ? asset.symbol : null, assetClassLabel(asset.assetClass, locale)].filter(Boolean).join(' · ')}</small></span>
           <span className={s.rowFig}><b className={s.num}>{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</b><small><Delta value={asset.change24hPct} /></small></span>
         </button>

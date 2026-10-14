@@ -5,6 +5,7 @@ import { ArrowUpRight, Clock3, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
+import { assetCover } from '@/lib/home-asset-media'
 import { assetClassLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { isListed, listBaskets, listPairs, listProducts, listRwaAssets } from '@/lib/api/markets'
@@ -84,7 +85,7 @@ export function SearchScreen({ query }: { query: string }) {
     {investable.length > 0 && <Group title={t.investable} count={investable.length}>
       {investable.map((product) => <li key={product.id}>
         <button type="button" className={s.row} onClick={() => go(`/asset/${encodeURIComponent(product.externalRef ?? product.id)}`)}>
-          <Logo name={product.displayName} />
+          <Logo src={assetCover(product.externalRef)} name={product.displayName} />
           <span className={s.rowMain}><b>{product.displayName}</b><small>{assetClassLabel(product.assetClassId, locale)}</small></span>
           <span className={s.rowFig}><small className={s.muted}>{fill(copy.markets.from, { v: fmtUsdt(product.minOrderAtomicAmount) })}</small><ArrowUpRight size={15} className={s.muted} /></span>
         </button>
@@ -96,7 +97,7 @@ export function SearchScreen({ query }: { query: string }) {
       : directory.error && !directory.data ? <StateBlock tone="error" title={t.assetError} body={directory.error.message} retry={directory.refetch} retryLabel={copy.common.retry} />
       : assets.length ? <ul className={s.list}>{assets.map((asset) => <li key={asset.slug}>
         <button type="button" className={s.row} onClick={() => go(`/asset/${encodeURIComponent(asset.slug)}`)}>
-          <Logo src={asset.logoUrl} name={asset.name} />
+          <Logo src={asset.logoUrl ?? assetCover(asset.slug)} name={asset.name} />
           <span className={s.rowMain}><b>{asset.name}</b><small>{[asset.symbol && asset.symbol !== '-' ? asset.symbol : null, asset.issuer?.name].filter(Boolean).join(' · ')}</small></span>
           <span className={s.rowFig}><b className={s.num}>{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</b><small><Delta value={asset.change24hPct} /></small></span>
         </button>
@@ -108,7 +109,7 @@ export function SearchScreen({ query }: { query: string }) {
         const base = pair.symbol.replace(new RegExp(`-${pair.quoteAssetCode}$`), '')
         return <li key={pair.id}>
           <button type="button" className={s.row} onClick={() => go(`/trade/${encodeURIComponent(pair.symbol)}`)}>
-            <Logo name={base} />
+            <Logo src={assetCover(base.toLowerCase())} name={base} />
             <span className={s.rowMain}><b className={s.num}>{base} / {pair.quoteAssetCode}</b><small>{pair.state === 'active' ? copy.markets.active : copy.markets.paused}</small></span>
             <span className={s.rowFig}><b className={s.num}>{pair.lastPrice == null ? '—' : pair.lastPrice.toLocaleString('en-US', { maximumFractionDigits: 6 })}</b></span>
           </button>
