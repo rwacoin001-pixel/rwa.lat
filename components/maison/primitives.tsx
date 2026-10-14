@@ -64,27 +64,9 @@ export function DeltaPill({ value }: { value: string | null | undefined }) {
   return <span className={`${styles.pill} ${styles.num} ${toneOf(value)}`}>{fmtPct(value, { signed: true })}</span>
 }
 
-/** Two initials for Latin names ("Qiheng Digital Income" → QD), the first character for CJK names. */
-export function monogram(name: string) {
-  const text = name.trim()
-  if (!text) return '·'
-  if (/[㐀-鿿가-힯]/.test(text[0])) return text[0]
-  // Initials come from words that start with a letter ("iShares 0-3 Month" → IM, not I0).
-  const words = text.split(/[\s·\-_/.]+/).filter(word => /^\p{L}/u.test(word))
-  return ((words[0]?.[0] ?? '') + (words[1]?.[0] ?? '')).toUpperCase() || text[0].toUpperCase()
-}
-/** A stable tone per name, so neighbouring placeholders differ; brand tints only, never the gain/loss colours. */
-export function monogramTone(name: string) {
-  let hash = 0
-  for (const char of name) hash = (hash * 31 + (char.codePointAt(0) ?? 0)) >>> 0
-  return hash % 3
-}
-
 export function Logo({ src, name }: { src?: string | null; name: string }) {
-  // The tile always carries the monogram tint: artwork covers it, and artwork that fails to load falls back to
-  // the same monogram as an asset that never had any.
-  return <span className={styles.logo} data-mono={monogramTone(name)} aria-hidden="true">
-    {src ? <PredictionImage src={src} name={name} fallback={monogram(name)} /> : monogram(name)}
+  return <span className={styles.logo} aria-hidden="true">
+    <PredictionImage src={src} name={name} />
   </span>
 }
 

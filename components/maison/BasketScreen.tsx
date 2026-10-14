@@ -5,8 +5,6 @@ import { useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
-import { assetCover } from '@/lib/home-asset-media'
-import { assetClassLabel } from '@/lib/asset-labels'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import { acknowledgeDisclosure, disclosureFor, getBasket, getWallet, isOrderableId, listBasketDisclosures, redeemBasket, subscribeBasket, type BasketRedemption, type BasketSubscription } from '@/lib/api/markets'
@@ -17,8 +15,6 @@ import { backOr, openPath } from '@/lib/maison-nav'
 import { sharedBack } from '@/lib/market-shared-transition'
 import { Logo, MaisonPage, SectionHead, Skeleton, Sparkline, StateBlock, maison as s } from './primitives'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
-import { hengxuById } from '@/lib/hengxu-products'
-import { hengxuCopy, hengxuText } from '@/lib/hengxu-copy'
 
 const OPEN = new Set(['pilot', 'active'])
 const DEC_6 = /^\d+(\.\d{1,6})?$/
@@ -66,8 +62,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   const detail = useBasket(validId)
   const basket = detail.data
   const content=useContentTranslation(basket?[basket.name,basket.strategyName,...basket.holdings.map(h=>h.name)]:[])
-  const topSeries = basket?.strategySlug?.startsWith('hengxu-') ? hengxuById(basket.strategySlug.slice('hengxu-'.length)) : null
-  const topbar = <RwaTopbar screen="basket-detail" title={topSeries?.zh.name ?? basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => validId ? sharedBack(`basket:${validId}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
+  const topbar = <RwaTopbar screen="basket-detail" title={basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => validId ? sharedBack(`basket:${validId}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
   if (!validId) return <Missing page="basket" topbar={topbar} />
   if (!basket && !detail.error) return <MaisonPage page="basket" dock topbar={topbar}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
@@ -77,23 +72,15 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   const held = scaled(basket.userUnits, 8)
   const history = [...basket.navHistory].filter((point) => point.nav && Number.isFinite(Number(point.nav))).sort((a, c) => Date.parse(a.timestamp) - Date.parse(c.timestamp))
   const order = (side: 'subscribe' | 'redeem') => openPath(`/basket/${encodeURIComponent(basket.id)}/order${side === 'redeem' ? '?side=redeem' : ''}`)
-  // A 衡序 basket is named from the series catalog (the API holds only the romanised name); the risk badge speaks
-  // the reader's language; the strategy line appears only when it adds something beyond the title.
-  const series = basket.strategySlug?.startsWith('hengxu-') ? hengxuById(basket.strategySlug.slice('hengxu-'.length)) : null
-  const hx = hengxuCopy[locale]
-  const title = series ? series.zh.name : content(basket.name)
-  const strategyLine = series ? hengxuText(series, locale).subtitle : basket.strategyName && basket.strategyName !== basket.name ? content(basket.strategyName) : null
-  const risk = basket.riskLevel === 'low' || basket.riskLevel === 'medium' || basket.riskLevel === 'high' ? hx.liveRisk[basket.riskLevel] : null
-  const unsubscribed = !(Number(basket.aumUsd ?? 0) > 0)
 
   return <MaisonPage page="basket" dock topbar={topbar} cta={open}>
     <header className={s.hero}>
       <p className={s.kicker}>{b.kicker}</p>
-      <h1 className={s.titleL} data-shared={`basket:${basket.id}:title`} lang={series ? 'zh-CN' : undefined}>{title}</h1>
+      <h1 className={s.titleL} data-shared={`basket:${basket.id}:title`}>{content(basket.name)}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         <span className={s.badge} data-tone={open ? 'live' : 'warn'}>{statusLabel(b, basket.status)}</span>
-        {risk && <span className={s.badge}>{risk}</span>}
-        {strategyLine && <span>{strategyLine}</span>}
+        {basket.riskLevel && <span className={s.badge}>{b.risk} · {basket.riskLevel}</span>}
+        <span>{content(basket.strategyName)}</span>
       </p>
     </header>
 
@@ -101,11 +88,10 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
       <span className={s.kicker}>{b.nav}</span>
       <p className={`${s.bigFigure} ${s.num}`}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</p>
       <dl className={s.stats} style={{ marginTop: 18 }}>
-        {/* Facts the API does not send are left out rather than shown as a dash; an unsubscribed basket says so. */}
-        <div><dt>{b.aum}</dt><dd className={unsubscribed ? s.muted : s.num}>{unsubscribed ? hx.noSubscriptions : fmtUsd(basket.aumUsd, { compact: true, locale })}</dd></div>
-        {!unsubscribed && scaled(basket.totalUnits, 8) !== null && <div><dt>{b.units}</dt><dd className={s.num}>{fmtUnits(basket.totalUnits, locale)}</dd></div>}
-        {basket.minimumSubscriptionUsd && <div><dt>{b.min}</dt><dd className={s.num}>{fmtUsd(basket.minimumSubscriptionUsd, { locale })}</dd></div>}
-        {basket.cashBalanceUsd && Number(basket.cashBalanceUsd) > 0 && <div><dt>{b.cash}</dt><dd className={s.num}>{fmtUsd(basket.cashBalanceUsd, { compact: true, locale })}</dd></div>}
+        <div><dt>{b.aum}</dt><dd className={s.num}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</dd></div>
+        <div><dt>{b.units}</dt><dd className={s.num}>{fmtUnits(basket.totalUnits, locale)}</dd></div>
+        <div><dt>{b.min}</dt><dd className={s.num}>{fmtUsd(basket.minimumSubscriptionUsd ?? null, { locale })}</dd></div>
+        <div><dt>{b.cash}</dt><dd className={s.num}>{fmtUsd(basket.cashBalanceUsd, { compact: true, locale })}</dd></div>
       </dl>
       {held !== null && held > BigInt(0) && <dl className={s.summary} style={{ marginTop: 8 }}>
         <div data-strong="true"><dt>{b.yours}</dt><dd className={s.num}>{fmtUnits(basket.userUnits, locale)}</dd></div>
@@ -124,8 +110,8 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
     <SectionHead index="02" title={b.holdings} action={<small className={`${s.muted} ${s.num}`}>{basket.holdings.length}</small>} />
     {basket.holdings.length ? <ul className={s.list}>{basket.holdings.map((holding) => <li key={holding.assetId}>
       <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(holding.slug)}`)}>
-        <Logo src={assetCover(holding.slug)} name={content(holding.name)} />
-        <span className={s.rowMain}><b>{content(holding.name)}</b><small>{[assetClassLabel(holding.assetClass, locale), holding.targetWeightPct ? `${b.target} ${Number(holding.targetWeightPct).toFixed(2)}%` : null].filter(Boolean).join(' · ')}</small></span>
+        <Logo name={content(holding.name)} />
+        <span className={s.rowMain}><b>{content(holding.name)}</b><small>{[holding.assetClass?.replace(/_/g, ' '), holding.targetWeightPct ? `${b.target} ${Number(holding.targetWeightPct).toFixed(2)}%` : null].filter(Boolean).join(' · ')}</small></span>
         <span className={s.rowFig}><b className={s.num}>{holding.actualWeightPct ? `${Number(holding.actualWeightPct).toFixed(2)}%` : '—'}</b><small className={s.muted}>{fmtUsd(holding.marketValueUsd, { compact: true, locale })}</small></span>
       </button>
     </li>)}</ul> : <StateBlock title={b.noHoldings} />}

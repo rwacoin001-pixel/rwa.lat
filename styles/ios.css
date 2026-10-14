@@ -543,13 +543,17 @@
 /* Open (on /ai): a hairline ring in the theme accent. */
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb.is-active { border-color: var(--bar-accent); }
 .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .ai-orb:active { transform: none; }
+/* Warm theme: the dock shows the assistant's pearl as drawn. The metal-sphere layers above were made for the old
+   LiquidMetal shader; over the pearl they read as a grey film (faded core, screen blend, two glass highlights). */
+.rwa-mobile[data-theme='light'][data-screen] .ios-dock.liquid-dock .ai-orb { border-color: transparent; background: transparent; box-shadow: 0 10px 22px -10px rgba(56, 38, 20, .42), 0 2px 5px -2px rgba(56, 38, 20, .16); }
+.rwa-mobile[data-theme='light'][data-screen] .ios-dock.liquid-dock .ai-orb__orb { width: var(--orb) !important; height: var(--orb) !important; opacity: 1; mix-blend-mode: normal; filter: none; box-shadow: none; }
+.rwa-mobile[data-theme='light'][data-screen] .ios-dock.liquid-dock .ai-orb::before,
+.rwa-mobile[data-theme='light'][data-screen] .ios-dock.liquid-dock .ai-orb::after { content: none; }
 @keyframes ios-pop { from { scale: .78; } to { scale: 1; } }
 
 /* ── Page enter · a short rise on the spring instead of a blur-in ─────────────────────── */
 .rwa-screen-transition.rwa-enter { animation: ios-enter .5s var(--spring) backwards; }
 .rwa-screen-transition.rwa-return { animation: ios-return .16s ease-out backwards; }
-.rwa-screen-transition.rwa-tab { animation: ios-tab .18s ease-out backwards; }
-@keyframes ios-tab { from { opacity: 0; } }
 .rwa-screen-transition.rwa-return [data-maison-page] { animation: none; }
 @keyframes ios-return { from { opacity: .85; } }
 @keyframes ios-enter { from { opacity: 0; transform: translateY(10px) scale(.994); } }
@@ -557,7 +561,7 @@
 @media (prefers-reduced-motion: reduce) {
   .rwa-mobile .rwa-topbar__center > span,
   .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .dock-link.is-active .dock-link__icon,
-  .rwa-screen-transition.rwa-enter, .rwa-screen-transition.rwa-return, .rwa-screen-transition.rwa-tab { animation: none; }
+  .rwa-screen-transition.rwa-enter, .rwa-screen-transition.rwa-return { animation: none; }
   .rwa-mobile .rwa-topbar .rwa-topbar__account .rwa-topbar__count { animation: none; }
   .rwa-mobile:not([data-screen='home']) .rwa-topbar__center > span:not(.rwa-steps) { transition: none; }
   .rwa-mobile[data-theme][data-screen] .ios-dock.liquid-dock .liquid-dock__pill,

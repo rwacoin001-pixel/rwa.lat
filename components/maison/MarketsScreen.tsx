@@ -5,8 +5,6 @@ import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
-import { assetCover } from '@/lib/home-asset-media'
-import { assetClassLabel, networkLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
 import { isListed, listPairs, listProducts, listRwaAssets, type CatalogProduct, type RwaSort } from '@/lib/api/markets'
@@ -119,7 +117,7 @@ export function MarketsScreen({ query }: { query: string }) {
             <div className={s.tableHead} aria-hidden="true"><span># · {pro.name}</span><span>{pro.mcap} · {pro.change}</span></div>
             <ul className={s.list} ref={directoryList}>{directory.data.items.map((asset) => <li key={asset.slug}>
               <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(asset.slug)}`)}>
-                <span className={s.rowLead}><span className={`${s.rank} ${s.num}`}>{asset.rank ?? '—'}</span><Logo src={asset.logoUrl ?? assetCover(asset.slug)} name={asset.name} /></span>
+                <span className={s.rowLead}><span className={`${s.rank} ${s.num}`}>{asset.rank ?? '—'}</span><Logo src={asset.logoUrl} name={asset.name} /></span>
                 <span className={s.rowMain}><b>{asset.name}</b><small>{[asset.symbol && asset.symbol !== '-' ? asset.symbol : null, asset.issuer?.name].filter(Boolean).join(' · ')}</small></span>
                 <span className={s.rowFig}><b className={s.num}>{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</b><small><DeltaPill value={asset.change24hPct} /></small></span>
               </button>
@@ -155,11 +153,11 @@ function ProductTable({ products, featured }: { products: CatalogProduct[]; feat
       <div className={s.tableHead} style={{ marginTop: leads.length ? 12 : 0 }} aria-hidden="true"><span>{pro.name}</span><span>{copy.detail.min}</span></div>
       <ul className={s.list} ref={list}>{rest.map((product) => {
         const slug = product.externalRef ?? product.id
-        const klass = assetClassLabel(product.assetClassId, locale)
+        const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId
         return <li key={product.id}>
           <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(slug)}`)}>
-            <Logo src={product.imageUrl ? apiUrl(product.imageUrl) : (product.externalRef && PRODUCT_IMAGES[product.externalRef]) || assetCover(product.externalRef)} name={product.displayName} />
-            <span className={s.rowMain}><b>{content(product.displayName)}</b><small>{[klass, networkLabel(product.network)].filter(Boolean).join(' · ')}</small></span>
+            <Logo name={product.displayName} />
+            <span className={s.rowMain}><b>{content(product.displayName)}</b><small>{[klass, product.network].filter(Boolean).join(' · ')}</small></span>
             <span className={s.rowFig}><b className={s.num}>{fmtUsdt(product.minOrderAtomicAmount)}</b><small className={s.up}>{copy.detail.investable}</small></span>
           </button>
         </li>
@@ -181,14 +179,12 @@ function ProductCard({ product, tone }: { product: CatalogProduct; tone?: 'lacqu
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const slug = product.externalRef ?? product.id
-  const klass = assetClassLabel(product.assetClassId, locale)
-  // Issuer artwork first, then the project's own imagery, then the shared editorial cover for the asset.
-  const cover = product.imageUrl ? apiUrl(product.imageUrl) : (product.externalRef && PRODUCT_IMAGES[product.externalRef]) || assetCover(product.externalRef)
+  const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId
   return <button type="button" className={s.product} data-tone={tone} onClick={() => openPath(`/asset/${encodeURIComponent(slug)}`)}>
-    {cover && <span aria-hidden="true" style={{ position: 'relative', display: 'block', gridColumn: '1 / -1', aspectRatio: '16 / 7', borderRadius: 8, overflow: 'hidden' }}>
-      <Image src={cover} unoptimized={Boolean(product.imageUrl)} alt="" fill sizes="(max-width: 500px) 60vw, 280px" style={{ objectFit: 'cover' }} />
+    {(product.imageUrl || (product.externalRef && PRODUCT_IMAGES[product.externalRef])) && <span aria-hidden="true" style={{ position: 'relative', display: 'block', gridColumn: '1 / -1', aspectRatio: '16 / 7', borderRadius: 8, overflow: 'hidden' }}>
+      <Image src={product.imageUrl ? apiUrl(product.imageUrl) : PRODUCT_IMAGES[product.externalRef!]} unoptimized={Boolean(product.imageUrl)} alt="" fill sizes="(max-width: 500px) 60vw, 280px" style={{ objectFit: 'cover' }} />
     </span>}
-    <span className={s.productMeta}><span>{klass}</span>{product.network && <span>{networkLabel(product.network)}</span>}</span>
+    <span className={s.productMeta}><span>{klass}</span>{product.network && <span>{product.network}</span>}</span>
     <span className={s.productName}>{content(product.displayName)}</span>
     <span className={s.productArrow} aria-hidden="true"><ArrowUpRight size={16} /></span>
     {product.summary && <span className={s.productSummary}>{content(product.summary)}</span>}
@@ -213,7 +209,7 @@ function TradePanel() {
         const base = pair.symbol.replace(new RegExp(`-${pair.quoteAssetCode}$`), '')
         return <li key={pair.id}>
           <button type="button" className={s.row} onClick={() => openPath(`/trade/${encodeURIComponent(pair.symbol)}`)}>
-            <Logo src={assetCover(base.toLowerCase())} name={base} />
+            <Logo name={base} />
             <span className={s.rowMain}><b className={s.num}>{base} / {pair.quoteAssetCode}</b><small>{pair.state === 'active' ? copy.markets.active : copy.markets.paused}{pair.updatedAt ? ` · ${fmtDateTime(pair.updatedAt, locale, { timeStyle: 'short' })}` : ''}</small></span>
             <span className={s.rowFig}><b><Figure value={pair.lastPrice} locale="en-US" format={{ maximumFractionDigits: 6 }} /></b><small className={s.muted}>{pair.quoteAssetCode}</small></span>
           </button>

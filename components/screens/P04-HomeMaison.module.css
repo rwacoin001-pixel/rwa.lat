@@ -160,11 +160,7 @@
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(min-content, 1fr) auto;
   gap: 22px;
-  /* The first screen fills the viewport and reserves the dock's band at its foot, so the portfolio card still sits
-     just above the dock and the next block starts below the fold instead of peeking out from behind the dock. */
-  box-sizing: border-box;
-  min-height: 100svh;
-  padding-bottom: calc(var(--app-dock-height, 52px) + max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) + 16px);
+  min-height: calc(100svh - var(--app-dock-height, 52px) - max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) - 16px);
   margin-top: calc(-1 * var(--home-topbar-box));
 }
 .hero {

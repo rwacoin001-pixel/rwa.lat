@@ -2,11 +2,11 @@
 .tabs { position: sticky; top: var(--feed-sticky-top, 0px); z-index: 52; display: flex; gap: 6px; overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x proximity; scrollbar-width: none; padding: 7px var(--home-gutter, 18px) 0; margin-inline: calc(-1 * var(--home-gutter, 18px)); background: color-mix(in srgb, var(--home-bg) 94%, transparent); -webkit-backdrop-filter: blur(26px) saturate(165%); backdrop-filter: blur(26px) saturate(165%); border-bottom: 1px solid var(--feed-line); transition: top .28s ease; }
 .tabs::-webkit-scrollbar { display: none; }
 .probe { display: block; height: 1px; margin-bottom: -1px; pointer-events: none; }
-.tabs button { position: relative; flex: 0 0 auto; scroll-snap-align: start; height: 44px; padding: 0 13px; border: 0; color: var(--home-muted); background: transparent; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color .2s ease, transform .22s var(--ease-house); }
+.tabs button { position: relative; flex: 0 0 auto; scroll-snap-align: start; height: 44px; padding: 0 13px; border: 0; color: var(--home-muted); background: transparent; font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; transition: color .2s ease, transform .22s cubic-bezier(.2,.8,.2,1); }
 .tabs button:active { transform: scale(.92); }
 .tabs button.active { color: var(--home-ink); }
 .tabs button.active::after { content: ''; position: absolute; inset-inline: 11px; bottom: 0; height: 2px; border-radius: 2px; background: var(--home-accent); }
-.post { display: grid; grid-template-columns: 42px minmax(0,1fr); gap: 11px; width: 100%; padding: 18px 2px 17px; border: 0; border-bottom: 1px solid var(--feed-line); color: inherit; background: transparent; text-align: start; cursor: pointer; transition: background .22s ease, transform .22s var(--ease-house); animation: feed-in .55s both; }
+.post { display: grid; grid-template-columns: 42px minmax(0,1fr); gap: 11px; width: 100%; padding: 18px 2px 17px; border: 0; border-bottom: 1px solid var(--feed-line); color: inherit; background: transparent; text-align: start; cursor: pointer; transition: background .22s ease, transform .22s cubic-bezier(.2,.8,.2,1); animation: feed-in .55s both; }
 .post:hover { background: color-mix(in srgb, var(--home-ink) 4%, transparent); }
 .post:active { transform: scale(.985); background: color-mix(in srgb, var(--home-ink) 7%, transparent); }
 .avatar { display: grid; place-items: center; width: 42px; height: 42px; overflow: hidden; border: 1px solid color-mix(in srgb, var(--home-accent) 26%, transparent); border-radius: 50%; color: var(--home-accent); background: color-mix(in srgb, var(--home-accent) 12%, transparent); font-size: 16px; font-weight: 700; }

@@ -4,8 +4,6 @@ import { Info, Plus, Search, X } from 'lucide-react'
 import { useEffect, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
-import { assetCover } from '@/lib/home-asset-media'
-import { assetClassLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { getRwaDetail, listRwaAssets, type RwaDetail } from '@/lib/api/markets'
 import { fmtUsd } from '@/lib/money'
@@ -58,7 +56,7 @@ export function CompareScreen({ query }: { query: string }) {
     { label: d.volume, cell: (asset) => <span className={s.num}>{fmtUsd(asset.volume24hUsd, { compact: true, locale })}</span> },
     { label: d.score, cell: (asset) => <span className={s.num}>{asset.score && typeof asset.score === 'object' ? asset.score.overallScore ?? '—' : '—'}</span> },
     { label: d.risk, cell: (asset) => asset.riskLevel ?? '—' },
-    { label: t.cls, cell: (asset) => assetClassLabel(asset.assetClass, locale) ?? '—' },
+    { label: t.cls, cell: (asset) => asset.assetClass?.replace(/_/g, ' ') ?? '—' },
     { label: t.issuer, cell: (asset) => asset.issuer ? <button type="button" className={s.link} onClick={() => openPath(`/issuers/${encodeURIComponent(asset.issuer.slug)}`)}>{asset.issuer.name}</button> : '—' },
     { label: d.region, cell: (asset) => asset.region ?? '—' },
   ]
@@ -104,7 +102,7 @@ export function CompareScreen({ query }: { query: string }) {
             : candidates.error && !candidates.data ? <StateBlock tone="error" title={copy.markets.loadError} body={candidates.error.message} retry={candidates.refetch} retryLabel={copy.common.retry} />
             : candidates.data?.items.filter((asset) => !slugs.includes(asset.slug)).length ? <ul className={s.list}>{candidates.data.items.filter((asset) => !slugs.includes(asset.slug)).map((asset) => <li key={asset.slug}>
               <button type="button" className={s.row} onClick={() => add(asset.slug)}>
-                <Logo src={asset.logoUrl ?? assetCover(asset.slug)} name={asset.name} />
+                <Logo src={asset.logoUrl} name={asset.name} />
                 <span className={s.rowMain}><b>{asset.name}</b><small>{[asset.symbol && asset.symbol !== '-' ? asset.symbol : null, asset.issuer?.name].filter(Boolean).join(' · ')}</small></span>
                 <span className={s.rowFig}><Plus size={16} className={s.muted} /></span>
               </button>

@@ -251,20 +251,3 @@
 .maskScope[data-masked='true'] dd { font-size: 0; }
 .maskScope[data-masked='true'] dd::after { content: '••••'; font-size: 15px; letter-spacing: .1em; }
 @media (prefers-reduced-motion: reduce) { .eye { transition: none; } }
-/* First-run guide inside the total card (a new account with nothing held and an empty wallet): one title, three
-   numbered steps with the next one emphasised, and the two actions that start them. */
-.start { display: grid; gap: 12px; margin-top: 14px; }
-.startTitle { margin: 0; color: var(--m-lacquer-ink, var(--m-ink)); font: 400 19px/1.3 var(--m-display); letter-spacing: -.005em; }
-.startSteps { display: grid; gap: 9px; margin: 0; padding: 0; list-style: none; }
-.startSteps li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: center; color: var(--m-lacquer-muted, var(--m-muted)); font-size: 13px; line-height: 1.45; }
-.startSteps li > span { display: grid; place-items: center; width: 22px; height: 22px; border: 1px solid var(--m-lacquer-line, var(--m-line)); border-radius: 50%; color: var(--m-lacquer-accent, var(--m-accent)); font-size: 11px; font-weight: 650; }
-.startSteps li:first-child { color: var(--m-lacquer-ink, var(--m-ink)); }
-.startSteps li:first-child > span { border-color: var(--m-lacquer-accent, var(--m-accent)); }
-.startActions { display: flex; gap: 10px; margin-top: 4px; }
-.startPrimary, .startSecondary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 46px; border-radius: 999px; font: 600 14px/1 var(--m-sans); transition: transform .16s var(--ease-house, ease), opacity .16s; }
-.startPrimary { flex: 1; border: 0; background: var(--m-lacquer-ink, var(--m-ink)); color: var(--m-bg); }
-.startSecondary { padding: 0 18px; border: 1px solid var(--m-lacquer-line, var(--m-line)); background: transparent; color: var(--m-lacquer-ink, var(--m-ink)); font-weight: 500; }
-.startPrimary:active, .startSecondary:active { transform: scale(.97); }
-.startPrimary:focus-visible, .startSecondary:focus-visible { outline: 2px solid var(--m-lacquer-accent, var(--m-accent)); outline-offset: 2px; }
-:global([dir='rtl']) .startPrimary svg { transform: scaleX(-1); }
-@media (prefers-reduced-motion: reduce) { .startPrimary, .startSecondary { transition: none; } }

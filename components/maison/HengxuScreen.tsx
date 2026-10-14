@@ -162,38 +162,16 @@ export function BasketShelf() {
   </div>
 }
 
-/** Three ticks for a live basket's API risk level (low · medium · high), labelled in the reader's language. */
-function LiveRisk({ level, copy }: { level: BasketPortfolio['riskLevel']; copy: HengxuCopy }) {
-  const step = level === 'low' ? 1 : level === 'medium' ? 2 : level === 'high' ? 3 : 0
-  if (!step || !level) return null
-  return <span className={h.risk} data-graded="true">
-    <span className={h.riskTicks} aria-hidden="true">{[1, 2, 3].map((tick) => <i key={tick} data-on={tick <= step} />)}</span>
-    <span>{copy.liveRisk[level as 'low' | 'medium' | 'high']}</span>
-  </span>
-}
-
-/**
- * A live basket portfolio. A 衡序 basket shows its Chinese name, subtitle and artwork from the series catalog
- * (the API only carries the romanised name); every basket shows its risk as ticks rather than an English word,
- * and a basket nobody has subscribed to yet says so instead of reading "US$0".
- */
+/** A live basket portfolio: NAV per unit leads, AUM under it, the minimum ticket in the subtitle when the API sends one. */
 function LiveRow({ basket }: { basket: BasketPortfolio }) {
   const { locale } = useI18n()
   const market = marketCopy[locale]
-  const copy = hengxuCopy[locale]
-  const series = basket.strategySlug?.startsWith('hengxu-') ? hengxuById(basket.strategySlug.slice('hengxu-'.length)) : null
-  const label = series ? names(series, locale) : null
-  const name = label?.mark ?? (basket.name || basket.strategyName || basket.id)
-  const thumb = series ? hengxuImage(series, 720) : basket.strategySlug ? `/baskets/${encodeURIComponent(basket.strategySlug)}_thumb.webp` : null
-  const min = basket.minimumSubscriptionUsd ? fill(market.markets.from, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) }) : null
-  const aum = Number(basket.aumUsd ?? 0)
+  const name = basket.name || basket.strategyName || basket.id
+  const sub = [basket.strategyName && basket.strategyName !== name ? basket.strategyName : null, basket.riskLevel, basket.minimumSubscriptionUsd ? fill(market.markets.from, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) }) : null]
   return <button type="button" className={s.row} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/basket/${encodeURIComponent(basket.id)}`))}>
-    <Logo src={thumb} name={name} />
-    <span className={s.rowMain}>
-      <b data-shared={`basket:${basket.id}:title`} lang={label ? 'zh-CN' : undefined}>{name}</b>
-      <small className={h.liveSub}>{label && <span dir="auto">{label.sub}</span>}<LiveRisk level={basket.riskLevel} copy={copy} />{min && <span>{min}</span>}</small>
-    </span>
-    <span className={s.rowFig}><b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b><small className={s.muted}>{aum > 0 ? fmtUsd(basket.aumUsd, { compact: true, locale }) : copy.noSubscriptions}</small></span>
+    <Logo src={basket.strategySlug ? `/baskets/${encodeURIComponent(basket.strategySlug)}_thumb.webp` : null} name={name} />
+    <span className={s.rowMain}><b data-shared={`basket:${basket.id}:title`}>{name}</b><small>{sub.filter(Boolean).join(' · ')}</small></span>
+    <span className={s.rowFig}><b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b><small className={s.muted}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</small></span>
   </button>
 }
 
