@@ -105,6 +105,11 @@ export function PortfolioScreen({ query }: { query: string }) {
   // Cost, P&L and yield only exist for products; say so whenever baskets are or may be present.
   const scoped = Boolean(basketRows?.length) || Boolean(baskets.error)
   const basketsEmpty = basketRows?.length === 0
+  const zero = (atomic?: string | null) => !atomic || BigInt(atomic) === BigInt(0)
+  // Nothing held anywhere: the overview says "no positions" once (allocation), not again under Positions.
+  const noHoldings = totals?.rows.length === 0 && basketsEmpty
+  // A brand-new account (nothing held, nothing in the wallet) gets a first-steps guide instead of seven zeros.
+  const fresh = !anyFailed && noHoldings && Boolean(balances) && zero(balances?.availableAtomic) && zero(balances?.lockedAtomic) && zero(balances?.pendingAtomic)
   const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
   const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
   const { masked, toggle: toggleMask } = useAmountMask()
@@ -114,9 +119,12 @@ export function PortfolioScreen({ query }: { query: string }) {
   // The value-trend section only exists once two snapshots do, so the numbering below follows what is actually on screen.
   const historyShown = useHistoryPoints().length >= 2
   const section = (n: number) => String(n).padStart(2, '0')
-  const positionsIndex = section(historyShown ? 3 : 2)
-  const basketsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1))
-  const toolsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1) + (basketsEmpty ? 0 : 1))
+  let shown = 0
+  if (!fresh) shown++ // allocation is always 01 when present
+  const historyIndex = section(historyShown ? ++shown : shown)
+  const positionsIndex = section(!productsHidden && !noHoldings ? ++shown : shown)
+  const basketsIndex = section(!basketsEmpty ? ++shown : shown)
+  const toolsIndex = section(++shown)
 
   return <MaisonPage page="portfolio" dock topbar={<RwaTopbar screen="portfolio" title={p.title} />}>
     <header className={s.hero}>
@@ -132,6 +140,14 @@ export function PortfolioScreen({ query }: { query: string }) {
         </div>
         {total === null && loadingAny ? <Skeleton rows={1} />
           : <p className={`${s.bigFigure} ${s.num}`}>{masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}<small>USDT</small></p>}
+        {fresh ? <div className={h.start}>
+          <p className={h.startTitle}>{p.start.title}</p>
+          <ol className={h.startSteps}>{p.start.steps.map((step, index) => <li key={step}><span className={s.num} aria-hidden="true">{index + 1}</span>{step}</li>)}</ol>
+          <div className={h.startActions}>
+            <button type="button" className={h.startPrimary} onClick={() => openPath('/wallet/deposit')}>{p.start.deposit}<ArrowRight size={15} aria-hidden="true" /></button>
+            <button type="button" className={h.startSecondary} onClick={() => openPath('/markets')}>{p.browse}</button>
+          </div>
+        </div> : <>
         <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5 }}>
           {totals && totals.rows.length > 0 && <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span>}
           {p.totalNote}
@@ -157,6 +173,7 @@ export function PortfolioScreen({ query }: { query: string }) {
             ]} />
           </div>
         </div>
+        </>}
         {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '10px 0 0', fontSize: 11.5 }}>
           {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
         </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
@@ -169,9 +186,9 @@ export function PortfolioScreen({ query }: { query: string }) {
     </div>
 
     {tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
-      <Allocation rows={totals?.rows} baskets={basketRows} cash={cash} loading={positions.loading || wallet.loading || baskets.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} partial={incomplete} />
-      {historyShown && <History index="02" />}
-      {!productsHidden && <>
+      {!fresh && <Allocation rows={totals?.rows} baskets={basketRows} cash={cash} loading={positions.loading || wallet.loading || baskets.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} partial={incomplete} />}
+      {historyShown && <History index={historyIndex} />}
+      {!productsHidden && !noHoldings && <>
         <SectionHead index={positionsIndex} title={p.positions} action={totals && totals.rows.length > 3 ? <button type="button" className={s.sectionMore} onClick={() => setTab('positions')}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
         <PositionTable rows={totals?.rows.slice(0, 3)} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
       </>}

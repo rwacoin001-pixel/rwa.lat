@@ -7,6 +7,8 @@ export type HengxuCopy = {
   filters: Record<'all' | HengxuFilter, string>
   stage: Record<HengxuStage, string>; listed: string
   risk: [string, string, string, string]; riskPending: string; riskUnrated: string
+  /** Live basket portfolios carry the API's three-step risk level, not the research grade. */
+  liveRisk: Record<'low' | 'medium' | 'high', string>; noSubscriptions: string
   horizon: Record<HengxuHorizon, string>
   flagship: string; count: string; countOne: string
   fields: { risk: string; hold: string; lock: string; redeem: string; min: string; fees: string }
@@ -45,6 +47,7 @@ const en: HengxuCopy = {
   filters: { all: 'All', short: 'Short term', long: 'Long term', digital: 'Digital assets', research: 'In research' },
   stage: { first: 'First-wave candidate', second: 'Second-wave candidate', research: 'In research', special: 'Special research' }, listed: 'Open on A-REIT',
   risk: ['Conservative', 'Balanced', 'Growth', 'High risk'], riskPending: 'Graded after stress test', riskUnrated: 'Not yet graded',
+  liveRisk: { low: 'Low risk', medium: 'Medium risk', high: 'High risk' }, noSubscriptions: 'No subscriptions yet',
   horizon: { d90: '30–90 days+', m12: '6–12 months+', y3: '3 years+', y5: '5 years+', terms: 'Per series terms' },
   flagship: 'Series flagship', count: '{n} strategies', countOne: '{n} strategy',
   fields: { risk: 'Risk tier', hold: 'Suggested holding', lock: 'Contract lock-up', redeem: 'Redemption settles', min: 'Suggested minimum', fees: 'Fees' },
@@ -81,6 +84,7 @@ const zh: HengxuCopy = {
   filters: { all: '全部', short: '短期', long: '长期', digital: '数字资产', research: '研究中' },
   stage: { first: '首发候选', second: '第二批候选', research: '研究中', special: '专项研究' }, listed: '已在 A-REIT 上线',
   risk: ['稳健研究', '均衡研究', '进取研究', '高风险研究'], riskPending: '待压力测试定级', riskUnrated: '未定级',
+  liveRisk: { low: '低风险', medium: '中风险', high: '高风险' }, noSubscriptions: '尚无申购',
   horizon: { d90: '30–90 天起', m12: '6–12 个月起', y3: '3 年起', y5: '5 年起', terms: '以期次条款为准' },
   flagship: '系列主打', count: '{n} 款', countOne: '{n} 款',
   fields: { risk: '风险档', hold: '建议持有期', lock: '合同锁定期', redeem: '赎回到账期', min: '建议起投', fees: '费用' },
@@ -124,6 +128,7 @@ const hi: HengxuCopy = {
   filters: { all: 'सभी', short: 'अल्पकालिक', long: 'दीर्घकालिक', digital: 'डिजिटल संपत्ति', research: 'शोध में' },
   stage: { first: 'पहली लहर उम्मीदवार', second: 'दूसरी लहर उम्मीदवार', research: 'शोध में', special: 'विशेष शोध' }, listed: 'A-REIT पर उपलब्ध',
   risk: ['संरक्षित', 'संतुलित', 'विकास', 'उच्च जोखिम'], riskPending: 'तनाव परीक्षण के बाद श्रेणी', riskUnrated: 'अभी श्रेणी नहीं',
+  liveRisk: { low: 'कम जोखिम', medium: 'मध्यम जोखिम', high: 'उच्च जोखिम' }, noSubscriptions: 'अभी कोई सब्सक्रिप्शन नहीं',
   horizon: { d90: '30–90 दिन+', m12: '6–12 महीने+', y3: '3 वर्ष+', y5: '5 वर्ष+', terms: 'श्रृंखला शर्तों के अनुसार' },
   flagship: 'श्रृंखला प्रमुख', count: '{n} रणनीतियाँ', countOne: '{n} रणनीति', sourcesNote: 'लाभांश दर, प्रोटोकॉल APY, वार्षिक प्रतिफल और कुल रिटर्न अलग-अलग दिखाए जाते हैं, कभी मिलाए नहीं जाते।', stressNote: 'लगभग 10% / 25% / 50% की गिरावट तनाव परीक्षण के चर्चा बिंदु हैं, हानि सीमा नहीं।',
   fields: { risk: 'जोखिम श्रेणी', hold: 'सुझाई अवधि', lock: 'अनुबंध लॉक-अप', redeem: 'रिडेम्प्शन निपटान', min: 'सुझाया न्यूनतम', fees: 'शुल्क' },
@@ -158,6 +163,7 @@ const es: HengxuCopy = {
   filters: { all: 'Todas', short: 'Corto plazo', long: 'Largo plazo', digital: 'Activos digitales', research: 'En estudio' },
   stage: { first: 'Candidata de primera fase', second: 'Candidata de segunda fase', research: 'En estudio', special: 'Estudio especial' }, listed: 'Disponible en A-REIT',
   risk: ['Conservador', 'Equilibrado', 'Crecimiento', 'Alto riesgo'], riskPending: 'Se califica tras prueba de estrés', riskUnrated: 'Sin calificar',
+  liveRisk: { low: 'Riesgo bajo', medium: 'Riesgo medio', high: 'Riesgo alto' }, noSubscriptions: 'Sin suscripciones aún',
   horizon: { d90: '30–90 días+', m12: '6–12 meses+', y3: '3 años+', y5: '5 años+', terms: 'Según la serie' },
   flagship: 'Insignia de la serie', count: '{n} estrategias', countOne: '{n} estrategia', sourcesNote: 'Tasa de dividendo, APY del protocolo, rendimiento anualizado y rendimiento total se muestran por separado, nunca mezclados.', stressNote: 'Caídas de aprox. 10% / 25% / 50% son referencias para pruebas de estrés, no un límite de pérdida.',
   fields: { risk: 'Nivel de riesgo', hold: 'Plazo sugerido', lock: 'Bloqueo contractual', redeem: 'Liquidación del rescate', min: 'Mínimo sugerido', fees: 'Comisiones' },
@@ -192,6 +198,7 @@ const ar: HengxuCopy = {
   filters: { all: 'الكل', short: 'قصير الأجل', long: 'طويل الأجل', digital: 'أصول رقمية', research: 'قيد البحث' },
   stage: { first: 'مرشح للدفعة الأولى', second: 'مرشح للدفعة الثانية', research: 'قيد البحث', special: 'بحث خاص' }, listed: 'متاح على A-REIT',
   risk: ['متحفظ', 'متوازن', 'نمو', 'مخاطر عالية'], riskPending: 'يُصنَّف بعد اختبار الضغط', riskUnrated: 'غير مصنف بعد',
+  liveRisk: { low: 'مخاطر منخفضة', medium: 'مخاطر متوسطة', high: 'مخاطر عالية' }, noSubscriptions: 'لا اشتراكات بعد',
   horizon: { d90: '30–90 يومًا فأكثر', m12: '6–12 شهرًا فأكثر', y3: '3 سنوات فأكثر', y5: '5 سنوات فأكثر', terms: 'وفق شروط الإصدار' },
   flagship: 'الأبرز في السلسلة', count: '{n} استراتيجيات', countOne: '{n} استراتيجية', sourcesNote: 'تُعرض نسبة التوزيعات وعائد البروتوكول السنوي والعائد السنوي والعائد الإجمالي كلٌّ على حدة، ولا تُخلط.', stressNote: 'تراجعات بنحو 10% / 25% / 50% هي مراجع لنقاش اختبارات الضغط، وليست حدًا أقصى للخسارة.',
   fields: { risk: 'فئة المخاطر', hold: 'مدة الاحتفاظ المقترحة', lock: 'فترة القفل التعاقدية', redeem: 'تسوية الاسترداد', min: 'الحد الأدنى المقترح', fees: 'الرسوم' },
@@ -226,6 +233,7 @@ const fr: HengxuCopy = {
   filters: { all: 'Toutes', short: 'Court terme', long: 'Long terme', digital: 'Actifs numériques', research: 'En recherche' },
   stage: { first: 'Candidate 1re vague', second: 'Candidate 2e vague', research: 'En recherche', special: 'Recherche spéciale' }, listed: 'Disponible sur A-REIT',
   risk: ['Prudent', 'Équilibré', 'Croissance', 'Risque élevé'], riskPending: 'Classé après test de résistance', riskUnrated: 'Non classé',
+  liveRisk: { low: 'Risque faible', medium: 'Risque modéré', high: 'Risque élevé' }, noSubscriptions: 'Aucune souscription',
   horizon: { d90: '30–90 jours et +', m12: '6–12 mois et +', y3: '3 ans et +', y5: '5 ans et +', terms: 'Selon la série' },
   flagship: 'Phare de la série', count: '{n} stratégies', countOne: '{n} stratégie', sourcesNote: 'Taux de distribution, APY du protocole, rendement annualisé et rendement total sont présentés séparément, jamais mélangés.', stressNote: 'Des baisses d’environ 10 % / 25 % / 50 % servent de repères aux tests de résistance, pas de plafond de perte.',
   fields: { risk: 'Niveau de risque', hold: 'Durée conseillée', lock: 'Blocage contractuel', redeem: 'Règlement du rachat', min: 'Minimum conseillé', fees: 'Frais' },
@@ -260,6 +268,7 @@ const pt: HengxuCopy = {
   filters: { all: 'Todas', short: 'Curto prazo', long: 'Longo prazo', digital: 'Ativos digitais', research: 'Em pesquisa' },
   stage: { first: 'Candidata da 1ª fase', second: 'Candidata da 2ª fase', research: 'Em pesquisa', special: 'Pesquisa especial' }, listed: 'Disponível na A-REIT',
   risk: ['Conservador', 'Equilibrado', 'Crescimento', 'Alto risco'], riskPending: 'Classificado após teste de estresse', riskUnrated: 'Sem classificação',
+  liveRisk: { low: 'Risco baixo', medium: 'Risco médio', high: 'Risco alto' }, noSubscriptions: 'Ainda sem aplicações',
   horizon: { d90: '30–90 dias+', m12: '6–12 meses+', y3: '3 anos+', y5: '5 anos+', terms: 'Conforme a série' },
   flagship: 'Destaque da série', count: '{n} estratégias', countOne: '{n} estratégia', sourcesNote: 'Taxa de dividendos, APY do protocolo, rendimento anualizado e retorno total são mostrados separadamente, nunca misturados.', stressNote: 'Quedas de cerca de 10% / 25% / 50% são referências para testes de estresse, não um limite de perda.',
   fields: { risk: 'Nível de risco', hold: 'Prazo sugerido', lock: 'Carência contratual', redeem: 'Liquidação do resgate', min: 'Mínimo sugerido', fees: 'Taxas' },
