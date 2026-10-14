@@ -163,8 +163,7 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import { assetAccountRouteCopy, homeDataCopy, portfolioRouteCopy, profileRouteCopy, walletFlowRouteCopy, walletRouteCopy, securityRouteCopy } from '@/lib/route-copy'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 const ParticleLogoIcon = dynamic(() => import('./particle-logo-icon'), { ssr: false })
-// Source: https://github.com/paper-design/shaders (Apache-2.0) — LiquidMetal circle orb
-const LiquidMetal = dynamic(() => import('@paper-design/shaders-react').then(module => module.LiquidMetal), { ssr: false })
+const AiPearl = dynamic(() => import('./maison/AiPearl'), { ssr: false })
 import { FlowProgress, LiquidSelection, Magnetic, ScreenTransition, SplitFlapText, TiltedSurface, captureSharedFlip, playSharedFlip, type RwaFlipState } from './motion-effects'
 const AssetEvidencePanel = dynamic(() => import('./p0a-screens').then((m) => ({ default: m.AssetEvidencePanel })), { ssr: false })
 const OnboardingOverviewScreen = dynamic(() => import('./p0a-screens').then((m) => ({ default: m.OnboardingOverviewScreen })), { ssr: false })
@@ -315,20 +314,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
         </button>
       </>}
       <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => setScreen('ai')}>
-        <LiquidMetal
-          shape="circle"
-          colorBack="#00000000"
-          colorTint={theme === 'light' ? '#D8B89B' : '#B9D5DE'}
-          repetition={2.4}
-          shiftRed={0.28}
-          shiftBlue={0.28}
-          contour={0.45}
-          softness={0.65}
-          distortion={0.9}
-          angle={60}
-          speed={0.65}
-          className="ai-orb__orb"
-        />
+        <AiPearl size={54} inset={.44} state="idle" className="ai-orb__orb" />
       </button>
     </nav>
   )

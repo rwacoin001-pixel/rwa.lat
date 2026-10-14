@@ -82,10 +82,15 @@ test('oversized decoded images fail before rendering and release resources', asy
   assert.equal(f.metrics.drawn, 0); assert.equal(f.metrics.closed, 1)
 })
 
-test('voice activity follows recognition events and never opens a competing microphone', () => {
-  const Wave = load('components/maison/AiVoiceWaveform.tsx', {}, { navigator: new Proxy({}, { get() { throw new Error('The visual must not acquire the microphone') } }) }).default
-  assert.equal(Wave({ active: true, speaking: false }).props['data-speaking'], undefined)
-  assert.equal(Wave({ active: true, speaking: true }).props['data-speaking'], true)
-  assert.equal(Wave({ active: false, speaking: true }).props['data-speaking'], undefined)
-  assert.equal(nodes(Wave({ active: true }), 'i').length, 27)
+test('the pearl is driven by recognition events, never opens a microphone, and holds still when asked', () => {
+  const pearl = load('components/maison/AiPearl.tsx', { react: { useEffect() {}, useRef: initial => ({ current: initial }) } }, { navigator: new Proxy({}, { get() { throw new Error('The visual must not acquire the microphone') } }) })
+  const at = (state, energy = 0, still = false, time = 1.3) => pearl.pearlGeometry({ size: 200, time, state, energy, inset: .36, still })
+  // A recognised word (energy 1) swells the listening pearl; the same energy does nothing at rest.
+  assert.ok(at('listening', 1).radius > at('listening', 0).radius + 4)
+  assert.equal(at('idle', 1).radius, at('idle', 0).radius)
+  // Reduced motion and message avatars draw one composed frame: no breathing, no drift, arc parked at 12 o'clock.
+  assert.equal(at('idle', 0, true, 0).radius, at('idle', 0, true, 7).radius)
+  assert.equal(at('thinking', 0, true).arcStart, -Math.PI / 2)
+  const tree = pearl.default({ state: 'thinking', size: 28, still: true })
+  assert.equal(tree.props['data-state'], 'thinking'); assert.equal(tree.props['aria-hidden'], true)
 })

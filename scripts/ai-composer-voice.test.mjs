@@ -40,7 +40,7 @@ function fixture(sendResult = true) {
     '@/lib/maison-ai-copy': { aiInputCopy: () => ({ voice: '语音输入', actionFailed: '发送失败', voiceEmpty: '没听到', voiceDenied: '请授权麦克风', voiceFailed: '识别失败', voiceUnavailable: '服务不可用' }) },
     '@/lib/ai-voice-copy': { aiVoiceCopy }, '@/lib/ai-visual-copy': { aiVisualCopy: () => ({ prompts: [] }) },
     '@/lib/ai-attachment-policy': { AI_FILE_LIMITS: { count: 3 } }, '@/lib/ai-file-parser': { readAiFile() { throw new Error('No file expected') } },
-    './useAiVoice': voice, './AiVoiceWaveform': { default: 'wave', __esModule: true }, './AiFaqTicker': { default: 'ticker', __esModule: true },
+    './useAiVoice': voice, '@/lib/ai-surface-state': load('lib/ai-surface-state.ts', {}), './AiPearl': { default: 'pearl', __esModule: true }, '@/lib/ai-pearl-copy': { aiPearlCopy: () => ({ listening: '请说…', busy: '正在回答' }) }, './AiFaqTicker': { default: 'ticker', __esModule: true },
   }).default
   const render = () => {
     cursor = 0
@@ -60,10 +60,15 @@ const tick = () => new Promise(resolve => setImmediate(resolve))
 
 test('composer sends Android interim text once on release, retains typed draft and clears only after success', async () => {
   const f = fixture(); f.button('按住说话').onPointerDown(f.event())
-  assert.equal(nodes(f.render(), 'wave')[0].props.speaking, false)
+  // Connecting: the pearl shows its thinking arc until the engine reports audio.
+  assert.equal(nodes(f.render(), 'pearl')[0].props.state, 'thinking')
   f.engines[0].onaudiostart(); f.engines[0].onspeechstart()
-  assert.equal(nodes(f.render(), 'wave')[0].props.speaking, true)
+  assert.equal(nodes(f.render(), 'pearl')[0].props.state, 'listening')
   f.engines[0].onresult(result('如何充值')); assert.deepEqual(f.sent, [])
+  // The words recognised so far are on screen before release, and each new word swells the pearl.
+  const tree = f.render()
+  assert.ok(nodes(tree, 'p').some(item => item.props.children === '如何充值'))
+  assert.equal(nodes(tree, 'pearl')[0].props.pulse, 4)
   const end = f.engines[0].onend
   f.button('按住说话').onPointerUp(f.event()); end(); end(); await tick()
   assert.deepEqual(f.sent, [{ message: '保留草稿 如何充值', attachments: [] }]); assert.equal(f.value(), '')
