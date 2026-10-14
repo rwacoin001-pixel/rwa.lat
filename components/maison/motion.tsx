@@ -53,7 +53,32 @@ export function Segmented<T extends string>({ value, options, onChange, label, s
       })}
     </div>
   // Sticky tracks sit in a full-bleed dock so nothing scrolls visibly above or beside them once pinned.
-  return <LayoutGroup id={id}>{sticky ? <div className={styles.segmentDock}>{track}</div> : track}</LayoutGroup>
+  return <LayoutGroup id={id}>{sticky ? <StickyDock>{track}</StickyDock> : track}</LayoutGroup>
+}
+
+/** Marks the dock `data-stuck` while it is pinned, so the status-bar cover above it only shows then. */
+function StickyDock({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let frame = 0
+    const check = () => {
+      frame = 0
+      // Pinned once the dock's natural spot (the bottom of whatever precedes it) has scrolled above the pin line.
+      const pin = parseFloat(getComputedStyle(el).top) || 0
+      const before = el.previousElementSibling?.getBoundingClientRect().bottom ?? el.parentElement?.getBoundingClientRect().top ?? 0
+      const stuck = before < pin - .5
+      if (stuck) el.dataset.stuck = ''
+      else delete el.dataset.stuck
+    }
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(check) }
+    check()
+    window.addEventListener('scroll', schedule, { passive: true, capture: true })
+    window.addEventListener('resize', schedule)
+    return () => { cancelAnimationFrame(frame); window.removeEventListener('scroll', schedule, { capture: true }); window.removeEventListener('resize', schedule) }
+  }, [])
+  return <div ref={ref} className={styles.segmentDock}>{children}</div>
 }
 
 /**

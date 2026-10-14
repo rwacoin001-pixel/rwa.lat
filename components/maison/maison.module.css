@@ -271,8 +271,11 @@
   top: 0;
   padding-top: calc(env(safe-area-inset-top) + 6px);
 }
-/* Markets has no bar above it, so its sticky dock pins to the very top, clear of the status bar. */
-.root[data-maison-page='markets'] .segmentDock { top: 0; padding-top: calc(env(safe-area-inset-top) + 6px); }
+/* Markets has no bar above it, so its dock pins just under the status bar. The status-bar band above it is a cover that
+   only shows while pinned: as padding it was also there at rest, a blank strip of status-bar height above the tabs. */
+.root[data-maison-page='markets'] .segmentDock { top: env(safe-area-inset-top); }
+.root[data-maison-page='markets'] .segmentDock::before { content: ''; position: absolute; inset-inline: 0; bottom: 100%; height: env(safe-area-inset-top); background: var(--m-topbar-bg); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); opacity: 0; pointer-events: none; }
+.root[data-maison-page='markets'] .segmentDock[data-stuck]::before { opacity: 1; }
 .segment[data-sticky='true'] { box-shadow: 0 10px 24px -18px rgba(0, 0, 0, .45); }
 @media (prefers-reduced-motion: reduce) { .segmentDock { transition: none; } }
 .segmentTrack { display: contents; }
