@@ -314,7 +314,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
         </button>
       </>}
       <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => setScreen('ai')}>
-        <AiPearl size={54} inset={.44} state="idle" className="ai-orb__orb" />
+        <AiPearl size={46} inset={.48} state="idle" className="ai-orb__orb" />
       </button>
     </nav>
   )
