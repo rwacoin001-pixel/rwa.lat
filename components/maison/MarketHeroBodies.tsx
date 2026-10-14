@@ -46,7 +46,7 @@ export function BasketPoster() {
   const listing = useListings().get(FEATURED.id)
   const product = FEATURED
   const text = hengxuText(product, locale)
-  const { mark, sub } = names(product, locale)
+  const { mark, sub, lang } = names(product, locale)
   const level = typeof product.risk === 'number' ? product.risk : 0
   const research = product.stage === 'research' || product.stage === 'special'
   // Body copy only exists in zh/en; other locales read English.
@@ -61,12 +61,12 @@ export function BasketPoster() {
     <span className={h.posterScrim} aria-hidden="true" />
     <div className={h.posterBody}>
       <div className={`${h.tier} ${h.posterTop}`} data-tier="1">
-        <span className={`${h.posterNo} ${h.reveal}`} style={at(0)} dir="ltr">衡序 · No.{product.no} / {HENGXU_PRODUCTS.length}</span>
+        <span className={`${h.posterNo} ${h.reveal}`} style={at(0)} dir="ltr">{copy.tab} · No.{product.no} / {HENGXU_PRODUCTS.length}</span>
         <span className={`${s.badge} ${h.reveal}`} style={at(0)} data-tone={listing ? 'live' : research ? 'warn' : 'accent'}>{listing ? copy.listed : `${copy.stage[product.stage]} · ${copy.terms.closed}`}</span>
       </div>
       <div>
         <div className={h.tier} data-tier="2">
-          <button type="button" className={`${h.posterMark} ${h.reveal}`} style={at(1)} onClick={open} lang="zh-CN">{mark}</button>
+          <button type="button" className={`${h.posterMark} ${h.reveal}`} style={at(1)} onClick={open} lang={lang}>{mark}</button>
           <p className={`${h.posterSub} ${h.reveal}`} style={at(2)}>{sub}</p>
           <p className={`${h.posterLine} ${h.reveal}`} style={at(2)} {...body}>{text.oneLiner}</p>
         </div>

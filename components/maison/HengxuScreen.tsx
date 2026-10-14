@@ -74,10 +74,10 @@ function StageBadge({ product, listing, copy }: { product: HengxuProduct; listin
   return <span className={s.badge} data-tone="accent">{copy.stage[product.stage]}</span>
 }
 
-/** Chinese strategy name leads in every locale; other locales add the romanised name to the subtitle. */
+/** zh-CN shows the Chinese strategy name; every other locale shows the romanised name, tagged so it is read as Latin. */
 export function names(product: HengxuProduct, locale: AppLocale) {
   const text = hengxuText(product, locale)
-  return { mark: product.zh.name, sub: locale === 'zh-CN' ? text.subtitle : `${product.en.name} · ${text.subtitle}` }
+  return { mark: text.name, sub: text.subtitle, lang: locale === 'zh-CN' ? 'zh-CN' : 'en' }
 }
 
 function Picture({ product, locale, sizes, priority, ratio }: { product: HengxuProduct; locale: AppLocale; sizes: string; priority?: boolean; ratio?: 'card' | 'natural' }) {
@@ -179,12 +179,12 @@ function FeaturedCard({ product, listing }: { product: HengxuProduct; listing?: 
   const { locale } = useI18n()
   const copy = hengxuCopy[locale]
   const text = hengxuText(product, locale)
-  const { mark, sub } = names(product, locale)
+  const { mark, sub, lang } = names(product, locale)
   return <a href={detailPath(product)} className={h.featured} onClick={(event) => go(event, detailPath(product))}>
     <Picture product={product} locale={locale} sizes="(max-width: 480px) 100vw, 480px" priority />
     <span className={h.featuredBody}>
       <span className={h.meta}><span>{copy.flagship}</span><span className={s.num}>{product.no} / 10</span></span>
-      <span className={h.nameLine}><b className={h.mark} lang="zh-CN" data-shared={sharedKey(product, 'title')}>{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
+      <span className={h.nameLine}><b className={h.mark} lang={lang} data-shared={sharedKey(product, 'title')}>{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
       <span className={h.oneLiner} {...bodyProps(locale)}>{text.oneLiner}</span>
       <span className={h.featuredFacts}>
         <span><small>{copy.fields.risk}</small><RiskMeter risk={product.risk} copy={copy} /></span>
@@ -200,12 +200,12 @@ function StrategyRow({ product, listing }: { product: HengxuProduct; listing?: C
   const { locale } = useI18n()
   const copy = hengxuCopy[locale]
   const text = hengxuText(product, locale)
-  const { mark, sub } = names(product, locale)
+  const { mark, sub, lang } = names(product, locale)
   const fee = product.terms?.mgmtFeePct
   return <a href={detailPath(product)} className={h.row} onClick={(event) => go(event, detailPath(product))}>
     <Picture product={product} locale={locale} sizes="96px" />
     <span className={h.rowText}>
-      <span className={h.nameLine}><b className={h.markS} lang="zh-CN" data-shared={sharedKey(product, 'title')}>{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
+      <span className={h.nameLine}><b className={h.markS} lang={lang} data-shared={sharedKey(product, 'title')}>{mark}</b><span className={h.sub} dir="auto">{sub}</span></span>
       <span className={h.rowLine} {...bodyProps(locale)}>{text.oneLiner}</span>
       <span className={h.rowFoot}><RiskMeter risk={product.risk} copy={copy} /><StageBadge product={product} listing={listing} copy={copy} /></span>
     </span>
@@ -222,7 +222,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const copy = hengxuCopy[locale]
   const listings = useListings()
   const product = hengxuById(id)
-  const topbar = <RwaTopbar screen="strategy-detail" title={product ? product.zh.name : copy.series} onBack={() => product ? sharedBack(`strategy:${product.id}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
+  const topbar = <RwaTopbar screen="strategy-detail" title={product ? names(product, locale).mark : copy.series} onBack={() => product ? sharedBack(`strategy:${product.id}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
   if (!product) return <MaisonPage page="strategy" dock topbar={topbar}><div className={s.hero}>
     <StateBlock title={copy.notFound} body={copy.notFoundBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets?tab=baskets')}>{copy.back}</button>} />
@@ -230,7 +230,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
 
   const text = hengxuText(product, locale)
   const body = bodyProps(locale)
-  const { mark, sub } = names(product, locale)
+  const { mark, sub, lang } = names(product, locale)
   const listing = listings.get(product.id)
   const index = HENGXU_PRODUCTS.indexOf(product)
   const prev = HENGXU_PRODUCTS[(index + HENGXU_PRODUCTS.length - 1) % HENGXU_PRODUCTS.length]
@@ -253,7 +253,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
 
     <header className={h.head}>
       <p className={s.kicker}>{copy.series} · <span className={s.num}>{product.no} / 10</span></p>
-      <h1 className={h.title}><span className={h.markL} lang="zh-CN" data-shared={sharedKey(product, 'title')}>{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
+      <h1 className={h.title}><span className={h.markL} lang={lang} data-shared={sharedKey(product, 'title')}>{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
       <p className={h.badges}>
         {!listing && <span className={s.badge} data-tone="warn">{copy.concept}</span>}
         <StageBadge product={product} listing={listing} copy={copy} />
@@ -351,8 +351,8 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
     </section>
 
     <nav className={h.pager} aria-label={copy.series}>
-      <a href={detailPath(prev)} onClick={(event) => go(event, detailPath(prev))}><ArrowLeft size={15} aria-hidden="true" /><span><small>{copy.prev}</small><b lang="zh-CN">{prev.zh.name}</b></span></a>
-      <a href={detailPath(next)} onClick={(event) => go(event, detailPath(next))} data-end="true"><span><small>{copy.next}</small><b lang="zh-CN">{next.zh.name}</b></span><ArrowRight size={15} aria-hidden="true" /></a>
+      <a href={detailPath(prev)} onClick={(event) => go(event, detailPath(prev))}><ArrowLeft size={15} aria-hidden="true" /><span><small>{copy.prev}</small><b lang={lang}>{names(prev, locale).mark}</b></span></a>
+      <a href={detailPath(next)} onClick={(event) => go(event, detailPath(next))} data-end="true"><span><small>{copy.next}</small><b lang={lang}>{names(next, locale).mark}</b></span><ArrowRight size={15} aria-hidden="true" /></a>
     </nav>
   </MaisonPage>
 }

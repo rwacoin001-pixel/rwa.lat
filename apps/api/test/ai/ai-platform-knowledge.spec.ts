@@ -18,6 +18,14 @@ describe('Live platform knowledge', () => {
     expect(sources.some(s=>s.body.includes('scanning fills the recipient only'))).toBe(true)
     expect(JSON.stringify(sources)).toContain('/profile/security')
   })
+  it('shows English-only source titles outside zh-CN and keeps the bilingual titles in zh-CN',async()=>{
+    const f=fixture()
+    const en=await f.service.retrieve('有哪些产品 deposit','en')
+    expect(en.find(s=>s.category==='platform-products')!.title).toBe('Current products')
+    for(const s of en) expect(s.title).not.toMatch(/\p{Script=Han}/u)
+    const zh=await f.service.retrieve('有哪些产品','zh-CN')
+    expect(zh.find(s=>s.category==='platform-products')!.title).toBe('当前资产产品 Current products')
+  })
   it('reads new publications on the next question and detects retirement during generation',async()=>{
     const f=fixture();const before=await f.service.retrieve('英伟达','zh-CN')
     expect(await f.service.stillCurrent(before)).toBe(true)

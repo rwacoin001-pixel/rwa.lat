@@ -143,6 +143,8 @@
 .posterTop { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 22px; }
 .posterNo { min-width: 0; overflow: hidden; color: color-mix(in srgb, var(--p-ink) 86%, transparent); font-family: var(--m-mono); font-size: 10.5px; font-weight: 600; letter-spacing: .14em; line-height: 16px; text-overflow: ellipsis; white-space: nowrap; }
 .posterMark { display: block; max-width: 100%; margin: 0; padding: 0; overflow: hidden; border: 0; background: none; color: inherit; font: inherit; font-size: clamp(48px, 15vw, 62px); font-weight: 600; letter-spacing: .02em; line-height: 1.04; text-align: start; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+/* A romanised name ("Zhongheng") is ~5em wide against the two-glyph mark's 2em; step down so it never ellipsises at 320px. */
+.posterMark[lang='en'] { font-size: clamp(38px, 11.5vw, 50px); letter-spacing: 0; }
 .posterSub, .posterLine { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .posterSub { margin: 6px 0 0; color: color-mix(in srgb, var(--p-ink) 90%, transparent); font-size: 13px; font-weight: 300; letter-spacing: .08em; line-height: 18px; }
 .posterLine { margin: 8px 0 0; color: color-mix(in srgb, var(--p-ink) 80%, transparent); font-size: 12.5px; line-height: 18px; }

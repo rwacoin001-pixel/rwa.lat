@@ -22,12 +22,18 @@ function search(question: string) {
 function relevance(question: string, text: string) {
   return search(question).reduce((sum, pattern) => sum + (text.toLowerCase().includes(pattern.slice(1, -1).replace(/\\/g, '')) ? 1 : 0), 0)
 }
+/** Titles are authored "中文 English"; zh-CN keeps both, every other locale shows only the English half (the citation chip). */
+function localTitle(title: string, locale: string) {
+  if (locale === 'zh-CN') return title
+  const english = title.match(/^.*\p{Script=Han}[^A-Za-z]*\s(\S.*)$/u)?.[1]
+  return english ?? title
+}
 function source(key: string, title: string, body: string, locale: string, url: string, query?: Query): LiveKnowledgeSource {
   const digest = createHash('sha256').update(body).digest('hex')
   const h = createHash('sha256').update(key).digest('hex')
   const id = `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-8${h.slice(17,20)}-${h.slice(20,32)}`
   return { id, sourceId: `live:${key}:${digest.slice(0,24)}`, revision: parseInt(digest.slice(0,7),16) + 1,
-    title, summary: '', body, locale, category: `platform-${key}`, productIds: [], publishedAt: new Date().toISOString(), url,
+    title: localTitle(title, locale), summary: '', body, locale, category: `platform-${key}`, productIds: [], publishedAt: new Date().toISOString(), url,
     ...(query ? { liveQuery: query } : {}) }
 }
 
@@ -36,7 +42,7 @@ function source(key: string, title: string, body: string, locale: string, url: s
 export class AiPlatformKnowledgeService {
   constructor(private readonly ds: DataSource) {}
   async retrieve(question: string, locale: string): Promise<LiveKnowledgeSource[]> {
-    const navigation = source('pages', 'A-REIT 页面与操作入口', JSON.stringify({
+    const navigation = source('pages', 'A-REIT 页面与操作入口 Pages and actions', JSON.stringify({
       pages: PAGE_DIRECTORY,
       additionalPages: [{ title: 'AI 客服与投资授权', path: '/ai-assistant' }, { title: '条款 Terms', path: '/terms' }, { title: '隐私 Privacy', path: '/privacy' }],
       note: 'Navigation only. A route is not proof of an enabled execution channel. Replace placeholders only with supplied record URLs.'
