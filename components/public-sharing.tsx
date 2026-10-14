@@ -1,5 +1,6 @@
 'use client'
 import { useRef, useState } from 'react'
+import { Share2 } from 'lucide-react'
 import { request, type ApiError } from '@/lib/api/_http'
 import { useQuery } from '@/lib/api/_query'
 import { useI18n } from '@/lib/i18n'
@@ -27,15 +28,20 @@ export function PublicShareButton({ kind, resourceId }: { kind: 'product'|'commu
   }
   async function revoke(id=shareId.current){if(!id||busy)return;setBusy(true);setError('');const result=await request(`/v1/shares/${encodeURIComponent(id)}/revoke`,{method:'POST',body:'{}'});setBusy(false);if(result.ok){if(id===shareId.current){setUrl('');shareId.current=null;setCopied(false)}history.refetch()}else setError(shareError(result.error,c))}
   async function copy(){try{await navigator.clipboard.writeText(url);setCopied(true)}catch{setCopied(false)}}
-  return <div className="my-3 space-y-2">
-    <button type="button" className={s.ctaSoft} disabled={busy||Boolean(url)} onClick={()=>void create()}>{c.create}</button>
-    <button type="button" className={s.ctaSoft} disabled={busy} aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>{c.manage}</button>
-    {error&&<p role="alert">{error}</p>}
-    {url&&<><label className="block">{c.created}<input className="w-full rounded border bg-transparent p-2" dir="ltr" readOnly value={url} onFocus={e=>e.target.select()}/></label>
-      <button type="button" className={s.ctaSoft} onClick={()=>void copy()}>{c.copy}</button>
-      <p role="status" aria-live="polite">{copied?c.copied:''}</p>
-      <button type="button" className={s.ctaSoft} disabled={busy} onClick={()=>void revoke()}>{c.revoke}</button></>}
-    {historyOpen&&<div>{history.error&&<p role="alert">{shareError(history.error,c)} <button type="button" className={s.link} onClick={history.refetch}>{c.retry}</button></p>}{history.loading&&!history.data&&<p>{c.historyLoading}</p>}{history.data?.length===0&&<p>{c.historyEmpty}</p>}{history.data?.map(link=><p key={link.id}>{new Date(link.createdAt).toLocaleString(locale)} · {link.revokedAt?c.revoked:<button type="button" className={s.ctaSoft} disabled={busy} onClick={()=>void revoke(link.id)}>{c.revokeOne}</button>}</p>)}</div>}
+  // Styled as small ghost pills under the product lede; the URL, copy/revoke and history appear only on demand.
+  return <div className={s.share}>
+    <div className={s.shareActions}>
+      <button type="button" className={s.ghost} data-size="s" disabled={busy||Boolean(url)} onClick={()=>void create()}><Share2 size={12} aria-hidden="true"/>{c.create}</button>
+      <button type="button" className={s.ghost} data-size="s" disabled={busy} aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>{c.manage}</button>
+    </div>
+    {error&&<p className={s.fieldError} role="alert">{error}</p>}
+    {url&&<><label className={s.field}><span>{c.created}</span><input data-kind="text" dir="ltr" readOnly value={url} onFocus={e=>e.target.select()}/></label>
+      <div className={s.shareActions}>
+        <button type="button" className={s.ghost} data-size="s" onClick={()=>void copy()}>{c.copy}</button>
+        <button type="button" className={s.ghost} data-size="s" disabled={busy} onClick={()=>void revoke()}>{c.revoke}</button>
+      </div>
+      <p className={s.shareNote} role="status" aria-live="polite">{copied?c.copied:''}</p></>}
+    {historyOpen&&<div className={s.shareHistory}>{history.error&&<p className={s.shareNote} role="alert">{shareError(history.error,c)} <button type="button" className={s.link} onClick={history.refetch}>{c.retry}</button></p>}{history.loading&&!history.data&&<p className={s.shareNote}>{c.historyLoading}</p>}{history.data?.length===0&&<p className={s.shareNote}>{c.historyEmpty}</p>}{history.data?.map(link=><p key={link.id}><span className={s.num}>{new Date(link.createdAt).toLocaleString(locale)}</span>{link.revokedAt?<span className={s.badge}>{c.revoked}</span>:<button type="button" className={s.ghost} data-size="s" disabled={busy} onClick={()=>void revoke(link.id)}>{c.revokeOne}</button>}</p>)}</div>}
   </div>
 }
 
@@ -51,6 +57,6 @@ export function PublicShareLanding({token}:{token:string|null}) {
     {dead?<StateBlock tone="error" title={c.invalid} body={c.invalidBody}/>
     :shared.error?<StateBlock tone="error" title={c.unavailable} body={status===0?c.network:c.failed} retry={shared.refetch} retryLabel={c.retry}/>
     :!shared.data?<Skeleton rows={3}/>
-    :<article className={s.list}><div className="p-4"><h2 dir="auto">{shared.data.title}</h2><p className="my-4 whitespace-pre-wrap" dir="auto">{shared.data.summary}</p><p>{c.privacy}</p>{path&&<button type="button" className={s.ctaSoft} onClick={()=>openPath(path)}>{c.open}</button>}</div></article>}
+    :<article className={s.list}><div className="p-4"><h2 dir="auto">{shared.data.title}</h2><p className="my-4 whitespace-pre-wrap" dir="auto">{shared.data.summary}</p><p>{c.privacy}</p>{path&&<button type="button" className={s.ghost} onClick={()=>openPath(path)}>{c.open}</button>}</div></article>}
     <button type="button" className={s.ghost} onClick={()=>openPath('/home')}>{c.home}</button></MaisonPage>
 }

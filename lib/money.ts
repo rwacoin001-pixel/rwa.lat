@@ -66,6 +66,14 @@ export function fmtPct(input: string | null | undefined, options: { signed?: boo
   const value = fixedDecimal(input, 2)
   return value === '—' ? value : `${options.signed && !value.startsWith('-') && value !== '0.00' ? '+' : ''}${value}%`
 }
+/** Display digits for an atomic unit price: 2 at or above one unit, up to PRICE_DECIMALS (trailing zeros dropped) below it. */
+export function priceDigits(atomic: string | null | undefined, decimals: number): number {
+  let value: string
+  try { value = fromAtomic(atomic, decimals) } catch { return 2 }
+  const [integer, fraction = ''] = value.replace('-', '').split('.')
+  if (BigInt(integer) >= BigInt(1)) return 2
+  return Math.max(2, fraction.slice(0, PRICE_DECIMALS).replace(/0+$/, '').length)
+}
 export function fmtQty(input: string, decimals: number, digits = 4): string {
   try { return fixedDecimal(fromAtomic(input, decimals), digits) } catch { return '—' }
 }

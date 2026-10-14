@@ -283,3 +283,29 @@ export const marketCopy: Record<AppLocale, MarketCopy> = { en, 'zh-CN': zh, hi, 
 
 export const fill = (template: string, values: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match))
+
+/** Fallback for ids without a label: `private_credit` → `Private credit`. */
+const humanize = (id: string) => { const text = id.replace(/[_-]+/g, ' ').trim(); return text.charAt(0).toUpperCase() + text.slice(1) }
+
+/** Display names for catalog asset-class ids (the API sends raw ids such as `commodity`). */
+const assetClassLabels: Record<AppLocale, Record<string, string>> = {
+  en: { treasury: 'Treasuries', stable_value: 'Stable value', private_credit: 'Private credit', real_estate: 'Real estate', fund: 'Funds', bond: 'Bonds', equity: 'Equity', commodity: 'Commodities', infrastructure: 'Infrastructure' },
+  'zh-CN': { treasury: '国债', stable_value: '稳定价值', private_credit: '私人信贷', real_estate: '房地产', fund: '基金', bond: '债券', equity: '股权', commodity: '大宗商品', infrastructure: '基础设施' },
+  hi: { treasury: 'ट्रेज़री', stable_value: 'स्थिर मूल्य', private_credit: 'निजी ऋण', real_estate: 'रियल एस्टेट', fund: 'फंड', bond: 'बॉन्ड', equity: 'इक्विटी', commodity: 'कमोडिटी', infrastructure: 'अवसंरचना' },
+  es: { treasury: 'Tesoro', stable_value: 'Valor estable', private_credit: 'Crédito privado', real_estate: 'Inmuebles', fund: 'Fondos', bond: 'Bonos', equity: 'Acciones', commodity: 'Materias primas', infrastructure: 'Infraestructura' },
+  ar: { treasury: 'سندات الخزانة', stable_value: 'قيمة مستقرة', private_credit: 'ائتمان خاص', real_estate: 'عقارات', fund: 'صناديق', bond: 'سندات', equity: 'أسهم', commodity: 'سلع', infrastructure: 'بنية تحتية' },
+  fr: { treasury: 'Trésor', stable_value: 'Valeur stable', private_credit: 'Crédit privé', real_estate: 'Immobilier', fund: 'Fonds', bond: 'Obligations', equity: 'Actions', commodity: 'Matières premières', infrastructure: 'Infrastructure' },
+  pt: { treasury: 'Tesouro', stable_value: 'Valor estável', private_credit: 'Crédito privado', real_estate: 'Imóveis', fund: 'Fundos', bond: 'Títulos', equity: 'Ações', commodity: 'Commodities', infrastructure: 'Infraestrutura' },
+}
+
+export function assetClassLabel(assetClass: string, locale: AppLocale) {
+  return assetClassLabels[locale][assetClass] ?? humanize(assetClass)
+}
+
+/** Network names are proper nouns and read the same in every locale; ids arrive lowercase (`ethereum`). */
+const networkLabels: Record<string, string> = { ethereum: 'Ethereum', tron: 'TRON', arbitrum: 'Arbitrum', polygon: 'Polygon', base: 'Base', optimism: 'Optimism', bsc: 'BNB Chain', solana: 'Solana', avalanche: 'Avalanche' }
+
+export function networkLabel(network: string | null | undefined) {
+  if (!network) return '—'
+  return networkLabels[network.toLowerCase()] ?? humanize(network)
+}

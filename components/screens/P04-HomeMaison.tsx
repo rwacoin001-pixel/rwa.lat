@@ -48,6 +48,7 @@ import { focusHomeEmailBinding } from '@/components/home/HomeEmailBinding'
 import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { homeDataCopy } from '@/lib/route-copy'
+import { assetClassLabel as classLabel } from '@/lib/maison-market-copy'
 import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home'
 import styles from './P04-HomeMaison.module.css'
 import { PullToRefresh } from '../maison/PullToRefresh'
@@ -66,16 +67,6 @@ const maisonCopy: Record<AppLocale, MaisonCopy> = {
   pt: { allocation: 'Distribuição por classe', other: 'Outros', trust: 'Custódia · Divulgação · Segurança', rank: 'N.º', strategy: 'Estratégia', invite: 'Convide amigos e ganhem recompensas juntos', inviteBody: 'Links de uso único · recompensas conforme lançamento', inviteEarned: '{v} ganhos', inviteDismiss: 'Ocultar por 30 dias', inviteOpen: 'Convites e recompensas' },
 }
 
-const classLabels: Record<AppLocale, Record<string, string>> = {
-  en: { treasury: 'Treasuries', stable_value: 'Stable value', private_credit: 'Private credit', real_estate: 'Real estate', fund: 'Funds', bond: 'Bonds', equity: 'Equity', commodity: 'Commodities', infrastructure: 'Infrastructure' },
-  'zh-CN': { treasury: '国债', stable_value: '稳定价值', private_credit: '私人信贷', real_estate: '房地产', fund: '基金', bond: '债券', equity: '股权', commodity: '大宗商品', infrastructure: '基础设施' },
-  hi: { treasury: 'ट्रेज़री', stable_value: 'स्थिर मूल्य', private_credit: 'निजी ऋण', real_estate: 'रियल एस्टेट', fund: 'फंड', bond: 'बॉन्ड', equity: 'इक्विटी', commodity: 'कमोडिटी', infrastructure: 'अवसंरचना' },
-  es: { treasury: 'Tesoro', stable_value: 'Valor estable', private_credit: 'Crédito privado', real_estate: 'Inmuebles', fund: 'Fondos', bond: 'Bonos', equity: 'Acciones', commodity: 'Materias primas', infrastructure: 'Infraestructura' },
-  ar: { treasury: 'سندات الخزانة', stable_value: 'قيمة مستقرة', private_credit: 'ائتمان خاص', real_estate: 'عقارات', fund: 'صناديق', bond: 'سندات', equity: 'أسهم', commodity: 'سلع', infrastructure: 'بنية تحتية' },
-  fr: { treasury: 'Trésor', stable_value: 'Valeur stable', private_credit: 'Crédit privé', real_estate: 'Immobilier', fund: 'Fonds', bond: 'Obligations', equity: 'Actions', commodity: 'Matières premières', infrastructure: 'Infrastructure' },
-  pt: { treasury: 'Tesouro', stable_value: 'Valor estável', private_credit: 'Crédito privado', real_estate: 'Imóveis', fund: 'Fundos', bond: 'Títulos', equity: 'Ações', commodity: 'Commodities', infrastructure: 'Infraestrutura' },
-}
-
 const lowerCopy: Record<AppLocale, { assets: string; community: string }> = {
   en: { assets: 'All assets', community: 'Enter community' },
   'zh-CN': { assets: '全部资产', community: '进入社区' },
@@ -90,10 +81,6 @@ const tickerSymbols: Record<string, string> = { '^TNX': 'US10Y', 'DX-Y.NYB': 'DX
 
 type FeaturedAsset = { slug: string; name: string; symbol?: string; assetClass?: string; marketCapUsd?: string | null; change24hPct?: string | null; change7dPct?: string | null; rank?: number | null; issuer?: { name: string } | null }
 type Distribution = { assetClass: string; assetCount: number; totalMarketCapUsd: string }
-
-function classLabel(assetClass: string, locale: AppLocale) {
-  return classLabels[locale][assetClass] ?? assetClass.replace(/_/g, ' ')
-}
 
 function toNumber(input: unknown) {
   if (input === null || input === undefined || input === '') return null

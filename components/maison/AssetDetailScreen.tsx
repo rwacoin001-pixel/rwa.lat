@@ -9,8 +9,8 @@ import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
 import { getDisclosures, getQuote, getRwaDetail, getRwaHistory, listProducts, productForSlug, type CatalogProduct } from '@/lib/api/markets'
-import { fmtUsd, fmtUsdCompact, fmtUsdt } from '@/lib/money'
-import { fill, marketCopy } from '@/lib/maison-market-copy'
+import { fmtUsd, fmtUsdCompact, fmtUsdt, priceDigits } from '@/lib/money'
+import { assetClassLabel, fill, marketCopy, networkLabel } from '@/lib/maison-market-copy'
 import { proCopy } from '@/lib/maison-pro-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Delta, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
@@ -67,17 +67,21 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
   const quote = useQuery(`markets:quote:${product.id}`, () => getQuote(product.id), { staleTime: 30_000, pollInterval: POLL.quote })
   const disclosures = useQuery(tab === 2 ? `markets:disclosures:${product.id}` : null, () => getDisclosures(product.id), { staleTime: 300_000 })
   const now = useNow(30_000)
-  const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId
+  const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? assetClassLabel(product.assetClassId, locale)
+  const network = networkLabel(product.network)
   const expired = quote.data ? quote.data.stale || Date.parse(quote.data.validUntil) <= now : false
   const invest = () => openPath(`/orders/review?product=${encodeURIComponent(product.id)}`)
   const cover = product.imageUrl ? apiUrl(product.imageUrl) : coverFor(product.assetClassId, product.displayName)
+  // Order limits are spend amounts in the USDT settlement asset (the server compares them with the order's
+  // USDT atomic amount), not quantities of the product asset, so they share the CTA's unit.
   const keyStats = [
-    { label: d.min, value: fmtAtomic(product.minOrderAtomicAmount, product.assetDecimals, product.assetCode) },
-    { label: d.max, value: fmtAtomic(product.maxOrderAtomicAmount, product.assetDecimals, product.assetCode, 0) },
-    { label: d.network, value: product.network ?? '—' },
+    { label: d.min, value: fmtUsdt(product.minOrderAtomicAmount) },
+    { label: d.max, value: fmtUsdt(product.maxOrderAtomicAmount, { digits: 0 }) },
+    { label: d.network, value: network },
   ]
   // Display only; order amounts stay atomic strings end to end.
   const unitPrice = quote.data ? Number(quote.data.unitPriceAtomicAmount) / 10 ** quote.data.unitPriceDecimals : null
+  const unitDigits = quote.data ? priceDigits(quote.data.unitPriceAtomicAmount, quote.data.unitPriceDecimals) : 2
   const validity = useMemo(() => {
     if (!quote.data) return null
     const start = Date.parse(quote.data.capturedAt), end = Date.parse(quote.data.validUntil)
@@ -102,7 +106,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
       {!quote.data && !quote.error ? <p className={`${s.bigFigure} ${s.muted}`}>—</p>
         : quote.error && !quote.data ? <><p className={`${s.bigFigure} ${s.muted}`}>—</p><p className={s.muted} style={{ margin: '8px 0 0', fontSize: 12.5 }}>{d.quoteUnavailable} · <button type="button" className={s.link} onClick={quote.refetch}>{copy.common.retry}</button></p></>
         : quote.data && <>
-          <p className={`${s.bigFigure} ${s.num}`}><Figure value={unitPrice} locale="en-US" format={{ minimumFractionDigits: 2, maximumFractionDigits: 6 }} /><small>{quote.data.currency}</small></p>
+          <p className={`${s.bigFigure} ${s.num}`}><Figure value={unitPrice} locale="en-US" format={{ minimumFractionDigits: 2, maximumFractionDigits: unitDigits }} /><small>{quote.data.currency}</small></p>
           {validity && !expired && <div style={{ marginTop: 12 }}><PollBar every={validity.span} elapsed={validity.elapsed} stamp={quote.data.capturedAt} label={fill(d.validUntil, { t: fmtDateTime(quote.data.validUntil, locale) })} /></div>}
           <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 11.5 }}>{copy.common.source}: {quote.data.source} · {fill(copy.common.updated, { t: fmtDateTime(quote.data.capturedAt, locale) })}</p>
           <p className={s.muted} style={{ margin: '4px 0 0', fontSize: 11.5 }}>{fill(d.validUntil, { t: fmtDateTime(quote.data.validUntil, locale) })}</p>
@@ -117,7 +121,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
       <StatStrip items={[
         { label: d.assetClass, value: klass },
         { label: d.settlement, value: product.assetCode },
-        { label: d.network, value: product.network ?? '—' },
+        { label: d.network, value: network },
         { label: d.version, value: `v${product.version}` },
       ]} />
       <SectionHead title={d.orderRules} />
@@ -126,7 +130,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
     </div>}
     {tab === 1 && <div className={s.tabPanel} role="tabpanel">
       {quote.data ? <dl className={s.summary}>
-        <div><dt>{d.unitPrice}</dt><dd className={s.num}>{fmtAtomic(quote.data.unitPriceAtomicAmount, quote.data.unitPriceDecimals, quote.data.currency, 6)}</dd></div>
+        <div><dt>{d.unitPrice}</dt><dd className={s.num}>{fmtAtomic(quote.data.unitPriceAtomicAmount, quote.data.unitPriceDecimals, quote.data.currency, unitDigits)}</dd></div>
         <div><dt>{copy.common.source}</dt><dd>{quote.data.source}</dd></div>
         <div><dt>{fill(copy.common.updated, { t: '' }).trim()}</dt><dd>{fmtDateTime(quote.data.capturedAt, locale)}</dd></div>
         <div><dt>{fill(d.validUntil, { t: '' }).trim()}</dt><dd>{fmtDateTime(quote.data.validUntil, locale)}</dd></div>
@@ -143,8 +147,9 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
         : <StateBlock title={d.tabs[2]} body={d.noDisclosures} />}
     </div>}
 
+    {/* No hint line here: it sat in the bar's transparent fade over the content scrolling beneath, and the same
+        eligibility sentence already closes "Order rules" (the review screen repeats it before confirming). */}
     <div className={s.stickyCta}>
-      <p>{copy.review.eligibility}</p>
       <button type="button" className={s.cta} onClick={invest}>
         <span>{d.invest} · <span className={s.num}>{fill(copy.markets.from, { v: fmtUsdt(product.minOrderAtomicAmount) })}</span></span>
         <span className={s.ctaIcon}><ArrowRight size={17} /></span>
