@@ -5,10 +5,8 @@ import { NavigationMemory } from './navigation-memory'
 
 const memory = new NavigationMemory()
 const MOTION_EVENT = 'rwa:navigation-motion'
-export type NavigationMotion = 'enter' | 'return' | 'tab'
 let activeEntry: string | null = null
 let restoring = false
-let tabSwitchAt = -Infinity
 const panel = () => document.querySelector<HTMLElement>('.rwa-mobile [data-maison-page]')
 const entryId = () => window.history.state?.rwaEntryId ?? `initial:${window.location.pathname}`
 
@@ -17,18 +15,12 @@ export function captureNavigationPosition() {
   memory.savePosition(activeEntry ?? entryId(), { x: window.scrollX, y: window.scrollY, panel: panel()?.scrollTop ?? 0 })
 }
 
-/** The bottom dock calls this before switching tabs: tabs swap almost instantly instead of playing an entrance. */
-// Time-boxed so a tab tap that never navigates (an auth redirect, the same tab) cannot mislabel a later push.
-export function markTabNavigation() { tabSwitchAt = performance.now() }
-
 /** Call before a history write; each pushed visit has its own return position. */
 export function nextNavigationState(replace = false) {
   captureNavigationPosition()
   const id = replace ? entryId() : crypto.randomUUID()
   activeEntry = id
-  const tab = performance.now() - tabSwitchAt < 600
-  tabSwitchAt = -Infinity
-  window.dispatchEvent(new CustomEvent(MOTION_EVENT, { detail: tab ? 'tab' : 'enter' }))
+  window.dispatchEvent(new CustomEvent(MOTION_EVENT, { detail: 'enter' }))
   return { rwaNavigation: replace ? Boolean(history.state?.rwaNavigation) : true, rwaEntryId: id }
 }
 
@@ -53,7 +45,7 @@ export function usePageState<T>(key: string, initial: T | (() => T)) {
 }
 
 export function useNavigationViewport(routeKey: string) {
-  const [motion, setMotion] = useState<NavigationMotion>('enter')
+  const [motion, setMotion] = useState<'enter' | 'return'>('enter')
   useLayoutEffect(() => {
     activeEntry = entryId()
     if (!history.state?.rwaEntryId) history.replaceState({ ...history.state, rwaEntryId: activeEntry }, '', window.location.href)
@@ -65,7 +57,7 @@ export function useNavigationViewport(routeKey: string) {
       activeEntry = entryId()
       setMotion('return')
     }
-    const onMotion = (event: Event) => setMotion((event as CustomEvent<NavigationMotion>).detail)
+    const onMotion = (event: Event) => setMotion((event as CustomEvent<'enter' | 'return'>).detail)
     const clear = () => memory.clear()
     document.addEventListener('scroll', onScroll, { capture: true, passive: true })
     window.addEventListener('popstate', onPop)

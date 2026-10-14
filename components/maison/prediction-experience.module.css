@@ -76,7 +76,7 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
 .eventRow .rowProbability { min-width:4.2ch; font-size:18px; text-align:end; font-variant-numeric:tabular-nums; }
 /* Yes / No are equal-weight cards: neutral lacquer face, coloured icon tile left, label, price right-aligned. */
 .eventOutcome { gap:6px; margin-top:6px; }
-.eventPage .eventOutcome button { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:6px; min-height:44px; padding:0 10px 0 6px; border-color:var(--m-line); border-radius:9px; background:var(--m-glass); color:var(--m-ink); font-size:13px; font-weight:600; }
+.eventPage .eventOutcome button { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:6px; min-height:36px; padding:0 10px 0 6px; border-color:var(--m-line); border-radius:9px; background:var(--m-glass); color:var(--m-ink); font-size:13px; font-weight:600; }
 .eventPage .eventOutcome button > span { text-align:center; }
 .eventPage .eventOutcome button > b { font-size:14px; font-weight:700; letter-spacing:-.01em; text-align:end; font-variant-numeric:tabular-nums; }
 .eventOutcomeIcon { display:grid; place-items:center; width:22px; height:22px; border-radius:6px; }
@@ -150,7 +150,7 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
 .centerAmount span { color:var(--m-muted); font-size:11px; font-weight:650; }
 .balance { margin:6px 0 0; color:var(--m-muted); font-size:11px; line-height:1.4; }
 .ticketOutcomes { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; border:1px solid var(--m-line-soft); border-radius:16px; background:var(--m-glass-deep); }
-.ticketOutcomes button { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-height:44px; border:1px solid transparent; border-radius:12px; color:var(--m-muted); background:transparent; font:600 13px var(--m-sans); cursor:pointer; }
+.ticketOutcomes button { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; min-height:38px; border:1px solid transparent; border-radius:12px; color:var(--m-muted); background:transparent; font:600 13px var(--m-sans); cursor:pointer; }
 .ticketOutcomes button small { font-size:11px; font-weight:500; }
 .ticketOutcomes button[aria-pressed='true'] { background:var(--m-glass); border-color:var(--m-line); }
 .ticketOutcomes button[aria-pressed='true'][data-side='yes'] { color:var(--m-up); }
@@ -163,7 +163,7 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
 /* Cost of the win sits right under it, not behind a disclosure. */
 .netCost { margin:-4px 0 0; color:var(--m-muted); font-size:11px; line-height:1.4; text-align:center; font-variant-numeric:tabular-nums; }
 .compactTicket .quickAmounts { margin:0; gap:7px; }
-.compactTicket .quickAmounts button { min-height:44px; min-width:0; font-size:12px; }
+.compactTicket .quickAmounts button { min-height:38px; min-width:0; font-size:12px; }
 .ticketDetails { color:var(--m-muted); font-size:11px; }
 .ticketDetails summary { display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:30px; list-style:none; cursor:pointer; }
 .ticketDetails summary::-webkit-details-marker { display:none; }
@@ -173,7 +173,7 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
 .ticketDetails dl > div:last-child { border:0; }
 .ticketDetails dd { margin:0; color:var(--m-ink); text-align:end; }
 .quoteLine { display:flex; flex-wrap:wrap; align-items:center; justify-content:center; gap:5px 10px; font-size:11px; line-height:1.4; color:var(--m-muted); }
-.quoteLine button { position:relative; display:inline-flex; gap:4px; align-items:center; min-height:30px; padding:0; border:0; background:transparent; color:var(--m-accent); font:inherit; cursor:pointer; }
+.quoteLine button { display:inline-flex; gap:4px; align-items:center; min-height:30px; padding:0; border:0; background:transparent; color:var(--m-accent); font:inherit; cursor:pointer; }
 .quoteLine button:disabled { opacity:.5; cursor:not-allowed; }
 .quoteSpinner { animation:chartSpin .8s linear infinite; }
 .ticketIssue { margin:0; color:var(--m-down); font-size:12px; line-height:1.4; }
@@ -190,7 +190,3 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
 @media(prefers-reduced-motion:reduce) { .guideImage > g, .guideScene { animation:none; } }
 
 .legendAvatar > span { width:24px; height:24px; font-size:12px; border-radius:7px; }
-/* Money actions: every tap target is at least 44px. The quote refresh keeps its slim line and gets the extra
-   height from an invisible hit area instead of pushing the ticket apart. */
-.quoteLine button::after { content:''; position:absolute; inset:-7px -6px; }
-.eventPage .eventOutcome button:active:not(:disabled), .ticketOutcomes button:active:not(:disabled), .compactTicket .quickAmounts button:active:not(:disabled) { transform:scale(.97); }

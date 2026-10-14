@@ -6,7 +6,6 @@ import Image from 'next/image'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
-import { assetClassLabel, networkLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, apiUrl } from '@/lib/api/_http'
 import { getDisclosures, getQuote, getRwaDetail, getRwaHistory, listProducts, productForSlug, type CatalogProduct } from '@/lib/api/markets'
@@ -68,14 +67,14 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
   const quote = useQuery(`markets:quote:${product.id}`, () => getQuote(product.id), { staleTime: 30_000, pollInterval: POLL.quote })
   const disclosures = useQuery(tab === 2 ? `markets:disclosures:${product.id}` : null, () => getDisclosures(product.id), { staleTime: 300_000 })
   const now = useNow(30_000)
-  const klass = assetClassLabel(product.assetClassId, locale)
+  const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId
   const expired = quote.data ? quote.data.stale || Date.parse(quote.data.validUntil) <= now : false
   const invest = () => openPath(`/orders/review?product=${encodeURIComponent(product.id)}`)
   const cover = product.imageUrl ? apiUrl(product.imageUrl) : coverFor(product.assetClassId, product.displayName)
   const keyStats = [
     { label: d.min, value: fmtAtomic(product.minOrderAtomicAmount, product.assetDecimals, product.assetCode) },
     { label: d.max, value: fmtAtomic(product.maxOrderAtomicAmount, product.assetDecimals, product.assetCode, 0) },
-    { label: d.network, value: networkLabel(product.network) ?? '—' },
+    { label: d.network, value: product.network ?? '—' },
   ]
   // Display only; order amounts stay atomic strings end to end.
   const unitPrice = quote.data ? Number(quote.data.unitPriceAtomicAmount) / 10 ** quote.data.unitPriceDecimals : null
@@ -118,7 +117,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
       <StatStrip items={[
         { label: d.assetClass, value: klass },
         { label: d.settlement, value: product.assetCode },
-        { label: d.network, value: networkLabel(product.network) ?? '—' },
+        { label: d.network, value: product.network ?? '—' },
         { label: d.version, value: `v${product.version}` },
       ]} />
       <SectionHead title={d.orderRules} />
@@ -187,7 +186,7 @@ function ResearchDetail({ slug }: { slug: string }) {
     <header className={s.hero}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Logo src={asset.logoUrl} name={content(asset.name)} />
-        <p className={s.kicker} style={{ flexWrap: 'wrap' }}>{[symbol, assetClassLabel(asset.assetClass, locale)].filter(Boolean).join(' · ')}</p>
+        <p className={s.kicker} style={{ flexWrap: 'wrap' }}>{[symbol, asset.assetClass.replace(/_/g, ' ')].filter(Boolean).join(' · ')}</p>
       </div>
       <h1 className={s.titleL} style={{ marginTop: 14 }}>{content(asset.name)}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>

@@ -10,4 +10,4 @@
 .facts dd { margin: 0; font-weight: 650; text-align: end; font-variant-numeric: tabular-nums; }
 .warning { display: flex; align-items: flex-start; gap: 10px; margin: 12px 0 0; color: var(--m-muted); font-size: 13px; line-height: 1.55; }
 .warning svg { flex: 0 0 auto; margin-top: 2px; color: var(--m-accent); }
-@media (prefers-reduced-motion: no-preference) { .help[open] { animation: help-in .26s var(--ease-house); } @keyframes help-in { from { opacity: .7; transform: translateY(28px); } to { opacity: 1; transform: none; } } }
+@media (prefers-reduced-motion: no-preference) { .help[open] { animation: help-in .26s cubic-bezier(.22, .8, .18, 1); } @keyframes help-in { from { opacity: .7; transform: translateY(28px); } to { opacity: 1; transform: none; } } }

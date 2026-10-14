@@ -59,7 +59,7 @@
 .primary:focus-visible, .secondary:focus-visible, .exit:focus-visible { outline: 2px solid var(--g-gold); outline-offset: 2px; }
 
 /* One entrance, then still. */
-.head, .notice, .steps, .notes, .done { animation: gateRise .6s var(--ease-house) both; }
+.head, .notice, .steps, .notes, .done { animation: gateRise .6s cubic-bezier(.22, .8, .18, 1) both; }
 .notice, .steps { animation-delay: .12s; }
 .notes, .done { animation-delay: .22s; }
 @keyframes gateRise { from { opacity: 0; transform: translateY(10px); } }
