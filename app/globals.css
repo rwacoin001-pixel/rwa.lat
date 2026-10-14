@@ -555,7 +555,8 @@ button:focus-visible, input:focus-visible, a:focus-visible, [tabindex]:focus-vis
 .liquid-dock.is-compact .ai-orb { width: 56px; height: 56px; min-width: 56px; min-height: 56px; max-width: 56px; max-height: 56px; }
 .liquid-dock.is-compact .ai-orb__particle-logo { width: 35px; height: 35px; }
 .ai-orb { width: 56px; height: 56px; min-width: 56px; min-height: 56px; max-width: 56px; max-height: 56px; position: relative; display: grid; place-items: center; flex: 0 0 56px; border: 0; border-radius: 50%; color: var(--mint); background: transparent; box-shadow: none; backdrop-filter: none; pointer-events: auto; transition: transform .18s ease; isolation: isolate; }
-.ai-orb__orb { width: 54px; height: 54px; display: block; border-radius: 50%; overflow: hidden; }
+.ai-orb__orb { width: 54px; height: 54px; display: block; border-radius: 50%; overflow: hidden; box-shadow: 0 8px 18px -6px rgba(27, 24, 19, .28); }
+.rwa-mobile[data-theme="dark"] .ai-orb__orb { box-shadow: 0 8px 20px -6px rgba(0, 0, 0, .6), 0 0 0 1px rgba(169, 184, 208, .12); }
 .ai-orb.is-active .ai-orb__orb { color: var(--mint); }
 .ai-orb::before { content: ''; position: absolute; z-index: 1; inset: -75%; pointer-events: none; background: linear-gradient(108deg, transparent 43%, transparent 47%, var(--shimmer-color) 50%, rgb(var(--accent-rgb)/.78) 52%, transparent 56%, transparent 61%); opacity: 0; transform: translateX(-42%) rotate(22deg); }
 .ai-orb::after { content: ''; position: absolute; z-index: 2; inset: 2px; pointer-events: none; border: 0; border-radius: inherit; box-shadow: none; }

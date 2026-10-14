@@ -9,14 +9,20 @@ import { aiVisualCopy } from '@/lib/ai-visual-copy'
 import { AI_FILE_ACCEPT, AI_FILE_LIMITS, type AiAttachment } from '@/lib/ai-attachment-policy'
 import { readAiFile } from '@/lib/ai-file-parser'
 import { useAiVoice } from './useAiVoice'
-import AiVoiceWaveform from './AiVoiceWaveform'
+import AiPearl from './AiPearl'
+import { aiPearlCopy } from '@/lib/ai-pearl-copy'
+import { holdLabel, isVoiceActive, pearlFor, showsSuggestions, surfaceState, type SurfaceState } from '@/lib/ai-surface-state'
 import AiFaqTicker from './AiFaqTicker'
 import s from './ai-composer.module.css'
 
-export default function AiComposer({ value, onChange, onSend, onStop, onInteraction, busy, disabled, placeholder, sendLabel, stopLabel, locale, secretLabel }: {
-  value: string; onChange(value: string): void; onSend(value: string, attachments: AiAttachment[]): Promise<boolean>; onStop?(): void; onInteraction?(): void; busy: boolean; disabled?: boolean; placeholder: string; sendLabel: string; stopLabel: string; locale: AppLocale; secretLabel: string
+export type ComposerVoice = { state: SurfaceState; live: string }
+
+// `voiceOverlay` false hands the listening visual to the page (the welcome pearl shows it instead), and
+// `suggestions` false hides the question ticker where the page already shows its own suggestions.
+export default function AiComposer({ value, onChange, onSend, onStop, onInteraction, onVoice, busy, disabled, placeholder, sendLabel, stopLabel, locale, secretLabel, voiceOverlay = true, suggestions = true }: {
+  value: string; onChange(value: string): void; onSend(value: string, attachments: AiAttachment[]): Promise<boolean>; onStop?(): void; onInteraction?(): void; onVoice?(voice: ComposerVoice): void; busy: boolean; disabled?: boolean; placeholder: string; sendLabel: string; stopLabel: string; locale: AppLocale; secretLabel: string; voiceOverlay?: boolean; suggestions?: boolean
 }) {
-  const c = aiInputCopy(locale), v = aiVoiceCopy(locale), visual = aiVisualCopy(locale), reduced = useReducedMotion()
+  const c = aiInputCopy(locale), v = aiVoiceCopy(locale), visual = aiVisualCopy(locale), pearl = aiPearlCopy(locale), reduced = useReducedMotion()
   const [focused, setFocused] = useState(false), [picker, setPicker] = useState(false), [files, setFiles] = useState<AiAttachment[]>([]), [reading, setReading] = useState<number | null>(null), [error, setError] = useState('')
   const [voiceMode, setVoiceMode] = useState(false), [cancelled, setCancelled] = useState(false)
   const field = useRef<HTMLTextAreaElement>(null), fileInput = useRef<HTMLInputElement>(null), imageInput = useRef<HTMLInputElement>(null), processing = useRef<AbortController | null>(null), ime = useRef(false), sending = useRef(false)
@@ -25,12 +31,19 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   const expanded = !voiceMode && (focused || !!value || files.length > 0 || reading !== null)
   useLayoutEffect(() => { const el = field.current; if (el) { el.style.height = '0px'; el.style.height = `${Math.min(el.scrollHeight, 148)}px` } }, [value, expanded])
   useEffect(() => () => { processing.current?.abort() }, [])
+  const state = surfaceState({ available: !disabled, busy, voiceMode, voicePhase: voice.phase, cancelled, reading: reading !== null, hasDraft: !!value.trim() || files.length > 0, focused })
+  useEffect(() => { onVoice?.({ state, live: voice.live }) }, [state, voice.live])
   useEffect(() => { if (!voice.listening && !voice.processing) { hold.current=null; keyHeld.current=false; setCancelled(false) } }, [voice.listening, voice.processing, voice.error])
   const submit = async (message = value, releasedVoice = false) => {
     if (busy || disabled || reading !== null || sending.current || (!releasedVoice && (voice.listening || voice.processing)) || (!message.trim() && !files.length)) return
     sending.current = true; setPicker(false); setError('')
     onInteraction?.()
-    try { if (await onSend(message.trim() || c.sendFile, files)) { setFiles([]); onChange(''); if (!voiceMode) field.current?.focus() } } catch { setError(c.actionFailed) } finally { sending.current = false }
+    // The box empties the moment the question is sent (it is already in the thread, and the busy placeholder
+    // needs the room); if the send fails or is stopped, the words and attachments come straight back.
+    const sentFiles = files
+    onChange(''); setFiles([])
+    const restore = () => { onChange(message); setFiles(sentFiles) }
+    try { if (await onSend(message.trim() || c.sendFile, sentFiles)) { if (!voiceMode) field.current?.focus() } else restore() } catch { restore(); setError(c.actionFailed) } finally { sending.current = false }
   }
   const keyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === 'Enter' && !event.shiftKey && !ime.current && !event.nativeEvent.isComposing) { event.preventDefault(); void submit() }
@@ -45,7 +58,8 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   const pointerDown = (event: PointerEvent<HTMLButtonElement>) => {
     if (event.button !== 0 || hold.current || !beginHold()) return
     event.preventDefault(); hold.current = { pointer: event.pointerId, y: event.clientY, cancel: false }
-    event.currentTarget.setPointerCapture(event.pointerId)
+    // A very fast tap can end before capture; the hold still works, it just won't follow a finger off the bar.
+    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* Pointer already released. */ }
   }
   const pointerMove = (event: PointerEvent<HTMLButtonElement>) => {
     const current = hold.current
@@ -84,9 +98,12 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   // Each failure names its next step: timeout → hold again; denied → where to re-enable the microphone.
   const voiceError = voice.error === 'unavailable' ? c.voiceUnavailable : voice.error === 'denied' ? v.denied : voice.error === 'timeout' ? v.timeout : voice.error === 'empty' ? c.voiceEmpty : voice.error === 'network' ? v.network : voice.error === 'capture' ? v.capture : voice.error === 'language' ? v.language : voice.error ? c.voiceFailed : ''
   return <div className={s.wrap} dir={locale === 'ar' ? 'rtl' : undefined}>
-    {!busy && !value && !files.length && reading === null && !voice.listening && !voice.processing && <AiFaqTicker questions={visual.prompts} label={visual.suggestions} onSelect={ask}/>}
-    <AnimatePresence>{voice.listening && <motion.div className={s.recording} data-cancel={cancelled || undefined} data-phase={voice.phase} initial={{ opacity: 0, y: reduced ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 5 }}>
-      <AiVoiceWaveform active={voice.listening} speaking={voice.speaking}/><p role="status">{cancelled ? v.cancel : voice.phase === 'connecting' ? v.preparing : <><b>{v.listening}</b><span>{v.release}</span></>}</p>
+    {suggestions && showsSuggestions(state) && <AiFaqTicker questions={visual.prompts} label={visual.suggestions} onSelect={ask}/>}
+    {/* Holding to talk: a small pearl listens above the bar and only the recognised words appear; every
+        instruction (release to send, slide up to cancel) lives on the bar under the thumb. */}
+    <AnimatePresence>{voiceOverlay && isVoiceActive(state) && <motion.div className={s.recording} data-cancel={cancelled || undefined} data-phase={voice.phase} initial={{ opacity: 0, y: reduced ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 5 }}>
+      <AiPearl size={76} state={pearlFor(state)} pulse={voice.live.length} cancel={state === 'cancelArmed'}/>
+      <p className={s.live} dir="auto" data-empty={!voice.live || undefined}>{voice.live || (state === 'listening' ? pearl.listening : '')}</p>
     </motion.div>}</AnimatePresence>
     <AnimatePresence>{picker && <motion.div className={s.picker} initial={{ opacity: 0, y: reduced ? 0 : 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="group" aria-label={c.attach}>
       <button type="button" onClick={() => imageInput.current?.click()}><ImagePlus size={20}/><span>{c.image}<small>{visual.hint}</small></span></button>
@@ -94,15 +111,15 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
     </motion.div>}</AnimatePresence>
     <input ref={fileInput} className={s.hidden} type="file" accept={AI_FILE_ACCEPT} multiple onChange={e => void load(e.target.files)} />
     <input ref={imageInput} className={s.hidden} type="file" accept="image/jpeg,image/png,image/webp" multiple onChange={e => void load(e.target.files)} />
-    <motion.form layout="size" className={s.composer} data-mode={voiceMode ? 'voice' : 'text'} data-recording={voice.listening || undefined} data-phase={voice.phase} data-cancel={cancelled || undefined} data-expanded={expanded || undefined} data-disabled={disabled || undefined} animate={{ borderRadius: expanded ? 25 : 30 }} transition={{ duration: reduced ? 0 : .22, ease: [.22, 1, .36, 1] }} onSubmit={event => { event.preventDefault(); void submit() }}>
+    <motion.form layout="size" className={s.composer} data-mode={voiceMode ? 'voice' : 'text'} data-recording={voice.listening || undefined} data-phase={voice.phase} data-cancel={cancelled || undefined} data-expanded={expanded || undefined} data-busy={busy || undefined} data-state={state} data-disabled={disabled || undefined} animate={{ borderRadius: expanded ? 25 : 30 }} transition={{ duration: reduced ? 0 : .22, ease: [.22, 1, .36, 1] }} onSubmit={event => { event.preventDefault(); void submit() }}>
       {!!files.length && <ul className={s.files}>{files.map((file, i) => <li key={`${file.name}-${i}`}><details><summary>{file.method === 'image' && file.dataUrl ? <img className={s.thumbnail} src={file.dataUrl} alt=""/> : <FileText size={15}/>}<span>{file.name}<small>{file.method === 'image' ? `${visual.image} · ${file.width} × ${file.height}` : `${file.method === 'ocr' ? c.ocr : c.extracted} · ${file.text.length.toLocaleString(locale)}`}</small></span></summary>{file.method === 'image' && file.dataUrl ? <img className={s.imageReview} src={file.dataUrl} alt={file.name}/> : <pre>{file.text}</pre>}</details><button type="button" disabled={busy || reading !== null} aria-label={`${c.remove}: ${file.name}`} onClick={() => setFiles(old => old.filter((_, index) => index !== i))}><X size={15}/></button></li>)}</ul>}
       <button type="button" className={s.add} aria-label={c.attach} aria-expanded={picker} disabled={disabled || busy || reading !== null || voice.listening || voice.processing} onClick={() => setPicker(open => !open)}><Plus size={22}/></button>
-      {voiceMode ? <button type="button" className={s.hold} disabled={disabled || busy || reading !== null || voice.processing} aria-label={v.hold} aria-pressed={voice.listening} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishHold(event)} onPointerCancel={event => finishHold(event, true)} onLostPointerCapture={event => { if (hold.current) finishHold(event, true) }} onContextMenu={event => event.preventDefault()} onKeyDown={event => { if (event.key === 'Escape') finishHold(undefined, true); if ((event.key === ' ' || event.key === 'Enter') && !event.repeat && !keyHeld.current) { event.preventDefault(); keyHeld.current = beginHold() } }} onKeyUp={event => { if ((event.key === ' ' || event.key === 'Enter') && keyHeld.current) { event.preventDefault(); finishHold() } }} onBlur={() => { if (keyHeld.current) finishHold(undefined, true) }}><span>{voice.processing ? v.transcribing : cancelled ? v.cancel : voice.phase === 'connecting' ? v.preparing : voice.listening ? v.listening : v.hold}</span></button> : <textarea ref={field} value={value} rows={1} maxLength={4000} dir="auto" disabled={disabled || busy} placeholder={placeholder} aria-label={placeholder} onChange={e => { onChange(e.target.value); if (e.target.value) onInteraction?.() }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onKeyDown={keyDown} onCompositionStart={() => { ime.current = true }} onCompositionEnd={() => { ime.current = false }} />}
+      {voiceMode ? <button type="button" className={s.hold} disabled={disabled || busy || reading !== null || voice.processing} aria-label={v.hold} aria-pressed={voice.listening} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishHold(event)} onPointerCancel={event => finishHold(event, true)} onLostPointerCapture={event => { if (hold.current) finishHold(event, true) }} onContextMenu={event => event.preventDefault()} onKeyDown={event => { if (event.key === 'Escape') finishHold(undefined, true); if ((event.key === ' ' || event.key === 'Enter') && !event.repeat && !keyHeld.current) { event.preventDefault(); keyHeld.current = beginHold() } }} onKeyUp={event => { if ((event.key === ' ' || event.key === 'Enter') && keyHeld.current) { event.preventDefault(); finishHold() } }} onBlur={() => { if (keyHeld.current) finishHold(undefined, true) }}><span>{holdLabel(state, v)}</span></button> : <textarea ref={field} value={value} rows={1} maxLength={4000} dir="auto" disabled={disabled || busy} placeholder={busy ? pearl.busy : placeholder} aria-label={placeholder} onChange={e => { onChange(e.target.value); if (e.target.value) onInteraction?.() }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onKeyDown={keyDown} onCompositionStart={() => { ime.current = true }} onCompositionEnd={() => { ime.current = false }} />}
       <div className={s.controls}>
         {voiceMode ? <button type="button" className={s.voice} aria-label={v.keyboard} disabled={voice.listening} onClick={switchKeyboard}><Keyboard size={21}/></button> : <button type="button" className={s.voice} disabled={disabled || busy || reading !== null} aria-label={c.voice} onClick={() => { setError(''); setVoiceMode(true); setFocused(false); field.current?.blur() }}><Mic size={22}/></button>}
         {reading !== null ? <span className={s.reading} role="status"><LoaderCircle size={18}/><span>{reading}%</span></span> : busy && onStop ? <button key="stop" type="button" className={s.send} aria-label={stopLabel} onClick={onStop}><Square size={12} fill="currentColor"/></button> : !voiceMode && (value.trim() || files.length) ? <button key="send" type="submit" className={s.send} disabled={disabled || busy} aria-label={sendLabel}><ArrowUp size={19}/></button> : null}
       </div>
     </motion.form>
-    {(error || voiceError || reading !== null || voice.processing) && <p className={s.status} role={error || voiceError ? 'alert' : 'status'}>{error || voiceError || (voice.processing ? v.transcribing : `${c.reading} ${reading}%`)}</p>}
+    {(error || voiceError || reading !== null || (voice.processing && !voiceOverlay)) && <p className={s.status} data-tone={error || voiceError ? 'error' : undefined} role={error || voiceError ? 'alert' : 'status'}>{error || voiceError || (voice.processing ? v.transcribing : `${c.reading} ${reading}%`)}</p>}
   </div>
 }

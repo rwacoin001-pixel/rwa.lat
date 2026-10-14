@@ -27,7 +27,7 @@ const voiceError = (code = ''): VoiceError => code === 'service-not-allowed' ? '
 /** Only the recognition engine opens the microphone. Hold mode sends nothing before release. */
 export function useAiVoice(locale: string, onText: (text: string) => void, options: { deferResult?: boolean } = {}) {
   const [available, setAvailable] = useState(false), [listening, setListening] = useState(false), [error, setError] = useState<VoiceError | null>(null)
-  const [processing, setProcessing] = useState(false), [ready, setReady] = useState(false), [speaking, setSpeaking] = useState(false)
+  const [processing, setProcessing] = useState(false), [ready, setReady] = useState(false), [speaking, setSpeaking] = useState(false), [live, setLive] = useState('')
   const active = useRef(false), recognition = useRef<Recognition | null>(null), receive = useRef(onText), timer = useRef<ReturnType<typeof setTimeout> | null>(null), run = useRef(0)
   const releaseTimer = useRef<ReturnType<typeof setTimeout> | null>(null), restartTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const deferred = useRef(!!options.deferResult), transcript = useRef(''), completed = useRef(''), released = useRef(false), ended = useRef(false), delivered = useRef(false)
@@ -39,7 +39,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
     if (connectTimer.current) { clearTimeout(connectTimer.current); connectTimer.current = null }
   }, [])
   const settle = useCallback(() => {
-    active.current = false; recognition.current = null; readyRef.current = false; setListening(false); setProcessing(false); setReady(false); setSpeaking(false)
+    active.current = false; recognition.current = null; readyRef.current = false; setListening(false); setProcessing(false); setReady(false); setSpeaking(false); setLive('')
     for (const ref of [timer, releaseTimer, restartTimer, connectTimer]) { if (ref.current) clearTimeout(ref.current); ref.current = null }
   }, [])
   const cancel = useCallback(() => {
@@ -79,7 +79,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
       if (detail?.type === 'ready' || detail?.type === 'speechstart') { markReady(); setSpeaking(detail.type === 'speechstart') }
       if (detail?.type === 'result' && detail.text) {
         markReady(); setSpeaking(true)
-        transcript.current = detail.text.trim().slice(0, 4000)
+        transcript.current = detail.text.trim().slice(0, 4000); setLive(textSoFar())
         if (!deferred.current && detail.final !== false) { delivered.current = true; receive.current(transcript.current) }
       }
       if (detail?.type === 'error') {
@@ -110,7 +110,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
     if (permission.current === 'denied') { setError('denied'); return false }
     cancelActiveVoice?.(); cancelActiveVoice = cancel
     const runId = ++run.current, android = /Android/i.test(w.navigator?.userAgent ?? '')
-    setError(null); transcript.current = completed.current = ''; released.current = ended.current = delivered.current = false
+    setError(null); setLive(''); transcript.current = completed.current = ''; released.current = ended.current = delivered.current = false
     active.current = true; readyRef.current = false; restarts.current = 0; setListening(true); setProcessing(false); setReady(false); setSpeaking(false)
     timer.current = setTimeout(() => { cancel(); setError(previous => previous ?? 'failed') }, 60000)
     // A WebView can expose the constructor yet never deliver audio; never leave the hold on "connecting".
@@ -133,7 +133,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
         if (!current()) return
         // Keep the latest full hypothesis; a later final event replaces it, never duplicates it.
         const text = Array.from(event.results).map(result => result[0]?.transcript ?? '').join(' ').trim().slice(0, 4000)
-        if (text) { transcript.current = text; markReady(); setSpeaking(true) }
+        if (text) { transcript.current = text; setLive(textSoFar()); markReady(); setSpeaking(true) }
         if (!deferred.current) {
           const final = Array.from(event.results).filter(result => result.isFinal !== false).map(result => result[0]?.transcript ?? '').join(' ').trim()
           if (final) { delivered.current = true; receive.current(final) }
@@ -167,5 +167,6 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
     } catch { cancel(); setError('failed'); return false }
   }, [cancel, locale, stop, finish, markReady, textSoFar])
   const phase: VoicePhase = processing ? 'processing' : listening ? ready ? 'listening' : 'connecting' : 'idle'
-  return { available, listening, processing, ready, speaking, error, phase, start, stop, cancel }
+  // `live` is the words recognised so far in this hold, shown while speaking so a misheard phrase can be cancelled.
+  return { available, listening, processing, ready, speaking, error, phase, live, start, stop, cancel }
 }

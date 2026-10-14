@@ -22,16 +22,15 @@ import { aiShellCopy, aiInputCopy } from '@/lib/maison-ai-copy'
 import { aiVoiceCopy } from '@/lib/ai-voice-copy'
 import { aiVisualCopy } from '@/lib/ai-visual-copy'
 import type { AiPageContext } from '@/lib/ai-page-context'
-import { useRwaTheme } from '@/lib/rwa-theme'
-import { useReducedMotion } from 'motion/react'
 import { showAiAnswer, type AiAttachment } from '@/lib/ai-attachment-policy'
 import { AI_CHAT_SESSION_KEY, clearAiChatSession, parseAiChatSession, serializeAiChatSession, type AiChatMessage } from '@/lib/ai-chat-session'
-import AiComposer from './AiComposer'
+import AiComposer, { type ComposerVoice } from './AiComposer'
+import AiPearl from './AiPearl'
+import { aiPearlCopy, pearlGreeting } from '@/lib/ai-pearl-copy'
+import { isVoiceActive, pearlFor, showsSuggestions } from '@/lib/ai-surface-state'
 import AiAnswerActions from './AiAnswerActions'
-import ParticleLogoIcon from '../particle-logo-icon'
 import { MaisonPage } from './primitives'
 import a from './ai-chat.module.css'
-const LiquidMetal = dynamic(() => import('@paper-design/shaders-react').then(module => module.LiquidMetal), { ssr: false })
 // The 社区 tab loads the feed only when first opened, so the assistant stays light.
 const CommunityFeed = dynamic(() => import('../community-screens').then(module => module.CommunityFeedScreen), { ssr: false })
 const TAB_KEY = 'rwa-ai-tab'
@@ -110,15 +109,17 @@ function Thinking({ label, slow, slower, seconds }: { label: string; slow: strin
   </div>
 }
 
-function Mark({ busy = false, size = 'sm' }: { busy?: boolean; size?: 'sm' | 'lg' }) {
-  return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><ParticleLogoIcon className={a.markLogo} label="" /></span>
+// The assistant's avatar is the same pearl as the welcome screen: still at rest, an orbiting arc while it
+// thinks, and one bright pulse as an answer lands.
+function Mark({ busy = false, speaking = false, size = 'sm' }: { busy?: boolean; speaking?: boolean; size?: 'sm' | 'lg' }) {
+  return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><AiPearl size={size === 'lg' ? 64 : 28} inset={.37} state={busy ? 'thinking' : speaking ? 'speaking' : 'idle'} pulse={speaking ? 1 : 0} still={!busy && !speaking} /></span>
 }
 
 /* ---------- Screen ---------- */
 
 export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; onPlan: () => void; pageContext?: AiPageContext }) {
   const { locale } = useI18n()
-  const { theme } = useRwaTheme(), reduceMotion = useReducedMotion()
+  const pearl = aiPearlCopy(locale), prompts = aiVisualCopy(locale).prompts.slice(0, 3)
   const c = aiShellCopy[locale], chat = aiChatCopy[locale]
   const voiceCopy = aiVoiceCopy(locale)
   const [input, setInput] = useState('')
@@ -131,6 +132,10 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const [keyboard, setKeyboard] = useState(0)
   const [dockHeight, setDockHeight] = useState(150)
   const [revealId, setRevealId] = useState<number | null>(null)
+  const [voice, setVoice] = useState<ComposerVoice>({ state: 'idle', live: '' })
+  const [speakingId, setSpeakingId] = useState<number | null>(null)
+  // The avatar pulses once while a new answer unfolds, then rests (a resting pearl draws no frames).
+  useEffect(() => { setSpeakingId(revealId); if (revealId === null) return; const timer = window.setTimeout(() => setSpeakingId(null), 1600); return () => window.clearTimeout(timer) }, [revealId])
   const [started, setStarted] = useState(false)
   const [sessionRestored, setSessionRestored] = useState(false)
   const inflight = useRef<AbortController | null>(null)
@@ -251,6 +256,9 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     setError({ text: chat.cancelled, tone: 'info', retry: pending, attachments: last?.attachments })
   }
   const empty = sessionRestored && messages.length === 0 && !sending
+  // The welcome pearl stays while the reader holds to talk, and steps aside when the keyboard needs the room.
+  const listeningHere = isVoiceActive(voice.state)
+  const showWelcome = empty && (!started || keyboard <= 80 || listeningHere)
 
   return <MaisonPage page="ai">
     <div className={a.shell}>
@@ -272,13 +280,17 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
       </section>}
 
       <div id="ai-panel-ai" role="tabpanel" aria-labelledby="ai-tab-ai" hidden={community} className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
-        {empty && !started ? <section className={a.welcome} aria-label={voiceCopy.title}>
-          <span className={a.welcomeOrb} aria-hidden="true"><LiquidMetal shape="circle" colorBack="#00000000" colorTint={theme === 'light' ? '#D8B89B' : '#B9D5DE'} repetition={2.4} shiftRed={.28} shiftBlue={.28} contour={.45} softness={.65} distortion={1.25} angle={60} speed={reduceMotion ? 0 : 1.25} className={a.orbShader}/></span>
+        {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined}>
+          <AiPearl size={184} state={pearlFor(voice.state)} pulse={voice.live.length} cancel={voice.state === 'cancelArmed'} className={a.welcomePearl} />
+          {/* One line, always: the greeting at rest, the reader's own words while they speak. */}
+          {listeningHere
+            ? <p className={a.welcomeLive} dir="auto" role="status" aria-live="polite" data-empty={!voice.live || undefined} data-cancel={voice.state === 'cancelArmed' || undefined}>{voice.live || (voice.state === 'listening' ? pearl.listening : ' ')}</p>
+            : <h2 className={a.welcomeLine}>{pearlGreeting(locale)}</h2>}
         </section> : <ol className={a.messages}>
           {messages.map((message) => message.role === 'user'
             ? <li key={message.id} className={a.user}><span className={a.srOnly}>{c.you}: </span><p dir="auto">{message.content}</p>{message.attachments?.map((file, index) => <small key={`${file.name}-${index}`} className={a.fileNote}>{file.name} · {file.method === 'image' ? aiVisualCopy(locale).image : file.method === 'ocr' ? aiInputCopy(locale).ocr : aiInputCopy(locale).extracted}</small>)}</li>
             : <li key={message.id} className={a.assistant}>
-              <div className={a.who}><Mark /><b>{c.name}</b></div>
+              <div className={a.who}><Mark speaking={message.id === speakingId} /><b>{c.name}</b></div>
               {showAiAnswer(message.questions) ? <><Answer text={message.content} reveal={message.id === revealId && !reduced()} />
                 {message.citations?.map(c=><Link key={`${c.id}:${c.revision}`} prefetch={false} href={aiNavigationLink(c.url) ?? `/ai-assistant?knowledge=${encodeURIComponent(c.id)}&revision=${c.revision}`}>{c.title}{c.url ? '' : ` · v${c.revision}`}</Link>)}
                 <AiAnswerActions text={message.content} messageId={message.messageId} localId={`${sessionId ?? generation}:${message.id}`} locale={locale}/></> : <p className={a.questionPrompt}>{message.questions?.map(question => question.title).join(' · ')}</p>}
@@ -298,7 +310,8 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
 
       <div ref={dock} className={a.dockWrap} hidden={community} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
-        <AiComposer key={generation} value={input} onChange={setInput} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
+        {showWelcome && showsSuggestions(voice.state) && <ul className={a.chips} aria-label={pearl.suggestions}>{prompts.map(question => <li key={question}><button type="button" disabled={status !== 'ready'} onClick={() => { void ask(question) }}><span dir="auto">{question}</span></button></li>)}</ul>}
+        <AiComposer key={generation} value={input} onChange={setInput} onVoice={setVoice} voiceOverlay={!showWelcome} suggestions={false} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}
       </div>
     </div>
