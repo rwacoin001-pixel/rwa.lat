@@ -12,26 +12,28 @@
  */
 export const LAUNCH_ICON_SIZE = 112
 
+// State lives on <html> (data-launch-state: "leaving" | "gone"), never in this element: React owns the element's
+// container and may recreate it during hydration, but it leaves <html> attributes alone (the theme bootstrap relies
+// on the same), so a recreated splash still follows the state and cannot get stuck on screen.
 export const launchSplashStyle = `#launch-splash{display:none}
-html[data-launch="app"] #launch-splash{display:grid;place-items:center;position:fixed;inset:0;z-index:2147483000;background:var(--page-chrome-color,#F4F1EA);transition:opacity .28s ease}
+html[data-launch="app"]:not([data-launch-state="gone"]) #launch-splash{display:grid;place-items:center;position:fixed;inset:0;z-index:2147483000;background:var(--page-chrome-color,#F4F1EA);transition:opacity .28s ease}
+html[data-launch-state="leaving"] #launch-splash{opacity:0;pointer-events:none}
 #launch-splash img{width:${LAUNCH_ICON_SIZE}px;height:${LAUNCH_ICON_SIZE}px;display:block}
-#launch-splash.is-leaving{opacity:0;pointer-events:none}
 @media (prefers-reduced-motion:reduce){html[data-launch="app"] #launch-splash{transition:none}}`
 
 export const launchSplashMarkup = `<div id="launch-splash" aria-hidden="true"><img src="/icons/a-reit-v1-512.png" width="${LAUNCH_ICON_SIZE}" height="${LAUNCH_ICON_SIZE}" alt="" decoding="sync" fetchpriority="high"></div>`
 
 export const launchSplashScript = `(() => {
-  const splash = document.getElementById('launch-splash');
-  if (!splash) return;
-  if (document.documentElement.dataset.launch !== 'app') { splash.remove(); return; }
+  const root = document.documentElement;
+  if (root.dataset.launch !== 'app') return;
   let done = false;
   let observer = null;
   const leave = () => {
     if (done) return;
     done = true;
     if (observer) observer.disconnect();
-    splash.classList.add('is-leaving');
-    setTimeout(() => splash.remove(), 320);
+    root.dataset.launchState = 'leaving';
+    setTimeout(() => { root.dataset.launchState = 'gone'; }, 320);
   };
   const check = () => { if (document.readyState !== 'loading' && !document.querySelector('[data-app-loading]')) leave(); };
   document.addEventListener('DOMContentLoaded', () => {

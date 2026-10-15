@@ -57,28 +57,25 @@ function runSplash({ installed, placeholders }) {
   const events = {}
   const timers = []
   let observer = null
-  let removed = false
-  const classes = new Set()
-  const splash = { remove: () => { removed = true }, classList: { add: (name) => classes.add(name) } }
+  const dataset = installed ? { launch: 'app' } : {}
   const doc = {
     readyState: 'loading',
-    documentElement: { dataset: installed ? { launch: 'app' } : {} },
+    documentElement: { dataset },
     body: {},
-    getElementById: () => splash,
     querySelector: () => (placeholders.count ? {} : null),
     addEventListener: (name, fn) => { events[name] = fn },
   }
   vm.runInNewContext(launchSplashScript, {
     document: doc,
     setTimeout: (fn, ms) => timers.push({ fn, ms }),
-    MutationObserver: class { constructor(fn) { observer = { fn, disconnected: false }; this.o = observer } observe() {} disconnect() { this.o.disconnected = true } },
+    MutationObserver: class { constructor(fn) { observer = { fn } } observe() {} disconnect() {} },
   })
   return {
     ready: () => { doc.readyState = 'interactive'; events.DOMContentLoaded?.() },
     mutate: () => observer?.fn(),
+    flush: (ms) => timers.filter(t => t.ms === ms).forEach(t => t.fn()),
     timers,
-    get leaving() { return classes.has('is-leaving') },
-    get removed() { return removed },
+    get state() { return dataset.launchState },
   }
 }
 
@@ -86,13 +83,25 @@ test('the launch screen stays while the loading placeholder is up and leaves onc
   const placeholders = { count: 1 }
   const splash = runSplash({ installed: true, placeholders })
   splash.ready()
-  assert.equal(splash.leaving, false)
+  assert.equal(splash.state, undefined)
   placeholders.count = 0
   splash.mutate()
-  assert.equal(splash.leaving, true)
+  assert.equal(splash.state, 'leaving')
+  splash.flush(320)
+  assert.equal(splash.state, 'gone')
   assert.ok(splash.timers.some(t => t.ms === 8000), 'safety stop')
 })
 
-test('outside the installed app the launch screen is removed at once', () => {
-  assert.equal(runSplash({ installed: false, placeholders: { count: 1 } }).removed, true)
+test('the safety stop clears it even if a placeholder never goes away', () => {
+  const splash = runSplash({ installed: true, placeholders: { count: 1 } })
+  splash.ready()
+  splash.flush(8000)
+  assert.equal(splash.state, 'leaving')
+})
+
+test('outside the installed app the script does nothing (CSS keeps the element hidden)', () => {
+  const splash = runSplash({ installed: false, placeholders: { count: 1 } })
+  splash.ready()
+  assert.equal(splash.state, undefined)
+  assert.equal(splash.timers.length, 0)
 })
