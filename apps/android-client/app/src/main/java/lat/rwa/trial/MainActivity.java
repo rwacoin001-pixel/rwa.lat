@@ -139,7 +139,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.1");
         settings.setSafeBrowsingEnabled(true);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -167,7 +167,9 @@ public final class MainActivity extends Activity {
     /** Dark icons on a light page, light icons on a dark page; the bars themselves stay transparent. */
     private void setBarIcons(boolean lightPage) {
         if (Build.VERSION.SDK_INT >= 30) {
-            WindowInsetsController controller = getWindow().getInsetsController();
+            // getDecorView() creates the decor if needed; Window.getInsetsController() returns null before that and the
+            // call itself threw in onCreate (1.1.0 crashed on launch on every Android 11+ phone).
+            WindowInsetsController controller = getWindow().getDecorView().getWindowInsetsController();
             if (controller == null) return;
             int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
             controller.setSystemBarsAppearance(lightPage ? mask : 0, mask);
