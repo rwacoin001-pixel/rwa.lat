@@ -464,7 +464,7 @@ export class PolymarketService {
   private async upsertMarket(record: PolymarketMarketRecord, syncedAt: Date): Promise<number> {
     const tokensComplete = record.tokenIds.length > 0 && record.tokenIds.length === record.outcomes.length
     const state = resolveMarketState(record, tokensComplete)
-    await this.markets.upsert({
+    const fields = {
       gammaMarketId: record.gammaMarketId,
       conditionId: record.conditionId,
       slug: record.slug,
@@ -478,19 +478,32 @@ export class PolymarketService {
       providerUpdatedAt: record.providerUpdatedAt,
       lastSyncedAt: syncedAt,
       rawPayload: record.rawPayload as never,
-    }, ['gammaMarketId'])
-    const mapping = await this.markets.findOneOrFail({ where: { gammaMarketId: record.gammaMarketId } })
-    if (!tokensComplete) return 0
-    for (let index = 0; index < record.tokenIds.length; index += 1) {
-      await this.tokens.upsert({
-        marketMappingId: mapping.id,
-        tokenId: record.tokenIds[index],
-        outcome: record.outcomes[index],
-        outcomeIndex: index,
-        state: state === 'resolved' ? 'resolved' : state === 'active' ? 'active' : 'inactive',
-      }, ['tokenId'])
     }
-    return record.tokenIds.length
+    return this.markets.manager.transaction(async manager => {
+      // Create if absent, then lock the existing row before updating discovery data.
+      // A stale active feed must never overwrite final evidence or a manual suspension.
+      await manager.createQueryBuilder().insert().into(PolymarketMarketMapping).values(fields).orIgnore().execute()
+      const mappings = manager.getRepository(PolymarketMarketMapping)
+      const mapping = await mappings.findOneOrFail({
+        where: { gammaMarketId: record.gammaMarketId }, lock: { mode:'pessimistic_write' },
+      })
+      const tokenRepo = manager.getRepository(PolymarketTokenMapping)
+      if (mapping.state === 'resolved' || mapping.state === 'suspended'
+        || await tokenRepo.existsBy({marketMappingId:mapping.id,state:'resolved'})) return 0
+      await mappings.update(mapping.id, fields)
+      if (!tokensComplete) return 0
+      for (let index = 0; index < record.tokenIds.length; index += 1) {
+        const tokenId = record.tokenIds[index]
+        const owner = await tokenRepo.findOne({where:{tokenId}})
+        if (owner && owner.marketMappingId !== mapping.id) throw new Error('Polymarket token mapping conflict')
+        await tokenRepo.upsert({
+          marketMappingId: mapping.id, tokenId,
+          outcome: record.outcomes[index], outcomeIndex: index,
+          state: state === 'active' ? 'active' : 'inactive',
+        }, ['tokenId'])
+      }
+      return record.tokenIds.length
+    })
   }
 
   private toMarketView(

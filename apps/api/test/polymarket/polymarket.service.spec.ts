@@ -42,6 +42,7 @@ describe('PolymarketService', () => {
       isEnabled: jest.fn().mockReturnValue(true),
       listMarkets: jest.fn(),
       listTrendingMarkets: jest.fn(),
+      getMarketById: jest.fn(),
       getMarketByTokenId: jest.fn(),
       getOrderBook: jest.fn(),
     }

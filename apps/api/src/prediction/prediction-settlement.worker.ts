@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnApplicationBootstrap, OnApplicationShutdown } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { PredictionService } from './prediction.service'
+import { PredictionResolutionService } from './prediction-resolution.service'
 
 function boundedInteger(value: string | undefined, fallback: number, min: number, max: number): number {
   const parsed = Number.parseInt(value ?? '', 10)
@@ -9,8 +10,8 @@ function boundedInteger(value: string | undefined, fallback: number, min: number
 }
 
 /**
- * 预测市场结算 worker：轮询"已有开奖结果且存在未结算投注"的市场，
- * 逐个原子结算（幂等）。默认关闭，生产环境通过 PREDICTION_SETTLEMENT_WORKER_ENABLED=true 启用。
+ * 先核对待结算市场的最终结果，再逐个原子结算（幂等）。
+ * worker 默认关闭；新结果同步另以 PREDICTION_RESOLUTION_SYNC_MODE=apply 明确启用。
  */
 @Injectable()
 export class PredictionSettlementWorker implements OnApplicationBootstrap, OnApplicationShutdown {
@@ -23,6 +24,7 @@ export class PredictionSettlementWorker implements OnApplicationBootstrap, OnApp
   constructor(
     private readonly prediction: PredictionService,
     config: ConfigService,
+    private readonly resolution: PredictionResolutionService,
   ) {
     this.enabled = config.get<string>('PREDICTION_SETTLEMENT_WORKER_ENABLED') === 'true'
     this.pollMs = boundedInteger(
@@ -58,6 +60,7 @@ export class PredictionSettlementWorker implements OnApplicationBootstrap, OnApp
   }
 
   async runOnce(): Promise<number> {
+    await this.resolution.syncPendingMarkets()
     const marketIds = await this.prediction.findSettleableMarkets(5)
     let settled = 0
     for (const marketId of marketIds) {

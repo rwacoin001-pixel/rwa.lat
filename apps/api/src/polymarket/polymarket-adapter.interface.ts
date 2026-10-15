@@ -51,6 +51,8 @@ export interface PolymarketReadAdapter {
   isEnabled(): boolean
   listMarkets(cursor?: string, limit?: number): Promise<PolymarketMarketPage>
   listTrendingMarkets(limit?: number): Promise<PolymarketMarketPage>
+  /** Exact known market, including closed markets, for final-resolution reconciliation. */
+  getMarketById(gammaMarketId: string): Promise<PolymarketMarketRecord>
   /** Resolve the market that owns a CLOB token id (used to ingest a market on demand). */
   getMarketByTokenId(tokenId: string): Promise<PolymarketMarketRecord | null>
   getOrderBook(tokenId: string): Promise<PolymarketOrderBook>

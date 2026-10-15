@@ -46,6 +46,7 @@ type PredictionTokenRow = {
   enable_order_book: boolean
   restricted: boolean | null
   market_state: string
+  market_end_at: Date | null
 }
 
 @Injectable()
@@ -156,6 +157,18 @@ export class PredictionService {
         await runner.commitTransaction()
         return this.toBetView(existing, true)
       }
+
+      // Serialize all users on the same market with result sync/settlement.
+      // Quotes were fetched outside this transaction; they may already be obsolete.
+      await runner.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`prediction-settle:${tokenRow.market_mapping_id}`])
+      const current = await this.tokenMapping(input.tokenId, runner)
+      const [settled] = await runner.query('SELECT id FROM app.prediction_settlement_runs WHERE market_mapping_id=$1', [tokenRow.market_mapping_id])
+      if (!current || current.market_mapping_id !== tokenRow.market_mapping_id || settled
+        || current.state !== 'active' || current.market_state !== 'active' || !current.enable_order_book
+        || (current.market_end_at && new Date(current.market_end_at).getTime() <= Date.now())) {
+        throw predictionMarketNotTradeable(tokenRow.market_mapping_id)
+      }
+      tokenRow = current
 
       await this.compliance.requireInvestmentEligibility(userId, 'prediction')
 
@@ -288,7 +301,13 @@ export class PredictionService {
        JOIN app.polymarket_token_mappings t ON t.market_mapping_id = m.id AND t.state = 'resolved'
        JOIN app.prediction_bets b ON b.market_mapping_id = m.id AND b.status = 'placed'
        LEFT JOIN app.prediction_settlement_runs r ON r.market_mapping_id = m.id
-       WHERE r.id IS NULL
+       LEFT JOIN app.polymarket_settlement_mappings s ON s.market_mapping_id = m.id
+       WHERE r.id IS NULL AND m.state <> 'suspended'
+         AND (s.id IS NULL OR (s.state='confirmed' AND s.provider='polymarket' AND s.payout_value=1
+           AND s.winning_token_mapping_id=t.id AND s.outcome=t.outcome
+           AND NOT EXISTS (SELECT 1 FROM app.polymarket_token_mappings other
+             WHERE other.market_mapping_id=m.id AND other.state='resolved' AND other.id<>t.id)))
+       ORDER BY m.id
        LIMIT $1`,
       [limit],
     )
@@ -302,6 +321,12 @@ export class PredictionService {
     try {
       await runner.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`prediction-settle:${marketMappingId}`])
 
+      const [market] = await runner.query('SELECT state FROM app.polymarket_market_mappings WHERE id=$1 FOR UPDATE', [marketMappingId])
+      if (!market || market.state === 'suspended') {
+        await runner.commitTransaction()
+        return { settled: false, betsSettled: 0, totalPaidAtomic: '0', totalFeeAtomic: '0' }
+      }
+
       const [already] = await runner.query(
         `SELECT id FROM app.prediction_settlement_runs WHERE market_mapping_id = $1`,
         [marketMappingId],
@@ -312,10 +337,10 @@ export class PredictionService {
       }
 
       const tokens = await runner.query(
-        `SELECT token_id, state FROM app.polymarket_token_mappings WHERE market_mapping_id = $1`,
+        `SELECT token_id, state, outcome FROM app.polymarket_token_mappings WHERE market_mapping_id = $1 FOR UPDATE`,
         [marketMappingId],
       )
-      const resolved = (tokens as Array<{ token_id: string; state: string }>).filter((t) => t.state === 'resolved')
+      const resolved = (tokens as Array<{ token_id: string; state: string; outcome: string }>).filter((t) => t.state === 'resolved')
       if (resolved.length === 0) {
         await runner.commitTransaction()
         return { settled: false, betsSettled: 0, totalPaidAtomic: '0', totalFeeAtomic: '0' }
@@ -323,10 +348,26 @@ export class PredictionService {
       const voided = resolved.length > 1
       const winnerTokenId = voided ? null : resolved[0].token_id
 
+      // Result evidence may have been disputed/reversed since sync. Check under lock
+      // again at the money boundary. Legacy manual resolutions without a mapping
+      // retain their existing winner/void semantics.
+      const [evidence] = await runner.query(`SELECT s.*, t.token_id AS winner_token_id
+        FROM app.polymarket_settlement_mappings s
+        LEFT JOIN app.polymarket_token_mappings t ON t.id=s.winning_token_mapping_id AND t.market_mapping_id=s.market_mapping_id
+        WHERE s.market_mapping_id=$1 FOR UPDATE OF s`, [marketMappingId])
+      if (evidence && (voided || evidence.state !== 'confirmed' || evidence.provider !== 'polymarket'
+        || !/^1(?:\.0+)?$/.test(String(evidence.payout_value))
+        || evidence.winner_token_id !== winnerTokenId || evidence.outcome !== resolved[0].outcome)) {
+        this.log.warn(`prediction settlement evidence requires review market=${marketMappingId}`)
+        await runner.commitTransaction()
+        return { settled:false, betsSettled:0, totalPaidAtomic:'0', totalFeeAtomic:'0' }
+      }
+
       const bets = await runner.query(
         `SELECT * FROM app.prediction_bets WHERE market_mapping_id = $1 AND status = 'placed' FOR UPDATE`,
         [marketMappingId],
       )
+      await runner.query(`UPDATE app.polymarket_market_mappings SET state='resolved',enable_order_book=false,updated_at=now() WHERE id=$1`, [marketMappingId])
       const pool = await this.poolAccount(runner)
       const feeAccount = await this.feeAccount(runner)
       const feeConfig = predictionFeeConfig()
@@ -426,13 +467,13 @@ export class PredictionService {
   // ---------------------------------------------------------------- 内部工具
 
   /** Look up a token's mapping together with its market's tradeable flags. */
-  private async tokenMapping(tokenId: string): Promise<PredictionTokenRow | null> {
-    const [row] = (await this.dataSource.query(
+  private async tokenMapping(tokenId: string, runner?: ReturnType<DataSource['createQueryRunner']>): Promise<PredictionTokenRow | null> {
+    const [row] = (await (runner ?? this.dataSource).query(
       `SELECT t.id, t.token_id, t.outcome, t.outcome_index, t.state, t.market_mapping_id,
-              m.enable_order_book, m.restricted, m.state AS market_state
+              m.enable_order_book, m.restricted, m.state AS market_state, m.market_end_at
        FROM app.polymarket_token_mappings t
        JOIN app.polymarket_market_mappings m ON m.id = t.market_mapping_id
-       WHERE t.token_id = $1`,
+       WHERE t.token_id = $1${runner ? ' FOR UPDATE OF m, t' : ''}`,
       [tokenId],
     )) as Array<PredictionTokenRow>
     return row ?? null

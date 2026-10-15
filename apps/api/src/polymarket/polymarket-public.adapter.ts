@@ -74,6 +74,16 @@ export class PolymarketPublicAdapter implements PolymarketReadAdapter {
     }
   }
 
+  async getMarketById(gammaMarketId: string): Promise<PolymarketMarketRecord> {
+    this.requireEnabled()
+    const payload = await this.fetchJson(new URL(`${this.gammaUrl}/markets/${encodeURIComponent(gammaMarketId)}`))
+    const record = normalizeMarket(payload)
+    if (!record || record.gammaMarketId !== gammaMarketId) {
+      throw new PolymarketUpstreamError(POLYMARKET_ERROR_CODES.UPSTREAM_INVALID_RESPONSE)
+    }
+    return record
+  }
+
   async getOrderBook(tokenId: string): Promise<PolymarketOrderBook> {
     this.requireEnabled()
     const url = new URL(`${this.clobUrl}/book`)

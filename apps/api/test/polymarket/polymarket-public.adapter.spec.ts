@@ -87,4 +87,27 @@ describe('PolymarketPublicAdapter', () => {
   it('drops malformed Gamma records instead of inventing identifiers', () => {
     expect(normalizeMarket({ id: '123', slug: 'missing-question' })).toBeNull()
   })
+
+  it('fetches a known closed market by exact ID without active-market filters', async () => {
+    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: '123', slug: 'finished', question: 'Finished?', closed: true,
+      umaResolutionStatus: 'resolved', outcomes: '["Yes","No"]',
+      clobTokenIds: '["yes","no"]', outcomePrices: '["1","0"]',
+    }), { status: 200 }))
+    global.fetch = fetchMock
+    const adapter = new PolymarketPublicAdapter(new ConfigService({}))
+    const market = await adapter.getMarketById('123')
+    expect(market?.rawPayload.umaResolutionStatus).toBe('resolved')
+    const url = new URL(String(fetchMock.mock.calls[0][0]))
+    expect(url.pathname).toBe('/markets/123')
+    expect(url.search).toBe('')
+  })
+
+  it('rejects a market returned for the wrong Gamma ID', async () => {
+    global.fetch = jest.fn().mockResolvedValue(new Response(JSON.stringify({
+      id: 'other', slug: 'wrong', question: 'Wrong?',
+    }), { status: 200 }))
+    await expect(new PolymarketPublicAdapter(new ConfigService({})).getMarketById('123'))
+      .rejects.toMatchObject({ response: { code: POLYMARKET_ERROR_CODES.UPSTREAM_INVALID_RESPONSE } })
+  })
 })
