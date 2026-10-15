@@ -7,6 +7,7 @@ import { useRwaTheme } from '@/lib/rwa-theme'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
 import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
+import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
 
 /** Shared A-REIT mark for every authentication surface. */
@@ -67,6 +68,7 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </div>
     </header>
 
+    <AndroidAppBanner />
     {hero && <div className={styles.heroCopy}>{hero}</div>}
     <div className={styles.stage}>
       <div className={styles.authSheet}><span className={styles.grain} aria-hidden="true" /><div className={styles.sheetInner}>{children}</div></div>

@@ -29,9 +29,11 @@ export function detectEnv(): InstallEnv {
   if (/MicroMessenger/i.test(ua)) return { kind: ios ? 'wechat-ios' : 'wechat-android', ios, app: 'WeChat' }
   const inApp = IN_APPS.find(([pattern]) => pattern.test(ua))
   if (inApp) return { kind: 'inapp', ios, app: inApp[1] }
-  if (android && /; wv\)/.test(ua)) return { kind: 'inapp', ios, app: null }
   if (ios) return { kind: /CriOS|FxiOS|EdgiOS|OPiOS|GSA\/|YaBrowser|DuckDuckGo/.test(ua) || !/Safari\//.test(ua) ? 'ios-other' : 'ios-safari', ios, app: null }
   if (android) {
+    // A WebView UA not claimed by a known app above is a WebView-based browser (Via, X, Mint…): it cannot install
+    // the web app either, so it gets the same Android-app offer as the other non-Chrome browsers.
+    if (/; wv\)/.test(ua)) return { kind: 'android-other', ios, app: null }
     if (/SamsungBrowser/.test(ua)) return { kind: 'android-samsung', ios, app: null }
     if (/MiuiBrowser|XiaoMi/i.test(ua)) return { kind: 'android-xiaomi', ios, app: null }
     if (/HuaweiBrowser|HONORBrowser/i.test(ua)) return { kind: 'android-huawei', ios, app: null }
@@ -47,4 +49,9 @@ export function detectEnv(): InstallEnv {
 /** Safari's major version from `Version/NN` (iOS 26 freezes the OS version in the UA, not this). 0 when absent. */
 export function safariMajor() {
   return Number(/Version\/(\d+)/.exec(window.navigator.userAgent)?.[1] ?? 0)
+}
+
+/** Android browsers whose "add to desktop" is only a bookmark: they get the Android app (and Chrome) first. */
+export function needsAndroidApp(kind: InstallKind) {
+  return kind === 'android-xiaomi' || kind === 'android-huawei' || kind === 'android-other'
 }
