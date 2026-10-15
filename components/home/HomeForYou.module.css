@@ -3,7 +3,7 @@
 .lead { position: relative; display: grid; align-content: space-between; gap: 12px; width: 100%; min-height: 172px; padding: 18px; overflow: hidden; border: 1px solid var(--home-line); border-radius: 20px; color: #f7f2ea; background: #1b1813; text-align: start; font: inherit; cursor: pointer; touch-action: manipulation; }
 .leadImage { position: absolute; inset: 0; background: url('/media/home/ai-basket-warm.webp') 70% 48% / cover no-repeat; opacity: .56; }
 :global(.rwa-mobile[data-theme='dark']) .leadImage { background-image: url('/media/home/ai-basket-cool.webp'); }
-.lead[data-image='treasury'] .leadImage { background-image: url('/media/generated/design-v2/treasury-architecture-v1.png'); }
+.lead[data-image='treasury'] .leadImage { background-image: url('/media/home/derived/treasury-architecture-960.webp'); }
 .lead::after { content: ''; position: absolute; inset: 0; background: linear-gradient(90deg, rgba(10, 8, 5, .88), rgba(10, 8, 5, .25)); pointer-events: none; }
 .badge { position: relative; z-index: 1; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding-inline-end: 24px; font-size: 11px; font-weight: 500; line-height: 1.4; letter-spacing: .03em; }
 .risk { padding: 3px 7px; border: 1px solid rgba(255, 255, 255, .25); border-radius: 999px; font-size: 11px; }

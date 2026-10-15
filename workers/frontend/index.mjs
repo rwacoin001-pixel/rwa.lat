@@ -2,6 +2,7 @@ import nextWorker from '../../.open-next/worker.js'
 import {proxyPublicPrediction} from '../../lib/prediction-public-proxy'
 import {proxyPredictionImage} from '../../lib/prediction-image-delivery'
 import {withClientHeaders} from '../../lib/edge-client-headers.mjs'
+import {isPublicRead,servePublicRead} from '../../lib/edge-public-cache.mjs'
 
 // Public discovery bypasses the Next runtime entirely, keeping Worker CPU small.
 export default {
@@ -23,7 +24,11 @@ export default {
       }
     }
     // /v1 is proxied to the API from this Worker, so the API would otherwise see the Worker as the visitor.
-    if(path.startsWith('/v1/'))return nextWorker.fetch(await withClientHeaders(request,env.EDGE_CLIENT_SIGNING_SECRET),env,ctx)
+    if(path.startsWith('/v1/')){
+      const forward=async()=>nextWorker.fetch(await withClientHeaders(request,env.EDGE_CLIENT_SIGNING_SECRET),env,ctx)
+      if(isPublicRead(request.method,path))return servePublicRead(request,{cache:typeof caches!=='undefined'?caches.default:undefined,waitUntil:ctx?.waitUntil?.bind(ctx),forward})
+      return forward()
+    }
     return nextWorker.fetch(request,env,ctx)
   },
 }

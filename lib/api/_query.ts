@@ -67,9 +67,21 @@ export function useQuery<T>(key: string | null, loader: () => Promise<ApiResult<
     item.refresh = refetch
     if (!item.updatedAt || Date.now() - item.updatedAt >= staleTime) void refetch()
     const focus = () => { if (Date.now() - item.updatedAt >= staleTime) void refetch() }
+    // Polling stops while the app is in the background (no data or battery spent on a screen nobody sees) and
+    // catches up the moment it is back: anything older than its poll interval, or stale, refreshes at once.
+    // visibilitychange rather than focus alone: an iPhone Home Screen app resuming does not reliably fire focus.
+    const poll = options.pollInterval
+    const hidden = () => typeof document !== 'undefined' && document.hidden
+    const tick = () => { if (!hidden()) void refetch() }
+    const visible = () => {
+      if (hidden()) return
+      const age = Date.now() - item.updatedAt
+      if (age >= staleTime || (poll && age >= poll)) void refetch()
+    }
     window.addEventListener('focus', focus)
-    const timer = options.pollInterval ? setInterval(refetch, options.pollInterval) : undefined
-    return () => { window.removeEventListener('focus', focus); if (timer) clearInterval(timer) }
+    if (typeof document !== 'undefined') document.addEventListener('visibilitychange', visible)
+    const timer = poll ? setInterval(tick, poll) : undefined
+    return () => { window.removeEventListener('focus', focus); if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', visible); if (timer) clearInterval(timer) }
   }, [item, refetch, staleTime, options.pollInterval])
   return { ...snapshot, refetch }
 }

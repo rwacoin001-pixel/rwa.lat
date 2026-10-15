@@ -6,3 +6,12 @@
 
 /_next/static/*
   Cache-Control: public, max-age=31536000, immutable
+
+# 图片等无 hash 的媒体：1 天内直接用本地副本，之后先用旧图并在后台更新（最多 7 天）。
+# 以前是 max-age=0：每次打开、每张图都要回源确认一次。换图时同名文件最多 1 天后生效；需要立刻生效的换图请改文件名。
+/media/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/asset-icons/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+/baskets/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
