@@ -139,7 +139,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.0.0");
+        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.0");
         settings.setSafeBrowsingEnabled(true);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);

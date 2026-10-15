@@ -68,10 +68,16 @@ final class AppPack {
         for (int i = 0; i < files.length(); i++) {
             JSONObject file = files.getJSONObject(i);
             String path = file.getString("p"), hash = file.getString("h");
-            if (!PATH.matcher(path).matches() || path.contains("..") || !HASH.matcher(hash).matches() || file.getLong("s") > MAX_FILE) continue;
+            if (!PATH.matcher(path).matches() || traversal(path) || !HASH.matcher(hash).matches() || file.getLong("s") > MAX_FILE) continue;
             if (hashes != null) hashes.add(hash);
             if (paths != null) paths.put(path, hash);
         }
+    }
+
+    /** A segment that is exactly ".." or "." is traversal; Next's catch-all folder "[[...rwa]]" is not. */
+    static boolean traversal(String path) {
+        for (String part : path.split("/")) if (part.equals("..") || part.equals(".")) return true;
+        return false;
     }
 
     /** A same-origin GET for a listed file, from the phone; null means "use the network". Runs off the UI thread. */

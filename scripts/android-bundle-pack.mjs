@@ -12,7 +12,7 @@ rmSync(out, { recursive: true, force: true })
 mkdirSync(join(out, 'files'), { recursive: true })
 let total = 0
 for (const file of manifest.files) {
-  if (!file.p.startsWith('/') || file.p.includes('..')) throw new Error(`bad path ${file.p}`)
+  if (!file.p.startsWith('/') || file.p.split('/').some(part => part === '..' || part === '.')) throw new Error(`bad path ${file.p}`)
   const body = readFileSync(join(assets, file.p.slice(1)))
   const hash = createHash('sha256').update(body).digest('hex')
   if (hash !== file.h || body.length !== file.s) throw new Error(`${file.p} does not match the manifest`)
