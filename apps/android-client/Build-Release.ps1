@@ -6,9 +6,11 @@
 #   & "$env:JAVA_HOME\bin\keytool.exe" -genkeypair -keystore D:\path\a-reit-release.p12 -storetype PKCS12 `
 #       -alias a-reit -keyalg RSA -keysize 4096 -validity 10000 -dname "CN=A-REIT"
 #
-# Usage:
-#   .\Build-Release.ps1 -JavaHome E:\rwa-android-build\jdk -AndroidSdk E:\rwa-android-build\sdk `
-#       -OutputDirectory E:\rwa-android-build\release -Keystore D:\path\a-reit-release.p12 -KeyAlias a-reit
+# Usage (after the website build, so -WebAssets holds /app-pack/manifest.json):
+#   .\Build-Release.ps1 -JavaHome D:\tools\jdk-21.0.12.1+1 -AndroidSdk G:\Dev\android-build\sdk `
+#       -OutputDirectory G:\Dev\android-build\release -GradleCacheDirectory G:\Dev\android-build\gradle-cache `
+#       -Keystore G:\Archive\a-reit-android-signing\a-reit-release.p12 -KeyAlias a-reit `
+#       -PasswordFile G:\Archive\a-reit-android-signing\password.txt -WebAssets ..\..\.open-next\assets
 # Output: a-reit-android-<version>.apk plus its SHA-256, for public/download/ and lib/android-app.ts.
 param(
     [Parameter(Mandatory=$true)][string]$JavaHome,
@@ -18,6 +20,8 @@ param(
     [Parameter(Mandatory=$true)][string]$KeyAlias,
     # The password file New-ReleaseKey.ps1 created; without it the password is asked for on the console.
     [string]$PasswordFile,
+    # The website build whose code and images ship inside the APK (scripts/app-pack-manifest.mjs output).
+    [Parameter(Mandatory=$true)][string]$WebAssets,
     [string]$GradleCacheDirectory = (Join-Path $OutputDirectory 'gradle-cache')
 )
 $ErrorActionPreference = 'Stop'
@@ -38,6 +42,9 @@ if ($PasswordFile) {
     $env:AREIT_RELEASE_KEY_PASSWORD = [System.Net.NetworkCredential]::new('', $secure).Password
 }
 try {
+    $packDirectory = Join-Path $projectDirectory 'app\src\main\assets\pack'
+    & node (Join-Path $projectDirectory '..\..\scripts\android-bundle-pack.mjs') (Resolve-Path -LiteralPath $WebAssets).Path $packDirectory
+    if ($LASTEXITCODE -ne 0) { throw 'Bundling the website files failed' }
     Push-Location -LiteralPath $projectDirectory
     try {
         & '.\gradlew.bat' testReleaseUnitTest lintRelease assembleRelease --no-daemon --console plain

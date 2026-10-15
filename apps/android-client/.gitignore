@@ -4,3 +4,5 @@ local.properties
 *.jks
 *.keystore
 signing.properties
+# Generated at release time from the website build (scripts/android-bundle-pack.mjs).
+app/src/main/assets/pack/

@@ -7,7 +7,9 @@ import android.app.AlertDialog;
 import android.app.DownloadManager;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Color;
 import android.graphics.Insets;
 import android.net.Uri;
@@ -17,6 +19,7 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Base64;
 import android.provider.MediaStore;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
@@ -24,7 +27,11 @@ import android.speech.SpeechRecognizer;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.view.WindowInsets;
+import android.view.WindowInsetsController;
+import android.view.WindowManager;
 import android.webkit.CookieManager;
 import android.webkit.GeolocationPermissions;
 import android.webkit.PermissionRequest;
@@ -41,10 +48,12 @@ import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.core.content.FileProvider;
+import androidx.webkit.ScriptHandler;
+import androidx.webkit.ServiceWorkerClientCompat;
+import androidx.webkit.ServiceWorkerControllerCompat;
 import androidx.webkit.WebSettingsCompat;
 import androidx.webkit.WebViewCompat;
 import androidx.webkit.WebViewFeature;
@@ -53,17 +62,32 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
-/** Installable trial shell. Business state and authentication remain in the website. */
+/** A-REIT Android client: the website edge to edge, with native launch, system bars, voice and files. Business state and authentication remain in the website. */
 public final class MainActivity extends Activity {
     private static final String HOME = "https://a-reit.com/home";
     private static final int MEDIA_PERMISSION = 101, GEO_PERMISSION = 102, VOICE_PERMISSION = 103, CAMERA_PERMISSION = 104, FILE_PICK = 201, CAMERA_PICK = 202;
     private WebView webView;
-    private LinearLayout nativeChrome;
     private FrameLayout pageContainer;
     private LinearLayout errorPanel;
-    private ProgressBar progress;
+    private boolean loading;
+    // The launch splash stays until the page's own launch screen is ready (or 8s), so there is one launch screen.
+    private boolean pageReady;
+    private int pageColor;
+    private int[] barInsets = new int[4];
+    private String insetCss = "";
+    private ScriptHandler insetScript;
+    private ScriptHandler handoffScript;
+    // The website's code and common images on the phone (AppPack); updated in the background once per launch.
+    private AppPack pack;
+    private boolean packUpdateStarted;
+    private String handoffFallback;
+    // Browser sign-in (lib/app-handoff.ts on the website): the PKCE verifier and state wait here while the user is in
+    // the browser, in app-private storage so a process the system killed meanwhile can still finish the sign-in.
+    private static final String HANDOFF_PREFS = "browser-sign-in";
+    private static final long HANDOFF_MAX_AGE_MS = 10 * 60 * 1000;
     private String retryUrl = HOME;
     private PermissionRequest pendingMedia;
     private GeolocationPermissions.Callback pendingGeo;
@@ -78,48 +102,37 @@ public final class MainActivity extends Activity {
     private boolean mainFrameFailed;
     private final Handler ui = new Handler(Looper.getMainLooper());
     private final Runnable voiceTimeout = () -> { stopVoice(true); emitVoice("error", null, "timeout", true); };
-    private final Runnable pageTimeout = () -> { if (progress.getVisibility() == View.VISIBLE) showError("连接时间较长，请检查网络后重试。", retryUrl); };
+    private final Runnable pageTimeout = () -> { if (loading) showError("连接时间较长，请检查网络后重试。", retryUrl); };
+    private final Runnable releaseLaunch = this::markPageReady;
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (Build.VERSION.SDK_INT >= 30) getWindow().setDecorFitsSystemWindows(false);
-        else getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
-        LinearLayout root = new LinearLayout(this);
-        root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.rgb(23, 26, 32));
-        root.setOnApplyWindowInsetsListener((view, insets) -> {
-            if (Build.VERSION.SDK_INT >= 30) {
-                Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout() | WindowInsets.Type.ime());
-                view.setPadding(bars.left, bars.top, bars.right, bars.bottom);
-            } else view.setPadding(insets.getSystemWindowInsetLeft(), insets.getSystemWindowInsetTop(), insets.getSystemWindowInsetRight(), insets.getSystemWindowInsetBottom());
-            return insets.consumeSystemWindowInsets();
-        });
-        LinearLayout chrome = new LinearLayout(this);
-        nativeChrome = chrome;
-        chrome.setGravity(Gravity.CENTER_VERTICAL);
-        chrome.setPadding(dp(16), 0, dp(8), 0);
-        View spacer = new View(this);
-        chrome.addView(spacer, new LinearLayout.LayoutParams(0, dp(48), 1));
-        Button browser = new Button(this);
-        browser.setText("浏览器登录"); browser.setTextSize(11); browser.setContentDescription("Google、X 和通行密钥使用浏览器登录");
-        browser.setTextColor(Color.rgb(219, 210, 192)); browser.setBackgroundColor(Color.TRANSPARENT);
-        browser.setOnClickListener(view -> showBrowserAuth());
-        chrome.addView(browser, new LinearLayout.LayoutParams(dp(104), dp(48)));
-        Button menu = new Button(this);
-        menu.setText("⋮"); menu.setTextColor(Color.WHITE); menu.setTextSize(22); menu.setContentDescription("客户端选项"); menu.setBackgroundColor(Color.TRANSPARENT);
-        menu.setOnClickListener(view -> showMenu());
-        chrome.addView(menu, new LinearLayout.LayoutParams(dp(48), dp(48)));
-        chrome.setVisibility(View.GONE);
-        root.addView(chrome);
-        progress = new ProgressBar(this, null, android.R.attr.progressBarStyleHorizontal);
-        progress.setMax(100); root.addView(progress, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, dp(2)));
+        // Edge to edge: the page draws under transparent status and navigation bars and lays itself out with the
+        // bar sizes we hand it (--native-inset-*), like the installed web app does with safe-area insets.
+        Window window = getWindow();
+        window.setStatusBarColor(Color.TRANSPARENT);
+        window.setNavigationBarColor(Color.TRANSPARENT);
+        if (Build.VERSION.SDK_INT >= 29) { window.setStatusBarContrastEnforced(false); window.setNavigationBarContrastEnforced(false); }
+        if (Build.VERSION.SDK_INT >= 28) {
+            WindowManager.LayoutParams attributes = window.getAttributes();
+            attributes.layoutInDisplayCutoutMode = Build.VERSION.SDK_INT >= 30 ? WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_ALWAYS : WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES;
+            window.setAttributes(attributes);
+        }
+        if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false);
+        else window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        boolean night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        pageColor = night ? Color.rgb(10, 11, 13) : Color.rgb(244, 241, 234);
+        setBarIcons(!night);
         pageContainer = new FrameLayout(this);
-        root.addView(pageContainer, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
-        setContentView(root);
+        pageContainer.setBackgroundColor(pageColor);
+        pageContainer.setOnApplyWindowInsetsListener(this::applyInsets);
+        pack = new AppPack(this);
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.rgb(23, 26, 32));
+        webView.setBackgroundColor(pageColor);
         pageContainer.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        setContentView(pageContainer);
+        holdLaunchUntilReady();
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
         settings.setAllowFileAccess(false); settings.setAllowContentAccess(false);
@@ -135,19 +148,139 @@ public final class MainActivity extends Activity {
             WebSettingsCompat.setWebAuthenticationSupport(settings, WebSettingsCompat.WEB_AUTHENTICATION_SUPPORT_NONE);
         }
         installVoiceBridge();
+        installAppBridge();
+        installServiceWorkerPack();
         webView.setWebViewClient(new TrialWebClient());
         webView.setWebChromeClient(new TrialChromeClient());
         webView.setDownloadListener(this::download);
         if (Build.VERSION.SDK_INT >= 33) getOnBackInvokedDispatcher().registerOnBackInvokedCallback(android.window.OnBackInvokedDispatcher.PRIORITY_DEFAULT, this::navigateBack);
         // Do not persist WebView history: callback URL state can contain one-use credentials.
-        webView.loadUrl(HOME);
+        if (!handleBrowserSignIn(getIntent())) webView.loadUrl(HOME);
+    }
+    @Override protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        handleBrowserSignIn(intent);
     }
 
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
-    private void updateChrome(String url) {
-        String path = url == null ? "" : Uri.parse(url).getPath();
-        boolean authPage = "/login".equals(path) || "/register".equals(path) || (path != null && path.startsWith("/auth/"));
-        nativeChrome.setVisibility(authPage || errorPanel != null ? View.VISIBLE : View.GONE);
+    /** Dark icons on a light page, light icons on a dark page; the bars themselves stay transparent. */
+    private void setBarIcons(boolean lightPage) {
+        if (Build.VERSION.SDK_INT >= 30) {
+            WindowInsetsController controller = getWindow().getInsetsController();
+            if (controller == null) return;
+            int mask = WindowInsetsController.APPEARANCE_LIGHT_STATUS_BARS | WindowInsetsController.APPEARANCE_LIGHT_NAVIGATION_BARS;
+            controller.setSystemBarsAppearance(lightPage ? mask : 0, mask);
+        } else {
+            View decor = getWindow().getDecorView();
+            int flags = decor.getSystemUiVisibility() & ~(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);
+            decor.setSystemUiVisibility(lightPage ? flags | View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR | View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR : flags);
+        }
+    }
+    /** System bars and cutout go to the page as CSS insets; only the keyboard still shrinks the page. */
+    private WindowInsets applyInsets(View view, WindowInsets insets) {
+        int top, right, bottom, left, keyboard;
+        if (Build.VERSION.SDK_INT >= 30) {
+            Insets bars = insets.getInsets(WindowInsets.Type.systemBars() | WindowInsets.Type.displayCutout());
+            keyboard = insets.getInsets(WindowInsets.Type.ime()).bottom;
+            top = bars.top; right = bars.right; left = bars.left; bottom = keyboard > 0 ? 0 : bars.bottom;
+        } else {
+            top = insets.getStableInsetTop(); right = insets.getStableInsetRight(); left = insets.getStableInsetLeft();
+            int stableBottom = insets.getStableInsetBottom(), windowBottom = insets.getSystemWindowInsetBottom();
+            keyboard = windowBottom > stableBottom ? windowBottom : 0;
+            bottom = keyboard > 0 ? 0 : stableBottom;
+        }
+        view.setPadding(0, 0, 0, keyboard);
+        barInsets = new int[]{top, right, bottom, left};
+        if (errorPanel != null) errorPanel.setPadding(dp(28), top + dp(28), dp(28), bottom + dp(28));
+        pushInsets();
+        return Build.VERSION.SDK_INT >= 30 ? WindowInsets.CONSUMED : insets.consumeSystemWindowInsets();
+    }
+    private void pushInsets() {
+        if (webView == null) return;
+        float density = getResources().getDisplayMetrics().density;
+        String css = String.format(Locale.ROOT, "{top:'%.1fpx',right:'%.1fpx',bottom:'%.1fpx',left:'%.1fpx'}", barInsets[0] / density, barInsets[1] / density, barInsets[2] / density, barInsets[3] / density);
+        String script = "(()=>{const v=" + css + ",s=document.documentElement.style;for(const k in v)s.setProperty('--native-inset-'+k,v[k]);})();";
+        if (!css.equals(insetCss)) {
+            insetCss = css;
+            // Registered at document start so every new page lays out with the bars from its first frame.
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                if (insetScript != null) insetScript.remove();
+                insetScript = WebViewCompat.addDocumentStartJavaScript(webView, script, java.util.Collections.singleton(UrlPolicy.ORIGIN));
+            }
+        }
+        if (trustedCurrentPage()) webView.evaluateJavascript(script, null);
+    }
+    /** Keeps the launch splash (system splash on Android 12+, the icon window background before) until the page is ready. */
+    private void holdLaunchUntilReady() {
+        View content = findViewById(android.R.id.content);
+        content.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
+            @Override public boolean onPreDraw() {
+                if (!pageReady) return false;
+                content.getViewTreeObserver().removeOnPreDrawListener(this);
+                return true;
+            }
+        });
+        ui.postDelayed(releaseLaunch, 8000);
+    }
+    private void markPageReady() {
+        if (pageReady) return;
+        pageReady = true;
+        ui.removeCallbacks(releaseLaunch);
+        View content = findViewById(android.R.id.content);
+        if (content != null) content.invalidate();
+        startPackUpdate();
+    }
+    /** Once per launch, after the first page is up: bring the on-phone files to the website's current build. */
+    private void startPackUpdate() {
+        if (packUpdateStarted || webView == null) return;
+        packUpdateStarted = true;
+        String userAgent = webView.getSettings().getUserAgentString();
+        ui.postDelayed(() -> { Thread worker = new Thread(() -> pack.update(userAgent), "app-pack"); worker.setPriority(Thread.MIN_PRIORITY); worker.start(); }, 3000);
+    }
+    /** The website's service worker fetches most files itself; serve those from the phone too. */
+    private void installServiceWorkerPack() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.SERVICE_WORKER_BASIC_USAGE) || !WebViewFeature.isFeatureSupported(WebViewFeature.SERVICE_WORKER_SHOULD_INTERCEPT_REQUEST)) return;
+        ServiceWorkerControllerCompat.getInstance().setServiceWorkerClient(new ServiceWorkerClientCompat() {
+            @Override public WebResourceResponse shouldInterceptRequest(WebResourceRequest request) { return pack.lookup(request.getMethod(), request.getUrl()); }
+        });
+    }
+    /** Page to app messages: theme (system bar icons) and readiness (launch splash). Origin-bound, main frame only. */
+    private void installAppBridge() {
+        if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) || !WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return;
+        WebViewCompat.addWebMessageListener(webView, "RwaNativeAppChannel", java.util.Collections.singleton(UrlPolicy.ORIGIN), (view, message, sourceOrigin, isMainFrame, reply) -> {
+            if (!isMainFrame || !UrlPolicy.trustedOrigin(sourceOrigin.toString()) || !trustedCurrentPage()) return;
+            try {
+                JSONObject payload = new JSONObject(message.getData());
+                if (!"chrome".equals(payload.optString("type"))) return;
+                applyPageTheme("dark".equals(payload.optString("theme")));
+                if (payload.optBoolean("ready")) markPageReady();
+            } catch (Exception ignored) { /* Malformed page message: keep the current bars. */ }
+        });
+        WebViewCompat.addDocumentStartJavaScript(webView, APP_SCRIPT, java.util.Collections.singleton(UrlPolicy.ORIGIN));
+    }
+    // Watches <html> for the theme and the website's launch screen state (lib/launch-splash.ts) and reports changes.
+    private static final String APP_SCRIPT = "(()=>{const ch=window.RwaNativeAppChannel;if(!ch)return;const r=document.documentElement;let loaded=false,last='';"
+        + "const send=()=>{const t=r.dataset.theme==='dark'?'dark':'light',st=r.dataset.launchState||'';"
+        + "const ready=loaded&&(r.dataset.launch!=='app'||st==='leaving'||st==='gone');const m=t+'|'+ready;if(m===last)return;last=m;"
+        + "ch.postMessage(JSON.stringify({type:'chrome',theme:t,ready}));};"
+        + "new MutationObserver(send).observe(r,{attributes:true,attributeFilter:['data-theme','data-launch','data-launch-state']});"
+        + "document.addEventListener('DOMContentLoaded',()=>{loaded=true;send();});send();})();";
+    private void applyPageTheme(boolean dark) {
+        pageColor = dark ? Color.rgb(10, 11, 13) : Color.rgb(244, 241, 234);
+        setBarIcons(!dark);
+        pageContainer.setBackgroundColor(pageColor);
+        if (webView != null) webView.setBackgroundColor(pageColor);
+    }
+    /** Without the message bridge (old WebView): read the theme once the page is up, and release the splash. */
+    private void syncPageFallback() {
+        if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) && WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) return;
+        if (!trustedCurrentPage()) return;
+        webView.evaluateJavascript("document.documentElement.dataset.theme||''", value -> applyPageTheme("\"dark\"".equals(value)));
+        markPageReady();
+    }
+    private String appVersion() {
+        try { return getPackageManager().getPackageInfo(getPackageName(), 0).versionName; } catch (PackageManager.NameNotFoundException error) { return ""; }
     }
     private boolean trustedCurrentPage() { return webView != null && UrlPolicy.trustedOrigin(webView.getUrl()); }
     private boolean granted(String permission) { return checkSelfPermission(permission) == PackageManager.PERMISSION_GRANTED; }
@@ -156,11 +289,11 @@ public final class MainActivity extends Activity {
         stopVoice(true);
         if (errorPanel != null) { hideError(); webView.loadUrl(HOME); }
         else if (webView.canGoBack()) webView.goBack();
-        else new AlertDialog.Builder(this).setMessage("退出 A-REIT 试用客户端？").setNeutralButton("客户端选项", (dialog, which) -> showMenu()).setNegativeButton("继续使用", null).setPositiveButton("退出", (dialog, which) -> finish()).show();
+        else new AlertDialog.Builder(this).setMessage("退出 A-REIT？").setNeutralButton("客户端选项", (dialog, which) -> showMenu()).setNegativeButton("继续使用", null).setPositiveButton("退出", (dialog, which) -> finish()).show();
     }
     @Override public void onBackPressed() { navigateBack(); }
     private void showMenu() {
-        new AlertDialog.Builder(this).setTitle("A-REIT 试用客户端")
+        new AlertDialog.Builder(this).setTitle("A-REIT")
             .setItems(new String[]{"重新加载", "用浏览器打开当前页面", "浏览器登录", "清除应用内登录与缓存", "设备信息", "开源许可"}, (dialog, item) -> {
                 if (item == 0) { hideError(); webView.reload(); }
                 if (item == 1) openBrowser(UrlPolicy.safeBrowserPage(webView.getUrl()));
@@ -174,7 +307,7 @@ public final class MainActivity extends Activity {
                     PackageManager manager = getPackageManager();
                     android.content.pm.PackageInfo provider = WebViewCompat.getCurrentWebViewPackage(this);
                     String version = provider == null ? "不可用" : provider.packageName + " " + provider.versionName;
-                    new AlertDialog.Builder(this).setTitle("设备信息").setMessage("客户端 0.1.0-trial\nAndroid " + Build.VERSION.RELEASE + " · API " + Build.VERSION.SDK_INT + "\nWebView " + version + "\n系统语音识别：" + (SpeechRecognizer.isRecognitionAvailable(this) ? "可调用，尚需真机验证" : "未提供") + "\n\nGoogle / X / 通行密钥：浏览器路径。浏览器会话不会自动同步到应用。").setPositiveButton("知道了", null).show();
+                    new AlertDialog.Builder(this).setTitle("设备信息").setMessage("客户端 " + appVersion() + "\nAndroid " + Build.VERSION.RELEASE + " · API " + Build.VERSION.SDK_INT + "\nWebView " + version + "\n系统语音识别：" + (SpeechRecognizer.isRecognitionAvailable(this) ? "可调用，尚需真机验证" : "未提供") + "\n\nGoogle / X / 通行密钥：浏览器路径。浏览器会话不会自动同步到应用。").setPositiveButton("知道了", null).show();
                 }
                 if (item == 5) {
                     try (java.io.InputStream notice = getAssets().open("licenses/NOTICE.txt"); java.io.InputStream license = getAssets().open("licenses/Apache-2.0.txt")) {
@@ -192,9 +325,54 @@ public final class MainActivity extends Activity {
         return output.toByteArray();
     }
     private void showBrowserAuth() {
-        new AlertDialog.Builder(this).setTitle("在浏览器登录")
-            .setMessage("Google、X 和通行密钥在系统浏览器中完成。登录后继续在浏览器使用；此试用版不会把浏览器会话同步到应用。应用内可使用邮箱密码或验证码。")
-            .setNegativeButton("留在应用", null).setPositiveButton("打开浏览器", (dialog, which) -> openBrowser("https://a-reit.com/login")).show();
+        new AlertDialog.Builder(this).setTitle("在浏览器中登录")
+            .setMessage("Google、X 和通行密钥会在系统浏览器中完成登录，完成后自动回到 App 并保持登录。")
+            .setNegativeButton("取消", null).setPositiveButton("继续", (dialog, which) -> startBrowserSignIn()).show();
+    }
+    private static String randomToken(int bytes) {
+        byte[] value = new byte[bytes];
+        new java.security.SecureRandom().nextBytes(value);
+        return Base64.encodeToString(value, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+    }
+    private void startBrowserSignIn() {
+        try {
+            String verifier = randomToken(32);
+            String state = randomToken(16);
+            byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(verifier.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
+            String challenge = Base64.encodeToString(digest, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
+            getSharedPreferences(HANDOFF_PREFS, MODE_PRIVATE).edit().putString("verifier", verifier).putString("state", state).putLong("at", System.currentTimeMillis()).commit();
+            openBrowser(UrlPolicy.ORIGIN + "/app-login?challenge=" + challenge + "&state=" + state);
+        } catch (java.security.NoSuchAlgorithmException error) { toast("此设备暂不支持浏览器登录。"); }
+    }
+    /** areit://auth?code=…&state=… from the browser: matching state only, then the page redeems code + verifier. */
+    private boolean handleBrowserSignIn(Intent intent) {
+        Uri data = intent == null ? null : intent.getData();
+        if (data == null || !"areit".equals(data.getScheme()) || !"auth".equals(data.getHost())) return false;
+        SharedPreferences pending = getSharedPreferences(HANDOFF_PREFS, MODE_PRIVATE);
+        String state = pending.getString("state", null), verifier = pending.getString("verifier", null);
+        long at = pending.getLong("at", 0);
+        String code = data.getQueryParameter("code"), returnedState = data.getQueryParameter("state");
+        boolean valid = state != null && verifier != null && System.currentTimeMillis() - at < HANDOFF_MAX_AGE_MS
+            && state.equals(returnedState) && code != null && code.matches("[A-Za-z0-9_-]{43,128}");
+        pending.edit().clear().commit();
+        intent.setData(null);
+        if (!valid) { toast("登录链接已失效，请重新登录。"); if (webView.getUrl() == null) webView.loadUrl(HOME); return true; }
+        try {
+            String script = "window.__rwaAppHandoff=" + new JSONObject().put("code", code).put("verifier", verifier) + ";";
+            if (WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+                if (handoffScript != null) handoffScript.remove();
+                handoffScript = WebViewCompat.addDocumentStartJavaScript(webView, script, java.util.Collections.singleton(UrlPolicy.ORIGIN));
+            } else handoffFallback = script;
+        } catch (org.json.JSONException error) { return true; }
+        hideError();
+        webView.loadUrl(UrlPolicy.ORIGIN + "/app-handoff");
+        return true;
+    }
+    /** The secrets are injected only into the hand-off page, once. */
+    private void finishHandoffInjection(String url) {
+        boolean handoffPage = url != null && "/app-handoff".equals(Uri.parse(url).getPath()) && UrlPolicy.trustedOrigin(url);
+        if (handoffPage && handoffFallback != null) { webView.evaluateJavascript(handoffFallback, null); handoffFallback = null; }
+        if (handoffScript != null && (handoffPage || url == null)) { handoffScript.remove(); handoffScript = null; }
     }
     private void openBrowser(String url) {
         try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)); }
@@ -212,30 +390,29 @@ public final class MainActivity extends Activity {
     }
     private void showError(String message, String url) {
         retryUrl = UrlPolicy.destination(url) == UrlPolicy.Destination.INTERNAL ? url : HOME;
-        ui.removeCallbacks(pageTimeout); progress.setVisibility(View.GONE); webView.setVisibility(View.INVISIBLE);
+        loading = false; ui.removeCallbacks(pageTimeout); webView.setVisibility(View.INVISIBLE); markPageReady(); setBarIcons(false);
         if (errorPanel != null) pageContainer.removeView(errorPanel);
-        errorPanel = new LinearLayout(this); errorPanel.setOrientation(LinearLayout.VERTICAL); errorPanel.setGravity(Gravity.CENTER); errorPanel.setPadding(dp(28), dp(28), dp(28), dp(28));
+        errorPanel = new LinearLayout(this); errorPanel.setOrientation(LinearLayout.VERTICAL); errorPanel.setGravity(Gravity.CENTER); errorPanel.setBackgroundColor(Color.rgb(23, 26, 32));
+        errorPanel.setPadding(dp(28), barInsets[0] + dp(28), dp(28), barInsets[2] + dp(28));
         TextView heading = new TextView(this); heading.setText("暂时无法连接"); heading.setTextColor(Color.WHITE); heading.setTextSize(22); errorPanel.addView(heading);
         TextView detail = new TextView(this); detail.setText(message); detail.setTextColor(Color.LTGRAY); detail.setGravity(Gravity.CENTER); detail.setPadding(0, dp(16), 0, dp(16)); errorPanel.addView(detail);
         Button retry = new Button(this); retry.setText("重试"); retry.setOnClickListener(view -> { String target = retryUrl; hideError(); webView.loadUrl(target); }); errorPanel.addView(retry);
         Button browser = new Button(this); browser.setText("用浏览器打开"); browser.setOnClickListener(view -> openBrowser(UrlPolicy.safeBrowserPage(retryUrl))); errorPanel.addView(browser);
         pageContainer.addView(errorPanel, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-        updateChrome(url);
     }
-    private void hideError() { if (errorPanel != null) { pageContainer.removeView(errorPanel); errorPanel = null; } webView.setVisibility(View.VISIBLE); updateChrome(webView.getUrl()); }
+    private void hideError() { if (errorPanel != null) { pageContainer.removeView(errorPanel); errorPanel = null; } webView.setVisibility(View.VISIBLE); }
     private final class TrialWebClient extends WebViewClient {
         @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) { return handleNavigation(request.getUrl().toString(), request.isForMainFrame(), request.hasGesture()); }
         @Override public void onPageStarted(WebView view, String url, android.graphics.Bitmap favicon) {
             if (UrlPolicy.destination(url) != UrlPolicy.Destination.INTERNAL) { view.stopLoading(); handleNavigation(url, true, false); return; }
-            hideError(); mainFrameFailed = false; retryUrl = url; progress.setVisibility(View.VISIBLE); progress.setProgress(0);
-            updateChrome(url);
+            hideError(); mainFrameFailed = false; retryUrl = url; loading = true;
             ui.removeCallbacks(pageTimeout); ui.postDelayed(pageTimeout, 30000); stopVoice(true); denyPendingPermissions();
         }
         @Override public void onPageFinished(WebView view, String url) {
-            ui.removeCallbacks(pageTimeout); progress.setVisibility(View.GONE);
+            loading = false; ui.removeCallbacks(pageTimeout); syncPageFallback();
             if (!mainFrameFailed && errorPanel == null && UrlPolicy.trustedOrigin(url)) installVoiceScript();
         }
-        @Override public void doUpdateVisitedHistory(WebView view, String url, boolean isReload) { updateChrome(url); }
+        @Override public void onPageCommitVisible(WebView view, String url) { pushInsets(); finishHandoffInjection(url); }
         @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
             if (request.isForMainFrame()) { mainFrameFailed = true; showError("请检查网络连接，再重新加载。", request.getUrl().toString()); }
         }
@@ -247,14 +424,13 @@ public final class MainActivity extends Activity {
             String scheme = request.getUrl().getScheme();
             if (request.isForMainFrame() && UrlPolicy.destination(request.getUrl().toString()) != UrlPolicy.Destination.INTERNAL) return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
             if ("http".equalsIgnoreCase(scheme) || "file".equalsIgnoreCase(scheme) || "content".equalsIgnoreCase(scheme)) return new WebResourceResponse("text/plain", "UTF-8", 403, "Blocked", java.util.Collections.emptyMap(), new ByteArrayInputStream(new byte[0]));
-            return null;
+            return pack.lookup(request.getMethod(), request.getUrl());
         }
         @Override public boolean onRenderProcessGone(WebView view, android.webkit.RenderProcessGoneDetail detail) {
             view.destroy(); new AlertDialog.Builder(MainActivity.this).setTitle("页面需要重新打开").setMessage("系统已停止网页进程，请重新启动客户端。").setCancelable(false).setPositiveButton("重新打开", (dialog, which) -> recreate()).show(); return true;
         }
     }
     private final class TrialChromeClient extends WebChromeClient {
-        @Override public void onProgressChanged(WebView view, int newProgress) { progress.setProgress(newProgress); }
         @Override public void onPermissionRequest(PermissionRequest request) {
             runOnUiThread(() -> {
                 if (!trustedCurrentPage() || !UrlPolicy.trustedOrigin(request.getOrigin().toString())) { request.deny(); return; }
