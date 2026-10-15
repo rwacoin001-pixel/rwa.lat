@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 public final class UrlPolicy {
     public enum Destination { INTERNAL, BROWSER_AUTH, EXTERNAL, BLOCK }
+    public static final String ORIGIN = "https://a-reit.com";
     private static final Set<String> AUTH_HOSTS = new java.util.HashSet<>(java.util.Arrays.asList("accounts.google.com", "x.com", "api.x.com", "twitter.com", "api.twitter.com"));
     private static final Pattern SESSION_PARAMETER = Pattern.compile("(?:^|[&;])(?:sessiontoken|session_token|access_token|auth_token|authorization|session)=", Pattern.CASE_INSENSITIVE);
     private UrlPolicy() {}

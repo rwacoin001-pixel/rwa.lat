@@ -8,7 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { createHash, randomBytes, randomUUID } from 'node:crypto'
 import { walletSignInMessage } from './wallet-sign-in-message'
 import { maskEmail } from '../data-governance/data-masking.util'
 import { DataSource, EntityManager, IsNull, Repository } from 'typeorm'
@@ -38,6 +38,8 @@ import {
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
 const ONE_TIME_TOKEN_TTL_MS = 60 * 60 * 1000
+// The browser hands the code straight to the app, so it only has to outlive one app switch.
+const APP_HANDOFF_TTL_MS = 2 * 60 * 1000
 const PASSKEY_CHALLENGE_TTL_MS = 5 * 60 * 1000
 
 export interface AuthResult {
@@ -903,6 +905,38 @@ export class IdentityService {
     } catch {
       return null
     }
+  }
+
+  /**
+   * Android app sign-in through the system browser, where Google, X and passkeys are allowed (Google forbids them
+   * inside an app's WebView). The signed-in browser asks for a two-minute, single-use code bound to the app's PKCE
+   * challenge; the app redeems it with the verifier that never left it, so a code caught by another app on the phone
+   * is useless. The browser session already passed every sign-in step, so the app gets its own fresh session.
+   */
+  async startAppHandoff(rawToken: string, challenge: string): Promise<{ code: string; expiresAt: Date }> {
+    const { userId } = await this.getSessionViewByToken(rawToken)
+    await this.oneTimeTokens.update({ userId, purpose: 'app_handoff', consumedAt: IsNull() }, { consumedAt: new Date() })
+    const code = this.crypto.generateSessionToken()
+    const expiresAt = new Date(Date.now() + APP_HANDOFF_TTL_MS)
+    await this.oneTimeTokens.save(this.oneTimeTokens.create({
+      id: randomUUID(),
+      userId,
+      purpose: 'app_handoff',
+      tokenHash: this.crypto.hashToken(`${code}.${challenge}`),
+      expiresAt,
+      consumedAt: null,
+    }))
+    return { code, expiresAt }
+  }
+
+  async redeemAppHandoff(code: string, verifier: string): Promise<AuthResult> {
+    const challenge = createHash('sha256').update(verifier).digest('base64url')
+    const userId = await this.consumeOneTimeToken(`${code}.${challenge}`, 'app_handoff', IDENTITY_ERROR_CODES.INVALID_VERIFICATION)
+    const user = await this.users.findOne({ where: { id: userId } })
+    if (!user || user.status === 'closed' || user.status === 'suspended') {
+      throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION, message: 'Verification token is invalid or expired.' })
+    }
+    return this.createSession(userId, { name: 'A-REIT Android' })
   }
 
   private async issueSession(

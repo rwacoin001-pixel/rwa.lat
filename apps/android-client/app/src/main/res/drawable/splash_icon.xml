@@ -1,0 +1,3 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 12+ masks the splash icon to a circle inside a 240dp canvas; the inset keeps the whole rounded tile visible. -->
+<inset xmlns:android="http://schemas.android.com/apk/res/android" android:drawable="@drawable/rwa_icon" android:inset="26%" />

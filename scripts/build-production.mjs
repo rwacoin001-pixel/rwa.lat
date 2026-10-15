@@ -12,6 +12,8 @@ const commands = {
   frontend: [
     ['node_modules/typescript/bin/tsc', '-p', 'packages/api-client/tsconfig.json'],
     ['node_modules/@opennextjs/cloudflare/dist/cli/index.js', 'build'],
+    // Android app: list of files it keeps on the phone, deployed as /app-pack/manifest.json.
+    ['scripts/app-pack-manifest.mjs'],
   ],
   api: [['apps/api/node_modules/@nestjs/cli/bin/nest.js', 'build']],
   admin: [['apps/admin/node_modules/@nestjs/cli/bin/nest.js', 'build']],

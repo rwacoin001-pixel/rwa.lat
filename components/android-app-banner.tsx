@@ -22,6 +22,8 @@ export function AndroidAppBanner() {
     if (!ANDROID_APP.url) return
     let closed = false
     try { closed = sessionStorage.getItem(CLOSED_KEY) === '1' } catch { /* storage blocked: show it */ }
+    // The app's own browser sign-in pages are reached from the app: no need to offer it there.
+    if (location.pathname === '/app-login' || location.pathname === '/app-handoff') return
     if (closed || isStandalone() || navigator.userAgent.includes(ANDROID_APP_UA) || !needsAndroidApp(detectEnv().kind)) return
     setChromeHref(chromeIntentUrl(location.href, new URL(ANDROID_APP.url, location.href).href))
     setShow(true)

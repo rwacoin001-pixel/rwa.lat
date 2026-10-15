@@ -16,6 +16,7 @@ import { SessionViewDto } from './dto/session-view.dto'
 import { EmailCodeService } from './email-code.service'
 import { EmailBindingStartDto, EmailBindingSendDto, EmailBindingTokenDto, EmailBindingCompleteDto } from './dto/email-binding.dto'
 import { ConfirmEmailCodeDto, EmailCodeChallengeDto, EmailLookupDto, EmailLookupResultDto, RequestEmailCodeDto } from './dto/email-code.dto'
+import { AppHandoffRedeemDto, AppHandoffStartDto } from './dto/app-handoff.dto'
 
 @ApiTags('identity')
 @Controller('auth')
@@ -199,6 +200,18 @@ export class IdentityController {
   @ApiOperation({ summary: 'Consume a recovery link token and issue a controlled session' })
   async confirmRecovery(@Body() dto: RecoverConfirmDto) {
     return this.identity.confirmRecovery(dto.token, dto.device)
+  }
+
+  @Post('app-handoff')
+  @ApiOperation({ summary: 'Signed-in browser: one-time code that signs the Android app in (PKCE-bound, 2 minutes)' })
+  async startAppHandoff(@Body() dto: AppHandoffStartDto, @Headers('authorization') authorization?: string) {
+    return this.identity.startAppHandoff(this.sessionToken(authorization), dto.challenge)
+  }
+
+  @Post('app-handoff/redeem')
+  @ApiOperation({ summary: 'Android app: redeem the browser code with its PKCE verifier for its own session' })
+  async redeemAppHandoff(@Body() dto: AppHandoffRedeemDto) {
+    return this.identity.redeemAppHandoff(dto.code, dto.verifier)
   }
 
   @Post('logout')

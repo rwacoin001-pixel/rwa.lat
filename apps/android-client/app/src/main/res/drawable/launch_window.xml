@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Window background until the page is ready: the app icon at 112dp centred, the same size and position as the
+     website's launch screen (lib/launch-splash.ts), so the hand-over is invisible. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_bg" />
+    <item android:width="112dp" android:height="112dp" android:gravity="center" android:drawable="@drawable/rwa_icon" />
+</layer-list>
