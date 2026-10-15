@@ -125,6 +125,16 @@ const en: GateCopy = {
 }
 
 const gateCopy: Record<AppLocale, GateCopy> = { en, 'zh-CN': zh, ...localizedGateViewCopy }
+// Which bar the reader sees at the bottom of Safari; picks the first step's drawing and wording.
+const BAR_PICK: Record<AppLocale, { question: string; toolbar: string; compact: string }> = {
+  'zh-CN': { question: '你的 Safari 底部是', toolbar: '完整工具栏', compact: '只有地址栏' },
+  en: { question: 'At the bottom of your Safari', toolbar: 'Full toolbar', compact: 'Address bar only' },
+  es: { question: 'Abajo en tu Safari hay', toolbar: 'Barra completa', compact: 'Solo la dirección' },
+  fr: { question: 'En bas de votre Safari', toolbar: 'Barre complète', compact: 'Adresse seule' },
+  pt: { question: 'Embaixo no seu Safari', toolbar: 'Barra completa', compact: 'Só o endereço' },
+  ar: { question: 'أسفل Safari لديك', toolbar: 'شريط أدوات كامل', compact: 'شريط العنوان فقط' },
+  hi: { question: 'आपके Safari में नीचे', toolbar: 'पूरा टूलबार', compact: 'सिर्फ़ पता बार' },
+}
 
 function Rich({ text }: { text: string }) {
   return <>{text.split(/\[(.+?)\]/).map((part, index) => index % 2 ? <b key={index}>{part}</b> : part)}</>
@@ -137,8 +147,12 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
   const copy = gateCopy[locale]
   const path: Path = env.kind === 'ios-safari' ? 'safari' : env.kind === 'wechat-ios' || env.kind === 'inapp' ? 'inapp' : 'browser'
   // Safari 26 defaults to the compact bar (Share sits behind ···) and adds the Web App switch; 0 = unknown, show both hints.
+  // The version is only the starting guess: Safari 26 also offers the classic Top/Bottom layouts and upgraded phones often
+  // keep theirs, which no web API reveals. So the reader can switch the first step between the two bars.
   const version = safariMajor()
-  const compact = path === 'safari' && version >= 26
+  const [bar, setBar] = useState<'toolbar' | 'compact'>(() => version >= 26 ? 'compact' : 'toolbar')
+  const compact = path === 'safari' && bar === 'compact'
+  const pick = BAR_PICK[locale] ?? BAR_PICK.en
   const webApp = version === 0 || version >= 26
   const app = env.app ? copy.apps?.[env.app] ?? env.app : copy.from.app
   const fill = (text: string) => text.replace('{app}', app).replace('{open}', env.kind === 'wechat-ios' ? copy.ui.openInSafari : copy.ui.openInBrowser)
@@ -209,8 +223,12 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
           <div className={styles.stepBody}>
             <h2 className={styles.stepTitle}><Rich text={fill(step.title)} /></h2>
             <p className={styles.stepText}><Rich text={fill(step.body)} /></p>
+            {index === 0 && path === 'safari' && <div className={styles.barPick} role="group" aria-label={pick.question}>
+              <span>{pick.question}</span>
+              {(['toolbar', 'compact'] as const).map(option => <button key={option} type="button" aria-pressed={bar === option} onClick={() => setBar(option)}>{pick[option]}</button>)}
+            </div>}
             {step.scene && <SceneArt scene={step.scene} ui={copy.ui} webApp={webApp} webAppTag={copy.webAppTag} openLabel={fill('{open}')} />}
-            {step.alt && <p className={styles.alt}><Rich text={step.alt} /></p>}
+            {step.alt && !(index === 0 && path === 'safari') && <p className={styles.alt}><Rich text={step.alt} /></p>}
           </div>
         </li>)}
       </ol>

@@ -52,3 +52,8 @@
 .stepIcon { display: grid; flex: none; place-items: center; width: 34px; height: 34px; border-radius: 10px; color: var(--home-lacquer-accent); background: var(--home-lacquer-press); }
 
 .note { margin: 14px 0 0; color: var(--home-lacquer-muted); font-size: 11px; line-height: 1.55; }
+/* Android browsers without a real web-app install: the Android app and Chrome come first. */
+.appOffer { display: grid; justify-items: center; gap: 7px; margin: 0 0 18px; }
+.appOffer small { color: var(--home-lacquer-muted); font-size: 11px; }
+.appOffer .secondary { margin-top: 4px; text-decoration: none; }
+.appOffer .primary { text-decoration: none; }

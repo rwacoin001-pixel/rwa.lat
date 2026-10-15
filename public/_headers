@@ -15,3 +15,10 @@
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
 /baskets/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800
+
+# Android 安装包：文件名带版本号，内容不会变，可长期缓存；类型和下载方式要明确，否则部分浏览器会当成普通文件或直接打开。
+/download/*
+  Content-Type: application/vnd.android.package-archive
+  Content-Disposition: attachment
+  Cache-Control: public, max-age=31536000, immutable
+  X-Content-Type-Options: nosniff

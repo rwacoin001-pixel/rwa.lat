@@ -4,11 +4,12 @@ android {
     namespace 'lat.rwa.trial'
     compileSdk 35
     defaultConfig {
-        applicationId 'lat.rwa.trial'
+        // Public release id; the Java namespace above stays (code package, not the install identity).
+        applicationId 'com.areit.app'
         minSdk 26
         targetSdk 35
-        versionCode 1
-        versionName '0.1.0-trial'
+        versionCode 2
+        versionName '1.0.0'
     }
     buildTypes {
         release { minifyEnabled false }
