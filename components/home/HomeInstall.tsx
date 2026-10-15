@@ -14,8 +14,8 @@ import { Check, Copy, Download, ExternalLink, Menu, MoreHorizontal, MoreVertical
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { AppLocale } from '@/lib/i18n'
 import { localizedInstallCopy } from '@/lib/install-localized-copy'
-import { detectEnv, isStandalone, type InstallEnv, type InstallKind } from './install-env'
-import { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } from '@/lib/android-app'
+import { detectEnv, isStandalone, needsAndroidApp, type InstallEnv, type InstallKind } from './install-env'
+import { ANDROID_APP, ANDROID_APP_UA, APP_OFFER, chromeIntentUrl } from '@/lib/android-app'
 import styles from './HomeInstall.module.css'
 
 type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
@@ -152,17 +152,6 @@ export function StepText({ text }: { text: string }) {
   return <>{text.split(/\[(.+?)\]/).map((part, index) => index % 2 ? <b key={index}>{part}</b> : part)}</>
 }
 
-const NO_WEB_APP = new Set<InstallKind>(['android-xiaomi', 'android-huawei', 'android-other'])
-const APP_OFFER: Record<AppLocale, { download: string; meta: string; chrome: string; shortcut: string }> = {
-  'zh-CN': { download: '下载 A-REIT 安卓 App', meta: '版本 {v} · SHA-256 {h}…', chrome: '用 Chrome 打开', shortcut: '或添加到桌面（仅为浏览器快捷方式）' },
-  en: { download: 'Download the A-REIT Android app', meta: 'Version {v} · SHA-256 {h}…', chrome: 'Open in Chrome', shortcut: 'Or add to your home screen (a browser shortcut only)' },
-  es: { download: 'Descargar la app de A-REIT para Android', meta: 'Versión {v} · SHA-256 {h}…', chrome: 'Abrir en Chrome', shortcut: 'O añadir a la pantalla de inicio (solo un acceso directo)' },
-  fr: { download: 'Télécharger l’app Android A-REIT', meta: 'Version {v} · SHA-256 {h}…', chrome: 'Ouvrir dans Chrome', shortcut: 'Ou ajouter à l’écran d’accueil (simple raccourci)' },
-  pt: { download: 'Baixar o app Android da A-REIT', meta: 'Versão {v} · SHA-256 {h}…', chrome: 'Abrir no Chrome', shortcut: 'Ou adicionar à tela inicial (apenas um atalho)' },
-  ar: { download: 'تنزيل تطبيق A-REIT لأندرويد', meta: 'الإصدار {v} · SHA-256 {h}…', chrome: 'فتح في Chrome', shortcut: 'أو أضِفه إلى الشاشة الرئيسية (اختصار للمتصفح فقط)' },
-  hi: { download: 'A-REIT Android ऐप डाउनलोड करें', meta: 'संस्करण {v} · SHA-256 {h}…', chrome: 'Chrome में खोलें', shortcut: 'या होम स्क्रीन पर जोड़ें (सिर्फ़ ब्राउज़र शॉर्टकट)' },
-}
-
 export function InstallSheet({ open, env, canPrompt, copy, onClose }: { open: boolean; env: InstallEnv; canPrompt: boolean; copy: InstallCopy; onClose: () => void }) {
   const reduced = useReducedMotion()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -198,7 +187,7 @@ export function InstallSheet({ open, env, canPrompt, copy, onClose }: { open: bo
 
   const native = canPrompt && !promptFailed
   // Browsers whose "add to desktop" is only a bookmark: offer the Android app and Chrome first, the shortcut last.
-  const appOffer = NO_WEB_APP.has(env.kind)
+  const appOffer = needsAndroidApp(env.kind)
   const locale = (Object.keys(installCopy) as AppLocale[]).find(key => installCopy[key] === copy) ?? 'en'
   const app = APP_OFFER[locale]
   const icons = STEP_ICONS[env.kind]
