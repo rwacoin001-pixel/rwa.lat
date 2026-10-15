@@ -11,8 +11,13 @@ type Contract = { id: string; locale: EmailLocale; subject: string; fields: stri
 let contracts: Map<string, Contract> | undefined
 const templates = new Map<string, { html: string; text: string }>()
 
+/** Expected caller-data errors may use a safe generic notification; asset failures must retry. */
+export class EmailTemplateInputError extends Error {
+  constructor(message: string) { super(message); this.name = 'EmailTemplateInputError' }
+}
+
 export function emailLocale(value?: string): EmailLocale {
-  const language = (value ?? 'en').toLowerCase().split('-')[0]
+  const language = (value ?? 'en').trim().toLowerCase().replace(/_/g, '-').split('-')[0]
   return language === 'zh' ? 'zh-CN' : EMAIL_LOCALES.find(locale => locale === language) ?? 'en'
 }
 
@@ -45,24 +50,25 @@ export function renderEmailTemplate(id: string, locale: string | undefined, data
   const language = emailLocale(locale)
   const key = `${id}/${language}`
   const contract = contracts.get(key)
-  if (!contract) throw new Error('Unknown email template')
+  if (!contract) throw new EmailTemplateInputError('Unknown email template')
   const values: Record<string, string | number> = { ...data, assetBaseUrl: EMAIL_ASSET_BASE_URL,
     supportUrl: 'https://a-reit.com/profile/support', year: new Date().getUTCFullYear() }
   for (const field of Object.keys(data)) {
-    if (COMMON_FIELDS.has(field) || !contract.fields.includes(field)) throw new Error('Unexpected email field')
+    if (COMMON_FIELDS.has(field) || !contract.fields.includes(field)) throw new EmailTemplateInputError('Unexpected email field')
   }
   for (const field of contract.fields) {
     const value = values[field]
     if ((typeof value !== 'string' && typeof value !== 'number') || (typeof value === 'number' && !Number.isFinite(value))
-      || String(value).length > 4000 || /[\u0000\r]/.test(String(value))) throw new Error('Invalid email field')
+      || String(value).length > 4000 || /[\u0000\r]/.test(String(value))) throw new EmailTemplateInputError('Invalid email field')
     if (field.endsWith('Url') && field !== 'assetBaseUrl') {
-      const url = new URL(String(value))
+      let url: URL
+      try { url = new URL(String(value)) } catch { throw new EmailTemplateInputError('Untrusted email URL') }
       if (url.protocol !== 'https:' || !ALLOWED_HOSTS.has(url.hostname) || url.username || url.password || url.port) {
-        throw new Error('Untrusted email URL')
+        throw new EmailTemplateInputError('Untrusted email URL')
       }
     }
   }
-  if ('code' in values && !/^\d{6}$/.test(String(values.code))) throw new Error('Invalid verification code')
+  if ('code' in values && !/^\d{6}$/.test(String(values.code))) throw new EmailTemplateInputError('Invalid verification code')
   if (!templates.has(key)) templates.set(key, {
     html: readFileSync(join(RESOURCE_ROOT, 'templates', language, `${id}.html`), 'utf8'),
     text: readFileSync(join(RESOURCE_ROOT, 'templates', language, `${id}.txt`), 'utf8'),

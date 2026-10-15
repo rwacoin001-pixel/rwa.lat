@@ -26,7 +26,7 @@ const SAFARI_EXIT_DELAY_MS = 30_000
 
 export default function IosInstallGate() {
   const pathname = usePathname()
-  const { locale } = useI18n()
+  const { locale, setLocale } = useI18n()
   const { theme } = useRwaTheme()
   const [gated, setGated] = useState(false)
   const [view, setView] = useState<ViewModule | null>(null)
@@ -67,5 +67,5 @@ export default function IosInstallGate() {
     setGated(false)
   }
   const View = view.default
-  return <View env={env} locale={locale} theme={tone} exitReady={exitReady} onLeave={leave} />
+  return <View env={env} locale={locale} onLocaleChange={setLocale} theme={tone} exitReady={exitReady} onLeave={leave} />
 }

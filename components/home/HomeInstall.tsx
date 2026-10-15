@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom'
 import { Check, Copy, Download, ExternalLink, Menu, MoreHorizontal, MoreVertical, PlusSquare, Settings, Share, X } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { AppLocale } from '@/lib/i18n'
+import { localizedInstallCopy } from '@/lib/install-localized-copy'
 import { detectEnv, isStandalone, type InstallEnv, type InstallKind } from './install-env'
 import styles from './HomeInstall.module.css'
 
@@ -85,7 +86,7 @@ const NEEDS_LINK = new Set<InstallKind>(['ios-other', 'android-other', 'desktop-
 const OUTSIDE_BROWSER = new Set<InstallKind>(['wechat-ios', 'wechat-android', 'inapp'])
 
 /** Step text marks UI labels with [brackets]; they render bold. */
-type InstallCopy = {
+export type InstallCopy = {
   strip: string; stripSub: string; stripInApp: string; dismiss: string
   title: string; lede: string; benefits: string[]; iosNote: string
   steps: string; manual: string; install: string; installHint: string
@@ -143,8 +144,7 @@ const en: InstallCopy = {
   },
 }
 
-// Other locales fall back to English until reviewed translations of the browser menu labels exist.
-export const installCopy: Record<AppLocale, InstallCopy> = { en, 'zh-CN': zh, hi: en, es: en, ar: en, fr: en, pt: en }
+export const installCopy: Record<AppLocale, InstallCopy> = { en, 'zh-CN': zh, ...localizedInstallCopy }
 
 export function StepText({ text }: { text: string }) {
   return <>{text.split(/\[(.+?)\]/).map((part, index) => index % 2 ? <b key={index}>{part}</b> : part)}</>

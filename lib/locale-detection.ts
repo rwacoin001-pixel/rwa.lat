@@ -16,9 +16,6 @@ const countriesByLanguage: Record<AppLocale, string> = {
   pt: 'PT BR AO MZ CV GW ST TL',
 }
 
-// In these countries, a device language is a better tie-breaker than one fixed language.
-const multilingualCountries = new Set('IN CA SG CH BE ZA HK MO AE'.split(' '))
-
 export function browserLocale(acceptLanguage: string | null | undefined): AppLocale | undefined {
   const entries = (acceptLanguage ?? '').slice(0, 4096).split(',').map((entry, index) => {
     const [tag, ...parameters] = entry.trim().split(';')
@@ -40,7 +37,6 @@ export function resolveInitialLocale(input: {
   if (isAppLocale(input.savedLocale)) return input.savedLocale
   const country = input.country?.trim().toUpperCase() ?? ''
   const deviceLocale = browserLocale(input.acceptLanguage)
-  if (multilingualCountries.has(country) && deviceLocale) return deviceLocale
   const regionalLocale = localeOptions.find(option => countriesByLanguage[option.code].split(' ').includes(country))?.code
   return regionalLocale ?? deviceLocale ?? 'en'
 }

@@ -14,7 +14,7 @@ export default function RecoverPage(){
   const r=await fetch(`/api/auth/recovery/${action}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(payload),signal:AbortSignal.timeout(20000)})
   const data=await r.json();if(!r.ok)throw Error(data.message||'验证失败');return data
  }
- async function request(){setBusy(true);setError('');try{await send('request',{email});setStage('code');setCooldown(60);setCode('')}catch(e){setError(e instanceof Error?e.message:'请求失败')}finally{setBusy(false)}}
+ async function request(){setBusy(true);setError('');try{await send('request',{email,locale:navigator.language});setStage('code');setCooldown(60);setCode('')}catch(e){setError(e instanceof Error?e.message:'请求失败')}finally{setBusy(false)}}
  async function submit(e:React.FormEvent){
   e.preventDefault();if(stage==='email'){await request();return}setBusy(true);setError('')
   try{

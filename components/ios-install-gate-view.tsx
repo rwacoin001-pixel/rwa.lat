@@ -11,6 +11,8 @@
 import { useState } from 'react'
 import { BookOpen, Check, ChevronDown, ChevronLeft, ChevronRight, Compass, Copy, Globe, KeyRound, MessageCircle, MoreHorizontal, PlusSquare, RotateCw, Share, X } from 'lucide-react'
 import type { AppLocale } from '@/lib/i18n'
+import { localeOptions } from '@/lib/app-locales'
+import { localizedGateViewCopy } from '@/lib/install-gate-view-copy'
 import { safariMajor, type InstallEnv } from './home/install-env'
 import styles from './ios-install-gate-view.module.css'
 
@@ -25,7 +27,7 @@ type Faq = { q: string; a: string; copy?: boolean }
 type Ui = { share: string; addToHome: string; add: string; cancel: string; webApp: string; openInSafari: string; openInBrowser: string }
 
 /** Text marks UI labels with [brackets]; they render bold. {app} / {open} are filled per environment. */
-type GateCopy = {
+export type GateCopy = {
   dir: 'ltr' | 'rtl'
   ui: Ui
   kicker: string; title: string; lede: string; ledeInApp: string
@@ -122,15 +124,14 @@ const en: GateCopy = {
   copyLink: 'Copy page link', copied: 'Copied', exit: 'Tried and still can’t add it? Continue in the browser for now',
 }
 
-// Same policy as the Home install guide: other locales use English until the Safari labels are reviewed.
-const gateCopy: Record<AppLocale, GateCopy> = { en, 'zh-CN': zh, hi: en, es: en, ar: en, fr: en, pt: en }
+const gateCopy: Record<AppLocale, GateCopy> = { en, 'zh-CN': zh, ...localizedGateViewCopy }
 
 function Rich({ text }: { text: string }) {
   return <>{text.split(/\[(.+?)\]/).map((part, index) => index % 2 ? <b key={index}>{part}</b> : part)}</>
 }
 
-export default function IosInstallGateView({ env, locale, theme, exitReady, onLeave }: {
-  env: InstallEnv; locale: AppLocale; theme: 'light' | 'dark'; exitReady: boolean; onLeave: () => void
+export default function IosInstallGateView({ env, locale, theme, exitReady, onLeave, onLocaleChange }: {
+  env: InstallEnv; locale: AppLocale; theme: 'light' | 'dark'; exitReady: boolean; onLeave: () => void; onLocaleChange: (locale: AppLocale) => void
 }) {
   const [copied, setCopied] = useState(false)
   const copy = gateCopy[locale]
@@ -163,7 +164,15 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
 
   return <div className={styles.gate} data-theme={theme} role="dialog" aria-modal="true" aria-labelledby="ios-gate-title" dir={copy.dir}>
     <div className={styles.inner}>
-      <p className={styles.brand}>A<i>-</i>REIT</p>
+      <div className={styles.topbar}>
+        <p className={styles.brand}>A<i>-</i>REIT</p>
+        <label className={styles.language}>
+          <Globe size={16} aria-hidden="true" />
+          <select aria-label="Language" value={locale} onChange={event => onLocaleChange(event.target.value as AppLocale)}>
+            {localeOptions.map(option => <option key={option.code} value={option.code} lang={option.code}>{option.label}</option>)}
+          </select>
+        </label>
+      </div>
 
       <header className={styles.head}>
         <p className={styles.kicker}>{copy.kicker}</p>

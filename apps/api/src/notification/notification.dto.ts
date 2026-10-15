@@ -1,5 +1,6 @@
 import { IsIn, IsObject, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { EMAIL_LOCALES } from '../common/email-template'
 
 export class ListNotificationsQueryDto {
   @ApiPropertyOptional()
@@ -49,6 +50,11 @@ export class CreateNotificationDto {
   @IsOptional()
   @IsObject()
   payload?: Record<string, unknown>
+
+  @ApiPropertyOptional({ enum: [...EMAIL_LOCALES, 'zh_CN'] })
+  @IsOptional()
+  @IsIn([...EMAIL_LOCALES, 'zh_CN'])
+  locale?: string
 
   @IsOptional() @IsUUID('4') idempotencyKey?: string
 }

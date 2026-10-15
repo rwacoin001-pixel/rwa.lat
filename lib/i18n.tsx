@@ -173,10 +173,11 @@ export function I18nProvider({ children, initialLocale = 'en' }: { children: Rea
     try {
       stored = window.localStorage.getItem('rwa-language')
     } catch { /* Storage is optional. */ }
-    // Migrate existing device preferences to a cookie so subsequent SSR agrees.
+    // Only an explicit saved choice is persistent. Automatic IP/device detection
+    // must remain automatic on future visits instead of becoming a manual override.
     const detected = isAppLocale(stored) ? stored : initialLocale
     setLocaleState(detected)
-    persistLocale(detected)
+    if (isAppLocale(stored)) persistLocale(stored)
   }, [initialLocale])
 
   const setLocale = (next: AppLocale) => {

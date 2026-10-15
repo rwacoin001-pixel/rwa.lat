@@ -22,11 +22,13 @@ test('country selects each available regional language before device preference'
   }
   assert.equal(resolveInitialLocale({ country: ' br ' }), 'pt')
 })
-test('multilingual regions honor device language and otherwise use regional default', () => {
-  assert.equal(resolveInitialLocale({ country: 'IN', acceptLanguage: 'en-IN,hi;q=0.8' }), 'en')
+test('IP country takes priority over device language, including multilingual regions', () => {
+  assert.equal(resolveInitialLocale({ country: 'IN', acceptLanguage: 'en-IN,hi;q=0.8' }), 'hi')
   assert.equal(resolveInitialLocale({ country: 'IN', acceptLanguage: 'bn' }), 'hi')
-  assert.equal(resolveInitialLocale({ country: 'CA', acceptLanguage: 'fr-CA,en;q=0.7' }), 'fr')
-  assert.equal(resolveInitialLocale({ country: 'SG', acceptLanguage: 'zh-SG,en;q=0.8' }), 'zh-CN')
+  assert.equal(resolveInitialLocale({ country: 'CA', acceptLanguage: 'fr-CA,en;q=0.7' }), 'en')
+  assert.equal(resolveInitialLocale({ country: 'SG', acceptLanguage: 'zh-SG,en;q=0.8' }), 'en')
+  assert.equal(resolveInitialLocale({ country: 'AE', acceptLanguage: 'en' }), 'ar')
+  assert.equal(resolveInitialLocale({ country: 'HK', acceptLanguage: 'en' }), 'zh-CN')
 })
 test('saved preference wins over country and moving networks', () => {
   assert.equal(resolveInitialLocale({ savedLocale: 'ar', country: 'CN', acceptLanguage: 'en' }), 'ar')
