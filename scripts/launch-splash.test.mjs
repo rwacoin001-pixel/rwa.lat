@@ -17,7 +17,7 @@ function load(relative) {
 const { documentPreferencesBootstrap } = load('lib/document-preferences-bootstrap.ts')
 const { launchSplashScript } = load('lib/launch-splash.ts')
 
-function runBootstrap({ path = '/home', standalone = false, ua = 'Mozilla/5.0', session = null, browsing = false } = {}) {
+function runBootstrap({ path = '/home', standalone = false, ua = 'Mozilla/5.0', session = null } = {}) {
   const dataset = {}
   const replaced = []
   const store = (values) => ({ getItem: (key) => values[key] ?? null })
@@ -31,7 +31,6 @@ function runBootstrap({ path = '/home', standalone = false, ua = 'Mozilla/5.0', 
     navigator: { userAgent: ua, standalone: false },
     location: { pathname: path, replace: (to) => replaced.push(to) },
     localStorage: store(session ? { 'rwa.session': session } : {}),
-    sessionStorage: store(browsing ? { 'rwa.browse-as-guest': '1' } : {}),
     matchMedia: (query) => ({ matches: standalone && /standalone/.test(query) }),
   })
   return { dataset, replaced }
@@ -44,9 +43,8 @@ test('an installed app opened signed out goes straight to sign-in', () => {
   assert.equal(runBootstrap({ standalone: true }).dataset.launch, 'app')
 })
 
-test('signed in, "look around first", other pages and browser tabs are left alone', () => {
+test('signed in, other pages and browser tabs are left alone', () => {
   assert.deepEqual(runBootstrap({ standalone: true, session: '{"sessionToken":"x"}' }).replaced, [])
-  assert.deepEqual(runBootstrap({ standalone: true, browsing: true }).replaced, [])
   assert.deepEqual(runBootstrap({ standalone: true, path: '/markets' }).replaced, [])
   const tab = runBootstrap({ standalone: false })
   assert.deepEqual(tab.replaced, [])

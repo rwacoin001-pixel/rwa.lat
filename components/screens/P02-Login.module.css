@@ -516,6 +516,3 @@
 @media (min-width: 640px) { .legalOverlay { align-items: center; } .legalHandle { visibility: hidden; height: 0; margin-bottom: 6px; } }
 @media (max-width: 380px) { .legalSheet { padding-inline: 16px; } .legalTitle { font-size: 24px; } .legalTabs button { padding: 0 6px; font-size: 11.5px; } }
 @media (prefers-reduced-motion: reduce) { .legalBackdrop, .legalSheet, .legalBody { animation: none; } .legalAction, .legalAction::after, .legalActionIcon { transition: none; } }
-/* Installed app only: a guest can still look around instead of signing in (AuthShell). */
-.browseLink { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; border-radius: 999px; color: inherit; font-size: 14px; font-weight: 600; text-decoration: none; opacity: .86; }
-.browseLink:active { transform: scale(.96); }
