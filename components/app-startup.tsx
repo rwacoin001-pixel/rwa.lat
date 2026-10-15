@@ -21,10 +21,10 @@ export function LogoStartupVisual({ theme, leaving = false, replay = false }: { 
       scope = createScope({ root: host.current }).add(() => {
         const timeline = createTimeline({ defaults: { ease: 'outExpo' }, loop: replay, loopDelay: 1000 })
         timeline
-          .add('[data-logo-piece="0"]', { x: [-14, 0], y: [-8, 0], rotate: [-3, 0], opacity: [0, 1], duration: 760 }, 0)
-          .add('[data-logo-piece="1"]', { y: [14, 0], rotate: [2, 0], opacity: [0, 1], duration: 760 }, 110)
-          .add('[data-logo-piece="2"]', { x: [14, 0], y: [-10, 0], rotate: [3, 0], opacity: [0, 1], duration: 760 }, 220)
-          .add('[data-logo-sheen]', { maskPosition: ['100% 0%', '0% 0%'], opacity: [0, .28, 0], duration: 550, ease: 'inOutSine' }, 800)
+          .add('[data-logo-piece="0"]', { x: [-14, 0], y: [-8, 0], rotate: [-3, 0], opacity: [0, 1], duration: 520 }, 0)
+          .add('[data-logo-piece="1"]', { y: [14, 0], rotate: [2, 0], opacity: [0, 1], duration: 520 }, 70)
+          .add('[data-logo-piece="2"]', { x: [14, 0], y: [-10, 0], rotate: [3, 0], opacity: [0, 1], duration: 520 }, 140)
+          .add('[data-logo-sheen]', { maskPosition: ['100% 0%', '0% 0%'], opacity: [0, .28, 0], duration: 380, ease: 'inOutSine' }, 560)
       })
     }).catch(() => { /* Preserve the complete canonical logo without animation. */ })
     return () => { alive = false; scope?.revert() }
@@ -62,8 +62,8 @@ export default function AppStartup() {
     }
     if (!showEntrance.current) return
     setStage('visible')
-    const fade = window.setTimeout(() => setStage('leaving'), 1550)
-    const done = window.setTimeout(() => setStage('idle'), 1830)
+    const fade = window.setTimeout(() => setStage('leaving'), 1000)
+    const done = window.setTimeout(() => setStage('idle'), 1240)
     const hide = () => {
       if (!document.hidden) return
       clearTimeout(fade); clearTimeout(done); setStage('idle')

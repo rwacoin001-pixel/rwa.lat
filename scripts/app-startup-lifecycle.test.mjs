@@ -81,9 +81,9 @@ test('installed entrance remains one bounded logo across route navigation', () =
     assert.equal(app.render().type.name, 'LogoStartupVisual')
     assert.equal(app.navigate('/markets').props.leaving, false)
     assert.deepEqual(app.writes, ['rwa:startup:logo:v2'])
-    app.advance(1550)
+    app.advance(1000)
     assert.equal(app.render().props.leaving, true)
-    app.advance(280)
+    app.advance(240)
     assert.equal(app.render(), null)
     assert.equal(app.navigate('/home'), null)
   } finally { app.cleanup() }
@@ -95,7 +95,7 @@ test('StrictMode cleanup does not strand the splash or write the session twice',
     app.render(); app.flush(); app.strictReplay()
     assert.equal(app.render().type.name, 'LogoStartupVisual')
     assert.deepEqual(app.writes, ['rwa:startup:logo:v2'])
-    app.advance(1830)
+    app.advance(1240)
     assert.equal(app.render(), null)
   } finally { app.cleanup() }
 })
@@ -117,9 +117,9 @@ test('backgrounding dismisses the entrance without restarting it', () => {
   try {
     app.render(); app.flush(); app.hide()
     assert.equal(app.render(), null)
-    app.advance(1550)
+    app.advance(1000)
     assert.equal(app.render(), null)
-    app.advance(280)
+    app.advance(240)
     assert.equal(app.navigate('/home'), null)
   } finally { app.cleanup() }
 })

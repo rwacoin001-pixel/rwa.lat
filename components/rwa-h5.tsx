@@ -183,7 +183,9 @@ const BasketScreen = dynamic(() => import('./basket-screens').then((m) => ({ def
 import { Button } from './ui/button'
 import { EmptyState } from './ui/Empty'
 import { Skeleton } from './ui/skeleton'
-import { PriceArea, type PricePoint } from './charts/PriceArea'
+import type { PricePoint } from './charts/PriceArea'
+// Charts load with the asset detail that draws them, not with the app shell.
+const PriceArea = dynamic(() => import('./charts/PriceArea').then((m) => m.PriceArea), { ssr: false })
 import Stepper, { Step } from './Stepper'
 
 import { NAV_EVENT, pathForTarget, type NavTarget } from '@/lib/routes'
