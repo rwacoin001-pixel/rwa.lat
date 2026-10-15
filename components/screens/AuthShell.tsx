@@ -15,6 +15,8 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 }
 
 /** Shared frame for every sign-in surface: the scene film, the wordmark bar, and a centred plaque above the card. */
+const BROWSE_LABEL: Record<string, string> = { 'zh-CN': '先看看', en: 'Look around', es: 'Explorar', fr: 'Découvrir', pt: 'Explorar', ar: 'تصفّح أولاً', hi: 'पहले देखें' }
+
 export function AuthShell({ children, hero, footer, attrs }: {
   children: ReactNode
   hero?: ReactNode
@@ -26,6 +28,11 @@ export function AuthShell({ children, hero, footer, attrs }: {
   const visual = authVisualCopy[locale]
   const [mediaReady, setMediaReady] = useState(false)
   const [localeOpen, setLocaleOpen] = useState(false)
+  // An installed app opened signed out lands here directly (see the head bootstrap); this lets a guest still look
+  // around. The flag lasts for this launch only, so the next signed-out launch comes back to sign-in.
+  const [installed, setInstalled] = useState(false)
+  useEffect(() => { setInstalled(document.documentElement.dataset.launch === 'app') }, [])
+  const browse = () => { try { sessionStorage.setItem('rwa.browse-as-guest', '1') } catch { /* storage blocked: the link still opens home */ } }
   const localeWrap = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const frame = requestAnimationFrame(() => setMediaReady(true))
@@ -55,6 +62,7 @@ export function AuthShell({ children, hero, footer, attrs }: {
     <header className={styles.topbar}>
       <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>
       <div className={styles.topActions}>
+        {installed && <a href="/home" className={styles.browseLink} onClick={browse}>{BROWSE_LABEL[locale] ?? BROWSE_LABEL.en}</a>}
         <button type="button" className={styles.iconButton} onClick={(event) => revealTheme(toggleTheme, cool ? 'light' : 'dark', event)} aria-label={visual.switchTheme} title={visual.switchTheme}>{cool ? <Sun size={19} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}</button>
         <div className={styles.localeWrap} ref={localeWrap}>
           <button type="button" className={styles.iconButton} aria-label={t('common.language')} aria-haspopup="menu" aria-expanded={localeOpen} onClick={() => setLocaleOpen(value => !value)}>

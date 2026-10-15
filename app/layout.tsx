@@ -15,7 +15,8 @@ import { RwaThemeProvider } from '@/lib/rwa-theme'
 import { I18nProvider } from '@/lib/i18n'
 import PageChrome from '@/components/page-chrome'
 import SessionPrivacyGate from '@/components/session-privacy-gate'
-import AppStartup from '@/components/app-startup'
+import { launchSplashMarkup, launchSplashScript, launchSplashStyle } from '@/lib/launch-splash'
+import { iosStartupImages } from '@/lib/ios-startup-images'
 import IosInstallGate from '@/components/ios-install-gate'
 
 export const metadata: Metadata = {
@@ -29,6 +30,8 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'A-REIT',
+    // Shown by iOS from the tap until the page paints; same icon and position as the launch screen that follows.
+    startupImage: iosStartupImages,
   },
   formatDetection: { telephone: false },
   icons: {
@@ -81,11 +84,14 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
       <head>
         <script dangerouslySetInnerHTML={{ __html: desktopRedirectBootstrap }} />
         <script dangerouslySetInnerHTML={{ __html: documentPreferencesBootstrap }} />
+        <style dangerouslySetInnerHTML={{ __html: launchSplashStyle }} />
       </head>
       <body className={`antialiased overflow-x-hidden ${GeistMono.variable}`}>
+        <div suppressHydrationWarning dangerouslySetInnerHTML={{ __html: launchSplashMarkup }} />
+        <script dangerouslySetInnerHTML={{ __html: launchSplashScript }} />
         <PwaRegister />
         <PressFeedback />
-        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><AppStartup /><IosInstallGate /><SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
+        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate /><SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
       </body>
     </html>
   )

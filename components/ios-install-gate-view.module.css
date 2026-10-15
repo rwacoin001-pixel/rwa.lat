@@ -260,3 +260,9 @@
   .hot::after, .hotText::after, .hotTile i::after { animation: none; opacity: 0; }
   .tap { opacity: 0; }
 }
+
+/* Step 1: which bar the reader's Safari shows (the version alone cannot tell). */
+.barPick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 10px 0 2px; color: var(--g-muted); font-size: 12.5px; }
+.barPick > span { margin-inline-end: 2px; }
+.barPick button { min-height: 40px; padding: 0 14px; border: 1px solid var(--g-line); border-radius: 999px; background: transparent; color: var(--g-ink); font: inherit; font-weight: 600; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.barPick button[aria-pressed='true'] { border-color: var(--g-lacquer-line); background: var(--g-gold-soft); color: var(--g-gold); }

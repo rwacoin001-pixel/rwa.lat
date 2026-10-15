@@ -44,6 +44,24 @@ export const documentPreferencesBootstrap = `(() => {
   root.lang = locale;
   root.dir = directions[locale];
 
+  // Opened as the installed app (Home Screen web app or the Android client): the launch screen in the layout shows
+  // from the first frame, and a signed-out launch goes straight to sign-in instead of loading the guest home first.
+  // "Look around first" on the sign-in page sets a per-launch flag that lets the guest home through.
+  let installed = false;
+  try {
+    installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches
+      || matchMedia('(display-mode: fullscreen)').matches || navigator.userAgent.includes('RwaLatAndroidTrial/');
+  } catch {}
+  if (installed) {
+    root.dataset.launch = 'app';
+    if (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/home/') {
+      let signedIn = true;
+      let browsing = false;
+      try { signedIn = Boolean(localStorage.getItem('rwa.session')); browsing = sessionStorage.getItem('rwa.browse-as-guest') === '1'; } catch {}
+      if (!signedIn && !browsing) { location.replace('/login'); return; }
+    }
+  }
+
   // The home photo is a CSS background, so the browser would only find it once the home screen's code has run.
   // Start it now, for the theme that will show.
   if (location.pathname === '/home' || location.pathname === '/home/') {
