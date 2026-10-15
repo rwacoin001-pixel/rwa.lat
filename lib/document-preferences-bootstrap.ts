@@ -43,4 +43,15 @@ export const documentPreferencesBootstrap = `(() => {
     : Object.prototype.hasOwnProperty.call(directions, root.lang) ? root.lang : 'en';
   root.lang = locale;
   root.dir = directions[locale];
+
+  // The home photo is a CSS background, so the browser would only find it once the home screen's code has run.
+  // Start it now, for the theme that will show.
+  if (location.pathname === '/home' || location.pathname === '/home/') {
+    const hero = document.createElement('link');
+    hero.rel = 'preload';
+    hero.as = 'image';
+    hero.href = theme === 'dark' ? '/media/home/hero-cool.webp' : '/media/home/hero-day-from-cool-v2.webp';
+    hero.setAttribute('fetchpriority', 'high');
+    document.head.appendChild(hero);
+  }
 })();`

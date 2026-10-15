@@ -1,4 +1,5 @@
 const CACHE_NAME = 'a-reit-offline-v3'
+const SHELL_WAIT_MS = 1500
 const OFFLINE_ASSETS = [
   '/offline',
   '/brand/a-reit/app-icon.svg',
@@ -6,12 +7,9 @@ const OFFLINE_ASSETS = [
   '/icons/a-reit-v1-512.png',
   '/icons/a-reit-v1-maskable-512.png',
   '/home',
-  '/media/generated/project-assets/home-asset-hero-v1.png',
-  '/media/generated/project-assets/home-solar-cover-v2.webp',
-  '/media/generated/project-assets/home-residential-cover-v2.webp',
-  '/media/generated/project-assets/markets-collection-v1.png',
-  '/media/generated/project-assets/rwa-collection-v1.png',
 ]
+// No photos here: the first launch of the installed app used to download ~5MB of artwork (three files no page
+// used any more) while the app itself was loading. Images are cached as pages actually show them.
 
 // Precache one URL at a time instead of a single atomic addAll().
 // addAll() rejects if ANY entry is not 2xx, which is exactly how install broke:
@@ -65,20 +63,26 @@ self.addEventListener('fetch', (event) => {
       event.respondWith(fetch(event.request).catch(() => caches.match('/offline')))
       return
     }
-    event.respondWith(
-      fetch(event.request)
-        .then(async (response) => {
-          if (response.ok) {
-            const copy = response.clone()
-            event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)))
-          }
-          // Cloudflare failures are HTTP responses, not network exceptions.
-          // Keep the installed app usable with its last valid shell on a 5xx.
-          if (response.status >= 500) return (await caches.match(event.request)) || (await caches.match('/offline')) || response
-          return response
-        })
-        .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline')),
-    )
+    // Network first, as before, but a launch never waits on a slow network for longer than SHELL_WAIT_MS when
+    // the last shell is cached: that one shows, and the network answer still refreshes the cache for next time.
+    // A shell from an older build is safe: app/error.tsx reloads once on a missing chunk.
+    const network = fetch(event.request)
+      .then(async (response) => {
+        if (response.ok) {
+          const copy = response.clone()
+          event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)))
+        }
+        // Cloudflare failures are HTTP responses, not network exceptions.
+        // Keep the installed app usable with its last valid shell on a 5xx.
+        if (response.status >= 500) return (await caches.match(event.request)) || (await caches.match('/offline')) || response
+        return response
+      })
+      .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline'))
+    event.waitUntil(network.catch(() => null))
+    event.respondWith(Promise.race([
+      network,
+      new Promise((resolve) => setTimeout(resolve, SHELL_WAIT_MS)).then(async () => (await caches.match(event.request)) || network),
+    ]))
     return
   }
 

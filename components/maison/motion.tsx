@@ -5,7 +5,8 @@
 // Every piece honours prefers-reduced-motion and renders real values only.
 import NumberFlow, { type Format } from '@number-flow/react'
 import { useAutoAnimate } from '@formkit/auto-animate/react'
-import { AreaSeries, CandlestickSeries, ColorType, CrosshairMode, HistogramSeries, LineStyle, createChart, type IChartApi, type Time, type UTCTimestamp } from 'lightweight-charts'
+// lightweight-charts (~160KB) is imported inside PriceChart, so only screens that draw a chart download it.
+import type { IChartApi, Time, UTCTimestamp } from 'lightweight-charts'
 import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
 import { useEffect, useId, useMemo, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 import { useRwaTheme } from '@/lib/rwa-theme'
@@ -146,41 +147,47 @@ export function PriceChart({ points, candles, height = 188, digits = 2, locale, 
     const node = host.current
     if (!node || closes.length < 2) return
     const c = palette(node)
-    const chart = createChart(node, {
-      autoSize: true,
-      height,
-      layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: c.faint, fontSize: 10, fontFamily: 'var(--font-geist-sans), system-ui', attributionLogo: false },
-      grid: { vertLines: { visible: false }, horzLines: { color: c.line, style: LineStyle.Dotted } },
-      rightPriceScale: { borderVisible: false, scaleMargins: { top: .14, bottom: ohlc.length ? .24 : .08 } },
-      timeScale: { borderVisible: false, timeVisible: ohlc.length > 0, secondsVisible: false, fixLeftEdge: true, fixRightEdge: true },
-      crosshair: { mode: CrosshairMode.Magnet, vertLine: { color: alpha(c.accent, .5), labelBackgroundColor: c.accent, style: LineStyle.Solid, width: 1 }, horzLine: { color: alpha(c.accent, .35), labelBackgroundColor: c.accent, style: LineStyle.Dashed } },
-      handleScroll: { vertTouchDrag: false, horzTouchDrag: true, mouseWheel: false, pressedMouseMove: true },
-      handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
-      localization: { locale, priceFormatter: (price: number) => price.toLocaleString('en-US', { minimumFractionDigits: Math.min(digits, 2), maximumFractionDigits: digits }) },
-    })
-    chartRef.current = chart
-    let main
-    if (ohlc.length) {
-      main = chart.addSeries(CandlestickSeries, { upColor: c.up, downColor: c.down, borderVisible: false, wickUpColor: c.up, wickDownColor: c.down, priceLineColor: c.accent, priceLineStyle: LineStyle.Dotted })
-      main.setData(ohlc.map((row) => ({ time: row.time as UTCTimestamp, open: row.open, high: row.high, low: row.low, close: row.close })))
-      if (ohlc.some((row) => row.volume)) {
-        const volume = chart.addSeries(HistogramSeries, { priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false })
-        chart.priceScale('vol').applyOptions({ scaleMargins: { top: .82, bottom: 0 } })
-        volume.setData(ohlc.map((row) => ({ time: row.time as UTCTimestamp, value: row.volume ?? 0, color: alpha(row.close >= row.open ? c.up : c.down, .35) })))
+    let disposed = false
+    let built: IChartApi | null = null
+    void import('lightweight-charts').then(({ AreaSeries, CandlestickSeries, ColorType, CrosshairMode, HistogramSeries, LineStyle, createChart }) => {
+      if (disposed) return
+      const chart = createChart(node, {
+        autoSize: true,
+        height,
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: c.faint, fontSize: 10, fontFamily: 'var(--font-geist-sans), system-ui', attributionLogo: false },
+        grid: { vertLines: { visible: false }, horzLines: { color: c.line, style: LineStyle.Dotted } },
+        rightPriceScale: { borderVisible: false, scaleMargins: { top: .14, bottom: ohlc.length ? .24 : .08 } },
+        timeScale: { borderVisible: false, timeVisible: ohlc.length > 0, secondsVisible: false, fixLeftEdge: true, fixRightEdge: true },
+        crosshair: { mode: CrosshairMode.Magnet, vertLine: { color: alpha(c.accent, .5), labelBackgroundColor: c.accent, style: LineStyle.Solid, width: 1 }, horzLine: { color: alpha(c.accent, .35), labelBackgroundColor: c.accent, style: LineStyle.Dashed } },
+        handleScroll: { vertTouchDrag: false, horzTouchDrag: true, mouseWheel: false, pressedMouseMove: true },
+        handleScale: { pinch: true, mouseWheel: false, axisPressedMouseMove: false },
+        localization: { locale, priceFormatter: (price: number) => price.toLocaleString('en-US', { minimumFractionDigits: Math.min(digits, 2), maximumFractionDigits: digits }) },
+      })
+      built = chart
+      chartRef.current = chart
+      let main
+      if (ohlc.length) {
+        main = chart.addSeries(CandlestickSeries, { upColor: c.up, downColor: c.down, borderVisible: false, wickUpColor: c.up, wickDownColor: c.down, priceLineColor: c.accent, priceLineStyle: LineStyle.Dotted })
+        main.setData(ohlc.map((row) => ({ time: row.time as UTCTimestamp, open: row.open, high: row.high, low: row.low, close: row.close })))
+        if (ohlc.some((row) => row.volume)) {
+          const volume = chart.addSeries(HistogramSeries, { priceScaleId: 'vol', priceFormat: { type: 'volume' }, lastValueVisible: false, priceLineVisible: false })
+          chart.priceScale('vol').applyOptions({ scaleMargins: { top: .82, bottom: 0 } })
+          volume.setData(ohlc.map((row) => ({ time: row.time as UTCTimestamp, value: row.volume ?? 0, color: alpha(row.close >= row.open ? c.up : c.down, .35) })))
+        }
+      } else {
+        main = chart.addSeries(AreaSeries, { lineColor: c.accent, lineWidth: 2, topColor: alpha(c.accent, .28), bottomColor: alpha(c.accent, 0), priceLineVisible: false, lastValueVisible: true, crosshairMarkerRadius: 4, crosshairMarkerBorderColor: c.bg, crosshairMarkerBackgroundColor: c.accent })
+        main.setData(area.map((row) => ({ time: row.time as UTCTimestamp, value: row.value })))
       }
-    } else {
-      main = chart.addSeries(AreaSeries, { lineColor: c.accent, lineWidth: 2, topColor: alpha(c.accent, .28), bottomColor: alpha(c.accent, 0), priceLineVisible: false, lastValueVisible: true, crosshairMarkerRadius: 4, crosshairMarkerBorderColor: c.bg, crosshairMarkerBackgroundColor: c.accent })
-      main.setData(area.map((row) => ({ time: row.time as UTCTimestamp, value: row.value })))
-    }
-    chart.timeScale().fitContent()
-    const series = main
-    chart.subscribeCrosshairMove((param) => {
-      const data = param.time ? param.seriesData.get(series) : undefined
-      if (!data || !param.time) { setHover(null); return }
-      const value = 'close' in data && typeof data.close === 'number' ? data.close : 'value' in data && typeof data.value === 'number' ? data.value : null
-      setHover(value == null ? null : { time: Number(param.time as Time), value })
-    })
-    return () => { chart.remove(); chartRef.current = null }
+      chart.timeScale().fitContent()
+      const series = main
+      chart.subscribeCrosshairMove((param) => {
+        const data = param.time ? param.seriesData.get(series) : undefined
+        if (!data || !param.time) { setHover(null); return }
+        const value = 'close' in data && typeof data.close === 'number' ? data.close : 'value' in data && typeof data.value === 'number' ? data.value : null
+        setHover(value == null ? null : { time: Number(param.time as Time), value })
+      })
+    }).catch(() => { /* The legend still shows the last value if the chart code cannot load. */ })
+    return () => { disposed = true; built?.remove(); chartRef.current = null }
   }, [area, closes.length, digits, height, locale, ohlc, theme])
 
   const shown = hover ?? (last != null ? { time: closes[closes.length - 1].time, value: last } : null)
