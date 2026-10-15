@@ -15,6 +15,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import type { AppLocale } from '@/lib/i18n'
 import { localizedInstallCopy } from '@/lib/install-localized-copy'
 import { detectEnv, isStandalone, type InstallEnv, type InstallKind } from './install-env'
+import { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } from '@/lib/android-app'
 import styles from './HomeInstall.module.css'
 
 type BeforeInstallPromptEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }> }
@@ -47,7 +48,8 @@ export function useHomeInstall() {
   useEffect(() => {
     const sync = () => {
       setCanPrompt(Boolean(deferredPrompt))
-      let hidden = isStandalone()
+      // Inside the Android client the site already is the app; its WebView reports as an in-app browser otherwise.
+      let hidden = isStandalone() || window.navigator.userAgent.includes(ANDROID_APP_UA)
       try {
         const at = Number(window.localStorage.getItem(DISMISS_KEY))
         hidden = hidden || window.localStorage.getItem(INSTALLED_KEY) === '1' || (Number.isFinite(at) && at > 0 && Date.now() - at < SNOOZE_MS)
@@ -150,6 +152,17 @@ export function StepText({ text }: { text: string }) {
   return <>{text.split(/\[(.+?)\]/).map((part, index) => index % 2 ? <b key={index}>{part}</b> : part)}</>
 }
 
+const NO_WEB_APP = new Set<InstallKind>(['android-xiaomi', 'android-huawei', 'android-other'])
+const APP_OFFER: Record<AppLocale, { download: string; meta: string; chrome: string; shortcut: string }> = {
+  'zh-CN': { download: '下载 A-REIT 安卓 App', meta: '版本 {v} · SHA-256 {h}…', chrome: '用 Chrome 打开', shortcut: '或添加到桌面（仅为浏览器快捷方式）' },
+  en: { download: 'Download the A-REIT Android app', meta: 'Version {v} · SHA-256 {h}…', chrome: 'Open in Chrome', shortcut: 'Or add to your home screen (a browser shortcut only)' },
+  es: { download: 'Descargar la app de A-REIT para Android', meta: 'Versión {v} · SHA-256 {h}…', chrome: 'Abrir en Chrome', shortcut: 'O añadir a la pantalla de inicio (solo un acceso directo)' },
+  fr: { download: 'Télécharger l’app Android A-REIT', meta: 'Version {v} · SHA-256 {h}…', chrome: 'Ouvrir dans Chrome', shortcut: 'Ou ajouter à l’écran d’accueil (simple raccourci)' },
+  pt: { download: 'Baixar o app Android da A-REIT', meta: 'Versão {v} · SHA-256 {h}…', chrome: 'Abrir no Chrome', shortcut: 'Ou adicionar à tela inicial (apenas um atalho)' },
+  ar: { download: 'تنزيل تطبيق A-REIT لأندرويد', meta: 'الإصدار {v} · SHA-256 {h}…', chrome: 'فتح في Chrome', shortcut: 'أو أضِفه إلى الشاشة الرئيسية (اختصار للمتصفح فقط)' },
+  hi: { download: 'A-REIT Android ऐप डाउनलोड करें', meta: 'संस्करण {v} · SHA-256 {h}…', chrome: 'Chrome में खोलें', shortcut: 'या होम स्क्रीन पर जोड़ें (सिर्फ़ ब्राउज़र शॉर्टकट)' },
+}
+
 export function InstallSheet({ open, env, canPrompt, copy, onClose }: { open: boolean; env: InstallEnv; canPrompt: boolean; copy: InstallCopy; onClose: () => void }) {
   const reduced = useReducedMotion()
   const closeRef = useRef<HTMLButtonElement>(null)
@@ -184,6 +197,10 @@ export function InstallSheet({ open, env, canPrompt, copy, onClose }: { open: bo
   }
 
   const native = canPrompt && !promptFailed
+  // Browsers whose "add to desktop" is only a bookmark: offer the Android app and Chrome first, the shortcut last.
+  const appOffer = NO_WEB_APP.has(env.kind)
+  const locale = (Object.keys(installCopy) as AppLocale[]).find(key => installCopy[key] === copy) ?? 'en'
+  const app = APP_OFFER[locale]
   const icons = STEP_ICONS[env.kind]
   if (!host) return null
   return createPortal(<AnimatePresence>
@@ -200,7 +217,12 @@ export function InstallSheet({ open, env, canPrompt, copy, onClose }: { open: bo
           <button type="button" className={styles.primary} onClick={() => void install()}><Download size={16} strokeWidth={1.8} aria-hidden={true} />{copy.install}</button>
           <small>{copy.installHint}</small>
         </div>}
-        <p className={styles.stepsLabel}>{native ? copy.manual : copy.steps}</p>
+        {appOffer && <div className={styles.appOffer}>
+          {ANDROID_APP.url && <a className={styles.primary} href={ANDROID_APP.url} download><Download size={16} strokeWidth={1.8} aria-hidden={true} />{app.download}</a>}
+          {ANDROID_APP.url && <small>{app.meta.replace('{v}', ANDROID_APP.version).replace('{h}', ANDROID_APP.sha256.slice(0, 12))}</small>}
+          <a className={styles.secondary} href={chromeIntentUrl(window.location.href, ANDROID_APP.url ? new URL(ANDROID_APP.url, window.location.href).href : window.location.href)}><ExternalLink size={15} strokeWidth={1.8} aria-hidden={true} />{app.chrome}</a>
+        </div>}
+        <p className={styles.stepsLabel}>{appOffer ? app.shortcut : native ? copy.manual : copy.steps}</p>
         <ol className={styles.steps}>
           {copy.guide[env.kind].map((text, index) => {
             const StepIcon = icons[index] ?? Check
