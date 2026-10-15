@@ -13,7 +13,7 @@ const root = new URL('../', import.meta.url)
 function load(relative, globals = {}) {
   const path = new URL(relative, root)
   let source = readFileSync(path, 'utf8')
-  if (relative === 'components/ios-install-gate.tsx') source += '\nexports.gateCopy = gateCopy\n'
+  if (relative === 'components/ios-install-gate-view.tsx') source += '\nexports.gateCopy = gateCopy\n'
   const exports = {}
   const react = globals.react ?? {}
   const output = ts.transpileModule(source, {
@@ -23,7 +23,9 @@ function load(relative, globals = {}) {
     ...globals, exports, Set,
     require: name => {
       if (name === 'react') return react
+      if (name.endsWith('.module.css')) return { default: {} }
       if (name === 'react/jsx-runtime') return { jsx: (type, props) => ({ type, props }), jsxs: (type, props) => ({ type, props }) }
+      if (name === './home/install-env') return { safariMajor: () => 26 }
       if (name === '@/lib/app-locales' || name === './app-locales') return load('lib/app-locales.ts')
       if (name === '@/lib/locale-detection') return load('lib/locale-detection.ts')
       if (name.startsWith('@/lib/install-')) {
@@ -38,15 +40,29 @@ function load(relative, globals = {}) {
 
 const { localeOptions } = load('lib/app-locales.ts')
 const { installCopy } = load('components/home/HomeInstall.tsx')
-const { gateCopy } = load('components/ios-install-gate.tsx')
+const { gateCopy } = load('components/ios-install-gate-view.tsx')
+
+function strings(value, path = '') {
+  return Object.entries(value).flatMap(([key, item]) => typeof item === 'string'
+    ? [[`${path}${key}`, item]]
+    : item && typeof item === 'object' ? strings(item, `${path}${key}.`) : [])
+}
 
 for (const { code } of localeOptions) {
   test(`${code}: the iPhone gate and browser-specific steps are translated`, () => {
-    for (const key of ['title', 'lede', 'safari', 'inApp', 'webApp', 'privateMode', 'done', 'exit']) {
+    for (const key of ['title', 'lede', 'ledeInApp', 'copyLink', 'copied', 'exit']) {
       assert.ok(gateCopy[code][key]?.trim(), `${code}.${key} missing`)
       if (code !== 'en') assert.notEqual(gateCopy[code][key], gateCopy.en[key], `${code}.${key} still falls back to English`)
     }
-    for (const key of ['strip', 'stripSub', 'title', 'lede', 'iosNote', 'copyLink', 'copied', 'close']) {
+    for (const [key, text] of strings(gateCopy.en)) {
+      const translated = key.split('.').reduce((value, part) => value?.[part], gateCopy[code])
+      assert.equal(typeof translated, 'string', `${code}.${key} missing`)
+      assert.ok(translated.trim(), `${code}.${key} empty`)
+      assert.equal((translated.match(/\[/g) ?? []).length, (translated.match(/\]/g) ?? []).length, `${code}.${key} broken emphasis`)
+      assert.deepEqual([...translated.matchAll(/\{\w+\}/g)].map(item => item[0]).sort(), [...text.matchAll(/\{\w+\}/g)].map(item => item[0]).sort(), `${code}.${key} placeholders changed`)
+    }
+    assert.equal(gateCopy[code].dir, code === 'ar' ? 'rtl' : 'ltr')
+    for (const key of ['strip', 'stripInApp', 'stripSub', 'title', 'lede', 'iosNote', 'copyLink', 'copied', 'close']) {
       assert.ok(installCopy[code][key]?.trim(), `${code}.${key} missing`)
       if (code !== 'en') assert.notEqual(installCopy[code][key], installCopy.en[key], `${code}.${key} still falls back to English`)
     }
@@ -112,4 +128,17 @@ test('invalid storage cannot turn automatic fallback into a saved choice', () =>
   assert.equal(state.updates.at(-1), 'fr')
   assert.equal(state.writes.length, 0)
   assert.equal(state.cookies.length, 0)
+})
+
+test('the gate exposes all seven language choices and forwards a manual selection', () => {
+  const selected = []
+  const { default: View } = load('components/ios-install-gate-view.tsx', { react: { useState: value => [value, () => {}] } })
+  const tree = View({ env: { kind: 'ios-safari', ios: true, app: null }, locale: 'en', theme: 'light', exitReady: false, onLeave: () => {}, onLocaleChange: value => selected.push(value) })
+  const nodes = value => !value || typeof value !== 'object' ? [] : Array.isArray(value) ? value.flatMap(nodes) : [value, ...nodes(value.props?.children)]
+  const select = nodes(tree).find(node => node.type === 'select')
+  assert.ok(select)
+  assert.equal(select.props.value, 'en')
+  assert.equal(select.props.children.length, 7)
+  select.props.onChange({ target: { value: 'ar' } })
+  assert.deepEqual(selected, ['ar'])
 })
