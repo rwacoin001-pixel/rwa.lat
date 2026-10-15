@@ -45,8 +45,8 @@ export const documentPreferencesBootstrap = `(() => {
   root.dir = directions[locale];
 
   // Opened as the installed app (Home Screen web app or the Android client): the launch screen in the layout shows
-  // from the first frame, and a signed-out launch goes straight to sign-in instead of loading the guest home first.
-  // "Look around first" on the sign-in page sets a per-launch flag that lets the guest home through.
+  // from the first frame, and a signed-out launch goes straight to sign-in instead of loading home first (home
+  // requires sign-in, so it would only redirect there after its code had loaded).
   let installed = false;
   try {
     installed = navigator.standalone === true || matchMedia('(display-mode: standalone)').matches
@@ -56,9 +56,8 @@ export const documentPreferencesBootstrap = `(() => {
     root.dataset.launch = 'app';
     if (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/home/') {
       let signedIn = true;
-      let browsing = false;
-      try { signedIn = Boolean(localStorage.getItem('rwa.session')); browsing = sessionStorage.getItem('rwa.browse-as-guest') === '1'; } catch {}
-      if (!signedIn && !browsing) { location.replace('/login'); return; }
+      try { signedIn = Boolean(localStorage.getItem('rwa.session')); } catch {}
+      if (!signedIn) { location.replace('/login'); return; }
     }
   }
 
