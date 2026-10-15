@@ -510,4 +510,53 @@ describe('IdentityService', () => {
   it('revokeSession throws when the session is missing', async () => {
     await expect(svc.revokeSession('missing', 'tok')).rejects.toBeInstanceOf(NotFoundException)
   })
+  describe('Android app sign-in handoff', () => {
+    const { createHash } = require('node:crypto') as typeof import('node:crypto')
+    const verifier = 'v'.repeat(43) + 'ABCdef0123456789_-'
+    const challenge = createHash('sha256').update(verifier).digest('base64url')
+    const browserToken = 'browser-session-token'
+
+    beforeEach(() => {
+      users.data.push({ id: 'u-handoff', status: 'active', locale: 'zh-CN' })
+      sessions.data.push({ id: 's-browser', userId: 'u-handoff', deviceId: 'd-browser', tokenHash: crypto.hashToken(browserToken), state: 'active', expiresAt: new Date(Date.now() + 3600_000) })
+    })
+
+    it('a signed-in browser gets a two-minute code; the app redeems it with its verifier for a session of its own, once', async () => {
+      const { code, expiresAt } = await svc.startAppHandoff(browserToken, challenge)
+      expect(expiresAt.getTime() - Date.now()).toBeLessThanOrEqual(2 * 60 * 1000)
+      expect(oneTimeTokens.data.filter(row => row.purpose === 'app_handoff')).toHaveLength(1)
+      expect(oneTimeTokens.data[0].tokenHash.equals(crypto.hashToken(code))).toBe(false)
+
+      const session = await svc.redeemAppHandoff(code, verifier)
+      expect(session.userId).toBe('u-handoff')
+      expect(session.token).not.toBe(browserToken)
+      expect(new Set(sessions.data.map(row => row.id)).size).toBe(2)
+
+      await expect(svc.redeemAppHandoff(code, verifier)).rejects.toBeInstanceOf(UnauthorizedException)
+    })
+
+    it('a code without the matching verifier is useless (another app catching the redirect cannot sign in)', async () => {
+      const { code } = await svc.startAppHandoff(browserToken, challenge)
+      await expect(svc.redeemAppHandoff(code, 'w'.repeat(64))).rejects.toBeInstanceOf(UnauthorizedException)
+      expect(new Set(sessions.data.map(row => row.id)).size).toBe(1)
+    })
+
+    it('expired codes and suspended accounts are refused', async () => {
+      const first = await svc.startAppHandoff(browserToken, challenge)
+      oneTimeTokens.data.find(row => row.purpose === 'app_handoff' && row.consumedAt === null).expiresAt = new Date(Date.now() - 1)
+      await expect(svc.redeemAppHandoff(first.code, verifier)).rejects.toBeInstanceOf(UnauthorizedException)
+
+      const second = await svc.startAppHandoff(browserToken, challenge)
+      users.data.find(row => row.id === 'u-handoff').status = 'suspended'
+      await expect(svc.redeemAppHandoff(second.code, verifier)).rejects.toBeInstanceOf(UnauthorizedException)
+      expect(new Set(sessions.data.map(row => row.id)).size).toBe(1)
+    })
+
+    it('a new code replaces the previous unused one, and a code needs a signed-in browser', async () => {
+      const first = await svc.startAppHandoff(browserToken, challenge)
+      await svc.startAppHandoff(browserToken, challenge)
+      await expect(svc.redeemAppHandoff(first.code, verifier)).rejects.toBeInstanceOf(UnauthorizedException)
+      await expect(svc.startAppHandoff('not-a-session', challenge)).rejects.toBeInstanceOf(UnauthorizedException)
+    })
+  })
 })
