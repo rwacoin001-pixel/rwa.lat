@@ -8,13 +8,14 @@ const featuredCovers: Record<string, string> = {
   circle: '/media/products/hengxu-v2/derived/chengyuan-reserve-720.webp',
 }
 
-export const HOME_ASSET_FALLBACK = '/media/generated/project-assets/markets-collection-v1.png'
+// Thumbnails render at 44px: small derived copies, not the 1.2-1.4k originals (1.8MB and 2.4MB as PNG).
+export const HOME_ASSET_FALLBACK = '/media/home/derived/markets-collection-160.webp'
 
 export function homeAssetImage(asset: { slug: string; assetClass?: string }, index: number): string {
   if (Object.hasOwn(featuredCovers, asset.slug)) return featuredCovers[asset.slug]
   switch ((asset.assetClass ?? '').toLowerCase()) {
     case 'treasury':
-    case 'bond': return index % 2 ? '/media/home/asset-treasury-paper.webp' : '/media/generated/design-v2/treasury-architecture-v1.png'
+    case 'bond': return index % 2 ? '/media/home/asset-treasury-paper.webp' : '/media/home/derived/treasury-architecture-160.webp'
     case 'real_estate': return '/media/home/asset-real-estate.webp'
     case 'infrastructure': return '/media/home/asset-infrastructure.webp'
     case 'commodity': return '/media/products/hengxu-v2/derived/liujin-gold-720.webp'
