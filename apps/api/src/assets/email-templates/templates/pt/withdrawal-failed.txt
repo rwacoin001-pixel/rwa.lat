@@ -1,17 +1,18 @@
 Saque não concluído
 
-Este saque não foi concluído. Consulte o motivo e a situação dos fundos.
+O saque não foi concluído. Confira o motivo e a situação dos fundos.
 
 {{amount}} {{currency}}
 Não concluído
 
-Motivo: {{reason}}
 Situação dos fundos: {{fundsStatus}}
+Motivo: {{reason}}
 Referência: {{reference}}
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

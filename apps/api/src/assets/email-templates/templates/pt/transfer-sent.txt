@@ -1,6 +1,6 @@
 Transferência interna concluída
 
-A transferência foi creditada no saldo da conta do destinatário.
+Esta transferência foi creditada no saldo da conta de destino.
 
 {{amount}} {{currency}}
 Enviado
@@ -11,6 +11,7 @@ Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

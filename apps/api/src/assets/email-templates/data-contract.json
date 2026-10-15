@@ -2,7 +2,7 @@
   {
     "id": "registration-code",
     "locale": "zh-CN",
-    "subject": "验证你的邮箱 · A-REIT",
+    "subject": "验证账户邮箱 · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -93,7 +93,7 @@
   {
     "id": "login-code",
     "locale": "zh-CN",
-    "subject": "确认本次登录 · A-REIT",
+    "subject": "登录验证码 · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -106,7 +106,7 @@
   {
     "id": "login-code",
     "locale": "en",
-    "subject": "Confirm your sign-in · A-REIT",
+    "subject": "Your sign-in code · A-REIT",
     "connection": "existing",
     "fields": [
       "assetBaseUrl",
@@ -275,7 +275,7 @@
   {
     "id": "magic-login-link",
     "locale": "zh-CN",
-    "subject": "登录 A-REIT · A-REIT",
+    "subject": "登录 A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -288,7 +288,7 @@
   {
     "id": "magic-login-link",
     "locale": "en",
-    "subject": "Sign in to A-REIT · A-REIT",
+    "subject": "Sign in to A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -301,7 +301,7 @@
   {
     "id": "magic-login-link",
     "locale": "hi",
-    "subject": "A-REIT में लॉगिन करें · A-REIT",
+    "subject": "A-REIT में लॉगिन करें",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -314,7 +314,7 @@
   {
     "id": "magic-login-link",
     "locale": "es",
-    "subject": "Accede a A-REIT · A-REIT",
+    "subject": "Accede a A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -327,7 +327,7 @@
   {
     "id": "magic-login-link",
     "locale": "ar",
-    "subject": "سجل الدخول إلى A-REIT · A-REIT",
+    "subject": "سجل الدخول إلى A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -340,7 +340,7 @@
   {
     "id": "magic-login-link",
     "locale": "fr",
-    "subject": "Connectez-vous à A-REIT · A-REIT",
+    "subject": "Connectez-vous à A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -353,7 +353,7 @@
   {
     "id": "magic-login-link",
     "locale": "pt",
-    "subject": "Entre na A-REIT · A-REIT",
+    "subject": "Entre na A-REIT",
     "connection": "existing",
     "fields": [
       "actionUrl",
@@ -457,7 +457,7 @@
   {
     "id": "reset-password-code",
     "locale": "zh-CN",
-    "subject": "确认重置密码 · A-REIT",
+    "subject": "重置密码验证码 · A-REIT",
     "connection": "shared",
     "fields": [
       "assetBaseUrl",
@@ -3327,7 +3327,7 @@
   {
     "id": "statement-ready",
     "locale": "zh-CN",
-    "subject": "账户账单已生成 · A-REIT",
+    "subject": "本期账单已生成 · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3340,7 +3340,7 @@
   {
     "id": "statement-ready",
     "locale": "en",
-    "subject": "Your account statement is ready · A-REIT",
+    "subject": "Your statement is ready · A-REIT",
     "connection": "missing",
     "fields": [
       "actionUrl",
@@ -3621,7 +3621,7 @@
   {
     "id": "product-update",
     "locale": "zh-CN",
-    "subject": "A-REIT 产品更新 · A-REIT",
+    "subject": "A-REIT 产品更新",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3634,7 +3634,7 @@
   {
     "id": "product-update",
     "locale": "en",
-    "subject": "What’s new at A-REIT · A-REIT",
+    "subject": "What’s new at A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3647,7 +3647,7 @@
   {
     "id": "product-update",
     "locale": "hi",
-    "subject": "A-REIT में नया क्या है · A-REIT",
+    "subject": "A-REIT में नया क्या है",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3660,7 +3660,7 @@
   {
     "id": "product-update",
     "locale": "es",
-    "subject": "Novedades de A-REIT · A-REIT",
+    "subject": "Novedades de A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3673,7 +3673,7 @@
   {
     "id": "product-update",
     "locale": "ar",
-    "subject": "الجديد في A-REIT · A-REIT",
+    "subject": "الجديد في A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3686,7 +3686,7 @@
   {
     "id": "product-update",
     "locale": "fr",
-    "subject": "Les nouveautés de A-REIT · A-REIT",
+    "subject": "Les nouveautés de A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",
@@ -3699,7 +3699,7 @@
   {
     "id": "product-update",
     "locale": "pt",
-    "subject": "Novidades da A-REIT · A-REIT",
+    "subject": "Novidades da A-REIT",
     "connection": "manual",
     "fields": [
       "actionUrl",

@@ -1,18 +1,19 @@
 Prediction market settled
 
-Your settlement amount and outcome are shown below.
+Your prediction market settlement amount and outcome are below.
 
 {{amount}} {{currency}}
 Settled
 
+Fee: {{fee}}
 Market: {{market}}
 Outcome: {{outcome}}
-Fee: {{fee}}
 Reference: {{reference}}
 Time: {{time}}
 
 View details: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

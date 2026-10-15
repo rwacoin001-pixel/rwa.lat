@@ -1,14 +1,13 @@
 Recuperação da conta concluída
 
-A recuperação da conta foi concluída. Revise suas configurações de segurança.
+Sua conta foi recuperada. Revise as configurações de segurança.
 
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-Não foi você? Revise a segurança da conta e entre em contato com o suporte oficial.
-{{securityUrl}}
+Se não foi você, revise imediatamente a segurança da conta.
+Revisar a segurança da conta: {{securityUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

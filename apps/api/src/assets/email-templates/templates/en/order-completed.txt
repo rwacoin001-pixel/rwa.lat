@@ -1,18 +1,19 @@
 Order executed
 
-Here is the execution record for your order.
+Your order execution record is below.
 
 {{amount}} {{currency}}
 Executed
 
-Product: {{product}}
-Units: {{units}}
 Fee: {{fee}}
+Product: {{product}}
 Reference: {{reference}}
 Time: {{time}}
+Units: {{units}}
 
 View details: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

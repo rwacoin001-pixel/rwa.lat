@@ -1,14 +1,13 @@
 Account recovery completed
 
-Account recovery is complete. Review your security settings.
+Your account has been recovered. Review your security settings.
 
 Time: {{time}}
 
 View details: {{actionUrl}}
 
-Not you? Review your account security and contact official support.
-{{securityUrl}}
+If this was not you, review your account security immediately.
+Review account security: {{securityUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

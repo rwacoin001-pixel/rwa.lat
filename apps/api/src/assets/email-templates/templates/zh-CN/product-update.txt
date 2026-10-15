@@ -1,11 +1,12 @@
 A-REIT 产品更新
 
-查看本次更新包含的新功能。
+查看本次产品更新详情。
 
 
 查看更新: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
-取消订阅: {{unsubscribeUrl}}
+取消订阅产品更新: {{unsubscribeUrl}}
+© {{year}} A-REIT

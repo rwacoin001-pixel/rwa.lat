@@ -1,17 +1,18 @@
 Saque concluído
 
-Seu saque foi processado. Consulte os detalhes da transação.
+Seu saque foi processado. Veja os detalhes abaixo.
 
 {{amount}} {{currency}}
 Concluído
 
-Taxa: {{fee}}
 Endereço de destino: {{destination}}
+Taxa: {{fee}}
 Referência: {{reference}}
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

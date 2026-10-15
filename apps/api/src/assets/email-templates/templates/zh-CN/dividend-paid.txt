@@ -1,17 +1,18 @@
 收益已入账
 
-本次分配已记入你的站内余额。
+以下收益分配已计入账户余额。
 
 {{amount}} {{currency}}
 已入账
 
-产品: {{product}}
 账期: {{period}}
+产品: {{product}}
 参考编号: {{reference}}
 时间: {{time}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

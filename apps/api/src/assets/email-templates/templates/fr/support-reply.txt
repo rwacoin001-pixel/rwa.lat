@@ -1,12 +1,13 @@
 Une réponse à votre ticket
 
-L’assistance a répondu. Lisez la réponse complète dans votre compte.
+L’assistance a répondu. Consultez la réponse complète dans votre compte.
 
 Ticket: {{ticket}}
 Date et heure: {{time}}
 
 Voir le ticket: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

@@ -1,12 +1,12 @@
 Recupere o acesso à conta
 
-Confirme sua solicitação para recuperar o acesso à conta.
+Confirme sua solicitação de recuperação de conta.
 
 
 Recuperar conta: {{actionUrl}}
+Validade do link: {{expiryText}}
 
-Este link expira em {{expiryText}} e só pode ser usado uma vez. Se não fez a solicitação, ignore este e-mail.
+Consulte sua conta para ver os registros mais recentes.
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

@@ -108,5 +108,7 @@ function readPositiveInteger(value: string | undefined, fallback: number): numbe
 }
 
 function sanitizeDisplayName(value: string): string {
-  return value.replace(/[\r\n<>]/g, '').trim() || 'A-REIT'
+  const name=value.replace(/[\r\n<>]/g, '').trim()
+  // Old deployment configurations must not restore the retired display brand.
+  return !name || /^rwa[.\s-]?lat$/i.test(name) ? 'A-REIT' : name
 }

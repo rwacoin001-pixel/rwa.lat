@@ -1,13 +1,12 @@
 Verify your new email
 
-Enter this code to confirm your new account email.
+Use this code to confirm your new account email.
 
 {{code}}
-Valid for {{expiryMinutes}} minutes
+{{expiryMinutes}} minutes remaining
 
 
-Use this code only for the action you requested. Never share it. If you did not request it, ignore this email.
+Use this code only for the action you requested. Never share it. If you did not request this, ignore this email.
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

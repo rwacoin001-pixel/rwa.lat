@@ -18,8 +18,19 @@ describe('Production email template rendering', () => {
       expect(result.html).toContain(`lang="${locale}"`)
       expect(result.html).not.toMatch(/\{\{|PREVIEW_NOT_A_VALID_TOKEN|localhost|<script\b/)
       expect(result.text).not.toMatch(/\{\{|PREVIEW_NOT_A_VALID_TOKEN|localhost/)
+      expect(`${result.subject} ${result.html} ${result.text}`).not.toMatch(/RWA\.LAT|rwa\.lat/i)
+      expect(result.html).toContain('https://api.a-reit.com/v1/media/email-v2/logo-lockup.png')
+      expect(result.html).not.toMatch(/identity-envelope|funds-wallet|security-key|<svg\b|background-image:/)
+      expect(result.html).toContain('name="color-scheme"')
+      expect(Buffer.byteLength(result.html)).toBeLessThan(80_000)
+      for (const field of fields.filter(field => !['assetBaseUrl', 'year'].includes(field))) {
+        expect(result.html).toContain(String(sample(fields)[field] ?? 'https://a-reit.com/profile/support'))
+        expect(result.text).toContain(String(sample(fields)[field] ?? 'https://a-reit.com/profile/support'))
+      }
       if (fields.includes('code')) { expect(result.html).toContain('012345'); expect(result.text).toContain('012345') }
       if (fields.includes('amount')) { expect(result.html).toContain('123.45'); expect(result.text).toContain('123.45') }
+      if (fields.includes('actionUrl')) expect(result.html).toContain('<v:roundrect')
+      if (fields.includes('code')) expect(result.html).not.toContain('<v:roundrect')
     })
 
   it('escapes dynamic HTML text while preserving the plain-text fallback', () => {
@@ -48,6 +59,14 @@ describe('Production email template rendering', () => {
     expect(emailLocale('PT-br')).toBe('pt')
     expect(emailLocale('../../secret')).toBe('en')
     expect(emailLocale('de-DE')).toBe('en')
+  })
+  it('keeps Arabic code and money in left-to-right text without changing the document direction', () => {
+    const code = renderEmailTemplate('login-code', 'ar', { code: '012345', expiryMinutes: '1.5' })
+    const money = renderEmailTemplate('withdrawal-submitted', 'ar', sample(contracts.find(c => c.id === 'withdrawal-submitted' && c.locale === 'ar')!.fields))
+    expect(code.html).toContain('dir="rtl"')
+    expect(code.html).toMatch(/dir="ltr"[^>]*>012345</)
+    expect(money.html).toMatch(/dir="ltr"[^>]*>123\.45 /)
+    expect(code.html).not.toContain('href="https://a-reit.com/profile/security"')
   })
   it('rejects expired and invalid timestamps', () => {
     expect(() => remainingEmailMinutes(new Date(Date.now() - 1))).toThrow()

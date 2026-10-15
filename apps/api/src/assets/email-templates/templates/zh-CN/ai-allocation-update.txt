@@ -1,6 +1,6 @@
 投资配置状态已更新
 
-查看本次配置的最新执行状态。
+请核对本次配置的最新执行状态。
 
 执行状态: {{allocationState}}
 参考编号: {{reference}}
@@ -8,6 +8,7 @@
 
 查看配置: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

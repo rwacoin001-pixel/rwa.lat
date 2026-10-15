@@ -1,16 +1,15 @@
 O e-mail da conta foi atualizado
 
-O e-mail usado para avisos e acesso à conta foi atualizado.
+Seu e-mail de login e de avisos da conta foi alterado.
 
-E-mail anterior: {{previousEmail}}
 Novo e-mail: {{newEmail}}
+E-mail anterior: {{previousEmail}}
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-Não foi você? Revise a segurança da conta e entre em contato com o suporte oficial.
-{{securityUrl}}
+Se não foi você, revise imediatamente a segurança da conta.
+Revisar a segurança da conta: {{securityUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

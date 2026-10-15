@@ -1,12 +1,13 @@
 Informations supplémentaires requises
 
-Consultez les informations requises sur la page de vérification.
+Rendez-vous sur la page de vérification pour fournir les informations demandées.
 
 Motif: {{reason}}
 Référence: {{reference}}
 
 Continuer la vérification: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

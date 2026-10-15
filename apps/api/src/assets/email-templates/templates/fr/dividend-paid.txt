@@ -5,13 +5,14 @@ Cette distribution a été créditée sur le solde de votre compte.
 {{amount}} {{currency}}
 Crédité
 
-Produit: {{product}}
 Période: {{period}}
+Produit: {{product}}
 Référence: {{reference}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

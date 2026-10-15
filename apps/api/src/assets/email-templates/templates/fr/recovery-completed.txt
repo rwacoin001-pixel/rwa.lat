@@ -1,14 +1,13 @@
 Récupération du compte terminée
 
-La récupération du compte est terminée. Vérifiez vos paramètres de sécurité.
+Votre compte a été récupéré. Vérifiez vos paramètres de sécurité.
 
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-Ce n’était pas vous ? Vérifiez la sécurité du compte et contactez l’assistance officielle.
-{{securityUrl}}
+Si ce n’était pas vous, vérifiez immédiatement la sécurité de votre compte.
+Vérifier la sécurité du compte: {{securityUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

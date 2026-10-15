@@ -1,17 +1,18 @@
 Retrait non terminé
 
-Ce retrait n’a pas abouti. Consultez le motif et l’état des fonds.
+Le retrait n’a pas abouti. Consultez le motif et l’état des fonds.
 
 {{amount}} {{currency}}
 Non terminé
 
-Motif: {{reason}}
 État des fonds: {{fundsStatus}}
+Motif: {{reason}}
 Référence: {{reference}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

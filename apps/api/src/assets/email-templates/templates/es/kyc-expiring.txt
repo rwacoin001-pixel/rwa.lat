@@ -1,12 +1,13 @@
 Tu verificación está por vencer
 
-Actualiza tu información de verificación antes de que venza.
+Actualiza tu verificación de identidad antes de su vencimiento.
 
 Vencimiento: {{expiry}}
 Referencia: {{reference}}
 
 Actualizar verificación: {{actionUrl}}
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
+Consulta tu cuenta para ver los registros más recientes.
+
 Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT

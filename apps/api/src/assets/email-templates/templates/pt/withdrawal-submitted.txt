@@ -1,17 +1,18 @@
 Solicitação de saque recebida
 
-Sua solicitação foi enviada. A transferência ainda não foi concluída.
+Sua solicitação de saque foi recebida. A transferência ainda não foi concluída.
 
 {{amount}} {{currency}}
 Em processamento
 
-Taxa: {{fee}}
 Endereço de destino: {{destination}}
+Taxa: {{fee}}
 Referência: {{reference}}
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

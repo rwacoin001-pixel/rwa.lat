@@ -7,6 +7,7 @@ Data e hora: {{time}}
 
 Ver chamado: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

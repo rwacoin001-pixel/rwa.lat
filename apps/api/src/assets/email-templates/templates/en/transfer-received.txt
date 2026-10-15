@@ -1,16 +1,17 @@
 You received an account transfer
 
-Incoming funds have been credited to your available balance.
+This transfer has been credited to your available balance.
 
 {{amount}} {{currency}}
 Received
 
-Sender: {{sender}}
 Reference: {{reference}}
+Sender: {{sender}}
 Time: {{time}}
 
 View details: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

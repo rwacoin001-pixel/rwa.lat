@@ -1,12 +1,13 @@
 Tu cuenta se ha cerrado
 
-La solicitud de cierre de tu cuenta se ha procesado.
+Tu solicitud de cierre de cuenta se ha procesado.
 
-Fecha y hora: {{time}}
 Referencia: {{reference}}
+Fecha y hora: {{time}}
 
 Contactar con soporte: {{actionUrl}}
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
+Consulta tu cuenta para ver los registros más recientes.
+
 Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT

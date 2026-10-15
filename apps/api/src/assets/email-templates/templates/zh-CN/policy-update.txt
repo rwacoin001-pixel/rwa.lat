@@ -1,12 +1,13 @@
 服务条款有更新
 
-请查看变更内容和生效日期。
+请查看条款变更内容及生效日期。
 
 生效日期: {{effectiveDate}}
 版本: {{version}}
 
 查看条款: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

@@ -5,13 +5,14 @@ Esta distribuição foi creditada no saldo da sua conta.
 {{amount}} {{currency}}
 Creditado
 
-Produto: {{product}}
 Período: {{period}}
+Produto: {{product}}
 Referência: {{reference}}
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

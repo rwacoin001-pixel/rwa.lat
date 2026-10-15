@@ -1,16 +1,17 @@
 收到一笔站内转账
 
-转入资金已记入你的可用余额。
+以下转入已计入账户可用余额。
 
 {{amount}} {{currency}}
 已收到
 
-付款人: {{sender}}
 参考编号: {{reference}}
+付款人: {{sender}}
 时间: {{time}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

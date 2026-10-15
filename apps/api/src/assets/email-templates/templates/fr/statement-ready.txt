@@ -1,11 +1,12 @@
 Votre relevé est prêt
 
-Consultez ou téléchargez le relevé de cette période dans votre compte.
+Votre relevé est disponible dans votre compte pour consultation ou téléchargement.
 
 Période: {{period}}
 
 Voir le relevé: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

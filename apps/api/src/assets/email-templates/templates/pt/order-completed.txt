@@ -1,18 +1,19 @@
 Ordem executada
 
-Este é o registro de execução da sua ordem.
+O registro de execução da sua ordem está abaixo.
 
 {{amount}} {{currency}}
 Executada
 
-Produto: {{product}}
-Unidades: {{units}}
 Taxa: {{fee}}
+Produto: {{product}}
 Referência: {{reference}}
 Data e hora: {{time}}
+Unidades: {{units}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

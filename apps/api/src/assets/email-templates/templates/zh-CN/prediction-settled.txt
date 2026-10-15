@@ -1,18 +1,19 @@
 预测市场已结算
 
-结算金额和结果如下。
+以下为本次预测市场结算金额与结果。
 
 {{amount}} {{currency}}
 已结算
 
+手续费: {{fee}}
 市场: {{market}}
 结果: {{outcome}}
-手续费: {{fee}}
 参考编号: {{reference}}
 时间: {{time}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

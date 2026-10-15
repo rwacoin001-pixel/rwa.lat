@@ -1,12 +1,13 @@
 Votre compte a été fermé
 
-Votre demande de fermeture de compte a été traitée.
+Votre demande de clôture de compte a été traitée.
 
-Date et heure: {{time}}
 Référence: {{reference}}
+Date et heure: {{time}}
 
 Contacter l’assistance: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

@@ -1,17 +1,18 @@
 提现未完成
 
-本次提现未完成，请查看原因和资金状态。
+提现未完成，请核对原因与资金状态。
 
 {{amount}} {{currency}}
 未完成
 
-原因: {{reason}}
 资金状态: {{fundsStatus}}
+原因: {{reason}}
 参考编号: {{reference}}
 时间: {{time}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

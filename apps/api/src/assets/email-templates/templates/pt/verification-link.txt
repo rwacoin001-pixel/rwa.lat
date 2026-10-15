@@ -1,12 +1,12 @@
 Verifique seu endereço de e-mail
 
-Confirme que este endereço de e-mail pertence a você.
+Confirme este endereço de e-mail para sua conta A-REIT.
 
 
 Verificar e-mail: {{actionUrl}}
+Validade do link: {{expiryText}}
 
-Este link expira em {{expiryText}} e só pode ser usado uma vez. Se não fez a solicitação, ignore este e-mail.
+Consulte sua conta para ver os registros mais recentes.
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

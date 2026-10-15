@@ -1,6 +1,6 @@
 Depósito creditado
 
-Os fundos foram creditados no saldo disponível da sua conta.
+Este depósito foi creditado no seu saldo disponível.
 
 {{amount}} {{currency}}
 Creditado
@@ -11,6 +11,7 @@ Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

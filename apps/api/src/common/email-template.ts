@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 export const EMAIL_LOCALES = ['zh-CN', 'en', 'hi', 'es', 'ar', 'fr', 'pt'] as const
 export type EmailLocale = typeof EMAIL_LOCALES[number]
-export const EMAIL_ASSET_BASE_URL = 'https://api.a-reit.com/v1/media/email-v1'
+export const EMAIL_ASSET_BASE_URL = 'https://api.a-reit.com/v1/media/email-v2'
 const RESOURCE_ROOT = join(__dirname, '..', 'assets', 'email-templates')
 const ALLOWED_HOSTS = new Set(['a-reit.com', 'www.a-reit.com'])
 const COMMON_FIELDS = new Set(['assetBaseUrl', 'supportUrl', 'year'])

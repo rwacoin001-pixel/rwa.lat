@@ -1,18 +1,19 @@
 Marché de prédiction réglé
 
-Le montant du règlement et le résultat sont indiqués ci-dessous.
+Le montant du règlement et le résultat du marché de prédiction figurent ci-dessous.
 
 {{amount}} {{currency}}
 Réglé
 
+Frais: {{fee}}
 Marché: {{market}}
 Résultat: {{outcome}}
-Frais: {{fee}}
 Référence: {{reference}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

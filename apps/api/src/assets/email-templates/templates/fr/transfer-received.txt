@@ -1,16 +1,17 @@
 Vous avez reçu un transfert interne
 
-Les fonds reçus ont été crédités sur votre solde disponible.
+Ce transfert a été crédité sur votre solde disponible.
 
 {{amount}} {{currency}}
 Reçu
 
-Expéditeur: {{sender}}
 Référence: {{reference}}
+Expéditeur: {{sender}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

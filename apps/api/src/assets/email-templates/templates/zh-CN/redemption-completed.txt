@@ -1,17 +1,18 @@
 赎回已完成
 
-赎回款已记入你的站内余额。
+以下赎回款项已计入账户余额。
 
 {{amount}} {{currency}}
 已结算
 
-产品: {{product}}
 手续费: {{fee}}
+产品: {{product}}
 参考编号: {{reference}}
 时间: {{time}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

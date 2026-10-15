@@ -4,9 +4,9 @@ import { IdentityDeliveryService } from '../../src/identity/identity-delivery.se
 const sendMail = jest.fn()
 jest.mock('nodemailer', () => ({ createTransport: jest.fn(() => ({ sendMail, close: jest.fn() })) }))
 
-function service() {
+function service(fromName?: string) {
   return new IdentityDeliveryService(new ConfigService({ AUTH_ADAPTER: 'production', PUBLIC_APP_URL: 'https://a-reit.com',
-    EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@a-reit.com', SMTP_HOST: 'smtp.example.com', SMTP_AUTH_MODE: 'none' }))
+    EMAIL_PROVIDER: 'smtp', EMAIL_FROM: 'no-reply@a-reit.com', EMAIL_FROM_NAME:fromName, SMTP_HOST: 'smtp.example.com', SMTP_AUTH_MODE: 'none' }))
 }
 
 describe('Branded identity emails', () => {
@@ -18,13 +18,18 @@ describe('Branded identity emails', () => {
     await service().sendEmailCode(input)
     const email = sendMail.mock.calls[0][0]
     expect(email.html).toContain(`lang="${locale}"`)
-    expect(email.html).toContain('https://api.a-reit.com/v1/media/email-v1/logo.png')
-    expect(email.html).toContain('https://api.a-reit.com/v1/media/email-v1/identity-envelope.jpg')
+    expect(email.html).toContain('https://api.a-reit.com/v1/media/email-v2/logo-lockup.png')
+    expect(email.html).not.toContain('identity-envelope.jpg')
     expect(email.html).toContain('012345')
     expect(email.text).toContain('012345')
     expect(email.html).not.toMatch(/\{\{|localhost|PREVIEW_NOT_A_VALID_TOKEN|token=/)
     expect(email.text).toContain('1.5')
     expect(email.html).toContain(locale === 'ar' ? 'dir="rtl"' : 'dir="ltr"')
+  })
+
+  it.each(['RWA.LAT','rwa.lat'])('normalizes an old configured sender display name %s without changing the sender address',async name=>{
+    await service(name).sendEmailCode({email:'user@example.com',intent:'login',code:'012345',locale:'en',expiresAt:new Date(Date.now()+60_000)})
+    expect(sendMail.mock.calls[0][0].from).toEqual({name:'A-REIT',address:'no-reply@a-reit.com'})
   })
 
   it('distinguishes registration, reset, binding and email-change from login', async () => {

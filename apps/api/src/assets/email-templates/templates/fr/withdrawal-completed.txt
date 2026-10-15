@@ -1,17 +1,18 @@
 Retrait terminé
 
-Votre retrait a été traité. Consultez les détails de la transaction.
+Votre retrait a été traité. Les détails figurent ci-dessous.
 
 {{amount}} {{currency}}
 Terminé
 
-Frais: {{fee}}
 Adresse de destination: {{destination}}
+Frais: {{fee}}
 Référence: {{reference}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

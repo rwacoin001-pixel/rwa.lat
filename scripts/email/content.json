@@ -1,0 +1,1486 @@
+{
+  "zh-CN": {
+    "labels": {
+      "device": "设备",
+      "location": "位置（估算）",
+      "time": "时间",
+      "previousEmail": "原邮箱",
+      "newEmail": "新邮箱",
+      "factor": "验证方式",
+      "change": "变更",
+      "reference": "参考编号",
+      "network": "网络",
+      "fee": "手续费",
+      "destination": "收款地址",
+      "reason": "原因",
+      "fundsStatus": "资金状态",
+      "recipient": "收款人",
+      "sender": "付款人",
+      "product": "产品",
+      "units": "份额",
+      "period": "账期",
+      "market": "市场",
+      "outcome": "结果",
+      "expiry": "到期日",
+      "ticket": "工单",
+      "effectiveDate": "生效日期",
+      "version": "版本",
+      "allocationState": "执行状态"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "验证账户邮箱",
+        "intro": "输入验证码，验证你的 A-REIT 账户邮箱。"
+      },
+      "login-code": {
+        "title": "登录验证码",
+        "intro": "输入验证码，完成本次登录。"
+      },
+      "verification-link": {
+        "title": "验证邮箱地址",
+        "intro": "确认此邮箱用于你的 A-REIT 账户。",
+        "action": "验证邮箱"
+      },
+      "magic-login-link": {
+        "title": "登录 A-REIT",
+        "intro": "通过此一次性链接完成登录。",
+        "action": "继续登录"
+      },
+      "recovery-link": {
+        "title": "恢复账户访问",
+        "intro": "确认你的账户恢复申请。",
+        "action": "恢复账户"
+      },
+      "reset-password-code": {
+        "title": "重置密码验证码",
+        "intro": "输入验证码，继续重置密码。"
+      },
+      "bind-email-code": {
+        "title": "绑定邮箱地址",
+        "intro": "输入验证码，将此邮箱绑定至账户。"
+      },
+      "change-email-code": {
+        "title": "验证新邮箱",
+        "intro": "输入验证码，确认新的账户邮箱。"
+      },
+      "welcome": {
+        "title": "账户已创建",
+        "intro": "邮箱验证已完成，可前往你的账户。",
+        "action": "打开账户"
+      },
+      "new-login": {
+        "title": "账户有新的登录",
+        "intro": "你的账户刚刚在以下设备登录。",
+        "action": "查看安全设置"
+      },
+      "password-changed": {
+        "title": "账户密码已更新",
+        "intro": "你的账户密码已更改。",
+        "action": "查看详情"
+      },
+      "email-changed": {
+        "title": "账户邮箱已更新",
+        "intro": "登录及接收账户通知的邮箱已更改。",
+        "action": "查看详情"
+      },
+      "security-factor-changed": {
+        "title": "安全验证方式已更新",
+        "intro": "你的账户安全验证设置已更改。",
+        "action": "查看详情"
+      },
+      "recovery-completed": {
+        "title": "账户恢复已完成",
+        "intro": "账户恢复已完成，请检查安全设置。",
+        "action": "查看详情"
+      },
+      "account-closed": {
+        "title": "账户已关闭",
+        "intro": "你的账户关闭申请已处理。",
+        "action": "联系支持"
+      },
+      "deposit-received": {
+        "title": "充值已入账",
+        "intro": "以下充值已计入账户可用余额。",
+        "action": "查看详情",
+        "status": "已入账"
+      },
+      "withdrawal-submitted": {
+        "title": "提现申请已收到",
+        "intro": "提现申请已收到，资金转出尚未完成。",
+        "action": "查看详情",
+        "status": "处理中"
+      },
+      "withdrawal-completed": {
+        "title": "提现已完成",
+        "intro": "提现已处理完成，详情如下。",
+        "action": "查看详情",
+        "status": "已完成"
+      },
+      "withdrawal-failed": {
+        "title": "提现未完成",
+        "intro": "提现未完成，请核对原因与资金状态。",
+        "action": "查看详情",
+        "status": "未完成"
+      },
+      "transfer-sent": {
+        "title": "站内转账已完成",
+        "intro": "以下转账已计入收款方账户余额。",
+        "action": "查看详情",
+        "status": "已转出"
+      },
+      "transfer-received": {
+        "title": "收到一笔站内转账",
+        "intro": "以下转入已计入账户可用余额。",
+        "action": "查看详情",
+        "status": "已收到"
+      },
+      "order-submitted": {
+        "title": "订单已提交",
+        "intro": "订单已提交，成交状态请见订单详情。",
+        "action": "查看详情",
+        "status": "待执行"
+      },
+      "order-completed": {
+        "title": "订单已成交",
+        "intro": "以下为你的订单成交记录。",
+        "action": "查看详情",
+        "status": "已成交"
+      },
+      "order-failed": {
+        "title": "订单未成交",
+        "intro": "订单未成交，请核对原因与资金状态。",
+        "action": "查看详情"
+      },
+      "redemption-completed": {
+        "title": "赎回已完成",
+        "intro": "以下赎回款项已计入账户余额。",
+        "action": "查看详情",
+        "status": "已结算"
+      },
+      "dividend-paid": {
+        "title": "收益已入账",
+        "intro": "以下收益分配已计入账户余额。",
+        "action": "查看详情",
+        "status": "已入账"
+      },
+      "prediction-settled": {
+        "title": "预测市场已结算",
+        "intro": "以下为本次预测市场结算金额与结果。",
+        "action": "查看详情",
+        "status": "已结算"
+      },
+      "kyc-approved": {
+        "title": "身份认证已通过",
+        "intro": "你的身份验证已通过。",
+        "action": "查看认证"
+      },
+      "kyc-action-required": {
+        "title": "身份认证需要补充资料",
+        "intro": "请前往验证页面补充所需资料。",
+        "action": "继续认证"
+      },
+      "kyc-expiring": {
+        "title": "身份认证即将到期",
+        "intro": "请在到期前更新身份验证资料。",
+        "action": "更新认证"
+      },
+      "support-reply": {
+        "title": "你的工单有新回复",
+        "intro": "客服已回复，可在账户内查看完整内容。",
+        "action": "查看工单"
+      },
+      "statement-ready": {
+        "title": "本期账单已生成",
+        "intro": "本期账单已生成，可在账户内查看或下载。",
+        "action": "查看账单"
+      },
+      "policy-update": {
+        "title": "服务条款有更新",
+        "intro": "请查看条款变更内容及生效日期。",
+        "action": "查看条款"
+      },
+      "ai-allocation-update": {
+        "title": "投资配置状态已更新",
+        "intro": "请核对本次配置的最新执行状态。",
+        "action": "查看配置"
+      },
+      "product-update": {
+        "title": "A-REIT 产品更新",
+        "intro": "查看本次产品更新详情。",
+        "action": "查看更新"
+      }
+    }
+  },
+  "en": {
+    "labels": {
+      "device": "Device",
+      "location": "Location (approximate)",
+      "time": "Time",
+      "previousEmail": "Previous email",
+      "newEmail": "New email",
+      "factor": "Verification method",
+      "change": "Change",
+      "reference": "Reference",
+      "network": "Network",
+      "fee": "Fee",
+      "destination": "Destination",
+      "reason": "Reason",
+      "fundsStatus": "Funds status",
+      "recipient": "Recipient",
+      "sender": "Sender",
+      "product": "Product",
+      "units": "Units",
+      "period": "Period",
+      "market": "Market",
+      "outcome": "Outcome",
+      "expiry": "Expiry",
+      "ticket": "Ticket",
+      "effectiveDate": "Effective date",
+      "version": "Version",
+      "allocationState": "Execution state"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "Verify your email",
+        "intro": "Enter this code to verify your A-REIT account email."
+      },
+      "login-code": {
+        "title": "Your sign-in code",
+        "intro": "Use this code to complete your sign-in."
+      },
+      "verification-link": {
+        "title": "Verify your email address",
+        "intro": "Confirm this email address for your A-REIT account.",
+        "action": "Verify email"
+      },
+      "magic-login-link": {
+        "title": "Sign in to A-REIT",
+        "intro": "Use this one-time link to complete your sign-in.",
+        "action": "Continue sign-in"
+      },
+      "recovery-link": {
+        "title": "Recover account access",
+        "intro": "Confirm your account recovery request.",
+        "action": "Recover account"
+      },
+      "reset-password-code": {
+        "title": "Confirm password reset",
+        "intro": "Use this code to continue resetting your password."
+      },
+      "bind-email-code": {
+        "title": "Link your email address",
+        "intro": "Use this code to link this email to your account."
+      },
+      "change-email-code": {
+        "title": "Verify your new email",
+        "intro": "Use this code to confirm your new account email."
+      },
+      "welcome": {
+        "title": "Your account is ready",
+        "intro": "Your email is verified. Continue to your account.",
+        "action": "Open account"
+      },
+      "new-login": {
+        "title": "A new sign-in to your account",
+        "intro": "Your account was just accessed on the device below.",
+        "action": "Review security"
+      },
+      "password-changed": {
+        "title": "Your password was updated",
+        "intro": "Your account password has changed.",
+        "action": "View details"
+      },
+      "email-changed": {
+        "title": "Your account email was updated",
+        "intro": "Your email for sign-in and account notices has changed.",
+        "action": "View details"
+      },
+      "security-factor-changed": {
+        "title": "Security verification was updated",
+        "intro": "Your account security verification settings have changed.",
+        "action": "View details"
+      },
+      "recovery-completed": {
+        "title": "Account recovery completed",
+        "intro": "Your account has been recovered. Review your security settings.",
+        "action": "View details"
+      },
+      "account-closed": {
+        "title": "Your account was closed",
+        "intro": "Your account closure request has been processed.",
+        "action": "Contact support"
+      },
+      "deposit-received": {
+        "title": "Deposit credited",
+        "intro": "This deposit has been credited to your available balance.",
+        "action": "View details",
+        "status": "Credited"
+      },
+      "withdrawal-submitted": {
+        "title": "Withdrawal request received",
+        "intro": "Your withdrawal request was received. The transfer is not complete.",
+        "action": "View details",
+        "status": "Processing"
+      },
+      "withdrawal-completed": {
+        "title": "Withdrawal completed",
+        "intro": "Your withdrawal has been processed. Details are below.",
+        "action": "View details",
+        "status": "Completed"
+      },
+      "withdrawal-failed": {
+        "title": "Withdrawal not completed",
+        "intro": "Your withdrawal did not complete. Review the reason and funds status.",
+        "action": "View details",
+        "status": "Not completed"
+      },
+      "transfer-sent": {
+        "title": "Account transfer completed",
+        "intro": "This transfer has been credited to the recipient’s account balance.",
+        "action": "View details",
+        "status": "Sent"
+      },
+      "transfer-received": {
+        "title": "You received an account transfer",
+        "intro": "This transfer has been credited to your available balance.",
+        "action": "View details",
+        "status": "Received"
+      },
+      "order-submitted": {
+        "title": "Order submitted",
+        "intro": "Your order was submitted. View its details for execution status.",
+        "action": "View details",
+        "status": "Awaiting execution"
+      },
+      "order-completed": {
+        "title": "Order executed",
+        "intro": "Your order execution record is below.",
+        "action": "View details",
+        "status": "Executed"
+      },
+      "order-failed": {
+        "title": "Order not executed",
+        "intro": "Your order was not executed. Review the reason and funds status.",
+        "action": "View details"
+      },
+      "redemption-completed": {
+        "title": "Redemption completed",
+        "intro": "These redemption proceeds have been credited to your account balance.",
+        "action": "View details",
+        "status": "Settled"
+      },
+      "dividend-paid": {
+        "title": "Distribution credited",
+        "intro": "This distribution has been credited to your account balance.",
+        "action": "View details",
+        "status": "Credited"
+      },
+      "prediction-settled": {
+        "title": "Prediction market settled",
+        "intro": "Your prediction market settlement amount and outcome are below.",
+        "action": "View details",
+        "status": "Settled"
+      },
+      "kyc-approved": {
+        "title": "Identity verification approved",
+        "intro": "Your identity verification has been approved.",
+        "action": "View verification"
+      },
+      "kyc-action-required": {
+        "title": "More information is needed",
+        "intro": "Visit the verification page to provide the information required.",
+        "action": "Continue verification"
+      },
+      "kyc-expiring": {
+        "title": "Identity verification is expiring",
+        "intro": "Update your identity verification before the expiry date.",
+        "action": "Update verification"
+      },
+      "support-reply": {
+        "title": "Your support ticket has a reply",
+        "intro": "Support has replied. Read the full response in your account.",
+        "action": "View ticket"
+      },
+      "statement-ready": {
+        "title": "Your statement is ready",
+        "intro": "Your statement is ready to view or download in your account.",
+        "action": "View statement"
+      },
+      "policy-update": {
+        "title": "Our service terms have changed",
+        "intro": "Review the changes to the terms and their effective date.",
+        "action": "Review terms"
+      },
+      "ai-allocation-update": {
+        "title": "Investment allocation status updated",
+        "intro": "Review the latest execution status of this allocation.",
+        "action": "View allocation"
+      },
+      "product-update": {
+        "title": "What’s new at A-REIT",
+        "intro": "View the details of this product update.",
+        "action": "View update"
+      }
+    }
+  },
+  "hi": {
+    "labels": {
+      "device": "डिवाइस",
+      "location": "स्थान (अनुमानित)",
+      "time": "समय",
+      "previousEmail": "पुराना ईमेल",
+      "newEmail": "नया ईमेल",
+      "factor": "सत्यापन विधि",
+      "change": "बदलाव",
+      "reference": "संदर्भ संख्या",
+      "network": "नेटवर्क",
+      "fee": "शुल्क",
+      "destination": "प्राप्तकर्ता का पता",
+      "reason": "कारण",
+      "fundsStatus": "धन की स्थिति",
+      "recipient": "प्राप्तकर्ता",
+      "sender": "प्रेषक",
+      "product": "उत्पाद",
+      "units": "इकाइयाँ",
+      "period": "अवधि",
+      "market": "बाज़ार",
+      "outcome": "परिणाम",
+      "expiry": "समाप्ति तिथि",
+      "ticket": "टिकट",
+      "effectiveDate": "प्रभावी तिथि",
+      "version": "संस्करण",
+      "allocationState": "निष्पादन की स्थिति"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "अपना ईमेल सत्यापित करें",
+        "intro": "अपने A-REIT खाते का ईमेल सत्यापित करने के लिए यह कोड दर्ज करें।"
+      },
+      "login-code": {
+        "title": "अपने लॉगिन की पुष्टि करें",
+        "intro": "लॉगिन पूरा करने के लिए यह कोड दर्ज करें।"
+      },
+      "verification-link": {
+        "title": "ईमेल पते की पुष्टि करें",
+        "intro": "अपने A-REIT खाते के लिए इस ईमेल पते की पुष्टि करें।",
+        "action": "ईमेल सत्यापित करें"
+      },
+      "magic-login-link": {
+        "title": "A-REIT में लॉगिन करें",
+        "intro": "लॉगिन पूरा करने के लिए इस एक बार उपयोग होने वाले लिंक का इस्तेमाल करें।",
+        "action": "लॉगिन जारी रखें"
+      },
+      "recovery-link": {
+        "title": "खाते की पहुँच पुनर्प्राप्त करें",
+        "intro": "खाता पुनर्प्राप्ति के अपने अनुरोध की पुष्टि करें।",
+        "action": "खाता पुनर्प्राप्त करें"
+      },
+      "reset-password-code": {
+        "title": "पासवर्ड रीसेट की पुष्टि करें",
+        "intro": "पासवर्ड रीसेट जारी रखने के लिए यह कोड दर्ज करें।"
+      },
+      "bind-email-code": {
+        "title": "अपना ईमेल पता जोड़ें",
+        "intro": "इस ईमेल को अपने खाते से जोड़ने के लिए यह कोड दर्ज करें।"
+      },
+      "change-email-code": {
+        "title": "अपना नया ईमेल सत्यापित करें",
+        "intro": "अपने खाते के नए ईमेल की पुष्टि करने के लिए यह कोड दर्ज करें।"
+      },
+      "welcome": {
+        "title": "आपका खाता तैयार है",
+        "intro": "आपका ईमेल सत्यापित है। अपने खाते में जाएँ।",
+        "action": "खाता खोलें"
+      },
+      "new-login": {
+        "title": "आपके खाते में नया लॉगिन",
+        "intro": "नीचे दिए गए डिवाइस से अभी आपके खाते में लॉगिन हुआ है।",
+        "action": "सुरक्षा देखें"
+      },
+      "password-changed": {
+        "title": "आपका पासवर्ड अपडेट हुआ",
+        "intro": "आपके खाते का पासवर्ड बदल गया है।",
+        "action": "विवरण देखें"
+      },
+      "email-changed": {
+        "title": "खाते का ईमेल अपडेट हुआ",
+        "intro": "लॉगिन और खाता सूचनाओं के लिए आपका ईमेल बदल गया है।",
+        "action": "विवरण देखें"
+      },
+      "security-factor-changed": {
+        "title": "सुरक्षा सत्यापन अपडेट हुआ",
+        "intro": "आपके खाते की सुरक्षा सत्यापन सेटिंग बदल गई है।",
+        "action": "विवरण देखें"
+      },
+      "recovery-completed": {
+        "title": "खाता पुनर्प्राप्ति पूरी हुई",
+        "intro": "खाता पुनर्प्राप्ति पूरी हुई। अपनी सुरक्षा सेटिंग जाँचें।",
+        "action": "विवरण देखें"
+      },
+      "account-closed": {
+        "title": "आपका खाता बंद हो गया",
+        "intro": "आपका खाता बंद करने का अनुरोध संसाधित हो गया है।",
+        "action": "सहायता से संपर्क करें"
+      },
+      "deposit-received": {
+        "title": "जमा राशि खाते में आ गई",
+        "intro": "यह जमा राशि आपकी उपलब्ध शेष राशि में जोड़ दी गई है।",
+        "action": "विवरण देखें",
+        "status": "जमा हो गया"
+      },
+      "withdrawal-submitted": {
+        "title": "निकासी का अनुरोध मिला",
+        "intro": "निकासी अनुरोध मिला है। धन का हस्तांतरण अभी पूरा नहीं हुआ है।",
+        "action": "विवरण देखें",
+        "status": "प्रक्रिया जारी है"
+      },
+      "withdrawal-completed": {
+        "title": "निकासी पूरी हुई",
+        "intro": "आपकी निकासी संसाधित हो गई है। विवरण नीचे हैं।",
+        "action": "विवरण देखें",
+        "status": "पूरा हो गया"
+      },
+      "withdrawal-failed": {
+        "title": "निकासी पूरी नहीं हुई",
+        "intro": "निकासी पूरी नहीं हुई। कारण और धन की स्थिति देखें।",
+        "action": "विवरण देखें",
+        "status": "पूरा नहीं हुआ"
+      },
+      "transfer-sent": {
+        "title": "खाते का हस्तांतरण पूरा हुआ",
+        "intro": "यह राशि प्राप्तकर्ता के खाते की शेष राशि में जमा हो गई है।",
+        "action": "विवरण देखें",
+        "status": "भेज दिया गया"
+      },
+      "transfer-received": {
+        "title": "आपको खाते में हस्तांतरण मिला",
+        "intro": "यह राशि आपकी उपलब्ध शेष राशि में जमा हो गई है।",
+        "action": "विवरण देखें",
+        "status": "प्राप्त हुआ"
+      },
+      "order-submitted": {
+        "title": "ऑर्डर जमा हुआ",
+        "intro": "ऑर्डर जमा हो गया है। निष्पादन की स्थिति के लिए विवरण देखें।",
+        "action": "विवरण देखें",
+        "status": "निष्पादन की प्रतीक्षा"
+      },
+      "order-completed": {
+        "title": "ऑर्डर निष्पादित हुआ",
+        "intro": "आपके ऑर्डर का निष्पादन रिकॉर्ड नीचे है।",
+        "action": "विवरण देखें",
+        "status": "निष्पादित"
+      },
+      "order-failed": {
+        "title": "ऑर्डर निष्पादित नहीं हुआ",
+        "intro": "ऑर्डर निष्पादित नहीं हुआ। कारण और धन की स्थिति देखें।",
+        "action": "विवरण देखें"
+      },
+      "redemption-completed": {
+        "title": "रिडेम्पशन पूरा हुआ",
+        "intro": "रिडेम्पशन की यह राशि आपके खाते में जमा हो गई है।",
+        "action": "विवरण देखें",
+        "status": "निपटान पूरा"
+      },
+      "dividend-paid": {
+        "title": "आय का वितरण जमा हुआ",
+        "intro": "इस वितरण की राशि आपके खाते में जमा हो गई है।",
+        "action": "विवरण देखें",
+        "status": "जमा हो गया"
+      },
+      "prediction-settled": {
+        "title": "पूर्वानुमान बाज़ार का निपटान हुआ",
+        "intro": "पूर्वानुमान बाज़ार की निपटान राशि और परिणाम नीचे हैं।",
+        "action": "विवरण देखें",
+        "status": "निपटान पूरा"
+      },
+      "kyc-approved": {
+        "title": "पहचान सत्यापन स्वीकृत",
+        "intro": "आपका पहचान सत्यापन स्वीकृत हो गया है।",
+        "action": "सत्यापन देखें"
+      },
+      "kyc-action-required": {
+        "title": "अतिरिक्त जानकारी आवश्यक है",
+        "intro": "आवश्यक जानकारी देने के लिए सत्यापन पृष्ठ पर जाएँ।",
+        "action": "सत्यापन जारी रखें"
+      },
+      "kyc-expiring": {
+        "title": "पहचान सत्यापन समाप्त होने वाला है",
+        "intro": "समाप्ति तिथि से पहले अपना पहचान सत्यापन अपडेट करें।",
+        "action": "सत्यापन अपडेट करें"
+      },
+      "support-reply": {
+        "title": "आपके सहायता टिकट का जवाब आया",
+        "intro": "सहायता टीम ने उत्तर दिया है। पूरा उत्तर अपने खाते में पढ़ें।",
+        "action": "टिकट देखें"
+      },
+      "statement-ready": {
+        "title": "खाते का विवरण-पत्र तैयार है",
+        "intro": "आपका विवरण-पत्र खाते में देखने या डाउनलोड करने के लिए तैयार है।",
+        "action": "विवरण-पत्र देखें"
+      },
+      "policy-update": {
+        "title": "सेवा की शर्तें बदली हैं",
+        "intro": "शर्तों में बदलाव और उनकी प्रभावी तिथि देखें।",
+        "action": "शर्तें देखें"
+      },
+      "ai-allocation-update": {
+        "title": "निवेश आवंटन की स्थिति अपडेट हुई",
+        "intro": "इस आवंटन की नवीनतम निष्पादन स्थिति देखें।",
+        "action": "आवंटन देखें"
+      },
+      "product-update": {
+        "title": "A-REIT में नया क्या है",
+        "intro": "इस उत्पाद अपडेट का विवरण देखें।",
+        "action": "अपडेट देखें"
+      }
+    }
+  },
+  "es": {
+    "labels": {
+      "device": "Dispositivo",
+      "location": "Ubicación (aproximada)",
+      "time": "Fecha y hora",
+      "previousEmail": "Correo anterior",
+      "newEmail": "Correo nuevo",
+      "factor": "Método de verificación",
+      "change": "Cambio",
+      "reference": "Referencia",
+      "network": "Red",
+      "fee": "Comisión",
+      "destination": "Dirección de destino",
+      "reason": "Motivo",
+      "fundsStatus": "Estado de los fondos",
+      "recipient": "Destinatario",
+      "sender": "Remitente",
+      "product": "Producto",
+      "units": "Unidades",
+      "period": "Periodo",
+      "market": "Mercado",
+      "outcome": "Resultado",
+      "expiry": "Vencimiento",
+      "ticket": "Ticket",
+      "effectiveDate": "Fecha de entrada en vigor",
+      "version": "Versión",
+      "allocationState": "Estado de ejecución"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "Verifica tu correo",
+        "intro": "Introduce este código para verificar el correo de tu cuenta A-REIT."
+      },
+      "login-code": {
+        "title": "Confirma tu acceso",
+        "intro": "Usa este código para completar el inicio de sesión."
+      },
+      "verification-link": {
+        "title": "Verifica tu dirección de correo",
+        "intro": "Confirma este correo para tu cuenta A-REIT.",
+        "action": "Verificar correo"
+      },
+      "magic-login-link": {
+        "title": "Accede a A-REIT",
+        "intro": "Completa el inicio de sesión con este enlace de un solo uso.",
+        "action": "Continuar el acceso"
+      },
+      "recovery-link": {
+        "title": "Recupera el acceso a tu cuenta",
+        "intro": "Confirma tu solicitud de recuperación de cuenta.",
+        "action": "Recuperar cuenta"
+      },
+      "reset-password-code": {
+        "title": "Confirma el cambio de contraseña",
+        "intro": "Usa este código para continuar el restablecimiento de tu contraseña."
+      },
+      "bind-email-code": {
+        "title": "Vincula tu correo",
+        "intro": "Usa este código para vincular este correo a tu cuenta."
+      },
+      "change-email-code": {
+        "title": "Verifica tu nuevo correo",
+        "intro": "Usa este código para confirmar el nuevo correo de tu cuenta."
+      },
+      "welcome": {
+        "title": "Tu cuenta está lista",
+        "intro": "Tu correo está verificado. Continúa a tu cuenta.",
+        "action": "Abrir cuenta"
+      },
+      "new-login": {
+        "title": "Nuevo acceso a tu cuenta",
+        "intro": "Se acaba de acceder a tu cuenta desde el dispositivo indicado.",
+        "action": "Revisar seguridad"
+      },
+      "password-changed": {
+        "title": "Tu contraseña se ha actualizado",
+        "intro": "La contraseña de tu cuenta ha cambiado.",
+        "action": "Ver detalles"
+      },
+      "email-changed": {
+        "title": "El correo de tu cuenta se ha actualizado",
+        "intro": "Tu correo de acceso y de avisos de cuenta ha cambiado.",
+        "action": "Ver detalles"
+      },
+      "security-factor-changed": {
+        "title": "Verificación de seguridad actualizada",
+        "intro": "La configuración de verificación de seguridad de tu cuenta ha cambiado.",
+        "action": "Ver detalles"
+      },
+      "recovery-completed": {
+        "title": "Recuperación de cuenta completada",
+        "intro": "Tu cuenta se ha recuperado. Revisa la configuración de seguridad.",
+        "action": "Ver detalles"
+      },
+      "account-closed": {
+        "title": "Tu cuenta se ha cerrado",
+        "intro": "Tu solicitud de cierre de cuenta se ha procesado.",
+        "action": "Contactar con soporte"
+      },
+      "deposit-received": {
+        "title": "Depósito abonado",
+        "intro": "Este depósito se ha abonado a tu saldo disponible.",
+        "action": "Ver detalles",
+        "status": "Abonado"
+      },
+      "withdrawal-submitted": {
+        "title": "Solicitud de retiro recibida",
+        "intro": "Hemos recibido tu solicitud de retirada. La transferencia aún no se ha completado.",
+        "action": "Ver detalles",
+        "status": "En proceso"
+      },
+      "withdrawal-completed": {
+        "title": "Retiro completado",
+        "intro": "Tu retirada se ha procesado. Consulta los detalles a continuación.",
+        "action": "Ver detalles",
+        "status": "Completado"
+      },
+      "withdrawal-failed": {
+        "title": "Retiro no completado",
+        "intro": "La retirada no se ha completado. Revisa el motivo y el estado de los fondos.",
+        "action": "Ver detalles",
+        "status": "No completado"
+      },
+      "transfer-sent": {
+        "title": "Transferencia interna completada",
+        "intro": "Esta transferencia se ha abonado al saldo de la cuenta destinataria.",
+        "action": "Ver detalles",
+        "status": "Enviado"
+      },
+      "transfer-received": {
+        "title": "Has recibido una transferencia interna",
+        "intro": "Esta transferencia se ha abonado a tu saldo disponible.",
+        "action": "Ver detalles",
+        "status": "Recibido"
+      },
+      "order-submitted": {
+        "title": "Orden enviada",
+        "intro": "Tu orden se ha enviado. Consulta su estado de ejecución en los detalles.",
+        "action": "Ver detalles",
+        "status": "Pendiente de ejecución"
+      },
+      "order-completed": {
+        "title": "Orden ejecutada",
+        "intro": "El registro de ejecución de tu orden figura a continuación.",
+        "action": "Ver detalles",
+        "status": "Ejecutada"
+      },
+      "order-failed": {
+        "title": "Orden no ejecutada",
+        "intro": "Tu orden no se ha ejecutado. Revisa el motivo y el estado de los fondos.",
+        "action": "Ver detalles"
+      },
+      "redemption-completed": {
+        "title": "Reembolso completado",
+        "intro": "El importe de este reembolso se ha abonado al saldo de tu cuenta.",
+        "action": "Ver detalles",
+        "status": "Liquidado"
+      },
+      "dividend-paid": {
+        "title": "Distribución abonada",
+        "intro": "Esta distribución se ha abonado al saldo de tu cuenta.",
+        "action": "Ver detalles",
+        "status": "Abonado"
+      },
+      "prediction-settled": {
+        "title": "Mercado de predicción liquidado",
+        "intro": "El importe y el resultado de la liquidación figuran a continuación.",
+        "action": "Ver detalles",
+        "status": "Liquidado"
+      },
+      "kyc-approved": {
+        "title": "Verificación de identidad aprobada",
+        "intro": "Tu verificación de identidad se ha aprobado.",
+        "action": "Ver verificación"
+      },
+      "kyc-action-required": {
+        "title": "Se necesita más información",
+        "intro": "Visita la página de verificación para aportar la información requerida.",
+        "action": "Continuar verificación"
+      },
+      "kyc-expiring": {
+        "title": "Tu verificación está por vencer",
+        "intro": "Actualiza tu verificación de identidad antes de su vencimiento.",
+        "action": "Actualizar verificación"
+      },
+      "support-reply": {
+        "title": "Hay una respuesta a tu ticket",
+        "intro": "Soporte ha respondido. Lee la respuesta completa en tu cuenta.",
+        "action": "Ver ticket"
+      },
+      "statement-ready": {
+        "title": "Tu extracto está listo",
+        "intro": "Tu extracto está disponible en tu cuenta para consultarlo o descargarlo.",
+        "action": "Ver extracto"
+      },
+      "policy-update": {
+        "title": "Las condiciones han cambiado",
+        "intro": "Revisa los cambios en las condiciones y su fecha de entrada en vigor.",
+        "action": "Revisar condiciones"
+      },
+      "ai-allocation-update": {
+        "title": "Asignación de inversión actualizada",
+        "intro": "Revisa el último estado de ejecución de esta asignación.",
+        "action": "Ver asignación"
+      },
+      "product-update": {
+        "title": "Novedades de A-REIT",
+        "intro": "Consulta los detalles de esta actualización del producto.",
+        "action": "Ver novedades"
+      }
+    }
+  },
+  "ar": {
+    "labels": {
+      "device": "الجهاز",
+      "location": "الموقع التقريبي",
+      "time": "الوقت",
+      "previousEmail": "البريد السابق",
+      "newEmail": "البريد الجديد",
+      "factor": "طريقة التحقق",
+      "change": "التغيير",
+      "reference": "الرقم المرجعي",
+      "network": "الشبكة",
+      "fee": "الرسوم",
+      "destination": "عنوان المستلم",
+      "reason": "السبب",
+      "fundsStatus": "حالة الأموال",
+      "recipient": "المستلم",
+      "sender": "المرسل",
+      "product": "المنتج",
+      "units": "الوحدات",
+      "period": "الفترة",
+      "market": "السوق",
+      "outcome": "النتيجة",
+      "expiry": "تاريخ الانتهاء",
+      "ticket": "التذكرة",
+      "effectiveDate": "تاريخ السريان",
+      "version": "الإصدار",
+      "allocationState": "حالة التنفيذ"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "تحقق من بريدك الإلكتروني",
+        "intro": "أدخل هذا الرمز للتحقق من بريد حسابك في A-REIT."
+      },
+      "login-code": {
+        "title": "أكد تسجيل الدخول",
+        "intro": "استخدم هذا الرمز لإكمال تسجيل الدخول."
+      },
+      "verification-link": {
+        "title": "تحقق من عنوان البريد",
+        "intro": "أكد عنوان البريد الإلكتروني لحسابك في A-REIT.",
+        "action": "تحقق من البريد"
+      },
+      "magic-login-link": {
+        "title": "سجل الدخول إلى A-REIT",
+        "intro": "أكمل تسجيل الدخول باستخدام هذا الرابط لمرة واحدة.",
+        "action": "متابعة تسجيل الدخول"
+      },
+      "recovery-link": {
+        "title": "استعد الوصول إلى حسابك",
+        "intro": "أكد طلب استعادة حسابك.",
+        "action": "استعادة الحساب"
+      },
+      "reset-password-code": {
+        "title": "أكد إعادة تعيين كلمة المرور",
+        "intro": "استخدم هذا الرمز لمتابعة إعادة تعيين كلمة المرور."
+      },
+      "bind-email-code": {
+        "title": "اربط بريدك الإلكتروني",
+        "intro": "استخدم هذا الرمز لربط هذا البريد بحسابك."
+      },
+      "change-email-code": {
+        "title": "تحقق من بريدك الجديد",
+        "intro": "استخدم هذا الرمز لتأكيد البريد الجديد لحسابك."
+      },
+      "welcome": {
+        "title": "حسابك جاهز",
+        "intro": "تم التحقق من بريدك. انتقل إلى حسابك.",
+        "action": "فتح الحساب"
+      },
+      "new-login": {
+        "title": "تسجيل دخول جديد إلى حسابك",
+        "intro": "تم تسجيل الدخول إلى حسابك للتو من الجهاز الموضح أدناه.",
+        "action": "مراجعة الأمان"
+      },
+      "password-changed": {
+        "title": "تم تحديث كلمة المرور",
+        "intro": "تم تغيير كلمة مرور حسابك.",
+        "action": "عرض التفاصيل"
+      },
+      "email-changed": {
+        "title": "تم تحديث بريد الحساب",
+        "intro": "تم تغيير بريد تسجيل الدخول وإشعارات الحساب.",
+        "action": "عرض التفاصيل"
+      },
+      "security-factor-changed": {
+        "title": "تم تحديث التحقق الأمني",
+        "intro": "تم تغيير إعدادات التحقق الأمني لحسابك.",
+        "action": "عرض التفاصيل"
+      },
+      "recovery-completed": {
+        "title": "اكتملت استعادة الحساب",
+        "intro": "تمت استعادة حسابك. راجع إعدادات الأمان.",
+        "action": "عرض التفاصيل"
+      },
+      "account-closed": {
+        "title": "تم إغلاق حسابك",
+        "intro": "تمت معالجة طلب إغلاق حسابك.",
+        "action": "التواصل مع الدعم"
+      },
+      "deposit-received": {
+        "title": "تمت إضافة الإيداع",
+        "intro": "أُضيف هذا الإيداع إلى رصيدك المتاح.",
+        "action": "عرض التفاصيل",
+        "status": "تمت إضافة الأموال"
+      },
+      "withdrawal-submitted": {
+        "title": "تم استلام طلب السحب",
+        "intro": "تم استلام طلب السحب. لم يكتمل التحويل بعد.",
+        "action": "عرض التفاصيل",
+        "status": "قيد المعالجة"
+      },
+      "withdrawal-completed": {
+        "title": "اكتمل السحب",
+        "intro": "تمت معالجة السحب. التفاصيل أدناه.",
+        "action": "عرض التفاصيل",
+        "status": "مكتمل"
+      },
+      "withdrawal-failed": {
+        "title": "لم يكتمل السحب",
+        "intro": "لم يكتمل السحب. راجع السبب وحالة الأموال.",
+        "action": "عرض التفاصيل",
+        "status": "غير مكتمل"
+      },
+      "transfer-sent": {
+        "title": "اكتمل التحويل الداخلي",
+        "intro": "أُضيف هذا التحويل إلى رصيد حساب المستلم.",
+        "action": "عرض التفاصيل",
+        "status": "تم الإرسال"
+      },
+      "transfer-received": {
+        "title": "استلمت تحويلًا داخليًا",
+        "intro": "أُضيف هذا التحويل إلى رصيدك المتاح.",
+        "action": "عرض التفاصيل",
+        "status": "تم الاستلام"
+      },
+      "order-submitted": {
+        "title": "تم تقديم الأمر",
+        "intro": "تم تقديم طلبك. راجع التفاصيل لمعرفة حالة التنفيذ.",
+        "action": "عرض التفاصيل",
+        "status": "بانتظار التنفيذ"
+      },
+      "order-completed": {
+        "title": "تم تنفيذ الأمر",
+        "intro": "سجل تنفيذ طلبك موضح أدناه.",
+        "action": "عرض التفاصيل",
+        "status": "تم التنفيذ"
+      },
+      "order-failed": {
+        "title": "لم يتم تنفيذ الأمر",
+        "intro": "لم يُنفذ طلبك. راجع السبب وحالة الأموال.",
+        "action": "عرض التفاصيل"
+      },
+      "redemption-completed": {
+        "title": "اكتمل الاسترداد",
+        "intro": "أُضيفت حصيلة هذا الاسترداد إلى رصيد حسابك.",
+        "action": "عرض التفاصيل",
+        "status": "تمت التسوية"
+      },
+      "dividend-paid": {
+        "title": "تمت إضافة التوزيع",
+        "intro": "أُضيف هذا التوزيع إلى رصيد حسابك.",
+        "action": "عرض التفاصيل",
+        "status": "تمت إضافة الأموال"
+      },
+      "prediction-settled": {
+        "title": "تمت تسوية سوق التوقعات",
+        "intro": "مبلغ التسوية ونتيجة سوق التوقعات موضحان أدناه.",
+        "action": "عرض التفاصيل",
+        "status": "تمت التسوية"
+      },
+      "kyc-approved": {
+        "title": "تم قبول التحقق من الهوية",
+        "intro": "تمت الموافقة على التحقق من هويتك.",
+        "action": "عرض التحقق"
+      },
+      "kyc-action-required": {
+        "title": "نحتاج إلى معلومات إضافية",
+        "intro": "انتقل إلى صفحة التحقق لتقديم المعلومات المطلوبة.",
+        "action": "متابعة التحقق"
+      },
+      "kyc-expiring": {
+        "title": "التحقق من الهوية قارب الانتهاء",
+        "intro": "حدّث التحقق من هويتك قبل تاريخ الانتهاء.",
+        "action": "تحديث التحقق"
+      },
+      "support-reply": {
+        "title": "وصل رد على تذكرة الدعم",
+        "intro": "ردّ فريق الدعم. اقرأ الرد الكامل في حسابك.",
+        "action": "عرض التذكرة"
+      },
+      "statement-ready": {
+        "title": "كشف حسابك جاهز",
+        "intro": "كشف حسابك جاهز للعرض أو التنزيل من حسابك.",
+        "action": "عرض كشف الحساب"
+      },
+      "policy-update": {
+        "title": "تم تحديث شروط الخدمة",
+        "intro": "راجع تعديلات الشروط وتاريخ سريانها.",
+        "action": "مراجعة الشروط"
+      },
+      "ai-allocation-update": {
+        "title": "تم تحديث حالة تخصيص الاستثمار",
+        "intro": "راجع أحدث حالة تنفيذ لهذا التخصيص.",
+        "action": "عرض التخصيص"
+      },
+      "product-update": {
+        "title": "الجديد في A-REIT",
+        "intro": "اطّلع على تفاصيل تحديث المنتج.",
+        "action": "عرض التحديث"
+      }
+    }
+  },
+  "fr": {
+    "labels": {
+      "device": "Appareil",
+      "location": "Lieu (approximatif)",
+      "time": "Date et heure",
+      "previousEmail": "Ancien e-mail",
+      "newEmail": "Nouvel e-mail",
+      "factor": "Méthode de vérification",
+      "change": "Modification",
+      "reference": "Référence",
+      "network": "Réseau",
+      "fee": "Frais",
+      "destination": "Adresse de destination",
+      "reason": "Motif",
+      "fundsStatus": "État des fonds",
+      "recipient": "Destinataire",
+      "sender": "Expéditeur",
+      "product": "Produit",
+      "units": "Unités",
+      "period": "Période",
+      "market": "Marché",
+      "outcome": "Résultat",
+      "expiry": "Expiration",
+      "ticket": "Ticket",
+      "effectiveDate": "Date d’entrée en vigueur",
+      "version": "Version",
+      "allocationState": "État d’exécution"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "Vérifiez votre e-mail",
+        "intro": "Saisissez ce code pour vérifier l’adresse e-mail de votre compte A-REIT."
+      },
+      "login-code": {
+        "title": "Confirmez votre connexion",
+        "intro": "Utilisez ce code pour terminer votre connexion."
+      },
+      "verification-link": {
+        "title": "Vérifiez votre adresse e-mail",
+        "intro": "Confirmez cette adresse e-mail pour votre compte A-REIT.",
+        "action": "Vérifier l’e-mail"
+      },
+      "magic-login-link": {
+        "title": "Connectez-vous à A-REIT",
+        "intro": "Terminez votre connexion avec ce lien à usage unique.",
+        "action": "Continuer la connexion"
+      },
+      "recovery-link": {
+        "title": "Récupérez l’accès à votre compte",
+        "intro": "Confirmez votre demande de récupération de compte.",
+        "action": "Récupérer le compte"
+      },
+      "reset-password-code": {
+        "title": "Confirmez la réinitialisation",
+        "intro": "Utilisez ce code pour poursuivre la réinitialisation du mot de passe."
+      },
+      "bind-email-code": {
+        "title": "Associez votre adresse e-mail",
+        "intro": "Utilisez ce code pour associer cette adresse e-mail à votre compte."
+      },
+      "change-email-code": {
+        "title": "Vérifiez votre nouvel e-mail",
+        "intro": "Utilisez ce code pour confirmer la nouvelle adresse e-mail de votre compte."
+      },
+      "welcome": {
+        "title": "Votre compte est prêt",
+        "intro": "Votre adresse e-mail est vérifiée. Accédez à votre compte.",
+        "action": "Ouvrir le compte"
+      },
+      "new-login": {
+        "title": "Nouvelle connexion à votre compte",
+        "intro": "Une connexion vient d’avoir lieu depuis l’appareil indiqué ci-dessous.",
+        "action": "Vérifier la sécurité"
+      },
+      "password-changed": {
+        "title": "Votre mot de passe a été modifié",
+        "intro": "Le mot de passe de votre compte a été modifié.",
+        "action": "Voir les détails"
+      },
+      "email-changed": {
+        "title": "L’e-mail du compte a été modifié",
+        "intro": "Votre adresse de connexion et de notification a été modifiée.",
+        "action": "Voir les détails"
+      },
+      "security-factor-changed": {
+        "title": "Vérification de sécurité modifiée",
+        "intro": "Les paramètres de vérification de sécurité de votre compte ont changé.",
+        "action": "Voir les détails"
+      },
+      "recovery-completed": {
+        "title": "Récupération du compte terminée",
+        "intro": "Votre compte a été récupéré. Vérifiez vos paramètres de sécurité.",
+        "action": "Voir les détails"
+      },
+      "account-closed": {
+        "title": "Votre compte a été fermé",
+        "intro": "Votre demande de clôture de compte a été traitée.",
+        "action": "Contacter l’assistance"
+      },
+      "deposit-received": {
+        "title": "Dépôt crédité",
+        "intro": "Ce dépôt a été crédité sur votre solde disponible.",
+        "action": "Voir les détails",
+        "status": "Crédité"
+      },
+      "withdrawal-submitted": {
+        "title": "Demande de retrait reçue",
+        "intro": "Votre demande de retrait a été reçue. Le transfert n’est pas encore terminé.",
+        "action": "Voir les détails",
+        "status": "En cours de traitement"
+      },
+      "withdrawal-completed": {
+        "title": "Retrait terminé",
+        "intro": "Votre retrait a été traité. Les détails figurent ci-dessous.",
+        "action": "Voir les détails",
+        "status": "Terminé"
+      },
+      "withdrawal-failed": {
+        "title": "Retrait non terminé",
+        "intro": "Le retrait n’a pas abouti. Consultez le motif et l’état des fonds.",
+        "action": "Voir les détails",
+        "status": "Non terminé"
+      },
+      "transfer-sent": {
+        "title": "Transfert interne terminé",
+        "intro": "Ce transfert a été crédité sur le solde du compte destinataire.",
+        "action": "Voir les détails",
+        "status": "Envoyé"
+      },
+      "transfer-received": {
+        "title": "Vous avez reçu un transfert interne",
+        "intro": "Ce transfert a été crédité sur votre solde disponible.",
+        "action": "Voir les détails",
+        "status": "Reçu"
+      },
+      "order-submitted": {
+        "title": "Ordre envoyé",
+        "intro": "Votre ordre a été soumis. Consultez ses détails pour connaître son état d’exécution.",
+        "action": "Voir les détails",
+        "status": "En attente d’exécution"
+      },
+      "order-completed": {
+        "title": "Ordre exécuté",
+        "intro": "Le relevé d’exécution de votre ordre figure ci-dessous.",
+        "action": "Voir les détails",
+        "status": "Exécuté"
+      },
+      "order-failed": {
+        "title": "Ordre non exécuté",
+        "intro": "Votre ordre n’a pas été exécuté. Consultez le motif et l’état des fonds.",
+        "action": "Voir les détails"
+      },
+      "redemption-completed": {
+        "title": "Rachat terminé",
+        "intro": "Le produit de ce rachat a été crédité sur le solde de votre compte.",
+        "action": "Voir les détails",
+        "status": "Réglé"
+      },
+      "dividend-paid": {
+        "title": "Distribution créditée",
+        "intro": "Cette distribution a été créditée sur le solde de votre compte.",
+        "action": "Voir les détails",
+        "status": "Crédité"
+      },
+      "prediction-settled": {
+        "title": "Marché de prédiction réglé",
+        "intro": "Le montant du règlement et le résultat du marché de prédiction figurent ci-dessous.",
+        "action": "Voir les détails",
+        "status": "Réglé"
+      },
+      "kyc-approved": {
+        "title": "Vérification d’identité approuvée",
+        "intro": "Votre vérification d’identité a été approuvée.",
+        "action": "Voir la vérification"
+      },
+      "kyc-action-required": {
+        "title": "Informations supplémentaires requises",
+        "intro": "Rendez-vous sur la page de vérification pour fournir les informations demandées.",
+        "action": "Continuer la vérification"
+      },
+      "kyc-expiring": {
+        "title": "Votre vérification va expirer",
+        "intro": "Mettez à jour votre vérification d’identité avant sa date d’expiration.",
+        "action": "Mettre à jour la vérification"
+      },
+      "support-reply": {
+        "title": "Une réponse à votre ticket",
+        "intro": "L’assistance a répondu. Consultez la réponse complète dans votre compte.",
+        "action": "Voir le ticket"
+      },
+      "statement-ready": {
+        "title": "Votre relevé est prêt",
+        "intro": "Votre relevé est disponible dans votre compte pour consultation ou téléchargement.",
+        "action": "Voir le relevé"
+      },
+      "policy-update": {
+        "title": "Les conditions ont changé",
+        "intro": "Consultez les modifications des conditions et leur date d’entrée en vigueur.",
+        "action": "Consulter les conditions"
+      },
+      "ai-allocation-update": {
+        "title": "Allocation d’investissement mise à jour",
+        "intro": "Consultez le dernier état d’exécution de cette allocation.",
+        "action": "Voir l’allocation"
+      },
+      "product-update": {
+        "title": "Les nouveautés de A-REIT",
+        "intro": "Consultez les détails de cette mise à jour du produit.",
+        "action": "Voir les nouveautés"
+      }
+    }
+  },
+  "pt": {
+    "labels": {
+      "device": "Dispositivo",
+      "location": "Localização (aproximada)",
+      "time": "Data e hora",
+      "previousEmail": "E-mail anterior",
+      "newEmail": "Novo e-mail",
+      "factor": "Método de verificação",
+      "change": "Alteração",
+      "reference": "Referência",
+      "network": "Rede",
+      "fee": "Taxa",
+      "destination": "Endereço de destino",
+      "reason": "Motivo",
+      "fundsStatus": "Situação dos fundos",
+      "recipient": "Destinatário",
+      "sender": "Remetente",
+      "product": "Produto",
+      "units": "Unidades",
+      "period": "Período",
+      "market": "Mercado",
+      "outcome": "Resultado",
+      "expiry": "Vencimento",
+      "ticket": "Chamado",
+      "effectiveDate": "Data de vigência",
+      "version": "Versão",
+      "allocationState": "Status da execução"
+    },
+    "messages": {
+      "registration-code": {
+        "title": "Verifique seu e-mail",
+        "intro": "Digite este código para verificar o e-mail da sua conta A-REIT."
+      },
+      "login-code": {
+        "title": "Confirme seu acesso",
+        "intro": "Use este código para concluir o login."
+      },
+      "verification-link": {
+        "title": "Verifique seu endereço de e-mail",
+        "intro": "Confirme este endereço de e-mail para sua conta A-REIT.",
+        "action": "Verificar e-mail"
+      },
+      "magic-login-link": {
+        "title": "Entre na A-REIT",
+        "intro": "Conclua o login com este link de uso único.",
+        "action": "Continuar o acesso"
+      },
+      "recovery-link": {
+        "title": "Recupere o acesso à conta",
+        "intro": "Confirme sua solicitação de recuperação de conta.",
+        "action": "Recuperar conta"
+      },
+      "reset-password-code": {
+        "title": "Confirme a redefinição de senha",
+        "intro": "Use este código para continuar a redefinição da senha."
+      },
+      "bind-email-code": {
+        "title": "Vincule seu e-mail",
+        "intro": "Use este código para vincular este e-mail à sua conta."
+      },
+      "change-email-code": {
+        "title": "Verifique seu novo e-mail",
+        "intro": "Use este código para confirmar o novo e-mail da sua conta."
+      },
+      "welcome": {
+        "title": "Sua conta está pronta",
+        "intro": "Seu e-mail foi verificado. Acesse sua conta.",
+        "action": "Abrir conta"
+      },
+      "new-login": {
+        "title": "Novo acesso à sua conta",
+        "intro": "Sua conta acaba de ser acessada pelo dispositivo abaixo.",
+        "action": "Revisar segurança"
+      },
+      "password-changed": {
+        "title": "Sua senha foi atualizada",
+        "intro": "A senha da sua conta foi alterada.",
+        "action": "Ver detalhes"
+      },
+      "email-changed": {
+        "title": "O e-mail da conta foi atualizado",
+        "intro": "Seu e-mail de login e de avisos da conta foi alterado.",
+        "action": "Ver detalhes"
+      },
+      "security-factor-changed": {
+        "title": "Verificação de segurança atualizada",
+        "intro": "As configurações de verificação de segurança da sua conta foram alteradas.",
+        "action": "Ver detalhes"
+      },
+      "recovery-completed": {
+        "title": "Recuperação da conta concluída",
+        "intro": "Sua conta foi recuperada. Revise as configurações de segurança.",
+        "action": "Ver detalhes"
+      },
+      "account-closed": {
+        "title": "Sua conta foi encerrada",
+        "intro": "Sua solicitação de encerramento de conta foi processada.",
+        "action": "Contatar o suporte"
+      },
+      "deposit-received": {
+        "title": "Depósito creditado",
+        "intro": "Este depósito foi creditado no seu saldo disponível.",
+        "action": "Ver detalhes",
+        "status": "Creditado"
+      },
+      "withdrawal-submitted": {
+        "title": "Solicitação de saque recebida",
+        "intro": "Sua solicitação de saque foi recebida. A transferência ainda não foi concluída.",
+        "action": "Ver detalhes",
+        "status": "Em processamento"
+      },
+      "withdrawal-completed": {
+        "title": "Saque concluído",
+        "intro": "Seu saque foi processado. Veja os detalhes abaixo.",
+        "action": "Ver detalhes",
+        "status": "Concluído"
+      },
+      "withdrawal-failed": {
+        "title": "Saque não concluído",
+        "intro": "O saque não foi concluído. Confira o motivo e a situação dos fundos.",
+        "action": "Ver detalhes",
+        "status": "Não concluído"
+      },
+      "transfer-sent": {
+        "title": "Transferência interna concluída",
+        "intro": "Esta transferência foi creditada no saldo da conta de destino.",
+        "action": "Ver detalhes",
+        "status": "Enviado"
+      },
+      "transfer-received": {
+        "title": "Você recebeu uma transferência interna",
+        "intro": "Esta transferência foi creditada no seu saldo disponível.",
+        "action": "Ver detalhes",
+        "status": "Recebido"
+      },
+      "order-submitted": {
+        "title": "Ordem enviada",
+        "intro": "Sua ordem foi enviada. Consulte os detalhes para verificar o estado de execução.",
+        "action": "Ver detalhes",
+        "status": "Aguardando execução"
+      },
+      "order-completed": {
+        "title": "Ordem executada",
+        "intro": "O registro de execução da sua ordem está abaixo.",
+        "action": "Ver detalhes",
+        "status": "Executada"
+      },
+      "order-failed": {
+        "title": "Ordem não executada",
+        "intro": "Sua ordem não foi executada. Confira o motivo e a situação dos fundos.",
+        "action": "Ver detalhes"
+      },
+      "redemption-completed": {
+        "title": "Resgate concluído",
+        "intro": "O valor deste resgate foi creditado no saldo da sua conta.",
+        "action": "Ver detalhes",
+        "status": "Liquidado"
+      },
+      "dividend-paid": {
+        "title": "Distribuição creditada",
+        "intro": "Esta distribuição foi creditada no saldo da sua conta.",
+        "action": "Ver detalhes",
+        "status": "Creditado"
+      },
+      "prediction-settled": {
+        "title": "Mercado de previsão liquidado",
+        "intro": "O valor da liquidação e o resultado do mercado de previsão estão abaixo.",
+        "action": "Ver detalhes",
+        "status": "Liquidado"
+      },
+      "kyc-approved": {
+        "title": "Verificação de identidade aprovada",
+        "intro": "Sua verificação de identidade foi aprovada.",
+        "action": "Ver verificação"
+      },
+      "kyc-action-required": {
+        "title": "Precisamos de mais informações",
+        "intro": "Acesse a página de verificação para fornecer as informações solicitadas.",
+        "action": "Continuar verificação"
+      },
+      "kyc-expiring": {
+        "title": "Sua verificação está para vencer",
+        "intro": "Atualize sua verificação de identidade antes da data de vencimento.",
+        "action": "Atualizar verificação"
+      },
+      "support-reply": {
+        "title": "Há uma resposta ao seu chamado",
+        "intro": "O suporte respondeu. Leia a resposta completa na sua conta.",
+        "action": "Ver chamado"
+      },
+      "statement-ready": {
+        "title": "Seu extrato está pronto",
+        "intro": "Seu extrato está disponível na sua conta para consulta ou download.",
+        "action": "Ver extrato"
+      },
+      "policy-update": {
+        "title": "Os termos foram atualizados",
+        "intro": "Confira as alterações nos termos e a data de vigência.",
+        "action": "Revisar termos"
+      },
+      "ai-allocation-update": {
+        "title": "Alocação de investimento atualizada",
+        "intro": "Confira o estado de execução mais recente desta alocação.",
+        "action": "Ver alocação"
+      },
+      "product-update": {
+        "title": "Novidades da A-REIT",
+        "intro": "Confira os detalhes desta atualização do produto.",
+        "action": "Ver novidades"
+      }
+    }
+  }
+}

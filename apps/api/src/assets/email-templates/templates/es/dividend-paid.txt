@@ -5,13 +5,14 @@ Esta distribución se ha abonado al saldo de tu cuenta.
 {{amount}} {{currency}}
 Abonado
 
-Producto: {{product}}
 Periodo: {{period}}
+Producto: {{product}}
 Referencia: {{reference}}
 Fecha y hora: {{time}}
 
 Ver detalles: {{actionUrl}}
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
+Consulta tu cuenta para ver los registros más recientes.
+
 Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT

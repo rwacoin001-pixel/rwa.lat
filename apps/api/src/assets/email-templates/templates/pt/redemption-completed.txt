@@ -1,17 +1,18 @@
 Resgate concluído
 
-O valor do resgate foi creditado no saldo da sua conta.
+O valor deste resgate foi creditado no saldo da sua conta.
 
 {{amount}} {{currency}}
 Liquidado
 
-Produto: {{product}}
 Taxa: {{fee}}
+Produto: {{product}}
 Referência: {{reference}}
 Data e hora: {{time}}
 
 Ver detalhes: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

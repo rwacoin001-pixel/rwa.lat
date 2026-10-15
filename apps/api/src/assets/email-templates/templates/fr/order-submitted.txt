@@ -1,6 +1,6 @@
 Ordre envoyé
 
-Votre ordre a été envoyé. Consultez ses détails pour connaître l’état d’exécution.
+Votre ordre a été soumis. Consultez ses détails pour connaître son état d’exécution.
 
 {{amount}} {{currency}}
 En attente d’exécution
@@ -11,6 +11,7 @@ Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

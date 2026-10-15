@@ -1,11 +1,12 @@
 What’s new at A-REIT
 
-Explore the features included in this update.
+View the details of this product update.
 
 
 View update: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
-Unsubscribe: {{unsubscribeUrl}}
+Unsubscribe from product updates: {{unsubscribeUrl}}
+© {{year}} A-REIT

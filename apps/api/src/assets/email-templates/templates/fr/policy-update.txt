@@ -1,12 +1,13 @@
 Les conditions ont changé
 
-Consultez les modifications et leur date d’entrée en vigueur.
+Consultez les modifications des conditions et leur date d’entrée en vigueur.
 
 Date d’entrée en vigueur: {{effectiveDate}}
 Version: {{version}}
 
 Consulter les conditions: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

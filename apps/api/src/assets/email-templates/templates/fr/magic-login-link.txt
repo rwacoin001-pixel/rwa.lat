@@ -1,12 +1,12 @@
 Connectez-vous à A-REIT
 
-Utilisez ce lien à usage unique pour terminer la connexion.
+Terminez votre connexion avec ce lien à usage unique.
 
 
 Continuer la connexion: {{actionUrl}}
+Validité du lien: {{expiryText}}
 
-Ce lien expire dans {{expiryText}} et ne peut être utilisé qu’une fois. Si vous ne l’avez pas demandé, ignorez cet e-mail.
+Consultez votre compte pour les dernières informations.
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

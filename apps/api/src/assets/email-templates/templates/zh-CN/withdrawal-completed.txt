@@ -1,17 +1,18 @@
 提现已完成
 
-提现已处理完成，可查看交易详情。
+提现已处理完成，详情如下。
 
 {{amount}} {{currency}}
 已完成
 
-手续费: {{fee}}
 收款地址: {{destination}}
+手续费: {{fee}}
 参考编号: {{reference}}
 时间: {{time}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

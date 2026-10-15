@@ -1,6 +1,6 @@
 Novo acesso à sua conta
 
-O dispositivo abaixo acabou de acessar sua conta.
+Sua conta acaba de ser acessada pelo dispositivo abaixo.
 
 Dispositivo: {{device}}
 Localização (aproximada): {{location}}
@@ -8,9 +8,8 @@ Data e hora: {{time}}
 
 Revisar segurança: {{actionUrl}}
 
-Não foi você? Revise a segurança da conta e entre em contato com o suporte oficial.
-{{securityUrl}}
+Se não foi você, revise imediatamente a segurança da conta.
+Revisar a segurança da conta: {{securityUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

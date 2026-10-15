@@ -1,11 +1,12 @@
 Les nouveautés de A-REIT
 
-Découvrez les fonctionnalités de cette mise à jour.
+Consultez les détails de cette mise à jour du produit.
 
 
 Voir les nouveautés: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
-Se désabonner: {{unsubscribeUrl}}
+Se désabonner des actualités produit: {{unsubscribeUrl}}
+© {{year}} A-REIT

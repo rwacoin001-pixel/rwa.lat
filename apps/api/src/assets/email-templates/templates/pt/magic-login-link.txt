@@ -1,12 +1,12 @@
 Entre na A-REIT
 
-Use este link de uso único para concluir o acesso.
+Conclua o login com este link de uso único.
 
 
 Continuar o acesso: {{actionUrl}}
+Validade do link: {{expiryText}}
 
-Este link expira em {{expiryText}} e só pode ser usado uma vez. Se não fez a solicitação, ignore este e-mail.
+Consulte sua conta para ver os registros mais recentes.
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

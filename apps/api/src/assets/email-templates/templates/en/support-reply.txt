@@ -7,6 +7,7 @@ Time: {{time}}
 
 View ticket: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

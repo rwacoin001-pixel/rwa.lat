@@ -1,13 +1,12 @@
 Confirma tu acceso
 
-Introduce este código en la página donde iniciaste el acceso.
+Usa este código para completar el inicio de sesión.
 
 {{code}}
-Válido durante {{expiryMinutes}} minutos
+{{expiryMinutes}} minutos de validez
 
 
 Usa este código solo para la acción que solicitaste. No lo compartas. Si no lo solicitaste, ignora este correo.
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
 Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT

@@ -1,6 +1,6 @@
 Account transfer completed
 
-The transfer has been credited to the recipient’s account balance.
+This transfer has been credited to the recipient’s account balance.
 
 {{amount}} {{currency}}
 Sent
@@ -11,6 +11,7 @@ Time: {{time}}
 
 View details: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

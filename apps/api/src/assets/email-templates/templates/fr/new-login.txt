@@ -1,6 +1,6 @@
 Nouvelle connexion à votre compte
 
-L’appareil ci-dessous vient de se connecter à votre compte.
+Une connexion vient d’avoir lieu depuis l’appareil indiqué ci-dessous.
 
 Appareil: {{device}}
 Lieu (approximatif): {{location}}
@@ -8,9 +8,8 @@ Date et heure: {{time}}
 
 Vérifier la sécurité: {{actionUrl}}
 
-Ce n’était pas vous ? Vérifiez la sécurité du compte et contactez l’assistance officielle.
-{{securityUrl}}
+Si ce n’était pas vous, vérifiez immédiatement la sécurité de votre compte.
+Vérifier la sécurité du compte: {{securityUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

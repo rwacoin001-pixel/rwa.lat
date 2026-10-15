@@ -1,12 +1,13 @@
 Votre vérification va expirer
 
-Mettez à jour vos informations de vérification avant leur expiration.
+Mettez à jour votre vérification d’identité avant sa date d’expiration.
 
 Expiration: {{expiry}}
 Référence: {{reference}}
 
 Mettre à jour la vérification: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

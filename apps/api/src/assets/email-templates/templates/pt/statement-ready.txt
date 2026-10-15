@@ -1,11 +1,12 @@
 Seu extrato está pronto
 
-Consulte ou baixe o extrato deste período na sua conta.
+Seu extrato está disponível na sua conta para consulta ou download.
 
 Período: {{period}}
 
 Ver extrato: {{actionUrl}}
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
+Consulte sua conta para ver os registros mais recentes.
+
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

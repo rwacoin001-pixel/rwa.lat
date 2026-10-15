@@ -1,12 +1,13 @@
 Hay una respuesta a tu ticket
 
-El equipo de soporte ha respondido. Lee la respuesta completa en tu cuenta.
+Soporte ha respondido. Lee la respuesta completa en tu cuenta.
 
 Ticket: {{ticket}}
 Fecha y hora: {{time}}
 
 Ver ticket: {{actionUrl}}
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
+Consulta tu cuenta para ver los registros más recientes.
+
 Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT

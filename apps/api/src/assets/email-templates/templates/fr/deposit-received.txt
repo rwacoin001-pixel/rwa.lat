@@ -1,6 +1,6 @@
 Dépôt crédité
 
-Les fonds ont été crédités sur le solde disponible de votre compte.
+Ce dépôt a été crédité sur votre solde disponible.
 
 {{amount}} {{currency}}
 Crédité
@@ -11,6 +11,7 @@ Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

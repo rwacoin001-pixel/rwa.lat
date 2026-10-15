@@ -1,6 +1,6 @@
 Investment allocation status updated
 
-Review the latest execution state of this allocation.
+Review the latest execution status of this allocation.
 
 Execution state: {{allocationState}}
 Reference: {{reference}}
@@ -8,6 +8,7 @@ Time: {{time}}
 
 View allocation: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

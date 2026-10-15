@@ -1,12 +1,13 @@
 Vérification d’identité approuvée
 
-Le résultat de votre vérification d’identité a été mis à jour.
+Votre vérification d’identité a été approuvée.
 
 Référence: {{reference}}
 Date et heure: {{time}}
 
 Voir la vérification: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

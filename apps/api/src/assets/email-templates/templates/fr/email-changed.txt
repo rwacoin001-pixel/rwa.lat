@@ -1,16 +1,15 @@
 L’e-mail du compte a été modifié
 
-L’e-mail utilisé pour les notifications et la connexion a été modifié.
+Votre adresse de connexion et de notification a été modifiée.
 
-Ancien e-mail: {{previousEmail}}
 Nouvel e-mail: {{newEmail}}
+Ancien e-mail: {{previousEmail}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-Ce n’était pas vous ? Vérifiez la sécurité du compte et contactez l’assistance officielle.
-{{securityUrl}}
+Si ce n’était pas vous, vérifiez immédiatement la sécurité de votre compte.
+Vérifier la sécurité du compte: {{securityUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

@@ -1,10 +1,11 @@
 Your account is ready
 
-Your email is verified. You can now use A-REIT.
+Your email is verified. Continue to your account.
 
 
 Open account: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

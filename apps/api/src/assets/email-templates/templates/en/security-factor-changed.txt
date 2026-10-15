@@ -1,16 +1,15 @@
 Security verification was updated
 
-Your security verification settings have changed.
+Your account security verification settings have changed.
 
-Verification method: {{factor}}
 Change: {{change}}
+Verification method: {{factor}}
 Time: {{time}}
 
 View details: {{actionUrl}}
 
-Not you? Review your account security and contact official support.
-{{securityUrl}}
+If this was not you, review your account security immediately.
+Review account security: {{securityUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

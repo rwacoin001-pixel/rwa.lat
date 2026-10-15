@@ -1,11 +1,12 @@
 Novedades de A-REIT
 
-Descubre las funciones incluidas en esta actualización.
+Consulta los detalles de esta actualización del producto.
 
 
 Ver novedades: {{actionUrl}}
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
+Consulta tu cuenta para ver los registros más recientes.
+
 Ayuda y soporte: {{supportUrl}}
-Cancelar suscripción: {{unsubscribeUrl}}
+Cancelar novedades del producto: {{unsubscribeUrl}}
+© {{year}} A-REIT

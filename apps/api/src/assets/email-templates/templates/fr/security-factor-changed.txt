@@ -1,16 +1,15 @@
 Vérification de sécurité modifiée
 
-Vos paramètres de vérification de sécurité ont changé.
+Les paramètres de vérification de sécurité de votre compte ont changé.
 
-Méthode de vérification: {{factor}}
 Modification: {{change}}
+Méthode de vérification: {{factor}}
 Date et heure: {{time}}
 
 Voir les détails: {{actionUrl}}
 
-Ce n’était pas vous ? Vérifiez la sécurité du compte et contactez l’assistance officielle.
-{{securityUrl}}
+Si ce n’était pas vous, vérifiez immédiatement la sécurité de votre compte.
+Vérifier la sécurité du compte: {{securityUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

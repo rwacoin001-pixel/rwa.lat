@@ -5,13 +5,14 @@ This distribution has been credited to your account balance.
 {{amount}} {{currency}}
 Credited
 
-Product: {{product}}
 Period: {{period}}
+Product: {{product}}
 Reference: {{reference}}
 Time: {{time}}
 
 View details: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

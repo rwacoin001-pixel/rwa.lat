@@ -1,13 +1,12 @@
 Verifique seu novo e-mail
 
-Insira este código para confirmar o novo e-mail da sua conta.
+Use este código para confirmar o novo e-mail da sua conta.
 
 {{code}}
-Válido por {{expiryMinutes}} minutos
+{{expiryMinutes}} minutos de validade
 
 
-Use este código apenas para a ação que você solicitou. Não o compartilhe. Se não fez a solicitação, ignore este e-mail.
+Use este código apenas para a ação solicitada. Nunca o compartilhe. Se não fez a solicitação, ignore este e-mail.
 
-A A-REIT nunca pede sua senha, códigos de verificação ou chaves privadas.
-A-REIT
 Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

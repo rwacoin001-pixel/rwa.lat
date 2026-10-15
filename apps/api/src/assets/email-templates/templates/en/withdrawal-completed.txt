@@ -1,17 +1,18 @@
 Withdrawal completed
 
-Your withdrawal has been processed. View the transaction details.
+Your withdrawal has been processed. Details are below.
 
 {{amount}} {{currency}}
 Completed
 
-Fee: {{fee}}
 Destination: {{destination}}
+Fee: {{fee}}
 Reference: {{reference}}
 Time: {{time}}
 
 View details: {{actionUrl}}
 
-A-REIT never asks for your password, verification codes or private keys.
-A-REIT
+Refer to your account for the latest records.
+
 Help & support: {{supportUrl}}
+© {{year}} A-REIT

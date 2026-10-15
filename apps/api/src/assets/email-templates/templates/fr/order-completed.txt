@@ -1,18 +1,19 @@
 Ordre exécuté
 
-Voici le relevé d’exécution de votre ordre.
+Le relevé d’exécution de votre ordre figure ci-dessous.
 
 {{amount}} {{currency}}
 Exécuté
 
-Produit: {{product}}
-Unités: {{units}}
 Frais: {{fee}}
+Produit: {{product}}
 Référence: {{reference}}
 Date et heure: {{time}}
+Unités: {{units}}
 
 Voir les détails: {{actionUrl}}
 
-A-REIT ne vous demande jamais votre mot de passe, vos codes de vérification ou vos clés privées.
-A-REIT
+Consultez votre compte pour les dernières informations.
+
 Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

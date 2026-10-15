@@ -1,18 +1,19 @@
 订单已成交
 
-以下为本次成交记录。
+以下为你的订单成交记录。
 
 {{amount}} {{currency}}
 已成交
 
-产品: {{product}}
-份额: {{units}}
 手续费: {{fee}}
+产品: {{product}}
 参考编号: {{reference}}
 时间: {{time}}
+份额: {{units}}
 
 查看详情: {{actionUrl}}
 
-A-REIT 不会向你索取密码、验证码或私钥。
-A-REIT
+请以账户内的最新记录为准。
+
 帮助与支持: {{supportUrl}}
+© {{year}} A-REIT

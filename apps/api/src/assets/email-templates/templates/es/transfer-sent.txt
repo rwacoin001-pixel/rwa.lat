@@ -1,6 +1,6 @@
 Transferencia interna completada
 
-La transferencia se ha abonado al saldo de la cuenta del destinatario.
+Esta transferencia se ha abonado al saldo de la cuenta destinataria.
 
 {{amount}} {{currency}}
 Enviado
@@ -11,6 +11,7 @@ Fecha y hora: {{time}}
 
 Ver detalles: {{actionUrl}}
 
-A-REIT nunca te pide tu contraseña, códigos de verificación ni claves privadas.
-A-REIT
+Consulta tu cuenta para ver los registros más recientes.
+
 Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT
