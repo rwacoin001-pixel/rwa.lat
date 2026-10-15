@@ -56,6 +56,8 @@ describe('Production email template rendering', () => {
   })
   it('normalizes supported locale variants and safely falls back', () => {
     expect(emailLocale('zh')).toBe('zh-CN')
+    expect(emailLocale(' zh_CN ')).toBe('zh-CN')
+    expect(emailLocale('ar_AE')).toBe('ar')
     expect(emailLocale('PT-br')).toBe('pt')
     expect(emailLocale('../../secret')).toBe('en')
     expect(emailLocale('de-DE')).toBe('en')

@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { createHash, createHmac, randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto'
 import { DataSource, EntityManager } from 'typeorm'
 import { createAdminTotp, decryptAdminMfaSecret, encryptAdminMfaSecret, readAdminMfaKeyring } from './admin-auth.service'
+import { renderAdminRecoveryEmail } from './admin-recovery-email'
 
 const INVALID = 'Administrator verification failed'
 type Context = { ipAddress?: string; userAgent?: string }
@@ -59,7 +60,7 @@ export class AdminTotpService {
     if (!outcome) throw new UnauthorizedException(INVALID)
     return outcome
   }
-  async requestRecovery(email: string) {
+  async requestRecovery(email: string, locale?: string) {
     this.enabled()
     if(this.config.get('EMAIL_PROVIDER') !== 'resend' || !this.config.get('RESEND_API_KEY') || !this.config.get('EMAIL_FROM')) throw new ServiceUnavailableException('Recovery email delivery unavailable')
     const code = String(randomInt(0,1000000)).padStart(6,'0'); const id=randomUUID()
@@ -75,7 +76,7 @@ export class AdminTotpService {
     })
     if(send){
       try{
-        const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${this.config.get('RESEND_API_KEY')}`,'content-type':'application/json','Idempotency-Key':`admin-recovery-${id}`},body:JSON.stringify({from:`A-REIT <${this.config.get('EMAIL_FROM')}>`,to:[send.email],subject:'A-REIT 管理员验证器恢复',text:`恢复验证码：${code}\n10 分钟内有效。验证后可绑定新的验证器，原验证器和旧登录会话将失效。\n如果不是你发起的请求，请不要提供验证码。`}),signal:AbortSignal.timeout(10000)})
+        const response=await fetch('https://api.resend.com/emails',{method:'POST',headers:{authorization:`Bearer ${this.config.get('RESEND_API_KEY')}`,'content-type':'application/json','Idempotency-Key':`admin-recovery-${id}`},body:JSON.stringify({from:`A-REIT <${this.config.get('EMAIL_FROM')}>`,to:[send.email],...renderAdminRecoveryEmail(code,send.email,locale)}),signal:AbortSignal.timeout(10000)})
         if(!response.ok) throw new Error('Delivery failed')
       }catch{
         await this.ds.query('UPDATE app.admin_mfa_recovery SET consumed_at=now() WHERE id=$1',[id])

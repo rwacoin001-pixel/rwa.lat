@@ -8,7 +8,7 @@ export async function POST(request:NextRequest,context:{params:Promise<{action:s
   if(forbidden)return forbidden
   const payload=await request.json().catch(()=>null)
   if(!payload||typeof payload!=='object')return NextResponse.json({message:'请求无效'},{status:400})
-  const body=action==='request'?{email:payload.email}:action==='verify'?{email:payload.email,code:payload.code}:{recoveryToken:payload.recoveryToken,code:payload.code}
+  const body=action==='request'?{email:payload.email,locale:payload.locale}:action==='verify'?{email:payload.email,code:payload.code}:{recoveryToken:payload.recoveryToken,code:payload.code}
   try{
     const r=await fetch(`${adminApiBase()}/admin/auth/recovery/${action}`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(body),cache:'no-store',signal:AbortSignal.timeout(15000)})
     const json=await r.json().catch(()=>null)
