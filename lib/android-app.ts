@@ -5,10 +5,13 @@
  * to public/download/; while `url` is null the install sheet offers only "Open in Chrome".
  */
 export const ANDROID_APP: { url: string | null; version: string; sha256: string } = {
-  url: null,
-  version: '',
-  sha256: '',
+  url: '/download/a-reit-android-1.0.0.apk',
+  version: '1.0.0',
+  sha256: '3137a6adf7de354811f97953779cb150c26ae44d38c981454f579d21723f79f9',
 }
+
+/** Signing certificate SHA-256 (apksigner verify --print-certs); every later version must show the same one. */
+export const ANDROID_APP_CERT_SHA256 = '7ef88406ea2f2076cb5b6a07cf864c9bfbc3e3caa3a6d9e098ced70bc73030ff'
 
 /** The Android client's WebView user agent carries this marker (MainActivity). */
 export const ANDROID_APP_UA = 'RwaLatAndroidTrial/'

@@ -16,8 +16,11 @@ test('"Open in Chrome" hands the same page to Chrome and falls back when Chrome 
   assert.equal(chromeIntentUrl(href, fallback), 'intent://a-reit.com/home?ref=abc#Intent;scheme=https;package=com.android.chrome;S.browser_fallback_url=https%3A%2F%2Fa-reit.com%2Fdownload%2Fa-reit-android-1.0.0.apk;end')
 })
 
-test('no download is offered until a signed APK has been published', () => {
-  assert.equal(ANDROID_APP.url, null)
+test('the offered APK is the published file, byte for byte', async () => {
+  const { createHash } = await import('node:crypto')
+  const file = readFileSync(new URL('../public' + ANDROID_APP.url, import.meta.url))
+  assert.equal(createHash('sha256').update(file).digest('hex'), ANDROID_APP.sha256)
+  assert.ok(ANDROID_APP.url.endsWith(`-${ANDROID_APP.version}.apk`))
 })
 
 test('the marker matches the Android client user agent', () => {

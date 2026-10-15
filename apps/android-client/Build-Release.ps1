@@ -16,6 +16,8 @@ param(
     [Parameter(Mandatory=$true)][string]$OutputDirectory,
     [Parameter(Mandatory=$true)][string]$Keystore,
     [Parameter(Mandatory=$true)][string]$KeyAlias,
+    # The password file New-ReleaseKey.ps1 created; without it the password is asked for on the console.
+    [string]$PasswordFile,
     [string]$GradleCacheDirectory = (Join-Path $OutputDirectory 'gradle-cache')
 )
 $ErrorActionPreference = 'Stop'
@@ -29,8 +31,12 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
 $version = (Select-String -LiteralPath (Join-Path $projectDirectory 'app\build.gradle') -Pattern "versionName '([^']+)'").Matches[0].Groups[1].Value
 if (-not $version) { throw 'versionName not found in app\build.gradle' }
 
-$secure = Read-Host -AsSecureString "Password for $KeyAlias in $keyPath"
-$env:AREIT_RELEASE_KEY_PASSWORD = [System.Net.NetworkCredential]::new('', $secure).Password
+if ($PasswordFile) {
+    $env:AREIT_RELEASE_KEY_PASSWORD = [System.IO.File]::ReadAllText((Resolve-Path -LiteralPath $PasswordFile).Path).Trim()
+} else {
+    $secure = Read-Host -AsSecureString "Password for $KeyAlias in $keyPath"
+    $env:AREIT_RELEASE_KEY_PASSWORD = [System.Net.NetworkCredential]::new('', $secure).Password
+}
 try {
     Push-Location -LiteralPath $projectDirectory
     try {
