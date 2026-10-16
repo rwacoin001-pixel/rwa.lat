@@ -23,7 +23,7 @@ import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
 import { AuthLegalFooter } from './AuthLegalFooter'
-import { connectLoginWallet } from '@/lib/api/wallet-connection'
+import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
 import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -84,6 +84,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     fr: ['Connexion au portefeuille…', 'Vérification du compte…', 'Confirmez la signature dans votre portefeuille', 'Vérification et connexion…'],
     ar: ['جارٍ توصيل المحفظة…', 'جارٍ التحقق من الحساب…', 'أكد التوقيع في محفظتك', 'جارٍ التحقق وتسجيل الدخول…'],
   }[locale]
+  const openWalletLabel = { 'zh-CN': '打开钱包确认', en: 'Open wallet to confirm', hi: 'पुष्टि के लिए वॉलेट खोलें', pt: 'Abrir carteira para confirmar', es: 'Abrir cartera para confirmar', fr: 'Ouvrir le portefeuille pour confirmer', ar: 'افتح المحفظة للتأكيد' }[locale]
+  // The signature request travels over the relay but does not open a mobile wallet; bring it back to the front.
+  useEffect(() => {
+    if (walletPhase !== 'signing') return
+    const timer = setTimeout(() => { openConnectedWallet() }, 600)
+    return () => clearTimeout(timer)
+  }, [walletPhase])
   useEffect(() => { void prefetchAuthAttribution() }, [])
   const [retryAfter, setRetryAfter] = useState(0)
   const [agreed, setAgreed] = useState(false)
@@ -488,6 +495,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </div>
     </div>}
     {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}
+    {walletPhase === 'signing' && connectedWalletLink() && <button type="button" className={styles.walletOpen} onClick={() => { openConnectedWallet() }}>{openWalletLabel}</button>}
     </div>
   </AuthShell>
 }

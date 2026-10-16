@@ -211,3 +211,29 @@ export async function connectLoginWallet(): Promise<WalletProvider> {
   if (existing) return existing
   return waitForLoginWalletConnection(modal)
 }
+
+// AppKit remembers the mobile wallet the user picked (WalletConnect deep link). A signature request sent over the
+// relay does not open the wallet by itself, so the page opens it again; desktop QR sessions have no entry here.
+const DEEPLINK_CHOICE = 'WALLETCONNECT_DEEPLINK_CHOICE'
+const UNSAFE_SCHEME = /^(?:javascript|data|vbscript|file|blob|about):/i
+
+/** The wallet app link to reopen for a pending request, or null (desktop/QR session, extension, unknown). */
+export function connectedWalletLink(storage: Pick<Storage, 'getItem'> = localStorage): string | null {
+  try {
+    const href = (JSON.parse(storage.getItem(DEEPLINK_CHOICE) ?? 'null') as { href?: unknown } | null)?.href
+    if (typeof href !== 'string' || !/^[a-z][a-z0-9+.-]*:/i.test(href) || UNSAFE_SCHEME.test(href) || /^http:/i.test(href)) return null
+    return href
+  } catch { return null }
+}
+
+/** Bring the connected mobile wallet to the front so the user can confirm the signature there. */
+export function openConnectedWallet(): boolean {
+  const href = connectedWalletLink()
+  if (!href) return false
+  try {
+    // An app scheme leaves this page in place; an https wallet link must not replace the page, so it opens beside it.
+    if (/^https:/i.test(href)) window.open(href, '_blank', 'noopener')
+    else window.location.href = href
+    return true
+  } catch { return false }
+}

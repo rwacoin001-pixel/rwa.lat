@@ -13,6 +13,7 @@ import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
 import { posterCopy } from '@/lib/referral-poster-copy'
+import { nativeCan, nativeShare } from '@/lib/native-app'
 import x from './referral.module.css'
 
 type Tab = 'team' | 'rewards'
@@ -109,6 +110,8 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   }
   const share = async () => {
     if (!link) return
+    // The Android app's WebView has no Web Share: the app opens the system share sheet.
+    if (nativeCan('share')) { const result = await nativeShare({ title: 'A-REIT', url: link }); if (!result.ok && result.reason === 'failed') await copy(); return }
     if (!navigator.share) return copy()
     try { await navigator.share({ title: 'A-REIT', url: link }) } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) await copy() }
   }

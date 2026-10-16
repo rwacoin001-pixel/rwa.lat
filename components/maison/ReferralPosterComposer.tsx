@@ -9,6 +9,7 @@ import { POSTER_PLATFORMS, buildPosterModel, invitationUrl, posterTemplates, pos
 import { posterCopy } from '@/lib/referral-poster-copy'
 import { drawReferralPoster } from '@/lib/referral-poster-renderer'
 import { ReferralSheet, type SheetTheme } from './ReferralSheet'
+import { nativeCan, nativeSaveImage, nativeShare } from '@/lib/native-app'
 import x from './referral-poster.module.css'
 
 function PosterThumbnail({ model, qr }: { model: PosterModel; qr: RefObject<HTMLDivElement | null> }) {
@@ -81,8 +82,23 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
     // Rendering and export are invalidated by every rule, code, account and selection change.
   }, [selected, selection, retry, ui.failed])
   const ready = !!selected && sourceReady && !!output && output.key === selection && current()
+  // Inside the Android app (WebView: no file download, no Web Share) the app saves to the gallery and shares natively.
+  const saveNative = () => {
+    if (!ready || sharing || !output) return
+    setSharing(true); setStatus('')
+    void nativeSaveImage(output.file, output.file.name).then(result => {
+      if (current()) { setSharing(false); setStatus(result.ok ? ui.savedPhoto : ui.saveFailed) }
+    })
+  }
   const share = () => {
     if (!ready || sharing || !output) return
+    if (nativeCan('share')) {
+      setSharing(true); setStatus('')
+      void nativeShare({ title: 'A-REIT', url: invitationUrl(code), image: output.file, name: output.file.name }).then(result => {
+        if (current()) { setSharing(false); if (!result.ok && result.reason === 'failed') setStatus(ui.shareHint) }
+      })
+      return
+    }
     const files = [output.file]
     if (!navigator.share || !navigator.canShare?.({ files })) { setStatus(ui.shareHint); return }
     setSharing(true); setStatus('')
@@ -116,7 +132,7 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
       <p className={x.status} role={error ? 'alert' : 'status'}>{status}</p>
       <div className={x.toolbar}>
         {expanded && <button type="button" className={x.collapse} aria-label={ui.templates} onClick={() => setExpanded(false)}><Minimize2 size={18} /></button>}
-        <a className={x.save} href={ready ? output!.url : undefined} download={selected?.filename} aria-disabled={!ready} tabIndex={ready ? 0 : -1} onClick={event => { if (!ready || !current()) { event.preventDefault(); return } setStatus(ui.saveHint) }}><Download size={18} />{ui.save}</a>
+        <a className={x.save} href={ready ? output!.url : undefined} download={selected?.filename} aria-disabled={!ready} tabIndex={ready ? 0 : -1} onClick={event => { if (!ready || !current()) { event.preventDefault(); return } if (nativeCan('save-image')) { event.preventDefault(); saveNative(); return } setStatus(ui.saveHint) }}><Download size={18} />{ui.save}</a>
         <button type="button" className={x.share} disabled={!ready || sharing} onClick={share} aria-busy={sharing}><Share2 size={18} />{ui.share}</button>
       </div>
     </div>

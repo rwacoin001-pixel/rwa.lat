@@ -1,6 +1,6 @@
 import { afterEach, test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildWalletConnectMetadata, waitForLoginWalletConnection, type WalletPageLifecycle, type WalletProvider } from '../lib/api/wallet-connection'
+import { buildWalletConnectMetadata, connectedWalletLink, waitForLoginWalletConnection, type WalletPageLifecycle, type WalletProvider } from '../lib/api/wallet-connection'
 
 class TestLifecycle implements WalletPageLifecycle {
   active = true
@@ -87,4 +87,13 @@ test('returning without an approved session reports a missing connection, not ca
   modal.setOpen(false)
   lifecycle.setForeground(true)
   await assert.rejects(connection, error => (error as { code?: string }).code === 'WALLET_CONNECTION_NOT_FOUND')
+})
+
+test('only a remembered wallet app link is reopened for signing; unsafe or missing links are ignored', () => {
+  const store = (value: unknown) => ({ getItem: () => value === undefined ? null : JSON.stringify(value) })
+  assert.equal(connectedWalletLink(store({ href: 'bnc://app.binance.com/cedefi/', name: 'Binance Wallet' })), 'bnc://app.binance.com/cedefi/')
+  assert.equal(connectedWalletLink(store({ href: 'https://metamask.app.link/', name: 'MetaMask' })), 'https://metamask.app.link/')
+  for (const href of ['javascript:alert(1)', 'data:text/html,x', 'http://evil.test/', 'not a link', 42]) assert.equal(connectedWalletLink(store({ href })), null, String(href))
+  assert.equal(connectedWalletLink(store(undefined)), null)
+  assert.equal(connectedWalletLink({ getItem: () => '{broken' }), null)
 })

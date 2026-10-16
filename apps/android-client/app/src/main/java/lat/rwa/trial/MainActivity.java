@@ -69,7 +69,7 @@ import java.util.Set;
 /** A-REIT Android client: the website edge to edge, with native launch, system bars, voice and files. Business state and authentication remain in the website. */
 public final class MainActivity extends Activity {
     private static final String HOME = "https://a-reit.com/home";
-    private static final int MEDIA_PERMISSION = 101, GEO_PERMISSION = 102, VOICE_PERMISSION = 103, CAMERA_PERMISSION = 104, FILE_PICK = 201, CAMERA_PICK = 202;
+    private static final int MEDIA_PERMISSION = 101, GEO_PERMISSION = 102, VOICE_PERMISSION = 103, CAMERA_PERMISSION = 104, FILE_PICK = 201, CAMERA_PICK = 202, STORAGE_PERMISSION = 105;
     private WebView webView;
     private FrameLayout pageContainer;
     private LinearLayout errorPanel;
@@ -145,7 +145,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.2");
+        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.3");
         settings.setSafeBrowsingEnabled(true);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -265,6 +265,7 @@ public final class MainActivity extends Activity {
                 JSONObject payload = new JSONObject(message.getData());
                 // A light tick on tab bar taps, like native tab bars (follows the system touch-feedback setting).
                 if ("haptic".equals(payload.optString("type"))) { webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); return; }
+                if ("share".equals(payload.optString("type")) || "save-image".equals(payload.optString("type"))) { handleNativeRequest(payload, reply); return; }
                 if (!"chrome".equals(payload.optString("type"))) return;
                 applyPageTheme("dark".equals(payload.optString("theme")));
                 if (payload.optBoolean("ready")) markPageReady();
@@ -273,7 +274,7 @@ public final class MainActivity extends Activity {
         WebViewCompat.addDocumentStartJavaScript(webView, APP_SCRIPT, java.util.Collections.singleton(UrlPolicy.ORIGIN));
     }
     // Watches <html> for the theme and the website's launch screen state (lib/launch-splash.ts) and reports changes.
-    private static final String APP_SCRIPT = "(()=>{const ch=window.RwaNativeAppChannel;if(!ch)return;const r=document.documentElement;let loaded=false,last='';"
+    private static final String APP_SCRIPT = "(()=>{const ch=window.RwaNativeAppChannel;if(!ch)return;window.__rwaNativeCaps=['share','save-image'];const r=document.documentElement;let loaded=false,last='';"
         + "const send=()=>{const t=r.dataset.theme==='dark'?'dark':'light',st=r.dataset.launchState||'';"
         + "const ready=loaded&&(r.dataset.launch!=='app'||st==='leaving'||st==='gone');const m=t+'|'+ready;if(m===last)return;last=m;"
         + "ch.postMessage(JSON.stringify({type:'chrome',theme:t,ready}));};"
@@ -568,7 +569,117 @@ public final class MainActivity extends Activity {
         if (requestCode == MEDIA_PERMISSION) grantMedia();
         if (requestCode == GEO_PERMISSION) grantGeo();
         if (requestCode == VOICE_PERMISSION) { if (granted(Manifest.permission.RECORD_AUDIO)) startVoice(voiceLocale); else emitVoice("error", null, "permission-denied", true); }
+        if (requestCode == STORAGE_PERMISSION) finishPendingSave(granted(Manifest.permission.WRITE_EXTERNAL_STORAGE));
         if (requestCode == CAMERA_PERMISSION) { if (granted(Manifest.permission.CAMERA)) startCamera(); else { cancelFiles(); toast("相机权限未开启，可选择已有文件。"); } }
+    }
+    // ---- Share sheet and gallery (lib/native-app.ts): the WebView has neither Web Share nor blob downloads. ----
+    private static final int NATIVE_IMAGE_LIMIT = 12 * 1024 * 1024;
+    private Runnable pendingSave;
+    private androidx.webkit.JavaScriptReplyProxy pendingSaveReply;
+    private String pendingSaveId;
+    private void answer(androidx.webkit.JavaScriptReplyProxy reply, String id, boolean ok, String reason) {
+        ui.post(() -> {
+            try { reply.postMessage(new JSONObject().put("id", id).put("ok", ok).put("reason", reason == null ? "" : reason).toString()); }
+            catch (Exception ignored) { /* The page went away. */ }
+        });
+    }
+    private static String imageMime(byte[] data) {
+        if (data.length > 8 && (data[0] & 0xff) == 0x89 && data[1] == 'P' && data[2] == 'N' && data[3] == 'G') return "image/png";
+        if (data.length > 3 && (data[0] & 0xff) == 0xff && (data[1] & 0xff) == 0xd8 && (data[2] & 0xff) == 0xff) return "image/jpeg";
+        return null;
+    }
+    private static String imageName(String requested, String mime) {
+        String base = requested == null ? "" : requested.replaceAll("[^A-Za-z0-9._-]", "-").replaceAll("\\.(png|jpe?g)$", "");
+        if (base.isEmpty() || base.length() > 80) base = "a-reit-" + System.currentTimeMillis();
+        return base + ("image/png".equals(mime) ? ".png" : ".jpg");
+    }
+    private void handleNativeRequest(JSONObject payload, androidx.webkit.JavaScriptReplyProxy reply) {
+        String id = payload.optString("id");
+        if (!id.matches("[A-Za-z0-9]{1,40}")) return;
+        String type = payload.optString("type"), encoded = payload.optString("image", "");
+        String text = payload.optString("text", ""), title = payload.optString("title", "");
+        if (text.length() > 2000) text = text.substring(0, 2000);
+        final String shareText = text, shareTitle = title.length() > 120 ? title.substring(0, 120) : title;
+        if ("share".equals(type) && encoded.isEmpty()) {
+            if (shareText.isEmpty()) { answer(reply, id, false, "failed"); return; }
+            Intent send = new Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, shareText);
+            if (!shareTitle.isEmpty()) send.putExtra(Intent.EXTRA_SUBJECT, shareTitle);
+            try { startActivity(Intent.createChooser(send, null)); answer(reply, id, true, null); }
+            catch (ActivityNotFoundException error) { answer(reply, id, false, "failed"); }
+            return;
+        }
+        if (encoded.length() > NATIVE_IMAGE_LIMIT / 3 * 4 + 8) { answer(reply, id, false, "failed"); return; }
+        Thread worker = new Thread(() -> {
+            byte[] data;
+            try { data = Base64.decode(encoded, Base64.DEFAULT); } catch (IllegalArgumentException error) { answer(reply, id, false, "failed"); return; }
+            String mime = imageMime(data);
+            if (mime == null || data.length > NATIVE_IMAGE_LIMIT) { answer(reply, id, false, "failed"); return; }
+            String name = imageName(payload.optString("name"), mime);
+            if ("save-image".equals(type)) {
+                Runnable save = () -> answer(reply, id, saveToGallery(data, name, mime), "failed");
+                if (Build.VERSION.SDK_INT >= 29 || granted(Manifest.permission.WRITE_EXTERNAL_STORAGE)) save.run();
+                else ui.post(() -> {
+                    if (pendingSaveReply != null) answer(pendingSaveReply, pendingSaveId, false, "failed");
+                    pendingSave = save; pendingSaveReply = reply; pendingSaveId = id;
+                    requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, STORAGE_PERMISSION);
+                });
+                return;
+            }
+            try {
+                File folder = new File(getCacheDir(), "shared");
+                File[] old = folder.listFiles();
+                if (old != null) for (File file : old) if (System.currentTimeMillis() - file.lastModified() > 60 * 60 * 1000) file.delete();
+                if (!folder.isDirectory() && !folder.mkdirs()) throw new java.io.IOException("no folder");
+                File image = new File(folder, name);
+                try (java.io.FileOutputStream out = new java.io.FileOutputStream(image)) { out.write(data); }
+                Uri uri = FileProvider.getUriForFile(this, getPackageName() + ".files", image);
+                ui.post(() -> {
+                    Intent send = new Intent(Intent.ACTION_SEND).setType(mime).putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                    send.setClipData(android.content.ClipData.newRawUri(name, uri));
+                    if (!shareText.isEmpty()) send.putExtra(Intent.EXTRA_TEXT, shareText);
+                    if (!shareTitle.isEmpty()) send.putExtra(Intent.EXTRA_SUBJECT, shareTitle);
+                    try { startActivity(Intent.createChooser(send, null).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)); answer(reply, id, true, null); }
+                    catch (ActivityNotFoundException error) { answer(reply, id, false, "failed"); }
+                });
+            } catch (Exception error) { answer(reply, id, false, "failed"); }
+        }, "native-share");
+        worker.start();
+    }
+    /** Pictures/A-REIT in the gallery. Android 10+ needs no permission; 8-9 ask for storage once. */
+    private boolean saveToGallery(byte[] data, String name, String mime) {
+        try {
+            if (Build.VERSION.SDK_INT >= 29) {
+                android.content.ContentResolver resolver = getContentResolver();
+                android.content.ContentValues values = new android.content.ContentValues();
+                values.put(MediaStore.Images.Media.DISPLAY_NAME, name);
+                values.put(MediaStore.Images.Media.MIME_TYPE, mime);
+                values.put(MediaStore.Images.Media.RELATIVE_PATH, Environment.DIRECTORY_PICTURES + "/A-REIT");
+                values.put(MediaStore.Images.Media.IS_PENDING, 1);
+                Uri uri = resolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+                if (uri == null) return false;
+                try (java.io.OutputStream out = resolver.openOutputStream(uri)) { if (out == null) throw new java.io.IOException("no stream"); out.write(data); }
+                catch (java.io.IOException error) { resolver.delete(uri, null, null); return false; }
+                values.clear();
+                values.put(MediaStore.Images.Media.IS_PENDING, 0);
+                resolver.update(uri, values, null, null);
+                return true;
+            }
+            File folder = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES), "A-REIT");
+            if (!folder.isDirectory() && !folder.mkdirs()) return false;
+            File image = new File(folder, name);
+            try (java.io.FileOutputStream out = new java.io.FileOutputStream(image)) { out.write(data); }
+            android.media.MediaScannerConnection.scanFile(this, new String[]{image.getAbsolutePath()}, new String[]{mime}, null);
+            return true;
+        } catch (Exception error) { return false; }
+    }
+    private void finishPendingSave(boolean allowed) {
+        Runnable save = pendingSave;
+        androidx.webkit.JavaScriptReplyProxy reply = pendingSaveReply;
+        String id = pendingSaveId;
+        pendingSave = null; pendingSaveReply = null; pendingSaveId = null;
+        if (save == null) return;
+        if (allowed) { Thread worker = new Thread(save, "native-save"); worker.start(); }
+        else { answer(reply, id, false, "failed"); toast("未开启存储权限，无法保存到相册。"); }
     }
     private void download(String url, String userAgent, String contentDisposition, String mimetype, long contentLength) {
         if (!trustedCurrentPage() || !UrlPolicy.trustedDownload(url)) { toast("此文件请在浏览器中下载。受保护或生成的文件不会自动传递应用会话。"); return; }
