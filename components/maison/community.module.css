@@ -341,3 +341,6 @@ b.name { cursor: default; }
   .sheet[data-starting-style], .sheet[data-ending-style] { transform: none; }
   .focus, .reply, .cover, .profileAvatar, .toast, .barBtn svg, .barBtn[data-error], .likeBtn[data-error], .likeBtn svg, .root .like :global(.community-join button::before), .root :global(.community-report-overlay), .root :global(.community-report-sheet) { animation: none; }
 }
+
+/* Android app: solid bars instead of a live blur over the scrolling feed (see globals.css). */
+:global(html[data-shell='android']) .dock, :global(html[data-shell='android']) .composeTools, :global(html[data-shell='android']) .replyBar { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--m-bg) 97%, transparent); }

@@ -47,7 +47,8 @@
   --home-h2-tracking: -.01em;
   --home-card-tint: rgba(88, 110, 150, .22);
   --home-card-deep: rgba(9, 15, 28, .82);
-  --feed-sticky-top: 56px;
+  /* Below the visible top bar (its real height includes the status bar), so the tabs never slide under it. */
+  --feed-sticky-top: var(--home-topbar-box);
   position: relative;
   width: 100%;
   max-width: var(--app-max);
@@ -420,3 +421,7 @@
 :global(.rwa-mobile[data-theme='dark']) .hero { --chrome-color: #0b1829; }
 
 :global(.rwa-mobile) .root.root .pulseMetrics dt, :global(.rwa-mobile) .root.root .stats dt, :global(.rwa-mobile) .root.root .assetColumns, :global(.rwa-mobile) .root.root .pulseFoot { color: var(--home-muted); }
+
+/* Android app: no live blur over the drifting hero and the scrolling page (see globals.css). */
+:global(html[data-shell='android']) .ticker { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--home-bg) 62%, transparent); }
+:global(html[data-shell='android']) .invite { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--home-glass) 55%, var(--home-bg)); }

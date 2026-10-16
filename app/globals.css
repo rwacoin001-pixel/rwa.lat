@@ -2046,3 +2046,9 @@ html:has([data-auth-theme]) { overscroll-behavior: none; }
 html[data-launch='app'] { overscroll-behavior: none; }
 /* App keyboard open (set by the Android shell): the dock stays under the keyboard instead of riding up with it. */
 html[data-keyboard='open'] .liquid-dock { visibility: hidden; }
+
+/* Android app (data-shell="android", set at document start): a live blur over scrolling content is redrawn every
+   frame, and mid-range Android WebViews drop frames doing it. Bars become near-solid (they were 90%+ opaque) and the
+   dock keeps a lighter glass. Browsers and the iPhone app are unchanged. */
+html[data-shell='android'] .rwa-topbar.rwa-topbar--s1 { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--bg) 98%, transparent); }
+html[data-shell='android'] .liquid-dock__pill { -webkit-backdrop-filter: blur(12px) saturate(150%) !important; backdrop-filter: blur(12px) saturate(150%) !important; }

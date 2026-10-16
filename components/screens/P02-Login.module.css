@@ -349,6 +349,7 @@
 [dir='rtl'] .inlineArrow[data-ready='true'] svg { transform: scaleX(-1); }
 .inlineSubmit:focus-visible, .altMethods button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 2px; }
 .hint { margin: 10px 2px 0; color: var(--auth-muted); font-size: 12.5px; line-height: 1.45; text-align: center; }
+.walletOpen { display: block; margin: 10px auto 0; min-height: 40px; padding: 0 18px; border: 1px solid color-mix(in srgb, currentColor 24%, transparent); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 /* Four icon-only entry points, with full accessible names on the buttons. */
 .root[data-auth-poster='true'] .otherMethods { margin-top: 20px; }

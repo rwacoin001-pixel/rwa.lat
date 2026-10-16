@@ -2,7 +2,7 @@ import type { AppLocale } from './app-locales'
 
 export type PosterCopy = {
   create: string; title: string; platform: string; templates: string; language: string
-  save: string; share: string; preparing: string; retry: string; failed: string; saved: string
+  save: string; share: string; preparing: string; retry: string; failed: string; saved: string; savedPhoto: string; saveFailed: string
   saveHint: string; shareHint: string; unavailable: string; close: string; preview: string
   brand: string; purchase: string; fee: string; guide: string
   headline: string; purchaseText: string; feeText: string; brandText: string
@@ -11,7 +11,7 @@ export type PosterCopy = {
 export const posterCopy: Record<AppLocale, PosterCopy> = {
   'zh-CN': {
     create: '生成推荐海报', title: '专属推荐海报', platform: '选择平台', templates: '选择模板', language: '海报语言',
-    save: '保存图片', share: '分享图片', preparing: '正在生成', retry: '重新生成', failed: '生成失败，请重试', saved: '图片已准备好',
+    save: '保存图片', share: '分享图片', preparing: '正在生成', retry: '重新生成', failed: '生成失败，请重试', saved: '图片已准备好', savedPhoto: '已保存到相册', saveFailed: '保存失败，请重试',
     saveHint: '无法直接保存时，可长按海报保存。', shareHint: '此浏览器暂不支持图片分享，请保存后发送。', unavailable: '此奖励暂不可用，请选择其他模板。', close: '关闭', preview: '海报预览',
     brand: '好友邀请', purchase: '买入推荐奖励', fee: '手续费推荐奖励', guide: '三步参与',
     headline: '邀请好友，\n分享更多可能。', brandText: '从一次邀请，开启更多可能。',
@@ -22,7 +22,7 @@ export const posterCopy: Record<AppLocale, PosterCopy> = {
   },
   en: {
     create: 'Create referral poster', title: 'Your referral poster', platform: 'Platform', templates: 'Choose a template', language: 'Poster language',
-    save: 'Save image', share: 'Share image', preparing: 'Creating', retry: 'Try again', failed: 'Unable to create. Please retry.', saved: 'Your image is ready',
+    save: 'Save image', share: 'Share image', preparing: 'Creating', retry: 'Try again', failed: 'Unable to create. Please retry.', saved: 'Your image is ready', savedPhoto: 'Saved to Photos', saveFailed: 'Couldn’t save. Please try again.',
     saveHint: 'If saving is unavailable, press and hold the image below to save it.', shareHint: 'Image sharing is unavailable here. Save the image and send it.', unavailable: 'This reward is unavailable. Choose another template.', close: 'Close', preview: 'Poster preview',
     brand: 'Invite friends', purchase: 'Purchase referral reward', fee: 'Fee referral reward', guide: 'Three steps',
     headline: 'Good connections.\nShared possibilities.', brandText: 'Start with an invitation. Share more possibilities.',
@@ -33,7 +33,7 @@ export const posterCopy: Record<AppLocale, PosterCopy> = {
   },
   hi: {
     create: 'रेफ़रल पोस्टर बनाएँ', title: 'आपका रेफ़रल पोस्टर', platform: 'प्लेटफ़ॉर्म चुनें', templates: 'टेम्पलेट चुनें', language: 'पोस्टर की भाषा',
-    save: 'चित्र सहेजें', share: 'चित्र साझा करें', preparing: 'बन रहा है', retry: 'फिर बनाएँ', failed: 'पोस्टर नहीं बन सका। फिर प्रयास करें।', saved: 'आपका चित्र तैयार है',
+    save: 'चित्र सहेजें', share: 'चित्र साझा करें', preparing: 'बन रहा है', retry: 'फिर बनाएँ', failed: 'पोस्टर नहीं बन सका। फिर प्रयास करें।', saved: 'आपका चित्र तैयार है', savedPhoto: 'गैलरी में सहेजा गया', saveFailed: 'सहेजा नहीं जा सका। फिर से कोशिश करें।',
     saveHint: 'सीधे सहेजना संभव न हो तो नीचे दिए चित्र को दबाकर रखें।', shareHint: 'यहाँ चित्र साझा करना उपलब्ध नहीं है। चित्र सहेजकर भेजें।', unavailable: 'यह रिवॉर्ड उपलब्ध नहीं है। दूसरा टेम्पलेट चुनें।', close: 'बंद करें', preview: 'पोस्टर पूर्वावलोकन',
     brand: 'दोस्तों को आमंत्रित करें', purchase: 'खरीद पर रेफ़रल रिवॉर्ड', fee: 'शुल्क पर रेफ़रल रिवॉर्ड', guide: 'तीन चरण',
     headline: 'दोस्तों को आमंत्रित करें।\nनई संभावनाएँ साझा करें।', brandText: 'एक निमंत्रण से नई संभावनाएँ साझा करें।',
@@ -44,7 +44,7 @@ export const posterCopy: Record<AppLocale, PosterCopy> = {
   },
   es: {
     create: 'Crear imagen de invitación', title: 'Tu imagen de invitación', platform: 'Plataforma', templates: 'Elige una plantilla', language: 'Idioma de la imagen',
-    save: 'Guardar imagen', share: 'Compartir imagen', preparing: 'Creando', retry: 'Reintentar', failed: 'No se pudo crear. Inténtalo de nuevo.', saved: 'Tu imagen está lista',
+    save: 'Guardar imagen', share: 'Compartir imagen', preparing: 'Creando', retry: 'Reintentar', failed: 'No se pudo crear. Inténtalo de nuevo.', saved: 'Tu imagen está lista', savedPhoto: 'Guardada en la galería', saveFailed: 'No se pudo guardar. Inténtalo de nuevo.',
     saveHint: 'Si no puedes guardarla, mantén pulsada la imagen de abajo.', shareHint: 'Aquí no se pueden compartir imágenes. Guárdala y envíala.', unavailable: 'Esta recompensa no está disponible. Elige otra plantilla.', close: 'Cerrar', preview: 'Vista previa',
     brand: 'Invita a tus amigos', purchase: 'Recompensa por compras', fee: 'Recompensa por comisiones', guide: 'Tres pasos',
     headline: 'Invita a tus amigos.\nComparte posibilidades.', brandText: 'Una invitación para compartir nuevas posibilidades.',
@@ -55,7 +55,7 @@ export const posterCopy: Record<AppLocale, PosterCopy> = {
   },
   ar: {
     create: 'إنشاء ملصق دعوة', title: 'ملصق الدعوة الخاص بك', platform: 'اختر المنصة', templates: 'اختر القالب', language: 'لغة الملصق',
-    save: 'حفظ الصورة', share: 'مشاركة الصورة', preparing: 'جارٍ الإنشاء', retry: 'حاول مجدداً', failed: 'تعذّر الإنشاء. حاول مجدداً.', saved: 'الصورة جاهزة',
+    save: 'حفظ الصورة', share: 'مشاركة الصورة', preparing: 'جارٍ الإنشاء', retry: 'حاول مجدداً', failed: 'تعذّر الإنشاء. حاول مجدداً.', saved: 'الصورة جاهزة', savedPhoto: 'تم الحفظ في المعرض', saveFailed: 'تعذّر الحفظ. حاول مرة أخرى.',
     saveHint: 'إذا تعذّر الحفظ المباشر، اضغط مطولاً على الصورة أدناه لحفظها.', shareHint: 'مشاركة الصور غير متاحة هنا. احفظ الصورة ثم أرسلها.', unavailable: 'هذه المكافأة غير متاحة. اختر قالباً آخر.', close: 'إغلاق', preview: 'معاينة الملصق',
     brand: 'ادعُ أصدقاءك', purchase: 'مكافأة إحالة المشتريات', fee: 'مكافأة إحالة الرسوم', guide: 'ثلاث خطوات',
     headline: 'ادعُ أصدقاءك.\nوشاركهم مزيداً من الإمكانات.', brandText: 'تبدأ إمكانات جديدة بدعوة واحدة.',
@@ -66,7 +66,7 @@ export const posterCopy: Record<AppLocale, PosterCopy> = {
   },
   fr: {
     create: 'Créer une affiche de parrainage', title: 'Votre affiche de parrainage', platform: 'Plateforme', templates: 'Choisir un modèle', language: 'Langue de l’affiche',
-    save: 'Enregistrer', share: 'Partager l’image', preparing: 'Création', retry: 'Réessayer', failed: 'Création impossible. Réessayez.', saved: 'Votre image est prête',
+    save: 'Enregistrer', share: 'Partager l’image', preparing: 'Création', retry: 'Réessayer', failed: 'Création impossible. Réessayez.', saved: 'Votre image est prête', savedPhoto: 'Enregistrée dans la galerie', saveFailed: 'Échec de l’enregistrement. Réessayez.',
     saveHint: 'Si l’enregistrement est indisponible, appuyez longuement sur l’image ci-dessous.', shareHint: 'Le partage d’images est indisponible ici. Enregistrez puis envoyez l’image.', unavailable: 'Cette récompense est indisponible. Choisissez un autre modèle.', close: 'Fermer', preview: 'Aperçu de l’affiche',
     brand: 'Invitez vos proches', purchase: 'Récompense sur les achats', fee: 'Récompense sur les frais', guide: 'Trois étapes',
     headline: 'Invitez vos proches.\nPartagez les possibilités.', brandText: 'De nouvelles possibilités commencent par une invitation.',
@@ -77,7 +77,7 @@ export const posterCopy: Record<AppLocale, PosterCopy> = {
   },
   pt: {
     create: 'Criar imagem de indicação', title: 'Sua imagem de indicação', platform: 'Plataforma', templates: 'Escolha um modelo', language: 'Idioma da imagem',
-    save: 'Salvar imagem', share: 'Compartilhar', preparing: 'Criando', retry: 'Tentar novamente', failed: 'Não foi possível criar. Tente novamente.', saved: 'Sua imagem está pronta',
+    save: 'Salvar imagem', share: 'Compartilhar', preparing: 'Criando', retry: 'Tentar novamente', failed: 'Não foi possível criar. Tente novamente.', saved: 'Sua imagem está pronta', savedPhoto: 'Salva na galeria', saveFailed: 'Não foi possível salvar. Tente novamente.',
     saveHint: 'Se não for possível salvar, mantenha pressionada a imagem abaixo.', shareHint: 'O compartilhamento de imagens não está disponível aqui. Salve e envie a imagem.', unavailable: 'Esta recompensa não está disponível. Escolha outro modelo.', close: 'Fechar', preview: 'Prévia da imagem',
     brand: 'Convide amigos', purchase: 'Recompensa por compras', fee: 'Recompensa por taxas', guide: 'Três etapas',
     headline: 'Convide amigos.\nCompartilhe possibilidades.', brandText: 'Novas possibilidades começam com um convite.',

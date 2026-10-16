@@ -54,6 +54,8 @@ export const documentPreferencesBootstrap = `(() => {
   } catch {}
   if (installed) {
     root.dataset.launch = 'app';
+    // The Android client's WebView: lighter compositing (globals.css) keeps scrolling smooth on mid-range phones.
+    try { if (navigator.userAgent.includes('RwaLatAndroidTrial/')) root.dataset.shell = 'android'; } catch {}
     if (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/home/') {
       let signedIn = true;
       try { signedIn = Boolean(localStorage.getItem('rwa.session')); } catch {}
