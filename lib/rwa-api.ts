@@ -53,6 +53,8 @@ export type PredictionBet = {
   /** toBetView() 返回；市场映射查不到时为 null，旧后端则缺失。 */
   marketQuestion?: string | null
   marketSlug?: string | null
+  /** Market id for /prediction/[id]; the slug is not accepted there. */
+  marketId?: string | null
   tokenOutcome?: string | null
   settledAt: string | null
   createdAt: string
