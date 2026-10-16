@@ -171,6 +171,12 @@ const nextConfig = {
     // Keep local Windows production builds deterministic and avoid worker-spawn exhaustion.
     cpus: 1,
   },
+  webpack(config, { dev }) {
+    // Release worktrees share dependencies through Windows junctions. Webpack's
+    // persistent snapshot hashing can fail on those absolute link targets.
+    if (!dev && process.env.RWA_RELEASE_NO_WEBPACK_CACHE === '1') config.cache = false
+    return config
+  },
   typescript: {
     ignoreBuildErrors: false,
   },

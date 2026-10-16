@@ -11,7 +11,8 @@ const selected = process.argv[2] || 'all'
 const commands = {
   frontend: [
     ['node_modules/typescript/bin/tsc', '-p', 'packages/api-client/tsconfig.json'],
-    ['node_modules/@opennextjs/cloudflare/dist/cli/index.js', 'build'],
+    ['node_modules/next/dist/bin/next', 'build', '--webpack'],
+    ['node_modules/@opennextjs/cloudflare/dist/cli/index.js', 'build', '--skipNextBuild'],
     // Android app: list of files it keeps on the phone, deployed as /app-pack/manifest.json.
     ['scripts/app-pack-manifest.mjs'],
   ],
@@ -29,6 +30,7 @@ for (const name of selected === 'all' ? Object.keys(commands) : [selected]) {
     API_INTERNAL_URL: 'https://api.a-reit.com',
     RWA_LOCAL_PROXY: '1',
     RWA_PROXY_TARGET: 'https://api.a-reit.com',
+    RWA_RELEASE_NO_WEBPACK_CACHE: '1',
   })
   for (const step of commands[name]) {
     const [script, ...args] = step
