@@ -55,6 +55,8 @@ export type PredictionBet = {
   marketSlug?: string | null
   /** Market id for /prediction/[id]; the slug is not accepted there. */
   marketId?: string | null
+  /** Event id: the markets page opens /prediction/event-<id> for it. */
+  marketEventId?: string | null
   tokenOutcome?: string | null
   settledAt: string | null
   createdAt: string
