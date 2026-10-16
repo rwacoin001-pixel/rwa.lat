@@ -25,6 +25,7 @@ import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
 import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -77,6 +78,7 @@ public final class MainActivity extends Activity {
     private boolean pageReady;
     private int pageColor;
     private int[] barInsets = new int[4];
+    private boolean keyboardOpen;
     private String insetCss = "";
     private ScriptHandler insetScript;
     private ScriptHandler handoffScript;
@@ -130,6 +132,10 @@ public final class MainActivity extends Activity {
         pack = new AppPack(this);
         webView = new WebView(this);
         webView.setBackgroundColor(pageColor);
+        // No edge stretch (Android 12+ stretches the whole view, fixed tab bar included) and no browser scrollbars.
+        webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        webView.setVerticalScrollBarEnabled(false);
+        webView.setHorizontalScrollBarEnabled(false);
         pageContainer.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(pageContainer);
         holdLaunchUntilReady();
@@ -139,7 +145,7 @@ public final class MainActivity extends Activity {
         settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
         settings.setMediaPlaybackRequiresUserGesture(true);
         settings.setJavaScriptCanOpenWindowsAutomatically(false); settings.setSupportMultipleWindows(false);
-        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.1");
+        settings.setUserAgentString(settings.getUserAgentString() + " RwaLatAndroidTrial/1.1.2");
         settings.setSafeBrowsingEnabled(true);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, false);
@@ -194,6 +200,7 @@ public final class MainActivity extends Activity {
         }
         view.setPadding(0, 0, 0, keyboard);
         barInsets = new int[]{top, right, bottom, left};
+        keyboardOpen = keyboard > 0;
         if (errorPanel != null) errorPanel.setPadding(dp(28), top + dp(28), dp(28), bottom + dp(28));
         pushInsets();
         return Build.VERSION.SDK_INT >= 30 ? WindowInsets.CONSUMED : insets.consumeSystemWindowInsets();
@@ -201,8 +208,10 @@ public final class MainActivity extends Activity {
     private void pushInsets() {
         if (webView == null) return;
         float density = getResources().getDisplayMetrics().density;
-        String css = String.format(Locale.ROOT, "{top:'%.1fpx',right:'%.1fpx',bottom:'%.1fpx',left:'%.1fpx'}", barInsets[0] / density, barInsets[1] / density, barInsets[2] / density, barInsets[3] / density);
-        String script = "(()=>{const v=" + css + ",s=document.documentElement.style;for(const k in v)s.setProperty('--native-inset-'+k,v[k]);})();";
+        String css = String.format(Locale.ROOT, "{top:'%.1fpx',right:'%.1fpx',bottom:'%.1fpx',left:'%.1fpx'}", barInsets[0] / density, barInsets[1] / density, barInsets[2] / density, barInsets[3] / density) + (keyboardOpen ? "|k" : "");
+        // data-keyboard="open" lets the page keep its tab bar under the keyboard instead of riding up with it.
+        String script = "(()=>{const v=" + css.replace("|k", "") + ",r=document.documentElement,s=r.style;for(const k in v)s.setProperty('--native-inset-'+k,v[k]);"
+            + (keyboardOpen ? "r.dataset.keyboard='open';" : "delete r.dataset.keyboard;") + "})();";
         if (!css.equals(insetCss)) {
             insetCss = css;
             // Registered at document start so every new page lays out with the bars from its first frame.
@@ -254,6 +263,8 @@ public final class MainActivity extends Activity {
             if (!isMainFrame || !UrlPolicy.trustedOrigin(sourceOrigin.toString()) || !trustedCurrentPage()) return;
             try {
                 JSONObject payload = new JSONObject(message.getData());
+                // A light tick on tab bar taps, like native tab bars (follows the system touch-feedback setting).
+                if ("haptic".equals(payload.optString("type"))) { webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); return; }
                 if (!"chrome".equals(payload.optString("type"))) return;
                 applyPageTheme("dark".equals(payload.optString("theme")));
                 if (payload.optBoolean("ready")) markPageReady();
@@ -267,7 +278,8 @@ public final class MainActivity extends Activity {
         + "const ready=loaded&&(r.dataset.launch!=='app'||st==='leaving'||st==='gone');const m=t+'|'+ready;if(m===last)return;last=m;"
         + "ch.postMessage(JSON.stringify({type:'chrome',theme:t,ready}));};"
         + "new MutationObserver(send).observe(r,{attributes:true,attributeFilter:['data-theme','data-launch','data-launch-state']});"
-        + "document.addEventListener('DOMContentLoaded',()=>{loaded=true;send();});send();})();";
+        + "document.addEventListener('DOMContentLoaded',()=>{loaded=true;send();});send();"
+        + "document.addEventListener('pointerdown',e=>{const t=e.target;if(e.isPrimary&&t instanceof Element&&t.closest('.liquid-dock button,.liquid-dock a'))ch.postMessage(JSON.stringify({type:'haptic'}));},{capture:true,passive:true});})();";
     private void applyPageTheme(boolean dark) {
         pageColor = dark ? Color.rgb(10, 11, 13) : Color.rgb(244, 241, 234);
         setBarIcons(!dark);
@@ -329,21 +341,22 @@ public final class MainActivity extends Activity {
     private void showBrowserAuth() {
         new AlertDialog.Builder(this).setTitle("在浏览器中登录")
             .setMessage("Google、X 和通行密钥会在系统浏览器中完成登录，完成后自动回到 App 并保持登录。")
-            .setNegativeButton("取消", null).setPositiveButton("继续", (dialog, which) -> startBrowserSignIn()).show();
+            .setNegativeButton("取消", null).setPositiveButton("继续", (dialog, which) -> startBrowserSignIn(null)).show();
     }
     private static String randomToken(int bytes) {
         byte[] value = new byte[bytes];
         new java.security.SecureRandom().nextBytes(value);
         return Base64.encodeToString(value, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
     }
-    private void startBrowserSignIn() {
+    /** provider: the button the user tapped (google / github / x); the browser then opens that provider directly. */
+    private void startBrowserSignIn(String provider) {
         try {
             String verifier = randomToken(32);
             String state = randomToken(16);
             byte[] digest = java.security.MessageDigest.getInstance("SHA-256").digest(verifier.getBytes(java.nio.charset.StandardCharsets.US_ASCII));
             String challenge = Base64.encodeToString(digest, Base64.URL_SAFE | Base64.NO_PADDING | Base64.NO_WRAP);
             getSharedPreferences(HANDOFF_PREFS, MODE_PRIVATE).edit().putString("verifier", verifier).putString("state", state).putLong("at", System.currentTimeMillis()).commit();
-            openBrowser(UrlPolicy.ORIGIN + "/app-login?challenge=" + challenge + "&state=" + state);
+            openBrowser(UrlPolicy.ORIGIN + "/app-login?challenge=" + challenge + "&state=" + state + (provider == null ? "" : "&provider=" + provider));
         } catch (java.security.NoSuchAlgorithmException error) { toast("此设备暂不支持浏览器登录。"); }
     }
     /** areit://auth?code=…&state=… from the browser: matching state only, then the page redeems code + verifier. */
@@ -376,6 +389,29 @@ public final class MainActivity extends Activity {
         if (handoffPage && handoffFallback != null) { webView.evaluateJavascript(handoffFallback, null); handoffFallback = null; }
         if (handoffScript != null && (handoffPage || url == null)) { handoffScript.remove(); handoffScript = null; }
     }
+    /**
+     * WalletConnect hands the request to the wallet app through its link. Like a browser: only apps that accept
+     * BROWSABLE links, never a named component, and no URI permission grants. The wallet returns via areit://wallet.
+     */
+    private void openWallet(String url) {
+        Intent intent;
+        try {
+            intent = url.regionMatches(true, 0, "intent:", 0, 7) ? Intent.parseUri(url, Intent.URI_INTENT_SCHEME) : new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+        } catch (java.net.URISyntaxException error) { toast("无法打开这个钱包链接。"); return; }
+        String fallback = intent.getStringExtra("browser_fallback_url");
+        String walletPackage = intent.getPackage();
+        intent.setComponent(null);
+        intent.setSelector(null);
+        intent.setFlags(intent.getFlags() & ~(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION | Intent.FLAG_GRANT_PREFIX_URI_PERMISSION));
+        intent.addCategory(Intent.CATEGORY_BROWSABLE);
+        try { startActivity(intent); return; } catch (ActivityNotFoundException | SecurityException ignored) { /* not installed */ }
+        if (fallback != null && UrlPolicy.destination(fallback) != UrlPolicy.Destination.BLOCK && fallback.startsWith("https://")) { openBrowser(fallback); return; }
+        if (walletPackage != null && walletPackage.matches("[A-Za-z0-9_.]{3,100}")) {
+            try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=" + walletPackage)).addCategory(Intent.CATEGORY_BROWSABLE)); return; }
+            catch (ActivityNotFoundException ignored) { /* no store either */ }
+        }
+        toast("没有找到这个钱包 App，请先安装。");
+    }
     private void openBrowser(String url) {
         try { startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(url)).addCategory(Intent.CATEGORY_BROWSABLE)); }
         catch (ActivityNotFoundException error) { toast("未找到可用浏览器，请先安装浏览器。"); }
@@ -384,7 +420,16 @@ public final class MainActivity extends Activity {
         UrlPolicy.Destination destination = UrlPolicy.destination(url);
         if (destination == UrlPolicy.Destination.INTERNAL) return false;
         if (!mainFrame) return true;
-        if (destination == UrlPolicy.Destination.BROWSER_AUTH) { showBrowserAuth(); return true; }
+        if (destination == UrlPolicy.Destination.BROWSER_AUTH) {
+            // The user already tapped Google / GitHub / X: go straight to the browser; otherwise explain first.
+            String provider = UrlPolicy.signInProvider(url);
+            if (provider != null && trustedCurrentPage()) startBrowserSignIn(provider); else showBrowserAuth();
+            return true;
+        }
+        if (destination == UrlPolicy.Destination.WALLET) {
+            if (trustedCurrentPage()) openWallet(url); else toast("此链接未获准在客户端打开。");
+            return true;
+        }
         if (destination == UrlPolicy.Destination.EXTERNAL && userGesture && trustedCurrentPage()) {
             new AlertDialog.Builder(this).setMessage("使用浏览器打开外部链接？").setNegativeButton("取消", null).setPositiveButton("打开", (dialog, which) -> openBrowser(url)).show();
         } else toast("此链接未获准在客户端打开。");

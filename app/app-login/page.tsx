@@ -4,8 +4,12 @@ import { useEffect, useState } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { clearSession, readSession, request } from '@/lib/api/_http'
 import { APP_HANDOFF_COPY, appReturnUrls, readAppLoginParams } from '@/lib/app-handoff'
+import { startOAuth } from '@/lib/api/auth'
+import { markNewAccount } from '@/lib/api/auth-navigation'
 import styles from '@/components/screens/P02-Login.module.css'
 import { AuthShell } from '@/components/screens/AuthShell'
+
+const RETURN_TO = 'rwa.return-to'
 
 type Phase = { kind: 'working' } | { kind: 'back'; intent: string; scheme: string } | { kind: 'invalid' } | { kind: 'failed' }
 
@@ -22,18 +26,27 @@ export default function AppLoginPage() {
   useEffect(() => {
     const params = readAppLoginParams(location.search)
     if (!params) { setPhase({ kind: 'invalid' }); return }
-    if (!readSession()) {
-      location.replace(`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`)
-      return
-    }
     let active = true
+    // Not signed in here yet: straight to the provider the user tapped in the app (its callback returns to this
+    // page through the saved destination), otherwise the usual sign-in page.
+    const signIn = () => {
+      const here = location.pathname + location.search
+      if (!params.provider) { location.replace(`/login?returnTo=${encodeURIComponent(here)}`); return }
+      try { sessionStorage.setItem(RETURN_TO, here); markNewAccount(sessionStorage, false) } catch { /* the callback falls back to Home */ }
+      void startOAuth(params.provider, 'login', []).then(result => {
+        if (!active) return
+        if (result.ok) location.replace(result.data)
+        else setPhase({ kind: 'failed' })
+      })
+    }
+    if (!readSession()) { signIn(); return () => { active = false } }
     setPhase({ kind: 'working' })
     void request<{ code: string }>('/v1/auth/app-handoff', { method: 'POST', body: JSON.stringify({ challenge: params.challenge }), loading: 'silent' }).then(result => {
       if (!active) return
       // The browser's session ended since: sign in again, then come back here.
       if (!result.ok && result.error.status === 401) {
         clearSession()
-        location.replace(`/login?returnTo=${encodeURIComponent(location.pathname + location.search)}`)
+        signIn()
         return
       }
       const urls = result.ok ? appReturnUrls(result.data.code, params.state) : null

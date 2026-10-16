@@ -1,3 +1,5 @@
+import { isAndroidApp } from '../android-app'
+
 export type WalletProvider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
 
 // Public Reown project identifier, not a secret. Restrict origins in its dashboard.
@@ -34,9 +36,13 @@ function createBrowserPageLifecycle(): WalletPageLifecycle {
 
 const walletError = (code: string, message: string) => Object.assign(new Error(message), { code })
 
-export function buildWalletConnectMetadata(origin: string) {
+/** Inside the Android app the wallet returns through areit://wallet (the app comes back to the front, the page waits). */
+export const ANDROID_APP_WALLET_RETURN = 'areit://wallet'
+
+export function buildWalletConnectMetadata(origin: string, inAndroidApp = false) {
   const metadata = { name: 'A-REIT', description: 'Sign in to A-REIT', url: origin, icons: [`${origin}/icons/a-reit-v1-512.png`] }
-  return { ...metadata, redirect: { universal: new URL('/login', origin).href } }
+  const universal = new URL('/login', origin).href
+  return { ...metadata, redirect: inAndroidApp ? { native: ANDROID_APP_WALLET_RETURN, universal } : { universal } }
 }
 
 /** Wait for the wallet session across an app switch; closing AppKit alone does not mean cancel. */
@@ -174,7 +180,7 @@ async function getModal(): Promise<WalletModal> {
       // ourselves so mobile wallets such as OKX know where to return after WalletConnect approval.
       const universalProvider = await UniversalProvider.init({
         projectId: PROJECT_ID,
-        metadata: buildWalletConnectMetadata(location.origin),
+        metadata: buildWalletConnectMetadata(location.origin, isAndroidApp()),
       })
       const modal = createAppKit({
         projectId: PROJECT_ID,

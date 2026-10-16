@@ -17,10 +17,15 @@ const state = 'abcDEF0123456789_-xy'
 const code = 'f'.repeat(64)
 
 test('the browser page only accepts a well-formed challenge and state', () => {
-  assert.deepEqual(plain(readAppLoginParams(`?challenge=${challenge}&state=${state}`)), { challenge, state })
+  assert.deepEqual(plain(readAppLoginParams(`?challenge=${challenge}&state=${state}`)), { challenge, state, provider: null })
   assert.equal(readAppLoginParams(`?challenge=${challenge}`), null)
   assert.equal(readAppLoginParams(`?challenge=short&state=${state}`), null)
   assert.equal(readAppLoginParams(`?challenge=${challenge}&state=<script>`), null)
+})
+
+test('the provider the user tapped in the app is honoured only from the known list', () => {
+  for (const provider of ['google', 'github', 'x']) assert.equal(readAppLoginParams(`?challenge=${challenge}&state=${state}&provider=${provider}`).provider, provider)
+  for (const provider of ['apple', 'https://evil.test', '']) assert.equal(readAppLoginParams(`?challenge=${challenge}&state=${state}&provider=${provider}`).provider, null)
 })
 
 test('the return link is pinned to the app package and carries only the code and state', () => {

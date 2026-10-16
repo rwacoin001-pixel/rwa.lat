@@ -3,8 +3,10 @@ import type { AppLocale } from './i18n'
 /**
  * Android app sign-in through the system browser (Google forbids its sign-in inside an app's WebView).
  *
- *   app      opens  /app-login?challenge=<base64url sha256(verifier)>&state=<nonce>   in the system browser
- *   browser  signs in as usual (any method), POST /v1/auth/app-handoff {challenge} → one-time code (2 min)
+ *   app      opens  /app-login?challenge=<base64url sha256(verifier)>&state=<nonce>[&provider=google|github|x]
+ *            in the system browser
+ *   browser  signs in (straight at the provider the user tapped, else the usual sign-in page),
+ *            POST /v1/auth/app-handoff {challenge} → one-time code (2 min)
  *   browser  opens  areit://auth?code=…&state=…   (intent link pinned to com.areit.app where supported)
  *   app      checks the state, loads /app-handoff with {code, verifier} injected at document start
  *   app page POST /v1/auth/app-handoff/redeem {code, verifier} → its own session → home
@@ -16,11 +18,16 @@ const CHALLENGE = /^[A-Za-z0-9_-]{43}$/
 const STATE = /^[A-Za-z0-9_-]{16,64}$/
 const CODE = /^[A-Za-z0-9_-]{43,128}$/
 
-export function readAppLoginParams(search: string): { challenge: string; state: string } | null {
+export type AppLoginProvider = 'google' | 'github' | 'x'
+const PROVIDERS: readonly AppLoginProvider[] = ['google', 'github', 'x']
+
+/** `provider` is the button the user tapped in the app: the browser goes straight to that provider. */
+export function readAppLoginParams(search: string): { challenge: string; state: string; provider: AppLoginProvider | null } | null {
   const params = new URLSearchParams(search)
   const challenge = params.get('challenge') ?? ''
   const state = params.get('state') ?? ''
-  return CHALLENGE.test(challenge) && STATE.test(state) ? { challenge, state } : null
+  const provider = PROVIDERS.find(name => name === params.get('provider')) ?? null
+  return CHALLENGE.test(challenge) && STATE.test(state) ? { challenge, state, provider } : null
 }
 
 /** Pinned to the app's package where the browser supports intent links, so only A-REIT can receive it. */

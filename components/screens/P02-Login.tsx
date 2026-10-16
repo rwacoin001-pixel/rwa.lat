@@ -24,6 +24,7 @@ import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
 import { AuthLegalFooter } from './AuthLegalFooter'
 import { connectLoginWallet } from '@/lib/api/wallet-connection'
+import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PENDING_CONSENTS = 'rwa.pending-consents'
@@ -109,9 +110,18 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       oauthNavigationTimer.current = null
       setPending(false)
     }
+    // Another app took over (system browser, provider app): the hand-off worked, so no timeout error on return.
+    const handedOff = () => {
+      if (document.visibilityState !== 'hidden' || !oauthNavigationTimer.current) return
+      clearTimeout(oauthNavigationTimer.current)
+      oauthNavigationTimer.current = null
+      setPending(false)
+    }
     window.addEventListener('pageshow', restore)
+    document.addEventListener('visibilitychange', handedOff)
     return () => {
       window.removeEventListener('pageshow', restore)
+      document.removeEventListener('visibilitychange', handedOff)
       if (oauthNavigationTimer.current) clearTimeout(oauthNavigationTimer.current)
     }
   }, [])
@@ -301,6 +311,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const startProvider = async (provider: 'google' | 'github' | 'x') => {
     if (pending || busy.current) return
     stopPasskey()
+    // The Android app hands providers to the system browser, which signs in and returns the session to the app.
+    if (isAndroidApp()) { setError(''); window.location.assign(`${APP_BROWSER_SIGN_IN_PATH}?provider=${provider}`); return }
     busy.current = true; setPending(true); setError('')
     markNewAccount(sessionStorage, false)
     const result = await startOAuth(provider, 'login', [])

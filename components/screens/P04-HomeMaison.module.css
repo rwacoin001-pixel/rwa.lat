@@ -60,7 +60,10 @@
   isolation: isolate;
   -webkit-font-smoothing: antialiased;
 }
-.root[data-topbar-hidden='true'] { --feed-sticky-top: 0px; }
+/* With the top bar away, the feed tabs pin just below the status bar, and a solid strip keeps the scrolling
+   page out from under the status-bar icons. The tabs keep their height, so nothing below them moves. */
+.root[data-topbar-hidden='true'] { --feed-sticky-top: env(safe-area-inset-top); }
+.root[data-topbar-hidden='true']::before { content: ''; position: fixed; z-index: 53; inset: 0 0 auto; height: env(safe-area-inset-top); background: var(--home-bg); pointer-events: none; }
 :global(.rwa-mobile[data-theme='dark']) .root {
   --home-bg: #070c16;
   --home-ink: #e9edf3;
