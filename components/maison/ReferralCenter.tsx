@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2 } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2, ImagePlus, ArrowUpRight } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -11,14 +12,16 @@ import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
+import { posterCopy } from '@/lib/referral-poster-copy'
 import x from './referral.module.css'
 
 type Tab = 'team' | 'rewards'
-type SheetKind = 'rules' | 'qr' | 'edit' | null
+type SheetKind = 'rules' | 'qr' | 'edit' | 'poster' | null
 type Translate = (cn: string, en: string) => string
 
 const PAGE_SIZE = 20
 const CODE_PATTERN = /^[A-Za-z0-9]{6,16}$/
+const ReferralPosterComposer = dynamic(() => import('./ReferralPosterComposer').then(module => module.ReferralPosterComposer), { ssr: false })
 const lengthClass = (code: string) => code.length <= 8 ? 's' : code.length <= 12 ? 'm' : 'l'
 
 function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: string; busy: boolean; error: string; onSave: (code: string) => void; onDraftChange: () => void; t: Translate }) {
@@ -69,7 +72,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   }, [])
   useEffect(() => {
     // A replaced account must not inherit the previous account's in-flight edit.
-    const onSession = () => { editGen.current += 1; setSaving(false); setEditError(''); setSheet(sheet => sheet === 'edit' ? null : sheet) }
+    const onSession = () => { editGen.current += 1; setSaving(false); setEditError(''); setSheet(sheet => sheet === 'edit' || sheet === 'poster' ? null : sheet) }
     window.addEventListener(SESSION_CHANGED, onSession)
     return () => window.removeEventListener(SESSION_CHANGED, onSession)
   }, [])
@@ -206,6 +209,10 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
             </div>
             <p className={x.feedback} role="status">{copied ? t('邀请链接已复制', 'Invitation link copied') : ''}</p>
             {copyError && <p className={x.error} role="alert">{copyError}</p>}
+            <button type="button" className={x.posterEntry} aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}>
+              <ImagePlus size={20} strokeWidth={1.65} aria-hidden="true" />
+              <span>{posterCopy[locale].create}</span><ArrowUpRight size={18} strokeWidth={1.6} aria-hidden="true" />
+            </button>
           </>}
       </section>
 
@@ -261,5 +268,6 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
     {sheet === 'edit' && code && <ReferralSheet title={t('修改邀请码', 'Edit invitation code')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
       <CodeForm code={code} busy={saving} error={editError} onSave={next => void save(next)} onDraftChange={() => setEditError('')} t={t} />
     </ReferralSheet>}
+    {sheet === 'poster' && code && sum && <ReferralPosterComposer key={code} code={code} summary={sum} locale={locale} theme={theme} inertRef={rootRef} onClose={closeSheet} sourceReady={!summary.loading && !me.loading && !summary.error && !me.error} />}
   </div>
 }

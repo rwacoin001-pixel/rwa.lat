@@ -23,17 +23,26 @@ export function useHostTheme(ref: RefObject<HTMLElement | null>): SheetTheme {
   return theme
 }
 
-export function ReferralSheet({ title, closeLabel, theme, inertRef, tall = false, onClose, children }: {
+export function ReferralSheet({ title, closeLabel, theme, inertRef, tall = false, fullScreen = false, onClose, children }: {
   title: string
   closeLabel: string
   theme: SheetTheme
   inertRef: RefObject<HTMLElement | null>
   tall?: boolean
+  fullScreen?: boolean
   onClose: () => void
   children: ReactNode
 }) {
   const titleId = useId(), dialogRef = useRef<HTMLElement>(null), closeRef = useRef(onClose), pressedScrim = useRef(false)
   closeRef.current = onClose
+
+  useEffect(() => {
+    if (!fullScreen) return
+    const body = document.body, root = document.documentElement
+    const bodyOverflow = body.style.overflow, rootOverflow = root.style.overflow
+    body.style.overflow = 'hidden'; root.style.overflow = 'hidden'
+    return () => { body.style.overflow = bodyOverflow; root.style.overflow = rootOverflow }
+  }, [fullScreen])
 
   useEffect(() => {
     const dialog = dialogRef.current
@@ -68,7 +77,7 @@ export function ReferralSheet({ title, closeLabel, theme, inertRef, tall = false
     <div className={`${x.ref} ${x.layer} ${GeistSans.variable} ${GeistMono.variable}`} data-ref-theme={theme}
       onPointerDown={event => { pressedScrim.current = event.target === event.currentTarget }}
       onClick={event => { if (pressedScrim.current && event.target === event.currentTarget) onClose(); pressedScrim.current = false }}>
-      <section ref={dialogRef} className={x.sheet} data-tall={tall || undefined} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
+      <section ref={dialogRef} className={x.sheet} data-tall={tall || undefined} data-fullscreen={fullScreen || undefined} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>
         <div className={x.handle} aria-hidden="true" />
         <div className={x.sheetTitle}>
           <h2 id={titleId}>{title}</h2>
