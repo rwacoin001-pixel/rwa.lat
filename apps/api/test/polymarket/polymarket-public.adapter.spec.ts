@@ -89,18 +89,19 @@ describe('PolymarketPublicAdapter', () => {
   })
 
   it('fetches a known closed market by exact ID without active-market filters', async () => {
-    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify({
+    const fetchMock = jest.fn().mockResolvedValue(new Response(JSON.stringify([{
       id: '123', slug: 'finished', question: 'Finished?', closed: true,
       umaResolutionStatus: 'resolved', outcomes: '["Yes","No"]',
       clobTokenIds: '["yes","no"]', outcomePrices: '["1","0"]',
-    }), { status: 200 }))
+    }]), { status: 200 }))
     global.fetch = fetchMock
     const adapter = new PolymarketPublicAdapter(new ConfigService({}))
     const market = await adapter.getMarketById('123')
     expect(market?.rawPayload.umaResolutionStatus).toBe('resolved')
     const url = new URL(String(fetchMock.mock.calls[0][0]))
-    expect(url.pathname).toBe('/markets/123')
-    expect(url.search).toBe('')
+    // The list query returns the market's events too; /markets/{id} does not.
+    expect(url.pathname).toBe('/markets')
+    expect(url.searchParams.get('id')).toBe('123')
   })
 
   it('rejects a market returned for the wrong Gamma ID', async () => {
