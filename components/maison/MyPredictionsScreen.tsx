@@ -34,7 +34,7 @@ function BetCard({ bet, locale, t, sc }: { bet: PredictionBet; locale: string; t
   const name = question || `${t.market} · #${bet.marketMappingId.slice(0, 6)}`
   const price = Number(bet.price)
   const priceText = Number.isFinite(price) ? price.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 3 }) : '—'
-  const target = bet.marketSlug ? `/prediction/${encodeURIComponent(bet.marketSlug)}` : null
+  const target = bet.marketId ? `/prediction/${encodeURIComponent(bet.marketId)}` : null
   const hasFee = amounts.fee > BigInt(0)
   const hasPayoutFee = amounts.payoutFee > BigInt(0)
   // Shares are shown verbatim, and only when they parse as a valid payout amount.
