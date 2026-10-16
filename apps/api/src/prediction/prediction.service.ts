@@ -269,7 +269,7 @@ export class PredictionService {
   async listBets(userId: string, page: number, limit: number) {
     const offset = (page - 1) * limit
     const rows = await this.dataSource.query(
-      `SELECT b.*, m.question AS market_question, m.slug AS market_slug, m.gamma_market_id AS market_gamma_id, t.outcome AS token_outcome
+      `SELECT b.*, m.question AS market_question, m.slug AS market_slug, m.gamma_market_id AS market_gamma_id, m.raw_payload #>> '{events,0,id}' AS market_event_id, t.outcome AS token_outcome
        FROM app.prediction_bets b
        LEFT JOIN app.polymarket_market_mappings m ON m.id = b.market_mapping_id
        LEFT JOIN app.polymarket_token_mappings t ON t.token_id = b.token_id
@@ -497,6 +497,8 @@ export class PredictionService {
       marketSlug: row.market_slug ?? null,
       /** The id GET /v1/polymarket/markets/:id accepts (the slug is not one). */
       marketId: row.market_gamma_id ?? null,
+      /** The Polymarket event the market belongs to; markets-page cards open /prediction/event-<id>. */
+      marketEventId: row.market_event_id ?? null,
       tokenOutcome: row.token_outcome ?? null,
       settledAt: row.settled_at ?? null,
       createdAt: row.created_at,
