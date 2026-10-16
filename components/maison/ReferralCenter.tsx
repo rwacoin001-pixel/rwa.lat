@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2, ImagePlus, ArrowUpRight } from 'lucide-react'
+import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2, ImagePlus, Users } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -62,6 +62,15 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const rootRef = useRef<HTMLDivElement>(null), copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const theme = useHostTheme(rootRef)
   const balanceId = useId()
+  const heroRef = useRef<HTMLElement>(null), [overHero, setOverHero] = useState(true)
+  useEffect(() => {
+    const hero = heroRef.current
+    if (!hero || !('IntersectionObserver' in window)) return
+    // The header turns solid once the art has scrolled up behind it.
+    const observer = new IntersectionObserver(([entry]) => setOverHero(entry.isIntersecting), { rootMargin: '-120px 0px 0px 0px' })
+    observer.observe(hero)
+    return () => observer.disconnect()
+  }, [])
   const me = useQuery('referral:v2:me', referralMe, { staleTime: 30_000 })
   const summary = useQuery('referral:v2:summary', referralSummary, { staleTime: 30_000 })
   const members = useQuery(tab === 'team' ? `referral:v2:members:${page}:${level}` : null, () => referralInvitees(page, level), { staleTime: 30_000 })
@@ -83,6 +92,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const sum = summary.data
   const unit = sum?.currency || 'USDT'
   const money = (atomic?: string) => fmtAtomic(atomic, sum?.decimals ?? 6, '', 2).trim()
+  const pct = (bps: number) => `${Number((bps / 100).toFixed(2))}%`
   const levelCount = (value: number) => sum ? String(sum.levels.find(row => row.level === value)?.count ?? 0) : '—'
   const totalCount = sum ? String(sum.levels.filter(row => row.level >= 1 && row.level <= 3).reduce((total, row) => total + row.count, 0)) : '—'
   const states: Record<string, string> = { earned: t('可领取', 'Claimable'), claimed: t('已领取', 'Claimed') }
@@ -161,63 +171,74 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const retryLabel = t('重试', 'Retry')
 
   return <div ref={rootRef} className={`${x.ref} ${x.screen}`}>
-    <MaisonPage page="referral" topbar={<header className={x.topbar}>
+    <MaisonPage page="referral" topbar={<header className={x.topbar} data-over-art={overHero ? 'true' : undefined}>
       <button type="button" className={x.iconBtn} aria-label={t('返回', 'Back')} onClick={() => backOr('/profile')}><ArrowLeft size={22} strokeWidth={1.75} /></button>
       <h1>{t('推荐奖励', 'Referrals')}</h1>
       <button type="button" className={x.iconBtn} aria-label={t('查看邀请规则', 'View invitation rules')} aria-haspopup="dialog" onClick={() => setSheet('rules')}><CircleHelp size={21} strokeWidth={1.75} /></button>
     </header>}>
-      <section className={x.balance} aria-labelledby={balanceId}>
-        <div className={x.balanceHead}>
-          <h2 id={balanceId}>{t('可领取奖励', 'Available rewards')}</h2>
-          {sum && <button type="button" className={x.chipButton} aria-haspopup="dialog" onClick={() => setSheet('rules')}>{t('查看规则', 'View rules')}</button>}
-        </div>
-        {summary.error
-          ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
-          : !sum ? <Skeleton rows={2} /> : <>
-            <p className={x.amount}><span>{money(sum.balances.available)}</span><small>{unit}</small></p>
-            <dl className={x.meta}>
-              <div><dt>{t('已领取', 'Claimed')}</dt><dd>{money(sum.balances.claimed)} <small>{unit}</small></dd></div>
-              <div><dt>{t('累计奖励', 'Total earned')}</dt><dd>{money(sum.balances.total)} <small>{unit}</small></dd></div>
-            </dl>
-            {sum.payoutsEnabled && <div className={x.actions}>
-              <button type="button" className={x.primary} disabled={!claimable || claiming} aria-busy={claiming} onClick={() => void claim()}>
+      <section ref={heroRef} className={x.hero} aria-labelledby={balanceId}>
+        <div className={x.heroBody}>
+          <div className={x.heroHead}>
+            <h2 id={balanceId}>{t('可领取奖励', 'Available rewards')}</h2>
+            {sum && <button type="button" className={x.heroChip} aria-haspopup="dialog" onClick={() => setSheet('rules')}>{t('查看规则', 'View rules')}</button>}
+          </div>
+          {summary.error
+            ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
+            : !sum ? <Skeleton rows={2} /> : <>
+              <p className={x.amount}><span>{money(sum.balances.available)}</span><small>{unit}</small></p>
+              <dl className={x.heroMeta}>
+                <div><dt>{t('已领取', 'Claimed')}</dt><dd>{money(sum.balances.claimed)}</dd></div>
+                <div><dt>{t('累计奖励', 'Total earned')}</dt><dd>{money(sum.balances.total)}</dd></div>
+                <div><dt>{t('邀请人数', 'Invited')}</dt><dd>{totalCount}</dd></div>
+              </dl>
+              {sum.payoutsEnabled && <button type="button" className={x.heroCta} disabled={!claimable || claiming} aria-busy={claiming} onClick={() => void claim()}>
                 {claiming ? t('领取中', 'Claiming') : t('领取到余额', 'Claim to balance')}
-              </button>
-            </div>}
-            <p className={x.feedback} role="status">{claimNote}</p>
-            {claimError && <p className={x.error} role="alert">{claimError}</p>}
-          </>}
+              </button>}
+              <p className={x.feedback} role="status">{claimNote}</p>
+              {claimError && <p className={x.error} role="alert">{claimError}</p>}
+            </>}
+        </div>
       </section>
 
-      <section className={x.invite} aria-label={t('我的邀请', 'My invitation')}>
+      <div className={x.panel}>
+      <section className={x.ticket} aria-label={t('我的邀请', 'My invitation')}>
         {me.error
           ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={retryLabel} />
           : !code ? <Skeleton rows={2} /> : <>
-            <div className={x.inviteRow}>
+            <div className={x.ticketTop}>
               <div className={x.inviteId}>
                 <div className={x.inviteLabel}>
                   <span>{t('我的邀请码', 'My invitation code')}</span>
-                  <button type="button" className={x.textBtn} aria-label={t('修改邀请码', 'Edit invitation code')} aria-haspopup="dialog" onClick={openEdit}><Pencil size={14} strokeWidth={1.75} aria-hidden="true" />{t('修改', 'Edit')}</button>
+                  <button type="button" className={x.textBtn} aria-label={t('修改邀请码', 'Edit invitation code')} aria-haspopup="dialog" onClick={openEdit}><Pencil size={13} strokeWidth={1.75} aria-hidden="true" />{t('修改', 'Edit')}</button>
                 </div>
                 <p className={x.code} data-len={lengthClass(code)}>{code}</p>
-                <p className={x.link}>{link}</p>
+                <p className={x.link}>{link.replace(/^https?:\/\//, '')}</p>
               </div>
               <button type="button" className={x.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={() => setSheet('qr')}>
-                <QRCodeSVG value={link} size={72} marginSize={2} level="M" bgColor="#ffffff" fgColor="#000000" title={t('邀请链接二维码', 'Invitation QR code')} />
+                <QRCodeSVG value={link} size={72} marginSize={1} level="M" bgColor="#ffffff" fgColor="#111111" title={t('邀请链接二维码', 'Invitation QR code')} />
               </button>
             </div>
-            <div className={x.actions}>
-              <button type="button" className={x.primary} onClick={() => void copy()}><CopyIcon size={18} strokeWidth={1.75} aria-hidden="true" />{copyLabel}</button>
-              <button type="button" className={x.secondary} onClick={() => void share()}><Share2 size={17} strokeWidth={1.75} aria-hidden="true" />{t('分享', 'Share')}</button>
+            <div className={x.perf} aria-hidden="true" />
+            <div className={x.tiles}>
+              <button type="button" onClick={() => void copy()}><span><CopyIcon size={18} strokeWidth={1.7} aria-hidden="true" /></span>{copyLabel}</button>
+              <button type="button" onClick={() => void share()}><span><Share2 size={18} strokeWidth={1.7} aria-hidden="true" /></span>{t('分享', 'Share')}</button>
+              <button type="button" aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><span><ImagePlus size={18} strokeWidth={1.7} aria-hidden="true" /></span>{t('生成海报', 'Poster')}</button>
             </div>
             <p className={x.feedback} role="status">{copied ? t('邀请链接已复制', 'Invitation link copied') : ''}</p>
             {copyError && <p className={x.error} role="alert">{copyError}</p>}
-            <button type="button" className={x.posterEntry} aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}>
-              <ImagePlus size={20} strokeWidth={1.65} aria-hidden="true" />
-              <span>{posterCopy[locale].create}</span><ArrowUpRight size={18} strokeWidth={1.6} aria-hidden="true" />
-            </button>
           </>}
       </section>
+
+      {sum && <section className={x.team} aria-label={t('团队层级', 'Team levels')}>
+        <div className={x.cardHead}><h2><Users size={16} strokeWidth={1.75} aria-hidden="true" />{t('我的团队', 'My team')}</h2><span>{t(`共 ${totalCount} 人`, `${totalCount} members`)}</span></div>
+        <div className={x.teamBar} aria-hidden="true">{[1, 2, 3].map(value => <i key={value} style={{ flexGrow: Math.max(Number(levelCount(value)) || 0, Number(totalCount) ? 0 : 1) }} />)}</div>
+        <div className={x.teamLevels}>{[1, 2, 3].map(value => <div key={value}>
+          <b>{levelCount(value)}</b>
+          <span>{t(['一级', '二级', '三级'][value - 1], `Level ${value}`)}</span>
+          {sum.feeRewardsEnabled !== false && sum.rules.feeRatesBps[value - 1] !== undefined && <small>{t('手续费', 'Fee')} {pct(sum.rules.feeRatesBps[value - 1])}</small>}
+          {sum.purchaseRewardsEnabled !== false && sum.rules.holdingRatesBps[value - 1] !== undefined && <small>{t('买入', 'Purchase')} {pct(sum.rules.holdingRatesBps[value - 1])}</small>}
+        </div>)}</div>
+      </section>}
 
       <section className={x.records} aria-label={t('推荐记录', 'Referral records')}>
         <div className={x.tabs} role="group" aria-label={t('记录类型', 'Record type')}>
@@ -235,10 +256,12 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
               ? <p className={x.empty} role="status">{tab === 'rewards' ? t('暂无奖励记录', 'No rewards yet') : level === 'all' ? t('暂无邀请记录', 'No invitations yet') : t('该层级暂无成员', 'No members at this level')}</p>
               : tab === 'team'
                 ? <ul className={x.list}>{members.data?.items.map((row, index) => <li className={x.row} key={`${row.memberLabel}:${index}`}>
+                  <span className={x.avatar} data-level={row.level} aria-hidden="true">{row.memberLabel.slice(0, 2)}</span>
                   <div><b>{row.memberLabel}</b><span>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</span></div>
                   <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
                 </li>)}</ul>
                 : <ul className={x.list}>{awards.data?.items.map(row => <li className={x.row} key={row.id}>
+                  <span className={x.avatar} data-level={row.level} aria-hidden="true">{row.memberLabel.slice(0, 2)}</span>
                   <div><b className={x.reward}>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><span>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {row.memberLabel} · {fmtDate(row.occurredAt, locale)}</span></div>
                   <span className={x.state}>{states[row.state] ?? row.state}</span>
                 </li>)}</ul>}
@@ -249,6 +272,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
             </nav>}
           </>}
       </section>
+      </div>
     </MaisonPage>
 
     {sheet === 'rules' && <ReferralSheet tall title={t('邀请规则', 'Invitation rules')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>

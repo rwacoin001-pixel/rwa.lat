@@ -98,6 +98,77 @@
 .ref .pager{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:12px 0;font-size:13px;color:var(--r-muted)}
 .ref .pagerBtn{min-height:44px;padding:0 16px;background:transparent;border:1px solid var(--r-line-strong);border-radius:999px;font-size:13px;color:var(--r-ink)}
 
+/* ---- Art direction (C): a full-bleed illustration carries the balance; a rounded sheet holds the invitation,
+   the team and the records. The art is always dark, so the header over it is light until it scrolls away. ---- */
+.ref .topbar{box-sizing:content-box;padding-top:env(safe-area-inset-top);transition:background-color .24s ease,border-color .24s ease,color .24s ease}
+.ref .topbar[data-over-art]{background:transparent;border-bottom-color:transparent;color:#fff}
+.ref .topbar[data-over-art] .iconBtn{color:#fff}
+.ref .topbar[data-over-art] .iconBtn:hover{background:rgba(255,255,255,.12)}
+.ref .hero{position:relative;margin:calc(-52px - env(safe-area-inset-top)) -16px 0;min-height:440px;display:flex;align-items:flex-end;color:#fff;
+  background:linear-gradient(180deg,rgba(6,8,14,.55) 0%,rgba(6,8,14,.08) 30%,rgba(6,8,14,.25) 55%,rgba(6,8,14,.88) 100%),url('/media/referral/posters/night-v2.webp') center 28%/cover no-repeat,#0b0d12;
+  isolation:isolate}
+.ref .heroBody{width:100%;padding:calc(96px + env(safe-area-inset-top)) 20px 52px}
+.ref .heroHead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.ref .heroHead h2{margin:0;font-size:12px;font-weight:500;letter-spacing:.14em;color:rgba(255,255,255,.72)}
+.ref .heroChip{min-height:28px;padding:0 12px;border:1px solid rgba(255,255,255,.32);border-radius:99px;background:rgba(255,255,255,.08);color:#fff;font-size:11.5px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.ref .hero .amount{margin:10px 0 14px}
+.ref .hero .amount span{font-size:clamp(56px,18vw,76px);color:#fff;text-shadow:0 2px 24px rgba(0,0,0,.35)}
+.ref .hero .amount small{color:rgba(255,255,255,.72);letter-spacing:.08em}
+.ref .heroMeta{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));margin:0 0 18px;padding-top:12px;border-top:1px solid rgba(255,255,255,.16)}
+.ref .heroMeta>div{min-width:0}
+.ref .heroMeta>div+div{padding-left:14px;border-left:1px solid rgba(255,255,255,.12)}
+.ref .heroMeta dt{font-size:11px;color:rgba(255,255,255,.6)}
+.ref .heroMeta dd{margin:3px 0 0;font-size:15px;font-weight:600;color:#fff;overflow-wrap:anywhere}
+.ref .heroCta{width:100%;min-height:50px;border-radius:999px;border:0;background:rgba(255,255,255,.94);color:#0b0d12;font-size:15px;font-weight:700;letter-spacing:.03em;box-shadow:0 12px 30px -12px rgba(0,0,0,.6)}
+.ref .heroCta:hover:not(:disabled){background:#fff}
+.ref .heroCta:disabled{opacity:1;background:rgba(255,255,255,.16);color:rgba(255,255,255,.7);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+.ref .hero .feedback{color:rgba(255,255,255,.75)}
+.ref .hero .error{color:#ffb4ab}
+.ref .hero :global([data-state-block]),.ref .hero [aria-busy]:not(button){color:#fff}
+
+.ref .panel{position:relative;z-index:1;margin:-24px -16px 0;padding:8px 16px 8px;border-radius:24px 24px 0 0;background:var(--r-bg)}
+
+/* Invitation ticket: code and QR, a perforation, then three actions. */
+.ref .ticket{margin-top:8px;padding:16px 18px 10px;border-radius:22px;background:var(--r-bg);box-shadow:0 0 0 1px var(--r-line-strong),0 18px 36px -26px rgba(0,0,0,.35);--r-notch:var(--r-bg)}
+.ref .ticketTop{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:14px;align-items:center}
+.ref .ticket .inviteLabel{min-height:32px}
+.ref .ticket .code{font-family:var(--m-mono);font-size:26px;letter-spacing:.05em}
+.ref .ticket .code[data-len='m']{font-size:21px}
+.ref .ticket .code[data-len='l']{font-size:16px}
+.ref .ticket .qr{width:auto;height:auto;padding:7px;border:0;border-radius:14px;box-shadow:0 0 0 1px var(--r-line),0 6px 18px rgba(0,0,0,.08)}
+.ref .perf{position:relative;height:1px;margin:16px -18px 10px;background-image:linear-gradient(90deg,var(--r-line-strong) 50%,transparent 0);background-size:8px 1px}
+.ref .tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px}
+.ref .tiles button{display:grid;justify-items:center;gap:7px;min-height:76px;padding:6px 2px 4px;border:0;border-radius:14px;background:none;color:var(--r-ink);font-size:12px;font-weight:500}
+.ref .tiles button span{width:46px;height:46px;display:grid;place-items:center;border-radius:16px;background:var(--r-surface);box-shadow:inset 0 0 0 1px var(--r-line)}
+.ref .tiles button:hover:not(:disabled) span{background:var(--r-line)}
+.ref .ticket .feedback{text-align:center}
+
+/* Team levels: share bar, counts and the configured reward rates. */
+.ref .team{margin-top:14px;padding:16px 18px 18px;border-radius:22px;background:var(--r-surface)}
+.ref .cardHead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.ref .cardHead h2{margin:0;display:flex;align-items:center;gap:7px;font-size:15px;font-weight:600}
+.ref .cardHead span{font-size:12px;color:var(--r-muted)}
+.ref .teamBar{display:flex;gap:3px;height:8px;margin-bottom:14px;border-radius:8px;overflow:hidden}
+.ref .teamBar i{display:block;flex-basis:0;min-width:6px;background:var(--r-ink)}
+.ref .teamBar i:nth-child(2){background:color-mix(in srgb,var(--r-ink) 55%,var(--r-surface))}
+.ref .teamBar i:nth-child(3){background:color-mix(in srgb,var(--r-ink) 22%,var(--r-surface))}
+.ref .teamLevels{display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}
+.ref .teamLevels>div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.ref .teamLevels>div+div{padding-left:14px;border-left:1px solid var(--r-line)}
+.ref .teamLevels b{font-family:var(--m-display);font-size:32px;font-weight:400;line-height:1}
+.ref .teamLevels span{margin-top:4px;font-size:12px;font-weight:600}
+.ref .teamLevels small{font-size:11px;color:var(--r-muted)}
+
+/* Records sit in the same sheet, as a card. */
+.ref .panel .records{margin-top:14px;padding:4px 18px 8px;border-radius:22px;background:var(--r-surface)}
+.ref .panel .records .levels{background:var(--r-bg)}
+.ref .panel .records .row:last-child{border-bottom:0}
+.ref .panel .records .empty{border-bottom:0}
+.ref .panel .records .row{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px}
+.ref .row .avatar{width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:var(--r-bg);color:var(--r-ink);box-shadow:inset 0 0 0 1.5px var(--r-ink);font:600 11.5px var(--m-mono);text-transform:uppercase}
+.ref .row .avatar[data-level='2']{box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--r-ink) 50%,transparent)}
+.ref .row .avatar[data-level='3']{box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--r-ink) 22%,transparent);color:var(--r-muted)}
+
 /* Sheet (portaled to body; width follows the app column, sits above the dock, respects safe areas) */
 .layer{position:fixed;inset:0;z-index:1200;display:flex;align-items:flex-end;justify-content:center;background:var(--r-scrim);overscroll-behavior:contain;font-family:var(--m-sans);-webkit-font-smoothing:antialiased}
 .sheet{width:100%;max-width:var(--app-max,480px);max-height:calc(100dvh - 24px - env(safe-area-inset-top));display:flex;flex-direction:column;padding:8px 16px 0;background:var(--r-bg);color:var(--r-ink);border-top:1px solid var(--r-line-strong);border-radius:20px 20px 0 0;outline:none}
