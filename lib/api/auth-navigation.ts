@@ -58,10 +58,14 @@ export function safeAuthReturnPath(value: string | null, origin: string): string
 export function consumeAuthDestination(storage: StorageReader, origin: string, oauth = false, skipPasskeyOffer = false): string {
   let destination = '/home'
   try {
-    const isNew = storage.getItem(NEW_ACCOUNT_KEY) === '1'
+    // A sign-in for the Android app (/app-login) goes straight back to it: the code it fetches lives two minutes,
+    // and the offer and welcome belong to the app session, not to this browser tab.
+    const forApp = (storage.getItem('rwa.return-to') ?? '').startsWith('/app-login?')
+    if (forApp) storage.removeItem(NEW_ACCOUNT_KEY)
+    const isNew = !forApp && storage.getItem(NEW_ACCOUNT_KEY) === '1'
     if (isNew && oauth) storage.removeItem('rwa.return-to')
     // Order: passkey offer, then the new-account welcome, then the saved page. Each step calls back in here.
-    if (!skipPasskeyOffer && passkeyOfferDue(storage, Date.now())) return PASSKEY_OFFER_PATH
+    if (!skipPasskeyOffer && !forApp && passkeyOfferDue(storage, Date.now())) return PASSKEY_OFFER_PATH
     if (isNew) {
       storage.removeItem(NEW_ACCOUNT_KEY)
       return WELCOME_PATH

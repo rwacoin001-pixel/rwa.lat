@@ -18,6 +18,14 @@ export const ANDROID_APP_CERT_SHA256 = '7ef88406ea2f2076cb5b6a07cf864c9bfbc3e3ca
 /** The Android client's WebView user agent carries this marker (MainActivity). */
 export const ANDROID_APP_UA = 'RwaLatAndroidTrial/'
 
+/** Running inside the Android client (its WebView), where Google/GitHub/X sign-in must go through the system browser. */
+export function isAndroidApp(userAgent: string = typeof navigator === 'undefined' ? '' : navigator.userAgent) {
+  return userAgent.includes(ANDROID_APP_UA)
+}
+
+/** Inside the app, sign-in providers open in the system browser and hand the session back (lib/app-handoff.ts). */
+export const APP_BROWSER_SIGN_IN_PATH = '/__native/browser-login'
+
 /**
  * An intent link that opens `href` in Chrome; Android browsers that support intents (most do) hand it over, and
  * where Chrome is missing the browser falls back to `fallback` (the APK when there is one, otherwise this page).

@@ -2042,3 +2042,7 @@ button, a, [role='tab'], [role='button'] { -webkit-user-select: none; user-selec
   html { overscroll-behavior: none; }
 }
 html:has([data-auth-theme]) { overscroll-behavior: none; }
+/* The Android app's WebView reports display-mode "browser": same rule, so the edge stretch never moves the dock. */
+html[data-launch='app'] { overscroll-behavior: none; }
+/* App keyboard open (set by the Android shell): the dock stays under the keyboard instead of riding up with it. */
+html[data-keyboard='open'] .liquid-dock { visibility: hidden; }

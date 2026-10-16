@@ -47,6 +47,12 @@ test('WalletConnect metadata points mobile wallets back to the PWA login route',
   assert.equal(metadata.url, 'https://rwa.lat')
   assert.equal(metadata.redirect.universal, 'https://rwa.lat/login')
   assert.match(metadata.icons[0], /^https:\/\/rwa\.lat\//)
+  assert.equal('native' in metadata.redirect, false)
+})
+
+test('inside the Android app the wallet returns to the app, with the web route as fallback', () => {
+  const metadata = buildWalletConnectMetadata('https://a-reit.com', true)
+  assert.deepEqual(metadata.redirect, { native: 'areit://wallet', universal: 'https://a-reit.com/login' })
 })
 
 test('an approved wallet session resolves after returning to the PWA', async () => {

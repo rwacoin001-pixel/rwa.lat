@@ -63,4 +63,11 @@ assert.equal(consumeAuthDestination({ getItem() { throw Error('disabled') }, rem
   assert.equal(completePasskeyOffer(origin, 30), '/home', 'blocked sessionStorage must still leave the offer')
   delete globalThis.window
 }
-console.log('PASS: auth destinations, OAuth resume, welcome, passkey offer/snooze, blocked storage getters and failed writes')
+{
+  // A browser sign-in for the Android app returns straight to /app-login: no passkey offer, no welcome.
+  const values = new Map([['rwa.auth-new-account', '1'], ['rwa.return-to', '/app-login?challenge=c&state=s&provider=google']])
+  const store = { getItem: key => values.get(key), removeItem: key => values.delete(key) }
+  assert.equal(consumeAuthDestination(store, origin, true), '/app-login?challenge=c&state=s&provider=google')
+  assert.equal(values.size, 0)
+}
+console.log('PASS: auth destinations, OAuth resume, welcome, passkey offer/snooze, blocked storage getters and failed writes, app sign-in')

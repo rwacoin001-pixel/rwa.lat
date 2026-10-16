@@ -1,4 +1,4 @@
-import { randomUUID } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { ConfigService } from '@nestjs/config'
 import { DataSource } from 'typeorm'
 import { buildDatabaseOptions } from '../../src/database/database-options'
@@ -95,6 +95,18 @@ suite('Mobile email codes against a new disposable PostgreSQL database', () => {
     expect(session.emailVerified).toBe(true)
     await identity.requestEmailLogin(address)
     expect(await identity.confirmEmailLogin(delivery.lastDemoToken(address, 'email_login')!)).toMatchObject({ userId: session.userId })
+  })
+
+  it('hands a signed-in browser session to the Android app once, bound to the app verifier', async () => {
+    const address = email(), registered = await signup(address)
+    const browser = await confirm(address, registered.challengeId)
+    const verifier = 'v'.repeat(43)
+    const { code } = await identity.startAppHandoff(browser.token, createHash('sha256').update(verifier).digest('base64url'))
+    await expect(identity.redeemAppHandoff(code, 'w'.repeat(43))).rejects.toThrow()
+    const app = await identity.redeemAppHandoff(code, verifier)
+    expect(app).toMatchObject({ userId: browser.userId })
+    expect(app.token).not.toBe(browser.token)
+    await expect(identity.redeemAppHandoff(code, verifier)).rejects.toThrow()
   })
 
   it('rejects missing registration consent before creating an account', async () => {
