@@ -1,15 +1,17 @@
-# RWA.LAT 平台法律与披露模板包
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
+
+# A-REIT 平台法律与披露模板包
 
 版本：0.9 Demo  
 暂定适用主体：**WAVEMAKER PACIFIC PARTNERS PTE. LTD.，UEN 201402949K，182 Cecil Street, #17-01, Frasers Tower, Singapore 069547**  
 已公开核验监管信息：MAS Capital Markets Services Licensee — Venture Capital Fund Management；[MAS FID record 4036](https://eservices.mas.gov.sg/fid/institution/detail/4036-WAVEMAKER-PACIFIC-PARTNERS-PTE-LTD)。公开页面未展示牌照编号。  
 法务状态：待新加坡及各服务地区律师确认。
 
-以上主体是根据品牌名称与公开资料作出的暂定映射，不代表已证明该主体获准运营 RWA.LAT。VCFM 权限不得扩大表述为 USDT 托管、Digital Payment Token Service、零售证券、交易场所或预测市场许可。
+以上主体是根据品牌名称与公开资料作出的暂定映射，不代表已证明该主体获准运营 A-REIT。VCFM 权限不得扩大表述为 USDT 托管、Digital Payment Token Service、零售证券、交易场所或预测市场许可。
 
 ## 1. 平台角色披露
 
-RWA.LAT 拟由 `[经董事会确认的运营主体；当前暂定为 WAVEMAKER PACIFIC PARTNERS PTE. LTD.]` 运营，作为数字资产产品访问、信息展示和技术服务平台。不同产品可能由不同发行人、特殊目的实体、算力供应商、券商或市场运营方提供。除非具体产品文件明确说明，平台运营方不是底层资产发行人、银行、存款机构、证券交易所或收益保证人。
+A-REIT 拟由 `[经董事会确认的运营主体；当前暂定为 WAVEMAKER PACIFIC PARTNERS PTE. LTD.]` 运营，作为数字资产产品访问、信息展示和技术服务平台。不同产品可能由不同发行人、特殊目的实体、算力供应商、券商或市场运营方提供。除非具体产品文件明确说明，平台运营方不是底层资产发行人、银行、存款机构、证券交易所或收益保证人。
 
 页面必须明确区分：
 
@@ -26,7 +28,7 @@ RWA.LAT 拟由 `[经董事会确认的运营主体；当前暂定为 WAVEMAKER P
 
 ## 3. AI 提示
 
-RWA.LAT AI 根据可用数据生成解释、筛选和组合建议。AI 输出可能不完整、过时或错误，不替代持牌人士提供的法律、税务或投资建议。用户应阅读实际发行文件，并在每次执行前确认产品、金额、费用、期限、风险和地区资格。
+A-REIT AI 根据可用数据生成解释、筛选和组合建议。AI 输出可能不完整、过时或错误，不替代持牌人士提供的法律、税务或投资建议。用户应阅读实际发行文件，并在每次执行前确认产品、金额、费用、期限、风险和地区资格。
 
 建议确认文案：
 

@@ -1,4 +1,6 @@
-# RWA.LAT 登录与注册接入要求
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
+
+# A-REIT 登录与注册接入要求
 
 版本：1.0  
 结论：当前 H5 为 Demo 交互；后端已有身份、设备和会话数据模型，但四类登录尚未形成生产闭环。
@@ -9,7 +11,7 @@
 
 需要公司提供：
 
-- 发送域名，例如 `auth.rwa.lat`；
+- 发送域名，例如 `a-reit.com`（须按邮件供应商要求验证）；
 - 邮件服务商账号（Amazon SES、Postmark 或 SendGrid 三选一）；
 - SMTP/API 凭据，仅保存于服务端密钥库；
 - 发件人名称、发件地址、退信地址；
@@ -28,8 +30,8 @@
 - Google Cloud 项目；
 - OAuth Client ID 与 Client Secret；
 - 已批准的品牌名称、Logo、隐私政策和用户条款 URL；
-- JavaScript origin：`https://rwa.lat` 及预发布域名；
-- Redirect URI，例如 `https://api.rwa.lat/v1/auth/oauth/google/callback`；
+- JavaScript origin：`https://a-reit.com` 及预发布域名；
+- Redirect URI，例如 `https://api.a-reit.com/v1/auth/oauth/google/callback`；
 - 联系邮箱及 OAuth consent screen 审核资料。
 
 ## 3. X 登录
@@ -40,7 +42,7 @@
 
 - X Developer Project 与 App；
 - OAuth 2.0 Client ID 与 Client Secret；
-- Callback URI，例如 `https://api.rwa.lat/v1/auth/oauth/x/callback`；
+- Callback URI，例如 `https://api.a-reit.com/v1/auth/oauth/x/callback`；
 - Website、Terms、Privacy、Organisation 信息；
 - 允许的 scope，建议首版仅 `users.read offline.access`（是否需要离线授权由安全评审决定）。
 
