@@ -160,8 +160,8 @@
 .probabilityRing svg { width: 100%; height: 100%; overflow: visible; transform: rotate(-90deg); filter: drop-shadow(0 0 15px rgba(47, 230, 191, .12)); }
 .probabilityRing circle { fill: none; stroke-width: 7; }
 .ringTrack { stroke: rgba(255, 255, 255, .07); }
-.ringYes { stroke: var(--mint); stroke-linecap: round; animation: ringReveal 1s cubic-bezier(.2, .8, .2, 1) both; filter: drop-shadow(0 0 5px rgba(47, 230, 191, .65)); }
-.ringNo { stroke: var(--red); stroke-linecap: round; animation: ringReveal 1s .12s cubic-bezier(.2, .8, .2, 1) both; filter: drop-shadow(0 0 4px rgba(255, 98, 122, .35)); }
+.ringYes { stroke: var(--mint); stroke-linecap: round; animation: ringReveal 1s var(--ease-house) both; filter: drop-shadow(0 0 5px rgba(47, 230, 191, .65)); }
+.ringNo { stroke: var(--red); stroke-linecap: round; animation: ringReveal 1s .12s var(--ease-house) both; filter: drop-shadow(0 0 4px rgba(255, 98, 122, .35)); }
 .probabilityRing > span { position: absolute; display: grid; place-items: center; }
 .probabilityRing b { font-family: 'Space Grotesk', Inter, sans-serif; font-size: 29px; letter-spacing: -.045em; }
 .probabilityRing small { color: var(--mint); font-size: 10px; font-weight: 700; letter-spacing: .12em; }

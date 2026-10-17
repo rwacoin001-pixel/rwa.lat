@@ -5,6 +5,7 @@ import { ArrowUpRight, Clock3, Search, X } from 'lucide-react'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
+import { assetClassLabel } from '@/lib/asset-labels'
 import { useQuery } from '@/lib/api/_query'
 import { isListed, listBaskets, listPairs, listProducts, listRwaAssets } from '@/lib/api/markets'
 import { fmtUsd, fmtUsdt } from '@/lib/money'
@@ -84,7 +85,7 @@ export function SearchScreen({ query }: { query: string }) {
       {investable.map((product) => <li key={product.id}>
         <button type="button" className={s.row} onClick={() => go(`/asset/${encodeURIComponent(product.externalRef ?? product.id)}`)}>
           <Logo name={product.displayName} />
-          <span className={s.rowMain}><b>{product.displayName}</b><small>{copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId}</small></span>
+          <span className={s.rowMain}><b>{product.displayName}</b><small>{assetClassLabel(product.assetClassId, locale)}</small></span>
           <span className={s.rowFig}><small className={s.muted}>{fill(copy.markets.from, { v: fmtUsdt(product.minOrderAtomicAmount) })}</small><ArrowUpRight size={15} className={s.muted} /></span>
         </button>
       </li>)}

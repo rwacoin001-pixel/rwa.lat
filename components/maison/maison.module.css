@@ -194,6 +194,10 @@
 .root[data-maison-page='ai'] { padding: 0; }
 .root[data-maison-page='ai'] > .body { padding: 0; }
 /* Staggered first paint: top blocks rise in sequence; later blocks arrive together. Fixed bars are left alone. */
+/* Inside the app shell the screen transition already brings the page in as one piece. A second page fade and a
+   block-by-block rise on top of it was the stacked entrance that kept every page from settling for about a
+   second, so there the page arrives once. Standalone pages (outside the shell) keep the rise. */
+:global(.rwa-screen-transition) .root, :global(.rwa-screen-transition) .body > :not(.stickyCta) { animation: none; }
 .body > :not(.stickyCta) { animation: mRise .52s var(--spring, var(--m-ease)) backwards; animation-delay: 200ms; }
 .body > :nth-child(1) { animation-delay: 0ms; }
 .body > :nth-child(2) { animation-delay: 50ms; }
@@ -505,6 +509,11 @@
 .rank { width: 18px; color: var(--m-faint); font-family: var(--m-mono); font-size: 10.5px; text-align: center; }
 .logo { display: grid; place-items: center; flex: none; width: 32px; height: 32px; overflow: hidden; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-glass-deep); color: var(--m-accent); font-family: var(--m-display); font-size: 15px; }
 .logo img { width: 100%; height: 100%; object-fit: cover; }
+/* Placeholder monogram when an asset has no artwork: two initials in the UI face, on one of three brand tints. */
+.logo[data-mono] { font-family: var(--m-sans); font-size: 11.5px; font-weight: 650; letter-spacing: .02em; }
+.logo[data-mono='0'] { background: color-mix(in srgb, var(--m-accent) 15%, var(--m-glass-deep)); color: var(--m-accent); }
+.logo[data-mono='1'] { background: color-mix(in srgb, var(--m-ink) 8%, var(--m-glass-deep)); color: var(--m-ink); }
+.logo[data-mono='2'] { background: color-mix(in srgb, #6d7f95 18%, var(--m-glass-deep)); color: color-mix(in srgb, #6d7f95 75%, var(--m-ink)); }
 .rowLead { display: flex; align-items: center; gap: 8px; }
 .rowMain { min-width: 0; }
 .rowMain b { display: block; overflow: hidden; font-size: 13.5px; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }
@@ -820,7 +829,7 @@
 :global([dir='rtl']) .countdown i::after { transform-origin: right center; }
 /* Percent presets under an amount (25 / 50 / 75 / MAX). */
 .presets { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; margin-top: 10px; }
-.presets button { min-height: 28px; border: 1px solid var(--m-line); border-radius: 8px; background: transparent; color: var(--m-muted); font: inherit; font-family: var(--m-mono); font-size: 11px; cursor: pointer; transition: color .2s var(--m-ease), border-color .2s var(--m-ease), background-color .2s var(--m-ease); }
+.presets button { position: relative; min-height: 28px; border: 1px solid var(--m-line); border-radius: 8px; background: transparent; color: var(--m-muted); font: inherit; font-family: var(--m-mono); font-size: 11px; cursor: pointer; transition: color .2s var(--m-ease), border-color .2s var(--m-ease), background-color .2s var(--m-ease); }
 .presets button[aria-pressed='true'] { color: var(--m-ink); border-color: var(--m-accent); background: color-mix(in srgb, var(--m-accent) 10%, transparent); }
 .presets button:disabled { opacity: .4; cursor: not-allowed; }
 
@@ -926,7 +935,7 @@ span.compareName { padding-top: 28px; cursor: default; }
 .orderLine > span { min-width: 0; }
 .orderLine b { display: block; font-weight: 600; }
 .orderLine small { display: block; margin-top: 2px; color: var(--m-muted); font-size: 11px; }
-.orderLine button { flex: none; min-height: 30px; padding: 0 12px; font-size: 11.5px; }
+.orderLine button { position: relative; flex: none; min-height: 30px; padding: 0 12px; font-size: 11.5px; }
 /* Fill meter inside an order line. */
 .fillMeter { display: block; width: 100%; height: 2px; margin-top: 6px; overflow: hidden; border-radius: 2px; background: var(--m-line); }
 .fillMeter i { display: block; height: 100%; background: var(--m-accent); transform-origin: left center; transform: scaleX(var(--f, 0)); transition: transform .6s var(--m-ease); }
@@ -1445,3 +1454,5 @@ span.compareName { padding-top: 28px; cursor: default; }
 .predSortMenu{position:absolute;right:0;top:54px;z-index:20;min-width:180px;border:1px solid var(--m-line);border-radius:18px;background:var(--m-bg);box-shadow:0 12px 36px #0003;padding:6px}
 .predSortMenu button{display:flex;align-items:center;justify-content:space-between;gap:20px;width:100%;padding:12px;border:0;border-radius:12px;background:transparent;color:var(--m-ink);font:inherit;font-size:14px;cursor:pointer}
 .predSortMenu button[aria-pressed=true]{background:var(--m-glass)}
+/* Trade presets and order-line actions keep their compact look; the hit area reaches 44px. */
+.presets button::after, .orderLine button::after { content: ''; position: absolute; inset: -8px -2px; }

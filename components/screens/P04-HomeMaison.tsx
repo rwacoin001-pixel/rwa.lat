@@ -36,8 +36,6 @@ import { openPath } from '@/lib/maison-nav'
 import type { MarketQuote } from '@/lib/p0a-data'
 import RwaTopbar from '@/components/rwa-topbar'
 import { ErrorBlock } from '@/components/ui/ErrorBlock'
-import { HomeSocialFeed } from '@/components/home/HomeSocialFeed'
-import { HomeMarkets } from '@/components/home/HomeMarkets'
 import { HomeForYou } from '@/components/home/HomeForYou'
 import { HomeSectionHeading as SectionHead } from '@/components/home/HomeSectionHeading'
 import { HomePolymarket } from '@/components/home/HomePolymarket'
@@ -67,14 +65,24 @@ const maisonCopy: Record<AppLocale, MaisonCopy> = {
   pt: { allocation: 'Distribuição por classe', other: 'Outros', trust: 'Custódia · Divulgação · Segurança', rank: 'N.º', strategy: 'Estratégia', invite: 'Convide amigos e ganhem recompensas juntos', inviteBody: 'Links de uso único · recompensas conforme lançamento', inviteEarned: '{v} ganhos', inviteDismiss: 'Ocultar por 30 dias', inviteOpen: 'Convites e recompensas' },
 }
 
-const lowerCopy: Record<AppLocale, { assets: string; community: string }> = {
-  en: { assets: 'All assets', community: 'Enter community' },
-  'zh-CN': { assets: '全部资产', community: '进入社区' },
-  hi: { assets: 'सभी परिसंपत्तियाँ', community: 'समुदाय में जाएँ' },
-  es: { assets: 'Todos los activos', community: 'Ir a comunidad' },
-  ar: { assets: 'جميع الأصول', community: 'دخول المجتمع' },
-  fr: { assets: 'Tous les actifs', community: 'Voir la communauté' },
-  pt: { assets: 'Todos os ativos', community: 'Entrar na comunidade' },
+const classLabels: Record<AppLocale, Record<string, string>> = {
+  en: { treasury: 'Treasuries', stable_value: 'Stable value', private_credit: 'Private credit', real_estate: 'Real estate', fund: 'Funds', bond: 'Bonds', equity: 'Equity', commodity: 'Commodities', infrastructure: 'Infrastructure' },
+  'zh-CN': { treasury: '国债', stable_value: '稳定价值', private_credit: '私人信贷', real_estate: '房地产', fund: '基金', bond: '债券', equity: '股权', commodity: '大宗商品', infrastructure: '基础设施' },
+  hi: { treasury: 'ट्रेज़री', stable_value: 'स्थिर मूल्य', private_credit: 'निजी ऋण', real_estate: 'रियल एस्टेट', fund: 'फंड', bond: 'बॉन्ड', equity: 'इक्विटी', commodity: 'कमोडिटी', infrastructure: 'अवसंरचना' },
+  es: { treasury: 'Tesoro', stable_value: 'Valor estable', private_credit: 'Crédito privado', real_estate: 'Inmuebles', fund: 'Fondos', bond: 'Bonos', equity: 'Acciones', commodity: 'Materias primas', infrastructure: 'Infraestructura' },
+  ar: { treasury: 'سندات الخزانة', stable_value: 'قيمة مستقرة', private_credit: 'ائتمان خاص', real_estate: 'عقارات', fund: 'صناديق', bond: 'سندات', equity: 'أسهم', commodity: 'سلع', infrastructure: 'بنية تحتية' },
+  fr: { treasury: 'Trésor', stable_value: 'Valeur stable', private_credit: 'Crédit privé', real_estate: 'Immobilier', fund: 'Fonds', bond: 'Obligations', equity: 'Actions', commodity: 'Matières premières', infrastructure: 'Infrastructure' },
+  pt: { treasury: 'Tesouro', stable_value: 'Valor estável', private_credit: 'Crédito privado', real_estate: 'Imóveis', fund: 'Fundos', bond: 'Títulos', equity: 'Ações', commodity: 'Commodities', infrastructure: 'Infraestrutura' },
+}
+
+const lowerCopy: Record<AppLocale, { assets: string; community: string; communityLede: string }> = {
+  en: { assets: 'All assets', community: 'Enter community', communityLede: 'See what investors are discussing' },
+  'zh-CN': { assets: '全部资产', community: '进入社区', communityLede: '看看投资者在聊什么' },
+  hi: { assets: 'सभी परिसंपत्तियाँ', community: 'समुदाय में जाएँ', communityLede: 'देखें निवेशक किस बारे में चर्चा कर रहे हैं' },
+  es: { assets: 'Todos los activos', community: 'Ir a comunidad', communityLede: 'Mira de qué hablan los inversores' },
+  ar: { assets: 'جميع الأصول', community: 'دخول المجتمع', communityLede: 'تعرّف على ما يناقشه المستثمرون' },
+  fr: { assets: 'Tous les actifs', community: 'Voir la communauté', communityLede: 'Voyez de quoi parlent les investisseurs' },
+  pt: { assets: 'Todos os ativos', community: 'Entrar na comunidade', communityLede: 'Veja o que os investidores estão discutindo' },
 }
 
 const tickerSymbols: Record<string, string> = { '^TNX': 'US10Y', 'DX-Y.NYB': 'DXY', 'GC=F': 'GOLD', '^GSPC': 'S&P 500', BTC: 'BTC', ETH: 'ETH' }
@@ -235,14 +243,6 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const [walletSnapshot, setWalletSnapshot] = useState<{ available: number; locked: number; pending: number; invested: number } | null>(null)
   const [positionsCount, setPositionsCount] = useState<number | null>(null)
   const [topbarHidden, setTopbarHidden] = useState(false)
-  // While the community tabs are pinned they own the top edge: the topbar stays tucked away.
-  const [feedPinned, setFeedPinned] = useState(false)
-  const feedPinnedRef = useRef(false)
-  const onFeedPinned = useCallback((pinned: boolean) => {
-    feedPinnedRef.current = pinned
-    setFeedPinned(pinned)
-    if (pinned) setTopbarHidden(true)
-  }, [])
   // Only the session probe is refreshed after an in-place email bind; wallet and positions are left alone.
   const refreshSessionView = useCallback(() => {
     void getSessionView().then(view => setSessionProbe(prev => prev.view && view.userId !== prev.view.userId ? prev : { status: 'ok', view })).catch(() => undefined)
@@ -327,8 +327,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
         const y = window.scrollY
         const el = heroBgRef.current
         if (el) el.style.transform = reducedMotion ? '' : `translate3d(0,${(-Math.min(y, 900) * .08).toFixed(1)}px,0) scale(${(1 + Math.min(y, 600) / 6000).toFixed(4)})`
-        if (feedPinnedRef.current) setTopbarHidden(true)
-        else if (y < 36) setTopbarHidden(false)
+        if (y < 36) setTopbarHidden(false)
         else if (Math.abs(y - previousY) > 5) setTopbarHidden(y > previousY)
         previousY = y
       })
@@ -376,7 +375,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   }, [sessionUserId])
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
 
-  return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
+  return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden}>
     <div className={styles.heroBg} ref={heroBgRef} aria-hidden="true" />
     <div className={styles.grain} aria-hidden="true" />
     <RwaTopbar screen="home" surface="transparent-over-media" action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/profile/referral') }} />
@@ -405,7 +404,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       {(state.lifecycle === 'funded' || state.lifecycle === 'invested') && <InviteStrip copy={extra} locale={locale} />}
 
       <Rise as="section" className={styles.pulse}>
-        <SectionHead index="01" title={copy.pulse} />
+        <SectionHead title={copy.pulse} />
         <dl className={styles.pulseMetrics}>
           <div><dt>{copy.tracked}</dt><dd><CountUp className={styles.pulseValue} value={marketCap} format={compactUsd} duration={1.8} /></dd></div>
           <div><dt>{copy.volume}</dt><dd><CountUp value={volume24h} format={compactUsd} /></dd></div>
@@ -427,12 +426,12 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       </Rise>
 
       <Rise as="section" className={styles.section}>
-        <SectionHead index="02" title={copy.forYou} />
+        <SectionHead title={copy.forYou} />
         <HomeForYou assets={featured.data?.items ?? []} onBaskets={() => go('basket-list')} />
       </Rise>
 
       <Rise as="section" className={styles.section}>
-        <SectionHead index="03" title={copy.featured} onMore={() => openPath('/markets?tab=assets')} more={lowerLabel.assets} />
+        <SectionHead title={copy.featured} onMore={() => openPath('/markets?tab=assets')} more={lowerLabel.assets} />
         {featured.loading && !featured.data ? <div className={styles.skeletonRow} aria-busy="true"><span /><span /><span /></div> : featured.error && !featured.data ? <ErrorBlock message={featured.error.message} retry={featured.refetch} /> : featuredItems.length ? <>
           <div className={styles.assetColumns} aria-hidden="true"><span /><span>{copy.marketCap}</span><span>{copy.change24h}</span></div>
           <div className={styles.rail}>
@@ -453,14 +452,15 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
         {featured.error && featured.data && <button type="button" className={styles.retry} onClick={() => void featured.refetch()}>{utility.retry}</button>}
       </Rise>
 
-      <Rise as="section" className={styles.section}><HomeMarkets /></Rise>
-
       <Rise as="section" className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></Rise>
 
-      <section className={`${styles.section} ${styles.community}`}>
-        <SectionHead index="06" title={copy.community} onMore={() => go('community')} more={lowerLabel.community} />
-        <HomeSocialFeed onPinnedChange={onFeedPinned} onOpen={post => openPath(`/community/post/${encodeURIComponent(post.id)}`)} onAuthor={post => { const handle = post.author?.handle || post.author?.id; if (handle) openPath('/community/member/' + encodeURIComponent(handle)) }} labels={{ all: feedAll[locale], loading: utility.loading, retry: utility.retry, end: utility.end, emptyTitle: copy.communityEmpty, emptyBody: copy.communityBody }} />
-      </section>
+      {/* The community lives on its own page; the home page offers the way in, not the whole stream. */}
+      <Rise as="section" className={styles.section}>
+        <button type="button" className={styles.communityEntry} onClick={() => go('community')}>
+          <span><b>{copy.community}</b><small>{lowerLabel.communityLede}</small></span>
+          <span className={styles.communityGo}>{lowerLabel.community}<ArrowUpRight size={15} aria-hidden="true" /></span>
+        </button>
+      </Rise>
     </div>
   </section>
 }

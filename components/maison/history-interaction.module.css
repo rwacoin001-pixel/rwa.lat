@@ -25,7 +25,7 @@
 .line {
   fill: none; stroke: var(--m-accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round;
   vector-effect: non-scaling-stroke; stroke-dasharray: 1; stroke-dashoffset: 0;
-  animation: draw 460ms cubic-bezier(.2, .7, .2, 1) both;
+  animation: draw 460ms var(--ease-house) both;
 }
 .cross { stroke: var(--m-faint); stroke-width: 1; stroke-dasharray: 3 3; vector-effect: non-scaling-stroke; }
 .dot { fill: var(--m-accent); stroke: var(--m-bg); stroke-width: 2; vector-effect: non-scaling-stroke; }

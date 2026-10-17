@@ -86,7 +86,7 @@ export function HomePolymarket() {
   useEffect(() => { void translate(result.data?.items ?? []) }, [translate, result.data])
 
   return <section className={styles.root} aria-label={label.title}>
-    <HomeSectionHeading index="05" title={label.title} more={allMarkets[locale]} onMore={() => openPath('/markets?tab=predictions')} />
+    <HomeSectionHeading title={label.title} more={allMarkets[locale]} onMore={() => openPath('/markets?tab=predictions')} />
     {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : (result.error && !result.data) || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{result.data.items.map(market => {
       const Icon = categoryIcon[market.category]
       const key = translationKey(locale, market)

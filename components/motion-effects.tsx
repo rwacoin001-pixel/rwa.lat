@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 
 import { DUR, EASE, reduced } from '@/lib/motion'
 
@@ -73,7 +73,7 @@ export function SplitFlapText({ value, className = '', label }: SplitFlapTextPro
   )
 }
 
-type ScreenTransitionProps = { screenKey: string; children: ReactNode; motion?: 'enter' | 'return' }
+type ScreenTransitionProps = { screenKey: string; children: ReactNode; motion?: 'enter' | 'return' | 'tab' }
 
 /**
  * A compositing-only screen transition. It deliberately animates opacity and
@@ -85,9 +85,33 @@ export function ScreenTransition({ screenKey, children, motion = 'enter' }: Scre
   // prefers-reduced-motion is handled in CSS (.rwa-screen-fade media query).
   return (
     <div key={`${screenKey}:${motion}`} className={`rwa-screen-transition rwa-${motion}`}>
+      {motion === 'tab' && <SettleEntrances />}
       {children}
     </div>
   )
+}
+
+/**
+ * Tabs behave like a native tab bar: the new tab is simply there. Every one-shot entrance inside it (block
+ * rises, title slides, staggered lists) jumps to its end on the first frames; looping animations such as
+ * spinners and skeleton shimmer keep running, and only the container's own short fade remains.
+ */
+function SettleEntrances() {
+  const marker = useRef<HTMLSpanElement>(null)
+  useLayoutEffect(() => {
+    const container = marker.current?.parentElement
+    if (!container || typeof container.getAnimations !== 'function') return
+    const settle = () => { for (const animation of container.getAnimations({ subtree: true })) {
+      const target = (animation.effect as KeyframeEffect | null)?.target
+      if (target === container || animation.effect?.getTiming().iterations === Infinity) continue
+      try { animation.finish() } catch { /* An animation with an unresolved end cannot be finished; leave it. */ }
+    } }
+    settle()
+    // Data-driven blocks mount a moment later; settle them too, but only within the switch itself.
+    const frames = [requestAnimationFrame(settle), window.setTimeout(settle, 120), window.setTimeout(settle, 360)]
+    return () => { cancelAnimationFrame(frames[0]); clearTimeout(frames[1]); clearTimeout(frames[2]) }
+  }, [])
+  return <span ref={marker} hidden />
 }
 
 type FlowProgressProps = { current: number; total: number; label?: string }
