@@ -158,16 +158,14 @@ describeDatabase('internal wallet transfers (PostgreSQL)', () => {
     const b = await createUser()
     await realDeposit(dataSource, a)
     await realDeposit(dataSource, b)
-    await seedAvailableBalance(a, '5000000')
     const intent = (senderUserId: string, recipientUserId: string) => ({
       id: randomUUID(), senderUserId, recipientUserId, atomicAmount: '1000000',
       idempotencyKey: `transfer:${randomUUID()}`, requestId: `request:${randomUUID()}`,
     })
     const attempts = Array.from({ length: 10 }, () => [bridge.postInternalTransfer(intent(a, b)), bridge.postInternalTransfer(intent(b, a))]).flat()
+    // Both sides hold a real deposit, so every transfer must post; a deadlock or raw driver error fails the test.
     const results = await Promise.allSettled(attempts)
-    // A side may legitimately run out of balance; a deadlock or raw driver error is the failure.
-    for (const result of results) {
-      if (result.status === 'rejected') expect(result.reason).toMatchObject({ response: expect.objectContaining({ code: 'WALLET_INSUFFICIENT_BALANCE' }) })
-    }
+    expect(results.filter((result) => result.status === 'rejected')).toEqual([])
+    await expect(balances([a, b])).resolves.toEqual({ [a]: '300000001', [b]: '300000001' })
   })
 })
