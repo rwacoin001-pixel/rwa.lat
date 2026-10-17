@@ -14,13 +14,13 @@ export type ForYouAsset = { slug: string; name: string; assetClass?: string; mar
 type Basket = { id: string; name: string; strategyName?: string | null; riskLevel?: string | null }
 type Copy = { basket: string; strategy: string; basketBody: string; pick: string; marketCap: string; low: string; medium: string; high: string }
 const copy: Record<AppLocale, Copy> = {
-  en: { basket: 'AI / RWA basket', strategy: 'Strategy', basketBody: 'Explore real asset strategies', pick: 'Treasury pick', marketCap: 'Market cap', low: 'Low risk', medium: 'Medium risk', high: 'High risk' },
-  'zh-CN': { basket: 'AI / RWA 组合', strategy: '策略', basketBody: '探索真实资产策略', pick: '精选国债', marketCap: '市值', low: '低风险', medium: '中风险', high: '高风险' },
-  hi: { basket: 'AI / RWA बास्केट', strategy: 'रणनीति', basketBody: 'वास्तविक संपत्ति रणनीतियाँ देखें', pick: 'ट्रेज़री चयन', marketCap: 'बाज़ार पूंजी', low: 'कम जोखिम', medium: 'मध्यम जोखिम', high: 'उच्च जोखिम' },
-  es: { basket: 'Cesta AI / RWA', strategy: 'Estrategia', basketBody: 'Explora estrategias de activos reales', pick: 'Selección del Tesoro', marketCap: 'Capitalización', low: 'Riesgo bajo', medium: 'Riesgo medio', high: 'Riesgo alto' },
-  ar: { basket: 'سلة AI / RWA', strategy: 'الاستراتيجية', basketBody: 'استكشف استراتيجيات الأصول الحقيقية', pick: 'اختيار سندات الخزانة', marketCap: 'القيمة السوقية', low: 'مخاطر منخفضة', medium: 'مخاطر متوسطة', high: 'مخاطر مرتفعة' },
-  fr: { basket: 'Panier AI / RWA', strategy: 'Stratégie', basketBody: 'Explorer les stratégies d’actifs réels', pick: 'Sélection du Trésor', marketCap: 'Capitalisation', low: 'Risque faible', medium: 'Risque modéré', high: 'Risque élevé' },
-  pt: { basket: 'Cesta AI / RWA', strategy: 'Estratégia', basketBody: 'Explore estratégias de ativos reais', pick: 'Seleção do Tesouro', marketCap: 'Valor de mercado', low: 'Risco baixo', medium: 'Risco médio', high: 'Risco alto' },
+  en: { basket: 'Asset basket', strategy: 'Strategy', basketBody: 'Explore real asset strategies', pick: 'Treasury pick', marketCap: 'Market cap', low: 'Low risk', medium: 'Medium risk', high: 'High risk' },
+  'zh-CN': { basket: '资产组合', strategy: '策略', basketBody: '探索真实资产策略', pick: '精选国债', marketCap: '市值', low: '低风险', medium: '中风险', high: '高风险' },
+  hi: { basket: 'परिसंपत्ति बास्केट', strategy: 'रणनीति', basketBody: 'वास्तविक संपत्ति रणनीतियाँ देखें', pick: 'ट्रेज़री चयन', marketCap: 'बाज़ार पूंजी', low: 'कम जोखिम', medium: 'मध्यम जोखिम', high: 'उच्च जोखिम' },
+  es: { basket: 'Cesta de activos', strategy: 'Estrategia', basketBody: 'Explora estrategias de activos reales', pick: 'Selección del Tesoro', marketCap: 'Capitalización', low: 'Riesgo bajo', medium: 'Riesgo medio', high: 'Riesgo alto' },
+  ar: { basket: 'سلة الأصول', strategy: 'الاستراتيجية', basketBody: 'استكشف استراتيجيات الأصول الحقيقية', pick: 'اختيار سندات الخزانة', marketCap: 'القيمة السوقية', low: 'مخاطر منخفضة', medium: 'مخاطر متوسطة', high: 'مخاطر مرتفعة' },
+  fr: { basket: 'Panier d’actifs', strategy: 'Stratégie', basketBody: 'Explorer les stratégies d’actifs réels', pick: 'Sélection du Trésor', marketCap: 'Capitalisation', low: 'Risque faible', medium: 'Risque modéré', high: 'Risque élevé' },
+  pt: { basket: 'Cesta de ativos', strategy: 'Estratégia', basketBody: 'Explore estratégias de ativos reais', pick: 'Seleção do Tesouro', marketCap: 'Valor de mercado', low: 'Risco baixo', medium: 'Risco médio', high: 'Risco alto' },
 }
 
 export function HomeForYou({ assets, onBaskets }: { assets: ForYouAsset[]; onBaskets: () => void }) {

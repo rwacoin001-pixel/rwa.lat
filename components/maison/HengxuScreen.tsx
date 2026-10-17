@@ -66,6 +66,22 @@ function RiskMeter({ risk, copy }: { risk: HengxuRisk; copy: HengxuCopy }) {
 /** Research and special-research strategies are never launch candidates; say so wherever they appear. */
 const inResearch = (product: HengxuProduct) => product.stage === 'research' || product.stage === 'special'
 
+/**
+ * Live baskets keyed by concept id: a basket's `strategySlug` is `hengxu-<id>`. Purchasability lives
+ * on the basket record, not in the catalog, so this — not `useListings` — is what proves a strategy
+ * is open. Shares the `markets:baskets` cache entry with the Open shelf, so it costs no extra fetch.
+ */
+function useBasketIndex() {
+  const baskets = useQuery('markets:baskets', listBaskets, { staleTime: 60_000, pollInterval: POLL.list })
+  return useMemo(() => {
+    const map = new Map<string, BasketPortfolio>()
+    for (const basket of baskets.data ?? []) {
+      if (basket.strategySlug?.startsWith('hengxu-')) map.set(basket.strategySlug.slice(7), basket)
+    }
+    return map
+  }, [baskets.data])
+}
+
 export const minText = (product: HengxuProduct, copy: HengxuCopy) => product.terms?.minInvestment === undefined ? copy.minValue : `${product.terms.minInvestment} USDT`
 
 function StageBadge({ product, listing, copy }: { product: HengxuProduct; listing?: CatalogProduct; copy: HengxuCopy }) {
@@ -96,17 +112,20 @@ export function BasketShelf() {
   const pro = proCopy[locale]
   const listings = useListings()
   const baskets = useQuery('markets:baskets', listBaskets, { staleTime: 60_000, pollInterval: POLL.list })
+  const basketIndex = useBasketIndex()
   const [filter, setFilter] = usePageState<Filter>('markets:baskets:filter', 'all')
   const live = baskets.data ?? []
+  /** Open = a live basket or a catalog listing. Live baskets show once, in the Open shelf, as real portfolios. */
+  const isOpen = (product: HengxuProduct) => listings.has(product.id) || basketIndex.has(product.id)
   const listed = HENGXU_PRODUCTS.filter((product) => listings.has(product.id))
   const showOpen = filter === 'all' || filter === 'open'
-  const series = filter === 'open' ? [] : HENGXU_PRODUCTS.filter((product) => (filter === 'all' || product.filters.includes(filter)) && !(showOpen && listings.has(product.id)))
+  const series = filter === 'open' ? [] : HENGXU_PRODUCTS.filter((product) => (filter === 'all' || product.filters.includes(filter)) && !(showOpen && isOpen(product)))
   const featured = series.find((product) => product.id === HENGXU_FEATURED)
   const rest = series.filter((product) => product !== featured)
   const bands = HORIZONS.map((horizon) => ({ horizon, items: rest.filter((product) => product.horizon === horizon) })).filter((band) => band.items.length)
   const openCount = live.length + listed.length
-  const candidates = HENGXU_PRODUCTS.filter((product) => !listings.has(product.id) && !inResearch(product)).length
-  const researching = HENGXU_PRODUCTS.filter((product) => !listings.has(product.id) && inResearch(product)).length
+  const candidates = HENGXU_PRODUCTS.filter((product) => !isOpen(product) && !inResearch(product)).length
+  const researching = HENGXU_PRODUCTS.filter((product) => !isOpen(product) && inResearch(product)).length
   const count = (key: Filter) => key === 'all' ? live.length + HENGXU_PRODUCTS.length : key === 'open' ? openCount : HENGXU_PRODUCTS.filter((product) => product.filters.includes(key)).length
   const termsHead = <div className={s.tableHead} aria-hidden="true"><span>{copy.sections[0]} · {copy.fields.risk}</span><span>{copy.terms.mgmtFee} · {copy.fields.min}</span></div>
 
@@ -243,6 +262,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const { locale } = useI18n()
   const copy = hengxuCopy[locale]
   const listings = useListings()
+  const basketIndex = useBasketIndex()
   const product = hengxuById(id)
   const topbar = <RwaTopbar screen="strategy-detail" title={product ? names(product, locale).mark : copy.series} onBack={() => product ? sharedBack(`strategy:${product.id}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
@@ -254,6 +274,9 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const body = bodyProps(locale)
   const { mark, sub, lang } = names(product, locale)
   const listing = listings.get(product.id)
+  const openBasket = basketIndex.get(product.id)
+  /** The strategy is open when either the catalog lists it or a live basket carries it. */
+  const open = Boolean(listing || openBasket)
   const index = HENGXU_PRODUCTS.indexOf(product)
   const prev = HENGXU_PRODUCTS[(index + HENGXU_PRODUCTS.length - 1) % HENGXU_PRODUCTS.length]
   const next = HENGXU_PRODUCTS[(index + 1) % HENGXU_PRODUCTS.length]
@@ -277,7 +300,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
       <p className={s.kicker}>{copy.series} · <span className={s.num}>{product.no} / 10</span></p>
       <h1 className={h.title}><span className={h.markL} lang={lang} data-shared={sharedKey(product, 'title')}>{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
       <p className={h.badges}>
-        {!listing && <span className={s.badge} data-tone="warn">{copy.concept}</span>}
+        {!open && <span className={s.badge} data-tone="warn">{copy.concept}</span>}
         <StageBadge product={product} listing={listing} copy={copy} />
         <span className={h.shortTag} lang="en" dir="ltr">{product.short}</span>
       </p>
@@ -294,10 +317,12 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
         <div><dt>{copy.fields.min}</dt><dd>{minText(product, copy)}<small>{terms.provisional ? copy.terms.provisional : copy.minNote}</small></dd></div>
         <div><dt>{copy.fields.fees}</dt><dd>{mgmtFee}{terms.mgmtFeePct !== undefined && <small>{terms.provisional ? copy.terms.provisional : copy.terms.mgmtFee}</small>}</dd></div>
       </dl>
-      {listing
-        ? <button type="button" className={s.cta} onClick={() => openPath(`/asset/${encodeURIComponent(listing.externalRef ?? listing.id)}`)}><span>{copy.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>
-        : <button type="button" className={`${s.cta} ${h.soon}`} disabled aria-describedby="hx-cta-note"><span>{researching ? `${copy.stage[product.stage]} · ${copy.terms.closed}` : copy.soon}</span><span className={s.ctaIcon}><Clock3 size={16} /></span></button>}
-      <p className={h.ctaNote} id="hx-cta-note">{listing ? copy.listedNote : copy.ctaNote}</p>
+      {openBasket
+        ? <button type="button" className={s.cta} onClick={() => openPath(`/basket/${encodeURIComponent(openBasket.id)}`)}><span>{copy.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>
+        : listing
+          ? <button type="button" className={s.cta} onClick={() => openPath(`/asset/${encodeURIComponent(listing.externalRef ?? listing.id)}`)}><span>{copy.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>
+          : <button type="button" className={`${s.cta} ${h.soon}`} disabled aria-describedby="hx-cta-note"><span>{researching ? `${copy.stage[product.stage]} · ${copy.terms.closed}` : copy.soon}</span><span className={s.ctaIcon}><Clock3 size={16} /></span></button>}
+      <p className={h.ctaNote} id="hx-cta-note">{open ? copy.listedNote : copy.ctaNote}</p>
     </section>
 
     <nav className={s.chips} aria-label={copy.jump}>

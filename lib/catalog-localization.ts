@@ -147,13 +147,13 @@ export function localizeProduct(product: DemoProduct, locale: AppLocale): DemoPr
 
 export function categoryLabel(category: DemoProduct['category'], locale: AppLocale) {
   const labels: Record<AppLocale, Record<DemoProduct['category'], string>> = {
-    en: { Compute: 'Compute', RWA: 'RWA', Stocks: 'Stocks', Prediction: 'Prediction' },
-    'zh-CN': { Compute: '算力', RWA: 'RWA', Stocks: '美股', Prediction: '预测市场' },
-    hi: { Compute: 'कंप्यूट', RWA: 'RWA', Stocks: 'शेयर', Prediction: 'पूर्वानुमान' },
-    es: { Compute: 'Cómputo', RWA: 'RWA', Stocks: 'Acciones', Prediction: 'Predicción' },
-    ar: { Compute: 'الحوسبة', RWA: 'RWA', Stocks: 'الأسهم', Prediction: 'التوقعات' },
-    fr: { Compute: 'Calcul', RWA: 'RWA', Stocks: 'Actions', Prediction: 'Prédiction' },
-    pt: { Compute: 'Computação', RWA: 'RWA', Stocks: 'Ações', Prediction: 'Previsão' },
+    en: { Compute: 'Compute', RWA: 'Real assets', Stocks: 'Stocks', Prediction: 'Prediction' },
+    'zh-CN': { Compute: '算力', RWA: '真实资产', Stocks: '美股', Prediction: '预测市场' },
+    hi: { Compute: 'कंप्यूट', RWA: 'वास्तविक संपत्ति', Stocks: 'शेयर', Prediction: 'पूर्वानुमान' },
+    es: { Compute: 'Cómputo', RWA: 'Activos reales', Stocks: 'Acciones', Prediction: 'Predicción' },
+    ar: { Compute: 'الحوسبة', RWA: 'الأصول الحقيقية', Stocks: 'الأسهم', Prediction: 'التوقعات' },
+    fr: { Compute: 'Calcul', RWA: 'Actifs réels', Stocks: 'Actions', Prediction: 'Prédiction' },
+    pt: { Compute: 'Computação', RWA: 'Ativos reais', Stocks: 'Ações', Prediction: 'Previsão' },
   }
   return labels[locale][category]
 }

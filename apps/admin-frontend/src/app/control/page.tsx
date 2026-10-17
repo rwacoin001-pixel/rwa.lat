@@ -446,7 +446,7 @@ export default function ControlPage() {
           <Card>
             <CardHeader>
               <CardTitle>资产分类</CardTitle>
-              <CardDescription>四类资产之上的一级分类（如 AI 算力、RWA、股票、预测市场）</CardDescription>
+              <CardDescription>四类资产之上的一级分类（如 AI 算力、真实资产、股票、预测市场）</CardDescription>
             </CardHeader>
             <CardContent className="p-0">
               {classes.length === 0 ? (

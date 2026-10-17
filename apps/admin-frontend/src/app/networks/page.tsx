@@ -51,7 +51,7 @@ export default function NetworksPage() {
       <div className="space-y-5">
         <PageHeader
           title="资产目录网络"
-          subtitle="RWA 资产目录覆盖的区块链网络（用于资产页筛选与链上数据关联），不决定钱包充值/提现网络"
+          subtitle="真实资产目录覆盖的区块链网络（用于资产页筛选与链上数据关联），不决定钱包充值/提现网络"
           actions={<RefreshButton loading={list.loading} onClick={list.reload} />}
         />
 
