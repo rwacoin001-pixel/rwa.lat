@@ -152,7 +152,7 @@ export function StepUpPanel({ emailFirst = false, locked = false, onVerified, on
     if (!emailFirst || requested.current) return
     requested.current = true
     void sendCode(false)
-  }, [emailFirst]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [emailFirst])
 
   useEffect(() => {
     if (mail.resendAt <= Date.now()) return
