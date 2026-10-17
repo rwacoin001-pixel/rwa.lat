@@ -499,6 +499,11 @@ export class WalletLedgerBridge {
     await runner.connect()
     await runner.startTransaction()
     try {
+      // Opposite transfers (A→B and B→A) would otherwise take the two balance-row locks in opposite
+      // order and deadlock. Taking both party locks in one global order serialises them instead.
+      for (const userId of [input.senderUserId, input.recipientUserId].sort()) {
+        await runner.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`transfer:${userId}`])
+      }
       const [prior] = await runner.query(
         `SELECT id, recipient_user_id AS "recipientUserId", atomic_amount::text AS "atomicAmount"
          FROM app.internal_transfers WHERE sender_user_id = $1 AND idempotency_key = $2`,
@@ -568,10 +573,29 @@ export class WalletLedgerBridge {
       return { id: input.id, created: true }
     } catch (error) {
       await runner.rollbackTransaction()
-      throw error
+      throw this.mapTransferError(error)
     } finally {
       await runner.release()
     }
+  }
+
+  /** Ledger-trigger failures are business outcomes for a transfer, not server errors. */
+  private mapTransferError(error: unknown): unknown {
+    const failure = error as { code?: string; constraint?: string; message?: string } | null
+    if (!failure || typeof failure !== 'object' || failure.constraint === 'closed_account_financial_write') return error
+    if (failure.code === '23514' && /insufficient balance/i.test(failure.message ?? '')) {
+      return new ConflictException({ code: WALLET_ERROR_CODES.INSUFFICIENT_BALANCE, message: 'Available USDT balance is insufficient.' })
+    }
+    if (failure.code === '55000') {
+      return new BadRequestException({
+        code: WALLET_ERROR_CODES.TRANSFER_RECIPIENT_UNAVAILABLE,
+        message: 'This transfer could not be completed. Check the recipient details and try again.',
+      })
+    }
+    if (failure.code === '40P01' || failure.code === '40001') {
+      return new ConflictException({ code: WALLET_ERROR_CODES.TRANSFER_BUSY, message: 'The transfer could not be completed right now. Please retry.' })
+    }
+    return error
   }
 
   private async resolveTransferReplay(

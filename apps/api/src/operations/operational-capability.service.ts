@@ -6,6 +6,7 @@ export const OPERATIONAL_SWITCH_KEYS = {
   orders: 'orders.acceptance',
   deposits: 'wallet.deposits.crediting',
   withdrawals: 'wallet.withdrawals.request',
+  transfers: 'wallet.transfers.request',
   withdrawalExecution: 'wallet.withdrawals.execution',
   yield: 'yield.processing',
   polymarket: 'polymarket.trading',

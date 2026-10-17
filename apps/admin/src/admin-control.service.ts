@@ -41,6 +41,12 @@ const SWITCH_DEFINITIONS = [
     environmentKey: 'CORE_PRODUCTION_FINANCIAL_FEATURES_ENABLED',
   },
   {
+    key: 'wallet.transfers.request',
+    label: '站内转账',
+    description: '允许用户发起新的站内转账。',
+    environmentKey: 'CORE_PRODUCTION_FINANCIAL_FEATURES_ENABLED',
+  },
+  {
     key: 'wallet.withdrawals.execution',
     label: '提现执行',
     description: '允许已审批的提现进入托管执行队列。',
