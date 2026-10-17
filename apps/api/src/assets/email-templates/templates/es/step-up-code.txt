@@ -1,0 +1,12 @@
+Configura tu PIN de operaciones
+
+Introduce este código para confirmar que eres tú y luego configura tu PIN de operaciones.
+
+{{code}}
+{{expiryMinutes}} minutos de validez
+
+
+Este código solo sirve para configurar o cambiar tu PIN de operaciones. No lo compartas. Si no lo solicitaste, cambia tu contraseña de acceso y contáctanos.
+
+Ayuda y soporte: {{supportUrl}}
+© {{year}} A-REIT

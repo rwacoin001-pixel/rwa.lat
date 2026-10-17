@@ -1,4 +1,5 @@
 import { request, type ApiResult } from '@/lib/api/_http'
+import type { AppLocale } from '@/lib/app-locales'
 
 type PasskeyCreationOptionsJSON = Omit<
   PublicKeyCredentialCreationOptions,
@@ -126,9 +127,13 @@ export type SecurityFactors = {
 }
 export type SecurityEventView = { id: string; action: string; occurredAt: string }
 /** A five-minute, session-bound token for sensitive actions. Keep it in memory only. */
-export type StepUpResult = { reauthentication: string; expiresInSeconds: number; method: 'totp' | 'recovery_code' | 'passkey' }
+export type StepUpResult = { reauthentication: string; expiresInSeconds: number; method: 'totp' | 'recovery_code' | 'passkey' | 'email' }
+/** Email step-up challenge for the signed-in account; the address is only ever returned masked. */
+export type EmailStepUpChallenge = { challengeId: string; maskedEmail: string; expiresInSeconds: number; resendAfterSeconds: number }
 
 export const listSecurityFactors = () => request<SecurityFactors>('/v1/security/factors')
+export const requestStepUpEmailCode = (signal?: AbortSignal, locale?: AppLocale) => request<EmailStepUpChallenge>('/v1/security/step-up/email/request', { method: 'POST', body: JSON.stringify({ locale }), signal, loading: 'silent' })
+export const stepUpWithEmailCode = (challengeId: string, code: string, signal?: AbortSignal) => request<StepUpResult>('/v1/security/step-up/email/confirm', { method: 'POST', body: JSON.stringify({ challengeId, code }), signal, loading: 'silent' })
 export const listSecurityEvents = () => request<SecurityEventView[]>('/v1/security/events')
 export const stepUpWithTotp = (code: string, signal?: AbortSignal) => request<StepUpResult>('/v1/security/step-up/totp', { method: 'POST', body: JSON.stringify({ code }), signal, loading: 'silent' })
 export const stepUpWithRecoveryCode = (code: string, signal?: AbortSignal) => request<StepUpResult>('/v1/security/step-up/recovery-code', { method: 'POST', body: JSON.stringify({ code }), signal, loading: 'silent' })

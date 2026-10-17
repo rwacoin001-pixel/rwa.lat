@@ -94,7 +94,11 @@ export class EmailDeliveryClient {
         }),
         signal: controller.signal,
       })
-      if (!response.ok) throw new Error('Email provider rejected the request')
+      if (!response.ok) {
+        const error = new Error('Email provider rejected the request') as Error & { providerStatus: number }
+        error.providerStatus = response.status
+        throw error
+      }
     } finally {
       clearTimeout(timeout)
     }

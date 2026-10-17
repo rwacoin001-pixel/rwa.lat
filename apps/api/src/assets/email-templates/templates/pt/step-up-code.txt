@@ -1,0 +1,12 @@
+Defina seu PIN de transações
+
+Insira este código para confirmar que é você e depois defina seu PIN de transações.
+
+{{code}}
+{{expiryMinutes}} minutos de validade
+
+
+Este código serve apenas para definir ou alterar seu PIN de transações. Nunca o compartilhe. Se não fez a solicitação, altere sua senha de acesso e fale conosco.
+
+Ajuda e suporte: {{supportUrl}}
+© {{year}} A-REIT

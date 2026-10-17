@@ -4,6 +4,8 @@ import type { AuthenticatedRequest } from './session-auth.guard'
 import { CurrentAuth } from './current-auth.decorator'
 import {
   PasskeyAssertionFinishDto,
+  EmailStepUpConfirmDto,
+  EmailStepUpRequestDto,
   PasskeyFinishDto,
   RecoveryCodeDto,
   SecurityEventViewDto,
@@ -101,6 +103,18 @@ export class SecurityController {
   @ApiOperation({ summary: 'Use a one-time recovery code for a five-minute sensitive-action reauthentication token' })
   verifyRecoveryCode(@CurrentAuth() actor: SecurityActor, @Body() dto: RecoveryCodeDto, @Req() request: AuthenticatedRequest) {
     return this.security.verifyRecoveryCode(actor, dto.code, this.requestId(request))
+  }
+
+  @Post('step-up/email/request')
+  @ApiOperation({ summary: 'Email a six-digit code to the verified address for transaction-password step-up' })
+  requestEmailStepUp(@CurrentAuth() actor: SecurityActor, @Req() request: AuthenticatedRequest, @Body() dto: EmailStepUpRequestDto) {
+    return this.security.requestEmailStepUp(actor, this.requestId(request), dto.locale)
+  }
+
+  @Post('step-up/email/confirm')
+  @ApiOperation({ summary: 'Verify the emailed code and issue a five-minute transaction-password-only reauthentication token' })
+  confirmEmailStepUp(@CurrentAuth() actor: SecurityActor, @Body() dto: EmailStepUpConfirmDto, @Req() request: AuthenticatedRequest) {
+    return this.security.confirmEmailStepUp(actor, dto.challengeId, dto.code, this.requestId(request))
   }
 
   @Post('passkeys/registration')

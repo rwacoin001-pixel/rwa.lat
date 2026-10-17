@@ -61,6 +61,7 @@ describe('Security core', () => {
       auditLogs as any,
       identityCrypto,
       { get: () => undefined } as any,
+      {} as any,
     )
     const actor: SecurityActor = { userId: 'user-1', sessionId: 'session-1', deviceId: 'device-1' }
     const token = (service as any).issueStepUp(actor, 'totp')
@@ -101,6 +102,7 @@ describe('Security core', () => {
       auditLogs as any,
       identityCrypto,
       { get: () => undefined } as any,
+      {} as any,
     )
     const actor: SecurityActor = { userId: 'user-1', sessionId: 'session-1', deviceId: 'device-1' }
     const token = (service as any).issueStepUp(actor, 'passkey')
@@ -136,6 +138,7 @@ describe('Security core', () => {
       auditLogs as any,
       crypto(),
       { get: () => undefined } as any,
+      {} as any,
     )
 
     await expect(service.listEvents({ userId: 'user-1', sessionId: 'session-1', deviceId: null })).resolves.toEqual([{

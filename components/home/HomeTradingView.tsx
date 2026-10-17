@@ -10,14 +10,14 @@ import styles from './HomeTradingView.module.css'
 
 const localeMap: Record<string, string> = { 'zh-CN': 'zh_CN', en: 'en', hi: 'en', es: 'es', ar: 'ar_AE', fr: 'fr', pt: 'pt' }
 
-const goldCopy: Record<AppLocale, { title: string; source: string; unavailable: string; futures: string; open: string; delayed: string; latest: string }> = {
-  en: { title: 'Gold spot', source: 'XAU/USD spot · TradingView', unavailable: 'XAU/USD chart unavailable', futures: 'Gold futures GC=F quote', open: 'Open chart on TradingView', delayed: 'Delayed', latest: 'Latest' },
-  'zh-CN': { title: '黄金现货', source: 'XAU/USD 现货 · TradingView', unavailable: 'XAU/USD 图表暂不可用', futures: '黄金期货 GC=F 报价', open: '在 TradingView 查看图表', delayed: '延迟', latest: '最新' },
-  hi: { title: 'हाजिर सोना', source: 'XAU/USD हाजिर · TradingView', unavailable: 'XAU/USD चार्ट उपलब्ध नहीं', futures: 'सोना फ्यूचर्स GC=F भाव', open: 'TradingView पर चार्ट खोलें', delayed: 'विलंबित', latest: 'नवीनतम' },
-  es: { title: 'Oro al contado', source: 'XAU/USD al contado · TradingView', unavailable: 'Gráfico XAU/USD no disponible', futures: 'Cotización de futuros GC=F', open: 'Abrir en TradingView', delayed: 'Retrasado', latest: 'Último' },
-  ar: { title: 'الذهب الفوري', source: 'XAU/USD فوري · TradingView', unavailable: 'رسم XAU/USD غير متاح', futures: 'سعر عقود الذهب الآجلة GC=F', open: 'فتح الرسم في TradingView', delayed: 'متأخر', latest: 'الأحدث' },
-  fr: { title: 'Or au comptant', source: 'XAU/USD au comptant · TradingView', unavailable: 'Graphique XAU/USD indisponible', futures: 'Cours des contrats à terme GC=F', open: 'Ouvrir dans TradingView', delayed: 'Différé', latest: 'Dernier' },
-  pt: { title: 'Ouro à vista', source: 'XAU/USD à vista · TradingView', unavailable: 'Gráfico XAU/USD indisponível', futures: 'Cotação de futuros GC=F', open: 'Abrir no TradingView', delayed: 'Atrasado', latest: 'Mais recente' },
+const goldCopy: Record<AppLocale, { title: string; source: string; unavailable: string; futures: string; open: string; delayed: string; latest: string; retry: string }> = {
+  en: { title: 'Gold spot', source: 'XAU/USD spot · TradingView', unavailable: 'XAU/USD chart unavailable', futures: 'Gold futures GC=F quote', open: 'Open chart on TradingView', delayed: 'Delayed', latest: 'Latest', retry: 'Retry chart' },
+  'zh-CN': { title: '黄金现货', source: 'XAU/USD 现货 · TradingView', unavailable: 'XAU/USD 图表暂不可用', futures: '黄金期货 GC=F 报价', open: '在 TradingView 查看图表', delayed: '延迟', latest: '最新', retry: '重新加载图表' },
+  hi: { title: 'हाजिर सोना', source: 'XAU/USD हाजिर · TradingView', unavailable: 'XAU/USD चार्ट उपलब्ध नहीं', futures: 'सोना फ्यूचर्स GC=F भाव', open: 'TradingView पर चार्ट खोलें', delayed: 'विलंबित', latest: 'नवीनतम', retry: 'चार्ट फिर लोड करें' },
+  es: { title: 'Oro al contado', source: 'XAU/USD al contado · TradingView', unavailable: 'Gráfico XAU/USD no disponible', futures: 'Cotización de futuros GC=F', open: 'Abrir en TradingView', delayed: 'Retrasado', latest: 'Último', retry: 'Reintentar gráfico' },
+  ar: { title: 'الذهب الفوري', source: 'XAU/USD فوري · TradingView', unavailable: 'رسم XAU/USD غير متاح', futures: 'سعر عقود الذهب الآجلة GC=F', open: 'فتح الرسم في TradingView', delayed: 'متأخر', latest: 'الأحدث', retry: 'إعادة تحميل الرسم' },
+  fr: { title: 'Or au comptant', source: 'XAU/USD au comptant · TradingView', unavailable: 'Graphique XAU/USD indisponible', futures: 'Cours des contrats à terme GC=F', open: 'Ouvrir dans TradingView', delayed: 'Différé', latest: 'Dernier', retry: 'Recharger le graphique' },
+  pt: { title: 'Ouro à vista', source: 'XAU/USD à vista · TradingView', unavailable: 'Gráfico XAU/USD indisponível', futures: 'Cotação de futuros GC=F', open: 'Abrir no TradingView', delayed: 'Atrasado', latest: 'Mais recente', retry: 'Recarregar gráfico' },
 }
 
 export function HomeTradingView({ bare = false }: { bare?: boolean } = {}) {
@@ -29,6 +29,7 @@ export function HomeTradingView({ bare = false }: { bare?: boolean } = {}) {
   const [visible, setVisible] = useState(false)
   const [failed, setFailed] = useState(false)
   const [loaded, setLoaded] = useState(false)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     const root = rootRef.current
@@ -88,25 +89,28 @@ export function HomeTradingView({ bare = false }: { bare?: boolean } = {}) {
         if (frame.contentWindow?.location.href === 'about:blank') return
       } catch { /* A cross-origin document means the widget navigated successfully. */ }
       settled = true
+      setFailed(false)
       setLoaded(true)
       window.clearInterval(checkFrame)
     }, 350)
-    const deadline = window.setTimeout(() => { if (!settled) setFailed(true); window.clearInterval(checkFrame) }, 8_000)
-    return () => { window.clearInterval(checkFrame); window.clearTimeout(deadline); mount.replaceChildren() }
-  }, [visible, theme, locale])
+    // A soft deadline shows a fallback without hiding a chart that arrives later.
+    const deadline = window.setTimeout(() => { if (!settled) setFailed(true) }, 8_000)
+    const stopPolling = window.setTimeout(() => window.clearInterval(checkFrame), 60_000)
+    return () => { window.clearInterval(checkFrame); window.clearTimeout(deadline); window.clearTimeout(stopPolling); script.onerror = null; mount.replaceChildren() }
+  }, [visible, theme, locale, attempt])
 
   return <section ref={rootRef} className={styles.root} aria-label="TradingView XAU/USD">
     {!bare && <div className={styles.heading}><div><span className={styles.eyebrow}>TRADINGVIEW / XAU·USD</span><h2>{label.title}</h2></div><a href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" rel="noopener noreferrer" aria-label="TradingView XAU/USD"><ArrowUpRight size={18} /></a></div>}
     <div className={styles.chart}>
       {(!visible || (!loaded && !failed)) && <div className={styles.placeholder} />}
       <div ref={mountRef} className={styles.widget} />
-      {failed && <GoldFallback />}
+      {failed && <GoldFallback onRetry={() => setAttempt(value => value + 1)} />}
     </div>
     <p className={styles.source}><a href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" rel="noopener noreferrer">{label.source}</a></p>
   </section>
 }
 
-function GoldFallback() {
+function GoldFallback({ onRetry }: { onRetry: () => void }) {
   const { locale } = useI18n()
   const label = goldCopy[locale]
   const quote = useQuery('market-context:tv-fallback', getMarketContextView, { staleTime: 45_000 }).data?.anchors.find(item => item.symbol === 'GC=F')
@@ -116,6 +120,7 @@ function GoldFallback() {
     <small>{label.futures}</small>
     <strong dir="ltr">{quote?.value == null ? '—' : new Intl.NumberFormat(locale, { maximumFractionDigits: 2 }).format(quote.value)}</strong>
     <small>{quote ? `${quote.source}${asOf ? ` · ${asOf}` : ''} · ${quote.stale ? label.delayed : label.latest}` : ''}</small>
+    <button type="button" className={styles.retry} onClick={onRetry}>{label.retry}</button>
     <a href="https://www.tradingview.com/symbols/XAUUSD/" target="_blank" rel="noopener noreferrer">{label.open} <ArrowUpRight size={14} /></a>
   </div>
 }
