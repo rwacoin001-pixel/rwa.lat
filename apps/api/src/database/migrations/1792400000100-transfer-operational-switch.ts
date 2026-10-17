@@ -4,8 +4,8 @@ import type { MigrationInterface, QueryRunner } from 'typeorm'
  * Internal transfers get their own operator switch so they can be paused without pausing withdrawals.
  * Seeded enabled: transfers already run today, and a missing row would read as paused in production.
  */
-export class TransferOperationalSwitch1792400000000 implements MigrationInterface {
-  name = 'TransferOperationalSwitch1792400000000'
+export class TransferOperationalSwitch1792400000100 implements MigrationInterface {
+  name = 'TransferOperationalSwitch1792400000100'
 
   async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
