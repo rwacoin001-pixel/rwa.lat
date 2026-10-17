@@ -24,6 +24,7 @@ import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './pr
 import { Lacquer, StatStrip } from './motion'
 import { fmtAtomic, fmtDate, fmtDateTime, fmtDuration } from './format'
 import { settle } from './settle'
+import { KYC_REQUIRED } from '@/lib/kyc-policy'
 import { NotificationPreferences } from './NotificationPreferences'
 
 const kycTone = (state: KycState | undefined) => state === 'approved' ? 'live' : state === 'rejected' || state === 'expired' ? 'down' : state === 'needs_information' ? 'warn' : state ? 'accent' : undefined
@@ -54,10 +55,10 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const protectedSignIn = totp + passkeys > 0
   const securityText = !factors.data ? (factors.error ? p.unknown : '…') : !protectedSignIn ? p.securityNone
     : [totp ? p.totp : null, passkeys ? fill(p.passkeys, { n: passkeys }) : null].filter(Boolean).join(' · ')
-  const nextKyc = kycState ? p.nextKyc[kycState] : undefined
+  const nextKyc = KYC_REQUIRED && kycState ? p.nextKyc[kycState] : undefined
   const next = nextKyc ? { body: nextKyc, path: '/profile/verification' }
     : factors.data && !protectedSignIn ? { body: p.nextSecurity, path: '/profile/security' }
-    : kycState === 'approved' && protectedSignIn ? null : undefined
+    : (!KYC_REQUIRED || kycState === 'approved') && protectedSignIn ? null : undefined
 
   const signOut = async () => {
     if (leaving) return

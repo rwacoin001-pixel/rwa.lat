@@ -10,6 +10,7 @@ import { getKycStatus, type KycState } from '@/lib/session-data'
 import styles from '@/components/screens/P02-Login.module.css'
 import welcome from './welcome.module.css'
 import { AuthShell } from '@/components/screens/AuthShell'
+import { KYC_REQUIRED } from '@/lib/kyc-policy'
 
 type WelcomeCopy = {
   kicker: string; title: string; lede: string
@@ -67,6 +68,8 @@ export default function WelcomePage() {
 
   useEffect(() => {
     if (!readSession()) { window.location.replace('/login'); return }
+    // Every step on this page is about identity verification; with no KYC requirement there is nothing to offer.
+    if (!KYC_REQUIRED) { leave(); return }
     let active = true
     getKycStatus().then(view => { if (active) setKyc(view?.state ?? 'not_started') }).catch(() => {})
     return () => { active = false }
@@ -77,6 +80,8 @@ export default function WelcomePage() {
     window.location.replace(target ?? destination)
   }
   const identityStatus = kyc === 'approved' ? text.done : kyc && ['submitted', 'in_progress', 'needs_information'].includes(kyc) ? text.review : text.optional
+
+  if (!KYC_REQUIRED) return null
 
   return <AuthShell>
     <header className={styles.cardHead}>
