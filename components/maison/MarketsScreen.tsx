@@ -16,7 +16,7 @@ import { openPath } from '@/lib/maison-nav'
 import { usePageState } from '@/lib/app-navigation'
 import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Figure, PollBar, Segmented, TickerTape, useAutoAnimate } from './motion'
-import { fmtDate, fmtDateTime, fmtWhen } from './format'
+import { fmtDate, fmtDateTime } from './format'
 import { BasketShelf } from './HengxuScreen'
 import { MarketHero } from './MarketHero'
 import { PredictionFeed } from './PredictionFeed'
@@ -211,7 +211,7 @@ function TradePanel() {
         return <li key={pair.id}>
           <button type="button" className={s.row} onClick={() => openPath(`/trade/${encodeURIComponent(pair.symbol)}`)}>
             <Logo name={base} />
-            <span className={s.rowMain}><b className={s.num}>{base} / {pair.quoteAssetCode}</b><small>{pair.state === 'active' ? copy.markets.active : copy.markets.paused}{pair.updatedAt ? ` · ${fmtWhen(pair.updatedAt, locale)}` : ''}</small></span>
+            <span className={s.rowMain}><b className={s.num}>{base} / {pair.quoteAssetCode}</b><small>{pair.state === 'active' ? copy.markets.active : copy.markets.paused}{pair.updatedAt ? ` · ${fmtDateTime(pair.updatedAt, locale, { timeStyle: 'short' })}` : ''}</small></span>
             <span className={s.rowFig}><b><Figure value={pair.lastPrice} locale="en-US" format={{ maximumFractionDigits: 6 }} /></b><small className={s.muted}>{pair.quoteAssetCode}</small></span>
           </button>
         </li>

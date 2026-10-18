@@ -270,8 +270,3 @@
 .startPrimary:focus-visible, .startSecondary:focus-visible { outline: 2px solid var(--m-lacquer-accent, var(--m-accent)); outline-offset: 2px; }
 :global([dir='rtl']) .startPrimary svg { transform: scaleX(-1); }
 @media (prefers-reduced-motion: reduce) { .startPrimary, .startSecondary { transition: none; } }
-/* Quiet trading pair: one plain sentence where the chart and depth bar would be. */
-/* A quiet pair gives the middle row the free height, so the note sits centred between price and actions. */
-.frame .inner[data-quiet] { grid-template-rows: auto 1fr auto; }
-.frame .inner > .tier[data-quiet] { align-self: center; }
-.quietNote { margin: 4px 0 2px; padding: 14px 16px; border: 1px dashed var(--m-lacquer-line, var(--m-line)); border-radius: 14px; color: var(--m-lacquer-muted, var(--m-muted)); font-size: 13px; line-height: 1.55; }

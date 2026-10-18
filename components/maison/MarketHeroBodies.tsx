@@ -16,7 +16,7 @@ import { openPath } from '@/lib/maison-nav'
 import { minText, names, riskLabel, useListings } from './HengxuScreen'
 import { maison as s } from './primitives'
 import { Figure } from './motion'
-import { fmtDateTime, fmtWhen } from './format'
+import { fmtDateTime } from './format'
 import h from './hero-card.module.css'
 
 const at = (i: number) => ({ '--i': i }) as CSSProperties
@@ -136,12 +136,8 @@ export function TradeGauge() {
   const live = pair?.state === 'active'
   const open = () => symbol && openPath(`/trade/${encodeURIComponent(symbol)}`)
   const depth = fill(text.depth, { n: DEPTH.toLocaleString(locale) })
-  // Loaded, and nothing rests on the book and no candle exists: the pair is listed but quiet. Say that plainly
-  // instead of drawing an empty chart, an empty depth bar and three dashes under a "trading" badge.
-  const settled = (candles.data || candles.error) && (book.data || book.error)
-  const quiet = Boolean(settled) && !day && bid === null && ask === null
 
-  return <div className={h.inner} data-quiet={quiet || undefined}>
+  return <div className={h.inner}>
     {!pairs.data && !pairs.error ? <div className={h.skeleton} aria-busy="true"><i /><i /><i /></div>
       : !pair ? <div className={h.state} role={pairs.error ? 'alert' : 'status'}>
         <span>{pairs.error ? copy.markets.loadError : copy.markets.pairsEmpty}</span>
@@ -151,7 +147,7 @@ export function TradeGauge() {
         <div className={h.tier} data-tier="1">
           <div className={`${h.top} ${h.reveal}`} style={at(0)}>
             <span className={`${h.tag} ${h.num}`}>{base} / {pair.quoteAssetCode}</span>
-            <span className={h.live} data-on={(live && !quiet) || undefined}>{!live ? copy.markets.paused : quiet ? text.quietBadge : copy.markets.active}</span>
+            <span className={h.live} data-on={live || undefined}>{live ? copy.markets.active : copy.markets.paused}</span>
           </div>
           <div className={`${h.prob} ${h.reveal}`} style={at(1)}>
             <span className={`${h.big} ${h.bigPrice} ${h.num}`}><Figure value={price} locale="en-US" format={{ minimumFractionDigits: 2, maximumFractionDigits: digits(price ?? 0) }} /><small>{pair.quoteAssetCode}</small></span>
@@ -160,10 +156,9 @@ export function TradeGauge() {
               {signed(day.change)}<i>· 24h</i>
             </span>}
           </div>
-          <p className={`${h.cap} ${h.reveal}`} style={at(2)}>{text.lastPrice}{pair.updatedAt ? ` · ${fmtWhen(pair.updatedAt, locale)}` : ''}</p>
+          <p className={`${h.cap} ${h.reveal}`} style={at(2)}>{text.lastPrice}{pair.updatedAt ? ` · ${fmtDateTime(pair.updatedAt, locale, { timeStyle: 'short' })}` : ''}</p>
         </div>
-        {quiet ? <div className={h.tier} data-tier="2" data-quiet="true"><p className={`${h.quietNote} ${h.reveal}`} style={at(3)}>{text.quietNote}</p></div>
-        : <div className={`${h.tier} ${h.chart}`} data-tier="2">
+        <div className={`${h.tier} ${h.chart}`} data-tier="2">
           <div className={`${h.chartHead} ${h.reveal}`} style={at(3)}><span className={h.chartLead}>{text.candles}</span></div>
           <div className={h.reveal} style={at(3)}>
             {day && day.rows.length > 1 ? <Candles rows={day.rows} label={`${base} · ${text.candles}`} />
@@ -180,7 +175,7 @@ export function TradeGauge() {
               <span data-side="ask">{fill(text.asks, { p: buyShare === null ? '—' : share(1 - buyShare, locale) })}</span>
             </div>
           </div>
-        </div>}
+        </div>
         <div className={h.tier} data-tier="3">
           <div className={`${h.actions} ${h.reveal}`} style={at(4)}>
             <button type="button" className={h.buy} onClick={open}>
@@ -192,11 +187,11 @@ export function TradeGauge() {
               {bid !== null && <span className={`${h.price} ${h.num}`}>{fmtPrice(bid)}</span>}
             </button>
           </div>
-          {!quiet && <dl className={`${h.facts} ${h.reveal}`} style={at(5)}>
+          <dl className={`${h.facts} ${h.reveal}`} style={at(5)}>
             <div><dt>{text.high24}</dt><dd className={h.num}>{fmtPrice(day?.high)}</dd></div>
             <div><dt>{text.low24}</dt><dd className={h.num}>{fmtPrice(day?.low)}</dd></div>
             <div><dt>{text.spread}</dt><dd className={h.num}>{bid !== null && ask !== null && ask + bid > 0 ? `${((ask - bid) / ((ask + bid) / 2) * 100).toFixed(2)}%` : '—'}</dd></div>
-          </dl>}
+          </dl>
         </div>
       </>}
   </div>
