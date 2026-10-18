@@ -298,8 +298,11 @@ export class ComplianceService {
     }
 
     // 1) KYC 状态
+    //    默认【不要求】KYC：未认证的账户照常可投资。需要时设置 KYC_REQUIRED_FOR_INVESTMENT=true 打开限制。
+    //    无论开关如何都读取 KYC 状态，作为资格记录里的参考证据（界面据此显示认证进度）。
+    //    制裁筛查、地区策略、风险标记仍然照常生效，不受此开关影响。
     const kyc = await this.getKycStatus(userId)
-    if (!kyc || kyc.state !== 'approved') {
+    if (process.env.KYC_REQUIRED_FOR_INVESTMENT === 'true' && (!kyc || kyc.state !== 'approved')) {
       if (decision === 'eligible') {
         decision = 'browse_only'
         reasons.push('kyc_not_approved')

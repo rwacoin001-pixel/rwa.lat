@@ -124,14 +124,65 @@ describe('ComplianceService 核心逻辑', () => {
     expect(profile.reasonCodes).toContain('risk_flag_open')
   })
 
-  it('KYC 未批准 -> 资格 browse_only', async () => {
-    riskRepo.find!.mockResolvedValue([])
-    kycRepo.findOne!.mockResolvedValue(null)
-    screeningRepo.findOne!.mockResolvedValue(null)
-    eligibilityRepo.findOne!.mockResolvedValue(null)
+  describe('KYC 开关 KYC_REQUIRED_FOR_INVESTMENT', () => {
+    const saved = process.env.KYC_REQUIRED_FOR_INVESTMENT
+    afterEach(() => {
+      if (saved === undefined) delete process.env.KYC_REQUIRED_FOR_INVESTMENT
+      else process.env.KYC_REQUIRED_FOR_INVESTMENT = saved
+    })
+    function noOtherBlocks(kyc: unknown) {
+      riskRepo.find!.mockResolvedValue([])
+      kycRepo.findOne!.mockResolvedValue(kyc)
+      screeningRepo.findOne!.mockResolvedValue(null)
+      eligibilityRepo.findOne!.mockResolvedValue(null)
+    }
 
-    const profile = await service.evaluateEligibility(userId, 'rwa-token')
-    expect(profile.decision).toBe('browse_only')
-    expect(profile.reasonCodes).toContain('kyc_not_approved')
+    it('默认（未设置）不要求 KYC：从未认证的账户也是 eligible', async () => {
+      delete process.env.KYC_REQUIRED_FOR_INVESTMENT
+      noOtherBlocks(null)
+      const profile = await service.evaluateEligibility(userId, 'rwa-token')
+      expect(profile.decision).toBe('eligible')
+      expect(profile.reasonCodes).not.toContain('kyc_not_approved')
+      expect(profile.evidenceReferences.kycState).toBeNull()
+    })
+
+    it.each(['false', '', '0'])('值为 %p 时同样不要求 KYC', async (value) => {
+      process.env.KYC_REQUIRED_FOR_INVESTMENT = value
+      noOtherBlocks(null)
+      expect((await service.evaluateEligibility(userId, 'rwa-token')).decision).toBe('eligible')
+    })
+
+    it('关闭时仍记录已有的 KYC 状态作为证据', async () => {
+      delete process.env.KYC_REQUIRED_FOR_INVESTMENT
+      noOtherBlocks({ id: 'c1', userId, state: 'submitted' } as KycCase)
+      const profile = await service.evaluateEligibility(userId, 'rwa-token')
+      expect(profile.decision).toBe('eligible')
+      expect(profile.evidenceReferences.kycState).toBe('submitted')
+    })
+
+    it('设为 true 后恢复限制：KYC 未批准 -> browse_only', async () => {
+      process.env.KYC_REQUIRED_FOR_INVESTMENT = 'true'
+      noOtherBlocks(null)
+      const profile = await service.evaluateEligibility(userId, 'rwa-token')
+      expect(profile.decision).toBe('browse_only')
+      expect(profile.reasonCodes).toContain('kyc_not_approved')
+    })
+
+    it('设为 true 且 KYC 已批准 -> eligible', async () => {
+      process.env.KYC_REQUIRED_FOR_INVESTMENT = 'true'
+      noOtherBlocks({ id: 'c1', userId, state: 'approved' } as KycCase)
+      expect((await service.evaluateEligibility(userId, 'rwa-token')).decision).toBe('eligible')
+    })
+
+    it('关闭 KYC 不会绕过制裁筛查或高风险标记', async () => {
+      delete process.env.KYC_REQUIRED_FOR_INVESTMENT
+      riskRepo.find!.mockResolvedValue([{ id: 'f1', severity: 'critical', state: 'open' } as RiskFlag])
+      kycRepo.findOne!.mockResolvedValue(null)
+      screeningRepo.findOne!.mockResolvedValue({ id: 's1', userId, state: 'confirmed_match' })
+      eligibilityRepo.findOne!.mockResolvedValue(null)
+      const profile = await service.evaluateEligibility(userId, 'rwa-token')
+      expect(profile.decision).toBe('manual_review')
+      expect(profile.reasonCodes).toEqual(expect.arrayContaining(['sanctions_match', 'risk_flag_open']))
+    })
   })
 })
