@@ -95,7 +95,7 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
   const localizedSelectedProduct = useMemo(() => localizeProduct(selectedProduct, locale), [locale, selectedProduct])
   useEffect(() => {
     const profileReturn = new URLSearchParams(window.location.search).get('profileReturn') as Screen | null
-    if (profileReturn && ['home', 'invest', 'portfolio', 'wallet'].includes(profileReturn)) {
+    if (profileReturn && ['home', 'invest', 'quant', 'portfolio', 'wallet'].includes(profileReturn)) {
       setProfileBaseScreen(profileReturn)
       window.sessionStorage.setItem('rwa-profile-base', profileReturn)
     }
@@ -311,7 +311,7 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
   const setSignedOut = () => setSessionMode('guest')
   // The order sheet keeps the Dock behind it; funds routes occupy the full screen.
   const isFloatingSheet = screen === 'order-review'
-  const showDock = ['home', 'invest', 'portfolio'].includes(screen) || isFloatingSheet
+  const showDock = ['home', 'invest', 'quant', 'portfolio'].includes(screen) || isFloatingSheet
   const dockActiveScreen: PrimaryScreen | undefined = screen === 'order-review' ? 'invest' : undefined
   const isProtectedWaiting = (protectedScreens.includes(screen) || routeRequiresAuth(routePath || initialPath)) && !sessionReady
   return { screen, go, notify, closeOverlay, setAuthenticated, setSignedOut, aiContext, sessionMode, sessionReady, routeQuery, routeParams, routePath, selectedProduct, products, localizedSelectedProduct, detailSlug, predictionId, selectedBasketId, communityPostId, communityHandle, supportTicketId, orderDetailId, routeSymbol, openOrder, openDynamicScreen, openCommunityPost, openCommunityProfile, openSupportTicket, navigationMotion, isOnline, showDock, isFloatingSheet, dockActiveScreen, isProtectedWaiting, theme, mode }

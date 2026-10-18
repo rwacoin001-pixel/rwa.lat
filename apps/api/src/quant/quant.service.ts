@@ -4,9 +4,10 @@ import { DataSource } from 'typeorm'
 import { LedgerService } from '../ledger/ledger.service'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import { ComplianceService } from '../compliance/compliance.service'
-import { addDays, orderTradeDate } from './quant.dates'
+import { addDays, localDateAndMinutes, orderTradeDate } from './quant.dates'
 import { isInsufficientLedgerBalance } from '../basket/basket.constants'
-import type { FeeTier } from './quant.math'
+import { planRedemptions, type FeeTier } from './quant.math'
+import { maxDrawdownPct, windowReturn, type IndexPoint } from './quant.performance'
 
 export const QUANT_ERROR_CODES = {
   PRODUCT_NOT_FOUND: 'QUANT_PRODUCT_NOT_FOUND',
@@ -88,18 +89,12 @@ export class QuantService {
       [product.id],
     )) as Array<{ tradeDate: string; grossReturnPct: string; netReturnPct: string; indexAfter: string }>
     const series = [...history].reverse()
+    // Performance comes from every settled day (not the 365-day chart window), so drawdown and windows stay honest over time.
+    const points = ((await this.ds.query(
+      `SELECT trade_date::text AS "tradeDate", index_after::float8 AS "indexAfter" FROM app.quant_daily_settlements WHERE product_id = $1 AND status = 'posted' ORDER BY trade_date`,
+      [product.id],
+    )) as IndexPoint[])
     const index = Number(product.index_value)
-    const windowReturn = (days: number) => {
-      const from = series.length > days ? Number(series[series.length - 1 - days].indexAfter) : 1
-      return from > 0 ? (index / from - 1) * 100 : null
-    }
-    let peak = 1
-    let drawdown = 0
-    for (const point of series) {
-      const value = Number(point.indexAfter)
-      peak = Math.max(peak, value)
-      drawdown = Math.min(drawdown, value / peak - 1)
-    }
     const disclosure = await this.latestDisclosure()
     const view = {
       id: product.id,
@@ -117,17 +112,58 @@ export class QuantService {
       target: product.target_annual_min_pct !== null && product.target_annual_max_pct !== null ? { annualMinPct: product.target_annual_min_pct, annualMaxPct: product.target_annual_max_pct } : null,
       performance: {
         index: product.index_value,
-        sinceInceptionPct: series.length ? (index - 1) * 100 : null,
-        last7dPct: series.length ? windowReturn(7) : null,
-        last30dPct: series.length ? windowReturn(30) : null,
-        maxDrawdownPct: series.length ? drawdown * 100 : null,
+        /** Index after management fees; the performance fee is charged per user at payout, so a user's net payout is on the day receipt. */
+        indexNetOf: 'management_fee',
+        sinceInceptionPct: points.length ? (index - 1) * 100 : null,
+        last7d: windowReturn(points, 7),
+        last30d: windowReturn(points, 30),
+        maxDrawdownPct: maxDrawdownPct(points),
         lastSettledDate: product.last_settled_date,
-        days: series.length,
+        days: points.length,
       },
       history: series,
       disclosureId: disclosure?.id ?? null,
     }
     return userId ? { ...view, position: await this.getPosition(userId, product.id) } : view
+  }
+
+  /** When a subscription placed right now starts earning, so the app can show real dates instead of "next day". */
+  async previewSubscription(slug: string) {
+    const product = await this.getProductRow(slug)
+    const now = new Date()
+    const tradeDate = orderTradeDate(now, product.timezone, product.cutoff_time)
+    const local = localDateAndMinutes(now, product.timezone)
+    return { tradeDate, effectiveDate: addDays(tradeDate, 1), firstSettlementDate: addDays(tradeDate, 1), cutoffTime: product.cutoff_time, timezone: product.timezone, afterCutoff: tradeDate > local.date, localDate: local.date }
+  }
+
+  /**
+   * What redeeming now would pay, from the user's current lots (oldest first, fee by days held). It is an estimate: the real
+   * amount is fixed at the end of the trade date, after that day's result is applied to the principal.
+   */
+  async previewRedemption(userId: string, slug: string, input: { amountUsd?: string; all?: boolean }) {
+    const product = await this.getProductRow(slug)
+    const tradeDate = orderTradeDate(new Date(), product.timezone, product.cutoff_time)
+    const lots = (await this.ds.query(
+      `SELECT id, principal_atomic::text AS principal, effective_date::text AS "effectiveDate" FROM app.quant_lots WHERE user_id = $1 AND product_id = $2 AND principal_atomic > 0 ORDER BY effective_date, id`,
+      [userId, product.id],
+    )) as Array<{ id: string; principal: string; effectiveDate: string }>
+    const total = lots.reduce((sum, lot) => sum + BigInt(lot.principal), 0n)
+    const redeemable = lots.filter((lot) => lot.effectiveDate <= tradeDate)
+    const redeemableTotal = redeemable.reduce((sum, lot) => sum + BigInt(lot.principal), 0n)
+    const amount = input.all || !input.amountUsd ? null : parseUsdt(input.amountUsd)
+    const plan = planRedemptions(redeemable.map((lot) => ({ id: lot.id, userId, principal: BigInt(lot.principal), effectiveDate: lot.effectiveDate })), [{ orderId: 'preview', userId, amount }], tradeDate, product.redemption_fee_tiers)
+    const result = plan.results[0]
+    return {
+      tradeDate,
+      estimate: true,
+      principalAtomic: total.toString(),
+      redeemableAtomic: redeemableTotal.toString(),
+      waitingAtomic: (total - redeemableTotal).toString(),
+      redeemAtomic: result.principal.toString(),
+      feeAtomic: result.fee.toString(),
+      payoutAtomic: result.payout.toString(),
+      minRedemptionAtomic: product.min_redemption_atomic,
+    }
   }
 
   async getPosition(userId: string, productId: string) {

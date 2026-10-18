@@ -34,6 +34,19 @@ export class QuantController {
     return this.quant.getProduct(slug, actor?.userId)
   }
 
+  @Get('products/:slug/subscription-preview')
+  @ApiOperation({ summary: 'Real dates for a subscription placed now: trade date, start-earning date, cutoff' })
+  subscriptionPreview(@Param('slug') slug: string) {
+    return this.quant.previewSubscription(slug)
+  }
+
+  @Get('me/products/:slug/redemption-preview')
+  @UseGuards(SessionAuthGuard)
+  @ApiOperation({ summary: 'Estimated principal, fee and payout for a redemption placed now (final at the end of that trade date)' })
+  redemptionPreview(@CurrentAuth() actor: SecurityActor, @Param('slug') slug: string, @Query('amountUsd') amountUsd?: string, @Query('all') all?: string) {
+    return this.quant.previewRedemption(actor.userId, slug, { amountUsd, all: all === 'true' })
+  }
+
   @Get('disclosure')
   @ApiOperation({ summary: 'Latest Koala Quant risk disclosure — acknowledge it through POST /basket/disclosures/:id/acknowledge' })
   disclosure() {

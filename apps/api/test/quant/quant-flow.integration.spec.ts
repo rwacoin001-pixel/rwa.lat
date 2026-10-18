@@ -126,6 +126,14 @@ describeDatabase('koala quant full flow', () => {
     const end = await userBalance()
     expect(end + fees + treasury + (await platform('', 'basket_settlement'))).toBe(start)
 
+    // public numbers come from every settled day, with honest coverage
+    const detail = await quant.getProduct(SLUG)
+    expect(detail.performance.days).toBe(2)
+    expect(detail.performance.last7d.coveredDays).toBe(2)
+    expect(detail.performance.maxDrawdownPct).toBeLessThan(0)
+    const dates = await quant.previewSubscription(SLUG)
+    expect(dates.effectiveDate > dates.tradeDate).toBe(true)
+
     const admin = await settlements.adminProduct(SLUG)
     expect(admin.ledger.poolMatchesLots).toBe(true)
     expect(admin.last_settled_date).toBe('2026-01-02')

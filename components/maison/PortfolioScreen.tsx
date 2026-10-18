@@ -1,4 +1,5 @@
 'use client'
+import { QuantAssetsCard } from './QuantPositionCard'
 import { usePageState } from '@/lib/app-navigation'
 
 import { ArrowRight, ArrowUpFromLine, ChevronRight, Eye, EyeOff } from 'lucide-react'
@@ -161,6 +162,8 @@ export function PortfolioScreen({ query }: { query: string }) {
           {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
         </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
       </Lacquer>}
+
+    <QuantAssetsCard />
 
     <div className={h.maskScope} data-masked={masked}><MyPredictionsCard /></div>
 

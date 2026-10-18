@@ -24,7 +24,7 @@ export const pageSlots: Record<string, SlotConfig> = {
   P32: { ...flow, steps: 3 }, P33: { ...child, r1: 'bell' }, P34: { ...child, r1: 'info' },
 }
 const screenPages: Partial<Record<RwaScreen, string>> = {
-  welcome: 'P01', login: 'P02', register: 'P03', 'verify-email': 'P03', recovery: 'P03', home: 'P04', invest: 'P09',
+  welcome: 'P01', login: 'P02', register: 'P03', 'verify-email': 'P03', recovery: 'P03', home: 'P04', invest: 'P09', quant: 'P09',
   'rwa-detail': 'P10', 'compute-detail': 'P10', 'stock-detail': 'P10', 'prediction-detail': 'P34', portfolio: 'P19', wallet: 'P22',
   'issuer-profile': 'P08-detail', 'order-review': 'P11', 'order-processing': 'P11', 'order-success': 'P11', 'order-partial': 'P11', 'order-failed': 'P11', 'order-receipt': 'P11', 'order-detail': 'P12', records: 'P12',
   deposit: 'P23', withdraw: 'P24', transfer: 'P26', 'address-book': 'P25', activity: 'P27', notifications: 'P28',
@@ -77,7 +77,7 @@ export const rwaTopbarConfig: Record<TopbarKind, RwaTopbarConfig> = {
 
 export const rwaScreenTopbarKinds: Record<RwaScreen, TopbarKind> = {
   welcome: 'immersive', login: 'immersive', register: 'immersive', 'verify-email': 'immersive', recovery: 'immersive',
-  home: 'home', invest: 'tab-content', portfolio: 'tab-asset', wallet: 'tab-asset', ai: 'immersive', profile: 'immersive',
+  home: 'home', invest: 'tab-content', quant: 'tab-content', portfolio: 'tab-asset', wallet: 'tab-asset', ai: 'immersive', profile: 'immersive',
   'basket-list': 'list', 'basket-detail': 'detail', 'basket-subscribe': 'flow', 'basket-redeem': 'flow', 'basket-disclosures': 'list', 'basket-recommend': 'tool', 'strategy-detail': 'detail',
   'rwa-detail': 'detail', 'compute-detail': 'detail', 'stock-detail': 'detail', 'prediction-detail': 'detail',
   'order-review': 'flow', 'order-processing': 'flow', 'order-success': 'flow', 'order-partial': 'flow', 'order-failed': 'flow', 'order-receipt': 'flow', 'order-detail': 'detail',

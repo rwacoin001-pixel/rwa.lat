@@ -20,6 +20,9 @@ const KEY_TO_SCREEN: Partial<Record<RouteKey, RwaScreen>> = {
   communityPost: 'community-post',
   communityMember: 'community-profile',
 
+  // Koala Quant
+  quant: 'quant',
+
   // Tab2 市场
   markets: 'invest',
   assetDetail: 'rwa-detail',

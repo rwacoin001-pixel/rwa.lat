@@ -1,6 +1,6 @@
 export type RwaScreen =
   | 'welcome' | 'login' | 'register' | 'verify-email' | 'recovery'
-  | 'home' | 'invest' | 'portfolio' | 'wallet' | 'ai' | 'profile'
+  | 'home' | 'invest' | 'quant' | 'portfolio' | 'wallet' | 'ai' | 'profile'
   | 'basket-list' | 'basket-detail' | 'basket-subscribe' | 'basket-redeem' | 'basket-disclosures' | 'basket-recommend' | 'strategy-detail'
   | 'rwa-detail' | 'compute-detail' | 'stock-detail' | 'prediction-detail'
   | 'order-review' | 'order-processing' | 'order-success' | 'order-partial' | 'order-failed' | 'order-receipt' | 'order-detail'
@@ -19,6 +19,7 @@ const screenPaths: Record<RwaScreen, string> = {
   recovery: '/recovery',
   home: '/home',
   invest: '/invest',
+  quant: '/quant',
   'basket-list': '/invest/baskets',
   'basket-detail': '/invest/basket',
   'basket-subscribe': '/invest/basket/subscribe',
