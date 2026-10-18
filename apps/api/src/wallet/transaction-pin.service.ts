@@ -60,14 +60,14 @@ export class TransactionPinService {
   private async mutate(mode: 'setup' | 'change' | 'reset', actor: SecurityActor,
     dto: { pin: string; confirmation: string; currentPin?: string; reauthentication: string }, requestId: string) {
     this.assertAvailable()
-    this.security.assertRecentStepUp(actor, dto.reauthentication)
+    this.security.assertRecentStepUp(actor, dto.reauthentication, true)
     assertTransactionPin(dto.pin)
     if (dto.pin !== dto.confirmation) throw new BadRequestException({ code: 'TRANSACTION_PIN_POLICY', message: 'The two transaction passwords must match.' })
     if (mode === 'change') assertTransactionPin(dto.currentPin ?? '')
     const hash = await hashTransactionPin(dto.pin, actor.userId, this.pepper)
     const result = await this.transact(async (runner) => {
       const row = await this.lock(runner, actor.userId)
-      this.security.assertRecentStepUp(actor, dto.reauthentication)
+      this.security.assertRecentStepUp(actor, dto.reauthentication, true)
       if (mode === 'setup' && row) return { error: this.error('TRANSACTION_PIN_CONFLICT') }
       if (mode !== 'setup' && !row) return { error: this.error('TRANSACTION_PIN_REQUIRED') }
       if (mode === 'change' && row) {

@@ -1,4 +1,6 @@
-# RWA.LAT 企业与监管信息档案
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
+
+# A-REIT 企业与监管信息档案
 
 版本：1.0（公开资料核验稿）  
 核验日期：2026-07-13  
@@ -11,7 +13,7 @@
 | 字段 | 当前核验结果 | 状态 |
 |---|---|---|
 | 品牌名称 | Wavemaker Partners | 用户提供 |
-| 暂定法律实体 | **WAVEMAKER PACIFIC PARTNERS PTE. LTD.** | 待董事会/公司秘书确认其是否为 RWA.LAT 签约及运营主体 |
+| 暂定法律实体 | **WAVEMAKER PACIFIC PARTNERS PTE. LTD.** | 待董事会/公司秘书确认其是否为 A-REIT 签约及运营主体 |
 | UEN | **201402949K** | 第三方企业登记资料与 MAS 记录相互印证 |
 | 法律形式 | Singapore Private Company Limited by Shares | 待 ACRA Business Profile 原件归档 |
 | 成立日期 | 2014-01-29 | 待 ACRA Business Profile 原件归档 |
@@ -40,15 +42,15 @@
 - 经营交易场所、券商、支付机构或预测市场；
 - 保证本金或收益。
 
-RWA.LAT 对外上线前，法务必须针对钱包托管、支付、RWA 分销、美股、算力参与份额和预测市场逐项形成“自营牌照 / 合作方牌照 / 豁免 / 不提供”结论。
+A-REIT 对外上线前，法务必须针对钱包托管、支付、RWA 分销、美股、算力参与份额和预测市场逐项形成“自营牌照 / 合作方牌照 / 豁免 / 不提供”结论。
 
 ## 4. 对外展示模板
 
-> RWA.LAT is operated by **[经董事会确认的运营主体]**, a company incorporated in Singapore under UEN **[UEN]**, with its registered office at **[地址]**. Regulatory permissions differ by product and jurisdiction. Product-specific issuers, execution partners, custody providers and eligibility restrictions are disclosed before any order is accepted.
+> A-REIT is operated by **[经董事会确认的运营主体]**, a company incorporated in Singapore under UEN **[UEN]**, with its registered office at **[地址]**. Regulatory permissions differ by product and jurisdiction. Product-specific issuers, execution partners, custody providers and eligibility restrictions are disclosed before any order is accepted.
 
 中文版：
 
-> RWA.LAT 由 **[经董事会确认的运营主体]** 运营，该主体在新加坡注册，UEN 为 **[UEN]**，注册地址为 **[地址]**。不同产品与地区适用不同监管许可；发行方、执行方、托管方和资格限制将在接受订单前逐项披露。
+> A-REIT 由 **[经董事会确认的运营主体]** 运营，该主体在新加坡注册，UEN 为 **[UEN]**，注册地址为 **[地址]**。不同产品与地区适用不同监管许可；发行方、执行方、托管方和资格限制将在接受订单前逐项披露。
 
 ## 5. 上线证据包
 
@@ -56,7 +58,7 @@ RWA.LAT 对外上线前，法务必须针对钱包托管、支付、RWA 分销�
 
 1. 90 日内下载的 ACRA Business Profile；
 2. 牌照证书、MAS 目录截图与许可活动法律意见；
-3. 董事会批准 RWA.LAT 品牌及运营主体的决议；
+3. 董事会批准 A-REIT 品牌及运营主体的决议；
 4. 域名、商标和品牌授权文件；
 5. 托管、KYC/AML、发行、券商、支付和市场合作协议；
 6. 每个首发国家和产品的法律备忘录；
@@ -67,7 +69,7 @@ RWA.LAT 对外上线前，法务必须针对钱包托管、支付、RWA 分销�
 - ACRA Business Profile PDF；
 - MAS 牌照证书及公开页面未显示的牌照编号；
 - 能证明 Digital Payment Token、支付或托管资格的正式文件（如适用）；
-- RWA.LAT 与该法律实体的授权关系；
+- A-REIT 与该法律实体的授权关系；
 - 法务、合规、隐私和客服正式邮箱；
 - 董事会批准的服务国家、客户类型和产品范围。
 

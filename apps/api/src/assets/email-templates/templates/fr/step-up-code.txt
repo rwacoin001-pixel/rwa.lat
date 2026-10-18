@@ -1,0 +1,12 @@
+Définissez votre code de transaction
+
+Saisissez ce code pour confirmer votre identité, puis définissez votre code de transaction.
+
+{{code}}
+{{expiryMinutes}} minutes de validité
+
+
+Ce code sert uniquement à définir ou modifier votre code de transaction. Ne le partagez jamais. Si vous n'êtes pas à l'origine de la demande, changez votre mot de passe de connexion et contactez-nous.
+
+Aide et assistance: {{supportUrl}}
+© {{year}} A-REIT

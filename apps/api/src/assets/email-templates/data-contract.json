@@ -3708,5 +3708,96 @@
       "unsubscribeUrl",
       "year"
     ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "zh-CN",
+    "subject": "设置交易密码的验证码 · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "en",
+    "subject": "Your trading PIN code · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "hi",
+    "subject": "ट्रेडिंग पिन सेट करने का कोड · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "es",
+    "subject": "Código para tu PIN de operaciones · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "ar",
+    "subject": "رمز تعيين العمليات · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "fr",
+    "subject": "Code pour votre code de transaction · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
+  },
+  {
+    "id": "step-up-code",
+    "locale": "pt",
+    "subject": "Código do PIN de transações · A-REIT",
+    "connection": "existing",
+    "fields": [
+      "assetBaseUrl",
+      "code",
+      "expiryMinutes",
+      "supportUrl",
+      "year"
+    ]
   }
 ]

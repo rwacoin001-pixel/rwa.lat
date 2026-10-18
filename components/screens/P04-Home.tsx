@@ -271,7 +271,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
         <div className={styles.rankingWrap}>
           {rankings.loading ? <div className={styles.skeleton} /> : rankings.error ? <ErrorBlock message={rankings.error.message} retry={rankings.refetch} /> : rankings.data?.items?.map((asset, index) => (
             <button type="button" key={asset.slug} className={styles.rankingRow} onClick={() => router.push(`/asset/${encodeURIComponent(asset.slug)}`)}>
-              <span className={styles.rankIndex}>0{index + 1}</span><span className={styles.rankName}><b>{asset.name}</b><small>{asset.symbol || 'RWA'}</small></span>
+              <span className={styles.rankIndex}>0{index + 1}</span><span className={styles.rankName}><b>{asset.name}</b><small>{asset.symbol || '—'}</small></span>
               <span className={styles.rankValue}><b dir="ltr">{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</b><small dir="ltr" className={asset.change24hPct?.startsWith('-') ? styles.down : styles.up}>{fmtPct(asset.change24hPct, { signed: true })}</small></span>
             </button>
           ))}
@@ -280,7 +280,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
 
       <Reveal reduced={reduced} className={styles.section}><SectionHeading title={copy.forYou} />
         <motion.button type="button" className={styles.basketCard} onClick={() => go('basket-list')} whileTap={reduced ? undefined : { scale: .975, rotate: -.3 }} whileHover={reduced ? undefined : { y: -4 }} transition={{ type: 'spring', stiffness: 360, damping: 24 }}>
-          <span className={styles.eyebrow}>AI / RWA</span><strong>{basketName}</strong><small>{firstBasket && typeof firstBasket.summary === 'string' ? firstBasket.summary : copy.basketEmpty}</small><span className={styles.basketArrow}><ArrowUpRight size={19} /></span>
+          <span className={styles.eyebrow}>{copy.headline}</span><strong>{basketName}</strong><small>{firstBasket && typeof firstBasket.summary === 'string' ? firstBasket.summary : copy.basketEmpty}</small><span className={styles.basketArrow}><ArrowUpRight size={19} /></span>
         </motion.button>
       </Reveal>
 
@@ -289,7 +289,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
           {featuredItems.map((asset, index) => <motion.button type="button" key={asset.slug} className={styles.assetCard} onClick={() => router.push(`/asset/${encodeURIComponent(asset.slug)}`)} whileTap={reduced ? undefined : { scale: .965, rotate: index % 2 ? .5 : -.5 }} whileHover={reduced ? undefined : { y: -5 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
             <span className={styles.assetPhoto} style={assetImage(asset, index) ? { backgroundImage: `url('${assetImage(asset, index)}')`, backgroundPosition: index % 2 ? '72% center' : '32% center' } : undefined} />
             <span className={styles.assetTop}><AssetGlyph kind={assetKind(asset, index)} /><ArrowUpRight size={16} /></span>
-            <span className={styles.assetInfo}><small>{asset.assetClass?.replace(/_/g, ' ') || 'RWA'}</small><b>{asset.name}</b><span><em>{copy.marketCap}</em><strong>{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</strong></span><span><em>{copy.change24h}</em><strong className={asset.change24hPct?.startsWith('-') ? styles.down : styles.up}>{fmtPct(asset.change24hPct, { signed: true })}</strong></span></span>
+            <span className={styles.assetInfo}><small>{asset.assetClass?.replace(/_/g, ' ') || copy.headline}</small><b>{asset.name}</b><span><em>{copy.marketCap}</em><strong>{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</strong></span><span><em>{copy.change24h}</em><strong className={asset.change24hPct?.startsWith('-') ? styles.down : styles.up}>{fmtPct(asset.change24hPct, { signed: true })}</strong></span></span>
           </motion.button>)}
         </div> : <p className={styles.empty}>{dataCopy.priceUnavailable}</p>}
       </Reveal>

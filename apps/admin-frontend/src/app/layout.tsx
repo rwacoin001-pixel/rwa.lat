@@ -19,7 +19,7 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: 'A-REIT Admin',
   description: 'A-REIT 后台运营管理系统',
-  keywords: ['RWA', 'Admin', 'Dashboard', 'Web3', 'Asset Management'],
+  keywords: ['Real assets', 'Admin', 'Dashboard', 'Web3', 'Asset Management'],
   authors: [{ name: 'A-REIT Team' }],
   openGraph: {
     title: 'A-REIT Admin',

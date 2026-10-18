@@ -1,4 +1,4 @@
-# RWA.LAT Identity and Compliance
+# A-REIT Identity and Compliance
 
 This language separates account access, legal identity, compliance review, and investment permission so no single “verified” flag can bypass a required decision.
 

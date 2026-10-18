@@ -1,12 +1,14 @@
-# RWA.LAT 用户条款模板
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
+
+# A-REIT 用户条款模板
 
 生效日期：`[待填写]`  
 版本：0.9 Demo  
-暂定运营方：**WAVEMAKER PACIFIC PARTNERS PTE. LTD.（UEN 201402949K）**，182 Cecil Street, #17-01, Frasers Tower, Singapore 069547。该映射及 RWA.LAT 运营授权待董事会和法务确认。
+暂定运营方：**WAVEMAKER PACIFIC PARTNERS PTE. LTD.（UEN 201402949K）**，182 Cecil Street, #17-01, Frasers Tower, Singapore 069547。该映射及 A-REIT 运营授权待董事会和法务确认。
 
 本模板仅用于产品和法务评审，不构成已生效协议。
 
-监管说明：MAS 公开目录显示上述暂定主体为 Capital Markets Services Licensee，获准活动为 Venture Capital Fund Management。该记录不表示所有 RWA.LAT 功能均受该牌照覆盖；具体产品、地区、发行方和合作方许可将在订单前披露。
+监管说明：MAS 公开目录显示上述暂定主体为 Capital Markets Services Licensee，获准活动为 Venture Capital Fund Management。该记录不表示所有 A-REIT 功能均受该牌照覆盖；具体产品、地区、发行方和合作方许可将在订单前披露。
 
 ## 1. 接受条款
 

@@ -1,47 +1,60 @@
-# Current source and production services
+# A-REIT · Source and deployment reference
 
-The only development entry is `E:\rwa-lat-current`. It is a junction to the existing verified worktree, not a second source copy. Repository: `rwacoin001-pixel/rwa.lat`. Formal branch: `main`. Consolidation was prepared on `codex/consolidation-20261004` from `7015a18`; the user authorized verification followed by merge and push on 2026-10-04.
+Updated: 2026-10-16, Asia/Singapore. This is the current entry document. Dated snapshots below are evidence from that time, not a permanent declaration of the latest version. Recheck GitHub and the running service before every release.
 
-After source changes, explicitly ask the user whether to merge. Only merge after their confirmation; then execute the approved merge directly. Do not release an unmerged worktree. `pnpm deploy:cloudflare` checks that the source is clean, on main and already pushed to origin/main.
+## Source of truth and workspaces
 
-## Source reconstruction
+- Repository: `https://github.com/rwacoin001-pixel/rwa.lat`; formal branch: `main`. The repository's legacy technical name is intentional and is not a second public brand.
+- This cleanup started from `origin/main` **9edf70e** (resolve the full SHA with Git; the branch's base is recorded in the cleanup report). It includes the later prediction-history fix, art-led referral page and Android 1.1.3. Never release the earlier `abdee7d` or `e278556` snapshot over later changes.
+- The isolated cleanup worktree is `D:\rwa-lat-worktrees\areit-copy-docs-20261016`, branch `chore/areit-copy-docs-20261016`. It is an implementation workspace, not a fixed universal production entry.
+- A main checkout also exists at `D:\rwa-lat-worktrees\desktop-offsite-release-20261013`. Its local HEAD was behind remote main during this audit. A familiar directory name is not proof that it is current or safe to deploy.
+- Old `E:\rwa-lat-current`/recovery paths and dated handoff documents are not current-entry instructions. Do not reset, clean, move or delete another agent's checkout or shared dependencies to make a release work.
 
-The source includes the 15 preserved prediction/translation/style/service-worker fixes, plus two yield-calendar changes recovered from the current live client. After normalizing CRLF/LF line endings, Core rebuilds match all 446 live JS files and Admin rebuilds match all 40 live JS files. There are no code differences. All 139 captured user frontend assets match byte-for-byte (four malformed capture paths returning HTML are excluded). Linux Docker builds of the admin frontend match all 62 captured live JS/CSS assets. The independent PDF server entrypoint is byte-identical to the live renderer; it imports no API application or database modules.
+Before changes, record the repository root, branch, full HEAD, worktree list, uncommitted diff and current remote main. Preserve unrelated work and use a new branch from the latest remote main. A filename, cached build or historical status report is not release evidence.
 
-The main production frontend is Cloudflare Worker `rwa-lat`; the admin frontend is on Oracle, not Cloudflare or Render. See `deploy/production-baseline.json` for current versions, image IDs and formal origins. The optional legacy admin Cloudflare configuration points to the correct Admin API, but must not be used to create a second production admin frontend.
+## Public origins and service boundaries
 
-## Build and release
+| Surface | Current public origin | Source/configuration reference |
+| --- | --- | --- |
+| User application/PWA | `https://a-reit.com` | Root `app`, `components`, `lib`, `styles`, `public` |
+| User API | `https://api.a-reit.com` | `apps/api` |
+| Admin frontend | `https://admin.a-reit.com` | `apps/admin-frontend` |
+| Admin API | `https://admin-api.a-reit.com` | `apps/admin` |
+| Cloudflare frontend | Worker `rwa-lat` | `wrangler.jsonc`, `workers/frontend/index.mjs` |
 
-1. Use `pnpm install --frozen-lockfile`. Do not refresh dependency versions during source consolidation.
-2. Run `pnpm build:production` for frontend, API, Admin and admin frontend. It explicitly supplies production frontend origins so local development settings cannot override them.
-3. After the user's approved merge and push, build Oracle images with `--build-arg SOURCE_REVISION=<full Git SHA>`. Use immutable image IDs/digests in the private release environment for `deploy/oracle.compose.yml`; record those IDs, Cloudflare version and backup location in the release record.
-4. Run schema migrations only as a separately reviewed release step. The Compose API command intentionally preserves the current direct Node start. Consolidation introduces no migration.
-5. Before a production switch, verify health/readiness and authenticated flows, then keep the previous release available for rollback. Never restart the old Admin using its `20261002-free-quotes` tag: its image metadata was pruned and that tag now resolves to another image. Its running filesystem is saved and verified outside Oracle.
+`www.a-reit.com` is configured on the same frontend and redirects to the primary hostname. The wide-window redirect to the CapitaLand website is a separate existing UI policy, not a change to the app's canonical origin.
 
-## Service boundaries
+Oracle configuration in the repository describes separate core API, admin API, admin frontend and PDF services. The bot also has state of its own. Exact live images, Compose project/path, database hosts, storage mappings, feature switches and scheduled jobs were **not re-audited in this cleanup**. Check live read-only evidence before changing any of them. Root `render.yaml` and old Render runbooks are not proof of the current production topology.
 
-- Formal entries: `rwa.lat`, `admin.rwa.lat`, `api.rwa.lat`, `admin-api.rwa.lat`.
-- Oracle: business API, Admin API, admin frontend, isolated PDF renderer, community bot. The bot has its own state and Compose project; preserve them.
-- Neon: separate business and admin production databases. Do not merge or delete these databases merely to reduce the number of names.
-- Backblaze B2: assets, attachments and KYC files. Keep existing bucket mappings.
-- VPN: separate Oracle server; outside this consolidation.
-- Private credentials remain under `/opt/rwa-lat/config`; never commit them. Compose keeps the PDF network internal, drops capabilities, uses read-only filesystems and binds external service ports to loopback.
+## Observed frontend release — snapshot only
 
-## Backups and legacy workspaces
+- Observation date: **2026-10-16**.
+- Worker: `rwa-lat`; version **d1bbade0-82fa-4c6a-97f2-b6b182e6a35e**, 100% traffic.
+- Deployment annotation: `prediction-history-links-9edf70e`.
+- The annotation matches the cleanup source base's short revision. It does not independently prove byte-for-byte reproducibility of every running backend or complete user-flow acceptance.
+- This copy/documentation branch has **not** been merged, pushed or deployed as part of this observation.
 
-`E:\rwa-lat-backups\consolidation-20261004` contains repository bundles and preserved working files from five workspaces, current runtime configuration/artifacts, database dumps and the Admin filesystem snapshot. New dumps restored successfully in a disposable PostgreSQL 18 container: Core app tables 177, Admin app tables 109. These are recovery copies; they do not change live balances.
+`deploy/production-baseline.json` and older handoff records describe historical releases. Do not use their versions, mutable image tags, database names or backup claims as current facts without checking them again.
 
-Other D:/E: source workspaces are preserved drafts/archives and must not be used for publication. Do not reset, clean, recursively delete, or blindly merge them. Source-only or unverified work remains in those backups instead of being mixed into the live release.
+## Checks and release procedure
 
-The two old Render admin frontends and their auto-deployment must be retired after the approved consolidation switch and final callback/dependency check. Until then, their presence is recorded explicitly. The keepalive source now targets only formal Oracle endpoints; publishing it is a separate release action. No service is stopped by committing this document.
+1. Review the scoped diff against the latest main and identify whether the batch changes runtime output. Pure Markdown changes do not require restarting services. Display-copy changes require the affected frontend to be built and released; neither implies an API or database deployment.
+2. Use installed, verified dependencies or an isolated install. Never approve deletion/reinstallation of shared `node_modules` merely to get past a package-manager prompt.
+3. Run appropriate syntax, type, lint and browser checks. For frontend production packaging, the current wrapper is `node scripts/build-production.mjs frontend`: it compiles the API client and Next app, packages the result with OpenNext, and regenerates the Android app-pack manifest. Do not package an old `.next` as a new release.
+4. Obtain the user's separate approval to merge, push and deploy this batch. Then integrate the latest main, rerun checks required by conflicts/new changes, and push. Run `node scripts/require-merged-release.mjs`; it requires clean, pushed `main` matching the remote.
+5. Capture the **then-current** Worker version/configuration or relevant immutable service images before release. The supported local Wrangler entry is `node node_modules/wrangler/bin/wrangler.js`; use the existing OpenNext deployment environment when invoking it directly (`OPEN_NEXT_DEPLOY=true`, `CLOUDFLARE_LOAD_DEV_VARS_FROM_DOT_ENV=false`). Do not let an implicit package reinstall remove shared dependencies. Do not deploy an unbuilt or stale worktree.
+6. Verify the deployed version, current build manifest and affected real pages/assets. Separate simulated tests from real-device or financial-flow acceptance; do not create real transfers, withdrawals or orders for a copy cleanup.
+7. Record the source revision, checks, deployment identifiers and rollback target. Before any rollback, recheck production for another agent's later release; do not overwrite it with an earlier saved version.
 
-## Verification of the consolidation source
+## Preserved technical and historical identities
 
-- The production build wrapper completed all four builds. The frontend was rebuilt after excluding deployment configuration from Tailwind source scanning.
-- All eight configured API unit batches passed: 67 suites, 497 tests. One investment eligibility fixture was brought up to date with the current quote API without changing its rejection and rollback assertions.
-- Admin route/security unit tests: 10 passed. Frontend refresh/AI regression tests: 6 passed. Frontend prediction quote tests: 4 passed.
-- A fresh disposable PostgreSQL 18 database accepted all 78 current migrations. Ten integration suites passed, totaling 54 tests: identity and wallet schemas, transfers and reconciliation, prediction schema, catalog quotes, identity sessions, email verification codes, community profiles, and manual order settlement. Production databases and balances were not used. Two timestamp fixtures now use the application's clock so a remote database clock offset cannot change their expected expiry or freshness result; production guards and assertions are unchanged.
-- Live read-only checks covered the five prediction sort modes, rejection of an invalid mode, history for 1h/1d/1w/1m/max, discussions, asset data, community feed and service status. Browser checks covered search retained after returning, chart-only period loading, both discussion tabs, the +1/+5/+10/+100 stake controls (116 USDT preview), authenticated homepage rendering, and Arabic-to-English community translation with original/cached toggling. No real order, withdrawal or transfer was submitted.
-- The proposed Oracle Compose file passes `docker compose config --quiet` against the existing private configuration. It has not been started.
-- The release guard rejects unmerged branches; on main it additionally requires a clean source tree and a matching remote main revision. The formal frontend, API health/readiness, Admin health and admin login URL returned HTTP 200; all four Oracle services remain healthy with their original start times and image IDs.
-- These checks confirm source reconstruction, builds, unit/integration behavior, sampled browser flows and recovery backups. They do not replace real-device biometrics, all-language visual acceptance or real-money business acceptance. This consolidation merges and pushes source only; it does not replace production containers or frontend releases.
+This batch does not rename repository/package names, Worker/container names, Android `applicationId`/signing identity/UA, storage keys, cookies, ticket audiences, API paths, queue names, database objects, bucket names, migration files or idempotency keys. Their names are not user-facing branding.
+
+Production secrets and credentials belong in their existing protected configuration, never in this document, source control, screenshots or handoff text. Existing financial, privacy and authentication controls remain in force.
+
+## Document authority
+
+- [Current design rules](../DESIGN.md) preserve the implemented logo, themes and navigation; they do not request a redesign.
+- [Documentation index](README.md) separates current entrypoints, reference templates and historical implementation evidence.
+- Historical task boards, prototypes, migration narratives and dated QA results retain their original bodies. Their success claims apply only to the recorded date and scope.
+- Database-published copy, mail-provider configuration, legal publications and operational records are not inferred from source text; changes require their own reviewed data/configuration task.

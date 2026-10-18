@@ -1,4 +1,4 @@
-import { IsObject, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator'
+import { IsIn, IsObject, IsOptional, IsString, IsUUID, Length, Matches } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
 export class TotpCodeDto {
@@ -54,3 +54,16 @@ export class PasskeyFinishDto {
 }
 
 export class PasskeyAssertionFinishDto extends PasskeyFinishDto {}
+
+export class EmailStepUpConfirmDto extends TotpCodeDto {
+  @ApiProperty()
+  @IsUUID()
+  challengeId!: string
+}
+
+export class EmailStepUpRequestDto {
+  @ApiPropertyOptional({ enum: ['en', 'zh-CN', 'hi', 'es', 'ar', 'fr', 'pt'] })
+  @IsOptional()
+  @IsIn(['en', 'zh-CN', 'hi', 'es', 'ar', 'fr', 'pt'])
+  locale?: string
+}

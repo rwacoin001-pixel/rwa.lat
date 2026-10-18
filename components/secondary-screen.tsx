@@ -90,7 +90,7 @@ export function SecondaryScreen({ go }: { go: (screen: RwaScreen) => void }) {
     const url = URL.createObjectURL(blob)
     const anchor = document.createElement('a')
     anchor.href = url
-    anchor.download = 'RWA-二级市场转让协议模板.txt'
+    anchor.download = 'A-REIT-二级市场转让协议模板.txt'
     anchor.click()
     URL.revokeObjectURL(url)
   }

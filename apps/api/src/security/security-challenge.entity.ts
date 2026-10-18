@@ -1,6 +1,6 @@
 import { Column, Entity, PrimaryColumn } from 'typeorm'
 
-export type SecurityChallengeKind = 'passkey_registration' | 'passkey_assertion'
+export type SecurityChallengeKind = 'passkey_registration' | 'passkey_assertion' | 'step_up_email'
 
 @Entity({ schema: 'app', name: 'security_challenges' })
 export class SecurityChallenge {
@@ -24,6 +24,9 @@ export class SecurityChallenge {
 
   @Column({ name: 'encryption_key_version', type: 'integer' })
   encryptionKeyVersion!: number
+
+  @Column({ type: 'integer', default: 0 })
+  attempts!: number
 
   @Column({ name: 'created_at', type: 'timestamptz', default: () => 'now()' })
   createdAt!: Date

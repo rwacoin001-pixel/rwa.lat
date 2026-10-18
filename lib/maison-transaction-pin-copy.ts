@@ -3,7 +3,19 @@ import type { AppLocale } from '@/lib/app-locales'
 export type TransactionPinMode = 'setup' | 'change' | 'reset'
 export type TransactionPinStep = 'current' | 'next' | 'confirm'
 
+export type PinFlowCopy = {
+  stepOf: (n: number, total: number) => string
+  hint: Record<TransactionPinStep, string>
+  verifyTitle: string; verifyHint: string; expired: string
+  email: {
+    label: string; sending: string; sentTo: (masked: string) => string; codeLabel: string
+    resendIn: (seconds: number) => string; resend: string; resent: string
+    wrong: string; sendFailed: string; unavailable: string; unavailableBody: string; retry: string; others: string
+  }
+}
+
 export type TransactionPinCopy = {
+  flow: PinFlowCopy
   securityLabel: string; configured: string; forgot: string; refresh: string; resetNotice: string
   receiveLocked: string; depositRule: string; deposit: string
   pad: { label: string; digit: (n: string) => string; backspace: string; clear: string; filled: (n: number, total: number) => string }
@@ -20,7 +32,7 @@ export type TransactionPinCopy = {
   eligibility: { eligible: string; ineligible: string; checking: string }
 }
 
-type BasicCopy = Omit<TransactionPinCopy, 'securityLabel' | 'configured' | 'forgot' | 'refresh' | 'resetNotice' | 'receiveLocked' | 'depositRule' | 'deposit'>
+type BasicCopy = Omit<TransactionPinCopy, 'flow' | 'securityLabel' | 'configured' | 'forgot' | 'refresh' | 'resetNotice' | 'receiveLocked' | 'depositRule' | 'deposit'>
 const en: BasicCopy = {
   pad: { label: 'Transaction PIN keypad', digit: (n) => `Digit ${n}`, backspace: 'Delete last digit', clear: 'Clear', filled: (n, t) => `${n} of ${t} digits entered` },
   title: { setup: 'Set transaction PIN', change: 'Change transaction PIN', reset: 'Reset transaction PIN' },
@@ -135,11 +147,62 @@ const extra: Record<AppLocale, ExtraCopy> = {
   fr: { securityLabel: 'Code de transaction', configured: 'Défini', forgot: 'Code oublié', refresh: 'Actualiser le statut', resetNotice: 'La réinitialisation du code suspend les retraits pendant 24 heures.', receiveLocked: 'La réception de transferts n’est pas encore disponible', depositRule: 'Un seul dépôt externe USDT crédité doit dépasser 300 USDT. Les transferts internes et bonus ne comptent pas.', deposit: 'Déposer' },
   pt: { securityLabel: 'PIN de transação', configured: 'Definido', forgot: 'Esqueci o PIN', refresh: 'Atualizar status', resetNotice: 'Redefinir o PIN pausa os saques por 24 horas.', receiveLocked: 'Receber transferências ainda não está disponível', depositRule: 'Um único depósito externo USDT creditado deve superar 300 USDT. Transferências internas e bônus não contam.', deposit: 'Depositar' },
 }
+const flows: Record<AppLocale, PinFlowCopy> = {
+  en: {
+    stepOf: (n, t) => `Step ${n} of ${t}`,
+    hint: { current: 'Confirm your current PIN first.', next: 'Six digits. Avoid easy-to-guess patterns.', confirm: 'Enter the same PIN once more.' },
+    verifyTitle: 'Verify it’s you', verifyHint: 'A quick check to approve this change.', expired: 'Verification expired. Please verify again.',
+    email: { label: 'Email code', sending: 'Sending code…', sentTo: (m) => `Code sent to ${m}`, codeLabel: '6-digit email code', resendIn: (s) => `Resend in ${s}s`, resend: 'Resend code', resent: 'New code sent',
+      wrong: 'Incorrect or expired code. Try again', sendFailed: 'Couldn’t send the code. Try again', unavailable: 'Email code isn’t available right now', unavailableBody: 'Use another way to verify, or try again later.', retry: 'Try again', others: 'Other ways to verify' },
+  },
+  'zh-CN': {
+    stepOf: (n, t) => `第 ${n} 步，共 ${t} 步`,
+    hint: { current: '先确认当前交易密码。', next: '6 位数字，避免容易被猜到的组合。', confirm: '再输入一次，确保无误。' },
+    verifyTitle: '确认是你本人', verifyHint: '完成一次验证后即可生效。', expired: '验证已过期，请重新验证',
+    email: { label: '邮箱验证码', sending: '正在发送验证码…', sentTo: (m) => `验证码已发送至 ${m}`, codeLabel: '6 位邮箱验证码', resendIn: (s) => `${s} 秒后可重发`, resend: '重新发送', resent: '已重新发送验证码',
+      wrong: '验证码错误或已过期，请重试', sendFailed: '验证码发送失败，请重试', unavailable: '暂时无法使用邮箱验证码', unavailableBody: '请改用其他验证方式，或稍后再试。', retry: '重试', others: '其他验证方式' },
+  },
+  hi: {
+    stepOf: (n, t) => `चरण ${n}/${t}`,
+    hint: { current: 'पहले अपना मौजूदा PIN पुष्टि करें।', next: '6 अंक। आसानी से अनुमान लगाने योग्य पैटर्न से बचें।', confirm: 'वही PIN एक बार फिर दर्ज करें।' },
+    verifyTitle: 'पुष्टि करें कि यह आप हैं', verifyHint: 'इस बदलाव को मंज़ूर करने के लिए एक त्वरित जाँच।', expired: 'सत्यापन समाप्त हो गया। फिर से सत्यापित करें।',
+    email: { label: 'ईमेल कोड', sending: 'कोड भेजा जा रहा है…', sentTo: (m) => `कोड ${m} पर भेजा गया`, codeLabel: '6 अंकों का ईमेल कोड', resendIn: (s) => `${s}s में फिर भेजें`, resend: 'कोड फिर भेजें', resent: 'नया कोड भेजा गया',
+      wrong: 'कोड गलत है या समाप्त हो गया। फिर प्रयास करें', sendFailed: 'कोड नहीं भेजा जा सका। फिर प्रयास करें', unavailable: 'ईमेल कोड अभी उपलब्ध नहीं है', unavailableBody: 'सत्यापन का कोई दूसरा तरीका चुनें, या बाद में प्रयास करें।', retry: 'फिर प्रयास करें', others: 'सत्यापन के अन्य तरीके' },
+  },
+  es: {
+    stepOf: (n, t) => `Paso ${n} de ${t}`,
+    hint: { current: 'Confirma primero tu PIN actual.', next: 'Seis dígitos. Evita combinaciones fáciles de adivinar.', confirm: 'Introduce el mismo PIN otra vez.' },
+    verifyTitle: 'Confirma que eres tú', verifyHint: 'Una comprobación rápida para aprobar este cambio.', expired: 'La verificación caducó. Verifica de nuevo.',
+    email: { label: 'Código por correo', sending: 'Enviando código…', sentTo: (m) => `Código enviado a ${m}`, codeLabel: 'Código de 6 dígitos del correo', resendIn: (s) => `Reenviar en ${s}s`, resend: 'Reenviar código', resent: 'Código nuevo enviado',
+      wrong: 'Código incorrecto o caducado. Inténtalo de nuevo', sendFailed: 'No se pudo enviar el código. Inténtalo de nuevo', unavailable: 'El código por correo no está disponible ahora', unavailableBody: 'Usa otra forma de verificar o inténtalo más tarde.', retry: 'Reintentar', others: 'Otras formas de verificar' },
+  },
+  ar: {
+    stepOf: (n, t) => `الخطوة ${n} من ${t}`,
+    hint: { current: 'أكّد رمزك الحالي أولًا.', next: 'ستة أرقام. تجنّب التركيبات سهلة التخمين.', confirm: 'أدخل الرمز نفسه مرة أخرى.' },
+    verifyTitle: 'أكِّد هويتك', verifyHint: 'تحقق سريع للموافقة على هذا التغيير.', expired: 'انتهت صلاحية التحقق. أعد التحقق.',
+    email: { label: 'رمز البريد', sending: 'جارٍ إرسال الرمز…', sentTo: (m) => `أُرسل الرمز إلى ${m}`, codeLabel: 'رمز البريد من 6 أرقام', resendIn: (s) => `إعادة الإرسال خلال ${s} ث`, resend: 'إعادة إرسال الرمز', resent: 'تم إرسال رمز جديد',
+      wrong: 'الرمز غير صحيح أو منتهي. حاول مجددًا', sendFailed: 'تعذّر إرسال الرمز. حاول مجددًا', unavailable: 'رمز البريد غير متاح حاليًا', unavailableBody: 'استخدم طريقة تحقق أخرى أو حاول لاحقًا.', retry: 'إعادة المحاولة', others: 'طرق تحقق أخرى' },
+  },
+  fr: {
+    stepOf: (n, t) => `Étape ${n} sur ${t}`,
+    hint: { current: 'Confirmez d’abord votre code actuel.', next: 'Six chiffres. Évitez les combinaisons faciles à deviner.', confirm: 'Saisissez à nouveau le même code.' },
+    verifyTitle: 'Confirmez votre identité', verifyHint: 'Une vérification rapide pour approuver ce changement.', expired: 'Vérification expirée. Vérifiez à nouveau.',
+    email: { label: 'Code par e-mail', sending: 'Envoi du code…', sentTo: (m) => `Code envoyé à ${m}`, codeLabel: 'Code à 6 chiffres reçu par e-mail', resendIn: (s) => `Renvoi dans ${s} s`, resend: 'Renvoyer le code', resent: 'Nouveau code envoyé',
+      wrong: 'Code incorrect ou expiré. Réessayez', sendFailed: 'Impossible d’envoyer le code. Réessayez', unavailable: 'Le code par e-mail est indisponible pour le moment', unavailableBody: 'Utilisez un autre moyen de vérification ou réessayez plus tard.', retry: 'Réessayer', others: 'Autres moyens de vérification' },
+  },
+  pt: {
+    stepOf: (n, t) => `Passo ${n} de ${t}`,
+    hint: { current: 'Confirme primeiro o PIN atual.', next: 'Seis dígitos. Evite combinações fáceis de adivinhar.', confirm: 'Digite o mesmo PIN mais uma vez.' },
+    verifyTitle: 'Confirme que é você', verifyHint: 'Uma verificação rápida para aprovar esta alteração.', expired: 'A verificação expirou. Verifique novamente.',
+    email: { label: 'Código por e-mail', sending: 'Enviando código…', sentTo: (m) => `Código enviado para ${m}`, codeLabel: 'Código de 6 dígitos do e-mail', resendIn: (s) => `Reenviar em ${s}s`, resend: 'Reenviar código', resent: 'Novo código enviado',
+      wrong: 'Código incorreto ou expirado. Tente novamente', sendFailed: 'Não foi possível enviar o código. Tente novamente', unavailable: 'O código por e-mail não está disponível agora', unavailableBody: 'Use outra forma de verificar ou tente mais tarde.', retry: 'Tentar novamente', others: 'Outras formas de verificar' },
+  },
+}
 function withDetails(key: AppLocale): TransactionPinCopy {
   const value = base[key]
   const details = extra[key]
   const { TRANSACTION_PIN_INVALID, TRANSACTION_PIN_LOCKED } = value.errors
-  return { ...value, ...details, gate: { ...value.gate, cooldown: details.resetNotice }, errors: {
+  return { ...value, ...details, flow: flows[key], gate: { ...value.gate, cooldown: details.resetNotice }, errors: {
     TRANSACTION_PIN_INVALID, TRANSACTION_PIN_LOCKED,
     TRANSACTION_PIN_REQUIRED: value.gate.unset,
     TRANSACTION_PIN_UNAVAILABLE: value.gate.unavailable,

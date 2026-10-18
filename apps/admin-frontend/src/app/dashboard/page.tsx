@@ -210,7 +210,7 @@ export default function DashboardPage() {
           <StatCard
             label="资产目录规模"
             value={show(status(facetsSrc), () => totals?.total.toLocaleString())}
-            sub={<SourceNote sources={[facetsSrc]} fallback={totals ? `有行情报价 ${totals.priced.toLocaleString()} 个` : 'RWA 标准化目录'} />}
+            sub={<SourceNote sources={[facetsSrc]} fallback={totals ? `有行情报价 ${totals.priced.toLocaleString()} 个` : '真实资产标准化目录'} />}
             icon={Store}
             tone="mint"
             delay={40}

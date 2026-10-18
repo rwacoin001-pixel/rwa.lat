@@ -1,30 +1,23 @@
-# RWA.LAT 原型图生成规范
+# A-REIT · Prototype reference rules
 
-本文件约束所有生成式原型图。它不替代产品规格；产品范围以 `RWA-LAT-Product-and-Development-Spec.md` 为准。
+Updated: 2026-10-16. This guide preserves the existing product and applies only when a separate task actually requests a prototype. Copy/documentation cleanup does not authorize generating a new design or replacing a page.
 
-## 固定界面骨架
+## Start from the current surface
 
-1. 一级页面：左上角使用现有 RWA.LAT 几何标记与字标；右上角是通知和头像；底部仅有首页、投资、投资组合、钱包四项，AI 为独立圆形按钮，个人中心仅从头像进入。
-2. 二级详情与交易流程：左上角使用返回控制和现有紧凑品牌/标题；不显示底部导航；交易页使用固定确认操作区。
-3. 后台页面：使用桌面操作台，不使用移动端手机外框或底部导航；左上角同样使用既有 RWA.LAT 标识，左侧为固定工作区导航。
+- Read [current design rules](../DESIGN.md) and [current project reference](deployment-current.md).
+- Trace the actual route and component, inspect the rendered page, then identify its owning styles and theme variables. Historical July prototypes are not a current implementation contract.
+- Reuse the approved folded-portal logo from `public/brand/a-reit/` and the existing logo component. Do not use old circle/axis logo files as brand references.
+- Preserve the existing background, fonts, light/dark variants, navigation and business flow unless the user explicitly changes that scope. Page-specific black/white or Maison tokens do not establish a universal palette for every page.
 
-## 视觉基线
+## Show the requested change only
 
-- 画布是纯黑色；材质是铂金金属、烟熏玻璃、细线边框和克制的薄荷青能量。
-- 一页只保留一个主要三维主体；信息密度高但保持清晰的财务层级。
-- 禁止页面级渐变、紫色主题、博彩/赌场装饰、机器人替代品牌、营销式收益承诺和无意义的发光。
-- 生成的图中文字仅作结构示意，真实上线文案以 i18n 文案和产品配置为准。
+- Keep platform-owned copy concise and translated in all seven supported languages. Verify Arabic RTL, amounts, addresses, placeholders and long labels.
+- Distinguish clearly marked example data from production data. A visual prototype cannot establish a price, reward, licence, issuer relationship or transaction state.
+- Keep the existing Home/Markets/Assets navigation and independent AI action wherever the current route uses them. Preserve detail-flow headers and safe areas rather than adding a new dock.
+- Make independent previews separate from production routes. Keep examples and generated assets outside business pages until approved for implementation.
 
-## 现有原型图审查结论
+## Acceptance and history
 
-| 文件 | 结论 | 原因 |
-|---|---|---|
-| `rwa-lat-home-concept-v1.png` | 作为旧版风格参考保留 | 质感、材质和首页层级成立，但底部仍含 Profile，不能再作为导航规范。 |
-| `rwa-lat-home-v2.png` | 删除 | 与首页 v1 重复，且同样采用已废弃的 Profile 底部导航。 |
-| `rwa-lat-onboarding-v1.png` | 保留 | 可作为首次使用视觉参考；后续需补登录、KYC、恢复等页面。 |
-| `rwa-lat-logo-simple-v1.png` | 保留为品牌参考 | 不作为单独的用户端页面原型。 |
-| `tmp_ocr.png` | 删除 | 临时处理文件，不是设计资产。 |
+Compare at 375, 390 and 430 px, both themes and reduced motion as relevant. Record what was visually checked and what still needs a real device. A screenshot or preview is not a merge, deployment or completed integration.
 
-## 输出命名
-
-输出目录为 `assets/generated/原型图/`。文件名使用：`序号-页面组-页面名称-v版本.png`。每张图必须在同目录的 `README.md` 中记录用途、页面类型、锁定骨架、覆盖状态和是否可作为实现参考。
+Earlier specifications and mockups remain in [historical documents](README.md#历史资料), with their original names and conclusions preserved. They must not be used to revert the approved live design.

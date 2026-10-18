@@ -1,3 +1,5 @@
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
+
 # 生产适配器实现说明
 
 本文描述仓库中的真实代码边界，不提供与代码不一致的“伪实现”。
@@ -14,7 +16,7 @@
 服务端通过 `POST /v1/compliance/kyc/session` 创建托管认证会话。浏览器只收到 `verificationUrl`，不会接触 Didit API Key。Didit 回调地址为：
 
 ```text
-https://api.rwa.lat/v1/compliance/kyc/webhooks/didit
+https://api.a-reit.com/v1/compliance/kyc/webhooks/didit
 ```
 
 回调只接受 `X-Signature-V2`，验证 5 分钟时间窗并使用 HMAC-SHA256 对递归排序、紧凑、保留 Unicode 的 JSON 做常量时间比较。Didit Console 的测试回调会验签但不会修改生产状态。应用仅保存 provider reference 的哈希和密文，不保存 Didit 返回的原始证件/人脸数据。
@@ -27,7 +29,7 @@ DIDIT_API_BASE_URL=https://verification.didit.me
 DIDIT_API_KEY=<Secret Manager>
 DIDIT_WORKFLOW_ID=<published workflow UUID>
 DIDIT_WEBHOOK_SECRET=<destination secret_shared_key>
-DIDIT_CALLBACK_URL=https://rwa.lat/profile/kyc?status=complete
+DIDIT_CALLBACK_URL=https://a-reit.com/profile/kyc?status=complete
 DIDIT_API_TIMEOUT_MS=10000
 DIDIT_API_MAX_RETRIES=2
 DIDIT_API_RETRY_BASE_DELAY_MS=500

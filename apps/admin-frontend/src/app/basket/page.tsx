@@ -437,7 +437,7 @@ export default function BasketOpsPage() {
           confirmLabel: '创建',
           confirmDisabled: !form.name.trim(),
           run: createStrategy,
-          body: field('name', '策略名称', { placeholder: '例如：AI RWA Core 核心篮子' }),
+          body: field('name', '策略名称', { placeholder: '例如：多元资产核心篮子' }),
         }
       case 'createVersion':
         return {
@@ -489,7 +489,7 @@ export default function BasketOpsPage() {
           run: createPortfolio,
           body: (
             <div className="space-y-3">
-              {field('name', '组合名称', { placeholder: '例如：AI RWA Core 一号组合' })}
+              {field('name', '组合名称', { placeholder: '例如：多元资产一号组合' })}
               <label className="block">
                 <span className="mb-1 block text-xs text-text-secondary">绑定策略 slug</span>
                 <input list="basket-strategy-slugs" value={form.strategySlug} onChange={(e) => setForm((prev) => ({ ...prev, strategySlug: e.target.value }))} className={cn(FIELD, 'font-mono')} />

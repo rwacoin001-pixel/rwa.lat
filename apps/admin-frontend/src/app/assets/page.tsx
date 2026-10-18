@@ -80,7 +80,7 @@ export default function AssetsPage() {
       <div className="space-y-5">
         <PageHeader
           title="资产分析"
-          subtitle="RWA 标准化资产目录浏览（行情 + 多维评分）— 全量目录的搜索与检索"
+          subtitle="真实资产标准化目录浏览（行情 + 多维评分）— 全量目录的搜索与检索"
           actions={
             <form
               onSubmit={(event) => {

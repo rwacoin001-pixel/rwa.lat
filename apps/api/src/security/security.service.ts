@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  HttpException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,10 +15,14 @@ import {
   verifyRegistrationResponse,
 } from '@simplewebauthn/server'
 import type { AuthenticationResponseJSON, RegistrationResponseJSON } from '@simplewebauthn/server'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes, randomInt, randomUUID, timingSafeEqual } from 'node:crypto'
 import { IsNull, Like, Repository } from 'typeorm'
 import { Device } from '../identity/device.entity'
 import { IdentityCrypto } from '../identity/identity-crypto.service'
+import { IdentityDeliveryService } from '../identity/identity-delivery.service'
+import { verifiedGoogleEmail } from '../identity/google-email'
+import { emailLocale } from '../common/email-template'
+import type { LoginIdentity } from '../identity/login-identity.entity'
 import { Session } from '../identity/session.entity'
 import { AuditLog } from './audit-log.entity'
 import { PasskeyCredential } from './passkey-credential.entity'
@@ -28,6 +33,10 @@ import type { SecurityEventViewDto } from './dto/security.dto'
 
 const CHALLENGE_TTL_MS = 5 * 60 * 1000
 const STEP_UP_TTL_MS = 5 * 60 * 1000
+const STEP_UP_EMAIL_TTL_MS = 10 * 60 * 1000
+const STEP_UP_EMAIL_RESEND_SECONDS = 60
+const STEP_UP_EMAIL_MAX_ATTEMPTS = 5
+const STEP_UP_EMAIL_MAX_SENDS_PER_HOUR = 10
 
 export interface SecurityActor {
   userId: string
@@ -50,6 +59,7 @@ export class SecurityService {
     @InjectRepository(AuditLog) private readonly auditLogs: Repository<AuditLog>,
     private readonly crypto: IdentityCrypto,
     config: ConfigService,
+    private readonly delivery: IdentityDeliveryService,
   ) {
     this.rpId = config.get<string>('PASSKEY_RP_ID') ?? 'localhost'
     this.origin = config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3030'
@@ -385,6 +395,74 @@ export class SecurityService {
     return { reauthentication, expiresInSeconds: STEP_UP_TTL_MS / 1000, method: 'passkey' }
   }
 
+  async requestEmailStepUp(actor: SecurityActor, requestId: string, locale?: string) {
+    // Google identifiers hold an encrypted provider profile, not a bare email address.
+    const [identity] = await this.challenges.manager.query(`SELECT li.kind, li.state, li.revoked_at AS "revokedAt",
+      li.identifier_hash AS "identifierHash", li.identifier_ciphertext AS "identifierCiphertext",
+      li.encryption_key_version AS "encryptionKeyVersion", u.locale
+      FROM app.login_identities li JOIN app.users u ON u.id = li.user_id
+      WHERE li.user_id = $1 AND li.kind IN ('email', 'google') AND li.state = 'verified' AND li.revoked_at IS NULL
+      ORDER BY (li.kind = 'email') DESC, li.verified_at DESC NULLS LAST LIMIT 1`, [actor.userId]) as
+      Array<LoginIdentity & { locale: string | null }>
+    if (!identity) {
+      throw new ConflictException({ code: 'STEP_UP_EMAIL_UNAVAILABLE', message: 'A verified email address is required.' })
+    }
+    const email = identity.kind === 'google'
+      ? verifiedGoogleEmail(this.crypto, identity)
+      : this.crypto.decrypt(identity.identifierCiphertext, identity.encryptionKeyVersion)
+    if (!email) throw new ConflictException({ code: 'STEP_UP_EMAIL_UNAVAILABLE', message: 'A verified email address is required.' })
+    const code = String(randomInt(0, 1_000_000)).padStart(6, '0')
+    const challengeId = randomUUID()
+    const expiresAt = new Date(Date.now() + STEP_UP_EMAIL_TTL_MS)
+    await this.challenges.manager.transaction(async (manager) => {
+      // Serializes concurrent requests for one user so the resend/hourly limits cannot be raced.
+      await manager.query('SELECT pg_advisory_xact_lock(hashtext($1))', [`step-up-email:${actor.userId}`])
+      const recent = await manager.query(`SELECT extract(epoch FROM (now() - created_at))::float8 AS age
+        FROM app.security_challenges WHERE user_id = $1 AND kind = 'step_up_email' AND created_at > now() - interval '1 hour'
+        ORDER BY created_at DESC`, [actor.userId]) as Array<{ age: number }>
+      const retryAfter = recent.length >= STEP_UP_EMAIL_MAX_SENDS_PER_HOUR
+        ? Math.ceil(3600 - recent[STEP_UP_EMAIL_MAX_SENDS_PER_HOUR - 1].age)
+        : recent.length ? Math.ceil(STEP_UP_EMAIL_RESEND_SECONDS - recent[0].age) : 0
+      if (retryAfter > 0) {
+        throw new HttpException({ code: 'STEP_UP_EMAIL_RATE_LIMIT', message: 'Please wait before requesting another code.', details: { retryAfter }, retryAfter }, 429)
+      }
+      await manager.update(SecurityChallenge, { userId: actor.userId, kind: 'step_up_email', consumedAt: IsNull() }, { consumedAt: new Date() })
+      await this.storeChallenge(actor, 'step_up_email', challengeId, {
+        id: challengeId,
+        ttlMs: STEP_UP_EMAIL_TTL_MS,
+        hashOf: this.stepUpEmailDigest(challengeId, actor.userId, code),
+        repo: manager.getRepository(SecurityChallenge),
+      })
+      // A delivery failure rolls back the new challenge and preserves the previous one.
+      await this.delivery.sendEmailCode({ email, intent: 'login', purpose: 'step_up', code, locale: emailLocale(locale ?? identity.locale ?? 'en'), expiresAt })
+    })
+    await this.audit(actor.userId, requestId, 'security.step_up.email_requested', 'security_challenge', challengeId)
+    return {
+      challengeId,
+      maskedEmail: this.maskEmail(email),
+      expiresInSeconds: STEP_UP_EMAIL_TTL_MS / 1000,
+      resendAfterSeconds: STEP_UP_EMAIL_RESEND_SECONDS,
+    }
+  }
+
+  async confirmEmailStepUp(actor: SecurityActor, challengeId: string, code: string, requestId: string) {
+    const challenge = await this.loadChallenge(actor, challengeId, 'step_up_email')
+    // Count the guess before comparing; the conditional update caps guesses at the limit even under concurrency.
+    const counted = await this.challenges.createQueryBuilder().update(SecurityChallenge)
+      .set({ attempts: () => 'attempts + 1' })
+      .where('id = :id AND consumed_at IS NULL AND attempts < :max', { id: challenge.id, max: STEP_UP_EMAIL_MAX_ATTEMPTS })
+      .execute()
+    if (counted.affected !== 1) throw this.emailChallengeInvalid()
+    const expected = this.stepUpEmailDigest(challenge.id, actor.userId, code)
+    if (challenge.challengeHash.length !== expected.length || !timingSafeEqual(challenge.challengeHash, expected)) {
+      throw new UnauthorizedException({ code: 'STEP_UP_EMAIL_CODE_INVALID', message: 'The verification code is invalid or expired.' })
+    }
+    await this.consumeChallenge(challenge)
+    const reauthentication = this.issueStepUp(actor, 'email')
+    await this.audit(actor.userId, requestId, 'security.step_up.completed', 'security_challenge', challenge.id, { method: 'email' })
+    return { reauthentication, expiresInSeconds: STEP_UP_TTL_MS / 1000, method: 'email' }
+  }
+
   async trustCurrentDevice(actor: SecurityActor, reauthentication: string, requestId: string) {
     this.assertStepUp(actor, reauthentication)
     if (!actor.deviceId) throw this.notFound(SECURITY_ERROR_CODES.DEVICE_NOT_FOUND, 'The current session has no device.')
@@ -399,8 +477,9 @@ export class SecurityService {
     return { trusted: true, deviceId: device.id }
   }
 
-  assertRecentStepUp(actor: SecurityActor, reauthentication: string): void {
-    this.assertStepUp(actor, reauthentication)
+  /** Email-issued tokens are rejected unless the caller opts in with allowEmail (transaction-password setup/change/reset only). */
+  assertRecentStepUp(actor: SecurityActor, reauthentication: string, allowEmail = false): void {
+    this.assertStepUp(actor, reauthentication, allowEmail)
   }
 
   async listEvents(actor: SecurityActor): Promise<SecurityEventViewDto[]> {
@@ -412,18 +491,25 @@ export class SecurityService {
     return events.map(({ id, action, occurredAt }) => ({ id, action, occurredAt }))
   }
 
-  private async storeChallenge(actor: SecurityActor, kind: SecurityChallengeKind, value: string) {
+  /** `hashOf` lets a secret (an emailed code) be stored only as a keyed hash while `value` is a non-secret placeholder. */
+  private async storeChallenge(
+    actor: SecurityActor,
+    kind: SecurityChallengeKind,
+    value: string,
+    options: { id?: string; ttlMs?: number; hashOf?: Buffer; repo?: Repository<SecurityChallenge> } = {},
+  ) {
+    const repo = options.repo ?? this.challenges
     const encrypted = this.crypto.encrypt(value)
-    const row = await this.challenges.save(
-      this.challenges.create({
-        id: randomUUID(),
+    const row = await repo.save(
+      repo.create({
+        id: options.id ?? randomUUID(),
         userId: actor.userId,
         sessionId: actor.sessionId,
         kind,
-        challengeHash: this.crypto.hashToken(value),
+        challengeHash: options.hashOf ?? this.crypto.hashToken(value),
         challengeCiphertext: encrypted.ciphertext,
         encryptionKeyVersion: encrypted.keyVersion,
-        expiresAt: new Date(Date.now() + CHALLENGE_TTL_MS),
+        expiresAt: new Date(Date.now() + (options.ttlMs ?? CHALLENGE_TTL_MS)),
         consumedAt: null,
       }),
     )
@@ -435,6 +521,7 @@ export class SecurityService {
       where: { id, userId: actor.userId, sessionId: actor.sessionId, kind, consumedAt: IsNull() },
     })
     if (!challenge || challenge.expiresAt <= new Date()) {
+      if (kind === 'step_up_email') throw this.emailChallengeInvalid()
       throw new UnauthorizedException({
         code: SECURITY_ERROR_CODES.PASSKEY_CHALLENGE_INVALID,
         message: 'The passkey challenge is missing, expired, or already used.',
@@ -446,6 +533,7 @@ export class SecurityService {
   private async consumeChallenge(challenge: SecurityChallenge) {
     const result = await this.challenges.update({ id: challenge.id, consumedAt: IsNull() }, { consumedAt: new Date() })
     if (result.affected !== 1) {
+      if (challenge.kind === 'step_up_email') throw this.emailChallengeInvalid()
       throw new ConflictException({
         code: SECURITY_ERROR_CODES.PASSKEY_CHALLENGE_INVALID,
         message: 'The passkey challenge was already used.',
@@ -453,7 +541,7 @@ export class SecurityService {
     }
   }
 
-  private issueStepUp(actor: SecurityActor, method: 'totp' | 'passkey' | 'recovery_code') {
+  private issueStepUp(actor: SecurityActor, method: 'totp' | 'passkey' | 'recovery_code' | 'email') {
     return this.crypto.signState(
       JSON.stringify({
         audience: 'rwa-lat-security-step-up',
@@ -466,7 +554,7 @@ export class SecurityService {
     )
   }
 
-  private assertStepUp(actor: SecurityActor, token: string) {
+  private assertStepUp(actor: SecurityActor, token: string, allowEmail = false) {
     const payload = this.crypto.verifyState(token)
     if (!payload) return this.stepUpRequired()
     try {
@@ -476,13 +564,31 @@ export class SecurityService {
         parsed.userId !== actor.userId ||
         parsed.sessionId !== actor.sessionId ||
         typeof parsed.expiresAt !== 'number' ||
-        parsed.expiresAt <= Date.now()
+        parsed.expiresAt <= Date.now() ||
+        (parsed.method === 'email' && !allowEmail)
       ) {
         return this.stepUpRequired()
       }
     } catch {
       return this.stepUpRequired()
     }
+  }
+
+  private stepUpEmailDigest(challengeId: string, userId: string, code: string) {
+    return this.crypto.hashToken(`step-up-email:${challengeId}:${userId}:${code}`)
+  }
+
+  private emailChallengeInvalid() {
+    return new UnauthorizedException({
+      code: 'STEP_UP_EMAIL_CHALLENGE_INVALID',
+      message: 'The email verification code is missing, expired, locked, or already used.',
+    })
+  }
+
+  private maskEmail(email: string) {
+    const at = email.lastIndexOf('@')
+    if (at < 1) return '***'
+    return `${email[0]}***${email.slice(at)}`
   }
 
   private recoveryCode() {

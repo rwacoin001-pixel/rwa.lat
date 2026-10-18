@@ -1,6 +1,8 @@
-# RWA.LAT 隐私通知模板
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
 
-版本：0.9 Demo。暂定控制者：**WAVEMAKER PACIFIC PARTNERS PTE. LTD.（UEN 201402949K）**；是否为 RWA.LAT 数据控制者待正式运营授权和数据流确认。隐私联系人：`[privacy@rwa.lat，待启用]`。
+# A-REIT 隐私通知模板
+
+版本：0.9 Demo。暂定控制者：**WAVEMAKER PACIFIC PARTNERS PTE. LTD.（UEN 201402949K）**；是否为 A-REIT 数据控制者待正式运营授权和数据流确认。隐私联系人：`[privacy@a-reit.com，待验证及启用；本轮未确认邮箱可用]`。
 
 ## 1. 收集的数据
 

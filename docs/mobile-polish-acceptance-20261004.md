@@ -1,3 +1,5 @@
+> **历史记录，不作为当前实施依据（标记于 2026-10-16）。** 以下正文保留原始名称、日期、决定及验收结论，不代表当前线上状态。实施与发布先读[当前项目说明](deployment-current.md)，界面设计以[当前设计规则](../DESIGN.md)为准。
+
 # Delivery evidence — 2026-10-04
 
 Source: canonical `E:\rwa-lat-current` → `E:\rwa-lat-recovery\prediction-ui-20261002`, branch `feat/android-client-ai-polish-20261004`. Its verified base and current remote main are both `d76fec11d6f65776f8983f726e58a407d316e06d`. No older checkout was substituted. No merge, deployment or database migration has occurred in this task.

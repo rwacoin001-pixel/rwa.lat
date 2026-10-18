@@ -50,7 +50,7 @@ const EN: Record<string, string> = {
 }
 
 export function assetClassLabel(cls?: string | null): string {
-  if (!cls) return 'RWA'
+  if (!cls) return 'Real assets'
   return EN[cls] ?? cls
 }
 

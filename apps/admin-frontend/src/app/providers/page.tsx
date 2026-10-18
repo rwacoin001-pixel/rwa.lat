@@ -10,7 +10,7 @@ type Health = { status: string; app: string; time: string }
 const INTEGRATIONS = [
   {
     name: 'CoinMarketCap',
-    role: 'RWA 资产目录与行情数据源',
+    role: '真实资产目录与行情数据源',
     detail: '每日全量目录 + 每小时行情快照（免费档限速 27 req/min，客户端内置节流与 429 退避）',
     icon: LineChart,
     tone: 'text-mint',

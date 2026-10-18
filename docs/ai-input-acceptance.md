@@ -1,3 +1,5 @@
+> **历史记录，不作为当前实施依据（标记于 2026-10-16）。** 以下正文保留原始名称、日期、决定及验收结论，不代表当前线上状态。实施与发布先读[当前项目说明](deployment-current.md)，界面设计以[当前设计规则](../DESIGN.md)为准。
+
 # AI input and answer actions acceptance
 
 Updated on 2026-10-05 in `E:\rwa-lat-worktrees\prediction-order-polish-20261004`, branch `codex/mobile-followup-20261004`. The additions below are local and unmerged. This document does not establish a production deployment or real-account/device acceptance.

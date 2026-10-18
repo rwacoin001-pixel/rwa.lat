@@ -1,17 +1,20 @@
 'use client'
 
-import { Delete, LockKeyhole } from 'lucide-react'
+import { ArrowLeft, Delete, LockKeyhole, ShieldCheck } from 'lucide-react'
 import { useEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
+import type { StepUpResult } from '@/lib/api/security'
 import { changeTransactionPin, isPin, resetTransactionPin, setupTransactionPin, type TransactionPinStatus } from '@/lib/api/transaction-pin'
 import { transactionPinCopy, type TransactionPinMode, type TransactionPinStep } from '@/lib/maison-transaction-pin-copy'
 import { Sheet } from './Sheet'
-import { useStepUp, type StepUpLine } from './StepUp'
+import { StepUpPanel, type StepUpLine } from './StepUp'
 import { maison as s } from './primitives'
 import x from './transaction-pin.module.css'
 
-export function TransactionPinPad({ value, onChange, disabled = false }: { value: string; onChange: (value: string) => void; disabled?: boolean }) {
+type PinStage = TransactionPinStep | 'verify'
+
+export function TransactionPinPad({ value, onChange, disabled = false, invalid = false, onBack, backLabel }: { value: string; onChange: (value: string) => void; disabled?: boolean; invalid?: boolean; onBack?: () => void; backLabel?: string }) {
   const { locale } = useI18n()
   const copy = transactionPinCopy[locale].pad
   const pad = useRef<HTMLDivElement>(null)
@@ -22,13 +25,13 @@ export function TransactionPinPad({ value, onChange, disabled = false }: { value
     if (/^[0-9]$/.test(event.key)) { event.preventDefault(); digit(event.key) }
     else if (event.key === 'Backspace' || event.key === 'Delete') { event.preventDefault(); onChange(value.slice(0, -1)) }
   }
-  return <div className={x.pad} ref={pad} tabIndex={disabled ? -1 : 0} onKeyDown={keyboard} role="group" aria-label={copy.label} data-pin-pad="">
+  return <div className={x.pad} ref={pad} tabIndex={disabled ? -1 : 0} onKeyDown={keyboard} role="group" aria-label={copy.label} data-pin-pad="" data-invalid={invalid || undefined}>
     <div className={x.slots} dir="ltr" role="img" aria-live="polite" aria-label={copy.filled(value.length, 6)}>
-      {Array.from({ length: 6 }, (_, i) => <span key={i} data-filled={i < value.length} aria-hidden="true">{i < value.length ? '•' : ''}</span>)}
+      {Array.from({ length: 6 }, (_, i) => <span key={i} data-filled={i < value.length} aria-hidden="true" />)}
     </div>
     <div className={x.keys} dir="ltr">
       {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(n => <button key={n} type="button" disabled={disabled || value.length >= 6} aria-label={copy.digit(n)} onClick={() => digit(n)}>{n}</button>)}
-      <span aria-hidden="true" />
+      {onBack ? <button type="button" className={x.keyBack} disabled={disabled} aria-label={backLabel} onClick={onBack}><ArrowLeft size={20} aria-hidden="true" /></button> : <span aria-hidden="true" />}
       <button type="button" disabled={disabled || value.length >= 6} aria-label={copy.digit('0')} onClick={() => digit('0')}>0</button>
       <button type="button" disabled={disabled || !value} aria-label={copy.backspace} onClick={() => onChange(value.slice(0, -1))}><Delete size={23} aria-hidden="true" /></button>
     </div>
@@ -58,7 +61,7 @@ export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy =
   }
   return <Sheet open={open} busy={busy} onClose={() => { setValue(''); onClose() }} title={p.prompt.title} data-transaction-pin="confirm">
     <dl className={`${s.summary} ${x.summary}`}>{summary.map(line => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl>
-    <TransactionPinPad value={value} onChange={setValue} disabled={busy} />
+    <TransactionPinPad value={value} onChange={setValue} disabled={busy} invalid={Boolean(error)} />
     {error && <p className={s.fieldError} role="alert">{error}</p>}
     <button type="button" className={s.cta} disabled={busy || !isPin(value)} aria-busy={busy} onClick={() => void confirm()}>
       <span>{busy ? p.working : p.prompt.confirm}</span><LockKeyhole size={18} aria-hidden="true" />
@@ -71,59 +74,90 @@ export function TransactionPinManager({ open, mode, onClose, onDone }: {
 }) {
   const { locale } = useI18n()
   const p = transactionPinCopy[locale]
-  const [step, setStep] = useState<TransactionPinStep>(mode === 'change' ? 'current' : 'next')
+  const stages: PinStage[] = mode === 'change' ? ['current', 'next', 'confirm', 'verify'] : ['next', 'confirm', 'verify']
+  const first = stages[0]
+  const [stage, setStage] = useState<PinStage>(first)
   const [value, setValue] = useState('')
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const secrets = useRef({ current: '', next: '' })
+  const [round, setRound] = useState(0)
+  const secrets = useRef({ current: '', next: '', confirm: '' })
   const epoch = useRef(0)
   const inflight = useRef(false)
   const closeRef = useRef(onClose)
   closeRef.current = onClose
-  const { run, sheet } = useStepUp()
-  const clear = () => { secrets.current = { current: '', next: '' }; setValue('') }
-  const cancel = () => { epoch.current++; clear(); onClose() }
+  const wipe = () => { secrets.current = { current: '', next: '', confirm: '' }; setValue('') }
+  const cancel = () => { epoch.current++; wipe(); onClose() }
   useEffect(() => {
-    epoch.current++; secrets.current = { current: '', next: '' }; setValue(''); setError(null)
-    setStep(mode === 'change' ? 'current' : 'next')
+    epoch.current++; secrets.current = { current: '', next: '', confirm: '' }; setValue(''); setError(null); setRound(0)
+    setStage(mode === 'change' ? 'current' : 'next')
   }, [open, mode])
   useEffect(() => {
-    const clearAccount = () => { epoch.current++; secrets.current = { current: '', next: '' }; setValue(''); closeRef.current() }
+    const clearAccount = () => { epoch.current++; secrets.current = { current: '', next: '', confirm: '' }; setValue(''); closeRef.current() }
     window.addEventListener(SESSION_CHANGED, clearAccount); window.addEventListener(SESSION_EXPIRED, clearAccount)
-    return () => { epoch.current++; secrets.current = { current: '', next: '' }; window.removeEventListener(SESSION_CHANGED, clearAccount); window.removeEventListener(SESSION_EXPIRED, clearAccount) }
+    return () => { epoch.current++; secrets.current = { current: '', next: '', confirm: '' }; window.removeEventListener(SESSION_CHANGED, clearAccount); window.removeEventListener(SESSION_EXPIRED, clearAccount) }
   }, [])
-  const advance = async () => {
-    if (!isPin(value) || busy || inflight.current) return
-    setError(null)
-    if (step === 'current') { secrets.current.current = value; setValue(''); setStep('next'); return }
-    if (step === 'next') { secrets.current.next = value; setValue(''); setStep('confirm'); return }
-    if (value !== secrets.current.next) { clear(); setStep(mode === 'change' ? 'current' : 'next'); setError(p.mismatch); return }
-    const attempt = epoch.current
-    const payload = { pin: secrets.current.next, confirmation: value, currentPin: secrets.current.current }
-    clear(); setBusy(true); inflight.current = true
-    try {
-      const result = await run(true, reauthentication => {
-        if (attempt !== epoch.current) return Promise.resolve({ ok: false as const, error: { status: 0, code: 'SESSION_CHANGED', message: p.failed } })
-        const body = { ...payload, reauthentication: reauthentication ?? '' }
-        return mode === 'setup' ? setupTransactionPin(body) : mode === 'change' ? changeTransactionPin(body) : resetTransactionPin(body)
-      }, [{ label: p.securityLabel, value: p.title[mode] }])
-      if (attempt !== epoch.current) return
-      if (result?.ok) { onDone(result.data); return }
-      setError(result && !result.ok ? p.errors[result.error.code] ?? p.failed : null)
-      setStep(mode === 'change' ? 'current' : 'next')
-    } catch { if (attempt === epoch.current) { setError(p.failed); setStep(mode === 'change' ? 'current' : 'next') } }
-    finally { payload.pin = ''; payload.confirmation = ''; payload.currentPin = ''; inflight.current = false; if (attempt === epoch.current) setBusy(false) }
+
+  // Six digits move the card on by themselves; a wrong confirmation stays on the same step so only that entry is redone.
+  const advance = () => {
+    if (stage === 'verify' || !isPin(value) || busy || inflight.current) return
+    if (stage === 'current') { secrets.current.current = value; setValue(''); setStage('next'); return }
+    if (stage === 'next') { secrets.current.next = value; setValue(''); setStage('confirm'); return }
+    if (value !== secrets.current.next) { setValue(''); setError(p.mismatch); return }
+    secrets.current.confirm = value; setValue(''); setStage('verify')
   }
-  return <>
-    <Sheet open={open} busy={busy} onClose={cancel} title={p.title[mode]} data-transaction-pin={mode}>
-      <p className={x.step}>{p.step[step]}</p>
-      {mode === 'reset' && <p className={s.notice} data-tone="warn">{p.resetNotice}</p>}
-      <TransactionPinPad key={step} value={value} onChange={setValue} disabled={busy} />
-      {error && <p className={s.fieldError} role="alert">{error}</p>}
-      <button type="button" className={s.cta} disabled={busy || !isPin(value)} aria-busy={busy} onClick={() => void advance()}>
-        <span>{busy ? p.working : step === 'confirm' ? p.submit : p.next}</span><LockKeyhole size={18} aria-hidden="true" />
-      </button>
-    </Sheet>
-    {sheet}
-  </>
+  const advanceRef = useRef(advance)
+  advanceRef.current = advance
+  useEffect(() => {
+    if (stage === 'verify' || busy || !isPin(value)) return
+    const timer = window.setTimeout(() => advanceRef.current(), 160)
+    return () => window.clearTimeout(timer)
+  }, [value, stage, busy])
+
+  const back = () => {
+    const previous = stages[stages.indexOf(stage) - 1]
+    if (!previous || busy) return
+    if (previous !== 'verify') secrets.current[previous] = ''
+    setValue(''); setError(null); setStage(previous)
+  }
+
+  const submit = async (verified: StepUpResult) => {
+    if (inflight.current) return
+    const attempt = epoch.current
+    const body = { pin: secrets.current.next, confirmation: secrets.current.confirm, reauthentication: verified.reauthentication }
+    const currentPin = secrets.current.current
+    let retry = false
+    setError(null); setBusy(true); inflight.current = true
+    try {
+      const result = mode === 'setup' ? await setupTransactionPin(body) : mode === 'change' ? await changeTransactionPin({ ...body, currentPin }) : await resetTransactionPin(body)
+      if (attempt !== epoch.current) return
+      if (result.ok) { onDone(result.data); return }
+      if (result.error.code === 'STEP_UP_REQUIRED') { retry = true; setRound((n) => n + 1); setError(p.flow.expired); return }
+      setError(p.errors[result.error.code] ?? (result.error.status > 0 ? `${p.failed} (${result.error.code})` : p.failed))
+      setStage(first)
+    } catch { if (attempt === epoch.current) { setError(p.failed); setStage(first) } }
+    finally {
+      inflight.current = false
+      if (attempt === epoch.current) { if (!retry) wipe(); setBusy(false) }
+    }
+  }
+
+  const index = stages.indexOf(stage)
+  return <Sheet open={open} busy={busy} onClose={cancel} title={p.title[mode]} data-transaction-pin={mode}
+    kicker={<><ShieldCheck size={13} aria-hidden="true" />{p.flow.stepOf(index + 1, stages.length)}</>}>
+    <ol className={x.progress} aria-hidden="true">{stages.map((id, i) => <li key={id} data-state={i < index ? 'done' : i === index ? 'now' : 'todo'} />)}</ol>
+    <div className={x.lead} key={stage}>
+      <h3 aria-live="polite">{stage === 'verify' ? p.flow.verifyTitle : p.step[stage]}</h3>
+      <p>{stage === 'verify' ? p.flow.verifyHint : p.flow.hint[stage]}</p>
+    </div>
+    {mode === 'reset' && (stage === first || stage === 'verify') && <p className={s.notice} data-tone="warn">{p.resetNotice}</p>}
+    {stage === 'verify' ? <>
+      <div className={x.msgSlot}>{error && <p role="alert">{error}</p>}</div>
+      <StepUpPanel key={round} emailFirst locked={busy} onVerified={(verified) => void submit(verified)} onLeave={cancel} />
+    </> : <>
+      <TransactionPinPad key={stage} value={value} onChange={(next) => { setValue(next); if (error) setError(null) }} disabled={busy} invalid={Boolean(error)} onBack={index > 0 ? back : undefined} backLabel={p.back} />
+      <div className={x.msgSlot}>{error && <p role="alert">{error}</p>}</div>
+    </>}
+    {stage === 'verify' && <button type="button" className={x.back} disabled={busy} onClick={back}><ArrowLeft size={14} aria-hidden="true" />{p.back}</button>}
+  </Sheet>
 }

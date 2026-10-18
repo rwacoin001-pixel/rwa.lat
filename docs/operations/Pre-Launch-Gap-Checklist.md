@@ -1,4 +1,6 @@
-# RWA.LAT 上线缺口清单
+> **保留的参考文档，2026-10-16 仅更新品牌与公开域名。** 本轮未重新验证文中的能力、流程、法律状态或供应商配置；当前部署事实见[当前项目说明](../deployment-current.md)。
+
+# A-REIT 上线缺口清单
 
 > 2026-10-09 审批策略更新：后台应用审批统一为单名授权管理员明确批准；本清单中的旧双人审批描述由[当前单人审批策略](../single-admin-approvals-20261009.md)覆盖。
 
@@ -36,10 +38,10 @@ OBJECT_STORAGE_ENABLED=false
 |---|---|---|---|
 | P0 | Core/Admin 运行服务器 | 部署平台账号、区域、网络拓扑 | Core readiness、Admin health 均为 200，服务不可绕过反代直连 |
 | P0 | PostgreSQL 生产库 | 托管数据库账号；生产和隔离测试连接串 | TLS、备份/PITR、`_production`/`_test` 命名、迁移与恢复演练通过 |
-| P0 | 正式域名 | Cloudflare DNS/TLS 权限 | `rwa.lat`、`api.rwa.lat`、`admin.rwa.lat`、`admin-api.rwa.lat` 精确绑定 |
+| P0 | 正式域名 | Cloudflare DNS/TLS 权限 | `a-reit.com`、`api.a-reit.com`、`admin.a-reit.com`、`admin-api.a-reit.com` 精确绑定 |
 | P0 | Secret Manager | 部署平台密钥管理权限 | 身份 HMAC/加密、Metrics、Admin MFA 等独立密钥注入且不出现在日志/Git |
 | P0 | 正式邮件 | SMTP/SES/SendGrid 等参数及域名验证 | SPF、DKIM、DMARC 和注册/找回送达测试通过 |
-| P0 | Google OAuth | Client Secret、正式发布状态和回调配置 | `https://rwa.lat/auth/callback/google` 完整登录回归通过 |
+| P0 | Google OAuth | Client Secret、正式发布状态和回调配置 | `https://a-reit.com/auth/callback/google` 完整登录回归通过 |
 | P0 | GitHub 发布策略 | 仓库管理员权限 | main 分支保护、必需检查、环境审批和回滚权限已设置 |
 | P1 | Didit 控制台 | API Key、Workflow ID、Webhook Destination Secret | Sandbox 会话和 Try Webhook 通过后再切 live application |
 | P1 | S3/KMS/扫描器 | 区域、桶、IAM/KMS、扫描供应商与回调密钥 | 三桶隔离、恶意文件隔离和删除/保留策略演练通过 |

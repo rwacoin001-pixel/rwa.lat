@@ -19,6 +19,6 @@ import { ReferralModule } from '../referral/referral.module'
   imports: [ReferralModule, TypeOrmModule.forFeature([User, LoginIdentity, Device, Session, IdentityOneTimeToken, IdentityPasskeyChallenge, PasskeyCredential])],
   controllers: [IdentityController],
   providers: [IdentityService, IdentityCrypto, IdentityDeliveryService, OAuthProviderService, EmailCodeService],
-  exports: [IdentityService, IdentityCrypto],
+  exports: [IdentityService, IdentityCrypto, IdentityDeliveryService],
 })
 export class IdentityModule {}

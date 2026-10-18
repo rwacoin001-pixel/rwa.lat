@@ -1,85 +1,40 @@
-# RWA.LAT Visual System
+# A-REIT · Current design rules
 
-## 1. Visual Theme & Atmosphere
+Updated: 2026-10-16. This document preserves the existing product; it is not a redesign request. Historical concept images and specifications do not override current components or later user-approved changes.
 
-RWA.LAT is a precise, cinematic financial instrument: pure black space, platinum hardware, smoked glass and restrained mint energy. The interface must feel engineered rather than decorated. Every screen has one dominant object and a clear financial hierarchy. Page backgrounds are always `#000000`; depth comes from materials, borders and local light inside components, never ambient page gradients.
+## Brand and public copy
 
-## 2. Color
+- Use **A-REIT** and the existing folded-portal mark with its green plane. Reuse `components/rwa-logo.tsx` and `public/brand/a-reit/`; their compatibility filenames are intentional.
+- Preserve the existing logo geometry, light/dark variants and green accent (`#19C7AA`). Do not restore the historical circle/axis logo or generate a replacement.
+- Public application, API and admin origins are `https://a-reit.com`, `https://api.a-reit.com` and `https://admin.a-reit.com`. Confirm the actual sender configuration before making email-delivery claims.
+- Platform-owned category labels use “真实资产 / Real assets”; basket labels use “资产组合 / Asset basket” and the corresponding supported translations. Internal enum keys, routes and provider fields may retain `RWA`.
+- Do not rename third-party products, user content, historical transactions, signed documents or registered legal entities as a copy cleanup. Do not imply an institutional affiliation, licence, return or guarantee that has not been established.
 
-- Canvas: `#000000`
-- Glass: `rgba(12, 16, 20, .62)`
-- Glass strong: `rgba(18, 23, 28, .76)`
-- Hairline: `rgba(255, 255, 255, .12)`
-- Glass rim: `rgba(218, 239, 255, .58)`
-- Primary text: `#F5F7F8`
-- Secondary text: `#929AA6`
-- Faint text: `#626A75`
-- Mint: `#2FE6BF`
-- Ice: `#C5E3F7`
-- Positive: `#2FE6BF`
-- Negative: `#FF627A`
-- Medium risk: `#7589FF`
-- High risk: `#FFAD3D`
+## Follow the current page, not a single global palette
 
-No page-level `linear-gradient` or `radial-gradient`. A component may use a tightly bounded specular highlight or glow when it represents glass refraction, an active control or an illuminated 3D object.
+- Preserve both themes and the existing backgrounds, images, video, fonts, spacing and interaction. A documentation change is not permission to restyle a page.
+- Home owns its styles in `components/screens/P04-HomeMaison.module.css`; shared Maison surfaces use `components/maison/maison.module.css`; authentication and referral surfaces have their own modules. Read the owning module and actual DOM before editing.
+- Use the page's existing theme variables. Do not force every surface to pure black, ivory/navy, mint CTAs, glass or gradients. A local theme override is not a new global design rule.
+- Preserve the existing font variables and language fallbacks. Use tabular numerals where the current financial components do; do not replace all typography with the old Inter/Space Grotesk prototype prescription.
 
-## 3. Typography
+## Navigation and layout
 
-Use Inter for navigation and body text; use Space Grotesk for portfolio values, yields and financial metrics. Use tabular numbers. Headlines are sentence case, never decorative all-caps. Micro labels are limited to portfolio and compliance metadata.
+- Trace the live entry: `app/[[...rwa]]/page.tsx` → `components/rwa-app-entry.tsx` → `components/rwa-h5.tsx`, then the selected page component. `ScreenRouter`/Maison adapters and compatibility routes are active code.
+- Preserve the current primary destinations **Home, Markets, Assets**, the independent AI action, and the profile entry provided by the current chrome. Do not restore the historical Home/Invest/Portfolio/Wallet four-item dock.
+- Reuse the current topbar, bottom navigation and page-specific detail header. Do not introduce another dock, change its vertical anchoring, or remove the approved compacting animation as part of text edits.
+- Preserve safe-area and keyboard handling, current responsive rules and horizontal/vertical scrolling. Verify 375, 390 and 430 px rather than declaring one historical fixed phone width universal.
+- The existing wide-window external redirect and its exceptions are owned by `lib/desktop-redirect.ts`; do not recreate the old desktop phone-shell concept or change that policy incidentally.
 
-## 4. Spacing & Grid
+## Language, density and feedback
 
-Use an 8px grid with 20px mobile gutters, 16px below 390px, and 24-32px between major sections. Touch targets are at least 44px. The H5 content width is capped at 430px. Safe-area insets are mandatory for the header and fixed dock.
+- Support `en`, `zh-CN`, `hi`, `es`, `ar`, `fr`, `pt`; retain manual-language precedence and current locale detection. Arabic uses RTL, while amounts, identifiers and addresses retain their existing directional handling.
+- Keep copy short and operational. Preserve amount units, fee bases, conditions, placeholders and disabled/error/loading semantics. Do not add decorative explanations, fake progress or example financial values to production data.
+- Prefer existing controls and local disclosure patterns. Keep readable contrast, visible focus, approximately 44 px touch areas and reduced-motion support without changing layout in a copy-only task.
+- Preserve existing animations and timings. Do not add continuous animation, blur, shaders or a new animation runtime without a separate scoped task.
 
-## 5. Layout & Composition
+## Delivery boundary
 
-The top bar is quiet and balanced: brand or page title on the left, notification and profile on the right. Home uses portfolio copy followed by a large orbital globe. Invest uses a segmented filter, one large hero product, then three strong horizontal products. Detail pages use a cinematic 3D hero, identity and metrics, then documentation. Wallet uses the balance and coin as a single hero composition. Avoid nested cards and uniform card repetition.
-
-## 6. Components
-
-- Liquid glass: neutral translucent fill, bright ice rim, top inner highlight, deep black shadow, 22-30px backdrop blur.
-- Bottom dock: one elliptical four-item glass capsule plus a separate circular AI button.
-- Primary navigation: Home, Invest, Portfolio, Wallet. Profile is opened from the top-right avatar.
-- Icons: Lucide-style 1.7-1.9px monoline icons; 3D art is reserved for asset identity.
-- Buttons: primary mint fill only for transactional confirmation; secondary actions use neutral glass.
-- Cards: use borders and spacing first. A card exists only when content needs a shared interactive surface.
-
-### 6.1 Locked Application Chrome
-
-The existing `Brand`, `TopBar` and `BottomDock` components in `components/rwa-h5.tsx` are the only source of truth for the app chrome. Do not redraw, replace or restyle these components per screen, route or generated visual.
-
-- **Top-left brand:** Root screens use the existing geometric RWA mark plus the `RWA.LAT` wordmark at the top left. Its white circle, horizontal axis and single mint node are fixed. Do not substitute a robot, orbit logo, text-only wordmark or a new brand mark. Detail and transactional screens use the existing detail header with a back control and compact brand or page title.
-- **Top-right actions:** Root screens use the existing notification control and avatar. The avatar alone opens Profile; Profile is never a dock item.
-- **Bottom navigation:** Root screens show exactly one four-item elliptical glass dock: Home, Invest, Portfolio, Wallet. A separate circular AI action sits beside/over the dock as implemented by `BottomDock`; it is not a fifth dock item. There is no Profile, Settings, Activity or other extra item in the dock.
-- **Detail flows:** Asset details, orders, wallet flows, activity, positions, AI plans, notifications and account flows hide the dock and use their existing detail header plus any fixed transactional action. Never render a partial or altered dock on these pages.
-- **Prototype images:** Every generated root-screen mockup must visibly follow this chrome. Generated detail-flow mockups must omit the dock rather than inventing a different menu. Treat a mockup that violates these rules as rejected output.
-
-## 7. Motion & Interaction
-
-Tap feedback is 120-160ms; component transitions 220-320ms; screen changes 320-420ms. 3D objects float subtly and respond to pointer/touch parallax. Orbital nodes move at different speeds. Reduced-motion stops continuous rotation and replaces parallax with a static poster-like composition.
-
-## 8. Voice & Brand
-
-Copy is concise, factual and financially literate. Use terms such as projected yield, minimum investment, settlement and risk. Avoid hype, unverifiable claims and generic AI language. RWA.LAT is written exactly with the period.
-
-## 9. Anti-patterns
-
-- No blue-purple or blue-green background gradients.
-- No ambient blurred blobs behind the phone.
-- No repeated generic glass cards with identical geometry.
-- No emoji, random 3D icon packs, illegible model text or fake brand marks.
-- No glow as a substitute for realistic material and hierarchy.
-- No profile item in the bottom dock.
-- No tiny centered copy, filler pills or pseudo-technical labels.
-- No 3D image pasted into a box without spatial integration or motion.
-
-## 10. Product-Ready Delivery Standard
-
-This is a production-shaped product demo, not a wireframe collection. Every implementation task must begin by reading this document and the approved concept images for its screen or flow.
-
-- **Build the full job:** A page must cover the user's complete task, its related detail views, confirmation steps, history/receipt where appropriate, permissions and all relevant non-ideal states. A single attractive first viewport is never a completed feature.
-- **Prefer complete over sparse:** Use the information density, disclosures, tools and history that a real investment user needs. Add useful, domain-specific content rather than placeholder cards, empty columns or generic filler.
-- **Concept images are implementation references:** For every material new surface or major flow, create and review a high-fidelity concept image in `assets/generated/原型图/` before or alongside implementation. The implementation must preserve the approved image's hierarchy, material language and locked application chrome.
-- **No placeholder experience:** Do not use lorem ipsum, fake product names, dead buttons, empty tabs, generic stock imagery or visual-only controls. A demo action must be interactive, show a meaningful result or state why it is unavailable.
-- **Use real integration shapes early:** Where a real partner API is not yet available, create a typed mock adapter that mirrors the expected request, response, error, latency and degraded states. When an API or authoritative public data source is needed to make a feature credible, research it and record the integration decision rather than inventing data contracts.
-- **Review gate:** Before a task can move to `待审核`, verify visual fidelity against the concept image, all intended states, responsive behavior, keyboard/focus behavior and any relevant data/interaction path. Record the checks and remaining external dependencies in that task's note.
+- Compare against the current implementation and the user-approved reference for the affected page. Old screenshots remain historical evidence, not a command to roll the product back.
+- Run checks appropriate to the change. Distinguish static checks, simulated browser checks, real-device tests, source merge, push and deployment. Do not infer one from another.
+- Keep other agents' changes. Start from the latest remote main in an isolated branch; obtain the user's batch-specific merge/push/deployment approval.
+- Current source and publication guidance: [project and deployment reference](docs/deployment-current.md). Current/historical document navigation: [documentation index](docs/README.md).
