@@ -68,7 +68,9 @@ import {
   WalletCards,
   X,
   type LucideIcon,
+  Info,
 } from 'lucide-react'
+import { toastTone, type ToastTone } from '@/lib/toast-tone'
 import type { AssetSceneKind } from './asset-scenes'
 const AssetScene = dynamic(() => import('./asset-scenes'), { ssr: false })
 import LanguageMenu from './language-menu'
@@ -1456,7 +1458,8 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const [routePath, setRoutePath] = useState(initialPath)
   const navigationMotion = useNavigationViewport(`${screen}:${routePath}:${routeQuery}`)
   const [profileBaseScreen, setProfileBaseScreen] = useState<Screen | null>(null)
-  const [toast, setToast] = useState<string | null>(null)
+  const [toast, setToast] = useState<{ message: string; tone: ToastTone } | null>(null)
+  const toastTimer = useRef<number | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [sessionMode, setSessionMode] = useState<'guest' | 'authenticated'>('guest')
   const [sessionReady, setSessionReady] = useState(false)
@@ -1678,8 +1681,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     if (next === 'ai' && screen !== 'ai') setAiContext(aiPageContext(window.location.pathname, window.location.search))
     if (sessionMode === 'guest' && protectedScreens.includes(next)) {
       window.sessionStorage.setItem('rwa.return-to', pathForScreen(next))
-      setToast(t('guest.protected'))
-      window.setTimeout(() => setToast(null), 2600)
+      notify(t('guest.protected'), 'info')
       next = 'login'
     }
     ;(document.activeElement as HTMLElement | null)?.blur()
@@ -1727,9 +1729,11 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     const nextPath = `${pathForScreen(next)}?profileReturn=${encodeURIComponent(screen)}`
     syncUrl(nextPath)
   }
-  const notify = (message: string) => {
-    setToast(message)
-    window.setTimeout(() => setToast(null), 2200)
+  const notify = (message: string, tone?: ToastTone) => {
+    setToast({ message, tone: tone ?? toastTone(message) })
+    // A newer message restarts the clock instead of being cut short by the older one's timer.
+    if (toastTimer.current) window.clearTimeout(toastTimer.current)
+    toastTimer.current = window.setTimeout(() => setToast(null), tone === 'error' || (tone === undefined && toastTone(message) === 'error') ? 3600 : 2600)
   }
   const openOrder = (asset: OrderAsset) => {
     if (isOrderableId(selectedProduct.id)) { window.dispatchEvent(new CustomEvent<PathNavigation>(PATH_EVENT, { detail: { path: `/orders/review?product=${encodeURIComponent(selectedProduct.id)}` } })); return }
@@ -1905,7 +1909,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         </ScreenTransition>
         {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home' && screen !== 'invest'} />}
       </div>
-      {toast && <div className="toast" role="status"><Check size={17} />{toast}</div>}
+      {toast && <div className="toast" data-tone={toast.tone} role={toast.tone === 'error' ? 'alert' : 'status'} aria-live={toast.tone === 'error' ? 'assertive' : 'polite'}><span className="toast__icon" aria-hidden="true">{toast.tone === 'ok' ? <Check size={14} strokeWidth={2.4} /> : toast.tone === 'error' ? <AlertTriangle size={14} strokeWidth={2.2} /> : <Info size={14} strokeWidth={2.2} />}</span><span className="toast__text">{toast.message}</span></div>}
       </main>
     </>
   )

@@ -135,6 +135,14 @@
 .codeBox { padding-block: 14px; }
 .codeBox input { grid-column: 1 / -1; height: 32px; text-align: center; font: 550 24px/1 var(--font-geist-mono), ui-monospace, monospace; letter-spacing: .3em; }
 .codeBox input::placeholder { opacity: .35; }
+.root .field.codeBox[data-state='error'], .root[data-auth-poster] .field.codeBox[data-state='error'] { border-color: #c4574a; box-shadow: 0 0 0 3px color-mix(in srgb, #c4574a 14%, transparent); animation: codeShake .32s ease-in-out; }
+.root .field.codeBox[data-state='ok'], .root[data-auth-poster] .field.codeBox[data-state='ok'] { border-color: var(--auth-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--auth-accent) 16%, transparent); }
+.codeBox[data-state='ok'] input { opacity: .35; }
+@keyframes codeShake { 0%, 100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+.codeStatus { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 22px; margin: 12px 0 0; color: var(--auth-muted); font: 500 13px/1.3 var(--sans); animation: authNoticeIn .2s ease-out both; }
+.codeStatus[data-tone='ok'] { color: var(--auth-accent); }
+.codeStatus .spinner { margin: 0; }
+@media (prefers-reduced-motion: reduce) { .codeBox[data-state='error'], .error, .codeStatus { animation: none; } }
 .codeDelivery { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 10px 6px 10px 14px; border-radius: 14px; background: color-mix(in srgb, var(--auth-accent) 9%, transparent); }
 .codeDelivery > svg { flex: none; color: var(--auth-accent); }
 .codeDelivery > span { display: grid; flex: 1; min-width: 0; gap: 2px; }
@@ -151,8 +159,12 @@
 .agreement { display: flex; align-items: flex-start; gap: 10px; margin: 14px 2px 0; color: var(--auth-muted); font-size: 12.5px; line-height: 1.55; cursor: pointer; }
 .agreement input { flex: none; width: 18px; height: 18px; margin: 1px 0 0; accent-color: var(--auth-accent); }
 .agreement a { color: var(--ink); text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--ink) 35%, transparent); text-underline-offset: 3px; }
-.error { margin: 10px 2px 0; color: #b0533f; font-size: 12.5px; line-height: 1.45; }
-.root[data-auth-theme='cool'] .error { color: #ef8f7d; }
+.root .error { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; padding: 10px 12px; border: 1px solid rgba(196, 87, 74, .28); border-radius: 12px; color: #9f3f33; background: rgba(255, 240, 236, .92); font-size: 12.5px; line-height: 1.45; animation: authNoticeIn .22s ease-out both; }
+.error > svg { flex: none; margin-top: 1px; }
+/* The dark card (cool theme) gets light text on a deep red wash; the light card keeps dark red on a pale one, compact or not. */
+.root[data-auth-theme='cool'] .error { color: #ffb3a3; border-color: rgba(239, 143, 125, .38); background: rgba(74, 30, 27, .62); }
+.root[data-auth-theme='warm'][data-auth-compact='true'] .error { color: #9f3f33; }
+@keyframes authNoticeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .error button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
 .success { margin: 0; color: var(--ink); font-size: 14px; line-height: 1.6; }
 
