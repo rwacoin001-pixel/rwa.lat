@@ -12,7 +12,7 @@ type TicketCategory = 'support' | 'dispute' | 'appeal' | 'scam_report'
 export type AccountCopy = {
   profile: {
     kicker: string; title: string; lede: string; plate: string; demo: string
-    email: string; emailOk: string; emailNo: string; identity: string; security: string; securityNone: string; totp: string; passkeys: string
+    email: string; emailOk: string; emailNo: string; identity: string; security: string; securityNone: string; optional: string; recommended: string; totp: string; passkeys: string
     sessionEnds: string; userId: string; unknown: string; copyId: string; idCopied: string; receiveCode: string
     kyc: Record<KycState, string>
     next: string; nextKyc: Partial<Record<KycState, string>>; nextSecurity: string; allSet: string; open: string
@@ -60,7 +60,7 @@ export type AccountCopy = {
 const en: AccountCopy = {
   profile: {
     kicker: 'Account', title: 'Your account', lede: 'Identity, security and preferences in one place.', plate: 'Signed in as', demo: 'Demo session',
-    email: 'Email', emailOk: 'Verified', emailNo: 'Unverified', identity: 'Identity', security: 'Security', securityNone: 'Not set', totp: '2FA', passkeys: '{n} passkey',
+    email: 'Email', emailOk: 'Verified', emailNo: 'Unverified', identity: 'Identity', security: 'Security', securityNone: 'Not set', optional: 'Optional', recommended: 'Recommended', totp: '2FA', passkeys: '{n} passkey',
     sessionEnds: 'Session ends {t}', userId: 'User ID', unknown: 'Unavailable', copyId: 'Copy user ID', idCopied: 'Copied', receiveCode: 'Receive code',
     kyc: { not_started: 'Not started', in_progress: 'In progress', submitted: 'In review', needs_information: 'Action needed', approved: 'Verified', rejected: 'Not approved', expired: 'Expired' },
     next: 'Next step',
@@ -132,7 +132,7 @@ const en: AccountCopy = {
 const zh: AccountCopy = {
   profile: {
     kicker: '账户', title: '我的账户', lede: '身份、安全与偏好集中管理。', plate: '当前登录', demo: '演示会话',
-    email: '邮箱', emailOk: '已验证', emailNo: '未验证', identity: '身份', security: '安全', securityNone: '未设置', totp: '验证器', passkeys: '{n} 个通行密钥',
+    email: '邮箱', emailOk: '已验证', emailNo: '未验证', identity: '身份', security: '安全', securityNone: '未设置', optional: '可选', recommended: '建议开启', totp: '验证器', passkeys: '{n} 个通行密钥',
     sessionEnds: '会话于 {t} 结束', userId: '用户 ID', unknown: '暂不可用', copyId: '复制用户 ID', idCopied: '已复制', receiveCode: '收款码',
     kyc: { not_started: '未开始', in_progress: '进行中', submitted: '审核中', needs_information: '需补充', approved: '已认证', rejected: '未通过', expired: '已过期' },
     next: '下一步',
@@ -204,7 +204,7 @@ const zh: AccountCopy = {
 const hi: AccountCopy = {
   profile: {
     kicker: 'खाता', title: 'आपका खाता', lede: 'पहचान, सुरक्षा और प्राथमिकताएँ एक ही जगह।', plate: 'इस रूप में साइन इन', demo: 'डेमो सत्र',
-    email: 'ईमेल', emailOk: 'सत्यापित', emailNo: 'असत्यापित', identity: 'पहचान', security: 'सुरक्षा', securityNone: 'सेट नहीं', totp: '2FA', passkeys: '{n} पासकी',
+    email: 'ईमेल', emailOk: 'सत्यापित', emailNo: 'असत्यापित', identity: 'पहचान', security: 'सुरक्षा', securityNone: 'सेट नहीं', optional: 'वैकल्पिक', recommended: 'अनुशंसित', totp: '2FA', passkeys: '{n} पासकी',
     sessionEnds: 'सत्र {t} को समाप्त', userId: 'यूज़र ID', unknown: 'उपलब्ध नहीं', copyId: 'यूज़र ID कॉपी करें', idCopied: 'कॉपी हुआ', receiveCode: 'रिसीव कोड',
     kyc: { not_started: 'शुरू नहीं', in_progress: 'प्रगति में', submitted: 'समीक्षा में', needs_information: 'कार्रवाई ज़रूरी', approved: 'सत्यापित', rejected: 'स्वीकृत नहीं', expired: 'समाप्त' },
     next: 'अगला कदम',
@@ -276,7 +276,7 @@ const hi: AccountCopy = {
 const es: AccountCopy = {
   profile: {
     kicker: 'Cuenta', title: 'Tu cuenta', lede: 'Identidad, seguridad y preferencias en un solo lugar.', plate: 'Sesión iniciada como', demo: 'Sesión demo',
-    email: 'Correo', emailOk: 'Verificado', emailNo: 'Sin verificar', identity: 'Identidad', security: 'Seguridad', securityNone: 'Sin configurar', totp: '2FA', passkeys: '{n} llave de acceso',
+    email: 'Correo', emailOk: 'Verificado', emailNo: 'Sin verificar', identity: 'Identidad', security: 'Seguridad', securityNone: 'Sin configurar', optional: 'Opcional', recommended: 'Recomendado', totp: '2FA', passkeys: '{n} llave de acceso',
     sessionEnds: 'La sesión termina el {t}', userId: 'ID de usuario', unknown: 'No disponible', copyId: 'Copiar ID de usuario', idCopied: 'Copiado', receiveCode: 'Código de cobro',
     kyc: { not_started: 'Sin iniciar', in_progress: 'En curso', submitted: 'En revisión', needs_information: 'Requiere acción', approved: 'Verificada', rejected: 'No aprobada', expired: 'Caducada' },
     next: 'Siguiente paso',
@@ -348,7 +348,7 @@ const es: AccountCopy = {
 const ar: AccountCopy = {
   profile: {
     kicker: 'الحساب', title: 'حسابك', lede: 'الهوية والأمان والتفضيلات في مكان واحد.', plate: 'مسجّل الدخول باسم', demo: 'جلسة تجريبية',
-    email: 'البريد', emailOk: 'موثّق', emailNo: 'غير موثّق', identity: 'الهوية', security: 'الأمان', securityNone: 'غير مُعدّ', totp: '2FA', passkeys: '{n} مفتاح مرور',
+    email: 'البريد', emailOk: 'موثّق', emailNo: 'غير موثّق', identity: 'الهوية', security: 'الأمان', securityNone: 'غير مُعدّ', optional: 'اختياري', recommended: 'موصى به', totp: '2FA', passkeys: '{n} مفتاح مرور',
     sessionEnds: 'تنتهي الجلسة {t}', userId: 'معرّف المستخدم', unknown: 'غير متاح', copyId: 'نسخ معرّف المستخدم', idCopied: 'تم النسخ', receiveCode: 'رمز الاستلام',
     kyc: { not_started: 'لم يبدأ', in_progress: 'قيد التنفيذ', submitted: 'قيد المراجعة', needs_information: 'مطلوب إجراء', approved: 'موثّقة', rejected: 'غير مقبولة', expired: 'منتهية' },
     next: 'الخطوة التالية',
@@ -420,7 +420,7 @@ const ar: AccountCopy = {
 const fr: AccountCopy = {
   profile: {
     kicker: 'Compte', title: 'Votre compte', lede: 'Identité, sécurité et préférences au même endroit.', plate: 'Connecté en tant que', demo: 'Session démo',
-    email: 'E-mail', emailOk: 'Vérifié', emailNo: 'Non vérifié', identity: 'Identité', security: 'Sécurité', securityNone: 'Non configurée', totp: '2FA', passkeys: '{n} clé d’accès',
+    email: 'E-mail', emailOk: 'Vérifié', emailNo: 'Non vérifié', identity: 'Identité', security: 'Sécurité', securityNone: 'Non configurée', optional: 'Facultatif', recommended: 'Recommandé', totp: '2FA', passkeys: '{n} clé d’accès',
     sessionEnds: 'La session se termine le {t}', userId: 'ID utilisateur', unknown: 'Indisponible', copyId: 'Copier l’ID utilisateur', idCopied: 'Copié', receiveCode: 'Code de réception',
     kyc: { not_started: 'Non commencée', in_progress: 'En cours', submitted: 'En examen', needs_information: 'Action requise', approved: 'Vérifiée', rejected: 'Non approuvée', expired: 'Expirée' },
     next: 'Étape suivante',
@@ -492,7 +492,7 @@ const fr: AccountCopy = {
 const pt: AccountCopy = {
   profile: {
     kicker: 'Conta', title: 'Sua conta', lede: 'Identidade, segurança e preferências em um só lugar.', plate: 'Conectado como', demo: 'Sessão demo',
-    email: 'E-mail', emailOk: 'Verificado', emailNo: 'Não verificado', identity: 'Identidade', security: 'Segurança', securityNone: 'Não configurada', totp: '2FA', passkeys: '{n} chave de acesso',
+    email: 'E-mail', emailOk: 'Verificado', emailNo: 'Não verificado', identity: 'Identidade', security: 'Segurança', securityNone: 'Não configurada', optional: 'Opcional', recommended: 'Recomendado', totp: '2FA', passkeys: '{n} chave de acesso',
     sessionEnds: 'A sessão termina em {t}', userId: 'ID do usuário', unknown: 'Indisponível', copyId: 'Copiar ID de usuário', idCopied: 'Copiado', receiveCode: 'Código de recebimento',
     kyc: { not_started: 'Não iniciada', in_progress: 'Em andamento', submitted: 'Em análise', needs_information: 'Ação necessária', approved: 'Verificada', rejected: 'Não aprovada', expired: 'Expirada' },
     next: 'Próximo passo',

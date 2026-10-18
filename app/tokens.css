@@ -16,6 +16,9 @@
   --accent-rgb: 15 92 90; --accent: #0F5C5A; --on-accent: #F4F1EA;
   --up: #1F7A4D; --down: #B4322F; --warn: #B8860B; --info: #2F5D9E;
   --shadow-card: 0 1px 2px rgb(var(--ink-rgb) / .06), 0 8px 24px rgb(var(--ink-rgb) / .06);
+  /* One look for notices everywhere: a soft wash, a thin line, readable text. */
+  --notice-error-fg: #9f3f33; --notice-error-bg: rgba(255, 240, 236, .92); --notice-error-line: rgba(196, 87, 74, .28);
+  --notice-ok-fg: #2f6b4b; --notice-ok-bg: rgba(236, 246, 240, .92); --notice-ok-line: rgba(63, 138, 98, .28);
   --hero-bg: var(--accent); --hero-ink: var(--on-accent); --hero-ring: none; --bg-texture: none;
   --font-num: var(--font-geist-mono), Inter, system-ui, sans-serif;
 }
@@ -26,6 +29,8 @@
   --accent-rgb: 127 224 200; --accent: #7FE0C8; --on-accent: #0A0B0D;
   --up: #5BD39A; --down: #F0645C; --warn: #E0B84A; --info: #7FB2F0;
   --shadow-card: none; --hero-bg: var(--surface); --hero-ink: var(--accent);
+  --notice-error-fg: #ffb3a3; --notice-error-bg: rgba(74, 30, 27, .62); --notice-error-line: rgba(239, 143, 125, .38);
+  --notice-ok-fg: #9be0bd; --notice-ok-bg: rgba(24, 54, 40, .6); --notice-ok-line: rgba(91, 211, 154, .34);
   --hero-ring: 0 0 0 1px rgb(var(--accent-rgb) / .35);
   --font-num: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: Georgia, 'Noto Serif', 'Source Serif 4', 'Times New Roman', serif;

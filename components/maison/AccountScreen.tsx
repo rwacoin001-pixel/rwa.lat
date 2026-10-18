@@ -53,7 +53,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const totp = factors.data?.totp.filter((item) => item.state === 'active').length ?? 0
   const passkeys = factors.data?.passkeys.filter((item) => item.state === 'active').length ?? 0
   const protectedSignIn = totp + passkeys > 0
-  const securityText = !factors.data ? (factors.error ? p.unknown : '…') : !protectedSignIn ? p.securityNone
+  const securityText = !factors.data ? (factors.error ? p.unknown : '…') : !protectedSignIn ? p.recommended
     : [totp ? p.totp : null, passkeys ? fill(p.passkeys, { n: passkeys }) : null].filter(Boolean).join(' · ')
   const nextKyc = KYC_REQUIRED && kycState ? p.nextKyc[kycState] : undefined
   const next = nextKyc ? { body: nextKyc, path: '/profile/verification' }
@@ -76,8 +76,8 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
 
   const groups: { title: string; items: NavItem[] }[] = [
     { title: p.groups.identity, items: [
-      { key: 'verification', path: '/profile/verification', Icon: Fingerprint, badge: kycState && <span className={s.badge} data-tone={kycTone(kycState)}>{p.kyc[kycState]}</span> },
-      { key: 'security', path: '/profile/security', Icon: KeyRound, badge: factors.data && <span className={s.badge} data-tone={protectedSignIn ? 'live' : 'warn'}>{protectedSignIn ? String(totp + passkeys) : p.securityNone}</span> },
+      { key: 'verification', path: '/profile/verification', Icon: Fingerprint, badge: kycState && <span className={s.badge} data-tone={kycState === 'not_started' && !KYC_REQUIRED ? undefined : kycTone(kycState)}>{kycState === 'not_started' && !KYC_REQUIRED ? p.optional : p.kyc[kycState]}</span> },
+      { key: 'security', path: '/profile/security', Icon: KeyRound, badge: factors.data && <span className={s.badge} data-tone={protectedSignIn ? 'live' : undefined}>{protectedSignIn ? String(totp + passkeys) : p.recommended}</span> },
       { key: 'channels', path: '/trust/official-channels', Icon: ShieldCheck },
     ] },
     { title: p.groups.records, items: [
@@ -135,14 +135,14 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         {view && <div className={s.idRow}>
           <button type="button" className={s.idCopy} onClick={() => void copyId(view.userId)} aria-label={`${p.copyId}: ${view.userId}`}>
             <small>{p.userId}</small>
-            <bdi dir="ltr" className={s.mono}>{view.userId}</bdi>
+            <bdi dir="ltr" className={s.mono}>{view.userId.length > 16 ? `${view.userId.slice(0, 8)}…${view.userId.slice(-4)}` : view.userId}</bdi>
             <span className={s.idCopyHint} aria-live="polite">{idCopied ? <><Check size={12} aria-hidden="true" />{p.idCopied}</> : <><Copy size={12} aria-hidden="true" />{p.copyId}</>}</span>
           </button>
           <button type="button" className={s.idQr} onClick={() => openPath('/assets/cash/receive')} aria-label={p.receiveCode}><QrCode size={18} strokeWidth={1.6} /></button>
         </div>}
         <StatStrip fit items={[
           { label: p.email, value: !view ? '…' : view.emailVerified ? p.emailOk : p.emailNo, tone: view?.emailVerified ? 'up' : undefined },
-          { label: p.identity, value: kycState ? p.kyc[kycState] : kyc.error ? p.unknown : '…', tone: kycState === 'approved' ? 'up' : kycState === 'rejected' || kycState === 'expired' ? 'down' : undefined },
+          { label: p.identity, value: kycState ? (kycState === 'not_started' && !KYC_REQUIRED ? p.optional : p.kyc[kycState]) : kyc.error ? p.unknown : '…', tone: kycState === 'approved' ? 'up' : kycState === 'rejected' || kycState === 'expired' ? 'down' : undefined },
           { label: p.security, value: securityText, tone: protectedSignIn ? 'up' : undefined },
         ]} />
         {view && <p className={s.plateFoot}><span className={s.liveDot} aria-hidden="true" />{fill(p.sessionEnds, { t: fmtDateTime(view.expiresAt, locale) })}</p>}
@@ -155,7 +155,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       </button>}
 
     {groups.map((group, index) => <div key={group.title}>
-      <SectionHead index={String(index + 1).padStart(2, '0')} title={group.title} />
+      <h2 className={s.groupTitle}>{group.title}</h2>
       <ul className={s.list} style={{ borderTop: 0 }}>{group.items.map(({ key, path, Icon, badge }) => <li key={key}>
         <button type="button" className={s.row} onClick={() => openPath(path)}>
           <span className={s.logo}><Icon size={16} strokeWidth={1.7} /></span>
@@ -170,7 +170,6 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         {leaving ? <RotateCw size={15} className={s.spin} /> : <LogOut size={15} />}{leaving ? p.signingOut : p.signOut}
       </button>
       {leaveError && <div className={s.notice} data-tone="error" role="alert"><Info size={16} /><span>{p.signOutFailed}</span></div>}
-      <button type="button" className={s.link} style={{ justifySelf: 'center', color: 'var(--m-down)' }} onClick={() => openPath('/profile/close-account')}>{p.closeAccount}</button>
     </div>
   </MaisonPage>
 }
@@ -221,6 +220,10 @@ export function SettingsScreen() {
     </div>
 
     <p className={s.foot}><Info size={12} /><span>{t.storage}</span></p>
+
+    <div className={s.dangerZone}>
+      <button type="button" className={s.link} onClick={() => openPath('/profile/close-account')}>{accountCopy[locale].profile.closeAccount}</button>
+    </div>
   </MaisonPage>
 }
 
