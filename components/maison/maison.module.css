@@ -509,11 +509,6 @@
 .rank { width: 18px; color: var(--m-faint); font-family: var(--m-mono); font-size: 10.5px; text-align: center; }
 .logo { display: grid; place-items: center; flex: none; width: 32px; height: 32px; overflow: hidden; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-glass-deep); color: var(--m-accent); font-family: var(--m-display); font-size: 15px; }
 .logo img { width: 100%; height: 100%; object-fit: cover; }
-/* Placeholder monogram when an asset has no artwork: two initials in the UI face, on one of three brand tints. */
-.logo[data-mono] { font-family: var(--m-sans); font-size: 11.5px; font-weight: 650; letter-spacing: .02em; }
-.logo[data-mono='0'] { background: color-mix(in srgb, var(--m-accent) 15%, var(--m-glass-deep)); color: var(--m-accent); }
-.logo[data-mono='1'] { background: color-mix(in srgb, var(--m-ink) 8%, var(--m-glass-deep)); color: var(--m-ink); }
-.logo[data-mono='2'] { background: color-mix(in srgb, #6d7f95 18%, var(--m-glass-deep)); color: color-mix(in srgb, #6d7f95 75%, var(--m-ink)); }
 .rowLead { display: flex; align-items: center; gap: 8px; }
 .rowMain { min-width: 0; }
 .rowMain b { display: block; overflow: hidden; font-size: 13.5px; font-weight: 600; line-height: 1.3; text-overflow: ellipsis; white-space: nowrap; }

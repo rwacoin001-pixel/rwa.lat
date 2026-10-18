@@ -224,10 +224,6 @@
   gap: 36px;
   padding: 32px var(--home-gutter) 0;
   background: linear-gradient(180deg, transparent 0, var(--home-bg) 150px);
-  /* The content's own background runs through the dock clearance below it, so a short page never shows the fixed
-     hero photo through the root's bottom padding. Padding and margin cancel: the page height is unchanged. */
-  padding-bottom: calc(118px + env(safe-area-inset-bottom));
-  margin-bottom: calc(-118px - env(safe-area-inset-bottom));
 }
 
 /* Compact portfolio summary; account guidance and cash routes retain their own guards. */
@@ -433,14 +429,3 @@
 /* Android app: no live blur over the drifting hero and the scrolling page (see globals.css). */
 :global(html[data-shell='android']) .ticker { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--home-bg) 62%, transparent); }
 :global(html[data-shell='android']) .invite { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--home-glass) 55%, var(--home-bg)); }
-/* Community entry: one quiet row in the place of the full post stream. */
-.communityEntry { display: flex; align-items: center; justify-content: space-between; gap: 14px; width: 100%; min-height: 72px; padding: 16px 18px; border: 1px solid var(--m-line, rgba(27, 24, 19, .12)); border-radius: 18px; background: var(--m-glass, transparent); color: var(--m-ink, inherit); text-align: start; transition: transform .16s var(--ease-house, ease), border-color .2s; }
-.communityEntry > span:first-child { display: grid; gap: 4px; min-width: 0; }
-.communityEntry b { font: 400 19px/1.2 var(--m-display, serif); letter-spacing: -.005em; }
-.communityEntry small { color: var(--m-muted, #6b6257); font-size: 12.5px; line-height: 1.45; }
-.communityGo { display: inline-flex; align-items: center; gap: 4px; flex: none; color: var(--m-accent, #8a6a3b); font-size: 13px; font-weight: 600; white-space: nowrap; }
-.communityEntry:active { transform: scale(.985); }
-.communityEntry:focus-visible { outline: 2px solid var(--m-accent, #8a6a3b); outline-offset: 2px; }
-:global([dir='rtl']) .communityGo svg { transform: scaleX(-1); }
-@media (hover: hover) and (pointer: fine) { .communityEntry:hover { border-color: color-mix(in srgb, var(--m-accent, #8a6a3b) 40%, var(--m-line, transparent)); } }
-@media (prefers-reduced-motion: reduce) { .communityEntry { transition: none; } }

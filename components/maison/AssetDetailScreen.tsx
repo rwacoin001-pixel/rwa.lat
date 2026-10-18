@@ -191,7 +191,7 @@ function ResearchDetail({ slug }: { slug: string }) {
     <header className={s.hero}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Logo src={asset.logoUrl} name={content(asset.name)} />
-        <p className={s.kicker} style={{ flexWrap: 'wrap' }}>{[symbol, assetClassLabel(asset.assetClass, locale)].filter(Boolean).join(' · ')}</p>
+        <p className={s.kicker} style={{ flexWrap: 'wrap' }}>{[symbol, asset.assetClass.replace(/_/g, ' ')].filter(Boolean).join(' · ')}</p>
       </div>
       <h1 className={s.titleL} style={{ marginTop: 14 }}>{content(asset.name)}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
