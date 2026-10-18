@@ -1,8 +1,7 @@
 'use client'
 
-import { AlertTriangle, Check, ChevronLeft, X, Moon, Sun, SlidersHorizontal, Search, Bell, Share2, Star, UserRound, Settings, MoreHorizontal, CircleHelp, Pencil, Calendar, ReceiptText, Download, Plus, UserPlus, CheckCheck, BookOpen, Info, type LucideIcon } from 'lucide-react'
+import { ChevronLeft, X, Moon, Sun, SlidersHorizontal, Search, Bell, Share2, Star, UserRound, Settings, MoreHorizontal, CircleHelp, Pencil, Calendar, ReceiptText, Download, Plus, UserPlus, CheckCheck, BookOpen, Info, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
-import { createPortal } from 'react-dom'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { revealTheme } from './maison/theme-reveal'
 import { hasDefaultTopbarAction, topbarDestinations, rwaScreenTopbarKinds, slotsForScreen, type Slot, type TopbarKind, type SlotConfig } from '@/lib/rwa-topbar-config'
@@ -20,7 +19,7 @@ import RwaLogoMark from './rwa-logo'
 import {useCommunityMe} from '@/lib/use-community-me'
 import {CommunityAvatar} from './community-avatar'
 import LanguageMenu from './language-menu'
-import actionStyles from './topbar-actions.module.css'
+import { showToast } from '@/lib/toast-store'
 export type { Slot }
 export type TopbarCenter = { kind: 'title'; text: ReactNode } | { kind: 'segment'; items: string[]; value: number; onChange: (index: number) => void } | { kind: 'steps'; total: number; current: number } | null
 export type RwaTopbarAction = { label: string; onClick: () => void; Icon?: LucideIcon; badge?: boolean; disabled?: boolean; busy?: boolean }
@@ -78,10 +77,8 @@ export default function RwaTopbar(props: Props) {
   // Every bar follows the Home rule: hidden while reading down, back on a small upward scroll or at the top.
   const chromeHidden = useScrollChrome()
   const config = { ...slotsForScreen(props.screen, props.kind), ...Object.fromEntries(Object.entries(props).filter(([key, value]) => ['template', 'l1', 'l2', 'r2', 'r1', 'surface', 'steps', 'hidden'].includes(key) && value !== undefined)) } as SlotConfig
-  const [shareNotice, setShareNotice] = useState<{ text: string; error: boolean } | null>(null)
   const sharing = useRef(false)
   useEffect(() => { expandChrome() }, [])
-  useEffect(() => { if (!shareNotice) return; const timer = window.setTimeout(() => setShareNotice(null), 3000); return () => window.clearTimeout(timer) }, [shareNotice])
   const transparent = config.surface === 'transparent-over-media'
   const kind = props.kind ?? (props.screen ? rwaScreenTopbarKinds[props.screen] : undefined)
   // A pushed page (back button) never carries the account entry, even when its screen is a tab kind (wallet).
@@ -100,7 +97,7 @@ export default function RwaTopbar(props: Props) {
       if (sharing.current) return
       sharing.current = true
       void sharePage(location.href, navigator).then(result => {
-        if (result === 'copied' || result === 'failed') setShareNotice({ text: shareCopy[locale][result], error: result === 'failed' })
+        if (result === 'copied' || result === 'failed') showToast(shareCopy[locale][result], result === 'failed' ? 'error' : 'ok')
       }).finally(() => { sharing.current = false })
       return
     }
@@ -136,5 +133,5 @@ export default function RwaTopbar(props: Props) {
         {showAccount && <AccountButton copy={copy} onProfile={props.onProfile} unread={unread} />}
       </div>
     </div>
-  </header>{shareNotice && createPortal(<div className={actionStyles.notice} data-theme={theme} data-error={shareNotice.error} role="status">{shareNotice.error ? <AlertTriangle size={16} aria-hidden="true" /> : <Check size={16} aria-hidden="true" />}<span>{shareNotice.text}</span></div>, document.body)}</>
+  </header></>
 }

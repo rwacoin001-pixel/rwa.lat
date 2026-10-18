@@ -70,7 +70,10 @@ import {
   type LucideIcon,
   Info,
 } from 'lucide-react'
-import { toastTone, type ToastTone } from '@/lib/toast-tone'
+import type { ToastTone } from '@/lib/toast-tone'
+import { showToast } from '@/lib/toast-store'
+import { ToastHost } from '@/components/ui/ToastHost'
+import { Notice } from '@/components/ui/Notice'
 import type { AssetSceneKind } from './asset-scenes'
 const AssetScene = dynamic(() => import('./asset-scenes'), { ssr: false })
 import LanguageMenu from './language-menu'
@@ -981,10 +984,10 @@ function OrderReviewScreen({ asset, product: selectedProduct, go, amount, setAmo
       <div className="amount-panel glass"><span>{copy.amount}</span><div><input aria-label={copy.amount} inputMode="decimal" value={amount} onChange={(event) => setAmount(Math.max(0, Number(event.target.value) || 0))} /><b>USDT</b></div><small>{copy.available}: {fmtAvailable} USDT</small><div className="amount-presets">{[100, 500, 1000, 5000].map((value) => <button key={value} type="button" onClick={() => setAmount(value)}>{formatMoney(value, locale)}</button>)}</div></div>
       <div className="review-breakdown"><span><small>{copy.allocation}</small><b>{formatMoney(amount, locale)} USDT</b></span><span><small>{copy.fee}</small><b>{formatMoney(fee, locale)} USDT</b></span><span><small>{copy.total}</small><b>{formatMoney(amount + fee, locale)} USDT</b></span></div>
       <div className={`quote-status ${quoteExpired ? 'is-expired' : ''}`}><Clock3 size={16} /><span><b>{quoteExpired ? copy.quoteExpired : interpolateCopy(copy.quoteHeld, { seconds: quoteSeconds })}</b><small>{quoteExpired ? copy.expiredBody : copy.heldBody}</small></span>{quoteExpired && <button type="button" onClick={() => setQuoteSeconds(45)}>{copy.refresh}</button>}</div>
-      {amountError && <div className="order-inline-error" role="alert"><AlertTriangle size={16} />{amountError}</div>}
-      {submitError && <div className="order-inline-error" role="alert"><AlertTriangle size={16} />{submitError}</div>}
+      {amountError && <Notice tone="error" className="order-notice">{amountError}</Notice>}
+      {submitError && <Notice tone="error" className="order-notice">{submitError}</Notice>}
       <button className={`risk-ack glass ${riskConfirmed ? 'is-confirmed' : ''}`} type="button" onClick={() => setRiskConfirmed((current) => !current)}><ShieldCheck size={21} /><p><b>{copy.confirmation}</b><small>{copy.confirmationBody}</small></p><span>{riskConfirmed && <Check size={15} />}</span></button>
-      {!riskConfirmed && <div className="order-inline-error order-inline-error--quiet"><AlertTriangle size={16} />{copy.confirmFirst}</div>}
+      {!riskConfirmed && <Notice tone="error" quiet className="order-notice">{copy.confirmFirst}</Notice>}
       <button className="flow-cta" type="button" disabled={!canSubmit} onClick={submit}>{isSubmitting ? copy.recording : quoteExpired ? copy.refreshToContinue : asset === 'prediction' ? copy.recordRequest : copy.recordAllocation}<LockKeyholeIcon /></button>
     </section>
   )
@@ -1458,8 +1461,6 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const [routePath, setRoutePath] = useState(initialPath)
   const navigationMotion = useNavigationViewport(`${screen}:${routePath}:${routeQuery}`)
   const [profileBaseScreen, setProfileBaseScreen] = useState<Screen | null>(null)
-  const [toast, setToast] = useState<{ message: string; tone: ToastTone } | null>(null)
-  const toastTimer = useRef<number | null>(null)
   const [isOnline, setIsOnline] = useState(true)
   const [sessionMode, setSessionMode] = useState<'guest' | 'authenticated'>('guest')
   const [sessionReady, setSessionReady] = useState(false)
@@ -1729,12 +1730,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     const nextPath = `${pathForScreen(next)}?profileReturn=${encodeURIComponent(screen)}`
     syncUrl(nextPath)
   }
-  const notify = (message: string, tone?: ToastTone) => {
-    setToast({ message, tone: tone ?? toastTone(message) })
-    // A newer message restarts the clock instead of being cut short by the older one's timer.
-    if (toastTimer.current) window.clearTimeout(toastTimer.current)
-    toastTimer.current = window.setTimeout(() => setToast(null), tone === 'error' || (tone === undefined && toastTone(message) === 'error') ? 3600 : 2600)
-  }
+  const notify = (message: string, tone?: ToastTone) => showToast(message, tone)
   const openOrder = (asset: OrderAsset) => {
     if (isOrderableId(selectedProduct.id)) { window.dispatchEvent(new CustomEvent<PathNavigation>(PATH_EVENT, { detail: { path: `/orders/review?product=${encodeURIComponent(selectedProduct.id)}` } })); return }
     setOrderAsset(asset)
@@ -1909,7 +1905,7 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         </ScreenTransition>
         {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home' && screen !== 'invest'} />}
       </div>
-      {toast && <div className="toast" data-tone={toast.tone} role={toast.tone === 'error' ? 'alert' : 'status'} aria-live={toast.tone === 'error' ? 'assertive' : 'polite'}><span className="toast__icon" aria-hidden="true">{toast.tone === 'ok' ? <Check size={14} strokeWidth={2.4} /> : toast.tone === 'error' ? <AlertTriangle size={14} strokeWidth={2.2} /> : <Info size={14} strokeWidth={2.2} />}</span><span className="toast__text">{toast.message}</span></div>}
+      <ToastHost />
       </main>
     </>
   )
