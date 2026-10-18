@@ -4,20 +4,21 @@
    theme attribute on .rwa-mobile and the topbar the page itself renders.
    Density: exchange-grade (tabular figures, 54px rows, hairline tables); warmth: lacquer + serif titles. */
 .root {
-  --m-bg: #f4efe6;
-  --m-ink: #1b1813;
-  --m-muted: #6b6257;
-  --m-faint: #9a8f82;
-  --m-line: rgba(27, 24, 19, .12);
-  --m-line-soft: rgba(27, 24, 19, .07);
+  /* Core colours come from the shared semantic layer (app/tokens.css); only Maison-specific pieces are defined here. */
+  --m-bg: var(--ds-bg);
+  --m-ink: var(--ds-ink);
+  --m-muted: var(--ds-muted);
+  --m-faint: var(--ds-faint);
+  --m-line: var(--ds-line);
+  --m-line-soft: var(--ds-line-soft);
   --m-glass: rgba(255, 252, 246, .62);
   --m-glass-deep: rgba(236, 228, 215, .7);
-  --m-accent: #8a6a3b;
-  --m-sea: #3e6f84;
-  --m-on-accent: #f7f1e6;
-  --m-up: #3f7a57;
-  --m-down: #b0533f;
-  --m-warn: #a4701f;
+  --m-accent: var(--ds-accent);
+  --m-sea: var(--ds-info);
+  --m-on-accent: var(--ds-on-accent);
+  --m-up: var(--ds-up);
+  --m-down: var(--ds-down);
+  --m-warn: var(--ds-warn);
   /* White-mode scheme A (ivory lacquer): the "lacquer" cards are ivory paper in light mode; dark keeps its navy lacquer below. */
   --m-lacquer: linear-gradient(165deg, #fffdf8, #f8f1e4 75%);
   --m-lacquer-ink: #1b1813;
@@ -85,20 +86,9 @@
 .root[data-dock='true'] { padding-bottom: calc(118px + env(safe-area-inset-bottom)); }
 .root[data-cta='true'] { padding-bottom: calc(132px + env(safe-area-inset-bottom)); }
 :global(.rwa-mobile[data-theme='dark']) .root {
-  --m-bg: #070c16;
-  --m-ink: #e9edf3;
-  --m-muted: #97a3b6;
-  --m-faint: #647088;
-  --m-line: rgba(169, 184, 208, .16);
-  --m-line-soft: rgba(169, 184, 208, .08);
+  /* Core colours: inherited from the same aliases as the light block (the semantic layer switches with the theme). */
   --m-glass: rgba(17, 26, 44, .62);
   --m-glass-deep: rgba(14, 22, 38, .78);
-  --m-accent: #e3bb7a;
-  --m-sea: #a9b8d0;
-  --m-on-accent: #0a1020;
-  --m-up: #7fcfa8;
-  --m-down: #ef8f7d;
-  --m-warn: #f0c46e;
   --m-lacquer: linear-gradient(160deg, rgba(28, 40, 66, .92), rgba(9, 15, 28, .97) 70%);
   --m-lacquer-ink: #eef1f6;
   --m-lacquer-muted: rgba(215, 224, 238, .56);
