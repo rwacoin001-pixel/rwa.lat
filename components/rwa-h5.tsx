@@ -15,84 +15,26 @@ const LearnScreen = dynamic(() => import('./maison/LearnScreen').then((m) => ({ 
 const AiPlanningScreen = dynamic(() => import('./maison/AiPlanningScreen').then((m) => ({ default: m.AiPlanningScreen })), { ssr: false, loading: AppLoading })
 const NotificationPreferences = dynamic(() => import('./maison/NotificationPreferences').then((m) => ({ default: m.NotificationPreferences })), { ssr: false })
 const PublicShareLanding = dynamic(() => import('./public-sharing').then((m) => ({ default: m.PublicShareLanding })), { ssr: false, loading: AppLoading })
-import CountUp from '@/components/react-bits/count-up'
-import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  ArrowDownToLine,
-  ArrowRight,
-  ArrowRightLeft,
-  ArrowUpFromLine,
-  AlertTriangle,
-  Bell,
-  ChartNoAxesColumnIncreasing,
-  Bookmark,
-  CalendarDays,
-  ChartPie,
-  CircleGauge,
-  Check,
-  ChevronRight,
-  BadgePercent,
-  Building2,
-  CircleCheck,
-  CircleDollarSign,
-  Clock3,
-  Copy,
-  Cpu,
-  CreditCard,
-  FileText,
-  Fingerprint,
-  Globe2,
-  House,
-  Headphones,
-  KeyRound,
-  Landmark,
-  Laptop,
-  LogOut,
-  MessageCircle,
-  Moon,
-  Network,
-  Plus,
-  QrCode,
-  ReceiptText,
-  Search,
-  Settings,
-  ShieldCheck,
-  Sparkles,
-  SlidersHorizontal,
-  TrendingUp,
-  Upload,
-  UserRound,
-  UserPlus,
-  Users,
-  WalletCards,
-  X,
-  type LucideIcon,
-  Info,
-} from 'lucide-react'
+import { ArrowDownToLine, ArrowRight, ArrowRightLeft, ArrowUpFromLine, AlertTriangle, Bell, ChartNoAxesColumnIncreasing, Bookmark, CalendarDays, ChartPie, Check, ChevronRight, Building2, CircleCheck, CircleDollarSign, Clock3, Copy, Cpu, FileText, Globe2, House, Headphones, KeyRound, Landmark, Network, Plus, QrCode, ReceiptText, Settings, ShieldCheck, Sparkles, TrendingUp, WalletCards, type LucideIcon } from 'lucide-react'
 import type { ToastTone } from '@/lib/toast-tone'
 import { showToast } from '@/lib/toast-store'
 import { ToastHost } from '@/components/ui/ToastHost'
 import { Notice } from '@/components/ui/Notice'
 import type { AssetSceneKind } from './asset-scenes'
 const AssetScene = dynamic(() => import('./asset-scenes'), { ssr: false })
-import LanguageMenu from './language-menu'
 import RwaTopbar from './rwa-topbar'
-import { useRwaTheme, type RwaThemePreference } from '@/lib/rwa-theme'
+import { useRwaTheme } from '@/lib/rwa-theme'
 import { Segmented } from './ui/Segmented'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { accountCopy, detailCopy, interpolateCopy, orderCopy, screenCopy } from '@/lib/screen-copy'
-import { operationText, operationsCopy } from '@/lib/operations-copy'
-import { accountFlowCopy, accountFlowText, type AccountFlowKind } from '@/lib/account-flow-copy'
 import { portfolioDetailCopy } from '@/lib/portfolio-detail-copy'
-import { trustActionCopy, trustActionText } from '@/lib/trust-action-copy'
+import { trustActionCopy } from '@/lib/trust-action-copy'
 import { assetExperienceCopy } from '@/lib/asset-experience-copy'
 import { categoryLabel, localizeProduct } from '@/lib/catalog-localization'
 const PolymarketDetailPanel = dynamic(() => import('./polymarket-detail-panel'), { ssr: false })
-const AddressBookScreen = dynamic(() => import('./address-book-screen').then((m) => ({ default: m.AddressBookScreen })), { ssr: false, loading: AppLoading })
 const StatusScreen = dynamic(() => import('./status-screen').then((m) => ({ default: m.StatusScreen })), { ssr: false, loading: AppLoading })
-const OrderDetailScreen = dynamic(() => import('./order-detail-screen').then((m) => ({ default: m.OrderDetailScreen })), { ssr: false, loading: AppLoading })
-const RecordsScreen = dynamic(() => import('./records-screen').then((m) => ({ default: m.RecordsScreen })), { ssr: false, loading: AppLoading })
 const SecondaryTransferScreen = dynamic(() => import('./maison/SecondaryTransferScreen').then((m) => ({ default: m.SecondaryTransferScreen })), { ssr: false, loading: AppLoading })
 const TradeScreen = dynamic(() => import('./trade-screen').then((m) => ({ default: m.TradeScreen })), { ssr: false, loading: AppLoading })
 const CommunityFeedScreen = dynamic(() => import('./community-screens').then((m) => ({ default: m.CommunityFeedScreen })), { ssr: false, loading: AppLoading })
@@ -151,28 +93,24 @@ const MaisonReferralScreen = dynamic(() => import('./maison/ReferralScreen').the
 import { acceptPendingInvite } from '@/lib/invite-acceptance'
 import { getPortfolioHistory, getPositions, type PortfolioHistoryPoint, type PositionView } from '@/lib/portfolio-data'
 import { getWallet, getLedgerTransactions, toUnits as walletUnits, type LedgerTransaction, type WalletView } from '@/lib/wallet-data'
-import { formatMoneyNumber, formatUsdt, fromAtomic, toAtomic } from '@/lib/money'
-import { directionClass, formatLedgerAmount, formatMoney, formatTime } from '@/lib/display/format'
-import { assetCategoryLabel, ledgerDisplay, shortId } from '@/lib/display/labels'
+import { formatMoneyNumber, formatUsdt } from '@/lib/money'
+import { formatLedgerAmount, formatMoney, formatTime } from '@/lib/display/format'
+import { assetCategoryLabel, ledgerDisplay } from '@/lib/display/labels'
 import { getAssetHistory, type AssetHistoryPoint } from '@/lib/p0a-data'
 import { createOrder } from '@/lib/orders-data'
 import { fetchRwaProducts, rwaToProduct, type RwaAssetRow } from '@/lib/rwa-data'
-import { getProducts, getFeaturedProducts, getProjectProfile, isAuthenticated, type DemoCategory, type DemoProduct } from '@/lib/h5-data'
-import { demoProducts as fallbackProducts, featuredProducts as fallbackFeatured, projectProfiles } from '@/lib/demo-catalog'
-import { useI18n, type AppLocale } from '@/lib/i18n'
-import { assetAccountRouteCopy, homeDataCopy, portfolioRouteCopy, profileRouteCopy, walletFlowRouteCopy, walletRouteCopy, securityRouteCopy } from '@/lib/route-copy'
+import { getProducts, getFeaturedProducts, isAuthenticated, type DemoProduct } from '@/lib/h5-data'
+import { demoProducts as fallbackProducts, projectProfiles } from '@/lib/demo-catalog'
+import { useI18n } from '@/lib/i18n'
+import { assetAccountRouteCopy, portfolioRouteCopy } from '@/lib/route-copy'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
-const ParticleLogoIcon = dynamic(() => import('./particle-logo-icon'), { ssr: false })
 const AiPearl = dynamic(() => import('./maison/AiPearl'), { ssr: false })
-import { FlowProgress, LiquidSelection, Magnetic, ScreenTransition, SplitFlapText, TiltedSurface, captureSharedFlip, playSharedFlip, type RwaFlipState } from './motion-effects'
+import { FlowProgress, LiquidSelection, ScreenTransition, SplitFlapText, captureSharedFlip, playSharedFlip, type RwaFlipState } from './motion-effects'
 const AssetEvidencePanel = dynamic(() => import('./p0a-screens').then((m) => ({ default: m.AssetEvidencePanel })), { ssr: false })
 const OnboardingOverviewScreen = dynamic(() => import('./p0a-screens').then((m) => ({ default: m.OnboardingOverviewScreen })), { ssr: false })
 const ValuationScreen = dynamic(() => import('./p0a-screens').then((m) => ({ default: m.ValuationScreen })), { ssr: false })
-import { logout } from '@/lib/api/auth'
 import { request } from '@/lib/api/_http'
 const EligibilityNotice = dynamic(() => import('./eligibility-notice').then((m) => ({ default: m.EligibilityNotice })), { ssr: false })
-import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
-import { registerPasskey } from '@/lib/api/security'
 import { BootScreen } from './screens/P01-Boot'
 import { LoginScreen } from './screens/P02-Login'
 import { AuthFlowScreen } from './screens/P03-AuthFlow'
@@ -199,40 +137,17 @@ type AvailabilityFilter = 'all' | 'open' | 'limited'
 type MinimumFilter = 'all' | '100' | '500'
 type SortMode = 'featured' | 'yield' | 'minimum' | 'risk' | 'table'
 
-const categories: InvestCategory[] = ['All', 'Compute', 'RWA', 'Stocks', 'Prediction']
-const riskOrder: Record<string, number> = { 'Low Risk': 1, 'Medium Risk': 2, 'High Risk': 3 }
 const PROFILE_SECTION_SCREENS = new Set<Screen>([
   'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket',
   'fees', 'settings', 'marketing', 'official-channels', 'scam-report', 'close-account', 'trust-center',
   'access-regions', 'product-disclosures', 'legal-center', 'status',
 ])
 
-function minimumValue(product: DemoProduct) {
-  return Number(product.minimum.replace(/[^\d.]/g, '')) || Number.POSITIVE_INFINITY
-}
 
-function isOpenProduct(product: DemoProduct) {
-  return /open|daily|market open/i.test(product.availability)
-}
 const protectedScreens: Screen[] = ['home', 'portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem']
 const routeRequiresAuth = (pathname: string) => resolveRoute(pathname)?.def.auth === 'required'
 
-const homeOpportunities: Array<{ category: DemoCategory; kind: AssetSceneKind }> = [
-  { category: 'Compute', kind: 'compute' },
-  { category: 'RWA', kind: 'solar' },
-  { category: 'Stocks', kind: 'stocks' },
-  { category: 'Prediction', kind: 'prediction' },
-]
 
-const opportunityArtwork: Record<AssetSceneKind, string> = {
-  compute: '/asset-icons/compute.png',
-  solar: '/asset-icons/rwa.png',
-  stocks: '/asset-icons/stocks.png',
-  prediction: '/asset-icons/prediction.png',
-  wallet: '/media/opportunity-source/compute.png',
-  portfolio: '/media/opportunity-source/stocks.png',
-  'solar-dome': '/media/opportunity-source/rwa.png',
-}
 
 const productAsset: Record<Exclude<InvestCategory, 'All'>, OrderAsset> = {
   Compute: 'compute',
@@ -323,13 +238,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
   )
 }
 
-function OrbitBadge({ className, icon: Icon, label, value }: { className: string; icon: typeof Landmark; label: string; value: string }) {
-  return <div className={`orbit-label ${className}`}><span className="orbit-label__icon"><Icon size={13} strokeWidth={2.7} /></span><span className="orbit-label__copy">{label}<b>{value}</b></span></div>
-}
 
-function OpportunityMedia({ kind }: { kind: AssetSceneKind }) {
-  return <span className="opportunity-media"><img src={opportunityArtwork[kind]} alt="" /></span>
-}
 
 function DetailProductVisual({ asset, scene }: { asset: OrderAsset; scene: AssetSceneKind }) {
   const video = asset === 'rwa' ? '/media/opportunities/rwa.mp4' : asset === 'compute' ? '/media/opportunities/compute.mp4' : null
@@ -346,124 +255,6 @@ function productFeeRate(product: DemoProduct) {
   return 0.008
 }
 
-function InvestScreen({ go, notify, openProduct, openPrediction, products, initialCategory = 'All' }: { go: (screen: Screen) => void; notify: (message: string) => void; openProduct: (product: DemoProduct) => void; openPrediction: (market: PredictionMarket) => void; products: DemoProduct[]; initialCategory?: InvestCategory }) {
-  const { locale, t } = useI18n()
-  const copy = screenCopy[locale].invest
-  const [category, setCategory] = useState<InvestCategory>(initialCategory)
-  useEffect(() => { setCategory(initialCategory) }, [initialCategory])
-  const [query, setQuery] = useState('')
-  const [openControl, setOpenControl] = useState<'filters' | 'sort' | null>(null)
-  const [riskFilter, setRiskFilter] = useState<RiskFilter>('all')
-  const [availabilityFilter, setAvailabilityFilter] = useState<AvailabilityFilter>('all')
-  const [minimumFilter, setMinimumFilter] = useState<MinimumFilter>('all')
-  const [sortMode, setSortMode] = useState<SortMode>('featured')
-  useEffect(() => {
-    const close = () => setOpenControl(null)
-    window.addEventListener('rwa:language-overlay-open', close)
-    return () => window.removeEventListener('rwa:language-overlay-open', close)
-  }, [])
-  const toggleControl = (control: 'filters' | 'sort') => {
-    setOpenControl((current) => {
-      const next = current === control ? null : control
-      if (next) window.dispatchEvent(new CustomEvent('rwa:catalog-overlay-open'))
-      return next
-    })
-  }
-  const activeFilterCount = [riskFilter !== 'all', availabilityFilter !== 'all', minimumFilter !== 'all'].filter(Boolean).length
-  const resetFilters = () => { setRiskFilter('all'); setAvailabilityFilter('all'); setMinimumFilter('all') }
-  const filtered = useMemo(() => {
-    const base = products.filter((item) => {
-      const riskMatches = riskFilter === 'all' || item.risk.toLowerCase().startsWith(riskFilter)
-      const availabilityMatches = availabilityFilter === 'all' || (availabilityFilter === 'open' ? isOpenProduct(item) : !isOpenProduct(item))
-      const minimumMatches = minimumFilter === 'all' || minimumValue(item) <= Number(minimumFilter)
-      const display = localizeProduct(item, locale)
-      return (category === 'All' || item.category === category) && riskMatches && availabilityMatches && minimumMatches && `${display.title} ${display.subtitle} ${item.title} ${item.category}`.toLowerCase().includes(query.toLowerCase())
-    })
-    const sorted = [...base]
-    if (sortMode === 'yield') sorted.sort((a, b) => parseFloat(b.returnMetric) - parseFloat(a.returnMetric))
-    if (sortMode === 'minimum') sorted.sort((a, b) => minimumValue(a) - minimumValue(b))
-    if (sortMode === 'risk') sorted.sort((a, b) => (riskOrder[a.risk] ?? 9) - (riskOrder[b.risk] ?? 9))
-    return sorted
-  }, [availabilityFilter, category, locale, minimumFilter, products, query, riskFilter, sortMode])
-  const categoryLabels: Record<InvestCategory, string> = { All: copy.all, Compute: copy.compute, RWA: copy.rwa, Stocks: copy.stocks, Prediction: copy.prediction }
-  const referenceLabels = {
-    en: { assets: 'Assets', baskets: 'Baskets', predictions: 'Predictions', trade: 'Trade', subtitle: 'Explore real-world opportunities', search: 'Search', issuers: 'Issuers' },
-    'zh-CN': { assets: '资产', baskets: '篮子', predictions: '预测', trade: '交易', subtitle: '探索真实世界机会', search: '搜索', issuers: '发行方' },
-    hi: { assets: 'परिसंपत्तियाँ', baskets: 'बास्केट', predictions: 'पूर्वानुमान', trade: 'ट्रेड', subtitle: 'वास्तविक अवसर खोजें', search: 'खोज', issuers: 'जारीकर्ता' },
-    es: { assets: 'Activos', baskets: 'Cestas', predictions: 'Predicciones', trade: 'Operar', subtitle: 'Explora oportunidades reales', search: 'Buscar', issuers: 'Emisores' },
-    ar: { assets: 'الأصول', baskets: 'السلال', predictions: 'التوقعات', trade: 'تداول', subtitle: 'استكشف فرصاً حقيقية', search: 'بحث', issuers: 'المُصدرون' },
-    fr: { assets: 'Actifs', baskets: 'Paniers', predictions: 'Prévisions', trade: 'Trader', subtitle: 'Explorez les opportunités réelles', search: 'Recherche', issuers: 'Émetteurs' },
-    pt: { assets: 'Ativos', baskets: 'Cestas', predictions: 'Previsões', trade: 'Negociar', subtitle: 'Explore oportunidades reais', search: 'Buscar', issuers: 'Emissores' },
-  }[locale]
-  return (
-    <section className="screen invest-screen">
-      <RwaTopbar screen="invest" />
-      <div className="invest-reference-intro" />
-      <div className="invest-nav-cards invest-reference-grid"><button type="button" className="invest-nav-card is-active" onClick={() => { setCategory('All'); setQuery('') }}><span className="invest-nav-card__icon"><Building2 size={28} /></span><b>{referenceLabels.assets}</b><ChevronRight size={17} /></button><button type="button" className="invest-nav-card" onClick={() => go('basket-list')}><span className="invest-nav-card__icon invest-nav-card__icon--basket"><ChartPie size={28} /></span><b>{referenceLabels.baskets}</b><ChevronRight size={17} /></button><button type="button" className="invest-nav-card" onClick={() => setCategory('Prediction')}><span className="invest-nav-card__icon invest-nav-card__icon--prediction"><CircleGauge size={28} /></span><b>{referenceLabels.predictions}</b><ChevronRight size={17} /></button><button type="button" className="invest-nav-card" onClick={() => go('trade')}><span className="invest-nav-card__icon invest-nav-card__icon--trade"><TrendingUp size={28} /></span><b>{referenceLabels.trade}</b><ChevronRight size={17} /></button></div>
-      <div className="invest-tool-row"><button type="button" onClick={() => go('search')}><Search size={16} />{referenceLabels.search}</button><button type="button" onClick={() => go('issuers')}><Building2 size={16} />{referenceLabels.issuers}</button></div>
-      <label className="opportunity-search"><Search size={20} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('invest.search')} aria-label={t('invest.search')} /><button type="button" aria-label={copy.clearSearch} onClick={() => setQuery('')}>{query ? '×' : ''}</button></label>
-      <div className="catalog-controls">
-        {openControl && <button className="catalog-control-scrim" type="button" aria-label={t('invest.closeOptions')} onClick={() => setOpenControl(null)} />}
-        <div className={`catalog-control ${openControl === 'filters' ? 'is-open' : ''}`}>
-          <button type="button" className={activeFilterCount ? 'is-active' : ''} aria-expanded={openControl === 'filters'} onClick={() => toggleControl('filters')}><SlidersHorizontal size={17} /><span>{t('invest.filters')}</span>{activeFilterCount > 0 && <b>{activeFilterCount}</b>}<ChevronRight size={16} /></button>
-          {openControl === 'filters' && <div className="catalog-popover catalog-popover--filters glass">
-            <div className="catalog-popover__head"><span><b>{t('invest.refine')}</b><small>{t('invest.matchCount', { count: filtered.length })}</small></span><button type="button" disabled={!activeFilterCount} onClick={resetFilters}>{t('invest.reset')}</button></div>
-            <div className="catalog-filter-group"><p>{t('invest.riskLevel')}</p><div>{([['all', t('invest.allRisk')], ['low', t('invest.low')], ['medium', t('invest.medium')], ['high', t('invest.high')]] as const).map(([value, label]) => <button className={riskFilter === value ? 'is-selected' : ''} type="button" key={value} onClick={() => setRiskFilter(value)}>{label}{riskFilter === value && <Check size={13} />}</button>)}</div></div>
-            <div className="catalog-filter-group"><p>{t('invest.availability')}</p><div>{([['all', t('invest.anyStatus')], ['open', t('invest.openNow')], ['limited', t('invest.limited')]] as const).map(([value, label]) => <button className={availabilityFilter === value ? 'is-selected' : ''} type="button" key={value} onClick={() => setAvailabilityFilter(value)}>{label}{availabilityFilter === value && <Check size={13} />}</button>)}</div></div>
-            <div className="catalog-filter-group"><p>{t('invest.minimum')}</p><div>{([['all', t('invest.anyAmount')], ['100', '≤ 100 USDT'], ['500', '≤ 500 USDT']] as const).map(([value, label]) => <button className={minimumFilter === value ? 'is-selected' : ''} type="button" key={value} onClick={() => setMinimumFilter(value)}>{label}{minimumFilter === value && <Check size={13} />}</button>)}</div></div>
-            <button className="catalog-popover__apply" type="button" onClick={() => setOpenControl(null)}>{t('invest.showCount', { count: filtered.length })}</button>
-          </div>}
-        </div>
-        <div className={`catalog-control ${openControl === 'sort' ? 'is-open' : ''}`}>
-          <button type="button" className={sortMode !== 'featured' ? 'is-active' : ''} aria-expanded={openControl === 'sort'} onClick={() => toggleControl('sort')}><span>{sortMode === 'featured' ? t('invest.featured') : sortMode === 'yield' ? t('invest.yieldHigh') : sortMode === 'minimum' ? t('invest.minimumLow') : sortMode === 'risk' ? t('invest.riskLow') : (locale === 'zh-CN' ? '表格视图' : 'Table view')}</span><ChevronRight size={16} /></button>
-          {openControl === 'sort' && <div className="catalog-popover catalog-popover--sort glass"><div className="catalog-popover__head"><span><b>{t('invest.sortTitle')}</b><small>{t('invest.sortBody')}</small></span></div><div className="catalog-sort-list">{([['featured', t('invest.featured'), t('invest.featuredBody')], ['yield', t('invest.yieldHigh'), t('invest.yieldBody')], ['minimum', t('invest.minimumLow'), t('invest.minimumBody')], ['risk', t('invest.riskLow'), t('invest.riskBody')], ['table', locale === 'zh-CN' ? '表格视图' : 'Table view', locale === 'zh-CN' ? 'TradingView 风格排序列表' : 'TradingView-style sortable list']] as const).map(([value, label, description]) => <button className={sortMode === value ? 'is-selected' : ''} type="button" key={value} onClick={() => { setSortMode(value); setOpenControl(null) }}><span><b>{label}</b><small>{description}</small></span><i>{sortMode === value && <Check size={14} />}</i></button>)}</div></div>}
-        </div>
-      </div>
-
-      <div className="segmented" role="tablist" aria-label={copy.categoriesAria}>
-        {categories.map((item) => <button key={item} role="tab" type="button" className={category === item ? 'is-active' : ''} aria-selected={category === item} onClick={() => setCategory(item)}><LiquidSelection id="rwa-category-selection" active={category === item} /><span>{categoryLabels[item]}</span></button>)}
-      </div>
-
-      {(category === 'All' || category === 'Compute') && products.some((product) => product.category === 'Compute') && (
-        <Magnetic className="compute-feature-magnetic">
-          <button className="compute-feature glass" type="button" onClick={() => { const first = products.find((product) => product.category === 'Compute'); if (first) openProduct(first) }}>
-            <div className="compute-feature__copy">
-              <h2>{copy.computeTitle}</h2>
-              <p>{products.find((product) => product.category === 'Compute')?.subtitle}</p>
-            </div>
-            <AssetScene kind="compute" />
-          </button>
-        </Magnetic>
-      )}
-
-      {sortMode === 'table' ? (
-        <RankingTable onOpen={(slug) => { const match = products.find((p) => (p as { slug?: string }).slug === slug); void match; go('rwa-detail') }} />
-      ) : (
-      <div className="product-stack">
-        {filtered.map((product) => { const display = localizeProduct(product, locale); return (
-          <TiltedSurface key={product.id} className="product-card-motion" maxTilt={4}>
-            <button type="button" className="product-card glass" data-flip-id={product.id} onClick={() => openProduct(display)}>
-              {product.logoUrl
-                ? <span className="catalog-product-media"><img src={product.logoUrl} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></span>
-                : <span className={`catalog-product-media project-visual project-visual--${product.id}`} aria-hidden="true" />}
-              <span className="product-card__copy"><small className="catalog-eyebrow">{categoryLabel(product.category, locale)} · {display.availability}</small><b>{display.title}</b><small>{display.subtitle}</small><small className={`risk risk--${product.risk.split(' ')[0].toLowerCase()}`}>{product.returnMetric} {display.returnLabel}</small></span>
-              <ChevronRight size={24} strokeWidth={1.35} />
-            </button>
-          </TiltedSurface>
-        )})}
-      </div>
-      )}
-      {sortMode !== 'table' && !filtered.length && <EmptyState variant="card" icon={Search} title={t('invest.noResults')} body={copy.noResultsBody} action={<button type="button" className="p0a-secondary-button" onClick={() => { setQuery(''); resetFilters() }}>{copy.resetCatalogue}</button>} />}
-      {(category === 'All' || category === 'Prediction') && <PredictionMarketPanel openMarket={openPrediction} notify={notify} />}
-      <div className="section-title"><h2>{t('invest.execution')}</h2><span /></div>
-      <div className="desk-stack glass">
-        <button type="button" onClick={() => notify(copy.usdtRouting)}><WalletCards size={20} /><span><b>{copy.usdtRouting}</b><small>{copy.routingBody}</small></span><ChevronRight size={18} /></button>
-        <button type="button" onClick={() => go('ai')}><Sparkles size={20} /><span><b>{copy.preTrade}</b><small>{copy.preTradeBody}</small></span><ChevronRight size={18} /></button>
-      </div>
-
-    </section>
-  )
-}
 
 type PredictionMarket = {
   id: string
@@ -485,54 +276,7 @@ function compactValue(value: number) {
   return `$${Math.round(value)}`
 }
 
-function PredictionMarketPanel({ openMarket, notify }: { openMarket: (market: PredictionMarket) => void; notify: (message: string) => void }) {
-  const { locale, t } = useI18n()
-  const copy = screenCopy[locale].prediction
-  const [markets, setMarkets] = useState<PredictionMarket[]>([])
-  const [source, setSource] = useState<'loading' | 'live' | 'unavailable'>('loading')
-  const [updatedAt, setUpdatedAt] = useState<string | null>(null)
-  const refreshMarkets = async () => {
-    setSource('loading')
-    const result = await request<unknown>('/v1/polymarket/markets?state=active&limit=4')
-    if (!result.ok) { setMarkets([]); setSource('unavailable'); notify(locale === 'zh-CN' ? '市场数据暂时不可用。' : 'Market data is temporarily unavailable.'); return }
-    const data = result.data && typeof result.data === 'object' ? result.data as Record<string, unknown> : {}
-    const items = Array.isArray(result.data) ? result.data : Array.isArray(data.items) ? data.items : Array.isArray(data.markets) ? data.markets : []
-    setMarkets(items.map((item: unknown) => {
-      const row = item && typeof item === 'object' ? item as Record<string, unknown> : {}
-      return { id: String(row.id ?? ''), slug: String(row.slug ?? row.id ?? ''), question: String(row.question ?? ''), outcomes: Array.isArray(row.outcomes) ? row.outcomes.map(String) : [], prices: Array.isArray(row.prices) ? row.prices.map(Number) : [], volume: Number(row.volume ?? 0), volume24h: Number(row.volume24h ?? 0), liquidity: Number(row.liquidity ?? 0), endDate: typeof row.endDate === 'string' ? row.endDate : null, category: String(row.category ?? ''), acceptingOrders: row.acceptingOrders === true }
-    }).filter((item: PredictionMarket) => item.id && item.question))
-    setSource('live')
-    setUpdatedAt(new Date().toISOString())
-  }
-  useEffect(() => { void refreshMarkets() }, [])
-  return (
-    <section className="prediction-desk" aria-label={copy.aria}>
-      <div className="section-title"><h2>{copy.desk}</h2><button type="button" onClick={() => void refreshMarkets()}>{source === 'loading' ? copy.refreshing : t('common.refresh')}</button></div>
-      <div className="prediction-source glass"><span><i className={source === 'live' ? 'is-live' : ''} />{source === 'live' ? copy.live : source === 'loading' ? copy.loading : copy.unavailable}</span><small>{updatedAt ? interpolateCopy(copy.updated, { time: new Date(updatedAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) }) : copy.discoveryApi}</small></div>
-      <div className="prediction-market-list">
-        {markets.slice(0, 4).map((market) => {
-          const yesIndex = Math.max(0, market.outcomes.findIndex((outcome) => outcome.toLowerCase() === 'yes'))
-          const yesLabel = market.outcomes[yesIndex]?.toLowerCase() === 'yes' ? copy.yes : market.outcomes[yesIndex] ?? market.outcomes[0] ?? copy.yes
-          const yesPrice = market.prices[yesIndex] ?? market.prices[0]
-          return <button className="prediction-market-card glass" type="button" key={market.id} onClick={() => openMarket(market)}>
-            <span className="prediction-market-card__meta"><small>{market.category}</small><small>{market.endDate ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(market.endDate)) : copy.openMarket}</small></span>
-            <b>{market.question}</b>
-            <div><span>{yesLabel} <strong>{Number.isFinite(yesPrice) ? `${Math.round(yesPrice * 100)}¢` : '—'}</strong></span><span>24h {compactValue(market.volume24h)}</span><ChevronRight size={18} /></div>
-          </button>
-        })}
-      </div>
-      {source === 'live' && markets.length === 0 && <EmptyState variant="card" icon={TrendingUp} title={locale === 'zh-CN' ? '暂无开放的预测市场' : 'No active prediction markets'} body={locale === 'zh-CN' ? '有开放市场后，预测项目会显示在这里。' : 'Prediction markets will appear here when they are available.'} />}
-      <p className="prediction-disclosure"><AlertTriangle size={14} />{copy.disclosure}</p>
-    </section>
-  )
-}
 
-const catalogArtwork: Record<DemoCategory, string> = {
-  Compute: '/media/generated/compute-catalog-concept-v1.png',
-  RWA: '/media/generated/rwa-catalog-concept-v1.png',
-  Stocks: '/asset-icons/stocks.png',
-  Prediction: '/asset-icons/prediction.png',
-}
 
 function MetricCard({ icon: Icon, main, label, accent = false }: { icon: typeof CircleDollarSign; main: string; label: string; accent?: boolean }) {
   return <div className="metric-card glass"><span><Icon size={25} strokeWidth={1.5} /></span><div><b className={accent ? 'mint' : ''}>{main}</b><small>{label}</small></div></div>
@@ -717,129 +461,14 @@ function PortfolioScreen({ go, notify, initialView = 'overview' }: { go: (screen
   )
 }
 
-function WalletAction({ icon: Icon, label, disabled, onClick }: { icon: typeof ArrowDownToLine; label: string; disabled?: boolean; onClick: () => void }) {
-  return <Magnetic className="wallet-action-magnetic" disabled={disabled}><button type="button" className="wallet-action glass" disabled={disabled} onClick={onClick}><span><Icon size={24} strokeWidth={1.45} /></span><b>{label}</b></button></Magnetic>
-}
 
-function isSessionError(error: unknown): boolean {
-  const status = error && typeof error === 'object' ? (error as { status?: unknown }).status : undefined
-  const message = typeof error === 'string' ? error : error instanceof Error ? error.message : ''
-  return status === 401 || /(?:status code\s*401|unauthori[sz]ed|session.*(?:expired|invalid|required)|登录状态.*(?:失效|过期|需要))/i.test(message)
-}
 
-function WalletScreen({ go, notify, openWalletFlow }: { go: (screen: Screen) => void; notify: (message: string) => void; openWalletFlow: (mode: 'deposit' | 'withdraw' | 'transfer') => void }) {
-  const { locale, t } = useI18n()
-  const copy = accountCopy[locale]
-  const walletCopy = walletRouteCopy[locale]
-  const [wallet, setWallet] = useState<WalletView | null>(null)
-  const [activity, setActivity] = useState<LedgerTransaction[]>([])
-  const [walletState, setWalletState] = useState<'loading' | 'ready' | 'error'>('loading')
-  const [walletError, setWalletError] = useState<string | null>(null)
-  const loadWallet = useCallback(async () => {
-    setWalletState('loading')
-    setWalletError(null)
-    const [walletResult, activityResult] = await Promise.allSettled([getWallet(), getLedgerTransactions(5)])
-    if (walletResult.status === 'fulfilled') {
-      setWallet(walletResult.value)
-      setWalletState('ready')
-    } else {
-      setWallet(null)
-      setWalletState('error')
-      setWalletError(isSessionError(walletResult.reason) ? walletCopy.sessionExpired : walletCopy.balanceUnavailable)
-    }
-    if (activityResult.status === 'fulfilled') setActivity(activityResult.value)
-    else setActivity([])
-  }, [])
-  useEffect(() => {
-    void loadWallet()
-  }, [loadWallet])
-  const decimals = wallet?.asset.decimals ?? 6
-  const available = walletUnits(wallet?.balances.availableAtomic, decimals)
-  const invested = walletUnits(wallet?.balances.investedAtomic, decimals)
-  const fmt = (n: number) => formatMoneyNumber(n, locale)
-  const displayAmount = (value: number) => walletState === 'loading' ? '…' : wallet ? fmt(value) : '—'
-  const displayInvested = walletState === 'loading' ? '…' : wallet && invested > 0 ? `${fmt(invested)} ${walletCopy.invested}` : '—'
-  return (
-    <section className="screen wallet-screen">
-      <RwaTopbar screen="wallet" title={t('wallet.title')} onProfile={() => go('profile')} />
-      <div className="wallet-hero">
-        <div className="wallet-copy"><p>{copy.availableBalance}</p><h1 className="money-hero"><SplitFlapText value={displayAmount(available)} /> <span>{wallet?.asset.code ?? 'USDT'}</span></h1><small>{wallet && invested > 0 ? `${fmt(invested)} ${walletCopy.invested}` : walletState === 'loading' ? walletCopy.loading : '≈ —'}</small></div>
-        <AssetScene kind="wallet" />
-      </div>
-      {walletError ? <div className="wallet-data-state" role="alert"><span>{walletError}</span><div><button type="button" onClick={() => void loadWallet()}>{walletCopy.retry}</button>{isSessionError(walletError) ? <button type="button" onClick={() => go('login')}>{walletCopy.signInAgain}</button> : null}</div></div> : null}
-      <div className="wallet-action-grid">
-        <WalletAction icon={ArrowDownToLine} label={t('wallet.deposit')} onClick={() => openWalletFlow('deposit')} />
-        <WalletAction icon={ArrowUpFromLine} label={t('wallet.withdraw')} onClick={() => openWalletFlow('withdraw')} />
-        <WalletAction icon={ArrowRightLeft} label={t('wallet.transfer')} onClick={() => openWalletFlow('transfer')} />
-        <WalletAction icon={CreditCard} label={t('wallet.fiat')} disabled onClick={() => undefined} />
-      </div>
-      <div className="wallet-network-row"><Network size={16} />{copy.networks} <span>TRON · Ethereum · Arbitrum</span></div>
-      <div className="section-title"><h2>{t('wallet.assets')}</h2></div>
-      <div className="wallet-assets glass">
-        <button type="button" onClick={() => go('asset-detail')}><span className="token token--usdt"><TokenUSDT size={22} variant="branded" /></span><span><b>{wallet?.asset.code ?? 'USDT'}</b><small>{copy.availableBalance}</small></span><strong>{displayAmount(available)}<small>{displayInvested}</small></strong><ChevronRight size={19} /></button>
-        <button type="button" onClick={() => go('portfolio')}><span className="token"><Cpu size={20} /></span><span><b>{copy.computePositions}</b><small>{copy.activeUnits}</small></span><strong>{displayAmount(invested)}<small>{copy.usdtValue}</small></strong><ChevronRight size={19} /></button>
-      </div>
-      <div className="section-title"><h2>{t('wallet.activity')}</h2><button type="button" onClick={() => go('activity')}>{t('common.viewAll')}</button></div>
-      <div className="activity-list glass">
-        {activity.length === 0 && <div><span><ReceiptText size={19} /></span><p><b>{walletCopy.noActivity}</b><small>{walletCopy.noActivityBody}</small></p><strong /></div>}
-        {activity.map((tx) => {
-          const display = ledgerDisplay(tx.transactionType, locale)
-          const Icon = display.icon
-          const entry = tx.entries[0]
-          const amount = walletUnits(entry?.atomicAmount, entry?.assetDecimals ?? decimals)
-          const reference = tx.referenceType ? ledgerDisplay(tx.referenceType, locale).label : shortId(tx.referenceId ?? tx.id)
-          return (
-            <div key={tx.id}><span className={directionClass(display.direction)}><Icon size={19} /></span><p><b>{display.label}</b><small>{reference}</small></p><strong className={directionClass(display.direction)}>{formatLedgerAmount(amount, tx.transactionType, locale)} {entry?.assetCode ?? 'USDT'}<small>{formatTime(tx.effectiveAt, locale)}</small></strong></div>
-          )
-        })}
-      </div>
-    </section>
-  )
-}
 
 function AiScreen({ go, onClose, pageContext }: { go: (screen: Screen) => void; notify: (message: string) => void; onClose: () => void; pageContext?: AiPageContext }) {
   return <AiChatScreen onClose={onClose} onPlan={() => go('ai-plan')} pageContext={pageContext} />
 }
 
-function ProfileScreen({ go, notify, sessionMode, onClose, onOpenSection, onSignedOut }: { go: (screen: Screen) => void; notify: (message: string) => void; sessionMode: 'guest' | 'authenticated'; onClose: () => void; onOpenSection: (screen: Screen) => void; onSignedOut: () => void }) {
-  const { locale, t } = useI18n()
-  const copy = accountCopy[locale]
-  const rows = [
-    [t('profile.identity'), copy.verified, ShieldCheck, 'kyc'],
-    [t('profile.security'), copy.passkeyEnabled, UserRound, 'security'],
-    [t('profile.referral'), copy.inviteEarn, Sparkles, 'referral'],
-    [t('profile.records'), copy.ordersSettlements, ReceiptText, 'records'],
-    [t('profile.support'), copy.realIssue, Headphones, 'support'],
-    [t('profile.marketing'), copy.emailPush, Bell, 'marketing'],
-    [t('profile.official'), copy.verifyLinks, ShieldCheck, 'official-channels'],
-    [t('profile.trust'), t('trust.body'), FileText, 'trust-center'],
-    [profileRouteCopy[locale].feesTitle, profileRouteCopy[locale].feesSubtitle, BadgePercent, 'fees'],
-    [t('profile.settings'), copy.languageNotifications, Settings, 'settings'],
-  ] as const
-  return (
-    <section className="profile-sheet">
-      <RwaTopbar screen="profile" title={t('profile.title')} onBack={onClose} />
-      <div className="profile-head"><div className="profile-orb profile-orb--large"><ParticleLogoIcon className="profile-orb__particle-logo" label="A-REIT AI" /></div><h1>{sessionMode === 'guest' ? t('guest.badge') : '0x82...92A'}</h1><p><ShieldCheck size={15} /> {sessionMode === 'guest' ? copy.publicSession : t('profile.verified')}</p></div>
-      <div className="profile-menu glass">{rows.map(([title, subtitle, Icon, screen]) => <button type="button" key={title} onClick={() => onOpenSection(screen)}><span><Icon size={21} /></span><p><b>{title}</b><small>{subtitle}</small></p><ChevronRight size={19} /></button>)}</div>
-      <button className="sign-out-button" type="button" onClick={() => void (async () => { await logout(); window.sessionStorage.removeItem('rwa-selected-product'); window.sessionStorage.removeItem('rwa-wallet-flow-mode'); onSignedOut(); notify(copy.signedOut); go('login') })()}><LogOut size={19} />{t('profile.signout')}</button>
-      <button className="close-account-link" type="button" onClick={() => onOpenSection('close-account')}>{copy.closeAccount}</button>
-    </section>
-  )
-}
 
-function CloseAccountScreen({ go, notify }: { go: (screen: Screen) => void; notify: (message: string) => void }) {
-  const { locale } = useI18n()
-  const copy = trustActionCopy[locale]
-  const [reason, setReason] = useState('')
-  const [acknowledged, setAcknowledged] = useState(false)
-  const [confirmation, setConfirmation] = useState('')
-  const [wallet, setWallet] = useState<WalletView | null>(null)
-  useEffect(() => { getWallet().then(setWallet).catch(() => setWallet(null)) }, [])
-  const available = wallet ? walletUnits(wallet.balances.availableAtomic, wallet.asset.decimals) : null
-  const canRequest = acknowledged && confirmation.trim().toUpperCase() === 'CLOSE'
-  const reasonLabels: Record<string, string> = { privacy: copy.privacyReason, fees: copy.feesReason, support: copy.supportReason, other: copy.otherReason }
-  return <section className="screen close-account-screen has-fixed-cta"><DetailHeader screen="close-account" go={go} back="profile" title={copy.closeTitle} kind="flow" /><div className="close-account-hero"><span><AlertTriangle size={27} /></span><p>{copy.lifecycle}</p><h1>{copy.closeHeading}</h1><small>{copy.closeBody}</small></div><div className="close-account-balance glass"><span><small>{copy.walletBalance}</small><b>{available === null ? '—' : `${formatUsdt(available, locale)}`}</b></span><span><small>{copy.openPositions}</small><b>{copy.activeAllocations}</b></span><small>{copy.holdingsBlock}</small></div><label className="close-account-reason">{copy.leaving}<select value={reason} onChange={(event) => setReason(event.target.value)}><option value="">{copy.selectReason}</option><option value="privacy">{copy.privacyReason}</option><option value="fees">{copy.feesReason}</option><option value="support">{copy.supportReason}</option><option value="other">{copy.otherReason}</option></select></label><label className="close-account-confirm">{copy.typeClose}<input value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder="CLOSE" autoCapitalize="characters" /></label><button className={`whitelist-check close-account-check ${acknowledged ? 'is-checked' : ''}`} type="button" onClick={() => setAcknowledged((value) => !value)}><span>{acknowledged && <Check size={14} />}</span><p><b>{copy.closureAck}</b><small>{copy.closureIrreversible}</small></p></button><button className="flow-cta close-account-cta" disabled={!canRequest} type="button" onClick={() => { notify(trustActionText(copy.closureRecorded, { reason: reason ? `: ${reasonLabels[reason]}` : '' })); go('profile') }}>{copy.recordRequest} <ArrowRight size={20} /></button></section>
-}
 
 function DetailHeader({ screen, go, back, title, kind = 'detail' }: { screen?: Screen; go: (screen: Screen) => void; back: Screen; title?: string; kind?: 'detail' | 'flow' | 'tool' | 'trust' | 'list' }) {
   const { t } = useI18n()
@@ -990,21 +619,6 @@ function OrderReviewScreen({ asset, product: selectedProduct, go, amount, setAmo
 
 function LockKeyholeIcon() { return <KeyRound size={21} /> }
 
-function OrderSuccessScreen({ asset, product, go, orderId }: { asset: OrderAsset; product: DemoProduct; go: (screen: Screen) => void; orderId: string | null }) {
-  const { locale } = useI18n()
-  const copy = orderCopy[locale]
-  return (
-    <section className="screen success-screen has-fixed-cta">
-      <DetailHeader screen="order-success" go={go} back="order-review" title={copy.successEyebrow} kind="flow" />
-      <FlowProgress current={3} total={3} label={copy.successEyebrow} />
-      <div className="success-orb"><CircleCheck size={38} /></div>
-      <p>{copy.successEyebrow}</p><h1>{copy.noExternal}</h1><span>{interpolateCopy(asset === 'prediction' ? copy.predictionSuccess : copy.allocationSuccess, { name: product.title })}</span>
-      <div className="success-receipt glass"><span><small>{copy.orderReference}</small><b>{orderId ? shortId(orderId).toUpperCase() : '—'}</b></span><span><small>{copy.executionState}</small><b>{copy.demoOnly}</b></span><span><small>{copy.nextGate}</small><b>{asset === 'prediction' ? copy.partnerIntegration : copy.eligibilitySettlement}</b></span></div>
-      <button className="flow-cta" type="button" onClick={() => orderId ? go('order-detail') : go('order-receipt')}>{copy.viewReceipt} <ArrowRight size={20} /></button>
-      <button className="quiet-action" type="button" onClick={() => go('portfolio')}>{copy.viewPortfolio}</button>
-    </section>
-  )
-}
 
 type DepositAddressView = {
   address: string
@@ -1021,58 +635,8 @@ type WithdrawalQuoteView = {
   sufficientBalance?: boolean
 }
 
-const walletNetworkKey: Record<string, 'tron' | 'ethereum' | 'arbitrum'> = {
-  TRON: 'tron',
-  Ethereum: 'ethereum',
-  Arbitrum: 'arbitrum',
-}
 
-function parseAtomicInteger(value: string | null | undefined): bigint | null {
-  if (typeof value !== 'string' || !/^\d+$/.test(value)) return null
-  return BigInt(value)
-}
 
-function ActivityScreen({ go }: { go: (screen: Screen) => void }) {
-  const { locale, t } = useI18n()
-  const text = operationsCopy[locale]
-  const [active, setActive] = useState<'All' | 'Wallet' | 'Investments' | 'Rewards'>('All')
-  const [ledgerTxs, setLedgerTxs] = useState<LedgerTransaction[]>([])
-  useEffect(() => {
-    getLedgerTransactions(30).then((list) => setLedgerTxs(list)).catch(() => setLedgerTxs([]))
-  }, [])
-  const filters = ['All', 'Wallet', 'Investments', 'Rewards'] as const
-  const filterLabels = { All: text.all, Wallet: text.wallet, Investments: text.investments, Rewards: text.rewards }
-  const groupOf = (type: string): 'Wallet' | 'Investments' | 'Rewards' =>
-    type.startsWith('withdrawal') || type === 'internal_transfer' ? 'Wallet'
-      : type === 'yield_distribution' || type === 'adjustment' ? 'Rewards'
-        : type === 'deposit' ? 'Wallet' : 'Investments'
-  const entries: Array<{ name: string; detail: string; value: string; amount: number; direction: 'in' | 'out' | 'hold' | 'context'; time: string; group: Exclude<typeof active, 'All'>; icon: LucideIcon }> = ledgerTxs.map((tx) => {
-    const entry = tx.entries[0]
-    const amount = walletUnits(entry?.atomicAmount, entry?.assetDecimals ?? 6)
-    const display = ledgerDisplay(tx.transactionType, locale)
-    const reference = tx.referenceType ? ledgerDisplay(tx.referenceType, locale).label : shortId(tx.referenceId ?? tx.id)
-    return {
-      name: display.label,
-      detail: reference,
-      value: `${formatLedgerAmount(amount, tx.transactionType, locale)} ${entry?.assetCode ?? 'USDT'}`,
-      amount,
-      direction: display.direction,
-      time: formatTime(tx.effectiveAt, locale),
-      group: groupOf(tx.transactionType),
-      icon: display.icon,
-    }
-  })
-  const visibleEntries = active === 'All' ? entries : entries.filter((entry) => entry.group === active)
-  const summary = visibleEntries.reduce((result, entry) => {
-    if (entry.direction === 'in') result.inflow += entry.amount
-    else if (entry.direction === 'out') result.outflow += entry.amount
-    else if (entry.direction === 'hold') result.hold += entry.amount
-    return result
-  }, { inflow: 0, outflow: 0, hold: 0 })
-  const summaryLabels = locale === 'zh-CN' ? { inflow: '流入', outflow: '流出', hold: '处理中' } : { inflow: 'In', outflow: 'Out', hold: 'Pending' }
-  const summaryValue = (amount: number, sign: 'in' | 'out' | 'hold') => `${amount ? formatMoney(amount, locale, { sign }) : formatMoney(0, locale)} USDT`
-  return <section className="screen activity-screen"><DetailHeader screen="activity" go={go} back="wallet" title={text.activity} /><div className="activity-filter">{filters.map((filter) => <button className={active === filter ? 'is-active' : ''} type="button" key={filter} onClick={() => setActive(filter)}>{filterLabels[filter]}</button>)}</div><div className="activity-timeline">{visibleEntries.length ? visibleEntries.map(({ name, detail, value, direction, time, icon: Icon }) => <div key={`${name}-${time}`} className="activity-timeline__row glass"><span><Icon size={20} /></span><p><b>{name}</b><small>{detail}</small></p><strong className={`money-sm ${directionClass(direction)}`}>{value}<small>{time}</small></strong></div>) : <EmptyState variant="card" icon={ReceiptText} title={operationText(locale, 'noActivity', { group: filterLabels[active].toLocaleLowerCase(locale) })} body={text.noActivityBody} />}</div><div className="activity-summary-bar glass"><span><small>{summaryLabels.inflow}</small><b className="money-sm direction-in">{summaryValue(summary.inflow, 'in')}</b></span><span><small>{summaryLabels.outflow}</small><b className="money-sm direction-out">{summaryValue(summary.outflow, 'out')}</b></span><span><small>{summaryLabels.hold}</small><b className="money-sm direction-hold">{summaryValue(summary.hold, 'hold')}</b></span></div></section>
-}
 
 function AssetAccountScreen({ go, notify }: { go: (screen: Screen) => void; notify: (message: string) => void }) {
   const { locale } = useI18n()
@@ -1139,245 +703,12 @@ Details: ${details.trim()}`, category: 'scam_report', priority: 'normal' }), ide
     : <form className="security-report-form glass" aria-busy={pending} onSubmit={(event) => void submit(event)}><label>{t('scam.source')}<input value={source} maxLength={200} dir="auto" disabled={pending} onChange={(event) => { setSource(event.target.value); setIntentKey(null) }} placeholder={copy.sourcePlaceholder} /></label><label>{t('scam.details')}<textarea value={details} maxLength={4700} dir="auto" disabled={pending} onChange={(event) => { setDetails(event.target.value); setIntentKey(null) }} placeholder={copy.detailsPlaceholder} rows={5} /><small className="community-counter" aria-hidden="true">{sc.counter.replace('{n}', String(details.length)).replace('{max}', '4700')}</small></label>{error && <p className="community-feedback" data-tone="error" role="alert">{error}</p>}<button className="flow-cta" disabled={!source.trim() || !details.trim() || pending} type="submit">{pending ? sc.submitting : t('scam.submit')}<ArrowRight size={20} /></button></form>}</section>
 }
 
-function factorCountText(count: number | null, kind: 'passkey' | 'factor', locale: string) {
-  if (count === null) return '—'
-  if (locale === 'zh-CN') return `${count} 个${kind === 'passkey' ? '通行密钥' : '安全因子'}`
-  const label = kind === 'passkey' ? 'passkey' : 'factor'
-  return `${count} ${label}${count === 1 ? '' : 's'}`
-}
 
-function sessionDisplay(item: Record<string, unknown>, index: number, locale: string) {
-  const device = item.device && typeof item.device === 'object' ? item.device as Record<string, unknown> : {}
-  const textValue = (...values: unknown[]) => values.find((value): value is string => typeof value === 'string' && value.trim().length > 0)
-  const isCurrent = item.isCurrent === true || item.current === true
-  const deviceName = textValue(device.name, item.deviceName, item.name) ?? (isCurrent ? (locale === 'zh-CN' ? '当前设备' : 'This device') : (locale === 'zh-CN' ? `其他设备 ${index + 1}` : `Other device ${index + 1}`))
-  const rawTime = item.lastSeenAt ?? item.createdAt
-  const dateValue = typeof rawTime === 'string' || typeof rawTime === 'number' ? new Date(rawTime) : null
-  const time = dateValue && !Number.isNaN(dateValue.getTime())
-    ? (() => {
-        const seconds = Math.round((dateValue.getTime() - Date.now()) / 1000)
-        const formatter = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' })
-        if (Math.abs(seconds) < 60) return formatter.format(seconds, 'second')
-        const minutes = Math.round(seconds / 60)
-        if (Math.abs(minutes) < 60) return formatter.format(minutes, 'minute')
-        const hours = Math.round(minutes / 60)
-        if (Math.abs(hours) < 24) return formatter.format(hours, 'hour')
-        return formatter.format(Math.round(hours / 24), 'day')
-      })()
-    : (locale === 'zh-CN' ? '时间未知' : 'Time unavailable')
-  const city = textValue(item.city, device.city, item.location)
-  return { deviceName, isCurrent, meta: [city, time].filter(Boolean).join(' · ') }
-}
 
-const referralStepCopies: Record<string, Array<[string, string]>> = {
-  en: [['Share your link', 'Invite a friend to explore A-REIT.'], ['Friend verifies', 'Their account completes the required checks.'], ['Earn fee credit', 'The reward is recorded after the first allocation.']],
-  'zh-CN': [['分享链接', '邀请好友了解 A-REIT。'], ['好友认证', '好友完成账户所需的认证。'], ['获得奖励', '首次投资完成后记录手续费抵扣。']],
-  hi: [['लिंक साझा करें', 'किसी मित्र को A-REIT देखने के लिए आमंत्रित करें।'], ['मित्र सत्यापित हो', 'मित्र आवश्यक खाते की जाँच पूरी करे।'], ['शुल्क क्रेडिट पाएँ', 'पहले निवेश के बाद पुरस्कार दर्ज होगा।']],
-  es: [['Comparte el enlace', 'Invita a un amigo a explorar A-REIT.'], ['Tu amigo verifica', 'Completa las comprobaciones necesarias.'], ['Gana crédito', 'La recompensa se registra tras la primera inversión.']],
-  ar: [['شارك الرابط', 'ادعُ صديقًا لاستكشاف A-REIT.'], ['يتحقق الصديق', 'يكمل فحوصات الحساب المطلوبة.'], ['اكسب رصيد رسوم', 'يسجل المكافأة بعد أول تخصيص.']],
-  fr: [['Partager le lien', 'Invitez un ami à découvrir A-REIT.'], ['Vérification', 'Votre ami termine les contrôles requis.'], ['Crédit de frais', 'La récompense est enregistrée après le premier investissement.']],
-  pt: [['Compartilhe o link', 'Convide um amigo para conhecer a A-REIT.'], ['Amigo verifica', 'A conta conclui as verificações necessárias.'], ['Ganhe crédito', 'A recompensa é registrada após o primeiro investimento.']],
-}
 
-function sessionToggleLabel(locale: string, expanded: boolean, count: number) {
-  if (locale === 'zh-CN') return expanded ? '收起列表' : `最近 5 台 · 查看全部（${count}）`
-  if (locale === 'hi') return expanded ? 'सूची संक्षिप्त करें' : `हाल के 5 · सभी देखें (${count})`
-  if (locale === 'es') return expanded ? 'Mostrar menos' : `Últimos 5 · Ver todos (${count})`
-  if (locale === 'fr') return expanded ? 'Réduire la liste' : `5 récents · Tout voir (${count})`
-  if (locale === 'pt') return expanded ? 'Mostrar menos' : `5 recentes · Ver tudo (${count})`
-  if (locale === 'ar') return expanded ? 'عرض أقل' : `آخر 5 · عرض الكل (${count})`
-  return expanded ? 'Show fewer' : `Recent 5 · View all (${count})`
-}
 
 // Theme moved out of the topbar; Settings is its single home.
-const themeOrder: RwaThemePreference[] = ['system', 'light', 'dark']
-const themeCopy: Record<AppLocale, { title: string; options: string[] }> = {
-  en: { title: 'Appearance', options: ['System', 'Light', 'Dark'] },
-  'zh-CN': { title: '外观', options: ['跟随系统', '浅色', '深色'] },
-  hi: { title: 'रूप', options: ['सिस्टम', 'हल्का', 'गहरा'] },
-  es: { title: 'Apariencia', options: ['Sistema', 'Claro', 'Oscuro'] },
-  ar: { title: 'المظهر', options: ['النظام', 'فاتح', 'داكن'] },
-  fr: { title: 'Apparence', options: ['Système', 'Clair', 'Sombre'] },
-  pt: { title: 'Aparência', options: ['Sistema', 'Claro', 'Escuro'] },
-}
 
-function AccountFlowScreen({ kind, go, notify }: { kind: AccountFlowKind; go: (screen: Screen) => void; notify: (message: string) => void }) {
-  const { locale, t } = useI18n()
-  const { preference, setTheme } = useRwaTheme()
-  const flow = accountFlowCopy[locale]
-  const [factors, setFactors] = useState<Record<string, unknown> | null>(null)
-  const [sessions, setSessions] = useState<Array<Record<string, unknown>>>([])
-  const [invitations, setInvitations] = useState<Array<Record<string, unknown>>>([])
-  const [inviteLink, setInviteLink] = useState<string | null>(null)
-  const [flowLoading, setFlowLoading] = useState(false)
-  const [passkeyBusy, setPasskeyBusy] = useState(false)
-  const [securityEnrollment, setSecurityEnrollment] = useState<Record<string, unknown> | null>(null)
-  const [securityCode, setSecurityCode] = useState('')
-  const [reauthentication, setReauthentication] = useState('')
-  const [showAllSessions, setShowAllSessions] = useState(false)
-  useEffect(() => {
-    if (kind === 'security') {
-      void Promise.all([request<Record<string, unknown>>('/v1/security/factors'), request<unknown>('/v1/security/sessions')]).then(([factorResult, sessionResult]) => {
-        if (factorResult.ok) setFactors(factorResult.data)
-        if (sessionResult.ok) setSessions(Array.isArray(sessionResult.data) ? sessionResult.data as Array<Record<string, unknown>> : Array.isArray((sessionResult.data as Record<string, unknown>)?.items) ? (sessionResult.data as { items: Array<Record<string, unknown>> }).items : [])
-      })
-    }
-    if (kind === 'referral') void request<unknown>('/v1/user-ops/invitations').then((result) => { if (result.ok) setInvitations(Array.isArray(result.data) ? result.data as Array<Record<string, unknown>> : Array.isArray((result.data as Record<string, unknown>)?.items) ? (result.data as { items: Array<Record<string, unknown>> }).items : []) })
-  }, [kind])
-  const refreshSecurity = async () => {
-    const [factorResult, sessionResult] = await Promise.all([request<Record<string, unknown>>('/v1/security/factors'), request<unknown>('/v1/security/sessions')])
-    if (factorResult.ok) setFactors(factorResult.data)
-    if (sessionResult.ok) setSessions(Array.isArray(sessionResult.data) ? sessionResult.data as Array<Record<string, unknown>> : Array.isArray((sessionResult.data as Record<string, unknown>)?.items) ? (sessionResult.data as { items: Array<Record<string, unknown>> }).items : [])
-  }
-  const createPasskey = async () => {
-    const copy = securityRouteCopy[locale]
-    setPasskeyBusy(true)
-    try {
-      const result = await registerPasskey()
-      if (!result.ok) {
-        const message = result.error.code === 'PASSKEY_REGISTRATION_CANCELLED' ? copy.passkeyCancelled
-          : result.error.code === 'PASSKEY_UNSUPPORTED' ? copy.passkeyUnsupported
-            : result.error.code === 'PASSKEY_ALREADY_REGISTERED' ? copy.passkeyAlreadyRegistered
-              : copy.passkeyFailed
-        notify(message)
-        return
-      }
-      await refreshSecurity()
-      notify(copy.passkeyAdded)
-    } catch {
-      notify(copy.passkeyFailed)
-    } finally {
-      setPasskeyBusy(false)
-    }
-  }
-  const startTotpEnrollment = async () => {
-    setFlowLoading(true)
-    const result = await request<Record<string, unknown>>('/v1/security/totp/enrollment', { method: 'POST', body: JSON.stringify({}) })
-    setFlowLoading(false)
-    if (!result.ok) { notify(result.error.message); return }
-    setSecurityEnrollment(result.data)
-    notify(securityRouteCopy[locale].setupStarted)
-  }
-  const confirmTotpEnrollment = async () => {
-    const factorId = securityEnrollment?.factorId
-    if (typeof factorId !== 'string' || !/^\d{6}$/.test(securityCode)) return
-    setFlowLoading(true)
-    const result = await request('/v1/security/totp/enrollment/confirm', { method: 'POST', body: JSON.stringify({ factorId, code: securityCode }) })
-    setFlowLoading(false)
-    if (!result.ok) { notify(result.error.message); return }
-    setSecurityEnrollment(null)
-    setSecurityCode('')
-    await refreshSecurity()
-    notify(securityRouteCopy[locale].factorAdded)
-  }
-  const revokeTotp = async (factorId: string) => {
-    if (!reauthentication.trim()) return
-    setFlowLoading(true)
-    const result = await request(`/v1/security/factors/totp/${encodeURIComponent(factorId)}`, { method: 'DELETE', body: JSON.stringify({ reauthentication: reauthentication.trim() }) })
-    setFlowLoading(false)
-    if (!result.ok) { notify(result.error.message); return }
-    setReauthentication('')
-    await refreshSecurity()
-    notify(securityRouteCopy[locale].factorRemoved)
-  }
-  const revokeSession = async (sessionId: string) => {
-    setFlowLoading(true)
-    const result = await request(`/v1/security/sessions/${encodeURIComponent(sessionId)}`, { method: 'DELETE', body: JSON.stringify({}) })
-    setFlowLoading(false)
-    if (!result.ok) { notify(result.error.message); return }
-    await refreshSecurity()
-    notify(securityRouteCopy[locale].sessionRemoved)
-  }
-  const revokeOthers = async () => {
-    setFlowLoading(true)
-    const result = await request('/v1/security/sessions/revoke-others', { method: 'POST', body: JSON.stringify({}) })
-    setFlowLoading(false)
-    if (!result.ok) { notify(result.error.message); return }
-    await refreshSecurity()
-    notify(securityRouteCopy[locale].sessionRemoved)
-  }
-  const [supportCategory, setSupportCategory] = useState('order-dispute')
-  const [supportDetails, setSupportDetails] = useState('')
-  const [supportReference, setSupportReference] = useState('')
-  const config = { ...flow.config[kind], icon: kind === 'security' ? KeyRound : kind === 'referral' ? Sparkles : kind === 'records' ? ReceiptText : kind === 'support' ? Headphones : Settings }
-  const Icon = config.icon
-  const passkeyCount = factors && Array.isArray(factors.passkeys) ? factors.passkeys.length : null
-  const totpCount = factors && Array.isArray(factors.totp) ? factors.totp.length : null
-  const visibleSessions = showAllSessions ? sessions : sessions.slice(0, 5)
-  const referralSteps = referralStepCopies[locale] ?? referralStepCopies.en
-  return (
-    <section className="screen account-flow-screen has-fixed-cta">
-      <DetailHeader screen={kind === 'security' ? 'security' : kind === 'referral' ? 'referral' : kind === 'records' ? 'records' : kind === 'support' ? 'support' : 'settings'} go={go} back="profile" title={config.title} />
-      <div className="account-flow-hero">
-        <span><Icon size={30} /></span>
-        <p>{config.overline}</p>
-        <h1>{config.heading}</h1>
-        <small>{config.body}</small>
-      </div>
-
-      {kind === 'security' && (
-        <><div className="security-factor-stats">
-          <div className="security-factor-stat glass"><KeyRound size={20} /><span><b>{flow.passkey}</b><small>{factorCountText(passkeyCount, 'passkey', locale)}</small></span></div>
-          <div className="security-factor-stat glass"><Fingerprint size={20} /><span><b>TOTP</b><small>{factorCountText(totpCount, 'factor', locale)}</small></span></div>
-        </div><div className="security-factor-panel glass"><div><b>{securityRouteCopy[locale].passkeyTitle}</b><small>{securityRouteCopy[locale].passkeyBody}</small></div><Button type="button" variant="outline" className="w-full justify-between" aria-busy={passkeyBusy} disabled={passkeyBusy || flowLoading} onClick={() => void createPasskey()}>{passkeyBusy ? securityRouteCopy[locale].addingPasskey : securityRouteCopy[locale].addPasskey}<ArrowRight size={16} /></Button></div><div className="security-factor-panel glass"><div><b>{securityRouteCopy[locale].enroll}</b><small>{securityRouteCopy[locale].enrollBody}</small></div>{securityEnrollment ? <><code>{String(securityEnrollment.otpauthUri ?? 'otpauth://…')}</code><small>{securityRouteCopy[locale].recoveryCodes}</small><pre>{Array.isArray(securityEnrollment.recoveryCodes) ? securityEnrollment.recoveryCodes.join('  ') : '—'}</pre><label className="basket-field"><span>{securityRouteCopy[locale].code}</span><input inputMode="numeric" maxLength={6} value={securityCode} onChange={(event) => setSecurityCode(event.target.value.replace(/\D/g, '').slice(0, 6))} /></label><button type="button" className="flow-cta" disabled={flowLoading || !/^\d{6}$/.test(securityCode)} onClick={() => void confirmTotpEnrollment()}>{securityRouteCopy[locale].confirm}<ArrowRight size={18} /></button></> : <button type="button" className="quiet-action" disabled={flowLoading} onClick={() => void startTotpEnrollment()}>{securityRouteCopy[locale].begin}<ArrowRight size={16} /></button>}</div>
-        <div className="security-reauth glass"><label className="basket-field"><span>{securityRouteCopy[locale].reauth}</span><input value={reauthentication} onChange={(event) => setReauthentication(event.target.value)} autoComplete="off" /></label>{Array.isArray(factors?.totp) && factors.totp.map((item, index) => { const factor = item && typeof item === 'object' ? item as Record<string, unknown> : {}; const factorId = typeof factor.id === 'string' ? factor.id : null; return <button key={factorId ?? index} type="button" className="quiet-action" disabled={flowLoading || !factorId || !reauthentication.trim()} onClick={() => factorId && void revokeTotp(factorId)}>{securityRouteCopy[locale].revoke}</button> })}</div><div className="device-session-head"><span>{flow.activeSessions}</span><div className="device-session-head__meta"><small>{accountFlowText(locale, flow.devices, { count: sessions.length })}</small>{sessions.length > 5 && <Button type="button" variant="link" size="sm" className="device-session-toggle" onClick={() => setShowAllSessions((value) => !value)}>{sessionToggleLabel(locale, showAllSessions, sessions.length)}</Button>}</div></div><div className="device-session-list glass">{sessions.length ? visibleSessions.map((item, index) => { const display = sessionDisplay(item, index, locale); return <div key={String(item.id ?? index)}><span className="device-session__icon"><Laptop size={18} /></span><p><b>{display.deviceName}</b><small>{display.meta}</small></p><strong>{display.isCurrent ? flow.current : <button type="button" onClick={() => typeof item.id === 'string' && void revokeSession(item.id)}>{securityRouteCopy[locale].revokeSession}</button>}</strong></div> }) : <EmptyState variant="inline" icon={Laptop} title={securityRouteCopy[locale].noFactors} body={locale === 'zh-CN' ? '最近登录的设备会显示在这里。' : 'Recent sign-ins will appear here.'} />}</div><button type="button" className="quiet-action" disabled={flowLoading} onClick={() => void revokeOthers()}>{securityRouteCopy[locale].revokeOthers}</button></>
-      )}
-
-      {kind === 'referral' && (
-        <>
-          {inviteLink && <div className="referral-code glass"><small>{flow.invitationCode}</small><b>{inviteLink}</b><button type="button" onClick={() => void navigator.clipboard?.writeText(inviteLink)}>{locale === 'zh-CN' ? '复制链接' : 'Copy link'}</button></div>}
-          <Stepper
-            className="referral-stepper"
-            stepCircleContainerClassName="referral-stepper__container"
-            stepContainerClassName="referral-stepper__indicators"
-            contentClassName="referral-stepper__content"
-            footerClassName="referral-stepper__footer"
-            initialStep={1}
-            nextButtonText={locale === 'zh-CN' ? '下一步' : 'Next step'}
-            completeButtonText={locale === 'zh-CN' ? '完成' : 'Complete'}
-            backButtonText={locale === 'zh-CN' ? '上一步' : 'Back'}
-            renderStepIndicator={({ step, currentStep, onStepClick }) => {
-              const StepIcon = [UserPlus, ShieldCheck, CircleDollarSign][step - 1]
-              return <button type="button" className={`referral-step-indicator ${currentStep === step ? 'is-active' : currentStep > step ? 'is-complete' : ''}`} aria-label={`${step}. ${referralSteps[step - 1]?.[0] ?? ''}`} aria-current={currentStep === step ? 'step' : undefined} onClick={() => onStepClick(step)}><span className="referral-step-indicator__icon"><StepIcon size={16} /></span><span className="referral-step-indicator__label">{referralSteps[step - 1]?.[0]}</span></button>
-            }}
-          >
-            {referralSteps.map(([title, body], index) => { const StepIcon = [UserPlus, ShieldCheck, CircleDollarSign][index]; return <Step key={title}><div className="referral-step glass"><span className="referral-step__index">{index + 1}</span><span className="referral-step__icon"><StepIcon size={18} /></span><p><b>{title}</b><small>{body}</small></p></div></Step> })}
-          </Stepper>
-          <div className="record-stack glass">{invitations.length ? invitations.map((item, index) => <div key={String(item.id ?? index)}><ReceiptText size={19} /><span><b>{String(item.code ?? item.id ?? '—')}</b><small>{String(item.status ?? item.state ?? '—')}</small></span></div>) : <EmptyState variant="inline" icon={Users} title={locale === 'zh-CN' ? '暂无邀请记录' : 'No invitations yet'} body={locale === 'zh-CN' ? '分享邀请链接后，已发送的邀请会显示在这里。' : 'Invitations will appear here after you share your link.'} />}</div>
-        </>
-      )}
-
-      {kind === 'records' && (
-        <div className="record-stack glass">
-          <button type="button" onClick={() => notify(accountFlowText(locale, flow.receiptOpened, { name: flow.rwaSubscription }))}><ReceiptText size={20} /><span><b>{flow.rwaSubscription}</b><small>{flow.solarAllocation}</small></span><strong>{flow.settled}</strong></button>
-          <button type="button" onClick={() => notify(accountFlowText(locale, flow.receiptOpened, { name: flow.computeRevenue }))}><Cpu size={20} /><span><b>{flow.computeRevenue}</b><small>{flow.dailySettlement}</small></span><strong className="mint">+12.40</strong></button>
-          <button type="button" onClick={() => notify(accountFlowText(locale, flow.receiptOpened, { name: flow.walletDeposit }))}><CircleDollarSign size={20} /><span><b>{flow.walletDeposit}</b><small>TRON USDT · TQx7...8vZp</small></span><strong className="mint">+2,000</strong></button>
-        </div>
-      )}
-
-      {kind === 'support' && (
-        <div className="support-stack">
-          <button className="support-card glass" type="button" onClick={() => go('ai')}><MessageCircle size={22} /><span><b>{flow.aiSupport}</b><small>{flow.aiSupportBody}</small></span><ChevronRight size={19} /></button>
-          <button className="support-card glass" type="button" onClick={() => notify(flow.humanRecorded)}><Headphones size={22} /><span><b>{flow.humanReview}</b><small>{flow.humanReviewBody}</small></span><ChevronRight size={19} /></button>
-          <button className="support-card glass" type="button" onClick={() => go('scam-report')}><ShieldCheck size={22} /><span><b>{t('scam.title')}</b><small>{flow.scamBody}</small></span><ChevronRight size={19} /></button>
-          {supportReference ? <div className="report-success glass"><CircleCheck size={30} /><h2>{flow.caseCreated}</h2><b>{supportReference}</b><p>{flow.caseStatus}</p></div> : <form className="security-report-form glass" onSubmit={(event) => { event.preventDefault(); if (!supportDetails.trim()) return; const reference = `SUP-${Math.random().toString(36).slice(2, 8).toUpperCase()}`; setSupportReference(reference); window.localStorage.setItem('rwa-last-support-ticket', JSON.stringify({ reference, category: supportCategory, details: supportDetails, status: 'submitted', createdAt: new Date().toISOString(), demo: true })); notify(accountFlowText(locale, flow.caseRecorded, { reference })) }}><label>{flow.issueType}<select value={supportCategory} onChange={(event) => setSupportCategory(event.target.value)}><option value="order-dispute">{flow.dispute}</option><option value="deposit-withdrawal">{flow.depositWithdrawal}</option><option value="yield-settlement">{flow.yieldSettlement}</option><option value="kyc-appeal">{flow.kycAppeal}</option><option value="other">{flow.other}</option></select></label><label>{flow.transactionDetails}<textarea rows={4} value={supportDetails} onChange={(event) => setSupportDetails(event.target.value)} placeholder={flow.detailsPlaceholder} /></label><button className="auth-primary" type="submit" disabled={!supportDetails.trim()}>{flow.createCase} <ArrowRight size={18} /></button></form>}
-        </div>
-      )}
-
-      {kind === 'settings' && (
-        <div className="setting-stack setting-stack--preferences glass">
-          <div className="settings-language-row"><Network size={20} /><LanguageMenu variant="settings" onChange={(label) => notify(accountFlowText(locale, flow.languageSaved, { label }))} /></div>
-          <div className="settings-theme-row"><Moon size={20} /><span><b>{themeCopy[locale].title}</b></span><Segmented label={themeCopy[locale].title} items={themeCopy[locale].options} value={themeOrder.indexOf(preference)} onChange={(index) => setTheme(themeOrder[index])} /></div>
-          <button type="button" onClick={() => go('marketing')}><Bell size={20} /><span><b>{t('settings.marketing')}</b><small>{flow.marketingDetail}</small></span><ChevronRight size={19} /></button>
-          <button type="button" onClick={() => notify(flow.notificationSaved)}><Bell size={20} /><span><b>{t('settings.notifications')}</b><small>{flow.notificationDetail}</small></span><Check size={19} /></button>
-          <button type="button" onClick={() => notify(flow.fiatUnavailable)}><Upload size={20} /><span><b>{t('settings.fiat')}</b><small>{flow.fiatDetail}</small></span><ChevronRight size={19} /></button>
-        </div>
-      )}
-
-      {kind === 'referral' && <button className="flow-cta" type="button" disabled={flowLoading} onClick={() => { setFlowLoading(true); void request<Record<string, unknown>>('/v1/user-ops/invitations', { method: 'POST', body: JSON.stringify({ role: 'member' }) }).then((result) => { setFlowLoading(false); if (!result.ok) { notify(result.error.message); return } const token = result.data.token; if (typeof token === 'string') setInviteLink(`${location.origin}/?invite=${encodeURIComponent(token)}`); const view = result.data.view; if (view && typeof view === 'object') setInvitations((items) => [view as Record<string, unknown>, ...items]) }) }}>{config.action}<ArrowRight size={20} /></button>}
-    </section>
-  )
-}
 
 type TrustPageKind = 'trust-center' | 'access-regions' | 'product-disclosures' | 'legal-center'
 type TrustRow = { title: string; description: string; icon: LucideIcon; destination?: Screen }
@@ -1872,6 +1203,5 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
 export default function RwaH5({ initialScreen = 'home', initialParams = {}, initialQuery = '', initialPath = '' }: { initialScreen?: Screen; initialParams?: Record<string, string>; initialQuery?: string; initialPath?: string }) {
   return <><EligibilityNotice /><RwaH5Content initialScreen={initialScreen} initialParams={initialParams} initialQuery={initialQuery} initialPath={initialPath} /></>
 }
-import { TokenUSDT, NetworkTron, NetworkEthereum, NetworkArbitrumOne } from '@web3icons/react'
-import { QRCodeSVG } from 'qrcode.react'
+import { TokenUSDT } from '@web3icons/react'
 import { RankingTable } from './invest/RankingTable'
