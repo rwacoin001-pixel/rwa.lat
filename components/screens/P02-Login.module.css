@@ -1,10 +1,10 @@
 /* Sign-in surfaces: the scene film behind, a centred plaque above, one lacquered card in front.
    Warm = ivory + lacquer, cool = navy + gold. */
 .root {
-  --ink: #1b1813;
-  --auth-muted: #6b6257;
-  --auth-faint: #9a8f82;
-  --auth-accent: #8a6a3b;
+  --ink: var(--pal-light-ink);
+  --auth-muted: var(--pal-light-muted);
+  --auth-faint: var(--pal-light-faint);
+  --auth-accent: var(--pal-light-accent);
   --auth-bg: #efe4d4;
   --card: rgba(251, 247, 240, .86);
   --card-deep: rgba(246, 239, 228, .84);
@@ -39,10 +39,10 @@
   font-family: var(--sans);
 }
 .root[data-auth-theme='cool'] {
-  --ink: #e9edf3;
-  --auth-muted: #9aa6b8;
-  --auth-faint: #68758c;
-  --auth-accent: #e3bb7a;
+  --ink: var(--pal-dark-ink);
+  --auth-muted: var(--pal-dark-muted);
+  --auth-faint: var(--pal-dark-faint);
+  --auth-accent: var(--pal-dark-accent);
   --auth-bg: #070c16;
   --card: rgba(12, 19, 33, .86);
   --card-deep: rgba(9, 14, 26, .88);

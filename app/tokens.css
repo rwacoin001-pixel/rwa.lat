@@ -1,4 +1,18 @@
 :root {
+  /* ─── Palette: the only place raw brand colours live. Everything else points here. ───
+     "light" is the ivory paper scheme, "dark" the navy one (the login page's warm / cool pick them directly). */
+  --pal-light-bg: #f4efe6; --pal-light-surface: #fffdf8; --pal-light-surface-2: #ece4d7;
+  --pal-light-ink: #1b1813; --pal-light-ink-rgb: 27 24 19; --pal-light-ink-2: #4a433a;
+  --pal-light-muted: #6b6257; --pal-light-faint: #9a8f82;
+  --pal-light-line: rgba(27, 24, 19, .12); --pal-light-line-soft: rgba(27, 24, 19, .07);
+  --pal-light-accent: #8a6a3b; --pal-light-accent-rgb: 138 106 59; --pal-light-on-accent: #f7f1e6;
+  --pal-light-up: #3f7a57; --pal-light-down: #b0533f; --pal-light-warn: #a4701f; --pal-light-info: #3e6f84;
+  --pal-dark-bg: #070c16; --pal-dark-surface: #0e1626; --pal-dark-surface-2: #16213a;
+  --pal-dark-ink: #e9edf3; --pal-dark-ink-rgb: 233 237 243; --pal-dark-ink-2: #c3cbd9;
+  --pal-dark-muted: #97a3b6; --pal-dark-faint: #647088;
+  --pal-dark-line: rgba(169, 184, 208, .16); --pal-dark-line-soft: rgba(169, 184, 208, .08);
+  --pal-dark-accent: #e3bb7a; --pal-dark-accent-rgb: 227 187 122; --pal-dark-on-accent: #0a1020;
+  --pal-dark-up: #7fcfa8; --pal-dark-down: #ef8f7d; --pal-dark-warn: #f0c46e; --pal-dark-info: #a9b8d0;
   --r-sm: 8px; --r-md: 14px; --r-lg: 20px; --r-xl: 28px; --r-pill: 999px;
   --sp-1: 4px; --sp-2: 8px; --sp-3: 12px; --sp-4: 16px; --sp-5: 20px; --sp-6: 24px; --sp-8: 32px;
   --topbar-h: 56px; --topbar-side-w: 88px; --btn-topbar-w: 40px; --dock-h: 72px;
@@ -10,11 +24,19 @@
   --focus-width: 2px; --chart-height: 200px; --score-height: 6px;
 }
 :root, [data-theme='light'] {
-  --bg: #F4F1EA; --surface: #FFFFFF; --surface-2: #ECE8DF;
-  --ink-rgb: 14 17 22; --ink: #0E1116; --ink-2: #4A5058; --ink-3: #6E747D;
-  --ink-disabled: rgb(14 17 22 / .38); --placeholder: rgb(14 17 22 / .40);
-  --accent-rgb: 15 92 90; --accent: #0F5C5A; --on-accent: #F4F1EA;
-  --up: #1F7A4D; --down: #B4322F; --warn: #B8860B; --info: #2F5D9E;
+  /* Semantic layer (--ds-*): what the palette means in this theme. */
+  --ds-bg: var(--pal-light-bg); --ds-surface: var(--pal-light-surface); --ds-surface-2: var(--pal-light-surface-2);
+  --ds-ink: var(--pal-light-ink); --ds-ink-rgb: var(--pal-light-ink-rgb); --ds-ink-2: var(--pal-light-ink-2);
+  --ds-muted: var(--pal-light-muted); --ds-faint: var(--pal-light-faint);
+  --ds-line: var(--pal-light-line); --ds-line-soft: var(--pal-light-line-soft);
+  --ds-accent: var(--pal-light-accent); --ds-accent-rgb: var(--pal-light-accent-rgb); --ds-on-accent: var(--pal-light-on-accent);
+  --ds-up: var(--pal-light-up); --ds-down: var(--pal-light-down); --ds-warn: var(--pal-light-warn); --ds-info: var(--pal-light-info);
+  /* Legacy names (the old shell) now alias the semantic layer. */
+  --bg: var(--ds-bg); --surface: var(--ds-surface); --surface-2: var(--ds-surface-2);
+  --ink-rgb: var(--ds-ink-rgb); --ink: var(--ds-ink); --ink-2: var(--ds-ink-2); --ink-3: var(--ds-muted);
+  --ink-disabled: rgb(var(--ds-ink-rgb) / .38); --placeholder: rgb(var(--ds-ink-rgb) / .40);
+  --accent-rgb: var(--ds-accent-rgb); --accent: var(--ds-accent); --on-accent: var(--ds-on-accent);
+  --up: var(--ds-up); --down: var(--ds-down); --warn: var(--ds-warn); --info: var(--ds-info);
   --shadow-card: 0 1px 2px rgb(var(--ink-rgb) / .06), 0 8px 24px rgb(var(--ink-rgb) / .06);
   /* One look for notices everywhere: a soft wash, a thin line, readable text. */
   --notice-error-fg: #9f3f33; --notice-error-bg: rgba(255, 240, 236, .92); --notice-error-line: rgba(196, 87, 74, .28);
@@ -23,11 +45,17 @@
   --font-num: var(--font-geist-mono), Inter, system-ui, sans-serif;
 }
 [data-theme='dark'] {
-  --bg: #0A0B0D; --surface: #13151A; --surface-2: #1B1E25;
-  --ink-rgb: 240 242 245; --ink: #F0F2F5; --ink-2: #B6BCC6; --ink-3: #8B93A0;
-  --ink-disabled: rgb(240 242 245 / .40); --placeholder: rgb(240 242 245 / .42);
-  --accent-rgb: 127 224 200; --accent: #7FE0C8; --on-accent: #0A0B0D;
-  --up: #5BD39A; --down: #F0645C; --warn: #E0B84A; --info: #7FB2F0;
+  --ds-bg: var(--pal-dark-bg); --ds-surface: var(--pal-dark-surface); --ds-surface-2: var(--pal-dark-surface-2);
+  --ds-ink: var(--pal-dark-ink); --ds-ink-rgb: var(--pal-dark-ink-rgb); --ds-ink-2: var(--pal-dark-ink-2);
+  --ds-muted: var(--pal-dark-muted); --ds-faint: var(--pal-dark-faint);
+  --ds-line: var(--pal-dark-line); --ds-line-soft: var(--pal-dark-line-soft);
+  --ds-accent: var(--pal-dark-accent); --ds-accent-rgb: var(--pal-dark-accent-rgb); --ds-on-accent: var(--pal-dark-on-accent);
+  --ds-up: var(--pal-dark-up); --ds-down: var(--pal-dark-down); --ds-warn: var(--pal-dark-warn); --ds-info: var(--pal-dark-info);
+  --bg: var(--ds-bg); --surface: var(--ds-surface); --surface-2: var(--ds-surface-2);
+  --ink-rgb: var(--ds-ink-rgb); --ink: var(--ds-ink); --ink-2: var(--ds-ink-2); --ink-3: var(--ds-muted);
+  --ink-disabled: rgb(var(--ds-ink-rgb) / .40); --placeholder: rgb(var(--ds-ink-rgb) / .42);
+  --accent-rgb: var(--ds-accent-rgb); --accent: var(--ds-accent); --on-accent: var(--ds-on-accent);
+  --up: var(--ds-up); --down: var(--ds-down); --warn: var(--ds-warn); --info: var(--ds-info);
   --shadow-card: none; --hero-bg: var(--surface); --hero-ink: var(--accent);
   --notice-error-fg: #ffb3a3; --notice-error-bg: rgba(74, 30, 27, .62); --notice-error-line: rgba(239, 143, 125, .38);
   --notice-ok-fg: #9be0bd; --notice-ok-bg: rgba(24, 54, 40, .6); --notice-ok-line: rgba(91, 211, 154, .34);
