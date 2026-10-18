@@ -86,7 +86,6 @@ import { operationText, operationsCopy } from '@/lib/operations-copy'
 import { accountFlowCopy, accountFlowText, type AccountFlowKind } from '@/lib/account-flow-copy'
 import { portfolioDetailCopy } from '@/lib/portfolio-detail-copy'
 import { trustActionCopy, trustActionText } from '@/lib/trust-action-copy'
-import { orderStatusCopy, orderStatusText } from '@/lib/order-status-copy'
 import { assetExperienceCopy } from '@/lib/asset-experience-copy'
 import { categoryLabel, localizeProduct } from '@/lib/catalog-localization'
 const PolymarketDetailPanel = dynamic(() => import('./polymarket-detail-panel'), { ssr: false })
@@ -94,9 +93,6 @@ const AddressBookScreen = dynamic(() => import('./address-book-screen').then((m)
 const StatusScreen = dynamic(() => import('./status-screen').then((m) => ({ default: m.StatusScreen })), { ssr: false, loading: AppLoading })
 const DisclosuresScreen = dynamic(() => import('./disclosures-screen').then((m) => ({ default: m.DisclosuresScreen })), { ssr: false, loading: AppLoading })
 const OrderDetailScreen = dynamic(() => import('./order-detail-screen').then((m) => ({ default: m.OrderDetailScreen })), { ssr: false, loading: AppLoading })
-const KycStatusScreen = dynamic(() => import('./compliance-screens').then((m) => ({ default: m.KycStatusScreen })), { ssr: false, loading: AppLoading })
-const EligibilityScreen = dynamic(() => import('./compliance-screens').then((m) => ({ default: m.EligibilityScreen })), { ssr: false, loading: AppLoading })
-const RiskProfileScreen = dynamic(() => import('./compliance-screens').then((m) => ({ default: m.RiskProfileScreen })), { ssr: false, loading: AppLoading })
 const RecordsScreen = dynamic(() => import('./records-screen').then((m) => ({ default: m.RecordsScreen })), { ssr: false, loading: AppLoading })
 const SecondaryScreen = dynamic(() => import('./secondary-screen').then((m) => ({ default: m.SecondaryScreen })), { ssr: false, loading: AppLoading })
 const TradeScreen = dynamic(() => import('./trade-screen').then((m) => ({ default: m.TradeScreen })), { ssr: false, loading: AppLoading })
@@ -1011,24 +1007,6 @@ function OrderSuccessScreen({ asset, product, go, orderId }: { asset: OrderAsset
   )
 }
 
-function OrderStatusScreen({ kind, asset, product, amount, go }: { kind: 'processing' | 'partial' | 'failed' | 'receipt'; asset: OrderAsset; product: DemoProduct; amount: number; go: (screen: Screen) => void }) {
-  const { locale } = useI18n()
-  const copy = orderStatusCopy[locale]
-  const isPrediction = asset === 'prediction'
-  const fee = Math.max(1.5, amount * productFeeRate(product))
-  const filled = Number((amount * .6).toFixed(2))
-  const config = {
-    processing: { ...copy.processing, icon: Clock3, tone: 'mint' },
-    partial: { ...copy.partial, body: orderStatusText(copy.partial.body, { filled: formatMoney(filled, locale) }), icon: ChartPie, tone: 'amber' },
-    failed: { ...copy.failed, icon: AlertTriangle, tone: 'negative' },
-    receipt: { ...copy.receipt, icon: ReceiptText, tone: 'mint' },
-  }[kind]
-  const Icon = config.icon
-  const primary = kind === 'processing' ? { label: copy.continueFlow, next: 'order-success' as Screen } : kind === 'failed' ? { label: copy.returnReview, next: 'order-review' as Screen } : { label: copy.viewPortfolio, next: 'portfolio' as Screen }
-  const descriptor = isPrediction ? copy.predictionDescriptor : orderStatusText(copy.allocationDescriptor, { category: categoryLabel(product.category, locale) })
-  return <section className={`screen order-status-screen order-status-screen--${config.tone} has-fixed-cta`}><DetailHeader screen={kind === 'processing' ? 'order-processing' : kind === 'partial' ? 'order-partial' : kind === 'failed' ? 'order-failed' : 'order-receipt'} go={go} back={kind === 'receipt' ? 'order-success' : 'order-review'} title={kind === 'receipt' ? copy.orderReceipt : copy.orderStatus} kind="flow" /><FlowProgress current={kind === 'processing' ? 2 : kind === 'receipt' ? 3 : 2} total={3} label={copy.orderStatus} /><div className="order-status-hero"><span><Icon size={31} /></span><p>{config.eyebrow}</p><h1>{config.title}</h1><small>{config.body}</small></div><div className="order-status-product glass"><span>{asset === 'compute' ? <Cpu size={22} /> : asset === 'rwa' ? <Landmark size={22} /> : asset === 'stocks' ? <TrendingUp size={22} /> : <Sparkles size={22} />}</span><p><b>{product.title}</b><small>{descriptor}</small></p><strong>{formatMoney(amount, locale)}<small>USDT</small></strong></div>{kind === 'processing' && <div className="order-state-timeline glass"><span className="is-complete"><i><Check size={13} /></i><p><b>{copy.requestValidated}</b><small>{copy.requestValidatedBody}</small></p><em>{copy.done}</em></span><span className="is-active"><i><Clock3 size={13} /></i><p><b>{copy.eligibilityQuote}</b><small>{copy.eligibilityQuoteBody}</small></p><em>{copy.checking}</em></span><span><i><ShieldCheck size={13} /></i><p><b>{copy.externalExecution}</b><small>{copy.externalExecutionBody}</small></p><em>{copy.locked}</em></span></div>}{kind === 'partial' && <div className="partial-fill-card glass"><div><span style={{ width: '60%' }} /></div><p><span><small>{copy.filled}</small><b>{formatMoney(filled, locale)} USDT</b></span><span><small>{copy.released}</small><b>{formatMoney(amount - filled, locale)} USDT</b></span></p><small>{copy.noMovement}</small></div>}{kind === 'failed' && <div className="failure-reasons glass"><p><AlertTriangle size={18} /><span><b>{copy.possibleReason}</b><small>{copy.reasonBody}</small></span></p><p><ShieldCheck size={18} /><span><b>{copy.fundsProtected}</b><small>{copy.fundsProtectedBody}</small></span></p></div>}{kind === 'receipt' && <><div className="receipt-breakdown glass"><span><small>{copy.demoReference}</small><b>{copy.notCreated}</b></span><span><small>{copy.requestedAllocation}</small><b>{formatMoney(amount, locale)} USDT</b></span><span><small>{copy.displayedFee}</small><b>{formatMoney(fee, locale)} USDT</b></span><span><small>{copy.venueId}</small><b>{copy.notCreated}</b></span><span><small>{copy.ledgerEntry}</small><b>{copy.notCreated}</b></span><span><small>{copy.executionStatus}</small><b>{copy.demoOnly}</b></span></div><div className="receipt-actions"><button type="button" onClick={() => go('order-partial')}>{copy.previewPartial}</button><button type="button" onClick={() => go('support')}>{copy.openSupport}</button></div></>}<button className="flow-cta" type="button" onClick={() => go(primary.next)}>{primary.label}<ArrowRight size={20} /></button>{kind === 'processing' && <button className="quiet-action" type="button" onClick={() => go('order-failed')}>{copy.previewFailed}</button>}</section>
-}
-
 type DepositAddressView = {
   address: string
   memo?: string | null
@@ -1053,17 +1031,6 @@ const walletNetworkKey: Record<string, 'tron' | 'ethereum' | 'arbitrum'> = {
 function parseAtomicInteger(value: string | null | undefined): bigint | null {
   if (typeof value !== 'string' || !/^\d+$/.test(value)) return null
   return BigInt(value)
-}
-
-function WalletSuccessScreen({ mode, go }: { mode: 'deposit' | 'withdraw' | 'transfer'; go: (screen: Screen) => void }) {
-  const { locale } = useI18n()
-  const text = operationsCopy[locale]
-  const copy = mode === 'deposit'
-    ? { eyebrow: text.depositEyebrow, title: text.depositSuccessTitle, body: text.depositSuccessBody, state: text.depositState }
-    : mode === 'withdraw'
-      ? { eyebrow: text.withdrawEyebrow, title: text.withdrawSuccessTitle, body: text.withdrawSuccessBody, state: text.withdrawState }
-      : { eyebrow: text.transferEyebrow, title: text.transferSuccessTitle, body: text.transferSuccessBody, state: text.transferState }
-  return <section className="screen success-screen has-fixed-cta"><DetailHeader screen="wallet-success" go={go} back="wallet" title={copy.eyebrow} kind="flow" /><FlowProgress current={3} total={3} label={copy.eyebrow} /><div className="success-orb"><CircleCheck size={38} /></div><p>{copy.eyebrow}</p><h1>{copy.title}</h1><span>{copy.body}</span><div className="success-receipt glass"><span><small>{text.requestReference}</small><b>WLT-240713-1298</b></span><span><small>{text.networkRail}</small><b>{mode === 'deposit' ? 'USDT · TRON' : 'Platform USDT'}</b></span><span><small>{text.currentState}</small><b>{copy.state}</b></span></div><button className="flow-cta" type="button" onClick={() => go('wallet')}>{text.backWallet} <ArrowRight size={20} /></button><button className="quiet-action" type="button" onClick={() => go('activity')}>{text.viewActivity}</button></section>
 }
 
 function ActivityScreen({ go }: { go: (screen: Screen) => void }) {
@@ -1464,9 +1431,6 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const [isOnline, setIsOnline] = useState(true)
   const [sessionMode, setSessionMode] = useState<'guest' | 'authenticated'>('guest')
   const [sessionReady, setSessionReady] = useState(false)
-  const [orderAsset, setOrderAsset] = useState<OrderAsset>('compute')
-  const [orderAmount, setOrderAmount] = useState(1000)
-  const [walletFlowMode, setWalletFlowMode] = useState<'deposit' | 'withdraw' | 'transfer'>('deposit')
   const [products, setProducts] = useState<DemoProduct[]>([])
   const [selectedProduct, setSelectedProduct] = useState<DemoProduct>(() => {
     if (initialScreen === 'rwa-detail' && initialParams.slug) {
@@ -1488,8 +1452,6 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const pendingFlipRef = useRef<{ state: RwaFlipState; productId: string } | null>(null)
   useEffect(() => {
     setSessionMode(isAuthenticated() ? 'authenticated' : 'guest')
-    const storedFlow = window.sessionStorage.getItem('rwa-wallet-flow-mode')
-    if (storedFlow === 'withdraw' || storedFlow === 'transfer' || storedFlow === 'deposit') setWalletFlowMode(storedFlow)
     try {
       const stored = window.sessionStorage.getItem('rwa-selected-product')
       if (stored && !initialParams.slug && !(initialScreen === 'prediction-detail' && initialParams.id)) setSelectedProduct(JSON.parse(stored) as DemoProduct)
@@ -1733,8 +1695,6 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
   const notify = (message: string, tone?: ToastTone) => showToast(message, tone)
   const openOrder = (asset: OrderAsset) => {
     if (isOrderableId(selectedProduct.id)) { window.dispatchEvent(new CustomEvent<PathNavigation>(PATH_EVENT, { detail: { path: `/orders/review?product=${encodeURIComponent(selectedProduct.id)}` } })); return }
-    setOrderAsset(asset)
-    setOrderAmount(asset === 'prediction' ? 250 : asset === 'stocks' ? 500 : asset === 'rwa' ? 500 : 1000)
     go('order-review')
   }
   const openProduct = (product: DemoProduct) => {
@@ -1801,7 +1761,6 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
     go(destination)
   }
   const openWalletFlow = (mode: 'deposit' | 'withdraw' | 'transfer') => {
-    setWalletFlowMode(mode)
     window.sessionStorage.setItem('rwa-wallet-flow-mode', mode)
     go(mode)
   }
@@ -1864,14 +1823,14 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'order-review' && <MaisonOrderReviewScreen query={queryParam(routeQuery, 'product') || !isOrderableId(selectedProduct.id) ? routeQuery : `product=${selectedProduct.id}`} />}
         {screen === 'order-processing' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
         {screen === 'order-success' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
-        {screen === 'order-partial' && <OrderStatusScreen kind="partial" product={localizedSelectedProduct} asset={orderAsset} amount={orderAmount} go={go} />}
-        {screen === 'order-failed' && <OrderStatusScreen kind="failed" product={localizedSelectedProduct} asset={orderAsset} amount={orderAmount} go={go} />}
-        {screen === 'order-receipt' && <OrderStatusScreen kind="receipt" product={localizedSelectedProduct} asset={orderAsset} amount={orderAmount} go={go} />}
+        {screen === 'order-partial' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
+        {screen === 'order-failed' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
+        {screen === 'order-receipt' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
         {screen === 'deposit' && <MaisonDepositScreen query={routeQuery} />}
         {screen === 'withdraw' && <MaisonWithdrawScreen query={routeQuery} />}
         {screen === 'transfer' && <MaisonTransferScreen query={routeQuery} />}
         {screen === 'receive' && <MaisonReceiveScreen />}
-        {screen === 'wallet-success' && <WalletSuccessScreen mode={walletFlowMode} go={go} />}
+        {screen === 'wallet-success' && <MaisonActivityScreen query={routeQuery} />}
         {screen === 'activity' && <MaisonActivityScreen query={routeQuery} />}
         {screen === 'asset-detail' && <AssetAccountScreen go={go} notify={notify} />}
         {screen === 'position-detail' && (routeParams.id ? <MaisonPositionDetailScreen key={routeParams.id} id={routeParams.id} /> : <PositionDetailScreen go={go} openOrder={openOrder} />)}
