@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowRight, Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
+import type { ToastTone } from '@/lib/toast-tone'
+import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
 import Image from 'next/image'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import {
@@ -51,7 +52,7 @@ function acceptedConsents(requirements: AuthConsentRequirements | null): AuthCon
 export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   mode: 'login' | 'register'
   go: (screen: RwaScreen) => void
-  notify: (message: string) => void
+  notify: (message: string, tone?: ToastTone) => void
   onAuthenticated: () => void
 }) {
   const { locale, t } = useI18n()
@@ -100,6 +101,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const [walletChallenge, setWalletChallenge] = useState<WalletLoginChallenge | null>(null)
   const [codeChallenge, setCodeChallenge] = useState<EmailCodeChallenge | null>(null)
   const [code, setCode] = useState('')
+  // The code is checked the moment the sixth digit lands: 'verified' shows the tick before the page changes, `shake` replays the wrong-code cue.
+  const [codeState, setCodeState] = useState<'idle' | 'verified'>('idle')
+  const [shake, setShake] = useState(0)
   const [previousMode, setPreviousMode] = useState(mode)
   const input = useRef<HTMLInputElement>(null)
   const passwordInput = useRef<HTMLInputElement>(null)
@@ -294,17 +298,28 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       if (retryAfter <= 0) await run(() => sendCode(account))
       return
     }
-    if (!codeChallenge) return
-    if (!/^\d{6}$/.test(code)) { setError(emailCopy.invalidCode); codeInput.current?.focus(); return }
+    await verifyCode(code)
+  }
+
+  // Runs on the sixth digit (typed, pasted or autofilled) and on Enter; there is no separate "continue" button for the code.
+  const verifyCode = async (value: string) => {
+    if (!account || !codeChallenge || pending || busy.current) return
+    if (!/^\d{6}$/.test(value)) { setError(emailCopy.invalidCode); codeInput.current?.focus(); return }
+    let accepted = false
     await run(async () => {
       // A new account continues to the set-password step; the mark survives that hop.
       markNewAccount(sessionStorage, account.isNew)
-      const result = await confirmEmailCode(account.email, account.isNew ? 'register' : 'login', codeChallenge.challengeId, code)
+      const result = await confirmEmailCode(account.email, account.isNew ? 'register' : 'login', codeChallenge.challengeId, value)
       if (!result.ok) { showAuthError(result.error); return }
-      setCode('')
-      notify(copy.loginSuccess)
+      accepted = true
+      setCode(''); setCodeState('verified')
+      await new Promise(resolve => setTimeout(resolve, 450))
       finish(account.isNew)
     })
+    if (accepted) return
+    // Wrong or expired code: clear the boxes, replay the cue and put the cursor back, ready for the next try.
+    setCode(''); setCodeState('idle'); setShake(count => count + 1)
+    window.setTimeout(() => codeInput.current?.focus({ preventScroll: true }), 0)
   }
 
   const sendAgain = () => { if (account && retryAfter <= 0) void run(() => sendCode(account)) }
@@ -352,7 +367,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       const result = await completeWalletLogin(started.data, walletChallenge ? consents : [], setWalletPhase)
       // Email binding happens in the signed-in account; preserve any required security steps.
       if (!result.ok) { if (continueAuth(result.error)) return; showAuthError(result.error); return }
-      notify(copy.loginSuccess)
+      notify(copy.loginSuccess, 'ok')
       finish(Boolean(walletChallenge))
       } finally { setWalletPhase(null) }
     })
@@ -396,8 +411,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <span>{visual.consentStart} <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span>
   </label>
   const errors = <>
-    {error && <p role="alert" className={styles.error}>{error}</p>}
-    {requirementsError && <p role="alert" className={styles.error}>{requirementsError} <button type="button" onClick={() => setRequirementsAttempt(value => value + 1)}>{t('common.refresh')}</button></p>}
+    {error && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></div>}
+    {requirementsError && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{requirementsError} <button type="button" onClick={() => setRequirementsAttempt(value => value + 1)}>{t('common.refresh')}</button></span></div>}
   </>
   const cooldownLabel = interpolateRouteCopy(copy.retryAfter, { seconds: retryAfter })
 
@@ -461,16 +476,19 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
       {step === 'new' && agreement}
 
-      {step === 'code' && <label className={`${styles.field} ${styles.codeBox}`}>
+      {step === 'code' && <label key={shake} className={`${styles.field} ${styles.codeBox}`} data-state={codeState === 'verified' ? 'ok' : error ? 'error' : undefined}>
         <span className={styles.srOnly}>{emailCopy.codeLabel}</span>
-        <input ref={codeInput} type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} enterKeyHint="done" placeholder="000000" value={code} onChange={event => { setCode(normalizeEmailCode(event.target.value)); setError('') }} aria-invalid={Boolean(error)} disabled={pending} dir="ltr" />
+        <input ref={codeInput} type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} enterKeyHint="done" placeholder="000000" value={code} onChange={event => { const next = normalizeEmailCode(event.target.value); setCode(next); setError(''); if (next.length === 6) void verifyCode(next) }} aria-invalid={Boolean(error)} disabled={pending || codeState === 'verified'} dir="ltr" />
       </label>}
+      {step === 'code' && (pending || codeState === 'verified') && <div className={styles.codeStatus} role="status" aria-live="polite" data-tone={codeState === 'verified' ? 'ok' : undefined}>
+        {codeState === 'verified' ? <><Check size={16} strokeWidth={2.2} aria-hidden="true" />{copy.loginSuccess}</> : <><LoaderCircle className={styles.spinner} size={15} aria-hidden="true" />{emailCopy.verifying}</>}
+      </div>}
 
       {errors}
-      {step !== 'email' && <button className={styles.primary} type="submit" disabled={primaryDisabled}>
+      {step !== 'email' && step !== 'code' && <button className={styles.primary} type="submit" disabled={primaryDisabled}>
         {pending ? <><LoaderCircle className={styles.spinner} size={20} aria-hidden="true" /><span className={styles.srOnly}>{pendingLabel}</span></>
           : step === 'passkey' ? <><span>{primaryLabel}</span><span className={styles.ctaIcon} aria-hidden="true"><Fingerprint size={18} strokeWidth={1.8} /></span></>
-          : cta(step !== 'code' && retryAfter > 0 ? cooldownLabel : primaryLabel)}
+          : cta(retryAfter > 0 ? cooldownLabel : primaryLabel)}
       </button>}
 
       {step === 'passkey' && <>
