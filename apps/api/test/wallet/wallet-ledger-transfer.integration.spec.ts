@@ -109,7 +109,7 @@ describeDatabase('internal wallet transfers (PostgreSQL)', () => {
       requestId: `request:${randomUUID()}`,
     }
 
-    await expect(bridge.postInternalTransfer(input)).rejects.toMatchObject({ code: '23514' })
+    await expect(bridge.postInternalTransfer(input)).rejects.toMatchObject({ response: expect.objectContaining({ code: 'WALLET_INSUFFICIENT_BALANCE' }), status: 409 })
     await expect(transferRows(input)).resolves.toEqual({ transfer_count: 0, transaction_count: 0, audit_count: 0 })
     await expect(balances([senderUserId, recipientUserId])).resolves.toEqual({ [senderUserId]: '1000000', [recipientUserId]: '300000001' })
   })
@@ -151,5 +151,21 @@ describeDatabase('internal wallet transfers (PostgreSQL)', () => {
       bridge.postInternalTransfer({ ...input, recipientUserId: randomUUID() }),
     ).rejects.toMatchObject({ response: expect.objectContaining({ code: 'WALLET_IDEMPOTENCY_CONFLICT' }) })
     await expect(transferRows(input)).resolves.toEqual({ transfer_count: 1, transaction_count: 1, audit_count: 1 })
+  })
+
+  it('settles simultaneous opposite transfers without deadlocking', async () => {
+    const a = await createUser()
+    const b = await createUser()
+    await realDeposit(dataSource, a)
+    await realDeposit(dataSource, b)
+    const intent = (senderUserId: string, recipientUserId: string) => ({
+      id: randomUUID(), senderUserId, recipientUserId, atomicAmount: '1000000',
+      idempotencyKey: `transfer:${randomUUID()}`, requestId: `request:${randomUUID()}`,
+    })
+    const attempts = Array.from({ length: 10 }, () => [bridge.postInternalTransfer(intent(a, b)), bridge.postInternalTransfer(intent(b, a))]).flat()
+    // Both sides hold a real deposit, so every transfer must post; a deadlock or raw driver error fails the test.
+    const results = await Promise.allSettled(attempts)
+    expect(results.filter((result) => result.status === 'rejected')).toEqual([])
+    await expect(balances([a, b])).resolves.toEqual({ [a]: '300000001', [b]: '300000001' })
   })
 })

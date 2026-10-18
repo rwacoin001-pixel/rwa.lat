@@ -546,6 +546,10 @@ export class WalletService {
 
   async createTransfer(actor: SecurityActor, dto: CreateTransferDto, idempotencyKey: string, requestId: string) {
     this.assertIdempotencyKey(idempotencyKey)
+    await this.operations.assertEnabled(
+      OPERATIONAL_SWITCH_KEYS.transfers,
+      'New internal transfers are currently paused by the operator.',
+    )
     this.assertExecutionEnabled()
     if (!this.canDemoExecute()) this.security.assertRecentStepUp(actor, dto.reauthentication ?? '')
     this.assertAtomicAmount(dto.atomicAmount)
