@@ -9,7 +9,7 @@ import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home
 import { homeStateCopy } from '@/components/home/home-state-copy'
 import { MaskLines } from '@/components/home/maison-motion'
 import { copyByLocale, ctaText, utilityCopy } from '@/components/screens/P04-Home'
-import { BottomDock } from '@/components/rwa-h5'
+import { BottomDock } from '@/components/h5/BottomDock'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { useRwaTheme } from '@/lib/rwa-theme'
