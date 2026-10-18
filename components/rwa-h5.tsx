@@ -6,7 +6,7 @@ import { markTabNavigation, nextNavigationState, useNavigationViewport } from '@
 
 import dynamic from 'next/dynamic'
 
-import type { BasketKind } from './basket-screens'
+type BasketKind = 'detail' | 'subscribe' | 'redeem' | 'disclosures'
 const PublishedOfficialChannels = dynamic(() => import('./published-platform').then((m) => ({ default: m.PublishedOfficialChannels })), { ssr: false })
 const PublishedPlatform = dynamic(() => import('./published-platform').then((m) => ({ default: m.PublishedPlatform })), { ssr: false })
 const PublishedReserves = dynamic(() => import('./published-platform').then((m) => ({ default: m.PublishedReserves })), { ssr: false })
@@ -91,10 +91,9 @@ import { categoryLabel, localizeProduct } from '@/lib/catalog-localization'
 const PolymarketDetailPanel = dynamic(() => import('./polymarket-detail-panel'), { ssr: false })
 const AddressBookScreen = dynamic(() => import('./address-book-screen').then((m) => ({ default: m.AddressBookScreen })), { ssr: false, loading: AppLoading })
 const StatusScreen = dynamic(() => import('./status-screen').then((m) => ({ default: m.StatusScreen })), { ssr: false, loading: AppLoading })
-const DisclosuresScreen = dynamic(() => import('./disclosures-screen').then((m) => ({ default: m.DisclosuresScreen })), { ssr: false, loading: AppLoading })
 const OrderDetailScreen = dynamic(() => import('./order-detail-screen').then((m) => ({ default: m.OrderDetailScreen })), { ssr: false, loading: AppLoading })
 const RecordsScreen = dynamic(() => import('./records-screen').then((m) => ({ default: m.RecordsScreen })), { ssr: false, loading: AppLoading })
-const SecondaryScreen = dynamic(() => import('./secondary-screen').then((m) => ({ default: m.SecondaryScreen })), { ssr: false, loading: AppLoading })
+const SecondaryTransferScreen = dynamic(() => import('./maison/SecondaryTransferScreen').then((m) => ({ default: m.SecondaryTransferScreen })), { ssr: false, loading: AppLoading })
 const TradeScreen = dynamic(() => import('./trade-screen').then((m) => ({ default: m.TradeScreen })), { ssr: false, loading: AppLoading })
 const CommunityFeedScreen = dynamic(() => import('./community-screens').then((m) => ({ default: m.CommunityFeedScreen })), { ssr: false, loading: AppLoading })
 const CommunityPostScreen = dynamic(() => import('./community-screens').then((m) => ({ default: m.CommunityPostScreen })), { ssr: false, loading: AppLoading })
@@ -180,7 +179,7 @@ import { AuthFlowScreen } from './screens/P03-AuthFlow'
 import { HomeScreen } from './screens/P04-HomeMaison'
 import { NotificationsScreen } from './screens/P28-Notifications'
 import { ScreenRouter } from './ScreenRouter'
-const BasketScreen = dynamic(() => import('./basket-screens').then((m) => ({ default: m.BasketScreen })), { ssr: false })
+const MaisonBasketDisclosuresScreen = dynamic(() => import('./maison/BasketInfoScreens').then((m) => ({ default: m.BasketDisclosuresScreen })), { ssr: false, loading: AppLoading })
 import { Button } from './ui/button'
 import { EmptyState } from './ui/Empty'
 import { Skeleton } from './ui/skeleton'
@@ -1795,8 +1794,8 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'basket-detail' && <MaisonBasketDetailScreen key={routeParams.id ?? selectedBasketId ?? ''} id={routeParams.id ?? selectedBasketId} />}
         {screen === 'basket-subscribe' && <MaisonBasketOrderScreen key={`s:${routeParams.id ?? selectedBasketId ?? ''}`} side="subscribe" id={routeParams.id ?? selectedBasketId} />}
         {screen === 'basket-redeem' && <MaisonBasketOrderScreen key={`r:${routeParams.id ?? selectedBasketId ?? ''}`} side="redeem" id={routeParams.id ?? selectedBasketId} />}
-        {screen === 'basket-disclosures' && <BasketScreen kind="disclosures" basketId={selectedBasketId} go={go} openBasket={openBasket} />}
-        {screen === 'basket-recommend' && <BasketScreen kind="recommend" basketId={selectedBasketId} go={go} openBasket={openBasket} />}
+        {screen === 'basket-disclosures' && <MaisonBasketDisclosuresScreen />}
+        {screen === 'basket-recommend' && <AiPlanningScreen key="goals" id={undefined} />}
         {screen === 'portfolio' && <MaisonPortfolioScreen key={routeQuery} query={routeQuery} />}
         {screen === 'wallet' && <MaisonCashScreen />}
         {screen === 'community' && <CommunityFeedScreen go={go} openPost={openCommunityPost} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
@@ -1847,9 +1846,9 @@ function RwaH5Content({ initialScreen = 'home', initialParams = {}, initialQuery
         {screen === 'fees' && <MaisonFeesScreen />}
         {screen === 'address-book' && <MaisonAddressBookScreen />}
         {screen === 'status' && <MaisonBridge page="status"><StatusScreen go={go} /></MaisonBridge>}
-        {screen === 'disclosures' && <DisclosuresScreen productId={selectedProduct?.id ?? null} go={go} />}
+        {screen === 'disclosures' && <MaisonBridge page="trust"><TrustCenterScreen kind="product-disclosures" go={go} notify={notify} /></MaisonBridge>}
         {screen === 'order-detail' && <MaisonOrderStatusScreen variant="detail" orderId={routeParams.id ?? queryParam(routeQuery, 'id') ?? orderDetailId} />}
-        {screen === 'secondary' && <SecondaryScreen go={go} />}
+        {screen === 'secondary' && <SecondaryTransferScreen />}
         {screen === 'trade' && (routePath === '/markets' ? <MaisonMarketsScreen query={routeQuery} /> : <MaisonTradeScreen symbol={routeParams.symbol ?? routeSymbol ?? null} />)}
         {screen === 'settings' && <MaisonSettingsScreen />}
         {screen === 'marketing' && <MaisonBridge page="marketing"><MarketingPreferencesScreen go={go} /></MaisonBridge>}

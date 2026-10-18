@@ -909,6 +909,10 @@ span.compareName { padding-top: 28px; cursor: default; }
 .field { display: grid; gap: 5px; margin-top: 10px; }
 .field > span { color: var(--m-muted); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .field input { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-glass); color: var(--m-ink); font: inherit; font-family: var(--m-mono); font-size: 15px; font-variant-numeric: tabular-nums; direction: ltr; box-sizing: border-box; transition: border-color .2s var(--m-ease), box-shadow .2s var(--m-ease); }
+.field textarea { width: 100%; padding: 10px 12px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-glass); color: var(--m-ink); font: inherit; resize: vertical; }
+.field textarea:focus-visible { outline: 0; border-color: var(--m-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-accent) 16%, transparent); }
+.field select { width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--m-line); border-radius: 10px; background: var(--m-glass); color: var(--m-ink); font: inherit; }
+.field select:focus-visible { outline: 0; border-color: var(--m-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-accent) 16%, transparent); }
 .field input:focus-visible { outline: 0; border-color: var(--m-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-accent) 16%, transparent); }
 .field input[aria-invalid='true'] { border-color: var(--m-down); }
 /* Stepper wrapper: − input + for tick-sized nudges. */
