@@ -672,6 +672,63 @@ export class LedgerService {
   }
 
   /**
+   * Koala Quant 过账：一笔平衡的多腿分录，涉及用户可用账户与该产品的本金池 / 费用收入 / 兑付准备金（平台账户）。
+   * delta 为正 = 贷记（余额增加），为负 = 借记；各腿之和必须为 0。幂等键 = idempotencyKey。
+   * 兑付准备金账户允许为负（负数 = 平台已为用户收益垫付的金额），用户账户不允许（账本触发器拒绝）。
+   */
+  async postQuantLegs(input: {
+    productId: string
+    idempotencyKey: string
+    transactionType: 'quant_subscription' | 'quant_redemption' | 'quant_daily_settlement'
+    referenceType: string
+    referenceId: string
+    requestId: string
+    legs: Array<{ account: { kind: 'user'; userId: string } | { kind: 'pool' | 'fee' | 'treasury' }; delta: bigint }>
+  }): Promise<{ ledgerTransactionId: string | null; duplicate: boolean }> {
+    const legs = input.legs.filter((leg) => leg.delta !== 0n)
+    if (legs.reduce((sum, leg) => sum + leg.delta, 0n) !== 0n) {
+      throw new BadRequestException({ code: LEDGER_ERROR_CODES.RECONCILIATION_INPUT_INVALID, message: 'Quant ledger legs must sum to zero.' })
+    }
+    if (!legs.length) return { ledgerTransactionId: null, duplicate: false }
+    return this.transaction(async (runner) => {
+      const transactionId = await this.ledgerTransaction(runner, input.transactionType, input.idempotencyKey, input.requestId, input.referenceType, input.referenceId, 'service', null)
+      if (!transactionId) {
+        const [existing] = await runner.query(`SELECT id FROM app.ledger_transactions WHERE idempotency_key = $1`, [input.idempotencyKey])
+        return { ledgerTransactionId: (existing?.id as string | undefined) ?? null, duplicate: true }
+      }
+      for (const leg of legs) {
+        const accountId = leg.account.kind === 'user'
+          ? await this.userAccount(runner, leg.account.userId, 'available')
+          : await this.quantPlatformAccount(runner, input.productId, leg.account.kind)
+        const amount = leg.delta > 0n ? leg.delta : -leg.delta
+        await runner.query(
+          `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount) VALUES ($1, $2, $3, $4)`,
+          [transactionId, accountId, leg.delta > 0n ? 'credit' : 'debit', amount.toString()],
+        )
+      }
+      return { ledgerTransactionId: transactionId, duplicate: false }
+    })
+  }
+
+  private async quantPlatformAccount(runner: QueryRunner, productId: string, kind: 'pool' | 'fee' | 'treasury'): Promise<string> {
+    const [reference, purpose, allowNegative] =
+      kind === 'pool' ? [`quant:${productId}`, 'basket_settlement', false]
+      : kind === 'fee' ? [`quant:${productId}:fee`, 'fee_revenue', false]
+      : [`quant:${productId}:treasury`, 'reward_payable', true]
+    await runner.query(
+      `INSERT INTO app.ledger_accounts (owner_type, owner_reference, purpose, asset_code, asset_decimals, network, normal_side, allow_negative)
+       VALUES ('platform', $1, $2, 'USDT', 6, NULL, 'credit', $3) ON CONFLICT DO NOTHING`,
+      [reference, purpose, allowNegative],
+    )
+    const [account] = await runner.query(
+      `SELECT id FROM app.ledger_accounts WHERE owner_type = 'platform' AND owner_reference = $1 AND purpose = $2 AND asset_code = 'USDT' AND network IS NULL`,
+      [reference, purpose],
+    )
+    if (!account) throw new NotFoundException({ code: LEDGER_ERROR_CODES.ACCOUNT_NOT_FOUND, message: 'Quant ledger account could not be resolved.' })
+    return account.id as string
+  }
+
+  /**
    * Basket 内部投资腿（Phase 13-14）：组合现金 ↔ 组合投资（invested_cost 账户）。
    * 买入成交 = invest（现金减、投资增）；卖出成交 = divest（投资减、现金增）。
    * 幂等键 basket_rebalance:<orderId>（每张调仓订单一条现金流）。
