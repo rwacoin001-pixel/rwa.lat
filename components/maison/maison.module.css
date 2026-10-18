@@ -789,6 +789,8 @@
 .notice svg { flex: none; margin-top: 1px; color: var(--m-accent); }
 .notice[data-tone='error'] { border-color: var(--notice-error-line, color-mix(in srgb, var(--m-down) 40%, transparent)); background: var(--notice-error-bg, transparent); color: var(--m-ink); }
 .notice[data-tone='error'] svg { color: var(--m-down); }
+.notice[data-tone='ok'] { border-color: var(--notice-ok-line); background: var(--notice-ok-bg); color: var(--m-ink); }
+.notice[data-tone='ok'] svg { color: var(--m-up); }
 .foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; color: var(--m-faint); font-size: 10.5px; line-height: 1.5; }
 
 /* ── Order form ───────────────────────────────────────── */

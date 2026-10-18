@@ -1,0 +1,6 @@
+.notice { --n-fg: var(--ds-ink-2); --n-bg: color-mix(in srgb, var(--ds-info) 10%, transparent); --n-line: color-mix(in srgb, var(--ds-info) 30%, transparent); display: flex; align-items: flex-start; gap: 8px; padding: 9px 12px; border: 1px solid var(--n-line); border-radius: 12px; color: var(--n-fg); background: var(--n-bg); font-size: 12px; line-height: 1.45; }
+.notice svg { flex: none; margin-top: 1px; }
+.notice span { min-width: 0; overflow-wrap: anywhere; }
+.notice[data-tone='error'] { --n-fg: var(--notice-error-fg); --n-bg: var(--notice-error-bg); --n-line: var(--notice-error-line); }
+.notice[data-tone='ok'] { --n-fg: var(--notice-ok-fg); --n-bg: var(--notice-ok-bg); --n-line: var(--notice-ok-line); }
+.notice[data-quiet] { --n-fg: var(--ds-muted); --n-bg: transparent; --n-line: var(--ds-line); }
