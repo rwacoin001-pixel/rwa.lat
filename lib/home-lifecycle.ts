@@ -17,6 +17,8 @@
  *      needs_information/approved/rejected/expired）
  */
 
+import { KYC_REQUIRED } from './kyc-policy'
+
 // ─── 类型 ───
 
 export type Lifecycle =
@@ -106,7 +108,8 @@ export function resolveHomeState(inputs: HomeInputs): HomeState {
   }
 
   const kycOk = inputs.kyc !== null
-  const kycApproved = kycOk && inputs.kyc!.state === 'approved'
+  // Without a KYC requirement an account counts as set up for the lifecycle, whatever its verification state.
+  const kycApproved = !KYC_REQUIRED || (kycOk && inputs.kyc!.state === 'approved')
 
   // ③ 资产优先守卫：持仓接口或钱包 invested 余额证明已有资产时，始终进入 invested。
   //    仅当 KYC 明确非 approved 时给 invested_restricted 变体（未知时不上横幅·仅 degraded）
@@ -118,7 +121,7 @@ export function resolveHomeState(inputs: HomeInputs): HomeState {
       variant: kycOk && !kycApproved ? 'invested_restricted' : null,
       mode,
       flags,
-      degraded: !kycOk || inputs.positionsCount === null || inputs.wallet === null
+      degraded: (KYC_REQUIRED && !kycOk) || inputs.positionsCount === null || inputs.wallet === null
         || (inputs.positionsCount === 0 && (inputs.wallet?.invested ?? 0) > 0),
     }
   }
