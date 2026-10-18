@@ -49,7 +49,7 @@ function topbarRuntime(signedIn = true) {
     '@/lib/i18n': { useI18n: () => ({ locale: 'en' }) }, '@/hooks/useAccount': { useSignedIn: () => signedIn },
     '@/hooks/useScrollChrome': { expandChrome() {}, useScrollChrome: () => false }, '@/hooks/useLargeTitle': { useLargeTitle: () => false },
     '@/hooks/useUnread': { useUnread: () => ({ unread: 0 }) }, '@/hooks/useEdgeSwipeBack': { useEdgeSwipeBack() {} },
-    './ui/Segmented': {}, './rwa-logo': { default: 'logo' }, '@/lib/use-community-me': {}, './community-avatar': {},
+    '@/lib/toast-store': { showToast() {} }, './ui/Segmented': {}, './rwa-logo': { default: 'logo' }, '@/lib/use-community-me': {}, './community-avatar': {},
     './language-menu': { default: 'language' }, './topbar-actions.module.css': { default: {} },
   }, { window: { scrollY: 0 }, history: { state: {} } }).default
   return { Topbar, navigated }
