@@ -130,4 +130,18 @@ describeDatabase('koala quant full flow', () => {
     expect(admin.ledger.poolMatchesLots).toBe(true)
     expect(admin.last_settled_date).toBe('2026-01-02')
   })
+  it('queues a redemption once and leaves it pending while the principal has not started earning', async () => {
+    await quant.subscribe(userId, SLUG, '100', 'sub-key-0002', 'req-1')
+    const queued = await quant.redeem(userId, SLUG, { all: true }, 'red-key-0002', 'req-2')
+    expect((queued.order as { status: string }).status).toBe('pending')
+    await expect(quant.redeem(userId, SLUG, { all: true }, 'red-key-0003', 'req-3')).rejects.toBeInstanceOf(ConflictException)
+    await expect(quant.subscribe(userId, SLUG, '0.5', 'sub-key-0003', 'req-4')).rejects.toThrow()
+
+    // an empty day (the lot starts in the future) still settles, and the redemption is not touched
+    const day = await settlements.enter(SLUG, { tradeDate: '2026-01-01', grossReturnPct: '0.4' }, adminA)
+    await settlements.approve(day.id, adminB, false, 'req-5')
+    const [order] = (await ds.query(`SELECT status FROM app.quant_orders WHERE user_id = $1 AND kind = 'redemption'`, [userId])) as Array<{ status: string }>
+    expect(order.status).toBe('pending')
+    expect(await platform('', 'basket_settlement')).toBe(100_000_000n)
+  })
 })

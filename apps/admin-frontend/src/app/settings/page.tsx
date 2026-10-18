@@ -28,6 +28,7 @@ const ENVIRONMENT_LABELS: Record<string, string> = {development: '本地开发',
 
 const PERMISSION_LABELS: Record<string, string> = {
   'basket.operations.manage': 'Basket 组合运营',
+  'quant.operations.manage': '考拉量化运营(配置/每日结算)',
   'users.read': '用户查看',
   'redemptions.read': '赎回查看',
   'audit.read': '审计日志读取',
