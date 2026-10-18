@@ -3,7 +3,7 @@ import { consumeAuthDestination, markNewAccount } from '@/lib/api/auth-navigatio
 import { continueAuth } from '@/lib/api/auth-flow'
 import { useUiLoading } from '@/lib/use-ui-loading'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
-import { ArrowLeft, LoaderCircle } from 'lucide-react'
+import { AlertCircle, ArrowLeft, Check, LoaderCircle } from 'lucide-react'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { confirmRecovery, registerEmail, requestRecovery, verifyEmail, type AuthConsent } from '@/lib/api/auth'
 import { useI18n, type AppLocale } from '@/lib/i18n'
@@ -121,13 +121,13 @@ export function AuthFlowScreen({ step, go, notify, onAuthenticated }: { step: 'v
         <h1 id="auth-flow-title" className={styles.cardTitle}>{title}</h1>
         <p className={styles.cardLede}>{step === 'recover' ? copy.recoverBody : copy.verifyBody}</p>
       </header>
-      {state === 'done' ? <p className={styles.success} role="status">{copy.done}</p> : <form onSubmit={send} noValidate aria-busy={busy}>
+      {state === 'done' ? <div className={flow.success} role="status"><Check size={16} aria-hidden="true" /><span>{copy.done}</span></div> : <form onSubmit={send} noValidate aria-busy={busy}>
         <label className={styles.field}>
           <span className={styles.fieldLabel}>{visual.emailAddress}</span>
           <input name="email" value={email} onChange={event => setEmail(event.target.value)} type="email" inputMode="email" autoComplete="email" spellCheck={false} maxLength={254} dir="ltr" aria-invalid={state === 'error' || undefined} placeholder="name@example.com" disabled={busy} />
         </label>
-        {state === 'sent' && <p className={flow.success} role="status">{step === 'recover' ? recoverySent[locale] : authCopy.emailSent}</p>}
-        {state === 'error' && <p role="alert" className={styles.error}>{message}</p>}
+        {state === 'sent' && <div className={flow.success} role="status"><Check size={16} aria-hidden="true" /><span>{step === 'recover' ? recoverySent[locale] : authCopy.emailSent}</span></div>}
+        {state === 'error' && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{message}</span></div>}
         <button className={styles.primary} type="submit" disabled={busy || retryAfter > 0}>{busy ? <><LoaderCircle className={styles.spinner} size={18} aria-hidden="true" /><span className={styles.srOnly}>{copy.processing}</span></> : <span>{retryAfter > 0 ? interpolateRouteCopy(authCopy.retryAfter, { seconds: retryAfter }) : state === 'sent' ? copy.resend : copy.send}</span>}</button>
       </form>}
       <footer className={flow.footer}><button type="button" onClick={() => go('login')}><ArrowLeft size={15} aria-hidden="true" />{visual.signIn}</button></footer>

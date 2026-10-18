@@ -797,7 +797,7 @@
 @keyframes mShimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
 .notice { display: flex; gap: 10px; align-items: flex-start; margin-top: 12px; padding: 11px 13px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-glass-deep); color: var(--m-muted); font-size: 12px; line-height: 1.5; }
 .notice svg { flex: none; margin-top: 1px; color: var(--m-accent); }
-.notice[data-tone='error'] { border-color: color-mix(in srgb, var(--m-down) 40%, transparent); color: var(--m-ink); }
+.notice[data-tone='error'] { border-color: var(--notice-error-line, color-mix(in srgb, var(--m-down) 40%, transparent)); background: var(--notice-error-bg, transparent); color: var(--m-ink); }
 .notice[data-tone='error'] svg { color: var(--m-down); }
 .foot { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; margin-top: 12px; color: var(--m-faint); font-size: 10.5px; line-height: 1.5; }
 
@@ -1451,3 +1451,6 @@ span.compareName { padding-top: 28px; cursor: default; }
 .predSortMenu button[aria-pressed=true]{background:var(--m-glass)}
 /* Trade presets and order-line actions keep their compact look; the hit area reaches 44px. */
 .presets button::after, .orderLine button::after { content: ''; position: absolute; inset: -8px -2px; }
+.groupTitle { margin: 26px 2px 6px; color: var(--m-muted); font: 600 12px/1.2 var(--m-sans, inherit); letter-spacing: .08em; text-transform: uppercase; }
+.dangerZone { display: grid; justify-items: center; margin: 28px 0 8px; padding-top: 18px; border-top: 1px solid var(--m-line); }
+.dangerZone .link { color: var(--m-down); font-size: 13px; }

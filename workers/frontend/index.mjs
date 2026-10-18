@@ -15,6 +15,8 @@ export default {
     const path=url.pathname
     // Static assets are served before the Worker runs; reaching here means the file is not in this build.
     if(path.startsWith('/_next/static/'))return new Response('Not found',{status:404,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}})
+    // Local-only preview pages: their code already calls notFound() in production, but that renders a 200 page. Answer 404 for real.
+    if(path==='/design-preview'||path==='/dev'||path.startsWith('/dev/'))return new Response('Not found',{status:404,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}})
     if(request.method==='GET'){
       const matched=/^\/api\/polymarket\/(feed|(?:event|market)\/[^/]+)$/.exec(path)
       if(matched)return proxyPublicPrediction(request,matched[1],env.API_INTERNAL_URL)
