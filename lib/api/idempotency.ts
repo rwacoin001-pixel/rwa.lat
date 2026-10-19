@@ -12,3 +12,8 @@ export function idempotencyKeyForIntent(
   keys.set(fingerprint, key)
   return key
 }
+
+/** Forget one confirmed intent's key (a new order of the same shape is a new intent) without touching other unresolved retries. */
+export function retireIntentKey(keys: Map<string, string>, method: string, path: string, body: unknown): void {
+  keys.delete(JSON.stringify([method.toUpperCase(), path, body]))
+}

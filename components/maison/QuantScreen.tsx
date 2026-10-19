@@ -5,41 +5,24 @@ import { ArrowRight } from 'lucide-react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { getQuantDisclosure, useQuantProducts, type QuantProduct } from '@/lib/api/quant'
-import { quantCopyFor, type QuantCopy } from '@/lib/maison-quant-copy'
-import { buildTicks, localToday, shortDate } from '@/lib/quant-view-model'
+import { getQuantDisclosure, getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
+import { quantCopyFor } from '@/lib/maison-quant-copy'
+import { buildTicks, localToday, quantAudience, shortDate } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
-import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
+import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
-import { QuantDial, QuantLegend, QuantRings, QuantStepper, Reveal, useHideDock } from './QuantParts'
-import { QuantPositionPlate, useQuantProduct } from './QuantPositionCard'
-import { QuantSubscribeSheet } from './QuantSheets'
+import { QuantDial, QuantLegend, QuantStepper, Reveal, useHideDock } from './QuantParts'
+import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
+import { QuantPerformance, QuantSummary, QuantTerms } from './QuantInfo'
+import { useQuantProduct } from './QuantPositionCard'
+import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import styles from './quant.module.css'
+import page from './quant-page.module.css'
 
-function Rules({ product, c, first }: { product: QuantProduct; c: QuantCopy; first: number }) {
-  const tiers = [...product.fees.redemptionTiers].sort((a, b) => a.maxDays - b.maxDays)
-  const last = tiers[tiers.length - 1]
-  const pct = (bps: number) => (bps / 100).toFixed(2).replace(/\.?0+$/, '')
-  const index = (offset: number) => String(first + offset).padStart(2, '0')
-  return <>
-    <SectionHead index={index(0)} title={c.feesTitle} />
-    <ul className={`${styles.lines} ${styles.plain}`}>
-      <li><span>{c.feeManagement(pct(product.fees.managementBps))}</span></li>
-      <li><span>{c.feePerformance(pct(product.fees.performanceBps))}</span></li>
-      {tiers.map((tier) => <li key={tier.maxDays}><span>{c.feeRedemption(tier.maxDays, pct(tier.bps))}</span></li>)}
-      {last && <li><span>{c.feeRedemptionFree(last.maxDays)}</span></li>}
-    </ul>
-    <SectionHead index={index(1)} title={c.rulesTitle} />
-    <ul className={`${styles.lines} ${styles.plain}`}>
-      <li><span>{c.ruleCutoff(product.cutoffTime, product.timezone)}</span></li>
-      <li><span>{c.ruleStart}</span></li>
-      <li><span>{c.ruleDaily}</span></li>
-      <li><span>{c.indexNote}</span></li>
-    </ul>
-  </>
-}
-
-/** The Koala Quant tab: the settlement dial on a lacquer card, then the account, where the money goes, fees and rules. */
+/**
+ * The Koala Quant tab. The settlement dial leads for everyone; what follows depends on who is looking: a visitor reads what to
+ * know before subscribing, a holder sees their account and history first.
+ */
 export function QuantScreen() {
   const { locale } = useI18n()
   const c = quantCopyFor(locale)
@@ -47,11 +30,17 @@ export function QuantScreen() {
   const slug = list.data?.[0]?.slug
   const detail = useQuantProduct(slug)
   const product = detail.data
+  const audience = quantAudience(product?.position)
+  const involved = audience !== 'visitor'
   const [picked, setPicked] = useState<number | null>(null)
   const [subscribeOpen, setSubscribeOpen] = useState(false)
+  const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   useHideDock(disclosureOpen)
   const disclosure = useQuery(disclosureOpen ? 'quant:disclosure' : null, getQuantDisclosure, { staleTime: 5 * 60_000 })
+  const payouts = useQuery(involved && slug ? `quant:payouts:${slug}` : null, () => listQuantPayouts(slug as string, 60), { staleTime: 30_000 })
+  const wantsSubscribe = audience === 'visitor' || audience === 'ex-holder'
+  const preview = useQuery(wantsSubscribe && slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
 
   // The dial holds one ring of 30 days; older history stays in the product record.
   const ticks = useMemo(() => product
@@ -67,7 +56,15 @@ export function QuantScreen() {
   if (!product) return <MaisonPage page="quant" dock topbar={topbar} className={stage}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
 
   const p = product.performance
-  const holds = Boolean(product.position && (BigInt(product.position.principalAtomic) > BigInt(0) || product.position.pendingOrders.length > 0))
+  const subscribe = wantsSubscribe && <Reveal>
+    <button type="button" className={`${s.cta} ${page.cta}`} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>
+      <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
+    </button>
+    {!product.open && <p className={page.note}>{c.closedNote}</p>}
+  </Reveal>
+  const performance = <Reveal><QuantPerformance product={product} c={c} /></Reveal>
+  const summary = <Reveal><QuantSummary product={product} preview={preview} c={c} /></Reveal>
+
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <header className={styles.mast}>
       <div>
@@ -77,49 +74,36 @@ export function QuantScreen() {
       <p className={styles.mastMeta}>{p.lastSettledDate ? `${c.settledTo} ${shortDate(p.lastSettledDate)}` : c.neverSettled}</p>
     </header>
 
+    {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
+
     {ticks.length > 0
       ? <>
         <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
         <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} />
       </>
       : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
-    <Reveal>
-      <QuantLegend copy={c} />
-      <QuantRings product={product} copy={c} />
-    </Reveal>
-    <Reveal>
-      <div className={styles.foot2}>
+    <div className={page.legend}><QuantLegend copy={c} /></div>
+    <p className={page.context}>{c.indexNote}</p>
+
+    <div>
+      {involved && <>
+        <Reveal><QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} /></Reveal>
+        <Reveal><QuantHistory payouts={payouts} c={c} /></Reveal>
+        {performance}
+        {wantsSubscribe && <>{summary}{subscribe}</>}
+      </>}
+      {!involved && <>{performance}{summary}{subscribe}</>}
+      <Reveal><QuantTerms product={product} c={c} /></Reveal>
+      <div className={page.foot}>
         <span>{c.riskLine}</span>
-        <button type="button" className={s.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
+        <button type="button" className={page.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
       </div>
-
-      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-        <button type="button" className={`${s.cta} ${styles.sheen}`} style={{ flex: 1 }} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>
-          <span>{holds ? c.addMore : c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
-        </button>
-      </div>
-      {!product.open && <div className={s.notice}><span>{c.closedNote}</span></div>}
-    </Reveal>
-
-    {product.target && <Reveal><div className={styles.target}><b>{product.target.annualMinPct}–{product.target.annualMaxPct}%</b><p><strong>{c.target}</strong> · {c.targetNote}</p></div></Reveal>}
-
-    {holds && <Reveal>
-      <SectionHead index="01" title={c.position.title} />
-      <QuantPositionPlate product={product} />
-    </Reveal>}
-
-    <Reveal>
-      <SectionHead index={holds ? '02' : '01'} title={c.flowTitle} />
-      <div className={styles.flow}>
-        <div><b>{c.flowGain}</b>{c.flowGainBody}</div><hr />
-        <div><b>{c.flowLoss}</b>{c.flowLossBody}</div>
-      </div>
-    </Reveal>
-    <Reveal><Rules product={product} c={c} first={holds ? 3 : 2} /></Reveal>
+    </div>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
+    <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />
     <Sheet open={disclosureOpen} onClose={() => setDisclosureOpen(false)} kicker={c.kicker} title={disclosure.data?.title ?? c.disclosure}>
-      {disclosure.data ? <p className={s.lede} style={{ whiteSpace: 'pre-line' }}>{disclosure.data.content}</p> : disclosure.error ? <p className={s.muted}>{c.loadError}</p> : <Skeleton rows={3} />}
+      {disclosure.data ? <p className={s.lede} style={{ whiteSpace: 'pre-line' }}>{disclosure.data.content}</p> : disclosure.error ? <p className={s.muted}>{c.loadError}</p> : disclosure.loading ? <Skeleton rows={3} /> : <p className={s.muted}>{c.view.disclosureEmpty}</p>}
     </Sheet>
   </MaisonPage>
 }

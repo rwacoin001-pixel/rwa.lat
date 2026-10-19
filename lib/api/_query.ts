@@ -52,7 +52,12 @@ export function useQuery<T>(key: string | null, loader: () => Promise<ApiResult<
     item.pending = (async () => {
       try {
         const result = await loadRef.current()
-        if (generation !== item.generation) return
+        if (generation !== item.generation) {
+          // A session event cleared the cache while this request was in flight, so its answer is dropped. Signed-in users get a
+          // refresh from the session handler; a guest would be left on an empty screen, so ask again for whoever is still watching.
+          queueMicrotask(() => { if (item.listeners.size && !item.pending && item.updatedAt === 0) void item.refresh?.() })
+          return
+        }
         if (result.ok) { item.updatedAt = Date.now(); publish(item, { data: result.data, loading: false }) }
         else publish(item, { data: item.snapshot.data, error: result.error, loading: false })
       } catch {
