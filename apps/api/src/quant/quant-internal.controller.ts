@@ -1,7 +1,7 @@
 import { Body, Controller, Get, Param, Patch, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { InternalServiceGuard } from '../wallet/internal-ops.controller'
-import { QuantApproveDto, QuantEnterReturnDto, QuantLimitQueryDto, QuantUpdateProductDto } from './quant.dto'
+import { QuantApproveDto, QuantDisclosureDto, QuantEnterReturnDto, QuantLimitQueryDto, QuantUpdateProductDto } from './quant.dto'
 import { QuantSettlementService } from './quant-settlement.service'
 
 type InternalRequestLike = { internalActorAdminId?: string; requestId?: string }
@@ -57,5 +57,17 @@ export class QuantInternalController {
   @ApiOperation({ summary: 'Void a draft or approved-but-unposted entry so it can be re-entered' })
   void(@Param('id') id: string, @Req() request: InternalRequestLike) {
     return this.settlements.voidDraft(id, request.internalActorAdminId as string)
+  }
+
+  @Get('disclosures')
+  @ApiOperation({ summary: 'Koala Quant risk disclosure versions, newest first' })
+  disclosures() {
+    return this.settlements.listDisclosures()
+  }
+
+  @Post('disclosures')
+  @ApiOperation({ summary: 'Publish a new risk disclosure version (users must acknowledge it again)' })
+  publishDisclosure(@Body() dto: QuantDisclosureDto, @Req() request: InternalRequestLike) {
+    return this.settlements.createDisclosure(dto, request.internalActorAdminId as string)
   }
 }

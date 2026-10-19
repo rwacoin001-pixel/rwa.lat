@@ -274,6 +274,27 @@ export class QuantSettlementService {
     return { ...(await this.getSettlement(settlement.id)), duplicate: false }
   }
 
+  /** Quant risk disclosures, newest first. The newest one is what a user must acknowledge before subscribing. */
+  async listDisclosures() {
+    return this.ds.query(
+      `SELECT d.id, d.version, d.title, d.content, d.effective_from AS "effectiveFrom",
+              (SELECT COUNT(*)::int FROM app.user_risk_acknowledgements a WHERE a.disclosure_id = d.id) AS "acknowledgements"
+       FROM app.risk_disclosures d WHERE d.product_type = 'quant' AND d.strategy_id IS NULL ORDER BY d.version DESC LIMIT 20`,
+    )
+  }
+
+  /** Publishes a new version. Everyone must acknowledge it again before their next subscription. */
+  async createDisclosure(input: { title: string; content: string }, adminId: string) {
+    const [row] = (await this.ds.query(
+      `INSERT INTO app.risk_disclosures (product_type, strategy_id, version, title, content)
+       SELECT 'quant', NULL, COALESCE(MAX(version), 0) + 1, $1, $2 FROM app.risk_disclosures WHERE product_type = 'quant' AND strategy_id IS NULL
+       RETURNING id, version, title, effective_from AS "effectiveFrom"`,
+      [input.title.trim(), input.content.trim()],
+    )) as Array<{ id: string; version: number; title: string; effectiveFrom: string }>
+    await this.audit('quant.disclosure.published', row.id, adminId, { version: row.version, title: row.title })
+    return row
+  }
+
   private async getSettlement(id: string): Promise<SettlementRow> {
     const [row] = (await this.ds.query(`SELECT ${SETTLEMENT_COLUMNS} FROM app.quant_daily_settlements WHERE id = $1`, [id])) as SettlementRow[]
     if (!row) throw new NotFoundException({ code: 'QUANT_SETTLEMENT_NOT_FOUND', message: 'Settlement entry was not found.' })

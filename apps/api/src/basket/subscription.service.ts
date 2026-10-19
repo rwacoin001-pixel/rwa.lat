@@ -301,7 +301,7 @@ export class BasketSubscriptionService {
       `SELECT id, product_type AS "productType", strategy_id AS "strategyId", version, title, content,
               effective_from AS "effectiveFrom"
        FROM app.risk_disclosures
-       WHERE ($1::uuid IS NULL OR strategy_id = $1) ORDER BY version DESC LIMIT 20`,
+       WHERE ($1::uuid IS NULL OR strategy_id = $1) AND product_type <> 'quant' ORDER BY version DESC LIMIT 20`,
       [strategyId ?? null],
     )
   }

@@ -18,11 +18,15 @@ export type QuantProduct = {
 }
 
 const STATUS_TEXT: Record<string, string> = { draft: '草稿(用户不可见)', pilot: '试运行', active: '正式开放', paused: '已暂停', closed: '已关闭' }
+type Disclosure = { id: string; version: number; title: string; content: string; effectiveFrom: string; acknowledgements: number }
 const usdt = (atomic?: string | null) => (atomic === undefined || atomic === null ? '—' : formatAtomic(atomic, 6, { group: true }))
 
 export default function QuantOverviewPage() {
   const products = useApi<QuantProduct[]>('/api/admin/quant/products')
   const product = products.data?.[0]
+  const disclosures = useApi<Disclosure[]>('/api/admin/quant/disclosures')
+  const [discTitle, setDiscTitle] = useState('')
+  const [discContent, setDiscContent] = useState('')
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
   const [form, setForm] = useState<Record<string, string>>({})
@@ -54,6 +58,26 @@ export default function QuantOverviewPage() {
     }
   }
 
+  const publishDisclosure = async (event: React.FormEvent) => {
+    event.preventDefault()
+    if (!window.confirm('发布新版本后,所有用户在下次申购前都必须重新阅读并确认。确认发布?')) return
+    setBusy(true)
+    setMessage('')
+    try {
+      const response = await fetch('/api/admin/quant/disclosures', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ title: discTitle, content: discContent }) })
+      const result = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(adminErrorMessage(result, response.status))
+      setMessage(`风险披露 v${result.version} 已发布`)
+      setDiscTitle('')
+      setDiscContent('')
+      disclosures.reload()
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : '操作失败')
+    } finally {
+      setBusy(false)
+    }
+  }
+
   const save = (event: React.FormEvent) => {
     event.preventDefault()
     const body: Record<string, unknown> = {
@@ -78,7 +102,7 @@ export default function QuantOverviewPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <PageHeader title="考拉量化" subtitle="主打产品 · 配置与总览" actions={<RefreshButton loading={products.loading} onClick={products.reload} />} />
+        <PageHeader title="考拉量化" subtitle="主打产品 · 配置与总览" actions={<RefreshButton loading={products.loading || disclosures.loading} onClick={() => { products.reload(); disclosures.reload() }} />} />
         {products.error && <p role="alert" className="text-sm text-red-500">{products.error}</p>}
         {message && <p role="status" className="rounded-xl border p-3 text-sm">{message}</p>}
         {product && (
@@ -113,6 +137,25 @@ export default function QuantOverviewPage() {
                   <p className="text-xs text-text-faint">{treasury < BigInt(0) ? '平台已垫付,请及时补足准备金' : '无垫付'}</p></div>
                 <div>费用收入 USDT<p className="mt-1 text-lg font-semibold tabular-nums">{usdt(product.ledger.feeAtomic)}</p></div>
               </div>
+            </Panel>
+
+            <Panel title="风险披露" subtitle="用户申购前必须阅读并确认最新版本。没有发布任何版本时,用户不需要确认,请在开放前先发布。">
+              {disclosures.error && <p role="alert" className="mb-3 text-sm text-red-500">{disclosures.error}</p>}
+              {disclosures.data && disclosures.data.length > 0
+                ? <div className="mb-5 rounded-xl border border-ink/10 p-3 text-sm">
+                  <p className="font-medium">当前生效:v{disclosures.data[0].version} · {disclosures.data[0].title} <span className="ml-2 text-xs font-normal text-text-faint">{disclosures.data[0].acknowledgements} 人已确认</span></p>
+                  <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-text-secondary">{disclosures.data[0].content}</p>
+                </div>
+                : !disclosures.loading && <p className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-700">还没有发布任何风险披露。开放产品前请先发布(正文由法务提供)。</p>}
+              <form onSubmit={publishDisclosure} className="space-y-4">
+                <label className="block space-y-1.5 text-sm"><span className="block">标题</span>
+                  <input value={discTitle} onChange={(e) => setDiscTitle(e.target.value)} placeholder="如:考拉量化风险披露" className="w-full rounded-xl border border-ink/10 bg-transparent px-3 py-2" /></label>
+                <label className="block space-y-1.5 text-sm"><span className="block">正文(至少 20 字,换行会保留)</span>
+                  <textarea value={discContent} onChange={(e) => setDiscContent(e.target.value)} rows={9} className="w-full rounded-xl border border-ink/10 bg-transparent px-3 py-2 text-sm leading-relaxed" /></label>
+                <button type="submit" disabled={busy || discTitle.trim().length < 2 || discContent.trim().length < 20} className="rounded-xl bg-ink px-5 py-2 text-white disabled:opacity-40">发布为新版本</button>
+              </form>
+              {disclosures.data && disclosures.data.length > 1 && <details className="mt-5 text-sm"><summary className="cursor-pointer text-text-secondary">历史版本({disclosures.data.length - 1})</summary>
+                <ul className="mt-2 space-y-1 text-xs">{disclosures.data.slice(1).map((row) => <li key={row.id} className="flex justify-between gap-3 border-b border-ink/5 py-1.5"><span>v{row.version} · {row.title}</span><span className="text-text-faint">{row.acknowledgements} 人确认</span></li>)}</ul></details>}
             </Panel>
 
             <Panel title="产品配置" subtitle="费率只影响之后的结算日;修改会写入审计日志">

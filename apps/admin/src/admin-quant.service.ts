@@ -53,6 +53,14 @@ export class AdminQuantService {
     return this.request('POST', `/internal/quant/settlements/${encodeURIComponent(id)}/void`, actorId, {})
   }
 
+  disclosures(actorId: string) {
+    return this.request('GET', '/internal/quant/disclosures', actorId)
+  }
+
+  publishDisclosure(actorId: string, body: Record<string, unknown>) {
+    return this.request('POST', '/internal/quant/disclosures', actorId, body)
+  }
+
   private async request<T>(method: 'GET' | 'POST' | 'PATCH', path: string, actorId: string, body?: Record<string, unknown>): Promise<T> {
     if (!this.coreApiUrl || !this.serviceToken || this.serviceToken.length < 32) {
       throw new ServiceUnavailableException('The core operations channel is not configured (CORE_API_URL / ADMIN_SERVICE_TOKEN).')

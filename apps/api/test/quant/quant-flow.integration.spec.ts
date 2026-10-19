@@ -33,6 +33,8 @@ describeDatabase('koala quant full flow', () => {
   const platform = (suffix: string, purpose: string) => balanceOf(`a.owner_type = 'platform' AND a.owner_reference = $1 AND a.purpose = $2`, [`quant:${productId}${suffix}`, purpose])
 
   const cleanup = async () => {
+    await ds.query(`DELETE FROM app.user_risk_acknowledgements WHERE disclosure_id IN (SELECT id FROM app.risk_disclosures WHERE product_type = 'quant')`)
+    await ds.query(`DELETE FROM app.risk_disclosures WHERE product_type = 'quant'`)
     const ids = `(SELECT id FROM app.quant_products WHERE slug = '${SLUG}')`
     await ds.query(`DELETE FROM app.quant_payouts WHERE product_id IN ${ids}`)
     await ds.query(`DELETE FROM app.quant_daily_settlements WHERE product_id IN ${ids}`)
@@ -151,5 +153,19 @@ describeDatabase('koala quant full flow', () => {
     const [order] = (await ds.query(`SELECT status FROM app.quant_orders WHERE user_id = $1 AND kind = 'redemption'`, [userId])) as Array<{ status: string }>
     expect(order.status).toBe('pending')
     expect(await platform('', 'basket_settlement')).toBe(100_000_000n)
+  })
+  it('asks for the latest risk disclosure before the first subscription and again after a new version', async () => {
+    const first = await settlements.createDisclosure({ title: 'Koala risk disclosure', content: 'Principal can fall. Past results do not predict future ones.' }, adminA)
+    expect(first.version).toBe(1)
+    await expect(quant.subscribe(userId, SLUG, '50', 'disc-key-0001', 'req-1')).rejects.toMatchObject({ response: { code: 'QUANT_DISCLOSURE_ACK_REQUIRED' } })
+    await ds.query(`INSERT INTO app.user_risk_acknowledgements (user_id, disclosure_id, version) VALUES ($1, $2, 1)`, [userId, first.id])
+    expect(((await quant.subscribe(userId, SLUG, '50', 'disc-key-0002', 'req-2')).order as { status: string }).status).toBe('settled')
+
+    const second = await settlements.createDisclosure({ title: 'Koala risk disclosure', content: 'Updated text. Principal can fall. Fees apply.' }, adminA)
+    expect(second.version).toBe(2)
+    await expect(quant.subscribe(userId, SLUG, '50', 'disc-key-0003', 'req-3')).rejects.toMatchObject({ response: { code: 'QUANT_DISCLOSURE_ACK_REQUIRED' } })
+    const list = (await settlements.listDisclosures()) as Array<{ version: number; acknowledgements: number }>
+    expect(list.map((row) => row.version)).toEqual([2, 1])
+    expect(list[1].acknowledgements).toBe(1)
   })
 })

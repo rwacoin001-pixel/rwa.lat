@@ -1,4 +1,4 @@
-import { IsBoolean, IsIn, IsInt, IsNumberString, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator'
+import { IsBoolean, IsIn, IsInt, IsNumberString, IsOptional, IsString, Matches, Max, MaxLength, Min, MinLength } from 'class-validator'
 
 const USDT_AMOUNT = /^\d{1,30}(\.\d{1,6})?$/
 
@@ -70,4 +70,16 @@ export class QuantUpdateProductDto {
   @IsOptional() @Matches(/^-?\d{1,3}(\.\d{1,4})?$/) targetAnnualMaxPct?: string
   @IsOptional() @Matches(/^\d{2}:\d{2}$/) cutoffTime?: string
   @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) firstTradeDate?: string
+}
+
+export class QuantDisclosureDto {
+  @IsString()
+  @MinLength(2)
+  @MaxLength(200)
+  title!: string
+
+  @IsString()
+  @MinLength(20)
+  @MaxLength(20000)
+  content!: string
 }
