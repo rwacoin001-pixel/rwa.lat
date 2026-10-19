@@ -3,7 +3,7 @@ import type { RwaScreen } from '@/lib/rwa-routes'
 import { markTabNavigation } from '@/lib/app-navigation'
 import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
-import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
+import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartCandlestick, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { openPath } from '@/lib/maison-nav'
 import { fundsCopy } from '@/lib/maison-funds-copy'
@@ -11,6 +11,7 @@ import { useI18n } from '@/lib/i18n'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 const AiPearl = dynamic(() => import('../maison/AiPearl'), { ssr: false })
 import type { PrimaryScreen } from './shared'
+import { useQuantListed } from '@/lib/api/quant'
 
 type Screen = RwaScreen
 
@@ -26,9 +27,12 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
     { label: t('wallet.transfer'), path: '/assets/cash/transfer', icon: ArrowRightLeft },
     { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', icon: QrCode },
   ]
+  // Koala Quant is the featured product: its own tab, shown once an operator has opened it.
+  const quantListed = useQuantListed()
   const items: Array<{ id: PrimaryScreen; label: string; icon: typeof House }> = [
     { id: 'home', label: t('nav.home'), icon: House },
     { id: 'invest', label: t('nav.markets'), icon: ChartNoAxesColumnIncreasing },
+    ...(quantListed || screen === 'quant' ? [{ id: 'quant' as const, label: t('nav.quant'), icon: ChartCandlestick }] : []),
     { id: 'portfolio', label: t('nav.assets'), icon: ChartPie },
   ]
   useEffect(() => { expandChrome() }, [screen])

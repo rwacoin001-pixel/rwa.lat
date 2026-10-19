@@ -20,6 +20,8 @@ import { AdminFundsOpsController, AdminWalletOpsController } from './admin-walle
 import { AdminWalletOpsService } from './admin-wallet-ops.service'
 import { AdminBasketController } from './admin-basket.controller'
 import { AdminBasketService } from './admin-basket.service'
+import { AdminQuantController } from './admin-quant.controller'
+import { AdminQuantService } from './admin-quant.service'
 import { AdminCommunityController } from './admin-community-ops.controller'
 import { AdminCommunityOpsService } from './admin-community-ops.service'
 import { AdminPredictionController } from './admin-prediction.controller'
@@ -35,12 +37,12 @@ import { AdminAiInvestmentController } from './admin-ai-investment.controller'
 
 const controllers = [
   AdminController, AdminAuthController, AdminTotpController, AdminControlController, AdminStorageController,
-  AdminWalletOpsController, AdminFundsOpsController, AdminBasketController,
+  AdminWalletOpsController, AdminFundsOpsController, AdminBasketController, AdminQuantController,
   AdminCommunityController, AdminPredictionController, AdminCoreOpsController, AdminPlatformController, AdminLegalController, AdminAiKnowledgeController, AdminAiInvestmentController,
 ]
 const providers = [
   AdminService, AdminAuthService, AdminTotpService, AdminSessionGuard, AdminCorePrincipalService, AdminPermissionGuard, AdminControlService,
-  AdminStorageService, AdminWalletOpsService, AdminBasketService, AdminCommunityOpsService,
+  AdminStorageService, AdminWalletOpsService, AdminBasketService, AdminQuantService, AdminCommunityOpsService,
   AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService,
 ]
 

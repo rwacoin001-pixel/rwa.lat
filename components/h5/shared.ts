@@ -4,7 +4,7 @@ import { isOrderableId } from '@/lib/api/markets'
 import type { DemoProduct } from '@/lib/h5-data'
 
 export type OrderAsset = 'compute' | 'rwa' | 'stocks' | 'prediction'
-export type PrimaryScreen = 'home' | 'invest' | 'portfolio' | 'wallet' | 'community'
+export type PrimaryScreen = 'home' | 'invest' | 'quant' | 'portfolio' | 'wallet' | 'community'
 
 export const PROFILE_SECTION_SCREENS = new Set<Screen>([
   'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket',

@@ -128,6 +128,32 @@ function greeting(hour: number) {
   return '晚上好'
 }
 
+
+type KoalaProduct = { name: string; status: string; nextTradeDate: string | null; last_settled_date: string | null; index_value: string; totals: { principalAtomic: string; users: number; pendingRedemptions: number }; ledger: { poolMatchesLots: boolean; treasuryAtomic: string } }
+const KOALA_STATUS: Record<string, string> = { draft: '草稿', pilot: '试运行', active: '正式开放', paused: '已暂停', closed: '已关闭' }
+
+/** 主打产品入口:今天要结算的日期、在投本金和账本核对一眼可见。 */
+function KoalaCard() {
+  const source = useSource<KoalaProduct[]>('/api/admin/quant/products', ['quant.operations.manage'])
+  if (source.denied) return null
+  const product = source.data?.[0]
+  const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10)
+  const due = product?.nextTradeDate && product.nextTradeDate <= yesterday
+  return (
+    <Link href="/quant/settlement" className="glass-strong card-lift flex flex-wrap items-center justify-between gap-4 rounded-card p-5">
+      <div>
+        <p className="flex items-center gap-2 text-base font-semibold"><Sparkles className="h-4 w-4" /> 考拉量化 <span className="rounded-full bg-ink/[0.06] px-2.5 py-0.5 text-xs font-normal">{product ? KOALA_STATUS[product.status] ?? product.status : source.loading ? '…' : '—'}</span></p>
+        <p className="mt-1 text-xs text-text-faint">{product ? `已结算至 ${product.last_settled_date ?? '尚未开始'} · 在投本金 ${(Number(product.totals.principalAtomic) / 1e6).toLocaleString('zh-CN', { maximumFractionDigits: 2 })} USDT · ${product.totals.users} 位用户 · ${product.totals.pendingRedemptions} 笔赎回待兑付` : source.error || '主打产品:配置与每日结算'}</p>
+      </div>
+      <div className="flex items-center gap-3 text-sm">
+        {product && !product.ledger.poolMatchesLots && <span className="rounded-full bg-red-500/10 px-3 py-1 text-xs text-red-500">账本与持仓不一致</span>}
+        {product && BigInt(product.ledger.treasuryAtomic) < BigInt(0) && <span className="rounded-full bg-amber-500/10 px-3 py-1 text-xs text-amber-600">平台已垫付收益</span>}
+        {due ? <span className="rounded-full bg-ink px-3 py-1 text-xs text-white">{product?.nextTradeDate} 待录入结算</span> : <span className="text-xs text-text-faint">进入每日结算 →</span>}
+      </div>
+    </Link>
+  )
+}
+
 export default function DashboardPage() {
   const facetsSrc = useSource<Facets>('/api/admin/basket/candidate-facets', ['basket.operations.manage'])
   const communitySrc = useSource<CommunityStats>('/api/admin/community/stats', ['community.content.review'])
@@ -204,6 +230,8 @@ export default function DashboardPage() {
             <RefreshCw className={cn('h-4 w-4', loading && 'animate-spin')} /> 刷新数据
           </button>
         </div>
+
+        <KoalaCard />
 
         {/* ── KPI 卡片 ─────────────────────────────────── */}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">

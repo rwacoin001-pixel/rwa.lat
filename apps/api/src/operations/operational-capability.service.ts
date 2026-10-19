@@ -14,6 +14,8 @@ export const OPERATIONAL_SWITCH_KEYS = {
   basketSubscriptions: 'basket.subscriptions',
   basketRedemptions: 'basket.redemptions',
   basketRebalanceExecution: 'basket.rebalance.execution',
+  quantSubscriptions: 'quant.subscriptions',
+  quantRedemptions: 'quant.redemptions',
 } as const
 
 export interface CapabilityState {

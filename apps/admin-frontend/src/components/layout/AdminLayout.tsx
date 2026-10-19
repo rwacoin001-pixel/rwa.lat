@@ -41,6 +41,8 @@ import {
   Users,
   Wallet,
   Workflow,
+  Sparkles,
+  CalendarCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -63,6 +65,15 @@ const NAV_SECTIONS: NavSection[] = [
     title: '概览',
     icon: Home,
     items: [{ name: '工作台', href: '/dashboard', icon: Home }],
+  },
+  {
+    id: 'koala',
+    title: '考拉量化 · 主打产品',
+    icon: Sparkles,
+    items: [
+      { name: '产品总览与配置', href: '/quant', icon: Sparkles },
+      { name: '每日结算', href: '/quant/settlement', icon: CalendarCheck },
+    ],
   },
   {
     id: 'operations',
@@ -144,6 +155,7 @@ const ALL_ITEMS: NavItem[] = NAV_SECTIONS.flatMap((section) => section.items)
 /* 移动端底部常用入口 */
 const DOCK_ITEMS: NavItem[] = [
   { name: '工作台', href: '/dashboard', icon: Home },
+  { name: '考拉量化', href: '/quant', icon: Sparkles },
   { name: 'Basket', href: '/basket', icon: PieChart },
   { name: '社区审核', href: '/community', icon: MessageCircle },
   { name: '钱包', href: '/wallets', icon: Wallet },

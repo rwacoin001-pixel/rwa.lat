@@ -15,10 +15,10 @@
 
 // ─── 类型 ───
 
-export type Domain = 'public' | 'home' | 'markets' | 'ai' | 'assets' | 'profile' | 'system'
+export type Domain = 'public' | 'home' | 'markets' | 'quant' | 'ai' | 'assets' | 'profile' | 'system'
 
 /** Dock 高亮归属：null = 不做任何高亮（无选中态） */
-export type DockTab = 'home' | 'markets' | 'assets' | 'ai' | null
+export type DockTab = 'home' | 'markets' | 'quant' | 'assets' | 'ai' | null
 
 export type AuthLevel = 'public' | 'optional' | 'required'
 
@@ -68,6 +68,9 @@ export const ROUTES = {
   communityMember: R('/community/member/:handle', { domain: 'home', dock: 'home', showDock: true, auth: 'optional' }),
   learn: R('/learn', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
   learnArticle: R('/learn/:slug', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
+
+  // ═══ Koala Quant · 主打产品(Dock 第 4 项「量化」)═══
+  quant: R('/quant', { domain: 'quant', dock: 'quant', showDock: true, auth: 'public' }),
 
   // ═══ Tab 2 · 市场（11）═══
   markets: R('/markets', { domain: 'markets', dock: 'markets', showDock: true, auth: 'public' }),
@@ -196,7 +199,7 @@ export const ROUTE_COUNTS = {
   pageRoutes: (Object.values(ROUTES) as RouteDef[]).filter((r) => r.domain !== 'system').length,
   /** 系统路由（仅 /auth/callback/email·不计入 67） */
   systemRoutes: (Object.values(ROUTES) as RouteDef[]).filter((r) => r.domain === 'system').length,
-  /** Dock 导航项（3：home/markets/assets）+ AI 球（ai） */
-  dockTabs: 3,
+  /** Dock 导航项（4：home/markets/quant/assets）+ AI 球（ai） */
+  dockTabs: 4,
   dockAiOrb: 1,
 }

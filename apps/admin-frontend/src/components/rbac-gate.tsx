@@ -14,6 +14,7 @@ export type ProfileState = { profile: AdminProfile | null; status: 'loading' | '
 export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/control': ['catalog.manage'],
   '/basket': ['basket.operations.manage'],
+  '/quant': ['quant.operations.manage'],
   '/assets': ['core.console.view'],
   '/yields': ['core.console.view'],
   '/settlements': ['core.console.view'],

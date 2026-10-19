@@ -30,6 +30,7 @@ import { RwaAnalysisModule } from './rwa-analysis/rwa-analysis.module'
 import { AiModule } from './ai/ai.module'
 import { TradingModule } from './trading/trading.module'
 import { BasketModule } from './basket/basket.module'
+import { QuantModule } from './quant/quant.module'
 import { PredictionModule } from './prediction/prediction.module'
 import { AdminConsoleModule } from './admin-console/admin-console.module'
 import { PlatformModule } from './platform/platform.module'
@@ -78,6 +79,7 @@ import { RobotsController } from './common/robots.controller'
     AiModule,
     TradingModule,
     BasketModule,
+    QuantModule,
     PredictionModule,
     AdminConsoleModule,
     PlatformModule,
