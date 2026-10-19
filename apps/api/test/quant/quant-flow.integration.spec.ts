@@ -1,4 +1,4 @@
-import { ConflictException, ForbiddenException } from '@nestjs/common'
+import { ConflictException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { ComplianceService } from '../../src/compliance/compliance.service'
@@ -95,8 +95,8 @@ describeDatabase('koala quant full flow', () => {
 
     // day 1: +1.00%
     const day1 = await settlements.enter(SLUG, { tradeDate: '2026-01-01', grossReturnPct: '1.00' }, adminA)
-    await expect(settlements.approve(day1.id, adminA, false, 'req-a')).rejects.toBeInstanceOf(ForbiddenException)
-    const posted1 = (await settlements.approve(day1.id, adminB, false, 'req-b')) as { status: string }
+    // one administrator may enter and confirm; the two steps stay separate actions
+    const posted1 = (await settlements.approve(day1.id, adminA, false, 'req-b')) as { status: string }
     expect(posted1.status).toBe('posted')
     const afterDay1 = await userBalance()
     expect(afterDay1 - (start - 500_000_000n)).toBeGreaterThan(0n)

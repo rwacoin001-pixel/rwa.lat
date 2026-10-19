@@ -3,7 +3,6 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { Panel, PageHeader, RefreshButton, StatChip, formatDateTime, shortId, useApi } from '@/components/console/framework'
-import { useAdminProfile } from '@/components/rbac-gate'
 import { adminErrorMessage } from '@/lib/admin-errors'
 import { formatAtomic } from '@/lib/money'
 import type { QuantProduct } from '../page'
@@ -15,7 +14,7 @@ type Settlement = {
   principalLossAtomic: string | null; redemptionPrincipalAtomic: string | null; redemptionFeeAtomic: string | null; postedAt: string | null; createdAt: string
 }
 
-const STATUS: Record<string, string> = { draft: '待复核', approved: '已复核(待过账)', posted: '已结算', voided: '已作废' }
+const STATUS: Record<string, string> = { draft: '待确认', approved: '已确认(待过账)', posted: '已结算', voided: '已作废' }
 const usdt = (atomic?: string | null) => (atomic === null || atomic === undefined ? '—' : formatAtomic(atomic, 6, { group: true }))
 const pct = (value?: string | null, digits = 4) => (value === null || value === undefined ? '—' : `${Number(value) > 0 ? '+' : ''}${Number(value).toFixed(digits)}%`)
 
@@ -23,8 +22,6 @@ export default function QuantSettlementPage() {
   const products = useApi<QuantProduct[]>('/api/admin/quant/products')
   const product = products.data?.[0]
   const settlements = useApi<Settlement[]>(product ? `/api/admin/quant/products/${product.slug}/settlements?limit=60` : null)
-  const access = useAdminProfile()
-  const me = access.profile?.id
   const [tradeDate, setTradeDate] = useState('')
   const [grossReturnPct, setGross] = useState('')
   const [note, setNote] = useState('')
@@ -56,8 +53,8 @@ export default function QuantSettlementPage() {
   const enter = async (event: React.FormEvent) => {
     event.preventDefault()
     if (!product) return
-    if (!window.confirm(`确认录入 ${tradeDate} 的策略真实毛收益率 ${grossReturnPct}%?录入后需要另一位管理员复核才会结算。`)) return
-    if (await call(`products/${product.slug}/settlements`, { tradeDate, grossReturnPct, note: note || undefined }, `已录入 ${tradeDate},等待另一位管理员复核`)) { setGross(''); setNote('') }
+    if (!window.confirm(`确认录入 ${tradeDate} 的策略真实毛收益率 ${grossReturnPct}%?录入后还需要你再确认一次才会结算。`)) return
+    if (await call(`products/${product.slug}/settlements`, { tradeDate, grossReturnPct, note: note || undefined }, `已录入 ${tradeDate},请核对后确认结算`)) { setGross(''); setNote('') }
   }
 
   const drafts = (settlements.data ?? []).filter((row) => row.status === 'draft' || row.status === 'approved')
@@ -66,7 +63,7 @@ export default function QuantSettlementPage() {
   return (
     <AdminLayout>
       <div className="space-y-6">
-        <PageHeader title="每日结算" subtitle="录入 → 另一人复核 → 自动过账" actions={<RefreshButton loading={products.loading || settlements.loading} onClick={() => { products.reload(); settlements.reload() }} />} />
+        <PageHeader title="每日结算" subtitle="录入 → 确认 → 自动过账" actions={<RefreshButton loading={products.loading || settlements.loading} onClick={() => { products.reload(); settlements.reload() }} />} />
         {(products.error || settlements.error) && <p role="alert" className="text-sm text-red-500">{products.error || settlements.error}</p>}
         {message && <p role="status" className="rounded-xl border p-3 text-sm">{message}</p>}
         {product && (
@@ -88,22 +85,21 @@ export default function QuantSettlementPage() {
             </Panel>
 
             {drafts.length > 0 && (
-              <Panel title="待复核 / 待过账" subtitle="录入人不能复核自己的录入">
+              <Panel title="待确认 / 待过账" subtitle="核对数字后再点「确认并结算」,结算后立即给用户派发收益或计入亏损,不可撤销">
                 <div className="space-y-3">
                   {drafts.map((row) => {
                     const large = Math.abs(Number(row.grossReturnPct)) > limit
-                    const self = row.enteredBy === me
                     return (
                       <div key={row.id} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 p-3 text-sm">
                         <div>
                           <p className="font-medium">{row.tradeDate} · 毛收益 <span className={Number(row.grossReturnPct) < 0 ? 'text-red-500' : 'text-green-600'}>{pct(row.grossReturnPct)}</span> · {STATUS[row.status]}</p>
-                          <p className="text-xs text-text-faint">录入人 {shortId(row.enteredBy)} · {formatDateTime(row.createdAt)}{row.note ? ` · ${row.note}` : ''}</p>
+                          <p className="text-xs text-text-faint">录入 {shortId(row.enteredBy)} · {formatDateTime(row.createdAt)}{row.note ? ` · ${row.note}` : ''}</p>
                           {large && row.status === 'draft' && <label className="mt-2 flex items-center gap-2 text-xs text-red-500"><input type="checkbox" checked={Boolean(confirmLarge[row.id])} onChange={(e) => setConfirmLarge({ ...confirmLarge, [row.id]: e.target.checked })} />单日波动超过 {limit}%,我已核对无误</label>}
                         </div>
                         <div className="flex gap-2">
-                          {row.status === 'draft' && <button disabled={busy || self || (large && !confirmLarge[row.id])} title={self ? '不能复核自己录入的数据' : undefined}
-                            onClick={() => { if (window.confirm(`确认复核并结算 ${row.tradeDate}?结算后会立即给用户派发收益或计入亏损,不可撤销。`)) void call(`settlements/${row.id}/approve`, { confirmLargeMove: Boolean(confirmLarge[row.id]) }, `${row.tradeDate} 已结算`) }}
-                            className="rounded-xl bg-ink px-4 py-2 text-white disabled:opacity-40">复核并结算</button>}
+                          {row.status === 'draft' && <button disabled={busy || (large && !confirmLarge[row.id])}
+                            onClick={() => { if (window.confirm(`确认确认并结算 ${row.tradeDate}?结算后会立即给用户派发收益或计入亏损,不可撤销。`)) void call(`settlements/${row.id}/approve`, { confirmLargeMove: Boolean(confirmLarge[row.id]) }, `${row.tradeDate} 已结算`) }}
+                            className="rounded-xl bg-ink px-4 py-2 text-white disabled:opacity-40">确认并结算</button>}
                           {row.status === 'approved' && <button disabled={busy} onClick={() => void call(`settlements/${row.id}/post`, {}, `${row.tradeDate} 已重新过账`)} className="rounded-xl bg-ink px-4 py-2 text-white disabled:opacity-40">重试过账</button>}
                           <button disabled={busy} onClick={() => { if (window.confirm('作废后可重新录入这一天,确认?')) void call(`settlements/${row.id}/void`, {}, '已作废') }} className="rounded-xl border px-4 py-2 disabled:opacity-40">作废</button>
                         </div>
@@ -117,7 +113,7 @@ export default function QuantSettlementPage() {
             <Panel title="结算历史" subtitle="金额单位 USDT;净收益率 = 毛收益率 − 当日管理费">
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs">
-                  <thead><tr className="border-b border-ink/10 text-text-faint">{['交易日', '状态', '毛收益率', '净收益率', '净值指数', '用户数', '在投本金', '已派发收益', '亏损计入本金', '管理费', '业绩提成', '赎回本金', '赎回费', '录入/复核'].map((h) => <th key={h} className="whitespace-nowrap px-3 py-2 font-medium">{h}</th>)}</tr></thead>
+                  <thead><tr className="border-b border-ink/10 text-text-faint">{['交易日', '状态', '毛收益率', '净收益率', '净值指数', '用户数', '在投本金', '已派发收益', '亏损计入本金', '管理费', '业绩提成', '赎回本金', '赎回费', '录入/确认'].map((h) => <th key={h} className="whitespace-nowrap px-3 py-2 font-medium">{h}</th>)}</tr></thead>
                   <tbody>
                     {(settlements.data ?? []).filter((row) => row.status !== 'voided').map((row) => (
                       <tr key={row.id} className="border-b border-ink/5 tabular-nums">

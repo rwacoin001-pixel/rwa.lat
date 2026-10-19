@@ -42,7 +42,7 @@ export class QuantInternalController {
   }
 
   @Post('settlements/:id/approve')
-  @ApiOperation({ summary: 'Step 2: a different operator approves; posting follows immediately' })
+  @ApiOperation({ summary: 'Step 2: confirm the entry; posting follows immediately' })
   approve(@Param('id') id: string, @Body() dto: QuantApproveDto, @Req() request: InternalRequestLike) {
     return this.settlements.approve(id, request.internalActorAdminId as string, dto.confirmLargeMove === true, request.requestId ?? `quant-approve-${id}`)
   }

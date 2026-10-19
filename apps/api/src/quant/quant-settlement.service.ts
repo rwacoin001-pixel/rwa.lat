@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, ForbiddenException, Injectable, Logger, NotFoundException } from '@nestjs/common'
+import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { format18, parse18 } from '../basket/basket.decimals'
@@ -17,9 +17,9 @@ const SETTLEMENT_COLUMNS = `id, product_id, trade_date::text AS trade_date, trim
   approved_by::text AS approved_by, large_move_confirmed`
 
 /**
- * Koala Quant, operator side. One trade date is settled in three steps by two different people:
+ * Koala Quant, operator side. One trade date is settled in three steps (the same administrator may do all of them):
  *   1. enter  - the operator records the strategy's real gross return for the day (draft)
- *   2. approve - a second operator confirms it (a move above the product's daily limit needs an explicit confirmation)
+ *   2. approve - confirm it in a separate action (a move above the product's daily limit needs an explicit confirmation)
  *   3. post   - runs right after approval: applies the return to every lot, pays profits to users' available balance,
  *               books fees, pays due redemptions, advances the product index and closes the day. Safe to retry.
  * Days are settled strictly in order with no gaps, and a day can only be settled after it has ended in the product's timezone.
@@ -140,11 +140,10 @@ export class QuantSettlementService {
     return { id: settlementId, status: 'voided' }
   }
 
-  /** Step 2 (+3): a different operator approves; posting follows immediately. */
+  /** Step 2 (+3): the entry is confirmed (by anyone with console access, including whoever entered it); posting follows immediately. */
   async approve(settlementId: string, adminId: string, confirmLargeMove: boolean, requestId: string) {
     const settlement = await this.getSettlement(settlementId)
     if (settlement.status === 'posted') return { ...settlement, duplicate: true }
-    if (settlement.entered_by === adminId) throw new ForbiddenException({ code: 'QUANT_SELF_APPROVAL', message: 'The person who entered the return cannot approve it.' })
     if (settlement.status === 'draft') {
       const product = await this.quant.getProductRow(settlement.product_id)
       const large = Math.abs(Number(settlement.gross_return_pct)) > Number(product.max_daily_move_pct)

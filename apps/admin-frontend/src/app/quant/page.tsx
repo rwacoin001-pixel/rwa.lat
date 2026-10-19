@@ -165,7 +165,7 @@ export default function QuantOverviewPage() {
                   {field('perfFeeBps', '业绩提成(基点)', '2000 = 20%,仅对高水位以上的新增收益收取')}
                   {field('minSubscriptionUsd', '最小申购 USDT')}
                   {field('minRedemptionUsd', '最小赎回 USDT')}
-                  {field('maxDailyMovePct', '单日涨跌幅上限 %', '超过需要复核人二次确认')}
+                  {field('maxDailyMovePct', '单日涨跌幅上限 %', '超过时确认结算前需要再勾选一次')}
                   {field('cutoffTime', '当日截止时间 (HH:MM)', `按 ${product.timezone} 时区;之后的申赎算下一个交易日`)}
                   {field('targetAnnualMinPct', '目标年化下限 %', '仅作展示,不是承诺;留空则前端不显示')}
                   {field('targetAnnualMaxPct', '目标年化上限 %')}
