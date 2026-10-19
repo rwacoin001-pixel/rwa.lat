@@ -1,6 +1,6 @@
 'use client'
 
-import { useInView, useMotionValue, useSpring } from 'framer-motion'
+import { useInView, useMotionValue, useSpring } from 'motion/react'
 import { useCallback, useEffect, useRef } from 'react'
 
 // 来源: react-bits (MIT + Commons Clause) — https://github.com/DavidHDev/react-bits

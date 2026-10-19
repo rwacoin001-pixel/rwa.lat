@@ -11,7 +11,7 @@
 import { useCallback, useEffect, useRef, useState, type ComponentType } from 'react'
 import { createPortal } from 'react-dom'
 import { Check, Copy, Download, ExternalLink, Menu, MoreHorizontal, MoreVertical, PlusSquare, Settings, Share, X } from 'lucide-react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import type { AppLocale } from '@/lib/i18n'
 import { localizedInstallCopy } from '@/lib/install-localized-copy'
 import { detectEnv, isStandalone, needsAndroidApp, type InstallEnv, type InstallKind } from './install-env'

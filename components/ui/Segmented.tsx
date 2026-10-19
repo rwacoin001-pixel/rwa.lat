@@ -1,5 +1,5 @@
 'use client'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import { useId } from 'react'
 import { DUR, EASE } from '@/lib/motion'
 export function Segmented({ items, value, onChange, label = '切换视图' }: { items: string[]; value: number; onChange: (index: number) => void; label?: string }) {

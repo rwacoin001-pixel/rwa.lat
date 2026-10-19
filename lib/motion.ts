@@ -1,4 +1,4 @@
-import { animate } from 'framer-motion'
+import { animate } from 'motion/react'
 export const DUR = { micro: 120, short: 200, base: 240, long: 400, reveal: 600, pulse: 1200 } as const
 export const EASE = { std: [0.2, 0, 0, 1], emph: [0.05, 0.7, 0.1, 1], exit: [0.3, 0, 0.8, 0.15] } as const
 export const STAGGER = { step: 0.04, max: 8 } as const

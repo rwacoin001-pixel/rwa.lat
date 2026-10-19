@@ -1,7 +1,7 @@
 'use client'
 
 import { useId, useState } from 'react'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { Check, ChevronLeft, Pencil, MessageCircleQuestionMark, Mic, X } from 'lucide-react'
 import type { AiQuestion } from '@/lib/api/ai-customer'
 import s from './ai-question-card.module.css'

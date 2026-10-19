@@ -2,7 +2,7 @@
 
 // One live recommendation. Macro and prediction data live in their own sections.
 import { ArrowUpRight } from 'lucide-react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import { openPath } from '@/lib/maison-nav'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, request } from '@/lib/api/_http'
