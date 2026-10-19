@@ -72,15 +72,44 @@ export function windowLabel(coveredDays: number, days: number): WindowLabel {
 export type TimelineStep = { key: 'submit' | 'start' | 'settle'; date: string }
 
 /**
- * The three dates the subscribe sheet shows: submit (today), the first day that counts (start earning), and the day that
- * first day is settled and its profit reaches the available balance (a trade date is settled after it has ended).
+ * The three dates the subscribe sheet shows, all taken from the preview the API returns: submit (today), the first day that
+ * counts (start earning) and the day that first day is settled. Nothing is derived locally, so the sheet never promises a
+ * date the server did not give.
  */
-export function subscriptionTimeline(preview: { localDate: string; effectiveDate: string }): TimelineStep[] {
+export function subscriptionTimeline(preview: { localDate: string; effectiveDate: string; firstSettlementDate: string }): TimelineStep[] {
   return [
     { key: 'submit', date: preview.localDate },
     { key: 'start', date: preview.effectiveDate },
-    { key: 'settle', date: addDays(preview.effectiveDate, 1) },
+    { key: 'settle', date: preview.firstSettlementDate },
   ]
+}
+
+export type QuantAudience = 'visitor' | 'holder' | 'pending' | 'ex-holder'
+type PositionLike = { principalAtomic: string; pendingOrders: readonly unknown[]; lastDay: unknown | null }
+
+/** Who is looking at the page: decides which blocks it shows and in what order. */
+export function quantAudience(position: PositionLike | null | undefined): QuantAudience {
+  if (!position) return 'visitor'
+  if (BigInt(position.principalAtomic) > BigInt(0)) return 'holder'
+  if (position.pendingOrders.length > 0) return 'pending'
+  return position.lastDay ? 'ex-holder' : 'visitor'
+}
+
+/** The API returns at most ten pending orders, so a count of ten means "ten or more". */
+export function pendingCount(count: number, limit = 10): string {
+  return count >= limit ? `${limit}+` : String(count)
+}
+
+export type RedemptionBand = { from: number; to: number | null; bps: number }
+
+/** Redemption fee tiers as exclusive-upper-bound day bands (`maxDays` is the first day that no longer pays the tier's fee), ending in a free band. */
+export function redemptionBands(tiers: ReadonlyArray<{ maxDays: number; bps: number }>): RedemptionBand[] {
+  const sorted = [...tiers].sort((x, y) => x.maxDays - y.maxDays)
+  const bands: RedemptionBand[] = []
+  let from = 0
+  for (const tier of sorted) { bands.push({ from, to: tier.maxDays, bps: tier.bps }); from = tier.maxDays }
+  bands.push({ from, to: null, bps: 0 })
+  return bands
 }
 
 /** Shortens `2026-10-18` to `10-18` for tick labels. */

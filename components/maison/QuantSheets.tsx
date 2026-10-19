@@ -5,7 +5,7 @@ import { Sheet } from './Sheet'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { acknowledgeDisclosure, getWallet } from '@/lib/api/markets'
-import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
+import { idempotencyKeyForIntent, retireIntentKey } from '@/lib/api/idempotency'
 import { getQuantDisclosure, getQuantRedemptionPreview, getQuantSubscriptionPreview, redeemQuant, subscribeQuant, type QuantProduct } from '@/lib/api/quant'
 import { quantCopyFor, quantErrorMessage } from '@/lib/maison-quant-copy'
 import { subscriptionTimeline } from '@/lib/quant-view-model'
@@ -59,7 +59,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
     return null
   }, [amount, available, c, locale, min, product.minSubscriptionAtomic, value])
   const needsAck = Boolean(product.disclosureId)
-  const ready = value !== null && !problem && (!needsAck || ack) && !pending && Boolean(preview.data)
+  const ready = value !== null && !problem && (!needsAck || (ack && Boolean(disclosure.data))) && !pending && Boolean(preview.data) && available !== null
 
   const submit = async () => {
     if (!ready || value === null) return
@@ -77,6 +77,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
     setPending(false)
     if (!result.ok) { setError(quantErrorMessage(c, result.error.code)); return }
     refreshAll()
+    retireIntentKey(keys.current, 'POST', path, { amountUsd: text }) // a confirmed order is done; other unresolved retries keep their keys
     setDoneDate(result.data.order.effectiveDate)
   }
 
@@ -115,6 +116,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
         {p?.afterCutoff && <p className={s.muted} style={{ margin: '-4px 0 0', fontSize: 11.5 }}>{c.sheet.afterCutoff}</p>}
 
         <div className={s.notice}><span>{c.riskLine}</span></div>
+        {needsAck && disclosure.error && !disclosure.data && <p className={styles.err} role="alert">{c.loadError} <button type="button" className={s.link} onClick={() => void disclosure.refetch()}>{c.retry}</button></p>}
         {needsAck && <label className={styles.ack}><input type="checkbox" checked={ack} onChange={(event) => setAck(event.target.checked)} /><span>{c.sheet.ack}{disclosure.data ? ` · v${disclosure.data.version}` : ''}</span></label>}
         {error && <p className={styles.err} role="alert">{error}</p>}
         <button type="button" className={s.cta} style={{ marginTop: 16 }} disabled={!ready} onClick={() => void submit()}>
@@ -161,6 +163,7 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
     setPending(false)
     if (!result.ok) { setError(quantErrorMessage(c, result.error.code)); return }
     refreshAll()
+    retireIntentKey(keys.current, 'POST', path, body)
     setDone(true)
   }
 

@@ -84,25 +84,10 @@
 .stepper button:disabled { opacity: .25; }
 .stepper span { min-width: 124px; text-align: center; font-variant-numeric: tabular-nums; }
 
-.subs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
-.sub { position: relative; aspect-ratio: 1; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: var(--q-face); box-shadow: var(--q-sub-shadow); }
-.sub svg { position: absolute; inset: 0; width: 100%; height: 100%; }
-.sub .st { fill: none; stroke: rgba(var(--q-gold-rgb), .1); stroke-width: 1.4; }
-.sub .sv { fill: none; stroke: var(--q-gain); stroke-width: 2.2; stroke-linecap: round; }
-.sub .sv[data-tone='down'] { stroke: var(--q-loss); }
-.sub .sk { stroke: rgba(var(--q-gold-rgb), .3); stroke-width: .8; }
-.sub b { position: relative; font-family: var(--q-serif); font-size: 22px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; color: var(--q-num); }
-.sub b[data-tone='down'] { color: var(--q-loss-text); }
-.sub span { position: relative; margin-top: 2px; color: var(--q-dim); font-family: var(--q-caps); font-size: 8.5px; letter-spacing: .24em; text-indent: .24em; text-transform: uppercase; }
-.sub small { position: relative; margin-top: 2px; color: var(--q-dim2); font-size: 9px; }
-.scaleNote { margin: 10px 0 0; text-align: center; color: var(--q-dim2); font-size: 10px; letter-spacing: .04em; }
-.foot2 { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 16px; color: var(--q-dim); font-size: 11px; line-height: 1.5; }
-
-/* Blocks below the dial rise into view once, as they are scrolled to. */
+/* Blocks below the dial fade in once, as they are scrolled to. */
 .reveal { opacity: 1; }
-.sheen { position: relative; overflow: hidden; }
 
-.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 2px 0; padding: 0; list-style: none; color: var(--m-muted); font-size: 11px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 2px 0; padding: 0; list-style: none; color: var(--m-muted); font-size: 12px; }
 .legend i { display: inline-block; width: 9px; height: 2px; margin-inline-end: 6px; vertical-align: 3px; border-radius: 1px; }
 .lgGain { background: var(--m-up); } .lgLoss { background: var(--m-down); } .lgFlat { background: var(--m-faint); }
 .lgMissing { background: repeating-linear-gradient(90deg, var(--m-muted) 0 2px, transparent 2px 4px); } .lgToday { height: 7px !important; width: 7px !important; border: 1px solid var(--m-accent); border-radius: 50%; vertical-align: -1px !important; background: none; }
@@ -129,7 +114,7 @@
 
 .slip { position: relative; margin-top: 10px; padding: 14px 16px 6px; border-radius: 18px; background: var(--m-glass); box-shadow: inset 0 0 0 .5px var(--m-line); }
 .slipHead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 12.5px; font-weight: 600; }
-.slipHead small { color: var(--m-muted); font-family: var(--m-mono); font-size: 10.5px; font-weight: 400; }
+.slipHead small { color: var(--m-muted); font-family: var(--m-mono); font-size: 12px; font-weight: 400; }
 .slip .lines li { font-size: 12px; }
 .slip .lines li > span:last-child { font-family: var(--m-mono); }
 
@@ -195,13 +180,6 @@
   .cStack, .center button { animation: cIn .45s .2s cubic-bezier(.2, .8, .2, 1) backwards; }
   .stepper span { animation: cIn .3s ease backwards; }
   @keyframes cIn { from { opacity: 0; transform: translateY(6px) scale(.97); } }
-  .sub { animation: subIn .7s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(var(--n, 0) * 110ms); }
-  @keyframes subIn { from { opacity: 0; transform: scale(.85); } }
-  .sub .sv { animation: ringIn 1.1s cubic-bezier(.3, .7, .2, 1) backwards; animation-delay: calc(.25s + var(--n, 0) * 110ms); }
-  @keyframes ringIn { from { stroke-dasharray: 0 var(--c); } }
-  .reveal { opacity: 0; transform: translateY(16px); }
-  .reveal[data-in] { opacity: 1; transform: none; transition: opacity .6s ease var(--d, 0ms), transform .75s cubic-bezier(.2, .8, .2, 1) var(--d, 0ms); }
-  .sheen::after { content: ''; position: absolute; inset: 0; z-index: 0; pointer-events: none; background: linear-gradient(105deg, transparent 38%, rgba(255, 255, 255, .5) 50%, transparent 62%); transform: translateX(-120%); animation: sheenSweep 5s 1.4s ease-in-out infinite; }
-  .sheen:disabled::after { display: none; }
-  @keyframes sheenSweep { 0%, 55% { transform: translateX(-120%); } 100% { transform: translateX(120%); } }
+  .reveal { opacity: 0; }
+  .reveal[data-in] { opacity: 1; transition: opacity .2s ease; }
 }

@@ -31,7 +31,7 @@ export function signedUsdt(atomic: string | null | undefined, locale: string): s
   if (atomic === null || atomic === undefined) return '—'
   const negative = atomic.startsWith('-')
   const body = usdtNumber(negative ? atomic.slice(1) : atomic, locale)
-  if (body === '—') return body
+  if (body === '—' || /^0(?:[.,]0+)?$/.test(body)) return body
   return negative ? `−${body}` : atomic === '0' ? body : `+${body}`
 }
 
@@ -316,36 +316,6 @@ export function QuantStepper({ ticks, selected, onSelect }: { ticks: Tick[]; sel
   </div>
 }
 
-function Sub({ value, full, label, note, index }: { value: number | null; full: number; label: string; note?: string; index: number }) {
-  const fraction = value === null ? 0 : Math.min(1, Math.abs(value) / full)
-  const circumference = 2 * Math.PI * 44
-  const negative = value !== null && value < 0
-  const tween = useTween(value, 900)
-  return <div className={styles.sub} style={{ '--n': index } as CSSProperties}>
-    <svg viewBox="0 0 110 110" aria-hidden="true">
-      <circle className={styles.st} cx="55" cy="55" r="44" />
-      {[0, 90, 180, 270].map((deg) => { const a = (deg * Math.PI) / 180; return <line key={deg} className={styles.sk} x1={55 + Math.cos(a) * 47} y1={55 + Math.sin(a) * 47} x2={55 + Math.cos(a) * 51} y2={55 + Math.sin(a) * 51} /> })}
-      <circle className={styles.sv} data-tone={negative ? 'down' : undefined} cx="55" cy="55" r="44" style={{ '--c': circumference } as CSSProperties} strokeDasharray={`${circumference * fraction} ${circumference}`} transform="rotate(-90 55 55)" />
-    </svg>
-    <b data-tone={negative ? 'down' : undefined}>{value === null ? '—' : formatPct(tween ?? 0, 1)}</b>
-    <span>{label}</span>
-    {note && <small>{note}</small>}
-  </div>
-}
-
-/** Three small subdials under the dial: 7 days, 30 days, max drawdown. A ring is full at a fixed reference (3% / 8% / 5%), named under it. */
-export function QuantRings({ product, copy }: { product: QuantProduct; copy: QuantCopy }) {
-  const p = product.performance
-  return <>
-    <div className={styles.subs}>
-      <Sub index={0} value={p.last7d.pct} full={3} label={copy.last7} note={p.last7d.coveredDays < p.last7d.days ? copy.partial(p.last7d.coveredDays) : undefined} />
-      <Sub index={1} value={p.last30d.pct} full={8} label={copy.last30} note={p.last30d.coveredDays < p.last30d.days ? copy.partial(p.last30d.coveredDays) : undefined} />
-      <Sub index={2} value={p.maxDrawdownPct} full={5} label={copy.drawdown} />
-    </div>
-    <p className={styles.scaleNote}>{copy.scaleNote}</p>
-  </>
-}
-
 /** Fades a block up the first time it scrolls into view. Never leaves it hidden: a timer shows it even if no observer fires. */
 export function Reveal({ children, index = 0 }: { children: ReactNode; index?: number }) {
   const ref = useRef<HTMLDivElement>(null)
@@ -382,6 +352,7 @@ export function QuantReceipt({ payout, copy, locale }: { payout: QuantPayout; co
       <li><span>{copy.position.management}</span><i /><span>{signedUsdt(negate(payout.managementFeeAtomic), locale)}</span></li>
       <li><span>{copy.position.performance}</span><i /><span>{signedUsdt(negate(payout.performanceFeeAtomic), locale)}</span></li>
       <li data-total=""><span>{copy.position.net} · {net < BigInt(0) ? copy.position.reduced : copy.position.credited}</span><i /><span style={{ color: net < BigInt(0) ? 'var(--m-down)' : 'var(--m-up)' }}>{signedUsdt(payout.netAtomic, locale)}</span></li>
+      <li><span>{copy.view.receiptPaid}</span><i /><span>{signedUsdt(payout.paidAtomic, locale)}</span></li>
     </ul>
   </div>
 }

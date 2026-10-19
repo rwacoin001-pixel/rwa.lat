@@ -35,8 +35,32 @@ test('percent formatting uses a real minus and never shows -0.00%', () => {
   assert.equal(vm.formatPct('abc'), '—')
 })
 
-test('subscription timeline: submit, first counted day, first payout day', () => {
-  assert.deepEqual(vm.subscriptionTimeline({ localDate: '2026-10-19', effectiveDate: '2026-10-20' }).map((s) => s.date), ['2026-10-19', '2026-10-20', '2026-10-21'])
+test('subscription timeline uses the dates the API returned, even when they are not consecutive', () => {
+  assert.deepEqual(vm.subscriptionTimeline({ localDate: '2026-10-19', effectiveDate: '2026-10-20', firstSettlementDate: '2026-10-20' }).map((s) => s.date), ['2026-10-19', '2026-10-20', '2026-10-20'])
+  assert.deepEqual(vm.subscriptionTimeline({ localDate: '2026-10-23', effectiveDate: '2026-10-26', firstSettlementDate: '2026-10-27' }).map((s) => s.date), ['2026-10-23', '2026-10-26', '2026-10-27'])
   assert.equal(vm.windowLabel(4, 7).partial, true)
   assert.equal(vm.windowLabel(7, 7).partial, false)
+})
+
+test('audience: visitor, holder (incl. waiting funds), pending-only, ex-holder', () => {
+  const none = { principalAtomic: '0', pendingOrders: [], lastDay: null }
+  assert.equal(vm.quantAudience(undefined), 'visitor')
+  assert.equal(vm.quantAudience(none), 'visitor')
+  assert.equal(vm.quantAudience({ ...none, principalAtomic: '5000000' }), 'holder')
+  assert.equal(vm.quantAudience({ ...none, pendingOrders: [{}] }), 'pending')
+  assert.equal(vm.quantAudience({ ...none, lastDay: { tradeDate: '2026-10-18' } }), 'ex-holder')
+  assert.equal(vm.quantAudience({ principalAtomic: '1', pendingOrders: [{}], lastDay: {} }), 'holder')
+})
+
+test('pending count caps at the API limit', () => {
+  assert.equal(vm.pendingCount(0), '0')
+  assert.equal(vm.pendingCount(9), '9')
+  assert.equal(vm.pendingCount(10), '10+')
+})
+
+test('redemption bands: exclusive upper bounds, sorted, ending free', () => {
+  assert.deepEqual(vm.redemptionBands([{ maxDays: 30, bps: 50 }, { maxDays: 7, bps: 150 }]), [
+    { from: 0, to: 7, bps: 150 }, { from: 7, to: 30, bps: 50 }, { from: 30, to: null, bps: 0 },
+  ])
+  assert.deepEqual(vm.redemptionBands([]), [{ from: 0, to: null, bps: 0 }])
 })

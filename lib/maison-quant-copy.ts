@@ -50,6 +50,42 @@ export type QuantCopy = {
   redeem: string
   addMore: string
   closedNote: string
+  view: {
+    loading: string
+    unavailable: string
+    updateFailed: string
+    stripLatest: string
+    stripPending: string
+    accountTitle: string
+    accountNet: string
+    accountFees: string
+    accountPaid: string
+    exited: string
+    noPrincipal: string
+    redemptionPending: string
+    ordersTitle: string
+    orderAll: string
+    orderStatus: { pending: string; accepted: string; unknown: string }
+    performanceTitle: string
+    drawdownHelp: string
+    summaryTitle: string
+    summaryMinimum: string
+    summaryStart: string
+    summarySettle: string
+    summaryCutoff: (time: string, zone: string) => string
+    historyTitle: string
+    historyLimit: string
+    historyMore: string
+    historyLess: string
+    feesHolding: string
+    feesRate: string
+    feesMinimum: string
+    feeBand: (from: number, to: number) => string
+    feeFrom: (from: number) => string
+    disclosureEmpty: string
+    exitedNote: string
+    receiptPaid: string
+  }
   position: {
     title: string
     principal: string
@@ -133,29 +169,65 @@ const en: QuantCopy = {
   drawdown: 'Max drawdown',
   partial: (days) => `${days}d recorded`,
   target: 'Target range',
-  targetValue: (min, max) => `${min}–${max}% a year`,
+  targetValue: (min, max) => `Annual target ${min}–${max}%, not guaranteed`,
   targetNote: 'A target, not a promise. Actual results can be lower and you can lose principal.',
   riskLine: 'Your principal can fall. Past results don’t predict future ones.',
   flowTitle: 'Where the money goes',
   flowGain: 'On a gain day',
-  flowGainBody: 'After fees, the profit goes to your available balance the same day, ready to withdraw.',
+  flowGainBody: 'Profit after fees enters your available balance and can be withdrawn that day.',
   flowLoss: 'On a loss day',
-  flowLossBody: 'The loss reduces your principal. Nothing is taken from your balance.',
+  flowLossBody: 'Losses reduce principal, not your available balance.',
   feesTitle: 'Fees',
   feeManagement: (pct) => `Management fee ${pct}% a year, charged daily`,
-  feePerformance: (pct) => `Performance fee ${pct}% of new gains above the product’s high-water mark`,
+  feePerformance: (pct) => `Performance fee: ${pct}% of new gains above the product’s previous peak`,
   feeRedemption: (days, pct) => `Redeem within ${days} days: ${pct}%`,
   feeRedemptionFree: (days) => `Redeem after ${days} days: free`,
   rulesTitle: 'How it works',
   ruleCutoff: (time, zone) => `Orders placed before ${time} (${zone}) count for that day; later ones count for the next day.`,
   ruleStart: 'A subscription starts earning the day after its trade date.',
   ruleDaily: 'Each day is settled after it ends. A redemption is paid after the settlement of its trade date.',
-  indexNote: 'The index is after the management fee. The performance fee is taken from each payout, so your own receipt is what you actually receive.',
+  indexNote: 'The index deducts management fees, not performance fees. Your settlement records show your net result.',
   disclosure: 'Risk disclosure',
   subscribe: 'Subscribe',
   redeem: 'Redeem',
   addMore: 'Add',
   closedNote: 'Subscriptions are paused. Your position and daily settlement continue.',
+  view: {
+    loading: 'Loading…',
+    unavailable: 'No data available',
+    updateFailed: 'Update failed',
+    stripLatest: 'Latest-day net result',
+    stripPending: 'Pending',
+    accountTitle: 'My Koala Quant',
+    accountNet: 'Total net result',
+    accountFees: 'Total fees',
+    accountPaid: 'Total credited to available balance',
+    exited: 'No current position',
+    noPrincipal: 'No principal to redeem',
+    redemptionPending: 'Redemption awaiting settlement',
+    ordersTitle: 'Orders in progress',
+    orderAll: 'All principal',
+    orderStatus: { pending: 'Processing', accepted: 'Accepted', unknown: 'Status unconfirmed' },
+    performanceTitle: 'Past performance',
+    drawdownHelp: 'Drawdown measures the index’s fall from a previous peak.',
+    summaryTitle: 'Before you subscribe',
+    summaryMinimum: 'Minimum subscription',
+    summaryStart: 'Starts earning',
+    summarySettle: 'First settlement',
+    summaryCutoff: (time, zone) => `Order cutoff ${time} (${zone})`,
+    historyTitle: 'Settlement history',
+    historyLimit: 'Latest 60 settlements',
+    historyMore: 'Show all',
+    historyLess: 'Show fewer',
+    feesHolding: 'Days held',
+    feesRate: 'Redemption fee',
+    feesMinimum: 'Minimum redemption',
+    feeBand: (from, to) => `${from} to under ${to} days`,
+    feeFrom: (from) => `${from} days or more`,
+    disclosureEmpty: 'No disclosure available',
+    exitedNote: 'Your past settlements stay here.',
+    receiptPaid: 'Credited to available balance',
+  },
   position: {
     title: 'My Koala Quant',
     principal: 'Principal (USDT)',
@@ -175,7 +247,7 @@ const en: QuantCopy = {
     emptyPayouts: 'Your first settlement will appear here.',
     orderSubscription: 'Subscription',
     orderRedemption: 'Redemption',
-    orderEffective: (date) => `Trade date ${date}`,
+    orderEffective: (date) => `Order effective ${date}`,
   },
   sheet: {
     subscribeTitle: 'Subscribe to Koala Quant',
@@ -187,7 +259,7 @@ const en: QuantCopy = {
     timelineTitle: 'When your money starts earning',
     stepSubmit: 'Submitted',
     stepStart: 'Starts earning',
-    stepSettle: 'First payout',
+    stepSettle: 'First settlement',
     stepSubmitBody: (time, zone) => `Cutoff ${time} (${zone}); later orders count for the next day.`,
     stepStartBody: 'The first day that counts toward your return.',
     stepSettleBody: 'That day is settled after it ends. Profit goes to your available balance; a loss reduces principal.',
@@ -205,7 +277,7 @@ const en: QuantCopy = {
     redeemSteps: { submit: 'Request submitted', settle: 'Trade date is settled', arrive: 'Fee deducted, paid to available balance' },
     done: 'Done',
     doneSubscribe: (date) => `Subscribed. It starts earning on ${date}.`,
-    doneRedeem: 'Redemption requested. It’s paid after the next settlement.',
+    doneRedeem: 'Redemption requested. It’s paid after its trade date settles.',
     close: 'Close',
     errors: {
       QUANT_INSUFFICIENT_BALANCE: 'Your available balance is too low.',
@@ -247,29 +319,65 @@ const zh: QuantCopy = {
   drawdown: '最大回撤',
   partial: (days) => `已记录 ${days} 日`,
   target: '目标区间',
-  targetValue: (min, max) => `年化 ${min}–${max}%`,
+  targetValue: (min, max) => `年化目标 ${min}–${max}%,不保证收益`,
   targetNote: '仅为目标,不是承诺。实际表现可能更低,本金可能亏损。',
   riskLine: '本金可能亏损;历史表现不代表未来。',
   flowTitle: '钱怎么走',
   flowGain: '盈利日',
-  flowGainBody: '扣除费用后,当天进入你的可用余额,可直接提现。',
+  flowGainBody: '盈利扣费后转入可用余额,可于到账当天提现。',
   flowLoss: '亏损日',
-  flowLossBody: '亏损计入本金,不会从你的余额里扣钱。',
+  flowLossBody: '亏损直接减少本金,不扣可用余额。',
   feesTitle: '费用',
   feeManagement: (pct) => `管理费 年化 ${pct}%,按日计提`,
-  feePerformance: (pct) => `业绩提成 ${pct}%,仅对产品高水位以上的新增收益收取`,
+  feePerformance: (pct) => `业绩报酬:超过历史最高净值的新增收益收取 ${pct}%`,
   feeRedemption: (days, pct) => `持有不足 ${days} 天赎回:${pct}%`,
   feeRedemptionFree: (days) => `持有满 ${days} 天后赎回:免费`,
   rulesTitle: '规则',
   ruleCutoff: (time, zone) => `${time}(${zone})前提交的申请算当天,之后算次日。`,
   ruleStart: '申购从其交易日的次日起息。',
   ruleDaily: '每个交易日结束后结算;赎回在其交易日结算后兑付。',
-  indexNote: '指数已扣管理费;业绩提成在每次派发时扣除,以你自己的结算凭单为准。',
+  indexNote: '指数已扣管理费,未扣业绩报酬;个人净收益以结算记录为准。',
   disclosure: '风险披露',
   subscribe: '申购',
   redeem: '赎回',
   addMore: '追加申购',
   closedNote: '申购已暂停,已有持仓和每日结算不受影响。',
+  view: {
+    loading: '加载中…',
+    unavailable: '暂无数据',
+    updateFailed: '更新失败',
+    stripLatest: '最近一日净收益',
+    stripPending: '待处理',
+    accountTitle: '我的考拉量化',
+    accountNet: '累计净收益',
+    accountFees: '累计费用',
+    accountPaid: '累计转入可用余额',
+    exited: '当前无持仓',
+    noPrincipal: '暂无可赎回本金',
+    redemptionPending: '已有赎回申请待结算',
+    ordersTitle: '处理中的订单',
+    orderAll: '全部本金',
+    orderStatus: { pending: '处理中', accepted: '已受理', unknown: '状态待确认' },
+    performanceTitle: '历史表现',
+    drawdownHelp: '回撤指指数从高点到低点的跌幅。',
+    summaryTitle: '申购前请了解',
+    summaryMinimum: '最低申购',
+    summaryStart: '开始计息',
+    summarySettle: '首次结算',
+    summaryCutoff: (time, zone) => `订单截止 ${time}(${zone})`,
+    historyTitle: '结算记录',
+    historyLimit: '最近 60 次结算',
+    historyMore: '查看全部',
+    historyLess: '收起',
+    feesHolding: '持有天数',
+    feesRate: '赎回费率',
+    feesMinimum: '最低赎回',
+    feeBand: (from, to) => `${from} 至不足 ${to} 天`,
+    feeFrom: (from) => `${from} 天及以上`,
+    disclosureEmpty: '暂无风险披露文件',
+    exitedNote: '你过去的结算记录会一直保留在这里。',
+    receiptPaid: '实际转入可用余额',
+  },
   position: {
     title: '我的考拉量化',
     principal: '当前本金 USDT',
@@ -289,7 +397,7 @@ const zh: QuantCopy = {
     emptyPayouts: '首次结算后,这里会显示你的每日凭单。',
     orderSubscription: '申购',
     orderRedemption: '赎回',
-    orderEffective: (date) => `交易日 ${date}`,
+    orderEffective: (date) => `订单生效日 ${date}`,
   },
   sheet: {
     subscribeTitle: '申购考拉量化',
@@ -301,7 +409,7 @@ const zh: QuantCopy = {
     timelineTitle: '这笔钱什么时候开始算收益',
     stepSubmit: '提交申请',
     stepStart: '起息',
-    stepSettle: '首次派发',
+    stepSettle: '首次结算',
     stepSubmitBody: (time, zone) => `截止 ${time}(${zone}),之后算次日。`,
     stepStartBody: '从这一天开始计入你的收益。',
     stepSettleBody: '该日结束后结算:盈利进可用余额,亏损计入本金。',
@@ -319,7 +427,7 @@ const zh: QuantCopy = {
     redeemSteps: { submit: '提交申请', settle: '交易日结算', arrive: '扣除赎回费,转入可用余额' },
     done: '完成',
     doneSubscribe: (date) => `申购成功,${date} 起息。`,
-    doneRedeem: '已提交赎回,下次结算后兑付。',
+    doneRedeem: '已提交赎回,其交易日结算后兑付。',
     close: '关闭',
     errors: {
       QUANT_INSUFFICIENT_BALANCE: '可用余额不足。',
