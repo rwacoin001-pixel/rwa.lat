@@ -214,18 +214,11 @@
    scrubbed timeline) and has two hard stops: untouched at rest, fully stowed once the last tier has gone. The surface
    shrinks towards its bottom edge — the edge that stays attached to the content below — so the card reads as sliding
    into a drawer under the tabs, and its contents leave top-down in three tiers. Transform and opacity only; layout never
-   moves. Engines without scroll timelines (iOS Safari, Firefox) get the same frames from MarketHero's useHeroStow: it
-   writes the raw exit progress (0→1, card top at scrollport top → card bottom at scrollport top) to --hero-p, and the
-   [data-stow='js'] rules below re-derive each range with the exact numbers of the keyframe ranges. */
-@supports (animation-timeline: view()) {
-  @media (prefers-reduced-motion: no-preference) {
-    .hero { view-timeline: --hero block; animation: heroStow linear both; animation-timeline: --hero; animation-range: exit 0% exit 80%; }
-    .tier { animation: tierStow linear both; animation-timeline: --hero; }
-    .tier[data-tier='1'] { animation-range: exit 0% exit 32%; }
-    .tier[data-tier='2'] { animation-range: exit 14% exit 50%; }
-    .tier[data-tier='3'] { animation-range: exit 34% exit 72%; }
-  }
-}
+   moves. Driven by MarketHero's useHeroStow on every engine: it writes the raw exit progress (0→1, card top at scrollport
+   top → card bottom at scrollport top) to --hero-p, and the [data-stow='js'] rules below map it to each tier's range.
+   (A CSS view() timeline was used where supported, but Chrome kept it at "stowed" when Markets opened from a page that
+   had been scrolled down: the timeline was resolved at the old offset and not refreshed when the scroll reset to the
+   top, so the card's contents stayed invisible until a tab switch.) */
 @keyframes heroStow { to { transform: scale(.9); opacity: .4; } }
 @keyframes tierStow { to { transform: translateY(-12px); opacity: 0; } }
 @media (prefers-reduced-motion: no-preference) {
