@@ -50,7 +50,7 @@ export class AdminQuantController {
   }
 
   @Post('settlements/:id/approve')
-  @ApiOperation({ summary: 'Step 2: a different operator approves; the day is posted right after' })
+  @ApiOperation({ summary: 'Step 2: confirm the entry; the day is posted right after' })
   approve(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) {
     return this.quant.approve(adminId(request), id, body)
   }
