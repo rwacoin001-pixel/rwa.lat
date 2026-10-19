@@ -8,18 +8,14 @@
 
 /* The stage: the Koala page is a bronze-and-champagne watch-dial room. It re-points the shared Maison tokens so every Maison part inside it (lacquer cards, sheets, lists, buttons) follows. Dark is the night dial; light is the same dial on champagne paper. */
 :global(.rwa-mobile[data-theme]) .stage.stage { --q-serif: var(--font-q-serif, var(--m-display)); --q-caps: var(--font-q-caps, var(--m-sans));
-  --q-gold: #d9bf86; --q-gold-rgb: 217, 191, 134; --q-num: #f4ead4; --q-dim: #9a8c75; --q-dim2: #7a6e5b; --q-flat: #8b7e66; --q-gain: #ecd9ad; --q-loss: #cf7457; --q-loss-text: #e08a6d;
-  --q-face: radial-gradient(circle at 50% 28%, #2a2118, #120e0a 72%); --q-face-inset: #000; --q-sheen: rgba(255, 235, 190, .5);
-  --q-bezel: conic-gradient(from 18deg, #3a3025, #9a8157 12%, #2b2218 24%, #6f5d41 38%, #241c15 50%, #b39a68 63%, #2b2218 76%, #7b6646 88%, #3a3025);
-  --q-bezel-shadow: 0 34px 50px -28px #000, 0 0 0 .5px rgba(255, 235, 190, .2), inset 0 0 0 1px rgba(255, 235, 190, .16); --q-bezel-hi: rgba(255, 240, 205, .5); --q-bezel-lo: rgba(0, 0, 0, .5);
-  --q-sub-shadow: inset 0 0 0 1px rgba(217, 191, 134, .22), inset 0 0 18px #000, 0 16px 20px -16px #000;
-  --m-bg: #0f0c09; --m-ink: #f0e6d0; --m-muted: #9a8c75; --m-faint: #7a6e5b; --m-line: rgba(217, 191, 134, .2); --m-line-soft: rgba(217, 191, 134, .1);
-  --m-glass: rgba(34, 27, 20, .72); --m-glass-deep: rgba(24, 19, 14, .82); --m-accent: #d9bf86; --m-on-accent: #1a1209; --m-up: #ecd9ad; --m-down: #cf7457; --m-warn: #d9bf86;
-  --m-lacquer: linear-gradient(180deg, #1d1812, #14100c); --m-lacquer-ink: #f0e6d0; --m-lacquer-muted: #9a8c75; --m-lacquer-line: rgba(217, 191, 134, .22); --m-lacquer-accent: #d9bf86;
-  --m-lacquer-hi: rgba(255, 235, 190, .14); --m-lacquer-up: #ecd9ad; --m-lacquer-down: #cf7457; --m-lacquer-edge: rgba(217, 191, 134, .26); --m-lacquer-fill: rgba(217, 191, 134, .07); --m-lacquer-tick: rgba(217, 191, 134, .2);
-  --m-lacquer-shadow: 0 22px 40px -26px #000; --m-cta: linear-gradient(180deg, #e7cf98, #c7a869); --m-cta-ink: #1a1209; --m-cta-rim: rgba(255, 255, 255, .45); --m-cta-chip: rgba(26, 18, 9, .85); --m-cta-chip-ink: #ecd9ad;
-  --m-scrim: rgba(8, 6, 4, .6); --m-topbar-bg: rgba(15, 12, 9, .66); background: #0f0c09; color: #f0e6d0; }
-:global(.rwa-mobile[data-theme]) .stage.stage::before { background: radial-gradient(120% 46% at 50% 14%, #2c2218 0, #0f0c09 64%); opacity: 1; }
+  /* Dark: the app's own navy-and-champagne page (its --m-* tokens are left alone); only the dial's metal and face are set here. */
+  --q-gold: #dcc196; --q-gold-rgb: 220, 193, 150; --q-num: #eef1f6; --q-dim: #8e9ab0; --q-dim2: #6d7a91; --q-flat: #7e8aa0; --q-gain: #e6c995; --q-loss: #e2806f; --q-loss-text: #f29b8b;
+  --q-face: radial-gradient(circle at 50% 28%, #1d2b47, #0a1222 72%); --q-face-inset: #000; --q-sheen: rgba(240, 226, 196, .5);
+  --q-bezel: conic-gradient(from 18deg, #2a3144, #a8916a 12%, #1d2435 24%, #6e6452 38%, #181e2d 50%, #cdb487 63%, #222a3c 76%, #7e6f54 88%, #2a3144);
+  --q-bezel-shadow: 0 34px 50px -28px #000, 0 0 0 .5px rgba(240, 226, 196, .22), inset 0 0 0 1px rgba(240, 226, 196, .16); --q-bezel-hi: rgba(245, 235, 210, .5); --q-bezel-lo: rgba(0, 0, 0, .5);
+  --q-sub-shadow: inset 0 0 0 1px rgba(220, 193, 150, .22), inset 0 0 18px #000, 0 16px 20px -16px #000;
+  --q-crown-hi: #fbf0d6; --q-crown-mid: #c9ad7c; --q-crown-lo: #6f5d3f; }
+:global(.rwa-mobile[data-theme='dark']) .stage.stage::before { background: radial-gradient(120% 46% at 50% 16%, rgba(44, 64, 102, .5) 0, transparent 64%), radial-gradient(120% 60% at 100% -10%, rgba(227, 187, 122, .16), transparent 60%), radial-gradient(90% 50% at -10% 30%, rgba(95, 122, 166, .2), transparent 62%); }
 :global(.rwa-mobile[data-theme='light']) .stage.stage {
   --q-gold: #8f6a2a; --q-gold-rgb: 143, 106, 42; --q-num: #2b2116; --q-dim: #75664d; --q-dim2: #8c7d63; --q-flat: #9a8b70; --q-gain: #9a7222; --q-loss: #b4492b; --q-loss-text: #b4492b;
   --q-face: radial-gradient(circle at 50% 28%, #fffaf0, #ece2cc 74%); --q-face-inset: rgba(110, 80, 30, .3); --q-sheen: rgba(255, 255, 255, .85);
@@ -30,9 +26,9 @@
   --m-glass: rgba(255, 251, 242, .78); --m-glass-deep: rgba(250, 243, 229, .92); --m-accent: #8f6a2a; --m-on-accent: #fff8e8; --m-up: #8a6a1f; --m-down: #b4492b; --m-warn: #8f6a2a;
   --m-lacquer: linear-gradient(180deg, #fffaf0, #f1e7d1); --m-lacquer-ink: #2b2116; --m-lacquer-muted: #75664d; --m-lacquer-line: rgba(143, 106, 42, .3); --m-lacquer-accent: #8f6a2a;
   --m-lacquer-hi: rgba(255, 255, 255, .75); --m-lacquer-up: #8a6a1f; --m-lacquer-down: #b4492b; --m-lacquer-edge: rgba(143, 106, 42, .32); --m-lacquer-fill: rgba(143, 106, 42, .07); --m-lacquer-tick: rgba(143, 106, 42, .26);
-  --m-lacquer-shadow: 0 20px 36px -26px rgba(90, 64, 24, .55); --m-cta-chip-ink: #ecd9ad;
+  --m-lacquer-shadow: 0 20px 36px -26px rgba(90, 64, 24, .55); --m-cta: linear-gradient(180deg, #e7cf98, #c7a869); --m-cta-ink: #1a1209; --m-cta-rim: rgba(255, 255, 255, .45); --m-cta-chip: rgba(26, 18, 9, .85); --m-cta-chip-ink: #ecd9ad;
   --m-scrim: rgba(60, 44, 20, .34); --m-topbar-bg: rgba(244, 236, 220, .72); background: #f4ecdc; color: #2b2116; }
-:global(.rwa-mobile[data-theme='light']) .stage.stage::before { background: radial-gradient(120% 46% at 50% 14%, #fffbf1 0, #f1e8d6 64%); }
+:global(.rwa-mobile[data-theme='light']) .stage.stage::before { background: radial-gradient(120% 46% at 50% 14%, #fffbf1 0, #f1e8d6 64%); opacity: 1; }
 
 /* Header: kicker, the name between two hairlines, and the live settlement pill, centred over the dial. */
 .mast { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 2px 0; text-align: center; }

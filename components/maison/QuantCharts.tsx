@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
-import { Activity, BarChart3, CalendarClock, Coins, Percent, Target, TrendingUp } from 'lucide-react'
+import { CalendarClock, Coins, Percent, Target } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import type { QuantProduct } from '@/lib/api/quant'
 import type { QuantCopy } from '@/lib/maison-quant-copy'
@@ -34,20 +34,68 @@ function TweenPct({ value, className }: { value: number | null; className?: stri
   return <b className={`${className ?? ''} ${value !== null && value < 0 ? styles.down : ''}`}>{body}{sign && <small>{sign}</small>}</b>
 }
 
-/** Three figures right under the dial: the last week, the last month and the worst fall, each counting up into place. */
+/** Scale for a sub-dial: the smallest of 1/2/5/10/20/50/100 % that leaves the figure some room before the end stop. */
+function subScale(value: number | null) {
+  const need = Math.abs(value ?? 0) * 1.3
+  return [1, 2, 5, 10, 20, 50, 100].find((step) => step >= need) ?? 100
+}
+const SWEEP = 135
+const at = (radius: number, degrees: number) => {
+  const a = (degrees * Math.PI) / 180
+  return [50 + Math.sin(a) * radius, 50 - Math.cos(a) * radius] as const
+}
+
+/**
+ * One chronograph sub-dial: a 270° scale from 0 to a round end stop, a gold arc and a needle that sweeps to the figure
+ * when it first comes into view, and the figure in the lower window. Drawdown runs the same way, in the loss colour.
+ */
+function SubDial({ label, short, value, note, loss, index }: { label: string; short: string; value: number | null; note: string | null; loss?: boolean; index: number }) {
+  const [ref, seen] = useSeen<HTMLDivElement>()
+  const scale = subScale(value)
+  const share = value === null ? 0 : Math.min(1, Math.abs(value) / scale)
+  const angle = -SWEEP + share * SWEEP * 2
+  const [ax, ay] = at(37, -SWEEP)
+  const [bx, by] = at(37, angle)
+  const arc = share > 0 ? `M${ax.toFixed(2)},${ay.toFixed(2)} A37,37 0 ${share * 270 > 180 ? 1 : 0} 1 ${bx.toFixed(2)},${by.toFixed(2)}` : ''
+  const [l0x, l0y] = at(30, -SWEEP + 30)
+  const [l1x, l1y] = at(30, SWEEP - 30)
+  return <div ref={ref} className={styles.sub} data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
+    <div className={styles.subDial}>
+      <i className={styles.subBezel} aria-hidden="true" />
+      <i className={styles.subFace} aria-hidden="true" />
+      <svg viewBox="0 0 100 100" className={styles.subSvg} aria-hidden="true">
+        {Array.from({ length: 55 }, (_, i) => {
+          const deg = -SWEEP + i * 5
+          const major = i % 9 === 0
+          const [x1, y1] = at(major ? 40 : 42, deg)
+          const [x2, y2] = at(45, deg)
+          return <line key={i} className={styles.subTick} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        <circle className={styles.subTrack} cx="50" cy="50" r="37" pathLength={360} strokeDasharray="270 90" transform="rotate(135 50 50)" />
+        {arc && <path className={styles.subArc} d={arc} pathLength={1} />}
+        <text className={styles.subNum} x={l0x} y={l0y + 3}>0</text>
+        <text className={styles.subNum} x={l1x} y={l1y + 3}>{loss ? `−${scale}` : scale}</text>
+        <text className={styles.subShort} x="50" y="33">{short}</text>
+        <g className={styles.subNeedle}>
+          <line x1="50" y1="57" x2="50" y2="15" />
+          <circle cx="50" cy="50" r="3.2" />
+          <circle className={styles.subPin} cx="50" cy="50" r="1.2" />
+        </g>
+      </svg>
+      <div className={styles.subWindow}><TweenPct value={value} /></div>
+    </div>
+    <span className={styles.subLabel}>{label}</span>
+    {note && <em className={styles.subNote}>{note}</em>}
+  </div>
+}
+
+/** Three sub-dials under the main dial, like a chronograph's: the last week, the last month and the worst fall. */
 export function QuantKpis({ product, c }: { product: QuantProduct; c: QuantCopy }) {
   const p = product.performance
-  const cells = [
-    { icon: BarChart3, label: c.last7, value: p.last7d.pct, note: p.last7d.coveredDays < p.last7d.days ? c.partial(p.last7d.coveredDays) : null },
-    { icon: TrendingUp, label: c.last30, value: p.last30d.pct, note: p.last30d.coveredDays < p.last30d.days ? c.partial(p.last30d.coveredDays) : null },
-    { icon: Activity, label: c.drawdown, value: p.maxDrawdownPct, note: null },
-  ]
-  return <div className={styles.kpis}>
-    {cells.map((cell, index) => <div key={cell.label} className={styles.kpi} style={{ '--i': index } as CSSProperties}>
-      <span><cell.icon size={13} strokeWidth={1.8} aria-hidden="true" />{cell.label}</span>
-      <TweenPct value={cell.value} />
-      {cell.note && <em>{cell.note}</em>}
-    </div>)}
+  return <div className={styles.subs}>
+    <SubDial index={0} label={c.last7} short="7D" value={p.last7d.pct} note={p.last7d.coveredDays < p.last7d.days ? c.partial(p.last7d.coveredDays) : null} />
+    <SubDial index={1} label={c.last30} short="30D" value={p.last30d.pct} note={p.last30d.coveredDays < p.last30d.days ? c.partial(p.last30d.coveredDays) : null} />
+    <SubDial index={2} label={c.drawdown} short="MDD" value={p.maxDrawdownPct} note={null} loss />
   </div>
 }
 

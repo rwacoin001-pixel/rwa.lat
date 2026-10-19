@@ -1,5 +1,5 @@
 'use client'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import { DUR, EASE, STAGGER } from '@/lib/motion'
 export function ScoreBars({ items }: { items: { label: string; value: string | null }[] }) {
   const reduced = useReducedMotion()

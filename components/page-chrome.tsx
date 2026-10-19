@@ -21,6 +21,7 @@ export default function PageChrome() {
     let frame = 0
     let pageColor = ''
     let statusColor = ''
+    let onAuth = false
     const writeStatus = (color: string) => {
       if (color === statusColor) return
       statusColor = color
@@ -31,6 +32,7 @@ export default function PageChrome() {
       const root = document.documentElement
       if (/RwaLatAndroidTrial\//.test(navigator.userAgent)) root.dataset.nativeApp = 'android'
       const auth = document.querySelector<HTMLElement>('[data-auth-theme]')
+      onAuth = Boolean(auth)
       const page = auth ?? document.querySelector<HTMLElement>('[data-maison-page]:not([data-maison-page="welcome"]), .rwa-mobile .screen, main:not(.rwa-shell):not([data-app-loading])')
       let color = auth ? getComputedStyle(auth).getPropertyValue('--auth-bg').trim() : ''
       if (!color && page) {
@@ -50,16 +52,25 @@ export default function PageChrome() {
       writeStatus((!auth && mediaChromeColor()) || color)
     }
     const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
+    // Scrolling cannot change the page colour, only which media band sits under the status bar, so a scroll frame
+    // re-reads just that (and nothing at all on pages without a media band) instead of re-styling the whole page.
+    let scrollFrame = 0
+    const scrolled = () => {
+      scrollFrame = 0
+      if (frame || onAuth || !pageColor) return
+      writeStatus(mediaChromeColor() || pageColor)
+    }
+    const onScroll = () => { if (!scrollFrame) scrollFrame = requestAnimationFrame(scrolled) }
     update()
     const observer = new MutationObserver(schedule)
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-auth-theme', 'data-screen', 'data-theme', 'data-maison-page', 'class'] })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     window.addEventListener('pageshow', schedule)
     window.addEventListener('resize', schedule, { passive: true })
-    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
-      observer.disconnect(); cancelAnimationFrame(frame)
-      window.removeEventListener('pageshow', schedule); window.removeEventListener('resize', schedule); window.removeEventListener('scroll', schedule)
+      observer.disconnect(); cancelAnimationFrame(frame); cancelAnimationFrame(scrollFrame)
+      window.removeEventListener('pageshow', schedule); window.removeEventListener('resize', schedule); window.removeEventListener('scroll', onScroll)
     }
   }, [pathname])
   return null

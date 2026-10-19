@@ -2,7 +2,7 @@
 // Source: https://github.com/tradingview/lightweight-charts
 import { useEffect, useRef, useState } from 'react'
 import { createChart, AreaSeries, type Time } from 'lightweight-charts'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { useI18n } from '@/lib/i18n'
 import { DUR, EASE } from '@/lib/motion'

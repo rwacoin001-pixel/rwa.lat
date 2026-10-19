@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ArrowUpRight, Eye, EyeOff, QrCode } from 'lucide-react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import type { HomeState } from '@/lib/home-lifecycle'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fmtUsd, fromAtomic } from '@/lib/money'

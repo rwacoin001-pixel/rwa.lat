@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react'
-import { animate, motion, useInView, useReducedMotion, type Variants } from 'framer-motion'
+import { animate, motion, useInView, useReducedMotion, type Variants } from 'motion/react'
 
 export const EASE = [0.22, 0.8, 0.18, 1] as const
 

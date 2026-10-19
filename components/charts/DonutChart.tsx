@@ -1,6 +1,6 @@
 'use client'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
-import { useReducedMotion } from 'framer-motion'
+import { useReducedMotion } from 'motion/react'
 import { ChartPie } from 'lucide-react'
 import { DUR } from '@/lib/motion'
 import { useI18n } from '@/lib/i18n'

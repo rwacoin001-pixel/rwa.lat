@@ -3,7 +3,7 @@
 // Maison home · Markets: macro quotes and the TradingView gold chart share one module.
 // Data: GET /v1/market-context → { anchors, secondary, serverTime } (MarketQuote.stale marks delayed quotes).
 import { useEffect, useRef, useState } from 'react'
-import { motion, useReducedMotion } from 'framer-motion'
+import { motion, useReducedMotion } from 'motion/react'
 import { useQuery } from '@/lib/api/_query'
 import { getMarketContextView } from '@/lib/api/market-context'
 import { useI18n, type AppLocale } from '@/lib/i18n'

@@ -94,7 +94,7 @@ export default function AiPearl({ state = 'idle', size, pulse = 0, cancel = fals
     const dpr = Math.min(2, window.devicePixelRatio || 1)
     el.width = Math.round(size * dpr); el.height = Math.round(size * dpr); ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    let frame = 0, visible = true, last = performance.now(), time = 0
+    let frame = 0, visible = true, last = performance.now(), time = 0, painted = 0
     const paint = (frozen: boolean) => {
       const s = live.current
       drawPearl(ctx, { size, time, state: s.state, energy: s.energy, theme: s.theme, inset, cancel: s.cancel, still: frozen })
@@ -102,7 +102,11 @@ export default function AiPearl({ state = 'idle', size, pulse = 0, cancel = fals
     const loop = (now: number) => {
       const dt = Math.min(.05, (now - last) / 1000); last = now; time += dt
       live.current.energy *= Math.pow(.25, dt)
-      paint(false); frame = requestAnimationFrame(loop)
+      // Idle is a slow breath (a few pixels a second), so 30 frames a second draw the same motion at half the cost; the
+      // pearl in the dock is on screen on every page. Listening, thinking and speaking keep every frame.
+      const calm = live.current.state === 'idle' && live.current.energy < .01
+      if (!calm || now - painted >= 32) { painted = now; paint(false) }
+      frame = requestAnimationFrame(loop)
     }
     const sync = () => {
       cancelAnimationFrame(frame); frame = 0
