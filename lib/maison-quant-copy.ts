@@ -50,6 +50,25 @@ export type QuantCopy = {
   redeem: string
   addMore: string
   closedNote: string
+  charts: {
+    navTitle: string
+    navSub: string
+    dailyTitle: string
+    dailySub: string
+    latest: string
+    nav: string
+    highlightsTitle: string
+    target: string
+    targetValue: (min: string, max: string) => string
+    minimum: string
+    settle: string
+    settleValue: string
+    settleSub: (time: string) => string
+    fees: string
+    feesValue: (management: string, performance: string) => string
+    feesSub: string
+    live: string
+  }
   view: {
     loading: string
     unavailable: string
@@ -192,6 +211,25 @@ const en: QuantCopy = {
   redeem: 'Redeem',
   addMore: 'Add',
   closedNote: 'Subscriptions are paused. Your position and daily settlement continue.',
+  charts: {
+    navTitle: 'Net value',
+    navSub: 'After the management fee, from 1.0000',
+    dailyTitle: 'Daily return',
+    dailySub: 'Tap or drag across the days',
+    latest: 'Latest',
+    nav: 'NAV',
+    highlightsTitle: 'At a glance',
+    target: 'Target a year',
+    targetValue: (min, max) => `${min}–${max}%`,
+    minimum: 'From',
+    settle: 'Settlement',
+    settleValue: 'Every day',
+    settleSub: (time) => `Before ${time}, counts from the next day`,
+    fees: 'Fees',
+    feesValue: (m, p) => `${m}% · ${p}%`,
+    feesSub: 'Management · performance',
+    live: 'Running',
+  },
   view: {
     loading: 'Loading…',
     unavailable: 'No data available',
@@ -342,6 +380,25 @@ const zh: QuantCopy = {
   redeem: '赎回',
   addMore: '追加申购',
   closedNote: '申购已暂停,已有持仓和每日结算不受影响。',
+  charts: {
+    navTitle: '净值走势',
+    navSub: '扣除管理费后，起点 1.0000',
+    dailyTitle: '每日收益',
+    dailySub: '点按或滑动查看每一天',
+    latest: '最新',
+    nav: '净值',
+    highlightsTitle: '产品要点',
+    target: '目标年化',
+    targetValue: (min, max) => `${min}–${max}%`,
+    minimum: '起投金额',
+    settle: '结算方式',
+    settleValue: '每日结算',
+    settleSub: (time) => `${time} 前提交，次日起计`,
+    fees: '费用',
+    feesValue: (m, p) => `${m}% · ${p}%`,
+    feesSub: '管理费 · 业绩报酬',
+    live: '运行中',
+  },
   view: {
     loading: '加载中…',
     unavailable: '暂无数据',

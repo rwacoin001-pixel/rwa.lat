@@ -34,11 +34,19 @@
   --m-scrim: rgba(60, 44, 20, .34); --m-topbar-bg: rgba(244, 236, 220, .72); background: #f4ecdc; color: #2b2116; }
 :global(.rwa-mobile[data-theme='light']) .stage.stage::before { background: radial-gradient(120% 46% at 50% 14%, #fffbf1 0, #f1e8d6 64%); }
 
-/* Header: one compact line at the top, name left, settlement status right; the dial starts right under it. */
-.mast { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 0 2px; }
-.mastCaps { display: block; color: var(--m-accent); font-family: var(--q-caps); font-size: 9.5px; font-weight: 500; letter-spacing: .3em; text-transform: uppercase; }
-.mastName { margin: 3px 0 0; font-family: var(--m-display); font-size: 22px; font-weight: 400; letter-spacing: .16em; line-height: 1.1; }
+/* Header: kicker, the name between two hairlines, and the live settlement pill, centred over the dial. */
+.mast { position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 6px 2px 0; text-align: center; }
+.mastCaps { display: block; color: var(--m-accent); font-family: var(--q-caps); font-size: 9.5px; font-weight: 500; letter-spacing: .42em; text-indent: .42em; text-transform: uppercase; }
+.mastName { display: flex; align-items: center; gap: 14px; margin: 0; font-family: var(--q-serif), var(--m-display); font-size: 30px; font-weight: 600; letter-spacing: .32em; text-indent: .32em; line-height: 1.1; color: var(--q-num); }
+.mastName::before, .mastName::after { content: ''; width: 46px; height: 0; border-top: .5px solid rgba(var(--q-gold-rgb), .55); }
 .mastMeta { margin: 0 0 3px; color: var(--q-dim); font-size: 11px; letter-spacing: .04em; text-align: end; }
+@media (prefers-reduced-motion: no-preference) {
+  .mastCaps { animation: mastIn .7s .05s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .mastName { animation: mastIn .8s .12s cubic-bezier(.2, .8, .2, 1) backwards; }
+  .mastName::before, .mastName::after { animation: ruleIn .9s .35s cubic-bezier(.2, .8, .2, 1) backwards; }
+  @keyframes mastIn { from { opacity: 0; transform: translateY(8px); letter-spacing: .5em; } }
+  @keyframes ruleIn { from { transform: scaleX(0); opacity: 0; } }
+}
 
 /* The dial: one tick per calendar day on a ring, oldest to today clockwise, today at twelve. Metal bezel, engraved face; the ring turns under the marker. */
 .dialBox { position: relative; width: min(100%, 332px); aspect-ratio: 1; margin: 16px auto 0; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: grab; outline: none; -webkit-tap-highlight-color: transparent; }
@@ -73,7 +81,7 @@
 .cStack { pointer-events: none; cursor: inherit; }
 .cLabel { color: var(--q-dim); font-family: var(--q-caps); font-size: 9.5px; font-weight: 500; letter-spacing: .34em; text-indent: .34em; text-transform: uppercase; }
 .cNum { margin-top: 8px; font-family: var(--q-serif); font-size: clamp(46px, 14.6vw, 60px); font-weight: 500; line-height: 1; letter-spacing: -.02em; color: var(--q-num); font-variant-numeric: lining-nums tabular-nums; direction: ltr; unicode-bidi: isolate; }
-.cNum sup { position: relative; top: .12em; margin-left: 2px; font-size: .44em; vertical-align: top; }
+.cNum sup { position: relative; top: .5em; margin-left: 2px; font-size: .44em; vertical-align: top; }
 .cNum.down { color: var(--q-loss-text); }
 .cSub { margin-top: 9px; color: var(--q-gold); font-family: var(--q-serif); font-size: 15px; font-style: italic; letter-spacing: .02em; font-variant-numeric: lining-nums; }
 .cRule { width: 84px; height: 0; margin: 11px 0 8px; border-top: .5px solid rgba(var(--q-gold-rgb), .28); }

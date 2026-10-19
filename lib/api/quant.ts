@@ -1,4 +1,4 @@
-import { request } from './_http'
+import { request, type ApiResult } from './_http'
 import { useQuery } from './_query'
 
 export type QuantPoint = { tradeDate: string; grossReturnPct: string; netReturnPct: string; indexAfter: string }
@@ -25,13 +25,18 @@ export type QuantSubscriptionPreview = { tradeDate: string; effectiveDate: strin
 export type QuantRedemptionPreview = { tradeDate: string; estimate: true; principalAtomic: string; redeemableAtomic: string; waitingAtomic: string; redeemAtomic: string; feeAtomic: string; payoutAtomic: string; minRedemptionAtomic: string }
 export type QuantDisclosure = { id: string; version: number; title: string; content: string; effectiveFrom: string }
 
-export const listQuantProducts = () => request<QuantProduct[]>('/v1/quant/products')
-export const getQuantProduct = (slug: string) => request<QuantProduct>(`/v1/quant/products/${encodeURIComponent(slug)}`)
+/** Local design preview only (see lib/quant-demo.ts); deployed builds never set the flag. */
+const DEMO = process.env.NEXT_PUBLIC_QUANT_DEMO === '1'
+const demo = () => import('../quant-demo')
+const ok = <T,>(data: T): ApiResult<T> => ({ ok: true, data })
+
+export const listQuantProducts = () => DEMO ? demo().then((m) => ok([m.demoProduct()])) : request<QuantProduct[]>('/v1/quant/products')
+export const getQuantProduct = (slug: string) => DEMO ? demo().then((m) => ok(m.demoProduct())) : request<QuantProduct>(`/v1/quant/products/${encodeURIComponent(slug)}`)
 export const getQuantDisclosure = () => request<QuantDisclosure | null>('/v1/quant/disclosure')
-export const getQuantSubscriptionPreview = (slug: string) => request<QuantSubscriptionPreview>(`/v1/quant/products/${encodeURIComponent(slug)}/subscription-preview`)
+export const getQuantSubscriptionPreview = (slug: string) => DEMO ? demo().then((m) => ok(m.demoPreview())) : request<QuantSubscriptionPreview>(`/v1/quant/products/${encodeURIComponent(slug)}/subscription-preview`)
 export const getQuantRedemptionPreview = (slug: string, input: { amountUsd?: string; all?: boolean }) =>
   request<QuantRedemptionPreview>(`/v1/quant/me/products/${encodeURIComponent(slug)}/redemption-preview?${new URLSearchParams({ ...(input.amountUsd ? { amountUsd: input.amountUsd } : {}), ...(input.all ? { all: 'true' } : {}) })}`)
-export const listQuantPayouts = (slug: string, limit = 30) => request<QuantPayout[]>(`/v1/quant/me/products/${encodeURIComponent(slug)}/payouts?limit=${limit}`)
+export const listQuantPayouts = (slug: string, limit = 30) => DEMO ? demo().then((m) => ok(m.demoPayouts())) : request<QuantPayout[]>(`/v1/quant/me/products/${encodeURIComponent(slug)}/payouts?limit=${limit}`)
 export const subscribeQuant = (slug: string, amountUsd: string, idempotencyKey: string) =>
   request<{ duplicate?: boolean; order: QuantOrder }>(`/v1/quant/products/${encodeURIComponent(slug)}/subscriptions`, { method: 'POST', body: JSON.stringify({ amountUsd }), idempotencyKey })
 export const redeemQuant = (slug: string, input: { amountUsd?: string; all?: boolean }, idempotencyKey: string) =>

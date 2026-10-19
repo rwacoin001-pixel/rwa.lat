@@ -75,7 +75,7 @@ const splitPct = (text: string) => (text.endsWith('%') ? [text.slice(0, -1), '%'
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value))
 
 /** Eases a number towards its target (a count-up on first show, a quick tween when the picked day changes). */
-function useTween(target: number | null, duration = 520): number | null {
+export function useTween(target: number | null, duration = 520): number | null {
   const [value, setValue] = useState<number | null>(null)
   const from = useRef(0)
   useEffect(() => {
