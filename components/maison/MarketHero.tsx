@@ -90,6 +90,7 @@ function useHeroStow(ref: RefObject<HTMLElement | null>) {
     let frame = 0
     let last = -1
     let running = false
+    let settle: number[] = []
     const apply = () => {
       frame = 0
       const height = el.offsetHeight
@@ -111,9 +112,16 @@ function useHeroStow(ref: RefObject<HTMLElement | null>) {
       target.addEventListener('scroll', schedule, { passive: true })
       window.addEventListener('resize', schedule)
       resize?.observe(el)
+      // The first read can land mid screen-transition or before scroll restoration; nothing else triggers a second one
+      // until the user scrolls, so re-measure once the page has settled instead of keeping a stale (stowed) value.
+      document.addEventListener('animationend', schedule, true)
+      settle = [120, 420, 900].map((delay) => window.setTimeout(schedule, delay))
     }
     const stop = () => {
       running = false
+      document.removeEventListener('animationend', schedule, true)
+      settle.forEach((timer) => window.clearTimeout(timer))
+      settle = []
       if (frame) window.cancelAnimationFrame(frame)
       frame = 0
       target.removeEventListener('scroll', schedule)
@@ -164,6 +172,16 @@ export function MarketHero({ tab = 'predictions' }: { tab?: HeroTab }) {
   const basketNote = useBasketNote()
   const stowRef = useRef<HTMLElement>(null)
   useHeroStow(stowRef)
+  // Safety net for the entrance: if the browser never starts the staggered reveal (no frames while the page is still
+  // settling), its backwards fill would leave the card's contents invisible. After the longest reveal has had time to
+  // finish, drop the animation so everything is simply shown.
+  useEffect(() => {
+    const el = stowRef.current
+    if (!el) return
+    delete el.dataset.settled
+    const timer = window.setTimeout(() => { el.dataset.settled = 'true' }, 1500)
+    return () => window.clearTimeout(timer)
+  }, [tab])
   const note = tab === 'baskets' ? basketNote : tab === 'trade' ? text.tradeNote : tab === 'assets' ? text.assetsNote : text.noteShort
 
   return <>

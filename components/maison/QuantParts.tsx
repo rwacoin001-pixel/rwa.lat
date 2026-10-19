@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, type CSSProperties } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from 'react'
+import { animate, useMotionValue } from 'motion/react'
 import { fmtUsdt } from '@/lib/money'
 import { formatPct, shortDate, tickHeight, tickScale, type Tick } from '@/lib/quant-view-model'
 import type { QuantCopy } from '@/lib/maison-quant-copy'
@@ -37,6 +38,8 @@ export function signedUsdt(atomic: string | null | undefined, locale: string): s
 const kindClass: Record<Tick['kind'], string> = { gain: styles.gain, loss: styles.loss, flat: styles.flat, missing: styles.missing, today: styles.today }
 const kindLabel = (copy: QuantCopy, kind: Tick['kind']) => kind === 'gain' ? copy.tickGain : kind === 'loss' ? copy.tickLoss : kind === 'flat' ? copy.tickFlat : kind === 'today' ? copy.tickToday : copy.tickMissing
 
+const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
 /**
  * Linear settlement ledger (position card): one column per calendar day on a shared scale. Every column is a real button
  * so a day can be picked without aiming at a thin bar.
@@ -61,90 +64,241 @@ export function QuantLedger({ ticks, selected, onSelect, height = 56, copy, labe
 
 const CX = 150
 const R_BASE = 104
+/** One tick every 12°: 30 days make one full turn. On screen that is 24px of arc, so a finger moves the ring 1:1. */
+const STEP = 12
+const PX_PER_DEGREE = 2
 const polar = (radius: number, degrees: number) => {
   const a = (degrees * Math.PI) / 180
   return [CX + Math.cos(a) * radius, CX + Math.sin(a) * radius] as const
 }
 const splitPct = (text: string) => (text.endsWith('%') ? [text.slice(0, -1), '%'] as const : [text, ''] as const)
+const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value))
+
+/** Eases a number towards its target (a count-up on first show, a quick tween when the picked day changes). */
+function useTween(target: number | null, duration = 520): number | null {
+  const [value, setValue] = useState<number | null>(null)
+  const from = useRef(0)
+  useEffect(() => {
+    if (target === null) { setValue(null); return }
+    if (reducedMotion()) { from.current = target; setValue(target); return }
+    const start = performance.now()
+    const origin = from.current
+    let frame = 0
+    const tick = (now: number) => {
+      const k = Math.min(1, (now - start) / duration)
+      const eased = 1 - Math.pow(1 - k, 3)
+      from.current = origin + (target - origin) * eased
+      setValue(from.current)
+      if (k < 1) frame = window.requestAnimationFrame(tick)
+    }
+    frame = window.requestAnimationFrame(tick)
+    return () => window.cancelAnimationFrame(frame)
+  }, [target, duration])
+  return value
+}
 
 /**
- * The settlement dial. One tick per calendar day on a ring: oldest to today clockwise, today at twelve. A gain day reaches
- * outward, a loss day inward, a day with no record is a dashed slot, today is a hollow ring. Tap a tick (or use the arrows)
- * and a needle points at it while the centre shows that day; otherwise the centre shows the figure since inception.
+ * The settlement dial. One tick per calendar day on a ring, oldest to today clockwise, today at twelve. A gain day reaches
+ * outward, a loss day inward, a day with no record is a dashed slot, today is a hollow ring. The ring turns under a fixed
+ * marker: drag it with a finger (swipe left/right, or follow the circle), tap a tick, or use the arrows, and it springs to
+ * the nearest day while the centre shows that day; at today the centre shows the figure since inception.
  */
 export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct
 }) {
   const scale = tickScale(ticks)
   const last = ticks.length - 1
+  const focus = selected ?? last
   const picked = selected !== null ? ticks[selected] : null
   const p = product.performance
-  const angleOf = (index: number) => -90 - (last - index) * 12
-  const [pickedInt, pickedSign] = splitPct(picked && picked.value !== null ? formatPct(picked.value) : '—')
-  const [sinceInt, sinceSign] = splitPct(formatPct(p.sinceInceptionPct))
-  return <div className={styles.dialBox}>
+  const angleOf = (index: number) => -90 - (last - index) * STEP
+  const rotation = useMotionValue((last - focus) * STEP)
+  const ringRef = useRef<SVGGElement>(null)
+  const boxRef = useRef<HTMLDivElement>(null)
+  const drag = useRef<{ id: number; x: number; y: number; lx: number; ly: number; arc: number; start: number; moved: number; active: boolean; samples: Array<[number, number]> } | null>(null)
+  const dragging = useRef(false)
+  const suppressClick = useRef(false)
+  const reported = useRef(focus)
+  const choose = useCallback((index: number) => onSelect(index === last ? null : index), [last, onSelect])
+
+  useLayoutEffect(() => {
+    const ring = ringRef.current
+    if (!ring) return
+    const write = (value: number) => ring.setAttribute('transform', `rotate(${value} ${CX} ${CX})`)
+    write(rotation.get())
+    return rotation.on('change', write)
+  }, [rotation])
+
+  // Follows the parent's selection (stepper, tapping the centre, a tapped tick) with a spring; the finger drives it directly.
+  useEffect(() => {
+    reported.current = focus
+    if (dragging.current) return
+    const target = (last - focus) * STEP
+    if (Math.abs(rotation.get() - target) < .01) return
+    if (reducedMotion()) { rotation.set(target); return }
+    const controls = animate(rotation, target, { type: 'spring', stiffness: 220, damping: 24, mass: .9 })
+    return () => controls.stop()
+  }, [focus, last, rotation])
+
+  const floatIndex = () => last - rotation.get() / STEP
+  const settle = (velocity: number) => {
+    const index = clamp(Math.round(floatIndex() + velocity * 180), 0, last)
+    dragging.current = false
+    reported.current = index
+    choose(index)
+    if (reducedMotion()) rotation.set((last - index) * STEP)
+    else animate(rotation, (last - index) * STEP, { type: 'spring', stiffness: 240, damping: 22, mass: .8 })
+  }
+
+  const onPointerDown = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.pointerType === 'mouse' && event.button !== 0) return
+    drag.current = { id: event.pointerId, x: event.clientX, y: event.clientY, lx: event.clientX, ly: event.clientY, arc: 0, start: floatIndex(), moved: 0, active: false, samples: [] }
+  }
+  const onPointerMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const state = drag.current
+    const box = boxRef.current
+    if (!state || state.id !== event.pointerId || !box) return
+    const mx = event.clientX - state.x
+    const my = event.clientY - state.y
+    const rect = box.getBoundingClientRect()
+    const radius = Math.max(1, rect.width / 2)
+    // Arc length travelled along the circle, clockwise positive: each step is projected on the tangent at the finger, so
+    // following the circle and swiping straight across the top both turn the ring with the finger. Near the centre a
+    // horizontal swipe is all there is to follow.
+    const px = (event.clientX - (rect.left + radius)) / radius
+    const py = (event.clientY - (rect.top + radius)) / radius
+    const length = Math.hypot(px, py) || 1
+    const dx = event.clientX - state.lx
+    const dy = event.clientY - state.ly
+    state.lx = event.clientX
+    state.ly = event.clientY
+    state.arc += length < .38 ? dx : (-py / length) * dx + (px / length) * dy
+    const along = state.arc
+    state.moved = Math.max(state.moved, Math.abs(mx) + Math.abs(my))
+    if (!state.active) {
+      if (state.moved < 7) return
+      state.active = true
+      dragging.current = true
+      suppressClick.current = true
+      try { box.setPointerCapture(event.pointerId) } catch { /* the pointer may already be gone */ }
+    }
+    // Clockwise turns the ring towards earlier days; past either end it gives only a third as far.
+    const raw = state.start - along / PX_PER_DEGREE / STEP
+    const bounded = raw < 0 ? raw * .33 : raw > last ? last + (raw - last) * .33 : raw
+    rotation.set((last - bounded) * STEP)
+    const now = performance.now()
+    state.samples.push([now, bounded])
+    while (state.samples.length > 1 && now - state.samples[0][0] > 90) state.samples.shift()
+    const index = clamp(Math.round(bounded), 0, last)
+    if (index !== reported.current) {
+      reported.current = index
+      choose(index)
+      if ('vibrate' in navigator) navigator.vibrate(3)
+    }
+  }
+  const onPointerEnd = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const state = drag.current
+    drag.current = null
+    if (!state || state.id !== event.pointerId) return
+    if (!state.active) return
+    try { boxRef.current?.releasePointerCapture(event.pointerId) } catch { /* already released */ }
+    const [first, last2] = [state.samples[0], state.samples[state.samples.length - 1]]
+    const velocity = first && last2 && last2[0] > first[0] ? (last2[1] - first[1]) / (last2[0] - first[0]) : 0
+    settle(velocity)
+    window.setTimeout(() => { suppressClick.current = false }, 0)
+  }
+  const onKeyDown = (event: ReactKeyboardEvent<HTMLDivElement>) => {
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault()
+      const next = clamp(focus + (event.key === 'ArrowLeft' ? -1 : 1), 0, last)
+      if (next !== focus) choose(next)
+    }
+  }
+
+  const tweenTarget = picked ? picked.value : p.sinceInceptionPct
+  const tween = useTween(tweenTarget, 520)
+  const shown = tweenTarget === null ? '—' : tween === null ? formatPct(0) : formatPct(tween)
+  const [numInt, numSign] = splitPct(shown)
+  const negative = tweenTarget !== null && tweenTarget < 0
+
+  return <div
+    ref={boxRef}
+    className={styles.dialBox}
+    tabIndex={0}
+    role="group"
+    aria-roledescription="dial"
+    aria-label={copy.ledgerTitle}
+    onPointerDown={onPointerDown}
+    onPointerMove={onPointerMove}
+    onPointerUp={onPointerEnd}
+    onPointerCancel={onPointerEnd}
+    onKeyDown={onKeyDown}
+  >
     <div className={styles.bezelMetal} />
+    <div className={styles.bezelSheen} aria-hidden="true" />
     <div className={styles.faceBg} />
-    <svg className={styles.dial} viewBox="0 0 300 300" role="group" aria-label={copy.ledgerTitle}>
-      {Array.from({ length: 120 }, (_, i) => {
-        const major = i % 5 === 0
-        const [x1, y1] = polar(major ? 130.5 : 133.5, i * 3)
-        const [x2, y2] = polar(137, i * 3)
-        return <line key={i} className={styles.track} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
-      })}
+    <svg className={styles.dial} viewBox="0 0 300 300">
       {[58, 72, 86].map((r) => <circle key={r} className={styles.engrave} cx={CX} cy={CX} r={r} />)}
-      {Array.from({ length: 72 }, (_, i) => {
-        const [x1, y1] = polar(40, i * 5)
-        const [x2, y2] = polar(56, i * 5)
-        return <line key={i} className={styles.spoke} x1={x1} y1={y1} x2={x2} y2={y2} />
-      })}
       <circle className={styles.baseRing} cx={CX} cy={CX} r={R_BASE} />
-      {selected !== null && (() => {
-        const [x1, y1] = polar(26, angleOf(selected))
-        const [x2, y2] = polar(R_BASE - 2, angleOf(selected))
-        return <g aria-hidden="true"><line className={styles.needle} x1={x1} y1={y1} x2={x2} y2={y2} /><circle className={styles.needleDot} cx={x2} cy={y2} r="1.8" /></g>
-      })()}
-      {ticks.map((tick, index) => {
-        const angle = angleOf(index)
-        const [bx, by] = polar(R_BASE, angle)
-        const length = tick.value === null || tick.value === 0 ? 7 : 3 + (Math.abs(tick.value) / scale) * 20
-        const outward = tick.value === null || tick.value >= 0
-        const [x1, y1] = polar(tick.kind === 'missing' ? R_BASE - 7 : R_BASE, angle)
-        const [x2, y2] = polar(tick.kind === 'missing' ? R_BASE + 7 : tick.kind === 'flat' ? R_BASE + 3 : outward ? R_BASE + length : R_BASE - length, angle)
-        const toggle = () => onSelect(selected === index ? null : index)
-        return <g
-          key={tick.date}
-          className={styles.t}
-          data-kind={tick.kind}
-          role="button"
-          tabIndex={0}
-          aria-pressed={selected === index}
-          aria-label={`${tick.date} · ${kindLabel(copy, tick.kind)}${tick.value !== null ? ` · ${formatPct(tick.value)}` : ''}`}
-          onClick={toggle}
-          onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle() } }}
-        >
-          <circle className={styles.hit} cx={bx} cy={by} r="11" />
-          {tick.kind === 'today' ? <circle cx={bx} cy={by} r="4" /> : <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ '--i': index } as CSSProperties} />}
-        </g>
-      })}
+      <g ref={ringRef}>
+        {Array.from({ length: 120 }, (_, i) => {
+          const major = i % 5 === 0
+          const [x1, y1] = polar(major ? 130.5 : 133.5, i * 3)
+          const [x2, y2] = polar(137, i * 3)
+          return <line key={i} className={styles.track} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        {Array.from({ length: 72 }, (_, i) => {
+          const [x1, y1] = polar(40, i * 5)
+          const [x2, y2] = polar(56, i * 5)
+          return <line key={i} className={styles.spoke} x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        {ticks.map((tick, index) => {
+          const angle = angleOf(index)
+          const [bx, by] = polar(R_BASE, angle)
+          const length = tick.value === null || tick.value === 0 ? 7 : 3 + (Math.abs(tick.value) / scale) * 20
+          const outward = tick.value === null || tick.value >= 0
+          const [x1, y1] = polar(tick.kind === 'missing' ? R_BASE - 7 : R_BASE, angle)
+          const [x2, y2] = polar(tick.kind === 'missing' ? R_BASE + 7 : tick.kind === 'flat' ? R_BASE + 3 : outward ? R_BASE + length : R_BASE - length, angle)
+          const choosing = () => { if (!suppressClick.current) choose(index) }
+          return <g
+            key={tick.date}
+            className={styles.t}
+            data-kind={tick.kind}
+            data-focus={focus === index || undefined}
+            role="button"
+            tabIndex={-1}
+            aria-pressed={selected === index}
+            aria-label={`${tick.date} · ${kindLabel(copy, tick.kind)}${tick.value !== null ? ` · ${formatPct(tick.value)}` : ''}`}
+            onClick={choosing}
+            onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choosing() } }}
+          >
+            <circle className={styles.hit} cx={bx} cy={by} r="11" />
+            {tick.kind === 'today' ? <circle cx={bx} cy={by} r="4" /> : <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ '--i': index } as CSSProperties} />}
+          </g>
+        })}
+      </g>
+      {selected !== null && <g aria-hidden="true">
+        <line className={styles.needle} x1={CX} y1={CX - 26} x2={CX} y2={CX - (R_BASE - 2)} />
+        <circle className={styles.needleDot} cx={CX} cy={CX - (R_BASE - 2)} r="1.8" />
+      </g>}
       <path className={styles.marker} d={`M${CX} ${CX - 126} l5 -9 h-10 z`} transform="translate(0 -22)" />
     </svg>
     <div className={styles.center}>
       {picked
-        ? <button type="button" onClick={() => onSelect(null)} aria-label={copy.sinceInception}>
+        ? <button type="button" onClick={() => onSelect(null)} aria-label={copy.sinceInception} key={picked.date}>
           <span className={styles.cLabel}>{picked.date}</span>
-          <span className={styles.cNum}>{pickedInt}{pickedSign && <sup>{pickedSign}</sup>}</span>
+          <span className={styles.cNum}>{numInt}{numSign && <sup>{numSign}</sup>}</span>
           <span className={styles.cSub}>{kindLabel(copy, picked.kind)}</span>
           <span className={styles.cRule} />
           <span className={styles.cFoot}>{copy.sinceInception} ›</span>
         </button>
-        : <>
+        : <div className={styles.cStack} key="since">
           <span className={styles.cLabel}>{copy.sinceInception}</span>
-          <span className={`${styles.cNum} ${p.sinceInceptionPct !== null && p.sinceInceptionPct < 0 ? styles.down : ''}`}>{sinceInt}{sinceSign && <sup>{sinceSign}</sup>}</span>
+          <span className={`${styles.cNum} ${negative ? styles.down : ''}`}>{numInt}{numSign && <sup>{numSign}</sup>}</span>
           <span className={styles.cSub}>{copy.indexShort} {Number(p.index).toFixed(4)}</span>
           <span className={styles.cRule} />
           <span className={styles.cFoot}>{copy.recorded(p.days)}</span>
-        </>}
+        </div>}
     </div>
   </div>
 }
@@ -152,25 +306,28 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
 /** Previous / next day under the dial: a thumb-sized way to walk the ticks. */
 export function QuantStepper({ ticks, selected, onSelect }: { ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void }) {
   if (ticks.length === 0) return null
-  const current = selected ?? ticks.length - 1
+  const last = ticks.length - 1
+  const current = selected ?? last
+  const go = (index: number) => onSelect(index === last ? null : index)
   return <div className={styles.stepper}>
-    <button type="button" aria-label="‹" disabled={current <= 0} onClick={() => onSelect(current - 1)}>‹</button>
-    <span>{ticks[current]?.date}</span>
-    <button type="button" aria-label="›" disabled={current >= ticks.length - 1} onClick={() => onSelect(current + 1)}>›</button>
+    <button type="button" aria-label="‹" disabled={current <= 0} onClick={() => go(current - 1)}>‹</button>
+    <span key={ticks[current]?.date}>{ticks[current]?.date}</span>
+    <button type="button" aria-label="›" disabled={current >= last} onClick={() => go(current + 1)}>›</button>
   </div>
 }
 
-function Sub({ value, full, label, note }: { value: number | null; full: number; label: string; note?: string }) {
+function Sub({ value, full, label, note, index }: { value: number | null; full: number; label: string; note?: string; index: number }) {
   const fraction = value === null ? 0 : Math.min(1, Math.abs(value) / full)
   const circumference = 2 * Math.PI * 44
   const negative = value !== null && value < 0
-  return <div className={styles.sub}>
+  const tween = useTween(value, 900)
+  return <div className={styles.sub} style={{ '--n': index } as CSSProperties}>
     <svg viewBox="0 0 110 110" aria-hidden="true">
       <circle className={styles.st} cx="55" cy="55" r="44" />
       {[0, 90, 180, 270].map((deg) => { const a = (deg * Math.PI) / 180; return <line key={deg} className={styles.sk} x1={55 + Math.cos(a) * 47} y1={55 + Math.sin(a) * 47} x2={55 + Math.cos(a) * 51} y2={55 + Math.sin(a) * 51} /> })}
-      <circle className={styles.sv} cx="55" cy="55" r="44" stroke={negative ? '#cf7457' : '#ecd9ad'} strokeDasharray={`${circumference * fraction} ${circumference}`} transform="rotate(-90 55 55)" />
+      <circle className={styles.sv} data-tone={negative ? 'down' : undefined} cx="55" cy="55" r="44" style={{ '--c': circumference } as CSSProperties} strokeDasharray={`${circumference * fraction} ${circumference}`} transform="rotate(-90 55 55)" />
     </svg>
-    <b data-tone={negative ? 'down' : undefined}>{formatPct(value, 1)}</b>
+    <b data-tone={negative ? 'down' : undefined}>{value === null ? '—' : formatPct(tween ?? 0, 1)}</b>
     <span>{label}</span>
     {note && <small>{note}</small>}
   </div>
@@ -181,28 +338,27 @@ export function QuantRings({ product, copy }: { product: QuantProduct; copy: Qua
   const p = product.performance
   return <>
     <div className={styles.subs}>
-      <Sub value={p.last7d.pct} full={3} label={copy.last7} note={p.last7d.coveredDays < p.last7d.days ? copy.partial(p.last7d.coveredDays) : undefined} />
-      <Sub value={p.last30d.pct} full={8} label={copy.last30} note={p.last30d.coveredDays < p.last30d.days ? copy.partial(p.last30d.coveredDays) : undefined} />
-      <Sub value={p.maxDrawdownPct} full={5} label={copy.drawdown} />
+      <Sub index={0} value={p.last7d.pct} full={3} label={copy.last7} note={p.last7d.coveredDays < p.last7d.days ? copy.partial(p.last7d.coveredDays) : undefined} />
+      <Sub index={1} value={p.last30d.pct} full={8} label={copy.last30} note={p.last30d.coveredDays < p.last30d.days ? copy.partial(p.last30d.coveredDays) : undefined} />
+      <Sub index={2} value={p.maxDrawdownPct} full={5} label={copy.drawdown} />
     </div>
     <p className={styles.scaleNote}>{copy.scaleNote}</p>
   </>
 }
 
-/** Forces the app's dark chrome (top bar, dock) while the Koala stage is on screen, and puts the user's theme back afterwards. */
-export function useStageTheme() {
+/** Fades a block up the first time it scrolls into view. Never leaves it hidden: a timer shows it even if no observer fires. */
+export function Reveal({ children, index = 0 }: { children: ReactNode; index?: number }) {
+  const ref = useRef<HTMLDivElement>(null)
+  const [seen, setSeen] = useState(false)
   useEffect(() => {
-    const nodes = [document.documentElement, ...Array.from(document.querySelectorAll<HTMLElement>('.rwa-mobile'))]
-    const before = nodes.map((node) => node.getAttribute('data-theme'))
-    nodes.forEach((node) => node.setAttribute('data-theme', 'dark'))
-    const pill = document.querySelector<HTMLElement>('.liquid-dock__pill')
-    const pillBefore = pill ? { background: pill.style.background, borderColor: pill.style.borderColor } : null
-    if (pill) { pill.style.background = 'rgba(30, 24, 18, .84)'; pill.style.borderColor = 'rgba(217, 191, 134, .3)' }
-    return () => {
-      nodes.forEach((node, i) => { if (before[i] === null) node.removeAttribute('data-theme'); else node.setAttribute('data-theme', before[i] as string) })
-      if (pill && pillBefore) { pill.style.background = pillBefore.background; pill.style.borderColor = pillBefore.borderColor }
-    }
+    const el = ref.current
+    if (!el || reducedMotion() || typeof IntersectionObserver === 'undefined') { setSeen(true); return }
+    const observer = new IntersectionObserver((entries) => { if (entries.some((entry) => entry.isIntersecting)) { setSeen(true); observer.disconnect() } }, { rootMargin: '0px 0px -6% 0px' })
+    observer.observe(el)
+    const fallback = window.setTimeout(() => setSeen(true), 1600)
+    return () => { observer.disconnect(); window.clearTimeout(fallback) }
   }, [])
+  return <div ref={ref} className={styles.reveal} data-in={seen || undefined} style={{ '--d': `${index * 70}ms` } as CSSProperties}>{children}</div>
 }
 
 export function QuantLegend({ copy }: { copy: QuantCopy }) {

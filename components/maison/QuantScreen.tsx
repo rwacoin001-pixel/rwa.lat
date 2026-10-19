@@ -11,7 +11,7 @@ import { buildTicks, localToday, shortDate } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
-import { QuantDial, QuantLegend, QuantRings, QuantStepper, useHideDock, useStageTheme } from './QuantParts'
+import { QuantDial, QuantLegend, QuantRings, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantPositionPlate, useQuantProduct } from './QuantPositionCard'
 import { QuantSubscribeSheet } from './QuantSheets'
 import styles from './quant.module.css'
@@ -60,7 +60,6 @@ export function QuantScreen() {
 
   const topbar = <RwaTopbar screen="quant" title={c.title} />
   const stage = `${styles.stage} ${quantSerif.variable} ${quantCaps.variable}`
-  useStageTheme()
 
   if (list.loading && !list.data) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
   if (list.error && !list.data) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><StateBlock tone="error" title={c.loadError} retry={list.refetch} retryLabel={c.retry} /></MaisonPage>
@@ -71,10 +70,11 @@ export function QuantScreen() {
   const holds = Boolean(product.position && (BigInt(product.position.principalAtomic) > BigInt(0) || product.position.pendingOrders.length > 0))
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <header className={styles.mast}>
-      <span className={styles.mastCaps}>{c.kicker}</span>
-      <h1 className={styles.mastName}>{product.name}</h1>
-      <i className={styles.mastRule} />
-      <p className={styles.meta} style={{ margin: '10px 0 0', color: '#9a8c75' }}>{p.lastSettledDate ? `${c.settledTo} ${shortDate(p.lastSettledDate)}` : c.neverSettled}</p>
+      <div>
+        <span className={styles.mastCaps}>{c.kicker}</span>
+        <h1 className={styles.mastName}>{product.name}</h1>
+      </div>
+      <p className={styles.mastMeta}>{p.lastSettledDate ? `${c.settledTo} ${shortDate(p.lastSettledDate)}` : c.neverSettled}</p>
     </header>
 
     {ticks.length > 0
@@ -83,33 +83,39 @@ export function QuantScreen() {
         <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} />
       </>
       : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
-    <QuantLegend copy={c} />
-    <QuantRings product={product} copy={c} />
-    <div className={styles.foot2}>
-      <span>{c.riskLine}</span>
-      <button type="button" className={s.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
-    </div>
+    <Reveal>
+      <QuantLegend copy={c} />
+      <QuantRings product={product} copy={c} />
+    </Reveal>
+    <Reveal>
+      <div className={styles.foot2}>
+        <span>{c.riskLine}</span>
+        <button type="button" className={s.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
+      </div>
 
-    <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-      <button type="button" className={s.cta} style={{ flex: 1 }} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>
-        <span>{holds ? c.addMore : c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
-      </button>
-    </div>
-    {!product.open && <div className={s.notice}><span>{c.closedNote}</span></div>}
+      <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
+        <button type="button" className={`${s.cta} ${styles.sheen}`} style={{ flex: 1 }} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>
+          <span>{holds ? c.addMore : c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
+        </button>
+      </div>
+      {!product.open && <div className={s.notice}><span>{c.closedNote}</span></div>}
+    </Reveal>
 
-    {product.target && <div className={styles.target}><b>{product.target.annualMinPct}–{product.target.annualMaxPct}%</b><p><strong>{c.target}</strong> · {c.targetNote}</p></div>}
+    {product.target && <Reveal><div className={styles.target}><b>{product.target.annualMinPct}–{product.target.annualMaxPct}%</b><p><strong>{c.target}</strong> · {c.targetNote}</p></div></Reveal>}
 
-    {holds && <>
+    {holds && <Reveal>
       <SectionHead index="01" title={c.position.title} />
       <QuantPositionPlate product={product} />
-    </>}
+    </Reveal>}
 
-    <SectionHead index={holds ? '02' : '01'} title={c.flowTitle} />
-    <div className={styles.flow}>
-      <div><b>{c.flowGain}</b>{c.flowGainBody}</div><hr />
-      <div><b>{c.flowLoss}</b>{c.flowLossBody}</div>
-    </div>
-    <Rules product={product} c={c} first={holds ? 3 : 2} />
+    <Reveal>
+      <SectionHead index={holds ? '02' : '01'} title={c.flowTitle} />
+      <div className={styles.flow}>
+        <div><b>{c.flowGain}</b>{c.flowGainBody}</div><hr />
+        <div><b>{c.flowLoss}</b>{c.flowLossBody}</div>
+      </div>
+    </Reveal>
+    <Reveal><Rules product={product} c={c} first={holds ? 3 : 2} /></Reveal>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <Sheet open={disclosureOpen} onClose={() => setDisclosureOpen(false)} kicker={c.kicker} title={disclosure.data?.title ?? c.disclosure}>
