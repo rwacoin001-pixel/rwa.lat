@@ -72,14 +72,13 @@ function useRise(target: number) {
   return value
 }
 
-/** JS twin of the CSS scroll-driven drawer, for engines without `animation-timeline` (iOS Safari, Firefox). It only
- *  writes the card's raw exit progress to --hero-p; the stylesheet maps it with the same ranges as the keyframes, so
- *  both paths land on identical frames. Read and write share one rAF per scroll and there is no easing, so it stays
+/** Scroll drawer for the cover card on every engine. It only writes the card's raw exit progress to --hero-p; the
+ *  stylesheet maps it to the tiers' ranges. At the top of the page the card is never stowed, whatever a stale read says. Read and write share one rAF per scroll and there is no easing, so it stays
  *  under the finger and stops dead at 0 and 1. */
 function useHeroStow(ref: RefObject<HTMLElement | null>) {
   useEffect(() => {
     const el = ref.current
-    if (!el || (typeof CSS !== 'undefined' && CSS.supports?.('animation-timeline: view()'))) return
+    if (!el) return
     let scroller: HTMLElement | null = null
     for (let node = el.parentElement; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
       if (/(auto|scroll|overlay)/.test(getComputedStyle(node).overflowY)) { scroller = node; break }
@@ -97,7 +96,8 @@ function useHeroStow(ref: RefObject<HTMLElement | null>) {
       const port = scroller ? scroller.getBoundingClientRect().top + scroller.clientTop : 0
       // The card scales about its bottom edge, so rect.bottom is the untransformed edge: our own transform never feeds back.
       const top = el.getBoundingClientRect().bottom - height
-      const value = height > 0 ? Math.round(Math.min(1, Math.max(0, (port - top) / height)) * 1000) / 1000 : 0
+      const atTop = (scroller ? scroller.scrollTop : window.scrollY) <= 0
+      const value = atTop ? 0 : height > 0 ? Math.round(Math.min(1, Math.max(0, (port - top) / height)) * 1000) / 1000 : 0
       if (value === last) return
       last = value
       el.style.setProperty('--hero-p', String(value))

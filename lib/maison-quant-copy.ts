@@ -16,6 +16,7 @@ export type QuantCopy = {
   scaleNote: string
   recorded: (days: number) => string
   ledgerTitle: string
+  windLabel: string
   legend: { gain: string; loss: string; flat: string; missing: string; today: string }
   tickGain: string
   tickLoss: string
@@ -50,6 +51,25 @@ export type QuantCopy = {
   redeem: string
   addMore: string
   closedNote: string
+  charts: {
+    navTitle: string
+    navSub: string
+    dailyTitle: string
+    dailySub: string
+    latest: string
+    nav: string
+    highlightsTitle: string
+    target: string
+    targetValue: (min: string, max: string) => string
+    minimum: string
+    settle: string
+    settleValue: string
+    settleSub: (time: string) => string
+    fees: string
+    feesValue: (management: string, performance: string) => string
+    feesSub: string
+    live: string
+  }
   view: {
     loading: string
     unavailable: string
@@ -158,6 +178,7 @@ const en: QuantCopy = {
   scaleNote: 'A ring is full at 3% (7 days), 8% (30 days) and 5% (drawdown).',
   recorded: (days) => `${days} days recorded`,
   ledgerTitle: 'Daily settlement',
+  windLabel: 'Wind the dial',
   legend: { gain: 'Gain', loss: 'Loss (principal reduced)', flat: 'Settled at 0.00%', missing: 'No record yet', today: 'Today, not settled' },
   tickGain: 'Gain',
   tickLoss: 'Loss',
@@ -192,6 +213,25 @@ const en: QuantCopy = {
   redeem: 'Redeem',
   addMore: 'Add',
   closedNote: 'Subscriptions are paused. Your position and daily settlement continue.',
+  charts: {
+    navTitle: 'Net value',
+    navSub: 'After the management fee, from 1.0000',
+    dailyTitle: 'Daily return',
+    dailySub: 'Tap or drag across the days',
+    latest: 'Latest',
+    nav: 'NAV',
+    highlightsTitle: 'At a glance',
+    target: 'Target a year',
+    targetValue: (min, max) => `${min}–${max}%`,
+    minimum: 'From',
+    settle: 'Settlement',
+    settleValue: 'Every day',
+    settleSub: (time) => `Before ${time}, counts from the next day`,
+    fees: 'Fees',
+    feesValue: (m, p) => `${m}% · ${p}%`,
+    feesSub: 'Management · performance',
+    live: 'Running',
+  },
   view: {
     loading: 'Loading…',
     unavailable: 'No data available',
@@ -308,6 +348,7 @@ const zh: QuantCopy = {
   scaleNote: '圆环满格:7 日 3% · 30 日 8% · 回撤 5%',
   recorded: (days) => `已记录 ${days} 日`,
   ledgerTitle: '每日结算',
+  windLabel: '上弦',
   legend: { gain: '盈利日', loss: '亏损日(本金减少)', flat: '已结算 0.00%', missing: '暂无记录', today: '今日未结算' },
   tickGain: '盈利',
   tickLoss: '亏损',
@@ -342,6 +383,25 @@ const zh: QuantCopy = {
   redeem: '赎回',
   addMore: '追加申购',
   closedNote: '申购已暂停,已有持仓和每日结算不受影响。',
+  charts: {
+    navTitle: '净值走势',
+    navSub: '扣除管理费后，起点 1.0000',
+    dailyTitle: '每日收益',
+    dailySub: '点按或滑动查看每一天',
+    latest: '最新',
+    nav: '净值',
+    highlightsTitle: '产品要点',
+    target: '目标年化',
+    targetValue: (min, max) => `${min}–${max}%`,
+    minimum: '起投金额',
+    settle: '结算方式',
+    settleValue: '每日结算',
+    settleSub: (time) => `${time} 前提交，次日起计`,
+    fees: '费用',
+    feesValue: (m, p) => `${m}% · ${p}%`,
+    feesSub: '管理费 · 业绩报酬',
+    live: '运行中',
+  },
   view: {
     loading: '加载中…',
     unavailable: '暂无数据',

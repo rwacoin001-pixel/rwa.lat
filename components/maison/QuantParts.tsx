@@ -75,11 +75,14 @@ const splitPct = (text: string) => (text.endsWith('%') ? [text.slice(0, -1), '%'
 const clamp = (value: number, low: number, high: number) => Math.min(high, Math.max(low, value))
 
 /** Eases a number towards its target (a count-up on first show, a quick tween when the picked day changes). */
-function useTween(target: number | null, duration = 520): number | null {
+export function useTween(target: number | null, duration = 520, restart = 0): number | null {
   const [value, setValue] = useState<number | null>(null)
   const from = useRef(0)
+  const round = useRef(restart)
   useEffect(() => {
     if (target === null) { setValue(null); return }
+    // A new round counts up from zero again (the crown winds the dial).
+    if (round.current !== restart) { round.current = restart; from.current = 0 }
     if (reducedMotion()) { from.current = target; setValue(target); return }
     const start = performance.now()
     const origin = from.current
@@ -93,7 +96,7 @@ function useTween(target: number | null, duration = 520): number | null {
     }
     frame = window.requestAnimationFrame(tick)
     return () => window.cancelAnimationFrame(frame)
-  }, [target, duration])
+  }, [target, duration, restart])
   return value
 }
 
@@ -120,6 +123,27 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   const suppressClick = useRef(false)
   const reported = useRef(focus)
   const choose = useCallback((index: number) => onSelect(index === last ? null : index), [last, onSelect])
+  const [wind, setWind] = useState(0)
+  const winding = useRef(false)
+
+  // The crown winds the watch: the ring makes one full turn and settles on today, the ticks grow back in and the centre
+  // counts up again from zero.
+  const windUp = () => {
+    if (winding.current) return
+    setWind((value) => value + 1)
+    if ('vibrate' in navigator) navigator.vibrate([4, 40, 4, 40, 4])
+    onSelect(null)
+    const home = 0
+    if (reducedMotion()) { rotation.set(home); return }
+    winding.current = true
+    dragging.current = true
+    const from = rotation.get()
+    animate(rotation, [from, home - 360], { duration: 1.25, ease: [.65, 0, .2, 1] }).then(() => {
+      rotation.set(home)
+      dragging.current = false
+      winding.current = false
+    })
+  }
 
   useLayoutEffect(() => {
     const ring = ringRef.current
@@ -216,7 +240,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   }
 
   const tweenTarget = picked ? picked.value : p.sinceInceptionPct
-  const tween = useTween(tweenTarget, 520)
+  const tween = useTween(tweenTarget, wind ? 1100 : 520, wind)
   const shown = tweenTarget === null ? '—' : tween === null ? formatPct(0) : formatPct(tween)
   const [numInt, numSign] = splitPct(shown)
   const negative = tweenTarget !== null && tweenTarget < 0
@@ -236,6 +260,10 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   >
     <div className={styles.bezelMetal} />
     <div className={styles.bezelSheen} aria-hidden="true" />
+    {wind > 0 && <div key={wind} className={styles.windFlash} aria-hidden="true" />}
+    <button type="button" className={styles.crown} key={`crown-${wind}`} data-wound={wind > 0 || undefined} aria-label={copy.windLabel} onPointerDown={(event) => event.stopPropagation()} onClick={windUp}>
+      <i className={styles.crownCap} /><i className={styles.crownKnurl} /><i className={styles.crownStem} />
+    </button>
     <div className={styles.faceBg} />
     <svg className={styles.dial} viewBox="0 0 300 300">
       {[58, 72, 86].map((r) => <circle key={r} className={styles.engrave} cx={CX} cy={CX} r={r} />)}
@@ -252,6 +280,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
           const [x2, y2] = polar(56, i * 5)
           return <line key={i} className={styles.spoke} x1={x1} y1={y1} x2={x2} y2={y2} />
         })}
+        <g key={wind}>
         {ticks.map((tick, index) => {
           const angle = angleOf(index)
           const [bx, by] = polar(R_BASE, angle)
@@ -276,12 +305,12 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
             {tick.kind === 'today' ? <circle cx={bx} cy={by} r="4" /> : <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ '--i': index } as CSSProperties} />}
           </g>
         })}
+        </g>
       </g>
       {selected !== null && <g aria-hidden="true">
         <line className={styles.needle} x1={CX} y1={CX - 26} x2={CX} y2={CX - (R_BASE - 2)} />
         <circle className={styles.needleDot} cx={CX} cy={CX - (R_BASE - 2)} r="1.8" />
       </g>}
-      <path className={styles.marker} d={`M${CX} ${CX - 126} l5 -9 h-10 z`} transform="translate(0 -22)" />
     </svg>
     <div className={styles.center}>
       {picked
