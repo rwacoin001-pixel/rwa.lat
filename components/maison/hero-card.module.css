@@ -28,6 +28,7 @@
 /* One orchestrated arrival: 8px rise, 60ms steps by --i, capped well under 500ms. */
 .reveal { animation: heroItem 420ms var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
 @keyframes heroItem { from { opacity: 0; transform: translateY(8px); } }
+.hero[data-settled] .reveal { animation: none; }
 
 /* ── Header: category dot + countdown ─────────────────── */
 .top { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 20px; }
