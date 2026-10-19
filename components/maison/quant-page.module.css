@@ -81,3 +81,4 @@ button.cell:active { background: var(--m-glass); }
   .reveal { opacity: 0; }
   .reveal[data-in] { opacity: 1; transition: opacity .2s ease; }
 }
+.ctaBlock { margin-top: 24px; }

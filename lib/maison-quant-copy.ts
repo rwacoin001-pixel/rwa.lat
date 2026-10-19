@@ -69,6 +69,17 @@ export type QuantCopy = {
     feesValue: (management: string, performance: string) => string
     feesSub: string
     live: string
+    perYear: string
+    cutoffAt: (time: string) => string
+    performanceFee: string
+    newHighsOnly: string
+    free: string
+    startsEarning: string
+    firstPayout: string
+    secPerformance: string
+    secSpecs: string
+    secProcess: string
+    secAccount: string
   }
   view: {
     loading: string
@@ -231,6 +242,17 @@ const en: QuantCopy = {
     feesValue: (m, p) => `${m}% · ${p}%`,
     feesSub: 'Management · performance',
     live: 'Running',
+    perYear: 'a year',
+    cutoffAt: (time) => `Cut-off ${time} each day`,
+    performanceFee: 'Performance fee',
+    newHighsOnly: 'Only on gains above the previous high',
+    free: 'Free',
+    startsEarning: 'Counts from this day',
+    firstPayout: 'First gain or loss booked',
+    secPerformance: 'Performance',
+    secSpecs: 'Specifications',
+    secProcess: 'How it works',
+    secAccount: 'My account',
   },
   view: {
     loading: 'Loading…',
@@ -401,6 +423,17 @@ const zh: QuantCopy = {
     feesValue: (m, p) => `${m}% · ${p}%`,
     feesSub: '管理费 · 业绩报酬',
     live: '运行中',
+    perYear: '年化',
+    cutoffAt: (time) => `每日 ${time} 截止`,
+    performanceFee: '业绩报酬',
+    newHighsOnly: '仅对超过历史最高净值的部分收取',
+    free: '免收',
+    startsEarning: '从这一天开始计入收益',
+    firstPayout: '第一笔收益或亏损入账',
+    secPerformance: '表现',
+    secSpecs: '产品规格',
+    secProcess: '申购流程',
+    secAccount: '我的账户',
   },
   view: {
     loading: '加载中…',

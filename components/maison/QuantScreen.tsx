@@ -11,10 +11,11 @@ import { buildTicks, localToday, quantAudience } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
-import { QuantDial, QuantLegend, QuantStepper, Reveal, useHideDock } from './QuantParts'
+import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantSummary, QuantTerms } from './QuantInfo'
-import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart, QuantPanel, QuantStatus } from './QuantCharts'
+import { QuantDailyBars, QuantKpis, QuantNavChart, QuantStatus } from './QuantCharts'
+import { QuantProcess, QuantSection, QuantSpecSheet } from './QuantSpec'
+import { QuantPin } from './QuantPin'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import styles from './quant.module.css'
@@ -56,51 +57,56 @@ export function QuantScreen() {
   if (!slug) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><StateBlock title={c.comingSoon} body={c.comingSoonBody} /></MaisonPage>
   if (!product) return <MaisonPage page="quant" dock topbar={topbar} className={stage}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
 
-  const subscribe = wantsSubscribe && <Reveal>
+  const subscribe = wantsSubscribe && <div className={page.ctaBlock}>
     <button type="button" className={`${s.cta} ${page.cta}`} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>
       <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
     </button>
-    <p className={page.note} style={{ textAlign: 'center' }}>{product.open ? c.charts.settleSub(product.cutoffTime) : c.closedNote}</p>
-  </Reveal>
-  const summary = <Reveal><QuantPanel><QuantSummary product={product} preview={preview} c={c} /></QuantPanel></Reveal>
-  const charts = ticks.length > 0 && <>
-    <Reveal><QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} /></Reveal>
-    <Reveal><QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} /></Reveal>
-    <div className={page.legend}><QuantLegend copy={c} /></div>
-    <p className={page.context} style={{ textAlign: 'start', margin: '8px 2px 0' }}>{c.indexNote}</p>
-  </>
-  const highlights = <Reveal><QuantHighlights product={product} c={c} /></Reveal>
+    {!product.open && <p className={page.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
+  </div>
+  const performance = ticks.length > 0 && <Reveal><QuantSection no="I" title={c.charts.secPerformance} kicker="PERFORMANCE">
+    <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+    <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+  </QuantSection></Reveal>
+  const process = wantsSubscribe && <Reveal><QuantSection no={involved ? 'III' : 'II'} title={c.charts.secProcess} kicker="PROCESS">
+    <QuantProcess preview={preview} c={c}>{subscribe}</QuantProcess>
+  </QuantSection></Reveal>
+  const specs = <Reveal><QuantSection no={involved ? (wantsSubscribe ? 'IV' : 'III') : 'III'} title={c.charts.secSpecs} kicker="SPECIFICATIONS">
+    <QuantSpecSheet product={product} c={c} />
+  </QuantSection></Reveal>
 
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
-    <header className={styles.mast}>
-      <h1 className="sr-only">{product.name}</h1>
-      <QuantStatus product={product} c={c} />
-    </header>
+    <h1 className="sr-only">{product.name}</h1>
+    <QuantPin>
+      <header className={`${styles.mast} ${styles.pinFade}`}>
+        <QuantStatus product={product} c={c} />
+      </header>
+      {ticks.length > 0
+        ? <>
+          <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
+          <div className={styles.pinFade}><QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /></div>
+        </>
+        : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
+    </QuantPin>
 
     {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
-
-    {ticks.length > 0
-      ? <>
-        <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
-        <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} />
-      </>
-      : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
     <QuantKpis product={product} c={c} />
 
-    <div>
-      {involved && <>
-        <Reveal><QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} /></Reveal>
-        {charts}
-        <Reveal><QuantHistory payouts={payouts} c={c} /></Reveal>
-        {highlights}
-        {wantsSubscribe && <>{summary}{subscribe}</>}
-      </>}
-      {!involved && <>{charts}{highlights}{subscribe}{summary}</>}
-      <Reveal><QuantPanel><QuantTerms product={product} c={c} /></QuantPanel></Reveal>
-      <div className={page.foot}>
-        <span>{c.riskLine}</span>
-        <button type="button" className={page.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
-      </div>
+    {involved && <>
+      <Reveal><QuantSection no="I" title={c.charts.secAccount} kicker="ACCOUNT">
+        <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
+        <QuantHistory payouts={payouts} c={c} />
+      </QuantSection></Reveal>
+      {ticks.length > 0 && <Reveal><QuantSection no="II" title={c.charts.secPerformance} kicker="PERFORMANCE">
+        <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+        <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+      </QuantSection></Reveal>}
+      {process}
+      {specs}
+    </>}
+    {!involved && <>{performance}{process}{specs}</>}
+    <div className={page.foot}>
+      <span>{c.riskLine}</span>
+      <button type="button" className={page.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
     </div>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
