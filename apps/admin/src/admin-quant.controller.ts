@@ -66,4 +66,16 @@ export class AdminQuantController {
   void(@Req() request: AdminRequest, @Param('id') id: string) {
     return this.quant.void(adminId(request), id)
   }
+
+  @Get('disclosures')
+  @ApiOperation({ summary: 'Risk disclosure versions with acknowledgement counts' })
+  disclosures(@Req() request: AdminRequest) {
+    return this.quant.disclosures(adminId(request))
+  }
+
+  @Post('disclosures')
+  @ApiOperation({ summary: 'Publish a new risk disclosure version' })
+  publishDisclosure(@Req() request: AdminRequest, @Body() body: Record<string, unknown>) {
+    return this.quant.publishDisclosure(adminId(request), body)
+  }
 }
