@@ -16,6 +16,7 @@ export type QuantCopy = {
   scaleNote: string
   recorded: (days: number) => string
   ledgerTitle: string
+  windLabel: string
   legend: { gain: string; loss: string; flat: string; missing: string; today: string }
   tickGain: string
   tickLoss: string
@@ -177,6 +178,7 @@ const en: QuantCopy = {
   scaleNote: 'A ring is full at 3% (7 days), 8% (30 days) and 5% (drawdown).',
   recorded: (days) => `${days} days recorded`,
   ledgerTitle: 'Daily settlement',
+  windLabel: 'Wind the dial',
   legend: { gain: 'Gain', loss: 'Loss (principal reduced)', flat: 'Settled at 0.00%', missing: 'No record yet', today: 'Today, not settled' },
   tickGain: 'Gain',
   tickLoss: 'Loss',
@@ -346,6 +348,7 @@ const zh: QuantCopy = {
   scaleNote: '圆环满格:7 日 3% · 30 日 8% · 回撤 5%',
   recorded: (days) => `已记录 ${days} 日`,
   ledgerTitle: '每日结算',
+  windLabel: '上弦',
   legend: { gain: '盈利日', loss: '亏损日(本金减少)', flat: '已结算 0.00%', missing: '暂无记录', today: '今日未结算' },
   tickGain: '盈利',
   tickLoss: '亏损',

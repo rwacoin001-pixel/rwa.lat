@@ -48,7 +48,7 @@ export function QuantScreen() {
     ? buildTicks(product.history.map((row) => ({ date: row.tradeDate, value: Number(row.netReturnPct) })), { today: localToday(product.timezone), count: 30 })
     : [], [product])
 
-  const topbar = <RwaTopbar screen="quant" title={c.title} />
+  const topbar = <RwaTopbar screen="quant" title={<span className={styles.barTitle}>{c.title}</span>} />
   const stage = `${styles.stage} ${quantSerif.variable} ${quantCaps.variable}`
 
   if (list.loading && !list.data) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
@@ -73,10 +73,7 @@ export function QuantScreen() {
 
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <header className={styles.mast}>
-      <div>
-        <span className={styles.mastCaps}>{c.kicker}</span>
-        <h1 className={styles.mastName}>{product.name}</h1>
-      </div>
+      <h1 className="sr-only">{product.name}</h1>
       <QuantStatus product={product} c={c} />
     </header>
 
