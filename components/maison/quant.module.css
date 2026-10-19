@@ -217,3 +217,13 @@
 /* Title in the topbar: the product name as spaced serif caps; it hides with the bar when reading down. */
 .barTitle { display: inline-flex; align-items: center; gap: 10px; color: var(--q-num); font-family: var(--q-serif), var(--m-display); font-size: 19px; font-weight: 600; letter-spacing: .3em; text-indent: .3em; }
 .barTitle::before, .barTitle::after { content: ''; width: 18px; border-top: .5px solid rgba(var(--q-gold-rgb), .6); }
+
+/* Pinned dial: sticky under the topbar. Its in-flow box is the compact height; a bottom margin keeps the full height at
+   rest, so as the page scrolls the dial shrinks in place (transform only) and then stays while the rest passes beneath. */
+.pin { position: sticky; z-index: 6; top: calc(var(--topbar-h, 48px) + env(safe-area-inset-top)); height: var(--pin-h, auto); margin-bottom: calc(var(--pin-full, 0px) - var(--pin-h, 0px)); transition: top .42s var(--spring, cubic-bezier(.2, .8, .2, 1)); }
+:global(.rwa-mobile:has(.rwa-topbar[data-chrome-hidden='true'])) .pin { top: env(safe-area-inset-top); }
+.pin::before { content: ''; position: absolute; z-index: -1; inset: -10px calc(var(--m-gutter, 16px) * -1) -36px; background: linear-gradient(180deg, var(--m-bg) 0, var(--m-bg) calc(100% - 44px), transparent); opacity: var(--k, 0); pointer-events: none; }
+.pinInner { transform-origin: 50% 0; transform: scale(calc(1 - var(--k, 0) * .56)); will-change: transform; }
+.pinFade { opacity: calc(1 - var(--k, 0) * 2.4); }
+.pin[data-pinned='true'] .pinFade { visibility: hidden; }
+.pin[data-pinned='true'] .pinInner { cursor: pointer; }
