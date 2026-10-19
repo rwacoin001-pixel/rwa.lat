@@ -7,7 +7,7 @@
 .down { color: var(--m-lacquer-down, var(--m-down)); }
 
 /* The stage: the Koala page is a bronze-and-champagne watch-dial room. It re-points the shared Maison tokens so every Maison part inside it (lacquer cards, sheets, lists, buttons) follows. Dark is the night dial; light is the same dial on champagne paper. */
-:global(.rwa-mobile[data-theme]) .stage.stage { --q-serif: var(--font-q-serif, var(--m-display)); --q-caps: var(--font-q-caps, var(--m-sans));
+:global(.rwa-mobile[data-theme]) .stage.stage { counter-reset: koala-sec; --q-serif: var(--font-q-serif, var(--m-display)); --q-caps: var(--font-q-caps, var(--m-sans));
   /* Dark: the app's own navy-and-champagne page (its --m-* tokens are left alone); only the dial's metal and face are set here. */
   --q-gold: #dcc196; --q-gold-rgb: 220, 193, 150; --q-num: #eef1f6; --q-dim: #8e9ab0; --q-dim2: #6d7a91; --q-flat: #7e8aa0; --q-gain: #e6c995; --q-loss: #e2806f; --q-loss-text: #f29b8b;
   --q-face: radial-gradient(circle at 50% 28%, #1d2b47, #0a1222 72%); --q-face-inset: #000; --q-sheen: rgba(240, 226, 196, .5);
