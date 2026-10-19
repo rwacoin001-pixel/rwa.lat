@@ -65,12 +65,12 @@ const polar = (radius: number, degrees: number) => {
   const a = (degrees * Math.PI) / 180
   return [CX + Math.cos(a) * radius, CX + Math.sin(a) * radius] as const
 }
+const splitPct = (text: string) => (text.endsWith('%') ? [text.slice(0, -1), '%'] as const : [text, ''] as const)
 
 /**
  * The settlement dial. One tick per calendar day on a ring: oldest to today clockwise, today at twelve. A gain day reaches
- * outward, a loss day inward, a day with no record is a dashed slot, today is a hollow ring. The centre shows the figure since
- * inception, or the picked day. Colours come from the shared lacquer tokens, so it is ivory enamel in the warm theme and navy
- * lacquer in the cool one.
+ * outward, a loss day inward, a day with no record is a dashed slot, today is a hollow ring. Tap a tick (or use the arrows)
+ * and a needle points at it while the centre shows that day; otherwise the centre shows the figure since inception.
  */
 export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct
@@ -79,23 +79,35 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   const last = ticks.length - 1
   const picked = selected !== null ? ticks[selected] : null
   const p = product.performance
+  const angleOf = (index: number) => -90 - (last - index) * 12
+  const [pickedInt, pickedSign] = splitPct(picked && picked.value !== null ? formatPct(picked.value) : '—')
+  const [sinceInt, sinceSign] = splitPct(formatPct(p.sinceInceptionPct))
   return <div className={styles.dialBox}>
+    <div className={styles.bezelMetal} />
+    <div className={styles.faceBg} />
     <svg className={styles.dial} viewBox="0 0 300 300" role="group" aria-label={copy.ledgerTitle}>
-      <circle className={styles.bezel} cx={CX} cy={CX} r="146" />
-      <circle className={styles.bezel} cx={CX} cy={CX} r="143" />
       {Array.from({ length: 120 }, (_, i) => {
-        const [x1, y1] = polar(i % 5 === 0 ? 134.5 : 137, i * 3)
-        const [x2, y2] = polar(141, i * 3)
-        return <line key={i} className={styles.track} data-major={i % 5 === 0 || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+        const major = i % 5 === 0
+        const [x1, y1] = polar(major ? 130.5 : 133.5, i * 3)
+        const [x2, y2] = polar(137, i * 3)
+        return <line key={i} className={styles.track} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
       })}
-      <circle className={styles.face} cx={CX} cy={CX} r="131" />
-      {[62, 84].map((r) => <circle key={r} className={styles.engrave} cx={CX} cy={CX} r={r} />)}
+      {[58, 72, 86].map((r) => <circle key={r} className={styles.engrave} cx={CX} cy={CX} r={r} />)}
+      {Array.from({ length: 72 }, (_, i) => {
+        const [x1, y1] = polar(40, i * 5)
+        const [x2, y2] = polar(56, i * 5)
+        return <line key={i} className={styles.spoke} x1={x1} y1={y1} x2={x2} y2={y2} />
+      })}
       <circle className={styles.baseRing} cx={CX} cy={CX} r={R_BASE} />
+      {selected !== null && (() => {
+        const [x1, y1] = polar(26, angleOf(selected))
+        const [x2, y2] = polar(R_BASE - 2, angleOf(selected))
+        return <g aria-hidden="true"><line className={styles.needle} x1={x1} y1={y1} x2={x2} y2={y2} /><circle className={styles.needleDot} cx={x2} cy={y2} r="1.8" /></g>
+      })()}
       {ticks.map((tick, index) => {
-        const age = last - index
-        const angle = -90 - age * 12
+        const angle = angleOf(index)
         const [bx, by] = polar(R_BASE, angle)
-        const length = tick.value === null || tick.value === 0 ? 7 : 3 + (Math.abs(tick.value) / scale) * 22
+        const length = tick.value === null || tick.value === 0 ? 7 : 3 + (Math.abs(tick.value) / scale) * 20
         const outward = tick.value === null || tick.value >= 0
         const [x1, y1] = polar(tick.kind === 'missing' ? R_BASE - 7 : R_BASE, angle)
         const [x2, y2] = polar(tick.kind === 'missing' ? R_BASE + 7 : tick.kind === 'flat' ? R_BASE + 3 : outward ? R_BASE + length : R_BASE - length, angle)
@@ -111,25 +123,25 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
           onClick={toggle}
           onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle() } }}
         >
-          <circle className={styles.hit} cx={bx} cy={by} r="12" />
+          <circle className={styles.hit} cx={bx} cy={by} r="11" />
           {tick.kind === 'today' ? <circle cx={bx} cy={by} r="4" /> : <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ '--i': index } as CSSProperties} />}
         </g>
       })}
-      <path className={styles.marker} d={`M${CX} ${CX - 135} l5 -9 h-10 z`} />
+      <path className={styles.marker} d={`M${CX} ${CX - 126} l5 -9 h-10 z`} transform="translate(0 -22)" />
     </svg>
     <div className={styles.center}>
       {picked
         ? <button type="button" onClick={() => onSelect(null)} aria-label={copy.sinceInception}>
           <span className={styles.cLabel}>{picked.date}</span>
-          <span className={styles.cNum}>{picked.value === null ? '—' : formatPct(picked.value)}</span>
+          <span className={styles.cNum}>{pickedInt}{pickedSign && <sup>{pickedSign}</sup>}</span>
           <span className={styles.cSub}>{kindLabel(copy, picked.kind)}</span>
           <span className={styles.cRule} />
           <span className={styles.cFoot}>{copy.sinceInception} ›</span>
         </button>
         : <>
           <span className={styles.cLabel}>{copy.sinceInception}</span>
-          <span className={`${styles.cNum} ${p.sinceInceptionPct !== null && p.sinceInceptionPct < 0 ? styles.down : ''}`}>{formatPct(p.sinceInceptionPct)}</span>
-          <span className={styles.cSub}>{Number(p.index).toFixed(4)}</span>
+          <span className={`${styles.cNum} ${p.sinceInceptionPct !== null && p.sinceInceptionPct < 0 ? styles.down : ''}`}>{sinceInt}{sinceSign && <sup>{sinceSign}</sup>}</span>
+          <span className={styles.cSub}>{copy.indexShort} {Number(p.index).toFixed(4)}</span>
           <span className={styles.cRule} />
           <span className={styles.cFoot}>{copy.recorded(p.days)}</span>
         </>}
@@ -148,22 +160,49 @@ export function QuantStepper({ ticks, selected, onSelect }: { ticks: Tick[]; sel
   </div>
 }
 
-function Stat({ value, label, note }: { value: number | null; label: string; note?: string }) {
-  return <div className={styles.ring}>
-    {label}
-    <b data-tone={value === null || value === 0 ? undefined : value > 0 ? 'up' : 'down'}>{formatPct(value, 1)}</b>
+function Sub({ value, full, label, note }: { value: number | null; full: number; label: string; note?: string }) {
+  const fraction = value === null ? 0 : Math.min(1, Math.abs(value) / full)
+  const circumference = 2 * Math.PI * 44
+  const negative = value !== null && value < 0
+  return <div className={styles.sub}>
+    <svg viewBox="0 0 110 110" aria-hidden="true">
+      <circle className={styles.st} cx="55" cy="55" r="44" />
+      {[0, 90, 180, 270].map((deg) => { const a = (deg * Math.PI) / 180; return <line key={deg} className={styles.sk} x1={55 + Math.cos(a) * 47} y1={55 + Math.sin(a) * 47} x2={55 + Math.cos(a) * 51} y2={55 + Math.sin(a) * 51} /> })}
+      <circle className={styles.sv} cx="55" cy="55" r="44" stroke={negative ? '#cf7457' : '#ecd9ad'} strokeDasharray={`${circumference * fraction} ${circumference}`} transform="rotate(-90 55 55)" />
+    </svg>
+    <b data-tone={negative ? 'down' : undefined}>{formatPct(value, 1)}</b>
+    <span>{label}</span>
     {note && <small>{note}</small>}
   </div>
 }
 
-/** Three figures under the dial: 7 days, 30 days, max drawdown. A window that is only partly recorded says how many days stand behind it. */
+/** Three small subdials under the dial: 7 days, 30 days, max drawdown. A ring is full at a fixed reference (3% / 8% / 5%), named under it. */
 export function QuantRings({ product, copy }: { product: QuantProduct; copy: QuantCopy }) {
   const p = product.performance
-  return <div className={styles.rings}>
-    <Stat value={p.last7d.pct} label={copy.last7} note={p.last7d.coveredDays < p.last7d.days ? copy.partial(p.last7d.coveredDays) : undefined} />
-    <Stat value={p.last30d.pct} label={copy.last30} note={p.last30d.coveredDays < p.last30d.days ? copy.partial(p.last30d.coveredDays) : undefined} />
-    <Stat value={p.maxDrawdownPct} label={copy.drawdown} />
-  </div>
+  return <>
+    <div className={styles.subs}>
+      <Sub value={p.last7d.pct} full={3} label={copy.last7} note={p.last7d.coveredDays < p.last7d.days ? copy.partial(p.last7d.coveredDays) : undefined} />
+      <Sub value={p.last30d.pct} full={8} label={copy.last30} note={p.last30d.coveredDays < p.last30d.days ? copy.partial(p.last30d.coveredDays) : undefined} />
+      <Sub value={p.maxDrawdownPct} full={5} label={copy.drawdown} />
+    </div>
+    <p className={styles.scaleNote}>{copy.scaleNote}</p>
+  </>
+}
+
+/** Forces the app's dark chrome (top bar, dock) while the Koala stage is on screen, and puts the user's theme back afterwards. */
+export function useStageTheme() {
+  useEffect(() => {
+    const nodes = [document.documentElement, ...Array.from(document.querySelectorAll<HTMLElement>('.rwa-mobile'))]
+    const before = nodes.map((node) => node.getAttribute('data-theme'))
+    nodes.forEach((node) => node.setAttribute('data-theme', 'dark'))
+    const pill = document.querySelector<HTMLElement>('.liquid-dock__pill')
+    const pillBefore = pill ? { background: pill.style.background, borderColor: pill.style.borderColor } : null
+    if (pill) { pill.style.background = 'rgba(30, 24, 18, .84)'; pill.style.borderColor = 'rgba(217, 191, 134, .3)' }
+    return () => {
+      nodes.forEach((node, i) => { if (before[i] === null) node.removeAttribute('data-theme'); else node.setAttribute('data-theme', before[i] as string) })
+      if (pill && pillBefore) { pill.style.background = pillBefore.background; pill.style.borderColor = pillBefore.borderColor }
+    }
+  }, [])
 }
 
 export function QuantLegend({ copy }: { copy: QuantCopy }) {

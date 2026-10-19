@@ -8,10 +8,10 @@ import { useQuery } from '@/lib/api/_query'
 import { getQuantDisclosure, useQuantProducts, type QuantProduct } from '@/lib/api/quant'
 import { quantCopyFor, type QuantCopy } from '@/lib/maison-quant-copy'
 import { buildTicks, localToday, shortDate } from '@/lib/quant-view-model'
-import { Lacquer } from './motion'
+import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
-import { QuantDial, QuantLegend, QuantRings, QuantStepper, useHideDock } from './QuantParts'
+import { QuantDial, QuantLegend, QuantRings, QuantStepper, useHideDock, useStageTheme } from './QuantParts'
 import { QuantPositionPlate, useQuantProduct } from './QuantPositionCard'
 import { QuantSubscribeSheet } from './QuantSheets'
 import styles from './quant.module.css'
@@ -59,38 +59,36 @@ export function QuantScreen() {
     : [], [product])
 
   const topbar = <RwaTopbar screen="quant" title={c.title} />
+  const stage = `${styles.stage} ${quantSerif.variable} ${quantCaps.variable}`
+  useStageTheme()
 
-  if (list.loading && !list.data) return <MaisonPage page="quant" dock topbar={topbar}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
-  if (list.error && !list.data) return <MaisonPage page="quant" dock topbar={topbar}><StateBlock tone="error" title={c.loadError} retry={list.refetch} retryLabel={c.retry} /></MaisonPage>
-  if (!slug) return <MaisonPage page="quant" dock topbar={topbar}><StateBlock title={c.comingSoon} body={c.comingSoonBody} /></MaisonPage>
-  if (!product) return <MaisonPage page="quant" dock topbar={topbar}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
+  if (list.loading && !list.data) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
+  if (list.error && !list.data) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><StateBlock tone="error" title={c.loadError} retry={list.refetch} retryLabel={c.retry} /></MaisonPage>
+  if (!slug) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><StateBlock title={c.comingSoon} body={c.comingSoonBody} /></MaisonPage>
+  if (!product) return <MaisonPage page="quant" dock topbar={topbar} className={stage}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
 
   const p = product.performance
   const holds = Boolean(product.position && (BigInt(product.position.principalAtomic) > BigInt(0) || product.position.pendingOrders.length > 0))
-  return <MaisonPage page="quant" dock topbar={topbar}>
-    <header className={s.hero}>
-      <p className={s.kicker}>{c.kicker}</p>
-      <h1 className={s.titleL}>{product.name}</h1>
+  return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
+    <header className={styles.mast}>
+      <span className={styles.mastCaps}>{c.kicker}</span>
+      <h1 className={styles.mastName}>{product.name}</h1>
+      <i className={styles.mastRule} />
+      <p className={styles.meta} style={{ margin: '10px 0 0', color: '#9a8c75' }}>{p.lastSettledDate ? `${c.settledTo} ${shortDate(p.lastSettledDate)}` : c.neverSettled}</p>
     </header>
 
-    <Lacquer className={styles.card}>
-      <div className={styles.head}>
-        <span className={styles.kick}>{c.ledgerTitle}</span>
-        <span className={styles.meta}>{p.lastSettledDate ? `${c.settledTo} ${shortDate(p.lastSettledDate)}` : c.neverSettled}</span>
-      </div>
-      {ticks.length > 0
-        ? <>
-          <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
-          <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} />
-        </>
-        : <p className={styles.meta} style={{ margin: '36px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
-      <QuantRings product={product} copy={c} />
-      <div className={styles.foot2}>
-        <span>{c.riskLine}</span>
-        <button type="button" className={s.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
-      </div>
-    </Lacquer>
+    {ticks.length > 0
+      ? <>
+        <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
+        <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} />
+      </>
+      : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
     <QuantLegend copy={c} />
+    <QuantRings product={product} copy={c} />
+    <div className={styles.foot2}>
+      <span>{c.riskLine}</span>
+      <button type="button" className={s.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
+    </div>
 
     <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
       <button type="button" className={s.cta} style={{ flex: 1 }} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>

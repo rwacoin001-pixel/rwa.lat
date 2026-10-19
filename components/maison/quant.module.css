@@ -6,45 +6,70 @@
 .up { color: var(--m-lacquer-up, var(--m-up)); }
 .down { color: var(--m-lacquer-down, var(--m-down)); }
 
-/* The dial: one tick per calendar day around the face, oldest to today clockwise, today at twelve. */
-.dialBox { position: relative; width: min(100%, 252px); aspect-ratio: 1; margin: 12px auto 0; }
-.dial { display: block; width: 100%; height: 100%; overflow: visible; direction: ltr; }
-.face { fill: color-mix(in srgb, var(--m-lacquer-fill) 100%, transparent); stroke: var(--m-lacquer-edge); stroke-width: .8; }
-.bezel { fill: none; stroke: var(--m-lacquer-edge); stroke-width: .6; }
-.track { stroke: var(--m-lacquer-tick); stroke-width: .6; }
-.track[data-major] { stroke: var(--m-lacquer-edge); }
-.engrave { fill: none; stroke: var(--m-lacquer-tick); stroke-width: .5; }
-.baseRing { fill: none; stroke: var(--m-lacquer-edge); stroke-width: .7; }
+/* The stage: the Koala page is a bronze-and-champagne watch-dial room. It re-points the shared Maison tokens so every Maison part inside it (lacquer cards, sheets, lists, buttons) follows, in either app theme. */
+:global(.rwa-mobile[data-theme]) .stage.stage { --q-serif: var(--font-q-serif, var(--m-display)); --q-caps: var(--font-q-caps, var(--m-sans));
+  --m-bg: #0f0c09; --m-ink: #f0e6d0; --m-muted: #9a8c75; --m-faint: #7a6e5b; --m-line: rgba(217, 191, 134, .2); --m-line-soft: rgba(217, 191, 134, .1);
+  --m-glass: rgba(34, 27, 20, .72); --m-glass-deep: rgba(24, 19, 14, .82); --m-accent: #d9bf86; --m-on-accent: #1a1209; --m-up: #ecd9ad; --m-down: #cf7457; --m-warn: #d9bf86;
+  --m-lacquer: linear-gradient(180deg, #1d1812, #14100c); --m-lacquer-ink: #f0e6d0; --m-lacquer-muted: #9a8c75; --m-lacquer-line: rgba(217, 191, 134, .22); --m-lacquer-accent: #d9bf86;
+  --m-lacquer-hi: rgba(255, 235, 190, .14); --m-lacquer-up: #ecd9ad; --m-lacquer-down: #cf7457; --m-lacquer-edge: rgba(217, 191, 134, .26); --m-lacquer-fill: rgba(217, 191, 134, .07); --m-lacquer-tick: rgba(217, 191, 134, .2);
+  --m-lacquer-shadow: 0 22px 40px -26px #000; --m-cta: linear-gradient(180deg, #e7cf98, #c7a869); --m-cta-ink: #1a1209; --m-cta-rim: rgba(255, 255, 255, .45); --m-cta-chip: rgba(26, 18, 9, .85); --m-cta-chip-ink: #ecd9ad;
+  --m-scrim: rgba(8, 6, 4, .6); --m-topbar-bg: rgba(15, 12, 9, .66); background: #0f0c09; color: #f0e6d0; }
+:global(.rwa-mobile[data-theme]) .stage.stage::before { background: radial-gradient(120% 46% at 50% 14%, #2c2218 0, #0f0c09 64%); opacity: 1; }
+.mast { text-align: center; padding-top: 2px; }
+.mastCaps { color: var(--m-accent); font-family: var(--q-caps); font-size: 10px; font-weight: 500; letter-spacing: .34em; text-indent: .34em; text-transform: uppercase; }
+.mastName { margin: 6px 0 0; font-family: var(--m-display); font-size: 24px; font-weight: 400; letter-spacing: .22em; text-indent: .22em; }
+.mastRule { display: block; width: 46px; height: 1px; margin: 10px auto 0; background: linear-gradient(90deg, transparent, var(--m-accent), transparent); }
+
+/* The dial: one tick per calendar day on a ring, oldest to today clockwise, today at twelve. Metal bezel, engraved face, a needle for the picked day. */
+.dialBox { position: relative; width: min(100%, 332px); aspect-ratio: 1; margin: 22px auto 0; }
+.bezelMetal { position: absolute; inset: 0; border-radius: 50%; background: conic-gradient(from 18deg, #3a3025, #9a8157 12%, #2b2218 24%, #6f5d41 38%, #241c15 50%, #b39a68 63%, #2b2218 76%, #7b6646 88%, #3a3025); box-shadow: 0 34px 50px -28px #000, 0 0 0 .5px rgba(255, 235, 190, .2), inset 0 0 0 1px rgba(255, 235, 190, .16); }
+.bezelMetal::after { content: ''; position: absolute; inset: 1.6%; border-radius: 50%; box-shadow: inset 0 1px 1px rgba(255, 240, 205, .5), inset 0 -2px 4px rgba(0, 0, 0, .5); }
+.faceBg { position: absolute; inset: 2.7%; border-radius: 50%; background: radial-gradient(circle at 50% 28%, #2a2118, #120e0a 72%); box-shadow: inset 0 0 36px #000, inset 0 0 0 1px rgba(217, 191, 134, .2); }
+.dial { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; direction: ltr; }
+.track { stroke: rgba(217, 191, 134, .16); stroke-width: .6; }
+.track[data-major] { stroke: rgba(217, 191, 134, .42); stroke-width: .8; }
+.engrave { fill: none; stroke: rgba(217, 191, 134, .1); stroke-width: .5; }
+.spoke { stroke: rgba(217, 191, 134, .08); stroke-width: .4; }
+.baseRing { fill: none; stroke: rgba(217, 191, 134, .3); stroke-width: .7; }
+.dateLab { fill: #8b7e66; font-family: var(--q-caps); font-size: 7.5px; letter-spacing: .1em; text-anchor: middle; dominant-baseline: middle; }
+.needle { stroke: var(--m-accent); stroke-width: .8; }
+.needleDot { fill: var(--m-accent); }
 .t { cursor: pointer; outline: none; }
 .t line { stroke-linecap: round; transition: stroke-width .18s ease; }
-.t[data-kind='gain'] line { stroke: var(--m-lacquer-up, var(--m-up)); stroke-width: 3; }
-.t[data-kind='loss'] line { stroke: var(--m-lacquer-down, var(--m-down)); stroke-width: 3; }
-.t[data-kind='flat'] line { stroke: var(--m-lacquer-muted); stroke-width: 2; }
-.t[data-kind='missing'] line { stroke: var(--m-lacquer-muted); stroke-width: 1; stroke-dasharray: 1.5 2.5; stroke-linecap: butt; }
-.t[data-kind='today'] circle { fill: none; stroke: var(--m-lacquer-accent); stroke-width: 1.1; }
+.t[data-kind='gain'] line { stroke: #ecd9ad; stroke-width: 3; }
+.t[data-kind='loss'] line { stroke: #cf7457; stroke-width: 3; }
+.t[data-kind='flat'] line { stroke: #8b7e66; stroke-width: 2; }
+.t[data-kind='missing'] line { stroke: #9a8c75; stroke-width: 1; stroke-dasharray: 1.5 2.5; stroke-linecap: butt; }
+.t[data-kind='today'] circle { fill: none; stroke: #d9bf86; stroke-width: 1.1; }
 .t[aria-pressed='true'] line { stroke-width: 4.6; }
-.t:focus-visible line, .t:focus-visible circle { stroke: var(--m-lacquer-ink); }
+.t:focus-visible line, .t:focus-visible circle { stroke: #fff; }
 .hit { fill: transparent; stroke: none; }
-.marker { fill: var(--m-lacquer-accent); }
-.center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 22%; pointer-events: none; }
+.marker { fill: #d9bf86; }
+.center { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 24%; pointer-events: none; }
 .center button { pointer-events: auto; border: 0; background: none; padding: 0; color: inherit; font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; }
-.cLabel { color: var(--m-lacquer-muted); font-size: 10px; font-weight: 600; letter-spacing: .22em; text-transform: uppercase; }
-.cNum { margin-top: 6px; font-family: var(--m-sans); font-size: clamp(34px, 10.4vw, 42px); font-weight: 500; line-height: 1; letter-spacing: -.03em; font-variant-numeric: tabular-nums lining-nums; direction: ltr; unicode-bidi: isolate; }
-.cSub { margin-top: 7px; color: var(--m-lacquer-accent); font-family: var(--m-mono); font-size: 11px; font-variant-numeric: tabular-nums; }
-.cRule { width: 70px; height: 0; margin: 9px 0 6px; border-top: .5px solid var(--m-lacquer-edge); }
-.cFoot { color: var(--m-lacquer-muted); font-size: 10.5px; }
-.stepper { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 4px; color: var(--m-lacquer-muted); font-size: 11.5px; }
-.stepper button { width: 44px; height: 36px; border: 0; border-radius: 18px; background: transparent; color: var(--m-lacquer-ink); font: inherit; font-size: 18px; cursor: pointer; }
-.stepper button:disabled { opacity: .3; }
-.stepper span { min-width: 120px; text-align: center; font-variant-numeric: tabular-nums; }
+.cLabel { color: #9a8c75; font-family: var(--q-caps); font-size: 9.5px; font-weight: 500; letter-spacing: .34em; text-indent: .34em; text-transform: uppercase; }
+.cNum { margin-top: 8px; font-family: var(--q-serif); font-size: clamp(46px, 14.6vw, 60px); font-weight: 500; line-height: 1; letter-spacing: -.02em; color: #f4ead4; font-variant-numeric: lining-nums; direction: ltr; unicode-bidi: isolate; }
+.cNum sup { position: relative; top: .12em; margin-left: 2px; font-size: .44em; vertical-align: top; }
+.cSub { margin-top: 9px; color: #d9bf86; font-family: var(--q-serif); font-size: 15px; font-style: italic; letter-spacing: .02em; font-variant-numeric: lining-nums; }
+.cRule { width: 84px; height: 0; margin: 11px 0 8px; border-top: .5px solid rgba(217, 191, 134, .28); }
+.cFoot { color: #9a8c75; font-family: var(--q-caps); font-size: 10px; letter-spacing: .2em; }
+.stepper { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 6px; color: #9a8c75; font-family: var(--q-caps); font-size: 11px; letter-spacing: .14em; }
+.stepper button { width: 44px; height: 34px; border: 0; border-radius: 17px; background: transparent; color: #d9bf86; font: inherit; font-size: 18px; cursor: pointer; }
+.stepper button:disabled { opacity: .25; }
+.stepper span { min-width: 124px; text-align: center; font-variant-numeric: tabular-nums; }
 
-.rings { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 14px; padding-top: 12px; border-top: .5px solid var(--m-lacquer-edge); }
-.ring { padding-inline: 12px; border-inline-start: .5px solid var(--m-lacquer-edge); color: var(--m-lacquer-muted); font-size: 10.5px; line-height: 1.3; }
-.ring:first-child { padding-inline-start: 0; border-inline-start: 0; }
-.ring b { display: block; margin-top: 4px; color: var(--m-lacquer-ink); font-family: var(--m-mono); font-size: 17px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.ring b[data-tone='up'] { color: var(--m-lacquer-up); } .ring b[data-tone='down'] { color: var(--m-lacquer-down); }
-.ring small { display: block; margin-top: 2px; font-size: 9.5px; opacity: .8; }
-.foot2 { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 12px; color: var(--m-lacquer-muted); font-size: 11px; line-height: 1.45; }
+.subs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 22px; }
+.sub { position: relative; aspect-ratio: 1; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; background: radial-gradient(circle at 50% 26%, #2a2118, #120e0a 72%); box-shadow: inset 0 0 0 1px rgba(217, 191, 134, .22), inset 0 0 18px #000, 0 16px 20px -16px #000; }
+.sub svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.sub .st { fill: none; stroke: rgba(217, 191, 134, .1); stroke-width: 1.4; }
+.sub .sv { fill: none; stroke-width: 2.2; stroke-linecap: round; }
+.sub .sk { stroke: rgba(217, 191, 134, .3); stroke-width: .8; }
+.sub b { position: relative; font-family: var(--q-serif); font-size: 22px; font-weight: 500; font-variant-numeric: lining-nums; color: #f4ead4; }
+.sub b[data-tone='down'] { color: #e08a6d; }
+.sub span { position: relative; margin-top: 2px; color: #9a8c75; font-family: var(--q-caps); font-size: 8.5px; letter-spacing: .24em; text-indent: .24em; text-transform: uppercase; }
+.sub small { position: relative; margin-top: 2px; color: #8b7e66; font-size: 9px; }
+.scaleNote { margin: 10px 0 0; text-align: center; color: #7a6e5b; font-size: 10px; letter-spacing: .04em; }
+.foot2 { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 16px; color: #9a8c75; font-size: 11px; line-height: 1.5; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 6px 14px; margin: 12px 2px 0; padding: 0; list-style: none; color: var(--m-muted); font-size: 11px; }
 .legend i { display: inline-block; width: 9px; height: 2px; margin-inline-end: 6px; vertical-align: 3px; border-radius: 1px; }
