@@ -63,7 +63,7 @@ export function QuantScreen() {
     </button>
     {!product.open && <p className={page.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
   </div>
-  const performance = ticks.length > 0 && <Reveal><QuantSection no="I" title={c.charts.secPerformance} kicker="PERFORMANCE">
+  const performance = product.history.length > 1 && <Reveal><QuantSection no="I" title={c.charts.secPerformance} kicker="PERFORMANCE">
     <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
     <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
   </QuantSection></Reveal>
@@ -96,7 +96,7 @@ export function QuantScreen() {
         <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
         <QuantHistory payouts={payouts} c={c} />
       </QuantSection></Reveal>
-      {ticks.length > 0 && <Reveal><QuantSection no="II" title={c.charts.secPerformance} kicker="PERFORMANCE">
+      {product.history.length > 1 && <Reveal><QuantSection no="II" title={c.charts.secPerformance} kicker="PERFORMANCE">
         <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
         <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
       </QuantSection></Reveal>}

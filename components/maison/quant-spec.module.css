@@ -1,7 +1,8 @@
 /* Koala Quant below the dial, set like a watch catalogue: numbered sections, small caps, serif figures, hairlines. No cards,
    no icon tiles; the page background carries everything. Reads the stage tokens so both themes follow. */
-.sec { margin-top: 40px; }
+.sec { margin-top: 40px; counter-increment: koala-sec; }
 .secHead { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+.secNo::before { content: counter(koala-sec, upper-roman); }
 .secNo { color: var(--q-gold); font-family: var(--q-serif); font-size: 15px; font-style: italic; font-weight: 500; }
 .secHead h2 { margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; letter-spacing: .14em; white-space: nowrap; }
 .secHead i { flex: 1; min-width: 16px; height: 0; border-top: .5px solid rgba(var(--q-gold-rgb), .35); transform: translateY(-4px); }

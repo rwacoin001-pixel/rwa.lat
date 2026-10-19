@@ -12,10 +12,10 @@ type Query<T> = { data?: T; error?: unknown; loading: boolean; refetch: () => Pr
 const pct = (bps: number) => (bps / 100).toFixed(2).replace(/\.?0+$/, '')
 
 /** A numbered section in the catalogue style: roman numeral, title, a hairline running to the edge, and a small-caps word. */
-export function QuantSection({ no, title, kicker, children }: { no: string; title: string; kicker: string; children: ReactNode }) {
+export function QuantSection({ title, kicker, children }: { no?: string; title: string; kicker: string; children: ReactNode }) {
   return <section className={styles.sec} aria-label={title}>
     <header className={styles.secHead}>
-      <span className={styles.secNo}>{no}</span>
+      <span className={styles.secNo} aria-hidden="true" />
       <h2>{title}</h2>
       <i aria-hidden="true" />
       <span className={styles.secKick} aria-hidden="true">{kicker}</span>
