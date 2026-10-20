@@ -85,6 +85,8 @@ export function QuantScreen() {
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
     </QuantPin>
 
+    {product.summary && <p className={styles.meta} style={{ margin: '18px 2px 0', lineHeight: 1.75, whiteSpace: 'pre-line' }}>{product.summary}</p>}
+
     {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
 
     {involved && <>
