@@ -18,6 +18,7 @@ import { QuantDailyBars, QuantKpis, QuantNavChart } from '@/components/maison/wa
 import { QuantPin } from '@/components/maison/watch/Pin'
 
 import '@/components/maison/watch/preview.css'
+import '@/components/maison/watch/fonts.css'
 
 const usd = (atomic: string | undefined) => (atomic ? (Number(atomic) / 1e6).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—')
 
