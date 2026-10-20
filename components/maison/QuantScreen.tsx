@@ -76,7 +76,7 @@ export function QuantScreen() {
 
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <h1 className="sr-only">{product.name}</h1>
-    <QuantPin>
+    <QuantPin subs={<QuantKpis product={product} c={c} />}>
       <header className={`${styles.mast} ${styles.pinFade}`}>
         <QuantStatus product={product} c={c} />
       </header>
@@ -89,7 +89,6 @@ export function QuantScreen() {
     </QuantPin>
 
     {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
-    <QuantKpis product={product} c={c} />
 
     {involved && <>
       <Reveal><QuantSection no="I" title={c.charts.secAccount} kicker="ACCOUNT">
