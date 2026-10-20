@@ -262,3 +262,9 @@
 }
 .watch-scope .plot .line { stroke-dashoffset: 0 !important; animation: none !important; }
 .watch-scope .sub[data-seen] .subArc, .watch-scope .sub .subArc { animation: none !important; }
+/* Module class names are hashed, so match them by fragment. */
+.watch-scope [class*=line] { stroke-dashoffset: 0 !important; animation: none !important; }
+.watch-scope [class*=area], .watch-scope [class*=dot], .watch-scope [class*=tip],
+.watch-scope [class*=halo], .watch-scope [class*=kpi], .watch-scope [class*=sub] {
+  opacity: 1 !important; transform: none !important; animation: none !important;
+}
