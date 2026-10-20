@@ -124,18 +124,13 @@ export function QuantScreen() {
     <h1 className="sr-only">{product.name}</h1>
     <QuantPin
       title={<span className={styles.barTitle}>{c.title}</span>}
-      dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}
+      dial={ticks.length > 0
+        ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
+        : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
+      stepper={ticks.length > 0 ? <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /> : undefined}
       menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
       body={<div key={tab} className={styles.tabBody}>{body}</div>}
-    >
-      <div className={styles.pinHead} data-pin-title=""><span className={styles.barTitle}>{c.title}</span></div>
-      {ticks.length > 0
-        ? <>
-          <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
-          <div className={styles.pinFade}><QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /></div>
-        </>
-        : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
-    </QuantPin>
+    />
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />
