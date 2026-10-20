@@ -327,7 +327,6 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
       </g>
       <path className="day-index-marker" d="M147 33 L150 39 L153 33Z" />
     </svg>
-    <div className="engraved-brand"><h2>考拉量化</h2><span>KOALA QUANT</span></div>
     <div className="watch-readout" data-mode={mode}>
       <div className="readout-legend" aria-label={['成立以来','当日收益','最新产品净值','当日产品净值'][labelIndex]}>
         <div className="legend-strip" style={{transform:`translateY(${-labelIndex*100/4}%)`}} aria-hidden="true">
@@ -350,11 +349,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
       </g>
       <circle className="selector-hub" cx="70" cy="38" r="2.5"/><circle className="hub-pin" cx="70" cy="38" r=".7"/>
     </svg>
-    <div className="watch-date" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
-      <button aria-label="前一天" disabled={focus<=0} onClick={()=>choose(focus-1)}><ChevronLeft size={12}/></button>
-      <div className="date-aperture"><RollingDate date={date}/></div>
-      <button aria-label="后一天" disabled={focus>=last} onClick={()=>choose(focus+1)}><ChevronRight size={12}/></button>
-    </div>
+
     <span className="dial-signature">DAILY SETTLEMENT</span>
     <div className="sapphire-crystal" aria-hidden="true"/>
     <div className="rim-reflection" aria-hidden="true"/>
