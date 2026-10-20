@@ -15,6 +15,7 @@ import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantDial as WatchDial } from './watch/Dial'
 import { QuantKpis as WatchKpis } from './watch/Charts'
 import './watch/watch-scope.css'
+import './watch/fonts.css'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
 import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart } from './QuantCharts'
 import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
@@ -135,6 +136,7 @@ export function QuantScreen() {
   return <MaisonPage page="quant" dock className={stage}>
     <h1 className="sr-only">{product.name}</h1>
     <div className="watch-scope" data-theme={themeMode}>
+    <main className="study-stage">
     <WatchPin
       dial={ticks.length > 0
         ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
@@ -144,6 +146,7 @@ export function QuantScreen() {
       menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
       body={<div key={tab} className={styles.tabBody}>{body}</div>}
     />
+    </main>
     </div>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
