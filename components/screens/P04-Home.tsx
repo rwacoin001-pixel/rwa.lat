@@ -168,7 +168,9 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => { window.removeEventListener('scroll', onScroll); cancelAnimationFrame(raf) }
   }, [])
-  const mainCta = heroCta(state)
+  // Until the session check settles the page is a placeholder: no guest status line and no guest call to action.
+  const sessionSettled = sessionProbe.status !== 'loading'
+  const mainCta = sessionSettled ? heroCta(state) : null
   const ctaLabel = mainCta ? ctaText[locale][mainCta.kind] : null
   const openMainCta = () => {
     if (!mainCta) return
@@ -191,7 +193,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const predictionItems = Array.isArray(predictionData) ? predictionData : predictionData?.items ?? []
   const blocks = homeBlocks(state)
   const stateLabels = homeStateCopy[locale]
-  const statusLabel = state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
+  const statusLabel = !sessionSettled ? '' : state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
   const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' ? account : null
 
   return <section className={`screen s2-home ${styles.root}`} data-home-s2="true" data-home-design="s3-premium" data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden}>
