@@ -12,6 +12,9 @@ import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
 import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
+import { QuantDial as WatchDial } from './watch/Dial'
+import { QuantKpis as WatchKpis } from './watch/Charts'
+import './watch/watch-scope.css'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
 import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart } from './QuantCharts'
 import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
@@ -47,6 +50,16 @@ export function QuantScreen() {
   const audience = quantAudience(product?.position)
   const involved = audience !== 'visitor'
   const [picked, setPicked] = useState<number | null>(null)
+  // The watch face lives in its own scoped stylesheet, so it needs the resolved theme rather than inheriting it.
+  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light')
+  useEffect(() => {
+    const read = () => setThemeMode(document.documentElement.dataset.theme === 'dark' || document.body.dataset.theme === 'dark' ? 'dark' : 'light')
+    read()
+    const observer = new MutationObserver(read)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] })
+    return () => observer.disconnect()
+  }, [])
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
@@ -120,16 +133,18 @@ export function QuantScreen() {
 
   return <MaisonPage page="quant" dock className={stage}>
     <h1 className="sr-only">{product.name}</h1>
+    <div className="watch-scope" data-theme={themeMode}>
     <QuantPin
       title={<span className={styles.barTitle}>{c.title}</span>}
       dial={ticks.length > 0
-        ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
+        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
-      subs={<QuantKpis product={product} c={c} />}
+      subs={<WatchKpis product={product} c={c} />}
       stepper={ticks.length > 0 ? <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /> : undefined}
       menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
       body={<div key={tab} className={styles.tabBody}>{body}</div>}
     />
+    </div>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />
