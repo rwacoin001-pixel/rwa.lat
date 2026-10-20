@@ -5,6 +5,14 @@
 .watchPage > :last-child > * { animation: none; }
 .watchPage::before, .watchPage > [aria-hidden='true'] { display: none; }
 .watchContent { padding-top: 10px; }
+/* Shared page controls keep Maison typography and colours outside the watch's material palette. */
+.siteControls {
+  --m-bg: var(--ds-bg);
+  --m-ink: var(--ds-ink);
+  --m-muted: var(--ds-muted);
+  --m-line: var(--ds-line);
+  font-family: var(--m-sans);
+}
 .h2 { margin: 0 0 4px; color: var(--m-ink); font-size: 18px; font-weight: 600; line-height: 24px; letter-spacing: 0; }
 .sub { margin: 0; color: var(--m-muted); font-size: 12px; line-height: 18px; }
 .note { margin: 10px 0 0; color: var(--m-muted); font-size: 12px; line-height: 18px; }
@@ -49,7 +57,7 @@ button.cell:active { background: var(--m-glass); }
 .btn:active:not(:disabled) { transform: scale(.98); }
 .btn[data-primary] { border-color: transparent; background: var(--m-cta); color: var(--m-cta-ink); box-shadow: inset 0 1px 0 var(--m-cta-rim, rgba(255, 255, 255, .4)); }
 .btn:disabled { opacity: .45; cursor: not-allowed; }
-.cta { margin-top: 16px; }
+.cta { margin-top: 16px; font-family: var(--m-sans); }
 
 /* Settlement history: one row per day, receipt expands in place. */
 .hist { margin: 8px 0 0; padding: 0; list-style: none; }

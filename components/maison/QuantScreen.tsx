@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight, Layers, PieChart } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -12,6 +12,7 @@ import { buildTicks, formatPct, localToday, quantAudience, shortDate } from '@/l
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
+import { Segmented } from './motion'
 import { useHideDock } from './QuantParts'
 import { QuantDial as WatchDial } from './watch/Dial'
 import { QuantKpis as WatchKpis } from './watch/Charts'
@@ -135,8 +136,8 @@ export function QuantScreen() {
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
       subs={<WatchKpis product={product} c={c} />}
 
-      menu={<div className="section-menu" role="tablist" aria-label={c.title}><span className="menu-highlight" aria-hidden="true" style={{transform:`translateX(${tab==='overview'?'0':'100%'})`}}/>{tabs.map(({key,label})=><button key={key} type="button" role="tab" id={`quant-tab-${key}`} aria-controls="quant-panel" aria-selected={tab===key} onClick={()=>setTab(key)}>{key==='overview'?<Layers size={15} strokeWidth={1.5}/>:<PieChart size={15} strokeWidth={1.5}/>}<span>{label}</span></button>)}</div>}
-      body={<div id="quant-panel" role="tabpanel" aria-labelledby={`quant-tab-${tab}`} className={page.watchContent}>{body}</div>}
+      menu={<div className={page.siteControls}><Segmented value={tab} onChange={setTab} label={c.title} options={tabs.map(({ key, label }) => ({ value: key, label }))} /></div>}
+      body={<div id="quant-panel" role="tabpanel" aria-label={tabs.find(({ key }) => key === tab)?.label} className={page.watchContent}>{body}</div>}
     />
     </div>
     </div>
