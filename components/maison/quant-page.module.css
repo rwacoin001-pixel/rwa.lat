@@ -3,7 +3,6 @@
 .block { margin-top: 28px; }
 .watchPage > :last-child { padding: 0; }
 .watchPage > :last-child > * { animation: none; }
-.watchPage::before, .watchPage > [aria-hidden='true'] { display: none; }
 .watchContent { padding-top: 10px; }
 /* Shared page controls keep Maison typography and colours outside the watch's material palette. */
 .siteControls {
