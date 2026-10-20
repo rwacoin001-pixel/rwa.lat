@@ -46,7 +46,7 @@
 .drum-digit{width:.49em}
 .drum-symbol{width:.3em}
 .drum-strip{display:block;transition:transform .8s cubic-bezier(.22,.75,.2,1)}
-.drum-strip>span{display:block;height:1em;line-height:1;text-align:center}
+.drum-strip>span{display:flex;align-items:center;justify-content:center;height:1em;line-height:1;text-align:center}
 .whole-slot{display:inline-block;width:.49em;overflow:hidden;transition:width .7s cubic-bezier(.22,.75,.2,1)}
 .whole-slot[data-leading=true]{width:0}
 .mode-complication{position:absolute;left:29%;top:59%;width:42%;height:auto;overflow:visible}
