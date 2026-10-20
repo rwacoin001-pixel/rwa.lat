@@ -6,6 +6,7 @@ import type { QuantProduct, QuantSubscriptionPreview } from '@/lib/api/quant'
 import type { QuantCopy } from '@/lib/maison-quant-copy'
 import { redemptionBands, shortDate } from '@/lib/quant-view-model'
 import { usdtNumber } from './QuantParts'
+import { AccountCard } from './QuantAccount'
 import styles from './quant-spec.module.css'
 
 type Query<T> = { data?: T; error?: unknown; loading: boolean; refetch: () => Promise<unknown> }
@@ -88,22 +89,18 @@ export function QuantProcess({ preview, c, children }: { preview: Query<QuantSub
   </>
 }
 
-/** Before subscribing: the figures a holder will see, empty, so the page already shows where the money goes. */
+/** Before subscribing: the same card a holder sees, with dashes, so the page already shows where the money goes. */
 export function QuantAccountPlaceholder({ product, c }: { product: QuantProduct; c: QuantCopy }) {
   const { locale } = useI18n()
-  const cells = [
-    { label: c.view.accountPrincipal, value: '—' },
-    { label: c.view.accountNet, value: '—' },
-    { label: c.view.accountPaid, value: '—' },
-    { label: c.view.accountWaiting, value: '—' },
-  ]
-  return <>
-    <div className={styles.ledger}>
-      {cells.map((cell, index) => <div key={cell.label} className={styles.figure} style={{ '--i': index } as CSSProperties}>
-        <small>{cell.label}</small>
-        <b>{cell.value}</b>
-      </div>)}
-    </div>
-    <p className={styles.ledgerNote}>{c.view.accountEmpty(usdtNumber(product.minSubscriptionAtomic, locale))}</p>
-  </>
+  return <AccountCard
+    title={c.view.accountTitle}
+    principal={null}
+    sub={c.view.accountPrincipal}
+    figures={[
+      { label: c.view.accountNet, value: '—' },
+      { label: c.view.accountFees, value: '—' },
+      { label: c.view.accountPaid, value: '—' },
+    ]}
+    empty={c.view.accountEmpty(usdtNumber(product.minSubscriptionAtomic, locale))}
+  />
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { ChevronRight } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import type { QuantPayout, QuantPosition, QuantProduct } from '@/lib/api/quant'
@@ -8,6 +8,7 @@ import { quantCopyFor, type QuantCopy } from '@/lib/maison-quant-copy'
 import { pendingCount, shortDate } from '@/lib/quant-view-model'
 import { QuantReceipt, signedUsdt, usdtNumber } from './QuantParts'
 import styles from './quant-page.module.css'
+import a from './quant-account.module.css'
 
 type Query<T> = { data?: T; error?: unknown; loading: boolean; refetch: () => Promise<unknown> }
 
@@ -43,6 +44,38 @@ function orderStatus(c: QuantCopy, status: string) {
   return status === 'pending' ? c.view.orderStatus.pending : status === 'accepted' ? c.view.orderStatus.accepted : c.view.orderStatus.unknown
 }
 
+/**
+ * The account as a statement card: principal large, then net, fees and paid; the orders in flight; the two actions.
+ * Shared with the visitor placeholder, which passes no position and shows dashes.
+ */
+export function AccountCard({ title, principal, sub, waiting, figures, orders, actions, note, empty }: {
+  title: string; principal: string | null; sub?: string; waiting?: string | null
+  figures: Array<{ label: string; value: string; tone?: 'up' | 'down' }>
+  orders?: ReactNode; actions?: ReactNode; note?: string | null; empty?: string | null
+}) {
+  return <section className={a.card} aria-label={title}>
+    <header className={a.head}>
+      <h2>{title}</h2>
+      {sub && <span className={a.badge} data-tone={principal === null ? 'idle' : undefined}><i />{sub}</span>}
+    </header>
+    <div className={a.hero}>
+      <small>{sub ?? ' '}</small>
+      <b>{principal ?? '—'}{principal !== null && <em>USDT</em>}</b>
+      {waiting && <p>{waiting}</p>}
+      {empty && <p>{empty}</p>}
+    </div>
+    <dl className={a.strip}>
+      {figures.map((figure) => <div key={figure.label}>
+        <dt>{figure.label}</dt>
+        <dd data-tone={figure.tone}>{figure.value}</dd>
+      </div>)}
+    </dl>
+    {orders}
+    {actions}
+    {note && <p className={a.note}>{note}</p>}
+  </section>
+}
+
 /** My account: principal, what is waiting, cumulative figures, the orders in flight, and the two actions. */
 export function QuantAccount({ product, onAdd, onRedeem, actions = true }: { product: QuantProduct; onAdd: () => void; onRedeem: () => void; actions?: boolean }) {
   const { locale } = useI18n()
@@ -53,38 +86,34 @@ export function QuantAccount({ product, onAdd, onRedeem, actions = true }: { pro
   const redeeming = position.pendingOrders.some((order) => order.kind === 'redemption')
   const canRedeem = principal > BigInt(0) && !redeeming
   const waiting = BigInt(position.waitingAtomic) > BigInt(0)
-  return <section className={styles.block} aria-label={c.view.accountTitle}>
-    <h2 className={styles.h2}>{c.view.accountTitle}</h2>
-    {principal > BigInt(0)
-      ? <><p className={styles.sub}>{c.position.principal}</p><p className={`${styles.big} ${styles.num}`}>{usdtNumber(position.principalAtomic, locale)}</p></>
-      : <p className={styles.sub}>{c.view.exited}</p>}
-    <ul className={styles.rows}>
-      {waiting && <li><span>{c.position.waiting}</span><span className={styles.num}>{usdtNumber(position.waitingAtomic, locale)}</span></li>}
-      <li><span>{c.view.accountNet}</span><span className={`${styles.num} ${position.totalNetAtomic.startsWith('-') ? styles.down : ''}`}>{signedUsdt(position.totalNetAtomic, locale)}</span></li>
-      <li><span>{c.view.accountFees}</span><span className={styles.num}>{usdtNumber(position.totalFeesAtomic, locale)}</span></li>
-      <li data-quiet=""><span>{c.view.accountPaid}</span><span className={styles.num}>{usdtNumber(position.totalPaidAtomic, locale)}</span></li>
-    </ul>
-    {position.pendingOrders.length > 0 && <div id="quant-orders">
-      <p className={styles.sub} style={{ marginTop: 18 }}>{c.view.ordersTitle}</p>
-      <ul className={styles.orders}>
+  const net = position.totalNetAtomic
+  return <AccountCard
+    title={c.view.accountTitle}
+    principal={principal > BigInt(0) ? usdtNumber(position.principalAtomic, locale) : null}
+    sub={c.position.principal}
+    waiting={waiting ? `${c.position.waiting} ${usdtNumber(position.waitingAtomic, locale)} USDT` : null}
+    empty={principal > BigInt(0) ? null : c.view.exited}
+    figures={[
+      { label: c.view.accountNet, value: signedUsdt(net, locale), tone: net.startsWith('-') ? 'down' : 'up' },
+      { label: c.view.accountFees, value: usdtNumber(position.totalFeesAtomic, locale) },
+      { label: c.view.accountPaid, value: usdtNumber(position.totalPaidAtomic, locale) },
+    ]}
+    orders={position.pendingOrders.length > 0 && <div id="quant-orders">
+      <ul className={a.orders}>
         {position.pendingOrders.map((order) => <li key={order.id}>
           <b>{order.kind === 'subscription' ? c.position.orderSubscription : c.position.orderRedemption}</b>
-          <span className={styles.num}>{order.amountAtomic === null ? c.view.orderAll : `${usdtNumber(order.amountAtomic, locale)} USDT`}</span>
+          <span>{order.amountAtomic === null ? c.view.orderAll : `${usdtNumber(order.amountAtomic, locale)} USDT`}</span>
           <small>{c.position.orderEffective(order.effectiveDate)}</small>
           <small>{orderStatus(c, order.status)}</small>
         </li>)}
       </ul>
     </div>}
-    {actions && <>
-      <div className={styles.actions}>
-        <button type="button" className={styles.btn} data-primary="" disabled={!product.open} onClick={onAdd}>{c.addMore}</button>
-        <button type="button" className={styles.btn} disabled={!canRedeem} onClick={onRedeem}>{c.redeem}</button>
-      </div>
-      {!product.open && <p className={styles.note}>{c.closedNote}</p>}
-      {!canRedeem && <p className={styles.note}>{redeeming ? c.view.redemptionPending : c.view.noPrincipal}</p>}
-    </>}
-    {!actions && <p className={styles.note}>{c.view.exitedNote}</p>}
-  </section>
+    actions={actions && <div className={a.actions}>
+      <button type="button" data-primary="" disabled={!product.open} onClick={onAdd}>{c.addMore}</button>
+      <button type="button" disabled={!canRedeem} onClick={onRedeem}>{c.redeem}</button>
+    </div>}
+    note={actions ? (!product.open ? c.closedNote : !canRedeem ? (redeeming ? c.view.redemptionPending : c.view.noPrincipal) : null) : c.view.exitedNote}
+  />
 }
 
 /** One row per settled day, newest first; a row opens that day's receipt. Shown to everyone who has ever held, even at zero principal. */
