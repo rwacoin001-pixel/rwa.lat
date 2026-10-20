@@ -3,7 +3,7 @@
 import { useEffect, useRef, type ReactNode } from 'react'
 import styles from './quant-hero.module.css'
 
-/** Height of the pinned hero (the compact dial, the title, and the strip beneath them). */
+/** Height of the pinned hero, below the status bar (the compact dial, the title, and the strip beneath them). */
 export const HERO_H = 132
 /** Height of the page's resting top block: the dial, its stepper, and the room they need. The menu sits at this line. */
 export const REST_H = 450
@@ -48,9 +48,8 @@ export function QuantPin({ dial, title, stepper, menu, body }: {
       <div className={styles.heroBg} aria-hidden="true" />
       <div className={styles.heroDial}>{dial}</div>
       <div className={styles.heroTitle}>{title}</div>
-      <div className={styles.heroStep}>{stepper}</div>
     </div>
-    <div className={styles.spacer} />
+    <div className={styles.spacer}><div className={styles.stepRow}>{stepper}</div></div>
     <div className={styles.menu}>{menu}</div>
     {body}
   </>

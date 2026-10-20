@@ -13,7 +13,7 @@
 .cell { display: flex; flex-direction: column; justify-content: center; gap: 4px; min-width: 0; padding: 10px 12px; border: 0; background: none; color: inherit; font: inherit; text-align: start; }
 .cell + .cell { border-inline-start: .5px solid var(--m-line); }
 .cell small { color: var(--m-muted); font-size: 12px; line-height: 16px; }
-.cell b { font-size: 16px; font-weight: 600; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cell b { font-size: 14px; font-weight: 600; line-height: 22px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cell i { color: var(--m-muted); font-size: 12px; font-style: normal; line-height: 16px; }
 button.cell { cursor: pointer; }
 button.cell:active { background: var(--m-glass); }

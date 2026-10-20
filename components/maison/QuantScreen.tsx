@@ -71,9 +71,7 @@ export function QuantScreen() {
   </div>
   const tabs: Array<{ key: QuantTab; label: string }> = [
     { key: 'overview', label: c.charts.tabOverview },
-    { key: 'performance', label: c.charts.tabPerformance },
     { key: 'account', label: c.charts.tabAccount },
-    { key: 'rules', label: c.charts.tabRules },
   ]
   const charts = <>
     {product.history.length > 1
@@ -85,6 +83,7 @@ export function QuantScreen() {
     <p className={page.context} style={{ textAlign: 'start', margin: '8px 2px 0' }}>{c.indexNote}</p>
   </>
 
+  const latest = product.history[product.history.length - 1]
   const body = <>
     {demo && <p style={{
       margin: '0 0 14px', padding: '10px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.6,
@@ -92,16 +91,13 @@ export function QuantScreen() {
     }}>{c.previewNotice}</p>}
     {tab === 'overview' && <>
       {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
-      {(() => {
-        const last = product.history[product.history.length - 1]
-        if (!last) return null
-        const net = Number(last.netReturnPct)
-        return <p className={styles.latest}>{c.charts.latest} · {shortDate(last.tradeDate)}<b data-loss={net < 0 || undefined}>{formatPct(net)}</b></p>
-      })()}
+      {latest && <p className={styles.latest}>{c.charts.latest} · {shortDate(latest.tradeDate)}<b data-loss={Number(latest.netReturnPct) < 0 || undefined}>{formatPct(Number(latest.netReturnPct))}</b></p>}
+      {charts}
       <QuantHighlights product={product} c={c} />
+      {wantsSubscribe && <QuantSection title={c.charts.secProcess} kicker="PROCESS"><QuantProcess preview={preview} c={c} /></QuantSection>}
       {subscribe}
+      <QuantSection title={c.charts.secSpecs} kicker="SPECIFICATIONS"><QuantSpecSheet product={product} c={c} /></QuantSection>
     </>}
-    {tab === 'performance' && <>{charts}</>}
     {tab === 'account' && <>
       {involved
         ? <>
@@ -109,10 +105,6 @@ export function QuantScreen() {
           <QuantHistory payouts={payouts} c={c} />
         </>
         : <QuantAccountPlaceholder product={product} c={c} />}
-    </>}
-    {tab === 'rules' && <>
-      {wantsSubscribe && <QuantSection title={c.charts.secProcess} kicker="PROCESS"><QuantProcess preview={preview} c={c} /></QuantSection>}
-      <QuantSection title={c.charts.secSpecs} kicker="SPECIFICATIONS"><QuantSpecSheet product={product} c={c} /></QuantSection>
     </>}
     <div className={page.foot}>
       <span>{c.riskLine}</span>
