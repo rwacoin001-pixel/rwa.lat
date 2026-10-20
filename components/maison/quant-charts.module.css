@@ -47,9 +47,9 @@
 .subNote { margin-top: 2px; color: var(--q-dim2); font-size: 10px; font-style: normal; }
 
 /* Compact sub-dials: the pinned column on the right of the compact dial. Labels and readouts drop away. */
-.compactSubs { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; width: 84px; flex: none; }
+.compactSubs { display: flex; flex-direction: row; align-items: center; gap: 6px; margin: 0; flex: none; }
 .compactSubs .sub { align-items: center; }
-.compactSubs .subDial { width: 58px; }
+.compactSubs .subDial { width: 50px; }
 .compactSubs .subLabel, .compactSubs .subNote, .compactSubs .subWindow { display: none; }
 
 /* Chart cards. */
@@ -149,3 +149,16 @@
 .panel { margin-top: 14px; padding: 4px 16px 10px; border-radius: 22px; background: var(--m-glass); box-shadow: inset 0 0 0 .5px var(--m-line), inset 0 .5px 0 var(--m-lacquer-hi); }
 .panel > section { margin-top: 14px; }
 .fine { margin: 12px 4px 0; }
+
+/* Tap on a sub-dial: the needle whips a full turn and a gold ring spreads once across the face. */
+.subNeedle[data-flicked] { animation: flick 1.1s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes flick { 0% { transform: rotate(var(--a)); } 55% { transform: rotate(calc(var(--a) + 380deg)); } 100% { transform: rotate(calc(var(--a) + 360deg)); } }
+.subRipple { fill: none; stroke: var(--q-gold); stroke-width: 1.4; transform-box: view-box; transform-origin: 50px 50px; animation: spread .9s cubic-bezier(.2, .7, .3, 1) forwards; pointer-events: none; }
+@keyframes spread { from { transform: scale(.35); opacity: .9; } to { transform: scale(1.12); opacity: 0; } }
+.ledger { display: grid; grid-template-columns: 1fr 1fr; margin-top: 4px; border-top: .5px solid rgba(var(--q-gold-rgb), .18); }
+.figure { display: flex; flex-direction: column; gap: 4px; padding: 14px 0 13px; border-bottom: .5px solid rgba(var(--q-gold-rgb), .18); }
+.figure:nth-child(odd) { padding-right: 14px; border-right: .5px solid rgba(var(--q-gold-rgb), .18); }
+.figure:nth-child(even) { padding-left: 16px; }
+.figure small { color: var(--q-dim); font-size: 11px; letter-spacing: .08em; }
+.figure b { color: var(--q-num); font-family: var(--q-serif), var(--m-display); font-size: 22px; font-weight: 500; line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
+.ledgerNote { margin: 12px 0 0; color: var(--q-dim2); font-size: 11.5px; line-height: 1.55; }

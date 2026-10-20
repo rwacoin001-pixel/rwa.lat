@@ -121,6 +121,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   const drag = useRef<{ id: number; x: number; y: number; lx: number; ly: number; arc: number; start: number; moved: number; active: boolean; samples: Array<[number, number]> } | null>(null)
   const dragging = useRef(false)
   const suppressClick = useRef(false)
+  const [ripple, setRipple] = useState(0)
   const reported = useRef(focus)
   const choose = useCallback((index: number) => onSelect(index === last ? null : index), [last, onSelect])
   const [wind, setWind] = useState(0)
@@ -258,8 +259,10 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
     onPointerUp={onPointerEnd}
     onPointerCancel={onPointerEnd}
     onKeyDown={onKeyDown}
+    onClick={() => { if (!suppressClick.current) setRipple((value) => value + 1) }}
   >
     <div className={styles.bezelMetal} />
+    {ripple > 0 && <span key={ripple} className={styles.ripple} aria-hidden="true" />}
     <div className={styles.bezelSheen} aria-hidden="true" />
     {wind > 0 && <div key={wind} className={styles.windFlash} aria-hidden="true" />}
     <button type="button" className={styles.crown} key={`crown-${wind}`} data-wound={wind > 0 || undefined} aria-label={copy.windLabel} onPointerDown={(event) => event.stopPropagation()} onClick={windUp}>

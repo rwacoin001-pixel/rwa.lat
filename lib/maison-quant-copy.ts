@@ -115,6 +115,9 @@ export type QuantCopy = {
     feeFrom: (from: number) => string
     disclosureEmpty: string
     exitedNote: string
+    accountPrincipal: string
+    accountWaiting: string
+    accountEmpty: (min: string) => string
     receiptPaid: string
   }
   position: {
@@ -288,6 +291,9 @@ const en: QuantCopy = {
     feeFrom: (from) => `${from} days or more`,
     disclosureEmpty: 'No disclosure available',
     exitedNote: 'Your past settlements stay here.',
+    accountPrincipal: 'Principal',
+    accountWaiting: 'Waiting',
+    accountEmpty: (min) => `Subscribe from ${min} USDT. Your principal, earnings and payouts appear here.`,
     receiptPaid: 'Credited to available balance',
   },
   position: {
@@ -469,6 +475,9 @@ const zh: QuantCopy = {
     feeFrom: (from) => `${from} 天及以上`,
     disclosureEmpty: '暂无风险披露文件',
     exitedNote: '你过去的结算记录会一直保留在这里。',
+    accountPrincipal: '投入本金',
+    accountWaiting: '待生效',
+    accountEmpty: (min) => `${min} USDT 起申购后，这里显示你的投入、收益与已到账金额。`,
     receiptPaid: '实际转入可用余额',
   },
   position: {
