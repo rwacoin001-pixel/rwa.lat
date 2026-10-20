@@ -65,7 +65,10 @@
 .readout b.up { color: var(--q-gain); }
 .readout b.down { color: var(--q-loss-text); }
 
-.plot { position: relative; margin-top: 10px; touch-action: pan-y; user-select: none; -webkit-user-select: none; cursor: crosshair; }
+/* A month or more of days is wider than the card, so the plots scroll sideways instead of crushing every bar. */
+.hscroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.hscroll::-webkit-scrollbar { display: none; }
+.plot { position: relative; margin-top: 10px; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; cursor: crosshair; }
 .svg { display: block; width: 100%; height: auto; overflow: visible; }
 .grid { stroke: rgba(var(--q-gold-rgb), .1); stroke-width: .6; stroke-dasharray: 2 4; }
 .base { stroke: rgba(var(--q-gold-rgb), .35); stroke-width: .6; stroke-dasharray: 1 3; }
@@ -83,7 +86,7 @@
 .axis { display: flex; align-items: center; justify-content: space-between; margin-top: 6px; color: var(--q-dim2); font-size: 10.5px; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
 
 /* Daily bars. */
-.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; height: 128px; margin-top: 14px; touch-action: pan-y; user-select: none; -webkit-user-select: none; direction: ltr; }
+.bars { position: relative; display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 3px; height: 128px; margin-top: 14px; touch-action: pan-x pan-y; user-select: none; -webkit-user-select: none; direction: ltr; }
 .zero { position: absolute; inset-inline: 0; top: var(--zero); height: 0; border-top: .5px solid rgba(var(--q-gold-rgb), .45); pointer-events: none; }
 .barCol { position: relative; min-width: 0; padding: 0; border: 0; background: transparent; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .barCol i { position: absolute; inset-inline: 14%; border-radius: 3px; transition: opacity .25s ease, transform .3s cubic-bezier(.2, .8, .2, 1), box-shadow .25s ease; }

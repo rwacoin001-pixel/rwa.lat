@@ -172,6 +172,10 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
   const points = usePoints(product, ticks)
   const [ref, seen] = useSeen<HTMLDivElement>()
   const series = useMemo(() => [{ date: '', value: 0, nav: 1, tick: null } as Point, ...points], [points])
+  // One day per 24px: with a month or more the plot is wider than the card and the reader swipes it sideways.
+  const W = Math.max(340, series.length * 24 + PAD.left + PAD.right)
+  const scroll = useRef<HTMLDivElement>(null)
+  useEffect(() => { const el = scroll.current; if (el) el.scrollLeft = el.scrollWidth }, [points.length])
   const navs = series.map((point) => point.nav)
   const low = Math.min(...navs)
   const high = Math.max(...navs)
@@ -202,6 +206,8 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
         <b>{focus.nav.toFixed(4)}</b>
       </div>
     </header>
+    <div ref={scroll} className={styles.hscroll}>
+    <div style={{ width: W }}>
     <div ref={ref} className={styles.plot} data-seen={seen || undefined} {...scrub}>
       <svg viewBox={`0 0 ${W} ${H}`} className={styles.svg} aria-hidden="true">
         <defs>
@@ -227,6 +233,8 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
       <div className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>
     </div>
     <DateAxis dates={points.map((point) => point.date)} left={`${(PAD.left / W) * 100}%`} right={`${(PAD.right / W) * 100}%`} />
+    </div>
+    </div>
   </section>
 }
 
@@ -241,6 +249,10 @@ function DateAxis({ dates, left, right }: { dates: string[]; left: string; right
 /** One bar per settled day on a shared zero line, gold above and terracotta below. Tap or drag picks the day for the whole page. */
 export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { product: QuantProduct; ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; c: QuantCopy }) {
   const points = usePoints(product, ticks)
+  // Same rule as the NAV curve: 24px a day, so a month of bars is swiped rather than crushed.
+  const barW = Math.max(320, points.length * 24)
+  const scroll = useRef<HTMLDivElement>(null)
+  useEffect(() => { const el = scroll.current; if (el) el.scrollLeft = el.scrollWidth }, [points.length])
   const [ref, seen] = useSeen<HTMLDivElement>()
   const top = Math.max(...points.map((point) => point.value), 0.05)
   const bottom = Math.min(...points.map((point) => point.value), 0)
@@ -266,6 +278,8 @@ export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { prod
         <b className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</b>
       </div>
     </header>
+    <div ref={scroll} className={styles.hscroll}>
+    <div style={{ width: barW }}>
     <div ref={ref} className={styles.bars} data-seen={seen || undefined} data-picking={activeIndex >= 0 || undefined} style={{ '--zero': `${zero}%` } as CSSProperties} {...scrub}>
       <i className={styles.zero} />
       {points.map((point, index) => {
@@ -285,6 +299,8 @@ export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { prod
       })}
     </div>
     <DateAxis dates={points.map((point) => point.date)} left={`${50 / points.length}%`} right={`${50 / points.length}%`} />
+    </div>
+    </div>
     <div className={styles.axis}>
       <span className={styles.tally}><i data-kind="gain" />{c.legend.gain} {gains}<i data-kind="loss" />{c.legend.loss} {points.length - gains}</span>
       <span>{c.recorded(points.length)}</span>
