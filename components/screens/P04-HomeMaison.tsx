@@ -341,7 +341,9 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const heroOpacity = useTransform(scrollY, [0, 320], [1, 0])
   const heroLift = useTransform(scrollY, [0, 320], [0, -36])
 
-  const mainCta = heroCta(state)
+  // Until the session check settles the page is a placeholder: no guest status line and no guest call to action.
+  const sessionSettled = sessionProbe.status !== 'loading'
+  const mainCta = sessionSettled ? heroCta(state) : null
   const ctaLabel = mainCta ? ctaText[locale][mainCta.kind] : null
   const openMainCta = () => {
     if (!mainCta) return
@@ -362,7 +364,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const featuredItems = featured.data?.items?.slice(0, 3) ?? []
   const tickerQuotes = [...(context.data?.anchors ?? []), ...(context.data?.secondary ?? [])].filter((quote, index, all) => quote.value !== null && all.findIndex(other => other.symbol === quote.symbol) === index)
   const stateLabels = homeStateCopy[locale]
-  const statusLabel = state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
+  const statusLabel = !sessionSettled ? '' : state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
   const sessionUserId = sessionProbe.status === 'ok' ? sessionProbe.view?.userId : undefined
   const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' || sessionUserId ? account : null
   const emailBinding = sessionProbe.status === 'ok' && sessionProbe.view && !sessionProbe.view.emailVerified && sessionUserId ? { userId: sessionUserId, onVerified: refreshSessionView } : undefined
