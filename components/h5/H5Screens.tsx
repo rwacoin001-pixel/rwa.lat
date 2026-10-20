@@ -29,7 +29,6 @@ function QuantRouteRedirect() {
   useEffect(() => { window.location.replace('/quant') }, [])
   return <AppLoading />
 }
-const MaisonQuantScreen = dynamic(() => import('../maison/QuantScreen').then((m) => ({ default: m.QuantScreen })), { ssr: false, loading: AppLoading })
 const MaisonMarketsScreen = dynamic(() => import('../maison/MarketsScreen').then((m) => ({ default: m.MarketsScreen })), { ssr: false, loading: AppLoading })
 const MaisonAssetDetailScreen = dynamic(() => import('../maison/AssetDetailScreen').then((m) => ({ default: m.AssetDetailScreen })), { ssr: false, loading: AppLoading })
 const MaisonOrderReviewScreen = dynamic(() => import('../maison/OrderReviewScreen').then((m) => ({ default: m.OrderReviewScreen })), { ssr: false, loading: AppLoading })
@@ -93,7 +92,7 @@ export function H5Screens({ h }: { h: H5Controller }) {
           notifications: <MaisonBridge page="notifications"><NotificationsScreen go={go} notify={notify} enabled={sessionReady && sessionMode === 'authenticated'} guest={sessionReady && sessionMode === 'guest'} focusId={routeParams.id} /></MaisonBridge>,
         }}>
         {screen === 'invest' && <MaisonMarketsScreen query={routeQuery} />}
-        {screen === 'quant' && <MaisonQuantScreen />}
+        {screen === 'quant' && <QuantRouteRedirect />}
         {screen === 'basket-list' && <MaisonMarketsScreen query={new URLSearchParams(routeQuery).get('tab') ? routeQuery : 'tab=baskets'} />}
         {screen === 'strategy-detail' && <MaisonHengxuDetailScreen key={routeParams.id ?? ''} id={routeParams.id ?? null} />}
         {screen === 'basket-detail' && <MaisonBasketDetailScreen key={routeParams.id ?? selectedBasketId ?? ''} id={routeParams.id ?? selectedBasketId} />}
