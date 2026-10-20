@@ -345,18 +345,19 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
     <div className={styles.center}>
       {picked
         ? <button type="button" onClick={() => onSelect(null)} aria-label={copy.sinceInception} key={picked.date}>
-          <span className={styles.cLabel}>{picked.date}</span>
+          <span className={styles.cBrand}>{product.name}</span>
           {bigNumber}
           <span className={styles.cSub}>{navMode ? copy.modeNav : kindLabel(copy, picked.kind)}</span>
           <span className={styles.cRule} />
-          <span className={styles.cFoot}>{copy.sinceInception} ›</span>
+          <span className={styles.dateWindow}>{picked.date.replace(/-/g, '.')}</span>
         </button>
         : <div className={styles.cStack} key="since">
+          <span className={styles.cBrand}>{product.name}</span>
           <span className={styles.cLabel}>{copy.sinceInception}</span>
           {bigNumber}
           <span className={styles.cSub}>{navMode ? copy.modeNav : `${copy.indexShort} ${Number(p.index).toFixed(4)}`}</span>
           <span className={styles.cRule} />
-          <span className={styles.cFoot}>{copy.recorded(p.days)}</span>
+          <span className={styles.dateWindow}>{p.lastSettledDate ? p.lastSettledDate.replace(/-/g, '.') : '—'}</span>
         </div>}
     </div>
   </div>
