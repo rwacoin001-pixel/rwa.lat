@@ -13,6 +13,8 @@ const ROW_TOP = 6
 /** The title's final width and the top of its row, in the topbar's line. */
 const TITLE_WIDTH = 150
 const TITLE_TOP = 16
+/** Distance from the top of the page over which a downward scroll lets the pinned pair return to rest. */
+const HOLD_PX = 80
 
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t
 
@@ -42,12 +44,17 @@ export function QuantPin({ children, subs, dial, title }: { children: ReactNode;
     dc.style.width = `${dialEl.offsetWidth}px`
     sc.style.width = `${rowEl.offsetWidth}px`
     let last = -1
+    let prevY = window.scrollY
     let frame = 0
     const apply = () => {
       frame = 0
       const y = window.scrollY
       const travel = Math.max(1, rowEl.getBoundingClientRect().top + y - TOP)
-      const k = Math.min(1, Math.max(0, y / travel))
+      const raw = Math.min(1, Math.max(0, y / travel))
+      // Scrolling back down holds the pinned pair where it is; only the last HOLD_PX before the top let it return, so the
+      // motion reverses smoothly into the resting layout instead of jumping.
+      const k = y < prevY && last > 0 ? Math.max(raw, last * Math.min(1, y / HOLD_PX)) : raw
+      prevY = y
       if (k === last) return
       last = k
       const live = k > 0
