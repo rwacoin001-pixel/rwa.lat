@@ -3,26 +3,25 @@
    no layout. Geometry: the hero is 132px tall and full-bleed; at rest the dial is 332px wide, centred, 60px down; pinned it
    is 116px at the top-left; the title is centred above the dial at rest, and sits top-right at 1.1x when pinned. */
 
-.hero { position: sticky; top: 0; z-index: 10; height: 132px; margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
+.hero { position: sticky; top: env(safe-area-inset-top); z-index: 10; height: calc(132px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
 
-.heroBg { position: absolute; left: 0; right: 0; top: 0; height: 132px; border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
+.heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(132px + env(safe-area-inset-top)); border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
 
 /* The dial: centred at rest (left 50% - 166px, top 60px), pinned to the top-left at 116px (scale .3494). */
-.heroDial { position: absolute; left: calc(50cqw - 166px); top: 60px; width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -54px), 0) scale(calc(1 - var(--p, 0) * .6506)); pointer-events: auto; touch-action: none; will-change: transform; }
+.heroDial { position: absolute; left: calc(50cqw - 166px); top: calc(60px + env(safe-area-inset-top)); width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -54px), 0) scale(calc(1 - var(--p, 0) * .6506)); pointer-events: auto; touch-action: none; will-change: transform; }
 .heroDial [data-pin-dial] { margin: 0; }
 
 /* The title: centred above the dial at rest; pinned to the top-right, 1.1x. */
-.heroTitle { position: absolute; left: calc(50cqw - 130px); top: 16px; width: 260px; display: flex; justify-content: center; white-space: nowrap; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (50cqw - 170px)), calc(var(--p, 0) * -2px), 0) scale(calc(1 + var(--p, 0) * .1)); pointer-events: none; will-change: transform; }
+.heroTitle { position: absolute; left: calc(50cqw - 130px); top: calc(16px + env(safe-area-inset-top)); width: 260px; display: flex; justify-content: center; white-space: nowrap; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (50cqw - 170px)), calc(var(--p, 0) * -2px), 0) scale(calc(1 + var(--p, 0) * .1)); pointer-events: none; will-change: transform; }
 
-/* The stepper: under the dial at rest, fades as the hero pins, and is removed from hit-testing once pinned. */
-.heroStep { position: absolute; left: 0; right: 0; top: 398px; display: flex; justify-content: center; opacity: calc(1 - var(--p, 0) * 4); pointer-events: auto; }
-.hero[data-pinned='true'] .heroStep { visibility: hidden; }
+/* The stepper sits in the scrolling content under the dial, so it leaves with the page and never sits over the menu. */
+.stepRow { position: absolute; left: 0; right: 0; top: 266px; display: flex; justify-content: center; pointer-events: auto; }
 
 /* The scroll distance the hero travels: rest height minus pinned height. The menu sits right after it. */
-.spacer { height: 318px; }
+.spacer { position: relative; height: 318px; }
 
 /* The menu: sticks directly under the pinned hero once the spacer has scrolled past. */
-.menu { position: sticky; top: 132px; z-index: 9; padding: 10px 0 8px; background: linear-gradient(var(--m-bg) 72%, transparent); }
+.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; background: linear-gradient(var(--m-bg) 72%, transparent); }
 
 /* The dial's centre readout keeps its look when pinned: nothing else to hide. */
 .hero[data-settled='true'] [data-needle] { animation: needleSpin 1.2s cubic-bezier(.2, .8, .2, 1) both; }
