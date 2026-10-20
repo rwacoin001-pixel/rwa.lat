@@ -19,6 +19,7 @@ import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
 import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart } from './QuantCharts'
 import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
 import { QuantPin } from './QuantPin'
+import { QuantPin as WatchPin } from './watch/Pin'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import styles from './quant.module.css'
@@ -134,7 +135,7 @@ export function QuantScreen() {
   return <MaisonPage page="quant" dock className={stage}>
     <h1 className="sr-only">{product.name}</h1>
     <div className="watch-scope" data-theme={themeMode}>
-    <QuantPin
+    <WatchPin
       dial={ticks.length > 0
         ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
