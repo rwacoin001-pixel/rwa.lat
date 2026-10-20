@@ -50,8 +50,9 @@ export function HomePortfolioCard({ state, account, labels, status, ctaLabel, on
   const cardRef = useSheen<HTMLDivElement>()
   const [hideBalance, setHideBalance] = useState(false)
   const showNotice = Boolean(account && (state.degraded || state.variant))
-  const total = account ? amount(account.totalAssetsAtomic, account.totalAssetsDecimals, locale) : '—'
-  const available = account ? amount(account.availableAtomic, account.availableDecimals, locale) : '—'
+  // The card keeps one layout: zeros until an account is known, real figures after.
+  const total = account ? amount(account.totalAssetsAtomic, account.totalAssetsDecimals, locale) : amount('0', 0, locale)
+  const available = account ? amount(account.availableAtomic, account.availableDecimals, locale) : amount('0', 0, locale)
   const cashActions = [
     { label: t('wallet.deposit'), path: '/assets/cash/deposit', Icon: ArrowDownToLine },
     { label: t('wallet.withdraw'), path: '/assets/cash/withdraw', Icon: ArrowUpFromLine },
@@ -68,24 +69,20 @@ export function HomePortfolioCard({ state, account, labels, status, ctaLabel, on
       </div>
       {sampleLabel ? <small className={styles.cardSample}>{sampleLabel}</small> : account && ctaLabel && !showNotice ? <button type="button" className={styles.cardExplore} onClick={onPrimary} aria-label={ctaLabel} title={ctaLabel}><ArrowUpRight size={18} /></button> : null}
     </div>
-    {account ? <>
-      <div className={styles.cardValue} dir="ltr">
-        <strong title={hideBalance ? undefined : total}>{hideBalance ? '••••••' : total}</strong>
-        <span className={styles.cardCurrency}>{account.currency}</span>
-      </div>
-      <div className={styles.cardFoot}>
-        <span><small>{labels.available}</small><b dir="ltr">{hideBalance ? '••••' : available}</b></span>
-        <span><small>{labels.holdings}</small><b>{account.holdings === null ? '—' : new Intl.NumberFormat(locale).format(account.holdings)}</b></span>
-      </div>
-      {showNotice && !emailBinding && <div className={styles.cardNotice} role="status"><span>{status}</span>{ctaLabel && <button type="button" onClick={onPrimary}>{ctaLabel}<ArrowUpRight size={14} /></button>}</div>}
-      {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}
-      <div className={styles.cardActions} role="group" aria-label={cashActions.map(action => action.label).join(', ')}>
-        {cashActions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => onCashAction(path)}><Icon size={21} strokeWidth={1.65} aria-hidden="true" /><span>{label}</span></button>)}
-      </div>
-    </> : <>
-      <strong className={styles.cardStatus} aria-live="polite">{status}</strong>
-      {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}
-      {ctaLabel && !emailBinding && <motion.button type="button" className={styles.cardCta} onClick={onPrimary} whileTap={reduced ? undefined : { scale: .98 }}><span>{ctaLabel}</span><span className={styles.cardCtaIcon}><ArrowUpRight size={16} /></span></motion.button>}
-    </>}
+    <div className={styles.cardValue} dir="ltr">
+      <strong title={hideBalance ? undefined : total}>{hideBalance ? '••••••' : total}</strong>
+      <span className={styles.cardCurrency}>{account ? account.currency : 'USDT'}</span>
+    </div>
+    <div className={styles.cardFoot}>
+      <span><small>{labels.available}</small><b dir="ltr">{hideBalance ? '••••' : available}</b></span>
+      <span><small>{labels.holdings}</small><b>{account && account.holdings !== null ? new Intl.NumberFormat(locale).format(account.holdings) : '0'}</b></span>
+    </div>
+    {account && showNotice && !emailBinding && <div className={styles.cardNotice} role="status"><span>{status}</span>{ctaLabel && <button type="button" onClick={onPrimary}>{ctaLabel}<ArrowUpRight size={14} /></button>}</div>}
+    {!account && status && <div className={styles.cardNotice} role="status"><span>{status}</span></div>}
+    {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}
+    {!account && ctaLabel && !emailBinding && <motion.button type="button" className={styles.cardCta} onClick={onPrimary} whileTap={reduced ? undefined : { scale: .98 }}><span>{ctaLabel}</span><span className={styles.cardCtaIcon}><ArrowUpRight size={16} /></span></motion.button>}
+    <div className={styles.cardActions} role="group" aria-label={cashActions.map(action => action.label).join(', ')}>
+      {cashActions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => onCashAction(path)}><Icon size={21} strokeWidth={1.65} aria-hidden="true" /><span>{label}</span></button>)}
+    </div>
   </motion.div>
 }

@@ -39,7 +39,7 @@
 .spacer { position: relative; height: 448px; }
 
 /* The menu: sticks directly under the pinned hero. */
-.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; background: linear-gradient(var(--m-bg) 72%, transparent); }
+.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .heroDial, .heroSubs > div > [data-sub] { transition: none; }
