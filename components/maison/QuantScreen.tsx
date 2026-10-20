@@ -49,7 +49,7 @@ export function QuantScreen() {
     ? buildTicks(product.history.map((row) => ({ date: row.tradeDate, value: Number(row.netReturnPct) })), { today: localToday(product.timezone), count: 30 })
     : [], [product])
 
-  const topbar = <RwaTopbar screen="quant" r2={null} account={false} title={<span className={styles.barTitle}>{c.title}</span>} />
+  const topbar = <RwaTopbar screen="quant" r2={null} account={false} />
   const stage = `${styles.stage} ${quantSerif.variable} ${quantCaps.variable}`
 
   if (list.loading && !list.data) return <MaisonPage page="quant" dock topbar={topbar} className={stage}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
@@ -76,7 +76,8 @@ export function QuantScreen() {
 
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <h1 className="sr-only">{product.name}</h1>
-    <QuantPin subs={<QuantKpis product={product} c={c} />} dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}>
+    <QuantPin title={<span className={styles.barTitle}>{c.title}</span>} subs={<QuantKpis product={product} c={c} />} dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}>
+      <div className={styles.pinHead} data-pin-title=""><span className={styles.barTitle}>{c.title}</span></div>
       {ticks.length > 0
         ? <>
           <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
