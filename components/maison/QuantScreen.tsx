@@ -1,12 +1,13 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { getQuantDisclosure, getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
 import { quantCopyFor } from '@/lib/maison-quant-copy'
+import { demoProduct } from '@/lib/quant-demo'
 import { buildTicks, localToday, quantAudience } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
@@ -31,7 +32,13 @@ export function QuantScreen() {
   const list = useQuantProducts()
   const slug = list.data?.[0]?.slug
   const detail = useQuantProduct(slug)
-  const product = detail.data
+  const raw = detail.data
+  // Owner layout review: `?preview=1` folds a month of sample settlements in; a banner above the charts says so.
+  const [demo, setDemo] = useState(false)
+  useEffect(() => {
+    try { setDemo(new URLSearchParams(window.location.search).get('preview') === '1') } catch { setDemo(false) }
+  }, [])
+  const product = useMemo(() => (raw && demo ? demoProduct() : raw), [raw, demo])
   const audience = quantAudience(product?.position)
   const involved = audience !== 'visitor'
   const [picked, setPicked] = useState<number | null>(null)
@@ -63,14 +70,19 @@ export function QuantScreen() {
     </button>
     {!product.open && <p className={page.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
   </div>
-  const performance = product.history.length > 1 && <Reveal><QuantSection no="I" title={c.charts.secPerformance} kicker="PERFORMANCE">
-    <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-    <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+  const hasHistory = product.history.length > 1
+  const performance = <Reveal><QuantSection no="II" title={c.charts.secPerformance} kicker="PERFORMANCE">
+    {hasHistory
+      ? <>
+        <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+        <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+      </>
+      : <p className={styles.meta} style={{ margin: '12px 2px' }}>{c.perfPending}</p>}
   </QuantSection></Reveal>
-  const process = wantsSubscribe && <Reveal><QuantSection no={involved ? 'III' : 'II'} title={c.charts.secProcess} kicker="PROCESS">
+  const process = wantsSubscribe && <Reveal><QuantSection no="III" title={c.charts.secProcess} kicker="PROCESS">
     <QuantProcess preview={preview} c={c}>{subscribe}</QuantProcess>
   </QuantSection></Reveal>
-  const specs = <Reveal><QuantSection no={involved ? (wantsSubscribe ? 'IV' : 'III') : 'III'} title={c.charts.secSpecs} kicker="SPECIFICATIONS">
+  const specs = <Reveal><QuantSection no={wantsSubscribe ? 'IV' : 'III'} title={c.charts.secSpecs} kicker="SPECIFICATIONS">
     <QuantSpecSheet product={product} c={c} />
   </QuantSection></Reveal>
 
@@ -85,6 +97,11 @@ export function QuantScreen() {
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
     </QuantPin>
 
+    {demo && <p style={{
+      margin: '14px 2px 0', padding: '10px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.6,
+      color: 'var(--m-lacquer-muted)', border: '1px solid rgba(227,187,122,.45)', background: 'rgba(227,187,122,.10)',
+    }}>{c.previewNotice}</p>}
+
     {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
 
     {involved && <>
@@ -92,10 +109,7 @@ export function QuantScreen() {
         <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
         <QuantHistory payouts={payouts} c={c} />
       </QuantSection></Reveal>
-      {product.history.length > 1 && <Reveal><QuantSection no="II" title={c.charts.secPerformance} kicker="PERFORMANCE">
-        <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-        <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-      </QuantSection></Reveal>}
+      {performance}
       {process}
       {specs}
     </>}
