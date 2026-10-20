@@ -1,6 +1,10 @@
 /* Koala Quant page below the dial. A plain reading layout on the --m-* tokens the stage sets for both themes: 390px viewport,
    15/23 body, 12/18 secondary, 18/24 headings, 32/38 key figure, rows at least 48px, targets at least 44px. Money is static. */
 .block { margin-top: 28px; }
+.watchPage > :last-child { padding: 0; }
+.watchPage > :last-child > * { animation: none; }
+.watchPage::before, .watchPage > [aria-hidden='true'] { display: none; }
+.watchContent { padding-top: 10px; }
 .h2 { margin: 0 0 4px; color: var(--m-ink); font-size: 18px; font-weight: 600; line-height: 24px; letter-spacing: 0; }
 .sub { margin: 0; color: var(--m-muted); font-size: 12px; line-height: 18px; }
 .note { margin: 10px 0 0; color: var(--m-muted); font-size: 12px; line-height: 18px; }

@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Layers, PieChart } from 'lucide-react'
+import { useRwaTheme } from '@/lib/rwa-theme'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { getQuantDisclosure, getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
@@ -11,15 +12,15 @@ import { buildTicks, formatPct, localToday, quantAudience, shortDate } from '@/l
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
-import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
+import { useHideDock } from './QuantParts'
 import { QuantDial as WatchDial } from './watch/Dial'
 import { QuantKpis as WatchKpis } from './watch/Charts'
+import { QuantCalendar } from './watch/Calendar'
 import './watch/watch-scope.css'
 import './watch/fonts.css'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart } from './QuantCharts'
-import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
-import { QuantPin } from './QuantPin'
+import { QuantDailyBars, QuantHighlights, QuantNavChart } from './QuantCharts'
+import { QuantAccountPlaceholder, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
 import { QuantPin as WatchPin } from './watch/Pin'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
@@ -32,6 +33,7 @@ import page from './quant-page.module.css'
  */
 export function QuantScreen() {
   const { locale } = useI18n()
+  const { theme } = useRwaTheme()
   const c = quantCopyFor(locale)
   const list = useQuantProducts()
   const slug = list.data?.[0]?.slug
@@ -41,9 +43,8 @@ export function QuantScreen() {
   useEffect(() => {
     try { setFlagged(new URLSearchParams(window.location.search).get('preview') === '1') } catch { setFlagged(false) }
   }, [])
-  // Until the first day is settled there is nothing to chart, so the page shows a labelled sample month instead of an
-  // empty panel. It removes itself on the first real settlement: only the numbers are borrowed, the product is the real one.
-  const sample = Boolean(raw) && (flagged || raw!.performance.days === 0)
+  // Sample figures require the explicit design-preview flag, including before the first real settlement.
+  const sample = Boolean(raw) && flagged
   const product = useMemo(() => {
     if (!raw || !sample) return raw
     const shown = demoProduct()
@@ -52,16 +53,6 @@ export function QuantScreen() {
   const audience = quantAudience(product?.position)
   const involved = audience !== 'visitor'
   const [picked, setPicked] = useState<number | null>(null)
-  // The watch face lives in its own scoped stylesheet, so it needs the resolved theme rather than inheriting it.
-  const [themeMode, setThemeMode] = useState<'light' | 'dark'>('light')
-  useEffect(() => {
-    const read = () => setThemeMode(document.documentElement.dataset.theme === 'dark' || document.body.dataset.theme === 'dark' ? 'dark' : 'light')
-    read()
-    const observer = new MutationObserver(read)
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
-    observer.observe(document.body, { attributes: true, attributeFilter: ['data-theme'] })
-    return () => observer.disconnect()
-  }, [])
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
@@ -120,6 +111,7 @@ export function QuantScreen() {
       <QuantSection title={c.charts.secSpecs} kicker="SPECIFICATIONS"><QuantSpecSheet product={product} c={c} /></QuantSection>
     </>}
     {tab === 'account' && <>
+      <QuantCalendar product={product} ticks={ticks} selected={picked} onSelect={setPicked} english={locale === 'en'} />
       {involved
         ? <>
           <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
@@ -133,20 +125,20 @@ export function QuantScreen() {
     </div>
   </>
 
-  return <MaisonPage page="quant" dock className={stage}>
+  return <MaisonPage page="quant" dock className={`${stage} ${page.watchPage}`}>
     <h1 className="sr-only">{product.name}</h1>
-    <div className="watch-scope" data-theme={themeMode}>
-    <main className="study-stage">
+    <div className="watch-scope" data-theme={theme}>
+    <div className="study-stage">
     <WatchPin
       dial={ticks.length > 0
-        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
+        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} english={locale === 'en'} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
       subs={<WatchKpis product={product} c={c} />}
 
-      menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
-      body={<div key={tab} className={styles.tabBody}>{body}</div>}
+      menu={<div className="section-menu" role="tablist" aria-label={c.title}><span className="menu-highlight" aria-hidden="true" style={{transform:`translateX(${tab==='overview'?'0':'100%'})`}}/>{tabs.map(({key,label})=><button key={key} type="button" role="tab" id={`quant-tab-${key}`} aria-controls="quant-panel" aria-selected={tab===key} onClick={()=>setTab(key)}>{key==='overview'?<Layers size={15} strokeWidth={1.5}/>:<PieChart size={15} strokeWidth={1.5}/>}<span>{label}</span></button>)}</div>}
+      body={<div id="quant-panel" role="tabpanel" aria-labelledby={`quant-tab-${tab}`} className={page.watchContent}>{body}</div>}
     />
-    </main>
+    </div>
     </div>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />

@@ -1,14 +1,13 @@
 'use client'
-
 import React, {useCallback,useEffect,useLayoutEffect,useRef,useState} from 'react';
-import type {CSSProperties, KeyboardEvent as ReactKeyboardEvent, PointerEvent as ReactPointerEvent} from 'react';
 import {animate,useMotionValue} from 'motion/react';
 import {ChevronLeft,ChevronRight} from 'lucide-react';
 import {RollingNumber,RollingDate} from './Rolling';
-import {formatPct,shortDate,tickHeight,tickScale} from '@/lib/quant-view-model';
+import {formatPct,tickHeight,tickScale,localToday} from '@/lib/quant-view-model';
 import type {Tick} from '@/lib/quant-view-model';
 import type {QuantCopy} from '@/lib/maison-quant-copy';
 import type {QuantProduct} from '@/lib/api/quant';
+import type {CSSProperties,KeyboardEvent as ReactKeyboardEvent,PointerEvent as ReactPointerEvent} from 'react';
 import styles from './dial.module.css';
 const kindClass: Record<Tick['kind'], string> = { gain: styles.gain, loss: styles.loss, flat: styles.flat, missing: styles.missing, today: styles.today }
 const kindLabel = (copy: QuantCopy, kind: Tick['kind']) => kind === 'gain' ? copy.tickGain : kind === 'loss' ? copy.tickLoss : kind === 'flat' ? copy.tickFlat : kind === 'today' ? copy.tickToday : copy.tickMissing
@@ -23,7 +22,7 @@ export function QuantLedger({ ticks, selected, onSelect, height = 56, copy, labe
   ticks: Tick[]; selected: number | null; onSelect: (index: number) => void; height?: number; copy: QuantCopy; label: string
 }) {
   const scale = tickScale(ticks)
-  return <div className={styles.ticks} style={{ '--ledger-h': `${height}px` } as CSSProperties} role="group" aria-label={label}>
+  return <div data-watch-part="ticks" className={styles.ticks} style={{ '--ledger-h': `${height}px` } as CSSProperties} role="group" aria-label={label}>
     {ticks.map((tick, index) => <button
       key={tick.date}
       type="button"
@@ -32,7 +31,7 @@ export function QuantLedger({ ticks, selected, onSelect, height = 56, copy, labe
       aria-label={`${tick.date} · ${kindLabel(copy, tick.kind)}${tick.value !== null ? ` · ${formatPct(tick.value)}` : ''}`}
       onClick={() => onSelect(index)}
     >
-      <i className={styles.bar} style={{ '--f': tickHeight(tick, scale), '--i': index } as CSSProperties} />
+      <i data-watch-part="bar" className={styles.bar} style={{ '--f': tickHeight(tick, scale), '--i': index } as CSSProperties} />
     </button>)}
   </div>
 }
@@ -80,8 +79,8 @@ export function useTween(target: number | null, duration = 520, restart = 0): nu
  * marker: drag it with a finger (swipe left/right, or follow the circle), tap a tick, or use the arrows, and it springs to
  * the nearest day while the centre shows that day; at today the centre shows the figure since inception.
  */
-export function QuantDial({ ticks, selected, onSelect, copy, product }: {
-  ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct
+export function QuantDial({ ticks, selected, onSelect, copy, product, english = false }: {
+  ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct; english?: boolean
 }) {
   const scale = tickScale(ticks)
   const last = ticks.length - 1
@@ -260,12 +259,13 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   const returnValue = picked ? picked.value : p.sinceInceptionPct
   const record = picked ? product.history.find(row => row.tradeDate === picked.date) : null
   const navValue = picked ? (record ? Number(record.indexAfter) : null) : p.days ? Number(p.index) : null
-  const date = ticks[focus]?.date || '2026-10-20'
+  const date = ticks[focus]?.date || localToday(product.timezone)
+  const labels = english ? ['Since inception','Daily return','Latest product NAV','Historical product NAV'] : ['成立以来','当日收益','最新产品净值','当日产品净值']
   const labelIndex = mode === 'nav' ? (picked ? 3 : 2) : (picked ? 1 : 0)
 
   return <div
     ref={boxRef}
-    className={styles.dialBox}
+    data-watch-part="dialBox" className={styles.dialBox}
     data-pin-dial=""
     data-no-ptr=""
     tabIndex={0}
@@ -278,25 +278,25 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
     onPointerCancel={onPointerEnd}
     onKeyDown={onKeyDown}
   >
-    <div className={styles.bezelMetal} />
-    <div className={styles.bezelSheen} aria-hidden="true" />
-    <button ref={crownRef} type="button" className={styles.crown} aria-label="表冠：回到今天" onPointerDown={(event) => event.stopPropagation()} onClick={windUp}>
-      <i className={styles.crownCap} /><i className={styles.crownKnurl} /><i className={styles.crownStem} />
+    <div data-watch-part="bezelMetal" className={styles.bezelMetal} />
+    <div data-watch-part="bezelSheen" className={styles.bezelSheen} aria-hidden="true" />
+    <button ref={crownRef} type="button" data-watch-part="crown" className={styles.crown} aria-label={english?'Crown: return to today':'表冠：回到今天'} onPointerDown={(event) => event.stopPropagation()} onClick={windUp}>
+      <i data-watch-part="crownCap" className={styles.crownCap} /><i data-watch-part="crownKnurl" className={styles.crownKnurl} /><i data-watch-part="crownStem" className={styles.crownStem} />
     </button>
-    <button type="button" className="calendar-pusher" aria-label="切换收益率与净值" aria-pressed={mode==='nav'} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => {e.stopPropagation();setMode(m=>m==='return'?'nav':'return');}}><span className="pusher-stem"/><span className="pusher-cap"/></button>
-    <div className={styles.faceBg} />
+    <button type="button" className="calendar-pusher" aria-label={english?'Switch return and NAV':'切换收益率与净值'} aria-pressed={mode==='nav'} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => {e.stopPropagation();setMode(m=>m==='return'?'nav':'return');}}><span className="pusher-stem"/><span className="pusher-cap"/></button>
+    <div data-watch-part="faceBg" className={styles.faceBg} />
     <div className="rotor-brushing" aria-hidden="true"/>
     <div className="chapter-rehaut" aria-hidden="true"/>
     <div className="enamel-medallion" aria-hidden="true"/>
-    <svg className={styles.dial} viewBox="0 0 300 300">
-      {[86, 88].map((r) => <circle key={r} className={styles.engrave} cx={CX} cy={CX} r={r} />)}
-      <circle className={styles.baseRing} cx={CX} cy={CX} r={R_BASE} />
+    <svg data-watch-part="dial" className={styles.dial} viewBox="0 0 300 300">
+      {[86, 88].map((r) => <circle key={r} data-watch-part="engrave" className={styles.engrave} cx={CX} cy={CX} r={r} />)}
+      <circle data-watch-part="baseRing" className={styles.baseRing} cx={CX} cy={CX} r={R_BASE} />
       <g ref={ringRef}>
         {Array.from({ length: 120 }, (_, i) => {
           const major = i % 5 === 0
           const [x1, y1] = polar(major ? 130.5 : 133.5, i * 3)
           const [x2, y2] = polar(137, i * 3)
-          return <line key={i} className={styles.track} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+          return <line key={i} data-watch-part="track" className={styles.track} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
         })}
         <g>
         {ticks.map((tick, index) => {
@@ -309,7 +309,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
           const choosing = () => { if (!suppressClick.current) choose(index) }
           return <g
             key={tick.date}
-            className={styles.t}
+            data-watch-part="t" className={styles.t}
             data-kind={tick.kind}
             data-focus={focus === index || undefined}
             role="button"
@@ -319,7 +319,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
             onClick={choosing}
             onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); choosing() } }}
           >
-            <circle className={styles.hit} cx={bx} cy={by} r="11" />
+            <circle data-watch-part="hit" className={styles.hit} cx={bx} cy={by} r="11" />
             {tick.kind === 'today' ? <circle cx={bx} cy={by} r="4" /> : <line x1={x1} y1={y1} x2={x2} y2={y2} style={{ '--i': index } as CSSProperties} />}
           </g>
         })}
@@ -327,10 +327,11 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
       </g>
       <path className="day-index-marker" d="M147 33 L150 39 L153 33Z" />
     </svg>
+    <div className="engraved-brand"><h2>{copy.title}</h2><span>KOALA QUANT</span></div>
     <div className="watch-readout" data-mode={mode}>
-      <div className="readout-legend" aria-label={['成立以来','当日收益','最新产品净值','当日产品净值'][labelIndex]}>
+      <div className="readout-legend" aria-label={labels[labelIndex]}>
         <div className="legend-strip" style={{transform:`translateY(${-labelIndex*100/4}%)`}} aria-hidden="true">
-          {['成立以来','当日收益','最新产品净值','当日产品净值'].map(label=><span key={label}>{label}</span>)}
+          {labels.map(label=><span key={label}>{label}</span>)}
         </div>
       </div>
       <div className="readout-window">
@@ -343,13 +344,17 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
     <svg className="mode-complication" viewBox="0 0 140 46" aria-label={mode==='return'?'当前显示收益率':'当前显示净值'}>
       <path className="selector-arc" d="M51 26 A28 28 0 0 1 89 26" />
       <path className="selector-ticks" d="M49 24l-3 -3 M59 17l-2 -4 M70 15v-4 M81 17l2 -4 M91 24l3 -3"/>
-      <text x="28" y="21">收益率</text><text x="112" y="21">净值</text>
+      <text x="28" y="21">{english?'RETURN':'收益率'}</text><text x="112" y="21">{english?'NAV':'净值'}</text>
       <g className="selector-hand" style={{transform:`rotate(${mode==='return'?-43:43}deg)`}}>
         <path d="M68.7 38L70 15L71.3 38L70 42Z"/><path className="hand-highlight" d="M70 16v22"/>
       </g>
       <circle className="selector-hub" cx="70" cy="38" r="2.5"/><circle className="hub-pin" cx="70" cy="38" r=".7"/>
     </svg>
-
+    <div className="watch-date" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
+      <button aria-label={english?'Previous day':'前一天'} disabled={focus<=0} onClick={()=>choose(focus-1)}><ChevronLeft size={12}/></button>
+      <div className="date-aperture"><RollingDate date={date}/></div>
+      <button aria-label={english?'Next day':'后一天'} disabled={focus>=last} onClick={()=>choose(focus+1)}><ChevronRight size={12}/></button>
+    </div>
     <span className="dial-signature">DAILY SETTLEMENT</span>
     <div className="sapphire-crystal" aria-hidden="true"/>
     <div className="rim-reflection" aria-hidden="true"/>
@@ -362,7 +367,7 @@ export function QuantStepper({ ticks, selected, onSelect }: { ticks: Tick[]; sel
   const last = ticks.length - 1
   const current = selected ?? last
   const go = (index: number) => onSelect(index === last ? null : index)
-  return <div className={styles.stepper}>
+  return <div data-watch-part="stepper" className={styles.stepper}>
     <button type="button" aria-label="‹" disabled={current <= 0} onClick={() => go(current - 1)}>‹</button>
     <span key={ticks[current]?.date}>{ticks[current]?.date}</span>
     <button type="button" aria-label="›" disabled={current >= last} onClick={() => go(current + 1)}>›</button>

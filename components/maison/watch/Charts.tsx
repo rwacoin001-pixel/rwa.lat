@@ -60,34 +60,34 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
   const arc = share > 0 ? `M${ax.toFixed(2)},${ay.toFixed(2)} A37,37 0 ${share * 270 > 180 ? 1 : 0} 1 ${bx.toFixed(2)},${by.toFixed(2)}` : ''
   const [l0x, l0y] = at(30, -SWEEP + 30)
   const [l1x, l1y] = at(30, SWEEP - 30)
-  return <div ref={ref} className={styles.sub}  data-sub="" data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
-    <div className={styles.subDial}>
-      <i className={styles.subBezel} aria-hidden="true" />
-      <i className={styles.subFace} aria-hidden="true" />
-      <svg viewBox="0 0 100 100" className={styles.subSvg} aria-hidden="true">
+  return <div ref={ref} data-watch-part="sub" className={styles.sub}  data-sub="" data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
+    <div data-watch-part="subDial" className={styles.subDial}>
+      <i data-watch-part="subBezel" className={styles.subBezel} aria-hidden="true" />
+      <i data-watch-part="subFace" className={styles.subFace} aria-hidden="true" />
+      <svg viewBox="0 0 100 100" data-watch-part="subSvg" className={styles.subSvg} aria-hidden="true">
         {Array.from({ length: 55 }, (_, i) => {
           const deg = -SWEEP + i * 5
           const major = i % 9 === 0
           const [x1, y1] = at(major ? 40 : 42, deg)
           const [x2, y2] = at(45, deg)
-          return <line key={i} className={styles.subTick} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+          return <line key={i} data-watch-part="subTick" className={styles.subTick} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
         })}
-        {flick > 0 && <circle key={`ring-${flick}`} className={styles.subRipple} cx="50" cy="50" r="36" pathLength={1} />}
-        <circle className={styles.subTrack} cx="50" cy="50" r="37" pathLength={360} strokeDasharray="270 90" transform="rotate(135 50 50)" />
-        {arc && <path className={styles.subArc} d={arc} pathLength={1} />}
-        <text className={styles.subNum} x={l0x} y={l0y + 3}>0</text>
-        <text className={styles.subNum} x={l1x} y={l1y + 3}>{loss ? `−${scale}` : scale}</text>
-        <text className={styles.subShort} x="50" y="33">{short}</text>
-        <g className={styles.subNeedle} data-needle="" data-flicked={flick > 0 || undefined}>
+        {flick > 0 && <circle key={`ring-${flick}`} data-watch-part="subRipple" className={styles.subRipple} cx="50" cy="50" r="36" pathLength={1} />}
+        <circle data-watch-part="subTrack" className={styles.subTrack} cx="50" cy="50" r="37" pathLength={360} strokeDasharray="270 90" transform="rotate(135 50 50)" />
+        {arc && <path data-watch-part="subArc" className={styles.subArc} d={arc} pathLength={1} />}
+        <text data-watch-part="subNum" className={styles.subNum} x={l0x} y={l0y + 3}>0</text>
+        <text data-watch-part="subNum" className={styles.subNum} x={l1x} y={l1y + 3}>{loss ? `−${scale}` : scale}</text>
+        <text data-watch-part="subShort" className={styles.subShort} x="50" y="33">{short}</text>
+        <g data-watch-part="subNeedle" className={styles.subNeedle} data-needle="" data-flicked={flick > 0 || undefined}>
           <line x1="50" y1="57" x2="50" y2="15" />
           <circle cx="50" cy="50" r="3.2" />
-          <circle className={styles.subPin} cx="50" cy="50" r="1.2" />
+          <circle data-watch-part="subPin" className={styles.subPin} cx="50" cy="50" r="1.2" />
         </g>
       </svg>
-      <div data-sub-window="" className={styles.subWindow}><TweenPct value={value} /></div>
+      <div data-sub-window="" data-watch-part="subWindow" className={styles.subWindow}><TweenPct value={value} /></div>
     </div>
-    <span data-sub-label="" className={styles.subLabel}>{label}</span>
-    {note && <em data-sub-note="" className={styles.subNote}>{note}</em>}
+    <span data-sub-label="" data-watch-part="subLabel" className={styles.subLabel}>{label}</span>
+    {note && <em data-sub-note="" data-watch-part="subNote" className={styles.subNote}>{note}</em>}
   </div>
 }
 
@@ -194,16 +194,16 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
 
   const [fx, fy] = xy[active] ?? xy[xy.length - 1]
   const left = `${(fx / W) * 100}%`
-  return <section className={styles.card} aria-label={c.charts.navTitle}>
-    <header className={styles.head}>
+  return <section data-watch-part="card" className={styles.card} aria-label={c.charts.navTitle}>
+    <header data-watch-part="head" className={styles.head}>
       <div><h2>{c.charts.navTitle}</h2><p>{c.charts.navSub}</p></div>
-      <div className={styles.readout} key={focus.date}>
+      <div data-watch-part="readout" className={styles.readout} key={focus.date}>
         <span>{shortDate(focus.date)}</span>
         <b>{focus.nav.toFixed(4)}</b>
       </div>
     </header>
-    <div ref={ref} className={styles.plot} data-seen={seen || undefined} {...scrub}>
-      <svg viewBox={`0 0 ${W} ${H}`} className={styles.svg} aria-hidden="true">
+    <div ref={ref} data-watch-part="plot" className={styles.plot} data-seen={seen || undefined} {...scrub}>
+      <svg viewBox={`0 0 ${W} ${H}`} data-watch-part="svg" className={styles.svg} aria-hidden="true">
         <defs>
           <linearGradient id="qNavFill" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="var(--q-gold)" stopOpacity=".32" />
@@ -213,18 +213,18 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
         {[0, .5, 1].map((k) => {
           const gy = PAD.top + k * (H - PAD.top - PAD.bottom)
           return <g key={k}>
-            <line className={styles.grid} x1={PAD.left} x2={W - PAD.right} y1={gy} y2={gy} />
-            <text className={styles.yLabel} x={PAD.left - 6} y={gy + 3}>{(high - k * span).toFixed(3)}</text>
+            <line data-watch-part="grid" className={styles.grid} x1={PAD.left} x2={W - PAD.right} y1={gy} y2={gy} />
+            <text data-watch-part="yLabel" className={styles.yLabel} x={PAD.left - 6} y={gy + 3}>{(high - k * span).toFixed(3)}</text>
           </g>
         })}
-        <line className={styles.base} x1={PAD.left} x2={W - PAD.right} y1={y(1)} y2={y(1)} />
-        <path className={styles.area} d={area} fill="url(#qNavFill)" />
-        <path className={styles.line} d={line} pathLength={1} />
-        <line className={styles.cursor} x1={fx} x2={fx} y1={PAD.top - 6} y2={H - PAD.bottom} />
-        <circle className={styles.halo} cx={fx} cy={fy} r="9" />
-        <circle className={styles.dot} cx={fx} cy={fy} r="3.4" />
+        <line data-watch-part="base" className={styles.base} x1={PAD.left} x2={W - PAD.right} y1={y(1)} y2={y(1)} />
+        <path data-watch-part="area" className={styles.area} d={area} fill="url(#qNavFill)" />
+        <path data-watch-part="line" className={styles.line} d={line} pathLength={1} />
+        <line data-watch-part="cursor" className={styles.cursor} x1={fx} x2={fx} y1={PAD.top - 6} y2={H - PAD.bottom} />
+        <circle data-watch-part="halo" className={styles.halo} cx={fx} cy={fy} r="9" />
+        <circle data-watch-part="dot" className={styles.dot} cx={fx} cy={fy} r="3.4" />
       </svg>
-      <div className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>
+      <div data-watch-part="tip" className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>
     </div>
     <DateAxis dates={points.map((point) => point.date)} left={`${(PAD.left / W) * 100}%`} right={`${(PAD.right / W) * 100}%`} />
   </section>
@@ -233,7 +233,7 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
 /** Five evenly spaced dates under a chart (first and last always shown). */
 function DateAxis({ dates, left, right }: { dates: string[]; left: string; right: string }) {
   const marks = dates.length <= 5 ? dates.map((_, i) => i) : [0, 1, 2, 3, 4].map((k) => Math.round((k / 4) * (dates.length - 1)))
-  return <div className={styles.dates} style={{ marginInline: `${left} ${right}` }}>
+  return <div data-watch-part="dates" className={styles.dates} style={{ marginInline: `${left} ${right}` }}>
     {marks.map((index) => <span key={index} style={{ left: `${dates.length > 1 ? (index / (dates.length - 1)) * 100 : 0}%` }}>{shortDate(dates[index])}</span>)}
   </div>
 }
@@ -258,23 +258,23 @@ export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { prod
   const gains = points.filter((point) => point.value > 0).length
   if (points.length === 0) return null
 
-  return <section className={styles.card} aria-label={c.charts.dailyTitle}>
-    <header className={styles.head}>
+  return <section data-watch-part="card" className={styles.card} aria-label={c.charts.dailyTitle}>
+    <header data-watch-part="head" className={styles.head}>
       <div><h2>{c.charts.dailyTitle}</h2><p>{c.charts.dailySub}</p></div>
-      <div className={styles.readout} key={focus.date}>
+      <div data-watch-part="readout" className={styles.readout} key={focus.date}>
         <span>{activeIndex >= 0 ? shortDate(focus.date) : `${c.charts.latest} · ${shortDate(focus.date)}`}</span>
         <b className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</b>
       </div>
     </header>
-    <div ref={ref} className={styles.bars} data-seen={seen || undefined} data-picking={activeIndex >= 0 || undefined} style={{ '--zero': `${zero}%` } as CSSProperties} {...scrub}>
-      <i className={styles.zero} />
+    <div ref={ref} data-watch-part="bars" className={styles.bars} data-seen={seen || undefined} data-picking={activeIndex >= 0 || undefined} style={{ '--zero': `${zero}%` } as CSSProperties} {...scrub}>
+      <i data-watch-part="zero" className={styles.zero} />
       {points.map((point, index) => {
         const size = (Math.abs(point.value) / range) * 100
         return <button
           key={point.date}
           type="button"
           tabIndex={-1}
-          className={styles.barCol}
+          data-watch-part="barCol" className={styles.barCol}
           data-kind={point.value > 0 ? 'gain' : point.value < 0 ? 'loss' : 'flat'}
           data-on={point.date === focus.date || undefined}
           aria-label={`${point.date} · ${formatPct(point.value)}`}
@@ -285,8 +285,8 @@ export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { prod
       })}
     </div>
     <DateAxis dates={points.map((point) => point.date)} left={`${50 / points.length}%`} right={`${50 / points.length}%`} />
-    <div className={styles.axis}>
-      <span className={styles.tally}><i data-kind="gain" />{c.legend.gain} {gains}<i data-kind="loss" />{c.legend.loss} {points.length - gains}</span>
+    <div data-watch-part="axis" className={styles.axis}>
+      <span data-watch-part="tally" className={styles.tally}><i data-kind="gain" />{c.legend.gain} {gains}<i data-kind="loss" />{c.legend.loss} {points.length - gains}</span>
       <span>{c.recorded(points.length)}</span>
     </div>
   </section>
