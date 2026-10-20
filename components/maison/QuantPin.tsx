@@ -10,6 +10,9 @@ const GUTTER = 14
 const DIAL_SIZE = 116
 const ROW_WIDTH = 162
 const ROW_TOP = 6
+/** The title's final width and the top of its row, in the topbar's line. */
+const TITLE_WIDTH = 150
+const TITLE_TOP = 16
 
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t
 
@@ -19,19 +22,22 @@ const lerp = (from: number, to: number, t: number) => from + (to - from) * t
  * smaller, the sub-dials to the right and smaller. Progress is the scroll position over the distance the row has to
  * travel, so the motion follows the finger. Each frame writes only transform and opacity, never layout.
  */
-export function QuantPin({ children, subs, dial }: { children: ReactNode; subs?: ReactNode; dial?: ReactNode }) {
+export function QuantPin({ children, subs, dial, title }: { children: ReactNode; subs?: ReactNode; dial?: ReactNode; title?: ReactNode }) {
   const root = useRef<HTMLDivElement>(null)
   const row = useRef<HTMLDivElement>(null)
   const bar = useRef<HTMLDivElement>(null)
   const bg = useRef<HTMLDivElement>(null)
   const dialCopy = useRef<HTMLDivElement>(null)
   const subsCopy = useRef<HTMLDivElement>(null)
+  const titleCopy = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
-    const r = root.current, rowEl = row.current, b = bar.current, g = bg.current, dc = dialCopy.current, sc = subsCopy.current
-    if (!r || !rowEl || !b || !g || !dc || !sc) return
+    const r = root.current, rowEl = row.current, b = bar.current, g = bg.current, dc = dialCopy.current, sc = subsCopy.current, tc = titleCopy.current
+    if (!r || !rowEl || !b || !g || !dc || !sc || !tc) return
     const dialEl = r.querySelector<HTMLElement>('[data-pin-dial]')
-    if (!dialEl) return
+    const titleEl = r.querySelector<HTMLElement>('[data-pin-title]')
+    if (!dialEl || !titleEl) return
+    tc.style.width = `${titleEl.offsetWidth}px`
     // Copies take the originals' natural widths, so their transforms map one size onto the other.
     dc.style.width = `${dialEl.offsetWidth}px`
     sc.style.width = `${rowEl.offsetWidth}px`
@@ -51,7 +57,7 @@ export function QuantPin({ children, subs, dial }: { children: ReactNode; subs?:
       b.style.setProperty('--k', k.toFixed(3))
       b.style.pointerEvents = k > .9 ? 'auto' : 'none'
       g.style.opacity = k.toFixed(3)
-      if (!live) return
+      if (!live) { tc.style.visibility = 'hidden'; return }
       const barTop = b.getBoundingClientRect().top
       const barWidth = b.clientWidth
       const d = dialEl.getBoundingClientRect()
@@ -63,8 +69,15 @@ export function QuantPin({ children, subs, dial }: { children: ReactNode; subs?:
       const dialY = lerp(d.top - barTop, ROW_TOP, k)
       dc.style.transform = `translate(${dialX.toFixed(2)}px, ${dialY.toFixed(2)}px) scale(${lerp(1, dialScale, k).toFixed(4)})`
       const rowX = lerp(s.left, barWidth - GUTTER - ROW_WIDTH, k)
-      const rowY = lerp(s.top - barTop, ROW_TOP + (DIAL_SIZE - rowHeight) / 2, k)
+      const rowY = lerp(s.top - barTop, ROW_TOP + DIAL_SIZE - rowHeight, k)
       sc.style.transform = `translate(${rowX.toFixed(2)}px, ${rowY.toFixed(2)}px) scale(${lerp(1, rowScale, k).toFixed(4)})`
+      // The title travels from its place in the page to the top-right corner, under the topbar's row.
+      const t = titleEl.getBoundingClientRect()
+      const titleScale = TITLE_WIDTH / titleEl.offsetWidth
+      const titleX = lerp(t.left, window.innerWidth - GUTTER - TITLE_WIDTH, k)
+      const titleY = lerp(t.top, TITLE_TOP, k)
+      tc.style.visibility = 'visible'
+      tc.style.transform = `translate(${titleX.toFixed(2)}px, ${titleY.toFixed(2)}px) scale(${lerp(1, titleScale, k).toFixed(4)})`
     }
     const onScroll = () => { if (!frame) frame = requestAnimationFrame(apply) }
     apply()
@@ -75,6 +88,7 @@ export function QuantPin({ children, subs, dial }: { children: ReactNode; subs?:
 
   return <div ref={root} className={styles.pinRoot} data-live="false">
     <div className={styles.pinDial}>{children}</div>
+    <div ref={titleCopy} className={styles.pinTitle} aria-hidden="true">{title}</div>
     <div ref={row} className={styles.pinSubs} data-pin-row="">{subs}</div>
     <div ref={bar} className={styles.pinBar} data-active="false" data-settled="false" aria-hidden="true">
       <div ref={bg} className={styles.pinBarBg} />
