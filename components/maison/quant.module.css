@@ -222,7 +222,14 @@
    and shown once the sub-dial row has gone above the topbar. Transparent, so nothing is boxed in. */
 .pinBar { position: sticky; z-index: 6; top: calc(var(--topbar-h, 48px) + env(safe-area-inset-top)); height: 0; }
 :global(.rwa-mobile:has(.rwa-topbar[data-chrome-hidden='true'])) .pinBar { top: env(safe-area-inset-top); }
-.pinBar[data-pinned='false'] { visibility: hidden; }
+/* The pinned pair animates in and out: the dial eases from large and centred to its place on the left, the sub-dials
+   shrink in from the right, and the frosted panel fades up beneath the topbar. */
+.pinBarIn { transition: opacity .45s ease, transform .6s cubic-bezier(.2, .8, .2, 1); }
+.pinBarIn > :first-child { transform-origin: 50% 50%; transition: transform .7s cubic-bezier(.2, .8, .2, 1), opacity .5s ease; }
+.pinBarIn > :last-child { transform-origin: 100% 50%; transition: transform .7s cubic-bezier(.2, .8, .2, 1) .08s, opacity .5s ease .08s; }
+.pinBar[data-pinned='false'] .pinBarIn { opacity: 0; transform: translateY(-12px); pointer-events: none; }
+.pinBar[data-pinned='false'] .pinBarIn > :first-child { opacity: 0; transform: translateX(96px) scale(2.1); }
+.pinBar[data-pinned='false'] .pinBarIn > :last-child { opacity: 0; transform: translateX(-36px) scale(1.7); }
 .pinBarIn { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 14px 12px; background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); border-radius: 0 0 22px 22px; box-shadow: inset 0 -.5px 0 var(--m-line), 0 16px 24px -20px rgba(0, 0, 0, .45); }
 .pinBarDial { width: 116px; flex: none; }
 .pinBarDial .dialBox { width: 116px; margin: 0; }
