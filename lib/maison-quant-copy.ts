@@ -82,6 +82,13 @@ export type QuantCopy = {
     secSpecs: string
     secProcess: string
     secAccount: string
+    tabOverview: string
+    tabPerformance: string
+    tabAccount: string
+    tabRules: string
+    figure7: string
+    figure30: string
+    figureDrawdown: string
   }
   view: {
     loading: string
@@ -260,6 +267,13 @@ const en: QuantCopy = {
     secSpecs: 'Specifications',
     secProcess: 'How it works',
     secAccount: 'My account',
+    tabOverview: 'Overview',
+    tabPerformance: 'Performance',
+    tabAccount: 'Mine',
+    tabRules: 'Rules',
+    figure7: 'Last 7 days',
+    figure30: 'Last 30 days',
+    figureDrawdown: 'Max drawdown',
   },
   view: {
     loading: 'Loading…',
@@ -446,6 +460,13 @@ const zh: QuantCopy = {
     secSpecs: '产品规格',
     secProcess: '申购流程',
     secAccount: '我的账户',
+    tabOverview: '总览',
+    tabPerformance: '业绩',
+    tabAccount: '我的',
+    tabRules: '规则',
+    figure7: '近 7 日',
+    figure30: '近 30 日',
+    figureDrawdown: '最大回撤',
   },
   view: {
     loading: '加载中…',
