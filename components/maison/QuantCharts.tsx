@@ -76,7 +76,7 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
         <text className={styles.subNum} x={l0x} y={l0y + 3}>0</text>
         <text className={styles.subNum} x={l1x} y={l1y + 3}>{loss ? `−${scale}` : scale}</text>
         <text className={styles.subShort} x="50" y="33">{short}</text>
-        <g className={styles.subNeedle}>
+        <g className={styles.subNeedle} data-needle="">
           <line x1="50" y1="57" x2="50" y2="15" />
           <circle cx="50" cy="50" r="3.2" />
           <circle className={styles.subPin} cx="50" cy="50" r="1.2" />
@@ -90,9 +90,9 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
 }
 
 /** Three sub-dials under the main dial, like a chronograph's: the last week, the last month and the worst fall. */
-export function QuantKpis({ product, c }: { product: QuantProduct; c: QuantCopy }) {
+export function QuantKpis({ product, c, compact }: { product: QuantProduct; c: QuantCopy; compact?: boolean }) {
   const p = product.performance
-  return <div className={styles.subs}>
+  return <div className={compact ? styles.compactSubs : styles.subs}>
     <SubDial index={0} label={c.last7} short="7D" value={p.last7d.pct} note={p.last7d.coveredDays < p.last7d.days ? c.partial(p.last7d.coveredDays) : null} />
     <SubDial index={1} label={c.last30} short="30D" value={p.last30d.pct} note={p.last30d.coveredDays < p.last30d.days ? c.partial(p.last30d.coveredDays) : null} />
     <SubDial index={2} label={c.drawdown} short="MDD" value={p.maxDrawdownPct} note={null} loss />
