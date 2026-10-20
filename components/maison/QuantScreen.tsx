@@ -13,7 +13,7 @@ import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
 import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantDailyBars, QuantHighlights, QuantNavChart } from './QuantCharts'
+import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart } from './QuantCharts'
 import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
 import { QuantPin } from './QuantPin'
 import { useQuantProduct } from './QuantPositionCard'
@@ -119,6 +119,7 @@ export function QuantScreen() {
       dial={ticks.length > 0
         ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
+      subs={<QuantKpis product={product} c={c} />}
       stepper={ticks.length > 0 ? <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /> : undefined}
       menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
       body={<div key={tab} className={styles.tabBody}>{body}</div>}
