@@ -254,3 +254,11 @@
 .watch-scope[data-theme=dark] .calendar-panel .calendar-day.picked {background:linear-gradient(145deg,#3a3e38,#2b302c);box-shadow:inset 0 1px 0 rgba(224,203,159,.14),inset 0 0 0 .6px rgba(185,161,117,.25),0 2px 3px -2px #03080e}
 
 @media(prefers-reduced-motion:reduce){.watch-scope .sapphire-crystal,.rim-reflection {transform:none!important}}
+
+/* No entrance choreography inside the app: every figure must be readable the instant the page paints. */
+.watch-scope .sub, .watch-scope .kpi, .watch-scope .plot .area, .watch-scope .plot .dot,
+.watch-scope .plot .tip, .watch-scope .plot .cursor, .watch-scope .plot .halo, .watch-scope .halo {
+  opacity: 1 !important; transform: none !important; animation: none !important;
+}
+.watch-scope .plot .line { stroke-dashoffset: 0 !important; animation: none !important; }
+.watch-scope .sub[data-seen] .subArc, .watch-scope .sub .subArc { animation: none !important; }
