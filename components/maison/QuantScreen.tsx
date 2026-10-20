@@ -32,12 +32,18 @@ export function QuantScreen() {
   const slug = list.data?.[0]?.slug
   const detail = useQuantProduct(slug)
   const raw = detail.data
-  // Owner layout review: `?preview=1` folds a month of sample settlements in; a banner above the charts says so.
-  const [demo, setDemo] = useState(false)
+  const [flagged, setFlagged] = useState(false)
   useEffect(() => {
-    try { setDemo(new URLSearchParams(window.location.search).get('preview') === '1') } catch { setDemo(false) }
+    try { setFlagged(new URLSearchParams(window.location.search).get('preview') === '1') } catch { setFlagged(false) }
   }, [])
-  const product = useMemo(() => (raw && demo ? demoProduct() : raw), [raw, demo])
+  // Until the first day is settled there is nothing to chart, so the page shows a labelled sample month instead of an
+  // empty panel. It removes itself on the first real settlement: only the numbers are borrowed, the product is the real one.
+  const sample = Boolean(raw) && (flagged || raw!.performance.days === 0)
+  const product = useMemo(() => {
+    if (!raw || !sample) return raw
+    const shown = demoProduct()
+    return { ...raw, performance: shown.performance, history: shown.history }
+  }, [raw, sample])
   const audience = quantAudience(product?.position)
   const involved = audience !== 'visitor'
   const [picked, setPicked] = useState<number | null>(null)
@@ -85,7 +91,7 @@ export function QuantScreen() {
 
   const latest = product.history[product.history.length - 1]
   const body = <>
-    {demo && <p style={{
+    {sample && <p style={{
       margin: '0 0 14px', padding: '10px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.6,
       color: 'var(--m-lacquer-muted)', border: '1px solid rgba(227,187,122,.45)', background: 'rgba(227,187,122,.10)',
     }}>{c.previewNotice}</p>}
