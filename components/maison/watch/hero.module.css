@@ -1,0 +1,46 @@
+/* Koala Quant top block. One sticky hero holds the dial (with the title set inside its face), the three sub-dials and
+   the bezel. QuantPin writes one progress value (--p: 0 at rest, 1 pinned) on the hero; every transform below reads it,
+   so each frame is a handful of transforms and no layout.
+
+   Geometry (CSS px, below the status bar, with E = the status-bar inset):
+   - hero: sticky at the top edge, 132 + E tall, full-bleed; its bottom edge is where the menu sticks.
+   - dial: 332 wide, centred, top 60 + E at rest; pinned at 116 wide, top-left (6 + E).
+   - title: inside the dial face at rest (124 + E); pinned top-right (14 + E) at 1.1x.
+   - sub-dials: 92 wide in a row under the date at rest (top 452 + E); pinned 46 wide, bottom-right (76 + E).
+   - the menu sits at 132 + E once the hero has arrived; spacer and rest height come from QuantPin's REST_H. */
+
+.hero { position: sticky; top: 0; z-index: 10; height: calc(132px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
+
+.heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(132px + env(safe-area-inset-top)); border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
+
+/* The dial. Rest: left 50% - 166px, top 60 + E. Pinned: scale 116/332 (.3494) at the top-left corner. */
+.heroDial { position: absolute; left: calc(50cqw - 166px); top: calc(60px + env(safe-area-inset-top)); width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -54px), 0) scale(calc(1 - var(--p, 0) * .6506)); pointer-events: auto; touch-action: none; will-change: transform; }
+.heroDial [data-pin-dial] { margin: 0; }
+
+/* The title lives inside the dial face: it moves with the dial and fades out as the dial pins, so it never
+   travels to the top-right. */
+.heroDial > .title { position: absolute; left: 0; right: 0; top: 64px; display: flex; justify-content: center; white-space: nowrap; pointer-events: none; opacity: calc(1 - var(--p, 0) * 4); }
+
+/* The three sub-dials. Each sits in a fixed left position at rest; the transform carries it to its pinned slot. */
+.heroSubs { position: absolute; left: 0; top: 0; width: 100cqw; height: 0; pointer-events: auto; }
+.heroSubs [data-subs] { display: block; margin: 0; }
+.heroSubs > div > [data-sub] { position: absolute; top: calc(452px + env(safe-area-inset-top)); width: 92px; transform-origin: 0 0; will-change: transform; }
+.heroSubs > div > [data-sub]:nth-child(1) { left: calc(16.6667cqw - 46px); transform: translate3d(calc(var(--p, 0) * (83.3333cqw - 122px)), calc(var(--p, 0) * -382px), 0) scale(calc(1 - var(--p, 0) * .5)); }
+.heroSubs > div > [data-sub]:nth-child(2) { left: calc(50cqw - 46px); transform: translate3d(calc(var(--p, 0) * (50cqw - 68px)), calc(var(--p, 0) * -382px), 0) scale(calc(1 - var(--p, 0) * .5)); }
+.heroSubs > div > [data-sub]:nth-child(3) { left: calc(83.3333cqw - 46px); transform: translate3d(calc(var(--p, 0) * (16.6667cqw - 14px)), calc(var(--p, 0) * -382px), 0) scale(calc(1 - var(--p, 0) * .5)); }
+/* Labels and readouts leave as the dials shrink; the figures stay in the rest state only. */
+.heroSubs [data-sub-label], .heroSubs [data-sub-note] { opacity: calc(1 - var(--p, 0) * 3); }
+.heroSubs [data-sub-window] { opacity: calc(1 - var(--p, 0) * 2); }
+
+/* The stepper: under the dial, in the scrolling content, so it leaves with the page and never sits over the menu. */
+.stepRow { position: absolute; left: 0; right: 0; top: 266px; display: flex; justify-content: center; pointer-events: auto; }
+
+/* Rest height below the hero: the content between the hero and the menu. Its height is REST_H - 132 in QuantPin. */
+.spacer { position: relative; height: 448px; }
+
+/* The menu: sticks directly under the pinned hero. */
+.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .heroDial, .heroSubs > div > [data-sub] { transition: none; }
+}
