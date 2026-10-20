@@ -10,6 +10,9 @@ export type QuantCopy = {
   retry: string
   settledTo: string
   neverSettled: string
+  modeReturn: string
+  modeNav: string
+  switchMode: string
   sinceInception: string
   indexLabel: string
   indexShort: string
@@ -195,6 +198,9 @@ const en: QuantCopy = {
   retry: 'Retry',
   settledTo: 'Settled to',
   neverSettled: 'Not settled yet',
+  modeReturn: 'Return',
+  modeNav: 'Net value',
+  switchMode: 'Switch between return and net value',
   sinceInception: 'Since inception',
   indexLabel: 'Index (after management fee)',
   indexShort: 'Index',
@@ -388,6 +394,9 @@ const zh: QuantCopy = {
   retry: '重试',
   settledTo: '已结算至',
   neverSettled: '尚未开始结算',
+  modeReturn: '收益率',
+  modeNav: '净值',
+  switchMode: '切换收益率与净值',
   sinceInception: '成立以来',
   indexLabel: '净值指数(已扣管理费)',
   indexShort: '净值',

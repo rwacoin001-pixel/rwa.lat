@@ -126,11 +126,19 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   const choose = useCallback((index: number) => onSelect(index === last ? null : index), [last, onSelect])
   const [wind, setWind] = useState(0)
   const winding = useRef(false)
+  // The 2 o'clock pusher switches what the big figure means: the day's return, or the index (net value).
+  const [mode, setMode] = useState<'return' | 'nav'>('return')
+  const crownRef = useRef<HTMLButtonElement>(null)
 
   // The crown winds the watch: the ring makes one full turn and settles on today, the ticks grow back in and the centre
   // counts up again from zero.
   const windUp = () => {
     if (winding.current) return
+    // Press the crown in, then let it spring back while the ring winds.
+    const cap = crownRef.current?.querySelector<HTMLElement>(`.${styles.crownCap}`)
+    const knurl = crownRef.current?.querySelector<HTMLElement>(`.${styles.crownKnurl}`)
+    const press = [{ transform: 'translateY(0)' }, { transform: 'translateY(3px)' }, { transform: 'translateY(0)' }]
+    if (!reducedMotion()) [cap, knurl].forEach((part) => part?.animate(press, { duration: 580, easing: 'cubic-bezier(.22,.75,.2,1)' }))
     setWind((value) => value + 1)
     if ('vibrate' in navigator) navigator.vibrate([4, 40, 4, 40, 4])
     onSelect(null)
@@ -245,10 +253,17 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   const shown = tweenTarget === null ? '—' : tween === null ? formatPct(0) : formatPct(tween)
   const [numInt, numSign] = splitPct(shown)
   const negative = tweenTarget !== null && tweenTarget < 0
+  const navMode = mode === 'nav'
+  const pickedRow = picked ? product.history.find((row) => row.tradeDate === picked.date) ?? null : null
+  const navFigure = picked ? (pickedRow ? Number(pickedRow.indexAfter).toFixed(4) : '—') : Number(p.index).toFixed(4)
+  const bigNumber = navMode
+    ? <span className={styles.cNum}>{navFigure}</span>
+    : <span className={`${styles.cNum} ${negative ? styles.down : ''}`}>{numInt}{numSign && <sup>{numSign}</sup>}</span>
 
   return <div
     ref={boxRef}
     className={styles.dialBox}
+    data-mode={mode}
     data-pin-dial=""
     data-no-ptr=""
     tabIndex={0}
@@ -266,8 +281,18 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
     {ripple > 0 && <span key={ripple} className={styles.ripple} aria-hidden="true" />}
     <div className={styles.bezelSheen} aria-hidden="true" />
     {wind > 0 && <div key={wind} className={styles.windFlash} aria-hidden="true" />}
-    <button type="button" className={styles.crown} key={`crown-${wind}`} data-wound={wind > 0 || undefined} aria-label={copy.windLabel} onPointerDown={(event) => event.stopPropagation()} onClick={windUp}>
+    <button ref={crownRef} type="button" className={styles.crown} key={`crown-${wind}`} data-wound={wind > 0 || undefined} aria-label={copy.windLabel} onPointerDown={(event) => event.stopPropagation()} onClick={windUp}>
       <i className={styles.crownCap} /><i className={styles.crownKnurl} /><i className={styles.crownStem} />
+    </button>
+    <button
+      type="button"
+      className={styles.pusher}
+      aria-label={copy.switchMode}
+      aria-pressed={navMode}
+      onPointerDown={(event) => event.stopPropagation()}
+      onClick={(event) => { event.stopPropagation(); setMode((value) => (value === 'nav' ? 'return' : 'nav')) }}
+    >
+      <i className={styles.pusherStem} /><i className={styles.pusherCap} />
     </button>
     <div className={styles.faceBg} />
     <svg className={styles.dial} viewBox="0 0 300 300">
@@ -321,15 +346,15 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
       {picked
         ? <button type="button" onClick={() => onSelect(null)} aria-label={copy.sinceInception} key={picked.date}>
           <span className={styles.cLabel}>{picked.date}</span>
-          <span className={styles.cNum}>{numInt}{numSign && <sup>{numSign}</sup>}</span>
-          <span className={styles.cSub}>{kindLabel(copy, picked.kind)}</span>
+          {bigNumber}
+          <span className={styles.cSub}>{navMode ? copy.modeNav : kindLabel(copy, picked.kind)}</span>
           <span className={styles.cRule} />
           <span className={styles.cFoot}>{copy.sinceInception} ›</span>
         </button>
         : <div className={styles.cStack} key="since">
           <span className={styles.cLabel}>{copy.sinceInception}</span>
-          <span className={`${styles.cNum} ${negative ? styles.down : ''}`}>{numInt}{numSign && <sup>{numSign}</sup>}</span>
-          <span className={styles.cSub}>{copy.indexShort} {Number(p.index).toFixed(4)}</span>
+          {bigNumber}
+          <span className={styles.cSub}>{navMode ? copy.modeNav : `${copy.indexShort} ${Number(p.index).toFixed(4)}`}</span>
           <span className={styles.cRule} />
           <span className={styles.cFoot}>{copy.recorded(p.days)}</span>
         </div>}
