@@ -162,3 +162,6 @@
 .figure small { color: var(--q-dim); font-size: 11px; letter-spacing: .08em; }
 .figure b { color: var(--q-num); font-family: var(--q-serif), var(--m-display); font-size: 22px; font-weight: 500; line-height: 1.1; font-variant-numeric: lining-nums tabular-nums; }
 .ledgerNote { margin: 12px 0 0; color: var(--q-dim2); font-size: 11.5px; line-height: 1.55; }
+
+/* Labels and readouts in the pinned copy fade out as the row shrinks into place. */
+[data-copy-subs] .subLabel, [data-copy-subs] .subNote, [data-copy-subs] .subWindow { opacity: calc(1 - var(--k, 0)); }
