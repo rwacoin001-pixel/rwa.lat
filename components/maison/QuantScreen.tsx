@@ -7,14 +7,14 @@ import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { getQuantDisclosure, getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
 import { quantCopyFor } from '@/lib/maison-quant-copy'
-import { buildTicks, localToday, quantAudience } from '@/lib/quant-view-model'
+import { buildTicks, formatPct, localToday, quantAudience } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
 import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantDailyBars, QuantKpis, QuantNavChart } from './QuantCharts'
-import { QuantAccountPlaceholder, QuantProcess, QuantSection, QuantSpecSheet } from './QuantSpec'
+import { QuantDailyBars, QuantHighlights, QuantNavChart } from './QuantCharts'
+import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
 import { QuantPin } from './QuantPin'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
@@ -38,6 +38,7 @@ export function QuantScreen() {
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
+  const [tab, setTab] = useState<QuantTab>('overview')
   useHideDock(disclosureOpen)
   const disclosure = useQuery(disclosureOpen ? 'quant:disclosure' : null, getQuantDisclosure, { staleTime: 5 * 60_000 })
   const payouts = useQuery(involved && slug ? `quant:payouts:${slug}` : null, () => listQuantPayouts(slug as string, 60), { staleTime: 30_000 })
@@ -63,20 +64,65 @@ export function QuantScreen() {
     </button>
     {!product.open && <p className={page.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
   </div>
-  const performance = product.history.length > 1 && <Reveal><QuantSection no="I" title={c.charts.secPerformance} kicker="PERFORMANCE">
-    <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-    <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-  </QuantSection></Reveal>
-  const process = wantsSubscribe && <Reveal><QuantSection no={involved ? 'III' : 'II'} title={c.charts.secProcess} kicker="PROCESS">
-    <QuantProcess preview={preview} c={c}>{subscribe}</QuantProcess>
-  </QuantSection></Reveal>
-  const specs = <Reveal><QuantSection no={involved ? (wantsSubscribe ? 'IV' : 'III') : 'III'} title={c.charts.secSpecs} kicker="SPECIFICATIONS">
-    <QuantSpecSheet product={product} c={c} />
-  </QuantSection></Reveal>
+  const p = product.performance
+  const figures = [
+    { label: c.charts.figure7, value: p.last7d.pct },
+    { label: c.charts.figure30, value: p.last30d.pct },
+    { label: c.charts.figureDrawdown, value: p.maxDrawdownPct, loss: true },
+  ]
+  const tabs: Array<{ key: QuantTab; label: string }> = [
+    { key: 'overview', label: c.charts.tabOverview },
+    { key: 'performance', label: c.charts.tabPerformance },
+    { key: 'account', label: c.charts.tabAccount },
+    { key: 'rules', label: c.charts.tabRules },
+  ]
+  const charts = product.history.length > 1
+    ? <>
+      <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+      <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
+      <p className={page.context} style={{ textAlign: 'start', margin: '8px 2px 0' }}>{c.indexNote}</p>
+    </>
+    : <p className={styles.meta} style={{ margin: '24px 0', textAlign: 'center' }}>{c.neverSettled}</p>
+
+  const body = <>
+    {tab === 'overview' && <>
+      {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
+      <div className={styles.figureRow}>
+        {figures.map((figure) => <div key={figure.label} className={styles.figureCell} data-loss={figure.loss || undefined}>
+          <small>{figure.label}</small>
+          <b>{formatPct(figure.value)}</b>
+        </div>)}
+      </div>
+      <QuantHighlights product={product} c={c} />
+      {subscribe}
+    </>}
+    {tab === 'performance' && <>{charts}</>}
+    {tab === 'account' && <>
+      {involved
+        ? <>
+          <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
+          <QuantHistory payouts={payouts} c={c} />
+        </>
+        : <QuantAccountPlaceholder product={product} c={c} />}
+    </>}
+    {tab === 'rules' && <>
+      {wantsSubscribe && <QuantSection title={c.charts.secProcess} kicker="PROCESS"><QuantProcess preview={preview} c={c} /></QuantSection>}
+      <QuantSection title={c.charts.secSpecs} kicker="SPECIFICATIONS"><QuantSpecSheet product={product} c={c} /></QuantSection>
+    </>}
+    <div className={page.foot}>
+      <span>{c.riskLine}</span>
+      <button type="button" className={page.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
+    </div>
+  </>
 
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <h1 className="sr-only">{product.name}</h1>
-    <QuantPin title={<span className={styles.barTitle}>{c.title}</span>} subs={<QuantKpis product={product} c={c} />} dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}>
+    <QuantPin
+      title={<span className={styles.barTitle}>{c.title}</span>}
+      dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}
+      menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
+      body={<div key={tab} className={styles.tabBody}>{body}</div>}
+    >
       <div className={styles.pinHead} data-pin-title=""><span className={styles.barTitle}>{c.title}</span></div>
       {ticks.length > 0
         ? <>
@@ -85,31 +131,6 @@ export function QuantScreen() {
         </>
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
     </QuantPin>
-
-    {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
-
-    {involved && <>
-      <Reveal><QuantSection no="I" title={c.charts.secAccount} kicker="ACCOUNT">
-        <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
-        <QuantHistory payouts={payouts} c={c} />
-      </QuantSection></Reveal>
-      {product.history.length > 1 && <Reveal><QuantSection no="II" title={c.charts.secPerformance} kicker="PERFORMANCE">
-        <QuantNavChart product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-        <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
-      </QuantSection></Reveal>}
-      {process}
-      {specs}
-    </>}
-    {!involved && <>
-      <Reveal><QuantSection no="I" title={c.charts.secAccount} kicker="ACCOUNT">
-        <QuantAccountPlaceholder product={product} c={c} />
-      </QuantSection></Reveal>
-      {performance}{process}{specs}
-    </>}
-    <div className={page.foot}>
-      <span>{c.riskLine}</span>
-      <button type="button" className={page.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>
-    </div>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />

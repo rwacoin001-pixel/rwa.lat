@@ -104,3 +104,21 @@ export function QuantAccountPlaceholder({ product, c }: { product: QuantProduct;
     empty={c.view.accountEmpty(usdtNumber(product.minSubscriptionAtomic, locale))}
   />
 }
+
+export type QuantTab = 'overview' | 'performance' | 'account' | 'rules'
+
+/** Segmented secondary menu: one pill per section, the chosen one in the gold action colour. */
+export function QuantMenu({ items, value, onChange, label }: {
+  items: Array<{ key: QuantTab; label: string }>; value: QuantTab; onChange: (key: QuantTab) => void; label: string
+}) {
+  return <nav className={styles.menu} role="tablist" aria-label={label}>
+    {items.map((item) => <button
+      key={item.key}
+      type="button"
+      role="tab"
+      aria-selected={item.key === value}
+      className={styles.menuItem}
+      onClick={() => onChange(item.key)}
+    >{item.label}</button>)}
+  </nav>
+}
