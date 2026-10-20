@@ -46,8 +46,7 @@ export function QuantPin({ dial, title, subs, stepper, menu, body }: {
   return <>
     <div ref={hero} className={styles.hero} data-pinned="false" data-settled="false">
       <div className={styles.heroBg} aria-hidden="true" />
-      <div className={styles.heroDial}>{dial}</div>
-      <div className={styles.heroTitle}>{title}</div>
+      <div className={styles.heroDial}>{dial}<div className={styles.title}>{title}</div></div>
       <div className={styles.heroSubs} data-subs="">{subs}</div>
     </div>
     <div className={styles.spacer}><div className={styles.stepRow}>{stepper}</div></div>
