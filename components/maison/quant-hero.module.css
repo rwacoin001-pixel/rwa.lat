@@ -17,8 +17,9 @@
 .heroDial { position: absolute; left: calc(50cqw - 166px); top: calc(60px + env(safe-area-inset-top)); width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -54px), 0) scale(calc(1 - var(--p, 0) * .6506)); pointer-events: auto; touch-action: none; will-change: transform; }
 .heroDial [data-pin-dial] { margin: 0; }
 
-/* The title, inside the dial face at rest; top-right at 1.1x when pinned. */
-.heroTitle { position: absolute; left: calc(50cqw - 130px); top: calc(124px + env(safe-area-inset-top)); width: 260px; display: flex; justify-content: center; white-space: nowrap; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (50cqw - 170px)), calc(var(--p, 0) * -110px), 0) scale(calc(1 + var(--p, 0) * .1)); pointer-events: none; will-change: transform; }
+/* The title lives inside the dial face: it moves with the dial and fades out as the dial pins, so it never
+   travels to the top-right. */
+.heroDial > .title { position: absolute; left: 0; right: 0; top: 64px; display: flex; justify-content: center; white-space: nowrap; pointer-events: none; opacity: calc(1 - var(--p, 0) * 4); }
 
 /* The three sub-dials. Each sits in a fixed left position at rest; the transform carries it to its pinned slot. */
 .heroSubs { position: absolute; left: 0; top: 0; width: 100cqw; height: 0; pointer-events: auto; }
@@ -41,5 +42,5 @@
 .menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; background: linear-gradient(var(--m-bg) 72%, transparent); }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroDial, .heroTitle, .heroSubs > div > [data-sub] { transition: none; }
+  .heroDial, .heroSubs > div > [data-sub] { transition: none; }
 }
