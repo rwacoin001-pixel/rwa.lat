@@ -60,7 +60,7 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
   const arc = share > 0 ? `M${ax.toFixed(2)},${ay.toFixed(2)} A37,37 0 ${share * 270 > 180 ? 1 : 0} 1 ${bx.toFixed(2)},${by.toFixed(2)}` : ''
   const [l0x, l0y] = at(30, -SWEEP + 30)
   const [l1x, l1y] = at(30, SWEEP - 30)
-  return <div ref={ref} className={styles.sub} onClick={() => setFlick((value) => value + 1)} data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
+  return <div ref={ref} className={styles.sub} onClick={() => setFlick((value) => value + 1)} data-sub="" data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
     <div className={styles.subDial}>
       <i className={styles.subBezel} aria-hidden="true" />
       <i className={styles.subFace} aria-hidden="true" />
@@ -84,10 +84,10 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
           <circle className={styles.subPin} cx="50" cy="50" r="1.2" />
         </g>
       </svg>
-      <div className={styles.subWindow}><TweenPct value={value} /></div>
+      <div data-sub-window="" className={styles.subWindow}><TweenPct value={value} /></div>
     </div>
-    <span className={styles.subLabel}>{label}</span>
-    {note && <em className={styles.subNote}>{note}</em>}
+    <span data-sub-label="" className={styles.subLabel}>{label}</span>
+    {note && <em data-sub-note="" className={styles.subNote}>{note}</em>}
   </div>
 }
 
