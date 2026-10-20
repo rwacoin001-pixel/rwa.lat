@@ -13,7 +13,7 @@ import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
 import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantDailyBars, QuantHighlights, QuantKpis, QuantNavChart } from './QuantCharts'
+import { QuantDailyBars, QuantHighlights, QuantNavChart } from './QuantCharts'
 import { QuantAccountPlaceholder, QuantMenu, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
 import { QuantPin } from './QuantPin'
 import { useQuantProduct } from './QuantPositionCard'
@@ -125,7 +125,6 @@ export function QuantScreen() {
     <QuantPin
       title={<span className={styles.barTitle}>{c.title}</span>}
       dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}
-      subs={<QuantKpis product={product} c={c} />}
       menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
       body={<div key={tab} className={styles.tabBody}>{body}</div>}
     >
@@ -136,7 +135,6 @@ export function QuantScreen() {
           <div className={styles.pinFade}><QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /></div>
         </>
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
-      <div data-pin-row=""><QuantKpis product={product} c={c} /></div>
     </QuantPin>
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />

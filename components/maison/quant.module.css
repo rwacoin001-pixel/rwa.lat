@@ -223,15 +223,16 @@
 /* Pinned pair: a fixed bar under the topbar holding copies of the dial and the sub-dial row. The originals hide while
    the copies are live; the copies are moved and scaled by QuantPin on scroll (transform only). */
 .pinRoot[data-live='true'] .pinDial { visibility: hidden; }
-.pinMenu { position: sticky; z-index: 5; top: calc(env(safe-area-inset-top) + 132px); padding: 10px 0 8px; background: linear-gradient(var(--m-bg) 72%, transparent); }
+.pinMenu { position: relative; padding: 10px 0 8px; }
+.pinRoot[data-live='true'] .pinMenu { visibility: hidden; }
+.pinMenuCopy { position: absolute; left: 0; top: 0; visibility: hidden; transform-origin: 0 0; will-change: transform; }
 .tabBody { animation: tabIn .45s cubic-bezier(.2, .8, .2, 1) backwards; }
 @keyframes tabIn { from { opacity: 0; transform: translateY(8px); } }
 .pinBar { position: fixed; z-index: 6; top: env(safe-area-inset-top); left: 0; right: 0; height: 0; }
 .pinBar[data-active='false'] { visibility: hidden; }
-.pinBarBg { position: absolute; left: 0; right: 0; top: 0; height: 132px; background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); border-radius: 0 0 22px 22px; box-shadow: inset 0 -.5px 0 var(--m-line), 0 16px 24px -20px rgba(0, 0, 0, .45); }
+.pinBarBg { position: absolute; left: 0; right: 0; top: 0; height: 196px; background: color-mix(in srgb, var(--bg) 62%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); border-radius: 0 0 22px 22px; box-shadow: inset 0 -.5px 0 var(--m-line), 0 16px 24px -20px rgba(0, 0, 0, .45); }
 .pinCopy { position: absolute; left: 0; top: 0; transform-origin: 0 0; will-change: transform; }
 .pinTitle { position: fixed; left: 0; top: 0; z-index: 41; transform-origin: 0 0; visibility: hidden; pointer-events: none; white-space: nowrap; will-change: transform; }
-.pinTitle .barTitle { font-size: 17px; }
 .pinHead { display: flex; justify-content: center; padding-top: 14px; }
 .pinCopy [data-pin-dial] { margin: 0; }
 .pinCopy .crown, .pinCopy .cLabel, .pinCopy .cSub, .pinCopy .cRule, .pinCopy .cFoot { opacity: calc(1 - var(--k, 0)); }
