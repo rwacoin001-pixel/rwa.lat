@@ -46,6 +46,12 @@
 .subLabel { margin-top: 9px; color: var(--m-ink); font-size: 12px; font-weight: 500; letter-spacing: .06em; white-space: nowrap; }
 .subNote { margin-top: 2px; color: var(--q-dim2); font-size: 10px; font-style: normal; }
 
+/* Compact sub-dials: the pinned column on the right of the compact dial. Labels and readouts drop away. */
+.compactSubs { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: 0; width: 84px; flex: none; }
+.compactSubs .sub { align-items: center; }
+.compactSubs .subDial { width: 58px; }
+.compactSubs .subLabel, .compactSubs .subNote, .compactSubs .subWindow { display: none; }
+
 /* Chart cards. */
 .card { position: relative; margin-top: 0; padding: 0; }
 .card + .card { margin-top: 26px; padding-top: 16px; border-top: .5px solid rgba(var(--q-gold-rgb), .18); }

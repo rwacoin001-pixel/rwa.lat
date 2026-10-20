@@ -218,9 +218,18 @@
 .barTitle { display: inline-flex; align-items: center; gap: 10px; color: var(--q-num); font-family: var(--q-serif), var(--m-display); font-size: 19px; font-weight: 600; letter-spacing: .3em; text-indent: .3em; }
 .barTitle::before, .barTitle::after { content: ''; width: 18px; border-top: .5px solid rgba(var(--q-gold-rgb), .6); }
 
-/* Sub-dial row: sticky under the topbar. The dial above it scrolls under the topbar's background, so only the three
-   sub-dials remain on screen. */
-.pinDial { position: relative; z-index: 1; }
-.pinSubs { position: sticky; z-index: 6; top: calc(var(--topbar-h, 48px) + env(safe-area-inset-top)); background: var(--m-bg); }
-:global(.rwa-mobile:has(.rwa-topbar[data-chrome-hidden='true'])) .pinSubs { top: env(safe-area-inset-top); }
-.pinFade { opacity: calc(1 - var(--k, 0) * 2.4); }
+/* Pinned bar: a zero-height sticky box in the flow, so it adds no layout; its content is absolutely placed beneath it
+   and shown once the sub-dial row has gone above the topbar. Transparent, so nothing is boxed in. */
+.pinBar { position: sticky; z-index: 6; top: calc(var(--topbar-h, 48px) + env(safe-area-inset-top)); height: 0; }
+:global(.rwa-mobile:has(.rwa-topbar[data-chrome-hidden='true'])) .pinBar { top: env(safe-area-inset-top); }
+.pinBar[data-pinned='false'] { visibility: hidden; }
+.pinBarIn { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 14px 14px; background: var(--bg); border-radius: 0 0 22px 22px; box-shadow: 0 14px 22px -18px rgba(0, 0, 0, .5); }
+.pinBarDial { width: 138px; flex: none; }
+.pinBarDial .dialBox { width: 138px; margin: 0; }
+.pinBarDial .crown, .pinBarDial .cLabel, .pinBarDial .cSub, .pinBarDial .cRule, .pinBarDial .cFoot { display: none; }
+.pinBarDial .cNum { font-size: 21px; margin-top: 0; }
+.pinBarDial .cNum sup { font-size: .5em; }
+.pinBarDial .bezelSheen { display: none; }
+.pinBar[data-pinned='true'] [data-needle] { animation: needleSpin 1.2s cubic-bezier(.2, .8, .2, 1) both; }
+@keyframes needleSpin { from { transform: rotate(calc(var(--a, 0deg) - 540deg)); } to { transform: rotate(var(--a, 0deg)); } }
+.pinFade { opacity: 1; }
