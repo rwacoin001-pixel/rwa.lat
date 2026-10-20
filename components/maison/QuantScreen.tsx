@@ -135,12 +135,11 @@ export function QuantScreen() {
     <h1 className="sr-only">{product.name}</h1>
     <div className="watch-scope" data-theme={themeMode}>
     <QuantPin
-      title={<span className={styles.barTitle}>{c.title}</span>}
       dial={ticks.length > 0
         ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
       subs={<WatchKpis product={product} c={c} />}
-      stepper={ticks.length > 0 ? <QuantStepper ticks={ticks} selected={picked} onSelect={setPicked} /> : undefined}
+
       menu={<QuantMenu items={tabs} value={tab} onChange={setTab} label={c.title} />}
       body={<div key={tab} className={styles.tabBody}>{body}</div>}
     />
