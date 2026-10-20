@@ -76,7 +76,7 @@ export function QuantScreen() {
 
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <h1 className="sr-only">{product.name}</h1>
-    <QuantPin subs={<QuantKpis product={product} c={c} />} bar={ticks.length > 0 ? <><div className={styles.pinBarDial}><QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /></div><QuantKpis product={product} c={c} compact /></> : undefined}>
+    <QuantPin subs={<QuantKpis product={product} c={c} />} dial={ticks.length > 0 ? <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /> : undefined}>
       {ticks.length > 0
         ? <>
           <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
