@@ -16,6 +16,7 @@ import { quantCopyFor } from '@/lib/maison-quant-copy'
 import { QuantDial } from '@/components/maison/watch/Dial'
 import { QuantDailyBars, QuantKpis, QuantNavChart } from '@/components/maison/watch/Charts'
 import { QuantPin } from '@/components/maison/watch/Pin'
+import { BottomDock } from '@/components/h5/BottomDock'
 
 import '@/components/maison/watch/preview.css'
 import '@/components/maison/watch/fonts.css'
@@ -139,10 +140,9 @@ export default function QuantWatchPage() {
         : <div className="overview-body" style={{ paddingTop: 120 }}>{body}</div>}
       <div className="bottom-space" />
     </main>
-    <div className="dock-wrap">
-      <nav className="bottom-dock" aria-label="主导航">
-        {[{ name: '首页', icon: Home, href: '/' }, { name: '市场', icon: ChartNoAxesColumnIncreasing, href: '/markets' }, { name: '量化', icon: Layers, href: '/quant' }, { name: '资产', icon: PieChart, href: '/assets' }].map((item) => <button key={item.name} className={item.name === '量化' ? 'active' : ''} aria-current={item.name === '量化' ? 'page' : undefined} onClick={() => { if (item.href !== '/quant') window.location.href = item.href }}><item.icon size={20} strokeWidth={1.4} /><span>{item.name}</span></button>)}
-      </nav>
-    </div>
+    <BottomDock screen="quant" activeScreen="quant" setScreen={(next) => {
+      const paths: Record<string, string> = { home: '/', invest: '/markets', quant: '/quant', portfolio: '/assets', wallet: '/assets', ai: '/ai-assistant', profile: '/profile' }
+      window.location.href = paths[String(next)] ?? '/'
+    }} />
   </div>
 }
