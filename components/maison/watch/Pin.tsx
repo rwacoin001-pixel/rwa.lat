@@ -46,13 +46,13 @@ export function QuantPin({ dial, title, subs, stepper, menu, body }: {
   }, [])
 
   return <>
-    <div ref={hero} className={styles.hero} data-pinned="false" data-settled="false">
-      <div className={styles.heroBg} aria-hidden="true" />
-      <div className={styles.heroDial}>{dial}<div className={styles.title}>{title}</div></div>
-      <div className={styles.heroSubs} data-subs="">{subs}</div>
+    <div ref={hero} data-watch-part="hero" className={styles.hero} data-pinned="false" data-settled="false">
+      <div data-watch-part="heroBg" className={styles.heroBg} aria-hidden="true" />
+      <div data-watch-part="heroDial" className={styles.heroDial}>{dial}<div data-watch-part="title" className={styles.title}>{title}</div></div>
+      <div data-watch-part="heroSubs" className={styles.heroSubs} data-subs="">{subs}</div>
     </div>
-    <div className={styles.spacer}><div className={styles.stepRow}>{stepper}</div></div>
-    <div className={styles.menu}>{menu}</div>
+    <div data-watch-part="spacer" className={styles.spacer}><div data-watch-part="stepRow" className={styles.stepRow}>{stepper}</div></div>
+    <div data-watch-part="menu" className={styles.menu}>{menu}</div>
     {body}
   </>
 }
