@@ -248,6 +248,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product }: {
   return <div
     ref={boxRef}
     className={styles.dialBox}
+    data-no-ptr=""
     tabIndex={0}
     role="group"
     aria-roledescription="dial"
