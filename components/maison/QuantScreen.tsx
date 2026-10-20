@@ -13,8 +13,8 @@ import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Sheet } from './Sheet'
 import { QuantDial, QuantStepper, Reveal, useHideDock } from './QuantParts'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantDailyBars, QuantKpis, QuantNavChart, QuantStatus } from './QuantCharts'
-import { QuantProcess, QuantSection, QuantSpecSheet } from './QuantSpec'
+import { QuantDailyBars, QuantKpis, QuantNavChart } from './QuantCharts'
+import { QuantAccountPlaceholder, QuantProcess, QuantSection, QuantSpecSheet } from './QuantSpec'
 import { QuantPin } from './QuantPin'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
@@ -77,9 +77,6 @@ export function QuantScreen() {
   return <MaisonPage page="quant" dock topbar={topbar} className={stage}>
     <h1 className="sr-only">{product.name}</h1>
     <QuantPin subs={<QuantKpis product={product} c={c} />} bar={ticks.length > 0 ? <><div className={styles.pinBarDial}><QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} /></div><QuantKpis product={product} c={c} compact /></> : undefined}>
-      <header className={`${styles.mast} ${styles.pinFade}`}>
-        <QuantStatus product={product} c={c} />
-      </header>
       {ticks.length > 0
         ? <>
           <QuantDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} />
@@ -102,7 +99,12 @@ export function QuantScreen() {
       {process}
       {specs}
     </>}
-    {!involved && <>{performance}{process}{specs}</>}
+    {!involved && <>
+      <Reveal><QuantSection no="I" title={c.charts.secAccount} kicker="ACCOUNT">
+        <QuantAccountPlaceholder product={product} c={c} />
+      </QuantSection></Reveal>
+      {performance}{process}{specs}
+    </>}
     <div className={page.foot}>
       <span>{c.riskLine}</span>
       <button type="button" className={page.link} onClick={() => setDisclosureOpen(true)}>{c.disclosure}</button>

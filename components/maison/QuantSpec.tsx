@@ -87,3 +87,23 @@ export function QuantProcess({ preview, c, children }: { preview: Query<QuantSub
     {children}
   </>
 }
+
+/** Before subscribing: the figures a holder will see, empty, so the page already shows where the money goes. */
+export function QuantAccountPlaceholder({ product, c }: { product: QuantProduct; c: QuantCopy }) {
+  const { locale } = useI18n()
+  const cells = [
+    { label: c.view.accountPrincipal, value: '—' },
+    { label: c.view.accountNet, value: '—' },
+    { label: c.view.accountPaid, value: '—' },
+    { label: c.view.accountWaiting, value: '—' },
+  ]
+  return <>
+    <div className={styles.ledger}>
+      {cells.map((cell, index) => <div key={cell.label} className={styles.figure} style={{ '--i': index } as CSSProperties}>
+        <small>{cell.label}</small>
+        <b>{cell.value}</b>
+      </div>)}
+    </div>
+    <p className={styles.ledgerNote}>{c.view.accountEmpty(usdtNumber(product.minSubscriptionAtomic, locale))}</p>
+  </>
+}

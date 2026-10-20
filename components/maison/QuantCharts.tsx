@@ -51,6 +51,7 @@ const at = (radius: number, degrees: number) => {
  */
 function SubDial({ label, short, value, note, loss, index }: { label: string; short: string; value: number | null; note: string | null; loss?: boolean; index: number }) {
   const [ref, seen] = useSeen<HTMLDivElement>()
+  const [flick, setFlick] = useState(0)
   const scale = subScale(value)
   const share = value === null ? 0 : Math.min(1, Math.abs(value) / scale)
   const angle = -SWEEP + share * SWEEP * 2
@@ -59,7 +60,7 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
   const arc = share > 0 ? `M${ax.toFixed(2)},${ay.toFixed(2)} A37,37 0 ${share * 270 > 180 ? 1 : 0} 1 ${bx.toFixed(2)},${by.toFixed(2)}` : ''
   const [l0x, l0y] = at(30, -SWEEP + 30)
   const [l1x, l1y] = at(30, SWEEP - 30)
-  return <div ref={ref} className={styles.sub} data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
+  return <div ref={ref} className={styles.sub} onClick={() => setFlick((value) => value + 1)} data-seen={seen || undefined} data-loss={loss || undefined} style={{ '--i': index, '--a': `${seen ? angle : -SWEEP}deg` } as CSSProperties}>
     <div className={styles.subDial}>
       <i className={styles.subBezel} aria-hidden="true" />
       <i className={styles.subFace} aria-hidden="true" />
@@ -71,12 +72,13 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
           const [x2, y2] = at(45, deg)
           return <line key={i} className={styles.subTick} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
         })}
+        {flick > 0 && <circle key={`ring-${flick}`} className={styles.subRipple} cx="50" cy="50" r="36" pathLength={1} />}
         <circle className={styles.subTrack} cx="50" cy="50" r="37" pathLength={360} strokeDasharray="270 90" transform="rotate(135 50 50)" />
         {arc && <path className={styles.subArc} d={arc} pathLength={1} />}
         <text className={styles.subNum} x={l0x} y={l0y + 3}>0</text>
         <text className={styles.subNum} x={l1x} y={l1y + 3}>{loss ? `−${scale}` : scale}</text>
         <text className={styles.subShort} x="50" y="33">{short}</text>
-        <g className={styles.subNeedle} data-needle="">
+        <g key={flick} className={styles.subNeedle} data-needle="" data-flicked={flick > 0 || undefined}>
           <line x1="50" y1="57" x2="50" y2="15" />
           <circle cx="50" cy="50" r="3.2" />
           <circle className={styles.subPin} cx="50" cy="50" r="1.2" />
