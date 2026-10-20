@@ -218,13 +218,12 @@
 .barTitle { display: inline-flex; align-items: center; gap: 10px; color: var(--q-num); font-family: var(--q-serif), var(--m-display); font-size: 19px; font-weight: 600; letter-spacing: .3em; text-indent: .3em; }
 .barTitle::before, .barTitle::after { content: ''; width: 18px; border-top: .5px solid rgba(var(--q-gold-rgb), .6); }
 
-/* Pinned dial and sub-dials: sticky under the topbar. The main dial shrinks in place (transform) and its layout box is
-   compensated with a negative margin, so the sub-dial row always sits directly beneath it. */
+/* Pinned block: sticky under the topbar. The main dial's box shrinks to nothing as the page scrolls, so the sub-dial row
+   slides up beneath the topbar and stays there. */
 .pin { position: sticky; z-index: 6; top: calc(var(--topbar-h, 48px) + env(safe-area-inset-top)); }
 :global(.rwa-mobile:has(.rwa-topbar[data-chrome-hidden='true'])) .pin { top: env(safe-area-inset-top); }
 .pin::before { content: ''; position: absolute; z-index: -1; inset: -10px calc(var(--m-gutter, 16px) * -1) -12px; background: var(--m-bg); opacity: var(--k, 0); pointer-events: none; }
-.pinDial { transform-origin: 50% 0; transform: scale(var(--pin-scale, 1)); margin-bottom: calc(var(--pin-full, 0px) * (var(--pin-scale, 1) - 1)); }
+.pinDial { height: calc(var(--pin-full, 0px) * (1 - var(--k, 0))); overflow: hidden; }
 .pinSubs { position: relative; background: var(--m-bg); }
 .pinFade { opacity: calc(1 - var(--k, 0) * 2.4); }
 .pin[data-pinned='true'] .pinFade { visibility: hidden; }
-.pin[data-pinned='true'] .pinDial { cursor: pointer; }
