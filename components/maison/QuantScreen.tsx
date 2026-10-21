@@ -5,15 +5,14 @@ import { ArrowRight } from 'lucide-react'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { getQuantDisclosure, getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
+import { getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
 import { quantCopyFor } from '@/lib/maison-quant-copy'
 import { demoProduct } from '@/lib/quant-demo'
 import { buildTicks, formatPct, localToday, quantAudience, shortDate } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
-import { Sheet } from './Sheet'
+import { QuantDisclosureSheet } from './QuantDisclosureSheet'
 import { Segmented } from './motion'
-import { useHideDock } from './QuantParts'
 import { QuantDial as WatchDial } from './watch/Dial'
 import { QuantKpis as WatchKpis } from './watch/Charts'
 import { QuantCalendar } from './watch/Calendar'
@@ -58,8 +57,6 @@ export function QuantScreen() {
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   const [tab, setTab] = useState<QuantTab>('overview')
-  useHideDock(disclosureOpen)
-  const disclosure = useQuery(disclosureOpen ? 'quant:disclosure' : null, getQuantDisclosure, { staleTime: 5 * 60_000 })
   const payouts = useQuery(involved && slug ? `quant:payouts:${slug}` : null, () => listQuantPayouts(slug as string, 60), { staleTime: 30_000 })
   const wantsSubscribe = audience === 'visitor' || audience === 'ex-holder'
   const preview = useQuery(wantsSubscribe && slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
@@ -144,8 +141,6 @@ export function QuantScreen() {
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />
-    <Sheet open={disclosureOpen} onClose={() => setDisclosureOpen(false)} kicker={c.kicker} title={disclosure.data?.title ?? c.disclosure}>
-      {disclosure.data ? <p className={s.lede} style={{ whiteSpace: 'pre-line' }}>{disclosure.data.content}</p> : disclosure.error ? <p className={s.muted}>{c.loadError}</p> : disclosure.loading ? <Skeleton rows={3} /> : <p className={s.muted}>{c.view.disclosureEmpty}</p>}
-    </Sheet>
+    <QuantDisclosureSheet open={disclosureOpen} onClose={() => setDisclosureOpen(false)} />
   </MaisonPage>
 }
