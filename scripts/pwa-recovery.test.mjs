@@ -31,7 +31,7 @@ test('manifest loads current start URL instead of replaying an installed legacy 
   assert.equal(await (await sw.request('/manifest.webmanifest','cors')).text(),'current');assert.deepEqual(sw.writes,[url])
 })
 test('PWA activation deletes only its own old shells and does not touch other caches',async()=>{
-  const sw=worker(async()=>new Response('ok'));await sw.activate();assert.deepEqual(sw.deleted,['rwa-lat-offline-v11','rwa-lat-offline-v12'])
+  const sw=worker(async()=>new Response('ok'));await sw.activate();assert.deepEqual(sw.deleted,['rwa-lat-offline-v11','rwa-lat-offline-v12','a-reit-offline-v3'])
 })
 test('a slow launch shows the last shell after the wait and still refreshes it from the network',async()=>{
   const url='https://rwa.lat/home',stored=new Map([[url,new Response('last-shell')]])

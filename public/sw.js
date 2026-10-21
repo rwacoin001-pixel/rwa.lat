@@ -1,4 +1,5 @@
-const CACHE_NAME = 'a-reit-offline-v3'
+// Bump this release cache when shipping app changes so installed PWAs cannot replay an old page shell with mismatched assets.
+const CACHE_NAME = 'a-reit-offline-v4'
 const SHELL_WAIT_MS = 1500
 const OFFLINE_ASSETS = [
   '/offline',
