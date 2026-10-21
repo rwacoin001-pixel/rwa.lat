@@ -26,6 +26,8 @@
   --m-line: var(--ds-line);
   font-family: var(--m-sans);
 }
+/* The quant tabs keep the selected thumb without an enclosing outline. */
+.siteControls > :global([role='tablist']) { border-color: transparent; }
 .h2 { margin: 0 0 4px; color: var(--m-ink); font-size: 18px; font-weight: 600; line-height: 24px; letter-spacing: 0; }
 .sub { margin: 0; color: var(--m-muted); font-size: 12px; line-height: 18px; }
 .note { margin: 10px 0 0; color: var(--m-muted); font-size: 12px; line-height: 18px; }
