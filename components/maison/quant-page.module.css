@@ -3,7 +3,21 @@
 .block { margin-top: 28px; }
 .watchPage > :last-child { padding: 0; }
 .watchPage > :last-child > * { animation: none; }
-.watchContent { padding-top: 10px; }
+.watchContent {
+  /* Watch materials stay in the pinned dials; ordinary content uses Maison semantics. */
+  --q-num: var(--m-ink);
+  --q-dim: var(--m-muted);
+  --q-dim2: var(--m-muted);
+  --q-gold: var(--m-accent);
+  --q-gain: var(--m-up);
+  --q-loss: var(--m-down);
+  --q-loss-text: var(--m-down);
+  --q-serif: var(--m-mono);
+  --q-caps: var(--m-sans);
+  padding-top: 10px;
+  color: var(--m-ink);
+  font-family: var(--m-sans);
+}
 /* Shared page controls keep Maison typography and colours outside the watch's material palette. */
 .siteControls {
   --m-bg: var(--ds-bg);

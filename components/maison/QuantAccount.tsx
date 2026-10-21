@@ -1,12 +1,13 @@
 'use client'
 
 import { useState, type ReactNode } from 'react'
-import { ChevronRight } from 'lucide-react'
+import { ArrowRight, ChevronRight } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import type { QuantPayout, QuantPosition, QuantProduct } from '@/lib/api/quant'
 import { quantCopyFor, type QuantCopy } from '@/lib/maison-quant-copy'
 import { pendingCount, shortDate } from '@/lib/quant-view-model'
 import { QuantReceipt, signedUsdt, usdtNumber } from './QuantParts'
+import { maison as s } from './primitives'
 import styles from './quant-page.module.css'
 import a from './quant-account.module.css'
 
@@ -53,7 +54,7 @@ export function AccountCard({ title, principal, sub, waiting, figures, orders, a
   figures: Array<{ label: string; value: string; tone?: 'up' | 'down' }>
   orders?: ReactNode; actions?: ReactNode; note?: string | null; empty?: string | null
 }) {
-  return <section className={a.card} aria-label={title}>
+  return <section className={`${s.lacquer} ${a.card}`} aria-label={title}>
     <header className={a.head}>
       <h2>{title}</h2>
       {sub && <span className={a.badge} data-tone={principal === null ? 'idle' : undefined}><i />{sub}</span>}
@@ -109,8 +110,8 @@ export function QuantAccount({ product, onAdd, onRedeem, actions = true }: { pro
       </ul>
     </div>}
     actions={actions && <div className={a.actions}>
-      <button type="button" data-primary="" disabled={!product.open} onClick={onAdd}>{c.addMore}</button>
-      <button type="button" disabled={!canRedeem} onClick={onRedeem}>{c.redeem}</button>
+      <button type="button" className={s.cta} disabled={!product.open} onClick={onAdd}><span className={a.actionLabel}>{c.addMore}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span></button>
+      <button type="button" className={s.ghost} disabled={!canRedeem} onClick={onRedeem}>{c.redeem}</button>
     </div>}
     note={actions ? (!product.open ? c.closedNote : !canRedeem ? (redeeming ? c.view.redemptionPending : c.view.noPrincipal) : null) : c.view.exitedNote}
   />
