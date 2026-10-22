@@ -130,6 +130,10 @@ export class ReferralBindingService {
       const [alias] = await m.query('SELECT code FROM app.referral_code_aliases WHERE user_id=$1 ORDER BY created_at,code LIMIT 1', [legacy.inviter_user_id])
       if (alias) source = { id: '', inviter_user_id: legacy.inviter_user_id, code: alias.code, clicked_at: legacy.accepted_at, expires_at: new Date() }
     }
+    // Invitation-only registration: no attribution means no account (the whole registration transaction rolls back).
+    if (!source && this.config.get<string>('REFERRAL_INVITE_REQUIRED') === 'true') {
+      throw new BadRequestException({ code: 'REFERRAL_CODE_REQUIRED', message: 'A valid invitation code is required to create an account.' })
+    }
     await m.query('INSERT INTO app.referral_registration_decisions(user_id,attribution_id) VALUES($1,$2)', [userId,source?.id || null])
     if (source) {
       await m.query(`INSERT INTO app.referral_edges(invitee_user_id,inviter_user_id,code) VALUES($1,$2,$3)`, [userId,source.inviter_user_id,source.code])

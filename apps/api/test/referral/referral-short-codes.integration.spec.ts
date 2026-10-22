@@ -68,6 +68,24 @@ database('referral short-code migration (PostgreSQL)', () => {
     await expect(binding.lookup(now.code)).resolves.toEqual({ valid: true, code: now.code.toUpperCase() })
   })
 
+  it('invitation-only mode refuses a new account without attribution and binds one with it', async () => {
+    const required = new ReferralBindingService(db, new ConfigService({ IDENTITY_HMAC_KEY: '11'.repeat(32), REFERRAL_INVITE_REQUIRED: 'true' }), new ReferralContext())
+    const inviter = await user(), code = await required.getCode(inviter)
+    let refused = ''
+    await db.transaction(async m => {
+      const [u] = await m.query(`INSERT INTO app.users(status) VALUES('active') RETURNING id`)
+      await required.bindNewUser(m, u.id, undefined)
+    }).catch(error => { refused = error.response?.code })
+    expect(refused).toBe('REFERRAL_CODE_REQUIRED')
+    const token = (await required.land(code)).token
+    const invitee = await db.transaction(async m => {
+      const [u] = await m.query(`INSERT INTO app.users(status) VALUES('active') RETURNING id`)
+      await required.bindNewUser(m, u.id, token)
+      return u.id as string
+    })
+    expect(await db.query('SELECT inviter_user_id FROM app.referral_edges WHERE invitee_user_id=$1', [invitee])).toEqual([{ inviter_user_id: inviter }])
+  })
+
   it('issues new codes in the short format', async () => {
     const fresh = await user()
     expect(await binding.getCode(fresh)).toMatch(/^[23456789abcdefghjkmnpqrstuvwxyz]{6}$/)

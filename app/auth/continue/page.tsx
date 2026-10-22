@@ -14,6 +14,7 @@ import { authErrorMessage } from '@/lib/auth-error-copy'
 import styles from '@/components/screens/P02-Login.module.css'
 import flowStyles from '@/components/screens/P03-AuthFlow.module.css'
 import { AuthShell } from '@/components/screens/AuthShell'
+import { InviteCodeField, useInviteCode } from '@/components/screens/InviteCodeField'
 
 export default function ContinueAuthPage() {
   const { locale } = useI18n()
@@ -28,6 +29,8 @@ export default function ContinueAuthPage() {
   const [retry, setRetry] = useState(0), [attempt, setAttempt] = useState(0)
   const [address, setAddress] = useState(''), [entered, setEntered] = useState(false)
   const locked = useRef(false)
+  // New OAuth accounts are created at the consent step, so the invitation is asked for here.
+  const invite = useInviteCode()
   useEffect(() => { const saved = readAuthFlow(); setFlow(saved); setRetry(saved?.retryAfter ?? 0); setReady(true) }, [])
   useEffect(() => {
     if (flow?.step !== 'consent') return
@@ -75,6 +78,7 @@ export default function ContinueAuthPage() {
     if (password && value !== repeat) { setError(t.mismatch); return }
     locked.current = true; setBusy(true); setError('')
     try {
+      if (flow.step === 'consent' && !(await invite.commit())) return
       const result = await completeAuthFlow(flow, password ? { password: value } : flow.step === 'consent'
         ? { consents: requirements?.required.map(item => ({ documentType: item.documentType, version: item.version, accepted: true })) }
         : { code: value })
@@ -119,7 +123,7 @@ export default function ContinueAuthPage() {
       {needsEmail ? <div className={styles.field}>
         <label className={styles.fieldLabel} htmlFor="flow-email">{t.addEmail}</label>
         <input id="flow-email" value={address} onChange={e => { setAddress(e.target.value); setError('') }} type="email" autoComplete="email" inputMode="email" placeholder="name@example.com" maxLength={254} disabled={busy} dir="ltr" autoFocus />
-      </div> : flow?.step === 'consent' ? <label className={styles.agreement}><input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} disabled={busy} /><span>{visual.consentStart} <a href={requirements?.required.find(i => i.documentType === 'terms')?.href ?? '/terms'} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={requirements?.required.find(i => i.documentType === 'privacy')?.href ?? '/privacy'} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span></label> : password ? <>
+      </div> : flow?.step === 'consent' ? <><div className={styles.inviteSlot}><InviteCodeField invite={invite} locale={locale} disabled={busy} /></div><label className={styles.agreement}><input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} disabled={busy} /><span>{visual.consentStart} <a href={requirements?.required.find(i => i.documentType === 'terms')?.href ?? '/terms'} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={requirements?.required.find(i => i.documentType === 'privacy')?.href ?? '/privacy'} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span></label></> : password ? <>
         <div className={styles.field}>
           <label className={styles.fieldLabel} htmlFor="new-password">{t.newPassword}</label>
           <input id="new-password" value={value} onChange={e => { setValue(e.target.value); setError('') }} type={show ? 'text' : 'password'} autoComplete="new-password" placeholder="••••••••••••" maxLength={128} disabled={busy} dir="ltr" />

@@ -39,6 +39,11 @@ const walletFailure: Record<AppLocale, { connection: string; signature: string }
   fr: { connection: 'La connexion au portefeuille est indisponible. Reconnectez-le et réessayez.', signature: 'Aucune signature de connexion reçue. Vérifiez la connexion au portefeuille et réessayez.' },
   pt: { connection: 'A conexão da carteira está indisponível. Reconecte e tente novamente.', signature: 'Nenhuma assinatura de acesso recebida. Verifique a conexão da carteira e tente novamente.' },
 }
+const inviteRequired: Record<AppLocale, string> = {
+  'zh-CN': '注册新账户需要有效的邀请码', en: 'A valid invitation code is required to create an account', hi: 'नया खाता बनाने के लिए मान्य आमंत्रण कोड आवश्यक है',
+  es: 'Se necesita un código de invitación válido para crear una cuenta', ar: 'يلزم رمز دعوة صالح لإنشاء حساب',
+  fr: 'Un code d’invitation valide est nécessaire pour créer un compte', pt: 'É preciso um código de convite válido para criar uma conta',
+}
 export function authErrorMessage(error: Pick<ApiError, 'code' | 'status'>, locale: AppLocale): string {
   const text = copy[locale]
   if (isConsentError(error)) return text.consent
@@ -55,6 +60,7 @@ export function authErrorMessage(error: Pick<ApiError, 'code' | 'status'>, local
   if (/WALLET/.test(error.code)) return text.wallet
   if (error.code === 'OAUTH_CANCELLED') return text.cancelled
   if (error.code === 'IDENTITY_EMAIL_TAKEN') return text.taken
+  if (error.code === 'REFERRAL_CODE_REQUIRED') return inviteRequired[locale]
   if (['IDENTITY_NOT_FOUND', 'REGISTRATION_REQUIRED'].includes(error.code)) return text.account
   return text.retry
 }
