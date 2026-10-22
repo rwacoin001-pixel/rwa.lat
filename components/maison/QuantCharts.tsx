@@ -171,11 +171,18 @@ const PAD = { top: 22, bottom: 8, left: 34, right: 8 }
 export function QuantNavChart({ product, ticks, selected, onSelect, c }: { product: QuantProduct; ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; c: QuantCopy }) {
   const points = usePoints(product, ticks)
   const [ref, seen] = useSeen<HTMLDivElement>()
-  const series = useMemo(() => [{ date: '', value: 0, nav: 1, tick: null } as Point, ...points], [points])
+  const [range, setRange] = useState<'d7' | 'd30' | 'all'>('d30')
+  // A window keeps the settled day before it as its starting point, so the first segment is a real move; "all" starts
+  // from the 1.0000 inception value.
+  const series = useMemo(() => {
+    const full = [{ date: '', value: 0, nav: 1, tick: null } as Point, ...points]
+    const days = range === 'd7' ? 7 : range === 'd30' ? 30 : Infinity
+    return full.length > days + 1 ? full.slice(-(days + 1)) : full
+  }, [points, range])
   // One day per 24px: with a month or more the plot is wider than the card and the reader swipes it sideways.
   const W = Math.max(340, series.length * 24 + PAD.left + PAD.right)
   const scroll = useRef<HTMLDivElement>(null)
-  useEffect(() => { const el = scroll.current; if (el) el.scrollLeft = el.scrollWidth }, [points.length])
+  useEffect(() => { const el = scroll.current; if (el) el.scrollLeft = el.scrollWidth }, [series.length])
   const navs = series.map((point) => point.nav)
   const low = Math.min(...navs)
   const high = Math.max(...navs)
@@ -187,20 +194,26 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
   const area = `${line} L${x(series.length - 1)},${H - PAD.bottom} L${x(0)},${H - PAD.bottom} Z`
   const pickedDate = selected !== null ? ticks[selected]?.date : null
   const found = pickedDate ? series.findIndex((point) => point.date === pickedDate) : -1
-  const active = found >= 1 ? found : series.length - 1
+  const active = found >= 0 && series[found].date ? found : series.length - 1
   const focus = series[active] ?? series[series.length - 1]
-  const scrub = useScrub(points.length, (index) => {
-    const tick = points[index]?.tick
+  const scrub = useScrub(series.length, (index) => {
+    const tick = series[index]?.tick
     if (tick === null || tick === undefined) return
     onSelect(tick === ticks.length - 1 ? null : tick)
   })
   if (points.length < 2) return null
+  const shownDates = series.filter((point) => point.date).map((point) => point.date)
 
   const [fx, fy] = xy[active] ?? xy[xy.length - 1]
   const left = `${(fx / W) * 100}%`
   return <section className={styles.card} aria-label={c.charts.navTitle}>
     <header className={styles.head}>
-      <div><h2>{c.charts.navTitle}</h2><p>{c.charts.navSub}</p></div>
+      <div>
+        <h2>{c.charts.navTitle}</h2><p>{c.charts.navSub}</p>
+        <div className={styles.ranges} role="group" aria-label={c.charts.ranges.label}>
+          {(['d7', 'd30', 'all'] as const).map((key) => <button key={key} type="button" aria-pressed={range === key} onClick={() => setRange(key)}>{c.charts.ranges[key]}</button>)}
+        </div>
+      </div>
       <div className={styles.readout} key={focus.date}>
         <span>{shortDate(focus.date)}</span>
         <b>{focus.nav.toFixed(4)}</b>
@@ -223,16 +236,17 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
             <text className={styles.yLabel} x={PAD.left - 6} y={gy + 3}>{(high - k * span).toFixed(3)}</text>
           </g>
         })}
-        <line className={styles.base} x1={PAD.left} x2={W - PAD.right} y1={y(1)} y2={y(1)} />
+        {low <= 1 && high >= 1 && <line className={styles.base} x1={PAD.left} x2={W - PAD.right} y1={y(1)} y2={y(1)} />}
         <path className={styles.area} d={area} fill="url(#qNavFill)" />
         <path className={styles.line} d={line} pathLength={1} />
         <line className={styles.cursor} x1={fx} x2={fx} y1={PAD.top - 6} y2={H - PAD.bottom} />
         <circle className={styles.halo} cx={fx} cy={fy} r="9" />
         <circle className={styles.dot} cx={fx} cy={fy} r="3.4" />
       </svg>
-      <div className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>
+      {/* The day's move lives in the daily-return card; here it only appears for a day the reader picked. */}
+      {pickedDate && found >= 0 && <div className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>}
     </div>
-    <DateAxis dates={points.map((point) => point.date)} left={`${(PAD.left / W) * 100}%`} right={`${(PAD.right / W) * 100}%`} />
+    <DateAxis dates={shownDates} left={`${(x(series.length - shownDates.length) / W) * 100}%`} right={`${(PAD.right / W) * 100}%`} />
     </div>
     </div>
   </section>
@@ -278,10 +292,19 @@ export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { prod
         <b className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</b>
       </div>
     </header>
+    <div className={styles.barsFrame} style={{ '--zero': `${zero}%` } as CSSProperties}>
+    {/* Fixed scale on the end edge while the bars scroll beneath: the best day, zero, and the worst day when there was one. */}
+    <div className={styles.yScale} aria-hidden="true" data-close={bottom < 0 && 100 - zero < 14 ? '' : undefined}>
+      <span style={{ top: 0 }}>{formatPct(top)}</span>
+      <span data-zero="" style={{ top: 'var(--zero)' }}>0%</span>
+      {bottom < 0 && <span style={{ top: '100%' }}>{formatPct(bottom)}</span>}
+    </div>
     <div ref={scroll} className={styles.hscroll}>
     <div style={{ width: barW }}>
-    <div ref={ref} className={styles.bars} data-seen={seen || undefined} data-picking={activeIndex >= 0 || undefined} style={{ '--zero': `${zero}%` } as CSSProperties} {...scrub}>
+    <div ref={ref} className={styles.bars} data-seen={seen || undefined} data-picking={activeIndex >= 0 || undefined} {...scrub}>
+      <i className={styles.maxLine} />
       <i className={styles.zero} />
+      {bottom < 0 && <i className={styles.minLine} />}
       {points.map((point, index) => {
         const size = (Math.abs(point.value) / range) * 100
         return <button
@@ -299,6 +322,7 @@ export function QuantDailyBars({ product, ticks, selected, onSelect, c }: { prod
       })}
     </div>
     <DateAxis dates={points.map((point) => point.date)} left={`${50 / points.length}%`} right={`${50 / points.length}%`} />
+    </div>
     </div>
     </div>
     <div className={styles.axis}>

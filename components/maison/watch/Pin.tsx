@@ -5,10 +5,10 @@ import React from 'react';
 import { useEffect, useRef, type ReactNode } from 'react'
 import styles from './hero.module.css'
 
-/** Height of the pinned hero, below the status bar (the compact dial, the title, and the strip beneath them). */
-export const HERO_H = 132
-/** Height of the page's resting top block: the dial, its stepper, and the room they need. The menu sits at this line. */
-export const REST_H = 580
+/** Height of the pinned hero, below the status bar: the small dial on the left and the three small sub-dials on the right. */
+export const HERO_H = 112
+/** Height of the page's resting top block: the dial (its sub-registers live inside the face) and its air. The menu sits here. */
+export const REST_H = 440
 /** Scroll distance over which the hero travels from rest to pinned. The menu arrives at the same distance. */
 const RANGE = REST_H - HERO_H
 
@@ -20,8 +20,10 @@ const clamp = (value: number) => Math.min(1, Math.max(0, value))
  * only, so every frame is cheap and the motion is the same whether the page is scrolled fast or slow. The menu is sticky
  * beneath the hero and arrives exactly as the hero finishes, so the two never drift apart.
  */
-export function QuantPin({ dial, title, subs, stepper, menu, body }: {
+export function QuantPin({ dial, title, subs, stepper, menu, body, registers = false }: {
   dial?: ReactNode; title?: ReactNode; subs?: ReactNode; stepper?: ReactNode; menu?: ReactNode; body?: ReactNode
+  /** Sub-registers shown in the face at rest; otherwise they stay tucked in and only come out as the page scrolls. */
+  registers?: boolean
 }) {
   const hero = useRef<HTMLDivElement>(null)
 
@@ -46,7 +48,7 @@ export function QuantPin({ dial, title, subs, stepper, menu, body }: {
   }, [])
 
   return <>
-    <div ref={hero} data-watch-part="hero" className={styles.hero} data-pinned="false" data-settled="false">
+    <div ref={hero} data-watch-part="hero" className={styles.hero} data-pinned="false" data-settled="false" data-registers={registers}>
       <div data-watch-part="heroBg" className={styles.heroBg} aria-hidden="true" />
       <div data-watch-part="heroDial" className={styles.heroDial}>{dial}<div data-watch-part="title" className={styles.title}>{title}</div></div>
       <div data-watch-part="heroSubs" className={styles.heroSubs} data-subs="">{subs}</div>

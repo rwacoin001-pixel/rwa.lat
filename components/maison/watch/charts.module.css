@@ -165,3 +165,7 @@
 
 /* Labels and readouts in the pinned copy fade out as the row shrinks into place. */
 [data-copy-subs] .subLabel, [data-copy-subs] .subNote, [data-copy-subs] .subWindow { opacity: calc(1 - var(--k, 0)); }
+
+/* Figure under a pinned sub-dial (QuantPin shows it; elsewhere the window inside the face carries the figure). */
+.subValue { display: none; color: var(--q-num); font-family: var(--q-serif), var(--m-display); font-weight: 600; letter-spacing: -.01em; font-variant-numeric: lining-nums tabular-nums; direction: ltr; unicode-bidi: isolate; white-space: nowrap; }
+.subValue.down { color: var(--q-loss-text); }

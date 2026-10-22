@@ -79,8 +79,12 @@ export function useTween(target: number | null, duration = 520, restart = 0): nu
  * marker: drag it with a finger (swipe left/right, or follow the circle), tap a tick, or use the arrows, and it springs to
  * the nearest day while the centre shows that day; at today the centre shows the figure since inception.
  */
-export function QuantDial({ ticks, selected, onSelect, copy, product, english = false }: {
+export function QuantDial({ ticks, selected, onSelect, copy, product, english = false, registers = false, onRegisters }: {
   ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct; english?: boolean
+  /** The three sub-registers (7D · 30D · MDD) are shown in the face instead of the central readout. */
+  registers?: boolean
+  /** The 4 o'clock pusher: toggles the sub-registers, like a chronograph's second pusher. */
+  onRegisters?: () => void
 }) {
   const scale = tickScale(ticks)
   const last = ticks.length - 1
@@ -267,6 +271,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product, english = 
     ref={boxRef}
     data-watch-part="dialBox" className={styles.dialBox}
     data-pin-dial=""
+    data-registers={registers || undefined}
     data-no-ptr=""
     tabIndex={0}
     role="group"
@@ -284,6 +289,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product, english = 
       <i data-watch-part="crownCap" className={styles.crownCap} /><i data-watch-part="crownKnurl" className={styles.crownKnurl} /><i data-watch-part="crownStem" className={styles.crownStem} />
     </button>
     <button type="button" className="calendar-pusher" aria-label={english?'Switch return and NAV':'切换收益率与净值'} aria-pressed={mode==='nav'} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => {e.stopPropagation();setMode(m=>m==='return'?'nav':'return');}}><span className="pusher-stem"/><span className="pusher-cap"/></button>
+    {onRegisters && <button type="button" className="calendar-pusher register-pusher" aria-label={english ? 'Show the 7-day, 30-day and drawdown registers' : '显示 7 天、30 天与最大回撤副表'} aria-pressed={registers} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); if ('vibrate' in navigator) navigator.vibrate(4); onRegisters() }}><span className="pusher-stem"/><span className="pusher-cap"/></button>}
     <div data-watch-part="faceBg" className={styles.faceBg} />
     <div className="rotor-brushing" aria-hidden="true"/>
     <div className="chapter-rehaut" aria-hidden="true"/>

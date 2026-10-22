@@ -88,6 +88,8 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
     </div>
     <span data-sub-label="" data-watch-part="subLabel" className={styles.subLabel}>{label}</span>
     {note && <em data-sub-note="" data-watch-part="subNote" className={styles.subNote}>{note}</em>}
+    {/* Read under the small pinned dial, where the window inside the face is too small to read. */}
+    <b data-sub-value="" className={`${styles.subValue} ${value !== null && value < 0 ? styles.down : ''}`} aria-hidden="true">{value === null ? '—' : formatPct(value)}</b>
   </div>
 }
 

@@ -12,8 +12,13 @@
   --q-gain: var(--m-up);
   --q-loss: var(--m-down);
   --q-loss-text: var(--m-down);
-  --q-serif: var(--m-mono);
+  /* One face below the dial: Geist Sans with tabular figures. The watch serif and caps stay on the dial itself; monospace
+     made terms such as "Every day" or a date read like code. */
+  --q-serif: var(--m-sans);
   --q-caps: var(--m-sans);
+  --m-mono: var(--m-sans);
+  font-variant-numeric: lining-nums tabular-nums;
+  --q-block: 32px;
   padding-top: 10px;
   color: var(--m-ink);
   font-family: var(--m-sans);
@@ -100,7 +105,7 @@ button.cell:active { background: var(--m-glass); }
 .state { padding: 14px 0; color: var(--m-muted); font-size: 14px; line-height: 21px; }
 .state button { margin-inline-start: 10px; border: 0; background: none; color: var(--m-accent); font: inherit; font-weight: 600; cursor: pointer; }
 .stale { color: var(--m-muted); font-size: 12px; line-height: 18px; }
-.foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: 28px; color: var(--m-muted); font-size: 12px; line-height: 18px; }
+.foot { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-top: var(--q-block, 32px); color: var(--m-muted); font-size: 12px; line-height: 18px; }
 .link { border: 0; background: none; padding: 0; color: var(--m-accent); font: inherit; font-weight: 600; cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .mini { min-height: 20px; }
 
@@ -109,3 +114,8 @@ button.cell:active { background: var(--m-glass); }
   .reveal[data-in] { opacity: 1; transition: opacity .2s ease; }
 }
 .ctaBlock { margin-top: 24px; }
+
+/* Pinned subscribe bar: this is a tab page, so the bar rides just above the dock instead of under it, and the page keeps
+   enough room below its last line for both. Doubled selectors outrank the shared Maison rules whatever the load order. */
+.dockCta.dockCta { bottom: calc(max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) + var(--app-dock-height, 52px) + 6px); padding-bottom: 6px; }
+.watchPage.watchPage[data-cta='true'] { padding-bottom: calc(196px + env(safe-area-inset-bottom)); }

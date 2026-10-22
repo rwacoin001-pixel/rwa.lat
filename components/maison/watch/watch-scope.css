@@ -114,3 +114,12 @@
 
 /* Cover scrolling content without an inset rectangular plate behind the tabs. */
 .watch-scope .study-stage [data-watch-part='menu']::before{content:'';position:absolute;inset:-8px calc(var(--mobile-gutter,18px) * -1);z-index:-1;pointer-events:none;background:linear-gradient(to bottom,transparent,var(--m-bg) 8px,var(--m-bg) calc(100% - 8px),transparent)}
+/* Second chronograph pusher at 4 o'clock: shows the 7D · 30D · MDD registers in the face. Mirrors the 2 o'clock pusher. */
+.watch-scope .register-pusher{left:85.355%;top:85.355%;transform:translate(-50%,-50%) rotate(135deg)}
+.watch-scope .register-pusher[aria-pressed='true'] .pusher-cap{transform:translateY(2px);filter:brightness(.96)}
+/* Sub-registers live inside the dial now (hero.module.css places them with transforms from the hero's top edge), so the
+   old fixed row offset is cleared. Inside the face a register is sunk into the dial — an inner shadow and a polished
+   chamfer catching the light — rather than raised like the standalone dials it becomes in the pinned bar. */
+.watch-scope .study-stage [data-watch-part="heroSubs"]>div>[data-sub]{top:0}
+.watch-scope .study-stage [data-watch-part="hero"][data-pinned="false"] [data-watch-part="subBezel"]{background:linear-gradient(160deg,rgba(255,252,240,.9),rgba(var(--q-gold-rgb),.38) 55%,rgba(255,252,240,.75));box-shadow:inset 0 1.5px 3px rgba(60,42,14,.32),0 .6px 0 rgba(255,255,255,.75)}
+.watch-scope .study-stage [data-watch-part="hero"][data-pinned="false"] [data-watch-part="subFace"]{box-shadow:inset 0 2px 6px rgba(60,42,14,.22),inset 0 0 0 .5px rgba(var(--q-gold-rgb),.35)}
