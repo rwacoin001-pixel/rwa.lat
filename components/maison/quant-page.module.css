@@ -119,3 +119,9 @@ button.cell:active { background: var(--m-glass); }
    enough room below its last line for both. Doubled selectors outrank the shared Maison rules whatever the load order. */
 .dockCta.dockCta { bottom: calc(max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) + var(--app-dock-height, 52px) + 6px); padding-bottom: 6px; }
 .watchPage.watchPage[data-cta='true'] { padding-bottom: calc(196px + env(safe-area-inset-bottom)); }
+
+/* Overview / Mine as a physical slot: the track is sunk into the page and the selected thumb sits proud of it, lit on its
+   top edge. */
+.siteControls > :global([role='tablist']) { box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .14), inset 0 0 0 .5px var(--m-line), 0 .5px 0 rgba(255, 255, 255, .55); }
+.siteControls :global([role='tab']) > i { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .75), 0 1px 2px rgba(0, 0, 0, .18), 0 4px 10px -6px rgba(0, 0, 0, .35); }
+.siteControls :global([role='tab']):active > span { transform: translateY(.5px); }

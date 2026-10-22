@@ -20,10 +20,8 @@ const clamp = (value: number) => Math.min(1, Math.max(0, value))
  * only, so every frame is cheap and the motion is the same whether the page is scrolled fast or slow. The menu is sticky
  * beneath the hero and arrives exactly as the hero finishes, so the two never drift apart.
  */
-export function QuantPin({ dial, title, subs, stepper, menu, body, registers = false }: {
+export function QuantPin({ dial, title, subs, stepper, menu, body }: {
   dial?: ReactNode; title?: ReactNode; subs?: ReactNode; stepper?: ReactNode; menu?: ReactNode; body?: ReactNode
-  /** Sub-registers shown in the face at rest; otherwise they stay tucked in and only come out as the page scrolls. */
-  registers?: boolean
 }) {
   const hero = useRef<HTMLDivElement>(null)
 
@@ -48,7 +46,7 @@ export function QuantPin({ dial, title, subs, stepper, menu, body, registers = f
   }, [])
 
   return <>
-    <div ref={hero} data-watch-part="hero" className={styles.hero} data-pinned="false" data-settled="false" data-registers={registers}>
+    <div ref={hero} data-watch-part="hero" className={styles.hero} data-pinned="false" data-settled="false">
       <div data-watch-part="heroBg" className={styles.heroBg} aria-hidden="true" />
       <div data-watch-part="heroDial" className={styles.heroDial}>{dial}<div data-watch-part="title" className={styles.title}>{title}</div></div>
       <div data-watch-part="heroSubs" className={styles.heroSubs} data-subs="">{subs}</div>

@@ -5,13 +5,12 @@
    Geometry (CSS px, below the status bar, with E = the status-bar inset):
    - hero: sticky at the top edge, 112 + E tall, full-bleed; its bottom edge is where the menu sticks.
    - dial: 332 wide, centred, top 60 + E at rest; pinned 96 wide at the top-left (14, 8 + E).
-   - sub-dials: chronograph registers INSIDE the face at rest (9, 3 and 6 o'clock, 66 wide), shown when the 4 o'clock pusher
-     is pressed and otherwise tucked away; as the page scrolls they come out of the face and travel to three separate small
+   - sub-dials: 7D and 30D are registers fixed in the face at 9 and 3 o'clock (66 wide); the drawdown dial waits behind the
+     power-reserve gauge at 6 o'clock. As the page scrolls all three come off the face and travel to three separate small
      dials (40 wide, figure underneath) on the right of the pinned bar.
    - the menu sits at 112 + E once the hero has arrived; spacer and rest height come from QuantPin's REST_H. */
 
-.hero { --reg: 0; position: sticky; top: 0; z-index: 10; height: calc(112px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
-.hero[data-registers='true'] { --reg: 1; }
+.hero { position: sticky; top: 0; z-index: 10; height: calc(112px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
 
 .heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(112px + env(safe-area-inset-top)); border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
 
@@ -22,32 +21,26 @@
 /* The title lives inside the dial face: it moves with the dial and fades out as the dial pins. */
 .heroDial > .title { position: absolute; left: 0; right: 0; top: 64px; display: flex; justify-content: center; white-space: nowrap; pointer-events: none; opacity: calc(1 - var(--p, 0) * 4); }
 
-/* With the registers in the face, the central readout and its selector step back so the three registers own the centre.
-   While the registers leave the face (the first third of the scroll) the readout clears the way, and it returns once the
-   dial is small, where it is the pinned dial's one figure: 1 at rest, 0 from p ≈ .33 to .65, 1 again when pinned. */
-.hero :global(.watch-readout), .hero :global(.mode-complication) { opacity: max(calc(1 - var(--p, 0) * 3), calc((var(--p, 0) - .65) * 3)); transition: transform .45s cubic-bezier(.2, .8, .2, 1); }
-.hero[data-registers='true'][data-pinned='false'] :global(.watch-readout), .hero[data-registers='true'][data-pinned='false'] :global(.mode-complication) { opacity: 0; transform: scale(.94); transition: opacity .35s ease, transform .45s cubic-bezier(.2, .8, .2, 1); }
+/* While the registers leave the face (the first third of the scroll) the window's figure clears the way, and it returns
+   once the dial is small, where it is the pinned dial's one figure: 1 at rest, 0 from p ≈ .33 to .65, 1 again pinned. */
+.hero :global(.watch-readout) { opacity: max(calc(1 - var(--p, 0) * 3), calc((var(--p, 0) - .65) * 3)); }
 
-/* The three sub-dials. Every one is placed by four numbers: rest position (--rx, --ry) and size (--rs) inside the face,
-   pinned position (--px, --py) and size (--ps) in the bar; --p mixes them. 92 is the sub-dial's own width. */
+/* The three sub-dials. Every one is placed by rest position (--rx, --ry) and size (--rs) in the face, pinned position
+   (--px, --py) and size (--ps) in the bar; --p mixes them. 92 is the sub-dial's own width. */
 .heroSubs { position: absolute; left: 0; top: 0; width: 100cqw; height: 0; pointer-events: none; }
 .heroSubs [data-subs] { display: block; margin: 0; }
 .heroSubs > div > [data-sub] {
-  --rs: .7174; --ps: .4348;
+  --rs: .7217; --ps: .4348;
   position: absolute; left: 0; top: 0; width: 92px; transform-origin: 0 0; will-change: transform, opacity; pointer-events: none;
   transform: translate3d(calc(var(--rx) + (var(--px) - var(--rx)) * var(--p, 0)), calc(var(--ry) + (var(--py) - var(--ry)) * var(--p, 0)), 0) scale(calc(var(--rs) + (var(--ps) - var(--rs)) * var(--p, 0)));
-  /* Shown at rest only with the registers on; otherwise they emerge from the face over the first third of the scroll. */
-  opacity: max(var(--reg), min(1, calc(var(--p, 0) * 3)));
-  transition: opacity .3s ease;
 }
-.heroSubs > div > [data-sub]:nth-child(1) { --rx: calc(50cqw - 106px); --ry: calc(183px + env(safe-area-inset-top)); --px: calc(100cqw - 160px); --py: calc(24px + env(safe-area-inset-top)); }
-.heroSubs > div > [data-sub]:nth-child(2) { --rx: calc(50cqw + 40px); --ry: calc(183px + env(safe-area-inset-top)); --px: calc(100cqw - 110px); --py: calc(24px + env(safe-area-inset-top)); }
-.heroSubs > div > [data-sub]:nth-child(3) { --rx: calc(50cqw - 33px); --ry: calc(230px + env(safe-area-inset-top)); --px: calc(100cqw - 60px); --py: calc(24px + env(safe-area-inset-top)); }
-.hero[data-registers='true'] .heroSubs > div > [data-sub], .hero[data-pinned='true'] .heroSubs > div > [data-sub] { pointer-events: auto; }
-
-/* Tucked in, a register sits a little smaller under the face; the pusher (or the scroll) lets it rise into place. */
-.heroSubs [data-sub] > [data-watch-part='subDial'] { transform-origin: 50% 50%; transition: transform .5s cubic-bezier(.2, .8, .2, 1); }
-.hero[data-registers='false'][data-pinned='false'] .heroSubs [data-sub] > [data-watch-part='subDial'] { transform: scale(.72); }
+/* Face positions follow the dial's 300-unit layout (registers at x 94 / 206, y 166; 1u = 1.1067px). */
+.heroSubs > div > [data-sub]:nth-child(1) { --rx: calc(50cqw - 95.2px); --ry: calc(210.5px + env(safe-area-inset-top)); --px: calc(100cqw - 160px); --py: calc(24px + env(safe-area-inset-top)); }
+.heroSubs > div > [data-sub]:nth-child(2) { --rx: calc(50cqw + 28.8px); --ry: calc(210.5px + env(safe-area-inset-top)); --px: calc(100cqw - 110px); --py: calc(24px + env(safe-area-inset-top)); }
+/* Drawdown: hidden behind the 6 o'clock gauge at rest (its hub is at 166, 214.7 in the dial); it grows out of the gauge as
+   the page scrolls, so the gauge and the pinned dial read as one instrument. */
+.heroSubs > div > [data-sub]:nth-child(3) { --rs: .45; --rx: calc(50cqw - 20.7px); --ry: calc(254px + env(safe-area-inset-top)); --px: calc(100cqw - 60px); --py: calc(24px + env(safe-area-inset-top)); opacity: min(1, calc(var(--p, 0) * 3)); }
+.heroSubs > div > [data-sub]:nth-child(-n + 2), .hero[data-pinned='true'] .heroSubs > div > [data-sub] { pointer-events: auto; }
 
 /* In the face the registers carry their short engraving only; the figure window fades as they shrink into the bar, and
    the pinned figure (set at 25px so it reads 11px at the pinned scale) takes over underneath. */
@@ -65,5 +58,5 @@
 .menu { position: sticky; top: calc(112px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .heroDial, .heroSubs > div > [data-sub], .heroSubs [data-sub] > [data-watch-part='subDial'], .hero :global(.watch-readout), .hero :global(.mode-complication) { transition: none; }
+  .heroDial, .heroSubs > div > [data-sub] { transition: none; }
 }

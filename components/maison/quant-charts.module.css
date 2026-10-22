@@ -194,3 +194,10 @@
 /* A worst day close to zero: 0 % sits just above its line and the minimum just below the floor, so the two never overlap. */
 .yScale[data-close] span[data-zero] { transform: translateY(-100%); }
 .yScale[data-close] span:last-child:not([data-zero]) { transform: none; }
+
+/* Range switch as a physical slot: the track is sunk into the page, the chosen key stands up out of it and lands with a
+   short press. */
+.ranges { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .14), inset 0 0 0 .5px var(--m-line), 0 .5px 0 rgba(255, 255, 255, .6); background: color-mix(in srgb, var(--m-ink) 4%, transparent); }
+.ranges button { transition: background-color .2s, color .2s, transform .12s cubic-bezier(.2, .8, .2, 1), box-shadow .2s; }
+.ranges button[aria-pressed='true'] { background: linear-gradient(180deg, color-mix(in srgb, var(--m-ink) 80%, #fff), var(--m-ink)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 2px rgba(0, 0, 0, .35), 0 3px 6px -3px rgba(0, 0, 0, .35); }
+.ranges button:active { transform: translateY(.5px) scale(.97); }

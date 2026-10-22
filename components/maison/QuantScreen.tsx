@@ -57,7 +57,8 @@ export function QuantScreen() {
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   const [tab, setTab] = useState<QuantTab>('overview')
-  const [registers, setRegisters] = useState(false)
+  // The dial and calendar speak one language: Chinese for Chinese, English for every other locale.
+  const english = locale !== 'zh-CN'
   const payouts = useQuery(involved && slug ? `quant:payouts:${slug}` : null, () => listQuantPayouts(slug as string, 60), { staleTime: 30_000 })
   const wantsSubscribe = audience === 'visitor' || audience === 'ex-holder'
   const preview = useQuery(wantsSubscribe && slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
@@ -109,7 +110,7 @@ export function QuantScreen() {
       {subscribe}
     </>}
     {tab === 'account' && <>
-      <QuantCalendar product={product} ticks={ticks} selected={picked} onSelect={setPicked} english={locale === 'en'} />
+      <QuantCalendar product={product} ticks={ticks} selected={picked} onSelect={setPicked} english={english} />
       {involved
         ? <>
           <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
@@ -129,10 +130,9 @@ export function QuantScreen() {
     <div className="study-stage">
     <WatchPin
       dial={ticks.length > 0
-        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} english={locale === 'en'} registers={registers} onRegisters={() => setRegisters((on) => !on)} />
+        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} english={english} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
       subs={<WatchKpis product={product} c={c} />}
-      registers={registers}
 
       menu={<div className={page.siteControls}><Segmented value={tab} onChange={setTab} label={c.title} options={tabs.map(({ key, label }) => ({ value: key, label }))} /></div>}
       body={<div id="quant-panel" role="tabpanel" aria-label={tabs.find(({ key }) => key === tab)?.label} className={page.watchContent}>{body}</div>}
