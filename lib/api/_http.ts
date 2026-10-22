@@ -99,6 +99,10 @@ export function prefetchAuthAttribution(): Promise<string | null> {
   attributionRequests.set(window, { at: Date.now(), result })
   return result
 }
+/** A code entered at signup just set the attribution cookie; the next registration request must read it afresh. */
+export function resetAuthAttribution() {
+  if (typeof window !== 'undefined') attributionRequests.delete(window)
+}
 
 export async function request<T>(path: string, options: RequestInit & { idempotencyKey?: string; token?: string | null; timeoutMs?: number; loading?: 'overlay' | 'silent'; referralAttribution?: 'skip' | 'include' } = {}): Promise<ApiResult<T>> {
   if (!path.startsWith('/v1/') || /\/v1\/(?:demo-admin|admin|[^/?]*-internal)(?:[/?]|$)/.test(path) || path.includes('..') || path.includes('\\')) {

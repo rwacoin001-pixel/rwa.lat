@@ -529,3 +529,7 @@
 @media (min-width: 640px) { .legalOverlay { align-items: center; } .legalHandle { visibility: hidden; height: 0; margin-bottom: 6px; } }
 @media (max-width: 380px) { .legalSheet { padding-inline: 16px; } .legalTitle { font-size: 24px; } .legalTabs button { padding: 0 6px; font-size: 11.5px; } }
 @media (prefers-reduced-motion: reduce) { .legalBackdrop, .legalSheet, .legalBody { animation: none; } .legalAction, .legalAction::after, .legalActionIcon { transition: none; } }
+
+/* The invitation field matches the email field's glass over the film. */
+.root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot { --field: rgba(251, 247, 240, .34); }
+.root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot p { text-shadow: 0 1px 8px rgba(255, 251, 244, .75); }
