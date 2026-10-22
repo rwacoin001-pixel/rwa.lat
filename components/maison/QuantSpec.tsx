@@ -12,14 +12,12 @@ import styles from './quant-spec.module.css'
 type Query<T> = { data?: T; error?: unknown; loading: boolean; refetch: () => Promise<unknown> }
 const pct = (bps: number) => (bps / 100).toFixed(2).replace(/\.?0+$/, '')
 
-/** A numbered section in the catalogue style: roman numeral, title, a hairline running to the edge, and a small-caps word. */
-export function QuantSection({ title, kicker, children }: { no?: string; title: string; kicker: string; children: ReactNode }) {
+/** A numbered section: the running number and the title, nothing else. */
+export function QuantSection({ title, children }: { title: string; children: ReactNode }) {
   return <section className={styles.sec} aria-label={title}>
     <header className={styles.secHead}>
       <span className={styles.secNo} aria-hidden="true" />
       <h2>{title}</h2>
-      <i aria-hidden="true" />
-      <span className={styles.secKick} aria-hidden="true">{kicker}</span>
     </header>
     {children}
   </section>
@@ -39,9 +37,9 @@ export function QuantSpecSheet({ product, c }: { product: QuantProduct; c: Quant
       {row(c.charts.minimum, <>{usdtNumber(product.minSubscriptionAtomic, locale)}<em>USDT</em></>, undefined, 1)}
       {row(c.view.feesMinimum, <>{usdtNumber(product.minRedemptionAtomic, locale)}<em>USDT</em></>, undefined, 2)}
       {row(c.charts.settle, <span className={styles.word}>{c.charts.settleValue}</span>, c.charts.cutoffAt(product.cutoffTime), 3)}
-      {row(c.position.management, <>{pct(product.fees.managementBps)}<em>%</em></>, c.charts.perYear, 4)}
-      {row(c.charts.performanceFee, <>{pct(product.fees.performanceBps)}<em>%</em></>, c.charts.newHighsOnly, 5)}
-      <div className={styles.row} style={{ '--i': 6 } as CSSProperties}>
+      {row(c.position.management, `${pct(product.fees.managementBps)}%`, c.charts.perYear, 4)}
+      {row(c.charts.performanceFee, `${pct(product.fees.performanceBps)}%`, c.charts.newHighsOnly, 5)}
+      <div className={styles.row} data-wide="" style={{ '--i': 6 } as CSSProperties}>
         <dt>{c.view.feesRate}</dt>
         <dd>
           <ul className={styles.bands}>

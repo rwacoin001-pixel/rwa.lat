@@ -8,7 +8,7 @@ import { useQuery } from '@/lib/api/_query'
 import { getQuantSubscriptionPreview, listQuantPayouts, useQuantProducts } from '@/lib/api/quant'
 import { quantCopyFor } from '@/lib/maison-quant-copy'
 import { demoProduct } from '@/lib/quant-demo'
-import { buildTicks, formatPct, localToday, quantAudience, shortDate } from '@/lib/quant-view-model'
+import { buildTicks, localToday, quantAudience } from '@/lib/quant-view-model'
 import { quantCaps, quantSerif } from './quant-fonts'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { QuantDisclosureSheet } from './QuantDisclosureSheet'
@@ -19,7 +19,7 @@ import { QuantCalendar } from './watch/Calendar'
 import './watch/watch-scope.css'
 import './watch/fonts.css'
 import { QuantAccount, QuantHistory, QuantStrip } from './QuantAccount'
-import { QuantDailyBars, QuantHighlights, QuantNavChart } from './QuantCharts'
+import { QuantDailyBars, QuantNavChart } from './QuantCharts'
 import { QuantAccountPlaceholder, QuantProcess, QuantSection, QuantSpecSheet, type QuantTab } from './QuantSpec'
 import { QuantPin as WatchPin } from './watch/Pin'
 import { useQuantProduct } from './QuantPositionCard'
@@ -57,6 +57,8 @@ export function QuantScreen() {
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   const [tab, setTab] = useState<QuantTab>('overview')
+  // The dial and calendar speak one language: Chinese for Chinese, English for every other locale.
+  const english = locale !== 'zh-CN'
   const payouts = useQuery(involved && slug ? `quant:payouts:${slug}` : null, () => listQuantPayouts(slug as string, 60), { staleTime: 30_000 })
   const wantsSubscribe = audience === 'visitor' || audience === 'ex-holder'
   const preview = useQuery(wantsSubscribe && slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
@@ -73,12 +75,15 @@ export function QuantScreen() {
   if (!slug) return <MaisonPage page="quant" dock className={stage}><StateBlock title={c.comingSoon} body={c.comingSoonBody} /></MaisonPage>
   if (!product) return <MaisonPage page="quant" dock className={stage}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
 
-  const subscribe = wantsSubscribe && <div className={page.ctaBlock}>
-    <button type="button" className={`${s.cta} ${page.cta}`} disabled={!product.open} onClick={() => setSubscribeOpen(true)}>
-      <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
-    </button>
-    {!product.open && <p className={page.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
-  </div>
+  // Subscribing stays one thumb away: a bar pinned above the dock (MaisonPage's `cta` reserves the room under the page).
+  const pinnedSubscribe = wantsSubscribe && product.open
+  const subscribe = pinnedSubscribe
+    ? <div className={`${s.stickyCta} ${page.dockCta}`}>
+      <button type="button" className={`${s.cta} ${page.cta}`} onClick={() => setSubscribeOpen(true)}>
+        <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
+      </button>
+    </div>
+    : wantsSubscribe && <p className={page.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>
   const tabs: Array<{ key: QuantTab; label: string }> = [
     { key: 'overview', label: c.charts.tabOverview },
     { key: 'account', label: c.charts.tabAccount },
@@ -90,10 +95,8 @@ export function QuantScreen() {
         <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
       </>
       : <p className={styles.meta} style={{ margin: '12px 2px' }}>{c.perfPending}</p>}
-    <p className={page.context} style={{ textAlign: 'start', margin: '8px 2px 0' }}>{c.indexNote}</p>
   </>
 
-  const latest = product.history[product.history.length - 1]
   const body = <>
     {sample && <p style={{
       margin: '0 0 14px', padding: '10px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.6,
@@ -101,15 +104,13 @@ export function QuantScreen() {
     }}>{c.previewNotice}</p>}
     {tab === 'overview' && <>
       {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
-      {latest && <p className={styles.latest}>{c.charts.latest} · {shortDate(latest.tradeDate)}<b data-loss={Number(latest.netReturnPct) < 0 || undefined}>{formatPct(Number(latest.netReturnPct))}</b></p>}
       {charts}
-      <QuantHighlights product={product} c={c} />
-      {wantsSubscribe && <QuantSection title={c.charts.secProcess} kicker="PROCESS"><QuantProcess preview={preview} c={c} /></QuantSection>}
+      {wantsSubscribe && <QuantSection title={c.charts.secProcess}><QuantProcess preview={preview} c={c} /></QuantSection>}
+      <QuantSection title={c.charts.secSpecs}><QuantSpecSheet product={product} c={c} /></QuantSection>
       {subscribe}
-      <QuantSection title={c.charts.secSpecs} kicker="SPECIFICATIONS"><QuantSpecSheet product={product} c={c} /></QuantSection>
     </>}
     {tab === 'account' && <>
-      <QuantCalendar product={product} ticks={ticks} selected={picked} onSelect={setPicked} english={locale === 'en'} />
+      <QuantCalendar product={product} ticks={ticks} selected={picked} onSelect={setPicked} english={english} />
       {involved
         ? <>
           <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
@@ -123,13 +124,13 @@ export function QuantScreen() {
     </div>
   </>
 
-  return <MaisonPage page="quant" dock className={`${stage} ${page.watchPage}`}>
+  return <MaisonPage page="quant" dock cta={Boolean(pinnedSubscribe && tab === 'overview')} className={`${stage} ${page.watchPage}`}>
     <h1 className="sr-only">{product.name}</h1>
     <div className="watch-scope" data-theme={theme}>
     <div className="study-stage">
     <WatchPin
       dial={ticks.length > 0
-        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} english={locale === 'en'} />
+        ? <WatchDial ticks={ticks} selected={picked} onSelect={setPicked} copy={c} product={product} english={english} />
         : <p className={styles.meta} style={{ margin: '48px 0', textAlign: 'center' }}>{c.neverSettled}</p>}
       subs={<WatchKpis product={product} c={c} />}
 

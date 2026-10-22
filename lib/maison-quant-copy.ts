@@ -61,6 +61,10 @@ export type QuantCopy = {
     navSub: string
     dailyTitle: string
     dailySub: string
+    /** Net-value range switch: last 7 settled days, last 30, everything since inception. */
+    ranges: { d7: string; d30: string; all: string; label: string }
+    /** Engraved on the dial's registers: short, one language. */
+    subShort: { d7: string; d30: string; mdd: string }
     latest: string
     nav: string
     highlightsTitle: string
@@ -249,6 +253,8 @@ const en: QuantCopy = {
     navSub: 'After the management fee, from 1.0000',
     dailyTitle: 'Daily return',
     dailySub: 'Tap or drag across the days',
+    ranges: { d7: '7D', d30: '30D', all: 'All', label: 'Range' },
+    subShort: { d7: '7D', d30: '30D', mdd: 'MDD' },
     latest: 'Latest',
     nav: 'NAV',
     highlightsTitle: 'At a glance',
@@ -445,6 +451,8 @@ const zh: QuantCopy = {
     navSub: '扣除管理费后，起点 1.0000',
     dailyTitle: '每日收益',
     dailySub: '点按或滑动查看每一天',
+    ranges: { d7: '7天', d30: '30天', all: '全部', label: '时间范围' },
+    subShort: { d7: '7日', d30: '30日', mdd: '回撤' },
     latest: '最新',
     nav: '净值',
     highlightsTitle: '产品要点',

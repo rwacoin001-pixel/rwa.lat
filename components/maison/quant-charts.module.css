@@ -54,7 +54,7 @@
 
 /* Chart cards. */
 .card { position: relative; margin-top: 0; padding: 0; }
-.card + .card { margin-top: 26px; padding-top: 16px; border-top: .5px solid color-mix(in srgb, var(--m-accent) 18%, transparent); }
+.card + .card { margin-top: var(--q-block, 32px); padding-top: 20px; border-top: .5px solid color-mix(in srgb, var(--m-accent) 18%, transparent); }
 .subs + .card, .kpis + .card { margin-top: 20px; }
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .head h2 { margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; letter-spacing: 0; }
@@ -175,3 +175,29 @@
 
 /* Labels and readouts in the pinned copy fade out as the row shrinks into place. */
 [data-copy-subs] .subLabel, [data-copy-subs] .subNote, [data-copy-subs] .subWindow { opacity: calc(1 - var(--k, 0)); }
+
+/* Net-value range switch (7D · 30D · All) under the card title. */
+.ranges { display: inline-flex; gap: 2px; margin-top: 8px; padding: 2px; border-radius: 999px; box-shadow: inset 0 0 0 .5px var(--m-line); }
+.ranges button { min-height: 30px; min-width: 44px; padding: 0 10px; border: 0; border-radius: 999px; background: none; color: var(--q-dim); font: 600 11.5px/1 var(--m-sans); cursor: pointer; transition: background-color .2s, color .2s; }
+.ranges button[aria-pressed='true'] { background: var(--m-ink); color: var(--m-bg); }
+.ranges button:focus-visible { outline: 2px solid var(--q-gold); outline-offset: 2px; }
+
+/* Daily-return scale: the bars scroll under a fixed scale on the end edge (best day, 0 %, worst day). The frame matches the
+   bars box (14px down, 128px tall) so every label sits on its line. */
+.barsFrame { position: relative; }
+.yScale { position: absolute; z-index: 2; inset-inline-end: 0; top: 14px; height: 128px; pointer-events: none; }
+.yScale span { position: absolute; inset-inline-end: 0; transform: translateY(-50%); padding-inline-start: 10px; color: var(--q-dim2); font-size: 10px; line-height: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; background: linear-gradient(90deg, transparent, var(--m-bg) 38%); }
+.yScale span[data-zero] { color: var(--m-muted); font-weight: 600; }
+.maxLine, .minLine { position: absolute; inset-inline: 0; height: 0; border-top: .5px dashed color-mix(in srgb, var(--m-muted) 38%, transparent); pointer-events: none; }
+.maxLine { top: 0; }
+.minLine { top: 100%; }
+/* A worst day close to zero: 0 % sits just above its line and the minimum just below the floor, so the two never overlap. */
+.yScale[data-close] span[data-zero] { transform: translateY(-100%); }
+.yScale[data-close] span:last-child:not([data-zero]) { transform: none; }
+
+/* Range switch as a physical slot: the track is sunk into the page, the chosen key stands up out of it and lands with a
+   short press. */
+.ranges { box-shadow: inset 0 1px 2px rgba(0, 0, 0, .14), inset 0 0 0 .5px var(--m-line), 0 .5px 0 rgba(255, 255, 255, .6); background: color-mix(in srgb, var(--m-ink) 4%, transparent); }
+.ranges button { transition: background-color .2s, color .2s, transform .12s cubic-bezier(.2, .8, .2, 1), box-shadow .2s; }
+.ranges button[aria-pressed='true'] { background: linear-gradient(180deg, color-mix(in srgb, var(--m-ink) 80%, #fff), var(--m-ink)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 2px rgba(0, 0, 0, .35), 0 3px 6px -3px rgba(0, 0, 0, .35); }
+.ranges button:active { transform: translateY(.5px) scale(.97); }

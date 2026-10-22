@@ -79,7 +79,8 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
         <text data-watch-part="subNum" className={styles.subNum} x={l1x} y={l1y + 3}>{loss ? `−${scale}` : scale}</text>
         <text data-watch-part="subShort" className={styles.subShort} x="50" y="33">{short}</text>
         <g data-watch-part="subNeedle" className={styles.subNeedle} data-needle="" data-flicked={flick > 0 || undefined}>
-          <line x1="50" y1="57" x2="50" y2="15" />
+          {/* Lance hand: a tapered blade with a short counterweight tail, instead of a plain line. */}
+          <path className={styles.subBlade} d="M50 14 L51.15 47 L50 58.5 L48.85 47 Z" />
           <circle cx="50" cy="50" r="3.2" />
           <circle data-watch-part="subPin" className={styles.subPin} cx="50" cy="50" r="1.2" />
         </g>
@@ -88,6 +89,8 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
     </div>
     <span data-sub-label="" data-watch-part="subLabel" className={styles.subLabel}>{label}</span>
     {note && <em data-sub-note="" data-watch-part="subNote" className={styles.subNote}>{note}</em>}
+    {/* Read under the small pinned dial, where the window inside the face is too small to read. */}
+    <b data-sub-value="" className={`${styles.subValue} ${value !== null && value < 0 ? styles.down : ''}`} aria-hidden="true">{value === null ? '—' : formatPct(value)}</b>
   </div>
 }
 
@@ -95,9 +98,9 @@ function SubDial({ label, short, value, note, loss, index }: { label: string; sh
 export function QuantKpis({ product, c, compact }: { product: QuantProduct; c: QuantCopy; compact?: boolean }) {
   const p = product.performance
   return <div className={compact ? styles.compactSubs : styles.subs}>
-    <SubDial index={0} label={c.last7} short="7D" value={p.last7d.pct} note={p.last7d.coveredDays < p.last7d.days ? c.partial(p.last7d.coveredDays) : null} />
-    <SubDial index={1} label={c.last30} short="30D" value={p.last30d.pct} note={p.last30d.coveredDays < p.last30d.days ? c.partial(p.last30d.coveredDays) : null} />
-    <SubDial index={2} label={c.drawdown} short="MDD" value={p.maxDrawdownPct} note={null} loss />
+    <SubDial index={0} label={c.last7} short={c.charts.subShort.d7} value={p.last7d.pct} note={p.last7d.coveredDays < p.last7d.days ? c.partial(p.last7d.coveredDays) : null} />
+    <SubDial index={1} label={c.last30} short={c.charts.subShort.d30} value={p.last30d.pct} note={p.last30d.coveredDays < p.last30d.days ? c.partial(p.last30d.coveredDays) : null} />
+    <SubDial index={2} label={c.drawdown} short={c.charts.subShort.mdd} value={p.maxDrawdownPct} note={null} loss />
   </div>
 }
 

@@ -37,7 +37,11 @@ export function QuantLedger({ ticks, selected, onSelect, height = 56, copy, labe
 }
 
 const CX = 150
-const R_BASE = 104
+/** Settlement ring radius. It sits near the rim so the face inside stays clear for the window, the registers and the
+ * drawdown gauge (direction A: big-date window at 12, registers at 9 and 3, power-reserve-style gauge at 6). */
+const R_BASE = 116
+/** Longest tick, either way from the ring; keeps outward ticks inside the minute track and inward ones off the face. */
+const TICK_REACH = 11
 /** One tick every 12°: 30 days make one full turn. On screen that is 24px of arc, so a finger moves the ring 1:1. */
 const STEP = 12
 const PX_PER_DEGREE = 2
@@ -80,7 +84,9 @@ export function useTween(target: number | null, duration = 520, restart = 0): nu
  * the nearest day while the centre shows that day; at today the centre shows the figure since inception.
  */
 export function QuantDial({ ticks, selected, onSelect, copy, product, english = false }: {
-  ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct; english?: boolean
+  ticks: Tick[]; selected: number | null; onSelect: (index: number | null) => void; copy: QuantCopy; product: QuantProduct
+  /** Every locale but Chinese reads the dial in English; Chinese reads it in Chinese only. */
+  english?: boolean
 }) {
   const scale = tickScale(ticks)
   const last = ticks.length - 1
@@ -267,6 +273,7 @@ export function QuantDial({ ticks, selected, onSelect, copy, product, english = 
     ref={boxRef}
     data-watch-part="dialBox" className={styles.dialBox}
     data-pin-dial=""
+    data-layout="datograph"
     data-no-ptr=""
     tabIndex={0}
     role="group"
@@ -285,24 +292,41 @@ export function QuantDial({ ticks, selected, onSelect, copy, product, english = 
     </button>
     <button type="button" className="calendar-pusher" aria-label={english?'Switch return and NAV':'切换收益率与净值'} aria-pressed={mode==='nav'} onPointerDown={(e) => e.stopPropagation()} onClick={(e) => {e.stopPropagation();setMode(m=>m==='return'?'nav':'return');}}><span className="pusher-stem"/><span className="pusher-cap"/></button>
     <div data-watch-part="faceBg" className={styles.faceBg} />
+    {/* Two finishes, as on a Lange dial: a clous-de-Paris centre inside a polished step, matte opaline outside it. */}
+    <div className="clous-centre" aria-hidden="true" />
     <div className="rotor-brushing" aria-hidden="true"/>
     <div className="chapter-rehaut" aria-hidden="true"/>
     <div className="enamel-medallion" aria-hidden="true"/>
     <svg data-watch-part="dial" className={styles.dial} viewBox="0 0 300 300">
-      {[86, 88].map((r) => <circle key={r} data-watch-part="engrave" className={styles.engrave} cx={CX} cy={CX} r={r} />)}
+      {[101, 103].map((r) => <circle key={r} data-watch-part="engrave" className={styles.engrave} cx={CX} cy={CX} r={r} />)}
       <circle data-watch-part="baseRing" className={styles.baseRing} cx={CX} cy={CX} r={R_BASE} />
       <g ref={ringRef}>
+        {/* Railroad minute track: two hairline rails with a fine tick between them every 3°, longer every 15°. */}
+        <circle className="rail" cx={CX} cy={CX} r="131.2" />
+        <circle className="rail" cx={CX} cy={CX} r="135.8" />
         {Array.from({ length: 120 }, (_, i) => {
           const major = i % 5 === 0
-          const [x1, y1] = polar(major ? 130.5 : 133.5, i * 3)
-          const [x2, y2] = polar(137, i * 3)
+          const [x1, y1] = polar(major ? 129.6 : 131.2, i * 3)
+          const [x2, y2] = polar(major ? 137.4 : 135.8, i * 3)
           return <line key={i} data-watch-part="track" className={styles.track} data-major={major || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+        })}
+        {/* Applied batons every 30°: a faceted gold bar, lit on one flank and shaded on the other, outside the rails. */}
+        {Array.from({ length: 12 }, (_, i) => {
+          const deg = i * 30
+          const wide = i % 3 === 0 ? 1.5 : 1.05
+          const a = (deg * Math.PI) / 180, n = [-Math.sin(a), Math.cos(a)]
+          const [ix, iy] = polar(137.9, deg), [ox, oy] = polar(i % 3 === 0 ? 141.4 : 140.6, deg)
+          const side = (sign: number) => `${ix + n[0] * wide * sign},${iy + n[1] * wide * sign} ${ox + n[0] * wide * sign},${oy + n[1] * wide * sign}`
+          return <g key={`b${i}`} className="baton">
+            <polygon className="baton-lit" points={`${ix},${iy} ${side(1)} ${ox},${oy}`} />
+            <polygon className="baton-shade" points={`${ix},${iy} ${side(-1)} ${ox},${oy}`} />
+          </g>
         })}
         <g>
         {ticks.map((tick, index) => {
           const angle = angleOf(index)
           const [bx, by] = polar(R_BASE, angle)
-          const length = tick.value === null || tick.value === 0 ? 7 : 3 + (Math.abs(tick.value) / scale) * 20
+          const length = tick.value === null || tick.value === 0 ? 5 : 2 + (Math.abs(tick.value) / scale) * (TICK_REACH - 2)
           const outward = tick.value === null || tick.value >= 0
           const [x1, y1] = polar(tick.kind === 'missing' ? R_BASE - 7 : R_BASE, angle)
           const [x2, y2] = polar(tick.kind === 'missing' ? R_BASE + 7 : tick.kind === 'flat' ? R_BASE + 3 : outward ? R_BASE + length : R_BASE - length, angle)
@@ -326,8 +350,10 @@ export function QuantDial({ ticks, selected, onSelect, copy, product, english = 
         </g>
       </g>
       <path className="day-index-marker" d="M147 33 L150 39 L153 33Z" />
+      <DrawdownGauge value={p.maxDrawdownPct} label={english ? 'MDD' : '最大回撤'} />
     </svg>
-    <div className="engraved-brand"><h2>{copy.title}</h2><span>KOALA QUANT</span></div>
+    {/* One language on the face: Chinese engraving in Chinese, the English name everywhere else. */}
+    <div className="engraved-brand" data-lang={english ? 'en' : 'zh'}>{english ? <span>KOALA QUANT</span> : <h2>{copy.title}</h2>}</div>
     <div className="watch-readout" data-mode={mode}>
       <div className="readout-legend" aria-label={labels[labelIndex]}>
         <div className="legend-strip" style={{transform:`translateY(${-labelIndex*100/4}%)`}} aria-hidden="true">
@@ -341,24 +367,49 @@ export function QuantDial({ ticks, selected, onSelect, copy, product, english = 
         </div>
       </div>
     </div>
-    <svg className="mode-complication" viewBox="0 0 140 46" aria-label={mode==='return'?'当前显示收益率':'当前显示净值'}>
-      <path className="selector-arc" d="M51 26 A28 28 0 0 1 89 26" />
-      <path className="selector-ticks" d="M49 24l-3 -3 M59 17l-2 -4 M70 15v-4 M81 17l2 -4 M91 24l3 -3"/>
-      <text x="28" y="21">{english?'RETURN':'收益率'}</text><text x="112" y="21">{english?'NAV':'净值'}</text>
-      <g className="selector-hand" style={{transform:`rotate(${mode==='return'?-43:43}deg)`}}>
-        <path d="M68.7 38L70 15L71.3 38L70 42Z"/><path className="hand-highlight" d="M70 16v22"/>
-      </g>
-      <circle className="selector-hub" cx="70" cy="38" r="2.5"/><circle className="hub-pin" cx="70" cy="38" r=".7"/>
-    </svg>
     <div className="watch-date" onPointerDown={e=>e.stopPropagation()} onClick={e=>e.stopPropagation()}>
       <button aria-label={english?'Previous day':'前一天'} disabled={focus<=0} onClick={()=>choose(focus-1)}><ChevronLeft size={12}/></button>
       <div className="date-aperture"><RollingDate date={date}/></div>
       <button aria-label={english?'Next day':'后一天'} disabled={focus>=last} onClick={()=>choose(focus+1)}><ChevronRight size={12}/></button>
     </div>
-    <span className="dial-signature">DAILY SETTLEMENT</span>
     <div className="sapphire-crystal" aria-hidden="true"/>
     <div className="rim-reflection" aria-hidden="true"/>
   </div>
+}
+
+/** Scale for the drawdown gauge: the smallest of 1/2/5/10/20/50/100 % that leaves the figure some room before the stop. */
+const gaugeScale = (value: number) => [1, 2, 5, 10, 20, 50, 100].find((step) => step >= Math.abs(value) * 1.3) ?? 100
+
+/**
+ * Maximum drawdown at 6 o'clock, set like a power-reserve indicator: a half-circle scale from 0 to a round stop, a slim
+ * hand at the figure, the figure engraved underneath. A fall is spent reserve, so the metaphor reads without a legend.
+ */
+function DrawdownGauge({ value, label }: { value: number | null; label: string }) {
+  const cx = 150, cy = 190, r = 17
+  const scale = gaugeScale(value ?? 0)
+  const share = value === null ? 0 : Math.min(1, Math.abs(value) / scale)
+  const angle = 180 + share * 180
+  const point = (radius: number, degrees: number) => {
+    const a = (degrees * Math.PI) / 180
+    return [cx + Math.cos(a) * radius, cy + Math.sin(a) * radius] as const
+  }
+  const [hx, hy] = point(r - 3, angle)
+  return <g className="mdd-gauge" aria-hidden="true">
+    <path className="mdd-arc" d={`M${cx - r} ${cy} A${r} ${r} 0 0 1 ${cx + r} ${cy}`} />
+    {Array.from({ length: 11 }, (_, i) => {
+      const deg = 180 + i * 18
+      const [x1, y1] = point(r - (i % 5 === 0 ? 4.5 : 2.6), deg)
+      const [x2, y2] = point(r + .2, deg)
+      return <line key={i} className="mdd-tick" data-major={i % 5 === 0 || undefined} x1={x1} y1={y1} x2={x2} y2={y2} />
+    })}
+    {share > 0 && <path className="mdd-spent" d={`M${cx - r} ${cy} A${r} ${r} 0 0 1 ${point(r, angle)[0].toFixed(2)} ${point(r, angle)[1].toFixed(2)}`} />}
+    <text className="mdd-end" x={cx - r - 1} y={cy + 8}>0</text>
+    <text className="mdd-end" x={cx + r + 1} y={cy + 8}>{`−${scale}`}</text>
+    <text className="mdd-label" x={cx} y={cy - r - 4}>{label}</text>
+    <line className="mdd-hand" x1={cx} y1={cy} x2={hx} y2={hy} />
+    <circle className="mdd-hub" cx={cx} cy={cy} r="2.1" />
+    <text className="mdd-value" x={cx} y={cy + 10.5}>{value === null ? '—' : formatPct(value)}</text>
+  </g>
 }
 
 /** Previous / next day under the dial: a thumb-sized way to walk the ticks. */

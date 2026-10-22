@@ -5,10 +5,10 @@ import React from 'react';
 import { useEffect, useRef, type ReactNode } from 'react'
 import styles from './hero.module.css'
 
-/** Height of the pinned hero, below the status bar (the compact dial, the title, and the strip beneath them). */
-export const HERO_H = 132
-/** Height of the page's resting top block: the dial, its stepper, and the room they need. The menu sits at this line. */
-export const REST_H = 580
+/** Height of the pinned hero, below the status bar: the small dial on the left and the three small sub-dials on the right. */
+export const HERO_H = 112
+/** Height of the page's resting top block: the dial (its sub-registers live inside the face) and its air. The menu sits here. */
+export const REST_H = 440
 /** Scroll distance over which the hero travels from rest to pinned. The menu arrives at the same distance. */
 const RANGE = REST_H - HERO_H
 

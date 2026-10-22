@@ -1,45 +1,61 @@
-/* Koala Quant top block. One sticky hero holds the dial (with the title set inside its face), the three sub-dials and
-   the bezel. QuantPin writes one progress value (--p: 0 at rest, 1 pinned) on the hero; every transform below reads it,
-   so each frame is a handful of transforms and no layout.
+/* Koala Quant top block. One sticky hero holds the dial (with the title set inside its face) and the three sub-dials.
+   QuantPin writes one progress value (--p: 0 at rest, 1 pinned) on the hero; every transform below reads it, so each frame is
+   a handful of transforms and no layout.
 
    Geometry (CSS px, below the status bar, with E = the status-bar inset):
-   - hero: sticky at the top edge, 132 + E tall, full-bleed; its bottom edge is where the menu sticks.
-   - dial: 332 wide, centred, top 60 + E at rest; pinned at 116 wide, top-left (6 + E).
-   - title: inside the dial face at rest (124 + E); pinned top-right (14 + E) at 1.1x.
-   - sub-dials: 92 wide in a row under the date at rest (top 452 + E); pinned 46 wide, bottom-right (76 + E).
-   - the menu sits at 132 + E once the hero has arrived; spacer and rest height come from QuantPin's REST_H. */
+   - hero: sticky at the top edge, 112 + E tall, full-bleed; its bottom edge is where the menu sticks.
+   - dial: 332 wide, centred, top 60 + E at rest; pinned 96 wide at the top-left (14, 8 + E).
+   - sub-dials: 7D and 30D are registers fixed in the face at 9 and 3 o'clock (66 wide); the drawdown dial waits behind the
+     power-reserve gauge at 6 o'clock. As the page scrolls all three come off the face and travel to three separate small
+     dials (40 wide, figure underneath) on the right of the pinned bar.
+   - the menu sits at 112 + E once the hero has arrived; spacer and rest height come from QuantPin's REST_H. */
 
-.hero { position: sticky; top: 0; z-index: 10; height: calc(132px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
+.hero { position: sticky; top: 0; z-index: 10; height: calc(112px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
 
-.heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(132px + env(safe-area-inset-top)); border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
+.heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(112px + env(safe-area-inset-top)); border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
 
-/* The dial. Rest: left 50% - 166px, top 60 + E. Pinned: scale 116/332 (.3494) at the top-left corner. */
-.heroDial { position: absolute; left: calc(50cqw - 166px); top: calc(60px + env(safe-area-inset-top)); width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -54px), 0) scale(calc(1 - var(--p, 0) * .6506)); pointer-events: auto; touch-action: none; will-change: transform; }
+/* The dial. Rest: left 50% - 166px, top 60 + E. Pinned: scale 96/332 (.2892) at (14, 8 + E). */
+.heroDial { position: absolute; left: calc(50cqw - 166px); top: calc(60px + env(safe-area-inset-top)); width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -52px), 0) scale(calc(1 - var(--p, 0) * .7108)); pointer-events: auto; touch-action: none; will-change: transform; }
 .heroDial [data-pin-dial] { margin: 0; }
 
-/* The title lives inside the dial face: it moves with the dial and fades out as the dial pins, so it never
-   travels to the top-right. */
+/* The title lives inside the dial face: it moves with the dial and fades out as the dial pins. */
 .heroDial > .title { position: absolute; left: 0; right: 0; top: 64px; display: flex; justify-content: center; white-space: nowrap; pointer-events: none; opacity: calc(1 - var(--p, 0) * 4); }
 
-/* The three sub-dials. Each sits in a fixed left position at rest; the transform carries it to its pinned slot. */
-.heroSubs { position: absolute; left: 0; top: 0; width: 100cqw; height: 0; pointer-events: auto; }
+/* While the registers leave the face (the first third of the scroll) the window's figure clears the way, and it returns
+   once the dial is small, where it is the pinned dial's one figure: 1 at rest, 0 from p ≈ .33 to .65, 1 again pinned. */
+.hero :global(.watch-readout) { opacity: max(calc(1 - var(--p, 0) * 3), calc((var(--p, 0) - .65) * 3)); }
+
+/* The three sub-dials. Every one is placed by rest position (--rx, --ry) and size (--rs) in the face, pinned position
+   (--px, --py) and size (--ps) in the bar; --p mixes them. 92 is the sub-dial's own width. */
+.heroSubs { position: absolute; left: 0; top: 0; width: 100cqw; height: 0; pointer-events: none; }
 .heroSubs [data-subs] { display: block; margin: 0; }
-.heroSubs > div > [data-sub] { position: absolute; top: calc(452px + env(safe-area-inset-top)); width: 92px; transform-origin: 0 0; will-change: transform; }
-.heroSubs > div > [data-sub]:nth-child(1) { left: calc(16.6667cqw - 46px); transform: translate3d(calc(var(--p, 0) * (83.3333cqw - 122px)), calc(var(--p, 0) * -382px), 0) scale(calc(1 - var(--p, 0) * .5)); }
-.heroSubs > div > [data-sub]:nth-child(2) { left: calc(50cqw - 46px); transform: translate3d(calc(var(--p, 0) * (50cqw - 68px)), calc(var(--p, 0) * -382px), 0) scale(calc(1 - var(--p, 0) * .5)); }
-.heroSubs > div > [data-sub]:nth-child(3) { left: calc(83.3333cqw - 46px); transform: translate3d(calc(var(--p, 0) * (16.6667cqw - 14px)), calc(var(--p, 0) * -382px), 0) scale(calc(1 - var(--p, 0) * .5)); }
-/* Labels and readouts leave as the dials shrink; the figures stay in the rest state only. */
-.heroSubs [data-sub-label], .heroSubs [data-sub-note] { opacity: calc(1 - var(--p, 0) * 3); }
+.heroSubs > div > [data-sub] {
+  --rs: .7217; --ps: .4348;
+  position: absolute; left: 0; top: 0; width: 92px; transform-origin: 0 0; will-change: transform, opacity; pointer-events: none;
+  transform: translate3d(calc(var(--rx) + (var(--px) - var(--rx)) * var(--p, 0)), calc(var(--ry) + (var(--py) - var(--ry)) * var(--p, 0)), 0) scale(calc(var(--rs) + (var(--ps) - var(--rs)) * var(--p, 0)));
+}
+/* Face positions follow the dial's 300-unit layout (registers at x 94 / 206, y 166; 1u = 1.1067px). */
+.heroSubs > div > [data-sub]:nth-child(1) { --rx: calc(50cqw - 95.2px); --ry: calc(210.5px + env(safe-area-inset-top)); --px: calc(100cqw - 160px); --py: calc(24px + env(safe-area-inset-top)); }
+.heroSubs > div > [data-sub]:nth-child(2) { --rx: calc(50cqw + 28.8px); --ry: calc(210.5px + env(safe-area-inset-top)); --px: calc(100cqw - 110px); --py: calc(24px + env(safe-area-inset-top)); }
+/* Drawdown: hidden behind the 6 o'clock gauge at rest (its hub is at 166, 214.7 in the dial); it grows out of the gauge as
+   the page scrolls, so the gauge and the pinned dial read as one instrument. */
+.heroSubs > div > [data-sub]:nth-child(3) { --rs: .45; --rx: calc(50cqw - 20.7px); --ry: calc(254px + env(safe-area-inset-top)); --px: calc(100cqw - 60px); --py: calc(24px + env(safe-area-inset-top)); opacity: min(1, calc(var(--p, 0) * 3)); }
+.heroSubs > div > [data-sub]:nth-child(-n + 2), .hero[data-pinned='true'] .heroSubs > div > [data-sub] { pointer-events: auto; }
+
+/* In the face the registers carry their short engraving only; the figure window fades as they shrink into the bar, and
+   the pinned figure (set at 25px so it reads 11px at the pinned scale) takes over underneath. */
+.heroSubs [data-sub-label], .heroSubs [data-sub-note] { display: none; }
 .heroSubs [data-sub-window] { opacity: calc(1 - var(--p, 0) * 2); }
+.heroSubs [data-sub-value] { display: block; width: 92px; margin-top: 8px; font-size: 25px; line-height: 1.2; text-align: center; opacity: calc((var(--p, 0) - .6) * 2.5); }
 
 /* The stepper: under the dial, in the scrolling content, so it leaves with the page and never sits over the menu. */
 .stepRow { position: absolute; left: 0; right: 0; top: 266px; display: flex; justify-content: center; pointer-events: auto; }
 
-/* Rest height below the hero: the content between the hero and the menu. Its height is REST_H - 132 in QuantPin. */
-.spacer { position: relative; height: 448px; }
+/* Rest height below the hero: the content between the hero and the menu. Its height is REST_H - HERO_H in QuantPin. */
+.spacer { position: relative; height: 328px; }
 
 /* The menu: sticks directly under the pinned hero. */
-.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; }
+.menu { position: sticky; top: calc(112px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .heroDial, .heroSubs > div > [data-sub] { transition: none; }

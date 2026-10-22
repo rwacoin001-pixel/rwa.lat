@@ -114,3 +114,98 @@
 
 /* Cover scrolling content without an inset rectangular plate behind the tabs. */
 .watch-scope .study-stage [data-watch-part='menu']::before{content:'';position:absolute;inset:-8px calc(var(--mobile-gutter,18px) * -1);z-index:-1;pointer-events:none;background:linear-gradient(to bottom,transparent,var(--m-bg) 8px,var(--m-bg) calc(100% - 8px),transparent)}
+/* Sub-registers live inside the dial now (hero.module.css places them with transforms from the hero's top edge), so the
+   old fixed row offset is cleared. Inside the face a register is sunk into the dial — an inner shadow and a polished
+   chamfer catching the light — rather than raised like the standalone dials it becomes in the pinned bar. */
+.watch-scope .study-stage [data-watch-part="heroSubs"]>div>[data-sub]{top:0}
+.watch-scope .study-stage [data-watch-part="hero"][data-pinned="false"] [data-watch-part="subBezel"]{background:linear-gradient(160deg,rgba(255,252,240,.9),rgba(var(--q-gold-rgb),.38) 55%,rgba(255,252,240,.75));box-shadow:inset 0 1.5px 3px rgba(60,42,14,.32),0 .6px 0 rgba(255,255,255,.75)}
+.watch-scope .study-stage [data-watch-part="hero"][data-pinned="false"] [data-watch-part="subFace"]{box-shadow:inset 0 2px 6px rgba(60,42,14,.22),inset 0 0 0 .5px rgba(var(--q-gold-rgb),.35)}
+
+/* Direction A (Lange Datograph): an outsize window at 12, the brand under it, registers at 9 and 3, a power-reserve-style
+   drawdown gauge at 6 and a small date aperture below it, all inside the settlement ring. Percentages are of the 332px
+   dial; the dial's SVG uses a 300-unit box (1u = 1.1067px). */
+.watch-scope [data-layout="datograph"] .clous-centre{position:absolute;inset:17.5%;border-radius:50%;pointer-events:none;background:repeating-linear-gradient(45deg,rgba(var(--q-gold-rgb),.075) 0 .6px,transparent .6px 4.6px),repeating-linear-gradient(-45deg,rgba(var(--q-gold-rgb),.075) 0 .6px,transparent .6px 4.6px);box-shadow:0 0 0 .6px rgba(var(--q-gold-rgb),.42),0 0 0 2.2px rgba(255,252,240,.45),inset 0 1px 3px rgba(60,42,14,.12)}
+.watch-scope [data-layout="datograph"] .watch-readout{left:31%;top:20.5%;width:38%;display:flex;flex-direction:column-reverse;align-items:center}
+.watch-scope [data-layout="datograph"] .readout-window{width:100%;height:40px;border-radius:3px;background:var(--q-face);box-shadow:inset 0 1.5px 2.5px rgba(60,42,14,.34),inset 0 0 0 .6px rgba(var(--q-gold-rgb),.6),0 0 0 1.6px rgba(255,252,240,.75),0 0 0 2.2px rgba(var(--q-gold-rgb),.35)}
+.watch-scope [data-layout="datograph"] .readout-row{height:40px;font-size:30px;text-shadow:none;letter-spacing:-.01em}
+.watch-scope [data-layout="datograph"] .readout-row sup{font-size:.45em}
+.watch-scope [data-layout="datograph"] .readout-legend{margin-top:4px;height:13px;line-height:13px;font-size:7.5px;letter-spacing:.18em}
+.watch-scope [data-layout="datograph"] .engraved-brand{top:41.5%;left:30%;width:40%}
+.watch-scope [data-layout="datograph"] .engraved-brand[data-lang="zh"] h2{font-size:14px;letter-spacing:.32em;text-indent:.32em;line-height:1.3}
+.watch-scope [data-layout="datograph"] .engraved-brand[data-lang="en"] span{margin:0;font-size:8.5px;letter-spacing:.3em;text-indent:.3em}
+.watch-scope [data-layout="datograph"] .watch-date{left:30%;top:71.5%;width:40%;height:26px}
+.watch-scope [data-layout="datograph"] .date-aperture{transform:scale(.9)}
+.watch-scope [data-layout="datograph"] .mdd-arc{fill:none;stroke:rgba(var(--q-gold-rgb),.5);stroke-width:.7}
+.watch-scope [data-layout="datograph"] .mdd-tick{stroke:rgba(var(--q-gold-rgb),.55);stroke-width:.45}
+.watch-scope [data-layout="datograph"] .mdd-tick[data-major]{stroke:rgba(var(--q-gold-rgb),.9);stroke-width:.75}
+.watch-scope [data-layout="datograph"] .mdd-spent{fill:none;stroke:var(--q-loss,#b5553f);stroke-width:1.5;stroke-linecap:round}
+.watch-scope [data-layout="datograph"] .mdd-end{fill:var(--q-dim);font-family:var(--sans);font-size:5px;text-anchor:middle}
+.watch-scope [data-layout="datograph"] .mdd-label{fill:var(--q-gold);font-family:var(--sans);font-size:5.2px;font-weight:500;letter-spacing:.18em;text-anchor:middle}
+.watch-scope [data-layout="datograph"] .mdd-hand{stroke:var(--q-loss-text,#9c4636);stroke-width:.9;stroke-linecap:round}
+.watch-scope [data-layout="datograph"] .mdd-hub{fill:var(--q-gold);stroke:rgba(0,0,0,.25);stroke-width:.3}
+.watch-scope [data-layout="datograph"] .mdd-value{fill:var(--q-loss-text,#9c4636);font-family:var(--serif);font-size:9px;font-weight:600;text-anchor:middle;font-variant-numeric:lining-nums tabular-nums}
+/* Piston pusher at 2 o'clock (Patek 5172 style): a short polished cylinder with a domed top over a fluted collar. */
+.watch-scope [data-layout="datograph"] .calendar-pusher .pusher-stem{left:16px;width:12px;top:7px;height:16px;border-radius:1.5px;background:repeating-linear-gradient(90deg,rgba(255,248,226,.9) 0 .8px,rgba(120,92,48,.55) .8px 1.6px),linear-gradient(90deg,#a68e5f,#efe1c0 45%,#b39b68)}
+.watch-scope [data-layout="datograph"] .calendar-pusher .pusher-cap{top:-1px;left:13px;width:18px;height:10px;border-radius:5px 5px 2px 2px;background:radial-gradient(120% 90% at 50% 0%,#fffaf0 0 18%,#e8d6a8 45%,#b69c66 100%);box-shadow:inset 0 -.8px 0 rgba(107,78,34,.45),0 1.5px 3px rgba(104,80,39,.22)}
+.watch-scope[data-theme="dark"] .study-stage [data-watch-part="hero"][data-pinned="false"] [data-watch-part="subBezel"]{background:linear-gradient(160deg,rgba(255,255,255,.16),rgba(var(--q-gold-rgb),.26) 55%,rgba(255,255,255,.1));box-shadow:inset 0 1.5px 3px rgba(0,0,0,.55),0 .6px 0 rgba(255,255,255,.12)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .readout-window{box-shadow:inset 0 1.5px 3px rgba(0,0,0,.6),inset 0 0 0 .6px rgba(var(--q-gold-rgb),.55),0 0 0 1.6px rgba(255,255,255,.08),0 0 0 2.2px rgba(var(--q-gold-rgb),.3)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .clous-centre{box-shadow:0 0 0 .6px rgba(var(--q-gold-rgb),.38),0 0 0 2.2px rgba(255,255,255,.06),inset 0 1px 3px rgba(0,0,0,.35)}
+/* Everything inside the clous centre stays within ~90u of the middle (the clous ring is 97.5u, the engraved rings 101/103),
+   so no frame or arrow ever sits on a ring. Window corners ≈ 90.5u, date row ≈ 87u (measured on the 300-unit box). */
+.watch-scope [data-layout="datograph"] .watch-readout{left:34.67%;top:24%;width:30.67%}
+.watch-scope [data-layout="datograph"] .readout-window{height:37px}
+.watch-scope [data-layout="datograph"] .readout-row{height:37px;font-size:26px}
+.watch-scope [data-layout="datograph"] .watch-date{left:31.67%;top:69%;width:36.67%;height:24px}
+.watch-scope [data-layout="datograph"] .watch-date button{width:20px;height:24px}
+/* Precision pass. Railroad rails under the minute ticks; applied batons with a lit and a shaded facet; a finer clous de
+   Paris with a lit and a shaded side to every pyramid; double-bevel frames on the window and the date aperture; a lance
+   hand on the drawdown gauge. */
+.watch-scope [data-layout="datograph"] .rail{fill:none;stroke:rgba(var(--q-gold-rgb),.38);stroke-width:.32}
+.watch-scope [data-layout="datograph"] .baton-lit{fill:#f4e7c6}
+.watch-scope [data-layout="datograph"] .baton-shade{fill:#a88b55}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .baton-lit{fill:#e7d3a3}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .baton-shade{fill:#7d6538}
+.watch-scope [data-layout="datograph"] .clous-centre{background:repeating-linear-gradient(45deg,rgba(255,252,240,.55) 0 .5px,rgba(var(--q-gold-rgb),.09) .5px 1.6px,transparent 1.6px 3.4px),repeating-linear-gradient(-45deg,rgba(255,252,240,.45) 0 .5px,rgba(var(--q-gold-rgb),.08) .5px 1.6px,transparent 1.6px 3.4px)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .clous-centre{background:repeating-linear-gradient(45deg,rgba(255,255,255,.05) 0 .5px,rgba(var(--q-gold-rgb),.08) .5px 1.6px,transparent 1.6px 3.4px),repeating-linear-gradient(-45deg,rgba(255,255,255,.04) 0 .5px,rgba(var(--q-gold-rgb),.07) .5px 1.6px,transparent 1.6px 3.4px)}
+.watch-scope [data-layout="datograph"] .readout-window,.watch-scope [data-layout="datograph"] .date-aperture{position:relative}
+.watch-scope [data-layout="datograph"] .readout-window::after{content:'';position:absolute;inset:2.5px;border-radius:1.5px;box-shadow:inset 0 0 0 .5px rgba(var(--q-gold-rgb),.45);pointer-events:none}
+.watch-scope [data-layout="datograph"] .mdd-hand{stroke-width:1.1}
+/* Materials pass. Figures and letters read as made things, not screen text: the window shows numerals printed on a disc
+   turning under a glazed aperture; the brand is applied gilt lettering standing proud of the dial; scale figures are
+   pad-printed (a hairline of light under each glyph); the crown, pusher and date keys are turned and polished metal that
+   moves when pressed. */
+.watch-scope [data-layout="datograph"] .readout-window{background:linear-gradient(180deg,rgba(60,42,14,.16) 0,rgba(60,42,14,0) 24%,rgba(60,42,14,0) 76%,rgba(60,42,14,.18) 100%),linear-gradient(180deg,#f3ecdc,#fbf7ee 45%,#f0e8d6)}
+.watch-scope [data-layout="datograph"] .readout-window::before{content:'';position:absolute;inset:0;z-index:2;border-radius:3px;pointer-events:none;background:linear-gradient(112deg,transparent 28%,rgba(255,255,255,.5) 38%,rgba(255,255,255,.08) 47%,transparent 56%),linear-gradient(180deg,rgba(255,255,255,.35),transparent 38%)}
+.watch-scope [data-layout="datograph"] .readout-row{color:#2a2016;text-shadow:0 .6px 0 rgba(255,255,255,.85),0 -.45px .3px rgba(40,28,10,.38)}
+.watch-scope [data-layout="datograph"] .readout-row[data-negative=true]{color:var(--q-loss-text)}
+.watch-scope [data-layout="datograph"] .engraved-brand{text-shadow:none}
+.watch-scope [data-layout="datograph"] .engraved-brand h2,.watch-scope [data-layout="datograph"] .engraved-brand>span{color:transparent;background:linear-gradient(180deg,#fbf0d0 0%,#d6b878 46%,#8f7142 54%,#e2c992 100%);-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 .8px .45px rgba(60,40,10,.5)) drop-shadow(0 -.35px 0 rgba(255,255,255,.75))}
+.watch-scope [data-layout="datograph"] .readout-legend span{color:#7d6a4c;text-shadow:0 .5px 0 rgba(255,255,255,.8)}
+.watch-scope [data-layout="datograph"] .date-aperture>*{padding:2px 5px 1px;border-radius:1px;background:linear-gradient(180deg,#e3d8c0,#fbf7ec 32%,#fbf7ec 68%,#e0d3b8);box-shadow:inset 0 1px 1.5px rgba(60,42,14,.38)}
+.watch-scope [data-layout="datograph"] .rolling-date{color:#3a2d1c;text-shadow:0 .5px 0 rgba(255,255,255,.85)}
+.watch-scope [data-layout="datograph"] :is(.mdd-end,.mdd-label,.mdd-value){filter:drop-shadow(0 .35px 0 rgba(255,255,255,.85))}
+.watch-scope .study-stage [data-watch-part="subShort"],.watch-scope .study-stage [data-watch-part="subNum"]{filter:drop-shadow(0 .3px 0 rgba(255,255,255,.85))}
+.watch-scope .study-stage [data-watch-part="subWindow"] b{text-shadow:0 .5px 0 rgba(255,255,255,.85),0 -.35px .2px rgba(40,28,10,.3)}
+/* Crown: a polished domed cap over a knurled barrel, lit from the top-left; it dips and darkens a touch when pressed. */
+.watch-scope .study-stage [data-watch-part="crownCap"]{background:radial-gradient(130% 160% at 38% 0%,#fffaf0 0 18%,#e6d4a6 46%,#a88b55 100%);box-shadow:0 .6px 0 rgba(97,75,38,.35),inset 0 -.5px 0 rgba(97,75,38,.35)}
+.watch-scope .study-stage [data-watch-part="crownKnurl"]{box-shadow:inset 0 1.2px 0 rgba(255,249,231,.9),inset 0 -1.5px 1.5px rgba(80,60,28,.45),0 2px 3.5px rgba(60,42,14,.28)}
+.watch-scope .study-stage [data-watch-part="crown"]:active [data-watch-part="crownKnurl"]{filter:brightness(.94)}
+/* Pusher: the cap catches a hard specular line; pressing sinks it into the collar with a shorter shadow. */
+.watch-scope [data-layout="datograph"] .calendar-pusher .pusher-cap{background:linear-gradient(90deg,rgba(255,255,255,0) 30%,rgba(255,255,255,.75) 44%,rgba(255,255,255,0) 52%),radial-gradient(120% 90% at 50% 0%,#fffaf0 0 18%,#e8d6a8 45%,#b69c66 100%)}
+.watch-scope [data-layout="datograph"] .calendar-pusher:active .pusher-cap{transform:translateY(2.5px);box-shadow:inset 0 -.8px 0 rgba(107,78,34,.45),0 .5px 1px rgba(104,80,39,.25);filter:brightness(.95)}
+.watch-scope [data-layout="datograph"] .calendar-pusher .pusher-stem{box-shadow:inset 0 0 0 .4px rgba(90,66,30,.35),0 1px 1.5px rgba(60,42,14,.25)}
+/* Date keys: two small polished studs either side of the aperture, domed and lit, that sink when tapped. */
+.watch-scope [data-layout="datograph"] .watch-date{gap:4px}
+.watch-scope [data-layout="datograph"] .watch-date button{width:18px;height:18px;margin:0;border-radius:50%;color:#5c4828;background:radial-gradient(circle at 36% 30%,#fffaf0 0 14%,#e7d6aa 44%,#a98c57 100%);box-shadow:0 1px 1.5px rgba(60,42,14,.38),inset 0 -.7px 0 rgba(90,66,30,.4),inset 0 .6px 0 rgba(255,255,255,.8);transition:transform .12s cubic-bezier(.2,.8,.2,1),box-shadow .12s}
+.watch-scope [data-layout="datograph"] .watch-date button:active:not(:disabled){transform:translateY(.8px);box-shadow:0 .3px .6px rgba(60,42,14,.35),inset 0 1px 1.5px rgba(90,66,30,.45)}
+.watch-scope [data-layout="datograph"] .watch-date button:disabled{opacity:.4;filter:saturate(.4)}
+.watch-scope [data-layout="datograph"] .watch-date button svg{width:10px;height:10px;filter:drop-shadow(0 .5px 0 rgba(255,255,255,.7))}
+/* Dark dial: the same objects under low light — darker disc, dimmer glint, gilt kept warm. */
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .readout-window{background:linear-gradient(180deg,rgba(0,0,0,.35) 0,rgba(0,0,0,0) 24%,rgba(0,0,0,0) 76%,rgba(0,0,0,.4) 100%),linear-gradient(180deg,#1c2433,#232c3d 45%,#1a2130)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .readout-window::before{opacity:.35}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .readout-row{color:#efe6d2;text-shadow:0 -.5px 0 rgba(0,0,0,.6),0 .4px .3px rgba(255,255,255,.12)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .readout-legend span{color:#a89676;text-shadow:none}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .date-aperture>*{background:linear-gradient(180deg,#141a26,#222b3b 32%,#222b3b 68%,#131925);box-shadow:inset 0 1px 1.5px rgba(0,0,0,.6)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] .rolling-date{color:#e9dfc8;text-shadow:0 -.5px 0 rgba(0,0,0,.6)}
+.watch-scope[data-theme="dark"] [data-layout="datograph"] :is(.mdd-end,.mdd-label,.mdd-value),.watch-scope[data-theme="dark"] .study-stage :is([data-watch-part="subShort"],[data-watch-part="subNum"]){filter:none}
+.watch-scope[data-theme="dark"] .study-stage [data-watch-part="subWindow"] b{text-shadow:0 -.5px 0 rgba(0,0,0,.55)}
