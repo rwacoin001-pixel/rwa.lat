@@ -63,6 +63,13 @@ const RULES: RateLimitRule[] = [
     matches: (method, path) => method === 'POST' && path === '/v1/auth/email/lookup',
   },
   {
+    // Signup checks a typed invitation code live; the cap keeps guessing the 6-character space impractical.
+    name: 'referral-code-lookup',
+    limit: 60,
+    windowMs: HOUR,
+    matches: (method, path) => method === 'GET' && path.startsWith('/v1/referral/public/codes/'),
+  },
+  {
     name: 'email-code-delivery',
     limit: 20,
     windowMs: HOUR,
