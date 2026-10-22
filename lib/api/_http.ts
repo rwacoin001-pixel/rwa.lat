@@ -113,7 +113,8 @@ export async function request<T>(path: string, options: RequestInit & { idempote
   headers.set('x-request-id', crypto.randomUUID())
   if (token) headers.set('Authorization', `Bearer ${token}`)
   // Carry the signed landing attribution across the app/API domains for registration and OAuth.
-  if (referralAttribution !== 'skip' && /^\/v1\/auth\/(?:register\/email|wallet\/verify|oauth\/(?:google|github|x)(?:\/start)?)$/.test(path)) {
+  // Every request that can create an account carries it: email-code registration and the OAuth consent step included.
+  if (referralAttribution !== 'skip' && /^\/v1\/auth\/(?:register\/email|email-code\/request|flow\/complete|wallet\/verify|oauth\/(?:google|github|x)(?:\/start)?)$/.test(path)) {
     const attribution = await prefetchAuthAttribution()
     if (attribution) headers.set('x-referral-attribution', attribution)
   }
