@@ -29,15 +29,15 @@ export class AdminCoreOpsService {
     return this.request<T>('GET', withQuery(path, query), actorId)
   }
 
-  post<T>(actorId: string, path: string, body?: Record<string, unknown>, query: Record<string, QueryValue> = {}): Promise<T> {
-    return this.request<T>('POST', withQuery(path, query), actorId, body ?? {})
+  post<T>(actorId: string, path: string, body?: Record<string, unknown>, query: Record<string, QueryValue> = {}, idempotencyKey?: string): Promise<T> {
+    return this.request<T>('POST', withQuery(path, query), actorId, body ?? {}, idempotencyKey)
   }
 
   put<T>(actorId: string, path: string, body?: Record<string, unknown>, query: Record<string, QueryValue> = {}): Promise<T> {
     return this.request<T>('PUT', withQuery(path, query), actorId, body ?? {})
   }
 
-  private async request<T>(method: 'GET' | 'POST' | 'PUT', path: string, actorId: string, body?: Record<string, unknown>): Promise<T> {
+  private async request<T>(method: 'GET' | 'POST' | 'PUT', path: string, actorId: string, body?: Record<string, unknown>, idempotencyKey?: string): Promise<T> {
     if (!this.coreApiUrl || !this.serviceToken || this.serviceToken.length < 32) {
       throw new ServiceUnavailableException('The core operations channel is not configured (CORE_API_URL / ADMIN_SERVICE_TOKEN).')
     }
@@ -50,6 +50,7 @@ export class AdminCoreOpsService {
           accept: 'application/json',
           authorization: `Bearer ${this.serviceToken}`,
           'x-actor-admin-id': actorId,
+          ...(idempotencyKey ? { 'idempotency-key': idempotencyKey } : {}),
           ...(body === undefined ? {} : { 'content-type': 'application/json' }),
         },
         body: body === undefined ? undefined : JSON.stringify(body),

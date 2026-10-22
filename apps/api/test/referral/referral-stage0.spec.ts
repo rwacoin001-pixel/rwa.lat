@@ -31,12 +31,12 @@ describe('referral immutable policy',()=>{
     const service=new ReferralFoundationService({} as DataSource)
     expect(()=>service.assertPayoutsDisabled()).toThrow(ServiceUnavailableException)
     const claims=new ReferralClaimService({} as DataSource)
-    const controller=new ReferralUserFoundationController({} as never,{} as never,claims)
+    const controller=new ReferralUserFoundationController({} as never,{} as never,claims,{} as never)
     await expect(controller.claim({auth:{userId:'u'}} as never,undefined)).rejects.toThrow(BadRequestException)
   })
   it('rejects unauthorized settings writes before accessing the database',async()=>{
     const core={saveSettings:jest.fn()},rbac={assertPermission:jest.fn().mockRejectedValue(new Error('denied'))}
-    const controller=new ReferralAdminFoundationController(core as never,rbac as never,{} as never)
+    const controller=new ReferralAdminFoundationController(core as never,rbac as never,{} as never,{} as never)
     await expect(controller.save({id:'unauthorized'} as never,{config:{payoutsEnabled:true}})).rejects.toThrow('denied')
     expect(core.saveSettings).not.toHaveBeenCalled()
   })

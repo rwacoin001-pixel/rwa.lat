@@ -19,12 +19,13 @@ const methods = ['listAiAnalysis', 'listAssets', 'listYieldBatches', 'listSettle
 type Harness = ReturnType<typeof harness>
 function harness() {
   const svc: any = Object.fromEntries(methods.map(name => [name, jest.fn().mockResolvedValue({ ok: true })]))
+  for (const name of ['list','detail','generateMonth','approve','pay']) svc[name]=jest.fn().mockResolvedValue({ok:true})
   const rbac = { assertPermission: jest.fn().mockRejectedValue(new ForbiddenException('Disabled audit-only principal')) }
   const sessions = { authenticate: jest.fn().mockResolvedValue(ordinary) }
   const guard = new AdminSessionGuard(new Reflector(), sessions as never, new ConfigService({ ADMIN_SERVICE_TOKEN: token }))
   return { svc, rbac, sessions, guard,
     console: new AdminConsoleController(svc, rbac as never),
-    referral: new ReferralAdminFoundationController(svc, rbac as never, svc),
+    referral: new ReferralAdminFoundationController(svc, rbac as never, svc, svc),
     support: new AdminSupportController(svc, rbac as never),
     jobs: new JobQueueAdminController(svc, rbac as never),
     notifications: new AdminNotificationController(svc, rbac as never, svc),
@@ -36,6 +37,11 @@ const routes: Array<[string, string, (h: Harness, admin: any) => Promise<unknown
   ...['aiAnalysis', 'assets', 'yields', 'settlements', 'collections', 'networks', 'kyc', 'eligibility', 'riskFlags'].map(method => [method, 'console.view', (h: Harness, a: any) => (h.console as any)[method](a)] as [string, string, (h: Harness, a: any) => Promise<unknown>]),
   ['referral settings', 'platform.manage', (h, a) => h.referral.settings(a)],
   ['referral overview', 'platform.manage', (h, a) => h.referral.overview(a)],
+  ['team batches', 'platform.manage', (h, a) => h.referral.teamBatches(a)],
+  ['team detail', 'platform.manage', (h, a) => h.referral.teamDetail(a,id)],
+  ['team generation', 'platform.manage', (h, a) => h.referral.generateTeam(a, {month:'2026-09'})],
+  ['team approval', 'platform.manage', (h, a) => h.referral.approveTeam(a, id)],
+  ['team payment', 'platform.manage', (h, a) => h.referral.payTeam(a, id, 'test-payment')],
   ['referral reconciliation', 'platform.manage', (h, a) => h.referral.reconcile(a)],
   ['tickets', 'support.tickets.manage', (h, a) => h.support.list(a, {})],
   ['ticket timeline', 'support.tickets.manage', (h, a) => h.support.timeline(a, 'ticket')],

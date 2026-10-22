@@ -1,6 +1,7 @@
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
+import { recordReferralRewards } from '../referral/referral-rewards'
 import { LedgerService } from '../ledger/ledger.service'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import { ComplianceService } from '../compliance/compliance.service'
@@ -291,6 +292,7 @@ export class QuantService {
         [product.id, userId, orderId, amount.toString(), effectiveDate],
       )
       await manager.query(`UPDATE app.quant_orders SET status = 'settled', principal_atomic = $2, ledger_reference = $3, settled_at = now() WHERE id = $1`, [orderId, amount.toString(), transfer.ledgerTransactionId])
+      await recordReferralRewards(manager, { kind: 'purchase', sourceType: 'quant_subscription', sourceId: orderId, sourceUserId: userId, baseAtomic: amount })
       await manager.query(
         `INSERT INTO app.audit_logs (id, actor_type, user_id, action, object_type, object_id, request_id, metadata) VALUES ($1, 'service', $2, 'quant.subscription.settled', 'quant_order', $3, $4, $5)`,
         [randomUUID(), userId, orderId, requestId, JSON.stringify({ productId: product.id, amountAtomic: amount.toString(), effectiveDate })],

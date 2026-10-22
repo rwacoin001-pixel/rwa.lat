@@ -9,6 +9,7 @@ import { ReferralBindingService } from '../../src/referral/referral-binding.serv
 import { ReferralContext } from '../../src/referral/referral-context'
 import { ReferralFoundationService } from '../../src/referral/referral-foundation.service'
 import { ReferralReadService } from '../../src/referral/referral-read.service'
+import { ReferralTeamService } from '../../src/referral/referral-team.service'
 import { REFERRAL_DEFAULT_SETTINGS } from '../../src/referral/referral-policy'
 import { IdentityService } from '../../src/identity/identity.service'
 import { IdentityCrypto } from '../../src/identity/identity-crypto.service'
@@ -43,21 +44,22 @@ suite('referral stage zero isolated PostgreSQL',()=>{
     const name=new URL(process.env.TEST_DATABASE_URL!).pathname.slice(1)
     if(name!==isolated || !/^rwa_referral_stage0_[a-f0-9]{12}_test$/.test(name))throw new Error('Dedicated test database required')
     db=new DataSource(buildDatabaseOptions({...process.env,NODE_ENV:'test'}));await db.initialize()
+    const allMigrations=[...db.migrations]
+    db.migrations.splice(0,db.migrations.length,...allMigrations.filter(m=>Number((m.name??m.constructor.name).slice(-13))<=1790760000000))
     await db.runMigrations({transaction:'all'})
+    db.migrations.splice(0,db.migrations.length,...allMigrations)
     const migration=new ReferralStageZero1790760000000(),q=db.createQueryRunner();await q.connect();await q.startTransaction()
     try{
       // Later referral migrations depend on stage-zero objects: unwind them first, reinstall after.
-      const rewards=new ReferralRewards1792100000000()
-      await rewards.down(q)
       await migration.down(q)
       const [legacyUser]=await q.query('INSERT INTO app.users DEFAULT VALUES RETURNING id')
       const [legacyReward]=await q.query("INSERT INTO app.rewards(user_id,kind,amount_atomic,currency) VALUES($1,'promo',12345,'USD') RETURNING *",[legacyUser.id])
       await migration.up(q)
-      await rewards.up(q)
       expect((await q.query('SELECT * FROM app.rewards WHERE id=$1',[legacyReward.id]))[0]).toEqual(legacyReward)
       await q.commitTransaction();stats.emptyUpDown=true;stats.legacyRewardPreserved=true
     }
     finally{if(q.isTransactionActive)await q.rollbackTransaction();await q.release()}
+    await db.runMigrations({transaction:'all'})
     context=new ReferralContext();binding=new ReferralBindingService(db,new ConfigService({IDENTITY_HMAC_KEY:'11'.repeat(32)}),context)
     core=new ReferralFoundationService(db)
     const config=new ConfigService({AUTH_ADAPTER:'demo',PUBLIC_APP_URL:'http://localhost:3030',IDENTITY_HMAC_KEY:'a'.repeat(64),IDENTITY_ENC_KEY:'b'.repeat(64)})
@@ -80,6 +82,7 @@ suite('referral stage zero isolated PostgreSQL',()=>{
     const sessions=new SessionAuthService(db.getRepository(Session),crypto)
     const module=await Test.createTestingModule({controllers:[ReferralLandingController,ReferralUserFoundationController,ReferralAdminFoundationController],providers:[
       {provide:ReferralReadService,useValue:new ReferralReadService(db)},{provide:ReferralClaimService,useValue:new ReferralClaimService(db)}, {provide:ReferralBindingService,useValue:binding},{provide:ReferralFoundationService,useValue:core},{provide:ReferralContext,useValue:context},
+      {provide:ReferralTeamService,useValue:new ReferralTeamService(db)},
       {provide:ConfigService,useValue:config},{provide:SessionAuthService,useValue:sessions},
       {provide:AdminSessionAuthService,useValue:{authenticate:async()=>{throw new UnauthorizedException()}}},
       {provide:AdminRbacService,useValue:{assertPermission:async()=>{throw new ForbiddenException()}}},

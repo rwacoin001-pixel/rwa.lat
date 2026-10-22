@@ -11,6 +11,7 @@ import { backOr } from '@/lib/maison-nav'
 import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
+import { ReferralTeamRewards } from './ReferralTeamRewards'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
 import { posterCopy } from '@/lib/referral-poster-copy'
 import { nativeCan, nativeShare } from '@/lib/native-app'
@@ -240,6 +241,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
         </div>)}</div>
       </section>}
 
+      <ReferralTeamRewards locale={locale} />
       <section className={x.records} aria-label={t('推荐记录', 'Referral records')}>
         <div className={x.tabs} role="group" aria-label={t('记录类型', 'Record type')}>
           {([['team', t('我的团队', 'My team')], ['rewards', t('奖励记录', 'Rewards')]] as const).map(([key, label]) =>
@@ -277,7 +279,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
 
     {sheet === 'rules' && <ReferralSheet tall title={t('邀请规则', 'Invitation rules')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
       {sum
-        ? <ReferralRules rules={sum.rules} locale={locale} />
+        ? <ReferralRules rules={sum.rules} locale={locale} teamEnabled={sum.teamSettlementEnabled} />
         : summary.error
           ? <StateBlock tone="error" title={t('规则暂不可用', 'Rules unavailable')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
           : <Skeleton rows={3} />}

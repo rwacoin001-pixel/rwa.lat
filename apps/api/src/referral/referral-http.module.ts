@@ -9,6 +9,7 @@ import { ReferralBindingService } from './referral-binding.service'
 import { ReferralFoundationService } from './referral-foundation.service'
 import { ReferralReadService } from './referral-read.service'
 import { ReferralClaimService } from './referral-claim.service'
+import { ReferralTeamService } from './referral-team.service'
 import { SecurityModule } from '../security/security.module'
 import { SessionAuthGuard, AuthenticatedRequest } from '../security/session-auth.guard'
 import { AdminRbacModule } from '../admin-rbac/admin-rbac.module'
@@ -37,6 +38,7 @@ export class ReferralContextInterceptor implements NestInterceptor {
 class CodeDto { @IsString() @Matches(/^[a-zA-Z0-9]{6,16}$/) code!: string }
 class SettingsDto { @IsObject() config!: Record<string,unknown> }
 class RollbackDto { @IsInt() @Min(1) version!: number }
+class TeamMonthDto { @IsString() @Matches(/^20\d{2}-(0[1-9]|1[0-2])$/) month!: string }
 
 @Controller('r')
 export class ReferralLandingController {
@@ -53,7 +55,8 @@ export class ReferralLandingController {
 @UseGuards(SessionAuthGuard)
 @Controller('referral')
 export class ReferralUserFoundationController {
-  constructor(private readonly binding: ReferralBindingService,private readonly read:ReferralReadService,private readonly claims:ReferralClaimService) {}
+  constructor(private readonly binding: ReferralBindingService,private readonly read:ReferralReadService,private readonly claims:ReferralClaimService,private readonly team:ReferralTeamService) {}
+  @Get('team') teamRewards(@Req() req:AuthenticatedRequest) { return this.team.records(req.auth.userId) }
   @Get('summary') summary(@Req() req:AuthenticatedRequest) { return this.read.summary(req.auth.userId) }
   @Get('invitees') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string) { return this.read.invitees(req.auth.userId,page,size,level) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }
@@ -65,7 +68,12 @@ export class ReferralUserFoundationController {
 @UseGuards(AdminSessionGuard)
 @Controller('admin/referral')
 export class ReferralAdminFoundationController {
-  constructor(private readonly core: ReferralFoundationService,private readonly rbac: AdminRbacService,private readonly read:ReferralReadService) {}
+  constructor(private readonly core: ReferralFoundationService,private readonly rbac: AdminRbacService,private readonly read:ReferralReadService,private readonly team:ReferralTeamService) {}
+  @Get('team/batches') async teamBatches(@CurrentAdmin() admin:AuthenticatedAdmin) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.team.list() }
+  @Get('team/batches/:id') async teamDetail(@CurrentAdmin() admin:AuthenticatedAdmin,@Param('id') id:string) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.team.detail(id) }
+  @Post('team/generate') async generateTeam(@CurrentAdmin() admin:AuthenticatedAdmin,@Body() dto:TeamMonthDto) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.team.generateMonth(dto.month,admin.id) }
+  @Post('team/:id/approve') async approveTeam(@CurrentAdmin() admin:AuthenticatedAdmin,@Param('id') id:string) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.team.approve(id,admin.id) }
+  @Post('team/:id/pay') async payTeam(@CurrentAdmin() admin:AuthenticatedAdmin,@Param('id') id:string,@Headers('idempotency-key') key?:string) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.team.pay(id,admin.id,key??'') }
   @Get('overview') async overview(@CurrentAdmin() admin:AuthenticatedAdmin,@Query('page') page?:string,@Query('pageSize') size?:string) {
     await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.read.overview(page,size)
   }

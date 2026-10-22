@@ -62,6 +62,13 @@ describe('Admin core operations upstream errors', () => {
 })
 
 describe('Admin funds overview route', () => {
+  it('forwards team payment idempotency and requires platform management permission',async()=>{
+    const required=new Reflector().get<string[]>('admin:required-permissions',AdminCoreOpsController.prototype.referralTeamPay)
+    expect(required).toEqual(['platform.manage'])
+    global.fetch=jest.fn().mockResolvedValue(new Response(JSON.stringify({status:'paid'})))
+    await new AdminCoreOpsController(service()).referralTeamPay({admin:{id:'actor'}} as never,'batch','payment-test')
+    expect(global.fetch).toHaveBeenCalledWith('http://core.test/v1/admin/referral/team/batch/pay',expect.objectContaining({headers:expect.objectContaining({'idempotency-key':'payment-test','x-actor-admin-id':'actor'})}))
+  })
   it('requires ledger.reconciliation.manage and forwards to the core funds summary', async () => {
     const reflector = new Reflector()
     const required = reflector.get<string[]>('admin:required-permissions', AdminCoreOpsController.prototype.consoleFunds)

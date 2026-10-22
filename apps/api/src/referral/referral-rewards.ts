@@ -5,7 +5,7 @@ export type RewardQueryable = { query(sql: string, parameters?: unknown[]): Prom
 export type RewardAncestor = { user_id: string; level: number }
 export type RewardPlan = { userId: string; level: number; rateBps: number; amountAtomic: bigint }
 export type RewardSource =
-  | { kind: 'purchase'; sourceType: 'order' | 'basket_subscription'; sourceId: string; sourceUserId: string; baseAtomic: bigint | string }
+  | { kind: 'purchase'; sourceType: 'order' | 'basket_subscription' | 'quant_subscription'; sourceId: string; sourceUserId: string; baseAtomic: bigint | string }
   | { kind: 'fee'; sourceType: 'prediction_fee'; component: 'prediction_place' | 'prediction_payout'; sourceId: string; sourceUserId: string; baseAtomic: bigint | string }
 
 const logger = new Logger('ReferralRewards')
@@ -52,6 +52,13 @@ export async function recordReferralRewards(q: RewardQueryable, source: RewardSo
   if (!edge) return []
   await q.query('SAVEPOINT referral_reward')
   try {
+    if (source.sourceType === 'quant_subscription') {
+      const [ready] = await q.query("SELECT to_regclass('app.referral_quant_first_subscriptions') IS NOT NULL AS ok")
+      if (!ready?.ok) { await q.query('RELEASE SAVEPOINT referral_reward'); return [] }
+      const [first] = await q.query(`SELECT 1 FROM app.referral_quant_first_subscriptions
+        WHERE user_id=$1 AND order_id=$2 AND reward_eligible`, [source.sourceUserId, source.sourceId])
+      if (!first) { await q.query('RELEASE SAVEPOINT referral_reward'); return [] }
+    }
     const effective = source.kind === 'purchase' ? 'holding_effective_at' : 'fee_effective_at'
     const [settings] = await q.query(`SELECT version, config FROM app.referral_settings
       WHERE ${effective} <= now() ORDER BY ${effective} DESC, version DESC LIMIT 1`)

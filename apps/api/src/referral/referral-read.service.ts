@@ -24,10 +24,15 @@ export class ReferralReadService {
         UNION ALL SELECT e.invitee_user_id,t.level+1 FROM app.referral_edges e JOIN team t ON e.inviter_user_id=t.invitee_user_id WHERE t.level<3
       ) SELECT level,count(*)::int AS count FROM team GROUP BY level ORDER BY level`,[userId])
       const [settings]=await m.query('SELECT * FROM app.referral_settings ORDER BY version DESC LIMIT 1')
+      const [installed]=await m.query("SELECT to_regclass('app.referral_team_activation') IS NOT NULL AS ready")
+      const [team]=installed.ready?await m.query(`SELECT a.activated_at,s.config FROM app.referral_team_activation a JOIN app.referral_settings s
+        ON s.version=(SELECT version FROM app.referral_settings WHERE team_effective_at<=now() OR version=a.settings_version
+          ORDER BY CASE WHEN version=a.settings_version THEN a.activated_at ELSE team_effective_at END DESC,version DESC LIMIT 1)`):[]
       return {stage:1,payoutsEnabled:true,currency:'USDT',decimals:6,balances,levels:[1,2,3].map(level=>({level,count:counts.find((r:any)=>r.level===level)?.count??0})),
         rules:{version:settings.version,feeRatesBps:settings.config.feeRatesBps,holdingRatesBps:settings.config.holdingRatesBps,teamTiers:settings.config.teamTiers,
           effectiveAt:{fee:settings.fee_effective_at,holding:settings.holding_effective_at,team:settings.team_effective_at}},
-        purchaseRewardsEnabled:settings.config.holdingEnabled===true,feeRewardsEnabled:settings.config.feeEnabled===true,teamSettlementEnabled:false}
+        purchaseRewardsEnabled:settings.config.holdingEnabled===true,feeRewardsEnabled:settings.config.feeEnabled===true,
+        firstQuantPurchaseOnly:true,teamSettlementEnabled:team?.config.teamEnabled===true,teamActivatedAt:team?.activated_at??null}
     })
   }
   async invitees(userId: string,page?:string,pageSize?:string,level='all') {

@@ -14,11 +14,16 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const target = new URL(`${adminApiBase()}/admin/${path.join('/')}`)
   target.search = request.nextUrl.search
   const hasBody = !['GET', 'HEAD'].includes(request.method)
+  const idempotencyKey=request.headers.get('idempotency-key')
+  if(idempotencyKey && !/^[A-Za-z0-9_-]{8,128}$/.test(idempotencyKey)) {
+    return NextResponse.json({message:'Invalid Idempotency-Key'},{status:400})
+  }
   try {
     const upstream = await fetch(target, {
       method: request.method,
       headers: {
         authorization: `Bearer ${token}`,
+        ...(hasBody && idempotencyKey ? {'idempotency-key':idempotencyKey}:{}),
         ...(hasBody && request.headers.get('content-type') ? { 'content-type': request.headers.get('content-type')! } : {}),
       },
       body: hasBody ? await request.text() : undefined,

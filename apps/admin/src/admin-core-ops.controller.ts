@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Headers, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { AdminPermissionGuard, RequireAdminPermissions } from './admin-permission.guard'
 import type { AdminRequest } from './admin-session.guard'
@@ -22,6 +22,16 @@ type QueryMap = Record<string, string | undefined>
 @UseGuards(AdminPermissionGuard)
 export class AdminCoreOpsController {
   constructor(private readonly core: AdminCoreOpsService) {}
+  @Get('referral/team/batches') @RequireAdminPermissions('platform.manage')
+  referralTeamBatches(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/team/batches') }
+  @Get('referral/team/batches/:id') @RequireAdminPermissions('platform.manage')
+  referralTeamDetail(@Req() r:AdminRequest,@Param('id') id:string) { return this.core.get(adminId(r),`/referral/team/batches/${encodeURIComponent(id)}`) }
+  @Post('referral/team/generate') @RequireAdminPermissions('platform.manage')
+  referralTeamGenerate(@Req() r:AdminRequest,@Body() body:Record<string,unknown>) { return this.core.post(adminId(r),'/referral/team/generate',body) }
+  @Post('referral/team/:id/approve') @RequireAdminPermissions('platform.manage')
+  referralTeamApprove(@Req() r:AdminRequest,@Param('id') id:string) { return this.core.post(adminId(r),`/referral/team/${encodeURIComponent(id)}/approve`,{}) }
+  @Post('referral/team/:id/pay') @RequireAdminPermissions('platform.manage')
+  referralTeamPay(@Req() r:AdminRequest,@Param('id') id:string,@Headers('idempotency-key') key?:string) { return this.core.post(adminId(r),`/referral/team/${encodeURIComponent(id)}/pay`,{}, {},key) }
   @Get('referral/settings') @RequireAdminPermissions('platform.manage')
   referralSettings(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/settings') }
   @Get('referral/overview') @RequireAdminPermissions('platform.manage')

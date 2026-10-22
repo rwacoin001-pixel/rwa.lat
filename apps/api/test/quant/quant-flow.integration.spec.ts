@@ -10,7 +10,7 @@ import { QuantService } from '../../src/quant/quant.service'
 
 const describeDatabase = process.env.TEST_DATABASE_URL ? describe : describe.skip
 const allowAll = { assertEnabled: async () => undefined, isEnabled: async () => true } as unknown as OperationalCapabilityService
-const SLUG = 'koala-test'
+let SLUG = 'koala-test'
 
 /** Koala Quant acceptance: subscribe, enter/approve/post two days (a win, then a loss), redeem, and check the ledger stays whole. */
 describeDatabase('koala quant full flow', () => {
@@ -35,12 +35,8 @@ describeDatabase('koala quant full flow', () => {
   const cleanup = async () => {
     await ds.query(`DELETE FROM app.user_risk_acknowledgements WHERE disclosure_id IN (SELECT id FROM app.risk_disclosures WHERE product_type = 'quant')`)
     await ds.query(`DELETE FROM app.risk_disclosures WHERE product_type = 'quant'`)
-    const ids = `(SELECT id FROM app.quant_products WHERE slug = '${SLUG}')`
-    await ds.query(`DELETE FROM app.quant_payouts WHERE product_id IN ${ids}`)
-    await ds.query(`DELETE FROM app.quant_daily_settlements WHERE product_id IN ${ids}`)
-    await ds.query(`DELETE FROM app.quant_lots WHERE product_id IN ${ids}`)
-    await ds.query(`DELETE FROM app.quant_orders WHERE product_id IN ${ids}`)
-    await ds.query(`DELETE FROM app.quant_products WHERE slug = '${SLUG}'`)
+    // Financial sources and lifetime first-subscription eligibility are immutable.
+    // Use a fresh product for each case instead of deleting settled subscription history.
   }
 
   beforeAll(async () => {
@@ -61,6 +57,7 @@ describeDatabase('koala quant full flow', () => {
 
   beforeEach(async () => {
     await cleanup()
+    SLUG=`koala-test-${randomUUID().slice(0,8)}`
     userId = randomUUID()
     await ds.query(`INSERT INTO app.users (id) VALUES ($1)`, [userId])
     const [user] = (await ds.query(
