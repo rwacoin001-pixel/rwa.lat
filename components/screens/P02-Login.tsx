@@ -258,6 +258,30 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     startCooldown(result.data.retryAfter)
   }
 
+  // A valid invitation code sends the verification email by itself once the terms are accepted; once per code.
+  const autoSent = useRef('')
+  useEffect(() => {
+    if (step !== 'new' || !account || invite.status !== 'valid' || !consentReady || pending || retryAfter > 0 || autoSent.current === invite.value) return
+    autoSent.current = invite.value
+    void run(async () => { if (await invite.commit()) await sendCode(account) })
+  }, [step, account, invite.status, invite.value, consentReady, pending, retryAfter])
+
+  // A complete address that belongs to no account opens registration by itself, so the invitation field appears
+  // without another tap. Existing accounts keep the explicit continue: typing alone never sends a sign-in email.
+  useEffect(() => {
+    if (step !== 'email' || walletChallenge || pending || retryAfter > 0) return
+    const value = email.trim()
+    if (!EMAIL.test(value)) return
+    let active = true
+    const timer = setTimeout(() => {
+      void lookupEmail(value, 'silent').then(result => {
+        if (!active || !result.ok || result.data.account !== 'new' || busy.current) return
+        setAccount({ email: value, isNew: true, password: false, passkey: false }); setPassword(''); setAgreed(false); setStep('new')
+      })
+    }, 800)
+    return () => { active = false; clearTimeout(timer) }
+  }, [email, step, walletChallenge, pending, retryAfter])
+
   const identify = () => run(async () => {
     const value = email.trim()
     const result = await lookupEmail(value)
@@ -336,7 +360,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const startProvider = async (provider: 'google' | 'github' | 'x') => {
     if (pending || busy.current) return
     stopPasskey()
-    if (!(await invite.commit())) return
+    // Providers serve sign-in as well, so an empty code never blocks them; a typed one is recorded first.
+    if (!(await invite.commit({ required: false }))) return
     // The Android app hands providers to the system browser, which signs in and returns the session to the app.
     if (isAndroidApp()) { setError(''); window.location.assign(`${APP_BROWSER_SIGN_IN_PATH}?provider=${provider}`); return }
     busy.current = true; setPending(true); setError('')
@@ -419,7 +444,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     {error && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></div>}
     {requirementsError && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{requirementsError} <button type="button" onClick={() => setRequirementsAttempt(value => value + 1)}>{t('common.refresh')}</button></span></div>}
   </>
-  // Prominent wherever an account may be created: the register route, the new-account step and wallet registration.
+  // Required wherever an account is created (new-account step, wallet registration); hidden when a /r/ link carries the invitation.
   const inviteField = <div className={styles.inviteSlot}><InviteCodeField invite={invite} locale={locale} disabled={pending} /></div>
   const cooldownLabel = interpolateRouteCopy(copy.retryAfter, { seconds: retryAfter })
 
@@ -472,7 +497,6 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         </button>
       </label> : identity}
       {step === 'email' && retryAfter > 0 && <p className={styles.hint} role="status">{cooldownLabel}</p>}
-      {step === 'email' && mode === 'register' && inviteField}
 
       {step === 'password' && account && <div className={styles.field}>
         {/* Lets password managers pair the saved password with this address. */}

@@ -33,8 +33,8 @@ export async function loginPassword(email: string, password: string): Promise<Ap
 
 // Email-first sign-in: the form asks which path an address takes before sending anything.
 export type EmailLookup = ApiSchemas['EmailLookupResultDto']
-export const lookupEmail = (email: string) =>
-  request<EmailLookup>('/v1/auth/email/lookup', { method: 'POST', body: JSON.stringify({ email } satisfies ApiSchemas['EmailLookupDto']) })
+export const lookupEmail = (email: string, loading?: 'silent') =>
+  request<EmailLookup>('/v1/auth/email/lookup', { method: 'POST', loading, body: JSON.stringify({ email } satisfies ApiSchemas['EmailLookupDto']) })
 
 export type EmailCodeChallenge = { accepted: true; challengeId: string; expiresIn: number; retryAfter: number }
 export const requestEmailCode = (email: string, intent: 'login' | 'register', locale: string, consents: AuthConsent[] = []) =>
