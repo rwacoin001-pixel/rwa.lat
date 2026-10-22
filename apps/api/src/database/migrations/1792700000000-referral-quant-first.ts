@@ -5,6 +5,7 @@ export class ReferralQuantFirst1792700000000 implements MigrationInterface {
   name = 'ReferralQuantFirst1792700000000'
   async up(q: QueryRunner): Promise<void> {
     await q.query(`
+      LOCK TABLE app.quant_orders IN SHARE ROW EXCLUSIVE MODE;
       CREATE TABLE app.referral_quant_first_subscriptions (
         user_id uuid PRIMARY KEY REFERENCES app.users(id) ON DELETE RESTRICT,
         order_id uuid NOT NULL UNIQUE REFERENCES app.quant_orders(id) ON DELETE RESTRICT,
