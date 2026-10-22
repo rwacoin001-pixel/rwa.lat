@@ -13,7 +13,7 @@ import { communityTopicCopy } from '@/lib/route-copy'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
 import RwaLogoMark from './rwa-logo'
-import { CommunityFollowButton, CommunityLike } from './community-actions'
+import { CommunityFollowButton, CommunityFollowView, CommunityLike, useCommunityFollow } from './community-actions'
 import { CommunityText } from './community-text'
 import { CommunityAvatar, CommunityMark, mediaSrc } from './community-avatar'
 import { CommunityBanner } from './community-banner'
@@ -309,6 +309,40 @@ function BackButton({ label, onClick }: { label: string; onClick: () => void }) 
   return <button type="button" className={c.circleBtn} aria-label={label} onClick={onClick}><ArrowLeft className={c.flip} size={20} strokeWidth={2} aria-hidden="true" /></button>
 }
 
+/**
+ * Scroll progress for the X profile bar, written as CSS variables on the page root (rAF-batched):
+ * --pf-art 0→1 while the banner scrolls up under the bar, --pf-title 0→1 while the name passes beneath it,
+ * and data-pin-follow once the profile's own follow button is hidden under the bar.
+ */
+function useProfileHead(ready: boolean) {
+  const root = useRef<HTMLDivElement>(null), bar = useRef<HTMLElement>(null), banner = useRef<HTMLDivElement>(null)
+  const name = useRef<HTMLHeadingElement>(null), follow = useRef<HTMLSpanElement>(null)
+  useEffect(() => {
+    const el = root.current
+    if (!el || !ready) return
+    let frame = 0
+    const clamp = (value: number) => Math.min(1, Math.max(0, value))
+    const update = () => {
+      frame = 0
+      const edge = bar.current?.getBoundingClientRect().bottom ?? 0
+      const art = banner.current?.getBoundingClientRect()
+      const title = name.current?.getBoundingClientRect()
+      const pin = follow.current?.getBoundingClientRect()
+      // The banner starts under the bar: 0 at rest, 1 once its bottom edge reaches the bar's.
+      el.style.setProperty('--pf-art', art ? clamp(-art.top / Math.max(1, art.height - edge)).toFixed(3) : '1')
+      el.style.setProperty('--pf-title', title ? clamp((edge - title.top) / Math.max(1, title.height)).toFixed(3) : '1')
+      if (pin && pin.bottom < edge) el.dataset.pinFollow = ''
+      else delete el.dataset.pinFollow
+    }
+    const schedule = () => { if (!frame) frame = requestAnimationFrame(update) }
+    update()
+    window.addEventListener('scroll', schedule, { passive: true })
+    window.addEventListener('resize', schedule)
+    return () => { window.removeEventListener('scroll', schedule); window.removeEventListener('resize', schedule); cancelAnimationFrame(frame) }
+  }, [ready])
+  return { root, bar, banner, name, follow }
+}
+
 /** Loads the next page when the end of the list scrolls into view (X has no "load more" button). */
 function useInfinite(onReach: () => void, enabled: boolean, page: unknown) {
   const ref = useRef<HTMLDivElement>(null)
@@ -470,6 +504,8 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
   const ui = communityUiCopy[locale]
   const p = profileCopy[locale]
   const actions = usePostActions(isGuest, go, locale)
+  // Reading down hides the whole bar; any scroll back up (or reaching the top) brings it back.
+  const chromeHidden = useScrollChrome()
 
   // `silent` keeps the current post on screen while counts refresh after a like or reply.
   const load = useCallback(async (silent = false) => {
@@ -506,7 +542,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
   return (
     <MaisonPage page="community-post" className={c.page}>
       <div className={c.x} data-reply-bar={data ? '' : undefined}>
-        <header className={c.subHead}>
+        <header className={c.subHead} data-hidden={chromeHidden}>
           <BackButton label={p.back} onClick={() => go('community')} />
           <h1 className={c.subTitle}><b>{p.post}</b></h1>
           {postId && <button type="button" className={c.circleBtn} aria-label={t('community.report')} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>}
@@ -617,15 +653,23 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
   const media = data ? data.posts.filter((post) => post.images.length > 0) : []
   const shareProfile = () => actions.share('/community/member/' + encodeURIComponent(profile?.handle || handle || ''))
   const openMenu = () => profile && actions.openMenu({ type: 'profile', id: profile.id, title: profile.displayName }, shareProfile)
+  const follow = useCommunityFollow(handle ?? '', isGuest || !handle, () => go('login'), () => void load(true))
+  const head = useProfileHead(Boolean(profile))
+  const art = profile ? (profile.coverUrl ? <img src={mediaSrc(profile.coverUrl) ?? undefined} alt="" /> : <CommunityBanner seed={profile.handle || handle || ''} />) : null
   return (
     <MaisonPage page="community-profile" className={c.page}>
-      <div className={c.x}>
-        <header className={c.subHead}>
-          <BackButton label={p.back} onClick={() => go('community')} />
-          <h1 className={c.subTitle}>
-            <b dir="auto">{profile?.displayName ?? t('community.viewProfile')}</b>
+      <div className={c.x} ref={head.root}>
+        {/* X profile bar: clear over the banner at rest; while scrolling, the banner pins under it (blurred, dimmed),
+            then the name and a pinned follow button fade in once their originals pass beneath the bar. */}
+        <header ref={head.bar} className={c.profHead} data-art={art ? '' : undefined}>
+          {art && <span className={c.profHeadArt} aria-hidden="true">{art}</span>}
+          <button type="button" className={c.discBtn} aria-label={p.back} onClick={() => go('community')}><ArrowLeft className={c.flip} size={20} strokeWidth={2} aria-hidden="true" /></button>
+          <h1 className={c.profHeadTitle}>
+            <b dir="auto">{profile?.displayName ?? t('community.viewProfile')}{profile?.kind === 'official' && <BadgeCheck className={c.badge} size={18} strokeWidth={2.2} aria-hidden="true" />}</b>
             {data && <small>{p.postsCount.replace('{n}', compact(locale, data.stats.postCount))}</small>}
           </h1>
+          {profile && <button type="button" className={c.discBtn} aria-label={p.more} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>}
+          {profile && !own && <CommunityFollowView state={follow} className={c.headFollow} />}
         </header>
         {!handle || failed ? (
           <XState title={failed ? communityCopy[locale].profileFailed : t('community.emptyTitle')}
@@ -634,24 +678,21 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
           <SkeletonRows rows={3} />
         ) : (
           <>
-            <div className={c.banner} aria-hidden="true">
-              {profile.coverUrl ? <img src={mediaSrc(profile.coverUrl) ?? undefined} alt="" /> : <CommunityBanner seed={profile.handle || handle} />}
-            </div>
+            <div ref={head.banner} className={c.banner} aria-hidden="true">{art}</div>
             <div className={c.profTop}>
               <span className={c.avatarRing}>
                 {own && me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle} size={80} /> : <Avatar author={profile} size={80} />}
               </span>
               <div className={c.profActions}>
-                <button type="button" className={c.outlineCircle} aria-label={p.more} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={18} strokeWidth={1.9} aria-hidden="true" /></button>
                 {own
                   ? <button type="button" className={c.pill} onClick={() => setEditing(true)}>{communityComposeCopy[locale].editProfile}</button>
                   : <>
                     <button type="button" className={c.outlineCircle} aria-label={p.dm} onClick={() => isGuest ? go('login') : actions.notify({ text: p.dmSoon })}><Mail size={18} strokeWidth={1.9} aria-hidden="true" /></button>
-                    <CommunityFollowButton className={c.follow} handle={handle} guest={isGuest} onLogin={() => go('login')} onChanged={() => void load(true)} />
+                    <span ref={head.follow} className={c.followSlot}><CommunityFollowView state={follow} className={c.follow} /></span>
                   </>}
               </div>
             </div>
-            <h2 className={c.profName}>
+            <h2 ref={head.name} className={c.profName}>
               <span dir="auto">{profile.displayName}</span>
               {profile.kind === 'official' && <BadgeCheck className={c.badge} size={20} strokeWidth={2.2} role="img" aria-label={p.verified} />}
             </h2>

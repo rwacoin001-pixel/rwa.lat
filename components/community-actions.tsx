@@ -99,7 +99,14 @@ export function CommunityLike({ postId, count, guest, onLogin, onChanged, probe 
 
 /** Follow / following pill. The state probe only decides the label; a failed probe still leaves it tappable. */
 export function CommunityFollowButton({ handle, guest, onLogin, onChanged, className }: { handle: string; guest: boolean; onLogin: () => void; onChanged?: () => void; className?: string }) {
-  const { locale } = useI18n(); const c = communityCopy[locale], f = followCopy[locale]
+  return <CommunityFollowView state={useCommunityFollow(handle, guest, onLogin, onChanged)} className={className} />
+}
+
+export type CommunityFollowState = ReturnType<typeof useCommunityFollow>
+
+/** One follow state for a profile, so several buttons (the profile row and the pinned header) always agree. */
+export function useCommunityFollow(handle: string, guest: boolean, onLogin: () => void, onChanged?: () => void) {
+  const { locale } = useI18n(); const c = communityCopy[locale]
   const [following, setFollowing] = useState(false), [busy, setBusy] = useState(false), [error, setError] = useState('')
   useEffect(() => {
     setFollowing(false)
@@ -119,7 +126,13 @@ export function CommunityFollowButton({ handle, guest, onLogin, onChanged, class
     if (!result.ok) { setFollowing(!next); setError(communityError(result.error, c)); return }
     onChanged?.()
   }
-  return <button type="button" className={className} aria-pressed={following} aria-busy={busy} data-error={error ? 'true' : undefined} title={error || undefined} onClick={() => void toggle()}>
+  return { following, busy, error, toggle }
+}
+
+export function CommunityFollowView({ state, className, tabIndex }: { state: CommunityFollowState; className?: string; tabIndex?: number }) {
+  const { locale } = useI18n(); const f = followCopy[locale]
+  const { following, busy, error, toggle } = state
+  return <button type="button" className={className} tabIndex={tabIndex} aria-pressed={following} aria-busy={busy} data-error={error ? 'true' : undefined} title={error || undefined} onClick={() => void toggle()}>
     {following ? <><span data-rest="">{f.following}</span><span data-hover="">{f.unfollow}</span></> : <span>{f.follow}</span>}
     <span style={srOnly} role="status">{error}</span>
   </button>

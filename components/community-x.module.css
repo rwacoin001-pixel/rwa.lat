@@ -111,6 +111,33 @@
 /* Sub-page header: back · title (+ subtitle) · trailing action. */
 .subHead { position: sticky; z-index: 10; top: 0; display: flex; align-items: center; gap: 20px; min-height: var(--x-head-row); padding: env(safe-area-inset-top) 8px 0; background: var(--x-header); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 .subHead[data-line] { border-bottom: 1px solid var(--x-line); }
+/* Post page: the whole bar (safe area included) slides away while reading down. */
+.subHead { transition: transform .32s cubic-bezier(.2, .8, .2, 1); }
+.subHead[data-hidden='true'] { transform: translateY(-100%); pointer-events: none; }
+
+/* ── Profile bar (X): floats over the banner, which pins and dims under it while scrolling (--pf-art),
+   then the name rises in (--pf-title) and a follow button pins once the profile's own scrolls away. ── */
+.x { --pf-art: 0; --pf-title: 0; }
+.profHead { --pf-bar: calc(var(--x-head-row) + env(safe-area-inset-top)); position: sticky; z-index: 10; top: 0; display: flex; align-items: center; gap: 12px; height: var(--pf-bar); margin-bottom: calc(-1 * var(--pf-bar)); padding: env(safe-area-inset-top) 12px 0; overflow: hidden; isolation: isolate; color: #fff; }
+.profHeadArt { position: absolute; z-index: -1; inset: 0; opacity: var(--pf-art); }
+.profHeadArt > img, .profHeadArt > svg { position: absolute; left: 0; bottom: 0; display: block; width: 100%; height: auto; aspect-ratio: 3 / 1; object-fit: cover; filter: blur(10px) saturate(1.1); transform: scale(1.15); transform-origin: 50% 100%; }
+.profHeadArt::after { content: ''; position: absolute; inset: 0; background: rgba(0, 0, 0, .38); }
+.discBtn { display: inline-grid; flex: none; place-items: center; width: 34px; height: 34px; padding: 0; border: 0; border-radius: 50%; background: rgba(15, 20, 25, .5); color: #fff; cursor: pointer; -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); transition: background-color .2s, transform .15s; }
+.discBtn:active { transform: scale(.94); background: rgba(15, 20, 25, .65); }
+.profHeadTitle { flex: 1; min-width: 0; margin: 0; opacity: var(--pf-title); transform: translateY(calc((1 - var(--pf-title)) * 14px)); }
+.profHeadTitle b { display: flex; align-items: center; gap: 4px; overflow: hidden; font-size: 18px; font-weight: 800; line-height: 22px; text-overflow: ellipsis; white-space: nowrap; }
+.profHeadTitle b > :global(svg) { flex: none; }
+.profHeadTitle small { display: block; color: rgba(255, 255, 255, .82); font-size: 13px; line-height: 16px; }
+.headFollow { display: inline-flex; flex: none; align-items: center; justify-content: center; height: 32px; padding: 0 16px; border: 1px solid #fff; border-radius: 9999px; background: #fff; color: #0f1419; font: 700 15px/1 var(--x-font); white-space: nowrap; cursor: pointer; visibility: hidden; opacity: 0; transform: scale(.9); transition: opacity .18s, transform .18s, visibility 0s .18s; }
+.headFollow[aria-pressed='true'] { border-color: rgba(255, 255, 255, .7); background: transparent; color: #fff; }
+.headFollow [data-hover] { display: none; }
+.x[data-pin-follow] .headFollow { visibility: visible; opacity: 1; transform: none; transition: opacity .18s, transform .18s; }
+.followSlot { display: inline-flex; }
+/* No banner yet (loading / failed): a plain bar with the title shown. */
+.profHead:not([data-art]) { background: var(--x-header); color: var(--x-ink); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); margin-bottom: 0; }
+.profHead:not([data-art]) .discBtn { background: transparent; color: var(--x-ink); -webkit-backdrop-filter: none; backdrop-filter: none; }
+.profHead:not([data-art]) .profHeadTitle { opacity: 1; transform: none; }
+.profHead:not([data-art]) .profHeadTitle small { color: var(--x-muted); }
 .subTitle { flex: 1; min-width: 0; margin: 0; }
 .subTitle b { display: block; overflow: hidden; color: var(--x-ink); font-size: 20px; font-weight: 700; line-height: 24px; text-overflow: ellipsis; white-space: nowrap; }
 .subTitle small { display: block; color: var(--x-muted); font-size: 13px; line-height: 16px; }
