@@ -2,7 +2,6 @@
 
 import { ArrowRight, ExternalLink, Info, ShieldCheck } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
-import Image from 'next/image'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
@@ -17,6 +16,9 @@ import { Delta, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s
 import { Figure, Lacquer, PollBar, PriceChart, Segmented, StatStrip } from './motion'
 import { fmtAtomic, fmtDateTime } from './format'
 import { PublicShareButton } from '../public-sharing'
+import { DetailFlow, ProductHero, heroTopbar } from './ProductHero'
+import { classCover, productCover, sharedKeys } from '@/lib/product-media'
+import { featuredCover } from '@/lib/home-asset-media'
 
 export function AssetDetailScreen({ slug }: { slug: string | null }) {
   const { locale } = useI18n()
@@ -24,7 +26,7 @@ export function AssetDetailScreen({ slug }: { slug: string | null }) {
   const products = useQuery('markets:catalog', listProducts, { staleTime: 60_000, pollInterval: POLL.list })
   const product = slug ? productForSlug(products.data, slug) : undefined
   const content=useContentTranslation(product?[product.displayName,product.summary??'']:[])
-  const topbar = <RwaTopbar screen="rwa-detail" title={content(product?.displayName ?? '')} onBack={() => backOr('/markets')} />
+  const topbar = <RwaTopbar screen="rwa-detail" {...(product ? heroTopbar : {})} title={content(product?.displayName ?? '')} onBack={() => backOr('/markets')} />
   if (!slug) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}><StateBlock title={copy.detail.notFound} body={copy.detail.notFoundBody} /></div></MaisonPage>
   if (!products.data && !products.error) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}><Skeleton rows={4} /></div></MaisonPage>
   // A catalog failure must not silently downgrade an investable product to "research only".
@@ -38,25 +40,6 @@ function useNow(interval = 1000) {
   return now
 }
 
-// Class imagery for the detail cover; classes without a picture keep the plain lacquer layout.
-function coverFor(assetClass: string, name = '') {
-  const kind = assetClass.toLowerCase()
-  if (kind === 'treasury' || kind === 'bond' || /t-?bill|treasur/i.test(name)) return '/media/home/feed-treasury-concept.webp'
-  if (/solar/i.test(name)) return '/media/home/feed-solar-concept.webp'
-  if (kind === 'real_estate' || /multifamily|estate/i.test(name)) return '/media/home/asset-real-estate.webp'
-  if (kind === 'compute') return '/media/home/feed-compute-concept.webp'
-  if (kind === 'rwa' || kind === 'infrastructure') return '/media/home/asset-infrastructure.webp'
-  if (kind === 'stocks') return '/media/home/asset-treasury-paper.webp'
-  return null
-}
-
-/** Key figures on a glass card floating over the class image (D3 batch 4). */
-function MediaCard({ src, items }: { src: string; items: Parameters<typeof StatStrip>[0]['items'] }) {
-  return <figure className={s.mediaCard}>
-    <Image src={src} unoptimized={src.includes('/v1/platform/')} alt="" fill sizes="(max-width: 500px) calc(100vw - 32px), 468px" loading="lazy" />
-    <div className={s.mediaGlass}><StatStrip items={items} /></div>
-  </figure>
-}
 
 function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar: React.ReactNode }) {
   const { locale } = useI18n()
@@ -71,7 +54,9 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
   const network = networkLabel(product.network)
   const expired = quote.data ? quote.data.stale || Date.parse(quote.data.validUntil) <= now : false
   const invest = () => openPath(`/orders/review?product=${encodeURIComponent(product.id)}`)
-  const cover = product.imageUrl ? apiUrl(product.imageUrl) : coverFor(product.assetClassId, product.displayName)
+  // Same picture as the Markets card (lib/product-media), so the card's image can fly into this hero.
+  const cover = productCover(product)?.src ?? null
+  const slug = product.externalRef ?? product.id
   // Order limits are spend amounts in the USDT settlement asset (the server compares them with the order's
   // USDT atomic amount), not quantities of the product asset, so they share the CTA's unit.
   const keyStats = [
@@ -89,15 +74,13 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
   }, [quote.data])
 
   return <MaisonPage page="asset" topbar={topbar} cta>
-    <header className={s.hero}>
-      <p className={s.kicker}>{klass} · {d.investable}</p>
-      <h1 className={s.titleL}>{content(product.displayName)}</h1>
-      {product.summary && <p className={s.lede}>{content(product.summary)}</p>}
+    <ProductHero image={cover} imageKey={sharedKeys.asset(slug, 'image')} titleKey={sharedKeys.asset(slug, 'title')}
+      kicker={<>{klass} · {d.investable}</>} title={content(product.displayName)} titleText={product.displayName}
+      lede={product.summary ? content(product.summary) : undefined}>
       {product.state==='published' && <PublicShareButton key={product.id} kind="product" resourceId={product.id} />}
-    </header>
+    </ProductHero>
 
-    {cover && <MediaCard src={cover} items={keyStats} />}
-
+    <DetailFlow>
     <Lacquer aria-live="polite">
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
         <span className={s.kicker}>{d.unitPrice}</span>
@@ -111,7 +94,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
           <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 11.5 }}>{copy.common.source}: {quote.data.source} · {fill(copy.common.updated, { t: fmtDateTime(quote.data.capturedAt, locale) })}</p>
           <p className={s.muted} style={{ margin: '4px 0 0', fontSize: 11.5 }}>{fill(d.validUntil, { t: fmtDateTime(quote.data.validUntil, locale) })}</p>
         </>}
-      {!cover && <StatStrip items={keyStats} />}
+      <StatStrip items={keyStats} />
     </Lacquer>
 
     <div style={{ marginTop: 22 }}>
@@ -146,6 +129,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
         })}</ul>
         : <StateBlock title={d.tabs[2]} body={d.noDisclosures} />}
     </div>}
+    </DetailFlow>
 
     {/* No hint line here: it sat in the bar's transparent fade over the content scrolling beneath, and the same
         eligibility sentence already closes "Order rules" (the review screen repeats it before confirming). */}
@@ -167,7 +151,7 @@ function ResearchDetail({ slug }: { slug: string }) {
   const pro = proCopy[locale]
   const asset = detail.data
   const content=useContentTranslation(asset?[asset.name,asset.description??'']:[])
-  const topbar = <RwaTopbar screen="rwa-detail" title={asset?.name ?? ''} onBack={() => backOr('/markets')} />
+  const topbar = <RwaTopbar screen="rwa-detail" {...(asset ? heroTopbar : {})} title={asset?.name ?? ''} onBack={() => backOr('/markets')} />
   if (!asset && !detail.error) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}><Skeleton rows={4} /></div></MaisonPage>
   if (!asset) return <MaisonPage page="asset" topbar={topbar}><div className={s.hero}>
     {detail.error?.status === 404 ? <StateBlock title={d.notFound} body={d.notFoundBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets')}>{copy.status.backMarkets}</button>} />
@@ -179,7 +163,8 @@ function ResearchDetail({ slug }: { slug: string }) {
   const points = real.map((point) => ({ time: Date.parse(point.date) / 1000, value: Number(point.marketCapUsd) }))
   const symbol = asset.symbol && asset.symbol !== '-' ? asset.symbol : null
   const score = asset.score && typeof asset.score === 'object' ? asset.score.overallScore : null
-  const cover = coverFor(asset.assetClass, asset.name)
+  // Same picture Home's featured rail shows for this asset when it has a curated one, so that thumbnail can fly here.
+  const cover = featuredCover(slug) ?? classCover(asset.assetClass, asset.name)
   const moves = [
     { label: d.change24h, value: <Delta value={asset.change24hPct} /> },
     { label: d.change7d, value: <Delta value={asset.change7dPct} /> },
@@ -188,26 +173,21 @@ function ResearchDetail({ slug }: { slug: string }) {
   ]
 
   return <MaisonPage page="asset" topbar={topbar}>
-    <header className={s.hero}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        <Logo src={asset.logoUrl} name={content(asset.name)} />
-        <p className={s.kicker} style={{ flexWrap: 'wrap' }}>{[symbol, asset.assetClass.replace(/_/g, ' ')].filter(Boolean).join(' · ')}</p>
-      </div>
-      <h1 className={s.titleL} style={{ marginTop: 14 }}>{content(asset.name)}</h1>
-      <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+    <ProductHero image={cover} imageKey={featuredCover(slug) ? sharedKeys.asset(slug, 'image') : undefined} titleKey={sharedKeys.asset(slug, 'title')}
+      logo={<Logo src={asset.logoUrl} name={content(asset.name)} />} kicker={[symbol, asset.assetClass.replace(/_/g, ' ')].filter(Boolean).join(' · ')}
+      title={content(asset.name)} titleText={asset.name}
+      badges={<>
         <span className={s.badge} data-tone="accent">{d.research}</span>
         {asset.issuer && <button type="button" className={s.link} onClick={() => openPath(`/issuers/${encodeURIComponent(asset.issuer.slug)}`)}>{d.issuer}: {asset.issuer.name}</button>}
-      </p>
-    </header>
+      </>} />
 
-    {cover && <MediaCard src={cover} items={moves} />}
-
+    <DetailFlow>
     <Lacquer>
       <span className={s.kicker}>{d.marketCap}</span>
       <p className={`${s.bigFigure} ${s.num}`}>{asset.marketCapUsd != null && Number.isFinite(Number(asset.marketCapUsd))
         ? fmtUsdCompact(asset.marketCapUsd, { locale })
         : '—'}</p>
-      {!cover && <StatStrip items={moves} />}
+      <StatStrip items={moves} />
     </Lacquer>
 
     <SectionHead index="01" title={d.history} />
@@ -238,6 +218,7 @@ function ResearchDetail({ slug }: { slug: string }) {
     </>}
 
     <div className={s.notice}><Info size={16} /><span>{d.researchNote}</span></div>
+    </DetailFlow>
     <div className={s.actions2} style={{ marginTop: 14 }}>
       <button type="button" className={s.ghost} onClick={() => openPath(`/compare?slugs=${encodeURIComponent(slug)}`)}>{copy.markets.compare}</button>
       <button type="button" className={s.ghost} onClick={() => openPath('/markets')}>{copy.status.backMarkets}</button>

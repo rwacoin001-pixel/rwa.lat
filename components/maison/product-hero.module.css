@@ -1,0 +1,102 @@
+/* Product detail header shared by basket, strategy, catalog asset and directory asset pages.
+   Colours come from the page's --m-* tokens, so both themes resolve here; geometry follows styles/ios.css. */
+
+.wrap {
+  --ph-bar: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px) + var(--app-topbar-row-height, 44px));
+  --ph-y: 0;
+  position: relative;
+  /* Full-bleed and pulled up under the clear topbar (the body adds 6px of air above its first child). */
+  margin: calc(-1 * var(--ph-bar) - 6px) calc(-1 * var(--m-gutter)) 0;
+}
+
+.media {
+  position: relative;
+  display: block;
+  height: clamp(300px, 62vw + var(--ph-bar), 460px);
+  max-height: 58svh;
+  margin: 0;
+  overflow: hidden;
+  background: var(--m-glass-deep);
+  isolation: isolate;
+}
+.img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 50% 0;
+  /* Parallax while reading down; a rubber-band stretch when pulled past the top (iOS overscroll). */
+  transform: translate3d(0, calc(max(var(--ph-y), 0) * .42px), 0) scale(calc(1 + max(calc(var(--ph-y) * -1), 0) / 320));
+  will-change: transform;
+}
+.media[data-empty='true'] { background: var(--m-lacquer); }
+.monogram {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding-top: var(--ph-bar);
+  color: var(--m-lacquer-accent);
+  font-family: var(--m-display);
+  font-size: clamp(96px, 34vw, 150px);
+  line-height: 1;
+  opacity: .5;
+}
+/* Top: keeps the floating back / share buttons legible on any picture. Bottom: dissolves the picture into the page. */
+.shade {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(0, 0, 0, .38) 0, rgba(0, 0, 0, 0) calc(var(--ph-bar) + 36px)),
+    linear-gradient(180deg, transparent 46%, color-mix(in srgb, var(--m-bg) 55%, transparent) 76%, var(--m-bg) 100%);
+}
+/* Sits on the picture itself, above the fade and clear of the title block. */
+.caption { position: absolute; z-index: 2; inset-inline-end: var(--m-gutter); bottom: 84px; margin: 0; color: rgba(255, 255, 255, .78); font-size: 10.5px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+
+.head { position: relative; z-index: 2; margin-top: -64px; padding: 0 var(--m-gutter) 6px; }
+.kicker { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--m-accent); font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
+.title { margin: 8px 0 0; color: var(--m-ink); font-family: var(--m-display); font-size: clamp(32px, 9.4vw, 44px); font-weight: 400; line-height: 1.04; letter-spacing: -.01em; overflow-wrap: anywhere; }
+.title > span { display: inline-block; }
+.sub { margin: 6px 0 0; color: var(--m-muted); font-size: 14px; font-weight: 500; line-height: 1.4; }
+.badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
+.lede { margin: 12px 0 0; color: var(--m-muted); font-size: 14px; line-height: 1.55; }
+
+/* Topbar over the picture: frosted dark discs with white glyphs at rest; the page's own glass once content scrolls under it. */
+:global(.rwa-mobile[data-theme][data-screen]) :global(.rwa-topbar.rwa-topbar--s1[data-template][data-surface='transparent-over-media']:not([data-scrolled='true'])):has(~ * .wrap) :global(button.rwa-topbar__slot:not(.rwa-topbar__slot--logo)) {
+  width: 36px; min-width: 36px; height: 36px; min-height: 36px; margin: 4px;
+  background: rgba(10, 12, 16, .34);
+  color: #fff;
+  -webkit-backdrop-filter: blur(14px) saturate(1.4);
+  backdrop-filter: blur(14px) saturate(1.4);
+  transition: background-color .25s, color .25s;
+}
+
+/* The bar's title stays out of the way over the picture and fades in once content scrolls under the glass. */
+:global(.rwa-topbar[data-surface='transparent-over-media']):has(~ * .wrap) :global(.rwa-topbar__center > span[data-over-media]) { opacity: 0; transition: opacity .2s; }
+:global(.rwa-topbar[data-surface='transparent-over-media'][data-scrolled='true']):has(~ * .wrap) :global(.rwa-topbar__center > span[data-over-media]) { opacity: 1; }
+
+/* ── Motion ── */
+@media (prefers-reduced-motion: no-preference) {
+  /* Names start with "ph" so the shared-element flight can finish them before measuring (see ENTRANCE there). */
+  .media { animation: phSettle .9s cubic-bezier(.16, 1, .3, 1) backwards; }
+  .head > * { animation: phRise .62s cubic-bezier(.16, 1, .3, 1) backwards; }
+  .head > :nth-child(1) { animation-delay: 80ms; }
+  .head > :nth-child(2) { animation-delay: 140ms; }
+  .head > :nth-child(3) { animation-delay: 200ms; }
+  .head > :nth-child(4) { animation-delay: 250ms; }
+  .head > :nth-child(n + 5) { animation-delay: 300ms; }
+  @keyframes phSettle { from { clip-path: inset(0 0 14% 0); filter: saturate(.6) brightness(.9); } }
+  @keyframes phRise { from { opacity: 0; transform: translateY(18px); } }
+
+  /* Sections after the hero rise into place as they scroll in (scroll-driven; browsers without it show them static). */
+  @supports (animation-timeline: view()) {
+    .flow > * { animation: phReveal linear both; animation-timeline: view(); animation-range: entry 0% entry 42%; }
+    @keyframes phReveal { from { opacity: 0; transform: translateY(28px) scale(.985); } to { opacity: 1; transform: none; } }
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .img { transform: none; }
+}

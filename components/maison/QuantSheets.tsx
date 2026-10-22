@@ -5,7 +5,7 @@ import { Sheet } from './Sheet'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { acknowledgeDisclosure, getWallet } from '@/lib/api/markets'
-import { idempotencyKeyForIntent, retireIntentKey } from '@/lib/api/idempotency'
+import { idempotencyKeyForIntent, isFinalRejection, retireIntentKey } from '@/lib/api/idempotency'
 import { getQuantDisclosure, getQuantRedemptionPreview, getQuantSubscriptionPreview, redeemQuant, subscribeQuant, type QuantProduct } from '@/lib/api/quant'
 import { quantCopyFor, quantErrorMessage } from '@/lib/maison-quant-copy'
 import { subscriptionTimeline } from '@/lib/quant-view-model'
@@ -75,7 +75,17 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
     const key = idempotencyKeyForIntent(keys.current, 'POST', path, { amountUsd: text })
     const result = await subscribeQuant(product.slug, text, key)
     setPending(false)
-    if (!result.ok) { setError(quantErrorMessage(c, result.error.code)); return }
+    if (!result.ok) {
+      // A refused order is stored as `rejected` under its key; the next tap must be a new order, not a replay of that one.
+      if (isFinalRejection(result.error)) retireIntentKey(keys.current, 'POST', path, { amountUsd: text })
+      setError(quantErrorMessage(c, result.error.code)); return
+    }
+    if (result.data.order.status === 'rejected') {
+      // A replayed key returns the earlier refusal as a "duplicate": never show it as a successful subscription.
+      retireIntentKey(keys.current, 'POST', path, { amountUsd: text })
+      refreshAll()
+      setError(quantErrorMessage(c, 'QUANT_INSUFFICIENT_BALANCE')); return
+    }
     refreshAll()
     retireIntentKey(keys.current, 'POST', path, { amountUsd: text }) // a confirmed order is done; other unresolved retries keep their keys
     setDoneDate(result.data.order.effectiveDate)
@@ -161,7 +171,10 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
     const idem = idempotencyKeyForIntent(keys.current, 'POST', path, body)
     const result = await redeemQuant(product.slug, body, idem)
     setPending(false)
-    if (!result.ok) { setError(quantErrorMessage(c, result.error.code)); return }
+    if (!result.ok) {
+      if (isFinalRejection(result.error)) retireIntentKey(keys.current, 'POST', path, body)
+      setError(quantErrorMessage(c, result.error.code)); return
+    }
     refreshAll()
     retireIntentKey(keys.current, 'POST', path, body)
     setDone(true)

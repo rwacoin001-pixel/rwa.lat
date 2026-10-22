@@ -7,9 +7,17 @@
  * Anything missing, slow (>1500ms), reduced-motion or interrupted falls back to plain navigation.
  */
 
-const DURATION = 360
+const DURATION = 400
+/** The picture travels further (thumbnail → full-bleed hero), so it gets a longer, softer-landing curve. */
+const IMAGE_DURATION = 560
+const HANDOFF = 160
 const WAIT = 1500
 const EASE = 'cubic-bezier(.2,.7,.2,1)'
+const IMAGE_EASE = 'cubic-bezier(.32,.72,0,1)'
+/** Tap feedback: the picture lifts off its card at once and holds there while the detail page loads. */
+const LIFT_SCALE = 'scale(1.06)'
+const LIFT_SHADOW = '0 18px 40px -12px rgba(0,0,0,.45)'
+const FLAT_SHADOW = '0 0 0 0 rgba(0,0,0,0)'
 const CANCEL_EVENTS = ['pointerdown', 'touchstart', 'wheel', 'keydown'] as const
 // Kept local (same value as PATH_EVENT in maison-nav) so this module stays free of app imports.
 const PATH_EVENT = 'rwa:navigate-path'
@@ -37,7 +45,8 @@ const reducedQuery = () => window.matchMedia('(prefers-reduced-motion: reduce)')
 const inView = (r: DOMRect) => r.width > 0 && r.height > 0 && r.bottom > 0 && r.right > 0 && r.top < window.innerHeight && r.left < window.innerWidth
 const lineHeightOf = (cs: CSSStyleDeclaration) => cs.lineHeight === 'normal' ? `${parseFloat(cs.fontSize) * 1.2}px` : cs.lineHeight
 
-const ENTRANCE = (name: string) => name === 'ios-enter' || name === 'ios-return' || name.includes('mRise')
+// CSS-module keyframe names are hashed, so match on the local part (mRise: maison; phSettle/phRise: ProductHero).
+const ENTRANCE = (name: string) => name === 'ios-enter' || name === 'ios-return' || name.includes('mRise') || name.includes('phSettle') || name.includes('phRise')
 
 /**
  * Jumps the page-entrance CSS animations (ios-enter / ios-return / mRise) on `node` and its ancestors up to and
@@ -107,6 +116,8 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
   const hidden = new Map<HTMLElement, string>()
   const clones: HTMLElement[] = []
   const animations: Animation[] = []
+  const lifts = new Map<Snap, Animation>()
+  const placed = new Set<Snap>()
   let observer: MutationObserver | null = null
   let timeout = 0
   let frame = 0
@@ -120,6 +131,7 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
     clearTimeout(timeout)
     cancelAnimationFrame(frame)
     for (const animation of animations) animation.cancel()
+    for (const lift of lifts.values()) lift.cancel()
     for (const clone of clones) clone.remove()
     for (const [node, visibility] of hidden) node.style.visibility = visibility
     for (const event of CANCEL_EVENTS) window.removeEventListener(event, cleanup, true)
@@ -173,20 +185,30 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
       for (const [snap, target] of targets) {
         settleEntrance(target)
         const to = target.getBoundingClientRect()
-        if (!inView(to)) { target.style.visibility = hidden.get(target) ?? ''; hidden.delete(target); continue }
+        if (!inView(to)) {
+          target.style.visibility = hidden.get(target) ?? ''; hidden.delete(target)
+          // A picture already lifted on tap has nowhere to land: let it fade away where it is.
+          if (placed.has(snap)) animations.push(snap.clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: HANDOFF, fill: 'forwards' }))
+          continue
+        }
         const cs = getComputedStyle(target)
         const clone = snap.clone
-        Object.assign(clone.style, { position: 'fixed', margin: '0', padding: '0', zIndex: '2147483000', pointerEvents: 'none', boxSizing: 'border-box', left: `${snap.rect.left}px`, top: `${snap.rect.top}px` })
-        clone.setAttribute('aria-hidden', 'true')
-        document.body.appendChild(clone)
-        clones.push(clone)
+        place(snap)
+        const lifted = lifts.get(snap)
+        lifted?.cancel()
+        lifts.delete(snap)
         const from: Keyframe = { left: `${snap.rect.left}px`, top: `${snap.rect.top}px` }
         const end: Keyframe = { left: `${to.left}px`, top: `${to.top}px` }
         if (snap.image) {
-          Object.assign(from, { width: `${snap.rect.width}px`, height: `${snap.rect.height}px`, borderRadius: snap.radius })
-          Object.assign(end, { width: `${to.width}px`, height: `${to.height}px`, borderRadius: cs.borderRadius })
+          // Continues from the lifted state (scaled, shadowed) and lands flat in the hero frame.
+          Object.assign(from, { width: `${snap.rect.width}px`, height: `${snap.rect.height}px`, borderRadius: snap.radius, boxShadow: LIFT_SHADOW, transform: lifted ? LIFT_SCALE : 'scale(1)' })
+          Object.assign(end, { width: `${to.width}px`, height: `${to.height}px`, borderRadius: cs.borderRadius, boxShadow: FLAT_SHADOW, transform: 'scale(1)' })
         } else {
           // Text interpolates font-size/line-height, never scale, so glyphs are re-laid out instead of stretched.
+          // A one-line title stays on one line for the whole flight: while the box narrows and the font grows,
+          // normal wrapping would briefly break it (e.g. 中/衡 stacked) before it settles back to one line.
+          const oneLine = (height: number, lineHeight: string) => height < parseFloat(lineHeight) * 1.5
+          if (oneLine(snap.rect.height, snap.lineHeight) && oneLine(to.height, lineHeightOf(cs))) Object.assign(clone.style, { whiteSpace: 'nowrap', overflow: 'visible' })
           Object.assign(from, { fontSize: snap.fontSize, lineHeight: snap.lineHeight, color: snap.color, width: `${snap.rect.width}px` })
           Object.assign(end, { fontSize: cs.fontSize, lineHeight: lineHeightOf(cs), color: cs.color, width: `${Math.min(to.width, window.innerWidth - Math.max(0, to.left))}px` })
           if ((target.textContent ?? '').trim() !== snap.text) {
@@ -202,11 +224,39 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
             animations.push(target.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: DURATION, easing: 'linear', fill: 'both' }))
           }
         }
-        animations.push(clone.animate([from, end], { duration: DURATION, easing: EASE, fill: 'both' }))
+        animations.push(clone.animate([from, end], snap.image ? { duration: IMAGE_DURATION, easing: IMAGE_EASE, fill: 'both' } : { duration: DURATION, easing: EASE, fill: 'both' }))
       }
       if (!animations.length) return cleanup()
-      Promise.all(animations.map((animation) => animation.finished)).then(cleanup, cleanup)
+      Promise.all(animations.map((animation) => animation.finished)).then(handoff, cleanup)
     })
+  }
+
+  // Landing: show the real elements under the clones, then fade the clones out, so a small thumbnail never pops
+  // into the sharp hero picture (or a title into a differently wrapped one).
+  const handoff = () => {
+    if (done) return
+    for (const [node, visibility] of hidden) node.style.visibility = visibility
+    hidden.clear()
+    const fades = clones.map((clone) => clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: HANDOFF, easing: 'ease-out', fill: 'forwards' }))
+    animations.push(...fades)
+    Promise.all(fades.map((fade) => fade.finished)).then(cleanup, cleanup)
+  }
+
+  // Fixed on <body> at the source box; inert and hidden from assistive tech.
+  function place(snap: Snap) {
+    if (placed.has(snap)) return
+    placed.add(snap)
+    Object.assign(snap.clone.style, { position: 'fixed', margin: '0', padding: '0', zIndex: '2147483000', pointerEvents: 'none', boxSizing: 'border-box', transformOrigin: '50% 50%', left: `${snap.rect.left}px`, top: `${snap.rect.top}px`, ...(snap.image ? { width: `${snap.rect.width}px`, height: `${snap.rect.height}px`, borderRadius: snap.radius } : {}) })
+    snap.clone.setAttribute('aria-hidden', 'true')
+    document.body.appendChild(snap.clone)
+    clones.push(snap.clone)
+  }
+  // Immediate feedback: pictures lift off their cards before the destination exists, so a slow detail
+  // chunk shows a held, raised picture rather than an empty frame followed by a late jump.
+  for (const snap of snaps) {
+    if (!snap.image) continue
+    place(snap)
+    lifts.set(snap, snap.clone.animate([{ transform: 'scale(1)', boxShadow: FLAT_SHADOW }, { transform: LIFT_SCALE, boxShadow: LIFT_SHADOW }], { duration: 180, easing: EASE, fill: 'forwards' }))
   }
 
   navigate()

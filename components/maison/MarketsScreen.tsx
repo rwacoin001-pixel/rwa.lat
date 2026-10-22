@@ -6,7 +6,7 @@ import Image from 'next/image'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { POLL, apiUrl } from '@/lib/api/_http'
+import { POLL } from '@/lib/api/_http'
 import { isListed, listPairs, listProducts, listRwaAssets, type CatalogProduct, type RwaSort } from '@/lib/api/markets'
 import { fmtUsd, fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
@@ -17,6 +17,8 @@ import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison 
 import { Figure, PollBar, Segmented, TickerTape, useAutoAnimate } from './motion'
 import { fmtDate, fmtDateTime } from './format'
 import { BasketShelf } from './HengxuScreen'
+import { sharedOpen } from '@/lib/market-shared-transition'
+import { productCover, sharedKeys } from '@/lib/product-media'
 import { MarketHero } from './MarketHero'
 import { PredictionFeed } from './PredictionFeed'
 
@@ -116,9 +118,9 @@ export function MarketsScreen({ query }: { query: string }) {
           : directory.data?.items.length ? <>
             <div className={s.tableHead} aria-hidden="true"><span># · {pro.name}</span><span>{pro.mcap} · {pro.change}</span></div>
             <ul className={s.list} ref={directoryList}>{directory.data.items.map((asset) => <li key={asset.slug}>
-              <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(asset.slug)}`)}>
+              <button type="button" className={s.row} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/asset/${encodeURIComponent(asset.slug)}`))}>
                 <span className={s.rowLead}><span className={`${s.rank} ${s.num}`}>{asset.rank ?? '—'}</span><Logo src={asset.logoUrl} name={asset.name} /></span>
-                <span className={s.rowMain}><b>{asset.name}</b><small>{[asset.symbol && asset.symbol !== '-' ? asset.symbol : null, asset.issuer?.name].filter(Boolean).join(' · ')}</small></span>
+                <span className={s.rowMain}><b data-shared={sharedKeys.asset(asset.slug, 'title')}>{asset.name}</b><small>{[asset.symbol && asset.symbol !== '-' ? asset.symbol : null, asset.issuer?.name].filter(Boolean).join(' · ')}</small></span>
                 <span className={s.rowFig}><b className={s.num}>{fmtUsd(asset.marketCapUsd, { compact: true, locale })}</b><small><DeltaPill value={asset.change24hPct} /></small></span>
               </button>
             </li>)}</ul>
@@ -155,9 +157,9 @@ function ProductTable({ products, featured }: { products: CatalogProduct[]; feat
         const slug = product.externalRef ?? product.id
         const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId
         return <li key={product.id}>
-          <button type="button" className={s.row} onClick={() => openPath(`/asset/${encodeURIComponent(slug)}`)}>
-            <Logo name={product.displayName} />
-            <span className={s.rowMain}><b>{content(product.displayName)}</b><small>{[klass, product.network].filter(Boolean).join(' · ')}</small></span>
+          <button type="button" className={s.row} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/asset/${encodeURIComponent(slug)}`))}>
+            <Logo src={productCover(product)?.src} name={product.displayName} shared={sharedKeys.asset(slug, 'image')} />
+            <span className={s.rowMain}><b data-shared={sharedKeys.asset(slug, 'title')}>{content(product.displayName)}</b><small>{[klass, product.network].filter(Boolean).join(' · ')}</small></span>
             <span className={s.rowFig}><b className={s.num}>{fmtUsdt(product.minOrderAtomicAmount)}</b><small className={s.up}>{copy.detail.investable}</small></span>
           </button>
         </li>
@@ -166,26 +168,20 @@ function ProductTable({ products, featured }: { products: CatalogProduct[]; feat
   </>
 }
 
-/** Local project imagery for product cards, matched strictly by CatalogProduct.externalRef.
- *  Products without a mapping keep the plain card — no placeholder, no remote hosts. */
-const PRODUCT_IMAGES: Record<string, string> = {
-  'h100-inference-pool': '/media/generated/project-assets/h100-inference-ops-v1.png',
-  'solar-income-2027': '/media/generated/project-assets/solar-income-ops-v1.png',
-  'tech-growth-etf': '/media/generated/project-assets/tech-growth-etf-ops-v1.png',
-}
-
 function ProductCard({ product, tone }: { product: CatalogProduct; tone?: 'lacquer' }) {
   const content=useContentTranslation([product.displayName,product.summary??''])
   const { locale } = useI18n()
   const copy = marketCopy[locale]
   const slug = product.externalRef ?? product.id
   const klass = copy.markets.classes[product.assetClassId as keyof typeof copy.markets.classes] ?? product.assetClassId
-  return <button type="button" className={s.product} data-tone={tone} onClick={() => openPath(`/asset/${encodeURIComponent(slug)}`)}>
-    {(product.imageUrl || (product.externalRef && PRODUCT_IMAGES[product.externalRef])) && <span aria-hidden="true" style={{ position: 'relative', display: 'block', gridColumn: '1 / -1', aspectRatio: '16 / 7', borderRadius: 8, overflow: 'hidden' }}>
-      <Image src={product.imageUrl ? apiUrl(product.imageUrl) : PRODUCT_IMAGES[product.externalRef!]} unoptimized={Boolean(product.imageUrl)} alt="" fill sizes="(max-width: 500px) 60vw, 280px" style={{ objectFit: 'cover' }} />
+  // One picture source with the detail hero (lib/product-media); tapping flies this picture up into it.
+  const cover = productCover(product)
+  return <button type="button" className={s.product} data-tone={tone} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/asset/${encodeURIComponent(slug)}`))}>
+    {cover && <span aria-hidden="true" data-shared={sharedKeys.asset(slug, 'image')} style={{ position: 'relative', display: 'block', gridColumn: '1 / -1', aspectRatio: '16 / 7', borderRadius: 8, overflow: 'hidden' }}>
+      <Image src={cover.src} unoptimized={cover.remote} alt="" fill sizes="(max-width: 500px) 60vw, 280px" style={{ objectFit: 'cover' }} />
     </span>}
     <span className={s.productMeta}><span>{klass}</span>{product.network && <span>{product.network}</span>}</span>
-    <span className={s.productName}>{content(product.displayName)}</span>
+    <span className={s.productName} data-shared={sharedKeys.asset(slug, 'title')}>{content(product.displayName)}</span>
     <span className={s.productArrow} aria-hidden="true"><ArrowUpRight size={16} /></span>
     {product.summary && <span className={s.productSummary}>{content(product.summary)}</span>}
     <span className={s.productFoot}><span>{copy.detail.investable}</span><b className={s.num}>{fill(copy.markets.from, { v: fmtUsdt(product.minOrderAtomicAmount) })}</b></span>

@@ -6,7 +6,7 @@ import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
-import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
+import { idempotencyKeyForIntent, isFinalRejection, retireIntentKey } from '@/lib/api/idempotency'
 import { acknowledgeDisclosure, disclosureFor, getBasket, getWallet, isOrderableId, listBasketDisclosures, redeemBasket, subscribeBasket, type BasketRedemption, type BasketSubscription } from '@/lib/api/markets'
 import { fmtUsd, fromAtomic, toAtomic } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
@@ -14,6 +14,8 @@ import { tradeCopy } from '@/lib/maison-trade-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { sharedBack } from '@/lib/market-shared-transition'
 import { Logo, MaisonPage, SectionHead, Skeleton, Sparkline, StateBlock, maison as s } from './primitives'
+import { DetailFlow, ProductHero, heroTopbar } from './ProductHero'
+import { basketCover, sharedKeys } from '@/lib/product-media'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 
 const OPEN = new Set(['pilot', 'active'])
@@ -62,7 +64,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   const detail = useBasket(validId)
   const basket = detail.data
   const content=useContentTranslation(basket?[basket.name,basket.strategyName,...basket.holdings.map(h=>h.name)]:[])
-  const topbar = <RwaTopbar screen="basket-detail" title={basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => validId ? sharedBack(`basket:${validId}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
+  const topbar = <RwaTopbar screen="basket-detail" {...(basket ? heroTopbar : {})} title={basket?.name ?? b.kicker.split(' · ')[0]} onBack={() => validId ? sharedBack(`basket:${validId}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
   if (!validId) return <Missing page="basket" topbar={topbar} />
   if (!basket && !detail.error) return <MaisonPage page="basket" dock topbar={topbar}><div className={s.hero}><Skeleton rows={5} /></div></MaisonPage>
@@ -74,16 +76,14 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
   const order = (side: 'subscribe' | 'redeem') => openPath(`/basket/${encodeURIComponent(basket.id)}/order${side === 'redeem' ? '?side=redeem' : ''}`)
 
   return <MaisonPage page="basket" dock topbar={topbar} cta={open}>
-    <header className={s.hero}>
-      <p className={s.kicker}>{b.kicker}</p>
-      <h1 className={s.titleL} data-shared={`basket:${basket.id}:title`}>{content(basket.name)}</h1>
-      <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+    <ProductHero image={basketCover(basket)} imageKey={sharedKeys.basket(basket.id, 'image')} titleKey={sharedKeys.basket(basket.id, 'title')}
+      kicker={b.kicker} title={content(basket.name)} titleText={basket.name} sub={basket.strategyName && basket.strategyName !== basket.name ? content(basket.strategyName) : undefined}
+      badges={<>
         <span className={s.badge} data-tone={open ? 'live' : 'warn'}>{statusLabel(b, basket.status)}</span>
         {basket.riskLevel && <span className={s.badge}>{b.risk} · {basket.riskLevel}</span>}
-        <span>{content(basket.strategyName)}</span>
-      </p>
-    </header>
+      </>} />
 
+    <DetailFlow>
     <section className={s.lacquer}>
       <span className={s.kicker}>{b.nav}</span>
       <p className={`${s.bigFigure} ${s.num}`}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</p>
@@ -117,6 +117,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
     </li>)}</ul> : <StateBlock title={b.noHoldings} />}
 
     <div className={s.notice}><Info size={16} /><span>{open ? b.note : o(locale).server.BASKET_PORTFOLIO_NOT_ACTIVE}</span></div>
+    </DetailFlow>
 
     {open && <div className={s.stickyCta}>
       {held !== null && held > BigInt(0)
@@ -201,6 +202,9 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
     const result = side === 'subscribe' ? await subscribeBasket(basket.id, value, key) : await redeemBasket(basket.id, value, key)
     setPending(false)
     if (!result.ok) {
+      // The API keeps a refused attempt as a `pending` row under its key, so a replay would return that row as a
+      // "duplicate" (e.g. retrying the same amount after topping up). A definitive refusal starts a new intent.
+      if (isFinalRejection(result.error)) retireIntentKey(keys.current, 'POST', path, body)
       setServerError(t.server[result.error.code] ?? result.error.message ?? copy.common.errorGeneric)
       if (result.error.code === 'BASKET_DISCLOSURE_ACK_REQUIRED') { acknowledged.current.clear(); setAck(false); void disclosures.refetch() }
       return

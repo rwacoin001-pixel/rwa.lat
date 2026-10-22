@@ -52,7 +52,9 @@ import { assetClassLabel as classLabel } from '@/lib/maison-market-copy'
 import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home-copy'
 import styles from './P04-HomeMaison.module.css'
 import { PullToRefresh } from '../maison/PullToRefresh'
-import { homeAssetImage, HOME_ASSET_FALLBACK } from '@/lib/home-asset-media'
+import { featuredCover, homeAssetImage, HOME_ASSET_FALLBACK } from '@/lib/home-asset-media'
+import { sharedOpen } from '@/lib/market-shared-transition'
+import { sharedKeys } from '@/lib/product-media'
 
 const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--home-display-latin', display: 'swap' })
 
@@ -441,10 +443,10 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
             {featuredItems.map((asset, index) => {
               const symbol = asset.symbol && asset.symbol !== '-' ? asset.symbol : null
               const change = toNumber(asset.change24hPct)
-              return <motion.button type="button" key={asset.slug} className={styles.asset} onClick={() => openPath('/asset/' + encodeURIComponent(asset.slug))} whileTap={reduced ? undefined : { scale: .99 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
+              return <motion.button type="button" key={asset.slug} className={styles.asset} onClick={(event) => sharedOpen(event.currentTarget, () => openPath('/asset/' + encodeURIComponent(asset.slug)))} whileTap={reduced ? undefined : { scale: .99 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
                 <span className={styles.assetIdentity}>
-                  <span className={styles.assetMedia}><FeaturedAssetPhoto src={homeAssetImage(asset, index)} /></span>
-                  <span className={styles.assetInfo}><b>{asset.name}</b><small>{[symbol, asset.issuer?.name || classLabel(asset.assetClass ?? 'rwa', locale)].filter(Boolean).join(' · ')}</small></span>
+                  <span className={styles.assetMedia} data-shared={featuredCover(asset.slug) ? sharedKeys.asset(asset.slug, 'image') : undefined}><FeaturedAssetPhoto src={homeAssetImage(asset, index)} /></span>
+                  <span className={styles.assetInfo}><b data-shared={sharedKeys.asset(asset.slug, 'title')}>{asset.name}</b><small>{[symbol, asset.issuer?.name || classLabel(asset.assetClass ?? 'rwa', locale)].filter(Boolean).join(' · ')}</small></span>
                 </span>
                 <span className={styles.assetValue} dir="ltr"><span className={styles.srOnly}>{copy.marketCap} </span>{fmtUsd(asset.marketCapUsd, { compact: true, locale, digits: 1 })}</span>
                 <span className={styles.assetChange + ' ' + changeTone(asset.change24hPct)} dir="ltr"><span className={styles.srOnly}>{copy.change24h} </span>{change === null ? '—' : new Intl.NumberFormat(locale, { signDisplay: 'exceptZero', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(change) + '%'}</span>

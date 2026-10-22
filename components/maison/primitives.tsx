@@ -64,8 +64,9 @@ export function DeltaPill({ value }: { value: string | null | undefined }) {
   return <span className={`${styles.pill} ${styles.num} ${toneOf(value)}`}>{fmtPct(value, { signed: true })}</span>
 }
 
-export function Logo({ src, name }: { src?: string | null; name: string }) {
-  return <span className={styles.logo} aria-hidden="true">
+/** `shared` marks the thumbnail as the start of the list → detail picture flight (lib/market-shared-transition). */
+export function Logo({ src, name, shared }: { src?: string | null; name: string; shared?: string }) {
+  return <span className={styles.logo} aria-hidden="true" data-shared={src && shared ? shared : undefined}>
     <PredictionImage src={src} name={name} />
   </span>
 }

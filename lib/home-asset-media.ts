@@ -8,6 +8,11 @@ const featuredCovers: Record<string, string> = {
   circle: '/media/products/hengxu-v2/derived/chengyuan-reserve-720.webp',
 }
 
+/** The curated cover for a directory asset, or null. Used by the asset hero so Home's thumbnail and the hero match. */
+export function featuredCover(slug: string): string | null {
+  return Object.hasOwn(featuredCovers, slug) ? featuredCovers[slug] : null
+}
+
 // Thumbnails render at 44px: small derived copies, not the 1.2-1.4k originals (1.8MB and 2.4MB as PNG).
 export const HOME_ASSET_FALLBACK = '/media/home/derived/markets-collection-160.webp'
 

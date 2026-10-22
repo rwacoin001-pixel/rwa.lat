@@ -104,6 +104,8 @@
 .rwa-mobile:not([data-screen='home']) .rwa-topbar--s1 button.rwa-topbar__slot:not(.rwa-topbar__slot--logo) { justify-self: center; color: var(--bar-ink); }
 /* Media heroes keep their own contrast buttons; only the geometry is shared. */
 .rwa-mobile:not([data-screen='home']) .rwa-topbar--s1[data-surface='transparent-over-media'] { background: transparent; box-shadow: none; }
+/* Over media the title is kept for the scrolled state only; product heroes fade it in (components/maison/product-hero.module.css). */
+.rwa-topbar__center > span[data-over-media] { opacity: 0; }
 .rwa-mobile:not([data-screen='home']) .rwa-topbar--s1[data-surface='transparent-over-media'][data-scrolled='true'] { background: var(--bar-glass); box-shadow: 0 .5px 0 var(--bar-line); }
 
 /* ── Nav bar geometry · shared by Home and every other page (D3.2) ──────────────────────

@@ -18,6 +18,8 @@ import { HENGXU_FEATURED, HENGXU_PRODUCTS, hengxuById, hengxuImage, type HengxuH
 import { hengxuCopy, hengxuText, type HengxuCopy } from '@/lib/hengxu-copy'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import h from './hengxu.module.css'
+import { DetailFlow, ProductHero, heroTopbar } from './ProductHero'
+import { basketCover, sharedKeys } from '@/lib/product-media'
 
 const FILTERS = ['all', 'open', 'short', 'long', 'digital', 'research'] as const
 type Filter = typeof FILTERS[number]
@@ -188,7 +190,7 @@ function LiveRow({ basket }: { basket: BasketPortfolio }) {
   const name = basket.name || basket.strategyName || basket.id
   const sub = [basket.strategyName && basket.strategyName !== name ? basket.strategyName : null, basket.riskLevel, basket.minimumSubscriptionUsd ? fill(market.markets.from, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) }) : null]
   return <button type="button" className={s.row} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/basket/${encodeURIComponent(basket.id)}`))}>
-    <Logo src={basket.strategySlug ? `/baskets/${encodeURIComponent(basket.strategySlug)}_thumb.webp` : null} name={name} />
+    <Logo src={basketCover(basket, 'thumb')} name={name} shared={sharedKeys.basket(basket.id, 'image')} />
     <span className={s.rowMain}><b data-shared={`basket:${basket.id}:title`}>{name}</b><small>{sub.filter(Boolean).join(' · ')}</small></span>
     <span className={s.rowFig}><b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b><small className={s.muted}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</small></span>
   </button>
@@ -242,7 +244,7 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const listings = useListings()
   const basketIndex = useBasketIndex()
   const product = hengxuById(id)
-  const topbar = <RwaTopbar screen="strategy-detail" title={product ? names(product, locale).mark : copy.series} onBack={() => product ? sharedBack(`strategy:${product.id}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
+  const topbar = <RwaTopbar screen="strategy-detail" {...(product ? heroTopbar : {})} title={product ? names(product, locale).mark : copy.series} onBack={() => product ? sharedBack(`strategy:${product.id}:`, () => backOr('/markets?tab=baskets')) : backOr('/markets?tab=baskets')} />
 
   if (!product) return <MaisonPage page="strategy" dock topbar={topbar}><div className={s.hero}>
     <StateBlock title={copy.notFound} body={copy.notFoundBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets?tab=baskets')}>{copy.back}</button>} />
@@ -269,22 +271,19 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
   const summary = product.allocation.map(([sleeve, weight]) => `${copy.sleeves[sleeve]} ${weight}%`).join(', ')
 
   return <MaisonPage page="strategy" dock topbar={topbar}>
-    <figure className={h.hero}>
-      <Picture product={product} locale={locale} sizes="(max-width: 480px) 100vw, 480px" priority ratio="natural" />
-      <figcaption>{copy.heroCaption}</figcaption>
-    </figure>
-
-    <header className={h.head}>
-      <p className={s.kicker}>{copy.series} · <span className={s.num}>{product.no} / 10</span></p>
-      <h1 className={h.title}><span className={h.markL} lang={lang} data-shared={sharedKey(product, 'title')}>{mark}</span><span className={h.titleSub} dir="auto">{sub}</span></h1>
-      <p className={h.badges}>
+    <ProductHero image={hengxuImage(product, 1440)} imageKey={sharedKey(product, 'image')} focus={product.image.focus} alt={text.alt} caption={copy.heroCaption}
+      kicker={<>{copy.series} · <span className={s.num}>{product.no} / 10</span></>}
+      title={mark} titleText={mark} titleKey={sharedKey(product, 'title')} titleLang={lang} sub={sub}
+      badges={<>
         {!open && <span className={s.badge} data-tone="warn">{copy.concept}</span>}
         <StageBadge product={product} listing={listing} copy={copy} />
         <span className={h.shortTag} lang="en" dir="ltr">{product.short}</span>
-      </p>
-      <p className={h.lead} {...body}>{text.oneLiner}</p>
+      </>}
+      lede={<span {...body}>{text.oneLiner}</span>}>
       {researching && text.blocker && <p className={s.notice}><Info size={15} aria-hidden="true" /><span><b>{copy.terms.blocked}</b> <span {...body}>{text.blocker}</span></span></p>}
-    </header>
+    </ProductHero>
+
+    <DetailFlow>
 
     <section className={`${s.lacquer} ${h.facts}`} aria-label={copy.sections[4]}>
       <dl className={h.factGrid}>
@@ -374,6 +373,8 @@ export function HengxuDetailScreen({ id }: { id: string | null }) {
         <ul className={h.checklist}>{text.conditions.map((line) => <li key={line} {...body}>{line}</li>)}</ul>
       </>}
     </section>
+
+    </DetailFlow>
 
     <nav className={h.pager} aria-label={copy.series}>
       <a href={detailPath(prev)} onClick={(event) => go(event, detailPath(prev))}><ArrowLeft size={15} aria-hidden="true" /><span><small>{copy.prev}</small><b lang={lang}>{names(prev, locale).mark}</b></span></a>

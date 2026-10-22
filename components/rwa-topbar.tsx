@@ -123,7 +123,7 @@ export default function RwaTopbar(props: Props) {
     <div className="rwa-topbar__grid">
       <div className="rwa-topbar__leading">{renderSlot(config.l1,'L1')}{renderSlot(config.l2,'L2')}</div>
       <div className="rwa-topbar__center">
-      {center?.kind === 'title' && !transparent && <span>{center.text}</span>}
+      {center?.kind === 'title' && (transparent ? <span data-over-media="" aria-hidden="true">{center.text}</span> : <span>{center.text}</span>)}
       {center?.kind === 'segment' && <Segmented {...center} />}
       {center?.kind === 'steps' && <span className="rwa-steps" role="img" aria-label={copy.steps.replace('{current}', String(center.current + 1)).replace('{total}', String(center.total))}>{Array.from({ length: center.total }, (_, index) => <i key={index} data-current={index === center.current} />)}</span>}
       </div>

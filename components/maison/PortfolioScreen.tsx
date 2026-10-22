@@ -30,6 +30,8 @@ import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import bp from './basket-positions.module.css'
 import h from './hero-card.module.css'
 import { playMoment } from '@/lib/moment'
+import { sharedOpen } from '@/lib/market-shared-transition'
+import { sharedKeys } from '@/lib/product-media'
 
 // Portfolio amounts are in the platform unit (USDT / USD quote, 6 decimals).
 const DECIMALS = 6
@@ -204,10 +206,10 @@ function BasketRow({ row }: { row: BasketPosition }) {
   const valued = row.valuedAt ? fmtDateTime(row.valuedAt, locale, { dateStyle: 'short', timeStyle: 'short' }) : null
   const quality = value !== null ? null : row.valuationQuality === 'ok' ? bc.quality.unavailable : bc.quality[row.valuationQuality]
   return <li>
-    <button type="button" className={s.row} onClick={() => openPath(`/basket/${encodeURIComponent(row.portfolioId)}`)}>
+    <button type="button" className={s.row} onClick={(event) => sharedOpen(event.currentTarget, () => openPath(`/basket/${encodeURIComponent(row.portfolioId)}`))}>
       <Logo name={row.portfolioName} />
       <span className={s.rowMain}>
-        <b>{row.portfolioName}</b>
+        <b data-shared={sharedKeys.basket(row.portfolioId, 'title')}>{row.portfolioName}</b>
         <small className={bp.line} title={masked ? undefined : `${units} ${bc.units}`}><bdi className={s.num}>{masked ? AMOUNT_MASK : units}</bdi> {bc.units}</small>
         <small className={bp.line}>{bc.nav} <bdi className={s.num}>{nav}</bdi>{valued && <> · <bdi>{valued}</bdi></>}</small>
       </span>
