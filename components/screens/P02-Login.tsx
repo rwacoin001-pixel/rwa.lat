@@ -23,6 +23,7 @@ import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
+import { InviteCodeField, useInviteCode } from './InviteCodeField'
 import { AuthLegalFooter } from './AuthLegalFooter'
 import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
 import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
@@ -75,6 +76,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const [error, setError] = useState('')
   const [pending, setPending] = useState(false)
   const [walletPhase, setWalletPhase] = useState<'connecting' | 'checking' | 'signing' | 'verifying' | null>(null)
+  const invite = useInviteCode()
   useUiLoading(pending && !passkeyPending && !walletPhase)
   const walletProgress = {
     'zh-CN': ['连接钱包…', '检查账户…', '请在钱包确认签名', '验证签名并登录…'],
@@ -295,7 +297,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     }
     if (step === 'new') {
       if (!consentReady) { setError(visual.consentRequired); return }
-      if (retryAfter <= 0) await run(() => sendCode(account))
+      // The invitation is recorded before the code is sent, so the account created on confirm binds it.
+      if (retryAfter <= 0) await run(async () => { if (await invite.commit()) await sendCode(account) })
       return
     }
     await verifyCode(code)
@@ -333,6 +336,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const startProvider = async (provider: 'google' | 'github' | 'x') => {
     if (pending || busy.current) return
     stopPasskey()
+    if (!(await invite.commit())) return
     // The Android app hands providers to the system browser, which signs in and returns the session to the app.
     if (isAndroidApp()) { setError(''); window.location.assign(`${APP_BROWSER_SIGN_IN_PATH}?provider=${provider}`); return }
     busy.current = true; setPending(true); setError('')
@@ -363,6 +367,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         setAgreed(false)
         return
       }
+      if (walletChallenge && !(await invite.commit())) return
       markNewAccount(sessionStorage, Boolean(walletChallenge))
       const result = await completeWalletLogin(started.data, walletChallenge ? consents : [], setWalletPhase)
       // Email binding happens in the signed-in account; preserve any required security steps.
@@ -414,6 +419,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     {error && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{error}</span></div>}
     {requirementsError && <div role="alert" className={styles.error}><AlertCircle size={16} aria-hidden="true" /><span>{requirementsError} <button type="button" onClick={() => setRequirementsAttempt(value => value + 1)}>{t('common.refresh')}</button></span></div>}
   </>
+  // Prominent wherever an account may be created: the register route, the new-account step and wallet registration.
+  const inviteField = <div className={styles.inviteSlot}><InviteCodeField invite={invite} locale={locale} disabled={pending} /></div>
   const cooldownLabel = interpolateRouteCopy(copy.retryAfter, { seconds: retryAfter })
 
   // The address every later step acts on, with a way back to change it.
@@ -448,6 +455,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     </header>}
 
     {walletChallenge ? <>
+      {inviteField}
       <div className={styles.walletIdentity}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} style={{ width: 22, height: 22 }} /><span>{walletChallenge.address.slice(0, 6)}…{walletChallenge.address.slice(-4)}</span></div>
       {agreement}
       {errors}
@@ -464,6 +472,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         </button>
       </label> : identity}
       {step === 'email' && retryAfter > 0 && <p className={styles.hint} role="status">{cooldownLabel}</p>}
+      {step === 'email' && mode === 'register' && inviteField}
 
       {step === 'password' && account && <div className={styles.field}>
         {/* Lets password managers pair the saved password with this address. */}
@@ -474,7 +483,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         <button type="button" className={styles.reveal} aria-label={showPassword ? sheet.hidePassword : sheet.showPassword} aria-pressed={showPassword} onClick={() => setShowPassword(value => !value)}>{showPassword ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
       </div>}
 
-      {step === 'new' && agreement}
+      {step === 'new' && <>{inviteField}{agreement}</>}
 
       {step === 'code' && <label key={shake} className={`${styles.field} ${styles.codeBox}`} data-state={codeState === 'verified' ? 'ok' : error ? 'error' : undefined}>
         <span className={styles.srOnly}>{emailCopy.codeLabel}</span>

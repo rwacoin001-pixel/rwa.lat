@@ -1,4 +1,4 @@
-import { BadRequestException, Body, CallHandler, Controller, ExecutionContext, Get, Headers, Injectable, Module, NestInterceptor, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
+import { BadRequestException, Body, CallHandler, Controller, ExecutionContext, Get, Header, Headers, Injectable, Module, NestInterceptor, Param, Post, Query, Req, Res, UseGuards } from '@nestjs/common'
 import { APP_INTERCEPTOR } from '@nestjs/core'
 import { Observable } from 'rxjs'
 import type { Request, Response } from 'express'
@@ -52,6 +52,13 @@ export class ReferralLandingController {
     return { attributionToken:result.token,expiresAt:result.expiresAt,registrationOnly:true }
   }
 }
+/** Signed-out signup helpers. Neither endpoint binds anything; binding happens only inside new-user registration. */
+@Controller('referral/public')
+export class ReferralPublicController {
+  constructor(private readonly binding: ReferralBindingService) {}
+  @Get('codes/:code') @Header('Cache-Control','no-store') lookup(@Param('code') code: string) { return this.binding.lookup(code) }
+  @Get('attribution') @Header('Cache-Control','no-store') async attribution() { return { attribution: await this.binding.describeAttribution(this.binding.currentAttribution()) } }
+}
 @UseGuards(SessionAuthGuard)
 @Controller('referral')
 export class ReferralUserFoundationController {
@@ -93,6 +100,6 @@ export class ReferralAdminFoundationController {
   }
 }
 @Module({imports:[ReferralModule,SecurityModule,AdminRbacModule],
-  controllers:[ReferralLandingController,ReferralUserFoundationController,ReferralAdminFoundationController],
+  controllers:[ReferralLandingController,ReferralPublicController,ReferralUserFoundationController,ReferralAdminFoundationController],
   providers:[{provide:APP_INTERCEPTOR,useClass:ReferralContextInterceptor}]})
 export class ReferralHttpModule {}

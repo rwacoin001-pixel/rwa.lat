@@ -1,11 +1,11 @@
 import { BadRequestException, ConflictException, Injectable, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
-import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { DataSource, EntityManager } from 'typeorm'
 import { ReferralContext } from './referral-context'
+import { generateShortCode, normalizeReferralCode, RESERVED_REFERRAL_CODES } from './referral-code'
 
 type Attribution = { id: string; inviter_user_id: string; code: string; clicked_at: Date; expires_at: Date }
-const RESERVED = new Set(['admin', 'signup', 'signin', 'system', 'support', 'referral'])
 
 @Injectable()
 export class ReferralBindingService {
@@ -49,7 +49,7 @@ export class ReferralBindingService {
       const [existing] = await manager.query('SELECT code FROM app.referral_codes WHERE user_id=$1', [userId])
       if (existing) return existing.code as string
       let code: string
-      do { code = randomBytes(8).toString('hex') } while ((await manager.query('SELECT 1 FROM app.referral_code_aliases WHERE code=$1', [code])).length)
+      do { code = generateShortCode() } while ((await manager.query('SELECT 1 FROM app.referral_code_aliases WHERE code=$1', [code])).length)
       await manager.query('INSERT INTO app.referral_code_aliases(code,user_id) VALUES($1,$2)', [code,userId])
       await manager.query('INSERT INTO app.referral_codes(user_id,code) VALUES($1,$2)', [userId,code])
       return code
@@ -59,7 +59,7 @@ export class ReferralBindingService {
   async changeCode(userId: string, input: string) {
     await this.requireInstalled()
     const code = input.toLowerCase()
-    if (!/^[a-z0-9]{6,16}$/.test(code) || RESERVED.has(code)) throw new BadRequestException('Invalid referral code')
+    if (!/^[a-z0-9]{6,16}$/.test(code) || RESERVED_REFERRAL_CODES.has(code)) throw new BadRequestException('Invalid referral code')
     return this.db.transaction(async m => {
       await m.query('SELECT pg_advisory_xact_lock(1790760000)')
       const [user] = await m.query('SELECT status FROM app.users WHERE id=$1',[userId])
@@ -74,6 +74,23 @@ export class ReferralBindingService {
         ON CONFLICT(user_id) DO UPDATE SET code=excluded.code,updated_at=clock_timestamp()`, [userId,code])
       return code
     })
+  }
+
+  /** Public pre-signup check: whether a typed code belongs to an active account. Reveals nothing about the inviter. */
+  async lookup(input: string) {
+    await this.requireInstalled()
+    const code = normalizeReferralCode(input)
+    if (!code) return { valid: false as const }
+    const [alias] = await this.db.query(`SELECT a.code FROM app.referral_code_aliases a JOIN app.users u ON u.id=a.user_id
+      WHERE a.code=$1 AND u.status NOT IN ('closed','suspended')`, [code])
+    return alias ? { valid: true as const, code: (alias.code as string).toUpperCase() } : { valid: false as const }
+  }
+
+  /** The code carried by the current signed attribution, so signup can show it instead of asking again. */
+  async describeAttribution(token?: string) {
+    if (!await this.installed()) return null
+    const row = await this.attribution(this.db.manager, token)
+    return row ? { code: row.code.toUpperCase(), expiresAt: row.expires_at } : null
   }
 
   /** The first valid attribution wins; changing a code preserves all previously issued links. */
