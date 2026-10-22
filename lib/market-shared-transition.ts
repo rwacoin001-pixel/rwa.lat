@@ -31,6 +31,8 @@ type Snap = {
   rect: DOMRect
   image: boolean
   fontSize: string
+  /** Typeface of the source text; a different face at the destination is cross-faded during the flight. */
+  face: string
   lineHeight: string
   color: string
   radius: string
@@ -114,7 +116,7 @@ function snapshot(node: HTMLElement): Snap | null {
   if (!key || !inView(rect)) return null
   const cs = getComputedStyle(node)
   const image = key.endsWith(':image')
-  const base = { key, node, rect, image, fontSize: cs.fontSize, lineHeight: lineHeightOf(cs), color: cs.color, radius: cs.borderRadius, src: '', fit: 'cover', position: '50% 50%', text: (node.textContent ?? '').trim() }
+  const base = { key, node, rect, image, fontSize: cs.fontSize, face: `${cs.fontFamily}|${cs.fontWeight}|${cs.fontStyle}`, lineHeight: lineHeightOf(cs), color: cs.color, radius: cs.borderRadius, src: '', fit: 'cover', position: '50% 50%', text: (node.textContent ?? '').trim() }
   if (image) {
     // Only the picture itself travels: a bare <img> in a clipping box, never the surrounding card.
     const img = node.querySelector('img')
@@ -294,6 +296,21 @@ function run(snaps: Snap[], navigate: () => void, destination?: string, hero: Fr
             if (getComputedStyle(target).visibility === 'hidden') target.style.visibility = 'visible'
             else hidden.delete(target)
             animations.push(target.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: DURATION, easing: 'linear', fill: 'both' }))
+          } else if (`${cs.fontFamily}|${cs.fontWeight}|${cs.fontStyle}` !== snap.face) {
+            // Same words in another typeface (list sans → hero display serif): a font cannot interpolate, so a twin
+            // set in the destination face flies along and takes over mid-flight. It lands identical to the real
+            // title, so the hand-off no longer swaps fonts in front of the reader.
+            const twin = target.cloneNode(true) as HTMLElement
+            for (const element of [twin, ...Array.from(twin.querySelectorAll<HTMLElement>('[id],[data-shared]'))]) { element.removeAttribute('id'); element.removeAttribute('data-shared') }
+            Object.assign(twin.style, { fontFamily: cs.fontFamily, fontWeight: cs.fontWeight, fontStyle: cs.fontStyle, letterSpacing: cs.letterSpacing, textAlign: cs.textAlign, maxWidth: `${window.innerWidth}px`, position: 'fixed', margin: '0', padding: '0', zIndex: '2147483000', pointerEvents: 'none', boxSizing: 'border-box', left: `${snap.rect.left}px`, top: `${snap.rect.top}px`, visibility: 'visible' })
+            copyTextLayout(twin, cs)
+            if (clone.style.whiteSpace === 'nowrap') Object.assign(twin.style, { whiteSpace: 'nowrap', overflow: 'visible' })
+            twin.setAttribute('aria-hidden', 'true')
+            document.body.appendChild(twin)
+            clones.push(twin)
+            animations.push(twin.animate([{ ...from, opacity: 0 }, { opacity: 0, offset: 0.25 }, { opacity: 1, offset: 0.7 }, { ...end, opacity: 1 }], { duration: DURATION, easing: EASE, fill: 'both' }))
+            animations.push(clone.animate([{ ...from, opacity: 1 }, { opacity: 1, offset: 0.3 }, { opacity: 0, offset: 0.65 }, { ...end, opacity: 0 }], { duration: DURATION, easing: EASE, fill: 'both' }))
+            continue
           }
         }
         animations.push(clone.animate([from, end], snap.image ? timing : { duration: DURATION, easing: EASE, fill: 'both' }))
