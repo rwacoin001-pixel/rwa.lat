@@ -46,7 +46,7 @@ export function ProductHero({ image, imageKey, focus, alt = '', kicker, title, t
       {image
         ? <img className={ph.img} src={image} alt={alt} decoding="async" fetchPriority="high" style={focus ? { objectPosition: focus } as CSSProperties : undefined} />
         : <span className={ph.monogram} aria-hidden="true">{initial}</span>}
-      <span className={ph.shade} aria-hidden="true" />
+      <span className={ph.shade} data-shared-shade="" aria-hidden="true" />
       {caption && <figcaption className={ph.caption}>{caption}</figcaption>}
     </figure>
     <header className={ph.head}>

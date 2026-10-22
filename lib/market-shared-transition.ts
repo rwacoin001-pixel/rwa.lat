@@ -11,6 +11,7 @@ const DURATION = 400
 /** The picture travels further (thumbnail → full-bleed hero), so it gets a longer, softer-landing curve. */
 const IMAGE_DURATION = 560
 const HANDOFF = 160
+const HANDOFF_WAIT = 250
 const WAIT = 1500
 const EASE = 'cubic-bezier(.2,.7,.2,1)'
 const IMAGE_EASE = 'cubic-bezier(.32,.72,0,1)'
@@ -118,6 +119,8 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
   const animations: Animation[] = []
   const lifts = new Map<Snap, Animation>()
   const placed = new Set<Snap>()
+  /** Destination pictures decoding during the flight; the hand-off waits for them so no blank frame shows through. */
+  const decoding: Promise<unknown>[] = []
   let observer: MutationObserver | null = null
   let timeout = 0
   let frame = 0
@@ -203,6 +206,22 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
           // Continues from the lifted state (scaled, shadowed) and lands flat in the hero frame.
           Object.assign(from, { width: `${snap.rect.width}px`, height: `${snap.rect.height}px`, borderRadius: snap.radius, boxShadow: LIFT_SHADOW, transform: lifted ? LIFT_SCALE : 'scale(1)' })
           Object.assign(end, { width: `${to.width}px`, height: `${to.height}px`, borderRadius: cs.borderRadius, boxShadow: FLAT_SHADOW, transform: 'scale(1)' })
+          // Land looking exactly like the destination: blend in its overlay (topbar shade, fade into the page) and
+          // move to its focal point during the flight, so the hand-off swaps identical pixels instead of a bare picture.
+          const timing: KeyframeAnimationOptions = { duration: IMAGE_DURATION, easing: IMAGE_EASE, fill: 'both' }
+          const shade = target.querySelector<HTMLElement>('[data-shared-shade]')
+          const shadeImage = shade ? getComputedStyle(shade).backgroundImage : 'none'
+          if (shadeImage && shadeImage !== 'none') {
+            const layer = document.createElement('div')
+            Object.assign(layer.style, { position: 'absolute', inset: '0', pointerEvents: 'none', backgroundImage: shadeImage })
+            clone.appendChild(layer)
+            animations.push(layer.animate([{ opacity: 0 }, { opacity: 1 }], timing))
+          }
+          const pic = clone.querySelector('img'), real = target.querySelector('img')
+          if (pic && real) {
+            animations.push(pic.animate([{ objectPosition: snap.position }, { objectPosition: getComputedStyle(real).objectPosition }], timing))
+            decoding.push(real.decode().catch(() => undefined))
+          }
         } else {
           // Text interpolates font-size/line-height, never scale, so glyphs are re-laid out instead of stretched.
           // A one-line title stays on one line for the whole flight: while the box narrows and the font grows,
@@ -234,6 +253,11 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
   // Landing: show the real elements under the clones, then fade the clones out, so a small thumbnail never pops
   // into the sharp hero picture (or a title into a differently wrapped one).
   const handoff = () => {
+    if (done) return
+    // Clones hold their landed frame (fill: both) while a slow decode finishes; capped so a stuck image never holds the page.
+    Promise.race([Promise.all(decoding), new Promise((resolve) => setTimeout(resolve, HANDOFF_WAIT))]).then(reveal, reveal)
+  }
+  const reveal = () => {
     if (done) return
     for (const [node, visibility] of hidden) node.style.visibility = visibility
     hidden.clear()

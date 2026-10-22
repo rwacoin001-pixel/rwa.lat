@@ -16,6 +16,7 @@ import RwaLogoMark from './rwa-logo'
 import { CommunityFollowButton, CommunityLike } from './community-actions'
 import { CommunityText } from './community-text'
 import { CommunityAvatar, CommunityMark, mediaSrc } from './community-avatar'
+import { CommunityBanner } from './community-banner'
 import { CommunityCompose, CommunityProfileEditor, CommunityReplyBar, useCommunityMe, type ComposeTarget } from './community-compose'
 import { communityComposeCopy } from '@/lib/maison-community-compose-copy'
 import { PublicShareButton } from './public-sharing'
@@ -634,7 +635,7 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
         ) : (
           <>
             <div className={c.banner} aria-hidden="true">
-              {profile.coverUrl ? <img src={mediaSrc(profile.coverUrl) ?? undefined} alt="" /> : <CommunityMark seed={handle} size={260} />}
+              {profile.coverUrl ? <img src={mediaSrc(profile.coverUrl) ?? undefined} alt="" /> : <CommunityBanner seed={profile.handle || handle} />}
             </div>
             <div className={c.profTop}>
               <span className={c.avatarRing}>
