@@ -12,7 +12,8 @@ const DURATION = 400
 const IMAGE_DURATION = 560
 const HANDOFF = 160
 const HANDOFF_WAIT = 250
-const WAIT = 1500
+/** Detail data can take a couple of seconds on a phone; the picture already waits in the hero frame meanwhile. */
+const WAIT = 2500
 const EASE = 'cubic-bezier(.2,.7,.2,1)'
 const IMAGE_EASE = 'cubic-bezier(.32,.72,0,1)'
 /** Tap feedback: the picture lifts off its card at once and holds there while the detail page loads. */
@@ -71,6 +72,37 @@ function settleEntrance(node: Element) {
   }
 }
 
+type Frame = { left: number; top: number; width: number; height: number; shade: string }
+
+/**
+ * Where a ProductHero picture will sit on the detail page, known before that page has its data:
+ * full-bleed at the top of the shell, under the clear topbar. Geometry and overlay mirror
+ * components/maison/product-hero.module.css (.media height, .shade gradients); keep the two in sync.
+ */
+function heroFrame(): Frame | null {
+  const shell = document.querySelector<HTMLElement>('.rwa-mobile')
+  if (!shell) return null
+  const bar = 'calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px) + var(--app-topbar-row-height, 44px))'
+  const probe = (height: string) => {
+    const node = document.createElement('div')
+    Object.assign(node.style, { position: 'fixed', left: '0', top: '0', width: '1px', height, visibility: 'hidden', pointerEvents: 'none' })
+    shell.appendChild(node)
+    const value = node.getBoundingClientRect().height
+    node.remove()
+    return value
+  }
+  const height = probe(`min(clamp(300px, calc(62vw + ${bar}), 460px), 58svh)`)
+  const barHeight = probe(bar)
+  const page = document.querySelector<HTMLElement>('.rwa-mobile [data-maison-page]') ?? shell
+  const bg = getComputedStyle(page).getPropertyValue('--m-bg').trim() || getComputedStyle(shell).backgroundColor
+  const box = shell.getBoundingClientRect()
+  if (!height || !box.width) return null
+  return {
+    left: box.left, top: 0, width: box.width, height,
+    shade: `linear-gradient(180deg, rgba(0, 0, 0, .38) 0px, rgba(0, 0, 0, 0) ${barHeight + 36}px), linear-gradient(180deg, transparent 46%, color-mix(in srgb, ${bg} 55%, transparent) 76%, ${bg} 100%)`,
+  }
+}
+
 export function cancelSharedTransition() {
   active?.()
 }
@@ -112,12 +144,15 @@ function copyTextLayout(clone: HTMLElement, cs: CSSStyleDeclaration) {
   if (to.display === 'inline') to.display = 'block'
 }
 
-function run(snaps: Snap[], navigate: () => void, destination?: string) {
+function run(snaps: Snap[], navigate: () => void, destination?: string, hero: Frame | null = null) {
   const query = reducedQuery()
   const hidden = new Map<HTMLElement, string>()
   const clones: HTMLElement[] = []
   const animations: Animation[] = []
   const lifts = new Map<Snap, Animation>()
+  /** Pictures already flying to the predicted hero frame (with its overlay) before the detail page exists. */
+  const early = new Map<Snap, { layer: HTMLElement; flight: Animation; fade: Animation }>()
+  const startedAt = performance.now()
   const placed = new Set<Snap>()
   /** Destination pictures decoding during the flight; the hand-off waits for them so no blank frame shows through. */
   const decoding: Promise<unknown>[] = []
@@ -135,6 +170,7 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
     cancelAnimationFrame(frame)
     for (const animation of animations) animation.cancel()
     for (const lift of lifts.values()) lift.cancel()
+    for (const { flight, fade } of early.values()) { flight.cancel(); fade.cancel() }
     for (const clone of clones) clone.remove()
     for (const [node, visibility] of hidden) node.style.visibility = visibility
     for (const event of CANCEL_EVENTS) window.removeEventListener(event, cleanup, true)
@@ -202,21 +238,38 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
         lifts.delete(snap)
         const from: Keyframe = { left: `${snap.rect.left}px`, top: `${snap.rect.top}px` }
         const end: Keyframe = { left: `${to.left}px`, top: `${to.top}px` }
+        const pre = early.get(snap)
+        if (!snap.image && hero && performance.now() - startedAt > DURATION) {
+          // The picture has long since landed; a title flying in late from an empty list spot reads as a glitch,
+          // so the real title just appears with its own entrance instead.
+          target.style.visibility = hidden.get(target) ?? ''; hidden.delete(target)
+          continue
+        }
+        let timing: KeyframeAnimationOptions = { duration: IMAGE_DURATION, easing: IMAGE_EASE, fill: 'both' }
         if (snap.image) {
           // Continues from the lifted state (scaled, shadowed) and lands flat in the hero frame.
           Object.assign(from, { width: `${snap.rect.width}px`, height: `${snap.rect.height}px`, borderRadius: snap.radius, boxShadow: LIFT_SHADOW, transform: lifted ? LIFT_SCALE : 'scale(1)' })
           Object.assign(end, { width: `${to.width}px`, height: `${to.height}px`, borderRadius: cs.borderRadius, boxShadow: FLAT_SHADOW, transform: 'scale(1)' })
           // Land looking exactly like the destination: blend in its overlay (topbar shade, fade into the page) and
           // move to its focal point during the flight, so the hand-off swaps identical pixels instead of a bare picture.
-          const timing: KeyframeAnimationOptions = { duration: IMAGE_DURATION, easing: IMAGE_EASE, fill: 'both' }
           const shade = target.querySelector<HTMLElement>('[data-shared-shade]')
           const shadeImage = shade ? getComputedStyle(shade).backgroundImage : 'none'
-          if (shadeImage && shadeImage !== 'none') {
-            const layer = document.createElement('div')
-            Object.assign(layer.style, { position: 'absolute', inset: '0', pointerEvents: 'none', backgroundImage: shadeImage })
-            clone.appendChild(layer)
-            animations.push(layer.animate([{ opacity: 0 }, { opacity: 1 }], timing))
+          let layer = pre?.layer ?? null
+          let shadeFrom = '0'
+          if (pre) {
+            // Already flying to (or resting in) the predicted frame: continue from wherever it is now, so the real
+            // frame only corrects the last few pixels instead of restarting the flight.
+            const now = getComputedStyle(clone)
+            Object.assign(from, { left: now.left, top: now.top, width: now.width, height: now.height, borderRadius: now.borderRadius, boxShadow: now.boxShadow, transform: now.transform === 'none' ? 'scale(1)' : now.transform })
+            shadeFrom = getComputedStyle(pre.layer).opacity
+            pre.flight.cancel(); pre.fade.cancel(); early.delete(snap)
+            timing = { ...timing, duration: Math.max(240, IMAGE_DURATION - (performance.now() - startedAt)) }
           }
+          if (shadeImage && shadeImage !== 'none') {
+            if (!layer) { layer = shadeLayer(); clone.appendChild(layer) }
+            layer.style.backgroundImage = shadeImage
+          }
+          if (layer) animations.push(layer.animate([{ opacity: shadeFrom }, { opacity: 1 }], timing))
           const pic = clone.querySelector('img'), real = target.querySelector('img')
           if (pic && real) {
             animations.push(pic.animate([{ objectPosition: snap.position }, { objectPosition: getComputedStyle(real).objectPosition }], timing))
@@ -243,7 +296,7 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
             animations.push(target.animate([{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1 }], { duration: DURATION, easing: 'linear', fill: 'both' }))
           }
         }
-        animations.push(clone.animate([from, end], snap.image ? { duration: IMAGE_DURATION, easing: IMAGE_EASE, fill: 'both' } : { duration: DURATION, easing: EASE, fill: 'both' }))
+        animations.push(clone.animate([from, end], snap.image ? timing : { duration: DURATION, easing: EASE, fill: 'both' }))
       }
       if (!animations.length) return cleanup()
       Promise.all(animations.map((animation) => animation.finished)).then(handoff, cleanup)
@@ -275,29 +328,65 @@ function run(snaps: Snap[], navigate: () => void, destination?: string) {
     document.body.appendChild(snap.clone)
     clones.push(snap.clone)
   }
-  // Immediate feedback: pictures lift off their cards before the destination exists, so a slow detail
-  // chunk shows a held, raised picture rather than an empty frame followed by a late jump.
+  // Immediate feedback. With a known hero frame the picture flies there at once (blending in the hero overlay)
+  // and waits in place for the detail data; the real hero then appears under it already aligned. Without one,
+  // it lifts off its card and holds, so a slow page shows a raised picture rather than a late jump.
   for (const snap of snaps) {
     if (!snap.image) continue
     place(snap)
-    lifts.set(snap, snap.clone.animate([{ transform: 'scale(1)', boxShadow: FLAT_SHADOW }, { transform: LIFT_SCALE, boxShadow: LIFT_SHADOW }], { duration: 180, easing: EASE, fill: 'forwards' }))
+    if (hero) {
+      const timing: KeyframeAnimationOptions = { duration: IMAGE_DURATION, easing: IMAGE_EASE, fill: 'both' }
+      const layer = shadeLayer()
+      layer.style.backgroundImage = hero.shade
+      snap.clone.appendChild(layer)
+      early.set(snap, {
+        layer,
+        fade: layer.animate([{ opacity: 0 }, { opacity: 1 }], timing),
+        flight: snap.clone.animate([
+          { left: `${snap.rect.left}px`, top: `${snap.rect.top}px`, width: `${snap.rect.width}px`, height: `${snap.rect.height}px`, borderRadius: snap.radius, boxShadow: LIFT_SHADOW },
+          { left: `${hero.left}px`, top: `${hero.top}px`, width: `${hero.width}px`, height: `${hero.height}px`, borderRadius: '0px', boxShadow: FLAT_SHADOW },
+        ], timing),
+      })
+    } else {
+      lifts.set(snap, snap.clone.animate([{ transform: 'scale(1)', boxShadow: FLAT_SHADOW }, { transform: LIFT_SCALE, boxShadow: LIFT_SHADOW }], { duration: 180, easing: EASE, fill: 'forwards' }))
+    }
   }
 
   navigate()
   if (done) return
   if (find()) return animate()
-  // Detail data can arrive late: watch only the app shell, give up after WAIT and leave the page as is.
-  observer = new MutationObserver(() => { if (find()) animate() })
+  // Nothing to land on: fade whatever is waiting where it is and leave the page as is.
+  const fadeAway = () => {
+    observer?.disconnect()
+    clearTimeout(timeout)
+    if (done) return
+    const fades = clones.map((clone) => clone.animate([{ opacity: 1 }, { opacity: 0 }], { duration: HANDOFF, easing: 'ease-out', fill: 'forwards' }))
+    animations.push(...fades)
+    Promise.all(fades.map((fade) => fade.finished)).then(cleanup, cleanup)
+  }
+  // Detail data can arrive late: watch only the app shell. A hero that renders without this picture
+  // (e.g. a monogram header) means there is no pair, so the waiting picture fades at once instead of after WAIT.
+  observer = new MutationObserver(() => {
+    if (find()) return animate()
+    if (early.size && document.querySelector('[data-shared-shade]') && snaps.some((snap) => snap.image && !targets.has(snap))) fadeAway()
+  })
   observer.observe(document.querySelector('.rwa-mobile') ?? document.body, { childList: true, subtree: true })
-  timeout = window.setTimeout(cleanup, WAIT)
+  timeout = window.setTimeout(fadeAway, WAIT)
 }
 
-function start(nodes: HTMLElement[], navigate: () => void, destination?: string) {
+/** The picture's overlay inside a clone (the hero's topbar shade and fade into the page). */
+function shadeLayer() {
+  const layer = document.createElement('div')
+  Object.assign(layer.style, { position: 'absolute', inset: '0', pointerEvents: 'none', opacity: '0' })
+  return layer
+}
+
+function start(nodes: HTMLElement[], navigate: () => void, destination?: string, toHero = false) {
   cancelSharedTransition()
   if (typeof window === 'undefined' || typeof Element.prototype.animate !== 'function' || reducedQuery().matches) return navigate()
   const snaps = nodes.map(snapshot).filter((snap): snap is Snap => snap !== null)
   if (!snaps.length) return navigate()
-  run(snaps, navigate, destination)
+  run(snaps, navigate, destination, toHero && snaps.some((snap) => snap.image) ? heroFrame() : null)
 }
 
 /**
@@ -306,7 +395,8 @@ function start(nodes: HTMLElement[], navigate: () => void, destination?: string)
  */
 export function sharedOpen(scope: Element | null, navigate: () => void, destination?: string) {
   if (!scope) return navigate()
-  start(Array.from(scope.querySelectorAll<HTMLElement>('[data-shared]')), navigate, destination)
+  // Every list → detail destination opens with a ProductHero, so the picture can head for its frame immediately.
+  start(Array.from(scope.querySelectorAll<HTMLElement>('[data-shared]')), navigate, destination, true)
 }
 
 /** Detail → list: pairs this entity's elements on the current page with the restored list. */
