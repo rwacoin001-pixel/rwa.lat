@@ -51,6 +51,8 @@ import { homeDataCopy } from '@/lib/route-copy'
 import { assetClassLabel as classLabel } from '@/lib/maison-market-copy'
 import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home-copy'
 import styles from './P04-HomeMaison.module.css'
+import { usePaletteA } from '@/lib/palette-preview'
+import { paletteASlogan } from '@/lib/palette-a-copy'
 import { PullToRefresh } from '../maison/PullToRefresh'
 import { featuredCover, homeAssetImage, HOME_ASSET_FALLBACK } from '@/lib/home-asset-media'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -223,6 +225,8 @@ function InstallStrip({ locale }: { locale: AppLocale }) {
 export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const { locale } = useI18n()
   const copy = copyByLocale[locale]
+  const paletteA = usePaletteA()
+  const slogan = paletteASlogan(locale)
   const extra = maisonCopy[locale]
   const utility = utilityCopy[locale]
   const dataCopy = homeDataCopy[locale]
@@ -393,8 +397,8 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
           <span>A-REIT</span><span className={styles.heroRule} /><span>{dateline}</span>
         </motion.div>
         <motion.p className={styles.heroKicker} initial={reduced ? false : { opacity: 0, letterSpacing: '.5em' }} animate={{ opacity: 1, letterSpacing: '.28em' }} transition={{ duration: 1.4, ease: EASE, delay: 0.2 }}>{copy.kicker}</motion.p>
-        <h1 className={styles.heroTitle}><MaskLines lines={[copy.headline, copy.perspective]} lineClassName={index => index === 1 ? styles.heroItalic : undefined} delay={0.3} /></h1>
-        <motion.p className={styles.heroSub} initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: EASE, delay: 0.75 }}>{copy.sub}</motion.p>
+        <h1 className={styles.heroTitle}><MaskLines lines={paletteA ? slogan.lines : [copy.headline, copy.perspective]} lineClassName={index => index === 1 ? styles.heroItalic : undefined} delay={0.3} /></h1>
+        <motion.p className={styles.heroSub} initial={reduced ? false : { opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1, ease: EASE, delay: 0.75 }}>{paletteA ? slogan.sub : copy.sub}</motion.p>
       </motion.div>
       <Ticker quotes={tickerQuotes} locale={locale} />
     </header>

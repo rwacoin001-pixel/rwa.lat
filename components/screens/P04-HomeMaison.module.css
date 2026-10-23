@@ -543,3 +543,7 @@
 :global(html[data-palette='a']) .pulseValue { font-weight: 500; }
 :global(html[data-palette='a']) .invite::after { background: var(--home-accent); opacity: 1; }
 :global(html[data-palette='a']) .invite { background: var(--home-lacquer); }
+/* Palette A round 3: one headline and one plain subline; no dateline, no letter-spaced kicker. */
+:global(html[data-palette='a']) :is(.heroMeta, .heroKicker) { display: none; }
+:global(html[data-palette='a']) .heroTitle { margin-top: 28px; }
+:global(html[data-palette='a']) .heroSub { max-width: 300px; margin-top: 14px; font-size: 15px; font-weight: 500; letter-spacing: 0; line-height: 1.5; text-transform: none; }

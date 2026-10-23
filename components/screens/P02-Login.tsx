@@ -23,6 +23,9 @@ import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
+import Onboarding from '@/components/onboarding/Onboarding'
+import { usePaletteA } from '@/lib/palette-preview'
+import { paletteASlogan } from '@/lib/palette-a-copy'
 import { InviteCodeField, useInviteCode } from './InviteCodeField'
 import { AuthLegalFooter } from './AuthLegalFooter'
 import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
@@ -58,6 +61,15 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 }) {
   const { locale, t } = useI18n()
   const copy = authRouteCopy[locale]
+  // Palette A preview: new brand line, and a first-run guide (replay with ?guide=1).
+  const paletteA = usePaletteA()
+  const [guide, setGuide] = useState(false)
+  useEffect(() => {
+    if (!paletteA) return
+    let seen = false
+    try { seen = localStorage.getItem('rwa.onboarded') === '1' } catch { /* Show it again. */ }
+    if (!seen || new URLSearchParams(location.search).has('guide')) setGuide(true)
+  }, [paletteA])
   const visual = authVisualCopy[locale]
   const sheet = authSheetCopy[locale]
   const emailCopy = authEmailCopy[locale]
@@ -434,7 +446,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const cta = (label: string) => <><span>{label}</span><span className={styles.ctaIcon} data-ready={Boolean(email.trim())} aria-hidden="true"><ArrowRight size={21} strokeWidth={1.6} /></span></>
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
-  const poster = authPosterTitle[locale]
+  const poster = paletteA ? paletteASlogan(locale).lines : authPosterTitle[locale]
   const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
@@ -470,8 +482,14 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const posterHero = !heading && <>
     <h1 className={styles.cardTitle}>{poster[0]} <em>{poster[1]}</em></h1>
-    <p className={styles.cardLede}>{authPosterIntro[locale]}</p>
+    <p className={styles.cardLede}>{paletteA ? paletteASlogan(locale).sub : authPosterIntro[locale]}</p>
   </>
+
+  if (guide) return <Onboarding locale={locale} onDone={intent => {
+    try { localStorage.setItem('rwa.onboarded', '1') } catch { /* Shown once per session then. */ }
+    setGuide(false)
+    if (intent === 'create') requestAnimationFrame(() => input.current?.focus())
+  }} />
 
   return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
