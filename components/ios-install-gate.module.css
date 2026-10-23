@@ -1,9 +1,9 @@
 /* iPhone install gate: the blank cover shown before paint while the guide chunk loads.
-   The guide itself is styled in ios-install-gate-view.module.css (same palette). */
+   The guide itself is styled in ios-install-gate-view.module.css (same iOS system palette). */
 .gate {
   position: fixed;
   inset: 0;
   z-index: 2147483000;
-  background: #f4efe6;
+  background: #f2f2f7;
 }
-.gate[data-theme='dark'] { background: #070c16; }
+.gate[data-theme='dark'] { background: #000000; }

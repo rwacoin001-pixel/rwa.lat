@@ -188,19 +188,13 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
         </label>
       </div>
 
-      <header className={styles.head}>
-        <p className={styles.kicker}>{copy.kicker}</p>
-        <h1 id="ios-gate-title" className={styles.title}>{copy.title}</h1>
-        <p className={styles.lede}>{path === 'inapp' ? copy.ledeInApp : copy.lede}</p>
-      </header>
-
       <div className={styles.journey} aria-hidden="true">
         <span className={styles.node}>
-          <span className={styles.glyph}><FromIcon size={24} strokeWidth={1.5} /></span>
+          <span className={styles.glyph}><FromIcon size={28} strokeWidth={1.6} /></span>
           <small>{fromLabel}</small>
         </span>
         <span className={styles.path}>
-          <span className={styles.chip}><PlusSquare size={12} strokeWidth={1.9} />{copy.ui.addToHome}</span>
+          <span className={styles.chip}><PlusSquare size={13} strokeWidth={2} />{copy.ui.addToHome}</span>
           <span className={styles.track}><i /></span>
         </span>
         <span className={styles.node}>
@@ -208,6 +202,12 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
           <small>{copy.to}</small>
         </span>
       </div>
+
+      <header className={styles.head}>
+        <p className={styles.kicker}>{copy.kicker}</p>
+        <h1 id="ios-gate-title" className={styles.title}>{copy.title}</h1>
+        <p className={styles.lede}>{path === 'inapp' ? copy.ledeInApp : copy.lede}</p>
+      </header>
       <p className={styles.meta}>{copy.meta[path]}</p>
 
       {notice && <div className={styles.notice} role="status">
@@ -225,7 +225,9 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
             <p className={styles.stepText}><Rich text={fill(step.body)} /></p>
             {index === 0 && path === 'safari' && <div className={styles.barPick} role="group" aria-label={pick.question}>
               <span>{pick.question}</span>
-              {(['toolbar', 'compact'] as const).map(option => <button key={option} type="button" aria-pressed={bar === option} onClick={() => setBar(option)}>{pick[option]}</button>)}
+              <span className={styles.segment} data-pick={bar}>
+                {(['toolbar', 'compact'] as const).map(option => <button key={option} type="button" aria-pressed={bar === option} onClick={() => setBar(option)}>{pick[option]}</button>)}
+              </span>
             </div>}
             {step.scene && <SceneArt scene={step.scene} ui={copy.ui} webApp={webApp} webAppTag={copy.webAppTag} openLabel={fill('{open}')} />}
             {step.alt && !(index === 0 && path === 'safari') && <p className={styles.alt}><Rich text={step.alt} /></p>}
@@ -234,7 +236,7 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
       </ol>
 
       <section className={styles.login}>
-        <span className={styles.loginIcon} aria-hidden="true"><KeyRound size={17} strokeWidth={1.6} /></span>
+        <span className={styles.loginIcon} aria-hidden="true"><KeyRound size={17} strokeWidth={2} /></span>
         <div>
           <h2>{copy.login.title}</h2>
           <p>{copy.login.body}</p>
@@ -244,7 +246,7 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
       <details className={styles.help}>
         <summary>
           <span><b>{copy.help.title}</b><small>{copy.help.hint}</small></span>
-          <ChevronDown className={styles.chevron} size={18} strokeWidth={1.6} aria-hidden="true" />
+          <ChevronDown className={styles.chevron} size={18} strokeWidth={2.2} aria-hidden="true" />
         </summary>
         <dl>
           {copy.help.items.map(item => <div key={item.q} className={styles.faq}>
@@ -281,6 +283,7 @@ function SceneArt({ scene, ui, webApp, webAppTag, openLabel }: { scene: Scene; u
         </span>
       </>
       case 'compact': return <>
+        {lines}
         <span className={s.popover}>
           <span className={`${s.menuRow} ${s.hotRow}`}><span>{ui.share}</span><Share size={13} strokeWidth={1.9} /><em className={s.badge}>2</em></span>
           <span className={s.menuRow}><i className={s.skel} /><i className={s.skelIcon} /></span>
