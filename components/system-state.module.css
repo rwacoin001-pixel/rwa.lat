@@ -95,3 +95,6 @@
 :global(html[data-palette='a']) .page[data-theme='cool'] .primaryIcon { background: #03211c; color: #19c7aa; }
 :global(html[data-palette='a']) .grain { display: none; }
 :global(html[data-palette='a']) .title { font-weight: 600; letter-spacing: -.025em; }
+:global(html[data-palette='a']) .page .card { background: #ffffff; }
+:global(html[data-palette='a']) .page[data-theme='cool'] .card { background: #14171d; }
+:global(html[data-palette='a']) .page, :global(html[data-palette='a']) .page[data-theme='cool'] { background: var(--ss-bg); }

@@ -448,7 +448,7 @@
   --home-down: #d6453d;
   --home-hero-ink: #0b1220;
   --home-hero-muted: rgba(11, 18, 32, .62);
-  --home-lacquer: linear-gradient(165deg, #ffffff, #f7f9fa 75%);
+  --home-lacquer: #ffffff;
   --home-lacquer-ink: #0b1220;
   --home-lacquer-muted: #5b6472;
   --home-lacquer-line: rgba(11, 18, 32, .09);
@@ -486,7 +486,7 @@
   --home-down: #ff6b5e;
   --home-hero-ink: #f2f4f7;
   --home-hero-muted: rgba(242, 244, 247, .68);
-  --home-lacquer: linear-gradient(160deg, rgba(30, 34, 42, .94), rgba(14, 16, 21, .97) 70%);
+  --home-lacquer: #14171d;
   --home-lacquer-ink: #f2f4f7;
   --home-lacquer-muted: rgba(242, 244, 247, .56);
   --home-lacquer-line: rgba(255, 255, 255, .09);
@@ -517,14 +517,14 @@
   background-image:
     linear-gradient(180deg, var(--chrome-color) 0, transparent 40px),
     linear-gradient(180deg, rgba(245, 246, 248, .30) 0%, rgba(245, 246, 248, 0) 30%, rgba(245, 246, 248, 0) 52%, rgba(245, 246, 248, .55) 76%, #f5f6f8 98%),
-    url('/media/home/hero-day-from-cool-v2.webp');
+    url('/media/palette-a/hero-light.webp');
 }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .heroBg {
   --chrome-color: #0b1626;
   background-image:
     linear-gradient(180deg, var(--chrome-color) 0, transparent 40px),
     linear-gradient(180deg, rgba(10, 12, 16, .45) 0%, rgba(10, 12, 16, 0) 32%, rgba(10, 12, 16, 0) 50%, rgba(10, 12, 16, .62) 76%, #0a0c10 98%),
-    url('/media/home/hero-cool.webp');
+    url('/media/palette-a/hero-dark.webp');
 }
 /* Sans display: tighter and a touch heavier than the serif it replaces; no italics. */
 :global(html[data-palette='a']) .heroTitle { font-weight: 600; letter-spacing: -.045em; line-height: 1; }
@@ -535,9 +535,11 @@
 :global(html[data-palette='a']) .cardStatus { font-weight: 600; letter-spacing: -.02em; }
 :global(html[data-palette='a']) .card { filter: drop-shadow(0 12px 18px rgba(15, 23, 42, .12)); }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .card { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .45)); }
-:global(html[data-palette='a']) .cardSheen { background: radial-gradient(420px circle at var(--mx) var(--my), var(--home-card-glow), transparent 45%); animation: none; }
-:global(html[data-palette='a']) .card::after { background: radial-gradient(160px 40px at calc(100% - 60px) 0, var(--home-card-rim-glow), transparent 70%); }
+:global(html[data-palette='a']) .cardSheen { display: none; }
+:global(html[data-palette='a']) .card::after { display: none; }
 :global(html[data-palette='a']) .invite { box-shadow: inset 0 0 0 .5px var(--home-line), 0 12px 26px -20px rgba(15, 23, 42, .3); }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .invite { box-shadow: inset 0 0 0 .5px var(--home-line), 0 14px 30px -20px rgba(0, 0, 0, .8); }
 :global(html[data-palette='a']) .invite::before { display: none; }
 :global(html[data-palette='a']) .pulseValue { font-weight: 500; }
+:global(html[data-palette='a']) .invite::after { background: var(--home-accent); opacity: 1; }
+:global(html[data-palette='a']) .invite { background: var(--home-lacquer); }

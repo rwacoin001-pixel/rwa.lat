@@ -1456,7 +1456,7 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .root {
   --m-glass: rgba(255, 255, 255, .72);
   --m-glass-deep: rgba(236, 238, 242, .78);
-  --m-lacquer: linear-gradient(165deg, #ffffff, #f7f9fa 75%);
+  --m-lacquer: #ffffff;
   --m-lacquer-ink: #0b1220;
   --m-lacquer-muted: #5b6472;
   --m-lacquer-line: rgba(11, 18, 32, .09);
@@ -1488,7 +1488,7 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root {
   --m-glass: rgba(22, 25, 31, .66);
   --m-glass-deep: rgba(18, 21, 26, .8);
-  --m-lacquer: linear-gradient(160deg, rgba(30, 34, 42, .94), rgba(14, 16, 21, .97) 70%);
+  --m-lacquer: #14171d;
   --m-lacquer-ink: #f2f4f7;
   --m-lacquer-muted: rgba(242, 244, 247, .56);
   --m-lacquer-line: rgba(255, 255, 255, .09);
@@ -1511,20 +1511,9 @@ span.compareName { padding-top: 28px; cursor: default; }
   --m-cta-quiet: rgba(25, 199, 170, .12);
   --m-cta-quiet-ink: #19c7aa;
 }
-:global(html[data-palette='a']) .root::before {
-  background:
-    radial-gradient(120% 60% at 100% -10%, rgba(25, 199, 170, .10), transparent 60%),
-    radial-gradient(90% 50% at -10% 30%, rgba(75, 101, 132, .07), transparent 62%);
-}
-:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root::before {
-  background:
-    radial-gradient(120% 60% at 100% -10%, rgba(25, 199, 170, .10), transparent 60%),
-    radial-gradient(90% 50% at -10% 30%, rgba(142, 163, 192, .06), transparent 62%);
-}
+:global(html[data-palette='a']) .root::before { background: none; }
 /* Cards: no brushed grain or gold ruling — a soft highlight and a hairline green rim. */
-:global(html[data-palette='a']) .lacquer::before {
-  background: radial-gradient(240px circle at var(--mx, var(--light-x, 80%)) var(--my, var(--light-y, 0%)), rgba(25, 199, 170, .08), transparent 60%);
-}
+:global(html[data-palette='a']) .lacquer::before, :global(html[data-palette='a']) .lacquer::after { background: none; }
 :global(html[data-palette='a']) .lacquer::after { opacity: .35; }
 :global(html[data-palette='a']) .lacquer > .guilloche { opacity: .3; }
 :global(html[data-palette='a']) .lacquer .field input,

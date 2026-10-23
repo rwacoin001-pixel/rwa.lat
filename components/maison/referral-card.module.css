@@ -130,3 +130,13 @@
 /* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
 :global(html[data-palette='a']) .page.page { --r-bg: #f5f6f8; --r-surface: #ffffff; --r-ink: #0b1220; --r-muted: #5b6472; --r-on-ink: #ffffff; --r-line: rgba(11, 18, 32, .1); --r-line-strong: rgba(11, 18, 32, .22); --r-gold: #087a67; --r-gold-text: #087a67; }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .page.page { --r-bg: #0a0c10; --r-surface: #14171d; --r-ink: #f2f4f7; --r-muted: #8a93a3; --r-on-ink: #0a0c10; --r-line: rgba(255, 255, 255, .09); --r-line-strong: rgba(255, 255, 255, .22); --r-gold: #19c7aa; --r-gold-text: #19c7aa; }
+
+/* Palette A preview, round 2: the member card turns flat white / graphite with a green foil and a silver chip. */
+:global(html[data-palette='a']) .page.page { --c-paper: #ffffff; --c-edge: rgba(11, 18, 32, .1); --c-mint: #19c7aa; --c-mint-soft: rgba(25, 199, 170, .12); --c-mint-ink: #087a67; --c-card-a: #ffffff; --c-card-b: #ffffff; --c-card-ink: #0b1220; --c-card-muted: #5b6472; --c-card-line: rgba(11, 18, 32, .12); --c-shadow: 0 24px 40px -28px rgba(15, 23, 42, .3), 0 2px 6px -2px rgba(15, 23, 42, .1); --c-serif: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .page.page { --c-paper: #14171d; --c-edge: rgba(255, 255, 255, .09); --c-mint: #19c7aa; --c-mint-soft: rgba(25, 199, 170, .14); --c-mint-ink: #5fe0c8; --c-card-a: #1a1e25; --c-card-b: #1a1e25; --c-card-ink: #f2f4f7; --c-card-muted: #8a93a3; --c-card-line: rgba(255, 255, 255, .12); --c-shadow: 0 30px 50px -30px rgba(0, 0, 0, .9), 0 2px 8px -2px rgba(0, 0, 0, .5); }
+:global(html[data-palette='a']) .card { background: var(--c-card-a); border-color: var(--c-card-line); }
+:global(html[data-palette='a']) .card::after { display: none; }
+:global(html[data-palette='a']) .guilloche { color: #19c7aa; opacity: .12; }
+:global(html[data-palette='a']) .foil { background: #19c7aa; }
+:global(html[data-palette='a']) .chip { background: linear-gradient(135deg, #c3c9d2, #f2f4f7 40%, #9ea6b2); box-shadow: inset 0 0 0 .5px rgba(15, 23, 42, .35); }
+:global(html[data-palette='a']) .cardFoot span { color: var(--c-card-muted); }

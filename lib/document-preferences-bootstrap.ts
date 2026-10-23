@@ -87,7 +87,7 @@ export const documentPreferencesBootstrap = `(() => {
     const hero = document.createElement('link');
     hero.rel = 'preload';
     hero.as = 'image';
-    hero.href = theme === 'dark' ? '/media/home/hero-cool.webp' : '/media/home/hero-day-from-cool-v2.webp';
+    hero.href = palette ? (theme === 'dark' ? '/media/palette-a/hero-dark.webp' : '/media/palette-a/hero-light.webp') : theme === 'dark' ? '/media/home/hero-cool.webp' : '/media/home/hero-day-from-cool-v2.webp';
     hero.setAttribute('fetchpriority', 'high');
     document.head.appendChild(hero);
   }
