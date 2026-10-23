@@ -48,3 +48,6 @@
 .row { min-height: 62px; border-color: var(--home-line-soft); }
 .value { font-weight: 480; }
 .root .up { color: var(--home-accent); }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .heading h2 { font-weight: 600; letter-spacing: -.03em; }

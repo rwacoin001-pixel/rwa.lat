@@ -29,3 +29,6 @@
 :global(.rwa-mobile) .root.root .source, :global(.rwa-mobile) .root.root .category, :global(.rwa-mobile) .root.root .mt, :global(.rwa-mobile) .root.root .foot { color: var(--home-muted); }
 @keyframes poly-shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) { .loading span { animation: none; } }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .question { font-weight: 600; letter-spacing: -.015em; }

@@ -1,0 +1,68 @@
+/* Palette A preview · cool white + brand green (#19C7AA, the logo's plane).
+   Only active on html[data-palette='a'] (?palette=a, see lib/document-preferences-bootstrap.ts); without it nothing here applies.
+   Global layer: the --pal-* palette and the dock. Home and Maison pages override their own module tokens next to the originals. */
+html[data-palette='a'] {
+  --pal-light-bg: #f5f6f8; --pal-light-surface: #ffffff; --pal-light-surface-2: #eceef2;
+  --pal-light-ink: #0b1220; --pal-light-ink-rgb: 11 18 32; --pal-light-ink-2: #2b3443;
+  --pal-light-muted: #5b6472; --pal-light-faint: #8f97a5;
+  --pal-light-line: rgba(11, 18, 32, .10); --pal-light-line-soft: rgba(11, 18, 32, .06);
+  /* Text-safe green on white (5:1); the bright logo green is for marks and dark mode. */
+  --pal-light-accent: #087a67; --pal-light-accent-rgb: 8 122 103; --pal-light-on-accent: #ffffff;
+  --pal-light-up: #078a6a; --pal-light-down: #d6453d; --pal-light-warn: #b7791f; --pal-light-info: #4b6584;
+  --pal-dark-bg: #0a0c10; --pal-dark-surface: #14171d; --pal-dark-surface-2: #1c2028;
+  --pal-dark-ink: #f2f4f7; --pal-dark-ink-rgb: 242 244 247; --pal-dark-ink-2: #c9ced8;
+  --pal-dark-muted: #8a93a3; --pal-dark-faint: #5d6573;
+  --pal-dark-line: rgba(255, 255, 255, .10); --pal-dark-line-soft: rgba(255, 255, 255, .05);
+  --pal-dark-accent: #19c7aa; --pal-dark-accent-rgb: 25 199 170; --pal-dark-on-accent: #03211c;
+  --pal-dark-up: #2fd4a3; --pal-dark-down: #ff6b5e; --pal-dark-warn: #f2b84b; --pal-dark-info: #8ea3c0;
+  --pal-a-brand: #19c7aa;
+}
+html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='dark'] { --bg-texture: none; --font-display: var(--font-sans); }
+
+/* Nav bar + glass chrome (styles/ios.css). */
+html[data-palette='a'] .rwa-mobile {
+  --bar-ink: #0b1220; --bar-muted: rgba(11, 18, 32, .56); --bar-accent: #087a67; --bar-line: rgba(11, 18, 32, .08);
+  --bar-glass: rgba(245, 246, 248, .74); --bar-btn: rgba(255, 255, 255, .7); --bar-btn-line: rgba(255, 255, 255, .9);
+  --bar-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 1px 2px rgba(15, 23, 42, .06), 0 8px 18px -10px rgba(15, 23, 42, .2);
+  --dock-glass: rgba(255, 255, 255, .78); --dock-line: rgba(255, 255, 255, .86);
+  --dock-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 18px 38px -14px rgba(15, 23, 42, .28), 0 2px 6px rgba(15, 23, 42, .06);
+  --dock-lens: rgba(11, 18, 32, .06); --dock-lens-shadow: inset 0 1px 0 rgba(255, 255, 255, .85), 0 6px 14px -8px rgba(15, 23, 42, .24);
+}
+html[data-palette='a'] .rwa-mobile[data-theme='dark'] {
+  --bar-ink: #f2f4f7; --bar-muted: rgba(242, 244, 247, .56); --bar-accent: #19c7aa; --bar-line: rgba(255, 255, 255, .08);
+  --bar-glass: rgba(10, 12, 16, .7); --bar-btn: rgba(255, 255, 255, .06); --bar-btn-line: rgba(255, 255, 255, .1);
+  --bar-btn-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 8px 18px -10px rgba(0, 0, 0, .7);
+  --dock-glass: rgba(22, 25, 31, .7); --dock-line: rgba(255, 255, 255, .1);
+  --dock-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 18px 40px -12px rgba(0, 0, 0, .66);
+  --dock-lens: rgba(255, 255, 255, .08); --dock-lens-line: rgba(255, 255, 255, .16);
+}
+html[data-palette='a'] .rwa-mobile[data-theme='light'][data-screen] .ios-dock.liquid-dock .ai-orb { box-shadow: 0 10px 22px -10px rgba(15, 23, 42, .36), 0 2px 5px -2px rgba(15, 23, 42, .14); }
+
+/* Dock · light: a white frosted bar with an ink capsule; dark: graphite bar with a green capsule. */
+html[data-palette='a'] .rwa-mobile[data-theme="light"] {
+  --dock-a-bg: rgba(255, 255, 255, .86); --dock-a-line: rgba(11, 18, 32, .08); --dock-a-hi: rgba(255, 255, 255, .95);
+  --dock-a-shadow: 0 16px 32px -18px rgba(15, 23, 42, .28), 0 2px 6px -3px rgba(15, 23, 42, .08);
+  --dock-a-ink: #0b1220; --dock-a-muted: #6b7380;
+  --dock-a-on: #0b1220; --dock-a-on-ink: #ffffff; --dock-a-on-line: rgba(11, 18, 32, .2);
+  --dock-a-cap-shadow: 0 4px 12px -6px rgba(15, 23, 42, .45);
+  --dock-a-orb-line: rgba(25, 199, 170, .5);
+  --dock-a-orb-bg: radial-gradient(circle at 30% 18%, #3a4150 0%, #1a1f29 38%, #0b1220 72%, #1d2a33 99%);
+  --dock-a-orb-shadow: inset 0 1px 2px rgba(255, 255, 255, .25), inset 0 -5px 10px rgba(0, 0, 0, .4), 0 14px 28px -14px rgba(15, 23, 42, .5), 0 2px 6px rgba(15, 23, 42, .12);
+  --dock-a-orb-spec: radial-gradient(ellipse 44% 26% at 33% 20%, rgba(255, 255, 255, .4), transparent 80%), radial-gradient(ellipse 24% 14% at 69% 77%, rgba(25, 199, 170, .45), transparent 95%);
+}
+html[data-palette='a'] .rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liquid-dock {
+  --dock-bar: rgba(22, 25, 31, .9);
+  --dock-bar-line: rgba(255, 255, 255, .09);
+  --dock-bar-shadow: inset 0 1px 0 rgba(255, 255, 255, .06), 0 18px 40px -12px rgba(0, 0, 0, .72);
+  --dock-tab: rgba(242, 244, 247, .55);
+  --dock-tab-hover: rgba(242, 244, 247, .9);
+  --dock-cap: #19c7aa;
+  --dock-cap-ink: #03211c;
+  --dock-cap-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), 0 4px 14px -4px rgba(0, 0, 0, .6), 0 0 18px -6px rgba(25, 199, 170, .55);
+  --dock-plus: #19c7aa;
+}
+
+@media (min-width: 700px) {
+  html[data-palette='a'] .rwa-shell { background: #e9ecf1; }
+  html[data-palette='a'] .rwa-shell:has(.rwa-mobile[data-theme='dark']) { background: #050608; }
+}

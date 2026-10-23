@@ -18,3 +18,6 @@
 :global(.rwa-mobile) .root.root .leadArrow { color: #1b1712; }
 :global([dir='rtl']) .lead::after { background: linear-gradient(270deg, rgba(10, 8, 5, .88), rgba(10, 8, 5, .25)); }
 @media (prefers-reduced-motion: reduce) { .leadArrow { transition: none; } .lead:hover .leadArrow { transform: none; } }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .leadBody strong { font-weight: 600; letter-spacing: -.02em; }

@@ -6,3 +6,6 @@
 .root > button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; border-radius: 5px; }
 :global(.rwa-mobile) .root.root .index { color: var(--home-accent); }
 @media (max-width: 350px) { .root h2 { font-size: 25px; } }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .root h2 { font-weight: 600; letter-spacing: -.03em; }

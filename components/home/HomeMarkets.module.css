@@ -43,3 +43,6 @@
 
 .tabs button:focus-visible, .error:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; }
 .symbol { flex-wrap: wrap; letter-spacing: .03em; }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .bigValue { font-weight: 500; }

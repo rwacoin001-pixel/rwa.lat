@@ -2,7 +2,7 @@
 
 import { useLayoutEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { themeColors } from '@/lib/document-preferences-bootstrap'
+import { paletteAColors, themeColors } from '@/lib/document-preferences-bootstrap'
 
 /** A full-bleed media band (e.g. the home hero) under the top edge lends the status bar its `--chrome-color`. */
 function mediaChromeColor() {
@@ -42,7 +42,8 @@ export default function PageChrome() {
           if (background !== 'transparent' && background !== 'rgba(0, 0, 0, 0)' && !background.startsWith('rgba(')) { color = background; break }
         }
       }
-      color ||= root.dataset.theme === 'dark' ? themeColors.dark : themeColors.light
+      const fallback = root.dataset.palette === 'a' ? paletteAColors : themeColors
+      color ||= root.dataset.theme === 'dark' ? fallback.dark : fallback.light
       if (color !== pageColor) {
         pageColor = color
         root.style.setProperty('--page-chrome-color', color)

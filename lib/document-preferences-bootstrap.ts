@@ -5,6 +5,12 @@ export const themeColors = {
   dark: '#0A0B0D',
 } as const
 
+// Page colours of the palette A preview (styles/palette-a.css).
+export const paletteAColors = {
+  light: '#F5F6F8',
+  dark: '#0A0C10',
+} as const
+
 const localeDirections = JSON.stringify(
   Object.fromEntries(localeOptions.map(({ code, direction }) => [code, direction])),
 )
@@ -31,8 +37,20 @@ export const documentPreferencesBootstrap = `(() => {
     : prefersDark ? 'dark' : 'light';
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
+
+  // Colour preview (palette A, cool white + brand green): opt in with ?palette=a, back to normal with ?palette=off.
+  // Only this device sees it; everyone else keeps the current colours.
+  let palette = null;
+  try {
+    const asked = new URLSearchParams(location.search).get('palette');
+    if (asked === 'a') localStorage.setItem('rwa.palette', 'a');
+    else if (asked === 'off') localStorage.removeItem('rwa.palette');
+    palette = localStorage.getItem('rwa.palette') === 'a' ? 'a' : null;
+  } catch {}
+  if (palette) root.dataset.palette = palette;
+
   const authRoute = /^\\/(login|register|verify-email|recovery)(\\/|$)/.test(location.pathname);
-  const color = authRoute ? (theme === 'dark' ? '#070c16' : '#efe4d4') : (theme === 'dark' ? '${themeColors.dark}' : '${themeColors.light}');
+  const color = palette ? (theme === 'dark' ? '${paletteAColors.dark}' : '${paletteAColors.light}') : authRoute ? (theme === 'dark' ? '#070c16' : '#efe4d4') : (theme === 'dark' ? '${themeColors.dark}' : '${themeColors.light}');
   root.style.setProperty('--page-chrome-color', color);
   root.style.backgroundColor = color;
   document.querySelectorAll('meta[name="theme-color"]').forEach(meta => { meta.content = color; meta.removeAttribute('media'); });

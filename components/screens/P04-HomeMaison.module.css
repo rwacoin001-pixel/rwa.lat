@@ -429,3 +429,115 @@
 /* Android app: no live blur over the drifting hero and the scrolling page (see globals.css). */
 :global(html[data-shell='android']) .ticker { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--home-bg) 62%, transparent); }
 :global(html[data-shell='android']) .invite { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--home-glass) 55%, var(--home-bg)); }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css): cool white + brand green, one sans family.
+   Overrides only; with the attribute absent none of this applies. ── */
+:global(html[data-palette='a']) .root {
+  --home-bg: #f5f6f8;
+  --home-ink: #0b1220;
+  --home-muted: #5b6472;
+  --home-faint: #8f97a5;
+  --home-line: rgba(11, 18, 32, .10);
+  --home-line-soft: rgba(11, 18, 32, .06);
+  --home-glass: rgba(255, 255, 255, .72);
+  --home-glass-deep: rgba(236, 238, 242, .78);
+  --home-accent: #087a67;
+  --home-sea: #4b6584;
+  --home-on-accent: #ffffff;
+  --home-up: #078a6a;
+  --home-down: #d6453d;
+  --home-hero-ink: #0b1220;
+  --home-hero-muted: rgba(11, 18, 32, .62);
+  --home-lacquer: linear-gradient(165deg, #ffffff, #f7f9fa 75%);
+  --home-lacquer-ink: #0b1220;
+  --home-lacquer-muted: #5b6472;
+  --home-lacquer-line: rgba(11, 18, 32, .09);
+  --home-lacquer-accent: #087a67;
+  --home-lacquer-press: rgba(11, 18, 32, .04);
+  --home-cta: #0b1220;
+  --home-cta-ink: #ffffff;
+  --home-cta-rim: rgba(255, 255, 255, .12);
+  --home-cta-chip: #19c7aa;
+  --home-cta-chip-ink: #03211c;
+  --home-card-glow: rgba(255, 255, 255, .6);
+  --home-card-rim-glow: rgba(25, 199, 170, .14);
+  --home-seg-0: #0b1220;
+  --home-seg-1: #19c7aa;
+  --home-seg-2: #4b6584;
+  --home-seg-3: #9aa3b2;
+  --home-seg-4: #d9dde4;
+  --home-shadow: 0 30px 60px -28px rgba(15, 23, 42, .32), 0 8px 18px -10px rgba(15, 23, 42, .12);
+  --home-display: var(--font-geist-sans), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --home-h2-tracking: -.03em;
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root {
+  --home-bg: #0a0c10;
+  --home-ink: #f2f4f7;
+  --home-muted: #8a93a3;
+  --home-faint: #5d6573;
+  --home-line: rgba(255, 255, 255, .10);
+  --home-line-soft: rgba(255, 255, 255, .05);
+  --home-glass: rgba(22, 25, 31, .66);
+  --home-glass-deep: rgba(18, 21, 26, .8);
+  --home-accent: #19c7aa;
+  --home-sea: #8ea3c0;
+  --home-on-accent: #03211c;
+  --home-up: #2fd4a3;
+  --home-down: #ff6b5e;
+  --home-hero-ink: #f2f4f7;
+  --home-hero-muted: rgba(242, 244, 247, .68);
+  --home-lacquer: linear-gradient(160deg, rgba(30, 34, 42, .94), rgba(14, 16, 21, .97) 70%);
+  --home-lacquer-ink: #f2f4f7;
+  --home-lacquer-muted: rgba(242, 244, 247, .56);
+  --home-lacquer-line: rgba(255, 255, 255, .09);
+  --home-lacquer-accent: #19c7aa;
+  --home-lacquer-press: rgba(255, 255, 255, .05);
+  --home-cta: #19c7aa;
+  --home-cta-ink: #03211c;
+  --home-cta-rim: rgba(255, 255, 255, .35);
+  --home-cta-chip: #0a0c10;
+  --home-cta-chip-ink: #19c7aa;
+  --home-card-glow: rgba(25, 199, 170, .10);
+  --home-card-rim-glow: rgba(25, 199, 170, .22);
+  --home-seg-0: #19c7aa;
+  --home-seg-1: #8ea3c0;
+  --home-seg-2: #4b6584;
+  --home-seg-3: #2c3340;
+  --home-seg-4: #1c2028;
+  --home-shadow: 0 34px 70px -30px rgba(0, 0, 0, .8), 0 10px 22px -12px rgba(0, 0, 0, .5);
+}
+:global(html[data-palette='a'] .rwa-mobile) .root.root.root[data-home-design='maison'] > :global(.rwa-topbar.rwa-topbar--s1) {
+  background: linear-gradient(180deg, rgba(245, 246, 248, .86), rgba(245, 246, 248, .52));
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root.root.root[data-home-design='maison'] > :global(.rwa-topbar.rwa-topbar--s1) {
+  background: linear-gradient(180deg, rgba(10, 12, 16, .86), rgba(10, 12, 16, .5));
+}
+:global(html[data-palette='a']) .grain { display: none; }
+:global(html[data-palette='a']) .heroBg {
+  background-image:
+    linear-gradient(180deg, var(--chrome-color) 0, transparent 40px),
+    linear-gradient(180deg, rgba(245, 246, 248, .30) 0%, rgba(245, 246, 248, 0) 30%, rgba(245, 246, 248, 0) 52%, rgba(245, 246, 248, .55) 76%, #f5f6f8 98%),
+    url('/media/home/hero-day-from-cool-v2.webp');
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .heroBg {
+  --chrome-color: #0b1626;
+  background-image:
+    linear-gradient(180deg, var(--chrome-color) 0, transparent 40px),
+    linear-gradient(180deg, rgba(10, 12, 16, .45) 0%, rgba(10, 12, 16, 0) 32%, rgba(10, 12, 16, 0) 50%, rgba(10, 12, 16, .62) 76%, #0a0c10 98%),
+    url('/media/home/hero-cool.webp');
+}
+/* Sans display: tighter and a touch heavier than the serif it replaces; no italics. */
+:global(html[data-palette='a']) .heroTitle { font-weight: 600; letter-spacing: -.045em; line-height: 1; }
+:global(html[data-palette='a'] .rwa-mobile) .root.root .heroItalic { font-style: normal; color: #087a67; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root.root .heroItalic { color: #19c7aa; text-shadow: none; }
+:global(html[data-palette='a'] .rwa-mobile) .root.root .cardCtaIcon { color: var(--home-cta-chip-ink); }
+:global(html[data-palette='a']) .root[data-locale='zh-CN'] .heroTitle { font-weight: 600; letter-spacing: 0; }
+:global(html[data-palette='a']) .cardStatus { font-weight: 600; letter-spacing: -.02em; }
+:global(html[data-palette='a']) .card { filter: drop-shadow(0 12px 18px rgba(15, 23, 42, .12)); }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .card { filter: drop-shadow(0 12px 18px rgba(0, 0, 0, .45)); }
+:global(html[data-palette='a']) .cardSheen { background: radial-gradient(420px circle at var(--mx) var(--my), var(--home-card-glow), transparent 45%); animation: none; }
+:global(html[data-palette='a']) .card::after { background: radial-gradient(160px 40px at calc(100% - 60px) 0, var(--home-card-rim-glow), transparent 70%); }
+:global(html[data-palette='a']) .invite { box-shadow: inset 0 0 0 .5px var(--home-line), 0 12px 26px -20px rgba(15, 23, 42, .3); }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .invite { box-shadow: inset 0 0 0 .5px var(--home-line), 0 14px 30px -20px rgba(0, 0, 0, .8); }
+:global(html[data-palette='a']) .invite::before { display: none; }
+:global(html[data-palette='a']) .pulseValue { font-weight: 500; }

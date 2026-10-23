@@ -57,3 +57,6 @@
 .appOffer small { color: var(--home-lacquer-muted); font-size: 11px; }
 .appOffer .secondary { margin-top: 4px; text-decoration: none; }
 .appOffer .primary { text-decoration: none; }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .title { font-weight: 600; letter-spacing: -.025em; }

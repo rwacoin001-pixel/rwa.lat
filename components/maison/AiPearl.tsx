@@ -19,6 +19,12 @@ const PALETTES: Record<PearlTheme, Palette> = {
   light: { hi: '#fffdf8', mid: '#eee5d5', edge: '#cdbb9e', band: '166,128,74', band2: '214,186,140', shade: '27,24,19', rim: 'rgba(27,24,19,.12)', spec: 'rgba(255,255,255,.92)', arc: '#8a6a3b', cancel: '176,83,63' },
   dark: { hi: '#34435f', mid: '#152036', edge: '#0a111f', band: '227,187,122', band2: '150,176,212', shade: '0,0,0', rim: 'rgba(169,184,208,.26)', spec: 'rgba(233,237,243,.5)', arc: '#e3bb7a', cancel: '239,143,125' },
 }
+// Palette A preview (html[data-palette='a'], styles/palette-a.css): white / graphite pearl with brand-green light.
+const PALETTES_A: Record<PearlTheme, Palette> = {
+  light: { hi: '#ffffff', mid: '#eef1f4', edge: '#c9d0da', band: '25,199,170', band2: '120,150,190', shade: '11,18,32', rim: 'rgba(11,18,32,.12)', spec: 'rgba(255,255,255,.92)', arc: '#087a67', cancel: '214,69,61' },
+  dark: { hi: '#2a313d', mid: '#151920', edge: '#0a0c10', band: '25,199,170', band2: '142,163,192', shade: '0,0,0', rim: 'rgba(255,255,255,.18)', spec: 'rgba(242,244,247,.5)', arc: '#19c7aa', cancel: '255,107,94' },
+}
+const paletteA = () => typeof document !== 'undefined' && document.documentElement.dataset.palette === 'a'
 
 export type PearlFrame = { size: number; time: number; state: PearlState; energy: number; theme: PearlTheme; inset: number; cancel: boolean; still: boolean }
 
@@ -34,7 +40,7 @@ export function pearlGeometry({ size, time, state, energy, inset, still }: Pick<
 
 export function drawPearl(ctx: CanvasRenderingContext2D, frame: PearlFrame) {
   const { size, time, state, energy, theme, cancel, still } = frame
-  const p = PALETTES[theme], c = size / 2
+  const p = (paletteA() ? PALETTES_A : PALETTES)[theme], c = size / 2
   const { radius: r, drift, arcStart, arcLength } = pearlGeometry(frame)
   const band = cancel ? p.cancel : p.band
   ctx.clearRect(0, 0, size, size)

@@ -1450,3 +1450,90 @@ span.compareName { padding-top: 28px; cursor: default; }
 .groupTitle { margin: 26px 2px 6px; color: var(--m-muted); font: 600 12px/1.2 var(--m-sans, inherit); letter-spacing: .08em; text-transform: uppercase; }
 .dangerZone { display: grid; justify-items: center; margin: 28px 0 8px; padding-top: 18px; border-top: 1px solid var(--m-line); }
 .dangerZone .link { color: var(--m-down); font-size: 13px; }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css): cool white + brand green, one sans family.
+   Core colours already switch through --pal-*; these are the Maison-only pieces. Absent the attribute nothing applies. ── */
+:global(html[data-palette='a']) .root {
+  --m-glass: rgba(255, 255, 255, .72);
+  --m-glass-deep: rgba(236, 238, 242, .78);
+  --m-lacquer: linear-gradient(165deg, #ffffff, #f7f9fa 75%);
+  --m-lacquer-ink: #0b1220;
+  --m-lacquer-muted: #5b6472;
+  --m-lacquer-line: rgba(11, 18, 32, .09);
+  --m-lacquer-accent: #087a67;
+  --m-lacquer-hi: rgba(255, 255, 255, .95);
+  --m-lacquer-down: #d6453d;
+  --m-lacquer-tip: rgba(255, 255, 255, .96);
+  --m-lacquer-shadow: 0 18px 36px -24px rgba(15, 23, 42, .22), 0 2px 6px -3px rgba(15, 23, 42, .08);
+  --m-lacquer-up: #078a6a;
+  --m-lacquer-edge: rgba(11, 18, 32, .12);
+  --m-lacquer-fill: rgba(11, 18, 32, .03);
+  --m-lacquer-tick: rgba(11, 18, 32, .12);
+  --m-shadow: 0 30px 60px -28px rgba(15, 23, 42, .3), 0 8px 18px -10px rgba(15, 23, 42, .12);
+  --m-shadow-soft: 0 18px 36px -26px rgba(15, 23, 42, .26);
+  --m-shadow-lit: var(--light-dx) calc(30px + var(--light-dy)) 60px -28px rgba(15, 23, 42, .3), calc(var(--light-dx) * .4) 8px 18px -10px rgba(15, 23, 42, .12);
+  --m-rim: rgba(255, 255, 255, .85);
+  --m-display: var(--font-geist-sans), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --m-scrim: rgba(8, 10, 14, .42);
+  --m-qr-paper: #ffffff;
+  --m-cta: #0b1220;
+  --m-cta-ink: #ffffff;
+  --m-cta-rim: rgba(255, 255, 255, .12);
+  --m-cta-chip: rgba(255, 255, 255, .14);
+  --m-cta-chip-ink: #ffffff;
+  --m-cta-quiet: rgba(11, 18, 32, .05);
+  --m-cta-quiet-ink: #0b1220;
+  --m-topbar-bg: rgba(245, 246, 248, .78);
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root {
+  --m-glass: rgba(22, 25, 31, .66);
+  --m-glass-deep: rgba(18, 21, 26, .8);
+  --m-lacquer: linear-gradient(160deg, rgba(30, 34, 42, .94), rgba(14, 16, 21, .97) 70%);
+  --m-lacquer-ink: #f2f4f7;
+  --m-lacquer-muted: rgba(242, 244, 247, .56);
+  --m-lacquer-line: rgba(255, 255, 255, .09);
+  --m-lacquer-accent: #19c7aa;
+  --m-lacquer-hi: rgba(255, 255, 255, .14);
+  --m-lacquer-down: #ff6b5e;
+  --m-lacquer-tip: rgba(14, 16, 21, .9);
+  --m-lacquer-up: #2fd4a3;
+  --m-lacquer-edge: rgba(255, 255, 255, .16);
+  --m-lacquer-fill: rgba(255, 255, 255, .05);
+  --m-lacquer-tick: rgba(255, 255, 255, .14);
+  --m-rim: rgba(255, 255, 255, .1);
+  --m-topbar-bg: rgba(10, 12, 16, .7);
+  --m-scrim: rgba(0, 0, 0, .5);
+  --m-cta: #19c7aa;
+  --m-cta-ink: #03211c;
+  --m-cta-rim: rgba(255, 255, 255, .35);
+  --m-cta-chip: rgba(3, 33, 28, .16);
+  --m-cta-chip-ink: #03211c;
+  --m-cta-quiet: rgba(25, 199, 170, .12);
+  --m-cta-quiet-ink: #19c7aa;
+}
+:global(html[data-palette='a']) .root::before {
+  background:
+    radial-gradient(120% 60% at 100% -10%, rgba(25, 199, 170, .10), transparent 60%),
+    radial-gradient(90% 50% at -10% 30%, rgba(75, 101, 132, .07), transparent 62%);
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root::before {
+  background:
+    radial-gradient(120% 60% at 100% -10%, rgba(25, 199, 170, .10), transparent 60%),
+    radial-gradient(90% 50% at -10% 30%, rgba(142, 163, 192, .06), transparent 62%);
+}
+/* Cards: no brushed grain or gold ruling — a soft highlight and a hairline green rim. */
+:global(html[data-palette='a']) .lacquer::before {
+  background: radial-gradient(240px circle at var(--mx, var(--light-x, 80%)) var(--my, var(--light-y, 0%)), rgba(25, 199, 170, .08), transparent 60%);
+}
+:global(html[data-palette='a']) .lacquer::after { opacity: .35; }
+:global(html[data-palette='a']) .lacquer > .guilloche { opacity: .3; }
+:global(html[data-palette='a']) .lacquer .field input,
+:global(html[data-palette='a']) .nest > div,
+:global(html[data-palette='a']) .idQr,
+:global(html[data-palette='a']) .lacquer .receiveActions .ghost { background: var(--m-lacquer-fill); }
+/* Sans display reads light at 400; give titles the weight the serif got from its contrast. */
+:global(html[data-palette='a']) :is(.display, .titleL, .sectionHead h2, .productName, .sheetTitle, .monthNav b, .plateMain b, .confirm h2, .credMain b, .sealTitle, .gaugeBand b) {
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: -.025em;
+}
