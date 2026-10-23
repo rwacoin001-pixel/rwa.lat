@@ -15,6 +15,7 @@ import PressFeedback from '@/components/press-feedback'
 import { RwaThemeProvider } from '@/lib/rwa-theme'
 import { I18nProvider } from '@/lib/i18n'
 import PageChrome from '@/components/page-chrome'
+import PaletteMedia from '@/components/palette-media'
 import SessionPrivacyGate from '@/components/session-privacy-gate'
 import { launchSplashMarkup, launchSplashScript, launchSplashStyle } from '@/lib/launch-splash'
 import { iosStartupImages } from '@/lib/ios-startup-images'
@@ -92,6 +93,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <script dangerouslySetInnerHTML={{ __html: launchSplashScript }} />
         <PwaRegister />
         <PressFeedback />
+        <PaletteMedia />
         <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate /><SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
       </body>
     </html>

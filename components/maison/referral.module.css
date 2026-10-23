@@ -228,3 +228,10 @@
 .ref .effectiveDates>div{padding:10px 0;border-bottom:1px solid var(--r-line)}
 .ref .effectiveDates dt{color:var(--r-muted)}
 .ref .effectiveDates dd{margin:4px 0 0;font-family:var(--m-mono);font-size:11px;overflow-wrap:anywhere}
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .ref, :global(html[data-palette='a']) .ref.layer[data-ref-theme='light'] { --r-gold: #087a67; --r-gold-text: #087a67; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .ref, :global(html[data-palette='a']) .ref[data-ref-theme='dark'] { --r-gold: #19c7aa; --r-gold-text: #19c7aa; }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .ref :is(.amount span, .teamLevels b) { font-weight: 600; }

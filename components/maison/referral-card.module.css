@@ -126,3 +126,7 @@
   .card{animation:card-rise .7s cubic-bezier(.2,.7,.2,1) both}
   @keyframes card-rise{from{opacity:0;transform:translateY(10px) rotateX(8deg)}}
 }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .page.page { --r-bg: #f5f6f8; --r-surface: #ffffff; --r-ink: #0b1220; --r-muted: #5b6472; --r-on-ink: #ffffff; --r-line: rgba(11, 18, 32, .1); --r-line-strong: rgba(11, 18, 32, .22); --r-gold: #087a67; --r-gold-text: #087a67; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .page.page { --r-bg: #0a0c10; --r-surface: #14171d; --r-ink: #f2f4f7; --r-muted: #8a93a3; --r-on-ink: #0a0c10; --r-line: rgba(255, 255, 255, .09); --r-line-strong: rgba(255, 255, 255, .22); --r-gold: #19c7aa; --r-gold-text: #19c7aa; }

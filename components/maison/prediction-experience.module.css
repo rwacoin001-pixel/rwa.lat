@@ -194,3 +194,6 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
    height from an invisible hit area instead of pushing the ticket apart. */
 .quoteLine button::after { content:''; position:absolute; inset:-7px -6px; }
 .eventPage .eventOutcome button:active:not(:disabled), .ticketOutcomes button:active:not(:disabled), .compactTicket .quickAmounts button:active:not(:disabled) { transform:scale(.97); }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .eventFigures dd.eventFigureLead { font-weight: 600; }

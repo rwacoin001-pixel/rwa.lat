@@ -21,3 +21,7 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .leadBody strong { font-weight: 600; letter-spacing: -.02em; }
+:global(html[data-palette='a']) .leadArrow { background: #ffffff; }
+:global(html[data-palette='a']) .lead:not([data-image='treasury']) .leadImage { background-image: url('/media/palette-a/ai-basket-light.webp'); }
+:global(html[data-palette='a']) .lead { background: #0b1220; }
+:global(html[data-palette='a']) .lead::after { background: linear-gradient(90deg, rgba(8, 11, 18, .88), rgba(8, 11, 18, .2)); }

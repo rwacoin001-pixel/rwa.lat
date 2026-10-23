@@ -344,3 +344,10 @@ b.name { cursor: default; }
 
 /* Android app: solid bars instead of a live blur over the scrolling feed (see globals.css). */
 :global(html[data-shell='android']) .dock, :global(html[data-shell='android']) .composeTools, :global(html[data-shell='android']) .replyBar { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--m-bg) 97%, transparent); }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .mark { --mk-hi: #2a313d; --mk-lo: #0b0e13; --mk-ink: #19c7aa; --mk-soft: rgba(25, 199, 170, .4); --mk-rim: rgba(25, 199, 170, .26); box-shadow: 0 1px 2px rgba(15, 23, 42, .2); }
+:global(html[data-palette='a']) .mark[data-tone='1'] { --mk-ink: #e6ebf2; --mk-soft: rgba(25, 199, 170, .42); }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .mark { --mk-hi: #232833; --mk-lo: #0a0c10; --mk-ink: #19c7aa; box-shadow: 0 1px 2px rgba(0, 0, 0, .4); }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .mark[data-tone='1'] { --mk-ink: #e6ebf2; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .mark[data-tone='3'] { --mk-hi: #232833; --mk-lo: #0a0c10; --mk-ink: #8ea3c0; --mk-soft: rgba(142, 163, 192, .36); --mk-rim: rgba(142, 163, 192, .22); }

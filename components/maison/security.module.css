@@ -34,3 +34,6 @@
 .amount { font-family: var(--m-mono); font-size: 13px; font-weight: 600; color: var(--m-ink); white-space: nowrap; }
 
 @media (prefers-reduced-motion: reduce) { .panel, .linkBox { animation: none; } }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .enrollTitle { font-weight: 600; }

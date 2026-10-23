@@ -533,3 +533,96 @@
 /* The invitation field matches the email field's glass over the film. */
 .root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot { --field: rgba(251, 247, 240, .34); }
 .root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot p { text-shadow: 0 1px 8px rgba(255, 251, 244, .75); }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css): the films stay; the chrome turns cool white /
+   graphite with the brand green, and titles move to the sans. Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .root {
+  --auth-bg: #eef0f3;
+  --card: rgba(255, 255, 255, .86);
+  --card-deep: rgba(245, 246, 248, .86);
+  --line: rgba(11, 18, 32, .10);
+  --field: rgba(255, 255, 255, .8);
+  --field-edge: rgba(11, 18, 32, .10);
+  --shadow: 0 30px 60px -28px rgba(15, 23, 42, .36), 0 8px 18px -12px rgba(15, 23, 42, .16);
+  --hero-ink: #0b1220;
+  --hero-gold: #087a67;
+  --wash-top: rgba(245, 246, 248, .5);
+  --wash-end: rgba(238, 240, 243, .55);
+  --cta: #0b1220;
+  --cta-ink: #ffffff;
+  --ok: #078a6a;
+  --display: var(--font-geist-sans, system-ui), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+}
+:global(html[data-palette='a']) .root[data-auth-theme='cool'] {
+  --auth-bg: #0a0c10;
+  --card: rgba(20, 23, 29, .86);
+  --card-deep: rgba(14, 16, 21, .88);
+  --edge: rgba(255, 255, 255, .1);
+  --line: rgba(255, 255, 255, .1);
+  --field: rgba(28, 32, 40, .8);
+  --field-edge: rgba(255, 255, 255, .1);
+  --rim: rgba(255, 255, 255, .1);
+  --hero-ink: #f2f4f7;
+  --hero-gold: #19c7aa;
+  --wash-top: rgba(10, 12, 16, .45);
+  --wash-end: rgba(10, 12, 16, .6);
+  --cta: #19c7aa;
+  --cta-ink: #03211c;
+  --ok: #2fd4a3;
+}
+:global(html[data-palette='a']) :is(.heroCopy h1, .cardTitle) { font-weight: 600; letter-spacing: -.025em; }
+:global(html[data-palette='a']) .root[data-auth-compact='true'] .cardTitle { font-weight: 600; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .cardTitle { font-weight: 600; letter-spacing: -.03em; }
+:global(html[data-palette='a']) .root .grain { display: none; }
+/* Compact sheet: graphite glass instead of brushed bronze. */
+:global(html[data-palette='a']) .root[data-auth-compact='true']:not([data-auth-poster='true']) .authSheet {
+  --ink: #f2f4f7; --auth-muted: #b4bccb; --auth-faint: #8a93a3; --auth-accent: #19c7aa;
+  --line: rgba(255, 255, 255, .12); --field: rgba(10, 12, 16, .3); --field-edge: rgba(255, 255, 255, .16); --cta-ink: #03211c;
+  border-color: rgba(255, 255, 255, .16);
+  background: linear-gradient(160deg, rgba(30, 34, 42, .62), rgba(12, 14, 18, .74) 70%);
+  box-shadow: 0 24px 64px -32px rgba(0, 0, 0, .5), inset 0 1px rgba(255, 255, 255, .08);
+}
+:global(html[data-palette='a']) .root[data-auth-compact='true'] .primary,
+:global(html[data-palette='a']) .inlineSubmit {
+  background: #19c7aa; color: #03211c;
+  box-shadow: inset 0 1px rgba(255, 255, 255, .35), 0 8px 20px -12px rgba(25, 199, 170, .5);
+}
+:global(html[data-palette='a']) .inlineSubmit .spinner { color: #03211c; }
+:global(html[data-palette='a'] .rwa-mobile) .root.root[data-auth-compact='true'] .ctaIcon { background: #03211c; color: #19c7aa; }
+/* Poster: the film falls off into graphite (cool) or cool white (warm). */
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .sceneWash { background:
+  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
+  linear-gradient(180deg, transparent 30%, rgba(10, 12, 16, .5) 52%, rgba(10, 12, 16, .88) 74%, #0a0c10 100%); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .field { border-color: rgba(255, 255, 255, .22); background: rgba(10, 12, 16, .32); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .field:focus-within { border-color: rgba(25, 199, 170, .7); box-shadow: 0 0 0 3px rgba(25, 199, 170, .14); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet {
+  --ink: #0b1220; --auth-muted: #4b5563; --auth-faint: #4b5563; --auth-accent: #087a67; --field-edge: rgba(11, 18, 32, .22);
+}
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .sceneWash { background:
+  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
+  linear-gradient(180deg, transparent 40%, rgba(238, 240, 243, .7) 100%); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .field { background: rgba(255, 255, 255, .5); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardTitle em { color: #087a67; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardLede { color: #2b3443; text-shadow: 0 1px 8px rgba(255, 255, 255, .6); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot { --field: rgba(255, 255, 255, .5); }
+/* Legal sheet. */
+:global(html[data-palette='a']) .legalOverlay {
+  --lg-ink: #0b1220; --lg-muted: #5b6472; --lg-faint: #8f97a5; --lg-gold: #087a67; --lg-gold-hi: #19c7aa;
+  --lg-line: rgba(11, 18, 32, .1); --lg-panel: rgba(255, 255, 255, .7); --lg-panel-edge: rgba(11, 18, 32, .1);
+  --lg-track: rgba(11, 18, 32, .06); --lg-thumb: #ffffff;
+  --display: var(--font-geist-sans, system-ui), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+}
+:global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] {
+  --lg-ink: #f2f4f7; --lg-muted: #a3acbb; --lg-faint: #77808f; --lg-gold: #19c7aa; --lg-gold-hi: #5fe0c8;
+  --lg-line: rgba(255, 255, 255, .1); --lg-panel: rgba(10, 12, 16, .4); --lg-panel-edge: rgba(255, 255, 255, .1);
+  --lg-track: rgba(255, 255, 255, .06); --lg-thumb: rgba(25, 199, 170, .16);
+}
+:global(html[data-palette='a']) .legalSheet { border-color: rgba(11, 18, 32, .1); background: linear-gradient(172deg, #ffffff, #f3f5f8 78%); box-shadow: 0 40px 100px -36px rgba(15, 23, 42, .5), inset 0 1px 0 rgba(255, 255, 255, .6); }
+:global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalSheet { border-color: rgba(255, 255, 255, .1); background: linear-gradient(172deg, #1a1e25, #0e1015 80%); box-shadow: 0 40px 100px -36px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .06); }
+:global(html[data-palette='a']) :is(.legalTitle, .legalCert strong) { font-weight: 600; }
+:global(html[data-palette='a']) .legalAction { background: #0b1220; color: #ffffff; box-shadow: 0 10px 24px -14px rgba(15, 23, 42, .6); }
+:global(html[data-palette='a']) .legalActionIcon { background: #19c7aa; color: #03211c; }
+:global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalAction { background: #19c7aa; color: #03211c; box-shadow: 0 10px 24px -14px rgba(25, 199, 170, .5); }
+:global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalActionIcon { background: #03211c; color: #19c7aa; }
+:global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalTabs button[aria-pressed='true'] { box-shadow: 0 0 0 .5px rgba(25, 199, 170, .35); }
+:global(html[data-palette='a']) .legalSeal, :global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalSeal { background: color-mix(in srgb, var(--lg-gold) 12%, transparent); box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--lg-gold) 34%, transparent); }

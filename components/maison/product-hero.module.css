@@ -100,3 +100,6 @@
 @media (prefers-reduced-motion: reduce) {
   .img { transform: none; }
 }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) .title { font-weight: 600; letter-spacing: -.025em; }

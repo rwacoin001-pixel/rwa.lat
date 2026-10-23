@@ -236,3 +236,24 @@
    so the dial reads as a movement rather than a flat disc. */
 .faceBg { background: repeating-conic-gradient(from 0deg, rgba(255, 240, 210, .03) 0deg .35deg, transparent .35deg 1.4deg), var(--q-face); box-shadow: inset 0 0 40px var(--q-face-inset), inset 0 0 0 1px rgba(var(--q-gold-rgb), .26), inset 0 2px 0 rgba(255, 240, 210, .08); }
 .bezelMetal { box-shadow: var(--q-bezel-shadow), 0 40px 60px -34px rgba(0, 0, 0, .75); }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+/* The watch turns from gilt to brushed steel; gains read in the brand green. */
+:global(html[data-palette='a'] .rwa-mobile[data-theme]) .stage.stage {
+  --q-serif: var(--m-sans);
+  --q-gold: #19c7aa; --q-gold-rgb: 25, 199, 170; --q-num: #f2f4f7; --q-dim: #8a93a3; --q-dim2: #6b7380; --q-flat: #7b8494; --q-gain: #2fd4a3; --q-loss: #ff6b5e; --q-loss-text: #ff8a7f;
+  --q-face: radial-gradient(circle at 50% 28%, #22272f, #0c0e12 72%); --q-face-inset: #000; --q-sheen: rgba(230, 236, 244, .45);
+  --q-bezel: conic-gradient(from 18deg, #2b3039, #9aa3b0 12%, #20242b 24%, #6b737f 38%, #1a1d23 50%, #c4ccd6 63%, #252a31 76%, #7d8591 88%, #2b3039);
+  --q-bezel-shadow: 0 34px 50px -28px #000, 0 0 0 .5px rgba(220, 228, 238, .2), inset 0 0 0 1px rgba(220, 228, 238, .14); --q-bezel-hi: rgba(240, 244, 250, .5); --q-bezel-lo: rgba(0, 0, 0, .5);
+  --q-sub-shadow: inset 0 0 0 1px rgba(25, 199, 170, .22), inset 0 0 18px #000, 0 16px 20px -16px #000;
+  --q-crown-hi: #f2f5f9; --q-crown-mid: #aab3bf; --q-crown-lo: #5b636e;
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='light']) .stage.stage {
+  --q-gold: #087a67; --q-gold-rgb: 8, 122, 103; --q-num: #0b1220; --q-dim: #5b6472; --q-dim2: #7b8494; --q-flat: #8f97a5; --q-gain: #078a6a; --q-loss: #d6453d; --q-loss-text: #d6453d;
+  --q-face: radial-gradient(circle at 50% 28%, #ffffff, #e7ebf0 74%); --q-face-inset: rgba(15, 23, 42, .2); --q-sheen: rgba(255, 255, 255, .85);
+  --q-bezel: conic-gradient(from 18deg, #b9c0ca, #f4f6f9 12%, #a3abb6 24%, #dde2e8 38%, #949ca8 50%, #fafbfc 63%, #a3abb6 76%, #d6dbe2 88%, #b9c0ca);
+  --q-bezel-shadow: 0 28px 40px -26px rgba(15, 23, 42, .45), 0 0 0 .5px rgba(11, 18, 32, .25), inset 0 0 0 1px rgba(255, 255, 255, .5); --q-bezel-hi: rgba(255, 255, 255, .9); --q-bezel-lo: rgba(15, 23, 42, .3);
+  --q-sub-shadow: inset 0 0 0 1px rgba(8, 122, 103, .25), inset 0 0 14px rgba(15, 23, 42, .16), 0 14px 18px -16px rgba(15, 23, 42, .4);
+  --q-crown-hi: #ffffff; --q-crown-mid: #b8c0cb; --q-crown-lo: #6b737f;
+}
+:global(html[data-palette='a']) .faceBg { background: var(--q-face); }

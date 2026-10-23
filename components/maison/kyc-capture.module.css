@@ -86,3 +86,8 @@
 @media (max-height: 690px) { .main { padding-block: 20px; } .frame, .choices { margin-top: 22px; } .hint { margin-top: 8px; } .privacy { margin-top: 16px; } .preview { height: 35dvh; } }
 @media (max-width: 360px) { .main { padding-inline: 18px; } .photos { gap: 12px 8px; } .choices button { gap: 10px; padding: 16px 12px; } .choices b { font-size: 13px; } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } .root button { transition: none; } }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .root[data-capture='true'] .progress li[data-done='true'] { background: rgba(25, 199, 170, .4); }
+:global(html[data-palette='a']) .frame[data-selfie='true'] .guide { border-color: rgba(25, 199, 170, .8); }
+:global(html[data-palette='a']) .root[data-capture='true'] .primary { color: #03211c; }

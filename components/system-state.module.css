@@ -72,3 +72,26 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (max-width: 360px) { .card { padding-inline: 18px; } .title { font-size: 25px; } }
 @media (prefers-reduced-motion: reduce) { .card { animation: none; } .primary, .primary::after, .primaryIcon { transition: none; } .primaryIcon[data-spin='true'] svg { animation: none; } }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .page {
+  --ss-bg: #f5f6f8; --ss-ink: #0b1220; --ss-muted: #5b6472; --ss-faint: #8f97a5; --ss-gold: #087a67;
+  --ss-line: rgba(11, 18, 32, .1); --ss-panel: rgba(255, 255, 255, .72); --ss-edge: rgba(11, 18, 32, .1);
+  --display: var(--font-geist-sans, system-ui), 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  background: radial-gradient(120% 70% at 50% 0%, #ffffff, var(--ss-bg) 70%);
+}
+:global(html[data-palette='a']) .page[data-theme='cool'] {
+  --ss-bg: #0a0c10; --ss-ink: #f2f4f7; --ss-muted: #a3acbb; --ss-faint: #77808f; --ss-gold: #19c7aa;
+  --ss-line: rgba(255, 255, 255, .1); --ss-panel: rgba(20, 23, 29, .5); --ss-edge: rgba(255, 255, 255, .1);
+  background: radial-gradient(120% 70% at 50% 0%, #1a1e25, var(--ss-bg) 70%);
+}
+:global(html[data-palette='a']) .glow, :global(html[data-palette='a']) .page[data-theme='cool'] .glow { background: radial-gradient(circle, rgba(25, 199, 170, .12), transparent 62%); }
+:global(html[data-palette='a']) .page .card { border-color: var(--ss-edge); background: linear-gradient(172deg, #ffffff, #f3f5f8 80%); }
+:global(html[data-palette='a']) .page[data-theme='cool'] .card { background: linear-gradient(172deg, #1a1e25, #0e1015 80%); }
+:global(html[data-palette='a']) .seal, :global(html[data-palette='a']) .page[data-theme='cool'] .seal { background: color-mix(in srgb, var(--ss-gold) 12%, transparent); box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--ss-gold) 34%, transparent); }
+:global(html[data-palette='a']) .primary { background: #0b1220; color: #ffffff; box-shadow: 0 10px 24px -14px rgba(15, 23, 42, .6); }
+:global(html[data-palette='a']) .primaryIcon { background: #19c7aa; color: #03211c; }
+:global(html[data-palette='a']) .page[data-theme='cool'] .primary { background: #19c7aa; color: #03211c; box-shadow: 0 10px 24px -14px rgba(25, 199, 170, .5); }
+:global(html[data-palette='a']) .page[data-theme='cool'] .primaryIcon { background: #03211c; color: #19c7aa; }
+:global(html[data-palette='a']) .grain { display: none; }
+:global(html[data-palette='a']) .title { font-weight: 600; letter-spacing: -.025em; }

@@ -64,3 +64,13 @@
   .documentHeader h1 { font-size: 17px; }
   .content { font-size: 13px; }
 }
+
+/* ── Palette A preview (html[data-palette='a'], styles/palette-a.css). Absent the attribute nothing here applies. ── */
+:global(html[data-palette='a']) .root {
+  --legal-bg: #f5f6f8; --legal-ink: #0b1220; --legal-muted: #5b6472; --legal-line: rgba(11, 18, 32, .1);
+  --legal-glass: rgba(255, 255, 255, .72); --legal-accent: #087a67; --legal-rim: rgba(255, 255, 255, .85);
+}
+:global(html[data-palette='a'][data-theme='dark']) .root {
+  --legal-bg: #0a0c10; --legal-ink: #f2f4f7; --legal-muted: #8a93a3; --legal-line: rgba(255, 255, 255, .1);
+  --legal-glass: rgba(22, 25, 31, .66); --legal-accent: #19c7aa; --legal-rim: rgba(255, 255, 255, .1);
+}

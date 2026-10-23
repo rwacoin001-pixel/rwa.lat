@@ -163,3 +163,6 @@
 @media (prefers-reduced-motion: reduce) {
   .picture img, .featured { transition: none; }
 }
+
+/* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
+:global(html[data-palette='a']) :is(.introTitle, .tally dd, .seriesTitle, .mark, .markS, .markL, .pager b) { font-weight: 600; letter-spacing: -.01em; }
