@@ -261,3 +261,22 @@
 .enterNote { text-shadow: 0 1px 6px var(--note-halo, rgba(255, 255, 255, .8)); }
 :global(html[data-theme='dark']) .enterNote { --note-halo: rgba(0, 0, 0, .7); }
 .enterNote:not([data-tone='error']) { color: color-mix(in srgb, var(--ink) 74%, transparent); font-weight: 500; }
+
+/* Round 10: the big card is glass again (thin, so the photograph still reads through it); the scene sits inside it. */
+.intro .card { padding: 20px 16px 16px; background: var(--card-glass); box-shadow:
+    inset 0 0 0 1px var(--card-line), inset 1.5px 2px 0 -.5px var(--rim-hi), inset -1.5px -2px 0 -.5px var(--rim-lo), inset 0 0 22px var(--body-glow),
+    0 40px 70px -42px rgba(15, 23, 42, .5), 0 12px 24px -16px rgba(15, 23, 42, .16);
+  -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); }
+.intro .card::after { display: block; }
+.intro { --card-glass: rgba(255, 255, 255, .34); }
+:global(html[data-theme='dark']) .intro { --card-glass: rgba(14, 17, 22, .42); }
+.intro .meta { left: 20px; right: 18px; top: 14px; }
+.intro .tiles { left: 14px; right: 14px; top: 60px; }
+.intro .layerStage { top: 54px; }
+.intro .widget { left: 16px; bottom: 214px; }
+.intro .dial { right: 16px; }
+.intro .near { right: -14px; }
+/* The text panel inside the glass card: a second, lighter pane. */
+.panel { border-radius: 24px; }
+.intro { --glass: rgba(255, 255, 255, .5); }
+:global(html[data-theme='dark']) .intro { --glass: rgba(18, 21, 27, .5); }

@@ -26,10 +26,10 @@ const ICONS = [Building2, Layers3, Sigma, Bot]
 // Pages 2–3 still use the studio cut-outs on one solid brand-green field.
 export const FIELD = '#19c7aa'
 const STATES = [
-  { hero: 'hero-reit', color: '#2dc8ac', deep: '#009f85' },
-  { hero: 'hero-basket', color: '#00c6ce', deep: '#009ca5' },
-  { hero: 'hero-quant', color: '#3abdee', deep: '#0094c3' },
-  { hero: 'hero-ai', color: '#07c3de', deep: '#0099b3' },
+  { hero: 'real-reit', color: '#2dc8ac', deep: '#009f85' },
+  { hero: 'real-basket', color: '#00c6ce', deep: '#009ca5' },
+  { hero: 'real-quant', color: '#3abdee', deep: '#0094c3' },
+  { hero: 'real-ai', color: '#07c3de', deep: '#0099b3' },
 ]
 /** Two rendered slabs per state: [left %, top %, width %, rotate deg]. */
 const SLABS: [number, number, number, number][][] = [
