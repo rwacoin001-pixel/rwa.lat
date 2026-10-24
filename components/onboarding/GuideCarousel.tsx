@@ -176,13 +176,15 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
   const touched = useRef(0)
   const viewport = useRef<HTMLDivElement>(null)
   const [width, setWidth] = useState(320)
+  const [view, setView] = useState(390)
   const step = width + GAP
   const track = useMotionValue(0)
 
   useLayoutEffect(() => {
     const el = viewport.current
     if (!el) return
-    const measure = () => setWidth(el.querySelector('article')?.getBoundingClientRect().width ?? el.clientWidth * .84)
+    // offsetWidth, not getBoundingClientRect: the cards are scaled while off-centre, and the step must use the real width.
+    const measure = () => { setWidth((el.querySelector('article') as HTMLElement | null)?.offsetWidth ?? el.clientWidth * .84); setView(el.clientWidth) }
     measure()
     const ro = new ResizeObserver(measure)
     ro.observe(el)
@@ -250,7 +252,7 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
 
     <div className={styles.viewport} ref={viewport} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
       role="region" aria-roledescription="carousel" aria-label={all.s0.swipe}>
-      <motion.div className={styles.track} style={{ x: track }}>
+      <motion.div className={styles.track} style={{ x: track, left: Math.max(0, (view - width) / 2) }}>
         {CARDS.map((_, i) => <Card key={i} i={i} active={i === index} step={step} track={track} tiltX={tiltX} tiltY={tiltY} locale={locale} />)}
       </motion.div>
     </div>
