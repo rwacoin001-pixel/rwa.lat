@@ -11,6 +11,7 @@ import { createSceneStore } from './OnboardingCanvas'
 
 // three + drei load only when the guide shows.
 const OnboardingCanvas = dynamic(() => import('./OnboardingCanvas'), { ssr: false })
+import HeroIntro from './HeroIntro'
 import styles from './Onboarding.module.css'
 
 /**
@@ -185,6 +186,9 @@ export default function Onboarding({ locale, invite, onDone }: {
       </div>
       {page < PAGES - 1 && <button type="button" className={styles.skip} onClick={() => go(PAGES - 1)}>{copy.skip}</button>}
     </header>
+
+    {/* Page 1 (Radium-style sample) is its own composition; pages 2–4 still use the live stage below. */}
+    {page === 0 && <HeroIntro locale={locale} onNext={() => go(1)} />}
 
     <div ref={stage} className={styles.stage} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-holding={hold > 0 || undefined}
       style={{ '--hold': hold } as CSSProperties}>
