@@ -14,21 +14,23 @@ import styles from './HeroIntro.module.css'
  * colour field, rolls the headline, and sends three small objects orbiting the hero — in front of it on the near
  * side, behind it (and out of focus) on the far side. Swipe or tap a chip to change state; it also advances by itself.
  */
-const ART = '/media/palette-a/onboard-v4'
+export const ART = '/media/palette-a/onboard-v7'
 const ICONS = [Building2, Layers3, Sigma, Bot]
+// One studio for every hero (the same renders as the Hengxu product covers), one brand green for every field.
+export const FIELD = ['#12b398', '#19c7aa', '#55d8c0'] as const
 const STATES = [
-  { hero: 'hero-tower', sats: ['sat-cloud', 'sat-leaf', 'sat-bead'], field: ['#0c8f79', '#19c7aa', '#b8eadb'], shape: '58% 42% 46% 54% / 52% 48% 52% 48%' },
-  { hero: 'hero-basket', sats: ['sat-goldbar', 'sat-leaf', 'sat-cloud'], field: ['#5f8f79', '#9cc4ad', '#e3efe5'], shape: '44% 56% 62% 38% / 48% 60% 40% 52%' },
-  { hero: 'hero-koala', sats: ['sat-leaf', 'sat-cloud', 'sat-bead'], field: ['#5d7697', '#9fb4cf', '#e1e8f2'], shape: '62% 38% 40% 60% / 56% 44% 56% 44%' },
-  { hero: 'hero-orb', sats: ['sat-bead', 'sat-leaf', 'sat-cloud'], field: ['#0f9e86', '#5fd9c3', '#d6f6ee'], shape: '50% 50% 58% 42% / 40% 58% 42% 60%' },
+  { hero: 'hero-reit', sats: ['sat-bead', 'sat-gold'], shape: '58% 42% 46% 54% / 52% 48% 52% 48%' },
+  { hero: 'hero-basket', sats: ['sat-gold', 'sat-bead'], shape: '44% 56% 62% 38% / 48% 60% 40% 52%' },
+  { hero: 'hero-quant', sats: ['sat-bead', 'sat-gold'], shape: '62% 38% 40% 60% / 56% 44% 56% 44%' },
+  { hero: 'hero-ai', sats: ['sat-bead', 'sat-gold'], shape: '50% 50% 58% 42% / 40% 58% 42% 60%' },
 ]
 const AUTO_MS = 4200
-const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
-const SOFT = { type: 'spring', stiffness: 140, damping: 20 } as const
-const EASE = [.65, 0, .35, 1] as const
+export const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
+export const SOFT = { type: 'spring', stiffness: 140, damping: 20 } as const
+export const EASE = [.65, 0, .35, 1] as const
 
 /** One satellite on an elliptical orbit around the hero; near side in front and sharp, far side behind and blurred. */
-function Satellite({ src, phase, radius, speed }: { src: string; phase: number; radius: number; speed: number }) {
+export function Satellite({ src, phase, radius, speed }: { src: string; phase: number; radius: number; speed: number }) {
   const ref = useRef<HTMLImageElement>(null)
   const reduced = useReducedMotion()
   useAnimationFrame(time => {
@@ -47,7 +49,7 @@ function Satellite({ src, phase, radius, speed }: { src: string; phase: number; 
 }
 
 /** Text that rolls up like a counter when its value changes. */
-function Roll({ value, className }: { value: string; className?: string }) {
+export function Roll({ value, className }: { value: string; className?: string }) {
   return <span className={`${styles.roll} ${className ?? ''}`}>
     <AnimatePresence mode="popLayout" initial={false}>
       <motion.span key={value} initial={{ y: '105%', opacity: 0 }} animate={{ y: '0%', opacity: 1 }} exit={{ y: '-105%', opacity: 0 }} transition={{ ...SPRING, opacity: { duration: .25 } }}>{value}</motion.span>
@@ -66,13 +68,13 @@ function StateWidget({ index, locale }: { index: number; locale: AppLocale }) {
   const body = [
     <div key="k" className={styles.wKinds}>{[Building2, Warehouse, Trees].map((Icon, i) => <span key={i}><i><Icon size={15} strokeWidth={1.9} /></i>{c.kinds[i]}</span>)}</div>,
     <div key="m" className={styles.wMix}>
-      <svg viewBox="0 0 36 36" aria-hidden="true">{[[0, 34, '#0b1220'], [34, 26, '#19c7aa'], [60, 22, '#9cc4ad'], [82, 18, '#d8c39a']].map(([start, len, color], i) =>
+      <svg viewBox="0 0 36 36" aria-hidden="true">{[[0, 34, '#0b1220'], [34, 26, '#19c7aa'], [60, 22, '#8f97a5'], [82, 18, '#cfd4db']].map(([start, len, color], i) =>
         <motion.circle key={i} cx="18" cy="18" r="14" fill="none" stroke={color as string} strokeWidth="5" pathLength="100" transform="rotate(-90 18 18)"
           strokeDashoffset={-Number(start)} initial={{ strokeDasharray: '0 100' }} animate={{ strokeDasharray: `${Number(len) - 2} ${102 - Number(len)}` }} transition={{ duration: .9, delay: .15 + i * .08, ease: EASE }} />)}</svg>
       <b>{c.mix}</b>
     </div>,
     <div key="r" className={styles.wRules}>
-      <svg viewBox="0 0 120 34" aria-hidden="true"><motion.path d="M2 26 C 14 24, 18 12, 30 16 S 48 28, 58 18 S 78 4, 90 10 S 108 20, 118 6" fill="none" stroke="#5d7697" strokeWidth="2.4" strokeLinecap="round"
+      <svg viewBox="0 0 120 34" aria-hidden="true"><motion.path d="M2 26 C 14 24, 18 12, 30 16 S 48 28, 58 18 S 78 4, 90 10 S 108 20, 118 6" fill="none" stroke="#087a67" strokeWidth="2.4" strokeLinecap="round"
         initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: EASE }} /></svg>
       <b>{c.rules}</b>
     </div>,
@@ -144,10 +146,10 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
     else if (dx > 45 || speed > .5) go(index - 1)
   }
 
-  const fieldBg = `linear-gradient(155deg, ${state.field[0]} 0%, ${state.field[1]} 55%, ${state.field[2]} 100%)`
+  const fieldBg = `linear-gradient(160deg, ${FIELD[0]} 0%, ${FIELD[1]} 60%, ${FIELD[2]} 100%)`
 
-  return <section className={styles.intro} style={{ '--glow': state.field[1] } as CSSProperties}>
-    <motion.div className={styles.halo} aria-hidden="true" animate={{ backgroundColor: state.field[1] }} transition={{ duration: 1.1, ease: EASE }} />
+  return <section className={styles.intro} style={{ '--glow': FIELD[1] } as CSSProperties}>
+    <motion.div className={styles.halo} aria-hidden="true" animate={{ backgroundColor: FIELD[1] }} transition={{ duration: 1.1, ease: EASE }} />
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
@@ -176,7 +178,7 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
             <i className={styles.shadow} />
             <motion.img className={styles.hero} src={`${ART}/${state.hero}.webp`} alt="" draggable={false}
               whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
-            {state.sats.map((src, i) => <Satellite key={src} src={src} phase={i * (Math.PI * 2 / 3) + index} radius={92 + i * 12} speed={.42 + i * .07} />)}
+            {state.sats.map((src, i) => <Satellite key={src} src={src} phase={i * (Math.PI * 2 / 3) + index} radius={100 + i * 14} speed={.38 + i * .08} />)}
           </motion.div>
         </AnimatePresence>
       </motion.div>

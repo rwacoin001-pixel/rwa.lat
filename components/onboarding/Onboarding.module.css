@@ -1,4 +1,4 @@
-/* First-run guide v2 (palette A preview): one live sculpture, two lines of type, one gesture per page. */
+/* First-run guide shell (palette A preview): top bar with the mark, a thin progress line and skip; pages below. */
 .root {
   --bg: #f2f4f7; --surface: #ffffff; --ink: #0b1220; --muted: #5b6472; --faint: #8f97a5; --line: rgba(11, 18, 32, .1);
   --accent: #087a67; --brand: #19c7aa; --cta: #0b1220; --cta-ink: #ffffff; --chip: rgba(11, 18, 32, .06); --frost: rgba(255, 255, 255, .86);
@@ -30,69 +30,5 @@
 .root[dir='rtl'] .progress i::after { transform-origin: 100% 50%; }
 .skip { min-width: 44px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; color: var(--muted); background: none; font-family: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
 
-/* Stage: the live sculpture fills it; every gesture happens here. */
-.stage { position: relative; flex: 1 1 auto; min-height: 0; touch-action: none; cursor: grab; }
-.root[data-page='0'] .stage { cursor: pointer; }
-.canvas { position: absolute; inset: 0; transition: opacity .8s var(--ease); }
-.root[data-live='pending'] .canvas { opacity: 0; }
-.poster { position: absolute; inset: 0; background: center 30% / cover no-repeat; opacity: 0; transform: scale(1.04); transition: opacity .7s var(--ease), transform 1.2s var(--ease); }
-.poster[data-on] { opacity: 1; transform: none; }
-:global(html[data-theme='dark']) .poster { filter: invert(.92) hue-rotate(180deg) brightness(.9) contrast(1.05); }
-.root[data-live='off'] .stage[data-holding] .poster[data-on] { transform: scale(calc(1 - var(--hold) * .06)); transition: transform .1s linear; }
-
-.hint { position: absolute; z-index: 2; inset: auto 0 14px; margin: 0; color: var(--faint); font-size: 12.5px; font-weight: 500; letter-spacing: .02em; text-align: center; pointer-events: none; animation: obHint 2.6s var(--ease) .8s infinite both; }
-@keyframes obHint { 0%, 100% { opacity: .45; transform: translateY(0); } 50% { opacity: 1; transform: translateY(-3px); } }
-.stage[data-holding] .hint { opacity: 0; animation: none; }
-
-/* 0 · hold ring around the blob */
-.holdRing { position: absolute; z-index: 2; left: 50%; top: 46%; width: min(66vw, 280px); aspect-ratio: 1; transform: translate(-50%, -50%); pointer-events: none; }
-.holdRing svg { width: 100%; height: 100%; transform: rotate(-90deg); overflow: visible; }
-.holdRing circle { fill: none; stroke: var(--brand); stroke-width: 1.2; stroke-linecap: round; stroke-dasharray: 182.2; stroke-dashoffset: calc(182.2 * (1 - var(--hold))); opacity: calc(var(--hold) * 1.4); filter: drop-shadow(0 0 6px var(--brand)); }
-
-/* 2 · frosted tiles over the slab; wiped tiles pop away, tags come through */
-.wipe { position: absolute; z-index: 2; inset: 6% 12% 12%; border-radius: 26px; overflow: hidden; box-shadow: 0 0 0 1px var(--line), 0 24px 48px -28px rgba(15, 23, 42, .35); }
-.tags { position: absolute; inset: 0; display: grid; align-content: center; justify-items: center; gap: 14px; }
-.tags span { min-width: 120px; padding: 10px 18px; border: 1px solid color-mix(in srgb, var(--brand) 40%, transparent); border-radius: 999px; color: var(--ink); background: color-mix(in srgb, var(--surface) 70%, transparent); font-size: 17px; font-weight: 700; letter-spacing: .04em; text-align: center; }
-.wipe[data-cleared] .tags span { animation: obTag .7s var(--spring) both; animation-delay: calc(var(--i) * 120ms); }
-@keyframes obTag { from { transform: scale(.7); opacity: 0; } }
-.frost { position: absolute; inset: 0; display: grid; }
-.frost i { background: var(--frost); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(14px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .5); transition: transform .45s var(--spring), opacity .35s var(--ease); }
-.frost i[data-gone] { transform: scale(0) rotate(12deg); opacity: 0; }
-.wipe[data-cleared] .frost i { transition-delay: var(--d); }
-
-/* Copy: two lines, swapped with a short rise per page. */
-.copy { position: relative; z-index: 2; flex: none; display: grid; gap: 10px; padding: 4px 24px calc(22px + env(safe-area-inset-bottom)); }
-.copy > * { animation: obRise .7s var(--ease) both; }
-.copy > :nth-child(2) { animation-delay: .07s; }
-.copy > :nth-child(n + 3) { animation-delay: .14s; }
-@keyframes obRise { from { opacity: 0; transform: translateY(14px); filter: blur(4px); } }
-.title { margin: 0; font-size: clamp(30px, 9vw, 38px); font-weight: 750; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
-.title em { display: block; color: var(--accent); font-style: normal; }
-.sub { margin: 0; color: var(--muted); font-size: 15px; line-height: 1.5; }
-.itemLine { display: flex; align-items: baseline; gap: 10px; margin: 0; font-size: 15px; animation: obRise .5s var(--ease) both; }
-.itemLine b { color: var(--accent); font-weight: 700; }
-.itemLine span { color: var(--muted); }
-.pips { display: flex; gap: 6px; }
-.pips i { width: 6px; height: 6px; border-radius: 50%; background: var(--chip); transition: background .3s, transform .4s var(--spring); }
-.pips i[data-seen] { background: var(--brand); }
-.pips i[data-focus] { transform: scale(1.5); }
-.invite { margin-top: 2px; --field: var(--surface); --field-edge: var(--line); --auth-accent: var(--accent); --auth-muted: var(--muted); --sans: inherit; }
-.invite :global(input) { user-select: text; -webkit-user-select: text; }
-.invite > * { margin-top: 0; }
-.actions { display: grid; gap: 4px; margin-top: 4px; }
-.primary { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 54px; padding: 0 6px 0 22px; border: 0; border-radius: 999px; color: var(--cta-ink); background: var(--cta); font-family: inherit; font-size: 16px; font-weight: 600; cursor: pointer; transition: transform .2s var(--spring); }
-.primary:active { transform: scale(.97); }
-.primaryIcon { display: grid; place-items: center; width: 42px; height: 42px; border-radius: 50%; color: #03211c; background: var(--brand); }
-:global(html[data-theme='dark']) .primaryIcon { color: var(--brand); background: #03211c; }
-.root[dir='rtl'] .primaryIcon svg { transform: scaleX(-1); }
-.secondary { min-height: 46px; border: 0; color: var(--ink); background: none; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
-.note { margin: 0; color: var(--faint); font-size: 11.5px; text-align: center; }
-.skip:focus-visible, .progress button:focus-visible, .primary:focus-visible, .secondary:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
-
-/* The last page needs room for the form: the stage shrinks. */
-.root[data-page='3'] .stage { flex: 0 0 34svh; }
-
-@media (prefers-reduced-motion: reduce) {
-  .root, .copy > *, .hint, .itemLine, .poster, .frost i, .tags span { animation: none !important; transition: none !important; }
-}
-:global(html[data-theme='dark']) .frost i { box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .05); }
+/* Each page fills the space under the top bar (HeroIntro / GuideSteps position themselves inside it). */
+.page { position: absolute; inset: 0; }
