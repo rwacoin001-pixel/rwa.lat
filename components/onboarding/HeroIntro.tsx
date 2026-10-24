@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
+import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { ArrowRight, Bot, Building2, Layers3, Sigma } from 'lucide-react'
 import { AppOffer, useAppOffer } from './AppOffer'
 import type { InviteCodeState } from '../screens/InviteCodeField'
@@ -10,21 +10,30 @@ import styles from './HeroIntro.module.css'
 
 /**
  * Guide page 1 (palette A), after Radium's state cards: one frosted card that cycles through the four products.
- * Each state swaps a CGI hero whose colour field is rendered into the image (one teal→blue family, equal OKLCH
- * lightness), and rolls the headline. The small glass tile stays the same in every state.
+ * Built in layers that move on their own, so the scene has depth: a coloured glow behind the glass card, a field of
+ * logo-shaped tiles that flip colour one by one, a transparent CGI hero (white ceramic + cool dichroic glass) with
+ * its own contact shadow, objects orbiting in front of and behind it, and one out-of-focus object in the foreground.
+ * One teal-to-blue colour family (equal OKLCH lightness). The small glass tile stays the same in every state.
  * Swipe or tap a chip to change state; it also advances by itself.
  */
 export const ART = '/media/palette-a/onboard-v7'
-/** Page 1 heroes: white ceramic + cool dichroic glass, field slab baked in, on the card's cool white (#F2F6F9). */
-const PLATES = '/media/palette-a/onboard-v8'
+/** Page 1 layers: transparent CGI heroes and orbit objects. */
+const LAYERS = '/media/palette-a/onboard-v9'
 const ICONS = [Building2, Layers3, Sigma, Bot]
 // Pages 2–3 still use the studio cut-outs on one solid brand-green field.
 export const FIELD = '#19c7aa'
 const STATES = [
-  { hero: 'hero-reit' },
-  { hero: 'hero-basket' },
-  { hero: 'hero-quant' },
-  { hero: 'hero-ai' },
+  { hero: 'hero-reit', color: '#2dc8ac' },
+  { hero: 'hero-basket', color: '#00c6ce' },
+  { hero: 'hero-quant', color: '#3abdee' },
+  { hero: 'hero-ai', color: '#07c3de' },
+]
+/** Field tiles per state: [left %, top %, width %, rotate deg]; each tile is the logo's panel. */
+const TILES: [number, number, number, number][][] = [
+  [[8, 6, 54, 0], [52, 22, 40, 0], [30, 52, 30, 0]],
+  [[40, 2, 52, -6], [6, 26, 44, 4], [58, 56, 30, 8]],
+  [[14, 10, 46, 6], [50, 4, 42, -4], [24, 54, 50, 0]],
+  [[26, 0, 50, -4], [4, 40, 36, 8], [56, 38, 38, -6]],
 ]
 const AUTO_MS = 4200
 export const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
@@ -32,7 +41,7 @@ export const SOFT = { type: 'spring', stiffness: 140, damping: 20 } as const
 export const EASE = [.65, 0, .35, 1] as const
 
 /** One satellite on an elliptical orbit around the hero; near side in front and sharp, far side behind and blurred. */
-export function Satellite({ src, phase, radius, speed }: { src: string; phase: number; radius: number; speed: number }) {
+export function Satellite({ src, phase, radius, speed, base = ART }: { src: string; phase: number; radius: number; speed: number; base?: string }) {
   const ref = useRef<HTMLImageElement>(null)
   const reduced = useReducedMotion()
   useAnimationFrame(time => {
@@ -47,7 +56,16 @@ export function Satellite({ src, phase, radius, speed }: { src: string; phase: n
     el.style.zIndex = depth > 0 ? '4' : '1'
     el.style.opacity = String(.55 + (depth + 1) * .225)
   })
-  return <img ref={ref} className={styles.sat} src={`${ART}/${src}.webp`} alt="" aria-hidden="true" />
+  return <img ref={ref} className={styles.sat} src={`${base}/${src}.webp`} alt="" aria-hidden="true" />
+}
+
+/** Logo-shaped tiles behind the hero: each flips and recolours a beat after the one before it. */
+function TileField({ index, color, x, y }: { index: number; color: string; x: MotionValue<number>; y: MotionValue<number> }) {
+  return <motion.div className={styles.tiles} style={{ x, y }} aria-hidden="true">
+    {TILES[index].map(([left, top, width, rotate], i) => <motion.i key={i} className={styles.tileField}
+      initial={false} animate={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, rotate, skewY: 18, backgroundColor: color, rotateY: [0, 90, 0] }}
+      transition={{ ...SPRING, delay: i * .07, backgroundColor: { duration: .2, delay: .18 + i * .07 }, rotateY: { duration: .55, delay: i * .07, ease: EASE } }} />)}
+  </motion.div>
 }
 
 /** Text that rolls up like a counter when its value changes. */
@@ -98,6 +116,8 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
   const lx = useMotionValue(0), ly = useMotionValue(0)
   const sx = useSpring(lx, { stiffness: 80, damping: 18 }), sy = useSpring(ly, { stiffness: 80, damping: 18 })
   const heroX = useTransform(sx, v => v * -14), heroY = useTransform(sy, v => v * -10), heroR = useTransform(sx, v => v * -3)
+  const fieldX = useTransform(sx, v => v * 7), fieldY = useTransform(sy, v => v * 5)
+  const nearX = useTransform(sx, v => v * -30), nearY = useTransform(sy, v => v * -22)
   const cardRX = useTransform(sy, v => v * 2.2), cardRY = useTransform(sx, v => v * -2.6)
   useEffect(() => {
     const pointer = (event: PointerEvent) => { lx.set((event.clientX / innerWidth) * 2 - 1); ly.set((event.clientY / innerHeight) * 2 - 1) }
@@ -130,10 +150,12 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
     else if (dx > 45 || speed > .5) go(index - 1)
   }
 
-  return <section className={styles.intro}>
+  return <section className={styles.intro} style={{ '--state': state.color } as React.CSSProperties}>
+    <motion.div className={styles.glow} aria-hidden="true" animate={{ backgroundColor: state.color }} transition={{ duration: .8, ease: EASE }} />
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
+      <TileField index={index} color={state.color} x={fieldX} y={fieldY} />
       <div className={styles.meta}>
         {pager}
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
@@ -142,7 +164,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
         <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
       </motion.h1>
       {/* Hero + orbit: inside the card, standing on the colour field. */}
-      <motion.div className={`${styles.stage} ${styles.plateStage}`} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
+      <motion.div className={`${styles.stage} ${styles.layerStage}`} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
           <motion.div key={state.hero} className={styles.heroWrap} custom={dir}
             variants={{
@@ -151,11 +173,15 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
               exit: (d: number) => ({ opacity: 0, x: d * -110, y: -40, scale: 1.08, rotate: d * -10, filter: 'blur(12px)' }),
             }}
             initial="enter" animate="center" exit="exit" transition={{ ...SPRING, filter: { duration: .45 }, opacity: { duration: .35 } }}>
-            <motion.img className={`${styles.hero} ${styles.plate}`} src={`${PLATES}/${state.hero}.webp`} alt="" draggable={false}
-              whileTap={{ scaleX: 1.05, scaleY: .94 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
+            <i className={styles.shadow} />
+            <motion.img className={styles.hero} src={`${LAYERS}/${state.hero}.webp`} alt="" draggable={false}
+              whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
+            <Satellite base={LAYERS} src="sat-chrome" phase={index * 1.7} radius={128} speed={.42} />
+            <Satellite base={LAYERS} src="sat-cube" phase={index * 1.7 + Math.PI} radius={112} speed={.34} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
+      <motion.img className={styles.near} src={`${LAYERS}/sat-cube.webp`} alt="" aria-hidden="true" style={{ x: nearX, y: nearY }} />
       <FixedTile locale={locale} />
       <span className={styles.grain} aria-hidden="true" />
 
@@ -167,7 +193,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
 
       <div className={styles.chips} role="tablist" aria-label={copy.swipe}>
         {copy.chips.map((label, i) => { const Icon = ICONS[i]; const on = i === index; return <button key={label} type="button" role="tab" aria-selected={on} className={styles.chip} onClick={() => go(i)}>
-          {on && <motion.i layoutId="chipPill" className={styles.chipPill} transition={SPRING} />}
+          {on && <motion.i layoutId="chipPill" className={styles.chipPill} transition={SPRING} animate={{ backgroundColor: state.color }} />}
           <Icon size={14} strokeWidth={2} aria-hidden="true" /><span>{label}</span>
         </button> })}
       </div>

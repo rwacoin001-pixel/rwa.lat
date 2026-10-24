@@ -106,14 +106,25 @@
 :global(html[data-theme='dark']) .hero { filter: drop-shadow(0 26px 26px rgba(0, 0, 0, .6)); }
 .shadow { position: absolute; z-index: 0; left: 24%; right: 24%; bottom: 3%; height: 8%; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 30, 40, .4), transparent); filter: blur(5px); animation: shade 6.4s ease-in-out infinite; }
 .sat { position: absolute; left: 50%; top: 52%; width: 40px; height: 40px; margin: -20px 0 0 -20px; object-fit: contain; pointer-events: none; will-change: transform, filter; filter: drop-shadow(0 8px 8px rgba(15, 23, 42, .18)); }
-/* Page 1: CGI plates with the colour field rendered in. Their cool-white ground (#F2F6F9) melts into the card
-   (multiply + feathered mask), so no cut-out edge shows. */
-.plateStage { --plate: min(86vw, 340px); top: 124px; left: calc(50% - var(--plate) / 2); right: auto; width: var(--plate); }
-.plate { filter: none; mix-blend-mode: multiply;
-  -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); }
-/* Dark: the light plate becomes a lit showcase window inside the dark glass. */
-:global(html[data-theme='dark']) .plate { mix-blend-mode: normal; inset: 8%; width: 84%; height: 84%; border-radius: 30px; filter: none;
-  -webkit-mask-image: none; mask-image: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 30px 60px -30px rgba(0, 0, 0, .8); }
+/* Page 1 layers (back to front): glow, tile field, hero + orbit, near blur, UI. */
+/* Coloured light behind the glass card; the card's backdrop blur turns it into a soft wash. Brighter in dark. */
+.glow { position: absolute; z-index: 0; top: 14%; left: 8%; width: 84%; height: 46%; border-radius: 50%; opacity: .32; filter: blur(60px); pointer-events: none; }
+:global(html[data-theme='dark']) .glow { opacity: .55; filter: blur(70px); }
+.tiles { position: absolute; z-index: 1; top: 128px; left: 14px; right: 14px; height: min(300px, 40%); perspective: 800px; pointer-events: none; }
+/* The selected chip takes the state colour, so its label goes dark for contrast. */
+.intro .chips .chip[aria-selected='true'] { color: #03211c; }
+/* The logo's panel: vertical sides, top and bottom sloping down to the right. */
+.tileField { position: absolute; aspect-ratio: 1 / 1.08; border-radius: 22px;
+  background-image: radial-gradient(rgba(255, 255, 255, .34) 1.1px, transparent 1.6px), linear-gradient(160deg, rgba(255, 255, 255, .28), rgba(255, 255, 255, 0) 55%, rgba(0, 40, 60, .16));
+  background-size: 9px 9px, 100% 100%;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 -10px 18px -12px rgba(0, 30, 50, .3), 0 22px 34px -22px rgba(0, 60, 80, .55); }
+:global(html[data-theme='dark']) .tileField { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -10px 18px -12px rgba(0, 0, 0, .45), 0 0 40px -10px var(--state), 0 22px 34px -22px rgba(0, 0, 0, .8); }
+.layerStage { --size: min(78vw, 310px); top: 116px; left: calc(50% - var(--size) / 2 + 8px); right: auto; width: var(--size); }
+.layerStage .sat { width: 46px; height: 46px; margin: -23px 0 0 -23px; }
+/* Dark: the hero gives off its state colour onto the glass around it. */
+:global(html[data-theme='dark']) .layerStage .hero { filter: drop-shadow(0 26px 26px rgba(0, 0, 0, .6)) drop-shadow(0 0 28px color-mix(in srgb, var(--state) 45%, transparent)); }
+/* One object right at the lens, out of focus, moving most with the tilt. */
+.near { position: absolute; z-index: 6; right: -26px; bottom: 236px; width: 112px; height: 112px; filter: blur(7px); opacity: .85; pointer-events: none; }
 .tile { display: flex; align-items: center; gap: 10px; }
 .tile > i { width: 10px; height: 10px; border-radius: 50%; background: #19c7aa; box-shadow: 0 0 0 4px rgba(25, 199, 170, .16); }
 .tile span { display: grid; gap: 1px; }
