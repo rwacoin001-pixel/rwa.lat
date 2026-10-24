@@ -12,6 +12,7 @@ import { createSceneStore } from './OnboardingCanvas'
 // three + drei load only when the guide shows.
 const OnboardingCanvas = dynamic(() => import('./OnboardingCanvas'), { ssr: false })
 import HeroIntro from './HeroIntro'
+import { AppOffer, useAppOffer } from './AppOffer'
 import styles from './Onboarding.module.css'
 
 /**
@@ -33,6 +34,7 @@ export default function Onboarding({ locale, invite, onDone }: {
   onDone: (intent: 'create' | 'signin') => void
 }) {
   const copy = paletteAOnboarding(locale)
+  const offer = useAppOffer()
   const rtl = locale === 'ar'
   const { theme } = useRwaTheme()
   const [page, setPage] = useState(0)
@@ -188,7 +190,7 @@ export default function Onboarding({ locale, invite, onDone }: {
     </header>
 
     {/* Page 1 (Radium-style sample) is its own composition; pages 2–4 still use the live stage below. */}
-    {page === 0 && <HeroIntro locale={locale} onNext={() => go(1)} />}
+    {page === 0 && <HeroIntro locale={locale} invite={invite} onNext={() => go(1)} />}
 
     <div ref={stage} className={styles.stage} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} data-holding={hold > 0 || undefined}
       style={{ '--hold': hold } as CSSProperties}>
@@ -222,6 +224,7 @@ export default function Onboarding({ locale, invite, onDone }: {
         <h2 className={styles.title}>{copy.s3.title}</h2>
         <p className={styles.sub}>{copy.s3.body}</p>
         <div className={styles.invite}><InviteCodeField invite={invite} locale={locale} /></div>
+        {offer && <AppOffer kind={offer} locale={locale} invite={invite} size="row" />}
         <div className={styles.actions}>
           <button type="button" className={styles.primary} onClick={() => done('create')}><span>{copy.create}</span><span className={styles.primaryIcon}><ArrowRight size={18} strokeWidth={2} /></span></button>
           <button type="button" className={styles.secondary} onClick={() => done('signin')}>{copy.signIn}</button>

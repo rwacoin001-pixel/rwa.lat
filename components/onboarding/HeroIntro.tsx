@@ -1,7 +1,9 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
-import { ArrowRight, Bot, Building2, Layers3, Sigma } from 'lucide-react'
+import { ArrowRight, Bot, Building2, Layers3, Sigma, Trees, Warehouse } from 'lucide-react'
+import { AppOffer, useAppOffer } from './AppOffer'
+import type { InviteCodeState } from '../screens/InviteCodeField'
 import type { AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import styles from './HeroIntro.module.css'
@@ -53,7 +55,36 @@ function Roll({ value, className }: { value: string; className?: string }) {
   </span>
 }
 
-export default function HeroIntro({ locale, onNext }: { locale: AppLocale; onNext: () => void }) {
+const WIDGET_COPY: Partial<Record<AppLocale, { kinds: [string, string, string]; mix: string; rules: string; ask: string }>> = {
+  'zh-CN': { kinds: ['写字楼', '物流仓', '产业园'], mix: '多资产 · 一次配置', rules: '规则驱动 · 过程透明', ask: '这只产品的费用是多少？' },
+  en: { kinds: ['Offices', 'Logistics', 'Parks'], mix: 'Many assets · one setup', rules: 'Rule-driven · in the open', ask: 'What are this product’s fees?' },
+}
+
+/** A small glass tile on the colour field: one illustrative UI fragment per state (no amounts, no returns). */
+function StateWidget({ index, locale }: { index: number; locale: AppLocale }) {
+  const c = WIDGET_COPY[locale] ?? WIDGET_COPY.en!
+  const body = [
+    <div key="k" className={styles.wKinds}>{[Building2, Warehouse, Trees].map((Icon, i) => <span key={i}><i><Icon size={15} strokeWidth={1.9} /></i>{c.kinds[i]}</span>)}</div>,
+    <div key="m" className={styles.wMix}>
+      <svg viewBox="0 0 36 36" aria-hidden="true">{[[0, 34, '#0b1220'], [34, 26, '#19c7aa'], [60, 22, '#9cc4ad'], [82, 18, '#d8c39a']].map(([start, len, color], i) =>
+        <motion.circle key={i} cx="18" cy="18" r="14" fill="none" stroke={color as string} strokeWidth="5" pathLength="100" transform="rotate(-90 18 18)"
+          strokeDashoffset={-Number(start)} initial={{ strokeDasharray: '0 100' }} animate={{ strokeDasharray: `${Number(len) - 2} ${102 - Number(len)}` }} transition={{ duration: .9, delay: .15 + i * .08, ease: EASE }} />)}</svg>
+      <b>{c.mix}</b>
+    </div>,
+    <div key="r" className={styles.wRules}>
+      <svg viewBox="0 0 120 34" aria-hidden="true"><motion.path d="M2 26 C 14 24, 18 12, 30 16 S 48 28, 58 18 S 78 4, 90 10 S 108 20, 118 6" fill="none" stroke="#5d7697" strokeWidth="2.4" strokeLinecap="round"
+        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: EASE }} /></svg>
+      <b>{c.rules}</b>
+    </div>,
+    <div key="a" className={styles.wAsk}><b>{c.ask}</b><span aria-hidden="true"><i /><i /><i /></span></div>,
+  ][index]
+  return <AnimatePresence mode="popLayout" initial={false}>
+    <motion.div key={index} className={styles.widget} initial={{ opacity: 0, y: 14, scale: .94 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: .96 }} transition={{ ...SPRING, delay: .12 }}>{body}</motion.div>
+  </AnimatePresence>
+}
+
+export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocale; invite?: InviteCodeState; onNext: () => void }) {
+  const offer = useAppOffer()
   const copy = paletteAOnboarding(locale).s0
   const reduced = useReducedMotion()
   const [index, setIndex] = useState(0)
@@ -116,6 +147,9 @@ export default function HeroIntro({ locale, onNext }: { locale: AppLocale; onNex
   const fieldBg = `linear-gradient(155deg, ${state.field[0]} 0%, ${state.field[1]} 55%, ${state.field[2]} 100%)`
 
   return <section className={styles.intro} style={{ '--glow': state.field[1] } as CSSProperties}>
+    <motion.h1 className={styles.title} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>
+      <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
+    </motion.h1>
     <motion.div className={styles.halo} aria-hidden="true" animate={{ backgroundColor: state.field[1] }} transition={{ duration: 1.1, ease: EASE }} />
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
@@ -126,10 +160,11 @@ export default function HeroIntro({ locale, onNext }: { locale: AppLocale; onNex
       </motion.div>
 
       <div className={styles.meta}>
-        <b>A-REIT</b>
-        <h1 className={styles.title}>{copy.title[0]}<em>{copy.title[1]}</em></h1>
+        <b><i className={styles.live} />A-REIT</b>
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
       </div>
+      <StateWidget index={index} locale={locale} />
+      <span className={styles.grain} aria-hidden="true" />
 
       <div className={styles.product}>
         <Roll value={text.name} className={styles.productName} />
@@ -163,6 +198,10 @@ export default function HeroIntro({ locale, onNext }: { locale: AppLocale; onNex
         </motion.div>
       </AnimatePresence>
     </motion.div>
+
+    {offer && <motion.div className={styles.offer} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .4 }}>
+      <AppOffer kind={offer} locale={locale} invite={invite} />
+    </motion.div>}
 
     <motion.button type="button" className={styles.cta} onClick={onNext} whileTap={{ scale: .97 }}
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .5 }}>

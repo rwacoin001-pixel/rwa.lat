@@ -1,7 +1,8 @@
 'use client'
 
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
-import { AlertCircle, Check, LoaderCircle } from 'lucide-react'
+import { AlertCircle, Check, ClipboardPaste, LoaderCircle } from 'lucide-react'
+import { ANDROID_APP_UA } from '@/lib/android-app'
 import type { AppLocale } from '@/lib/app-locales'
 import { applyInviteCode, currentInvite, displayInviteCode, isInviteCodeShape, lookupInviteCode, normalizeInviteCode, type InviteAttribution } from '@/lib/referral-invite'
 import styles from './InviteCodeField.module.css'
@@ -85,9 +86,15 @@ export function useInviteCode() {
   return { value, status, locked, message, fromLink, change, commit }
 }
 
+const PASTE: Partial<Record<AppLocale, string>> = { 'zh-CN': '粘贴', en: 'Paste', es: 'Pegar', fr: 'Coller', pt: 'Colar', hi: 'पेस्ट', ar: 'لصق' }
+
 export function InviteCodeField({ invite, locale, disabled }: { invite: InviteCodeState; locale: AppLocale; disabled?: boolean }) {
   const copy = inviteCopy[locale]
   const id = useId()
+  // Inside the Android app: the browser copied the invitation code on download, so offer to paste it.
+  const [inApp, setInApp] = useState(false)
+  useEffect(() => { setInApp(navigator.userAgent.includes(ANDROID_APP_UA) && Boolean(navigator.clipboard?.readText)) }, [])
+  const paste = async () => { try { const text = await navigator.clipboard.readText(); if (text.trim()) invite.change(text.trim()) } catch { /* clipboard denied: type it */ } }
   const { status, message, value, locked } = invite
   if (status === 'loading' || invite.fromLink) return null
   const shown = status === 'locked' && locked ? locked.attribution.code : value
@@ -100,6 +107,7 @@ export function InviteCodeField({ invite, locale, disabled }: { invite: InviteCo
       <input id={`${id}-invite`} value={displayInviteCode(shown)} placeholder={copy.placeholder} disabled={disabled} readOnly={status === 'locked'} required
         onChange={event => invite.change(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} inputMode="text" maxLength={19} dir="ltr" enterKeyHint="send"
         aria-invalid={tone === 'error' ? true : undefined} aria-describedby={`${id}-invite-note`} />
+      {inApp && !value && status === 'idle' && <button type="button" className={styles.paste} onClick={() => { void paste() }}><ClipboardPaste size={14} aria-hidden="true" />{PASTE[locale] ?? PASTE.en}</button>}
       <span className={styles.status} aria-hidden="true">
         {status === 'checking' ? <LoaderCircle className={styles.spin} size={18} /> : ok ? <Check size={18} strokeWidth={2.2} /> : tone === 'error' ? <AlertCircle size={18} /> : null}
       </span>

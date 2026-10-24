@@ -41,6 +41,15 @@ if (typeof window !== 'undefined') {
   })
 }
 
+/** For other screens (the sign-in guide): whether Chrome offered an install prompt, and showing it. */
+export const canPromptInstall = () => Boolean(deferredPrompt)
+export async function promptInstall(): Promise<boolean> {
+  const event = deferredPrompt
+  if (!event) return false
+  deferredPrompt = null
+  try { await event.prompt(); return (await event.userChoice).outcome === 'accepted' } catch { return false } finally { notify() }
+}
+
 /** null until mounted or when the entry must stay hidden. */
 export function useHomeInstall() {
   const [env, setEnv] = useState<InstallEnv | null>(null)

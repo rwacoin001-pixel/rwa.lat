@@ -21,3 +21,8 @@
 .wrap .field ~ p.note[data-tone='error'] { color: var(--invite-bad); }
 
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
+
+/* Android app only: paste the code the browser copied on download. */
+.paste { display: inline-flex; grid-column: 2; grid-row: 1; justify-self: end; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px; border: 0; border-radius: 999px; color: var(--auth-accent); background: color-mix(in srgb, var(--auth-accent) 12%, transparent); font: 600 12px/1 var(--sans); white-space: nowrap; cursor: pointer; }
+.field:has(.paste) { grid-template-columns: minmax(0, 1fr) auto; }
+.field:has(.paste) .status { display: none; }
