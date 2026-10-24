@@ -64,42 +64,97 @@ const HOME_COPY: Partial<Record<AppLocale, { slogan: [string, string]; sub: stri
   en: { slogan: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant, one clear account', mine: 'My assets', actions: ['Deposit', 'Withdraw', 'Transfer', 'Receive'], home: 'Home', cash: 'Available', held: 'Holdings' },
 }
 
-// The AI assistant page as it is in the app (the user's screenshot): tabs, a short exchange, a guided question card,
-// the input bar and the disclaimer. Sample words only; no real account data.
-const AI_COPY: Partial<Record<AppLocale, { tabs: [string, string]; hi: string; name: string; reply: string; ask: string; q: string; count: string; opts: [string, string, string]; own: string; skip: string; next: string; input: string; note: string }>> = {
-  'zh-CN': { tabs: ['AI 助手', '社区'], hi: '你好', name: 'A-REIT AI', reply: '你好！我是 A-REIT AI 助手。我可以介绍平台、解释和对比已上架的产品与篮子组合、协助做投资配置，或指导你在哪里查看账户、资金、费用和客服支持。',
-    ask: '我有一笔钱，怎么配置？', q: '这笔资金大概打算投资多久？', count: '1/3', opts: ['1 年以内', '1–3 年', '3 年以上'], own: '或者写下你自己的回答', skip: '跳过', next: '下一步',
-    input: '问问费用、风险或配置…', note: 'AI 可能出错，回答仅供参考，不构成投资建议。' },
-  en: { tabs: ['AI Support', 'Community'], hi: 'Hello', name: 'A-REIT AI', reply: 'Hi! I am the A-REIT AI assistant. I can introduce the platform, explain and compare listed products and baskets, help with allocation, or show you where to find your account, funds, fees and support.',
-    ask: 'How should I allocate some money?', q: 'Roughly how long will you invest this money?', count: '1/3', opts: ['Under 1 year', '1–3 years', 'Over 3 years'], own: 'Or write your own reply', skip: 'Skip', next: 'Next',
-    input: 'Ask about fees, risk or allocation…', note: 'AI can make mistakes. Answers are for reference only and are not investment advice.' },
+// The AI assistant page as it is in the app (the user's screenshot), played as a short scripted exchange: a greeting,
+// the AI's reply typed out, a question, then the guided question card answered three times, and a summary.
+// Sample words only; no account data and no advice.
+type AiCopy = { tabs: [string, string]; hi: string; name: string; reply: string; ask: string; qs: [string, [string, string, string], string][]; pick: number[];
+  own: string; skip: string; next: string; summary: string; input: string; note: string; done: string }
+const AI_COPY: Partial<Record<AppLocale, AiCopy>> = {
+  'zh-CN': { tabs: ['AI 助手', '社区'], hi: '你好', name: 'A-REIT AI', reply: '你好！我是 A-REIT AI 助手。我可以介绍平台、解释和对比产品，也能帮你理清配置思路。',
+    ask: '我有一笔钱，怎么配置？',
+    qs: [['这笔资金大概打算投资多久？', ['1 年以内', '1–3 年', '3 年以上'], '投资多久？'], ['你更看重哪一点？', ['稳定收入', '长期增长', '两者兼顾'], '看重什么？'], ['能接受多大的波动？', ['较小', '中等', '较大'], '多大波动？']],
+    pick: [1, 0, 0], own: '或者写下你自己的回答', skip: '跳过', next: '下一步',
+    summary: '已记录：1–3 年、稳定收入、波动较小。我按这些列出可以先了解的产品，结果仅供参考。', input: '问问费用、风险或配置…', note: 'AI 可能出错，回答仅供参考，不构成投资建议。', done: '整理好了' },
+  en: { tabs: ['AI Support', 'Community'], hi: 'Hello', name: 'A-REIT AI', reply: 'Hi! I am the A-REIT AI assistant. I can introduce the platform, explain and compare products, and help you think through an allocation.',
+    ask: 'How should I allocate some money?',
+    qs: [['Roughly how long will you invest it?', ['Under 1 year', '1–3 years', 'Over 3 years'], 'How long?'], ['What matters more to you?', ['Steady income', 'Long-term growth', 'Both'], 'What matters?'], ['How much ups and downs can you take?', ['Little', 'Some', 'A lot'], 'How much swing?']],
+    pick: [1, 0, 0], own: 'Or write your own reply', skip: 'Skip', next: 'Next',
+    summary: 'Noted: 1–3 years, steady income, little swing. I will list products you could look at first; for reference only.', input: 'Ask about fees, risk or allocation…', note: 'AI can make mistakes. Answers are for reference only and are not investment advice.', done: 'All set' },
+}
+/** Script times (ms after the page shows): hi, typing, reply, ask, Q1, pick 1, Q2, pick 2, Q3, pick 3, summary. */
+const AI_TIMES = [0, 400, 1000, 1500, 3600, 4300, 5500, 6400, 7500, 8400, 9500, 10500]
+
+/** Steps through the script while the page is current; starts over each time it becomes current. */
+function useScript(on: boolean, times: number[]) {
+  const [step, setStep] = useState(0)
+  useEffect(() => {
+    setStep(0)
+    if (!on) return
+    const timers = times.map((t, k) => setTimeout(() => setStep(k), t))
+    return () => timers.forEach(clearTimeout)
+  }, [on, times])
+  return step
 }
 
-/** The AI assistant page, printed the same way (grey ink, hairlines; the brand teal on the mark and the AI dot). */
-function PrintedAi({ locale, active }: { locale: AppLocale; active: boolean }) {
+/** Types a string out character by character once started. */
+function Typed({ text, go }: { text: string; go: boolean }) {
+  const [n, setN] = useState(0)
+  useEffect(() => {
+    setN(0)
+    if (!go) return
+    const t = setInterval(() => setN(v => { if (v >= text.length) { clearInterval(t); return v } return v + 1 }), 32)
+    return () => clearInterval(t)
+  }, [go, text])
+  return <>{text.slice(0, n)}{go && n < text.length && <i className={styles.caret} />}</>
+}
+
+/** What the two paper bubbles in the air say at each step (the question in play, and the answer just picked). */
+function aiBubbleText(locale: AppLocale, step: number): [string, string] {
   const c = AI_COPY[locale] ?? AI_COPY.en!
-  const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .14 : 0, ease: EASE } })
+  const q = step >= 9 ? 2 : step >= 7 ? 1 : 0
+  const big = step >= 11 ? c.done : step >= 5 ? c.qs[q][2] : step >= 4 ? c.ask : step >= 1 ? c.hi : ''
+  const pickedSteps = [6, 8, 10]
+  const lastPick = pickedSteps.filter(t => step >= t).length - 1
+  const small = lastPick >= 0 ? c.qs[lastPick][1][c.pick[lastPick]] : step >= 2 ? '…' : ''
+  return [big, small]
+}
+
+const Msg = ({ show, children, className }: { show: boolean; children: React.ReactNode; className: string }) =>
+  <AnimatePresence initial={false}>{show && <motion.div className={className} initial={{ opacity: 0, y: 10, scale: .98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, height: 0, marginTop: 0 }} transition={{ type: 'spring', stiffness: 320, damping: 30 }}>{children}</motion.div>}</AnimatePresence>
+
+/** The AI assistant page, printed the same way, playing the script. */
+function PrintedAi({ locale, step = 99 }: { locale: AppLocale; active: boolean; step?: number }) {
+  const c = AI_COPY[locale] ?? AI_COPY.en!
+  const q = step >= 9 ? 2 : step >= 7 ? 1 : 0
+  const picked = step === 6 || step === 8 || step === 10 ? c.pick[q] : -1
+  const [question, opts] = c.qs[q]
   return <div className={`${styles.print} ${styles.aiPrint}`}>
     <div className={styles.pStatus}><b><Clock /></b><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
-    <motion.div className={styles.aBar} {...show(0)}>
+    <div className={styles.aBar}>
       <ArrowLeft size={20} strokeWidth={1.5} />
       <span className={styles.aTabs}><b>{c.tabs[0]}</b><span>{c.tabs[1]}</span></span>
       <i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i>
-    </motion.div>
-    <motion.div className={styles.aMe} {...show(1)}>{c.hi}</motion.div>
-    <motion.div className={styles.aBot} {...show(2)}>
-      <span className={styles.aName}><RwaLogoMark width={22} height={12} label="" /><b>{c.name}</b></span>
-      <p>{c.reply}</p>
-    </motion.div>
-    <motion.div className={styles.aMe} {...show(3)}>{c.ask}</motion.div>
-    <motion.div className={styles.aQ} {...show(4)}>
-      <div className={styles.aQHead}><span>{c.q}</span><small>{c.count}</small></div>
-      {c.opts.map((o, k) => <div key={o} className={styles.aOpt}><i>{k + 1}</i><span>{o}</span></div>)}
-      <div className={styles.aOwn}><Pencil size={14} strokeWidth={1.4} /><span>{c.own}</span></div>
-      <div className={styles.aQFoot}><span>{c.skip}</span><b>{c.next}</b></div>
-    </motion.div>
-    <motion.div className={styles.aInput} {...show(5)}><Plus size={18} strokeWidth={1.5} /><span>{c.input}</span><Mic size={18} strokeWidth={1.5} /></motion.div>
-    <motion.p className={styles.aNote} {...show(6)}>{c.note}</motion.p>
+    </div>
+    <div className={styles.aThread}>
+      <Msg show={step >= 1} className={styles.aMe}>{c.hi}</Msg>
+      <Msg show={step >= 2} className={styles.aBot}>
+        <span className={styles.aName}><RwaLogoMark width={22} height={12} label="" /><b>{c.name}</b></span>
+        <p>{step < 3 ? <span className={styles.dots3}><i /><i /><i /></span> : <Typed text={c.reply} go={step >= 3} />}</p>
+      </Msg>
+      <Msg show={step >= 4} className={styles.aMe}>{c.ask}</Msg>
+      <Msg show={step >= 5 && step < 11} className={styles.aQ}>
+        <div className={styles.aQHead}><span>{question}</span><small>{q + 1}/3</small></div>
+        {opts.map((o, k) => <div key={o} className={styles.aOpt} data-on={picked === k || undefined}><i>{k + 1}</i><span>{o}</span></div>)}
+        <div className={styles.aOwn}><Pencil size={14} strokeWidth={1.4} /><span>{c.own}</span></div>
+        <div className={styles.aQFoot}><span>{c.skip}</span><b data-press={picked >= 0 || undefined}>{c.next}</b></div>
+      </Msg>
+      <Msg show={step >= 11} className={styles.aBot}>
+        <span className={styles.aName}><RwaLogoMark width={22} height={12} label="" /><b>{c.name}</b></span>
+        <p><Typed text={c.summary} go={step >= 11} /></p>
+      </Msg>
+    </div>
+    <div className={styles.aInput}><Plus size={18} strokeWidth={1.5} /><span>{c.input}</span><Mic size={18} strokeWidth={1.5} /></div>
+    <p className={styles.aNote}>{c.note}</p>
   </div>
 }
 
@@ -151,9 +206,9 @@ type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
     print is clipped to, an optional cut-out that sits above the print, and the page printed on it. */
 /** Paper objects cut out of a scene and floated in code: [file, left %, top %, width %, height %, drift y px, turn deg, seconds]. */
 type Floater = [string, number, number, number, number, number, number, number]
-const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: typeof PrintedHome; floaters?: Floater[] }> = {
+const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: (p: { locale: AppLocale; active: boolean; step?: number }) => React.ReactElement; floaters?: Floater[]; script?: boolean }> = {
   paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
-  ai: { photo: 'ai-scene-bg', floaters: [['ai-bubble-big', 10.45, 8.46, 25.1, 15.5, -9, -2, 5.2], ['ai-bubble-small', 2.73, 17.51, 15.82, 9.31, 7, 2.5, 4.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '81.4% 4.4%, 80.6% 3.2%, 79% 3.1%, 35.8% 5.8%, 35.8% 38.4%, 30.4% 38.4%, 30.4% 80.4%, 32% 81.6%, 79% 88.3%, 80.7% 87.6%, 81.4% 86%', Print: PrintedAi },
+  ai: { photo: 'ai-scene-bg', script: true, floaters: [['ai-bubble-big', 10.45, 8.46, 25.1, 15.5, -9, -2, 5.2], ['ai-bubble-small', 2.73, 17.51, 15.82, 9.31, 7, 2.5, 4.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '81.4% 4.4%, 80.6% 3.2%, 79% 3.1%, 35.8% 5.8%, 35.8% 38.4%, 30.4% 38.4%, 30.4% 80.4%, 32% 81.6%, 79% 88.3%, 80.7% 87.6%, 81.4% 86%', Print: PrintedAi },
 }
 
 /**
@@ -173,15 +228,20 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
   const q = [sc.face.tl, sc.face.tr, sc.face.br, sc.face.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
   const Print = sc.Print
   const reduced = useReducedMotion()
+  const step = useScript(active && !!sc.script, AI_TIMES)
+  const words = sc.script ? aiBubbleText(locale, step) : null
   return <div className={styles.paperStage} ref={stage}>
     <img className={styles.paperPhoto} src={`${ART}/${sc.photo}.webp`} alt="" draggable={false} />
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
-      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} /></div>
+      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
     </div>}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
-    {sc.floaters?.map(([src, left, top, width, height, dy, turn, sec]) => <motion.img key={src} className={styles.floater} src={`${ART}/${src}.webp`} alt="" draggable={false}
+    {sc.floaters?.map(([src, left, top, width, height, dy, turn, sec], k) => <motion.div key={src} className={styles.floater} data-k={k}
       style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
-      animate={reduced ? undefined : { y: [0, dy, 0], rotate: [0, turn, 0] }} transition={{ duration: sec, ease: 'easeInOut', repeat: Infinity }} />)}
+      animate={reduced ? undefined : { y: [0, dy, 0], rotate: [0, turn, 0] }} transition={{ duration: sec, ease: 'easeInOut', repeat: Infinity }}>
+      <img src={`${ART}/${src}.webp`} alt="" draggable={false} />
+      {words && <AnimatePresence mode="wait"><motion.span key={words[k]} className={styles.floatText} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: .3 }}>{words[k]}</motion.span></AnimatePresence>}
+    </motion.div>)}
   </div>
 }
 
