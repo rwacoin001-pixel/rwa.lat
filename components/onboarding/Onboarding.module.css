@@ -28,5 +28,5 @@
 .pager button[aria-selected='true'] i::after { transform: none; }
 .root[dir='rtl'] .pager i::after { transform-origin: 100% 50%; }
 
-/* Each page fills the screen (HeroIntro / GuideSteps position themselves inside it). */
+/* The page fills the screen (GuideCarousel lays itself out inside it). */
 .page { position: absolute; inset: 0; }
