@@ -43,7 +43,7 @@ const AUTO_MS = 4800
 const FACE = {"tl": [18.46, 3.26], "tr": [76.76, 6.9], "br": [76.76, 78.84], "bl": [18.46, 88.93]}
 const FACE_W = 390, FACE_H = 820
 /** The flat part of the face (left of the tear), in % of the photograph: the printed page is clipped to it. */
-const FLAT = '18.4% 2.9%, 77.5% 5.5%, 76.2% 7.8%, 74.2% 11.7%, 70.3% 16.9%, 64.5% 22.8%, 58.6% 28%, 53.7% 33.9%, 51.8% 39.1%, 51.2% 45.6%, 51.2% 58.6%, 51.6% 71.6%, 52% 83.3%, 52.3% 87%, 18.4% 89.2%'
+const FLAT = '18.5% 4.6%, 19.3% 3.4%, 21% 3%, 74% 5.4%, 73.4% 7.6%, 71.4% 11%, 67.6% 15.8%, 62% 21.6%, 56.6% 27%, 52.4% 32.8%, 50.6% 38.5%, 50.2% 45.6%, 50.2% 58.6%, 50.6% 71.6%, 51% 83%, 51.2% 86.2%, 21% 88.1%, 19.2% 87.3%, 18.5% 85.6%'
 
 /** CSS matrix3d that maps a FACE_W x FACE_H box onto the quad (px), so flat UI lies on the tilted face in true perspective. */
 function quadMatrix(q: number[][]) {
@@ -63,6 +63,14 @@ const HOME_COPY: Partial<Record<AppLocale, { slogan: [string, string]; sub: stri
   en: { slogan: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant, one clear account', mine: 'My assets', actions: ['Deposit', 'Withdraw', 'Transfer', 'Receive'], home: 'Home', cash: 'Available', held: 'Holdings' },
 }
 
+/** The phone's own clock: the visitor's current time, kept up to date. */
+function Clock() {
+  const fmt = () => new Date().toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: false })
+  const [now, setNow] = useState('')
+  useEffect(() => { setNow(fmt()); const t = setInterval(() => setNow(fmt()), 15000); return () => clearInterval(t) }, [])
+  return <>{now || ' '}</>
+}
+
 /** A line drawing of the home page's pavilion (stands in for the photo, in the printed style). */
 function Pavilion() {
   return <svg className={styles.pHero} viewBox="0 0 240 110" aria-hidden="true">
@@ -79,10 +87,10 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
   const acts = [ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, QrCode]
   const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .1 : 0, ease: EASE } })
   return <div className={styles.print}>
-    <div className={styles.pStatus}><b>9:41</b><i className={styles.pIsland} /><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
+    <div className={styles.pStatus}><b><Clock /></b><i className={styles.pIsland} /><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
     <motion.div className={styles.pTop} {...show(0)}>
       <RwaLogoMark width={44} height={25} label="" /><b>A-REIT</b>
-      <span><Gift size={22} strokeWidth={1.4} /><Moon size={22} strokeWidth={1.4} /><i className={styles.pAvatar} /></span>
+      <span><Gift size={22} strokeWidth={1.4} /><Moon size={22} strokeWidth={1.4} /><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span>
     </motion.div>
     <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><span>{c.slogan[1]}</span></motion.h3>
     <motion.p className={styles.pSub} {...show(2)}>{c.sub}</motion.p>
@@ -118,6 +126,7 @@ function PaperScene({ active, locale }: { active: boolean; locale: AppLocale }) 
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${FLAT})` }}>
       <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><PrintedHome locale={locale} active={active} /></div>
     </div>}
+    <img className={styles.paperPerson} src={`${ART}/paper-person.webp`} alt="" draggable={false} />
   </div>
 }
 
