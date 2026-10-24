@@ -115,7 +115,7 @@ function FixedTile({ locale, index }: { locale: AppLocale; index: number }) {
   </div>
 }
 
-export default function HeroIntro({ locale, invite, pager, onNext }: { locale: AppLocale; invite?: InviteCodeState; pager?: React.ReactNode; onNext: () => void }) {
+export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocale; invite?: InviteCodeState; pager?: React.ReactNode; onNext: () => void }) {
   const offer = useAppOffer()
   const copy = paletteAOnboarding(locale).s0
   const reduced = useReducedMotion()
@@ -184,8 +184,8 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
       <TileField index={index} color={state.color} x={fieldX} y={fieldY} />
       <div className={styles.meta}>
-        {pager}
-        <RwaLogoMark className={styles.metaLogo} width={34} height={19} label="" accentColor={state.color} />
+        <RwaLogoMark className={styles.metaLogo} width={34} height={19} label="A-REIT" accentColor={state.color} />
+        <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
       </div>
       <motion.h1 className={styles.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>
         <span>{copy.title[0]}</span><em>{copy.title[1]}</em>

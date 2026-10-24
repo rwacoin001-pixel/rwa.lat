@@ -178,6 +178,6 @@
 .tileUnit { color: var(--state); font-size: 14px; font-weight: 700; }
 .tileLabel { max-width: 100%; color: var(--muted); font-size: 11.5px; font-weight: 500; }
 .tileLabel > span { overflow: hidden; text-overflow: ellipsis; }
-/* The main button follows the state colour. */
-.intro .cta.stateCta { color: #ffffff; background: var(--cta); transition: background-color .5s ease; box-shadow: 0 16px 30px -18px var(--cta); }
-.intro .stateCta .ctaIcon { color: var(--cta); background: #ffffff; transition: color .5s ease; }
+/* The main button stays black (light) / white (dark); only its arrow disc takes the state colour. */
+.intro .cta.stateCta .ctaIcon { color: #ffffff; background: var(--cta); transition: background-color .5s ease; }
+:global(html[data-theme='dark']) .intro .cta.stateCta { color: #0b1220; background: #f2f4f7; box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .8); }
