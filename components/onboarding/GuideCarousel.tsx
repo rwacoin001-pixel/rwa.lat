@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { Wifi, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { Wifi, Mic, Plus, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
 import { localeOptions, useI18n, type AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
@@ -28,7 +28,7 @@ const CARDS = [
   { hero: 'object-reit', from: '#3fd3b8', to: '#00806b', value: 3, scene: 'paper' },
   { hero: 'object-basket', from: '#22d0d6', to: '#00808a', value: 1 },
   { hero: 'object-koala', from: '#56c6f0', to: '#0077b0', value: 100 },
-  { hero: 'object-ai', from: '#2ccce4', to: '#007c99', value: 24 },
+  { hero: 'object-ai', from: '#2ccce4', to: '#007c99', value: 24, scene: 'ai' },
 ] as const
 /** Two callouts per card: anchor on the object [x %, y %] → label at [x %, y %] (of the hero box), and its side. */
 const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
@@ -38,6 +38,7 @@ const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
   [[50, 40, 92, 16, 'r'], [42, 82, 6, 94, 'l']],
 ]
 const AUTO_MS = 4800
+const SKIP: Partial<Record<AppLocale, string>> = { 'zh-CN': '跳过', en: 'Skip' }
 
 // The phone's front face in paper-scene-w.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
 const FACE = {"tl": [18.46, 3.26], "tr": [76.76, 6.9], "br": [76.76, 78.84], "bl": [18.46, 88.93]}
@@ -61,6 +62,31 @@ function quadMatrix(q: number[][]) {
 const HOME_COPY: Partial<Record<AppLocale, { slogan: [string, string]; sub: string; mine: string; actions: [string, string, string, string]; home: string; cash: string; held: string }>> = {
   'zh-CN': { slogan: ['好资产，', '一目了然。'], sub: '地产信托、资产组合、量化策略，一个账户看清', mine: '我的资产', actions: ['充值', '提现', '转账', '收款'], home: '首页', cash: '可用资金', held: '持仓' },
   en: { slogan: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant, one clear account', mine: 'My assets', actions: ['Deposit', 'Withdraw', 'Transfer', 'Receive'], home: 'Home', cash: 'Available', held: 'Holdings' },
+}
+
+const AI_COPY: Partial<Record<AppLocale, { title: string; hi: string; chips: string[]; ask: string; answer: string; rows: string[]; input: string }>> = {
+  'zh-CN': { title: 'AI 助手', hi: '有什么想看明白的？', chips: ['费用怎么算', '风险在哪里', '怎么配置'], ask: '这只产品的费用是多少？',
+    answer: '费用都写在产品披露里，我帮你列出来：', rows: ['申购费：买入时收取', '管理费：按年计提', '赎回规则：以披露为准'], input: '问问费用、风险或配置…' },
+  en: { title: 'AI assistant', hi: 'What would you like to understand?', chips: ['How fees work', 'Where the risk is', 'How to allocate'], ask: 'What are this product’s fees?',
+    answer: 'They are all in the product disclosure. Here they are:', rows: ['Subscription fee: when you buy', 'Management fee: yearly', 'Redemption: per the disclosure'], input: 'Ask about fees, risk or allocation…' },
+}
+
+/** The AI assistant page, printed the same way. */
+function PrintedAi({ locale, active }: { locale: AppLocale; active: boolean }) {
+  const c = AI_COPY[locale] ?? AI_COPY.en!
+  const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .14 : 0, ease: EASE } })
+  return <div className={styles.print}>
+    <div className={styles.pStatus}><b><Clock /></b><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
+    <motion.div className={styles.pTop} {...show(0)}><RwaLogoMark width={44} height={25} label="" /><b>{c.title}</b></motion.div>
+    <motion.h3 className={styles.aHi} {...show(1)}>{c.hi}</motion.h3>
+    <motion.div className={styles.aChips} {...show(2)}>{c.chips.map(x => <span key={x}>{x}</span>)}</motion.div>
+    <motion.div className={styles.aAsk} {...show(3)}>{c.ask}</motion.div>
+    <motion.div className={styles.aAnswer} {...show(4)}>
+      <p>{c.answer}</p>
+      <ul>{c.rows.map(r => <li key={r}>{r}</li>)}</ul>
+    </motion.div>
+    <motion.div className={styles.aInput} {...show(5)}><Plus size={18} strokeWidth={1.5} /><span>{c.input}</span><Mic size={18} strokeWidth={1.5} /></motion.div>
+  </div>
 }
 
 /** The phone's own clock: the visitor's current time, kept up to date. */
@@ -106,12 +132,20 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
   </div>
 }
 
+type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
+/** Each paper-phone scene: the photograph, its measured face (corners, % of the 1024x1536 photo), the flat part the
+    print is clipped to, an optional cut-out that sits above the print, and the page printed on it. */
+const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: typeof PrintedHome }> = {
+  paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
+  ai: { photo: 'ai-scene', face: {"tl": [18.55, 3.13], "tr": [69.73, 6.45], "br": [69.73, 81.71], "bl": [18.55, 88.74]}, flat: '18.6% 4.4%, 19.4% 3.2%, 21% 3.1%, 64.2% 5.8%, 64.2% 38.4%, 69.6% 38.4%, 69.6% 80.4%, 68% 81.6%, 21% 88.3%, 19.3% 87.6%, 18.6% 86%', Print: PrintedAi },
+}
+
 /**
- * Scene page (card 1), after the reference: a giant paper phone in a soft grey studio; its front page peels open from
- * inside and a woman steps through into a sunlit office atrium. Our home page is printed on the flat part of the face,
- * mapped onto the face's four corners so it shares the slab's perspective.
+ * Paper-phone scene: a giant cool-white paper phone in a pale studio, with the woman. The page is printed on the face,
+ * mapped onto the face's four corners so it shares the phone's perspective, and clipped to the flat paper.
  */
-function PaperScene({ active, locale }: { active: boolean; locale: AppLocale }) {
+function PaperScene({ scene, active, locale }: { scene: string; active: boolean; locale: AppLocale }) {
+  const sc = SCENES[scene]
   const stage = useRef<HTMLDivElement>(null)
   const [box, setBox] = useState({ w: 0, h: 0 })
   useLayoutEffect(() => {
@@ -120,13 +154,14 @@ function PaperScene({ active, locale }: { active: boolean; locale: AppLocale }) 
     const m = () => setBox({ w: el.clientWidth, h: el.clientHeight })
     m(); const ro = new ResizeObserver(m); ro.observe(el); return () => ro.disconnect()
   }, [])
-  const q = [FACE.tl, FACE.tr, FACE.br, FACE.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
+  const q = [sc.face.tl, sc.face.tr, sc.face.br, sc.face.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
+  const Print = sc.Print
   return <div className={styles.paperStage} ref={stage}>
-    <img className={styles.paperPhoto} src={`${ART}/paper-scene-w.webp`} alt="" draggable={false} />
-    {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${FLAT})` }}>
-      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><PrintedHome locale={locale} active={active} /></div>
+    <img className={styles.paperPhoto} src={`${ART}/${sc.photo}.webp`} alt="" draggable={false} />
+    {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
+      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} /></div>
     </div>}
-    <img className={styles.paperPerson} src={`${ART}/paper-person-w.webp`} alt="" draggable={false} />
+    {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
   </div>
 }
 
@@ -207,7 +242,7 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
   const heroX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * -90 + t * -10)
   const heroY = useTransform(tiltY, t => t * -8)
   const topoX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * 40 + t * 6)
-  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}><PaperScene active={active} locale={locale} /></article>
+  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}><PaperScene scene={card.scene} active={active} locale={locale} /></article>
   return <article className={styles.card} style={{ '--from': card.from, '--to': card.to } as never} aria-hidden={!active}>
     <motion.img className={styles.topo} src={`${ART}/topo.svg`} alt="" style={{ x: topoX }} draggable={false} />
     <span className={styles.sheen} aria-hidden="true" />
@@ -297,7 +332,7 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
   }, [])
   useEffect(() => {
     if (reduced) return
-    const t = setTimeout(() => { if (Date.now() - touched.current > 7000) go(index + 1, 'auto') }, 'scene' in CARDS[index] ? AUTO_MS + 3600 : AUTO_MS)
+    const t = setTimeout(() => { if (index < CARDS.length - 1 && Date.now() - touched.current > 7000) go(index + 1, 'auto') }, 'scene' in CARDS[index] ? AUTO_MS + 3600 : AUTO_MS)
     return () => clearTimeout(t)
   }, [index, go, reduced])
 
@@ -337,13 +372,13 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
 
   const r0 = useTransform(pos, p => 0 - p), r1 = useTransform(pos, p => 1 - p), r2 = useTransform(pos, p => 2 - p), r3 = useTransform(pos, p => 3 - p)
   const rels = [r0, r1, r2, r3]
-  const enter = async () => { if (!invite || await invite.commit({ required: false })) onDone() }
 
   return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined}>
     <header className={styles.top}>
       <div className={styles.topRight}>
         <span className={styles.count}><b>0{index + 1}</b> / 04</span>
         <LangSwitch label={(COPY[locale] ?? COPY.en!).lang} />
+        {index < CARDS.length - 1 && <button type="button" className={styles.skip} onClick={onDone}>{SKIP[locale] ?? SKIP.en}</button>}
       </div>
     </header>
 
@@ -360,10 +395,12 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
       </button>)}
     </nav>
 
-    {offer && <div className={styles.offer}><AppOffer kind={offer} locale={locale} invite={invite} /></div>}
-    <motion.div className={styles.enterWrap} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...CUT, delay: .35 }}>
-      <EnterBar invite={invite} locale={locale} label={all.enter} onEnter={() => void enter()} />
-    </motion.div>
+    <AnimatePresence>{index === CARDS.length - 1 && <motion.div key="go" className={styles.finish} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} transition={CUT}>
+      {offer && <div className={styles.offer}><AppOffer kind={offer} locale={locale} invite={invite} /></div>}
+      <motion.button type="button" className={styles.finishBtn} onClick={onDone} whileTap={{ scale: .97 }}>
+        <span>{all.enter}</span><i><ArrowRight size={18} strokeWidth={1.6} /></i>
+      </motion.button>
+    </motion.div>}</AnimatePresence>
     </div>
   </section>
 }
