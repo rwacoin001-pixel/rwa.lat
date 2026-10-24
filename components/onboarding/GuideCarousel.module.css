@@ -152,3 +152,70 @@
 .slabLine { margin: 4cqw 0 0; padding-top: 3cqw; border-top: 1px solid rgba(75, 74, 71, .3); font-size: 2.3cqw; line-height: 1.6; white-space: pre-line; opacity: .85; }
 .slabFoot { display: flex; align-items: center; gap: 2cqw; margin-top: 5cqw; font-size: 2.1cqw; font-weight: 600; letter-spacing: .14em; }
 .slabFoot i { width: 4cqw; height: 4cqw; border-radius: 50%; box-shadow: inset 0 0 0 1.2px rgba(75, 74, 71, .55); background: radial-gradient(circle, rgba(75, 74, 71, .6) 28%, transparent 32%); }
+
+/* Round 18: full screen. Pages fill the screen; the bars float over them. */
+.guide { padding: 0; }
+.top { position: absolute; z-index: 10; top: calc(10px + env(safe-area-inset-top)); right: 16px; left: auto; height: auto; padding: 0; }
+.topRight { gap: 8px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--glass);
+  box-shadow: inset 1px 1px 0 var(--rim), inset -1px -1px 0 var(--rim-lo); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+.langBtn { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 8px; }
+.viewport { position: absolute; inset: 0; margin: 0; overflow: hidden; }
+.page { position: absolute; inset: 0; will-change: transform, opacity; }
+.page .card { width: 100%; max-width: none; height: 100%; border-radius: 0; box-shadow: none; }
+.page .cardHead { top: calc(22px + env(safe-area-inset-top)); }
+.page .heroWrap { top: 12%; left: 8%; right: 8%; }
+.page .cardFoot { bottom: calc(150px + env(safe-area-inset-bottom)); }
+.bottom { position: absolute; z-index: 10; left: 0; right: 0; bottom: 0; padding: 40px 16px calc(12px + env(safe-area-inset-bottom));
+  background: linear-gradient(to top, color-mix(in srgb, var(--page) 70%, transparent), transparent); pointer-events: none; }
+.bottom > * { pointer-events: auto; }
+.dots { padding: 0 0 12px; }
+.enterWrap, .offer { padding: 0; }
+.offer { padding-bottom: 8px; }
+.guide[data-scene] .dots i { background: rgba(255, 255, 255, .5); }
+
+/* Scene page: the photograph keeps 2:3 and fills the height, centred; overlays are in % of it. */
+.sceneCard { background: #e9e6e1; }
+.doorStage { position: absolute; top: 0; bottom: 0; left: 50%; height: 100%; aspect-ratio: 2 / 3; translate: -50% 0; }
+.doorPhoto, .doorPerson { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none; pointer-events: none; }
+.doorPerson { z-index: 4; }
+.doorFrame { position: absolute; z-index: 2; perspective: 1600px; perspective-origin: 30% 50%; }
+.spill { position: absolute; inset: -6% -10% -30%; pointer-events: none; background: radial-gradient(60% 50% at 50% 70%, rgba(255, 250, 238, .55), transparent 70%); mix-blend-mode: screen; }
+.door { position: absolute; inset: 0; transform-origin: 0 50%; transform-style: preserve-3d; border-radius: 7.4% / 3.9%; overflow: hidden; container-type: inline-size;
+  background: #f7f8fa; box-shadow: inset 0 0 0 .6px rgba(0, 0, 0, .25), 22px 0 40px -18px rgba(0, 0, 0, .35); backface-visibility: hidden; }
+.doorShade { position: absolute; inset: 0; background: linear-gradient(90deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .55)); pointer-events: none; }
+
+/* The app on the door (sizes in container units of the door width, about a real phone's width). */
+.app { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 0 6cqw; color: #0b1220;
+  font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; background: linear-gradient(180deg, #ffffff, #f3f5f8); }
+.status { position: relative; display: flex; align-items: center; justify-content: space-between; height: 11cqw; padding-top: 1cqw; font-size: 3.8cqw; }
+.status b { font-weight: 600; }
+.island { position: absolute; left: 50%; top: 2.6cqw; width: 26cqw; height: 7cqw; margin-left: -13cqw; border-radius: 99px; background: #050608; }
+.sig { display: flex; align-items: flex-end; gap: .7cqw; height: 3cqw; }
+.sig i { width: .9cqw; border-radius: .3cqw; background: #0b1220; }
+.sig i:nth-child(1) { height: 30%; } .sig i:nth-child(2) { height: 55%; } .sig i:nth-child(3) { height: 80%; } .sig i:nth-child(4) { height: 100%; }
+.appHead { display: flex; align-items: center; gap: 2.4cqw; margin-top: 3cqw; }
+.appHead svg:first-child { width: 7.4cqw; height: auto; }
+.appHead b { font-size: 3.6cqw; font-weight: 600; letter-spacing: .2em; }
+.bell { width: 5cqw; height: 5cqw; margin-inline-start: auto; color: #5b6472; }
+.appHi { margin: 6cqw 0 0; font-size: 7.4cqw; font-weight: 600; letter-spacing: -.01em; }
+.appChips { display: flex; gap: 2cqw; margin-top: 4cqw; }
+.appChips span { padding: 1.6cqw 3.4cqw; border-radius: 99px; font-size: 3cqw; color: #5b6472; background: #eceff3; }
+.appChips span[data-on] { color: #ffffff; background: #009f85; }
+.appCard { margin-top: 4.5cqw; overflow: hidden; border-radius: 5cqw; background: #ffffff; box-shadow: 0 3cqw 8cqw -4cqw rgba(15, 23, 42, .25); }
+.appCard img { display: block; width: 100%; height: 30cqw; object-fit: cover; object-position: 50% 50%; }
+.appCard div { display: grid; gap: .8cqw; padding: 3.4cqw 4cqw 4cqw; }
+.appCard small { color: #009f85; font-size: 2.8cqw; font-weight: 600; letter-spacing: .14em; }
+.appCard b { font-size: 4.4cqw; font-weight: 600; }
+.appCard span { color: #5b6472; font-size: 3cqw; }
+.appRows { display: grid; gap: 2.4cqw; margin: 4.5cqw 0 0; padding: 0; list-style: none; }
+.appRows li { display: flex; align-items: center; gap: 3cqw; padding-bottom: 2.4cqw; border-bottom: 1px solid rgba(11, 18, 32, .07); }
+.appRows i { display: grid; place-items: center; width: 6cqw; height: 6cqw; border-radius: 50%; color: #ffffff; background: #19c7aa; }
+.appRows i svg { width: 3.4cqw; height: 3.4cqw; }
+.appRows span { display: grid; gap: .4cqw; }
+.appRows b { font-size: 3.4cqw; font-weight: 600; }
+.appRows small { color: #5b6472; font-size: 2.7cqw; }
+.appTabs { display: flex; justify-content: space-around; margin: auto -6cqw 0; padding: 3cqw 0 6cqw; border-top: 1px solid rgba(11, 18, 32, .07); background: rgba(255, 255, 255, .9); }
+.appTabs span { display: grid; justify-items: center; gap: .8cqw; color: #8f97a5; }
+.appTabs svg { width: 5.4cqw; height: 5.4cqw; }
+.appTabs small { font-size: 2.4cqw; }
+.appTabs span[data-on] { color: #009f85; }
