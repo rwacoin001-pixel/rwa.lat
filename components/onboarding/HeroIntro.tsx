@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
-import { ArrowRight, Bot, Building2, Layers3, Sigma, Trees, Warehouse } from 'lucide-react'
+import { ArrowRight, Bot, Building2, Layers3, Sigma } from 'lucide-react'
 import { AppOffer, useAppOffer } from './AppOffer'
 import type { InviteCodeState } from '../screens/InviteCodeField'
 import type { AppLocale } from '@/lib/i18n'
@@ -10,19 +10,21 @@ import styles from './HeroIntro.module.css'
 
 /**
  * Guide page 1 (palette A), after Radium's state cards: one frosted card that cycles through the four products.
- * Each state swaps a photoreal cut-out hero (Antigravity render, rembg matte), recolours and reshapes the soft
- * colour field, rolls the headline, and sends three small objects orbiting the hero — in front of it on the near
- * side, behind it (and out of focus) on the far side. Swipe or tap a chip to change state; it also advances by itself.
+ * Each state swaps a CGI hero whose colour field is rendered into the image (one teal→blue family, equal OKLCH
+ * lightness), and rolls the headline. The small glass tile stays the same in every state.
+ * Swipe or tap a chip to change state; it also advances by itself.
  */
 export const ART = '/media/palette-a/onboard-v7'
+/** Page 1 heroes: white ceramic + cool dichroic glass, field slab baked in, on the card's cool white (#F2F6F9). */
+const PLATES = '/media/palette-a/onboard-v8'
 const ICONS = [Building2, Layers3, Sigma, Bot]
-// One studio for every hero (the same renders as the Hengxu product covers), one solid brand green for every field.
+// Pages 2–3 still use the studio cut-outs on one solid brand-green field.
 export const FIELD = '#19c7aa'
 const STATES = [
-  { hero: 'hero-reit', sats: ['sat-alu', 'sat-glass'], shape: '58% 42% 46% 54% / 52% 48% 52% 48%' },
-  { hero: 'hero-basket', sats: ['sat-alu', 'sat-glass'], shape: '44% 56% 62% 38% / 48% 60% 40% 52%' },
-  { hero: 'hero-quant', sats: ['sat-alu', 'sat-glass'], shape: '62% 38% 40% 60% / 56% 44% 56% 44%' },
-  { hero: 'hero-ai', sats: ['sat-alu', 'sat-glass'], shape: '50% 50% 58% 42% / 40% 58% 42% 60%' },
+  { hero: 'hero-reit' },
+  { hero: 'hero-basket' },
+  { hero: 'hero-quant' },
+  { hero: 'hero-ai' },
 ]
 const AUTO_MS = 4200
 export const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
@@ -57,32 +59,15 @@ export function Roll({ value, className }: { value: string; className?: string }
   </span>
 }
 
-const WIDGET_COPY: Partial<Record<AppLocale, { kinds: [string, string, string]; mix: string; rules: string; ask: string }>> = {
-  'zh-CN': { kinds: ['写字楼', '物流仓', '产业园'], mix: '多资产 · 一次配置', rules: '规则驱动 · 过程透明', ask: '这只产品的费用是多少？' },
-  en: { kinds: ['Offices', 'Logistics', 'Parks'], mix: 'Many assets · one setup', rules: 'Rule-driven · in the open', ask: 'What are this product’s fees?' },
+const TILE_COPY: Partial<Record<AppLocale, { title: string; line: string }>> = {
+  'zh-CN': { title: '看清每一份', line: '来源 · 费用 · 风险' },
+  en: { title: 'See every detail', line: 'Source · Fees · Risk' },
 }
 
-/** A small glass tile on the colour field: one illustrative UI fragment per state (no amounts, no returns). */
-function StateWidget({ index, locale }: { index: number; locale: AppLocale }) {
-  const c = WIDGET_COPY[locale] ?? WIDGET_COPY.en!
-  const body = [
-    <div key="k" className={styles.wKinds}>{[Building2, Warehouse, Trees].map((Icon, i) => <span key={i}><i><Icon size={15} strokeWidth={1.9} /></i>{c.kinds[i]}</span>)}</div>,
-    <div key="m" className={styles.wMix}>
-      <svg viewBox="0 0 36 36" aria-hidden="true">{[[0, 34, '#0b1220'], [34, 26, '#19c7aa'], [60, 22, '#8f97a5'], [82, 18, '#cfd4db']].map(([start, len, color], i) =>
-        <motion.circle key={i} cx="18" cy="18" r="14" fill="none" stroke={color as string} strokeWidth="5" pathLength="100" transform="rotate(-90 18 18)"
-          strokeDashoffset={-Number(start)} initial={{ strokeDasharray: '0 100' }} animate={{ strokeDasharray: `${Number(len) - 2} ${102 - Number(len)}` }} transition={{ duration: .9, delay: .15 + i * .08, ease: EASE }} />)}</svg>
-      <b>{c.mix}</b>
-    </div>,
-    <div key="r" className={styles.wRules}>
-      <svg viewBox="0 0 120 34" aria-hidden="true"><motion.path d="M2 26 C 14 24, 18 12, 30 16 S 48 28, 58 18 S 78 4, 90 10 S 108 20, 118 6" fill="none" stroke="#087a67" strokeWidth="2.4" strokeLinecap="round"
-        initial={{ pathLength: 0 }} animate={{ pathLength: 1 }} transition={{ duration: 1.2, ease: EASE }} /></svg>
-      <b>{c.rules}</b>
-    </div>,
-    <div key="a" className={styles.wAsk}><b>{c.ask}</b><span aria-hidden="true"><i /><i /><i /></span></div>,
-  ][index]
-  return <AnimatePresence mode="popLayout" initial={false}>
-    <motion.div key={index} className={styles.widget} initial={{ opacity: 0, y: 14, scale: .94 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -10, scale: .96 }} transition={{ ...SPRING, delay: .12 }}>{body}</motion.div>
-  </AnimatePresence>
+/** The small glass tile on the hero: the same in every state (only the hero behind it changes). */
+function FixedTile({ locale }: { locale: AppLocale }) {
+  const c = TILE_COPY[locale] ?? TILE_COPY.en!
+  return <div className={styles.widget}><div className={styles.tile}><i aria-hidden="true" /><span><b>{c.title}</b><small>{c.line}</small></span></div></div>
 }
 
 export default function HeroIntro({ locale, invite, pager, onNext }: { locale: AppLocale; invite?: InviteCodeState; pager?: React.ReactNode; onNext: () => void }) {
@@ -113,7 +98,6 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
   const lx = useMotionValue(0), ly = useMotionValue(0)
   const sx = useSpring(lx, { stiffness: 80, damping: 18 }), sy = useSpring(ly, { stiffness: 80, damping: 18 })
   const heroX = useTransform(sx, v => v * -14), heroY = useTransform(sy, v => v * -10), heroR = useTransform(sx, v => v * -3)
-  const fieldX = useTransform(sx, v => v * 6), fieldY = useTransform(sy, v => v * 4)
   const cardRX = useTransform(sy, v => v * 2.2), cardRY = useTransform(sx, v => v * -2.6)
   useEffect(() => {
     const pointer = (event: PointerEvent) => { lx.set((event.clientX / innerWidth) * 2 - 1); ly.set((event.clientY / innerHeight) * 2 - 1) }
@@ -150,11 +134,6 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
-      <motion.div className={styles.field} aria-hidden="true" style={{ x: fieldX, y: fieldY, background: FIELD }}
-        animate={{ borderRadius: state.shape }} transition={{ duration: 1, ease: EASE }}>
-        <span /><span />
-      </motion.div>
-
       <div className={styles.meta}>
         {pager}
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
@@ -163,7 +142,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
         <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
       </motion.h1>
       {/* Hero + orbit: inside the card, standing on the colour field. */}
-      <motion.div className={styles.stage} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
+      <motion.div className={`${styles.stage} ${styles.plateStage}`} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
           <motion.div key={state.hero} className={styles.heroWrap} custom={dir}
             variants={{
@@ -172,14 +151,12 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
               exit: (d: number) => ({ opacity: 0, x: d * -110, y: -40, scale: 1.08, rotate: d * -10, filter: 'blur(12px)' }),
             }}
             initial="enter" animate="center" exit="exit" transition={{ ...SPRING, filter: { duration: .45 }, opacity: { duration: .35 } }}>
-            <i className={styles.shadow} />
-            <motion.img className={styles.hero} src={`${ART}/${state.hero}.webp`} alt="" draggable={false}
-              whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
-            {state.sats.map((src, i) => <Satellite key={src} src={src} phase={i * (Math.PI * 2 / 3) + index} radius={100 + i * 14} speed={.38 + i * .08} />)}
+            <motion.img className={`${styles.hero} ${styles.plate}`} src={`${PLATES}/${state.hero}.webp`} alt="" draggable={false}
+              whileTap={{ scaleX: 1.05, scaleY: .94 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
-      <StateWidget index={index} locale={locale} />
+      <FixedTile locale={locale} />
       <span className={styles.grain} aria-hidden="true" />
 
       <div className={styles.product}>

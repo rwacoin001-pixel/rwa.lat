@@ -106,6 +106,18 @@
 :global(html[data-theme='dark']) .hero { filter: drop-shadow(0 26px 26px rgba(0, 0, 0, .6)); }
 .shadow { position: absolute; z-index: 0; left: 24%; right: 24%; bottom: 3%; height: 8%; border-radius: 50%; background: radial-gradient(closest-side, rgba(10, 30, 40, .4), transparent); filter: blur(5px); animation: shade 6.4s ease-in-out infinite; }
 .sat { position: absolute; left: 50%; top: 52%; width: 40px; height: 40px; margin: -20px 0 0 -20px; object-fit: contain; pointer-events: none; will-change: transform, filter; filter: drop-shadow(0 8px 8px rgba(15, 23, 42, .18)); }
+/* Page 1: CGI plates with the colour field rendered in. Their cool-white ground (#F2F6F9) melts into the card
+   (multiply + feathered mask), so no cut-out edge shows. */
+.plateStage { --plate: min(86vw, 340px); top: 124px; left: calc(50% - var(--plate) / 2); right: auto; width: var(--plate); }
+.plate { filter: none; mix-blend-mode: multiply;
+  -webkit-mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); mask-image: radial-gradient(closest-side, #000 72%, transparent 100%); }
+/* Dark: the light plate becomes a lit showcase window inside the dark glass. */
+:global(html[data-theme='dark']) .plate { mix-blend-mode: normal; inset: 8%; width: 84%; height: 84%; border-radius: 30px; filter: none;
+  -webkit-mask-image: none; mask-image: none; box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 30px 60px -30px rgba(0, 0, 0, .8); }
+.tile { display: flex; align-items: center; gap: 10px; }
+.tile > i { width: 10px; height: 10px; border-radius: 50%; background: #19c7aa; box-shadow: 0 0 0 4px rgba(25, 199, 170, .16); }
+.tile span { display: grid; gap: 1px; }
+.tile small { color: var(--muted); font-size: 11px; }
 @keyframes float { 0%, 100% { translate: 0 0; rotate: 0deg; } 30% { translate: 0 -9px; rotate: -1.2deg; } 60% { translate: 0 -14px; rotate: .8deg; } }
 @keyframes shade { 0%, 100% { scale: 1; opacity: 1; } 60% { scale: .84; opacity: .72; } }
 
