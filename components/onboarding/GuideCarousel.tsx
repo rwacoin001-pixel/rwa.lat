@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { ArrowRight, Bell, Bot, Check, Gift, House, Languages, LayoutGrid, LoaderCircle, UserRound } from 'lucide-react'
+import { ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
 import { localeOptions, useI18n, type AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
@@ -25,7 +25,7 @@ import styles from './GuideCarousel.module.css'
  */
 const ART = '/media/palette-a/guide'
 const CARDS = [
-  { hero: 'object-reit', from: '#3fd3b8', to: '#00806b', value: 3, scene: 'door' },
+  { hero: 'object-reit', from: '#3fd3b8', to: '#00806b', value: 3, scene: 'paper' },
   { hero: 'object-basket', from: '#22d0d6', to: '#00808a', value: 1 },
   { hero: 'object-koala', from: '#56c6f0', to: '#0077b0', value: 100 },
   { hero: 'object-ai', from: '#2ccce4', to: '#007c99', value: 24 },
@@ -39,55 +39,80 @@ const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
 ]
 const AUTO_MS = 4800
 
-// The phone's screen opening in door-scene.webp, in % of the 1024x1536 photograph, and the camera cutout on it.
-const SCREEN = { left: 22.85, top: 8.27, width: 54.3, height: 69.86 }
-const DOOR_COPY: Partial<Record<AppLocale, { hi: string; kind: string; place: string; tags: string; rows: [string, string][]; tabs: [string, string, string, string]; chips: string[] }>> = {
-  'zh-CN': { hi: '看见资产背后', kind: '地产信托', place: '写字楼 · 城市核心区', tags: '按份额参与', rows: [['来源', '物业和收入从哪里来'], ['费用', '申购费、管理费写清楚'], ['风险', '可能亏损的情况提前说明']],
-    tabs: ['首页', '市场', 'AI', '我的'], chips: ['地产信托', '资产组合', '考拉量化'] },
-  en: { hi: 'See behind the asset', kind: 'REIT', place: 'Offices · city core', tags: 'By the share', rows: [['Source', 'Where property and income come from'], ['Fees', 'Subscription and management, spelled out'], ['Risk', 'How you could lose money, up front']],
-    tabs: ['Home', 'Market', 'AI', 'Me'], chips: ['REITs', 'Baskets', 'Quant'] },
+// The phone's front face in paper-scene.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
+const FACE = {"tl": [21.29, 2.6], "tr": [76.76, 8.07], "br": [76.76, 84.38], "bl": [21.29, 88.93]}
+const FACE_W = 600, FACE_H = 1260
+
+/** CSS matrix3d that maps a FACE_W x FACE_H box onto the quad (px), so flat UI lies on the tilted face in true perspective. */
+function quadMatrix(q: number[][]) {
+  const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q
+  const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3
+  const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3
+  const den = dx1 * dy2 - dx2 * dy1
+  const g = den ? (dx3 * dy2 - dx2 * dy3) / den : 0
+  const h = den ? (dx1 * dy3 - dx3 * dy1) / den : 0
+  const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, d = y1 - y0 + g * y1, e = y3 - y0 + h * y3
+  const W = FACE_W, H = FACE_H
+  return `matrix3d(${a / W},${d / W},0,${g / W},${b / H},${e / H},0,${h / H},0,0,1,0,${x0},${y0},0,1)`
 }
 
-/** The door is our real app screen (sharp, translatable). It opens on its left hinge to show the space behind. */
-function DoorApp({ locale }: { locale: AppLocale }) {
-  const c = DOOR_COPY[locale] ?? DOOR_COPY.en!
-  const tabs = [House, LayoutGrid, Bot, UserRound]
-  return <div className={styles.app}>
-    <div className={styles.status}><b>9:41</b><i className={styles.island} /><span className={styles.sig}><i /><i /><i /><i /></span></div>
-    <header className={styles.appHead}>
-      <RwaLogoMark width={30} height={17} label="" />
-      <b>A-REIT</b>
-      <Bell size={16} strokeWidth={1.6} className={styles.bell} />
-    </header>
-    <h3 className={styles.appHi}>{c.hi}</h3>
-    <div className={styles.appChips}>{c.chips.map((x, k) => <span key={x} data-on={k === 0 || undefined}>{x}</span>)}</div>
-    <article className={styles.appCard}>
-      <img src={`${ART}/door-atrium.webp`} alt="" draggable={false} />
-      <div><small>{c.kind}</small><b>{c.place}</b><span>{c.tags}</span></div>
-    </article>
-    <ul className={styles.appRows}>{c.rows.map(([k, v]) => <li key={k}><i><Check size={12} strokeWidth={2} /></i><span><b>{k}</b><small>{v}</small></span></li>)}</ul>
-    <nav className={styles.appTabs}>{tabs.map((Icon, k) => <span key={k} data-on={k === 0 || undefined}><Icon size={17} strokeWidth={1.6} /><small>{c.tabs[k]}</small></span>)}</nav>
+const HOME_COPY: Partial<Record<AppLocale, { slogan: [string, string]; sub: string; mine: string; actions: [string, string, string, string]; home: string; cash: string; held: string }>> = {
+  'zh-CN': { slogan: ['好资产，', '一目了然。'], sub: '地产信托、资产组合、量化策略，一个账户看清', mine: '我的资产', actions: ['充值', '提现', '转账', '收款'], home: '首页', cash: '可用资金', held: '持仓' },
+  en: { slogan: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant, one clear account', mine: 'My assets', actions: ['Deposit', 'Withdraw', 'Transfer', 'Receive'], home: 'Home', cash: 'Available', held: 'Holdings' },
+}
+
+/** A line drawing of the home page's pavilion (stands in for the photo, in the printed style). */
+function Pavilion() {
+  return <svg className={styles.pHero} viewBox="0 0 240 110" aria-hidden="true">
+    <path d="M0 78 H240" /><path d="M8 72 C40 60 70 64 98 70" />
+    <path d="M70 40 L236 26 L236 32 L72 46 Z" /><path d="M96 44 V78 M128 41 V78 M160 38 V78 M196 35 V78 M232 32 V78" />
+    <path d="M90 78 H240" /><path d="M150 60 h30 v18 M110 66 h22" />
+    <path d="M100 86 H230 M120 92 H220 M140 98 H210" opacity=".55" />
+  </svg>
+}
+
+/** Our real home page, redrawn as if printed on the paper phone: grey ink, hairlines, outline icons; only the logo in colour. */
+function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean }) {
+  const c = HOME_COPY[locale] ?? HOME_COPY.en!
+  const acts = [ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, QrCode]
+  const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .1 : 0, ease: EASE } })
+  return <div className={styles.print}>
+    <motion.div className={styles.pTop} {...show(0)}>
+      <RwaLogoMark width={44} height={25} label="" /><b>A-REIT</b>
+      <span><Gift size={22} strokeWidth={1.4} /><Moon size={22} strokeWidth={1.4} /><i className={styles.pAvatar} /></span>
+    </motion.div>
+    <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><span>{c.slogan[1]}</span></motion.h3>
+    <motion.p className={styles.pSub} {...show(2)}>{c.sub}</motion.p>
+    <motion.div {...show(3)}><Pavilion /></motion.div>
+    <motion.div className={styles.pTicker} {...show(4)}><span>REIT</span><i /><span>DXY</span><i /><span>GOLD</span><i /></motion.div>
+    <motion.div className={styles.pCard} {...show(5)}>
+      <div className={styles.pCardHead}><span>{c.mine}</span><Eye size={20} strokeWidth={1.4} /></div>
+      <div className={styles.pAmountRow}><b className={styles.pAmount}>* * * *</b><small>USDT</small></div>
+      <div className={styles.pSubRow}><span>{c.cash} <b>* * *</b></span><span>{c.held} <b>*</b></span></div>
+      <div className={styles.pActs}>{acts.map((Icon, k) => <span key={k}><Icon size={22} strokeWidth={1.4} /><small>{c.actions[k]}</small></span>)}</div>
+    </motion.div>
+    <motion.nav className={styles.pTabs} {...show(6)}><span data-on=""><House size={20} strokeWidth={1.4} /><small>{c.home}</small></span><ChartColumn size={20} strokeWidth={1.4} /><ChartPie size={20} strokeWidth={1.4} /><i /></motion.nav>
   </div>
 }
 
 /**
- * Scene page (card 1): a giant phone in a bright gallery; its screen is a door (our app) that swings open onto a real
- * office atrium. Layers: photograph → door (code, 3D) → light spill → the person (cut out, on top).
+ * Scene page (card 1), after the reference: a giant paper phone in a soft grey studio; its front page peels open from
+ * inside and a woman steps through into a sunlit office atrium. Our home page is printed on the flat part of the face,
+ * mapped onto the face's four corners so it shares the slab's perspective.
  */
-function DoorScene({ active, locale }: { active: boolean; locale: AppLocale }) {
-  const reduced = useReducedMotion()
-  const open = active && !reduced
-  return <div className={styles.doorStage}>
-    <img className={styles.doorPhoto} src={`${ART}/door-scene.webp`} alt="" draggable={false} />
-    <div className={styles.doorFrame} style={{ left: `${SCREEN.left}%`, top: `${SCREEN.top}%`, width: `${SCREEN.width}%`, height: `${SCREEN.height}%` }}>
-      <motion.span className={styles.spill} initial={false} animate={{ opacity: open ? 1 : 0 }} transition={{ duration: 1.6, delay: open ? 1.1 : 0 }} />
-      <motion.div className={styles.door} initial={false} animate={{ rotateY: open ? 74 : 0 }}
-        transition={open ? { duration: 1.8, delay: 1, ease: [.45, 0, .2, 1] } : { duration: .5, ease: EASE }}>
-        <DoorApp locale={locale} />
-        <motion.i className={styles.doorShade} initial={false} animate={{ opacity: open ? .55 : 0 }} transition={{ duration: 1.8, delay: open ? 1 : 0 }} />
-      </motion.div>
-    </div>
-    <img className={styles.doorPerson} src={`${ART}/door-person.webp`} alt="" draggable={false} />
+function PaperScene({ active, locale }: { active: boolean; locale: AppLocale }) {
+  const stage = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState({ w: 0, h: 0 })
+  useLayoutEffect(() => {
+    const el = stage.current
+    if (!el) return
+    const m = () => setBox({ w: el.clientWidth, h: el.clientHeight })
+    m(); const ro = new ResizeObserver(m); ro.observe(el); return () => ro.disconnect()
+  }, [])
+  const q = [FACE.tl, FACE.tr, FACE.br, FACE.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
+  return <div className={styles.paperStage} ref={stage}>
+    <img className={styles.paperPhoto} src={`${ART}/paper-scene.webp`} alt="" draggable={false} />
+    {box.w > 0 && <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><PrintedHome locale={locale} active={active} /></div>}
   </div>
 }
 
@@ -168,7 +193,7 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
   const heroX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * -90 + t * -10)
   const heroY = useTransform(tiltY, t => t * -8)
   const topoX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * 40 + t * 6)
-  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}><DoorScene active={active} locale={locale} /></article>
+  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}><PaperScene active={active} locale={locale} /></article>
   return <article className={styles.card} style={{ '--from': card.from, '--to': card.to } as never} aria-hidden={!active}>
     <motion.img className={styles.topo} src={`${ART}/topo.svg`} alt="" style={{ x: topoX }} draggable={false} />
     <span className={styles.sheen} aria-hidden="true" />
@@ -202,7 +227,7 @@ function Page({ i, pos, view, children }: { i: number; pos: MotionValue<number>;
   const x = useTransform(pos, p => { const r = i - p; if (scene && r < 0) return 0; if (afterScene && r > 0 && r < 1) return 0; return r * view })
   const scale = useTransform(pos, p => { const r = i - p; if (scene && r < 0) return 1 + Math.min(1, -r) * 2.8; if (afterScene && r > 0 && r < 1) return 1 + r * .14; return 1 })
   const opacity = useTransform(pos, p => { const r = i - p; if (scene && r < 0) return Math.max(0, 1 - -r * 1.3); if (afterScene && r > 0 && r < 1) return 1 - r; return 1 })
-  return <motion.div className={styles.page} style={{ x, scale, opacity, zIndex: afterScene ? 2 : 1, transformOrigin: scene ? '50% 43%' : '50% 50%' }}>{children}</motion.div>
+  return <motion.div className={styles.page} style={{ x, scale, opacity, zIndex: afterScene ? 2 : 1, transformOrigin: scene ? '68% 42%' : '50% 50%' }}>{children}</motion.div>
 }
 
 function EnterBar({ invite, locale, label, onEnter }: { invite?: InviteCodeState; locale: AppLocale; label: string; onEnter: () => void }) {

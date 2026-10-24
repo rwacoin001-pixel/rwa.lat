@@ -219,3 +219,47 @@
 .appTabs svg { width: 5.4cqw; height: 5.4cqw; }
 .appTabs small { font-size: 2.4cqw; }
 .appTabs span[data-on] { color: #009f85; }
+
+/* Round 20: paper phone scene. The photograph keeps 2:3 and fits the width; the wall and floor tones fill above and
+   below it, so the whole composition (phone, opening, person) always shows. */
+.sceneCard { background: linear-gradient(180deg, var(--wall, #5d544c) 0%, var(--wall, #5d544c) 30%, var(--floor, #796d63) 70%, var(--floor, #796d63) 100%); }
+.paperStage { position: absolute; left: 0; right: 0; top: calc(44px + env(safe-area-inset-top)); aspect-ratio: 2 / 3; }
+.paperStage::before, .paperStage::after { content: ''; position: absolute; left: 0; right: 0; height: 12%; z-index: 1; pointer-events: none; }
+.paperPhoto { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none; pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 92%, transparent 100%); mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 92%, transparent 100%); }
+.face { position: absolute; z-index: 2; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
+/* Printed in grey ink on paper: slightly soft, pressed in (light lower edge), multiplied into the grain. */
+.print { position: absolute; left: 6%; top: 8%; width: 46%; bottom: 5%; display: flex; flex-direction: column; color: #4a4741; mix-blend-mode: multiply;
+  font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; text-shadow: 0 1px 0 rgba(255, 255, 255, .5); }
+.print svg { color: #4a4741; }
+.pTop { display: flex; align-items: center; gap: 12px; }
+.pTop b { font-size: 21px; font-weight: 600; letter-spacing: .24em; }
+.pTop > span { display: flex; align-items: center; gap: 16px; margin-inline-start: auto; }
+.pAvatar { width: 32px; height: 32px; border-radius: 50%; box-shadow: inset 0 0 0 1.4px #4a4741; }
+.pSlogan { display: grid; margin: 70px 0 0; font-size: 58px; font-weight: 700; line-height: 1.12; letter-spacing: -.01em; color: #3e3b36; }
+.pSub { margin: 22px 0 0; font-size: 19px; line-height: 1.5; opacity: .85; }
+.pHero { width: 100%; height: auto; margin-top: 28px; fill: none; stroke: #4a4741; stroke-width: 1.4; stroke-linecap: round; }
+.pTicker { display: flex; align-items: center; gap: 12px; margin-top: 14px; font-size: 15px; letter-spacing: .14em; opacity: .8; }
+.pTicker i { flex: 1; height: 14px; background: linear-gradient(transparent 50%, #4a4741 50%, #4a4741 calc(50% + 1px), transparent calc(50% + 1px)); opacity: .5; }
+.pCard { margin-top: 26px; padding: 22px 22px 18px; border-radius: 26px; box-shadow: inset 0 0 0 1.4px rgba(74, 71, 65, .7); }
+.pCardHead { display: flex; justify-content: space-between; align-items: center; font-size: 17px; }
+.pAmount { display: block; margin-top: 16px; font-size: 42px; font-weight: 500; letter-spacing: .1em; }
+.pActs { display: flex; justify-content: space-between; margin-top: 22px; padding-top: 18px; border-top: 1.4px solid rgba(74, 71, 65, .4); }
+.pActs span { display: grid; justify-items: center; gap: 8px; }
+.pActs small { font-size: 15px; }
+.pTabs { display: flex; align-items: center; justify-content: space-between; margin-top: auto; padding: 10px 12px 10px 10px; border-radius: 99px; box-shadow: inset 0 0 0 1.4px rgba(74, 71, 65, .6); }
+.pTabs span { display: flex; align-items: center; gap: 8px; padding: 8px 16px; border-radius: 99px; box-shadow: inset 0 0 0 1.4px #4a4741; font-size: 16px; }
+.pTabs > i { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 0 0 1.4px #4a4741; }
+/* Only the mark keeps its colour: lift it out of the multiply. */
+.pTop svg:first-child { mix-blend-mode: normal; filter: saturate(1.05); }
+.pAmountRow { display: flex; align-items: baseline; gap: 10px; margin-top: 14px; }
+.pAmountRow .pAmount { margin: 0; }
+.pAmountRow small { font-size: 16px; letter-spacing: .08em; }
+.pSubRow { display: flex; justify-content: space-between; margin-top: 8px; font-size: 15px; opacity: .85; }
+.pTop { gap: 8px; }
+.pTop b { font-size: 17px; letter-spacing: .14em; white-space: nowrap; }
+.pTop > span { gap: 10px; }
+.pTop > span svg { width: 18px; height: 18px; }
+.pAvatar { width: 26px; height: 26px; }
+.pSlogan { font-size: 46px; white-space: nowrap; margin-top: 56px; }
+.pSub { font-size: 17px; }
