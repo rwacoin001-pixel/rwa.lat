@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
+import { Wifi, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
 import { localeOptions, useI18n, type AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
@@ -39,9 +39,11 @@ const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
 ]
 const AUTO_MS = 4800
 
-// The phone's front face in paper-scene.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
-const FACE = {"tl": [21.29, 2.6], "tr": [76.76, 8.07], "br": [76.76, 84.38], "bl": [21.29, 88.93]}
-const FACE_W = 600, FACE_H = 1260
+// The phone's front face in paper-scene-2.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
+const FACE = {"tl": [18.46, 3.26], "tr": [76.76, 6.9], "br": [76.76, 78.84], "bl": [18.46, 88.93]}
+const FACE_W = 390, FACE_H = 820
+/** The flat part of the face (left of the tear), in % of the photograph: the printed page is clipped to it. */
+const FLAT = '18.4% 2.9%, 77.5% 5.5%, 76.2% 7.8%, 74.2% 11.7%, 70.3% 16.9%, 64.5% 22.8%, 58.6% 28%, 53.7% 33.9%, 51.8% 39.1%, 51.2% 45.6%, 51.2% 58.6%, 51.6% 71.6%, 52% 83.3%, 52.3% 87%, 18.4% 89.2%'
 
 /** CSS matrix3d that maps a FACE_W x FACE_H box onto the quad (px), so flat UI lies on the tilted face in true perspective. */
 function quadMatrix(q: number[][]) {
@@ -77,6 +79,7 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
   const acts = [ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, QrCode]
   const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .1 : 0, ease: EASE } })
   return <div className={styles.print}>
+    <div className={styles.pStatus}><b>9:41</b><i className={styles.pIsland} /><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
     <motion.div className={styles.pTop} {...show(0)}>
       <RwaLogoMark width={44} height={25} label="" /><b>A-REIT</b>
       <span><Gift size={22} strokeWidth={1.4} /><Moon size={22} strokeWidth={1.4} /><i className={styles.pAvatar} /></span>
@@ -111,8 +114,10 @@ function PaperScene({ active, locale }: { active: boolean; locale: AppLocale }) 
   }, [])
   const q = [FACE.tl, FACE.tr, FACE.br, FACE.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
   return <div className={styles.paperStage} ref={stage}>
-    <img className={styles.paperPhoto} src={`${ART}/paper-scene.webp`} alt="" draggable={false} />
-    {box.w > 0 && <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><PrintedHome locale={locale} active={active} /></div>}
+    <img className={styles.paperPhoto} src={`${ART}/paper-scene-2.webp`} alt="" draggable={false} />
+    {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${FLAT})` }}>
+      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><PrintedHome locale={locale} active={active} /></div>
+    </div>}
   </div>
 }
 

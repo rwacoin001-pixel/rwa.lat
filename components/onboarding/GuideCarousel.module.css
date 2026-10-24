@@ -263,3 +263,37 @@
 .pAvatar { width: 26px; height: 26px; }
 .pSlogan { font-size: 46px; white-space: nowrap; margin-top: 56px; }
 .pSub { font-size: 17px; }
+
+/* Round 21: the page is laid out at a real phone's scale (390 px wide) and fills the whole face, like a screen;
+   the part that falls on the tear is clipped away. */
+.faceClip { position: absolute; inset: 0; z-index: 2; pointer-events: none; }
+.print { left: 0; top: 0; width: 100%; bottom: 0; padding: 0 22px 18px; }
+.pStatus { position: relative; display: flex; align-items: center; justify-content: space-between; height: 46px; padding: 0 8px; font-size: 15px; }
+.pStatus b { font-weight: 600; letter-spacing: .01em; }
+.pStatus > span { display: flex; align-items: center; gap: 6px; }
+.pIsland { position: absolute; left: 50%; top: 11px; width: 104px; height: 28px; margin-left: -52px; border-radius: 99px; box-shadow: inset 0 0 0 1.4px #4a4741; }
+.pSig { display: flex; align-items: flex-end; gap: 2px; height: 11px; }
+.pSig i { width: 3px; border-radius: 1px; background: #4a4741; }
+.pSig i:nth-child(1) { height: 30%; } .pSig i:nth-child(2) { height: 55%; } .pSig i:nth-child(3) { height: 80%; } .pSig i:nth-child(4) { height: 100%; }
+.pBatt { position: relative; width: 24px; height: 12px; border-radius: 3.5px; box-shadow: inset 0 0 0 1.2px #4a4741; }
+.pBatt i { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 15px; border-radius: 1.5px; background: #4a4741; }
+.pTop { margin-top: 6px; gap: 10px; }
+.pTop b { font-size: 19px; font-weight: 700; letter-spacing: .02em; }
+.pTop > span { gap: 16px; }
+.pTop > span svg { width: 22px; height: 22px; }
+.pAvatar { width: 36px; height: 36px; }
+.pSlogan { margin-top: 64px; font-size: 46px; font-weight: 800; line-height: 1.16; }
+.pSub { margin-top: 14px; font-size: 15px; line-height: 1.5; }
+.pHero { margin-top: 30px; width: 112%; }
+.pTicker { margin-top: 6px; font-size: 13px; }
+.pCard { margin-top: 18px; padding: 18px 18px 14px; border-radius: 22px; }
+.pCardHead { font-size: 14px; }
+.pAmountRow { margin-top: 12px; }
+.pAmount { font-size: 38px; }
+.pSubRow { font-size: 13px; }
+.pActs { margin-top: 16px; padding-top: 14px; }
+.pActs small { font-size: 13px; }
+.pTabs { margin-top: 18px; }
+/* The photograph has its own speaker slot; the status bar sits level with it. */
+.pIsland { display: none; }
+.pStatus { height: 64px; padding: 26px 14px 0 20px; align-items: center; }
