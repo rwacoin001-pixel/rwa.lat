@@ -13,9 +13,9 @@ import styles from './HeroIntro.module.css'
 /**
  * First-run guide (palette A), one page after Radium's state cards: one frosted card that cycles through the four
  * products, an invitation-code line, and one way in (sign in / sign up).
- * Built in layers that move on their own, so the scene has depth: a real-space photo and a coloured glow behind the
- * glass card, two rendered logo-shaped slabs that turn and recolour one after the other, a transparent CGI hero (white ceramic + cool dichroic glass) with
- * its own contact shadow, and objects orbiting in front of and behind it.
+ * Built in layers: the home photograph and a coloured glow behind a thin glass card, one colour card behind the hero
+ * that eases its colour and shape per state, a transparent CGI hero (white ceramic + cool dichroic glass) with
+ * its own soft black contact shadow. Changes are a fast cut (about 0.3 s) followed by a long, still hold.
  * One teal-to-blue colour family (equal OKLCH lightness). The small glass tile stays the same in every state.
  * Swipe or tap a chip to change state; it also advances by itself.
  */
@@ -26,20 +26,14 @@ const ICONS = [Building2, Layers3, Sigma, Bot]
 // Pages 2–3 still use the studio cut-outs on one solid brand-green field.
 export const FIELD = '#19c7aa'
 const STATES = [
-  { hero: 'real-reit', color: '#2dc8ac', deep: '#009f85' },
-  { hero: 'real-basket', color: '#00c6ce', deep: '#009ca5' },
-  { hero: 'real-quant', color: '#3abdee', deep: '#0094c3' },
-  { hero: 'real-ai', color: '#07c3de', deep: '#0099b3' },
+  { hero: 'real-reit-cool', color: '#2dc8ac', deep: '#009f85' },
+  { hero: 'real-basket-cool', color: '#00c6ce', deep: '#009ca5' },
+  { hero: 'real-quant-cool', color: '#3abdee', deep: '#0094c3' },
+  { hero: 'real-ai-cool', color: '#07c3de', deep: '#0099b3' },
 ]
 /** Two rendered slabs per state: [left %, top %, width %, rotate deg]. */
-const SLABS: [number, number, number, number][][] = [
-  [[4, 4, 54, -4], [48, 22, 42, 6], [26, 52, 30, 2]],
-  [[40, 0, 54, 5], [2, 28, 44, -6], [60, 54, 28, 8]],
-  [[8, 10, 48, 4], [50, 2, 44, -5], [30, 56, 34, -2]],
-  [[24, 0, 52, -6], [0, 34, 40, 8], [62, 40, 30, -4]],
-]
-/** The slab is rendered once in teal; these hue turns take it to each state's colour. */
-const HUE = [0, 22, 48, 34]
+/** The colour card behind the hero, per state: [corner radius px, rotate deg, x %, y %]. It eases between these. */
+const BACKDROP: [number, number, number, number][] = [[46, -4, -3, 0], [60, 3, 3, -2], [38, -2, -2, 2], [72, 4, 2, 0]]
 const AUTO_MS = 4200
 export const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
 export const SOFT = { type: 'spring', stiffness: 140, damping: 20 } as const
@@ -64,13 +58,12 @@ export function Satellite({ src, phase, radius, speed, base = ART }: { src: stri
   return <img ref={ref} className={styles.sat} src={`${base}/${src}.webp`} alt="" aria-hidden="true" />
 }
 
-/** Two rendered slabs behind the hero (the logo's panel, with real thickness and a lit bevel): each turns,
-    moves and recolours a beat after the other. */
-function TileField({ index, x, y }: { index: number; x: MotionValue<number>; y: MotionValue<number> }) {
-  return <motion.div className={styles.tiles} style={{ x, y }} aria-hidden="true">
-    {SLABS[index].map(([left, top, width, rotate], i) => <motion.img key={i} className={styles.slab} src={`${LAYERS}/slab.webp`} alt="" draggable={false}
-      initial={false} animate={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, rotate, filter: `hue-rotate(${HUE[index]}deg)`, rotateY: [0, 70, 0] }}
-      transition={{ ...SPRING, delay: i * .08, filter: { duration: .5, delay: .1 + i * .08 }, rotateY: { duration: .6, delay: i * .08, ease: EASE } }} />)}
+/** One colour card behind the hero (Radium's colour field): its colour, corners and tilt ease to each state. */
+function Backdrop({ index, color, x, y }: { index: number; color: string; x: MotionValue<number>; y: MotionValue<number> }) {
+  const [radius, rotate, dx, dy] = BACKDROP[index]
+  return <motion.div className={styles.backdropWrap} style={{ x, y }} aria-hidden="true">
+    <motion.i className={styles.backdrop} initial={false} animate={{ backgroundColor: color, borderRadius: radius, rotate, x: `${dx}%`, y: `${dy}%` }}
+      transition={{ type: 'spring', stiffness: 170, damping: 24, backgroundColor: { duration: .35, ease: EASE } }} />
   </motion.div>
 }
 
@@ -121,14 +114,14 @@ function EnterBar({ invite, locale, label, onEnter }: { invite?: InviteCodeState
   return <div className={styles.enter}>
     <div className={styles.enterBar} data-state={error ? 'error' : ok ? 'ok' : undefined}>
       {invite && status !== 'loading' && <label className={styles.enterCode}>
-        <Gift size={16} strokeWidth={1.9} aria-hidden="true" />
+        <Gift size={15} strokeWidth={1.5} aria-hidden="true" />
         <input value={displayInviteCode(shown)} placeholder={c.code} aria-label={ic.placeholder} readOnly={status === 'locked'}
           onChange={event => invite.change(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={19} dir="ltr" enterKeyHint="go"
           onKeyDown={event => { if (event.key === 'Enter') onEnter() }} aria-invalid={error ? true : undefined} />
-        {status === 'checking' ? <LoaderCircle className={styles.spin} size={15} aria-hidden="true" /> : ok ? <Check className={styles.ok} size={15} strokeWidth={2.6} aria-hidden="true" /> : null}
+        {status === 'checking' ? <LoaderCircle className={styles.spin} size={15} aria-hidden="true" /> : ok ? <Check className={styles.ok} size={15} strokeWidth={1.8} aria-hidden="true" /> : null}
       </label>}
       <motion.button type="button" className={styles.enterBtn} onClick={onEnter} whileTap={{ scale: .96 }}>
-        <span>{label}</span><i><ArrowRight size={16} strokeWidth={2.2} /></i>
+        <span>{label}</span><i><ArrowRight size={16} strokeWidth={1.6} /></i>
       </motion.button>
     </div>
     <p className={styles.enterNote} data-tone={error ? 'error' : undefined} aria-live="polite">{error || c.note}</p>
@@ -143,7 +136,7 @@ function Dial({ index, reduced }: { index: number; reduced: boolean | null }) {
       <motion.circle key={index} cx="20" cy="20" r="17" className={styles.dialRun} pathLength={1} transform="rotate(-90 20 20)"
         initial={{ pathLength: reduced ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: reduced ? 0 : AUTO_MS / 1000, ease: 'linear' }} /></svg>
     <AnimatePresence mode="popLayout" initial={false}>
-      <motion.i key={index} initial={{ scale: .4, opacity: 0, rotate: -40 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} exit={{ scale: .4, opacity: 0, rotate: 40 }} transition={SPRING}><Icon size={17} strokeWidth={2} /></motion.i>
+      <motion.i key={index} initial={{ scale: .4, opacity: 0, rotate: -40 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} exit={{ scale: .4, opacity: 0, rotate: 40 }} transition={SPRING}><Icon size={16} strokeWidth={1.4} /></motion.i>
     </AnimatePresence>
   </div>
 }
@@ -201,7 +194,6 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
   const sx = useSpring(lx, { stiffness: 80, damping: 18 }), sy = useSpring(ly, { stiffness: 80, damping: 18 })
   const heroX = useTransform(sx, v => v * -14), heroY = useTransform(sy, v => v * -10), heroR = useTransform(sx, v => v * -3)
   const fieldX = useTransform(sx, v => v * 7), fieldY = useTransform(sy, v => v * 5)
-  const nearX = useTransform(sx, v => v * -30), nearY = useTransform(sy, v => v * -22)
   const cardRX = useTransform(sy, v => v * 2.2), cardRY = useTransform(sx, v => v * -2.6)
   useEffect(() => {
     const pointer = (event: PointerEvent) => { lx.set((event.clientX / innerWidth) * 2 - 1); ly.set((event.clientY / innerHeight) * 2 - 1) }
@@ -242,7 +234,7 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
-      <TileField index={index} x={fieldX} y={fieldY} />
+      <Backdrop index={index} color={state.color} x={fieldX} y={fieldY} />
       <div className={styles.meta}>
         <RwaLogoMark className={styles.metaLogo} width={34} height={19} label="A-REIT" accentColor={state.color} />
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
@@ -252,20 +244,17 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
           <motion.div key={state.hero} className={styles.heroWrap} custom={dir}
             variants={{
-              enter: (d: number) => ({ opacity: 0, x: d * 120, y: 30, scale: .7, rotate: d * 14, filter: 'blur(10px)' }),
-              center: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, filter: 'blur(0px)' },
-              exit: (d: number) => ({ opacity: 0, x: d * -110, y: -40, scale: 1.08, rotate: d * -10, filter: 'blur(12px)' }),
+              enter: (d: number) => ({ opacity: 0, x: d * 90, y: 12, scale: .92, filter: 'blur(8px)' }),
+              center: { opacity: 1, x: 0, y: 0, scale: 1, filter: 'blur(0px)' },
+              exit: (d: number) => ({ opacity: 0, x: d * -90, y: -6, scale: 1.02, filter: 'blur(8px)', transition: { duration: .24, ease: [.4, 0, 1, 1] } }),
             }}
-            initial="enter" animate="center" exit="exit" transition={{ ...SPRING, filter: { duration: .45 }, opacity: { duration: .35 } }}>
+            initial="enter" animate="center" exit="exit" transition={{ type: 'spring', stiffness: 320, damping: 30, filter: { duration: .3 }, opacity: { duration: .22 } }}>
             <i className={styles.shadow} />
             <motion.img className={styles.hero} src={`${LAYERS}/${state.hero}.webp`} alt="" draggable={false}
               whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
-            <Satellite base={LAYERS} src="sat-chrome" phase={index * 1.7} radius={128} speed={.42} />
-            <Satellite base={LAYERS} src="sat-cube" phase={index * 1.7 + Math.PI} radius={112} speed={.34} />
           </motion.div>
         </AnimatePresence>
       </motion.div>
-      <motion.img className={styles.near} src={`${LAYERS}/sat-cube.webp`} alt="" aria-hidden="true" style={{ x: nearX, y: nearY }} />
       <FixedTile locale={locale} index={index} />
       <Dial index={index} reduced={reduced} />
       <span className={styles.grain} aria-hidden="true" />
@@ -280,7 +269,7 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
       <div className={styles.chips} role="tablist" aria-label={copy.swipe}>
         {copy.chips.map((label, i) => { const Icon = ICONS[i]; const on = i === index; return <button key={label} type="button" role="tab" aria-selected={on} className={styles.chip} onClick={() => go(i)}>
           {on && <motion.i layoutId="chipPill" className={styles.chipPill} transition={SPRING} animate={{ backgroundColor: state.deep }} />}
-          <Icon size={14} strokeWidth={2} aria-hidden="true" /><span>{label}</span>
+          <Icon size={13} strokeWidth={1.5} aria-hidden="true" /><span>{label}</span>
         </button> })}
       </div>
       </div>
