@@ -207,3 +207,57 @@
   box-shadow: inset 0 0 0 1px var(--card-line); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); font-size: 14px; font-weight: 600; }
 .inviteDone i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #ffffff; background: #009f85; }
 .inviteDone b { margin-inline-start: auto; font-family: var(--font-geist-mono, ui-monospace), monospace; letter-spacing: .06em; }
+
+/* Round 9. */
+/* The home page's photograph behind everything, sharp: the scene is real, the glass floats over it. */
+.space { filter: none; transform: none; }
+/* The card itself is no longer one sheet of glass: the hero floats over the photograph; only the text panel and the
+   small tiles are glass (Mirror Mirror-style floating panels). */
+.intro .card { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 16px 0 0; }
+.intro .card::after, .intro .card .grain { display: none; }
+.intro .meta { left: 6px; right: 4px; top: 6px; }
+.panel { position: relative; z-index: 5; display: grid; gap: 12px; padding: 18px 16px 14px; border-radius: 30px; background: var(--glass);
+  box-shadow: inset 1.5px 1.5px 0 var(--rim-hi), inset -1px -1px 0 var(--rim-lo), inset 0 0 24px var(--body-glow), 0 30px 60px -36px rgba(15, 23, 42, .55);
+  -webkit-backdrop-filter: blur(30px) saturate(170%); backdrop-filter: blur(30px) saturate(170%); }
+.intro { --glass: rgba(255, 255, 255, .62); padding-inline: 14px; }
+:global(html[data-theme='dark']) .intro { --glass: rgba(16, 19, 25, .6); }
+.intro .tiles { left: 0; right: 0; top: 52px; }
+.intro .layerStage { top: 46px; }
+.intro .widget { left: 0; bottom: 214px; }
+.near { display: block; right: -18px; bottom: 300px; width: 96px; height: 96px; filter: blur(6px); }
+/* Glass dial: state icon + auto-advance ring. */
+.dial { position: absolute; z-index: 6; right: 4px; bottom: 228px; display: grid; place-items: center; width: 62px; height: 62px; border-radius: 50%; color: var(--ink); background: var(--glass);
+  box-shadow: inset 1.5px 1.5px 0 var(--rim-hi), inset -1px -1px 0 var(--rim-lo), 0 18px 30px -18px rgba(15, 23, 42, .5); -webkit-backdrop-filter: blur(20px) saturate(170%); backdrop-filter: blur(20px) saturate(170%); }
+.dial > svg { position: absolute; inset: 5px; width: calc(100% - 10px); height: calc(100% - 10px); }
+.dial circle { fill: none; stroke-width: 2.4; stroke-linecap: round; }
+.dialTrack { stroke: var(--chip-line); }
+.dialRun { stroke: var(--state); }
+.dial > i { display: grid; place-items: center; }
+/* Finer type. */
+.intro .productName { font-size: 11.5px; letter-spacing: .12em; }
+.intro .productTitle { font-size: clamp(26px, 7.6vw, 30px); letter-spacing: -.035em; }
+.intro .productLine { font-size: 13.5px; }
+.intro .chips { padding: 3px; }
+.intro .chip { min-height: 32px; font-size: 12.5px; }
+/* One bar: optional invitation code + Sign in / sign up. */
+.enterWrap { position: relative; z-index: 3; flex: none; width: 100%; min-width: 0; }
+.enter { display: grid; gap: 6px; }
+.enterBar { display: flex; align-items: center; gap: 6px; min-height: 60px; padding: 6px; border-radius: 999px; background: var(--glass);
+  box-shadow: inset 1.5px 1.5px 0 var(--rim-hi), inset -1px -1px 0 var(--rim-lo), 0 18px 34px -22px rgba(15, 23, 42, .5); -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%); }
+.enterBar[data-state='error'] { box-shadow: inset 0 0 0 1.5px #d4574a, 0 18px 34px -22px rgba(15, 23, 42, .5); }
+.enterCode { display: flex; flex: 1 1 auto; align-items: center; gap: 8px; min-width: 0; padding-inline: 14px 4px; color: var(--muted); cursor: text; }
+.enterCode input { flex: 1 1 auto; width: 0; min-width: 0; padding: 0; border: 0; outline: 0; color: var(--ink); background: none; font: inherit; font-size: 14.5px; font-weight: 600; letter-spacing: .04em; }
+.enterCode input::placeholder { color: var(--muted); font-weight: 500; letter-spacing: 0; }
+.enterCode .ok { color: #009f85; }
+.spin { animation: spin 1s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.enterBtn { display: inline-flex; flex: none; align-items: center; gap: 10px; min-height: 48px; padding: 0 6px 0 18px; border: 0; border-radius: 999px; color: #ffffff; background: #0b1220;
+  font: inherit; font-size: 15px; font-weight: 700; white-space: nowrap; cursor: pointer; box-shadow: 0 10px 22px -12px rgba(11, 18, 32, .7); }
+.enterBtn i { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: #ffffff; background: var(--cta); transition: background-color .5s ease; }
+:global(html[data-theme='dark']) .enterBtn { color: #0b1220; background: #f2f4f7; box-shadow: 0 10px 22px -12px rgba(0, 0, 0, .8); }
+.enterNote { margin: 0; padding-inline: 18px; color: var(--muted); font-size: 11.5px; line-height: 1.4; }
+.enterNote[data-tone='error'] { color: #d4574a; }
+:global(html[data-theme='dark']) .enterNote[data-tone='error'] { color: #ff9a90; }
+.enterNote { text-shadow: 0 1px 6px var(--note-halo, rgba(255, 255, 255, .8)); }
+:global(html[data-theme='dark']) .enterNote { --note-halo: rgba(0, 0, 0, .7); }
+.enterNote:not([data-tone='error']) { color: color-mix(in srgb, var(--ink) 74%, transparent); font-weight: 500; }

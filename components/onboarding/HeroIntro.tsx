@@ -1,9 +1,10 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { ArrowRight, Bot, Building2, Check, Gift, Layers3, Sigma } from 'lucide-react'
+import { ArrowRight, Bot, Building2, Check, Gift, Layers3, LoaderCircle, Sigma } from 'lucide-react'
 import { AppOffer, useAppOffer } from './AppOffer'
-import { InviteCodeField, type InviteCodeState } from '../screens/InviteCodeField'
+import { inviteCopy, type InviteCodeState } from '../screens/InviteCodeField'
+import { displayInviteCode } from '@/lib/referral-invite'
 import type { AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import RwaLogoMark from '../rwa-logo'
@@ -32,10 +33,10 @@ const STATES = [
 ]
 /** Two rendered slabs per state: [left %, top %, width %, rotate deg]. */
 const SLABS: [number, number, number, number][][] = [
-  [[4, 4, 58, -4], [46, 26, 46, 6]],
-  [[40, 0, 56, 5], [2, 30, 46, -6]],
-  [[8, 10, 50, 4], [48, 2, 48, -5]],
-  [[24, 0, 54, -6], [0, 34, 44, 8]],
+  [[4, 4, 54, -4], [48, 22, 42, 6], [26, 52, 30, 2]],
+  [[40, 0, 54, 5], [2, 28, 44, -6], [60, 54, 28, 8]],
+  [[8, 10, 48, 4], [50, 2, 44, -5], [30, 56, 34, -2]],
+  [[24, 0, 52, -6], [0, 34, 40, 8], [62, 40, 30, -4]],
 ]
 /** The slab is rendered once in teal; these hue turns take it to each state's colour. */
 const HUE = [0, 22, 48, 34]
@@ -98,24 +99,52 @@ const TILE_COPY: Partial<Record<AppLocale, { value: number; unit: string; label:
   ],
 }
 
-const INVITE_COPY: Partial<Record<AppLocale, { ask: string; note: string; done: string }>> = {
-  'zh-CN': { ask: '有邀请码？', note: '奖励以平台规则为准', done: '邀请码已填写' },
-  en: { ask: 'Have an invitation code?', note: 'Rewards follow the platform rules', done: 'Invitation code added' },
+const ENTER_COPY: Partial<Record<AppLocale, { code: string; note: string }>> = {
+  'zh-CN': { code: '邀请码（选填）', note: '有邀请码就填上，奖励以平台规则为准' },
+  en: { code: 'Invitation code (optional)', note: 'Have a code? Add it. Rewards follow the platform rules' },
 }
 
-/** Invitation code, kept small: filled in and locked when the link carried one; otherwise one quiet line that opens
-    the field. The code is the one signup uses (shared invite state). */
-function InviteEntry({ invite, locale }: { invite?: InviteCodeState; locale: AppLocale }) {
-  const [open, setOpen] = useState(false)
-  if (!invite || invite.status === 'loading') return null
-  const c = INVITE_COPY[locale] ?? INVITE_COPY.en!
-  if (invite.fromLink && invite.locked) return <div className={styles.inviteDone}><i><Check size={13} strokeWidth={3} /></i><span>{c.done}</span><b>{invite.locked.attribution.code}</b></div>
-  if (!open && !invite.value) return <button type="button" className={styles.inviteAsk} onClick={() => setOpen(true)}>
-    <Gift size={15} strokeWidth={1.9} aria-hidden="true" /><span>{c.ask}</span><small>{c.note}</small>
-  </button>
-  return <motion.div className={styles.inviteBox} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}>
-    <InviteCodeField invite={invite} locale={locale} />
-  </motion.div>
+/**
+ * One bar, one way in: an optional invitation-code field and the Sign in / sign up button side by side.
+ * Existing accounts just press the button (no code needed). A code typed here is checked and locked before moving on,
+ * and signup then shows it read-only. A code carried by a referral link arrives filled in and locked.
+ */
+function EnterBar({ invite, locale, label, onEnter }: { invite?: InviteCodeState; locale: AppLocale; label: string; onEnter: () => void }) {
+  const c = ENTER_COPY[locale] ?? ENTER_COPY.en!
+  const ic = inviteCopy[locale]
+  const status = invite?.status
+  const locked = status === 'locked' ? invite?.locked : null
+  const shown = locked ? locked.attribution.code : invite?.value ?? ''
+  const ok = status === 'valid' || status === 'locked'
+  const error = invite?.message === 'unavailable' ? ic.unavailable : invite?.message === 'invalid' || status === 'invalid' ? ic.invalid : ''
+  return <div className={styles.enter}>
+    <div className={styles.enterBar} data-state={error ? 'error' : ok ? 'ok' : undefined}>
+      {invite && status !== 'loading' && <label className={styles.enterCode}>
+        <Gift size={16} strokeWidth={1.9} aria-hidden="true" />
+        <input value={displayInviteCode(shown)} placeholder={c.code} aria-label={ic.placeholder} readOnly={status === 'locked'}
+          onChange={event => invite.change(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={19} dir="ltr" enterKeyHint="go"
+          onKeyDown={event => { if (event.key === 'Enter') onEnter() }} aria-invalid={error ? true : undefined} />
+        {status === 'checking' ? <LoaderCircle className={styles.spin} size={15} aria-hidden="true" /> : ok ? <Check className={styles.ok} size={15} strokeWidth={2.6} aria-hidden="true" /> : null}
+      </label>}
+      <motion.button type="button" className={styles.enterBtn} onClick={onEnter} whileTap={{ scale: .96 }}>
+        <span>{label}</span><i><ArrowRight size={16} strokeWidth={2.2} /></i>
+      </motion.button>
+    </div>
+    <p className={styles.enterNote} data-tone={error ? 'error' : undefined} aria-live="polite">{error || c.note}</p>
+  </div>
+}
+
+/** A small glass dial: the state's icon, ringed by the auto-advance progress. */
+function Dial({ index, reduced }: { index: number; reduced: boolean | null }) {
+  const Icon = ICONS[index]
+  return <div className={styles.dial} aria-hidden="true">
+    <svg viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" className={styles.dialTrack} />
+      <motion.circle key={index} cx="20" cy="20" r="17" className={styles.dialRun} pathLength={1} transform="rotate(-90 20 20)"
+        initial={{ pathLength: reduced ? 1 : 0 }} animate={{ pathLength: 1 }} transition={{ duration: reduced ? 0 : AUTO_MS / 1000, ease: 'linear' }} /></svg>
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.i key={index} initial={{ scale: .4, opacity: 0, rotate: -40 }} animate={{ scale: 1, opacity: 1, rotate: 0 }} exit={{ scale: .4, opacity: 0, rotate: 40 }} transition={SPRING}><Icon size={17} strokeWidth={2} /></motion.i>
+    </AnimatePresence>
+  </div>
 }
 
 /** A number that counts to its new value instead of jumping. */
@@ -171,6 +200,7 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
   const sx = useSpring(lx, { stiffness: 80, damping: 18 }), sy = useSpring(ly, { stiffness: 80, damping: 18 })
   const heroX = useTransform(sx, v => v * -14), heroY = useTransform(sy, v => v * -10), heroR = useTransform(sx, v => v * -3)
   const fieldX = useTransform(sx, v => v * 7), fieldY = useTransform(sy, v => v * 5)
+  const nearX = useTransform(sx, v => v * -30), nearY = useTransform(sy, v => v * -22)
   const cardRX = useTransform(sy, v => v * 2.2), cardRY = useTransform(sx, v => v * -2.6)
   useEffect(() => {
     const pointer = (event: PointerEvent) => { lx.set((event.clientX / innerWidth) * 2 - 1); ly.set((event.clientY / innerHeight) * 2 - 1) }
@@ -205,8 +235,8 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
 
   return <section className={styles.intro} style={{ '--state': state.color } as React.CSSProperties}>
     {/* A real space behind the glass: the card's blur has something to soften, so it reads as glass. */}
-    <img className={`${styles.space} ${styles.spaceDay}`} src={`${LAYERS}/space-day.webp`} alt="" aria-hidden="true" />
-    <img className={`${styles.space} ${styles.spaceNight}`} src={`${LAYERS}/space-night.webp`} alt="" aria-hidden="true" />
+    <img className={`${styles.space} ${styles.spaceDay}`} src="/media/palette-a/hero-light.webp" alt="" aria-hidden="true" />
+    <img className={`${styles.space} ${styles.spaceNight}`} src="/media/palette-a/hero-dark.webp" alt="" aria-hidden="true" />
     <motion.div className={styles.glow} aria-hidden="true" animate={{ backgroundColor: state.color }} transition={{ duration: .8, ease: EASE }} />
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
@@ -234,9 +264,12 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
           </motion.div>
         </AnimatePresence>
       </motion.div>
+      <motion.img className={styles.near} src={`${LAYERS}/sat-cube.webp`} alt="" aria-hidden="true" style={{ x: nearX, y: nearY }} />
       <FixedTile locale={locale} index={index} />
+      <Dial index={index} reduced={reduced} />
       <span className={styles.grain} aria-hidden="true" />
 
+      <div className={styles.panel}>
       <div className={styles.product}>
         <Roll value={text.name} className={styles.productName} />
         <Roll value={text.title} className={styles.productTitle} />
@@ -249,7 +282,7 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
           <Icon size={14} strokeWidth={2} aria-hidden="true" /><span>{label}</span>
         </button> })}
       </div>
-      <div className={styles.timer} aria-hidden="true"><motion.i key={index} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: AUTO_MS / 1000, ease: 'linear' }} /></div>
+      </div>
     </motion.article>
 
 
@@ -257,13 +290,8 @@ export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocal
       <AppOffer kind={offer} locale={locale} invite={invite} />
     </motion.div>}
 
-    <motion.div className={styles.invite} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .45 }}>
-      <InviteEntry invite={invite} locale={locale} />
+    <motion.div className={styles.enterWrap} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .5 }} style={{ '--cta': state.deep } as React.CSSProperties}>
+      <EnterBar invite={invite} locale={locale} label={all.enter} onEnter={() => void enter()} />
     </motion.div>
-
-    <motion.button type="button" className={`${styles.cta} ${styles.stateCta}`} onClick={() => void enter()} whileTap={{ scale: .97 }} style={{ '--cta': state.deep } as React.CSSProperties}
-      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .5 }}>
-      <span>{all.enter}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
-    </motion.button>
   </section>
 }
