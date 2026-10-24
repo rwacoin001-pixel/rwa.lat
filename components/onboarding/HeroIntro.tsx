@@ -1,75 +1,172 @@
 'use client'
-import { useEffect, useRef, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
+import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
 import { ArrowRight, Bot, Building2, Layers3, Sigma } from 'lucide-react'
 import type { AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import styles from './HeroIntro.module.css'
 
 /**
- * Guide page 1, Radium-style sample: a frosted product card with one saturated brand-green field,
- * a rendered ceramic tower (Antigravity) breaking out of the card, blurred foreground objects for depth,
- * a big headline and small factual stats. The scene leans with the finger (and the phone's tilt where allowed);
- * the tower floats on a seamless loop.
+ * Guide page 1 (palette A), after Radium's state cards: one frosted card that cycles through the four products.
+ * Each state swaps a photoreal cut-out hero (Antigravity render, rembg matte), recolours and reshapes the soft
+ * colour field, rolls the headline, and sends three small objects orbiting the hero — in front of it on the near
+ * side, behind it (and out of focus) on the far side. Swipe or tap a chip to change state; it also advances by itself.
  */
-const ART = '/media/palette-a/onboard-v3'
+const ART = '/media/palette-a/onboard-v4'
 const ICONS = [Building2, Layers3, Sigma, Bot]
+const STATES = [
+  { hero: 'hero-tower', sats: ['sat-cloud', 'sat-leaf', 'sat-bead'], field: ['#0c8f79', '#19c7aa', '#b8eadb'], shape: '58% 42% 46% 54% / 52% 48% 52% 48%' },
+  { hero: 'hero-basket', sats: ['sat-goldbar', 'sat-leaf', 'sat-cloud'], field: ['#5f8f79', '#9cc4ad', '#e3efe5'], shape: '44% 56% 62% 38% / 48% 60% 40% 52%' },
+  { hero: 'hero-koala', sats: ['sat-leaf', 'sat-cloud', 'sat-bead'], field: ['#5d7697', '#9fb4cf', '#e1e8f2'], shape: '62% 38% 40% 60% / 56% 44% 56% 44%' },
+  { hero: 'hero-orb', sats: ['sat-bead', 'sat-leaf', 'sat-cloud'], field: ['#0f9e86', '#5fd9c3', '#d6f6ee'], shape: '50% 50% 58% 42% / 40% 58% 42% 60%' },
+]
+const AUTO_MS = 4200
+const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
+const SOFT = { type: 'spring', stiffness: 140, damping: 20 } as const
+const EASE = [.65, 0, .35, 1] as const
+
+/** One satellite on an elliptical orbit around the hero; near side in front and sharp, far side behind and blurred. */
+function Satellite({ src, phase, radius, speed }: { src: string; phase: number; radius: number; speed: number }) {
+  const ref = useRef<HTMLImageElement>(null)
+  const reduced = useReducedMotion()
+  useAnimationFrame(time => {
+    const el = ref.current
+    if (!el) return
+    const a = phase + (reduced ? 0 : time / 1000) * speed
+    const depth = Math.sin(a) // -1 far … +1 near
+    const x = Math.cos(a) * radius, y = Math.sin(a) * radius * .28 - depth * 10
+    const scale = .62 + (depth + 1) * .26
+    el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${scale.toFixed(3)}) rotate(${(a * 40).toFixed(1)}deg)`
+    el.style.filter = `blur(${Math.max(0, (-depth + .2) * 3.2).toFixed(2)}px)`
+    el.style.zIndex = depth > 0 ? '4' : '1'
+    el.style.opacity = String(.55 + (depth + 1) * .225)
+  })
+  return <img ref={ref} className={styles.sat} src={`${ART}/${src}.webp`} alt="" aria-hidden="true" />
+}
+
+/** Text that rolls up like a counter when its value changes. */
+function Roll({ value, className }: { value: string; className?: string }) {
+  return <span className={`${styles.roll} ${className ?? ''}`}>
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.span key={value} initial={{ y: '105%', opacity: 0 }} animate={{ y: '0%', opacity: 1 }} exit={{ y: '-105%', opacity: 0 }} transition={{ ...SPRING, opacity: { duration: .25 } }}>{value}</motion.span>
+    </AnimatePresence>
+  </span>
+}
 
 export default function HeroIntro({ locale, onNext }: { locale: AppLocale; onNext: () => void }) {
   const copy = paletteAOnboarding(locale).s0
-  const root = useRef<HTMLElement>(null)
+  const reduced = useReducedMotion()
+  const [index, setIndex] = useState(0)
+  const [dir, setDir] = useState(1)
+  const touched = useRef(0)
+  const state = STATES[index]
+  const text = copy.states[index]
 
-  // Lean: pointer anywhere on the page, or the phone's tilt (Android; iOS needs a permission prompt, so it uses touch).
+  const go = useCallback((next: number, by: 'user' | 'auto' = 'user') => {
+    const target = (next + STATES.length) % STATES.length
+    setDir(next > index || (index === STATES.length - 1 && target === 0 && by === 'auto') ? 1 : -1)
+    setIndex(target)
+    if (by === 'user') { touched.current = Date.now(); try { navigator.vibrate?.(6) } catch { /* optional */ } }
+  }, [index])
+
+  // Auto-advance like the reference loops; pauses for a while after the user takes over.
   useEffect(() => {
-    const el = root.current
-    if (!el || matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let tx = 0, ty = 0, x = 0, y = 0, frame = 0
-    const set = (nx: number, ny: number) => { tx = Math.max(-1, Math.min(1, nx)); ty = Math.max(-1, Math.min(1, ny)) }
-    const pointer = (event: PointerEvent) => {
-      const box = el.getBoundingClientRect()
-      set(((event.clientX - box.left) / box.width) * 2 - 1, ((event.clientY - box.top) / box.height) * 2 - 1)
-    }
-    const tilt = (event: DeviceOrientationEvent) => { if (event.gamma != null && event.beta != null) set(event.gamma / 25, (event.beta - 45) / 25) }
-    const loop = () => {
-      x += (tx - x) * .08; y += (ty - y) * .08
-      el.style.setProperty('--lx', x.toFixed(3)); el.style.setProperty('--ly', y.toFixed(3))
-      frame = requestAnimationFrame(loop)
-    }
+    if (reduced) return
+    const timer = setTimeout(() => { if (Date.now() - touched.current > 6000) go(index + 1, 'auto') }, AUTO_MS)
+    return () => clearTimeout(timer)
+  }, [index, go, reduced])
+
+  // Lean: the finger (or Android's tilt) moves every layer at its own depth, through springs.
+  const lx = useMotionValue(0), ly = useMotionValue(0)
+  const sx = useSpring(lx, { stiffness: 80, damping: 18 }), sy = useSpring(ly, { stiffness: 80, damping: 18 })
+  const heroX = useTransform(sx, v => v * -14), heroY = useTransform(sy, v => v * -10), heroR = useTransform(sx, v => v * -3)
+  const fieldX = useTransform(sx, v => v * 6), fieldY = useTransform(sy, v => v * 4)
+  const cardRX = useTransform(sy, v => v * 2.2), cardRY = useTransform(sx, v => v * -2.6)
+  useEffect(() => {
+    const pointer = (event: PointerEvent) => { lx.set((event.clientX / innerWidth) * 2 - 1); ly.set((event.clientY / innerHeight) * 2 - 1) }
+    const tilt = (event: DeviceOrientationEvent) => { if (event.gamma != null && event.beta != null) { lx.set(Math.max(-1, Math.min(1, event.gamma / 25))); ly.set(Math.max(-1, Math.min(1, (event.beta - 45) / 25))) } }
     window.addEventListener('pointermove', pointer, { passive: true })
     window.addEventListener('deviceorientation', tilt, { passive: true })
-    frame = requestAnimationFrame(loop)
-    return () => { cancelAnimationFrame(frame); window.removeEventListener('pointermove', pointer); window.removeEventListener('deviceorientation', tilt) }
-  }, [])
+    return () => { window.removeEventListener('pointermove', pointer); window.removeEventListener('deviceorientation', tilt) }
+  }, [lx, ly])
 
-  return <section ref={root} className={styles.intro}>
-    <div className={styles.halo} aria-hidden="true" />
-    <img className={`${styles.fx} ${styles.fxBack}`} src={`${ART}/fx-discs.webp`} alt="" aria-hidden="true" />
+  // Swipe: the card follows the finger with resistance, then snaps to the next / previous state.
+  const dragX = useMotionValue(0)
+  const cardX = useSpring(dragX, { stiffness: 400, damping: 34 })
+  const swipe = useRef<{ x: number; t: number; id: number } | null>(null)
+  const onDown = (event: ReactPointerEvent) => {
+    if ((event.target as HTMLElement).closest('button')) return
+    swipe.current = { x: event.clientX, t: performance.now(), id: event.pointerId }
+  }
+  const onMove = (event: ReactPointerEvent) => {
+    const s = swipe.current
+    if (s && s.id === event.pointerId) dragX.set((event.clientX - s.x) * .35)
+  }
+  const onUp = (event: ReactPointerEvent) => {
+    const s = swipe.current
+    swipe.current = null
+    dragX.set(0)
+    if (!s) return
+    const dx = (event.clientX - s.x) * (locale === 'ar' ? -1 : 1)
+    const speed = dx / Math.max(1, performance.now() - s.t) // px per ms
+    if (dx < -45 || speed < -.5) go(index + 1)
+    else if (dx > 45 || speed > .5) go(index - 1)
+  }
 
-    <article className={styles.card}>
-      <div className={styles.field} aria-hidden="true"><span /><span /></div>
-      <div className={styles.meta}><b>A-REIT</b><span>01 <i>/ 04</i></span></div>
+  const fieldBg = `linear-gradient(155deg, ${state.field[0]} 0%, ${state.field[1]} 55%, ${state.field[2]} 100%)`
 
-      <div className={styles.copy}>
+  return <section className={styles.intro} style={{ '--glow': state.field[1] } as CSSProperties}>
+    <motion.div className={styles.halo} aria-hidden="true" animate={{ backgroundColor: state.field[1] }} transition={{ duration: 1.1, ease: EASE }} />
+
+    <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
+      initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
+      <motion.div className={styles.field} aria-hidden="true" style={{ x: fieldX, y: fieldY }}
+        animate={{ background: fieldBg, borderRadius: state.shape }} transition={{ duration: 1, ease: EASE }}>
+        <span /><span />
+      </motion.div>
+
+      <div className={styles.meta}>
+        <b>A-REIT</b>
         <h1 className={styles.title}>{copy.title[0]}<em>{copy.title[1]}</em></h1>
-        <p className={styles.sub}>{copy.sub}</p>
+        <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
       </div>
 
-      <ul className={styles.chips}>
-        {copy.chips.map((label, index) => { const Icon = ICONS[index]; return <li key={label} style={{ '--i': index } as CSSProperties}><Icon size={14} strokeWidth={2} aria-hidden="true" />{label}</li> })}
-      </ul>
+      <div className={styles.product}>
+        <Roll value={text.name} className={styles.productName} />
+        <Roll value={text.title} className={styles.productTitle} />
+        <Roll value={text.line} className={styles.productLine} />
+      </div>
 
-      <dl className={styles.stats}>
-        {copy.stats.map(([value, label], index) => <div key={label} style={{ '--i': index } as CSSProperties}><dt>{value}</dt><dd>{label}</dd></div>)}
-      </dl>
-    </article>
+      <div className={styles.chips} role="tablist" aria-label={copy.swipe}>
+        {copy.chips.map((label, i) => { const Icon = ICONS[i]; const on = i === index; return <button key={label} type="button" role="tab" aria-selected={on} className={styles.chip} onClick={() => go(i)}>
+          {on && <motion.i layoutId="chipPill" className={styles.chipPill} transition={SPRING} />}
+          <Icon size={14} strokeWidth={2} aria-hidden="true" /><span>{label}</span>
+        </button> })}
+      </div>
+      <div className={styles.timer} aria-hidden="true"><motion.i key={index} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: AUTO_MS / 1000, ease: 'linear' }} /></div>
+    </motion.article>
 
-    {/* The hero breaks out of the card's top edge; its shadow sits on the card. */}
-    <div className={styles.hero} aria-hidden="true">
-      <i className={styles.heroShadow} />
-      <img src={`${ART}/hero-tower.webp`} alt="" />
-    </div>
-    <img className={`${styles.fx} ${styles.fxSphere}`} src={`${ART}/fx-sphere.webp`} alt="" aria-hidden="true" />
-    <img className={`${styles.fx} ${styles.fxCapsule}`} src={`${ART}/fx-capsule.webp`} alt="" aria-hidden="true" />
+    {/* Hero + orbit: above the card, breaking out of its top edge. */}
+    <motion.div className={styles.stage} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
+      <AnimatePresence mode="popLayout" initial={false} custom={dir}>
+        <motion.div key={state.hero} className={styles.heroWrap} custom={dir}
+          variants={{
+            enter: (d: number) => ({ opacity: 0, x: d * 120, y: 30, scale: .7, rotate: d * 14, filter: 'blur(10px)' }),
+            center: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, filter: 'blur(0px)' },
+            exit: (d: number) => ({ opacity: 0, x: d * -110, y: -40, scale: 1.08, rotate: d * -10, filter: 'blur(12px)' }),
+          }}
+          initial="enter" animate="center" exit="exit" transition={{ ...SPRING, filter: { duration: .45 }, opacity: { duration: .35 } }}>
+          <i className={styles.shadow} />
+          <motion.img className={styles.hero} src={`${ART}/${state.hero}.webp`} alt="" draggable={false}
+            whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
+          {state.sats.map((src, i) => <Satellite key={src} src={src} phase={i * (Math.PI * 2 / 3) + index} radius={118 + i * 14} speed={.42 + i * .07} />)}
+        </motion.div>
+      </AnimatePresence>
+    </motion.div>
 
-    <button type="button" className={styles.cta} onClick={onNext}><span>{copy.cta}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span></button>
+    <motion.button type="button" className={styles.cta} onClick={onNext} whileTap={{ scale: .97 }}
+      initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .5 }}>
+      <span>{copy.cta}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
+    </motion.button>
   </section>
 }
