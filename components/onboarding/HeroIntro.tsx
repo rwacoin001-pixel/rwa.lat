@@ -147,9 +147,6 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
   const fieldBg = `linear-gradient(155deg, ${state.field[0]} 0%, ${state.field[1]} 55%, ${state.field[2]} 100%)`
 
   return <section className={styles.intro} style={{ '--glow': state.field[1] } as CSSProperties}>
-    <motion.h1 className={styles.title} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>
-      <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
-    </motion.h1>
     <motion.div className={styles.halo} aria-hidden="true" animate={{ backgroundColor: state.field[1] }} transition={{ duration: 1.1, ease: EASE }} />
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
@@ -163,6 +160,26 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
         <b><i className={styles.live} />A-REIT</b>
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
       </div>
+      <motion.h1 className={styles.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>
+        <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
+      </motion.h1>
+      {/* Hero + orbit: inside the card, standing on the colour field. */}
+      <motion.div className={styles.stage} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
+        <AnimatePresence mode="popLayout" initial={false} custom={dir}>
+          <motion.div key={state.hero} className={styles.heroWrap} custom={dir}
+            variants={{
+              enter: (d: number) => ({ opacity: 0, x: d * 120, y: 30, scale: .7, rotate: d * 14, filter: 'blur(10px)' }),
+              center: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, filter: 'blur(0px)' },
+              exit: (d: number) => ({ opacity: 0, x: d * -110, y: -40, scale: 1.08, rotate: d * -10, filter: 'blur(12px)' }),
+            }}
+            initial="enter" animate="center" exit="exit" transition={{ ...SPRING, filter: { duration: .45 }, opacity: { duration: .35 } }}>
+            <i className={styles.shadow} />
+            <motion.img className={styles.hero} src={`${ART}/${state.hero}.webp`} alt="" draggable={false}
+              whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
+            {state.sats.map((src, i) => <Satellite key={src} src={src} phase={i * (Math.PI * 2 / 3) + index} radius={92 + i * 12} speed={.42 + i * .07} />)}
+          </motion.div>
+        </AnimatePresence>
+      </motion.div>
       <StateWidget index={index} locale={locale} />
       <span className={styles.grain} aria-hidden="true" />
 
@@ -181,23 +198,6 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
       <div className={styles.timer} aria-hidden="true"><motion.i key={index} initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: AUTO_MS / 1000, ease: 'linear' }} /></div>
     </motion.article>
 
-    {/* Hero + orbit: above the card, breaking out of its top edge. */}
-    <motion.div className={styles.stage} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
-      <AnimatePresence mode="popLayout" initial={false} custom={dir}>
-        <motion.div key={state.hero} className={styles.heroWrap} custom={dir}
-          variants={{
-            enter: (d: number) => ({ opacity: 0, x: d * 120, y: 30, scale: .7, rotate: d * 14, filter: 'blur(10px)' }),
-            center: { opacity: 1, x: 0, y: 0, scale: 1, rotate: 0, filter: 'blur(0px)' },
-            exit: (d: number) => ({ opacity: 0, x: d * -110, y: -40, scale: 1.08, rotate: d * -10, filter: 'blur(12px)' }),
-          }}
-          initial="enter" animate="center" exit="exit" transition={{ ...SPRING, filter: { duration: .45 }, opacity: { duration: .35 } }}>
-          <i className={styles.shadow} />
-          <motion.img className={styles.hero} src={`${ART}/${state.hero}.webp`} alt="" draggable={false}
-            whileTap={{ scaleX: 1.08, scaleY: .9 }} transition={{ type: 'spring', stiffness: 500, damping: 14 }} />
-          {state.sats.map((src, i) => <Satellite key={src} src={src} phase={i * (Math.PI * 2 / 3) + index} radius={118 + i * 14} speed={.42 + i * .07} />)}
-        </motion.div>
-      </AnimatePresence>
-    </motion.div>
 
     {offer && <motion.div className={styles.offer} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .4 }}>
       <AppOffer kind={offer} locale={locale} invite={invite} />
