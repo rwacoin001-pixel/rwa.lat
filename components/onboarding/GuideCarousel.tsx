@@ -208,7 +208,7 @@ type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
 type Floater = [string, number, number, number, number, number, number, number]
 const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: (p: { locale: AppLocale; active: boolean; step?: number }) => React.ReactElement; floaters?: Floater[]; script?: boolean }> = {
   paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
-  ai: { photo: 'ai-scene-bg', script: true, floaters: [['ai-bubble-big', 10.45, 8.46, 25.1, 15.5, -9, -2, 5.2], ['ai-bubble-small', 2.73, 17.51, 15.82, 9.31, 7, 2.5, 4.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '81.4% 4.4%, 80.6% 3.2%, 79% 3.1%, 35.8% 5.8%, 35.8% 38.4%, 30.4% 38.4%, 30.4% 80.4%, 32% 81.6%, 79% 88.3%, 80.7% 87.6%, 81.4% 86%', Print: PrintedAi },
+  ai: { photo: 'ai-scene-bg', person: 'ai-front', script: true, floaters: [['ai-bubble-big', 10.55, 8.53, 25, 15.82, -8, -1.5, 5.2], ['ai-bubble-small', 2.73, 18.1, 15.14, 8.27, 6, 2, 4.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '33.4% 6.3%, 79% 3%, 80.6% 3.2%, 81.4% 4.4%, 81.4% 86%, 80.7% 87.6%, 79% 88.3%, 32% 81.6%, 30.4% 80.4%, 30.4% 9.2%, 31.2% 7.9%, 32% 6.6%', Print: PrintedAi },
 }
 
 /**

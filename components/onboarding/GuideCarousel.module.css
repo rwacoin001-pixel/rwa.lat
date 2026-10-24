@@ -413,3 +413,10 @@
 .floater[data-k='0'] .floatText { rotate: -4deg; font-size: 14px; }
 .floater[data-k='1'] .floatText { rotate: 9deg; left: 14%; right: 16%; top: 20%; bottom: 42%; font-size: 11.5px; }
 .aThread { padding-left: 11%; }
+/* Round 28: the floating bubbles now lie over the page like real objects in front of the screen, so the page keeps the
+   real phone layout (time and back arrow at the left). Bubble words are tilted to lie along each bubble. */
+.aiPrint > .pStatus, .aiPrint > .aBar { margin-left: 0; }
+.aThread { padding-left: 0; }
+.floatText { left: 10%; right: 10%; top: 20%; bottom: 44%; font-size: 14px; }
+.floater[data-k='0'] .floatText { rotate: 19deg; }
+.floater[data-k='1'] .floatText { rotate: 22deg; left: 10%; right: 12%; top: 26%; bottom: 36%; font-size: 12px; }
