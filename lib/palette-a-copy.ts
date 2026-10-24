@@ -1,49 +1,39 @@
 import type { AppLocale } from './i18n'
 
 /**
- * Palette A preview copy: A-REIT repositioned on commercial and industrial REITs.
- * Brand line "让资产清晰起来 / Bring assets into focus" (approved 2026-10-18); no return promises anywhere.
+ * Palette A preview copy. Brand line "好资产，一目了然 / Good assets, at a glance." (chosen 2026-10-24); it covers
+ * the whole app (REITs, baskets, quant, AI), not one product. No return promises; referral rewards "per the rules".
  * Chinese and English are written; the other locales fall back to English until the copy is approved.
  */
 type Slogan = { lines: [string, string]; sub: string }
 type Onboarding = {
-  skip: string; next: string; create: string; signIn: string; step: string
-  s1: { kicker: string; title: string; body: string; kinds: [string, string, string] }
-  s2: { kicker: string; title: string; body: string; flow: [string, string, string, string]; shares: string; unit: string; ofBuilding: string; note: string }
-  s3: { kicker: string; title: string; rows: [string, string][] }
+  skip: string; step: string; start: string; signIn: string; create: string
+  s0: { title: [string, string]; sub: string; hint: string }
+  s1: { title: string; hint: string; items: [string, string][] }
+  s2: { title: string; hint: string; tags: [string, string, string] }
+  s3: { title: string; body: string; note: string; hint: string }
 }
 
 const slogan: Partial<Record<AppLocale, Slogan>> = {
-  'zh-CN': { lines: ['让资产', '清晰起来。'], sub: '商业与工业地产，按份额投资' },
-  en: { lines: ['Bring assets', 'into focus.'], sub: 'Commercial and industrial real estate, by the share' },
+  'zh-CN': { lines: ['好资产，', '一目了然。'], sub: '地产信托、资产组合、量化策略，一个账户看清' },
+  en: { lines: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant strategies, one clear account' },
 }
 
 const onboarding: Partial<Record<AppLocale, Onboarding>> = {
   'zh-CN': {
-    skip: '跳过', next: '下一步', create: '创建账户', signIn: '我已有账户', step: '第 {n} 步，共 3 步',
-    s1: { kicker: '投资什么', title: '投资看得见的空间', body: '写字楼、物流仓、产业园。按份额参与优质的商业与工业地产。', kinds: ['写字楼', '物流仓', '产业园'] },
-    s2: {
-      kicker: '收入从哪里来', title: '租金，按份额分给你', body: '租户按月支付租金，信托扣除费用后，按你持有的份额分派。拖动滑块看看。',
-      flow: ['租户', '物业', '信托', '你'], shares: '你持有', unit: '份', ofBuilding: '一栋物业分成 100 份', note: '仅为示意，不代表实际分派金额',
-    },
-    s3: {
-      kicker: '怎么保障', title: '每一步都清楚',
-      rows: [['信息披露', '定期公布物业、租户和费用，看得到钱从哪里来。'], ['实名认证', '投资前完成身份认证，保护你的账户。'], ['份额记录', '每一份持有都有记录，随时可查。']],
-    },
+    skip: '跳过', step: '第 {n} 步，共 4 步', start: '开始', signIn: '我已有账户', create: '创建账户',
+    s0: { title: ['好资产，', '一目了然。'], sub: '地产信托、资产组合、量化策略，一个账户看清', hint: '按住' },
+    s1: { title: '一个账户，多种资产', hint: '左右拖动，看看每一种', items: [['地产信托', '写字楼、物流仓、产业园'], ['资产组合', '一篮子资产，一次配置'], ['考拉量化', '规则驱动的量化策略'], ['AI 助手', '随时问，帮你看清']] },
+    s2: { title: '看清每一份', hint: '手指划过玻璃', tags: ['来源', '费用', '风险'] },
+    s3: { title: '邀请好友，一起得奖励', body: '好友用你的邀请码注册并投资后，你可以获得奖励。', note: '奖励以平台规则为准', hint: '拖一拖' },
   },
   en: {
-    skip: 'Skip', next: 'Next', create: 'Create account', signIn: 'I have an account', step: 'Step {n} of 3',
-    s1: { kicker: 'What you invest in', title: 'Invest in spaces you can see', body: 'Offices, logistics, business parks. Own a share of quality commercial and industrial real estate.', kinds: ['Offices', 'Logistics', 'Parks'] },
-    s2: {
-      kicker: 'Where income comes from', title: 'Rent, shared by the unit', body: 'Tenants pay rent; after fees, the trust distributes it by the units you hold. Drag to see how.',
-      flow: ['Tenants', 'Property', 'Trust', 'You'], shares: 'You hold', unit: 'units', ofBuilding: 'One property in 100 units', note: 'Illustration only, not an actual distribution',
-    },
-    s3: {
-      kicker: 'How you are protected', title: 'Every step, in the open',
-      rows: [['Disclosure', 'Properties, tenants and fees are published regularly.'], ['Verified identity', 'Verify before you invest to keep your account safe.'], ['Unit records', 'Every unit you hold is on record and easy to check.']],
-    },
+    skip: 'Skip', step: 'Step {n} of 4', start: 'Start', signIn: 'I have an account', create: 'Create account',
+    s0: { title: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant strategies, one clear account', hint: 'Press and hold' },
+    s1: { title: 'One account, many assets', hint: 'Drag to look around', items: [['REITs', 'Offices, logistics, business parks'], ['Baskets', 'A set of assets in one go'], ['Koala Quant', 'Rule-driven quant strategies'], ['AI assistant', 'Ask anything, see it clearly']] },
+    s2: { title: 'See every unit clearly', hint: 'Wipe the glass', tags: ['Source', 'Fees', 'Risk'] },
+    s3: { title: 'Invite friends, earn together', body: 'When friends sign up with your code and invest, you can earn rewards.', note: 'Rewards follow the platform rules', hint: 'Give it a pull' },
   },
 }
-
 export const paletteASlogan = (locale: AppLocale): Slogan => slogan[locale] ?? slogan.en!
 export const paletteAOnboarding = (locale: AppLocale): Onboarding => onboarding[locale] ?? onboarding.en!

@@ -67,7 +67,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   useEffect(() => {
     if (!paletteA) return
     let seen = false
-    try { seen = localStorage.getItem('rwa.onboarded') === '1' } catch { /* Show it again. */ }
+    try { seen = localStorage.getItem('rwa.onboarded.v2') === '1' } catch { /* Show it again. */ }
     if (!seen || new URLSearchParams(location.search).has('guide')) setGuide(true)
   }, [paletteA])
   const visual = authVisualCopy[locale]
@@ -485,8 +485,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <p className={styles.cardLede}>{paletteA ? paletteASlogan(locale).sub : authPosterIntro[locale]}</p>
   </>
 
-  if (guide) return <Onboarding locale={locale} onDone={intent => {
-    try { localStorage.setItem('rwa.onboarded', '1') } catch { /* Shown once per session then. */ }
+  if (guide) return <Onboarding locale={locale} invite={invite} onDone={intent => {
+    try { localStorage.setItem('rwa.onboarded.v2', '1') } catch { /* Shown once per session then. */ }
     setGuide(false)
     if (intent === 'create') requestAnimationFrame(() => input.current?.focus())
   }} />

@@ -656,3 +656,13 @@
 :global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .field { border-color: rgba(255, 255, 255, .12); background: #14171d; box-shadow: none; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet { --ink: #0b1220; --auth-muted: #5b6472; --auth-faint: #8f97a5; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { margin-top: auto; }
+
+/* Palette A v2: a small frosted-glass blob (Antigravity render) above the brand line, breathing slowly. */
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy::before {
+  content: ''; display: block; width: 84px; height: 84px; margin: 0 0 18px -6px;
+  background: url('/media/palette-a/onboard-v2/login-blob.webp') center / cover no-repeat; border-radius: 50%;
+  mix-blend-mode: multiply; animation: paletteBreathe 6s ease-in-out infinite;
+}
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .heroCopy::before { mix-blend-mode: screen; filter: invert(.92) hue-rotate(180deg); }
+@keyframes paletteBreathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.06, .95) rotate(4deg); } }
+@media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy::before { animation: none; } }
