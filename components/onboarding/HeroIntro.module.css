@@ -181,3 +181,29 @@
 /* The main button stays black (light) / white (dark); only its arrow disc takes the state colour. */
 .intro .cta.stateCta .ctaIcon { color: #ffffff; background: var(--cta); transition: background-color .5s ease; }
 :global(html[data-theme='dark']) .intro .cta.stateCta { color: #0b1220; background: #f2f4f7; box-shadow: 0 16px 30px -18px rgba(0, 0, 0, .8); }
+
+/* Round 8: one-page guide. */
+/* Real space behind the glass (day / night plate), lightly blurred again so it stays a backdrop. */
+.space { position: absolute; z-index: 0; inset: 0; width: 100%; height: 100%; object-fit: cover; filter: blur(3px) saturate(.9); transform: scale(1.04); pointer-events: none; }
+.spaceNight { display: none; }
+:global(html[data-theme='dark']) .spaceDay { display: none; }
+:global(html[data-theme='dark']) .spaceNight { display: block; }
+.intro .glow { z-index: 0; }
+/* Thinner glass so the space reads through it. */
+.intro { --card: rgba(255, 255, 255, .5); }
+:global(html[data-theme='dark']) .intro { --card: rgba(18, 21, 27, .55); }
+/* No headline any more: the scene moves up. */
+.tiles { top: 64px; height: min(330px, 44%); }
+.layerStage { top: 56px; --size: min(82vw, 330px); }
+.slab { position: absolute; height: auto; aspect-ratio: 1; object-fit: contain; pointer-events: none; -webkit-user-drag: none; }
+:global(html[data-theme='dark']) .slab { opacity: .92; }
+/* Invitation line under the card. */
+.invite { position: relative; z-index: 3; flex: none; min-height: 44px; }
+.inviteAsk { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; padding: 0 16px; border: 0; border-radius: 16px; color: var(--ink);
+  background: var(--card); box-shadow: inset 0 0 0 1px var(--card-line); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.inviteAsk svg { color: var(--accent); }
+.inviteAsk small { margin-inline-start: auto; color: var(--muted); font-size: 11.5px; font-weight: 500; }
+.inviteDone { display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 16px; color: var(--ink); background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--card-line); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); font-size: 14px; font-weight: 600; }
+.inviteDone i { display: grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: #ffffff; background: #009f85; }
+.inviteDone b { margin-inline-start: auto; font-family: var(--font-geist-mono, ui-monospace), monospace; letter-spacing: .06em; }

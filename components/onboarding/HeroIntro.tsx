@@ -1,25 +1,26 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { ArrowRight, Bot, Building2, Layers3, Sigma } from 'lucide-react'
+import { ArrowRight, Bot, Building2, Check, Gift, Layers3, Sigma } from 'lucide-react'
 import { AppOffer, useAppOffer } from './AppOffer'
-import type { InviteCodeState } from '../screens/InviteCodeField'
+import { InviteCodeField, type InviteCodeState } from '../screens/InviteCodeField'
 import type { AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import RwaLogoMark from '../rwa-logo'
 import styles from './HeroIntro.module.css'
 
 /**
- * Guide page 1 (palette A), after Radium's state cards: one frosted card that cycles through the four products.
- * Built in layers that move on their own, so the scene has depth: a coloured glow behind the glass card, a field of
- * logo-shaped tiles that flip colour one by one, a transparent CGI hero (white ceramic + cool dichroic glass) with
- * its own contact shadow, objects orbiting in front of and behind it, and one out-of-focus object in the foreground.
+ * First-run guide (palette A), one page after Radium's state cards: one frosted card that cycles through the four
+ * products, an invitation-code line, and one way in (sign in / sign up).
+ * Built in layers that move on their own, so the scene has depth: a real-space photo and a coloured glow behind the
+ * glass card, two rendered logo-shaped slabs that turn and recolour one after the other, a transparent CGI hero (white ceramic + cool dichroic glass) with
+ * its own contact shadow, and objects orbiting in front of and behind it.
  * One teal-to-blue colour family (equal OKLCH lightness). The small glass tile stays the same in every state.
  * Swipe or tap a chip to change state; it also advances by itself.
  */
 export const ART = '/media/palette-a/onboard-v7'
-/** Page 1 layers: transparent CGI heroes and orbit objects. */
-const LAYERS = '/media/palette-a/onboard-v9'
+/** Guide layers: a real-space photo behind the glass, rendered slabs, transparent CGI heroes and orbit objects. */
+const LAYERS = '/media/palette-a/onboard-v10'
 const ICONS = [Building2, Layers3, Sigma, Bot]
 // Pages 2–3 still use the studio cut-outs on one solid brand-green field.
 export const FIELD = '#19c7aa'
@@ -29,13 +30,15 @@ const STATES = [
   { hero: 'hero-quant', color: '#3abdee', deep: '#0094c3' },
   { hero: 'hero-ai', color: '#07c3de', deep: '#0099b3' },
 ]
-/** Field tiles per state: [left %, top %, width %, rotate deg]; each tile is the logo's panel. */
-const TILES: [number, number, number, number][][] = [
-  [[8, 6, 54, 0], [52, 22, 40, 0], [30, 52, 30, 0]],
-  [[40, 2, 52, -6], [6, 26, 44, 4], [58, 56, 30, 8]],
-  [[14, 10, 46, 6], [50, 4, 42, -4], [24, 54, 50, 0]],
-  [[26, 0, 50, -4], [4, 40, 36, 8], [56, 38, 38, -6]],
+/** Two rendered slabs per state: [left %, top %, width %, rotate deg]. */
+const SLABS: [number, number, number, number][][] = [
+  [[4, 4, 58, -4], [46, 26, 46, 6]],
+  [[40, 0, 56, 5], [2, 30, 46, -6]],
+  [[8, 10, 50, 4], [48, 2, 48, -5]],
+  [[24, 0, 54, -6], [0, 34, 44, 8]],
 ]
+/** The slab is rendered once in teal; these hue turns take it to each state's colour. */
+const HUE = [0, 22, 48, 34]
 const AUTO_MS = 4200
 export const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
 export const SOFT = { type: 'spring', stiffness: 140, damping: 20 } as const
@@ -60,12 +63,13 @@ export function Satellite({ src, phase, radius, speed, base = ART }: { src: stri
   return <img ref={ref} className={styles.sat} src={`${base}/${src}.webp`} alt="" aria-hidden="true" />
 }
 
-/** Logo-shaped tiles behind the hero: each flips and recolours a beat after the one before it. */
-function TileField({ index, color, x, y }: { index: number; color: string; x: MotionValue<number>; y: MotionValue<number> }) {
+/** Two rendered slabs behind the hero (the logo's panel, with real thickness and a lit bevel): each turns,
+    moves and recolours a beat after the other. */
+function TileField({ index, x, y }: { index: number; x: MotionValue<number>; y: MotionValue<number> }) {
   return <motion.div className={styles.tiles} style={{ x, y }} aria-hidden="true">
-    {TILES[index].map(([left, top, width, rotate], i) => <motion.i key={i} className={styles.tileField}
-      initial={false} animate={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, rotate, skewY: 18, backgroundColor: color, rotateY: [0, 90, 0] }}
-      transition={{ ...SPRING, delay: i * .07, backgroundColor: { duration: .2, delay: .18 + i * .07 }, rotateY: { duration: .55, delay: i * .07, ease: EASE } }} />)}
+    {SLABS[index].map(([left, top, width, rotate], i) => <motion.img key={i} className={styles.slab} src={`${LAYERS}/slab.webp`} alt="" draggable={false}
+      initial={false} animate={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, rotate, filter: `hue-rotate(${HUE[index]}deg)`, rotateY: [0, 70, 0] }}
+      transition={{ ...SPRING, delay: i * .08, filter: { duration: .5, delay: .1 + i * .08 }, rotateY: { duration: .6, delay: i * .08, ease: EASE } }} />)}
   </motion.div>
 }
 
@@ -94,6 +98,26 @@ const TILE_COPY: Partial<Record<AppLocale, { value: number; unit: string; label:
   ],
 }
 
+const INVITE_COPY: Partial<Record<AppLocale, { ask: string; note: string; done: string }>> = {
+  'zh-CN': { ask: '有邀请码？', note: '奖励以平台规则为准', done: '邀请码已填写' },
+  en: { ask: 'Have an invitation code?', note: 'Rewards follow the platform rules', done: 'Invitation code added' },
+}
+
+/** Invitation code, kept small: filled in and locked when the link carried one; otherwise one quiet line that opens
+    the field. The code is the one signup uses (shared invite state). */
+function InviteEntry({ invite, locale }: { invite?: InviteCodeState; locale: AppLocale }) {
+  const [open, setOpen] = useState(false)
+  if (!invite || invite.status === 'loading') return null
+  const c = INVITE_COPY[locale] ?? INVITE_COPY.en!
+  if (invite.fromLink && invite.locked) return <div className={styles.inviteDone}><i><Check size={13} strokeWidth={3} /></i><span>{c.done}</span><b>{invite.locked.attribution.code}</b></div>
+  if (!open && !invite.value) return <button type="button" className={styles.inviteAsk} onClick={() => setOpen(true)}>
+    <Gift size={15} strokeWidth={1.9} aria-hidden="true" /><span>{c.ask}</span><small>{c.note}</small>
+  </button>
+  return <motion.div className={styles.inviteBox} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={SOFT}>
+    <InviteCodeField invite={invite} locale={locale} />
+  </motion.div>
+}
+
 /** A number that counts to its new value instead of jumping. */
 function CountUp({ value }: { value: number }) {
   const ref = useRef<HTMLSpanElement>(null)
@@ -115,9 +139,12 @@ function FixedTile({ locale, index }: { locale: AppLocale; index: number }) {
   </div>
 }
 
-export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocale; invite?: InviteCodeState; pager?: React.ReactNode; onNext: () => void }) {
+export default function HeroIntro({ locale, invite, onDone }: { locale: AppLocale; invite?: InviteCodeState; onDone: () => void }) {
   const offer = useAppOffer()
-  const copy = paletteAOnboarding(locale).s0
+  const all = paletteAOnboarding(locale)
+  const copy = all.s0
+  // One way in: a code typed here is checked and locked now (signup then shows it read-only); empty is fine.
+  const enter = async () => { if (!invite || await invite.commit({ required: false })) onDone() }
   const reduced = useReducedMotion()
   const [index, setIndex] = useState(0)
   const [dir, setDir] = useState(1)
@@ -144,7 +171,6 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
   const sx = useSpring(lx, { stiffness: 80, damping: 18 }), sy = useSpring(ly, { stiffness: 80, damping: 18 })
   const heroX = useTransform(sx, v => v * -14), heroY = useTransform(sy, v => v * -10), heroR = useTransform(sx, v => v * -3)
   const fieldX = useTransform(sx, v => v * 7), fieldY = useTransform(sy, v => v * 5)
-  const nearX = useTransform(sx, v => v * -30), nearY = useTransform(sy, v => v * -22)
   const cardRX = useTransform(sy, v => v * 2.2), cardRY = useTransform(sx, v => v * -2.6)
   useEffect(() => {
     const pointer = (event: PointerEvent) => { lx.set((event.clientX / innerWidth) * 2 - 1); ly.set((event.clientY / innerHeight) * 2 - 1) }
@@ -178,18 +204,18 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
   }
 
   return <section className={styles.intro} style={{ '--state': state.color } as React.CSSProperties}>
+    {/* A real space behind the glass: the card's blur has something to soften, so it reads as glass. */}
+    <img className={`${styles.space} ${styles.spaceDay}`} src={`${LAYERS}/space-day.webp`} alt="" aria-hidden="true" />
+    <img className={`${styles.space} ${styles.spaceNight}`} src={`${LAYERS}/space-night.webp`} alt="" aria-hidden="true" />
     <motion.div className={styles.glow} aria-hidden="true" animate={{ backgroundColor: state.color }} transition={{ duration: .8, ease: EASE }} />
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
-      <TileField index={index} color={state.color} x={fieldX} y={fieldY} />
+      <TileField index={index} x={fieldX} y={fieldY} />
       <div className={styles.meta}>
         <RwaLogoMark className={styles.metaLogo} width={34} height={19} label="A-REIT" accentColor={state.color} />
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
       </div>
-      <motion.h1 className={styles.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>
-        <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
-      </motion.h1>
       {/* Hero + orbit: inside the card, standing on the colour field. */}
       <motion.div className={`${styles.stage} ${styles.layerStage}`} style={{ x: heroX, y: heroY, rotate: heroR }} aria-hidden="true">
         <AnimatePresence mode="popLayout" initial={false} custom={dir}>
@@ -208,7 +234,6 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
           </motion.div>
         </AnimatePresence>
       </motion.div>
-      <motion.img className={styles.near} src={`${LAYERS}/sat-cube.webp`} alt="" aria-hidden="true" style={{ x: nearX, y: nearY }} />
       <FixedTile locale={locale} index={index} />
       <span className={styles.grain} aria-hidden="true" />
 
@@ -232,9 +257,13 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
       <AppOffer kind={offer} locale={locale} invite={invite} />
     </motion.div>}
 
-    <motion.button type="button" className={`${styles.cta} ${styles.stateCta}`} onClick={onNext} whileTap={{ scale: .97 }} style={{ '--cta': state.deep } as React.CSSProperties}
+    <motion.div className={styles.invite} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .45 }}>
+      <InviteEntry invite={invite} locale={locale} />
+    </motion.div>
+
+    <motion.button type="button" className={`${styles.cta} ${styles.stateCta}`} onClick={() => void enter()} whileTap={{ scale: .97 }} style={{ '--cta': state.deep } as React.CSSProperties}
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .5 }}>
-      <span>{copy.cta}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
+      <span>{all.enter}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
     </motion.button>
   </section>
 }
