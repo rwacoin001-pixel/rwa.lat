@@ -82,6 +82,8 @@ const AI_COPY: Partial<Record<AppLocale, AiCopy>> = {
     summary: 'Noted: 1–3 years, steady income, little swing. I will list products you could look at first; for reference only.', input: 'Ask about fees, risk or allocation…', note: 'AI can make mistakes. Answers are for reference only and are not investment advice.', done: 'All set' },
 }
 /** Script times (ms after the page shows): hi, typing, reply, ask, Q1, pick 1, Q2, pick 2, Q3, pick 3, summary. */
+/** Fixed words printed on the three paper bubbles: the questions people bring to the assistant. */
+const BUBBLE_WORDS: Partial<Record<AppLocale, string[]>> = { 'zh-CN': ['费用多少？', '风险？', '怎么配置？'], en: ['Fees?', 'Risk?', 'How to allocate?'] }
 const AI_TIMES = [0, 400, 1000, 1500, 3600, 4300, 5500, 6400, 7500, 8400, 9500, 10500]
 
 /** Steps through the script while the page is current; starts over each time it becomes current. */
@@ -106,17 +108,6 @@ function Typed({ text, go }: { text: string; go: boolean }) {
     return () => clearInterval(t)
   }, [go, text])
   return <>{text.slice(0, n)}{go && n < text.length && <i className={styles.caret} />}</>
-}
-
-/** What the two paper bubbles in the air say at each step (the question in play, and the answer just picked). */
-function aiBubbleText(locale: AppLocale, step: number): [string, string] {
-  const c = AI_COPY[locale] ?? AI_COPY.en!
-  const q = step >= 9 ? 2 : step >= 7 ? 1 : 0
-  const big = step >= 11 ? c.done : step >= 5 ? c.qs[q][2] : step >= 4 ? c.ask : step >= 1 ? c.hi : ''
-  const pickedSteps = [6, 8, 10]
-  const lastPick = pickedSteps.filter(t => step >= t).length - 1
-  const small = lastPick >= 0 ? c.qs[lastPick][1][c.pick[lastPick]] : step >= 2 ? '…' : ''
-  return [big, small]
 }
 
 const Msg = ({ show, children, className }: { show: boolean; children: React.ReactNode; className: string }) =>
@@ -206,9 +197,9 @@ type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
     print is clipped to, an optional cut-out that sits above the print, and the page printed on it. */
 /** Paper objects cut out of a scene and floated in code: [file, left %, top %, width %, height %, drift y px, turn deg, seconds]. */
 type Floater = [string, number, number, number, number, number, number, number]
-const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: (p: { locale: AppLocale; active: boolean; step?: number }) => React.ReactElement; floaters?: Floater[]; script?: boolean }> = {
+const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: (p: { locale: AppLocale; active: boolean; step?: number }) => React.ReactElement; floaters?: Floater[]; script?: boolean; labels?: [number, number, number, number][] }> = {
   paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
-  ai: { photo: 'ai-scene-bg', person: 'ai-front', script: true, floaters: [['ai-bubble-big', 10.55, 8.53, 25, 15.82, -8, -1.5, 5.2], ['ai-bubble-small', 2.73, 18.1, 15.14, 8.27, 6, 2, 4.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '33.4% 6.3%, 79% 3%, 80.6% 3.2%, 81.4% 4.4%, 81.4% 86%, 80.7% 87.6%, 79% 88.3%, 32% 81.6%, 30.4% 80.4%, 30.4% 9.2%, 31.2% 7.9%, 32% 6.6%', Print: PrintedAi },
+  ai: { photo: 'ai-scene', person: 'ai-front', script: true, labels: [[23.15, 15.05, 27.1, 3.7], [10.08, 22.11, 26.6, 2.3], [24.25, 30.46, -19, 3.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '33.4% 6.3%, 79% 3%, 80.6% 3.2%, 81.4% 4.4%, 81.4% 86%, 80.7% 87.6%, 79% 88.3%, 32% 81.6%, 30.4% 80.4%, 30.4% 9.2%, 31.2% 7.9%, 32% 6.6%', Print: PrintedAi },
 }
 
 /**
@@ -229,18 +220,17 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
   const Print = sc.Print
   const reduced = useReducedMotion()
   const step = useScript(active && !!sc.script, AI_TIMES)
-  const words = sc.script ? aiBubbleText(locale, step) : null
   return <div className={styles.paperStage} ref={stage}>
     <img className={styles.paperPhoto} src={`${ART}/${sc.photo}.webp`} alt="" draggable={false} />
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
       <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
     </div>}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
+    {sc.labels?.map(([cx, cy, ang, size], k) => <span key={k} className={styles.bubbleInk} style={{ left: `${cx}%`, top: `${cy}%`, rotate: `${ang}deg`, fontSize: `${size}cqw` }}>{(BUBBLE_WORDS[locale] ?? BUBBLE_WORDS.en!)[k]}</span>)}
     {sc.floaters?.map(([src, left, top, width, height, dy, turn, sec], k) => <motion.div key={src} className={styles.floater} data-k={k}
       style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
       animate={reduced ? undefined : { y: [0, dy, 0], rotate: [0, turn, 0] }} transition={{ duration: sec, ease: 'easeInOut', repeat: Infinity }}>
       <img src={`${ART}/${src}.webp`} alt="" draggable={false} />
-      {words && <AnimatePresence mode="wait"><motion.span key={words[k]} className={styles.floatText} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: .3 }}>{words[k]}</motion.span></AnimatePresence>}
     </motion.div>)}
   </div>
 }

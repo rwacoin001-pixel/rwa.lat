@@ -420,3 +420,7 @@
 .floatText { left: 10%; right: 10%; top: 20%; bottom: 44%; font-size: 14px; }
 .floater[data-k='0'] .floatText { rotate: 19deg; }
 .floater[data-k='1'] .floatText { rotate: 22deg; left: 10%; right: 12%; top: 26%; bottom: 36%; font-size: 12px; }
+/* Round 29: the bubbles stay as photographed (whole, still); fixed words are inked onto them like the print. */
+.paperStage { container-type: inline-size; }
+.bubbleInk { position: absolute; z-index: 4; translate: -50% -50%; white-space: nowrap; color: #2b3038; font-weight: 600; letter-spacing: .02em;
+  mix-blend-mode: multiply; opacity: .9; filter: blur(.2px); text-shadow: 0 .5px 0 rgba(255, 255, 255, .55); pointer-events: none; }
