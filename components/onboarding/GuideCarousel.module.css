@@ -347,3 +347,31 @@
 .finishBtn i { display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; color: #ffffff; background: #0a8a73; }
 :global(html[data-theme='dark']) .finishBtn { color: #0b1220; background: #f2f4f7; }
 .aAsk { margin-inline-end: 14%; max-width: 74%; }
+
+/* Round 25: the printed AI page follows the app's real AI screen. */
+.aBar { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.aTabs { display: flex; padding: 3px; border-radius: 99px; font-size: 13px; box-shadow: inset 0 0 0 1.2px rgba(27, 33, 42, .45); }
+.aTabs b, .aTabs > span { padding: 6px 12px; border-radius: 99px; }
+.aTabs b { font-weight: 600; box-shadow: inset 0 0 0 1.2px #1b212a; }
+.aTabs > span { opacity: .7; }
+.aMe { align-self: flex-end; max-width: 74%; margin: 22px 14% 0 0; padding: 10px 16px; border-radius: 18px; font-size: 15px; box-shadow: inset 0 0 0 1.3px rgba(27, 33, 42, .55); }
+.aBot { margin-top: 18px; }
+.aName { display: flex; align-items: center; gap: 8px; }
+.aName b { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 12px; font-weight: 500; letter-spacing: .14em; }
+.aBot p { margin: 8px 0 0; font-size: 14px; line-height: 1.6; }
+.aQ { margin-top: 18px; padding: 16px 16px 12px; border-radius: 22px; box-shadow: inset 0 0 0 1.3px rgba(27, 33, 42, .5); }
+.aQHead { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+.aQHead span { font-size: 15px; font-weight: 700; }
+.aQHead small { font-size: 12px; opacity: .7; }
+.aOpt { display: flex; align-items: center; gap: 12px; margin-top: 12px; font-size: 14.5px; }
+.aOpt i { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; font-style: normal; font-size: 12px; box-shadow: inset 0 0 0 1.2px rgba(27, 33, 42, .45); }
+.aOwn { display: flex; align-items: center; gap: 10px; margin-top: 14px; font-size: 13px; opacity: .6; }
+.aQFoot { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; font-size: 13px; }
+.aQFoot span, .aQFoot b { padding: 7px 14px; border-radius: 99px; box-shadow: inset 0 0 0 1.2px rgba(27, 33, 42, .45); }
+.aQFoot b { font-weight: 600; color: #ffffff; background: #1b212a; text-shadow: none; }
+.aInput { margin-top: 16px; margin-bottom: 0; }
+.aNote { margin: 8px 0 0; font-size: 10.5px; line-height: 1.4; text-align: center; opacity: .65; }
+/* Card 4 is mirrored (phone turned the other way); the paper bubbles cover the face's upper-left corner,
+   so the top of the page keeps clear of it. */
+.aiPrint > :nth-child(-n+4) { margin-left: 13%; }
+.aiPrint .aMe { margin-right: 0; }

@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { Wifi, Mic, Plus, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
+import { Wifi, Mic, Plus, Pencil, ArrowLeft, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
 import { localeOptions, useI18n, type AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
@@ -64,28 +64,42 @@ const HOME_COPY: Partial<Record<AppLocale, { slogan: [string, string]; sub: stri
   en: { slogan: ['Good assets,', 'at a glance.'], sub: 'REITs, baskets and quant, one clear account', mine: 'My assets', actions: ['Deposit', 'Withdraw', 'Transfer', 'Receive'], home: 'Home', cash: 'Available', held: 'Holdings' },
 }
 
-const AI_COPY: Partial<Record<AppLocale, { title: string; hi: string; chips: string[]; ask: string; answer: string; rows: string[]; input: string }>> = {
-  'zh-CN': { title: 'AI 助手', hi: '有什么想看明白的？', chips: ['费用怎么算', '风险在哪里', '怎么配置'], ask: '这只产品的费用是多少？',
-    answer: '费用都写在产品披露里，我帮你列出来：', rows: ['申购费：买入时收取', '管理费：按年计提', '赎回规则：以披露为准'], input: '问问费用、风险或配置…' },
-  en: { title: 'AI assistant', hi: 'What would you like to understand?', chips: ['How fees work', 'Where the risk is', 'How to allocate'], ask: 'What are this product’s fees?',
-    answer: 'They are all in the product disclosure. Here they are:', rows: ['Subscription fee: when you buy', 'Management fee: yearly', 'Redemption: per the disclosure'], input: 'Ask about fees, risk or allocation…' },
+// The AI assistant page as it is in the app (the user's screenshot): tabs, a short exchange, a guided question card,
+// the input bar and the disclaimer. Sample words only; no real account data.
+const AI_COPY: Partial<Record<AppLocale, { tabs: [string, string]; hi: string; name: string; reply: string; ask: string; q: string; count: string; opts: [string, string, string]; own: string; skip: string; next: string; input: string; note: string }>> = {
+  'zh-CN': { tabs: ['AI 助手', '社区'], hi: '你好', name: 'A-REIT AI', reply: '你好！我是 A-REIT AI 助手。我可以介绍平台、解释和对比已上架的产品与篮子组合、协助做投资配置，或指导你在哪里查看账户、资金、费用和客服支持。',
+    ask: '我有一笔钱，怎么配置？', q: '这笔资金大概打算投资多久？', count: '1/3', opts: ['1 年以内', '1–3 年', '3 年以上'], own: '或者写下你自己的回答', skip: '跳过', next: '下一步',
+    input: '问问费用、风险或配置…', note: 'AI 可能出错，回答仅供参考，不构成投资建议。' },
+  en: { tabs: ['AI Support', 'Community'], hi: 'Hello', name: 'A-REIT AI', reply: 'Hi! I am the A-REIT AI assistant. I can introduce the platform, explain and compare listed products and baskets, help with allocation, or show you where to find your account, funds, fees and support.',
+    ask: 'How should I allocate some money?', q: 'Roughly how long will you invest this money?', count: '1/3', opts: ['Under 1 year', '1–3 years', 'Over 3 years'], own: 'Or write your own reply', skip: 'Skip', next: 'Next',
+    input: 'Ask about fees, risk or allocation…', note: 'AI can make mistakes. Answers are for reference only and are not investment advice.' },
 }
 
-/** The AI assistant page, printed the same way. */
+/** The AI assistant page, printed the same way (grey ink, hairlines; the brand teal on the mark and the AI dot). */
 function PrintedAi({ locale, active }: { locale: AppLocale; active: boolean }) {
   const c = AI_COPY[locale] ?? AI_COPY.en!
   const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .14 : 0, ease: EASE } })
-  return <div className={styles.print}>
+  return <div className={`${styles.print} ${styles.aiPrint}`}>
     <div className={styles.pStatus}><b><Clock /></b><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
-    <motion.div className={styles.pTop} {...show(0)}><RwaLogoMark width={44} height={25} label="" /><b>{c.title}</b></motion.div>
-    <motion.h3 className={styles.aHi} {...show(1)}>{c.hi}</motion.h3>
-    <motion.div className={styles.aChips} {...show(2)}>{c.chips.map(x => <span key={x}>{x}</span>)}</motion.div>
-    <motion.div className={styles.aAsk} {...show(3)}>{c.ask}</motion.div>
-    <motion.div className={styles.aAnswer} {...show(4)}>
-      <p>{c.answer}</p>
-      <ul>{c.rows.map(r => <li key={r}>{r}</li>)}</ul>
+    <motion.div className={styles.aBar} {...show(0)}>
+      <ArrowLeft size={20} strokeWidth={1.5} />
+      <span className={styles.aTabs}><b>{c.tabs[0]}</b><span>{c.tabs[1]}</span></span>
+      <i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i>
+    </motion.div>
+    <motion.div className={styles.aMe} {...show(1)}>{c.hi}</motion.div>
+    <motion.div className={styles.aBot} {...show(2)}>
+      <span className={styles.aName}><RwaLogoMark width={22} height={12} label="" /><b>{c.name}</b></span>
+      <p>{c.reply}</p>
+    </motion.div>
+    <motion.div className={styles.aMe} {...show(3)}>{c.ask}</motion.div>
+    <motion.div className={styles.aQ} {...show(4)}>
+      <div className={styles.aQHead}><span>{c.q}</span><small>{c.count}</small></div>
+      {c.opts.map((o, k) => <div key={o} className={styles.aOpt}><i>{k + 1}</i><span>{o}</span></div>)}
+      <div className={styles.aOwn}><Pencil size={14} strokeWidth={1.4} /><span>{c.own}</span></div>
+      <div className={styles.aQFoot}><span>{c.skip}</span><b>{c.next}</b></div>
     </motion.div>
     <motion.div className={styles.aInput} {...show(5)}><Plus size={18} strokeWidth={1.5} /><span>{c.input}</span><Mic size={18} strokeWidth={1.5} /></motion.div>
+    <motion.p className={styles.aNote} {...show(6)}>{c.note}</motion.p>
   </div>
 }
 
@@ -137,7 +151,7 @@ type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
     print is clipped to, an optional cut-out that sits above the print, and the page printed on it. */
 const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: typeof PrintedHome }> = {
   paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
-  ai: { photo: 'ai-scene', face: {"tl": [18.55, 3.13], "tr": [69.73, 6.45], "br": [69.73, 81.71], "bl": [18.55, 88.74]}, flat: '18.6% 4.4%, 19.4% 3.2%, 21% 3.1%, 64.2% 5.8%, 64.2% 38.4%, 69.6% 38.4%, 69.6% 80.4%, 68% 81.6%, 21% 88.3%, 19.3% 87.6%, 18.6% 86%', Print: PrintedAi },
+  ai: { photo: 'ai-scene', face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '81.4% 4.4%, 80.6% 3.2%, 79% 3.1%, 35.8% 5.8%, 35.8% 38.4%, 30.4% 38.4%, 30.4% 80.4%, 32% 81.6%, 79% 88.3%, 80.7% 87.6%, 81.4% 86%', Print: PrintedAi },
 }
 
 /**
