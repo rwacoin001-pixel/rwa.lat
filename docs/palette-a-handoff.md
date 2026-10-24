@@ -1,6 +1,6 @@
 # 交接：配色方向 A + 新引导页（预览中）
 
-更新：2026-10-24 · 线上 Worker `5708d3c4`（tag `palette-a-guide3-9343586`，main `93435868`）
+更新：2026-10-24 晚 · 线上 Worker `96c37016`（tag `palette-a-flock-e914712`，main `e9147129`）
 
 接手前请先读完本文。所有改动目前**只在打开过 `?palette=a` 的设备上生效**，普通用户看到的仍是旧版（米色 + 古铜金）。
 
@@ -63,8 +63,17 @@
   - 交互：左右滑动、点芯片、4.2 秒自动轮播、按住主角会压扁回弹、视差。
   - 动效全部用 `motion/react`。
 - 第 2 页"看清每一份"：来源、费用、风险三行依次打勾。
-- 第 3 页"邀请好友"：卡片下方是邀请码输入框、安装提示、"创建账户 / 我已有账户"。
-- 标语和主角都在卡片内，卡片从顶栏下面开始（用户明确要求）。
+- 第 3 页"邀请好友"：卡片下方是邀请码输入框、安装提示、**一个按钮"登录 / 注册"**（2026-10-24 晚，用户要求合并，不要"我已有账户"）。
+- 标语和主角都在卡片内，**卡片在最顶上**。
+- **2026-10-24 晚（用户第 4 轮要求）**：
+  - **不要顶栏、不要 logo**。页码指示（3 段短线）放在卡片内左上角（`Onboarding.tsx` 里的 `pager`，作为属性传给每页）。没有"跳过"。
+  - **背景纯色**，不要渐变（用户说渐变"AI 味太重"）：浅色 `#eef0f3`，深色 `#0a0c10`；色块也是纯色 `#19c7aa`。光晕（halo）已删除。
+  - 卡片做成**液态玻璃**：亮的上左边缘、暗的下右边缘、内部微光（`.card` 的多层 inset 阴影 + `.card::after`），都在 `HeroIntro.module.css`。
+  - 环绕小物体换成同一个摄影棚的**拉丝铝球 `sat-alu`、玻璃方块 `sat-glass`**；AI 助手主角换成"玻璃球 + 铝底座"。旧的 `sat-bead` / `sat-gold` 文件还在，但不再使用。
+- **邀请码只填一次**：引导页和注册页共用同一个 `invite` 状态（`useInviteCode()`）。在第 3 页点"登录 / 注册"时会调用 `invite.commit({ required: false })`：
+  - 填了有效邀请码 → 立刻校验并锁定，注册页显示为只读，不会再让用户填另一个。
+  - 填了无效邀请码 → 停在引导页并提示错误。
+  - 没填 → 直接进入登录页（老用户登录不需要邀请码；新用户注册时仍会被要求填写）。
 - **安装提示**：`components/onboarding/AppOffer.tsx`，第 1 页显示条形，最后一页显示行形。按环境分三种：
 
   | 类型 | 环境 | 显示内容 |
@@ -77,6 +86,16 @@
   - 点"下载"时会把邀请码复制到剪贴板。
   - 想在任何设备上预览，加 `&offer=apk`（或 `pwa` / `browser`）。
 - **App 内粘贴邀请码**：`components/screens/InviteCodeField.tsx`。在安卓 App 里（UA 含 `RwaLatAndroidTrial/`），输入框为空时显示"粘贴"按钮。**这一项对所有用户生效。**
+
+## 4b. 登录 / 注册页（配色 A）
+
+- **头像飞散动画**：`components/screens/AvatarFlock.tsx` + `.module.css`，在 `AuthShell.tsx` 里只在配色 A 的海报模式下渲染。
+  - 30 个头像从中间一个品牌绿圆点飞出，朝屏幕外散开、循环。纯 CSS 3D（`perspective` + `translate3d`），不用 JS 动画，手机上很省。
+  - 头像是 DiceBear **notionists**（作者 Zoish，**CC0 1.0** 公有领域），和 App 里的用户头像同一种风格。预先生成成 18 个 SVG，放在 `public/media/palette-a/avatars/`，页面不加载头像库。
+  - 系统开了"减少动态效果"时，头像停在原地。
+  - reactbits 的 topography 背景看过，和产品气质不搭，没有用。
+- **输入框放在底部**：标语 + 邮箱输入 + 登录方式 + 条款都在屏幕下半部分；没有标语的步骤（验证码、设密码等）表单也贴底。
+- **深色下的黄色已清除**：海报模式的深色表单原来还用古铜色令牌（`--auth-accent: #e3bb7a`、金色细线和边框），影响勾选框、链接、验证码框、邀请码框等。现在在 `P02-Login.module.css` 里给 `.root[data-auth-poster='true'][data-auth-theme='cool'] .authSheet` 和 `.root` 加了绿色 / 石墨色的覆盖。
 
 ## 5. 素材流程（写实图）
 
@@ -92,7 +111,10 @@
      - 需要用户自己登录。登录时会遇到 Cloudflare 的"验证你是真人"，**只能让用户点**。
      - 免费版每天只能出 2–3 张。
      - 图片是 blob 地址，用表单 POST 传到本机接收器：`G:\Media\a-reit-palette-a\art\recv.cjs`（端口 4600，launch 配置名 `img-recv`）。图片存到 `art/web/`。
-   - Codex 命令行的出图模型（gpt-6-astra / gpt-6.1-sol）现在被 ChatGPT 账号拒绝，不要再试。
+   - **Codex 命令行出图（2026-10-24 晚起可以用，现在首选）**：在输出目录里运行
+     `codex.exe exec --skip-git-repo-check -m gpt-6-astra --sandbox workspace-write "Use your image generation tool to create ONE image, then save it into the current working directory as <名字>.png … Photorealistic studio product photograph, square 1:1, on a seamless matte graphite background…" < /dev/null`
+     - 本轮的图在 `G:\Media\a-reit-palette-a\art\v8\`（`test-ai.png`、`sat-alu.png`、`sat-glass.png`）。
+     - 风格要和恒序封面一致：石墨灰无缝背景、铝、玻璃、柔和棚拍光。
 2. **写实图提示词要点**：
    - "Hyper-realistic commercial product photograph… rich vivid colour, high contrast…"
    - 纯白或浅灰背景。
@@ -115,6 +137,8 @@
   - 看引导页要先删掉 `rwa.session`。
 - **侧边浏览器隐藏时会暂停渲染**（3D 和 ResizeObserver 都不跑），所以用无头 Chrome 脚本（SwiftShader 支持 WebGL）：
   - `tools/page-shot.mjs <输出.jpg> <网址> <light|dark> [等待毫秒]`：单张截图。
+    - 环境变量 `PRESET="localStorage.setItem('rwa.onboarded.v2','1')"` 可在加载前多写 localStorage（例如跳过引导直接看登录页）。
+    - `ACTIONS="<js>;;<js>"` 在截图前依次执行，例如点第 3 页：`document.querySelector('[role=tablist] button:nth-child(3)').click()`。
   - `tools/frames.mjs <目录> <网址> <主题> <chip|swipe> [张数]`：连拍，看动效。
     - 加 `SLOW=0.15` 可以慢放 JS 时间，但启动画面也会变慢。
   - `tools/guide-shot.mjs`：旧版 4 页引导的完整走查。
@@ -134,11 +158,14 @@
 
    - 不要用 `require-merged-release.mjs`：它会因为上面那个未提交的文件而失败。
 4. 核对：`node node_modules/wrangler/bin/wrangler.js deployments list` 查看当前版本，再用 curl 确认新素材返回 200。
-5. 每次部署记下回退版本。本轮的版本链：`76f55153` → `91c66360` → `81b10e46` → `5708d3c4`（当前）。
+5. 每次部署记下回退版本。本轮的版本链：`76f55153` → `91c66360` → `81b10e46` → `5708d3c4` → `96c37016`（当前，回退用 `5708d3c4`）。
+   - `--message` 不能有空格（会报 Unknown arguments），用短横线连接。
 
 ## 8. 待办（按优先级）
 
-1. **等用户对统一风格后的 3 页引导的反馈**（见本文开头的线上版本）。
+1. **等用户对第 4 轮（纯色背景、液态玻璃卡片、一个按钮、头像飞散登录页）的反馈**（见本文开头的线上版本）。
+   - 本地截图在 `G:\Media\a-reit-palette-a\shots\v9\`。
+   - 已知：`scripts/design-guard.test.mjs` 有一项失败（`app/globals.css` 里 `.profile-menu` 没人用了），和本轮无关，是之前就有的。
 2. AI 助手主角现在是调色后的玻璃球；如果用户要求，可以用同一个摄影棚（石墨灰底、铝和玻璃）重出一张更统一的。
 4. 用户决定把配色 A 设为默认后，要做：
    - 把各模块里的 `:global(html[data-palette='a'])` 覆盖规则合并进基础样式，去掉开关。
