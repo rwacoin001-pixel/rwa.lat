@@ -375,3 +375,17 @@
    so the top of the page keeps clear of it. */
 .aiPrint > :nth-child(-n+4) { margin-left: 13%; }
 .aiPrint .aMe { margin-right: 0; }
+
+/* Round 26: the scene sits lower and larger; every page carries the counting number + title. */
+.paperStage { top: calc(26px + env(safe-area-inset-top)); left: -4%; right: -4%; }
+.sceneFoot { z-index: 5; color: #141a22; bottom: calc(64px + env(safe-area-inset-bottom)); }
+.sceneFoot[data-last] { bottom: calc(132px + env(safe-area-inset-bottom)); }
+.sceneFoot .number small { color: #0a8a73; opacity: 1; }
+.sceneFoot .fact { color: #4a5260; opacity: 1; }
+.page .cardFoot[data-last] { bottom: calc(150px + env(safe-area-inset-bottom)); }
+.page .cardFoot:not([data-last]) { bottom: calc(70px + env(safe-area-inset-bottom)); }
+/* AI page: the input bar and disclaimer sit at the bottom of the screen, as in the app. */
+.aiPrint { padding-bottom: 64px; }
+.aiPrint .aInput { margin-top: auto; }
+/* Floating paper bubbles: cut from the photo, drifting gently in front of everything else. */
+.floater { position: absolute; z-index: 4; pointer-events: none; -webkit-user-drag: none; transform-origin: 50% 80%; filter: drop-shadow(0 10px 12px rgba(40, 48, 60, .18)); }

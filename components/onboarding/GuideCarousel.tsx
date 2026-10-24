@@ -149,9 +149,11 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
 type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
 /** Each paper-phone scene: the photograph, its measured face (corners, % of the 1024x1536 photo), the flat part the
     print is clipped to, an optional cut-out that sits above the print, and the page printed on it. */
-const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: typeof PrintedHome }> = {
+/** Paper objects cut out of a scene and floated in code: [file, left %, top %, width %, height %, drift y px, turn deg, seconds]. */
+type Floater = [string, number, number, number, number, number, number, number]
+const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: typeof PrintedHome; floaters?: Floater[] }> = {
   paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
-  ai: { photo: 'ai-scene', face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '81.4% 4.4%, 80.6% 3.2%, 79% 3.1%, 35.8% 5.8%, 35.8% 38.4%, 30.4% 38.4%, 30.4% 80.4%, 32% 81.6%, 79% 88.3%, 80.7% 87.6%, 81.4% 86%', Print: PrintedAi },
+  ai: { photo: 'ai-scene-bg', floaters: [['ai-bubble-big', 10.45, 8.46, 25.1, 15.5, -9, -2, 5.2], ['ai-bubble-small', 2.73, 17.51, 15.82, 9.31, 7, 2.5, 4.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '81.4% 4.4%, 80.6% 3.2%, 79% 3.1%, 35.8% 5.8%, 35.8% 38.4%, 30.4% 38.4%, 30.4% 80.4%, 32% 81.6%, 79% 88.3%, 80.7% 87.6%, 81.4% 86%', Print: PrintedAi },
 }
 
 /**
@@ -170,12 +172,16 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
   }, [])
   const q = [sc.face.tl, sc.face.tr, sc.face.br, sc.face.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
   const Print = sc.Print
+  const reduced = useReducedMotion()
   return <div className={styles.paperStage} ref={stage}>
     <img className={styles.paperPhoto} src={`${ART}/${sc.photo}.webp`} alt="" draggable={false} />
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
       <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} /></div>
     </div>}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
+    {sc.floaters?.map(([src, left, top, width, height, dy, turn, sec]) => <motion.img key={src} className={styles.floater} src={`${ART}/${src}.webp`} alt="" draggable={false}
+      style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
+      animate={reduced ? undefined : { y: [0, dy, 0], rotate: [0, turn, 0] }} transition={{ duration: sec, ease: 'easeInOut', repeat: Infinity }} />)}
   </div>
 }
 
@@ -256,7 +262,15 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
   const heroX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * -90 + t * -10)
   const heroY = useTransform(tiltY, t => t * -8)
   const topoX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * 40 + t * 6)
-  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}><PaperScene scene={card.scene} active={active} locale={locale} /></article>
+  const foot = (extra = '') => <footer className={`${styles.cardFoot} ${extra}`} data-last={i === CARDS.length - 1 || undefined}>
+    <div className={styles.number}><b><Count value={card.value} run={active} /></b><small>{c.units[i]}</small></div>
+    <h2 className={styles.title}>{text.title}</h2>
+    <p className={styles.fact}>{c.facts[i]}</p>
+  </footer>
+  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}>
+    <PaperScene scene={card.scene} active={active} locale={locale} />
+    {foot(styles.sceneFoot)}
+  </article>
   return <article className={styles.card} style={{ '--from': card.from, '--to': card.to } as never} aria-hidden={!active}>
     <motion.img className={styles.topo} src={`${ART}/topo.svg`} alt="" style={{ x: topoX }} draggable={false} />
     <span className={styles.sheen} aria-hidden="true" />
@@ -271,11 +285,7 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
         animate={active ? { y: [0, -5, 0] } : { y: 0 }} transition={active ? { duration: 5.6, ease: 'easeInOut', repeat: Infinity } : { duration: .3 }} />
       <Callouts i={i} active={active} tags={c.tags[i]} />
     </motion.div>
-    <footer className={styles.cardFoot}>
-      <div className={styles.number}><b><Count value={card.value} run={active} /></b><small>{c.units[i]}</small></div>
-      <h2 className={styles.title}>{text.title}</h2>
-      <p className={styles.fact}>{c.facts[i]}</p>
-    </footer>
+    {foot()}
   </article>
 }
 
