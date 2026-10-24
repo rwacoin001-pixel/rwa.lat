@@ -1,6 +1,6 @@
 # 交接：配色方向 A + 新引导页（预览中）
 
-更新：2026-10-24 · 线上 Worker `81b10e46`（tag `palette-a-p1v6-1e05658`，main `1e056583`，BUILD_ID `5vYZXvivFG07IE4w7RS0Q`）
+更新：2026-10-24 · 线上 Worker `5708d3c4`（tag `palette-a-guide3-9343586`，main `93435868`）
 
 接手前请先读完本文。所有改动目前**只在打开过 `?palette=a` 的设备上生效**，普通用户看到的仍是旧版（米色 + 古铜金）。
 
@@ -134,7 +134,7 @@
 
    - 不要用 `require-merged-release.mjs`：它会因为上面那个未提交的文件而失败。
 4. 核对：`node node_modules/wrangler/bin/wrangler.js deployments list` 查看当前版本，再用 curl 确认新素材返回 200。
-5. 每次部署记下回退版本。本轮的版本链：`76f55153` → `91c66360` → `81b10e46`（当前）。
+5. 每次部署记下回退版本。本轮的版本链：`76f55153` → `91c66360` → `81b10e46` → `5708d3c4`（当前）。
 
 ## 8. 待办（按优先级）
 
