@@ -9,6 +9,8 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
+import { usePaletteA } from '@/lib/palette-preview'
+import { AvatarFlock } from './AvatarFlock'
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -44,6 +46,7 @@ export function AuthShell({ children, hero, footer, attrs }: {
   const cool = theme === 'dark'
   const media = cool ? 'cool' : 'warm'
   const poster = attrs?.['data-auth-poster'] === 'true'
+  const paletteA = usePaletteA()
   const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>A<i>-</i>REIT</span>}</>
   return <section className={`screen ${styles.root}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     <div className={styles.scene} aria-hidden="true">
@@ -52,6 +55,7 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </video>}
     </div>
     <div className={styles.sceneWash} aria-hidden="true" />
+    {poster && paletteA && <AvatarFlock />}
 
     <header className={styles.topbar}>
       <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>

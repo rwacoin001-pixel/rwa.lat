@@ -485,10 +485,10 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <p className={styles.cardLede}>{paletteA ? paletteASlogan(locale).sub : authPosterIntro[locale]}</p>
   </>
 
-  if (guide) return <Onboarding locale={locale} invite={invite} onDone={intent => {
+  if (guide) return <Onboarding locale={locale} invite={invite} onDone={() => {
     try { localStorage.setItem('rwa.onboarded.v2', '1') } catch { /* Shown once per session then. */ }
     setGuide(false)
-    if (intent === 'create') requestAnimationFrame(() => input.current?.focus())
+    requestAnimationFrame(() => input.current?.focus())
   }} />
 
   return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer}>

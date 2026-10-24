@@ -1,35 +1,42 @@
 /* Guide page 1 (palette A): a Radium-style state card. Frosted card, one soft colour field that morphs per state,
    a photoreal cut-out hero breaking out of the card, three objects orbiting it, rolling type. */
 .intro {
-  --card: rgba(255, 255, 255, .7); --card-line: rgba(255, 255, 255, .92); --ink: #0b1220; --muted: #5b6472; --faint: #8f97a5;
+  --card: rgba(255, 255, 255, .62); --card-line: rgba(255, 255, 255, .9); --ink: #0b1220; --muted: #5b6472; --faint: #8f97a5;
   --chip: rgba(11, 18, 32, .05); --chip-line: rgba(11, 18, 32, .07); --accent: #087a67; --pill: #0b1220; --pill-ink: #ffffff;
-  position: absolute; z-index: 4; inset: calc(52px + env(safe-area-inset-top)) 0 0;
+  --rim-hi: rgba(255, 255, 255, .95); --rim-lo: rgba(11, 18, 32, .08); --body-glow: rgba(255, 255, 255, .55);
+  position: absolute; z-index: 4; inset: 0;
   display: flex; flex-direction: column; gap: 14px;
-  padding: 0 16px calc(16px + env(safe-area-inset-bottom));
+  padding: calc(10px + env(safe-area-inset-top)) 12px calc(14px + env(safe-area-inset-bottom));
   overflow: hidden; perspective: 1200px;
-  background: radial-gradient(130% 80% at 50% 10%, #fafbfc 0%, #eceef2 62%, #e3e6eb 100%);
+  background: #eef0f3;
 }
 :global(html[data-theme='dark']) .intro {
   --card: rgba(24, 27, 33, .66); --card-line: rgba(255, 255, 255, .08); --ink: #f2f4f7; --muted: #9aa3b1; --faint: #6b7380;
   --chip: rgba(255, 255, 255, .06); --chip-line: rgba(255, 255, 255, .07); --accent: #5fe0c8; --pill: #f2f4f7; --pill-ink: #0b1220;
-  background: radial-gradient(130% 80% at 50% 10%, #1a1e25 0%, #0c0e12 62%, #08090c 100%);
+  --rim-hi: rgba(255, 255, 255, .22); --rim-lo: rgba(0, 0, 0, .5); --body-glow: rgba(255, 255, 255, .03);
+  background: #0a0c10;
 }
-
-/* A wide, very soft glow in the state colour behind the card. */
-.halo { position: absolute; z-index: 0; top: -6%; right: -30%; width: 110%; aspect-ratio: 1; border-radius: 50%; opacity: .32; filter: blur(70px); }
-:global(html[data-theme='dark']) .halo { opacity: .22; }
 
 /* ── Card ── */
 .card {
   position: relative; z-index: 1; flex: 1 1 auto; min-height: 0;
   display: flex; flex-direction: column; justify-content: flex-end; gap: 14px;
-  margin-top: 6px; padding: 20px 18px 16px; overflow: hidden;
-  border: 1px solid var(--card-line); border-radius: 34px;
+  padding: 20px 18px 16px; overflow: hidden;
+  border: 0; border-radius: 34px;
   background: var(--card);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 40px 70px -40px rgba(15, 23, 42, .45), 0 10px 22px -14px rgba(15, 23, 42, .14);
-  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%);
+  /* Liquid glass: a thick, lit rim (bright top-left, soft bottom-right), a faint inner body, and a floating shadow. */
+  box-shadow:
+    inset 0 0 0 1px var(--card-line),
+    inset 1.5px 2px 0 -.5px var(--rim-hi),
+    inset -1.5px -2px 0 -.5px var(--rim-lo),
+    inset 0 0 22px var(--body-glow),
+    0 40px 70px -42px rgba(15, 23, 42, .5), 0 12px 24px -16px rgba(15, 23, 42, .16);
+  -webkit-backdrop-filter: blur(26px) saturate(180%); backdrop-filter: blur(26px) saturate(180%);
   touch-action: pan-y; transform-style: preserve-3d; will-change: transform;
 }
+/* The lit edge sits above everything inside the card, so the field and hero read as being under the glass. */
+.card::after { content: ''; position: absolute; z-index: 8; inset: 0; border-radius: inherit; pointer-events: none;
+  box-shadow: inset 0 1px 0 var(--rim-hi), inset 0 0 0 1px var(--card-line), inset 0 -10px 18px -14px var(--rim-lo); }
 
 /* The soft colour field: an organic shape that reshapes and recolours with each state. */
 .field { position: absolute; top: 112px; right: 14px; width: 64%; bottom: 246px; overflow: hidden; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), 0 24px 40px -26px rgba(7, 77, 67, .45); }
@@ -37,10 +44,7 @@
 .field span:first-child { width: 120%; aspect-ratio: 1; right: -46%; bottom: -66%; }
 .field span:last-child { width: 72%; aspect-ratio: 1; right: -16%; bottom: -30%; border-color: rgba(255, 255, 255, .32); }
 
-.meta { position: absolute; z-index: 4; top: 18px; left: 20px; right: 18px; display: flex; align-items: center; justify-content: space-between; }
-.meta b { display: inline-flex; align-items: center; gap: 7px; color: var(--ink); font-size: 11.5px; font-weight: 700; letter-spacing: .2em; }
-.live { width: 7px; height: 7px; border-radius: 50%; background: #19c7aa; box-shadow: 0 0 0 0 rgba(25, 199, 170, .6); animation: live 2.2s ease-out infinite; }
-@keyframes live { 70%, 100% { box-shadow: 0 0 0 7px rgba(25, 199, 170, 0); } }
+.meta { position: absolute; z-index: 9; top: 14px; left: 20px; right: 18px; display: flex; align-items: center; justify-content: space-between; }
 .step { display: flex; align-items: baseline; gap: 4px; color: var(--ink); font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 20px; font-weight: 500; letter-spacing: -.03em; }
 .step i { color: var(--faint); font-style: normal; font-size: 13px; }
 
@@ -130,4 +134,6 @@
 .inviteBox { position: relative; z-index: 3; flex: none; --field: var(--card); --field-edge: var(--chip-line); --auth-accent: var(--accent); --auth-muted: var(--muted); --sans: inherit; --ink: var(--ink); }
 .inviteBox > * { margin-top: 0; }
 .actions { position: relative; z-index: 3; display: grid; gap: 2px; flex: none; }
-.secondary { min-height: 44px; border: 0; color: var(--ink); background: none; font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+/* Page 3 has a shorter card (the invite field sits under it): the field and hero move down to use the height. */
+.intro[data-compact] .field { top: 120px; bottom: 150px; }
+.intro[data-compact] .stage { top: max(130px, calc(50% - 170px)); }

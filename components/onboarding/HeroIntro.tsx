@@ -1,5 +1,5 @@
 'use client'
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
 import { ArrowRight, Bot, Building2, Layers3, Sigma, Trees, Warehouse } from 'lucide-react'
 import { AppOffer, useAppOffer } from './AppOffer'
@@ -16,13 +16,13 @@ import styles from './HeroIntro.module.css'
  */
 export const ART = '/media/palette-a/onboard-v7'
 const ICONS = [Building2, Layers3, Sigma, Bot]
-// One studio for every hero (the same renders as the Hengxu product covers), one brand green for every field.
-export const FIELD = ['#12b398', '#19c7aa', '#55d8c0'] as const
+// One studio for every hero (the same renders as the Hengxu product covers), one solid brand green for every field.
+export const FIELD = '#19c7aa'
 const STATES = [
-  { hero: 'hero-reit', sats: ['sat-bead', 'sat-gold'], shape: '58% 42% 46% 54% / 52% 48% 52% 48%' },
-  { hero: 'hero-basket', sats: ['sat-gold', 'sat-bead'], shape: '44% 56% 62% 38% / 48% 60% 40% 52%' },
-  { hero: 'hero-quant', sats: ['sat-bead', 'sat-gold'], shape: '62% 38% 40% 60% / 56% 44% 56% 44%' },
-  { hero: 'hero-ai', sats: ['sat-bead', 'sat-gold'], shape: '50% 50% 58% 42% / 40% 58% 42% 60%' },
+  { hero: 'hero-reit', sats: ['sat-alu', 'sat-glass'], shape: '58% 42% 46% 54% / 52% 48% 52% 48%' },
+  { hero: 'hero-basket', sats: ['sat-alu', 'sat-glass'], shape: '44% 56% 62% 38% / 48% 60% 40% 52%' },
+  { hero: 'hero-quant', sats: ['sat-alu', 'sat-glass'], shape: '62% 38% 40% 60% / 56% 44% 56% 44%' },
+  { hero: 'hero-ai', sats: ['sat-alu', 'sat-glass'], shape: '50% 50% 58% 42% / 40% 58% 42% 60%' },
 ]
 const AUTO_MS = 4200
 export const SPRING = { type: 'spring', stiffness: 260, damping: 26, mass: .9 } as const
@@ -85,7 +85,7 @@ function StateWidget({ index, locale }: { index: number; locale: AppLocale }) {
   </AnimatePresence>
 }
 
-export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocale; invite?: InviteCodeState; onNext: () => void }) {
+export default function HeroIntro({ locale, invite, pager, onNext }: { locale: AppLocale; invite?: InviteCodeState; pager?: React.ReactNode; onNext: () => void }) {
   const offer = useAppOffer()
   const copy = paletteAOnboarding(locale).s0
   const reduced = useReducedMotion()
@@ -146,20 +146,17 @@ export default function HeroIntro({ locale, invite, onNext }: { locale: AppLocal
     else if (dx > 45 || speed > .5) go(index - 1)
   }
 
-  const fieldBg = `linear-gradient(160deg, ${FIELD[0]} 0%, ${FIELD[1]} 60%, ${FIELD[2]} 100%)`
-
-  return <section className={styles.intro} style={{ '--glow': FIELD[1] } as CSSProperties}>
-    <motion.div className={styles.halo} aria-hidden="true" animate={{ backgroundColor: FIELD[1] }} transition={{ duration: 1.1, ease: EASE }} />
+  return <section className={styles.intro}>
 
     <motion.article className={styles.card} style={{ x: cardX, rotateX: cardRX, rotateY: cardRY }} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={onUp} onPointerCancel={onUp}
       initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
-      <motion.div className={styles.field} aria-hidden="true" style={{ x: fieldX, y: fieldY }}
-        animate={{ background: fieldBg, borderRadius: state.shape }} transition={{ duration: 1, ease: EASE }}>
+      <motion.div className={styles.field} aria-hidden="true" style={{ x: fieldX, y: fieldY, background: FIELD }}
+        animate={{ borderRadius: state.shape }} transition={{ duration: 1, ease: EASE }}>
         <span /><span />
       </motion.div>
 
       <div className={styles.meta}>
-        <b><i className={styles.live} />A-REIT</b>
+        {pager}
         <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
       </div>
       <motion.h1 className={styles.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>

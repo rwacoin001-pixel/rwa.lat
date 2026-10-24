@@ -12,8 +12,6 @@ import styles from './HeroIntro.module.css'
  * Guide pages 2 and 3 (palette A), in the same card as page 1 so the whole guide reads as one product:
  * the same studio renders as the Hengxu covers, one brand-green field, the same type and springs.
  */
-const fieldBg = `linear-gradient(160deg, ${FIELD[0]} 0%, ${FIELD[1]} 60%, ${FIELD[2]} 100%)`
-
 function Hero({ src, sats }: { src: string; sats: string[] }) {
   return <div className={styles.stage} aria-hidden="true">
     <motion.div className={styles.heroWrap} initial={{ opacity: 0, y: 30, scale: .82, filter: 'blur(10px)' }} animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
@@ -25,13 +23,13 @@ function Hero({ src, sats }: { src: string; sats: string[] }) {
   </div>
 }
 
-function Shell({ step, children, hero, sats }: { step: number; children: React.ReactNode; hero: string; sats: string[] }) {
+function Shell({ step, pager, children, hero, sats }: { step: number; pager: React.ReactNode; children: React.ReactNode; hero: string; sats: string[] }) {
   return <motion.article className={styles.card} initial={{ opacity: 0, y: 30, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ ...SOFT, delay: .05 }}>
     <motion.div className={styles.field} aria-hidden="true" initial={{ borderRadius: '50% 50% 50% 50% / 50% 50% 50% 50%' }}
-      animate={{ borderRadius: step === 2 ? '46% 54% 58% 42% / 52% 46% 54% 48%' : '56% 44% 42% 58% / 44% 56% 44% 56%' }} transition={{ duration: 1, ease: EASE }} style={{ background: fieldBg }}>
+      animate={{ borderRadius: step === 2 ? '46% 54% 58% 42% / 52% 46% 54% 48%' : '56% 44% 42% 58% / 44% 56% 44% 56%' }} transition={{ duration: 1, ease: EASE }} style={{ background: FIELD }}>
       <span /><span />
     </motion.div>
-    <div className={styles.meta}><b><i className={styles.live} />A-REIT</b><span className={styles.step}>0{step} <i>/ 03</i></span></div>
+    <div className={styles.meta}>{pager}<span className={styles.step}>0{step} <i>/ 03</i></span></div>
     <Hero src={hero} sats={sats} />
     <span className={styles.grain} aria-hidden="true" />
     {children}
@@ -39,13 +37,12 @@ function Shell({ step, children, hero, sats }: { step: number; children: React.R
 }
 
 /** Page 2: what every product states before you invest. The three checks tick in turn. */
-export function ClearStep({ locale, onNext }: { locale: AppLocale; onNext: () => void }) {
+export function ClearStep({ locale, pager, onNext }: { locale: AppLocale; pager: React.ReactNode; onNext: () => void }) {
   const copy = paletteAOnboarding(locale)
   const s2 = copy.s2
   const icons = [FileSearch, Coins, ShieldAlert]
   return <section className={styles.intro}>
-    <motion.div className={styles.halo} aria-hidden="true" style={{ backgroundColor: FIELD[1] }} />
-    <Shell step={2} hero="hero-clear" sats={['sat-bead']}>
+    <Shell step={2} pager={pager} hero="hero-clear" sats={['sat-glass']}>
       <h1 className={styles.title}><span>{copy.s0.title[0]}</span><em>{copy.s0.title[1]}</em></h1>
       <div className={styles.checks}>
         {s2.rows.map(([label, detail], i) => { const Icon = icons[i]; return <motion.div key={label} className={styles.check}
@@ -68,11 +65,13 @@ export function ClearStep({ locale, onNext }: { locale: AppLocale; onNext: () =>
 }
 
 /** Page 3: invite friends — the invitation code here is the one signup uses; the app offer sits under it. */
-export function InviteStep({ locale, invite, offer, onDone }: { locale: AppLocale; invite: InviteCodeState; offer: OfferKind | null; onDone: (intent: 'create' | 'signin') => void }) {
+export function InviteStep({ locale, invite, offer, pager, onDone }: { locale: AppLocale; invite: InviteCodeState; offer: OfferKind | null; pager: React.ReactNode; onDone: () => void }) {
+  // One way in. A code typed here is checked and locked now, so signup shows it read-only and never asks for a second one;
+  // an empty field is fine (an existing account needs none, and signup still asks a new account for one).
+  const enter = async () => { if (await invite.commit({ required: false })) onDone() }
   const copy = paletteAOnboarding(locale)
   return <section className={styles.intro} data-compact="">
-    <motion.div className={styles.halo} aria-hidden="true" style={{ backgroundColor: FIELD[1] }} />
-    <Shell step={3} hero="hero-invite" sats={['sat-bead', 'sat-gold']}>
+    <Shell step={3} pager={pager} hero="hero-invite" sats={['sat-alu', 'sat-glass']}>
       <h1 className={styles.title}><span>{copy.s0.title[0]}</span><em>{copy.s0.title[1]}</em></h1>
       <div className={styles.product}>
         <span className={styles.productName}>{copy.s3.note}</span>
@@ -85,10 +84,9 @@ export function InviteStep({ locale, invite, offer, onDone }: { locale: AppLocal
     </motion.div>
     {offer && <div className={styles.offer}><AppOffer kind={offer} locale={locale} invite={invite} size="row" /></div>}
     <motion.div className={styles.actions} initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .4 }}>
-      <motion.button type="button" className={styles.cta} onClick={() => onDone('create')} whileTap={{ scale: .97 }}>
-        <span>{copy.create}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
+      <motion.button type="button" className={styles.cta} onClick={() => void enter()} whileTap={{ scale: .97 }}>
+        <span>{copy.enter}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
       </motion.button>
-      <button type="button" className={styles.secondary} onClick={() => onDone('signin')}>{copy.signIn}</button>
     </motion.div>
   </section>
 }

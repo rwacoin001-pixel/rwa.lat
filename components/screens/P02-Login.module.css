@@ -598,6 +598,14 @@
 :global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet {
   --ink: #0b1220; --auth-muted: #4b5563; --auth-faint: #4b5563; --auth-accent: #087a67; --field-edge: rgba(11, 18, 32, .22);
 }
+/* Dark poster: the compact sheet's bronze tokens (gold accent, gold hairlines) turn graphite + brand green. */
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .authSheet {
+  --ink: #f2f4f7; --auth-muted: #a3acbb; --auth-faint: #8a93a3; --auth-accent: #19c7aa;
+  --line: rgba(255, 255, 255, .1); --field-edge: rgba(255, 255, 255, .14); --cta-ink: #03211c;
+  border-color: rgba(255, 255, 255, .1);
+}
+:global(html[data-palette='a']) .root { --auth-accent: #087a67; }
+:global(html[data-palette='a']) .root[data-auth-theme='cool'] { --auth-accent: #19c7aa; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .sceneWash { background:
   linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
   linear-gradient(180deg, transparent 40%, rgba(238, 240, 243, .7) 100%); }
@@ -644,25 +652,19 @@
 @keyframes paletteDrift { from { transform: translateX(-50%) scale(1.03); } to { transform: translateX(calc(-50% + .5%)) scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .scene { animation: none; transform: translateX(-50%) scale(1.03); } }
 
-/* Palette A round 3 · option 甲: no film, no photo. Plain page, headline up top, the form right under it. */
+/* Palette A round 3 · option 甲: no film, no photo. Plain solid page. */
 :global(html[data-palette='a']) .root[data-auth-poster='true'] :is(.scene, .sceneWash) { display: none; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] { background: var(--auth-bg); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { margin: clamp(40px, 11svh, 104px) auto 28px; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy .cardTitle { font-size: clamp(34px, 10vw, 42px); line-height: 1.12; text-shadow: none; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy .cardLede { color: var(--auth-muted); font-size: 15px; text-shadow: none; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-compact='true'] .stage { margin: 0 auto auto; padding-top: 0; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .field { border-color: rgba(11, 18, 32, .12); background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .field:focus-within { border-color: #19c7aa; box-shadow: 0 0 0 4px rgba(25, 199, 170, .14); }
 :global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .field { border-color: rgba(255, 255, 255, .12); background: #14171d; box-shadow: none; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet { --ink: #0b1220; --auth-muted: #5b6472; --auth-faint: #8f97a5; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { margin-top: auto; }
 
-/* Palette A v2: a small frosted-glass blob (Antigravity render) above the brand line, breathing slowly. */
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy::before {
-  content: ''; display: block; width: 84px; height: 84px; margin: 0 0 18px -6px;
-  background: url('/media/palette-a/onboard-v7/hero-basket.webp') center / contain no-repeat;
-  filter: drop-shadow(0 12px 14px rgba(15, 23, 42, .22)); animation: paletteBreathe 6s ease-in-out infinite;
-}
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .heroCopy::before { filter: drop-shadow(0 12px 16px rgba(0, 0, 0, .5)); }
-@keyframes paletteBreathe { 0%, 100% { transform: scale(1) rotate(0deg); } 50% { transform: scale(1.06, .95) rotate(4deg); } }
-@media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy::before { animation: none; } }
+/* Palette A v3: the avatar flock (AvatarFlock.tsx) fills the top; the brand line and the form sit at the bottom, in thumb reach. */
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { position: relative; z-index: 1; margin: auto auto 22px; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-compact='true'] .stage { position: relative; z-index: 1; margin: 0 auto; padding-top: 0; }
+/* Steps with their own heading carry no brand line: the form alone goes to the bottom. */
+:global(html[data-palette='a']) .root[data-auth-poster='true']:not(:has(> .heroCopy))[data-auth-compact='true'] .stage { margin-top: auto; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { margin-top: 10px; }
