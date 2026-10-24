@@ -1,11 +1,12 @@
 'use client'
 import { useCallback, useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { AnimatePresence, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { AnimatePresence, animate, motion, useAnimationFrame, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
 import { ArrowRight, Bot, Building2, Layers3, Sigma } from 'lucide-react'
 import { AppOffer, useAppOffer } from './AppOffer'
 import type { InviteCodeState } from '../screens/InviteCodeField'
 import type { AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
+import RwaLogoMark from '../rwa-logo'
 import styles from './HeroIntro.module.css'
 
 /**
@@ -23,10 +24,10 @@ const ICONS = [Building2, Layers3, Sigma, Bot]
 // Pages 2–3 still use the studio cut-outs on one solid brand-green field.
 export const FIELD = '#19c7aa'
 const STATES = [
-  { hero: 'hero-reit', color: '#2dc8ac' },
-  { hero: 'hero-basket', color: '#00c6ce' },
-  { hero: 'hero-quant', color: '#3abdee' },
-  { hero: 'hero-ai', color: '#07c3de' },
+  { hero: 'hero-reit', color: '#2dc8ac', deep: '#009f85' },
+  { hero: 'hero-basket', color: '#00c6ce', deep: '#009ca5' },
+  { hero: 'hero-quant', color: '#3abdee', deep: '#0094c3' },
+  { hero: 'hero-ai', color: '#07c3de', deep: '#0099b3' },
 ]
 /** Field tiles per state: [left %, top %, width %, rotate deg]; each tile is the logo's panel. */
 const TILES: [number, number, number, number][][] = [
@@ -77,15 +78,41 @@ export function Roll({ value, className }: { value: string; className?: string }
   </span>
 }
 
-const TILE_COPY: Partial<Record<AppLocale, { title: string; line: string }>> = {
-  'zh-CN': { title: '看清每一份', line: '来源 · 费用 · 风险' },
-  en: { title: 'See every detail', line: 'Source · Fees · Risk' },
+// One number per state for the fixed glass tile. Counts and descriptions only: no amounts, no returns.
+const TILE_COPY: Partial<Record<AppLocale, { value: number; unit: string; label: string }[]>> = {
+  'zh-CN': [
+    { value: 3, unit: '类', label: '写字楼 · 物流仓 · 产业园' },
+    { value: 1, unit: '次', label: '配置，覆盖多种资产' },
+    { value: 100, unit: '%', label: '规则驱动，过程透明' },
+    { value: 24, unit: 'h', label: '有问题，随时问' },
+  ],
+  en: [
+    { value: 3, unit: 'types', label: 'Offices · logistics · parks' },
+    { value: 1, unit: 'setup', label: 'covering many assets' },
+    { value: 100, unit: '%', label: 'rule-driven, in the open' },
+    { value: 24, unit: 'h', label: 'ask any time' },
+  ],
 }
 
-/** The small glass tile on the hero: the same in every state (only the hero behind it changes). */
-function FixedTile({ locale }: { locale: AppLocale }) {
-  const c = TILE_COPY[locale] ?? TILE_COPY.en!
-  return <div className={styles.widget}><div className={styles.tile}><i aria-hidden="true" /><span><b>{c.title}</b><small>{c.line}</small></span></div></div>
+/** A number that counts to its new value instead of jumping. */
+function CountUp({ value }: { value: number }) {
+  const ref = useRef<HTMLSpanElement>(null)
+  const from = useRef(0)
+  useEffect(() => {
+    const controls = animate(from.current, value, { duration: .9, ease: EASE, onUpdate: v => { if (ref.current) ref.current.textContent = String(Math.round(v)) } })
+    from.current = value
+    return () => controls.stop()
+  }, [value])
+  return <span ref={ref}>{value}</span>
+}
+
+/** The glass tile on the hero: one fixed size in every state; only its number counts and its line rolls. */
+function FixedTile({ locale, index }: { locale: AppLocale; index: number }) {
+  const c = (TILE_COPY[locale] ?? TILE_COPY.en!)[index]
+  return <div className={styles.widget}>
+    <div className={styles.tileNum}><b><CountUp value={c.value} /></b><Roll value={c.unit} className={styles.tileUnit} /></div>
+    <Roll value={c.label} className={styles.tileLabel} />
+  </div>
 }
 
 export default function HeroIntro({ locale, invite, pager, onNext }: { locale: AppLocale; invite?: InviteCodeState; pager?: React.ReactNode; onNext: () => void }) {
@@ -158,7 +185,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
       <TileField index={index} color={state.color} x={fieldX} y={fieldY} />
       <div className={styles.meta}>
         {pager}
-        <span className={styles.step}><Roll value={`0${index + 1}`} /> <i>/ 04</i></span>
+        <RwaLogoMark className={styles.metaLogo} width={34} height={19} label="" accentColor={state.color} />
       </div>
       <motion.h1 className={styles.title} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .1 }}>
         <span>{copy.title[0]}</span><em>{copy.title[1]}</em>
@@ -182,7 +209,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
         </AnimatePresence>
       </motion.div>
       <motion.img className={styles.near} src={`${LAYERS}/sat-cube.webp`} alt="" aria-hidden="true" style={{ x: nearX, y: nearY }} />
-      <FixedTile locale={locale} />
+      <FixedTile locale={locale} index={index} />
       <span className={styles.grain} aria-hidden="true" />
 
       <div className={styles.product}>
@@ -193,7 +220,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
 
       <div className={styles.chips} role="tablist" aria-label={copy.swipe}>
         {copy.chips.map((label, i) => { const Icon = ICONS[i]; const on = i === index; return <button key={label} type="button" role="tab" aria-selected={on} className={styles.chip} onClick={() => go(i)}>
-          {on && <motion.i layoutId="chipPill" className={styles.chipPill} transition={SPRING} animate={{ backgroundColor: state.color }} />}
+          {on && <motion.i layoutId="chipPill" className={styles.chipPill} transition={SPRING} animate={{ backgroundColor: state.deep }} />}
           <Icon size={14} strokeWidth={2} aria-hidden="true" /><span>{label}</span>
         </button> })}
       </div>
@@ -205,7 +232,7 @@ export default function HeroIntro({ locale, invite, pager, onNext }: { locale: A
       <AppOffer kind={offer} locale={locale} invite={invite} />
     </motion.div>}
 
-    <motion.button type="button" className={styles.cta} onClick={onNext} whileTap={{ scale: .97 }}
+    <motion.button type="button" className={`${styles.cta} ${styles.stateCta}`} onClick={onNext} whileTap={{ scale: .97 }} style={{ '--cta': state.deep } as React.CSSProperties}
       initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ ...SOFT, delay: .5 }}>
       <span>{copy.cta}</span><span className={styles.ctaIcon}><ArrowRight size={18} strokeWidth={2} /></span>
     </motion.button>
