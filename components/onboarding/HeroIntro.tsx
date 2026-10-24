@@ -100,13 +100,14 @@ const TILE_COPY: Partial<Record<AppLocale, { value: number; unit: string; label:
 }
 
 const ENTER_COPY: Partial<Record<AppLocale, { code: string; note: string }>> = {
-  'zh-CN': { code: '邀请码（选填）', note: '有邀请码就填上，奖励以平台规则为准' },
-  en: { code: 'Invitation code (optional)', note: 'Have a code? Add it. Rewards follow the platform rules' },
+  'zh-CN': { code: '邀请码（新用户填写）', note: '老用户直接登录；新用户现在填，或注册时再填' },
+  en: { code: 'Invitation code (new accounts)', note: 'Have an account? Just sign in. New here? Add it now or at sign-up' },
 }
 
 /**
- * One bar, one way in: an optional invitation-code field and the Sign in / sign up button side by side.
- * Existing accounts just press the button (no code needed). A code typed here is checked and locked before moving on,
+ * One bar, one way in: the invitation-code field and the Sign in / sign up button side by side. Signing up needs a
+ * code, but not here: existing accounts just press the button, and a new account left empty here is asked for it
+ * on the signup step (same shared invite state). A code typed here is checked and locked before moving on,
  * and signup then shows it read-only. A code carried by a referral link arrives filled in and locked.
  */
 function EnterBar({ invite, locale, label, onEnter }: { invite?: InviteCodeState; locale: AppLocale; label: string; onEnter: () => void }) {
