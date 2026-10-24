@@ -39,7 +39,7 @@ const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
 ]
 const AUTO_MS = 4800
 
-// The phone's front face in paper-scene-2.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
+// The phone's front face in paper-scene-w.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
 const FACE = {"tl": [18.46, 3.26], "tr": [76.76, 6.9], "br": [76.76, 78.84], "bl": [18.46, 88.93]}
 const FACE_W = 390, FACE_H = 820
 /** The flat part of the face (left of the tear), in % of the photograph: the printed page is clipped to it. */
@@ -92,7 +92,7 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
       <RwaLogoMark width={44} height={25} label="" /><b>A-REIT</b>
       <span><Gift size={22} strokeWidth={1.4} /><Moon size={22} strokeWidth={1.4} /><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span>
     </motion.div>
-    <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><span>{c.slogan[1]}</span></motion.h3>
+    <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><em>{c.slogan[1]}</em></motion.h3>
     <motion.p className={styles.pSub} {...show(2)}>{c.sub}</motion.p>
     <motion.div {...show(3)}><Pavilion /></motion.div>
     <motion.div className={styles.pTicker} {...show(4)}><span>REIT</span><i /><span>DXY</span><i /><span>GOLD</span><i /></motion.div>
@@ -122,11 +122,11 @@ function PaperScene({ active, locale }: { active: boolean; locale: AppLocale }) 
   }, [])
   const q = [FACE.tl, FACE.tr, FACE.br, FACE.bl].map(([x, y]) => [x / 100 * box.w, y / 100 * box.h])
   return <div className={styles.paperStage} ref={stage}>
-    <img className={styles.paperPhoto} src={`${ART}/paper-scene-2.webp`} alt="" draggable={false} />
+    <img className={styles.paperPhoto} src={`${ART}/paper-scene-w.webp`} alt="" draggable={false} />
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${FLAT})` }}>
       <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><PrintedHome locale={locale} active={active} /></div>
     </div>}
-    <img className={styles.paperPerson} src={`${ART}/paper-person.webp`} alt="" draggable={false} />
+    <img className={styles.paperPerson} src={`${ART}/paper-person-w.webp`} alt="" draggable={false} />
   </div>
 }
 
