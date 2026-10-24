@@ -10,7 +10,10 @@ import styles from './P02-Login.module.css'
 import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
 import { usePaletteA } from '@/lib/palette-preview'
-import { AvatarFlock } from './AvatarFlock'
+import dynamic from 'next/dynamic'
+
+// WebGL silk backdrop for the palette A sign-in poster; client-only and loaded after first paint.
+const Silk = dynamic(() => import('../vendor/react-bits/Silk'), { ssr: false })
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -55,7 +58,10 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </video>}
     </div>
     <div className={styles.sceneWash} aria-hidden="true" />
-    {poster && paletteA && <AvatarFlock />}
+    {poster && paletteA && <div className={styles.silk} aria-hidden="true">
+      <Silk key={media} lightMode={!cool} color={cool ? '#19c7aa' : '#5fe3cf'} sheenColor={cool ? '#7fe3ff' : '#ffffff'}
+        speed={3.2} scale={.9} rotation={-.35} depth={cool ? .6 : .3} sheen={cool ? .7 : .5} glow={cool ? .45 : .2} noiseIntensity={1} intro />
+    </div>}
 
     <header className={styles.topbar}>
       <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>

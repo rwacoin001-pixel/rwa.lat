@@ -668,3 +668,22 @@
 /* Steps with their own heading carry no brand line: the form alone goes to the bottom. */
 :global(html[data-palette='a']) .root[data-auth-poster='true']:not(:has(> .heroCopy))[data-auth-compact='true'] .stage { margin-top: auto; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { margin-top: 10px; }
+
+/* Palette A sign-in poster, round 5: a satin backdrop (React Bits Silk, brand teal) fills the top of the screen and
+   fades out; the headline sits on its tail and the whole sign-in form is a glass sheet pinned to the bottom. */
+.silk { position: fixed; z-index: 0; top: 0; left: 50%; width: min(100%, var(--app-max, 100%)); height: 68lvh; transform: translateX(-50%); pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 100%); mask-image: linear-gradient(180deg, #000 52%, transparent 100%); }
+.silk > div { pointer-events: auto; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] { min-height: 100svh; display: flex; flex-direction: column; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .topbar,
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { position: relative; z-index: 2; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { margin: auto auto 18px; width: min(400px, calc(100% - 48px)); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .stage {
+  position: relative; z-index: 2; width: 100%; margin: 0; padding: 22px 24px calc(16px + env(safe-area-inset-bottom));
+  border-radius: 32px 32px 0 0; background: rgba(255, 255, 255, .62);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), 0 -18px 40px -24px rgba(15, 23, 42, .28);
+  -webkit-backdrop-filter: blur(26px) saturate(170%); backdrop-filter: blur(26px) saturate(170%); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .stage {
+  background: rgba(16, 19, 24, .62); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 -18px 40px -24px rgba(0, 0, 0, .7); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .stage > * { width: min(400px, 100%); margin-inline: auto; }
+:global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { padding-top: 16px; }
