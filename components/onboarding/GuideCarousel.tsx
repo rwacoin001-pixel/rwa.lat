@@ -1,7 +1,7 @@
 'use client'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
-import { ArrowRight, Check, Gift, Languages, LoaderCircle } from 'lucide-react'
+import { ArrowRight, Building2, Check, Gift, Languages, LoaderCircle } from 'lucide-react'
 import { localeOptions, useI18n, type AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
@@ -24,7 +24,7 @@ import styles from './GuideCarousel.module.css'
  */
 const ART = '/media/palette-a/guide'
 const CARDS = [
-  { hero: 'object-reit', from: '#3fd3b8', to: '#00806b', value: 3 },
+  { hero: 'object-reit', from: '#3fd3b8', to: '#00806b', value: 3, scene: 'scene-reit' },
   { hero: 'object-basket', from: '#22d0d6', to: '#00808a', value: 1 },
   { hero: 'object-koala', from: '#56c6f0', to: '#0077b0', value: 100 },
   { hero: 'object-ai', from: '#2ccce4', to: '#007c99', value: 24 },
@@ -37,6 +37,36 @@ const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
   [[50, 40, 92, 16, 'r'], [42, 82, 6, 94, 'l']],
 ]
 const AUTO_MS = 4800
+
+// Scene card copy: our real interface, "pressed" into the giant slab the person is opening (not drawn by the image model).
+const SCENE_COPY: Partial<Record<AppLocale, { kind: string; checks: [string, string, string]; headline: string[]; line: string; foot: string }>> = {
+  'zh-CN': { kind: '地产信托', checks: ['来源', '费用', '风险'], headline: ['看见', '资产', '背后'], line: '写字楼 · 物流仓 · 产业园\n按份额参与，信息写清楚', foot: '好资产，一目了然' },
+  en: { kind: 'REIT', checks: ['Source', 'Fees', 'Risk'], headline: ['SEE', 'BEHIND', 'THE ASSET'], line: 'Offices · logistics · parks\nBy the share, every detail stated', foot: 'Good assets, at a glance' },
+}
+
+/**
+ * Scene card (sample, card 1): a photograph of a person peeling back a giant blank app slab to reveal a real building.
+ * Our interface is laid onto the slab in code (sharp, translatable, animated), positioned in % of the photograph.
+ */
+function SceneSlab({ active, locale }: { active: boolean; locale: AppLocale }) {
+  const c = SCENE_COPY[locale] ?? SCENE_COPY.en!
+  const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0, y: active ? 0 : 6 }, transition: { duration: .5, delay: active ? .25 + k * .09 : 0, ease: EASE } })
+  return <div className={styles.slab} aria-hidden={!active}>
+    <motion.div className={styles.slabTop} {...show(0)}>
+      <RwaLogoMark width={22} height={12} label="" accentColor="#5f6b6a" /><span>A-REIT</span><i>···</i>
+    </motion.div>
+    <motion.div className={styles.slabProfile} {...show(1)}>
+      <span className={styles.slabAvatar}><Building2 size={16} strokeWidth={1.2} /></span>
+      <span><b>{c.kind}</b><small>A-REIT</small></span>
+    </motion.div>
+    <motion.div className={styles.slabChecks} {...show(2)}>
+      {c.checks.map(k => <span key={k}><Check size={10} strokeWidth={1.6} /><small>{k}</small></span>)}
+    </motion.div>
+    <motion.h2 className={styles.slabHead} {...show(3)}>{c.headline.map(l => <span key={l}>{l}</span>)}</motion.h2>
+    <motion.p className={styles.slabLine} {...show(4)}>{c.line}</motion.p>
+    <motion.div className={styles.slabFoot} {...show(5)}><i /><span>{c.foot}</span></motion.div>
+  </div>
+}
 const GAP = 12
 const CUT = { type: 'spring', stiffness: 260, damping: 32, mass: .9 } as const
 const EASE = [.65, 0, .35, 1] as const
@@ -119,6 +149,13 @@ function Card({ i, active, step, track, tiltX, tiltY, locale }: {
   const heroX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * -70 + t * -10)
   const heroY = useTransform(tiltY, t => t * -8)
   const topoX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * 30 + t * 6)
+  if ('scene' in card) return <motion.article className={`${styles.card} ${styles.sceneCard}`} style={{ scale } as never} aria-hidden={!active}>
+    <motion.div className={styles.scene} style={{ x: topoX }}>
+      <img className={styles.scenePhoto} src={`${ART}/${card.scene}.webp`} alt="" draggable={false} />
+      <SceneSlab active={active} locale={locale} />
+    </motion.div>
+    <motion.span className={styles.veil} style={{ opacity: dim }} aria-hidden="true" />
+  </motion.article>
   return <motion.article className={styles.card} style={{ scale, '--from': card.from, '--to': card.to } as never} aria-hidden={!active}>
     <motion.img className={styles.topo} src={`${ART}/topo.svg`} alt="" style={{ x: topoX }} draggable={false} />
     <span className={styles.sheen} aria-hidden="true" />

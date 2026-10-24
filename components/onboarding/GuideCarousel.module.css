@@ -125,3 +125,30 @@
 .topo { opacity: .32; }
 .heroWrap { top: 9%; left: 5%; right: 5%; }
 .hero { padding: 5%; }
+
+/* Round 16 sample: scene card. The photograph keeps its 2:3 shape and fills the card's height; the slab overlay is
+   placed in % of the photograph, sized in container units, so it stays on the slab at any card size. */
+.sceneCard { background: #c9c3bb; }
+.scene { position: absolute; top: 0; bottom: 0; left: 0; height: 100%; aspect-ratio: 2 / 3; translate: -4% 0; container-type: inline-size; }
+.scenePhoto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; -webkit-user-drag: none; }
+/* The printed interface: dark grey on warm stone, pressed in (a light lower edge, a soft upper shade). */
+.slab { position: absolute; left: 10.5%; top: 9%; width: 33%; height: 70%; display: flex; flex-direction: column; color: #4b4a47;
+  text-shadow: 0 .6px 0 rgba(255, 255, 255, .55), 0 -.4px 0 rgba(0, 0, 0, .12); }
+.slabTop { display: flex; align-items: center; gap: 1.6cqw; font-size: 2.3cqw; font-weight: 600; letter-spacing: .22em; }
+.slabTop svg { width: 6cqw; height: auto; }
+.slabTop i { margin-inline-start: auto; font-style: normal; letter-spacing: .1em; }
+.slabProfile { display: flex; align-items: center; gap: 3cqw; margin-top: 5cqw; padding-bottom: 3cqw; border-bottom: 1px solid rgba(75, 74, 71, .25); }
+.slabAvatar { display: grid; place-items: center; width: 9cqw; height: 9cqw; border-radius: 50%; color: #6b6964;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, .18), inset 0 -1px 0 rgba(255, 255, 255, .6); background: rgba(0, 0, 0, .03); }
+.slabAvatar svg { width: 4.4cqw; height: 4.4cqw; }
+.slabProfile span:last-child { display: grid; gap: .6cqw; }
+.slabProfile b { font-size: 3.2cqw; font-weight: 600; letter-spacing: .02em; }
+.slabProfile small { font-size: 1.9cqw; letter-spacing: .2em; opacity: .7; }
+.slabChecks { display: flex; justify-content: space-between; margin-top: 3.6cqw; }
+.slabChecks span { display: grid; justify-items: center; gap: 1cqw; }
+.slabChecks svg { width: 4.2cqw; height: 4.2cqw; padding: .8cqw; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(75, 74, 71, .35); }
+.slabChecks small { font-size: 2cqw; letter-spacing: .12em; }
+.slabHead { display: grid; margin: auto 0 0; font-size: 10.5cqw; font-weight: 800; line-height: 1.02; letter-spacing: .02em; color: #3d3c39; }
+.slabLine { margin: 4cqw 0 0; padding-top: 3cqw; border-top: 1px solid rgba(75, 74, 71, .3); font-size: 2.3cqw; line-height: 1.6; white-space: pre-line; opacity: .85; }
+.slabFoot { display: flex; align-items: center; gap: 2cqw; margin-top: 5cqw; font-size: 2.1cqw; font-weight: 600; letter-spacing: .14em; }
+.slabFoot i { width: 4cqw; height: 4cqw; border-radius: 50%; box-shadow: inset 0 0 0 1.2px rgba(75, 74, 71, .55); background: radial-gradient(circle, rgba(75, 74, 71, .6) 28%, transparent 32%); }
