@@ -10,10 +10,6 @@ import styles from './P02-Login.module.css'
 import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
 import { usePaletteA } from '@/lib/palette-preview'
-import dynamic from 'next/dynamic'
-
-// WebGL silk backdrop for the palette A sign-in poster; client-only and loaded after first paint.
-const Silk = dynamic(() => import('../vendor/react-bits/Silk'), { ssr: false })
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -58,9 +54,11 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </video>}
     </div>
     <div className={styles.sceneWash} aria-hidden="true" />
-    {poster && paletteA && <div className={styles.silk} aria-hidden="true">
-      <Silk key={media} lightMode={!cool} color={cool ? '#19c7aa' : '#5fe3cf'} sheenColor={cool ? '#7fe3ff' : '#ffffff'}
-        speed={3.2} scale={.9} rotation={-.35} depth={cool ? .6 : .3} sheen={cool ? .7 : .5} glow={cool ? .45 : .2} noiseIntensity={1} intro />
+    {/* Palette A sign-in: the guide's paper phone, facing you (day / night with the theme); the mark is printed on it
+        and the headline (hero) is set onto its face by CSS. The form sits below, on the floor. */}
+    {poster && paletteA && <div className={styles.paperBack} aria-hidden="true">
+      <img className={styles.paperPhoto} src={`/media/palette-a/login/${cool ? 'night' : 'day'}.webp`} alt="" draggable={false} />
+      <div className={styles.paperMark}><RwaLogoMark width={30} height={17} label="" /><b>A-REIT</b></div>
     </div>}
 
     <header className={styles.topbar}>

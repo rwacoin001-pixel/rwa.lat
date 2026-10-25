@@ -681,3 +681,56 @@
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .stage { position: relative; z-index: 2; width: 100%; margin: 0; padding: 4px 24px calc(16px + env(safe-area-inset-bottom)); }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .stage > * { width: min(400px, 100%); margin-inline: auto; }
 :global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { padding-top: 16px; }
+
+/* Round 36: palette A sign-in = the last scene of the guide. A straight-on paper phone fills the top (day or night
+   photo); its face (23.2-76.6 % across, 8.5-75.3 % down the photo) carries the printed mark and the headline; the
+   real form sits below on the floor in the guide's liquid glass. --pw is the photo width; the photo is 2:3. */
+:global(html[data-palette='a']) .root[data-auth-poster='true'] { --pw: min(100vw, var(--app-max, 480px)); --face-l: calc(var(--pw) * .232); --face-w: calc(var(--pw) * .534);
+  --face-t: calc(var(--pw) * 1.5 * .085); --face-b: calc(var(--pw) * 1.5 * .753);
+  background: linear-gradient(180deg, #b9b9bc 0, #c2c2c5 calc(var(--pw) * 1.2), #c4c3c5 100%); }
+:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] { background: linear-gradient(180deg, #292829 0, #393637 calc(var(--pw) * 1.2), #444142 100%); }
+.paperBack { position: absolute; z-index: 0; top: 0; left: 50%; width: var(--pw); aspect-ratio: 2 / 3; translate: -50% 0; pointer-events: none; }
+.paperPhoto { position: absolute; inset: 0; width: 100%; height: 100%; -webkit-user-drag: none;
+  -webkit-mask-image: linear-gradient(180deg, #000 88%, transparent 100%); mask-image: linear-gradient(180deg, #000 88%, transparent 100%); }
+.paperMark { position: absolute; left: calc(23.2% + 5%); top: calc(8.5% + 4.6%); display: flex; align-items: center; gap: 8px; color: #141a22; mix-blend-mode: multiply; }
+.paperMark b { font-size: calc(var(--pw) * .036); font-weight: 700; letter-spacing: .04em; }
+.root[data-auth-theme='cool'] .paperMark { mix-blend-mode: normal; color: #1d2128; }
+/* The headline is printed on the face. */
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .heroCopy { position: absolute; z-index: 1; margin: 0; left: calc(50% - var(--pw) / 2 + var(--face-l) + var(--pw) * .052);
+  width: calc(var(--face-w) - var(--pw) * .1); top: calc(var(--face-t) + var(--pw) * .16); text-align: start; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .heroCopy .cardTitle { margin: 0; color: #141a22; font-size: calc(var(--pw) * .085); font-weight: 800; line-height: 1.14; letter-spacing: -.01em;
+  mix-blend-mode: multiply; text-shadow: 0 1px 0 rgba(255, 255, 255, .55); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .heroCopy .cardTitle em { color: #0a8a73; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .heroCopy .cardLede { margin: 14px 0 0; color: #3d4450; font-size: calc(var(--pw) * .034); line-height: 1.55; mix-blend-mode: multiply; text-shadow: none; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .heroCopy :is(.cardTitle, .cardLede) { mix-blend-mode: normal; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .heroCopy .cardTitle { color: #1b1f26; }
+/* The form starts on the floor, under the phone. */
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .stage { margin-top: auto; padding-top: calc(var(--face-b) + 18px); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .topbar { position: relative; z-index: 3; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .brand { visibility: hidden; }
+/* Liquid glass, as on the guide's last page: the email pill is light glass with a dark disc; primary actions are dark glass. */
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .field { min-height: 58px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .66);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 -1px .5px rgba(255, 255, 255, .3), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 14px 30px -20px rgba(15, 23, 42, .5);
+  -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .field:focus-within { box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 0 0 1.5px rgba(10, 138, 115, .55), 0 14px 30px -20px rgba(15, 23, 42, .5); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .field { background: rgba(32, 34, 40, .62);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .2), inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 14px 30px -20px rgba(0, 0, 0, .8); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .field.codeBox { border-radius: 22px; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .inlineSubmit { width: 44px; height: 44px; color: #ffffff; background: rgba(12, 16, 24, .86);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .3), 0 6px 14px -8px rgba(11, 18, 32, .7); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .inlineSubmit { color: #0b1220; background: rgba(242, 244, 247, .92); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .primary { min-height: 58px; border: 0; border-radius: 999px; color: #ffffff; background: rgba(12, 16, 24, .8);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .35), inset 0 0 0 .5px rgba(255, 255, 255, .14), 0 20px 34px -20px rgba(11, 18, 32, .8); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .primary { color: #0b1220; background: rgba(242, 244, 247, .88); }
+/* Other ways in: one quiet row of small glass discs under a hairline. */
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .otherMethods { margin-top: 16px; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .altMethods { display: flex; justify-content: center; gap: 14px; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .altMethods button { width: 48px; height: 48px; border: 0; border-radius: 50%; color: #141a22; background: rgba(255, 255, 255, .5);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .9), inset 0 0 0 .5px rgba(255, 255, 255, .5), 0 8px 18px -12px rgba(15, 23, 42, .45); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .altMethods button img { width: 20px; height: 20px; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .altMethods button { color: #f2f4f7; background: rgba(40, 44, 52, .5); box-shadow: inset 0 1px .5px rgba(255, 255, 255, .2), inset 0 0 0 .5px rgba(255, 255, 255, .1); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .altMethods img[data-mono] { filter: invert(1); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .outerFooter { padding-top: 10px; font-size: 11px; color: color-mix(in srgb, #141a22 60%, transparent); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .outerFooter { color: rgba(242, 244, 247, .55); }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .cardHead .cardTitle { color: #141a22; }
+:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .cardHead .cardTitle { color: #f2f4f7; }
