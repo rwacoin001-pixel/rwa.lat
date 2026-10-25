@@ -96,13 +96,19 @@ export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy =
     setValue(''); sending.current = true
     try { await onConfirm(pin) } finally { sending.current = false }
   }
+  // Palette A: the sixth digit confirms (the keypad has no Enter); the button stays only as a busy line.
+  const paletteA = usePaletteA()
+  const confirmRef = useRef(confirm)
+  confirmRef.current = confirm
+  useEffect(() => { if (paletteA && open && isPin(value)) void confirmRef.current() }, [paletteA, open, value])
   return <Sheet open={open} busy={busy} onClose={() => { setValue(''); onClose() }} title={p.prompt.title} data-transaction-pin="confirm">
     <dl className={`${s.summary} ${x.summary}`}>{summary.map(line => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl>
     <TransactionPinPad value={value} onChange={setValue} disabled={busy} invalid={Boolean(error)} />
     {error && <p className={s.fieldError} role="alert">{error}</p>}
-    <button type="button" className={s.cta} disabled={busy || !isPin(value)} aria-busy={busy} onClick={() => void confirm()}>
-      <span>{busy ? p.working : p.prompt.confirm}</span><LockKeyhole size={18} aria-hidden="true" />
-    </button>
+    {paletteA ? <p className={x.working} aria-live="polite">{busy ? p.working : null}</p>
+      : <button type="button" className={s.cta} disabled={busy || !isPin(value)} aria-busy={busy} onClick={() => void confirm()}>
+        <span>{busy ? p.working : p.prompt.confirm}</span><LockKeyhole size={18} aria-hidden="true" />
+      </button>}
   </Sheet>
 }
 

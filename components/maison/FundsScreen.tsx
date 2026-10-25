@@ -143,6 +143,12 @@ export function WithdrawScreen({ query }: { query: string }) {
   const keys = useRef(new Map<string, string>())
   const inflight = useRef(false)
   const [picks] = useAutoAnimate<HTMLUListElement>({ duration: 200 })
+  const paletteA = usePaletteA()
+  const kit = flowKitCopy(locale)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const [scanning, setScanning] = useState(false)
+  // The PIN sheet (or PIN setup) takes over from the review sheet.
+  useEffect(() => { if (pinPrompt || pinManager) setReviewOpen(false) }, [pinPrompt, pinManager])
 
   const decimals = network?.assetDecimals ?? 6
   const unit = network?.assetCode ?? 'USDT'
@@ -243,6 +249,89 @@ export function WithdrawScreen({ query }: { query: string }) {
   const again = () => { keys.current.clear(); setReceipt(null); setAmount(''); setConsent(false); setTouched(false); setServerError(null) }
 
   const topbar = <RwaTopbar screen="withdraw" title={w.title} onBack={() => backOr('/assets/cash')} />
+  if (paletteA) {
+    const arrival = network?.estimatedArrivalMinutes?.length ? kit.minutes(network.estimatedArrivalMinutes[0], network.estimatedArrivalMinutes[network.estimatedArrivalMinutes.length - 1]) : '—'
+    const bare = (value: string | null | undefined) => fmtAtomic(value, decimals, unit).replace(` ${unit}`, '')
+    if (receipt) {
+      const done = ['completed', 'posted', 'approved'].includes(receipt.state)
+      return <MaisonPage page="withdraw" className={fs.page} topbar={topbar}>
+        <h1 className={fp.srTitle}>{w.title}</h1>
+        <FlowSuccess title={done ? w.done : kit.sentWithdraw} pending={!done} amount={bare(receipt.atomicAmount)} unit={unit}
+          rows={[
+            { label: f.common.state, value: stateLabel(states, receipt.state) },
+            { label: f.common.network, value: list.find((item) => item.id === receipt.network)?.displayName ?? receipt.network },
+            { label: w.to, value: <bdi dir="ltr" className={s.mono}>{receipt.to}</bdi> },
+            { label: f.common.fee, value: fmtAtomic(receipt.feeAtomicAmount, decimals, unit) },
+            { label: kit.arrival, value: arrival },
+            { label: f.common.reference, value: <span className={s.mono} dir="ltr">{receipt.id.slice(0, 8)}</span> },
+            ...(receipt.reasonCode ? [{ label: w.reason, value: w.reasons[receipt.reasonCode] ?? receipt.reasonCode }] : []),
+          ]}
+          note={[!receipt.created && f.common.replay, receipt.integration && !receipt.integration.realFunds && f.common.stubNote].filter(Boolean).join(' · ') || undefined}
+          onDone={() => openPath('/assets/cash')} onAgain={again} onRecords={() => openPath('/assets/activity?type=funding')} />
+      </MaisonPage>
+    }
+    const usableEntries = entries.filter(usable)
+    const typedBad = mode === 'manual' && destination.length > 0 && !addressOk
+    const gateBlocked = knownGate !== null && !['ready', 'unset'].includes(knownGate)
+    // The button names the next missing thing, top to bottom.
+    const talk = !network ? kit.checking
+      : !addressOk ? (typedBad ? fill(w.addressInvalid, { n: network.displayName }) : kit.chooseAddress)
+      : !amount ? kit.enterAmount
+      : fieldError === w.insufficient ? kit.insufficient
+      : fieldError ? fieldError
+      : !current ? kit.checking
+      : current.error ? w.quoteError
+      : insufficient ? kit.insufficient
+      : gateBlocked ? p.gate[knownGate as keyof typeof p.gate]
+      : knownGate === 'unset' ? p.title.setup
+      : pending ? f.common.submitting
+      : kit.withdrawN(fmtAtomic(atomic, decimals, unit))
+    const canReview = Boolean(network && atomic && !fieldError && addressOk && current?.data && !insufficient && !pending && !gateBlocked)
+    const pasteAddress = async () => {
+      try { const text = (await navigator.clipboard.readText()).trim().replace(/\s/g, ''); if (text) { setModePick('manual'); setEntryId(null); setDestination(text); setServerError(null) } } catch { /* paste blocked: typing still works */ }
+    }
+    return <MaisonPage page="withdraw" className={fs.page} topbar={topbar}>
+      {scanning && network && <TransferScanner onClose={() => setScanning(false)} onCode={(code) => { const value = code.trim().replace(/^[a-z]+:/i, '').split('?')[0]; if (!isValidAddress(network.id, value)) return false; setModePick('manual'); setEntryId(null); setDestination(value); setServerError(null); return true }} />}
+      {pinManager && <TransactionPinManager open mode="setup" onClose={() => setPinManager(false)} onDone={() => { setPinManager(false); void pinStatus.refetch() }} />}
+      {pinPrompt && <TransactionPinPrompt open busy={pending} onClose={() => setPinPrompt(false)} onConfirm={confirmPin} summary={[
+        { label: f.common.amount, value: network && atomic ? fmtAtomic(atomic, decimals, unit) : '—' },
+        { label: w.to, value: destinationLine },
+      ]} />}
+      <h1 className={fp.srTitle}>{w.title}</h1>
+      {networks.error && !networks.data ? <StateBlock tone="error" title={common.errorGeneric} body={networks.error.message} retry={networks.refetch} retryLabel={common.retry} />
+        : !network ? <Skeleton rows={5} />
+        : <AmountPad value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} decimals={Math.min(decimals, 6)} unit={unit} disabled={pending}
+          invalid={Boolean(fieldError) || insufficient} error={serverError && !reviewOpen ? serverError : null}
+          sub={!wallet.data && !wallet.error ? '…' : <>{kit.available(fmtAtomic(available, decimals, unit))} · {fill(f.common.min, { v: fmtAtomic(network.minimumWithdrawalAtomic, decimals, '', 0).trim() })}</>}
+          side={[{ label: '25%', value: share(maxAtomic, 25, decimals) }, { label: '50%', value: share(maxAtomic, 50, decimals) }, { label: '75%', value: share(maxAtomic, 75, decimals) }, { label: kit.max, value: share(maxAtomic, 100, decimals) }]}
+          header={<>
+            {list.length > 1 && <div className={`${fp.touchSeg} ${fs.flowNetworks}`}><Segmented value={network.id} onChange={choose} label={f.common.network} role="group" options={list.map((item) => ({ value: item.id, label: item.displayName }))} /></div>}
+            <RecipientField label={fill(w.address, { n: network.displayName })} value={mode === 'manual' ? destination : ''} disabled={pending}
+              readOnly={mode === 'saved'} display={mode === 'saved' ? (entry ? <>{entry.label} · <Addr value={entry.destination} /></> : <span className={s.muted}>{kit.chooseAddress}</span>) : undefined}
+              placeholder={network.id === 'tron' ? 'T…' : '0x…'} state={typedBad ? 'invalid' : addressOk ? 'valid' : undefined}
+              onChange={(next) => { setModePick('manual'); setEntryId(null); setDestination(next); setServerError(null) }}
+              status={typedBad ? fill(w.addressInvalid, { n: network.displayName }) : bookRequired ? w.bookRequired : book.error && !book.data ? f.book.loadError : !entries.length && book.data ? fill(w.bookEmpty, { n: network.displayName }) : null}
+              actions={[
+                ...(bookRequired ? [] : [{ label: kit.paste, icon: <ClipboardPaste size={19} strokeWidth={1.7} />, onClick: () => void pasteAddress() }, { label: kit.scan, icon: <QrCode size={19} strokeWidth={1.7} />, onClick: () => setScanning(true) }]),
+                { label: kit.book, icon: <BookUser size={19} strokeWidth={1.7} />, onClick: () => openPath('/assets/cash/address-book') },
+              ]}
+              recents={{ title: w.saved, items: usableEntries.map((item) => ({ key: item.id, label: <>{item.label} <small className={s.mono} dir="ltr">…{item.destination.slice(-4)}</small></>, active: mode === 'saved' && entry?.id === item.id, onPick: () => { setModePick('saved'); setEntryId(item.id); setServerError(null) } })) }} />
+          </>}
+          cta={{ label: talk, disabled: !canReview && knownGate !== 'unset', busy: pending, onClick: () => { if (knownGate === 'unset') { setPinManager(true); return } setServerError(null); setConsent(false); setReviewOpen(true) } }} />}
+      {network && <FlowConfirm open={reviewOpen} onClose={() => { if (!pending) setReviewOpen(false) }} busy={pending} title={kit.reviewWithdraw} amount={atomic ? bare(atomic) : '0'} unit={unit}
+        rows={[
+          { label: w.to, value: destinationLine },
+          { label: f.common.network, value: network.displayName },
+          { label: f.common.fee, value: fmtAtomic(current?.data?.feeAtomicAmount ?? network.withdrawalFeeAtomic, decimals, unit) },
+          { label: kit.arrival, value: arrival },
+          { label: w.total, value: current?.data ? fmtAtomic(current.data.totalDebitAtomic, decimals, unit) : '—', strong: true },
+        ]}
+        note={integration && !integration.realFunds ? f.common.stubNote : stepUpRequired(integration) ? f.stepUp.required : undefined}
+        consent={{ label: w.consent, checked: consent, onChange: (checked) => { setConsent(checked); setServerError(null) } }}
+        error={serverError} confirmLabel={kit.confirmWithdraw} onConfirm={() => void submit()} />}
+      {sheet}
+    </MaisonPage>
+  }
   if (receipt) return <MaisonPage page="withdraw" className={fs.page} topbar={topbar}>
     <h1 className={fp.srTitle}>{w.title}</h1>
     <Receipt f={f} title={w.done} created={receipt.created} integration={receipt.integration} onAgain={again} rows={[

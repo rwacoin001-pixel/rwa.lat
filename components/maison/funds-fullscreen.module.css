@@ -139,3 +139,4 @@
 @media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .page .rows[data-ready] > div { animation: none; } }
 :global(html[data-palette='a']) .page [data-inline-max] .maxChip { flex: none; min-height: 32px; min-width: 0; padding: 0 14px; border-radius: 999px; font-size: 13px; }
 :global(html[data-palette='a']) .page .empty { border: 0; }
+:global(html[data-palette='a']) .page .flowNetworks { margin-bottom: 12px; }

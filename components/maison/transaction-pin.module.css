@@ -68,3 +68,4 @@
 .kitPad[data-invalid="true"] .slots span { border-color: var(--m-down); }
 .shuffle { display: inline-flex; align-items: center; justify-self: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--m-muted); font: inherit; font-size: 12.5px; cursor: pointer; }
 .shuffle[aria-pressed="true"] { color: var(--m-ink); background: var(--pa-fill); }
+.working { min-height: 20px; margin: 4px 0 0; color: var(--m-muted); font-size: 13px; text-align: center; }
