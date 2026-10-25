@@ -30,6 +30,8 @@ import fp from './funds-polish.module.css'
 import fs from './funds-fullscreen.module.css'
 import { usePaletteA } from '@/lib/palette-preview'
 import tf from './transfer-feedback.module.css'
+import { AmountPad, FlowConfirm, FlowSuccess, RecipientField, share, useRecentRecipients } from './flow-kit'
+import { flowKitCopy } from '@/lib/flow-kit-copy'
 
 const WITHDRAW_PATH = '/v1/wallet/withdrawals'
 const TRANSFER_PATH = '/v1/wallet/transfers'
@@ -424,6 +426,10 @@ export function TransferScreen({ query }: { query: string }) {
   useEffect(() => { setSelf(readSession()?.userId ?? null) }, [])
   const keys = useRef(new Map<string, string>())
   const inflight = useRef(false)
+  const paletteA = usePaletteA()
+  const kit = flowKitCopy(locale)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const recents = useRecentRecipients(self)
 
   const decimals = wallet.data?.asset.decimals ?? 6
   const unit = wallet.data?.asset.code ?? 'USDT'
@@ -474,6 +480,8 @@ export function TransferScreen({ query }: { query: string }) {
       if (!result) { setServerError(f.common.cancelled); return }
       if (!result.ok) { setServerError(p.errors[result.error.code] ?? errorText(f, result.error, common.errorGeneric)); void recipientStatus.refetch(); return }
       invalidate(['wallet:', 'portfolio:', 'home:'])
+      recents.remember(body.recipientUserId)
+      setReviewOpen(false)
       setReceipt(result.data)
     } catch {
       // Fields and key are kept; retrying sends the same idempotent intent.
@@ -501,6 +509,60 @@ export function TransferScreen({ query }: { query: string }) {
   }
 
   const topbar = <RwaTopbar screen="transfer" title={t.title} onBack={() => backOr('/assets/cash')} />
+  if (paletteA) {
+    const short = (value: string) => `${value.slice(0, 4)}…${value.slice(-4)}`
+    if (receipt) return <MaisonPage page="transfer" className={fs.page} topbar={topbar}>
+      <h1 className={fp.srTitle}>{t.title}</h1>
+      <FlowSuccess title={['completed', 'posted'].includes(receipt.state) ? kit.sentTransfer : stateLabel(states, receipt.state)} pending={!['completed', 'posted'].includes(receipt.state)}
+        amount={exact(receipt.atomicAmount).replace(` ${unit}`, '')} unit={unit}
+        rows={[
+          { label: t.to, value: <bdi dir="ltr" className={s.mono}>{short(receipt.recipientUserId)}</bdi> },
+          { label: f.common.fee, value: t.feeValue },
+          { label: kit.arrival, value: kit.instant },
+          { label: f.common.reference, value: <span className={s.mono} dir="ltr">{receipt.id.slice(0, 8)}</span> },
+        ]}
+        note={[!receipt.created && f.common.replay, receipt.integration && !receipt.integration.realFunds && f.common.stubNote].filter(Boolean).join(' · ') || undefined}
+        onDone={() => openPath('/assets/cash')} onAgain={again} onRecords={() => openPath('/assets/activity?type=funding')} />
+    </MaisonPage>
+    // The button says what is missing, in the order the user fills the page.
+    const eligibility = recipientStatus.error ? kit.unavailable : recipientStatus.loading || !recipientStatus.data ? kit.checking : recipientStatus.data.receivable ? null : recipientStatus.data.reason === 'deposit_threshold' ? p.depositRule : p.eligibility.ineligible
+    const talk = !wallet.data ? kit.checking
+      : !id ? kit.addRecipient
+      : recipientError ?? (eligibility && eligibility !== kit.checking ? eligibility : null)
+        ?? (!amount ? kit.enterAmount
+          : fieldError === f.errors.WALLET_INSUFFICIENT_BALANCE ? kit.insufficient
+          : fieldError ? fieldError
+          : eligibility ?? (pending ? f.common.submitting : kit.transferN(exact(atomic))))
+    const canReview = Boolean(id && !recipientError && recipientStatus.data?.receivable && !recipientStatus.error && atomic && !fieldError && wallet.data && !pending)
+    const amountShown = atomic && !fieldError ? exact(atomic).replace(` ${unit}`, '') : '0'
+    return <MaisonPage page="transfer" className={`${fs.page} ${tf.form}`} topbar={topbar}>
+      {scanning && <TransferScanner onClose={() => setScanning(false)} onCode={code => { if (inflight.current) return false; const value = transferRecipientFromCode(code, window.location.origin); if (!value) return false; setRecipient(value); setServerError(null); setConsent(false); return true }} />}
+      <h1 className={fp.srTitle}>{t.title}</h1>
+      {wallet.error && !wallet.data ? <StateBlock tone="error" title={common.errorGeneric} body={wallet.error.message} retry={wallet.refetch} retryLabel={common.retry} />
+        : <AmountPad value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} decimals={Math.min(decimals, 6)} unit={unit} disabled={pending}
+          invalid={Boolean(fieldError)} error={serverError && !reviewOpen ? serverError : null}
+          sub={<>{kit.available(exact(available))}{atomic && !fieldError && unit === 'USDT' ? <> · {kit.approx(fromAtomic(atomic, decimals))}</> : null}</>}
+          side={[{ label: '25%', value: share(available, 25, decimals) }, { label: '50%', value: share(available, 50, decimals) }, { label: '75%', value: share(available, 75, decimals) }, { label: kit.max, value: share(available, 100, decimals) }]}
+          header={<RecipientField label={t.recipient} value={recipient} disabled={pending} placeholder={t.recipient}
+            state={recipientError ? 'invalid' : recipientStatus.data?.receivable && !recipientStatus.error ? 'valid' : undefined}
+            onChange={(next) => { setRecipient(next); setServerError(null); setPasteFailed(false); setConsent(false) }}
+            status={recipientError ?? (pasteFailed ? t.pasteFailed : id ? (eligibility ?? [recipientStatus.data?.displayName, p.eligibility.eligible].filter(Boolean).join(' · ')) : null)}
+            actions={[{ label: kit.paste, icon: <ClipboardPaste size={19} strokeWidth={1.7} />, onClick: () => void paste() }, { label: kit.scan, icon: <QrCode size={19} strokeWidth={1.7} />, onClick: () => setScanning(true) }]}
+            recents={{ title: kit.recent, items: recents.items.filter((item) => item !== self).map((item) => ({ key: item, label: <bdi dir="ltr">{short(item)}</bdi>, active: item === id, onPick: () => { setRecipient(item); setServerError(null); setConsent(false) } })) }} />}
+          cta={{ label: talk, disabled: !canReview, busy: pending, onClick: () => { setServerError(null); setConsent(false); setReviewOpen(true) } }} />}
+      <FlowConfirm open={reviewOpen} onClose={() => { if (!pending) setReviewOpen(false) }} busy={pending} title={kit.reviewTransfer} amount={amountShown} unit={unit}
+        rows={[
+          { label: t.to, value: id ? <Addr value={id} head={8} tail={4} /> : '—' },
+          { label: f.common.fee, value: t.feeValue },
+          { label: kit.arrival, value: kit.instant },
+          { label: f.common.after, value: atomic && !fieldError && available !== null ? exact((BigInt(available) - BigInt(atomic)).toString()) : '—', strong: true },
+        ]}
+        note={integration && !integration.realFunds ? f.common.stubNote : undefined}
+        consent={{ label: <>{t.consent}{id && !recipientError && <> {fill(t.idTail, { d: id.slice(-4) })}</>}</>, checked: consent, onChange: (checked) => { setConsent(checked); setServerError(null) } }}
+        error={serverError} confirmLabel={kit.confirmTransfer} onConfirm={() => void submit()} />
+      {sheet}
+    </MaisonPage>
+  }
   if (receipt) return <MaisonPage page="transfer" className={fs.page} topbar={topbar}>
     <h1 className={fp.srTitle}>{t.title}</h1>
     <div className={tf.receipt} data-tone={stateTone(receipt.state)}>

@@ -59,3 +59,12 @@
   .keys button:active:not(:disabled), .altList button:active:not(:disabled) { transform: none; }
   .lead, .spin, .pad[data-invalid="true"] .slots, .otp[data-invalid="true"] .otpSlots { animation: none; }
 }
+
+/* Palette A PIN pad (KitPinPad): the shared keypad under six dots; ink dots, not accent. */
+.kitPad { display: grid; gap: 6px; margin: 18px 0 4px; }
+.kitPad .slots { margin-bottom: 18px; }
+.kitPad .slots span[data-filled="true"] { border-color: var(--m-ink); background: var(--m-ink); }
+.kitPad[data-invalid="true"] .slots { animation: pinShake .4s var(--m-ease); }
+.kitPad[data-invalid="true"] .slots span { border-color: var(--m-down); }
+.shuffle { display: inline-flex; align-items: center; justify-self: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--m-muted); font: inherit; font-size: 12.5px; cursor: pointer; }
+.shuffle[aria-pressed="true"] { color: var(--m-ink); background: var(--pa-fill); }

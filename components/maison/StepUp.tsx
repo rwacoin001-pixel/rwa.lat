@@ -1,6 +1,8 @@
 'use client'
 
 import { Fingerprint, KeyRound, Loader2, Mail, ShieldCheck } from 'lucide-react'
+import { usePaletteA } from '@/lib/palette-preview'
+import { CodePad } from './flow-kit'
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -90,6 +92,14 @@ function StepUpSheet({ open, summary, onDone }: { open: boolean; summary?: StepU
 }
 
 function CodeField({ value, onChange, disabled, invalid, label, focusToken }: {
+  value: string; onChange: (value: string) => void; disabled: boolean; invalid: boolean; label: string; focusToken?: string
+}) {
+  // Palette A: the code goes in on our keypad, with Paste and a switch back to the system keyboard.
+  if (usePaletteA()) return <CodePad value={value} onChange={onChange} disabled={disabled} invalid={invalid} label={label} />
+  return <SystemCodeField value={value} onChange={onChange} disabled={disabled} invalid={invalid} label={label} focusToken={focusToken} />
+}
+
+function SystemCodeField({ value, onChange, disabled, invalid, label, focusToken }: {
   value: string; onChange: (value: string) => void; disabled: boolean; invalid: boolean; label: string; focusToken?: string
 }) {
   const input = useRef<HTMLInputElement>(null)
@@ -200,7 +210,9 @@ export function StepUpPanel({ emailFirst = false, locked = false, onVerified, on
   }
   const verifyRef = useRef(verify)
   verifyRef.current = verify
-  useEffect(() => { if (active === 'email' && /^\d{6}$/.test(code)) void verifyRef.current() }, [code, active])
+  const paletteA = usePaletteA()
+  // Six digits verify by themselves (email always; the authenticator too on the palette A keypad, which has no Enter).
+  useEffect(() => { if ((active === 'email' || (paletteA && active === 'totp')) && /^\d{6}$/.test(code)) void verifyRef.current() }, [code, active, paletteA])
 
   const pick = (next: Method) => { setMethod(next); setCode(''); setNote(null) }
   const leave = () => { onLeave?.(); openPath('/profile/security') }
@@ -222,7 +234,8 @@ export function StepUpPanel({ emailFirst = false, locked = false, onVerified, on
           : mail.phase === 'sending' ? <><Loader2 size={14} className={x.spin} aria-hidden="true" />{e.sending}</> : null}
       </p>
       <CodeField value={code} onChange={(next) => { setCode(next); setNote(null) }} disabled={lock || !mail.challenge} invalid={note?.tone === 'error' && Boolean(mail.challenge)} label={e.codeLabel} focusToken={mail.challenge?.challengeId} />
-    </> : active === 'passkey' ? <p className={s.muted} style={{ margin: '14px 0 0', fontSize: 12.5 }}><Fingerprint size={14} aria-hidden="true" style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />{t.passkeyBody}</p>
+    </> : active === 'totp' && paletteA ? <CodePad value={code} onChange={(next) => { setCode(next); setNote(null) }} disabled={locked || busy} invalid={note?.tone === 'error'} label={t.totpLabel} />
+      : active === 'passkey' ? <p className={s.muted} style={{ margin: '14px 0 0', fontSize: 12.5 }}><Fingerprint size={14} aria-hidden="true" style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />{t.passkeyBody}</p>
       : <label className={s.field}>
         <span>{active === 'totp' ? t.totpLabel : t.recoveryLabel}</span>
         <input autoFocus value={code} name="step-up-code" aria-invalid={note?.tone === 'error'} aria-describedby="step-up-error" disabled={locked}
@@ -234,7 +247,7 @@ export function StepUpPanel({ emailFirst = false, locked = false, onVerified, on
     {emailActive ? <div className={x.resend}>
       {wait > 0 ? <span>{e.resendIn(wait)}</span>
         : <button type="button" className={s.link} disabled={lock || mail.phase === 'sending'} onClick={() => void sendCode(true)}>{e.resend}</button>}
-    </div> : <button type="submit" className={s.cta} style={{ marginTop: 16 }} disabled={!valid || lock} aria-busy={busy}>
+    </div> : paletteA && active === 'totp' ? null : <button type="submit" className={s.cta} style={{ marginTop: 16 }} disabled={!valid || lock} aria-busy={busy}>
       <span>{busy ? t.verifying : active === 'passkey' ? t.passkeyCta : t.verify}</span>
       <span className={s.ctaIcon}>{active === 'passkey' ? <Fingerprint size={17} /> : <KeyRound size={17} />}</span>
     </button>}
