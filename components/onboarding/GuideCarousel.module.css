@@ -505,3 +505,6 @@
 :global(html[data-theme='dark']) .finishBtn i { color: #ffffff; background: #0b1220; }
 /* With an install card in the stack the last page's text block moves up to clear it. */
 .guide[data-offer] .sceneFoot[data-last] { bottom: calc(218px + env(safe-area-inset-bottom)); }
+
+/* The band above and below each photo is the photo's own top / bottom colour, so the status bar area matches. */
+.sceneCard { background: linear-gradient(180deg, var(--sky) 0%, var(--sky) 22%, var(--ground) 78%, var(--ground) 100%); }

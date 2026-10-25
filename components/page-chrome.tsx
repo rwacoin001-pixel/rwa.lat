@@ -31,6 +31,14 @@ export default function PageChrome() {
       frame = 0
       const root = document.documentElement
       if (/RwaLatAndroidTrial\//.test(navigator.userAgent)) root.dataset.nativeApp = 'android'
+      // A full-screen guide over the page owns the top edge: its own colour for the bar and the page behind it.
+      const guide = document.querySelector<HTMLElement>('[data-guide-chrome]')?.dataset.guideChrome
+      if (guide) {
+        if (guide !== pageColor) { pageColor = guide; root.style.setProperty('--page-chrome-color', guide); root.style.backgroundColor = guide; document.body.style.backgroundColor = guide }
+        onAuth = true
+        writeStatus(guide)
+        return
+      }
       const auth = document.querySelector<HTMLElement>('[data-auth-theme]')
       onAuth = Boolean(auth)
       const page = auth ?? document.querySelector<HTMLElement>('[data-maison-page]:not([data-maison-page="welcome"]), .rwa-mobile .screen, main:not(.rwa-shell):not([data-app-loading])')
@@ -64,7 +72,7 @@ export default function PageChrome() {
     const onScroll = () => { if (!scrollFrame) scrollFrame = requestAnimationFrame(scrolled) }
     update()
     const observer = new MutationObserver(schedule)
-    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-auth-theme', 'data-screen', 'data-theme', 'data-maison-page', 'class'] })
+    observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-auth-theme', 'data-screen', 'data-theme', 'data-maison-page', 'data-guide-chrome', 'class'] })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
     window.addEventListener('pageshow', schedule)
     window.addEventListener('resize', schedule, { passive: true })

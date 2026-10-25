@@ -25,10 +25,10 @@ import styles from './GuideCarousel.module.css'
  */
 const ART = '/media/palette-a/guide'
 const CARDS = [
-  { from: '#3fd3b8', to: '#00806b', value: 100, scene: 'paper' },
-  { from: '#22d0d6', to: '#00808a', value: 1, scene: 'port' },
-  { from: '#56c6f0', to: '#0077b0', value: 100, scene: 'quant' },
-  { from: '#2ccce4', to: '#007c99', value: 24, scene: 'ai' },
+  { from: '#3fd3b8', to: '#00806b', value: 100, scene: 'paper', sky: '#b9bec3', ground: '#aeb1b4' },
+  { from: '#22d0d6', to: '#00808a', value: 1, scene: 'port', sky: '#adadb0', ground: '#c9c8c8' },
+  { from: '#56c6f0', to: '#0077b0', value: 100, scene: 'quant', sky: '#a2a7ad', ground: '#afb1b6' },
+  { from: '#2ccce4', to: '#007c99', value: 24, scene: 'ai', sky: '#b5bbc2', ground: '#b1b5ba' },
 ] as const
 const AUTO_MS = 4800
 const SKIP: Partial<Record<AppLocale, string>> = { 'zh-CN': '跳过', en: 'Skip' }
@@ -396,7 +396,7 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
     <h2 className={styles.title}>{text.title}</h2>
     <p className={styles.fact}>{c.facts[i]}</p>
   </footer>
-  return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}>
+  return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active} style={{ '--sky': card.sky, '--ground': card.ground } as React.CSSProperties}>
     <PaperScene scene={card.scene} active={active} locale={locale} />
     {foot(styles.sceneFoot)}
   </article>
@@ -517,7 +517,8 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
   const r0 = useTransform(pos, p => 0 - p), r1 = useTransform(pos, p => 1 - p), r2 = useTransform(pos, p => 2 - p), r3 = useTransform(pos, p => 3 - p)
   const rels = [r0, r1, r2, r3]
 
-  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-offer={offer || undefined}>
+  // The status bar (Android theme-color) and the page behind it (iOS) take the colour at the top of the current photo.
+  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-offer={offer || undefined} data-guide-chrome={CARDS[index].sky}>
     <header className={styles.top}>
       <div className={styles.topRight}>
         <span className={styles.count}><b>0{index + 1}</b> / 04</span>
