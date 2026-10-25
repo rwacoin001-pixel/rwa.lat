@@ -46,3 +46,6 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .bigValue { font-weight: 500; }
+
+/* Palette A: a change is coloured figures, not a tinted chip (same as the picks list above). */
+:global(html[data-palette='a']) .chip { min-width: 0; padding: 0; border-radius: 0; background: none; font-size: 13.5px; text-align: end; }

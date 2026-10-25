@@ -541,7 +541,12 @@
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .invite { box-shadow: inset 0 0 0 .5px var(--home-line), 0 14px 30px -20px rgba(0, 0, 0, .8); }
 :global(html[data-palette='a']) .invite::before { display: none; }
 :global(html[data-palette='a']) .pulseValue { font-weight: 500; }
-:global(html[data-palette='a']) .invite::after { background: var(--home-accent); opacity: 1; }
+:global(html[data-palette='a']) .invite::after { display: none; }
+/* Palette A: the strips are type only: no icon disc, no accent rule; the title carries it. */
+:global(html[data-palette='a']) .inviteIcon { display: none; }
+:global(html[data-palette='a']) .inviteMain { padding-inline-start: 18px; }
+:global(html[data-palette='a']) .inviteText b { font-size: 14px; font-weight: 600; letter-spacing: 0; }
+:global(html[data-palette='a']) .inviteText small { font-size: 12px; letter-spacing: 0; }
 :global(html[data-palette='a']) .invite { background: var(--home-lacquer); }
 /* Palette A round 3: one headline and one plain subline; no dateline, no letter-spaced kicker. */
 :global(html[data-palette='a']) :is(.heroMeta, .heroKicker) { display: none; }

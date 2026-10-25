@@ -32,3 +32,6 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .question { font-weight: 600; letter-spacing: -.015em; }
+
+/* Palette A: no icon tile; the category word stands alone. */
+:global(html[data-palette='a']) .icon { display: none; }
