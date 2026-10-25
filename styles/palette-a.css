@@ -1,15 +1,19 @@
 /* Palette A preview · cool white + brand green (#19C7AA, the logo's plane).
    Only active on html[data-palette='a'] (?palette=a, see lib/document-preferences-bootstrap.ts); without it nothing here applies.
    Global layer: the --pal-* palette and the dock. Home and Maison pages override their own module tokens next to the originals. */
-/* Type: Satoshi for Latin and figures (self-hosted, Fontshare free licence), the system CJK face for Chinese.
-   Most stacks in the app start with var(--font-geist-sans) (never loaded), so pointing it at Satoshi switches them all. */
+/* Type: Satoshi for Latin and figures (self-hosted, Fontshare free licence). Chinese: PingFang on Apple devices, the
+   installed HarmonyOS Sans on Huawei/Honor, and Noto Sans SC everywhere else (self-hosted slices, styles/noto-sans-sc.css).
+   Most stacks in the app start with var(--font-geist-sans) (never loaded), so pointing it at this list switches them all. */
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
 @font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: swap; }
+/* next/font sets --font-geist-sans / --home-display-latin again on the Maison and home roots (a hashed __variable class). */
+html[data-palette='a'] [class*='__variable'] { --font-geist-sans: var(--pa-sans); --home-display-latin: var(--pa-sans); }
 html[data-palette='a'] {
-  --font-geist-sans: 'Satoshi'; --home-display-latin: 'Satoshi';
-  --font-sans: 'Satoshi', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --pa-sans: 'Satoshi', 'PingFang SC', 'HarmonyOS Sans SC', 'HarmonyOS Sans', 'Noto Sans CJK SC', 'Noto Sans SC';
+  --font-geist-sans: var(--pa-sans); --home-display-latin: var(--pa-sans);
+  --font-sans: var(--font-geist-sans), 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
   --x-font: var(--font-sans);
   --pal-light-bg: #f5f6f8; --pal-light-surface: #ffffff; --pal-light-surface-2: #eceef2;
   --pal-light-ink: #0b1220; --pal-light-ink-rgb: 11 18 32; --pal-light-ink-2: #2b3443;

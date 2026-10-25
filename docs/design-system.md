@@ -14,8 +14,11 @@
 - 青色只用在少数地方：选中、主数据、品牌标记。不做大面积底色。
 
 ## 3. 字体
-- 拉丁字母和数字：**Satoshi**（自托管 `public/fonts/satoshi`，400/500/700/900）。中文：系统字体（PingFang / 微软雅黑）。
-- 开关：`--font-geist-sans` 指向 Satoshi，大多数字体栈都从它开始。
+- 拉丁字母和数字：**Satoshi**（自托管 `public/fonts/satoshi`，400/500/700/900）。
+- 中文：苹果设备用**苹方**；华为、荣耀用本机的**鸿蒙黑体**；其他设备用**思源黑体**（Noto Sans SC，OFL 授权，自托管切片 `public/fonts/noto-sans-sc`，`styles/noto-sans-sc.css`，页面用到哪块才下载）。
+  鸿蒙黑体授权不允许修改字体文件，不能切片，所以不作为网页字体下载。
+- 开关：`--pa-sans` 是整套字体栈；`--font-geist-sans` 和 `--home-display-latin` 都指向它（包括 next/font 在页面根上重设的地方）。
+- 中文标题用 600，不用 700 以上。
 - 数字一律 `font-variant-numeric: tabular-nums`。
 
 ## 4. 控件（`components/ui/controls.module.css`）
