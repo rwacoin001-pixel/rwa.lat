@@ -194,3 +194,20 @@ html[data-palette='a'][data-theme='dark'], html[data-palette='a'] [data-ctl='dar
 /* Layout: one side margin for every page's content column (narrow phones get a little less). */
 html[data-palette='a'] { --page-gutter: 24px; }
 @media (max-width: 374px) { html[data-palette='a'] { --page-gutter: 20px; } }
+
+/* ── Component kit (docs/design-system.md §7). Every page maps its own cards, tags, tabs and fields to these. ── */
+html[data-palette='a'] {
+  --pa-card: #ffffff; --pa-card-radius: 22px; --pa-card-pad: 16px;
+  --pa-card-shadow: 0 0 0 .5px rgba(11, 18, 32, .08), 0 12px 28px -20px rgba(15, 23, 42, .28);
+  --pa-fill: rgba(11, 18, 32, .05); --pa-fill-strong: rgba(11, 18, 32, .08); --pa-hair: rgba(11, 18, 32, .1);
+  --pa-sel: #0e121a; --pa-sel-ink: #ffffff;
+  --pa-tag-h: 32px; --pa-seg-h: 40px; --pa-field-h: 44px;
+  --pa-series-1: #0a8a73; --pa-series-2: #2b3443; --pa-series-3: #98a1af; --pa-series-4: #c4a774;
+}
+html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='dark'] {
+  --pa-card: #15181e;
+  --pa-card-shadow: 0 0 0 .5px rgba(255, 255, 255, .07), 0 16px 32px -20px rgba(0, 0, 0, .8);
+  --pa-fill: rgba(255, 255, 255, .06); --pa-fill-strong: rgba(255, 255, 255, .1); --pa-hair: rgba(255, 255, 255, .09);
+  --pa-sel: #f2f4f7; --pa-sel-ink: #0b0d12;
+  --pa-series-1: #19c7aa; --pa-series-2: #e6e9ee; --pa-series-3: #7d8796; --pa-series-4: #c9ad78;
+}

@@ -166,3 +166,7 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) :is(.introTitle, .tally dd, .seriesTitle, .mark, .markS, .markL, .pager b) { font-weight: 600; letter-spacing: -.01em; }
+
+/* Palette A: a status line is text, no outlined pill, no icon. */
+:global(html[data-palette='a']) .conceptLine { padding: 0; border: 0; border-radius: 0; background: none; font-size: 12.5px; }
+:global(html[data-palette='a']) .conceptLine svg { display: none; }

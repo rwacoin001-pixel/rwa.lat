@@ -1526,3 +1526,51 @@ span.compareName { padding-top: 28px; cursor: default; }
   font-style: normal;
   letter-spacing: -.025em;
 }
+
+/* ── Palette A component kit (styles/palette-a.css --pa-*): cards are paper with a hairline, tags and tabs sit on a
+   quiet fill, the selected one is ink, changes are coloured figures, series use one restrained set, no accent rules. ── */
+:global(html[data-palette='a']) .root { --m-radius: var(--pa-card-radius); }
+:global(html[data-palette='a']) .segment { min-height: var(--pa-seg-h); padding: 3px; border: 0; background: var(--pa-fill); }
+:global(html[data-palette='a']) .segment button { min-height: calc(var(--pa-seg-h) - 6px); font-size: 13.5px; font-weight: 500; }
+:global(html[data-palette='a']) .segment button[aria-selected='true'], :global(html[data-palette='a']) .segment button[aria-pressed='true'] { font-weight: 600; }
+:global(html[data-palette='a']) .segThumb { border: 0; background: var(--pa-card); box-shadow: 0 0 0 .5px var(--pa-hair), 0 4px 10px -6px rgba(15, 23, 42, .3); }
+:global(html[data-palette='a']) .segment[data-sticky='true'] { box-shadow: none; }
+:global(html[data-palette='a']) .search { min-height: var(--pa-field-h); padding: 0 16px; border: 0; background: var(--pa-fill); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:global(html[data-palette='a']) .search input { font-size: 15px; }
+:global(html[data-palette='a']) .search:focus-within { box-shadow: 0 0 0 1.5px var(--m-accent); }
+:global(html[data-palette='a']) .chips { gap: 8px; }
+:global(html[data-palette='a']) .chip { min-height: var(--pa-tag-h); padding: 0 14px; border: 0; background: var(--pa-fill); color: var(--m-muted); font-size: 13px; font-weight: 500; }
+:global(html[data-palette='a']) .chip[aria-pressed='true'] { color: var(--pa-sel-ink); background: var(--pa-sel); }
+:global(html[data-palette='a']) .chips[data-dense='true'] .chip { min-height: 28px; padding: 0 10px; background: none; font-family: inherit; font-size: 12px; }
+:global(html[data-palette='a']) .chips[data-dense='true'] .chip[aria-pressed='true'] { color: var(--m-ink); background: var(--pa-fill-strong); }
+:global(html[data-palette='a']) .pill { min-width: 0; padding: 0; border-radius: 0; background: none; font-size: 13px; font-weight: 500; text-align: end; font-variant-numeric: tabular-nums; }
+:global(html[data-palette='a']) .pill.up, :global(html[data-palette='a']) .pill.down { background: none; }
+:global(html[data-palette='a']) .predCard { padding: var(--pa-card-pad); border: 0; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .predCard[data-layout='pulse'] { border-inline-start: 0; }
+@media (hover: hover) { :global(html[data-palette='a']) .predCard:hover { border-color: transparent; box-shadow: 0 0 0 1px color-mix(in srgb, var(--m-accent) 45%, transparent), 0 12px 28px -20px rgba(15, 23, 42, .28); } }
+:global(html[data-palette='a']) .predCardMeta { font-size: 10px; font-weight: 600; letter-spacing: .08em; }
+:global(html[data-palette='a']) .predQuestion { font-size: 15.5px; letter-spacing: -.01em; }
+:global(html[data-palette='a']) .predThumb { border-radius: 8px; }
+:global(html[data-palette='a']) :is(.predFeatureOutcome, .predOption) { font-size: 12px; }
+:global(html[data-palette='a']) :is(.predFeatureLabel i, .predOption > i) { width: 6px; height: 6px; flex-basis: 6px; background: var(--pa-series-1); }
+:global(html[data-palette='a']) :is(.predFeatureLabel i, .predOption > i)[data-index='1'] { background: var(--pa-series-2); }
+:global(html[data-palette='a']) :is(.predFeatureLabel i, .predOption > i)[data-index='2'] { background: var(--pa-series-3); }
+:global(html[data-palette='a']) :is(.predFeatureLabel i, .predOption > i)[data-index='3'] { background: var(--pa-series-4); }
+:global(html[data-palette='a']) .predMiniBar { height: 2px; background: var(--pa-fill-strong); }
+:global(html[data-palette='a']) .predMiniBar > i { background: var(--pa-series-1); }
+:global(html[data-palette='a']) :is(.predFeatureOutcome, .predOption):nth-child(2) .predMiniBar > i { background: var(--pa-series-2); }
+:global(html[data-palette='a']) :is(.predFeatureOutcome, .predOption):nth-child(3) .predMiniBar > i { background: var(--pa-series-3); }
+:global(html[data-palette='a']) :is(.predFeatureOutcome, .predOption):nth-child(4) .predMiniBar > i { background: var(--pa-series-4); }
+/* Up/down sides: quiet fill, the side's colour only on its word and figure. */
+:global(html[data-palette='a']) :is(.predPulseSides > span, .predPulseSides > span[data-side='1'], .predBinaryOutcome, .predBinaryOutcome[data-side='1']) { border: 0; border-radius: 14px; background: var(--pa-fill); }
+:global(html[data-palette='a']) .predPulseRound b { background: var(--pa-fill); font-variant-numeric: tabular-nums; }
+:global(html[data-palette='a']) .predPulseSplit { height: 3px; }
+/* Product cards: paper, one radius on every corner, no accent rule. */
+:global(html[data-palette='a']) .product { padding: var(--pa-card-pad); border: 0; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .product::after { display: none; }
+:global(html[data-palette='a']) .featureGrid > .product { border-radius: var(--pa-card-radius); }
+:global(html[data-palette='a']) .featureGrid { gap: 10px; }
+/* Row logos: a real logo keeps a soft square; a letter stand-in is dropped (no letter tiles). */
+:global(html[data-palette='a']) .logo { border: 0; border-radius: 9px; background: var(--pa-fill); }
+:global(html[data-palette='a']) .logo:not(:has(img)) { display: none; }
+:global(html[data-palette='a']) .predSortButton { width: var(--pa-field-h); height: var(--pa-field-h); border: 0; background: var(--pa-fill); }
