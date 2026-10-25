@@ -590,3 +590,9 @@
 .pcSpark { width: 46px; height: 13px; margin-left: 6px; fill: none; stroke: #0a8a73; stroke-width: 1.4; stroke-linecap: round; }
 .pc[data-k='d'] .pcRow[data-thin] b { margin-left: auto; }
 @media (prefers-reduced-motion: reduce) { .pRipple, .pActs[data-on] > span, .mixBar[data-on] i, .pcWin rect, .pcTruck { animation: none; } }
+
+/* Round 44: the bottom bar is on every page and uses the shared controls; captions sit above it on every page.
+   The top chip holds only the language switch. */
+.sceneFoot, .sceneFoot[data-last] { bottom: calc(132px + env(safe-area-inset-bottom)); }
+.topRight[data-lang-only] { padding: 4px; }
+.actionBar .signIn { flex: 1 1 auto; min-width: 0; }

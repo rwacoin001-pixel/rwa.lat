@@ -1,0 +1,30 @@
+/* Shared controls (palette A): the one look for buttons and fields across the site. Materials and colours come
+   from the control tokens in styles/palette-a.css (light and black mode); this file only shapes them.
+   primary  solid ink pill (the main action), optional .arrow disc at its end
+   glass    clear glass pill (secondary actions)
+   icon     clear glass round key (add .small for 44 px)
+   field    glass input pill; .action is its solid round key */
+.primary, .glass { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: var(--ctl-h, 56px); padding: 0 24px;
+  border: 0; border-radius: 999px; font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s ease, opacity .2s ease; }
+.primary { color: var(--btn-solid-ink, #fff); background: var(--btn-solid-fill, #0b0d11); box-shadow: var(--btn-solid-edge, none); }
+.primary:has(> .arrow) { justify-content: space-between; padding: 0 6px 0 24px; }
+.primary > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.arrow { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; color: var(--btn-arrow-ink, #0b1220); background: var(--btn-arrow-fill, #fff); box-shadow: var(--btn-arrow-edge, none); }
+.glass, .icon, .field { color: var(--ctl-ink, #0b1220); background: var(--glass-fill, rgba(255, 255, 255, .6)); box-shadow: var(--glass-edge, none);
+  -webkit-backdrop-filter: var(--glass-blur, blur(20px)); backdrop-filter: var(--glass-blur, blur(20px)); }
+.icon { position: relative; display: grid; flex: none; place-items: center; width: var(--ctl-h, 56px); height: var(--ctl-h, 56px); padding: 0; border: 0; border-radius: 50%; overflow: hidden;
+  font: inherit; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .22s cubic-bezier(.34, 1.56, .64, 1); }
+.icon.small { width: 44px; height: 44px; }
+.primary:active, .glass:active { transform: scale(.97); }
+.icon:active { transform: scale(.92); }
+.primary:disabled, .glass:disabled, .icon:disabled { opacity: .45; cursor: default; transform: none; }
+.primary:focus-visible, .glass:focus-visible, .icon:focus-visible { outline: 2px solid rgba(10, 138, 115, .6); outline-offset: 3px; }
+.field { display: flex; align-items: center; gap: 8px; min-height: var(--ctl-h, 56px); padding: 0 6px 0 22px; border: 0; border-radius: 999px; box-sizing: border-box; transition: box-shadow .25s ease; }
+.field:focus-within { box-shadow: var(--ctl-focus, none); }
+.field input { flex: 1 1 auto; min-width: 0; height: 44px; padding: 0; border: 0; outline: none; background: none; color: inherit; font: inherit; font-size: 17px; letter-spacing: -.01em; }
+.field input::placeholder { color: var(--ctl-placeholder, rgba(60, 60, 67, .5)); }
+.action { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; cursor: pointer;
+  color: var(--btn-solid-ink, #fff); background: var(--btn-solid-fill, #0b0d11); box-shadow: var(--btn-solid-edge, none); transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
+.action:active { transform: scale(.92); }
+.action:disabled { opacity: .5; cursor: default; }

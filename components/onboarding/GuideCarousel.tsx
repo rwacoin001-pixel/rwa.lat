@@ -8,6 +8,7 @@ import { displayInviteCode } from '@/lib/referral-invite'
 import { inviteCopy, type InviteCodeState } from '../screens/InviteCodeField'
 import RwaLogoMark from '../rwa-logo'
 import { InstallButton, useInstallAction } from './AppOffer'
+import controls from '../ui/controls.module.css'
 import styles from './GuideCarousel.module.css'
 
 /**
@@ -31,7 +32,6 @@ const CARDS = [
   { from: '#2ccce4', to: '#007c99', value: 24, scene: 'ai', sky: '#b5bbc2', ground: '#b1b5ba' },
 ] as const
 const AUTO_MS = 4800
-const SKIP: Partial<Record<AppLocale, string>> = { 'zh-CN': '跳过', en: 'Skip' }
 
 // The phone's front face in paper-scene-w.webp, in % of the 1024x1536 photograph: top-left, top-right, bottom-right, bottom-left.
 const FACE = {"tl": [18.46, 3.26], "tr": [76.76, 6.9], "br": [76.76, 78.84], "bl": [18.46, 88.93]}
@@ -576,12 +576,12 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
   const rels = [r0, r1, r2, r3]
 
   // The status bar (Android theme-color) and the page behind it (iOS) take the colour at the top of the current photo.
-  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-guide-chrome={CARDS[index].sky}>
+  // The guide is day-only, so its controls stay in the light set even when the app is in black mode.
+  return <section className={styles.guide} data-ctl="light" data-scene={'scene' in CARDS[index] || undefined} data-guide-chrome={CARDS[index].sky}>
+    {/* Language only at the top: the way in is always at the bottom, and the progress marks show the page. */}
     <header className={styles.top}>
-      <div className={styles.topRight}>
-        <span className={styles.count}><b>0{index + 1}</b> / 04</span>
+      <div className={styles.topRight} data-lang-only="">
         <LangSwitch label={(COPY[locale] ?? COPY.en!).lang} />
-        {index < CARDS.length - 1 && <button type="button" className={styles.skip} onClick={onDone}>{SKIP[locale] ?? SKIP.en}</button>}
       </div>
     </header>
 
@@ -599,14 +599,15 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
       </button>)}
     </nav>
 
-    <AnimatePresence>{index === CARDS.length - 1 && <motion.div key="go" className={styles.finish} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} transition={CUT}>
+    {/* The way in, on every page (as banking apps do): sign in or sign up, and beside it the install key. */}
+    <div className={styles.finish}>
       <div className={styles.actionBar}>
-        <motion.button type="button" className={styles.finishBtn} onClick={onDone} whileTap={{ scale: .97 }}>
-          <span>{all.enter}</span><i><ArrowRight size={17} strokeWidth={1.6} /></i>
-        </motion.button>
+        <button type="button" className={`${controls.primary} ${styles.signIn}`} onClick={onDone}>
+          <span>{all.enter}</span><i className={controls.arrow}><ArrowRight size={18} strokeWidth={1.7} /></i>
+        </button>
         {install && <InstallButton kind={install} locale={locale} invite={invite} />}
       </div>
-    </motion.div>}</AnimatePresence>
+    </div>
     </div>
   </section>
 }

@@ -146,3 +146,30 @@ html[data-palette='a'][data-theme='dark'] input[type='checkbox']::after { border
 
 /* One icon weight everywhere, as in the guide: 1.6 px strokes (CSS beats the SVG attribute). */
 html[data-palette='a'] :is(.rwa-mobile, main, section) svg.lucide { stroke-width: 1.6; }
+
+/* Controls (buttons and fields) — one set for the whole site. Primary actions are solid ink (black by day, white
+   in black mode) with a light arrow disc; everything else is clear glass: a bright rim at the top left, a soft shade
+   at the bottom right, a lifted shadow. Teal is only the accent (focus ring). Used by components/ui/controls.module.css.
+   An area can pin its own mode with data-ctl="light" / "dark" (the day-only guide does). */
+html[data-palette='a'], html[data-palette='a'] [data-ctl='light'] {
+  --ctl-h: 56px; --ctl-ink: #0b1220; --ctl-muted: rgba(60, 60, 67, .6); --ctl-placeholder: rgba(60, 60, 67, .5);
+  --btn-solid-fill: radial-gradient(140% 160% at 30% 0%, #3f4550 0%, #171b22 48%, #0b0d11 100%); --btn-solid-ink: #ffffff;
+  --btn-solid-edge: inset 0 1px 0 rgba(255, 255, 255, .26), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .28), inset 0 -2px 3px rgba(0, 0, 0, .42), 0 1px 1px rgba(0, 0, 0, .14), 0 16px 28px -14px rgba(11, 18, 32, .7);
+  --btn-arrow-fill: radial-gradient(130% 130% at 30% 15%, #ffffff 0%, #eef1f4 60%, #dfe3e9 100%); --btn-arrow-ink: #0b1220;
+  --btn-arrow-edge: inset 0 1px 0 #ffffff, inset 0 -1.5px 1.5px rgba(11, 18, 32, .12), 0 3px 8px -3px rgba(0, 0, 0, .45);
+  --glass-fill: linear-gradient(180deg, rgba(255, 255, 255, .74), rgba(255, 255, 255, .44));
+  --glass-edge: inset 0 .5px 0 rgba(255, 255, 255, .98), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .95), inset -1px -2px 3px -1px rgba(15, 23, 42, .07), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(15, 23, 42, .08), 0 2px 6px -3px rgba(15, 23, 42, .14), 0 14px 30px -14px rgba(15, 23, 42, .36);
+  --glass-blur: blur(22px) saturate(190%) brightness(1.04);
+  --ctl-focus: inset 0 .5px 0 #ffffff, inset 0 0 0 1px rgba(10, 138, 115, .55), 0 0 0 4px rgba(10, 138, 115, .15), 0 14px 30px -14px rgba(15, 23, 42, .36);
+}
+html[data-palette='a'][data-theme='dark'], html[data-palette='a'] [data-ctl='dark'] {
+  --ctl-ink: #f2f4f7; --ctl-muted: rgba(235, 235, 245, .6); --ctl-placeholder: rgba(235, 235, 245, .45);
+  --btn-solid-fill: radial-gradient(140% 160% at 30% 0%, #ffffff 0%, #eef0f3 55%, #d6dbe2 100%); --btn-solid-ink: #0b0d12;
+  --btn-solid-edge: inset 0 1px 0 #ffffff, inset 0 -2px 3px rgba(11, 18, 32, .14), 0 16px 28px -14px rgba(0, 0, 0, .9);
+  --btn-arrow-fill: radial-gradient(130% 130% at 30% 15%, #3d434d 0%, #161a21 60%, #0b0d11 100%); --btn-arrow-ink: #ffffff;
+  --btn-arrow-edge: inset 0 1px 0 rgba(255, 255, 255, .22), 0 3px 8px -3px rgba(0, 0, 0, .6);
+  --glass-fill: linear-gradient(180deg, rgba(78, 84, 96, .55), rgba(34, 37, 44, .5));
+  --glass-edge: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .22), inset -1px -2px 3px -1px rgba(0, 0, 0, .3), inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 0 0 .5px rgba(0, 0, 0, .4), 0 14px 30px -14px rgba(0, 0, 0, .8);
+  --glass-blur: blur(22px) saturate(160%);
+  --ctl-focus: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 0 0 0 1px rgba(60, 224, 177, .6), 0 0 0 4px rgba(60, 224, 177, .15), 0 14px 30px -14px rgba(0, 0, 0, .8);
+}

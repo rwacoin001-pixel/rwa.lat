@@ -698,12 +698,6 @@
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .primary { color: #0b1220; background: rgba(242, 244, 247, .88); }
 /* Other ways in: one quiet row of small glass discs under a hairline. */
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'] .otherMethods { margin-top: 16px; }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .altMethods { display: flex; justify-content: center; gap: 14px; }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .altMethods button { width: 48px; height: 48px; border: 0; border-radius: 50%; color: #141a22; background: rgba(255, 255, 255, .5);
-  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .9), inset 0 0 0 .5px rgba(255, 255, 255, .5), 0 8px 18px -12px rgba(15, 23, 42, .45); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .altMethods button img { width: 20px; height: 20px; }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .altMethods button { color: #f2f4f7; background: rgba(40, 44, 52, .5); box-shadow: inset 0 1px .5px rgba(255, 255, 255, .2), inset 0 0 0 .5px rgba(255, 255, 255, .1); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .altMethods img[data-mono] { filter: invert(1); }
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'] .outerFooter { padding-top: 10px; font-size: 11px; color: color-mix(in srgb, #141a22 60%, transparent); }
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .outerFooter { color: rgba(242, 244, 247, .55); }
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'] .cardHead .cardTitle { color: #141a22; }
@@ -851,44 +845,11 @@
 @keyframes kFlute { to { transform: translateX(9px); } }
 @keyframes kWind { 0% { transform: rotate(0); } 80% { transform: rotate(-357.5deg); } 93% { transform: rotate(-360.6deg); } 100% { transform: rotate(-360deg); } }
 
-/* Round 43: the sign-in controls in Apple's liquid glass: a thick clear pane that brightens what is behind it, a
-   specular rim catching the light at the top left, a soft inner shade at the bottom right and a lifted shadow. */
-:global(html) .root.root.root[data-auth-cabinet] .stage .field { min-height: 56px; border: 0; border-radius: 999px; padding-inline-start: 22px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .42));
-  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .95), inset -1px -2px 3px -1px rgba(15, 23, 42, .06),
-    inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(15, 23, 42, .08), 0 2px 6px -3px rgba(15, 23, 42, .14), 0 14px 30px -14px rgba(15, 23, 42, .38);
-  -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.04); backdrop-filter: blur(22px) saturate(190%) brightness(1.04);
-  transition: box-shadow .25s ease, background-color .25s ease; }
-:global(html) .root.root.root[data-auth-cabinet] .stage .field:focus-within { background: linear-gradient(180deg, rgba(255, 255, 255, .86), rgba(255, 255, 255, .62));
-  box-shadow: inset 0 .5px 0 #ffffff, inset 0 0 0 1px rgba(10, 138, 115, .55), 0 0 0 4px rgba(10, 138, 115, .14), 0 14px 30px -14px rgba(15, 23, 42, .38); }
-:global(html) .root.root.root[data-auth-cabinet] .stage .field input { color: #0b0d12; font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
-:global(html) .root.root.root[data-auth-cabinet] .stage .field input::placeholder { color: rgba(60, 60, 67, .55); }
-:global(html) .root.root.root[data-auth-cabinet] .stage .inlineSubmit { width: 44px; height: 44px; color: #ffffff;
-  background: radial-gradient(120% 120% at 30% 18%, #474d58 0%, #1a1e25 55%, #0b0d11 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 1px 1.5px 1.5px -1px rgba(255, 255, 255, .35), inset 0 -1.5px 2px rgba(0, 0, 0, .45), 0 1px 1px rgba(0, 0, 0, .18), 0 6px 14px -6px rgba(11, 18, 32, .7);
-  transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
-:global(html) .root.root.root[data-auth-cabinet] .stage .inlineSubmit:active { transform: scale(.92); }
-:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods { gap: 18px; }
-:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods button { width: 52px; height: 52px; border: 0; border-radius: 50%; color: #0b0d12;
-  background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .4));
-  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .95), inset -1px -2px 3px -1px rgba(15, 23, 42, .07),
-    inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(15, 23, 42, .08), 0 2px 5px -3px rgba(15, 23, 42, .16), 0 12px 24px -12px rgba(15, 23, 42, .38);
-  -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.04); backdrop-filter: blur(20px) saturate(190%) brightness(1.04);
-  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1); }
-:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods button:active { transform: scale(.9); }
-:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods button img { width: 21px; height: 21px; }
-:global(html) .root.root.root[data-auth-cabinet] .stage .primary { min-height: 56px; border: 0; border-radius: 999px; color: #ffffff; font-size: 17px; font-weight: 600; letter-spacing: -.01em;
-  background: radial-gradient(140% 160% at 30% 0%, #464c57 0%, #1a1e25 50%, #0b0d11 100%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .3), inset 0 -2px 3px rgba(0, 0, 0, .4), 0 1px 1px rgba(0, 0, 0, .15), 0 16px 28px -14px rgba(11, 18, 32, .75); }
-/* Night: smoked glass with a cooler rim; the action keys turn light. */
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage :is(.field, .altMethods button) { color: #f2f4f7;
-  background: linear-gradient(180deg, rgba(74, 80, 92, .55), rgba(34, 37, 44, .5));
-  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .22), inset -1px -2px 3px -1px rgba(0, 0, 0, .3),
-    inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 0 0 .5px rgba(0, 0, 0, .4), 0 14px 30px -14px rgba(0, 0, 0, .8); }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .field:focus-within { box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 0 0 0 1px rgba(60, 224, 177, .6), 0 0 0 4px rgba(60, 224, 177, .14), 0 14px 30px -14px rgba(0, 0, 0, .8); }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .field input { color: #f2f4f7; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .field input::placeholder { color: rgba(235, 235, 245, .5); }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage :is(.inlineSubmit, .primary) { color: #0b0d12;
-  background: radial-gradient(130% 140% at 30% 10%, #ffffff 0%, #eef0f3 55%, #d5dae1 100%);
-  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1.5px 2px rgba(11, 18, 32, .14), 0 6px 14px -6px rgba(0, 0, 0, .8); }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .altMethods img[data-mono] { filter: invert(1); }
+/* Round 44: the cabinet sign-in uses the shared controls (components/ui/controls.module.css); only their placement
+   is set here. The step headings and the password / code fields keep this page's own styles. */
+.wide { width: 100%; margin-top: 14px; }
+
+/* Palette A: the other ways in are shared glass icon keys in a centred row. */
+.methodsA { display: flex; justify-content: center; gap: 18px; }
+.methodsA img { width: 21px; height: 21px; }
+.root[data-auth-theme='cool'] .methodsA img[data-mono] { filter: invert(1); }

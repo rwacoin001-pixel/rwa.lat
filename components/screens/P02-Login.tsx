@@ -28,6 +28,7 @@ import { usePaletteA } from '@/lib/palette-preview'
 import { paletteASlogan } from '@/lib/palette-a-copy'
 import { InviteCodeField, useInviteCode } from './InviteCodeField'
 import { AuthLegalFooter } from './AuthLegalFooter'
+import controls from '../ui/controls.module.css'
 import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
 import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
 
@@ -443,7 +444,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     void usePasskey(account.email)
   }, [step, pending])
 
-  const cta = (label: string) => <><span>{label}</span><span className={styles.ctaIcon} data-ready={Boolean(email.trim())} aria-hidden="true"><ArrowRight size={21} strokeWidth={1.6} /></span></>
+  const cta = (label: string) => paletteA
+    ? <><span>{label}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} strokeWidth={1.7} /></i></>
+    : <><span>{label}</span><span className={styles.ctaIcon} data-ready={Boolean(email.trim())} aria-hidden="true"><ArrowRight size={21} strokeWidth={1.6} /></span></>
+  // Palette A: the shared controls (components/ui/controls.module.css) instead of the sign-in page's own.
+  const ui = paletteA
+    ? { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: controls.icon }
+    : { field: `${styles.field} ${styles.emailField}`, submit: styles.inlineSubmit, primary: styles.primary, method: undefined }
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
   const poster = paletteA ? paletteASlogan(locale).lines : authPosterTitle[locale]
@@ -502,14 +509,14 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       <div className={styles.walletIdentity}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} style={{ width: 22, height: 22 }} /><span>{walletChallenge.address.slice(0, 6)}…{walletChallenge.address.slice(-4)}</span></div>
       {agreement}
       {errors}
-      <button className={styles.primary} type="button" disabled={pending || !agreed || !requirements} onClick={useWallet}>{cta(pending ? copy.sending : visual.wallet)}</button>
+      <button className={ui.primary} type="button" disabled={pending || !agreed || !requirements} onClick={useWallet}>{cta(pending ? copy.sending : visual.wallet)}</button>
       <button className={styles.textLink} type="button" onClick={() => { setWalletChallenge(null); setAgreed(false); setError('') }}>{sheet.signIn}</button>
     </> : <form onSubmit={submit} noValidate aria-busy={pending}>
       {/* The poster's lead: one field, its confirm inside on the end edge. The lookup decides sign-in or registration. */}
-      {step === 'email' ? <label className={`${styles.field} ${styles.emailField}`}>
+      {step === 'email' ? <label className={ui.field}>
         <span className={styles.srOnly}>{visual.emailAddress}</span>
         <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
-        <button type="submit" className={styles.inlineSubmit} disabled={pending || retryAfter > 0} aria-label={pending ? pendingLabel : retryAfter > 0 ? cooldownLabel : sheet.continue} title={sheet.continue}>
+        <button type="submit" className={ui.submit} disabled={pending || retryAfter > 0} aria-label={pending ? pendingLabel : retryAfter > 0 ? cooldownLabel : sheet.continue} title={sheet.continue}>
           {pending ? <LoaderCircle className={styles.spinner} size={18} aria-hidden="true" />
             : <span className={styles.inlineArrow} data-ready={EMAIL.test(email.trim())} aria-hidden="true"><ArrowRight size={19} strokeWidth={1.7} /></span>}
         </button>
@@ -536,7 +543,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </div>}
 
       {errors}
-      {step !== 'email' && step !== 'code' && <button className={styles.primary} type="submit" disabled={primaryDisabled}>
+      {step !== 'email' && step !== 'code' && <button className={ui.primary} type="submit" disabled={primaryDisabled}>
         {pending ? <><LoaderCircle className={styles.spinner} size={20} aria-hidden="true" /><span className={styles.srOnly}>{pendingLabel}</span></>
           : step === 'passkey' ? <><span>{primaryLabel}</span><span className={styles.ctaIcon} aria-hidden="true"><Fingerprint size={18} strokeWidth={1.8} /></span></>
           : cta(retryAfter > 0 ? cooldownLabel : primaryLabel)}
@@ -556,11 +563,11 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
     {/* Each icon reuses the existing sign-in handler; email autofill remains available. */}
     {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <div className={styles.altMethods}>
-        <button type="button" disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /></button>
-        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
-        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
-        <button type="button" disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
+      <div className={paletteA ? styles.methodsA : styles.altMethods}>
+        <button type="button" className={ui.method} disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /></button>
+        <button type="button" className={ui.method} disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
+        <button type="button" className={ui.method} disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
+        <button type="button" className={ui.method} disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
       </div>
     </div>}
     {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}

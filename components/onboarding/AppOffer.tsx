@@ -7,6 +7,7 @@ import { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } from '@/lib/android-app'
 import { detectEnv, isStandalone, needsAndroidApp } from '@/components/home/install-env'
 import { canPromptInstall, promptInstall } from '@/components/home/HomeInstall'
 import type { InviteCodeState } from '../screens/InviteCodeField'
+import controls from '../ui/controls.module.css'
 import styles from './AppOffer.module.css'
 
 /**
@@ -148,8 +149,8 @@ export function InstallButton({ kind, locale, invite }: { kind: InstallKind; loc
   }
   return <span className={styles.discWrap}>
     {kind === 'apk'
-      ? <a className={styles.disc} data-glow="" href={ANDROID_APP.url!} download aria-label={label} title={label} onClick={() => { void onDownload() }}>{icon}</a>
-      : <button type="button" className={styles.disc} disabled={added} aria-label={label} title={label} onClick={onClick}>{icon}</button>}
+      ? <a className={`${controls.icon} ${styles.glow}`} href={ANDROID_APP.url!} download aria-label={label} title={label} onClick={() => { void onDownload() }}>{icon}</a>
+      : <button type="button" className={controls.icon} disabled={added} aria-label={label} title={label} onClick={onClick}>{icon}</button>}
     <AnimatePresence>{toast && <motion.p className={styles.toast} role="status" initial={{ opacity: 0, y: 8, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>{toast}</motion.p>}</AnimatePresence>
   </span>
 }
