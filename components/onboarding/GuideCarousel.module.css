@@ -564,7 +564,6 @@
 /* Round 43: guide scenes 1 and 2 redrawn. Ink sits in the paper (the scene's fibre filter); drawings are finer and move. */
 .inkDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
 .print, .pc { filter: var(--ink-filter, none); }
-.pHero path { vector-effect: non-scaling-stroke; }
 .pRipple { fill: none; stroke: currentColor; stroke-width: 1; opacity: .4; stroke-dasharray: 14 9 4 9; animation: ripple 6s linear infinite; }
 @keyframes ripple { to { stroke-dashoffset: -72; } }
 /* The four actions are tapped in turn, gently, while the page is on. */
