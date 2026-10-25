@@ -4,9 +4,11 @@
 .orb::before, .orb::after { display: none !important; }
 :global(html[data-theme='dark']) .orb, :global(.rwa-mobile[data-theme='dark']) .orb {
   --paper-hi: #555a63; --paper-mid: #33373f; --paper-lo: #1f2228; --paper-rim: #17191e; --buddy-ink: #f2f4f7; --accent: #19c7aa; --accent-2: #3ce0b1; --badge-ring: #0a0c10; }
-/* The sphere fills the 56 px key; the drawing has room around it for the streamers, the marks and the shadow. */
-.host { position: absolute; left: 50%; top: 50%; width: 96px; height: 96px; margin: -50px 0 0 -48px; pointer-events: none; }
-.host :global(svg) { display: block; overflow: visible; }
+/* The ball is exactly the bar's height (--dock-h), centred on the bar; the drawing (148 units round an
+   88-unit ball whose centre sits 70 units down) spills out for the streamers, the marks and the shadow. */
+.host { --ball: var(--dock-h, var(--orb, 52px)); position: absolute; left: 50%; top: 50%; width: calc(var(--ball) * 148 / 88); height: calc(var(--ball) * 148 / 88);
+  margin: calc(var(--ball) * -70 / 88) 0 0 calc(var(--ball) * -74 / 88); pointer-events: none; }
+.host :global(svg) { display: block; width: 100%; height: 100%; overflow: visible; }
 .host :global(.pb-z) { animation: pbZ 2.4s ease-in-out infinite; }
 .host :global(.pb-dots) :global(circle) { animation: pbDot 1.2s ease-in-out infinite; }
 .host :global(.pb-dots) :global(circle:nth-child(2)) { animation-delay: .2s; }

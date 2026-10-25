@@ -1,7 +1,16 @@
 /* Palette A preview · cool white + brand green (#19C7AA, the logo's plane).
    Only active on html[data-palette='a'] (?palette=a, see lib/document-preferences-bootstrap.ts); without it nothing here applies.
    Global layer: the --pal-* palette and the dock. Home and Maison pages override their own module tokens next to the originals. */
+/* Type: Satoshi for Latin and figures (self-hosted, Fontshare free licence), the system CJK face for Chinese.
+   Most stacks in the app start with var(--font-geist-sans) (never loaded), so pointing it at Satoshi switches them all. */
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-400.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-500.woff2') format('woff2'); font-weight: 500; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-700.woff2') format('woff2'); font-weight: 700; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-900.woff2') format('woff2'); font-weight: 900; font-style: normal; font-display: swap; }
 html[data-palette='a'] {
+  --font-geist-sans: 'Satoshi'; --home-display-latin: 'Satoshi';
+  --font-sans: 'Satoshi', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
+  --x-font: var(--font-sans);
   --pal-light-bg: #f5f6f8; --pal-light-surface: #ffffff; --pal-light-surface-2: #eceef2;
   --pal-light-ink: #0b1220; --pal-light-ink-rgb: 11 18 32; --pal-light-ink-2: #2b3443;
   --pal-light-muted: #5b6472; --pal-light-faint: #8f97a5;
@@ -89,7 +98,7 @@ html[data-palette='a'] .watch-scope[data-theme=dark] .study-stage.study-stage {
   --q-bezel-shadow: 0 17px 24px -16px rgba(0, 0, 0, .7), 0 2px 5px rgba(0, 0, 0, .3), inset 0 .7px 0 rgba(230, 236, 244, .45), inset 0 -.7px 0 rgba(0, 0, 0, .5);
   --q-sub-shadow: inset 0 0 0 .7px rgba(25, 199, 170, .22), inset 0 0 10px rgba(0, 0, 0, .3), 0 8px 14px -12px rgba(0, 0, 0, .5);
 }
-html[data-palette='a'] .watch-scope { --serif: var(--font-geist-sans), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+html[data-palette='a'] .watch-scope { --serif: var(--font-geist-sans), 'PingFang SC', 'Microsoft YaHei', sans-serif; --sans: var(--font-geist-sans), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
 html[data-palette='a'] .watch-scope .study-stage [data-watch-part="crownKnurl"] { background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .65) 0 .9px, rgba(15, 23, 42, .25) .9px 1.8px), linear-gradient(90deg, #8e97a3, #eef1f4 38%, #a8b0bb 73%, #8e97a3); }
 html[data-palette='a'] .watch-scope .study-stage [data-watch-part="crownCap"] { background: radial-gradient(130% 160% at 38% 0%, #ffffff 0 18%, #d3d8df 46%, #8e97a3 100%); }
 html[data-palette='a'] .watch-scope [data-layout="datograph"] .calendar-pusher .pusher-cap { background: linear-gradient(90deg, rgba(255, 255, 255, 0) 30%, rgba(255, 255, 255, .75) 44%, rgba(255, 255, 255, 0) 52%), radial-gradient(120% 90% at 50% 0%, #ffffff 0 18%, #d3d8df 45%, #8e97a3 100%); }

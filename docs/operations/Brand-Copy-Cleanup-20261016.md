@@ -47,7 +47,7 @@
 - [docs/admin-user-management-20261008.md](../admin-user-management-20261008.md)
 - [docs/ai-input-acceptance.md](../ai-input-acceptance.md)
 - [docs/capture-acceptance.md](../capture-acceptance.md)
-- [docs/design-contract.md](../design-contract.md)
+- docs/design-contract.md（已删除，见 docs/design-system.md）
 - [docs/design/Apple-HIG-Review-2026-07-13.md](../design/Apple-HIG-Review-2026-07-13.md)
 - [docs/handoff-2026-07-14.md](../handoff-2026-07-14.md)
 - [docs/implementation-handoff.md](../implementation-handoff.md)

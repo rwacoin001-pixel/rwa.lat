@@ -54,7 +54,7 @@ Production secrets and credentials belong in their existing protected configurat
 
 ## Document authority
 
-- [Current design rules](../DESIGN.md) preserve the implemented logo, themes and navigation; they do not request a redesign.
+- [Design system](design-system.md) is the only current design spec (Paper & Glass).
 - [Documentation index](README.md) separates current entrypoints, reference templates and historical implementation evidence.
 - Historical task boards, prototypes, migration narratives and dated QA results retain their original bodies. Their success claims apply only to the recorded date and scope.
 - Database-published copy, mail-provider configuration, legal publications and operational records are not inferred from source text; changes require their own reviewed data/configuration task.

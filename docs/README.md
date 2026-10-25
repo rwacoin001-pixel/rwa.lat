@@ -5,7 +5,7 @@
 ## 当前入口
 
 - [当前项目与部署说明](deployment-current.md)：仓库、工作区核对、公开域名、发布边界与本次观察到的版本。每次发布仍须重新核查。
-- [当前设计规则](../DESIGN.md)：保持已实现的 Logo、各页面主题、导航、字体和布局，不恢复历史原型。
+- [设计语言 Paper & Glass](design-system.md)：唯一现行设计规范。
 - [身份与账本术语](../CONTEXT.md)：账户、登录身份、法律身份、账本与余额的区别。
 - [原型参考规则](Prototype-Generation-Guide.md)：仅在任务确实要求设计样稿时使用。
 - [Android 客户端源码参考](android-client-trial.md)：安装身份、签名、UA 和现有原生交互的兼容边界。
@@ -44,9 +44,9 @@
 这些材料保留原始内容，供追溯当时的决定、实现与验收；不代表当前线上状态，也不是新任务的实施指令。文件原名和链接保留，避免破坏历史引用。
 
 - [2026-07-13 实施快照](Implementation-Status-2026-07-13.md)、[旧任务表](Task-Board.md)、[旧产品与开发规格](RWA-LAT-Product-and-Development-Spec.md)
-- [旧协作规范](AI-Agent-Collaboration-Plan.md)、[旧实现交接](implementation-handoff.md)、[2026-07-14 交接](handoff-2026-07-14.md)、[旧设计合同](design-contract.md)
+- [旧协作规范](AI-Agent-Collaboration-Plan.md)、[旧实现交接](implementation-handoff.md)、[2026-07-14 交接](handoff-2026-07-14.md)
 - [旧 Cloudflare 部署教程](Cloudflare-Deploy-Guide.md)、[旧外部资源教程](Production-External-Setup-Guide.md)、[旧后端路线图](Backend-Completion-Roadmap.md)
-- [历史任务记录](task-notes/)、[历史 QA 结果与检查表](qa/)、[历史设计复核](design/)、[历史发布记录](releases/)
+- [历史任务记录](task-notes/)、[历史 QA 结果与检查表](qa/)、[历史发布记录](releases/)
 - [历史实施计划](plans/)、[历史 Superpowers 计划](superpowers/plans/)
 - [品牌迁移记录](operations/A-Reit-Brand-Migration-20261011.md)、[域名迁移记录](operations/A-Reit-Domain-Migration-20261010.md)、[单域名切换记录](operations/A-Reit-Only-Domain-20261011.md)
 
