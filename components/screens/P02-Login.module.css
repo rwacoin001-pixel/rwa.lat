@@ -748,7 +748,7 @@
 .root[data-auth-theme='cool'] .cabFace { --ink: #c4c7cd; }
 .kPrint { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 16px 24px 0; color: var(--ink);
   font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 12px; line-height: 1.3; }
-.kInk { mix-blend-mode: multiply; filter: blur(.22px);
+.kInk { mix-blend-mode: multiply; filter: url(#cab-ink);
   -webkit-mask-image: url('/media/palette-a/ink-grain.png'); mask-image: url('/media/palette-a/ink-grain.png'); -webkit-mask-size: 180px; mask-size: 180px; }
 .root[data-auth-theme='cool'] .kInk { mix-blend-mode: screen; }
 .kPrint svg { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
@@ -842,3 +842,7 @@
 .cabFoot { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
 :global(html) .root.root.root[data-auth-cabinet] .cabFoot :is(button, span) { padding: 6px 2px; border: 0; background: none; font: inherit; font-size: 11px; color: rgba(20, 26, 34, .55); cursor: pointer; }
 :global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot :is(button, span) { color: rgba(238, 241, 246, .5); }
+
+.cabDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
+/* Ink, not pixels: a warm, slightly dry tone rather than flat grey. */
+.cabFace { --ink: #45413b; }
