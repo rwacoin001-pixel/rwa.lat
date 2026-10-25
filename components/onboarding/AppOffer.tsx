@@ -5,7 +5,7 @@ import { Check, Download, ExternalLink, MoreHorizontal, PlusSquare } from 'lucid
 import type { AppLocale } from '@/lib/i18n'
 import { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } from '@/lib/android-app'
 import { detectEnv, isStandalone, needsAndroidApp } from '@/components/home/install-env'
-import { canPromptInstall, onInstallPromptChange, promptInstall } from '@/components/home/HomeInstall'
+import { canPromptInstall, promptInstall } from '@/components/home/HomeInstall'
 import type { InviteCodeState } from '../screens/InviteCodeField'
 import styles from './AppOffer.module.css'
 
@@ -83,8 +83,9 @@ export function AppOffer({ kind, locale, invite, size = 'strip' }: { kind: Offer
 
 /**
  * The one install action next to Sign in on the guide's last page:
- * - Android Chrome with an install prompt ready: install to the home screen (the prompt opens on tap);
- * - other Android browsers (or Chrome without a prompt): download the app;
+ * - Android Chrome: install to the home screen (Chrome's prompt opens on tap; if Chrome has none ready, the tap
+ *   shows the menu route);
+ * - other Android browsers: download the app;
  * - WeChat / in-app browsers on Android: open in the browser first;
  * - iPhone, the installed app, desktop: none.
  * Preview with ?offer=pwa | apk | browser.
@@ -98,16 +99,15 @@ export function useInstallAction(): OfferKind | null {
     const env = detectEnv()
     if (env.ios || !/Android/.test(navigator.userAgent)) return
     if (env.kind === 'wechat-android' || env.kind === 'inapp') { setKind('browser'); return }
-    const pick = () => setKind(env.kind === 'android-chrome' && canPromptInstall() ? 'pwa' : ANDROID_APP.url ? 'apk' : null)
-    pick()
-    return onInstallPromptChange(pick)
+    if (env.kind === 'android-chrome') { setKind('pwa'); return }
+    if (ANDROID_APP.url) setKind('apk')
   }, [])
   return kind
 }
 
-const ACTION: Partial<Record<AppLocale, { apk: string; pwa: string; browser: string; added: string; tip: string }>> = {
-  'zh-CN': { apk: '下载 App', pwa: '安装到桌面', browser: '浏览器打开', added: '已安装', tip: '点右上角 ··· 选择「在浏览器打开」' },
-  en: { apk: 'Get app', pwa: 'Install', browser: 'Open in browser', added: 'Installed', tip: 'Tap ··· at the top right, then “Open in browser”' },
+const ACTION: Partial<Record<AppLocale, { apk: string; pwa: string; browser: string; added: string; tip: string; menu: string }>> = {
+  'zh-CN': { apk: '下载 App', pwa: '安装到桌面', browser: '浏览器打开', added: '已安装', tip: '点右上角 ··· 选择「在浏览器打开」', menu: '点右上角 ⋮，选择「添加到主屏幕」或「安装应用」' },
+  en: { apk: 'Get app', pwa: 'Install', browser: 'Open in browser', added: 'Installed', tip: 'Tap ··· at the top right, then “Open in browser”', menu: 'Tap ⋮ at the top right, then “Install app” or “Add to Home screen”' },
 }
 
 /** The install button in the bottom row: a glass pill beside the main action. A Download pill gets a light sweep. */
@@ -127,7 +127,7 @@ export function InstallButton({ kind, locale, invite }: { kind: OfferKind; local
   if (kind === 'apk') return <a className={styles.pill} data-glow="" href={ANDROID_APP.url!} download onClick={() => { void onDownload() }}>
     <Download size={17} strokeWidth={1.6} aria-hidden="true" /><span>{a.apk}</span>{toastNode}
   </a>
-  if (kind === 'pwa') return <button type="button" className={styles.pill} disabled={added} onClick={() => { void promptInstall().then(ok => { if (ok) setAdded(true) }) }}>
+  if (kind === 'pwa') return <button type="button" className={styles.pill} disabled={added} onClick={() => { if (!canPromptInstall()) { flash(a.menu); return } void promptInstall().then(ok => { if (ok) setAdded(true) }) }}>
     {added ? <Check size={17} strokeWidth={1.8} aria-hidden="true" /> : <PlusSquare size={17} strokeWidth={1.6} aria-hidden="true" />}<span>{added ? a.added : a.pwa}</span>{toastNode}
   </button>
   return <button type="button" className={styles.pill} onClick={() => flash(a.tip)}>

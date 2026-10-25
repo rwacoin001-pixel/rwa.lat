@@ -25,7 +25,8 @@ const INSTALLED_KEY = 'rwa.home.app-installed'
 const SNOOZE_MS = 14 * 24 * 60 * 60 * 1000
 
 // Chromium may fire beforeinstallprompt before Home mounts, so capture it at module load.
-let deferredPrompt: BeforeInstallPromptEvent | null = null
+let deferredPrompt: BeforeInstallPromptEvent | null = typeof window !== 'undefined'
+  ? ((window as unknown as { __rwaInstallPrompt?: BeforeInstallPromptEvent }).__rwaInstallPrompt ?? null) : null
 const subscribers = new Set<() => void>()
 const notify = () => subscribers.forEach(fn => fn())
 if (typeof window !== 'undefined') {

@@ -18,6 +18,8 @@ const localeDirections = JSON.stringify(
 // Keep this script static and allowlist every value read from browser storage.
 // It runs in <head> so the document has the right theme and locale before paint.
 export const documentPreferencesBootstrap = `(() => {
+  // Chrome fires its install prompt early, often before the screen that offers it has loaded: keep it for later.
+  window.addEventListener('beforeinstallprompt', event => { event.preventDefault(); window.__rwaInstallPrompt = event; });
   const root = document.documentElement;
   let savedTheme = null;
   let savedLocale = null;
