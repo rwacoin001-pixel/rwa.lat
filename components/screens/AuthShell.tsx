@@ -9,7 +9,7 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
-import { CabinetFace } from './CabinetFace'
+import { CabinetScene } from './CabinetFace'
 import { usePaletteA } from '@/lib/palette-preview'
 
 /** Shared A-REIT mark for every authentication surface. */
@@ -56,9 +56,6 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </video>}
     </div>
     <div className={styles.sceneWash} aria-hidden="true" />
-    {/* Palette A sign-in: a cabinet in the studio (day / night with the theme). Its side holds our products in
-        miniature; its front face is the phone, with a live status bar, the mark, an avatar and the real form. */}
-    {cabinet && <img className={styles.cabPhoto} src={`/media/palette-a/login/cabinet-${cool ? 'night' : 'day'}.webp`} alt="" aria-hidden="true" draggable={false} />}
 
     <header className={styles.topbar}>
       <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>
@@ -77,10 +74,10 @@ export function AuthShell({ children, hero, footer, attrs }: {
 
     <AndroidAppBanner />
     {cabinet ? <>
-      {/* The cabinet's face is the phone, with the Koala Quant page written on it as the cover. */}
-      <CabinetFace locale={locale} />
+      {/* Palette A: the scene is a rounded paper cabinet (day / night with the theme) whose face shows the Koala
+          Quant page; the real form sits below it, on the floor. */}
+      <CabinetScene locale={locale} night={cool} />
       <div className={styles.stage}>
-        {hero && <div className={styles.heroCopy}>{hero}</div>}
         <div className={styles.cabBody}>{children}</div>
         {footer && <div className={styles.cabFoot}>{footer}</div>}
       </div>

@@ -709,112 +709,111 @@
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'] .cardHead .cardTitle { color: #141a22; }
 :global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .cardHead .cardTitle { color: #f2f4f7; }
 
-/* Round 37: palette A sign-in = a cabinet in the studio, seen from a step back, above the form. The photo (2:3, day /
-   night) is --cb wide, centred: at most 90 % of the screen, and small enough that the form fits below. In the photo
-   the cabinet spans 8-93 % down; its face (the phone) 3.9-62.8 % across and 9.4-90 % down; the side with the product
-   cubbies is on the right. The page colour follows the photo's wall and floor, so its edges melt into the page. */
-:global(html) .root.root[data-auth-cabinet] { --cab-top: #b4b8c0;
-  --cpw: min(100vw, var(--app-max, 480px));
-  --cb: min(calc(var(--cpw) * .9), calc((100svh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 270px) / 1.3));
-  --cx: calc(50% - var(--cb) / 2);
-  --cy: calc(env(safe-area-inset-top) + 54px - var(--cb) * .1);
-  --auth-bg: var(--cab-top);
-  background: linear-gradient(180deg, var(--cab-top) 0, var(--cab-top) var(--cy),
-    #bcc1c9 calc(var(--cy) + var(--cb) * .5), #bfc4cc calc(var(--cy) + var(--cb) * .9), #d1d3da calc(var(--cy) + var(--cb) * 1.17),
-    #e3e3e6 calc(var(--cy) + var(--cb) * 1.32), #e6e6e8 calc(var(--cy) + var(--cb) * 1.5), #e6e6e8 100%); }
-:global(html) .root.root[data-auth-cabinet][data-auth-theme='cool'] { --cab-top: #1a1d21;
-  background: linear-gradient(180deg, var(--cab-top) 0, var(--cab-top) var(--cy),
-    #1e2025 calc(var(--cy) + var(--cb) * .5), #1c1f24 calc(var(--cy) + var(--cb) * .9), #34363e calc(var(--cy) + var(--cb) * 1.17),
-    #4a4e57 calc(var(--cy) + var(--cb) * 1.32), #474a53 calc(var(--cy) + var(--cb) * 1.5), #2a2c32 100%); }
-.cabPhoto { position: absolute; z-index: 0; left: var(--cx); top: var(--cy); width: var(--cb); max-width: none; height: calc(var(--cb) * 1.5); pointer-events: none; -webkit-user-drag: none;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%), linear-gradient(180deg, transparent 0, #000 6%, #000 94%, transparent 100%);
-  -webkit-mask-composite: source-in; mask-image: linear-gradient(90deg, transparent 0, #000 3%, #000 97%, transparent 100%), linear-gradient(180deg, transparent 0, #000 6%, #000 94%, transparent 100%); mask-composite: intersect; }
+/* Round 40: palette A sign-in, framed like the guide's scenes: a rounded paper cabinet in the studio fills the photo
+   (2:3, full width, day / night). In the photo the front face (the phone) is 8.2-57.4 % across and 7.4-90.4 % down;
+   the cabinet stands on the floor at about 92 %. The form sits below, on the floor; on short screens the photo
+   rises (up to a little under the status bar) so the cabinet stays clear of the form. Sizes inside are in cqw. */
+:global(html) .root.root[data-auth-cabinet] { --cab-sky: #bec3cc; --cab-ground: #dadbdd; --auth-bg: var(--cab-sky);
+  --sw: min(100vw, var(--app-max, 480px)); min-height: 100svh;
+  background: linear-gradient(180deg, var(--cab-sky) 0%, var(--cab-sky) 30%, var(--cab-ground) 70%, var(--cab-ground) 100%); }
+:global(html) .root.root[data-auth-cabinet][data-auth-theme='cool'] { --cab-sky: #262b33; --cab-ground: #4e4b4e; }
+.cabStage { position: absolute; z-index: 0; left: 50%; width: var(--sw); translate: -50% 0; aspect-ratio: 2 / 3; container-type: inline-size; pointer-events: none;
+  top: clamp(-24px, calc(100svh - 212px - env(safe-area-inset-bottom) - var(--sw) * 1.38), calc(18px + env(safe-area-inset-top))); }
+.cabStage::before, .cabStage::after { content: ''; position: absolute; z-index: 4; left: 0; right: 0; height: 8%; pointer-events: none; }
+.cabStage::before { top: 0; background: linear-gradient(180deg, var(--cab-sky), transparent); }
+.cabStage::after { bottom: 0; background: linear-gradient(0deg, var(--cab-ground), transparent); }
+.cabPhoto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; -webkit-user-drag: none; }
+.cabTag { position: absolute; z-index: 3; left: 49.32%; top: 5.47%; width: 8.3%; height: 14.45%; max-width: none; }
 .root.root[data-auth-cabinet] > .sceneWash, .root.root[data-auth-cabinet] > .scene { display: none; }
-.root.root[data-auth-cabinet] .topbar { position: relative; z-index: 3; }
+.root.root[data-auth-cabinet] .topbar { position: relative; z-index: 3; padding-top: calc(6px + env(safe-area-inset-top)); }
 .root.root[data-auth-cabinet] .brand { visibility: hidden; }
-.root.root[data-auth-cabinet] .iconButton { width: 36px; height: 36px; margin-left: 6px; color: #141a22; background: rgba(255, 255, 255, .5);
+.root.root[data-auth-cabinet] .iconButton { width: 34px; height: 34px; margin-left: 6px; color: #141a22; background: rgba(255, 255, 255, .55);
   box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 6px 14px -8px rgba(15, 23, 42, .45); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
 .root.root[data-auth-cabinet][data-auth-theme='cool'] .iconButton { color: #eef1f6; background: rgba(46, 50, 58, .55); box-shadow: inset 0 1px .5px rgba(255, 255, 255, .18), inset 0 0 0 .5px rgba(255, 255, 255, .1); }
 
-/* The face: the Koala Quant page, printed small; sizes follow the face (--u = 1 % of its width). */
-.cabFace { position: absolute; z-index: 1; left: calc(var(--cx) + var(--cb) * .039); top: calc(var(--cy) + var(--cb) * .141);
-  --u: calc(var(--cb) * .00589); width: calc(var(--u) * 100); height: calc(var(--cb) * 1.209); box-sizing: border-box; padding: calc(var(--u) * 3) calc(var(--u) * 6);
-  display: flex; flex-direction: column; align-items: stretch; overflow: hidden; pointer-events: none; color: #141a22; }
-.root[data-auth-theme='cool'] .cabFace { color: #eef1f6; }
-.cabStatus { display: flex; flex: none; align-items: center; justify-content: space-between; height: calc(var(--u) * 10); font-size: calc(var(--u) * 5.6); }
-.cabStatus b { font-weight: 600; font-variant-numeric: tabular-nums; }
-.cabStatus > span { display: flex; align-items: center; gap: calc(var(--u) * 2); }
-.cabStatus svg { width: calc(var(--u) * 5.4); height: calc(var(--u) * 5.4); }
-.cabSig { display: flex; align-items: flex-end; gap: calc(var(--u) * .7); height: calc(var(--u) * 4.4); }
-.cabSig i { width: calc(var(--u) * 1.1); border-radius: 1px; background: currentColor; }
-.cabSig i:nth-child(1) { height: 30%; } .cabSig i:nth-child(2) { height: 55%; } .cabSig i:nth-child(3) { height: 80%; } .cabSig i:nth-child(4) { height: 100%; }
-.cabBatt { position: relative; width: calc(var(--u) * 9); height: calc(var(--u) * 4.6); border-radius: calc(var(--u) * 1.3); box-shadow: inset 0 0 0 1px currentColor; }
-.cabBatt i { position: absolute; left: 1.5px; top: 1.5px; bottom: 1.5px; width: 62%; border-radius: 1px; background: currentColor; }
-.cabHead { display: flex; flex: none; align-items: center; gap: calc(var(--u) * 3); margin-top: calc(var(--u) * 4); }
-.cabHead svg { width: calc(var(--u) * 11); height: auto; }
-.cabHead b { font-size: calc(var(--u) * 6.4); font-weight: 700; letter-spacing: .04em; }
-.cabAvatar { width: calc(var(--u) * 13); height: calc(var(--u) * 13); margin-left: auto; overflow: hidden; border-radius: 50%; background: #ffffff; box-shadow: 0 0 0 1px #1b212a; }
-.cabAvatar img { display: block; width: 100%; height: 100%; }
-.cabDial { display: block; width: 92%; height: auto; margin: calc(var(--u) * 5) auto 0; filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 4) rgba(15, 23, 42, .28)); }
-.root[data-auth-theme='cool'] .cabDial { filter: drop-shadow(0 calc(var(--u) * 3) calc(var(--u) * 5) rgba(0, 0, 0, .7)); }
-.cabSeg { display: flex; flex: none; margin-top: calc(var(--u) * 7); padding: calc(var(--u) * 1.2); border-radius: 999px; background: rgba(20, 26, 34, .06); box-shadow: inset 0 0 0 1px rgba(20, 26, 34, .08); font-size: calc(var(--u) * 5); }
-.cabSeg > * { flex: 1; padding: calc(var(--u) * 2.4) 0; border-radius: 999px; text-align: center; }
-.cabSeg b { font-weight: 700; background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, .15), inset 0 0 0 1px rgba(255, 255, 255, .9); }
-.cabSeg span { opacity: .6; }
-.root[data-auth-theme='cool'] .cabSeg { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .08); }
-.root[data-auth-theme='cool'] .cabSeg b { background: rgba(255, 255, 255, .14); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18); }
-.cabChart { display: block; width: 100%; height: calc(var(--u) * 26); margin-top: calc(var(--u) * 7); }
+/* Written on the side's header, sheared onto its slope. */
+.cabSide { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; overflow: visible; mix-blend-mode: multiply; }
+.cabSide text { fill: #3f4249; font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+.cabSideTitle { font-size: 40px; font-weight: 700; letter-spacing: .04em; }
+.cabSideLine { font-size: 19px; opacity: .72; letter-spacing: .02em; }
+.cabSideRule { stroke: #0a8a73; stroke-width: 3; stroke-linecap: round; opacity: .85; }
+.root[data-auth-theme='cool'] .cabSide { mix-blend-mode: normal; }
+.root[data-auth-theme='cool'] .cabSide text { fill: #d7d9dd; }
+.root[data-auth-theme='cool'] .cabSideRule { stroke: #3ce0b1; }
 
-/* Below the cabinet, on the floor: the real form in the guide's liquid glass (round 36 rules), then the legal line. */
-:global(html) .root.root.root[data-auth-cabinet] .stage { position: relative; z-index: 2; margin-top: 0; padding: calc(var(--cy) + var(--cb) * 1.4 + 6px) 20px calc(8px + env(safe-area-inset-bottom)); }
+/* The face, clipped to its rounded corners; --u = 1 % of the face width. */
+.cabFace { position: absolute; z-index: 2; left: 8.2%; top: 7.4%; width: 49.2%; height: 83%; overflow: hidden; border-radius: 8cqw / 5.4cqw; --u: .492cqw; --ink: #4a4741; }
+.root[data-auth-theme='cool'] .cabFace { --ink: #d4d7dc; }
+.kPrint { position: absolute; inset: 0; display: flex; flex-direction: column; padding: calc(var(--u) * 3) calc(var(--u) * 6) 0; color: var(--ink); mix-blend-mode: multiply;
+  font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: calc(var(--u) * 4.4); line-height: 1.3; }
+.root[data-auth-theme='cool'] .kPrint { mix-blend-mode: normal; }
+.kPrint svg { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.kStatus { display: flex; flex: none; align-items: center; justify-content: space-between; height: calc(var(--u) * 9); font-size: calc(var(--u) * 5); }
+.kStatus b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.kStatus > span { display: flex; align-items: center; gap: calc(var(--u) * 1.6); }
+.kStatus svg { width: calc(var(--u) * 5); height: calc(var(--u) * 5); stroke-width: 2.2; }
+.kSig { display: flex; align-items: flex-end; gap: calc(var(--u) * .6); height: calc(var(--u) * 4); }
+.kSig i { width: calc(var(--u) * 1); border-radius: 1px; background: currentColor; }
+.kSig i:nth-child(1) { height: 30%; } .kSig i:nth-child(2) { height: 55%; } .kSig i:nth-child(3) { height: 80%; } .kSig i:nth-child(4) { height: 100%; }
+.kBatt { position: relative; width: calc(var(--u) * 8); height: calc(var(--u) * 4.2); border-radius: calc(var(--u) * 1.2); box-shadow: inset 0 0 0 1px currentColor; }
+.kBatt i { position: absolute; left: 1.5px; top: 1.5px; bottom: 1.5px; width: 62%; border-radius: 1px; background: currentColor; }
+
+.kDial { display: block; flex: none; width: 88%; height: auto; margin: calc(var(--u) * 2) auto 0; }
+.kDial text { fill: var(--ink); stroke: none; }
+.kMono { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 14px; font-weight: 600; letter-spacing: .04em; }
+.kMonoS { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 7.5px; letter-spacing: .06em; }
+.kTiny { font-size: 6px; letter-spacing: .08em; opacity: .8; }
+.kName { font-size: 10px; font-weight: 600; letter-spacing: .14em; }
+.kFill { fill: var(--ink); stroke: none; }
+.kRun { transform-origin: 100px 104px; animation: kRun 12s linear infinite; }
+.kNeedleA { transform-origin: 68px 122px; animation: kSwing 3.2s ease-in-out infinite alternate; }
+.kNeedleB { transform-origin: 132px 122px; animation: kSwing 4.4s ease-in-out -1.2s infinite alternate-reverse; }
+.kNeedleC { transform-origin: 100px 136px; animation: kSwing 5s ease-in-out -.6s infinite alternate; }
+@keyframes kRun { to { transform: rotate(360deg); } }
+@keyframes kSwing { from { transform: rotate(-16deg); } to { transform: rotate(14deg); } }
+
+/* Overview / Mine: the tab well is pressed into the face, the overview key stands out of it, and slides now and then. */
+.kSeg { position: relative; display: grid; flex: none; grid-template-columns: 1fr 1fr; margin-top: calc(var(--u) * 5); padding: calc(var(--u) * 1.2); border-radius: 999px; isolation: isolate;
+  background: linear-gradient(180deg, rgba(20, 26, 34, .08), rgba(20, 26, 34, .02)); box-shadow: inset 0 1.5px 3px rgba(20, 26, 34, .18), inset 0 -1px 0 rgba(255, 255, 255, .75); }
+.kSeg b { position: relative; z-index: 1; padding: calc(var(--u) * 2.4) 0; text-align: center; font-weight: 600; font-size: calc(var(--u) * 4.6); }
+.kKey { position: absolute; z-index: 0; left: calc(var(--u) * 1.2); top: calc(var(--u) * 1.2); bottom: calc(var(--u) * 1.2); width: calc(50% - var(--u) * 1.2); border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #eceef2); box-shadow: inset 0 1px 0 #ffffff, inset 0 -1.5px 1px rgba(20, 26, 34, .1), 0 1px 1px rgba(20, 26, 34, .14), 0 calc(var(--u) * 2.2) calc(var(--u) * 3.4) rgba(20, 26, 34, .26);
+  animation: kSlide 9s cubic-bezier(.65, 0, .35, 1) 2s infinite; }
+@keyframes kSlide { 0%, 42% { transform: translateX(0); } 50%, 92% { transform: translateX(100%); } 100% { transform: translateX(0); } }
+.kPrint .kSeg { mix-blend-mode: normal; }
+.root[data-auth-theme='cool'] .kSeg { background: linear-gradient(180deg, rgba(0, 0, 0, .32), rgba(0, 0, 0, .12)); box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .55), inset 0 -1px 0 rgba(255, 255, 255, .08); }
+.root[data-auth-theme='cool'] .kKey { background: linear-gradient(180deg, #4d525c, #343840); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 calc(var(--u) * 2.2) calc(var(--u) * 3.4) rgba(0, 0, 0, .6); }
+
+.kStats { display: grid; flex: none; grid-template-columns: 1.1fr 1.2fr .8fr; margin-top: calc(var(--u) * 5); border-top: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.kStats span { display: flex; flex-direction: column; gap: calc(var(--u) * 1); padding: calc(var(--u) * 3) calc(var(--u) * 1.6); }
+.kStats span + span { border-left: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.kStats small { font-size: calc(var(--u) * 3.4); opacity: .8; }
+.kStats b { font-size: calc(var(--u) * 4.8); font-weight: 700; }
+.kNavHead { display: flex; flex: none; align-items: flex-end; justify-content: space-between; margin-top: calc(var(--u) * 3.4); }
+.kNavHead > b { font-size: calc(var(--u) * 5.2); font-weight: 700; }
+.kNavHead span { display: flex; flex-direction: column; align-items: flex-end; }
+.kNavHead small { font-size: calc(var(--u) * 3.4); opacity: .7; }
+.kNavHead strong { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: calc(var(--u) * 7.4); font-weight: 600; line-height: 1.1; }
+.kDays { display: flex; flex: none; align-self: flex-start; margin-top: calc(var(--u) * 1.6); padding: calc(var(--u) * .8); border-radius: 999px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 45%, transparent); font-size: calc(var(--u) * 3.6); }
+.kDays > * { padding: calc(var(--u) * 1.2) calc(var(--u) * 3.2); border-radius: 999px; }
+.kDays b { box-shadow: inset 0 0 0 1.2px var(--ink); font-weight: 700; }
+.kChart { display: block; flex: none; width: 100%; height: auto; margin-top: calc(var(--u) * 2.4); overflow: visible; }
+.kChart text { fill: var(--ink); stroke: none; font-size: 6.5px; opacity: .8; }
+.kArea { fill: color-mix(in srgb, var(--ink) 9%, transparent); stroke: none !important; }
+.kLine { stroke-width: 1.6; stroke-dasharray: 1; stroke-dashoffset: 1; animation: kDraw 7s cubic-bezier(.45, 0, .2, 1) .6s infinite; }
+@keyframes kDraw { 0% { stroke-dashoffset: 1; } 35%, 88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+.kDock { display: flex; flex: none; align-items: center; gap: calc(var(--u) * 2.4); margin-top: auto; margin-bottom: calc(var(--u) * 5); }
+.kDock > span { display: flex; flex: 1; align-items: center; justify-content: space-around; height: calc(var(--u) * 13); padding: 0 calc(var(--u) * 1.4); border-radius: 999px; box-shadow: inset 0 0 0 1.1px var(--ink); }
+.kDock svg { width: calc(var(--u) * 5.2); height: calc(var(--u) * 5.2); stroke-width: 1.6; }
+.kDock b { display: flex; align-items: center; gap: calc(var(--u) * 1.4); padding: calc(var(--u) * 2) calc(var(--u) * 3.6); border-radius: 999px; box-shadow: inset 0 0 0 1.2px var(--ink); font-size: calc(var(--u) * 4); font-weight: 700; }
+.kDock b svg { width: calc(var(--u) * 6); height: auto; }
+.kDock > i { width: calc(var(--u) * 12); height: calc(var(--u) * 12); border-radius: 50%; box-shadow: inset 0 0 0 1.1px var(--ink); }
+@media (prefers-reduced-motion: reduce) { .kRun, .kNeedleA, .kNeedleB, .kNeedleC, .kKey, .kLine { animation: none; } .kLine { stroke-dashoffset: 0; } }
+
+/* The form below the scene, on the floor (round 36's liquid glass), then the legal line. */
+:global(html) .root.root.root[data-auth-cabinet] .stage { position: relative; z-index: 2; margin-top: auto; padding: 0 20px calc(6px + env(safe-area-inset-bottom)); }
 .cabBody { display: flex; flex-direction: column; }
-.root.root.root[data-auth-cabinet] .stage .cardHead .cardTitle { margin: 0 0 12px; font-size: 20px; font-weight: 700; }
-.cabFoot { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 8px; }
-.root.root.root[data-auth-cabinet] .cabFoot :is(button, span) { padding: 6px 2px; border: 0; background: none; font: inherit; font-size: 11px; color: rgba(20, 26, 34, .55); cursor: pointer; }
-.root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot :is(button, span) { color: rgba(238, 241, 246, .5); }
-/* A printed buy button closes the face, as on the real page. */
-.cabBuy { display: flex; flex: none; align-items: center; justify-content: space-between; margin-top: auto; padding: 0 calc(var(--u) * 2) 0 calc(var(--u) * 7); height: calc(var(--u) * 16);
-  border-radius: 999px; color: #ffffff; background: #12161d; font-size: calc(var(--u) * 5.6); box-shadow: 0 calc(var(--u) * 2) calc(var(--u) * 4) rgba(11, 18, 32, .3); }
-.cabBuy i { display: grid; place-items: center; width: calc(var(--u) * 12); height: calc(var(--u) * 12); border-radius: 50%; background: rgba(255, 255, 255, .12); font-style: normal; }
-.root[data-auth-theme='cool'] .cabBuy { color: #0b1220; background: #eef1f6; }
-.root[data-auth-theme='cool'] .cabBuy i { background: rgba(11, 18, 32, .1); }
-/* The headline fills the floor between the cabinet and the form, where there is room for it. */
-.root.root.root[data-auth-cabinet] .stage { min-height: 100svh; box-sizing: border-box; }
-.root.root.root[data-auth-cabinet] .stage .heroCopy { position: static; display: block; margin: 14px 4px 0; text-align: center; color: inherit; }
-.root.root.root[data-auth-cabinet] .stage .heroCopy .cardTitle { margin: 0; color: #141a22; font-family: var(--sans); font-size: 24px; font-weight: 750; line-height: 1.2; text-shadow: none; mix-blend-mode: normal; animation: none; }
-.root.root.root[data-auth-cabinet] .stage .heroCopy .cardTitle em { display: inline; color: #0a8a73; font-style: normal; }
-.root.root.root[data-auth-cabinet] .stage .heroCopy .cardLede { margin: 6px 0 0; color: rgba(20, 26, 34, .6); font-size: 13px; line-height: 1.5; text-shadow: none; mix-blend-mode: normal; }
-.root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .heroCopy .cardTitle { color: #eef1f6; }
-.root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .heroCopy .cardTitle em { color: #3ce0b1; }
-.root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .heroCopy .cardLede { color: rgba(238, 241, 246, .6); }
-.root.root.root[data-auth-cabinet] .cabBody { margin-top: auto; padding-top: 14px; }
-@media (max-height: 760px) { .root.root.root[data-auth-cabinet] .stage .heroCopy .cardLede { display: none; } }
-@media (max-height: 690px) { .root.root.root[data-auth-cabinet] .stage .heroCopy { display: none; } }
-.root .cabFace .cabBuy b { color: #ffffff; font-weight: 600; }
-.root[data-auth-theme='cool'] .cabFace .cabBuy b { color: #0b1220; }
-
-/* Round 38: the face is written by hand in the guide's ink: warm grey lines and outlines, no fills, sans in the
-   guide's weights; only the logo keeps its colours. At night the ink is chalk-light on the slate. */
-.cabFace { --ink: #4a4741; color: var(--ink); mix-blend-mode: multiply; font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; text-shadow: 0 1px 0 rgba(255, 255, 255, .45); }
-.root[data-auth-theme='cool'] .cabFace { --ink: #d7d9dd; color: var(--ink); mix-blend-mode: normal; opacity: .9; text-shadow: none; }
-.cabHead svg { mix-blend-mode: normal; }
-.cabHead b { letter-spacing: .12em; font-weight: 600; }
-.cabAvatar { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
-.root[data-auth-theme='cool'] .cabAvatar { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
-.root[data-auth-theme='cool'] .cabAvatar img { filter: invert(1); mix-blend-mode: screen; }
-.cabAvatar img { mix-blend-mode: multiply; }
-svg.cabDial { display: block; width: 72%; height: auto; margin: calc(var(--u) * 5) auto 0; filter: none; fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
-.root[data-auth-theme='cool'] svg.cabDial { filter: none; }
-.cabDial text { fill: var(--ink); stroke: none; font-size: 9px; font-weight: 600; letter-spacing: .1em; }
-.cabDial text.cabMono { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 11px; letter-spacing: .12em; }
-.cabDial .cabInkFill { fill: var(--ink); }
-.cabSeg { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
-.cabSeg b { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); font-weight: 600; }
-.root[data-auth-theme='cool'] .cabSeg { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
-.root[data-auth-theme='cool'] .cabSeg b { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
-.cabChart { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linecap: round; }
-.cabChart path:first-child { stroke-width: 1; }
-.cabChart > *, .cabChart path { vector-effect: non-scaling-stroke; }
-.cabBuy, .root[data-auth-theme='cool'] .cabBuy { color: var(--ink); background: none; box-shadow: inset 0 0 0 1.3px var(--ink); }
-.cabBuy i, .root[data-auth-theme='cool'] .cabBuy i { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
-.root .cabFace .cabBuy b, .root[data-auth-theme='cool'] .cabFace .cabBuy b { color: var(--ink); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .cardHead .cardTitle { margin: 0 0 12px; font-size: 20px; font-weight: 700; }
+.cabFoot { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
+:global(html) .root.root.root[data-auth-cabinet] .cabFoot :is(button, span) { padding: 6px 2px; border: 0; background: none; font: inherit; font-size: 11px; color: rgba(20, 26, 34, .55); cursor: pointer; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot :is(button, span) { color: rgba(238, 241, 246, .5); }
