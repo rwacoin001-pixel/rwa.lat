@@ -792,3 +792,29 @@
 @media (max-height: 690px) { .root.root.root[data-auth-cabinet] .stage .heroCopy { display: none; } }
 .root .cabFace .cabBuy b { color: #ffffff; font-weight: 600; }
 .root[data-auth-theme='cool'] .cabFace .cabBuy b { color: #0b1220; }
+
+/* Round 38: the face is written by hand in the guide's ink: warm grey lines and outlines, no fills, sans in the
+   guide's weights; only the logo keeps its colours. At night the ink is chalk-light on the slate. */
+.cabFace { --ink: #4a4741; color: var(--ink); mix-blend-mode: multiply; font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; text-shadow: 0 1px 0 rgba(255, 255, 255, .45); }
+.root[data-auth-theme='cool'] .cabFace { --ink: #d7d9dd; color: var(--ink); mix-blend-mode: normal; opacity: .9; text-shadow: none; }
+.cabHead svg { mix-blend-mode: normal; }
+.cabHead b { letter-spacing: .12em; font-weight: 600; }
+.cabAvatar { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.root[data-auth-theme='cool'] .cabAvatar { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.root[data-auth-theme='cool'] .cabAvatar img { filter: invert(1); mix-blend-mode: screen; }
+.cabAvatar img { mix-blend-mode: multiply; }
+svg.cabDial { display: block; width: 72%; height: auto; margin: calc(var(--u) * 5) auto 0; filter: none; fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; }
+.root[data-auth-theme='cool'] svg.cabDial { filter: none; }
+.cabDial text { fill: var(--ink); stroke: none; font-size: 9px; font-weight: 600; letter-spacing: .1em; }
+.cabDial text.cabMono { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 11px; letter-spacing: .12em; }
+.cabDial .cabInkFill { fill: var(--ink); }
+.cabSeg { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.cabSeg b { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); font-weight: 600; }
+.root[data-auth-theme='cool'] .cabSeg { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.root[data-auth-theme='cool'] .cabSeg b { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.cabChart { fill: none; stroke: var(--ink); stroke-width: 1.2; stroke-linecap: round; }
+.cabChart path:first-child { stroke-width: 1; }
+.cabChart > *, .cabChart path { vector-effect: non-scaling-stroke; }
+.cabBuy, .root[data-auth-theme='cool'] .cabBuy { color: var(--ink); background: none; box-shadow: inset 0 0 0 1.3px var(--ink); }
+.cabBuy i, .root[data-auth-theme='cool'] .cabBuy i { background: none; box-shadow: inset 0 0 0 1.2px var(--ink); }
+.root .cabFace .cabBuy b, .root[data-auth-theme='cool'] .cabFace .cabBuy b { color: var(--ink); }

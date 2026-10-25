@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Moon, Sun, Wifi } from 'lucide-react'
+import { Moon, Sun } from 'lucide-react'
 import { localeOptions, useI18n } from '@/lib/i18n'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
@@ -9,6 +9,7 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
+import { CabinetFace } from './CabinetFace'
 import { usePaletteA } from '@/lib/palette-preview'
 
 /** Shared A-REIT mark for every authentication surface. */
@@ -76,16 +77,8 @@ export function AuthShell({ children, hero, footer, attrs }: {
 
     <AndroidAppBanner />
     {cabinet ? <>
-      {/* The cabinet's face is the phone, showing the Koala Quant page as the cover (printed, not live). */}
-      <div className={styles.cabFace} aria-hidden="true">
-        <div className={styles.cabStatus}><b><Clock /></b><span><i className={styles.cabSig}><i /><i /><i /><i /></i><Wifi size={11} strokeWidth={2.2} /><i className={styles.cabBatt}><i /></i></span></div>
-        <div className={styles.cabHead}><RwaLogoMark width={26} height={15} label="" /><b>A-REIT</b><i className={styles.cabAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></div>
-        <img className={styles.cabDial} src="/media/palette-a/login/quant-dial.webp" alt="" draggable={false} />
-        <div className={styles.cabSeg}><b>{locale === 'zh-CN' ? '总览' : 'Overview'}</b><span>{locale === 'zh-CN' ? '我的' : 'Mine'}</span></div>
-        <svg className={styles.cabChart} viewBox="0 0 200 60" preserveAspectRatio="none"><defs><linearGradient id="cabFill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="#0a8a73" stopOpacity=".28" /><stop offset="1" stopColor="#0a8a73" stopOpacity="0" /></linearGradient></defs>
-          <path d="M0 52 C20 44 34 47 50 43 S78 30 96 33 S120 34 136 24 S172 12 200 4 V60 H0 Z" fill="url(#cabFill)" /><path d="M0 52 C20 44 34 47 50 43 S78 30 96 33 S120 34 136 24 S172 12 200 4" fill="none" stroke="#0a8a73" strokeWidth="2" vectorEffect="non-scaling-stroke" /></svg>
-        <div className={styles.cabBuy}><b>{locale === 'zh-CN' ? '申购' : 'Subscribe'}</b><i>→</i></div>
-      </div>
+      {/* The cabinet's face is the phone, with the Koala Quant page written on it as the cover. */}
+      <CabinetFace locale={locale} />
       <div className={styles.stage}>
         {hero && <div className={styles.heroCopy}>{hero}</div>}
         <div className={styles.cabBody}>{children}</div>
@@ -99,14 +92,6 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </div>
     </>}
   </section>
-}
-
-/** The time on the cabinet's phone face: the device's own clock. */
-function Clock() {
-  const format = () => new Date().toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: false })
-  const [now, setNow] = useState('')
-  useEffect(() => { setNow(format()); const timer = setInterval(() => setNow(format()), 15000); return () => clearInterval(timer) }, [])
-  return <>{now || '\u00a0'}</>
 }
 
 /** The serif kicker + two-line plaque used above the card. */
