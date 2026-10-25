@@ -74,8 +74,8 @@ const AI_COPY: Partial<Record<AppLocale, AiCopy>> = {
     summary: 'Noted: 1–3 years, steady income, little swing. I will list products you could look at first; for reference only.', input: 'Ask about fees, risk or allocation…', note: 'AI can make mistakes. Answers are for reference only and are not investment advice.', done: 'All set' },
 }
 /** Script times (ms after the page shows): hi, typing, reply, ask, Q1, pick 1, Q2, pick 2, Q3, pick 3, summary. */
-/** Fixed words printed on the three paper bubbles: the questions people bring to the assistant. */
-const BUBBLE_WORDS: Partial<Record<AppLocale, string[]>> = { 'zh-CN': ['费用多少？', '风险？', '怎么配置？'], en: ['Fees?', 'Risk?', 'How to allocate?'] }
+/** One emoji printed on each paper bubble (fees, risk, allocation): reads in every language and never overflows. */
+const BUBBLE_MARKS = ['💰', '⚠️', '📊']
 const AI_TIMES = [0, 400, 1000, 1500, 3600, 4300, 5500, 6400, 7500, 8400, 9500, 10500]
 
 /** Steps through the script while the page is current; starts over each time it becomes current. */
@@ -291,7 +291,7 @@ const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat:
     flat: '9.9% 12%, 11% 9.8%, 13% 9.4%, 49.4% 11.9%, 51% 12.6%, 51.6% 14.2%, 51.6% 82%, 50.8% 83.2%, 13% 84.6%, 10.9% 84%, 9.9% 82.4%', Print: PrintedPortfolio },
   quant: { photo: 'quant-scene', person: 'quant-person', face: {"tl": [41.02, 7.68], "tr": [85.74, 2.6], "br": [85.74, 82.36], "bl": [41.02, 80.4]},
     flat: '41.1% 10.4%, 42.2% 8%, 44.4% 7.2%, 83.6% 2.6%, 85.4% 3.1%, 85.7% 4.8%, 85.7% 53.6%, 41.1% 53.6%', Print: PrintedQuant },
-  ai: { photo: 'ai-scene', person: 'ai-front', script: true, labels: [[23.15, 15.05, 27.1, 3.7], [10.08, 22.11, 26.6, 2.3], [24.25, 30.46, -19, 3.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '33.4% 6.3%, 79% 3%, 80.6% 3.2%, 81.4% 4.4%, 81.4% 86%, 80.7% 87.6%, 79% 88.3%, 32% 81.6%, 30.4% 80.4%, 30.4% 9.2%, 31.2% 7.9%, 32% 6.6%', Print: PrintedAi },
+  ai: { photo: 'ai-scene', person: 'ai-front', script: true, labels: [[23.15, 15.05, 27.1, 7.6], [10.08, 22.11, 26.6, 4.4], [24.25, 30.46, -19, 7.2]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '33.4% 6.3%, 79% 3%, 80.6% 3.2%, 81.4% 4.4%, 81.4% 86%, 80.7% 87.6%, 79% 88.3%, 32% 81.6%, 30.4% 80.4%, 30.4% 9.2%, 31.2% 7.9%, 32% 6.6%', Print: PrintedAi },
 }
 
 /**
@@ -319,7 +319,7 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
     </div>}
     {scene === 'port' && box.w > 0 && <PaperCards box={box} locale={locale} />}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
-    {sc.labels?.map(([cx, cy, ang, size], k) => <span key={k} className={styles.bubbleInk} style={{ left: `${cx}%`, top: `${cy}%`, rotate: `${ang}deg`, fontSize: `${size}cqw` }}>{(BUBBLE_WORDS[locale] ?? BUBBLE_WORDS.en!)[k]}</span>)}
+    {sc.labels?.map(([cx, cy, ang, size], k) => <span key={k} className={styles.bubbleInk} style={{ left: `${cx}%`, top: `${cy}%`, rotate: `${ang}deg`, fontSize: `${size}cqw` }}>{BUBBLE_MARKS[k]}</span>)}
     {sc.floaters?.map(([src, left, top, width, height, dy, turn, sec], k) => <motion.div key={src} className={styles.floater} data-k={k}
       style={{ left: `${left}%`, top: `${top}%`, width: `${width}%`, height: `${height}%` }}
       animate={reduced ? undefined : { y: [0, dy, 0], rotate: [0, turn, 0] }} transition={{ duration: sec, ease: 'easeInOut', repeat: Infinity }}>

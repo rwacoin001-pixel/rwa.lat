@@ -490,3 +490,6 @@
 .pc[data-k='d'] .pcHead span { font-size: 11.5px; }
 .pc[data-k='d'] .pcArt { margin-top: 12px; }
 .pc[data-k='d'] .pcRow { margin-top: 10px; }
+/* Emoji on the bubbles: sized to each bubble's short axis, tilted with it, printed into the paper (slightly muted). */
+.bubbleInk { font-weight: 400; letter-spacing: 0; line-height: 1; opacity: .92; filter: saturate(.85) contrast(.95); text-shadow: none;
+  font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
