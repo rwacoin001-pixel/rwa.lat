@@ -1574,3 +1574,6 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .logo { border: 0; border-radius: 9px; background: var(--pa-fill); }
 :global(html[data-palette='a']) .logo:not(:has(img)) { display: none; }
 :global(html[data-palette='a']) .predSortButton { width: var(--pa-field-h); height: var(--pa-field-h); border: 0; background: var(--pa-fill); }
+/* Prediction feed: one translate switch under the filters, end-aligned. */
+.predFeedTranslate { display: flex; justify-content: flex-end; margin: 6px 0 -4px; }
+.predFeedTranslate .predTranslate { font-size: 12px; }

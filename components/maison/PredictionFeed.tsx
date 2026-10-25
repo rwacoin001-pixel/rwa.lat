@@ -119,6 +119,8 @@ export function PredictionFeed() {
     <div className={s.chips} role="group" aria-label={m.discovery}>
       {POLYMARKET_CATEGORIES.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={category === key} onClick={() => selectCategory(key)}>{labels.categories[key]}</button>)}
     </div>
+    {/* One switch for the whole feed: it is translated in one batch, shown or hidden together, retried together. */}
+    {visibleItems.length > 0 && sources.length > 0 && <div className={s.predFeedTranslate}><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={sources}/></div>}
     {!loadedOnce && loading ? <Skeleton rows={3} /> : null}
     {error && !visibleItems.length ? <StateBlock tone="error" title={m.loadError} retry={() => setRetry((value) => value + 1)} retryLabel={labels.retry} /> : null}
     {visibleItems.length > 0 && <div aria-live="off">{visibleItems.map((item) => {
@@ -150,7 +152,7 @@ export function PredictionFeed() {
           <i><span style={{ width: `${Math.max(0, Math.min(1, outcome.impliedProbability)) * 100}%` }} /></i>
         </span>)}</span>}
         {layout !== 'pulse' && <span className={s.predCardFoot}><span>{m.volume24h} <b className={s.num}>{item.volume24hUsd == null ? '—' : fmtUsd(String(item.volume24hUsd), { compact: true, locale })}</b></span>{remaining > 0 && <span>+{remaining}</span>}</span>}
-      </button>{layout !== 'pulse' && <PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={[item.question,...item.outcomes.map(o=>o.label)]}/>}</article>
+      </button></article>
     })}</div>}
     {loadedOnce && !loading && !error && !visibleItems.length && nextOffset === null ? <StateBlock title={copy.common.empty} /> : null}
     <div ref={sentinel} className={s.predFeedSentinel} aria-hidden="true" />
