@@ -135,7 +135,7 @@ export function AmountPad({ value, onChange, decimals, unit, onUnit, sub, error,
   }
   const shown = grouped(text, locale)
   const size = shown.length <= 7 ? 'l' : shown.length <= 10 ? 'm' : 's'
-  return <div className={k.flow}>
+  return <div className={k.flow} data-money-flow="">
     {header && <div className={k.header}>{header}</div>}
     <div className={k.stage} aria-live="polite">
       <p className={k.figure} data-size={size} data-empty={!text || undefined} data-invalid={problem ? 'true' : undefined} key={nudge} data-nudge={nudge > 0 || undefined}>
@@ -204,7 +204,7 @@ export function FlowSuccess({ title, amount, unit, rows, note, pending = false, 
   const { locale } = useI18n()
   const c = flowKitCopy(locale)
   useEffect(() => { haptic([12, 60, 18]) }, [])
-  return <div className={k.success} data-pending={pending || undefined}>
+  return <div className={k.success} data-pending={pending || undefined} data-money-flow="">
     <svg className={k.check} viewBox="0 0 72 72" aria-hidden="true">
       <circle cx="36" cy="36" r="32" pathLength={1} />
       <path d={pending ? 'M36 20v18l10 6' : 'M23 37.5l9 9 17-19'} pathLength={1} />

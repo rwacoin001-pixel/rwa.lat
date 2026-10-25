@@ -1615,3 +1615,6 @@ span.compareName { padding-top: 28px; cursor: default; }
 /* Amount: the figure, its unit and MAX on one line. */
 :global(html[data-palette='a']) .amount { align-items: center; border-bottom-width: .5px; }
 :global(html[data-palette='a']) .amount span { font-weight: 500; }
+/* Order entry header (palette A amount-first subscribe). */
+.orderHead { display: grid; justify-items: center; gap: 4px; padding-top: 6px; text-align: center; }
+.orderTitle { margin: 0; color: var(--m-ink); font-size: 20px; font-weight: 650; letter-spacing: -.01em; line-height: 1.25; }

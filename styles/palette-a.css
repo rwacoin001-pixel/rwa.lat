@@ -211,3 +211,10 @@ html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='d
   --pa-sel: #f2f4f7; --pa-sel-ink: #0b0d12;
   --pa-series-1: #19c7aa; --pa-series-2: #e6e9ee; --pa-series-3: #7d8796; --pa-series-4: #c9ad78;
 }
+
+/* Money entry (flow-kit) is full screen: no floating panel, no dock under the keypad. */
+html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .rwa-screen-transition { padding: 0; }
+html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .rwa-screen-transition::before { display: none; }
+html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .rwa-screen-transition > [data-maison-page] { width: 100%; max-width: var(--app-max); height: 100dvh; max-height: none; border: 0; border-radius: 0; box-shadow: none; }
+html[data-palette='a'] .rwa-mobile:has([data-money-flow]) .liquid-dock, html[data-palette='a'] .rwa-mobile:has([data-money-flow]) .ai-orb { display: none !important; }
+html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .rwa-screen-transition > [data-maison-page] > .rwa-topbar::before { display: none; }

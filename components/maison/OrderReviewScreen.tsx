@@ -13,6 +13,9 @@ import { backOr, openPath, queryParam } from '@/lib/maison-nav'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { Lacquer } from './motion'
 import { fmtAtomic, fmtDuration } from './format'
+import { usePaletteA } from '@/lib/palette-preview'
+import { flowKitCopy } from '@/lib/flow-kit-copy'
+import { AmountPad, FlowConfirm, share } from './flow-kit'
 
 const ORDER_PATH = '/v1/orders'
 
@@ -34,6 +37,9 @@ export function OrderReviewScreen({ query }: { query: string }) {
   const [touched, setTouched] = useState(false)
   const keys = useRef(new Map<string, string>())
   const confirmDialog = useRef<HTMLDialogElement>(null)
+  const paletteA = usePaletteA()
+  const kit = flowKitCopy(locale)
+  const [reviewOpen, setReviewOpen] = useState(false)
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => { const timer = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(timer) }, [])
   useEffect(() => {
@@ -104,6 +110,53 @@ export function OrderReviewScreen({ query }: { query: string }) {
     {products.error ? <StateBlock tone="error" title={copy.common.errorGeneric} body={products.error.message} retry={products.refetch} retryLabel={copy.common.retry} />
       : <StateBlock title={copy.detail.notFound} body={r.errors.noProduct} action={<button type="button" className={s.link} onClick={() => openPath('/markets')}>{copy.status.backMarkets}</button>} />}
   </div></MaisonPage>
+
+  if (paletteA) {
+    // What can go in: the balance, capped by the product maximum.
+    const cap = available && walletIsUsdt ? (product.maxOrderAtomicAmount && BigInt(product.maxOrderAtomicAmount) < BigInt(available) ? product.maxOrderAtomicAmount : available) : null
+    const money = (value: string | null | undefined, digits?: number) => fmtAtomic(value, USDT_DECIMALS, settlementUnit, digits)
+    const talk = !amount ? kit.enterAmount
+      : fieldError === r.errors.balance ? kit.insufficient
+      : fieldError ? fieldError
+      : isPrediction && !outcome ? r.errors.outcome
+      : !quote.data && !quote.error ? kit.checking
+      : quoteExpired ? r.refresh
+      : pending ? r.submitting
+      : kit.buyN(money(atomic))
+    const canReview = Boolean(atomic && !fieldError && (!isPrediction || outcome) && !pending && !quoteExpired)
+    const refreshOnly = Boolean(atomic && !fieldError && (!isPrediction || outcome) && quoteExpired && (quote.data || quote.error))
+    return <MaisonPage page="order-review" topbar={topbar}>
+      <AmountPad value={amount} onChange={(next) => { setAmount(next); setServerError(null) }} decimals={2} unit={settlementUnit} disabled={pending}
+        invalid={Boolean(fieldError)} error={serverError && !reviewOpen ? serverError : null}
+        sub={!wallet.data && !wallet.error ? '…' : <>{kit.available(fmtAtomic(available, walletDecimals, wallet.data?.asset.code ?? unit))} · {product.maxOrderAtomicAmount ? <bdi dir="ltr">{fmtAtomic(product.minOrderAtomicAmount, USDT_DECIMALS, '', 0).trim()}–{fmtAtomic(product.maxOrderAtomicAmount, USDT_DECIMALS, '', 0).trim()}</bdi> : kit.belowMin(fmtAtomic(product.minOrderAtomicAmount, USDT_DECIMALS, '', 0).trim())}</>}
+        side={[{ label: '25%', value: share(cap, 25, USDT_DECIMALS) }, { label: '50%', value: share(cap, 50, USDT_DECIMALS) }, { label: '75%', value: share(cap, 75, USDT_DECIMALS) }, { label: kit.max, value: share(cap, 100, USDT_DECIMALS) }]}
+        header={<div className={s.orderHead}>
+          <p className={s.kicker}>{r.kicker}</p>
+          <h1 className={s.orderTitle}>{product.displayName}</h1>
+          {isPrediction && <div className={s.outcome} style={{ marginTop: 12 }}>
+            <button type="button" data-side="yes" aria-pressed={outcome === 'yes'} onClick={() => setOutcome('yes')}>{r.yes}</button>
+            <button type="button" data-side="no" aria-pressed={outcome === 'no'} onClick={() => setOutcome('no')}>{r.no}</button>
+          </div>}
+        </div>}
+        cta={{ label: talk, disabled: !canReview && !refreshOnly, busy: pending, onClick: () => {
+          if (refreshOnly) { void quote.refetch(); return }
+          setServerError(null); setRisk(false); setReviewOpen(true)
+        } }} />
+      <FlowConfirm open={reviewOpen} onClose={() => { if (!pending) setReviewOpen(false) }} busy={pending} title={kit.reviewBuy}
+        amount={atomic ? fmtAtomic(atomic, USDT_DECIMALS, '').trim() : '0'} unit={settlementUnit}
+        rows={[
+          { label: r.kicker, value: product.displayName },
+          ...(isPrediction && outcome ? [{ label: r.outcome, value: outcome === 'yes' ? r.yes : r.no }] : []),
+          { label: r.unitPrice, value: quote.data ? fmtAtomic(quote.data.unitPriceAtomicAmount, quote.data.unitPriceDecimals, quote.data.currency, 6) : '—' },
+          { label: r.estQty, value: quantity ? fmtAtomic(quantity, decimals, '', 6).trim() : '—' },
+          { label: r.after, value: after ? money(after) : '—' },
+          { label: r.locked, value: atomic ? money(atomic) : '—', strong: true },
+        ]}
+        note={<>{quoteExpired ? r.expired : <>{r.refreshIn.split('{s}')[0]}<bdi>{fmtDuration(secondsLeft)}</bdi>{r.refreshIn.split('{s}')[1]}</>} · {r.eligibility}</>}
+        consent={{ label: r.risk, checked: risk, onChange: (checked) => { setRisk(checked); setServerError(null) } }}
+        error={serverError} confirmLabel={quoteExpired ? r.refresh : kit.confirmBuy} onConfirm={() => { if (quoteExpired) { void quote.refetch(); return } void placeOrder() }} />
+    </MaisonPage>
+  }
 
   const chips = [product.minOrderAtomicAmount, '1000000000', '5000000000'].filter((value, index, all): value is string => Boolean(value) && all.indexOf(value) === index && (!product.minOrderAtomicAmount || BigInt(value!) >= BigInt(product.minOrderAtomicAmount)))
 
