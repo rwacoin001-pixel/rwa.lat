@@ -80,3 +80,61 @@ export function AppOffer({ kind, locale, invite, size = 'strip' }: { kind: Offer
     <AnimatePresence>{toast && <motion.p className={styles.toast} role="status" initial={{ opacity: 0, y: 8, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>{toast}</motion.p>}</AnimatePresence>
   </div>
 }
+
+/**
+ * Install options for the guide's last page, one row under the main button:
+ * - iPhone: none (a web app on iPhone is already opened from the Home Screen);
+ * - Android Chrome: Download app + Add to home screen;
+ * - other Android browsers: Download app (highlighted);
+ * - WeChat / in-app browsers on Android: Open in browser.
+ * Preview with ?offer=apk | pwa | browser | chrome.
+ */
+export function useInstallKinds(): OfferKind[] {
+  const [kinds, setKinds] = useState<OfferKind[]>([])
+  useEffect(() => {
+    const forced = new URLSearchParams(location.search).get('offer')
+    if (forced === 'apk' || forced === 'pwa' || forced === 'browser') { setKinds([forced]); return }
+    if (forced === 'chrome') { setKinds(['apk', 'pwa']); return }
+    if (isStandalone() || navigator.userAgent.includes(ANDROID_APP_UA)) return
+    const env = detectEnv()
+    if (env.ios || !/Android/.test(navigator.userAgent)) return
+    if (env.kind === 'wechat-android' || env.kind === 'inapp') setKinds(['browser'])
+    else if (env.kind === 'android-chrome') setKinds(ANDROID_APP.url ? ['apk', 'pwa'] : ['pwa'])
+    else if (ANDROID_APP.url) setKinds(['apk'])
+  }, [])
+  return kinds
+}
+
+const ROW: Partial<Record<AppLocale, { apk: string; pwa: string; browser: string; added: string; menu: string }>> = {
+  'zh-CN': { apk: '下载 App', pwa: '添加到桌面', browser: '在浏览器打开', added: '已添加', menu: '点右上角 ⋮，选择「添加到主屏幕」' },
+  en: { apk: 'Get the app', pwa: 'Add to Home', browser: 'Open in browser', added: 'Added', menu: 'Tap ⋮ at the top right, then “Add to Home screen”' },
+}
+
+/** The install row: small glass pills; a lone Download app pill gets a slow light sweep so it is not missed. */
+export function InstallRow({ kinds, locale, invite }: { kinds: OfferKind[]; locale: AppLocale; invite?: InviteCodeState }) {
+  const copy = COPY[locale] ?? COPY.en!
+  const row = ROW[locale] ?? ROW.en!
+  const [toast, setToast] = useState('')
+  const [added, setAdded] = useState(false)
+  const flash = (message: string) => { setToast(message); setTimeout(() => setToast(''), 3600) }
+  const onDownload = async () => {
+    const code = inviteCode(invite)
+    if (!code) return
+    try { await navigator.clipboard.writeText(code) } catch { /* the toast still tells them the code */ }
+    flash(copy.copied.replace('{code}', code))
+  }
+  const onAdd = async () => { if (await promptInstall()) setAdded(true); else flash(row.menu) }
+  const glow = kinds.length === 1 && kinds[0] === 'apk'
+  return <div className={styles.row} data-count={kinds.length}>
+    {kinds.includes('apk') && <a className={styles.pill} data-glow={glow || undefined} href={ANDROID_APP.url!} download onClick={() => { void onDownload() }}>
+      <Download size={15} strokeWidth={1.6} aria-hidden="true" /><span>{row.apk}</span>
+    </a>}
+    {kinds.includes('pwa') && <button type="button" className={styles.pill} onClick={() => { void onAdd() }} disabled={added}>
+      {added ? <Check size={15} strokeWidth={1.8} aria-hidden="true" /> : <PlusSquare size={15} strokeWidth={1.6} aria-hidden="true" />}<span>{added ? row.added : row.pwa}</span>
+    </button>}
+    {kinds.includes('browser') && <span className={styles.pill} data-static="">
+      <MoreHorizontal size={15} strokeWidth={1.6} aria-hidden="true" /><span>{copy.browser.line}</span>
+    </span>}
+    <AnimatePresence>{toast && <motion.p className={styles.toast} role="status" initial={{ opacity: 0, y: 8, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>{toast}</motion.p>}</AnimatePresence>
+  </div>
+}

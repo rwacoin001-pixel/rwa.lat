@@ -7,7 +7,7 @@ import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
 import { inviteCopy, type InviteCodeState } from '../screens/InviteCodeField'
 import RwaLogoMark from '../rwa-logo'
-import { AppOffer, useAppOffer } from './AppOffer'
+import { InstallRow, useInstallKinds } from './AppOffer'
 import styles from './GuideCarousel.module.css'
 
 /**
@@ -388,62 +388,48 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
   i: number; active: boolean; rel: MotionValue<number>; tiltX: MotionValue<number>; tiltY: MotionValue<number>; locale: AppLocale
 }) {
   const card = CARDS[i]
-  const s0 = paletteAOnboarding(locale).s0
-  const c = COPY[locale] ?? COPY.en!
-  const text = s0.states[i]
-  const foot = (extra = '') => <footer className={`${styles.cardFoot} ${extra}`} data-last={i === CARDS.length - 1 || undefined}>
-    <div className={styles.number}><b><Count value={card.value} run={active} /></b><small>{c.units[i]}</small></div>
-    <h2 className={styles.title}>{text.title}</h2>
-    <p className={styles.fact}>{c.facts[i]}</p>
-  </footer>
   return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active} style={{ '--sky': card.sky, '--ground': card.ground } as React.CSSProperties}>
     <PaperScene scene={card.scene} active={active} locale={locale} />
-    {foot(styles.sceneFoot)}
   </article>
 }
 
+/** Where each page's camera walks in when you go forward (screen %): the tear, the held card, the top step. */
+const WALK_IN = ['64% 37%', '73% 31%', '72% 41%', '50% 50%']
+
 /**
  * One full-screen page per product. pos is a float page position (index while still, fractional while moving).
- * Normal pages slide. Leaving the scene page forward is a walk through its door: it zooms into the opening and fades,
- * while the next page grows in from just behind.
+ * Every change is a walk-through: the page you leave zooms into its point of interest and fades, the next one grows in
+ * from just behind; going back plays the same in reverse. The finger drives it while dragging.
  */
-function Page({ i, pos, view, children }: { i: number; pos: MotionValue<number>; view: number; children: React.ReactNode }) {
-  const scene = i === 0 && 'scene' in CARDS[0]
-  const afterScene = i === 1 && 'scene' in CARDS[0]
-  const x = useTransform(pos, p => { const r = i - p; if (scene && r < 0) return 0; if (afterScene && r > 0 && r < 1) return 0; return r * view })
-  const scale = useTransform(pos, p => { const r = i - p; if (scene && r < 0) return 1 + Math.min(1, -r) * 2.8; if (afterScene && r > 0 && r < 1) return 1 + r * .14; return 1 })
-  const opacity = useTransform(pos, p => { const r = i - p; if (scene && r < 0) return Math.max(0, 1 - -r * 1.3); if (afterScene && r > 0 && r < 1) return 1 - r; return 1 })
-  return <motion.div className={styles.page} style={{ x, scale, opacity, zIndex: afterScene ? 2 : 1, transformOrigin: scene ? '68% 42%' : '50% 50%' }}>{children}</motion.div>
+function Page({ i, pos, children }: { i: number; pos: MotionValue<number>; children: React.ReactNode }) {
+  const scale = useTransform(pos, p => { const r = i - p; if (r < 0) return 1 + Math.min(1, -r) * 2.6; if (r < 1) return 1 + r * .14; return 1.14 })
+  const opacity = useTransform(pos, p => { const r = i - p; if (r <= -1 || r >= 1) return 0; if (r < 0) return Math.max(0, 1 - -r * 1.35); return 1 - r })
+  const z = useTransform(pos, p => (i - p > 0 ? 2 : 1))
+  const blur = useTransform(pos, p => { const r = i - p; return r < 0 ? `blur(${Math.min(6, -r * 8)}px)` : 'none' })
+  return <motion.div className={styles.page} style={{ scale, opacity, zIndex: z, filter: blur, transformOrigin: WALK_IN[i] }}>{children}</motion.div>
 }
 
-function EnterBar({ invite, locale, label, onEnter }: { invite?: InviteCodeState; locale: AppLocale; label: string; onEnter: () => void }) {
+/** The caption stays put; only its number counts and its words roll, in step with the page change. */
+function Caption({ index, locale, offer }: { index: number; locale: AppLocale; offer: boolean }) {
+  const s0 = paletteAOnboarding(locale).s0
   const c = COPY[locale] ?? COPY.en!
-  const ic = inviteCopy[locale]
-  const status = invite?.status
-  const locked = status === 'locked' ? invite?.locked : null
-  const shown = locked ? locked.attribution.code : invite?.value ?? ''
-  const ok = status === 'valid' || status === 'locked'
-  const error = invite?.message === 'unavailable' ? ic.unavailable : invite?.message === 'invalid' || status === 'invalid' ? ic.invalid : ''
-  return <div className={styles.enter}>
-    <div className={styles.bar} data-state={error ? 'error' : ok ? 'ok' : undefined}>
-      {invite && status !== 'loading' && <label className={styles.code}>
-        <Gift size={15} strokeWidth={1.5} aria-hidden="true" />
-        <input value={displayInviteCode(shown)} placeholder={c.code} aria-label={ic.placeholder} readOnly={status === 'locked'}
-          onChange={event => invite.change(event.target.value)} autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={19} dir="ltr" enterKeyHint="go"
-          onKeyDown={event => { if (event.key === 'Enter') onEnter() }} aria-invalid={error ? true : undefined} />
-        {status === 'checking' ? <LoaderCircle className={styles.spin} size={15} strokeWidth={1.6} aria-hidden="true" /> : ok ? <Check className={styles.ok} size={15} strokeWidth={1.8} aria-hidden="true" /> : null}
-      </label>}
-      <motion.button type="button" className={styles.go} onClick={onEnter} whileTap={{ scale: .96 }}>
-        <span>{label}</span><i><ArrowRight size={16} strokeWidth={1.6} /></i>
-      </motion.button>
-    </div>
-    <p className={styles.note} data-tone={error ? 'error' : undefined} aria-live="polite">{error || c.note}</p>
-  </div>
+  const roll = (key: string, node: React.ReactNode, className: string, delay = 0) => <span className={`${styles.capLine} ${className}`}>
+    <AnimatePresence mode="popLayout" initial={false}>
+      <motion.span key={key} initial={{ y: '100%', opacity: 0 }} animate={{ y: '0%', opacity: 1 }} exit={{ y: '-100%', opacity: 0 }}
+        transition={{ duration: .7, delay, ease: [.22, .8, .18, 1] }}>{node}</motion.span>
+    </AnimatePresence>
+  </span>
+  return <footer className={`${styles.cardFoot} ${styles.sceneFoot} ${styles.caption}`} data-last={index === CARDS.length - 1 || undefined} data-offer={offer || undefined} aria-live="polite">
+    <div className={styles.number}><b><Count value={CARDS[index].value} run /></b>{roll(`u${index}`, c.units[index], styles.capUnit, .05)}</div>
+    {roll(`t${index}`, s0.states[index].title, styles.title, .08)}
+    {roll(`f${index}`, c.facts[index], styles.fact, .12)}
+  </footer>
 }
 
 export default function GuideCarousel({ locale, invite, onDone }: { locale: AppLocale; invite?: InviteCodeState; onDone: () => void }) {
   const all = paletteAOnboarding(locale)
-  const offer = useAppOffer()
+  const kinds = useInstallKinds()
+  const offer = kinds.length > 0
   const reduced = useReducedMotion()
   const rtl = locale === 'ar'
   const [index, setIndex] = useState(0)
@@ -518,7 +504,7 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
   const rels = [r0, r1, r2, r3]
 
   // The status bar (Android theme-color) and the page behind it (iOS) take the colour at the top of the current photo.
-  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-offer={offer || undefined} data-guide-chrome={CARDS[index].sky}>
+  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-offer={(offer && index === CARDS.length - 1) || undefined} data-guide-chrome={CARDS[index].sky}>
     <header className={styles.top}>
       <div className={styles.topRight}>
         <span className={styles.count}><b>0{index + 1}</b> / 04</span>
@@ -529,10 +515,11 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
 
     <div className={styles.viewport} ref={viewport} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
       role="region" aria-roledescription="carousel" aria-label={all.s0.swipe}>
-      {CARDS.map((_, i) => <Page key={i} i={i} pos={pos} view={view}>
+      {CARDS.map((_, i) => <Page key={i} i={i} pos={pos}>
         <Card i={i} active={i === index} rel={rels[i]} tiltX={tiltX} tiltY={tiltY} locale={locale} />
       </Page>)}
     </div>
+    <Caption index={index} locale={locale} offer={offer && index === CARDS.length - 1} />
     <div className={styles.bottom}>
     <nav className={styles.dots} role="tablist" aria-label={all.s0.swipe}>
       {all.s0.chips.map((label, i) => <button key={label} type="button" role="tab" aria-selected={i === index} aria-label={label} onClick={() => go(i)}>
@@ -541,10 +528,10 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
     </nav>
 
     <AnimatePresence>{index === CARDS.length - 1 && <motion.div key="go" className={styles.finish} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} transition={CUT}>
-      {offer && <AppOffer kind={offer} locale={locale} invite={invite} size="row" />}
-      <motion.button type="button" className={styles.finishBtn} onClick={onDone} whileTap={{ scale: .98 }}>
+      <motion.button type="button" className={styles.finishBtn} onClick={onDone} whileTap={{ scale: .97 }}>
         <span>{all.enter}</span><i><ArrowRight size={17} strokeWidth={1.6} /></i>
       </motion.button>
+      {offer && <InstallRow kinds={kinds} locale={locale} invite={invite} />}
     </motion.div>}</AnimatePresence>
     </div>
   </section>

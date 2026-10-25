@@ -508,3 +508,22 @@
 
 /* The band above and below each photo is the photo's own top / bottom colour, so the status bar area matches. */
 .sceneCard { background: linear-gradient(180deg, var(--sky) 0%, var(--sky) 22%, var(--ground) 78%, var(--ground) 100%); }
+
+/* Round 33: one fixed caption over all pages. */
+.caption { position: absolute; z-index: 9; left: 24px; right: 24px; pointer-events: none; }
+.capLine { position: relative; display: block; overflow: hidden; }
+.capLine > span { display: block; }
+.number .capLine { display: inline-block; margin-top: 10px; }
+.capUnit { font-size: 12px; font-weight: 500; letter-spacing: .08em; color: #0a8a73; }
+.guide[data-offer] .sceneFoot[data-last] { bottom: calc(196px + env(safe-area-inset-bottom)); }
+/* iOS-style liquid glass for the main action: dark glass, a bright rim, a soft inner sheen. */
+.finishBtn { position: relative; overflow: hidden; isolation: isolate; min-height: 58px; color: #ffffff; background: rgba(12, 16, 24, .78);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .35), inset 0 -1px .5px rgba(255, 255, 255, .08), inset 0 0 0 .5px rgba(255, 255, 255, .14), 0 20px 34px -20px rgba(11, 18, 32, .8);
+  -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); }
+.finishBtn::before { content: ''; position: absolute; z-index: -1; inset: 0 0 50% 0; border-radius: 999px 999px 40% 40%; pointer-events: none;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, 0)); }
+.finishBtn i { background: rgba(255, 255, 255, .94); color: #0b1220; box-shadow: inset 0 -1px 1px rgba(0, 0, 0, .08), 0 4px 10px -4px rgba(0, 0, 0, .4); }
+:global(html[data-theme='dark']) .finishBtn { color: #0b1220; background: rgba(242, 244, 247, .86);
+  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .9), inset 0 0 0 .5px rgba(255, 255, 255, .5), 0 20px 34px -20px rgba(0, 0, 0, .9); }
+:global(html[data-theme='dark']) .finishBtn i { background: #0b1220; color: #ffffff; }
+.finish { gap: 12px; }
