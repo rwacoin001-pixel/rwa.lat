@@ -557,3 +557,6 @@
 :global(html[data-theme='dark']) .finishBtn::before { opacity: .5; }
 :global(html[data-theme='dark']) .finishBtn i { background: radial-gradient(120% 100% at 50% 0%, #2a303b, #0b1220 75%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 6px 12px -6px rgba(0, 0, 0, .6); }
 .finishBtn::before { inset: 1px 8% auto 8%; height: 60%; border-radius: 999px; background: radial-gradient(70% 100% at 50% 0%, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0) 72%); }
+
+/* Round 41: printed pages look written on: a grain mask for uneven ink and the paper's tooth, and a breath of softness. */
+.print { filter: blur(.2px); -webkit-mask-image: url('/media/palette-a/ink-grain.png'); mask-image: url('/media/palette-a/ink-grain.png'); -webkit-mask-size: 160px; mask-size: 160px; }

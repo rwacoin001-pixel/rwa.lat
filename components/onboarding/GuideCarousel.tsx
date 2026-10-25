@@ -166,7 +166,7 @@ function PaperCard({ k, locale }: { k: 'a' | 'b' | 'c' | 'd'; locale: AppLocale 
         <path d="M0 80 H240" /><path d="M30 80 V22 H110 V80 M44 30 H96 M44 42 H96 M44 54 H96 M44 66 H96" />
         <path d="M120 80 V40 H200 V80 M134 50 H186 M134 62 H186" /><path d="M210 80 V58 H236 V80" opacity=".6" />
       </svg>
-      <div className={styles.pcRow}><span>{c.share}</span><b>* * *</b></div>
+      <div className={styles.pcRow}><span>{c.share}</span><b>1,200</b></div>
       <div className={styles.pcMore}><span>{c.more}</span><ArrowRight size={14} strokeWidth={1.5} /></div>
     </>}
     {k === 'c' && <svg className={styles.pcArtSm} viewBox="0 0 240 60" aria-hidden="true"><path d="M0 56 H240 M20 56 V26 L70 12 L120 26 V56 M34 56 V36 H56 V56 M78 56 V36 H100 V56 M140 56 V34 H226 V56" /></svg>}
@@ -198,21 +198,21 @@ function PrintedPortfolio({ locale, active }: { locale: AppLocale; active: boole
     <motion.div className={styles.pTop} {...show(0)}><RwaLogoMark width={44} height={25} label="" /><b>{c.title}</b><span><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span></motion.div>
     <motion.div className={styles.pCard} {...show(1)}>
       <div className={styles.pCardHead}><span>{c.total}</span><Eye size={18} strokeWidth={1.4} /></div>
-      <div className={styles.pAmountRow}><b className={styles.pAmount}>* * * *</b><small>USDT</small></div>
+      <div className={styles.pAmountRow}><b className={styles.pAmount}>12,860.00</b><small>USDT</small></div>
     </motion.div>
     <motion.div className={styles.qTabs} {...show(2)}>{c.tabs.map((t, k) => <span key={t} data-on={k === 0 || undefined}>{t}</span>)}</motion.div>
     <motion.div className={styles.qSec} {...show(3)}><small>01</small><b>{c.s1}</b><span>{c.s1sub}</span></motion.div>
     <motion.div className={styles.mixBar} {...show(4)}>{c.parts.map((x, k) => <i key={x} data-k={k} />)}</motion.div>
     <motion.div className={styles.mixLegend} {...show(5)}>{c.parts.map((x, k) => <span key={x}><i data-k={k} />{x}</span>)}</motion.div>
     <motion.div className={styles.qSec} {...show(6)}><small>02</small><b>{c.s2}</b></motion.div>
-    <motion.ul className={styles.qRows} {...show(7)}>{c.rows.map(([a, b]) => <li key={a}><i /><span><b>{a}</b><small>{b}</small></span><em>* * *</em></li>)}</motion.ul>
+    <motion.ul className={styles.qRows} {...show(7)}>{c.rows.map(([a, b], k) => <li key={a}><i /><span><b>{a}</b><small>{b}</small></span><em>{['5,200.00', '4,160.00', '3,500.00'][k]}</em></li>)}</motion.ul>
   </div>
 }
 
 const QUANT_COPY: Partial<Record<AppLocale, { title: string; name: string; tag: string; rules: [string, string][]; s2: string; kpi: [string, string, string] }>> = {
-  'zh-CN': { title: '考拉量化', name: '稳健规则 · 示例策略', tag: '规则驱动', s2: '策略规则', kpi: ['累计', '回撤', '胜率'],
+  'zh-CN': { title: '考拉量化', name: '稳健规则 · 示例策略', tag: '规则驱动', s2: '策略规则', kpi: ['成立以来', '7日', '30日'],
     rules: [['规则先定好', '买卖条件提前写清楚'], ['按信号执行', '不靠感觉，不追涨杀跌'], ['全程可回看', '每一笔都有记录']] },
-  en: { title: 'Koala Quant', name: 'Steady rules · sample strategy', tag: 'Rule-driven', s2: 'Rules', kpi: ['Total', 'Drawdown', 'Win rate'],
+  en: { title: 'Koala Quant', name: 'Steady rules · sample strategy', tag: 'Rule-driven', s2: 'Rules', kpi: ['Since launch', '7D', '30D'],
     rules: [['Rules come first', 'Buy and sell conditions set in advance'], ['Follow the signal', 'No hunches, no chasing'], ['Review everything', 'Every trade is recorded']] },
 }
 
@@ -230,7 +230,7 @@ function PrintedQuant({ locale, active }: { locale: AppLocale; active: boolean }
         <motion.path d="M4 92 C30 86 44 90 62 78 S96 70 112 72 S142 52 160 56 S196 40 214 44 S250 22 268 26 S290 16 298 12" strokeWidth="2.2"
           initial={false} animate={{ pathLength: active ? 1 : 0 }} transition={{ duration: 1.6, delay: active ? .5 : 0, ease: EASE }} />
       </svg>
-      <div className={styles.qKpi}>{c.kpi.map(k => <span key={k}><small>{k}</small><b>* *</b></span>)}</div>
+      <div className={styles.qKpi}>{c.kpi.map((k, i) => <span key={k}><small>{k}</small><b>{['+17.26%', '+3.00%', '+16.71%'][i]}</b></span>)}</div>
     </motion.div>
     <motion.div className={styles.qSec} {...show(2)}><small>01</small><b>{c.s2}</b></motion.div>
     <motion.ul className={styles.qRows} {...show(3)}>{c.rules.map(([a, b], k) => <li key={a}><i>{k + 1}</i><span><b>{a}</b><small>{b}</small></span></li>)}</motion.ul>
@@ -277,8 +277,8 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
     </span>)}</div></motion.div>
     <motion.div className={styles.pCard} {...show(5)}>
       <div className={styles.pCardHead}><span>{c.mine}</span><Eye size={20} strokeWidth={1.4} /></div>
-      <div className={styles.pAmountRow}><b className={styles.pAmount}>* * * *</b><small>USDT</small></div>
-      <div className={styles.pSubRow}><span>{c.cash} <b>* * *</b></span><span>{c.held} <b>*</b></span></div>
+      <div className={styles.pAmountRow}><b className={styles.pAmount}>12,860.00</b><small>USDT</small></div>
+      <div className={styles.pSubRow}><span>{c.cash} <b>1,240.00</b></span><span>{c.held} <b>3</b></span></div>
       <div className={styles.pActs}>{acts.map((Icon, k) => <span key={k}><Icon size={22} strokeWidth={1.4} /><small>{c.actions[k]}</small></span>)}</div>
     </motion.div>
     <motion.nav className={styles.pTabs} {...show(6)}><span data-on=""><House size={20} strokeWidth={1.4} /><small>{c.home}</small></span><ChartColumn size={20} strokeWidth={1.4} /><ChartPie size={20} strokeWidth={1.4} /><i /></motion.nav>
