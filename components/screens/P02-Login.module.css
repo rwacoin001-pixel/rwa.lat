@@ -853,7 +853,8 @@
 .methodsA { display: flex; justify-content: center; gap: 18px; }
 .methodsA img { width: 21px; height: 21px; }
 .root[data-auth-theme='cool'] .methodsA img[data-mono] { filter: invert(1); }
-/* The form is one column as wide as the row of four sign-in keys (56 px each, 22 px apart), centred, so the email
-   field's ends line up with the first and last key; every later step keeps the same column. */
-:global(html) .root.root.root[data-auth-cabinet] .cabBody { width: min(100%, calc(56px * 4 + 22px * 3)); margin-inline: auto; }
-.methodsA { gap: 22px; }
+/* One content column with a 24 px side margin (the page gutter for palette A): the email field fills it, and the four
+   sign-in keys spread across the same width, so the first and last key meet the field's ends. */
+:global(html) .root.root.root[data-auth-cabinet] .stage { padding-inline: var(--page-gutter, 24px); }
+:global(html) .root.root.root[data-auth-cabinet] .cabBody { width: 100%; }
+.methodsA { justify-content: space-between; gap: 0; }
