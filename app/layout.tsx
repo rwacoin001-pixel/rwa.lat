@@ -4,7 +4,7 @@ import { getCloudflareContext } from '@opennextjs/cloudflare'
 import { LANGUAGE_COOKIE, resolveInitialLocale } from '@/lib/locale-detection'
 import { GeistMono } from 'geist/font/mono'
 import PwaRegister from '@/components/pwa-register'
-import { documentPreferencesBootstrap, themeColors } from '@/lib/document-preferences-bootstrap'
+import { documentPreferencesBootstrap, paletteAColors } from '@/lib/document-preferences-bootstrap'
 import { desktopRedirectBootstrap } from '@/lib/desktop-redirect'
 import './globals.css'
 import '../styles/ios.css'
@@ -60,8 +60,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   colorScheme: 'light dark',
   themeColor: [
-    { media: '(prefers-color-scheme: light)', color: themeColors.light },
-    { media: '(prefers-color-scheme: dark)', color: themeColors.dark },
+    { media: '(prefers-color-scheme: light)', color: paletteAColors.light },
+    { media: '(prefers-color-scheme: dark)', color: paletteAColors.dark },
   ],
   width: 'device-width',
   initialScale: 1,

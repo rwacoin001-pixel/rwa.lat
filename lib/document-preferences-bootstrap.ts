@@ -40,14 +40,14 @@ export const documentPreferencesBootstrap = `(() => {
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
 
-  // Colour preview (palette A, cool white + brand green): opt in with ?palette=a, back to normal with ?palette=off.
-  // Only this device sees it; everyone else keeps the current colours.
-  let palette = null;
+  // Palette A (Paper & Glass: cool white + brand green, and a dark mode) is the design for everyone since 2026-10-26.
+  // The old colours stay reachable for comparison on this device only: ?palette=classic (or off); ?palette=a returns.
+  let palette = 'a';
   try {
     const asked = new URLSearchParams(location.search).get('palette');
-    if (asked === 'a') localStorage.setItem('rwa.palette', 'a');
-    else if (asked === 'off') localStorage.removeItem('rwa.palette');
-    palette = localStorage.getItem('rwa.palette') === 'a' ? 'a' : null;
+    if (asked === 'classic' || asked === 'off') localStorage.setItem('rwa.palette', 'classic');
+    else if (asked === 'a') localStorage.removeItem('rwa.palette');
+    palette = localStorage.getItem('rwa.palette') === 'classic' ? null : 'a';
   } catch {}
   if (palette) root.dataset.palette = palette;
   // Palette A draws its own light and dark: tell browsers that recolour "light-only" pages (Xiaomi / Samsung night

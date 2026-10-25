@@ -13,8 +13,8 @@ export default function manifest(): MetadataRoute.Manifest {
     display: 'standalone',
     display_override: ['window-controls-overlay', 'standalone'],
     orientation: 'portrait',
-    background_color: '#F4F1EA',
-    theme_color: '#F4F1EA',
+    background_color: '#F5F6F8',
+    theme_color: '#F5F6F8',
     categories: ['finance', 'productivity'],
     shortcuts: [
       { name: 'Home', short_name: 'Home', url: '/home', icons: [{ src: '/icons/a-reit-v1-192.png', sizes: '192x192' }] },
