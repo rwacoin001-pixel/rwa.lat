@@ -493,3 +493,15 @@
 /* Emoji on the bubbles: sized to each bubble's short axis, tilted with it, printed into the paper (slightly muted). */
 .bubbleInk { font-weight: 400; letter-spacing: 0; line-height: 1; opacity: .92; filter: saturate(.85) contrast(.95); text-shadow: none;
   font-family: 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', sans-serif; }
+/* Words printed on the bubbles: dark grey ink pressed into the paper (multiply, a soft lower-edge highlight). */
+.bubbleInk { font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; font-weight: 700; letter-spacing: .01em; line-height: 1;
+  color: #2a2f37; opacity: .88; filter: blur(.15px); text-shadow: 0 .6px 0 rgba(255, 255, 255, .6); }
+
+/* Last page: install offer and the main action as one stack, same width; the main action is the app's black pill. */
+.finish { gap: 10px; }
+.finishBtn { min-height: 56px; padding: 0 6px 0 22px; font-size: 15px; font-weight: 600; letter-spacing: .01em; box-shadow: 0 18px 32px -20px rgba(11, 18, 32, .7); }
+.finishBtn i { width: 44px; height: 44px; color: #0b1220; background: #ffffff; }
+:global(html[data-theme='dark']) .finishBtn { color: #0b1220; background: #f2f4f7; box-shadow: 0 18px 32px -20px rgba(0, 0, 0, .9); }
+:global(html[data-theme='dark']) .finishBtn i { color: #ffffff; background: #0b1220; }
+/* With an install card in the stack the last page's text block moves up to clear it. */
+.guide[data-offer] .sceneFoot[data-last] { bottom: calc(218px + env(safe-area-inset-bottom)); }

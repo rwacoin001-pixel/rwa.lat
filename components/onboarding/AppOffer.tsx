@@ -72,11 +72,11 @@ export function AppOffer({ kind, locale, invite, size = 'strip' }: { kind: Offer
   return <div className={styles.offer} data-size={size} data-kind={kind}>
     <img className={styles.icon} src="/icons/a-reit-v1-192.png" alt="" width={40} height={40} />
     <div className={styles.text}><b>{text.title}</b><small>{text.line}</small>
-      {kind === 'apk' && size === 'row' && <a className={styles.alt} href={chromeIntentUrl(location.href, new URL(ANDROID_APP.url!, location.href).href)}><ExternalLink size={12} aria-hidden="true" />{copy.chrome}</a>}
+      {kind === 'apk' && size === 'row' && <a className={styles.alt} href={chromeIntentUrl(location.href, new URL(ANDROID_APP.url!, location.href).href)}><ExternalLink size={12} strokeWidth={1.6} aria-hidden="true" />{copy.chrome}</a>}
     </div>
-    {kind === 'apk' && <a className={styles.get} href={ANDROID_APP.url!} download onClick={() => { void onDownload() }}><Icon size={15} strokeWidth={2} aria-hidden="true" />{text.action}</a>}
-    {kind === 'pwa' && <button type="button" className={styles.get} onClick={() => { void onAdd() }} disabled={done}>{done ? <Check size={15} strokeWidth={2.2} aria-hidden="true" /> : <Icon size={15} strokeWidth={2} aria-hidden="true" />}{text.action}</button>}
-    {kind === 'browser' && <span className={styles.hint} aria-hidden="true"><Icon size={18} strokeWidth={2} /></span>}
+    {kind === 'apk' && <a className={styles.get} href={ANDROID_APP.url!} download onClick={() => { void onDownload() }}><Icon size={15} strokeWidth={1.6} aria-hidden="true" />{text.action}</a>}
+    {kind === 'pwa' && <button type="button" className={styles.get} onClick={() => { void onAdd() }} disabled={done}>{done ? <Check size={15} strokeWidth={1.8} aria-hidden="true" /> : <Icon size={15} strokeWidth={1.6} aria-hidden="true" />}{text.action}</button>}
+    {kind === 'browser' && <span className={styles.hint} aria-hidden="true"><Icon size={18} strokeWidth={1.6} /></span>}
     <AnimatePresence>{toast && <motion.p className={styles.toast} role="status" initial={{ opacity: 0, y: 8, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>{toast}</motion.p>}</AnimatePresence>
   </div>
 }
