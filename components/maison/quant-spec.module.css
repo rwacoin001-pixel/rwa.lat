@@ -55,3 +55,6 @@
   .row, .track li { animation: in .55s cubic-bezier(.2, .8, .2, 1) backwards; animation-delay: calc(.08s + var(--i, 0) * 55ms); }
   @keyframes in { from { opacity: 0; transform: translateY(6px); } }
 }
+
+/* Palette A: no editorial section numbers. */
+:global(html[data-palette='a']) .secNo { display: none; }

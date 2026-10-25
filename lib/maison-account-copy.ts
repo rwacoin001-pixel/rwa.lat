@@ -113,7 +113,7 @@ const en: AccountCopy = {
   },
   settings: {
     kicker: 'Preferences', title: 'Settings', lede: 'Changes apply immediately.', language: 'Language', languageNote: 'Interface and number formats', saved: 'Saved on this device',
-    appearance: 'Appearance', appearanceNote: 'Warm or cool palette', themes: { light: { title: 'Warm', body: 'Ivory and lacquer' }, dark: { title: 'Cool', body: 'Night navy and gold' }, system: { title: 'System', body: 'Follows your device' } }, showing: 'Now showing {name}',
+    appearance: 'Appearance', appearanceNote: 'Light or dark', themes: { light: { title: 'Light', body: 'Cool white and teal' }, dark: { title: 'Dark', body: 'Ink and teal' }, system: { title: 'System', body: 'Follows your device' } }, showing: 'Now showing {name}',
     notifications: 'Notifications', notificationsNote: 'Channels and alerts', notificationsTitle: 'Notification channels are not connected yet', notificationsBody: 'Per-channel alerts will appear here once the account preference service is linked. Nothing is saved from this section.', communication: 'Communication preferences',
     currency: 'Display currency', currencyNote: 'Amounts across the app', currencyValue: 'USDT', currencyBody: 'Platform unit · other currencies are not available yet',
     storage: 'Language and appearance are stored in this browser only; they are not synced to your account.',
@@ -185,7 +185,7 @@ const zh: AccountCopy = {
   },
   settings: {
     kicker: '偏好', title: '设置', lede: '修改即时生效。', language: '语言', languageNote: '界面与数字格式', saved: '已保存在本设备',
-    appearance: '外观', appearanceNote: '暖色或冷色', themes: { light: { title: '暖色', body: '象牙白与漆黑' }, dark: { title: '冷色', body: '夜蓝与金' }, system: { title: '跟随系统', body: '随设备切换' } }, showing: '当前显示：{name}',
+    appearance: '外观', appearanceNote: '浅色或深色', themes: { light: { title: '浅色', body: '冷白与青绿' }, dark: { title: '深色', body: '墨黑与青绿' }, system: { title: '跟随系统', body: '随设备切换' } }, showing: '当前显示：{name}',
     notifications: '通知', notificationsNote: '渠道与提醒', notificationsTitle: '通知渠道尚未接通', notificationsBody: '账户偏好服务接通后，这里会显示各渠道的提醒开关。本区域不会保存任何设置。', communication: '沟通偏好',
     currency: '显示币种', currencyNote: '全站金额', currencyValue: 'USDT', currencyBody: '平台记账单位 · 暂不支持其他币种',
     storage: '语言和外观仅保存在当前浏览器，不会同步到账户。',
@@ -257,7 +257,7 @@ const hi: AccountCopy = {
   },
   settings: {
     kicker: 'प्राथमिकताएँ', title: 'सेटिंग्स', lede: 'बदलाव तुरंत लागू होते हैं।', language: 'भाषा', languageNote: 'इंटरफ़ेस और संख्या प्रारूप', saved: 'इस डिवाइस पर सहेजा गया',
-    appearance: 'रूप', appearanceNote: 'गर्म या ठंडा पैलेट', themes: { light: { title: 'गर्म', body: 'हाथीदाँत और लाख' }, dark: { title: 'ठंडा', body: 'रात्रि नीला और सोना' }, system: { title: 'सिस्टम', body: 'डिवाइस के अनुसार' } }, showing: 'अभी दिख रहा: {name}',
+    appearance: 'रूप', appearanceNote: 'हल्का या गहरा', themes: { light: { title: 'हल्का', body: 'ठंडा सफ़ेद और टील' }, dark: { title: 'गहरा', body: 'स्याही और टील' }, system: { title: 'सिस्टम', body: 'डिवाइस के अनुसार' } }, showing: 'अभी दिख रहा: {name}',
     notifications: 'सूचनाएँ', notificationsNote: 'चैनल और अलर्ट', notificationsTitle: 'सूचना चैनल अभी जुड़े नहीं हैं', notificationsBody: 'खाता प्राथमिकता सेवा जुड़ने पर हर चैनल के अलर्ट यहाँ दिखेंगे। इस भाग से कुछ भी सहेजा नहीं जाता।', communication: 'संचार प्राथमिकताएँ',
     currency: 'प्रदर्शन मुद्रा', currencyNote: 'ऐप में सभी राशियाँ', currencyValue: 'USDT', currencyBody: 'प्लेटफ़ॉर्म इकाई · अन्य मुद्राएँ अभी उपलब्ध नहीं',
     storage: 'भाषा और रूप केवल इस ब्राउज़र में सहेजे जाते हैं; खाते से सिंक नहीं होते।',
@@ -329,7 +329,7 @@ const es: AccountCopy = {
   },
   settings: {
     kicker: 'Preferencias', title: 'Ajustes', lede: 'Los cambios se aplican al instante.', language: 'Idioma', languageNote: 'Interfaz y formato de números', saved: 'Guardado en este dispositivo',
-    appearance: 'Apariencia', appearanceNote: 'Paleta cálida o fría', themes: { light: { title: 'Cálida', body: 'Marfil y laca' }, dark: { title: 'Fría', body: 'Azul noche y oro' }, system: { title: 'Sistema', body: 'Sigue a tu dispositivo' } }, showing: 'Mostrando: {name}',
+    appearance: 'Apariencia', appearanceNote: 'Claro u oscuro', themes: { light: { title: 'Claro', body: 'Blanco frío y verde azulado' }, dark: { title: 'Oscuro', body: 'Tinta y verde azulado' }, system: { title: 'Sistema', body: 'Sigue a tu dispositivo' } }, showing: 'Mostrando: {name}',
     notifications: 'Notificaciones', notificationsNote: 'Canales y alertas', notificationsTitle: 'Los canales de notificación aún no están conectados', notificationsBody: 'Las alertas por canal aparecerán aquí cuando se conecte el servicio de preferencias de la cuenta. Esta sección no guarda nada.', communication: 'Preferencias de comunicación',
     currency: 'Moneda de visualización', currencyNote: 'Importes en toda la app', currencyValue: 'USDT', currencyBody: 'Unidad de la plataforma · otras monedas aún no disponibles',
     storage: 'El idioma y la apariencia se guardan solo en este navegador; no se sincronizan con tu cuenta.',
@@ -401,7 +401,7 @@ const ar: AccountCopy = {
   },
   settings: {
     kicker: 'التفضيلات', title: 'الإعدادات', lede: 'تُطبّق التغييرات فورًا.', language: 'اللغة', languageNote: 'الواجهة وتنسيق الأرقام', saved: 'محفوظ على هذا الجهاز',
-    appearance: 'المظهر', appearanceNote: 'لوحة دافئة أو باردة', themes: { light: { title: 'دافئ', body: 'عاجي وورنيش' }, dark: { title: 'بارد', body: 'كحلي ليلي وذهبي' }, system: { title: 'النظام', body: 'يتبع جهازك' } }, showing: 'المعروض الآن: {name}',
+    appearance: 'المظهر', appearanceNote: 'فاتح أو داكن', themes: { light: { title: 'فاتح', body: 'أبيض بارد وأخضر مزرق' }, dark: { title: 'داكن', body: 'حبر وأخضر مزرق' }, system: { title: 'النظام', body: 'يتبع جهازك' } }, showing: 'المعروض الآن: {name}',
     notifications: 'الإشعارات', notificationsNote: 'القنوات والتنبيهات', notificationsTitle: 'قنوات الإشعارات غير متصلة بعد', notificationsBody: 'ستظهر تنبيهات كل قناة هنا عند ربط خدمة تفضيلات الحساب. لا يُحفظ أي شيء من هذا القسم.', communication: 'تفضيلات التواصل',
     currency: 'عملة العرض', currencyNote: 'المبالغ في التطبيق', currencyValue: 'USDT', currencyBody: 'وحدة المنصة · العملات الأخرى غير متاحة بعد',
     storage: 'تُحفظ اللغة والمظهر في هذا المتصفح فقط ولا تُزامَن مع حسابك.',
@@ -473,7 +473,7 @@ const fr: AccountCopy = {
   },
   settings: {
     kicker: 'Préférences', title: 'Réglages', lede: 'Les changements s’appliquent immédiatement.', language: 'Langue', languageNote: 'Interface et format des nombres', saved: 'Enregistré sur cet appareil',
-    appearance: 'Apparence', appearanceNote: 'Palette chaude ou froide', themes: { light: { title: 'Chaude', body: 'Ivoire et laque' }, dark: { title: 'Froide', body: 'Bleu nuit et or' }, system: { title: 'Système', body: 'Suit votre appareil' } }, showing: 'Affichage : {name}',
+    appearance: 'Apparence', appearanceNote: 'Clair ou sombre', themes: { light: { title: 'Clair', body: 'Blanc froid et sarcelle' }, dark: { title: 'Sombre', body: 'Encre et sarcelle' }, system: { title: 'Système', body: 'Suit votre appareil' } }, showing: 'Affichage : {name}',
     notifications: 'Notifications', notificationsNote: 'Canaux et alertes', notificationsTitle: 'Les canaux de notification ne sont pas encore connectés', notificationsBody: 'Les alertes par canal apparaîtront ici une fois le service de préférences du compte relié. Rien n’est enregistré depuis cette section.', communication: 'Préférences de communication',
     currency: 'Devise d’affichage', currencyNote: 'Montants dans l’app', currencyValue: 'USDT', currencyBody: 'Unité de la plateforme · autres devises pas encore disponibles',
     storage: 'La langue et l’apparence sont enregistrées dans ce navigateur uniquement ; elles ne sont pas synchronisées avec votre compte.',
@@ -545,7 +545,7 @@ const pt: AccountCopy = {
   },
   settings: {
     kicker: 'Preferências', title: 'Configurações', lede: 'As alterações valem na hora.', language: 'Idioma', languageNote: 'Interface e formato de números', saved: 'Salvo neste dispositivo',
-    appearance: 'Aparência', appearanceNote: 'Paleta quente ou fria', themes: { light: { title: 'Quente', body: 'Marfim e laca' }, dark: { title: 'Fria', body: 'Azul-noite e ouro' }, system: { title: 'Sistema', body: 'Segue seu dispositivo' } }, showing: 'Exibindo: {name}',
+    appearance: 'Aparência', appearanceNote: 'Claro ou escuro', themes: { light: { title: 'Claro', body: 'Branco frio e verde-azulado' }, dark: { title: 'Escuro', body: 'Tinta e verde-azulado' }, system: { title: 'Sistema', body: 'Segue seu dispositivo' } }, showing: 'Exibindo: {name}',
     notifications: 'Notificações', notificationsNote: 'Canais e alertas', notificationsTitle: 'Os canais de notificação ainda não estão conectados', notificationsBody: 'Os alertas por canal aparecerão aqui quando o serviço de preferências da conta for conectado. Nada é salvo nesta seção.', communication: 'Preferências de comunicação',
     currency: 'Moeda de exibição', currencyNote: 'Valores no app', currencyValue: 'USDT', currencyBody: 'Unidade da plataforma · outras moedas ainda indisponíveis',
     storage: 'Idioma e aparência ficam salvos apenas neste navegador; não são sincronizados com sua conta.',

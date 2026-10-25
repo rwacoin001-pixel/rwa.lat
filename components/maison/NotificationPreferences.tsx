@@ -43,11 +43,11 @@ export function NotificationPreferences() {
   if (!data || !available.data) return <Skeleton rows={3} />
   return <div>
     <fieldset disabled={busy} style={{ border: 0, padding: 0, display: 'grid', gap: 16 }}>
-      {(['in_app', 'email'] as const).map((key, index) => <label key={key} style={{ display: 'flex', gap: 10 }}>
-        <input type="checkbox" checked={values[key] ?? false} disabled={!available.data?.[key] && !values[key]} onChange={event => { setDraft({ ...values, [key]: event.target.checked }); setMessage('') }} />
+      {(['in_app', 'email'] as const).map((key, index) => <label key={key} className={s.switchRow} style={{ display: 'flex', gap: 10 }}>
+        <input type="checkbox" role="switch" checked={values[key] ?? false} disabled={!available.data?.[key] && !values[key]} onChange={event => { setDraft({ ...values, [key]: event.target.checked }); setMessage('') }} />
         <span>{c[index]}{!available.data?.[key] && ` · ${c[5]}`}</span>
       </label>)}
-      <label style={{ display: 'flex', gap: 10 }}><input type="checkbox" checked={consent ?? data.communicationConsent} onChange={event => { setConsent(event.target.checked); setMessage('') }} />{c[2]}</label>
+      <label className={s.switchRow} style={{ display: 'flex', gap: 10 }}><input type="checkbox" role="switch" checked={consent ?? data.communicationConsent} onChange={event => { setConsent(event.target.checked); setMessage('') }} />{c[2]}</label>
       <button type="button" className={s.ghost} disabled={draft === null && consent === null} onClick={() => void save()}>{c[3]}</button>
     </fieldset>
     <p className={s.foot}>{c[6]}</p>
