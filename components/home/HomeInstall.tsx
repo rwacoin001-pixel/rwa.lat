@@ -43,6 +43,8 @@ if (typeof window !== 'undefined') {
 
 /** For other screens (the sign-in guide): whether Chrome offered an install prompt, and showing it. */
 export const canPromptInstall = () => Boolean(deferredPrompt)
+/** Called whenever the install prompt becomes available or goes away. */
+export const onInstallPromptChange = (fn: () => void) => { subscribers.add(fn); return () => { subscribers.delete(fn) } }
 export async function promptInstall(): Promise<boolean> {
   const event = deferredPrompt
   if (!event) return false

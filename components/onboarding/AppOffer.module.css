@@ -62,3 +62,7 @@
 @keyframes sweep { 0% { background-position: 130% 0; } 55%, 100% { background-position: -30% 0; } }
 @media (prefers-reduced-motion: reduce) { .pill[data-glow]::after { animation: none; } }
 .row .toast { bottom: calc(100% + 10px); }
+
+/* In the bottom bar the install pill matches the main action's height. */
+.pill { min-height: 58px; padding: 0 18px 0 16px; font-size: 14.5px; }
+.pill .toast { position: absolute; }

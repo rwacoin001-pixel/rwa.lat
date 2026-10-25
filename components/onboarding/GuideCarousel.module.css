@@ -527,3 +527,9 @@
   box-shadow: inset 0 1px .5px rgba(255, 255, 255, .9), inset 0 0 0 .5px rgba(255, 255, 255, .5), 0 20px 34px -20px rgba(0, 0, 0, .9); }
 :global(html[data-theme='dark']) .finishBtn i { background: #0b1220; color: #ffffff; }
 .finish { gap: 12px; }
+
+/* One bottom bar, like Safari's: the main action takes the room, the install pill sits beside it at the same height. */
+.actionBar { position: relative; display: flex; gap: 10px; align-items: stretch; }
+.actionBar .finishBtn { flex: 1 1 auto; min-width: 0; }
+.actionBar .finishBtn span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.actionBar > :last-child:not(.finishBtn) { flex: none; }

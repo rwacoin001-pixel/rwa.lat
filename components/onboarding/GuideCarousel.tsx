@@ -7,7 +7,7 @@ import { paletteAOnboarding } from '@/lib/palette-a-copy'
 import { displayInviteCode } from '@/lib/referral-invite'
 import { inviteCopy, type InviteCodeState } from '../screens/InviteCodeField'
 import RwaLogoMark from '../rwa-logo'
-import { InstallRow, useInstallKinds } from './AppOffer'
+import { InstallButton, useInstallAction } from './AppOffer'
 import styles from './GuideCarousel.module.css'
 
 /**
@@ -410,7 +410,7 @@ function Page({ i, pos, children }: { i: number; pos: MotionValue<number>; child
 }
 
 /** The caption stays put; only its number counts and its words roll, in step with the page change. */
-function Caption({ index, locale, offer }: { index: number; locale: AppLocale; offer: boolean }) {
+function Caption({ index, locale }: { index: number; locale: AppLocale }) {
   const s0 = paletteAOnboarding(locale).s0
   const c = COPY[locale] ?? COPY.en!
   const roll = (key: string, node: React.ReactNode, className: string, delay = 0) => <span className={`${styles.capLine} ${className}`}>
@@ -419,7 +419,7 @@ function Caption({ index, locale, offer }: { index: number; locale: AppLocale; o
         transition={{ duration: .7, delay, ease: [.22, .8, .18, 1] }}>{node}</motion.span>
     </AnimatePresence>
   </span>
-  return <footer className={`${styles.cardFoot} ${styles.sceneFoot} ${styles.caption}`} data-last={index === CARDS.length - 1 || undefined} data-offer={offer || undefined} aria-live="polite">
+  return <footer className={`${styles.cardFoot} ${styles.sceneFoot} ${styles.caption}`} data-last={index === CARDS.length - 1 || undefined} aria-live="polite">
     <div className={styles.number}><b><Count value={CARDS[index].value} run /></b>{roll(`u${index}`, c.units[index], styles.capUnit, .05)}</div>
     {roll(`t${index}`, s0.states[index].title, styles.title, .08)}
     {roll(`f${index}`, c.facts[index], styles.fact, .12)}
@@ -428,8 +428,7 @@ function Caption({ index, locale, offer }: { index: number; locale: AppLocale; o
 
 export default function GuideCarousel({ locale, invite, onDone }: { locale: AppLocale; invite?: InviteCodeState; onDone: () => void }) {
   const all = paletteAOnboarding(locale)
-  const kinds = useInstallKinds()
-  const offer = kinds.length > 0
+  const install = useInstallAction()
   const reduced = useReducedMotion()
   const rtl = locale === 'ar'
   const [index, setIndex] = useState(0)
@@ -504,7 +503,7 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
   const rels = [r0, r1, r2, r3]
 
   // The status bar (Android theme-color) and the page behind it (iOS) take the colour at the top of the current photo.
-  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-offer={(offer && index === CARDS.length - 1) || undefined} data-guide-chrome={CARDS[index].sky}>
+  return <section className={styles.guide} data-scene={'scene' in CARDS[index] || undefined} data-guide-chrome={CARDS[index].sky}>
     <header className={styles.top}>
       <div className={styles.topRight}>
         <span className={styles.count}><b>0{index + 1}</b> / 04</span>
@@ -519,7 +518,7 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
         <Card i={i} active={i === index} rel={rels[i]} tiltX={tiltX} tiltY={tiltY} locale={locale} />
       </Page>)}
     </div>
-    <Caption index={index} locale={locale} offer={offer && index === CARDS.length - 1} />
+    <Caption index={index} locale={locale} />
     <div className={styles.bottom}>
     <nav className={styles.dots} role="tablist" aria-label={all.s0.swipe}>
       {all.s0.chips.map((label, i) => <button key={label} type="button" role="tab" aria-selected={i === index} aria-label={label} onClick={() => go(i)}>
@@ -528,10 +527,12 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
     </nav>
 
     <AnimatePresence>{index === CARDS.length - 1 && <motion.div key="go" className={styles.finish} initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 12 }} transition={CUT}>
-      <motion.button type="button" className={styles.finishBtn} onClick={onDone} whileTap={{ scale: .97 }}>
-        <span>{all.enter}</span><i><ArrowRight size={17} strokeWidth={1.6} /></i>
-      </motion.button>
-      {offer && <InstallRow kinds={kinds} locale={locale} invite={invite} />}
+      <div className={styles.actionBar}>
+        <motion.button type="button" className={styles.finishBtn} onClick={onDone} whileTap={{ scale: .97 }}>
+          <span>{all.enter}</span><i><ArrowRight size={17} strokeWidth={1.6} /></i>
+        </motion.button>
+        {install && <InstallButton kind={install} locale={locale} invite={invite} />}
+      </div>
     </motion.div>}</AnimatePresence>
     </div>
   </section>
