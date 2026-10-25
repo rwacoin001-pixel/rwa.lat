@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Check, Download, ExternalLink, MoreHorizontal, PlusSquare } from 'lucide-react'
+import { Check, Compass, Download, ExternalLink, MoreHorizontal, PlusSquare, Share } from 'lucide-react'
 import type { AppLocale } from '@/lib/i18n'
 import { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } from '@/lib/android-app'
 import { detectEnv, isStandalone, needsAndroidApp } from '@/components/home/install-env'
@@ -18,6 +18,8 @@ import styles from './AppOffer.module.css'
  * Downloading the app copies the invitation code, because the app cannot read what this browser remembered.
  */
 export type OfferKind = 'apk' | 'pwa' | 'browser'
+/** The guide's bottom bar also shares the link on iPhone. */
+export type InstallKind = OfferKind | 'share'
 
 export function useAppOffer(): OfferKind | null {
   const [kind, setKind] = useState<OfferKind | null>(null)
@@ -87,17 +89,19 @@ export function AppOffer({ kind, locale, invite, size = 'strip' }: { kind: Offer
  *   shows the menu route);
  * - other Android browsers: download the app;
  * - WeChat / in-app browsers on Android: open in the browser first;
- * - iPhone, the installed app, desktop: none.
- * Preview with ?offer=pwa | apk | browser.
+ * - iPhone (in Safari, not the installed app): share the link (with the invitation);
+ * - the installed app, desktop: none.
+ * Preview with ?offer=pwa | apk | browser | share.
  */
-export function useInstallAction(): OfferKind | null {
-  const [kind, setKind] = useState<OfferKind | null>(null)
+export function useInstallAction(): InstallKind | null {
+  const [kind, setKind] = useState<InstallKind | null>(null)
   useEffect(() => {
     const forced = new URLSearchParams(location.search).get('offer')
-    if (forced === 'apk' || forced === 'pwa' || forced === 'browser') { setKind(forced); return }
+    if (forced === 'apk' || forced === 'pwa' || forced === 'browser' || forced === 'share') { setKind(forced); return }
     if (isStandalone() || navigator.userAgent.includes(ANDROID_APP_UA)) return
     const env = detectEnv()
-    if (env.ios || !/Android/.test(navigator.userAgent)) return
+    if (env.ios) { setKind('share'); return }
+    if (!/Android/.test(navigator.userAgent)) return
     if (env.kind === 'wechat-android' || env.kind === 'inapp') { setKind('browser'); return }
     if (env.kind === 'android-chrome') { setKind('pwa'); return }
     if (ANDROID_APP.url) setKind('apk')
@@ -105,13 +109,16 @@ export function useInstallAction(): OfferKind | null {
   return kind
 }
 
-const ACTION: Partial<Record<AppLocale, { apk: string; pwa: string; browser: string; added: string; tip: string; menu: string }>> = {
-  'zh-CN': { apk: '下载 App', pwa: '安装到桌面', browser: '浏览器打开', added: '已安装', tip: '点右上角 ··· 选择「在浏览器打开」', menu: '点右上角 ⋮，选择「添加到主屏幕」或「安装应用」' },
-  en: { apk: 'Get app', pwa: 'Install', browser: 'Open in browser', added: 'Installed', tip: 'Tap ··· at the top right, then “Open in browser”', menu: 'Tap ⋮ at the top right, then “Install app” or “Add to Home screen”' },
+const ACTION: Partial<Record<AppLocale, { apk: string; pwa: string; browser: string; share: string; shared: string; added: string; tip: string; menu: string }>> = {
+  'zh-CN': { apk: '下载 App', pwa: '安装到桌面', browser: '浏览器打开', share: '分享', shared: '链接已复制', added: '已安装', tip: '点右上角 ··· 选择「在浏览器打开」', menu: '点右上角 ⋮，选择「添加到主屏幕」或「安装应用」' },
+  en: { apk: 'Get app', pwa: 'Install', browser: 'Open in browser', share: 'Share', shared: 'Link copied', added: 'Installed', tip: 'Tap ··· at the top right, then “Open in browser”', menu: 'Tap ⋮ at the top right, then “Install app” or “Add to Home screen”' },
 }
 
-/** The install button in the bottom row: a glass pill beside the main action. A Download pill gets a light sweep. */
-export function InstallButton({ kind, locale, invite }: { kind: OfferKind; locale: AppLocale; invite?: InviteCodeState }) {
+/**
+ * The round glass button beside Sign in: one icon, no words (its name is read out). The tip it raises floats above
+ * it. A Download disc gets a slow light sweep so it is not missed.
+ */
+export function InstallButton({ kind, locale, invite }: { kind: InstallKind; locale: AppLocale; invite?: InviteCodeState }) {
   const copy = COPY[locale] ?? COPY.en!
   const a = ACTION[locale] ?? ACTION.en!
   const [toast, setToast] = useState('')
@@ -123,14 +130,26 @@ export function InstallButton({ kind, locale, invite }: { kind: OfferKind; local
     try { await navigator.clipboard.writeText(code) } catch { /* the toast still shows the code */ }
     flash(copy.copied.replace('{code}', code))
   }
-  const toastNode = <AnimatePresence>{toast && <motion.p className={styles.toast} role="status" initial={{ opacity: 0, y: 8, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>{toast}</motion.p>}</AnimatePresence>
-  if (kind === 'apk') return <a className={styles.pill} data-glow="" href={ANDROID_APP.url!} download onClick={() => { void onDownload() }}>
-    <Download size={17} strokeWidth={1.6} aria-hidden="true" /><span>{a.apk}</span>{toastNode}
-  </a>
-  if (kind === 'pwa') return <button type="button" className={styles.pill} disabled={added} onClick={() => { if (!canPromptInstall()) { flash(a.menu); return } void promptInstall().then(ok => { if (ok) setAdded(true) }) }}>
-    {added ? <Check size={17} strokeWidth={1.8} aria-hidden="true" /> : <PlusSquare size={17} strokeWidth={1.6} aria-hidden="true" />}<span>{added ? a.added : a.pwa}</span>{toastNode}
-  </button>
-  return <button type="button" className={styles.pill} onClick={() => flash(a.tip)}>
-    <ExternalLink size={17} strokeWidth={1.6} aria-hidden="true" /><span>{a.browser}</span>{toastNode}
-  </button>
+  const onShare = async () => {
+    const code = inviteCode(invite)
+    const url = code ? `${location.origin}/r/${code}` : location.origin
+    if (navigator.share) { try { await navigator.share({ title: 'A-REIT', url }) } catch { /* closed */ } return }
+    try { await navigator.clipboard.writeText(url) } catch { /* nothing to copy into */ }
+    flash(a.shared)
+  }
+  const label = kind === 'pwa' ? (added ? a.added : a.pwa) : a[kind]
+  const icon = kind === 'share' ? <Share size={21} strokeWidth={1.7} aria-hidden="true" />
+    : kind === 'browser' ? <Compass size={21} strokeWidth={1.7} aria-hidden="true" />
+    : added ? <Check size={21} strokeWidth={1.9} aria-hidden="true" /> : <Download size={21} strokeWidth={1.7} aria-hidden="true" />
+  const onClick = () => {
+    if (kind === 'share') { void onShare(); return }
+    if (kind === 'browser') { flash(a.tip); return }
+    if (kind === 'pwa') { if (!canPromptInstall()) { flash(a.menu); return } void promptInstall().then(ok => { if (ok) setAdded(true) }) }
+  }
+  return <span className={styles.discWrap}>
+    {kind === 'apk'
+      ? <a className={styles.disc} data-glow="" href={ANDROID_APP.url!} download aria-label={label} title={label} onClick={() => { void onDownload() }}>{icon}</a>
+      : <button type="button" className={styles.disc} disabled={added} aria-label={label} title={label} onClick={onClick}>{icon}</button>}
+    <AnimatePresence>{toast && <motion.p className={styles.toast} role="status" initial={{ opacity: 0, y: 8, scale: .96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 6 }} transition={{ type: 'spring', stiffness: 380, damping: 28 }}>{toast}</motion.p>}</AnimatePresence>
+  </span>
 }

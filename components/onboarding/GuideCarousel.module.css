@@ -539,3 +539,21 @@
 .paperStage { left: 50%; right: auto; width: min(108%, calc((100svh - 300px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * .6667)); translate: -50% 0; }
 .face { will-change: transform; -webkit-backface-visibility: hidden; backface-visibility: hidden; }
 .faceClip { transform: translateZ(0); }
+
+/* Round 37: the scene always fills the width again (no side bands on any phone). On short screens it rises, up to the
+   very top, so the phone's lower edge (about 89 % down the photo) stays clear of the caption. */
+.paperStage { --sw: min(100vw, 480px); left: 0; right: 0; width: auto; translate: none;
+  top: clamp(0px, calc(100svh - 292px - env(safe-area-inset-bottom) - var(--sw) * 1.335), calc(26px + env(safe-area-inset-top))); }
+/* Thicker glass on the main action, to sit with the install disc: a lit top rim, depth from top to bottom, a lens
+   highlight across the upper half and a soft cast shadow. */
+.finishBtn { background: linear-gradient(180deg, rgba(52, 58, 70, .92) 0%, rgba(16, 20, 28, .9) 52%, rgba(8, 11, 17, .94) 100%);
+  box-shadow: inset 0 1.5px 1px rgba(255, 255, 255, .42), inset 0 -2px 3px rgba(255, 255, 255, .08), inset 0 -12px 18px -12px rgba(60, 224, 177, .22),
+    inset 0 0 0 .5px rgba(255, 255, 255, .16), 0 1px 1px rgba(11, 18, 32, .2), 0 22px 34px -18px rgba(11, 18, 32, .85); }
+.finishBtn::before { inset: 3px 24px 52% 24px; border-radius: 999px; background: linear-gradient(180deg, rgba(255, 255, 255, .22), rgba(255, 255, 255, 0)); }
+.finishBtn i { background: radial-gradient(120% 100% at 50% 0%, #ffffff, #e9edf2 70%, #d9dee6 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1.5px 2px rgba(11, 18, 32, .14), 0 6px 12px -6px rgba(0, 0, 0, .55); }
+:global(html[data-theme='dark']) .finishBtn { background: linear-gradient(180deg, rgba(255, 255, 255, .96) 0%, rgba(236, 239, 243, .92) 55%, rgba(214, 219, 226, .92) 100%);
+  box-shadow: inset 0 1.5px 1px #ffffff, inset 0 -2px 3px rgba(11, 18, 32, .1), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 22px 34px -18px rgba(0, 0, 0, .95); }
+:global(html[data-theme='dark']) .finishBtn::before { opacity: .5; }
+:global(html[data-theme='dark']) .finishBtn i { background: radial-gradient(120% 100% at 50% 0%, #2a303b, #0b1220 75%); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .25), 0 6px 12px -6px rgba(0, 0, 0, .6); }
+.finishBtn::before { inset: 1px 8% auto 8%; height: 60%; border-radius: 999px; background: radial-gradient(70% 100% at 50% 0%, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0) 72%); }

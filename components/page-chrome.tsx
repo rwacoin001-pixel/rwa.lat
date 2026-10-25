@@ -74,11 +74,18 @@ export default function PageChrome() {
     const observer = new MutationObserver(schedule)
     observer.observe(document.body, { subtree: true, childList: true, attributes: true, attributeFilter: ['data-auth-theme', 'data-screen', 'data-theme', 'data-maison-page', 'data-guide-chrome', 'class'] })
     observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] })
+    // A screen's stylesheet can arrive after its markup (the sign-in page's colour lives in its CSS): read again when
+    // styles are added to the head, and once each stylesheet has loaded.
+    const styles = new MutationObserver(records => {
+      schedule()
+      for (const record of records) record.addedNodes.forEach(node => { if (node instanceof HTMLLinkElement) node.addEventListener('load', schedule, { once: true }) })
+    })
+    styles.observe(document.head, { childList: true })
     window.addEventListener('pageshow', schedule)
     window.addEventListener('resize', schedule, { passive: true })
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => {
-      observer.disconnect(); cancelAnimationFrame(frame); cancelAnimationFrame(scrollFrame)
+      observer.disconnect(); styles.disconnect(); cancelAnimationFrame(frame); cancelAnimationFrame(scrollFrame)
       window.removeEventListener('pageshow', schedule); window.removeEventListener('resize', schedule); window.removeEventListener('scroll', onScroll)
     }
   }, [pathname])
