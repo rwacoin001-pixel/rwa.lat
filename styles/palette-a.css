@@ -173,3 +173,8 @@ html[data-palette='a'][data-theme='dark'], html[data-palette='a'] [data-ctl='dar
   --glass-blur: blur(22px) saturate(160%);
   --ctl-focus: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 0 0 0 1px rgba(60, 224, 177, .6), 0 0 0 4px rgba(60, 224, 177, .15), 0 14px 30px -14px rgba(0, 0, 0, .8);
 }
+/* Depth for the shared controls, per mode. */
+html[data-palette='a'], html[data-palette='a'] [data-ctl='light'] { --btn-gloss: rgba(255, 255, 255, .2); --btn-underlight: rgba(255, 255, 255, .26); --arrow-gloss: 1;
+  --glass-glint: rgba(255, 255, 255, .6); --glass-underlight: rgba(255, 255, 255, .55); --field-sink: rgba(15, 23, 42, .07); }
+html[data-palette='a'][data-theme='dark'], html[data-palette='a'] [data-ctl='dark'] { --btn-gloss: rgba(255, 255, 255, .55); --btn-underlight: rgba(11, 18, 32, .12); --arrow-gloss: .25;
+  --glass-glint: rgba(255, 255, 255, .14); --glass-underlight: rgba(255, 255, 255, .14); --field-sink: rgba(0, 0, 0, .35); }

@@ -28,3 +28,23 @@
   color: var(--btn-solid-ink, #fff); background: var(--btn-solid-fill, #0b0d11); box-shadow: var(--btn-solid-edge, none); transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
 .action:active { transform: scale(.92); }
 .action:disabled { opacity: .5; cursor: default; }
+
+/* Depth. Primary: a lens-like gloss over the upper half, a faint light along the lower edge (as off a polished
+   surface), contact and ambient shadows. The arrow disc is domed. Glass: a diagonal highlight and a bright lower rim
+   where light comes through the thickness. Fields sit a touch into the surface. */
+.primary { isolation: isolate; }
+.primary::before { content: ''; position: absolute; z-index: -1; left: 10px; right: 10px; top: 2px; height: 48%; border-radius: 999px 999px 60% 60% / 999px 999px 40% 40%; pointer-events: none;
+  background: linear-gradient(180deg, var(--btn-gloss, rgba(255, 255, 255, .2)), rgba(255, 255, 255, 0)); }
+.primary::after { content: ''; position: absolute; z-index: -1; left: 22%; right: 22%; bottom: 1px; height: 1px; border-radius: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, var(--btn-underlight, rgba(255, 255, 255, .28)), transparent); }
+.primary { box-shadow: var(--btn-solid-edge, none), 0 1px 2px rgba(11, 18, 32, .2), 0 6px 12px -6px rgba(11, 18, 32, .35); }
+.primary:active { box-shadow: var(--btn-solid-edge, none), 0 1px 1px rgba(11, 18, 32, .25); filter: brightness(.96); }
+.arrow { position: relative; overflow: hidden; }
+.arrow::before { content: ''; position: absolute; inset: 1px 6px 50% 6px; border-radius: 50% 50% 40% 40%; pointer-events: none; background: linear-gradient(180deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, 0)); opacity: var(--arrow-gloss, 1); }
+.glass, .icon, .field { isolation: isolate; }
+.glass::before, .icon::before { content: ''; position: absolute; z-index: -1; inset: 0; border-radius: inherit; pointer-events: none;
+  background: linear-gradient(135deg, var(--glass-glint, rgba(255, 255, 255, .55)) 0%, rgba(255, 255, 255, 0) 38%),
+    linear-gradient(0deg, var(--glass-underlight, rgba(255, 255, 255, .5)) 0, rgba(255, 255, 255, 0) 2px); }
+.field { position: relative; box-shadow: var(--glass-edge, none), inset 0 1.5px 3px var(--field-sink, rgba(15, 23, 42, .07)); }
+.field:focus-within { box-shadow: var(--ctl-focus, none), inset 0 1.5px 3px var(--field-sink, rgba(15, 23, 42, .07)); }
+@media (prefers-reduced-transparency: reduce) { .glass, .icon, .field { -webkit-backdrop-filter: none; backdrop-filter: none; } }

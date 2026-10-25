@@ -129,6 +129,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const passkeyController = useRef<AbortController | null>(null)
   const autofillController = useRef<AbortController | null>(null)
   const autoPrompt = useRef(false)
+  // The address someone backed out of ("change email"): it must not reopen registration by itself until it is edited.
+  const dismissed = useRef('')
   useEffect(() => {
     const restore = (event: PageTransitionEvent) => {
       if (!event.persisted || !oauthNavigationTimer.current) return
@@ -284,14 +286,14 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   useEffect(() => {
     if (step !== 'email' || walletChallenge || pending || retryAfter > 0) return
     const value = email.trim()
-    if (!EMAIL.test(value)) return
+    if (!EMAIL.test(value) || value.toLowerCase() === dismissed.current) return
     let active = true
     const timer = setTimeout(() => {
       void lookupEmail(value, 'silent').then(result => {
         if (!active || !result.ok || result.data.account !== 'new' || busy.current) return
         setAccount({ email: value, isNew: true, password: false, passkey: false }); setPassword(''); setAgreed(false); setStep('new')
       })
-    }, 800)
+    }, 1500)
     return () => { active = false; clearTimeout(timer) }
   }, [email, step, walletChallenge, pending, retryAfter])
 
@@ -365,6 +367,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const sendAgain = () => { if (account && retryAfter <= 0) void run(() => sendCode(account)) }
   const usePasswordInstead = () => { stopPasskey(); setStep('password'); setCodeChallenge(null); setCode(''); setError('') }
   const changeEmail = () => {
+    dismissed.current = (account?.email ?? email).trim().toLowerCase()
     restart()
     requestAnimationFrame(() => input.current?.focus())
   }
