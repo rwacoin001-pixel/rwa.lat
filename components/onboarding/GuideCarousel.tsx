@@ -40,7 +40,7 @@ const FACE_W = 390, FACE_H = 820
 const FLAT = '18.5% 4.6%, 19.3% 3.4%, 21% 3%, 74% 5.4%, 73.4% 7.6%, 71.4% 11%, 67.6% 15.8%, 62% 21.6%, 56.6% 27%, 52.4% 32.8%, 50.6% 38.5%, 50.2% 45.6%, 50.2% 58.6%, 50.6% 71.6%, 51% 83%, 51.2% 86.2%, 21% 88.1%, 19.2% 87.3%, 18.5% 85.6%'
 
 /** CSS matrix3d that maps a FACE_W x FACE_H box onto the quad (px), so flat UI lies on the tilted face in true perspective. */
-function quadMatrix(q: number[][]) {
+function quadMatrix(q: number[][], W = FACE_W, H = FACE_H) {
   const [[x0, y0], [x1, y1], [x2, y2], [x3, y3]] = q
   const dx1 = x1 - x2, dx2 = x3 - x2, dx3 = x0 - x1 + x2 - x3
   const dy1 = y1 - y2, dy2 = y3 - y2, dy3 = y0 - y1 + y2 - y3
@@ -48,7 +48,6 @@ function quadMatrix(q: number[][]) {
   const g = den ? (dx3 * dy2 - dx2 * dy3) / den : 0
   const h = den ? (dx1 * dy3 - dx3 * dy1) / den : 0
   const a = x1 - x0 + g * x1, b = x3 - x0 + h * x3, d = y1 - y0 + g * y1, e = y3 - y0 + h * y3
-  const W = FACE_W, H = FACE_H
   return `matrix3d(${a / W},${d / W},0,${g / W},${b / H},${e / H},0,${h / H},0,0,1,0,${x0},${y0},0,1)`
 }
 
@@ -142,6 +141,42 @@ function PrintedAi({ locale, step = 99 }: { locale: AppLocale; active: boolean; 
   </div>
 }
 
+// Page 2: the paper cards that fan out of the screen carry asset cards, printed and mapped onto each card's own corners
+// (in % of the photo); the cards behind are clipped to the part you can actually see.
+const PORT_CARDS: { k: 'a' | 'b' | 'c' | 'd'; quad: number[][]; w: number; h: number; clip: string }[] = [{ k: 'a', quad: [[50.098, 15.82], [66.992, 17.383], [66.992, 29.948], [50.098, 28.32]], w: 300, h: 300, clip: '50.098% 15.82%, 66.992% 17.383%, 66.992% 21.419%, 50.098% 19.141%' }, { k: 'b', quad: [[50.098, 19.141], [77.246, 22.786], [77.246, 35.156], [50.098, 31.576]], w: 300, h: 200, clip: '50.098% 19.141%, 77.246% 22.786%, 77.246% 28.19%, 53.32% 22.786%, 50.098% 35.026%' }, { k: 'c', quad: [[53.32, 22.786], [80.957, 29.036], [77.637, 41.406], [50.098, 35.026]], w: 260, h: 172, clip: '53.32% 22.786%, 80.957% 29.036%, 80.273% 33.203%, 66.211% 28.581%, 60.352% 37.24%, 50.098% 35.026%' }, { k: 'd', quad: [[66.211, 28.581], [83.008, 33.984], [77.344, 44.922], [58.984, 39.193]], w: 230, h: 215, clip: '66.211% 28.581%, 83.008% 33.984%, 77.344% 44.922%, 58.984% 39.193%' }]
+const CARD_COPY: Partial<Record<AppLocale, Record<'a' | 'b' | 'c' | 'd', [string, string]> & { share: string; more: string }>> = {
+  'zh-CN': { a: ['现金', 'USDT · 随时可用'], b: ['产业园', '研发与制造'], c: ['物流仓', '港口与园区'], d: ['写字楼', '城市核心区'], share: '份额', more: '查看详情' },
+  en: { a: ['Cash', 'USDT · available'], b: ['Business parks', 'R&D and making'], c: ['Logistics', 'Ports and parks'], d: ['Offices', 'City core'], share: 'Shares', more: 'Details' },
+}
+
+/** One printed asset card. The held card (d) is the full card; the ones behind show their heading. */
+function PaperCard({ k, locale }: { k: 'a' | 'b' | 'c' | 'd'; locale: AppLocale }) {
+  const c = CARD_COPY[locale] ?? CARD_COPY.en!
+  const [kind, sub] = c[k]
+  const n = { a: '04', b: '03', c: '02', d: '01' }[k]
+  return <div className={styles.pc} data-k={k}>
+    <div className={styles.pcHead}><small>{n}</small><b>{kind}</b><span>{sub}</span></div>
+    {k === 'd' && <>
+      <svg className={styles.pcArt} viewBox="0 0 240 90" aria-hidden="true">
+        <path d="M0 80 H240" /><path d="M30 80 V22 H110 V80 M44 30 H96 M44 42 H96 M44 54 H96 M44 66 H96" />
+        <path d="M120 80 V40 H200 V80 M134 50 H186 M134 62 H186" /><path d="M210 80 V58 H236 V80" opacity=".6" />
+      </svg>
+      <div className={styles.pcRow}><span>{c.share}</span><b>* * *</b></div>
+      <div className={styles.pcMore}><span>{c.more}</span><ArrowRight size={14} strokeWidth={1.5} /></div>
+    </>}
+    {k === 'c' && <svg className={styles.pcArtSm} viewBox="0 0 240 60" aria-hidden="true"><path d="M0 56 H240 M20 56 V26 L70 12 L120 26 V56 M34 56 V36 H56 V56 M78 56 V36 H100 V56 M140 56 V34 H226 V56" /></svg>}
+  </div>
+}
+
+/** The printed cards over the photo of page 2. */
+function PaperCards({ box, locale }: { box: { w: number; h: number }; locale: AppLocale }) {
+  return <>{PORT_CARDS.map(card => <div key={card.k} className={styles.faceClip} style={{ clipPath: `polygon(${card.clip})`, zIndex: 3 }}>
+    <div className={styles.face} style={{ width: card.w, height: card.h, transform: quadMatrix(card.quad.map(([x, y]) => [x / 100 * box.w, y / 100 * box.h]), card.w, card.h) }}>
+      <PaperCard k={card.k} locale={locale} />
+    </div>
+  </div>)}</>
+}
+
 const PORT_COPY: Partial<Record<AppLocale, { title: string; total: string; parts: string[]; s1: string; s1sub: string; s2: string; rows: [string, string][]; tabs: string[] }>> = {
   'zh-CN': { title: '资产组合', total: '组合总值 · USDT', parts: ['写字楼', '物流仓', '产业园', '现金'], s1: '资产配置', s1sub: '按市值', s2: '持仓',
     rows: [['写字楼', '城市核心区 · 份额'], ['物流仓', '港口与园区 · 份额'], ['产业园', '研发与制造 · 份额']], tabs: ['总览', '持仓', '收益', '订单'] },
@@ -205,6 +240,9 @@ function Clock() {
   return <>{now || ' '}</>
 }
 
+// The home page ticker, printed and looping (index levels as on the real home page, not account data).
+const TICKS: [string, string, string][] = [['REIT', '1,284.6', '+0.71%'], ['DXY', '101.75', '+0.14%'], ['GOLD', '4,007.9', '-1.29%'], ['US10Y', '4.21%', '-0.03%'], ['SPCX', '3.3B', '+0.44%']]
+
 /** A line drawing of the home page's pavilion (stands in for the photo, in the printed style). */
 function Pavilion() {
   return <svg className={styles.pHero} viewBox="0 0 240 110" aria-hidden="true">
@@ -229,7 +267,9 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
     <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><em>{c.slogan[1]}</em></motion.h3>
     <motion.p className={styles.pSub} {...show(2)}>{c.sub}</motion.p>
     <motion.div {...show(3)}><Pavilion /></motion.div>
-    <motion.div className={styles.pTicker} {...show(4)}><span>REIT</span><i /><span>DXY</span><i /><span>GOLD</span><i /></motion.div>
+    <motion.div className={styles.pTicker} {...show(4)}><div className={styles.pTickTrack}>{[0, 1].map(k => <span key={k} className={styles.pTickRun} aria-hidden={k === 1 || undefined}>
+      {TICKS.map(([name, val, chg]) => <span key={name} className={styles.pTick}><b>{name}</b><span>{val}</span><em data-up={chg.startsWith('+') || undefined}>{chg}</em></span>)}
+    </span>)}</div></motion.div>
     <motion.div className={styles.pCard} {...show(5)}>
       <div className={styles.pCardHead}><span>{c.mine}</span><Eye size={20} strokeWidth={1.4} /></div>
       <div className={styles.pAmountRow}><b className={styles.pAmount}>* * * *</b><small>USDT</small></div>
@@ -277,6 +317,7 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
       <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
     </div>}
+    {scene === 'port' && box.w > 0 && <PaperCards box={box} locale={locale} />}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
     {sc.labels?.map(([cx, cy, ang, size], k) => <span key={k} className={styles.bubbleInk} style={{ left: `${cx}%`, top: `${cy}%`, rotate: `${ang}deg`, fontSize: `${size}cqw` }}>{(BUBBLE_WORDS[locale] ?? BUBBLE_WORDS.en!)[k]}</span>)}
     {sc.floaters?.map(([src, left, top, width, height, dy, turn, sec], k) => <motion.div key={src} className={styles.floater} data-k={k}
@@ -310,7 +351,7 @@ function Count({ value, run }: { value: number; run: boolean }) {
   const ref = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     if (!run) return
-    const c = animate(0, value, { duration: .9, ease: EASE, onUpdate: v => { if (ref.current) ref.current.textContent = String(Math.round(v)) } })
+    const c = animate(0, value, { duration: 2.2, delay: .35, ease: [.16, 1, .3, 1], onUpdate: v => { if (ref.current) ref.current.textContent = String(Math.round(v)) } })
     return () => c.stop()
   }, [run, value])
   return <span ref={ref}>{value}</span>
@@ -413,8 +454,14 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
     ro.observe(el)
     return () => ro.disconnect()
   }, [])
-  // One move per change: a quick spring, then stillness (the door walk-through takes a little longer).
-  useEffect(() => { const c = animate(pos, index, reduced ? { duration: 0 } : { type: 'spring', stiffness: 120, damping: 24 }); return () => c.stop() }, [index, pos, reduced])
+  // One move per change, always the same calm length however fast the finger was; no new swipe until it has landed.
+  const busy = useRef(false)
+  useEffect(() => {
+    busy.current = !reduced
+    const c = animate(pos, index, reduced ? { duration: 0 } : { duration: .8, ease: [.22, .8, .18, 1] })
+    c.then(() => { busy.current = false })
+    return () => c.stop()
+  }, [index, pos, reduced])
 
   const go = useCallback((next: number, by: 'user' | 'auto' = 'user') => {
     setIndex((next + CARDS.length) % CARDS.length)
@@ -428,11 +475,12 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
 
   // Drag: pages follow the finger (resistance past the ends), then go by distance or speed.
   const drag = useRef<{ x: number; t: number; id: number } | null>(null)
-  const down = (e: ReactPointerEvent) => { if ((e.target as HTMLElement).closest('button, input, a')) return; drag.current = { x: e.clientX, t: performance.now(), id: e.pointerId } }
+  const down = (e: ReactPointerEvent) => { if (busy.current || (e.target as HTMLElement).closest('button, input, a')) return; drag.current = { x: e.clientX, t: performance.now(), id: e.pointerId } }
   const move = (e: ReactPointerEvent) => {
     const d = drag.current
     if (!d || d.id !== e.pointerId) return
-    let v = index - ((e.clientX - d.x) * (rtl ? -1 : 1)) / Math.max(1, view)
+    // At most one page away from the current one, whatever the finger does.
+    let v = index - Math.max(-1, Math.min(1, ((e.clientX - d.x) * (rtl ? -1 : 1)) / Math.max(1, view)))
     if (v < 0) v *= .35; else if (v > CARDS.length - 1) v = CARDS.length - 1 + (v - (CARDS.length - 1)) * .35
     pos.set(v)
   }
@@ -445,7 +493,7 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
     let next = index
     if (dx < -view * .2 || speed < -.45) next = Math.min(CARDS.length - 1, index + 1)
     else if (dx > view * .2 || speed > .45) next = Math.max(0, index - 1)
-    if (next === index) animate(pos, index, { type: 'spring', stiffness: 160, damping: 26 })
+    if (next === index) animate(pos, index, { duration: .45, ease: [.22, .8, .18, 1] })
     else go(next)
     touched.current = Date.now()
   }

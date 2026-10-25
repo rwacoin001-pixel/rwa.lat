@@ -458,3 +458,35 @@
 .qKpi span { display: grid; gap: 2px; font-size: 12px; }
 .qKpi small { opacity: .65; }
 .qKpi b { font-size: 16px; letter-spacing: .1em; }
+
+/* Round 31: the printed ticker scrolls in a loop (two copies of the run, moved by exactly one run width). */
+.pTicker { overflow: hidden; margin-left: -22px; margin-right: -22px; padding: 8px 0; border-block: 1.2px solid rgba(27, 33, 42, .18); opacity: 1; }
+.pTicker i { display: none; }
+.pTickTrack { display: flex; width: max-content; animation: tick 22s linear infinite; }
+.pTickRun { display: flex; gap: 22px; padding-right: 22px; }
+.pTick { display: inline-flex; align-items: baseline; gap: 6px; white-space: nowrap; font-size: 13px; letter-spacing: .02em; }
+.pTick b { font-weight: 600; letter-spacing: .14em; font-size: 11.5px; }
+.pTick em { font-style: normal; color: #b4483c; }
+.pTick em[data-up] { color: #0a8a73; }
+@keyframes tick { to { transform: translateX(-50%); } }
+@media (prefers-reduced-motion: reduce) { .pTickTrack { animation: none; } }
+
+/* Round 32: asset cards printed on the paper cards of page 2 (grey ink multiplied into the paper). */
+.pc { position: absolute; inset: 0; padding: 18px 20px; color: #1b212a; mix-blend-mode: multiply; text-shadow: 0 1px 0 rgba(255, 255, 255, .5);
+  font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+.pcHead { display: flex; align-items: baseline; gap: 8px; white-space: nowrap; }
+.pcHead small { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 11px; color: #0a8a73; }
+.pcHead b { font-size: 20px; font-weight: 700; }
+.pcHead span { font-size: 12px; opacity: .65; }
+.pc[data-k='a'] { padding-top: 12px; } .pc[data-k='a'] .pcHead b { font-size: 17px; }
+.pc[data-k='b'] { padding-top: 12px; }
+.pcArt { display: block; width: 100%; height: auto; margin-top: 16px; fill: none; stroke: #1b212a; stroke-width: 1.3; stroke-linecap: round; }
+.pcArtSm { display: block; width: 62%; height: auto; margin-top: 12px; fill: none; stroke: #1b212a; stroke-width: 1.3; opacity: .85; }
+.pcRow { display: flex; justify-content: space-between; margin-top: 14px; padding-top: 10px; border-top: 1.2px solid rgba(27, 33, 42, .25); font-size: 13px; }
+.pcRow b { letter-spacing: .12em; }
+.pcMore { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 13px; font-weight: 600; color: #0a8a73; }
+.pc[data-k='d'] { padding: 16px 16px; }
+.pc[data-k='d'] .pcHead b { font-size: 19px; }
+.pc[data-k='d'] .pcHead span { font-size: 11.5px; }
+.pc[data-k='d'] .pcArt { margin-top: 12px; }
+.pc[data-k='d'] .pcRow { margin-top: 10px; }
