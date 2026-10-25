@@ -25,18 +25,11 @@ import styles from './GuideCarousel.module.css'
  */
 const ART = '/media/palette-a/guide'
 const CARDS = [
-  { hero: 'object-reit', from: '#3fd3b8', to: '#00806b', value: 3, scene: 'paper' },
-  { hero: 'object-basket', from: '#22d0d6', to: '#00808a', value: 1 },
-  { hero: 'object-koala', from: '#56c6f0', to: '#0077b0', value: 100 },
-  { hero: 'object-ai', from: '#2ccce4', to: '#007c99', value: 24, scene: 'ai' },
+  { from: '#3fd3b8', to: '#00806b', value: 100, scene: 'paper' },
+  { from: '#22d0d6', to: '#00808a', value: 1, scene: 'port' },
+  { from: '#56c6f0', to: '#0077b0', value: 100, scene: 'quant' },
+  { from: '#2ccce4', to: '#007c99', value: 24, scene: 'ai' },
 ] as const
-/** Two callouts per card: anchor on the object [x %, y %] → label at [x %, y %] (of the hero box), and its side. */
-const CALLOUTS: [number, number, number, number, 'l' | 'r'][][] = [
-  [[66, 34, 92, 14, 'r'], [30, 74, 6, 92, 'l']],
-  [[40, 44, 8, 16, 'l'], [70, 60, 94, 86, 'r']],
-  [[64, 22, 92, 8, 'r'], [30, 78, 6, 94, 'l']],
-  [[50, 40, 92, 16, 'r'], [42, 82, 6, 94, 'l']],
-]
 const AUTO_MS = 4800
 const SKIP: Partial<Record<AppLocale, string>> = { 'zh-CN': '跳过', en: 'Skip' }
 
@@ -149,6 +142,61 @@ function PrintedAi({ locale, step = 99 }: { locale: AppLocale; active: boolean; 
   </div>
 }
 
+const PORT_COPY: Partial<Record<AppLocale, { title: string; total: string; parts: string[]; s1: string; s1sub: string; s2: string; rows: [string, string][]; tabs: string[] }>> = {
+  'zh-CN': { title: '资产组合', total: '组合总值 · USDT', parts: ['写字楼', '物流仓', '产业园', '现金'], s1: '资产配置', s1sub: '按市值', s2: '持仓',
+    rows: [['写字楼', '城市核心区 · 份额'], ['物流仓', '港口与园区 · 份额'], ['产业园', '研发与制造 · 份额']], tabs: ['总览', '持仓', '收益', '订单'] },
+  en: { title: 'Portfolio', total: 'Total value · USDT', parts: ['Offices', 'Logistics', 'Parks', 'Cash'], s1: 'Allocation', s1sub: 'By market value', s2: 'Holdings',
+    rows: [['Offices', 'City core · shares'], ['Logistics', 'Ports and parks · shares'], ['Parks', 'R&D and making · shares']], tabs: ['Overview', 'Holdings', 'Returns', 'Orders'] },
+}
+
+/** The portfolio page, printed: masked total, an allocation bar (no figures), the holdings list. */
+function PrintedPortfolio({ locale, active }: { locale: AppLocale; active: boolean }) {
+  const c = PORT_COPY[locale] ?? PORT_COPY.en!
+  const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .12 : 0, ease: EASE } })
+  return <div className={styles.print}>
+    <div className={styles.pStatus}><b><Clock /></b><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
+    <motion.div className={styles.pTop} {...show(0)}><RwaLogoMark width={44} height={25} label="" /><b>{c.title}</b><span><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span></motion.div>
+    <motion.div className={styles.pCard} {...show(1)}>
+      <div className={styles.pCardHead}><span>{c.total}</span><Eye size={18} strokeWidth={1.4} /></div>
+      <div className={styles.pAmountRow}><b className={styles.pAmount}>* * * *</b><small>USDT</small></div>
+    </motion.div>
+    <motion.div className={styles.qTabs} {...show(2)}>{c.tabs.map((t, k) => <span key={t} data-on={k === 0 || undefined}>{t}</span>)}</motion.div>
+    <motion.div className={styles.qSec} {...show(3)}><small>01</small><b>{c.s1}</b><span>{c.s1sub}</span></motion.div>
+    <motion.div className={styles.mixBar} {...show(4)}>{c.parts.map((x, k) => <i key={x} data-k={k} />)}</motion.div>
+    <motion.div className={styles.mixLegend} {...show(5)}>{c.parts.map((x, k) => <span key={x}><i data-k={k} />{x}</span>)}</motion.div>
+    <motion.div className={styles.qSec} {...show(6)}><small>02</small><b>{c.s2}</b></motion.div>
+    <motion.ul className={styles.qRows} {...show(7)}>{c.rows.map(([a, b]) => <li key={a}><i /><span><b>{a}</b><small>{b}</small></span><em>* * *</em></li>)}</motion.ul>
+  </div>
+}
+
+const QUANT_COPY: Partial<Record<AppLocale, { title: string; name: string; tag: string; rules: [string, string][]; s2: string; kpi: [string, string, string] }>> = {
+  'zh-CN': { title: '考拉量化', name: '稳健规则 · 示例策略', tag: '规则驱动', s2: '策略规则', kpi: ['累计', '回撤', '胜率'],
+    rules: [['规则先定好', '买卖条件提前写清楚'], ['按信号执行', '不靠感觉，不追涨杀跌'], ['全程可回看', '每一笔都有记录']] },
+  en: { title: 'Koala Quant', name: 'Steady rules · sample strategy', tag: 'Rule-driven', s2: 'Rules', kpi: ['Total', 'Drawdown', 'Win rate'],
+    rules: [['Rules come first', 'Buy and sell conditions set in advance'], ['Follow the signal', 'No hunches, no chasing'], ['Review everything', 'Every trade is recorded']] },
+}
+
+/** The Koala Quant page, printed: strategy card with a drawing line chart, masked figures, the three rules. */
+function PrintedQuant({ locale, active }: { locale: AppLocale; active: boolean }) {
+  const c = QUANT_COPY[locale] ?? QUANT_COPY.en!
+  const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .12 : 0, ease: EASE } })
+  return <div className={styles.print}>
+    <div className={styles.pStatus}><b><Clock /></b><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
+    <motion.div className={styles.pTop} {...show(0)}><RwaLogoMark width={44} height={25} label="" /><b>{c.title}</b><span><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span></motion.div>
+    <motion.div className={styles.pCard} {...show(1)}>
+      <div className={styles.pCardHead}><span>{c.name}</span><small className={styles.qTag}>{c.tag}</small></div>
+      <svg className={styles.qChart} viewBox="0 0 300 110" aria-hidden="true">
+        <path d="M0 96 H300 M0 64 H300 M0 32 H300" opacity=".25" />
+        <motion.path d="M4 92 C30 86 44 90 62 78 S96 70 112 72 S142 52 160 56 S196 40 214 44 S250 22 268 26 S290 16 298 12" strokeWidth="2.2"
+          initial={false} animate={{ pathLength: active ? 1 : 0 }} transition={{ duration: 1.6, delay: active ? .5 : 0, ease: EASE }} />
+      </svg>
+      <div className={styles.qKpi}>{c.kpi.map(k => <span key={k}><small>{k}</small><b>* *</b></span>)}</div>
+    </motion.div>
+    <motion.div className={styles.qSec} {...show(2)}><small>01</small><b>{c.s2}</b></motion.div>
+    <motion.ul className={styles.qRows} {...show(3)}>{c.rules.map(([a, b], k) => <li key={a}><i>{k + 1}</i><span><b>{a}</b><small>{b}</small></span></li>)}</motion.ul>
+  </div>
+}
+
 /** The phone's own clock: the visitor's current time, kept up to date. */
 function Clock() {
   const fmt = () => new Date().toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit', hour12: false })
@@ -199,6 +247,10 @@ type Quad = { tl: number[]; tr: number[]; br: number[]; bl: number[] }
 type Floater = [string, number, number, number, number, number, number, number]
 const SCENES: Record<string, { photo: string; person?: string; face: Quad; flat: string; Print: (p: { locale: AppLocale; active: boolean; step?: number }) => React.ReactElement; floaters?: Floater[]; script?: boolean; labels?: [number, number, number, number][] }> = {
   paper: { photo: 'paper-scene-w', person: 'paper-person-w', face: FACE, flat: FLAT, Print: PrintedHome },
+  port: { photo: 'port-scene', face: {"tl": [9.57, 9.77], "tr": [53.03, 11.91], "br": [53.03, 82.68], "bl": [9.57, 84.64]},
+    flat: '9.9% 12%, 11% 9.8%, 13% 9.4%, 49.4% 11.9%, 51% 12.6%, 51.6% 14.2%, 51.6% 82%, 50.8% 83.2%, 13% 84.6%, 10.9% 84%, 9.9% 82.4%', Print: PrintedPortfolio },
+  quant: { photo: 'quant-scene', person: 'quant-person', face: {"tl": [41.02, 7.68], "tr": [85.74, 2.6], "br": [85.74, 82.36], "bl": [41.02, 80.4]},
+    flat: '41.1% 10.4%, 42.2% 8%, 44.4% 7.2%, 83.6% 2.6%, 85.4% 3.1%, 85.7% 4.8%, 85.7% 53.6%, 41.1% 53.6%', Print: PrintedQuant },
   ai: { photo: 'ai-scene', person: 'ai-front', script: true, labels: [[23.15, 15.05, 27.1, 3.7], [10.08, 22.11, 26.6, 2.3], [24.25, 30.46, -19, 3.4]], face: {"tl": [30.27, 6.45], "tr": [81.45, 3.13], "br": [81.45, 88.74], "bl": [30.27, 81.71]}, flat: '33.4% 6.3%, 79% 3%, 80.6% 3.2%, 81.4% 4.4%, 81.4% 86%, 80.7% 87.6%, 79% 88.3%, 32% 81.6%, 30.4% 80.4%, 30.4% 9.2%, 31.2% 7.9%, 32% 6.6%', Print: PrintedAi },
 }
 
@@ -238,18 +290,16 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
 const CUT = { type: 'spring', stiffness: 260, damping: 32, mass: .9 } as const
 const EASE = [.65, 0, .35, 1] as const
 
-const COPY: Partial<Record<AppLocale, { units: string[]; facts: string[]; code: string; note: string; tags: [string, string][]; lang: string }>> = {
+const COPY: Partial<Record<AppLocale, { units: string[]; facts: string[]; code: string; note: string; lang: string }>> = {
   'zh-CN': {
-    tags: [['写字楼 · 物流 · 产业园', '按份额参与'], ['多种资产', '一次配置'], ['规则驱动', '过程可回看'], ['随时提问', '帮你读懂条款']],
     lang: '语言',
-    units: ['类空间', '次配置', '% 规则驱动', 'h 随时问'],
+    units: ['+ 处空间', '次配置', '% 规则驱动', 'h 随时问'],
     facts: ['写字楼 · 物流仓 · 产业园', '多种资产，一次配好', '过程透明，可以回看', '不懂就问，帮你看明白'],
     code: '邀请码（新用户填写）', note: '老用户直接登录；新用户现在填，或注册时再填',
   },
   en: {
-    tags: [['Offices · logistics · parks', 'By the share'], ['Many assets', 'One setup'], ['Rule-driven', 'Easy to review'], ['Ask any time', 'Reads the fine print']],
     lang: 'Language',
-    units: ['kinds of space', 'setup', '% rule-driven', 'h, ask any time'],
+    units: ['+ spaces', 'setup', '% rule-driven', 'h, ask any time'],
     facts: ['Offices · logistics · parks', 'Many assets, set up once', 'In the open, easy to review', 'Ask anything, see it clearly'],
     code: 'Invitation code (new accounts)', note: 'Have an account? Just sign in. New here? Add it now or at sign-up',
   },
@@ -264,21 +314,6 @@ function Count({ value, run }: { value: number; run: boolean }) {
     return () => c.stop()
   }, [run, value])
   return <span ref={ref}>{value}</span>
-}
-
-/** Hairline callouts: a dot on the object, a line that draws out, a small tracked label. */
-function Callouts({ i, active, tags }: { i: number; active: boolean; tags: [string, string] }) {
-  return <>
-    <svg className={styles.callouts} viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-      {CALLOUTS[i].map(([ax, ay, lx, ly], k) => <motion.path key={k} d={`M${ax} ${ay} L${(ax + lx) / 2} ${ly} L${lx} ${ly}`} vectorEffect="non-scaling-stroke"
-        initial={false} animate={{ pathLength: active ? 1 : 0, opacity: active ? 1 : 0 }} transition={{ duration: active ? .7 : .2, delay: active ? .35 + k * .18 : 0, ease: EASE }} />)}
-    </svg>
-    {CALLOUTS[i].map(([ax, ay, lx, ly, side], k) => <span key={k}>
-      <motion.i className={styles.dot} style={{ left: `${ax}%`, top: `${ay}%` }} initial={false} animate={{ scale: active ? 1 : 0 }} transition={{ type: 'spring', stiffness: 500, damping: 20, delay: active ? .3 + k * .18 : 0 }} />
-      <motion.small className={styles.tag} data-side={side} style={{ left: `${lx}%`, top: `${ly}%` }} initial={false}
-        animate={{ opacity: active ? 1 : 0, y: active ? 0 : 4 }} transition={{ duration: .4, delay: active ? .8 + k * .18 : 0 }}>{tags[k]}</motion.small>
-    </span>)}
-  </>
 }
 
 /** Language: a small round button and a short list. */
@@ -309,33 +344,14 @@ function Card({ i, active, rel, tiltX, tiltY, locale }: {
   const s0 = paletteAOnboarding(locale).s0
   const c = COPY[locale] ?? COPY.en!
   const text = s0.states[i]
-  const heroX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * -90 + t * -10)
-  const heroY = useTransform(tiltY, t => t * -8)
-  const topoX = useTransform([rel, tiltX] as const, ([r, t]: number[]) => r * 40 + t * 6)
   const foot = (extra = '') => <footer className={`${styles.cardFoot} ${extra}`} data-last={i === CARDS.length - 1 || undefined}>
     <div className={styles.number}><b><Count value={card.value} run={active} /></b><small>{c.units[i]}</small></div>
     <h2 className={styles.title}>{text.title}</h2>
     <p className={styles.fact}>{c.facts[i]}</p>
   </footer>
-  if ('scene' in card) return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}>
+  return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active}>
     <PaperScene scene={card.scene} active={active} locale={locale} />
     {foot(styles.sceneFoot)}
-  </article>
-  return <article className={styles.card} style={{ '--from': card.from, '--to': card.to } as never} aria-hidden={!active}>
-    <motion.img className={styles.topo} src={`${ART}/topo.svg`} alt="" style={{ x: topoX }} draggable={false} />
-    <span className={styles.sheen} aria-hidden="true" />
-    <header className={styles.cardHead}>
-      <span className={styles.index}>0{i + 1}</span>
-      <span className={styles.label}>{text.name}</span>
-    </header>
-    <motion.div className={styles.heroWrap} style={{ x: heroX, y: heroY }}>
-      <i className={styles.pool} />
-      <span className={styles.brackets} aria-hidden="true"><i /><i /><i /><i /></span>
-      <motion.img className={styles.hero} src={`${ART}/${card.hero}.webp`} alt="" draggable={false}
-        animate={active ? { y: [0, -5, 0] } : { y: 0 }} transition={active ? { duration: 5.6, ease: 'easeInOut', repeat: Infinity } : { duration: .3 }} />
-      <Callouts i={i} active={active} tags={c.tags[i]} />
-    </motion.div>
-    {foot()}
   </article>
 }
 

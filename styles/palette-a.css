@@ -128,3 +128,6 @@ html[data-palette='a'] .rwa-topbar__avatar { background: rgba(255, 255, 255, .6)
 html[data-palette='a'] .watch-scope .drum-digit { width: .62em; }
 html[data-palette='a'] .watch-scope .drum-symbol { width: .6em; }
 html[data-palette='a'] .watch-scope .readout-row { letter-spacing: -.02em; }
+
+/* Opt out of browser-forced dark (Xiaomi / Samsung night modes, Chrome auto-dark): palette A styles both themes itself. */
+html[data-palette='a'][data-theme='light'] .rwa-mobile { color-scheme: light dark; }

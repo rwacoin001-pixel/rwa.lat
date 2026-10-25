@@ -48,6 +48,9 @@ export const documentPreferencesBootstrap = `(() => {
     palette = localStorage.getItem('rwa.palette') === 'a' ? 'a' : null;
   } catch {}
   if (palette) root.dataset.palette = palette;
+  // Palette A draws its own light and dark: tell browsers that recolour "light-only" pages (Xiaomi / Samsung night
+  // modes, Chrome auto-dark) that this page handles dark itself, so they leave its colours and photos alone.
+  if (palette) root.style.colorScheme = theme === 'dark' ? 'dark' : 'light dark';
 
   const authRoute = /^\\/(login|register|verify-email|recovery)(\\/|$)/.test(location.pathname);
   const color = palette ? (theme === 'dark' ? '${paletteAColors.dark}' : '${paletteAColors.light}') : authRoute ? (theme === 'dark' ? '#070c16' : '#efe4d4') : (theme === 'dark' ? '${themeColors.dark}' : '${themeColors.light}');
