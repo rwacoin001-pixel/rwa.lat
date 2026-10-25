@@ -25,6 +25,7 @@ import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
 import Onboarding from '@/components/onboarding/Onboarding'
 import { usePaletteA } from '@/lib/palette-preview'
+import { CodePad } from '@/components/maison/flow-kit'
 import { paletteASlogan } from '@/lib/palette-a-copy'
 import { InviteCodeField, useInviteCode } from './InviteCodeField'
 import { AuthLegalFooter } from './AuthLegalFooter'
@@ -537,7 +538,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
       {step === 'new' && <>{inviteField}{agreement}</>}
 
-      {step === 'code' && <label key={shake} className={`${styles.field} ${styles.codeBox}`} data-state={codeState === 'verified' ? 'ok' : error ? 'error' : undefined}>
+      {/* Palette A: the code goes in on our keypad (Paste, clipboard pick-up, a switch back to the system keyboard). */}
+      {step === 'code' && paletteA && <div key={shake} className={styles.kitCode}>
+        <CodePad value={code} label={emailCopy.codeLabel} invalid={Boolean(error)} disabled={pending || codeState === 'verified'}
+          onChange={next => { const digits = normalizeEmailCode(next); setCode(digits); setError(''); if (digits.length === 6) void verifyCode(digits) }} />
+      </div>}
+      {step === 'code' && !paletteA && <label key={shake} className={`${styles.field} ${styles.codeBox}`} data-state={codeState === 'verified' ? 'ok' : error ? 'error' : undefined}>
         <span className={styles.srOnly}>{emailCopy.codeLabel}</span>
         <input ref={codeInput} type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} enterKeyHint="done" placeholder="000000" value={code} onChange={event => { const next = normalizeEmailCode(event.target.value); setCode(next); setError(''); if (next.length === 6) void verifyCode(next) }} aria-invalid={Boolean(error)} disabled={pending || codeState === 'verified'} dir="ltr" />
       </label>}

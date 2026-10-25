@@ -860,3 +860,20 @@
 :global(html) .root.root.root[data-auth-cabinet] .stage { padding-inline: var(--page-gutter, 24px); }
 :global(html) .root.root.root[data-auth-cabinet] .cabBody { width: 100%; }
 .methodsA { justify-content: space-between; gap: 0; }
+
+/* Palette A code keypad on the sign-in page: the kit reads Maison tokens, so give it the sign-in colours. */
+.kitCode { --m-ink: #0b1220; --m-muted: #5b6472; --m-faint: #8f97a5; --m-accent: #0a8a73; --m-down: #d6453d; --m-up: #078a6a; --m-gutter: var(--page-gutter, 24px); width: 100%; color: var(--m-ink); }
+.root[data-auth-theme='cool'] .kitCode { --m-ink: #f2f4f7; --m-muted: #a3a9b3; --m-faint: #6b7280; --m-accent: #19c7aa; --m-down: #ff6b5e; --m-up: #2fd4a3; }
+/* While the code is typed on the keypad, the cabinet steps back and the form takes the page (no overlap). */
+.root.root[data-auth-cabinet] .cabStage { transition: opacity .35s ease, transform .45s cubic-bezier(.22, 1, .36, 1); }
+.root.root[data-auth-cabinet]:has(.kitCode) .cabStage { opacity: 0; transform: translateY(-24px) scale(.96); }
+:global(html) .root.root.root[data-auth-cabinet]:has(.kitCode) .stage { margin-top: 8px; animation: kitRise .4s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes kitRise { from { opacity: 0; transform: translateY(16px); } }
+@media (prefers-reduced-motion: reduce) { .root.root[data-auth-cabinet] .cabStage, :global(html) .root.root.root[data-auth-cabinet]:has(.kitCode) .stage { transition: none; animation: none; } }
+/* Keypad in the thumb zone: slots near the top, keys at the bottom. */
+:global(html) .root.root.root[data-auth-cabinet]:has(.kitCode) .stage { display: flex; flex: 1 1 auto; flex-direction: column; }
+.root.root[data-auth-cabinet]:has(.kitCode) .cabBody { flex: 1 1 auto; }
+.kitCode { display: flex; flex: 1 1 auto; flex-direction: column; }
+.kitCode > div { display: flex; flex: 1 1 auto; flex-direction: column; }
+.kitCode [role='group'] { margin-top: auto; }
+.root.root[data-auth-cabinet]:has(.kitCode) .cabBody, .root.root[data-auth-cabinet]:has(.kitCode) .cabBody > *:has(.kitCode), .root.root[data-auth-cabinet]:has(.kitCode) .cabBody *:has(> .kitCode) { display: flex; flex: 1 1 auto; flex-direction: column; }
