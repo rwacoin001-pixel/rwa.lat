@@ -149,35 +149,67 @@ function PrintedAi({ locale, step = 99 }: { locale: AppLocale; active: boolean; 
 // Page 2: the paper cards that fan out of the screen carry asset cards, printed and mapped onto each card's own corners
 // (in % of the photo); the cards behind are clipped to the part you can actually see.
 const PORT_CARDS: { k: 'a' | 'b' | 'c' | 'd'; quad: number[][]; w: number; h: number; clip: string }[] = [{ k: 'a', quad: [[50.098, 15.82], [66.992, 17.383], [66.992, 29.948], [50.098, 28.32]], w: 300, h: 300, clip: '50.098% 15.82%, 66.992% 17.383%, 66.992% 21.419%, 50.098% 19.141%' }, { k: 'b', quad: [[50.098, 19.141], [77.246, 22.786], [77.246, 35.156], [50.098, 31.576]], w: 300, h: 200, clip: '50.098% 19.141%, 77.246% 22.786%, 77.246% 28.19%, 53.32% 22.786%, 50.098% 35.026%' }, { k: 'c', quad: [[53.32, 22.786], [80.957, 29.036], [77.637, 41.406], [50.098, 35.026]], w: 260, h: 172, clip: '53.32% 22.786%, 80.957% 29.036%, 80.273% 33.203%, 66.211% 28.581%, 60.352% 37.24%, 50.098% 35.026%' }, { k: 'd', quad: [[66.211, 28.581], [83.008, 33.984], [77.344, 44.922], [58.984, 39.193]], w: 230, h: 215, clip: '66.211% 28.581%, 83.008% 33.984%, 77.344% 44.922%, 58.984% 39.193%' }]
-const CARD_COPY: Partial<Record<AppLocale, Record<'a' | 'b' | 'c' | 'd', [string, string]> & { share: string; more: string }>> = {
-  'zh-CN': { a: ['现金', 'USDT · 随时可用'], b: ['产业园', '研发与制造'], c: ['物流仓', '港口与园区'], d: ['写字楼', '城市核心区'], share: '份额', more: '查看详情' },
-  en: { a: ['Cash', 'USDT · available'], b: ['Business parks', 'R&D and making'], c: ['Logistics', 'Ports and parks'], d: ['Offices', 'City core'], share: 'Shares', more: 'Details' },
+const CARD_COPY: Partial<Record<AppLocale, Record<'a' | 'b' | 'c' | 'd', [string, string]> & { share: string; value: string; more: string }>> = {
+  'zh-CN': { a: ['现金', 'USDT · 随时可用'], b: ['产业园', '研发与制造'], c: ['物流仓', '港口与园区'], d: ['写字楼', '城市核心区'], share: '份额', value: '市值 USDT', more: '查看详情' },
+  en: { a: ['Cash', 'USDT · available'], b: ['Business parks', 'R&D and making'], c: ['Logistics', 'Ports and parks'], d: ['Offices', 'City core'], share: 'Shares', value: 'Value USDT', more: 'Details' },
 }
 
-/** One printed asset card. The held card (d) is the full card; the ones behind show their heading. */
-function PaperCard({ k, locale }: { k: 'a' | 'b' | 'c' | 'd'; locale: AppLocale }) {
+/** Each asset's little drawing, in ink. Offices: two towers whose windows light one by one. Logistics: a warehouse
+ * with docks and a truck easing in. Parks: saw-tooth workshops among trees. Cash: a stack of coins by a USDT disc. */
+function CardArt({ k }: { k: 'a' | 'b' | 'c' | 'd' }) {
+  if (k === 'd') return <svg className={styles.pcArt} viewBox="0 0 240 96" aria-hidden="true">
+    <path d="M0 90 H240" />
+    <path d="M28 90 V14 L70 8 V90 M28 14 L36 6 L76 2 L70 8 M70 8 V90 M76 2 V84 L70 90" />
+    <path d="M118 90 V36 L170 32 V90 M118 36 L124 30 L176 26 L170 32 M176 26 V84 L170 90" />
+    <g className={styles.pcWin}>{Array.from({ length: 24 }, (_, i) => <rect key={i} x={34 + (i % 4) * 8.5} y={18 + Math.floor(i / 4) * 11} width="5" height="6" style={{ '--i': i } as React.CSSProperties} />)}
+      {Array.from({ length: 15 }, (_, i) => <rect key={`b${i}`} x={124 + (i % 5) * 9} y={40 + Math.floor(i / 5) * 13} width="5.5" height="7" style={{ '--i': i + 6 } as React.CSSProperties} />)}</g>
+    <path d="M196 90 C192 78 200 70 207 73 C212 66 222 70 220 79 C226 81 224 90 216 90 M208 90 V78" opacity=".75" />
+    <path d="M84 90 V80 H110 V90 M90 80 V74 H104 V80" opacity=".6" />
+  </svg>
+  if (k === 'c') return <svg className={styles.pcArtSm} viewBox="0 0 240 70" aria-hidden="true">
+    <path d="M0 64 H240" /><path d="M18 64 V30 L74 14 L130 30 V64 M18 30 H130" />
+    <path d="M30 64 V42 H52 V64 M64 64 V42 H86 V64 M98 64 V42 H120 V64 M30 48 H52 M64 48 H86 M98 48 H120" opacity=".7" />
+    <path d="M144 64 V38 H232 V64 M144 46 H232" opacity=".6" />
+    <g className={styles.pcTruck}><path d="M150 62 V50 H182 V62 M182 54 H192 L196 58 V62" /><circle cx="158" cy="63" r="2.5" /><circle cx="188" cy="63" r="2.5" /></g>
+  </svg>
+  if (k === 'b') return <svg className={styles.pcArtSm} viewBox="0 0 240 70" aria-hidden="true">
+    <path d="M0 64 H240" /><path d="M20 64 V36 L40 26 V36 L60 26 V36 L80 26 V36 L100 26 V64 Z" />
+    <path d="M118 64 V40 H190 V64 M128 48 H180 M128 56 H180" opacity=".7" />
+    <path d="M200 64 C196 54 204 48 210 50 C214 44 224 48 222 56 C228 58 226 64 218 64 M211 64 V54" opacity=".75" />
+  </svg>
+  return <svg className={styles.pcArtSm} viewBox="0 0 240 70" aria-hidden="true">
+    <path d="M0 64 H240" />
+    <path d="M40 60 a18 5 0 1 0 36 0 a18 5 0 1 0 -36 0 M40 60 v-8 a18 5 0 0 1 36 0 v8 M40 52 v-8 a18 5 0 0 1 36 0 v8 M40 44 v-8 a18 5 0 0 1 36 0 v8" />
+    <circle cx="120" cy="40" r="20" /><circle cx="120" cy="40" r="15" opacity=".5" /><path d="M112 34 H128 M120 34 V50 M113 40 a7 2.5 0 1 0 14 0" />
+  </svg>
+}
+
+/** One printed asset card, laid out like the app's: an inner ruled frame, the index and name, the drawing; the held
+ * card (offices) carries its figures (counting up), a little trend that draws itself, and the way in. The cards
+ * behind show only what is visible of them. */
+function PaperCard({ k, locale, active }: { k: 'a' | 'b' | 'c' | 'd'; locale: AppLocale; active: boolean }) {
   const c = CARD_COPY[locale] ?? CARD_COPY.en!
   const [kind, sub] = c[k]
   const n = { a: '04', b: '03', c: '02', d: '01' }[k]
+  const value = useCountUp(k === 'd' ? 5200 : 0, active && k === 'd', 1400, 1200)
+  const shares = useCountUp(k === 'd' ? 1200 : 0, active && k === 'd', 1400, 1300)
   return <div className={styles.pc} data-k={k}>
     <div className={styles.pcHead}><small>{n}</small><b>{kind}</b><span>{sub}</span></div>
+    <CardArt k={k} />
     {k === 'd' && <>
-      <svg className={styles.pcArt} viewBox="0 0 240 90" aria-hidden="true">
-        <path d="M0 80 H240" /><path d="M30 80 V22 H110 V80 M44 30 H96 M44 42 H96 M44 54 H96 M44 66 H96" />
-        <path d="M120 80 V40 H200 V80 M134 50 H186 M134 62 H186" /><path d="M210 80 V58 H236 V80" opacity=".6" />
-      </svg>
-      <div className={styles.pcRow}><span>{c.share}</span><b>1,200</b></div>
+      <div className={styles.pcRow}><span>{c.value}</span><b>{money(value)}</b></div>
+      <div className={styles.pcRow} data-thin=""><span>{c.share}</span><b>{Math.round(shares).toLocaleString('en-US')}</b>
+        <svg className={styles.pcSpark} viewBox="0 0 60 16" aria-hidden="true"><motion.path initial={false} animate={{ pathLength: active ? 1 : 0 }} transition={{ duration: 1.2, delay: active ? 1.4 : 0, ease: EASE }} d="M1 13 L10 11 L18 12 L27 8 L35 9 L44 5 L52 6 L59 2" /></svg></div>
       <div className={styles.pcMore}><span>{c.more}</span><ArrowRight size={14} strokeWidth={1.5} /></div>
     </>}
-    {k === 'c' && <svg className={styles.pcArtSm} viewBox="0 0 240 60" aria-hidden="true"><path d="M0 56 H240 M20 56 V26 L70 12 L120 26 V56 M34 56 V36 H56 V56 M78 56 V36 H100 V56 M140 56 V34 H226 V56" /></svg>}
   </div>
 }
 
 /** The printed cards over the photo of page 2. */
-function PaperCards({ box, locale }: { box: { w: number; h: number }; locale: AppLocale }) {
+function PaperCards({ box, locale, active }: { box: { w: number; h: number }; locale: AppLocale; active: boolean }) {
   return <>{PORT_CARDS.map(card => <div key={card.k} className={styles.faceClip} style={{ clipPath: `polygon(${card.clip})`, zIndex: 3 }}>
-    <div className={styles.face} style={{ width: card.w, height: card.h, transform: quadMatrix(card.quad.map(([x, y]) => [x / 100 * box.w, y / 100 * box.h]), card.w, card.h) }}>
-      <PaperCard k={card.k} locale={locale} />
+    <div className={styles.face} style={{ width: card.w, height: card.h, transform: quadMatrix(card.quad.map(([x, y]) => [x / 100 * box.w, y / 100 * box.h]), card.w, card.h), '--ink-filter': 'url(#ink-port)' } as React.CSSProperties}>
+      <PaperCard k={card.k} locale={locale} active={active} />
     </div>
   </div>)}</>
 }
@@ -192,20 +224,22 @@ const PORT_COPY: Partial<Record<AppLocale, { title: string; total: string; parts
 /** The portfolio page, printed: masked total, an allocation bar (no figures), the holdings list. */
 function PrintedPortfolio({ locale, active }: { locale: AppLocale; active: boolean }) {
   const c = PORT_COPY[locale] ?? PORT_COPY.en!
+  const total = useCountUp(12860, active, 1600, 700)
+  const r0 = useCountUp(5200, active, 1300, 1500), r1 = useCountUp(4160, active, 1300, 1650), r2 = useCountUp(3500, active, 1300, 1800)
   const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .12 : 0, ease: EASE } })
   return <div className={styles.print}>
     <div className={styles.pStatus}><b><Clock /></b><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
     <motion.div className={styles.pTop} {...show(0)}><RwaLogoMark width={44} height={25} label="" /><b>{c.title}</b><span><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span></motion.div>
     <motion.div className={styles.pCard} {...show(1)}>
       <div className={styles.pCardHead}><span>{c.total}</span><Eye size={18} strokeWidth={1.4} /></div>
-      <div className={styles.pAmountRow}><b className={styles.pAmount}>12,860.00</b><small>USDT</small></div>
+      <div className={styles.pAmountRow}><b className={styles.pAmount}>{money(total)}</b><small>USDT</small></div>
     </motion.div>
     <motion.div className={styles.qTabs} {...show(2)}>{c.tabs.map((t, k) => <span key={t} data-on={k === 0 || undefined}>{t}</span>)}</motion.div>
     <motion.div className={styles.qSec} {...show(3)}><small>01</small><b>{c.s1}</b><span>{c.s1sub}</span></motion.div>
-    <motion.div className={styles.mixBar} {...show(4)}>{c.parts.map((x, k) => <i key={x} data-k={k} />)}</motion.div>
+    <motion.div className={styles.mixBar} data-on={active || undefined} {...show(4)}>{c.parts.map((x, k) => <i key={x} data-k={k} />)}</motion.div>
     <motion.div className={styles.mixLegend} {...show(5)}>{c.parts.map((x, k) => <span key={x}><i data-k={k} />{x}</span>)}</motion.div>
     <motion.div className={styles.qSec} {...show(6)}><small>02</small><b>{c.s2}</b></motion.div>
-    <motion.ul className={styles.qRows} {...show(7)}>{c.rows.map(([a, b], k) => <li key={a}><i /><span><b>{a}</b><small>{b}</small></span><em>{['5,200.00', '4,160.00', '3,500.00'][k]}</em></li>)}</motion.ul>
+    <motion.ul className={styles.qRows} {...show(7)}>{c.rows.map(([a, b], k) => <li key={a}><i /><span><b>{a}</b><small>{b}</small></span><em>{money([r0, r1, r2][k])}</em></li>)}</motion.ul>
   </div>
 }
 
@@ -248,19 +282,49 @@ function Clock() {
 // The home page ticker, printed and looping (index levels as on the real home page, not account data).
 const TICKS: [string, string, string][] = [['REIT', '1,284.6', '+0.71%'], ['DXY', '101.75', '+0.14%'], ['GOLD', '4,007.9', '-1.29%'], ['US10Y', '4.21%', '-0.03%'], ['SPCX', '3.3B', '+0.44%']]
 
-/** A line drawing of the home page's pavilion (stands in for the photo, in the printed style). */
-function Pavilion() {
-  return <svg className={styles.pHero} viewBox="0 0 240 110" aria-hidden="true">
-    <path d="M0 78 H240" /><path d="M8 72 C40 60 70 64 98 70" />
-    <path d="M70 40 L236 26 L236 32 L72 46 Z" /><path d="M96 44 V78 M128 41 V78 M160 38 V78 M196 35 V78 M232 32 V78" />
-    <path d="M90 78 H240" /><path d="M150 60 h30 v18 M110 66 h22" />
-    <path d="M100 86 H230 M120 92 H220 M140 98 H210" opacity=".55" />
+/** Counts a printed figure up from zero each time its page comes on (eased); shows it settled when motion is reduced. */
+function useCountUp(target: number, active: boolean, ms = 1500, delay = 300) {
+  const [value, setValue] = useState(active ? 0 : target)
+  useEffect(() => {
+    if (!active) { setValue(0); return }
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setValue(target); return }
+    let frame = 0
+    let start = 0
+    const step = (now: number) => {
+      if (!start) start = now + delay
+      const t = Math.max(0, Math.min(1, (now - start) / ms))
+      setValue(target * (1 - Math.pow(1 - t, 3)))
+      if (t < 1) frame = requestAnimationFrame(step)
+    }
+    frame = requestAnimationFrame(step)
+    return () => cancelAnimationFrame(frame)
+  }, [target, active, ms, delay])
+  return value
+}
+const money = (value: number) => value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
+/** A line drawing of the home page's pavilion, as an architect would ink it: the cantilevered roof with its edge and
+ * soffit, glass bays with mullions and a glint, slim columns, a reflecting pool whose ripples drift, trees drawn as
+ * loose scribbles, two small figures for scale. The lines draw themselves in when the page comes on. */
+function Pavilion({ active }: { active: boolean }) {
+  const draw = (k: number) => ({ initial: false as const, animate: { pathLength: active ? 1 : 0 }, transition: { duration: 1.4, delay: active ? .3 + k * .18 : 0, ease: EASE } })
+  return <svg className={styles.pHero} viewBox="0 0 240 120" aria-hidden="true">
+    <motion.path {...draw(0)} d="M0 84 H240" />
+    <motion.path {...draw(1)} d="M58 34 L238 20 L238 27 L60 42 Z" />
+    <motion.path {...draw(1)} d="M60 42 L238 27 M70 41 L236 28.4" opacity=".45" />
+    <motion.path {...draw(2)} d="M84 44 V84 M120 41 V84 M156 38 V84 M196 35 V84 M232 31 V84" />
+    <motion.path {...draw(3)} d="M90 50 V82 M102 49 V82 M126 47 V82 M138 46 V82 M162 44 V82 M174 43 V82 M202 41 V82 M214 40 V82" opacity=".5" />
+    <motion.path {...draw(3)} d="M92 76 L108 54 M128 74 L146 50 M164 72 L184 46 M204 70 L222 44" opacity=".3" />
+    <motion.path {...draw(4)} d="M16 84 C14 70 22 60 30 62 C36 54 48 58 46 68 C54 70 52 82 44 84 M30 84 V70 M20 84 C18 78 22 74 26 76" opacity=".75" />
+    <motion.path {...draw(4)} d="M108 84 v-7 m0 0 a1.6 1.6 0 1 1 .1 0 M108 80 l-2 4 M108 80 l2 4 M146 84 v-6 m0 0 a1.5 1.5 0 1 1 .1 0" opacity=".8" />
+    <path className={styles.pRipple} d="M70 92 H236 M86 98 H222 M104 104 H210 M124 110 H196" />
   </svg>
 }
 
 /** Our real home page, redrawn as if printed on the paper phone: grey ink, hairlines, outline icons; only the logo in colour. */
 function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean }) {
   const c = HOME_COPY[locale] ?? HOME_COPY.en!
+  const total = useCountUp(12860, active, 1600, 900), cash = useCountUp(1240, active, 1400, 1100)
   const acts = [ArrowDownToLine, ArrowUpFromLine, ArrowLeftRight, QrCode]
   const show = (k: number) => ({ initial: false as const, animate: { opacity: active ? 1 : 0 }, transition: { duration: .6, delay: active ? .2 + k * .1 : 0, ease: EASE } })
   return <div className={styles.print}>
@@ -271,15 +335,15 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
     </motion.div>
     <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><em>{c.slogan[1]}</em></motion.h3>
     <motion.p className={styles.pSub} {...show(2)}>{c.sub}</motion.p>
-    <motion.div {...show(3)}><Pavilion /></motion.div>
+    <motion.div {...show(3)}><Pavilion active={active} /></motion.div>
     <motion.div className={styles.pTicker} {...show(4)}><div className={styles.pTickTrack}>{[0, 1].map(k => <span key={k} className={styles.pTickRun} aria-hidden={k === 1 || undefined}>
       {TICKS.map(([name, val, chg]) => <span key={name} className={styles.pTick}><b>{name}</b><span>{val}</span><em data-up={chg.startsWith('+') || undefined}>{chg}</em></span>)}
     </span>)}</div></motion.div>
     <motion.div className={styles.pCard} {...show(5)}>
       <div className={styles.pCardHead}><span>{c.mine}</span><Eye size={20} strokeWidth={1.4} /></div>
-      <div className={styles.pAmountRow}><b className={styles.pAmount}>12,860.00</b><small>USDT</small></div>
-      <div className={styles.pSubRow}><span>{c.cash} <b>1,240.00</b></span><span>{c.held} <b>3</b></span></div>
-      <div className={styles.pActs}>{acts.map((Icon, k) => <span key={k}><Icon size={22} strokeWidth={1.4} /><small>{c.actions[k]}</small></span>)}</div>
+      <div className={styles.pAmountRow}><b className={styles.pAmount}>{money(total)}</b><small>USDT</small></div>
+      <div className={styles.pSubRow}><span>{c.cash} <b>{money(cash)}</b></span><span>{c.held} <b>3</b></span></div>
+      <div className={styles.pActs} data-on={active || undefined}>{acts.map((Icon, k) => <span key={k} style={{ '--k': k } as React.CSSProperties}><Icon size={22} strokeWidth={1.4} /><small>{c.actions[k]}</small></span>)}</div>
     </motion.div>
     <motion.nav className={styles.pTabs} {...show(6)}><span data-on=""><House size={20} strokeWidth={1.4} /><small>{c.home}</small></span><ChartColumn size={20} strokeWidth={1.4} /><ChartPie size={20} strokeWidth={1.4} /><i /></motion.nav>
   </div>
@@ -318,11 +382,20 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
   const reduced = useReducedMotion()
   const step = useScript(active && !!sc.script, AI_TIMES)
   return <div className={styles.paperStage} ref={stage}>
+    {/* Ink on paper (as on the sign-in cabinet): edges nudged by the paper's fibres, softened to the photo, a faint bleed. */}
+    <svg className={styles.inkDefs} aria-hidden="true"><filter id={`ink-${scene}`} x="-3%" y="-3%" width="106%" height="106%" colorInterpolationFilters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="7" result="fibre" />
+      <feDisplacementMap in="SourceGraphic" in2="fibre" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="pushed" />
+      <feGaussianBlur in="pushed" stdDeviation=".4" result="ink" />
+      <feGaussianBlur in="pushed" stdDeviation="1.4" result="spread" />
+      <feComponentTransfer in="spread" result="bleed"><feFuncA type="linear" slope=".2" /></feComponentTransfer>
+      <feMerge><feMergeNode in="bleed" /><feMergeNode in="ink" /></feMerge>
+    </filter></svg>
     <img className={styles.paperPhoto} src={`${ART}/${sc.photo}.webp`} alt="" draggable={false} />
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
-      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) }}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
+      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q), '--ink-filter': `url(#ink-${scene})` } as React.CSSProperties}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
     </div>}
-    {scene === 'port' && box.w > 0 && <PaperCards box={box} locale={locale} />}
+    {scene === 'port' && box.w > 0 && <PaperCards box={box} locale={locale} active={active} />}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
     {sc.labels?.map(([cx, cy, ang, long, short], k) => { const word = (BUBBLE_WORDS[locale] ?? BUBBLE_WORDS.en!)[k]
       return <span key={k} className={styles.bubbleInk} style={{ left: `${cx}%`, top: `${cy}%`, rotate: `${ang}deg`, fontSize: `${fitWord(word, long, short)}cqw` }}>{word}</span> })}

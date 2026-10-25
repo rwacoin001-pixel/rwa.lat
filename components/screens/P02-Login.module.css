@@ -765,19 +765,13 @@
 .kHead b { font-size: 15px; font-weight: 700; letter-spacing: .1em; }
 .kHead svg { mix-blend-mode: normal; }
 
-.kDial { display: block; width: 228px; height: auto; margin: 4px auto 0; }
+.kDial { display: block; width: 212px; height: auto; margin: 4px auto 0; }
 .kDial text { fill: var(--ink); stroke: none; }
 .kMono { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 15px; font-weight: 600; letter-spacing: .02em; }
 .kMonoS { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 7px; font-weight: 600; letter-spacing: .02em; }
 .kTiny { font-size: 6px; letter-spacing: .08em; opacity: .85; }
 .kName { font-size: 10px; font-weight: 600; letter-spacing: .14em; }
 .kFill { fill: var(--ink); stroke: none; }
-.kRun { transform-origin: 100px 104px; animation: kRun 12s linear infinite; }
-.kNeedleA { transform-origin: 66px 124px; animation: kSwing 3.2s ease-in-out infinite alternate; }
-.kNeedleB { transform-origin: 134px 124px; animation: kSwing 4.4s ease-in-out -1.2s infinite alternate-reverse; }
-.kNeedleC { transform-origin: 100px 132px; animation: kSwing 5s ease-in-out -.6s infinite alternate; }
-@keyframes kRun { to { transform: rotate(360deg); } }
-@keyframes kSwing { from { transform: rotate(-16deg); } to { transform: rotate(14deg); } }
 
 /* Overview / Mine: the well is pressed into the face; the key stands out of it and slides with the tab. */
 .kSeg { position: relative; display: grid; flex: none; grid-template-columns: 1fr 1fr; margin-top: 10px; padding: 3px; border-radius: 999px; isolation: isolate;
@@ -833,7 +827,7 @@
 .kDock b { display: flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; box-shadow: inset 0 0 0 1.2px var(--ink); font-size: 11px; font-weight: 700; }
 .kDock b svg { width: 16px; height: auto; }
 .kDock > i { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 0 0 1.1px var(--ink); }
-@media (prefers-reduced-motion: reduce) { .kRun, .kNeedleA, .kNeedleB, .kNeedleC, .kLine { animation: none; } .kLine { stroke-dashoffset: 0; } }
+@media (prefers-reduced-motion: reduce) { .kLine { animation: none; } .kLine { stroke-dashoffset: 0; } }
 
 /* The form below the scene, on the floor (round 36's liquid glass), then the legal line. */
 :global(html) .root.root.root[data-auth-cabinet] .stage { position: relative; z-index: 2; margin-top: auto; padding: 0 20px calc(6px + env(safe-area-inset-bottom)); }
@@ -846,3 +840,55 @@
 .cabDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
 /* Ink, not pixels: a warm, slightly dry tone rather than flat grey. */
 .cabFace { --ink: #45413b; }
+
+/* Round 43: the crown press, as on the real dial (every 5 s): cap and knurl sink 3.5 px and spring back, the flutes
+   roll, the settlement ring winds one full turn back with a small overshoot. */
+.kCrown[data-press] { animation: kPress .58s cubic-bezier(.22, .75, .2, 1); }
+.kFlutes[data-press] { animation: kFlute 1.35s cubic-bezier(.45, 0, .18, 1); }
+.kWind { transform-origin: 100px 104px; }
+.kWind[data-press] { animation: kWind 1.55s cubic-bezier(.45, 0, .18, 1) .12s; }
+@keyframes kPress { 0% { transform: translateY(0); } 22%, 42% { transform: translateY(3.5px); } 80% { transform: translateY(-.45px); } 100% { transform: translateY(0); } }
+@keyframes kFlute { to { transform: translateX(9px); } }
+@keyframes kWind { 0% { transform: rotate(0); } 80% { transform: rotate(-357.5deg); } 93% { transform: rotate(-360.6deg); } 100% { transform: rotate(-360deg); } }
+
+/* Round 43: the sign-in controls in Apple's liquid glass: a thick clear pane that brightens what is behind it, a
+   specular rim catching the light at the top left, a soft inner shade at the bottom right and a lifted shadow. */
+:global(html) .root.root.root[data-auth-cabinet] .stage .field { min-height: 56px; border: 0; border-radius: 999px; padding-inline-start: 22px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .7), rgba(255, 255, 255, .42));
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .95), inset -1px -2px 3px -1px rgba(15, 23, 42, .06),
+    inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(15, 23, 42, .08), 0 2px 6px -3px rgba(15, 23, 42, .14), 0 14px 30px -14px rgba(15, 23, 42, .38);
+  -webkit-backdrop-filter: blur(22px) saturate(190%) brightness(1.04); backdrop-filter: blur(22px) saturate(190%) brightness(1.04);
+  transition: box-shadow .25s ease, background-color .25s ease; }
+:global(html) .root.root.root[data-auth-cabinet] .stage .field:focus-within { background: linear-gradient(180deg, rgba(255, 255, 255, .86), rgba(255, 255, 255, .62));
+  box-shadow: inset 0 .5px 0 #ffffff, inset 0 0 0 1px rgba(10, 138, 115, .55), 0 0 0 4px rgba(10, 138, 115, .14), 0 14px 30px -14px rgba(15, 23, 42, .38); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .field input { color: #0b0d12; font-size: 17px; font-weight: 400; letter-spacing: -.01em; }
+:global(html) .root.root.root[data-auth-cabinet] .stage .field input::placeholder { color: rgba(60, 60, 67, .55); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .inlineSubmit { width: 44px; height: 44px; color: #ffffff;
+  background: radial-gradient(120% 120% at 30% 18%, #474d58 0%, #1a1e25 55%, #0b0d11 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .3), inset 1px 1.5px 1.5px -1px rgba(255, 255, 255, .35), inset 0 -1.5px 2px rgba(0, 0, 0, .45), 0 1px 1px rgba(0, 0, 0, .18), 0 6px 14px -6px rgba(11, 18, 32, .7);
+  transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .inlineSubmit:active { transform: scale(.92); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods { gap: 18px; }
+:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods button { width: 52px; height: 52px; border: 0; border-radius: 50%; color: #0b0d12;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .72), rgba(255, 255, 255, .4));
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .98), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .95), inset -1px -2px 3px -1px rgba(15, 23, 42, .07),
+    inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 0 0 .5px rgba(15, 23, 42, .08), 0 2px 5px -3px rgba(15, 23, 42, .16), 0 12px 24px -12px rgba(15, 23, 42, .38);
+  -webkit-backdrop-filter: blur(20px) saturate(190%) brightness(1.04); backdrop-filter: blur(20px) saturate(190%) brightness(1.04);
+  transition: transform .22s cubic-bezier(.34, 1.56, .64, 1); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods button:active { transform: scale(.9); }
+:global(html) .root.root.root[data-auth-cabinet] .stage .altMethods button img { width: 21px; height: 21px; }
+:global(html) .root.root.root[data-auth-cabinet] .stage .primary { min-height: 56px; border: 0; border-radius: 999px; color: #ffffff; font-size: 17px; font-weight: 600; letter-spacing: -.01em;
+  background: radial-gradient(140% 160% at 30% 0%, #464c57 0%, #1a1e25 50%, #0b0d11 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .28), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .3), inset 0 -2px 3px rgba(0, 0, 0, .4), 0 1px 1px rgba(0, 0, 0, .15), 0 16px 28px -14px rgba(11, 18, 32, .75); }
+/* Night: smoked glass with a cooler rim; the action keys turn light. */
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage :is(.field, .altMethods button) { color: #f2f4f7;
+  background: linear-gradient(180deg, rgba(74, 80, 92, .55), rgba(34, 37, 44, .5));
+  box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 1.5px 2px 2px -1.5px rgba(255, 255, 255, .22), inset -1px -2px 3px -1px rgba(0, 0, 0, .3),
+    inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 0 0 .5px rgba(0, 0, 0, .4), 0 14px 30px -14px rgba(0, 0, 0, .8); }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .field:focus-within { box-shadow: inset 0 .5px 0 rgba(255, 255, 255, .32), inset 0 0 0 1px rgba(60, 224, 177, .6), 0 0 0 4px rgba(60, 224, 177, .14), 0 14px 30px -14px rgba(0, 0, 0, .8); }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .field input { color: #f2f4f7; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .field input::placeholder { color: rgba(235, 235, 245, .5); }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage :is(.inlineSubmit, .primary) { color: #0b0d12;
+  background: radial-gradient(130% 140% at 30% 10%, #ffffff 0%, #eef0f3 55%, #d5dae1 100%);
+  box-shadow: inset 0 1px 0 #ffffff, inset 0 -1.5px 2px rgba(11, 18, 32, .14), 0 6px 14px -6px rgba(0, 0, 0, .8); }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .stage .altMethods img[data-mono] { filter: invert(1); }

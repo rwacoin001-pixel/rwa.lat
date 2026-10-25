@@ -92,16 +92,33 @@ const TRACK = Array.from({ length: 120 }, (_, i) => {
   return `M${x1} ${y1} L${x2} ${y2}`
 }).join(' ')
 
-/** The Koala Quant watch, in ink, with its registers ticking, a marker running round the ring and the live figures. */
+/** The Koala Quant watch, in ink, with the live figures. As on the real page, every few seconds the crown is pressed:
+ * cap and knurl sink and spring back while the flutes roll, and the settlement ring winds a full turn back to today. */
 function DialDrawing({ zh, view }: { zh: boolean; view: View }) {
   const since = useCount(view.since), d7 = useCount(view.d7), d30 = useCount(view.d30), dd = useCount(view.dd)
-  return <svg className={styles.kDial} viewBox="0 0 200 204" aria-hidden="true">
-    <path d="M93 0 h14 v9 h-14 Z M96 3 v3 M100 3 v3 M104 3 v3 M97 9 v6 M103 9 v6" />
-    <path d="M166 30 l8 -8 l6 6 l-8 8 Z M168 38 l-4 4" />
+  const [press, setPress] = useState(0)
+  useEffect(() => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = setInterval(() => setPress(count => count + 1), 5000)
+    return () => clearInterval(timer)
+  }, [])
+  const pressed = press > 0 || undefined
+  return <svg className={styles.kDial} viewBox="0 -26 200 232" aria-hidden="true">
+    <defs><clipPath id="k-knurl"><rect x="89" y="-19" width="22" height="12" rx="2.5" /></clipPath></defs>
+    {/* Crown at 12, square on the case: stem from the bezel, knurled grip, cap. */}
+    <rect x="95.5" y="-7" width="9" height="15" rx="1" />
+    <g key={`c${press}`} className={styles.kCrown} data-press={pressed}>
+      <rect x="89" y="-19" width="22" height="12" rx="2.5" />
+      <g clipPath="url(#k-knurl)"><g key={`f${press}`} className={styles.kFlutes} data-press={pressed}>
+        <path d={Array.from({ length: 14 }, (_, i) => `M${80 + i * 3} -17 V-9`).join(' ')} opacity=".75" />
+      </g></g>
+      <rect x="91" y="-24" width="18" height="5" rx="2" />
+    </g>
+    {/* Pusher at about two o'clock. */}
+    <g transform="rotate(40 100 104)"><rect x="97" y="-3" width="6" height="11" rx="1" /><rect x="94.5" y="-8" width="11" height="5" rx="1.6" /></g>
     <circle cx="100" cy="104" r="96" /><circle cx="100" cy="104" r="92" opacity=".5" />
     <path d={TRACK} opacity=".45" />
-    <path d={RING} strokeWidth="2" />
-    <g className={styles.kRun}><circle cx="100" cy="27" r="3.2" className={styles.kFill} /></g>
+    <g key={`w${press}`} className={styles.kWind} data-press={pressed}><path d={RING} strokeWidth="2" /></g>
     <circle cx="100" cy="104" r="62" opacity=".55" /><circle cx="100" cy="104" r="58" strokeDasharray="1.2 2.6" opacity=".45" />
     <circle cx="100" cy="36" r="6" /><path d="M97 34 h6 l-3 4 Z" />
     <rect x="64" y="51" width="72" height="23" rx="3" /><rect x="66.5" y="53.5" width="67" height="18" rx="2" opacity=".4" />
@@ -109,15 +126,15 @@ function DialDrawing({ zh, view }: { zh: boolean; view: View }) {
     <text x="100" y="83" textAnchor="middle" className={styles.kTiny}>{zh ? '成立以来' : 'SINCE LAUNCH'}</text>
     <text x="100" y="97" textAnchor="middle" className={styles.kName}>{zh ? '考 拉 量 化' : 'KOALA QUANT'}</text>
     <circle cx="66" cy="124" r="19" /><circle cx="66" cy="124" r="15" strokeDasharray="1 2.4" opacity=".6" />
-    <g className={styles.kNeedleA}><path d="M66 124 L72 110" /></g><circle cx="66" cy="124" r="1.6" className={styles.kFill} />
+    <path d="M66 124 L72 110" /><circle cx="66" cy="124" r="1.6" className={styles.kFill} />
     <text x="66" y="113" textAnchor="middle" className={styles.kTiny}>{zh ? '7日' : '7D'}</text>
     <text x="66" y="136" textAnchor="middle" className={styles.kMonoS}>{signed(d7)}</text>
     <circle cx="134" cy="124" r="19" /><circle cx="134" cy="124" r="15" strokeDasharray="1 2.4" opacity=".6" />
-    <g className={styles.kNeedleB}><path d="M134 124 L124 113" /></g><circle cx="134" cy="124" r="1.6" className={styles.kFill} />
+    <path d="M134 124 L124 113" /><circle cx="134" cy="124" r="1.6" className={styles.kFill} />
     <text x="134" y="113" textAnchor="middle" className={styles.kTiny}>{zh ? '30日' : '30D'}</text>
     <text x="134" y="136" textAnchor="middle" className={styles.kMonoS}>{signed(d30)}</text>
     <text x="100" y="116" textAnchor="middle" className={styles.kTiny}>{zh ? '最大回撤' : 'MAX DD'}</text>
-    <path d="M90 132 a10 10 0 0 1 20 0" /><g className={styles.kNeedleC}><path d="M100 132 L93 128" /></g><circle cx="100" cy="132" r="1.4" className={styles.kFill} />
+    <path d="M90 132 a10 10 0 0 1 20 0" /><path d="M100 132 L93 128" /><circle cx="100" cy="132" r="1.4" className={styles.kFill} />
     <text x="100" y="141" textAnchor="middle" className={styles.kMonoS}>{signed(dd)}</text>
     <rect x="74" y="147" width="52" height="13" rx="2" /><text x="100" y="156.5" textAnchor="middle" className={styles.kMonoS}>{view.today.split('-').join('.')}</text>
     <circle cx="64" cy="153.5" r="5" /><path d="M65.5 151 l-2.5 2.5 l2.5 2.5" /><circle cx="136" cy="153.5" r="5" opacity=".5" />
