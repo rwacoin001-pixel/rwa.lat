@@ -1649,3 +1649,14 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .switchRow input[role='switch']:checked::after { transform: translateX(18px); }
 :global(html[data-palette='a']) .switchRow input[role='switch']:disabled { opacity: .45; cursor: default; }
 :global(html[data-palette='a']) .switchRow input[role='switch']:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+/* Loading: soft paper bars with a slow sheen, shaped like the rows they stand for. */
+:global(html[data-palette='a']) .skeleton i { height: 56px; border-radius: 16px; background: linear-gradient(90deg, var(--pa-fill) 30%, var(--pa-fill-strong) 50%, var(--pa-fill) 70%); background-size: 220% 100%; }
+:global(html[data-palette='a']) .state[data-tone='error'] b { color: var(--m-down); }
+/* Security: the ring is a thin progress ring on paper; the next step is a plain paper row, not a tinted panel. */
+:global(html[data-palette='a']) .credRing { width: 48px; height: 48px; background: conic-gradient(var(--m-up) calc(var(--p, 0) * 360deg), var(--pa-fill-strong) 0); }
+:global(html[data-palette='a']) .credRing::before { inset: 3px; background: var(--pa-card); }
+:global(html[data-palette='a']) .credMain small { font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+:global(html[data-palette='a']) .credMain b { font-family: inherit; font-weight: 650; }
+:global(html[data-palette='a']) .nextStep { padding: 14px 16px; border: 0; border-radius: 18px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .nextStep small { color: var(--m-muted); font-family: inherit; font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+:global(html[data-palette='a']) .nextStep b { font-size: 14.5px; }

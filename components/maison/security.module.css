@@ -37,3 +37,6 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .enrollTitle { font-weight: 600; }
+
+/* Palette A: no icon tile beside the protection figure. */
+:global(html[data-palette='a']) .shield { display: none; }
