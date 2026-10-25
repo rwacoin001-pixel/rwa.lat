@@ -14,7 +14,7 @@ export function revealTheme(toggle: () => void, next: 'light' | 'dark', event?: 
     flushSync(toggle)
     // The provider mirrors the theme onto <html> in an effect; set it now so the new snapshot is complete.
     root.dataset.theme = next
-    root.style.colorScheme = next
+    root.style.colorScheme = root.dataset.palette === 'a' && next === 'light' ? 'light dark' : next
   })
   transition.ready.then(() => {
     root.animate({ clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] }, { duration: 680, easing: 'cubic-bezier(.22, .8, .18, 1)', fill: 'forwards', pseudoElement: '::view-transition-new(root)' })

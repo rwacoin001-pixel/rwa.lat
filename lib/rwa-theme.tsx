@@ -35,7 +35,8 @@ export function RwaThemeProvider({ children }: PropsWithChildren) {
     if (!ready) return
     document.documentElement.dataset.theme = theme
     document.documentElement.dataset.mode = mode
-    document.documentElement.style.colorScheme = theme
+    // Palette A styles both themes itself; 'light dark' keeps browser auto-dark (Xiaomi, Samsung, Chrome) off it.
+    document.documentElement.style.colorScheme = document.documentElement.dataset.palette === 'a' && theme === 'light' ? 'light dark' : theme
     try { localStorage.setItem('rwa.theme', preference); localStorage.setItem('rwa.mode', mode) } catch { /* Storage is optional. */ }
   }, [theme, mode, preference, ready])
   const setTheme = useCallback((value: RwaThemePreference) => setPreference(value), [])
