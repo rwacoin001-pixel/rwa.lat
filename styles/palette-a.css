@@ -218,3 +218,29 @@ html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .
 html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .rwa-screen-transition > [data-maison-page] { width: 100%; max-width: var(--app-max); height: 100dvh; max-height: none; border: 0; border-radius: 0; box-shadow: none; }
 html[data-palette='a'] .rwa-mobile:has([data-money-flow]) .liquid-dock, html[data-palette='a'] .rwa-mobile:has([data-money-flow]) .ai-orb { display: none !important; }
 html[data-palette='a'] .rwa-mobile[data-sheet='true']:has([data-money-flow]) > .rwa-screen-transition > [data-maison-page] > .rwa-topbar::before { display: none; }
+
+/* Secondary pages: no top banner. The bar is see-through with no rule under it and no sheet grip; only the
+   back / close button and a light title remain. Once the page scrolls, a soft fade (no edge) keeps text legible. */
+html[data-palette='a'] .rwa-mobile:not([data-screen='home']) .rwa-topbar.rwa-topbar--s1 {
+  border-bottom-color: transparent !important; background: transparent !important; box-shadow: none !important;
+  -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+html[data-palette='a'] .rwa-mobile:not([data-screen='home']) .rwa-topbar.rwa-topbar--s1[data-scrolled='true'] {
+  background: linear-gradient(180deg, var(--m-bg, var(--bg)) 62%, color-mix(in srgb, var(--m-bg, var(--bg)) 0%, transparent)) !important;
+}
+html[data-palette='a'] .rwa-mobile[data-sheet='true'] > .rwa-screen-transition > [data-maison-page] > .rwa-topbar.rwa-topbar--s1::before { display: none; }
+html[data-palette='a'] .rwa-mobile:not([data-screen='home']) .rwa-topbar--s1 .rwa-topbar__center { font-size: 15px; font-weight: 600; letter-spacing: -.005em; }
+
+/* Notifications: one paper list, type only (like the buddy digest). Unread rows: bolder title and a small ink dot. */
+html[data-palette='a'] .s2-notification-list { gap: 0; padding: 2px 16px; border-radius: var(--pa-card-radius); background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+html[data-palette='a'] .s2-notification-row { position: relative; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; min-height: 0; margin: 0; padding: 14px 0 14px 14px; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html[data-palette='a'] .s2-notification-row + .s2-notification-row { border-top: .5px solid var(--pa-hair) !important; }
+html[data-palette='a'] .s2-notification-row > svg { display: none; }
+html[data-palette='a'] .s2-notification-row::before { content: ''; position: absolute; left: 0; top: 21px; width: 6px; height: 6px; border-radius: 50%; background: transparent; }
+html[data-palette='a'] .s2-notification-row[data-unread='true']::before { background: var(--pa-sel); transform: none; }
+html[data-palette='a'] .s2-notification-row b { font-size: 15px; font-weight: 500; }
+html[data-palette='a'] .s2-notification-row[data-unread='true'] b { font-weight: 650; }
+html[data-palette='a'] .s2-notification-row small { font-size: 13px; }
+html[data-palette='a'] .s2-notification-row time { font-size: 12px; font-variant-numeric: tabular-nums; }
+html[data-palette='a'] .s2-notification-filters .rwa-sel { min-height: var(--pa-tag-h); padding: 0 14px; border: 0 !important; border-radius: 999px; background: var(--pa-fill) !important; color: var(--ink-2, inherit); font-size: 13px; font-weight: 500; box-shadow: none !important; }
+html[data-palette='a'] .s2-notification-filters .rwa-sel[aria-selected='true'] { background: var(--pa-sel) !important; color: var(--pa-sel-ink) !important; }

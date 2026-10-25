@@ -1618,3 +1618,9 @@ span.compareName { padding-top: 28px; cursor: default; }
 /* Order entry header (palette A amount-first subscribe). */
 .orderHead { display: grid; justify-items: center; gap: 4px; padding-top: 6px; text-align: center; }
 .orderTitle { margin: 0; color: var(--m-ink); font-size: 20px; font-weight: 650; letter-spacing: -.01em; line-height: 1.25; }
+/* A row whose stand-in icon was dropped keeps its end at the end. */
+:global(html[data-palette='a']) .row:has(> .logo:not(:has(img))) { grid-template-columns: minmax(0, 1fr) auto; }
+:global(html[data-palette='a']) .row { border-bottom-width: .5px; }
+:global(html[data-palette='a']) .badge { border: 0; background: var(--pa-fill); font-weight: 500; }
+:global(html[data-palette='a']) .row > .logo:not(:has(img)) + .rowMain { grid-column: 1 / 3; }
+:global(html[data-palette='a']) .row > .rowEnd { grid-column: 3; justify-self: end; }
