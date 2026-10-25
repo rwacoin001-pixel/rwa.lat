@@ -72,7 +72,8 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
         ))}
       </div>
       <button type="button" className="liquid-dock__compact-button" aria-hidden={!isCompact} tabIndex={isCompact ? 0 : -1} aria-label={active.label} aria-expanded={false} onClick={expandChrome}><ActiveIcon size={19} strokeWidth={1.8} /></button>
-      {showQuickActions && <>
+      {/* Palette A: the asset page carries its own money actions under the total, so no extra "+" there. */}
+      {showQuickActions && !(paletteA && screen === 'portfolio') && <>
         <div id="dock-quick-menu" className="liquid-dock__quick-menu" data-open={quickOpen ? 'true' : 'false'} role="group" aria-label={quickActions.map((action) => action.label).join(', ')} aria-hidden={!quickOpen}>
           {quickActions.map(({ label, path, icon: Icon }) => <button key={path} type="button" tabIndex={quickOpen ? 0 : -1} onClick={() => { setQuickOpen(false); openPath(path) }}>
             <Icon size={17} strokeWidth={1.8} /><span>{label}</span><ChevronRight size={14} aria-hidden="true" />

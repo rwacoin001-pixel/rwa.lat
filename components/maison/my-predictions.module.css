@@ -162,3 +162,6 @@ button.question:focus-visible { outline: 2px solid var(--m-accent); outline-offs
   .stats dd { font-size: 17px; }
   .stats div + div { padding-inline-start: 10px; }
 }
+
+/* Palette A: the entry is a paper card from the kit. */
+:global(html[data-palette='a']) .entry { padding: var(--pa-card-pad); border: 0; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }

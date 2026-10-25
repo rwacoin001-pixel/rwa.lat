@@ -9,3 +9,6 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .root h2 { font-weight: 600; letter-spacing: -.03em; }
+
+/* Palette A: no editorial section numbers. */
+:global(html[data-palette='a']) .index { display: none; }

@@ -2,7 +2,7 @@
 import { QuantAssetsCard } from './QuantPositionCard'
 import { usePageState } from '@/lib/app-navigation'
 
-import { ArrowRight, ArrowUpFromLine, ChevronRight, Eye, EyeOff } from 'lucide-react'
+import { ArrowDownToLine, ArrowRight, ArrowRightLeft, ArrowUpFromLine, ChevronDown, ChevronRight, Eye, EyeOff, QrCode } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -17,6 +17,7 @@ import { basketPositionsCopy } from '@/lib/maison-basket-positions-copy'
 import { portfolioCopy } from '@/lib/maison-portfolio-copy'
 import { myPredictionsCopy } from '@/lib/maison-my-predictions-copy'
 import { heroCardCopy } from '@/lib/hero-card-copy'
+import { fundsCopy } from '@/lib/maison-funds-copy'
 import { AMOUNT_MASK, useAmountMask } from '@/lib/use-amount-mask'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
@@ -29,6 +30,9 @@ import type { Redemption } from '@/lib/api/portfolio'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import bp from './basket-positions.module.css'
 import h from './hero-card.module.css'
+import pa from './portfolio-a.module.css'
+import { usePaletteA } from '@/lib/palette-preview'
+import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
 import { sharedKeys } from '@/lib/product-media'
@@ -111,6 +115,7 @@ export function PortfolioScreen({ query }: { query: string }) {
   const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
   const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
   const { masked, toggle: toggleMask } = useAmountMask()
+  const paletteA = usePaletteA()
   const hc = heroCardCopy[locale]
   const hide = (text: string) => masked ? AMOUNT_MASK : text
   const holdingsNote = holdings !== null && holdingsCount !== null ? `${holdingsCount} · ${hide(fmtUsdt(holdings.toString(), { locale }))}` : undefined
@@ -121,13 +126,48 @@ export function PortfolioScreen({ query }: { query: string }) {
   const basketsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1))
   const toolsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1) + (basketsEmpty ? 0 : 1))
 
-  return <MaisonPage page="portfolio" dock topbar={<RwaTopbar screen="portfolio" title={p.title} />}>
-    <header className={s.hero}>
+  const breakdown = <>
+    <div className={s.nest}>
+      <div>
+        <span>{p.positions}</span>
+        <b className={s.num}>{hide(holdings === null ? '—' : bare(holdings))}</b>
+        <small className={s.num}>{scoped ? bc.productCost : p.cost} {hide(bare(totals?.cost))}</small>
+      </div>
+      <div>
+        <span>{scoped ? bc.productYield : p.yield}</span>
+        <b className={`${s.num} ${!masked && totals && toneOfBig(totals.yield) === 'up' ? s.up : !masked && totals && toneOfBig(totals.yield) === 'down' ? s.down : ''}`}>{hide(bare(totals?.yield, true))}</b>
+        <small className={s.num}>{scoped ? bc.productPnl : p.pnl} {hide(bare(totals?.pnl, true))}</small>
+      </div>
+      <div data-wide="true">
+        <span>{p.cash}</span>
+        <StatStrip fit items={[
+          { label: p.available, value: hide(bare(balances?.availableAtomic)) },
+          { label: p.locked, value: hide(bare(balances?.lockedAtomic)) },
+          { label: p.pending, value: hide(bare(balances?.pendingAtomic)) },
+        ]} />
+      </div>
+    </div>
+  </>
+  const notes = <>
+    {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '10px 0 0', fontSize: 11.5 }}>
+      {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
+    </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
+  </>
+  const pnlLine = totals && totals.rows.length > 0 ? <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span> : null
+
+  return <MaisonPage page="portfolio" dock topbar={paletteA ? undefined : <RwaTopbar screen="portfolio" title={p.title} />}>
+    {/* Palette A: no title bar; the page opens on its own menu, pinned at the top (as exchange wallets do). */}
+    {paletteA && <TopTabs value={tab} onChange={setTab} label={p.title} options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />}
+    {!paletteA && <header className={s.hero}>
       <p className={s.kicker}><span className={s.liveDot} aria-hidden="true" />{p.kicker}</p>
       <h1 className={s.display}>{p.title}</h1>
-    </header>
+    </header>}
 
     {bothFailed ? <StateBlock tone="error" title={common.errorGeneric} body={positions.error?.message} retry={retryAll} retryLabel={common.retry} />
+      : paletteA ? tab === 'overview' && <PaperTotal masked={masked} onMask={toggleMask} loading={total === null && loadingAny}
+          figure={masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}
+          line={pnlLine ?? <span>{p.available} <b className={s.num}>{hide(bare(balances?.availableAtomic))}</b> USDT</span>}
+          note={p.totalNote} breakdown={breakdown} notes={notes} />
       : <Lacquer aria-live="polite">
         <div className={h.capRow}>
           <span className={s.kicker}>{p.total} · USDT</span>
@@ -136,42 +176,22 @@ export function PortfolioScreen({ query }: { query: string }) {
         {total === null && loadingAny ? <Skeleton rows={1} />
           : <p className={`${s.bigFigure} ${s.num}`}>{masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}<small>USDT</small></p>}
         <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5 }}>
-          {totals && totals.rows.length > 0 && <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span>}
+          {pnlLine}
           {p.totalNote}
         </p>
         {/* Cards set into the total: holdings and income side by side, cash below with its three balances. */}
-        <div className={s.nest}>
-          <div>
-            <span>{p.positions}</span>
-            <b className={s.num}>{hide(holdings === null ? '—' : bare(holdings))}</b>
-            <small className={s.num}>{scoped ? bc.productCost : p.cost} {hide(bare(totals?.cost))}</small>
-          </div>
-          <div>
-            <span>{scoped ? bc.productYield : p.yield}</span>
-            <b className={`${s.num} ${!masked && totals && toneOfBig(totals.yield) === 'up' ? s.up : !masked && totals && toneOfBig(totals.yield) === 'down' ? s.down : ''}`}>{hide(bare(totals?.yield, true))}</b>
-            <small className={s.num}>{scoped ? bc.productPnl : p.pnl} {hide(bare(totals?.pnl, true))}</small>
-          </div>
-          <div data-wide="true">
-            <span>{p.cash}</span>
-            <StatStrip fit items={[
-              { label: p.available, value: hide(bare(balances?.availableAtomic)) },
-              { label: p.locked, value: hide(bare(balances?.lockedAtomic)) },
-              { label: p.pending, value: hide(bare(balances?.pendingAtomic)) },
-            ]} />
-          </div>
-        </div>
-        {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '10px 0 0', fontSize: 11.5 }}>
-          {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
-        </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
+        {breakdown}
+        {notes}
       </Lacquer>}
 
-    <QuantAssetsCard />
+    {(!paletteA || tab === 'overview') && <QuantAssetsCard />}
 
-    <div className={h.maskScope} data-masked={masked}><MyPredictionsCard /></div>
+    {/* Palette A: "My predictions" lives in the tools list below, not as a second card under the total. */}
+    {!paletteA && <div className={h.maskScope} data-masked={masked}><MyPredictionsCard /></div>}
 
-    <div style={{ marginTop: 20 }}>
+    {!paletteA && <div style={{ marginTop: 20 }}>
       <Segmented value={tab} onChange={setTab} label={p.title} sticky options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />
-    </div>
+    </div>}
 
     {tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
       <Allocation rows={totals?.rows} baskets={basketRows} cash={cash} loading={positions.loading || wallet.loading || baskets.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} partial={incomplete} />
@@ -255,6 +275,9 @@ function Allocation({ rows, baskets, cash, loading, error, retry, products, part
     return { whole, items: all.sort((a, b) => a.value === b.value ? 0 : a.value > b.value ? -1 : 1).map((slice) => ({ ...slice, ratio: share(slice.value, whole) })) }
   }, [baskets, cash, p.cash, p.product, products, rows])
   const { masked } = useAmountMask()
+  const paletteA = usePaletteA()
+  // Palette A: with nothing but cash there is no allocation to show; the holdings section below says "no holdings" once.
+  if (paletteA && !error && !(loading && !rows) && slices.items.every((slice) => slice.cash)) return null
   return <>
     <SectionHead index="01" title={p.allocation} note={p.allocationNote} />
     {error ? <StateBlock tone="error" title={p.loadError} retry={retry} retryLabel={common.retry} />
@@ -500,4 +523,64 @@ export function PositionDetailScreen({ id }: { id: string | null }) {
     {long && <RedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} onDone={(item) => { setRedeemOpen(false); setRedeemed(item) }}
       productId={id} name={name} positions={positions.data ?? []} unitPriceAtomic={long.unitPriceAtomicAmount} unitPriceDecimals={long.unitPriceDecimals} currency={long.currency} />}
   </MaisonPage>
+}
+
+const DETAIL_KEY = 'rwa.assets.detail'
+const detailCopy: Partial<Record<string, [string, string]>> = { 'zh-CN': ['明细', '收起'], en: ['Details', 'Hide'], es: ['Detalle', 'Ocultar'], fr: ['Détail', 'Masquer'], pt: ['Detalhes', 'Ocultar'], ar: ['التفاصيل', 'إخفاء'], hi: ['विवरण', 'छिपाएँ'] }
+
+/**
+ * Palette A total: one figure, one line under it (P&L once there are holdings, otherwise what is free to use), the four
+ * money actions right there, and the breakdown folded away until asked for (remembered on this device).
+ */
+function PaperTotal({ masked, onMask, loading, figure, line, note, breakdown, notes }: { masked: boolean; onMask: () => void; loading: boolean; figure: ReactNode; line: ReactNode; note: string; breakdown: ReactNode; notes: ReactNode }) {
+  const { locale, t } = useI18n()
+  const p = portfolioCopy[locale]
+  const hc = heroCardCopy[locale]
+  const reduced = useReducedMotion()
+  const [open, setOpen] = useState(false)
+  useEffect(() => { try { setOpen(window.localStorage.getItem(DETAIL_KEY) === '1') } catch { /* closed by default */ } }, [])
+  const toggle = () => setOpen((value) => { try { window.localStorage.setItem(DETAIL_KEY, value ? '0' : '1') } catch { /* not remembered */ } return !value })
+  const [more, less] = detailCopy[locale] ?? detailCopy.en!
+  const actions = [
+    { label: t('wallet.deposit'), path: '/assets/cash/deposit', Icon: ArrowDownToLine },
+    { label: t('wallet.withdraw'), path: '/assets/cash/withdraw', Icon: ArrowUpFromLine },
+    { label: t('wallet.transfer'), path: '/assets/cash/transfer', Icon: ArrowRightLeft },
+    { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', Icon: QrCode },
+  ]
+  return <section className={pa.total} aria-live="polite">
+    <div className={pa.head}>
+      <span>{p.total} · USDT</span>
+      <button type="button" className={pa.eye} aria-pressed={masked} aria-label={masked ? hc.showAmounts : hc.hideAmounts} onClick={onMask}>{masked ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
+    </div>
+    {loading ? <Skeleton rows={1} /> : <p className={`${pa.figure} ${s.num}`}>{figure}<small>USDT</small></p>}
+    <p className={pa.line}>{line}</p>
+    <div className={pa.actions}>
+      {actions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => openPath(path)}><Icon size={20} strokeWidth={1.7} aria-hidden="true" /><span>{label}</span></button>)}
+    </div>
+    <button type="button" className={pa.disclose} aria-expanded={open} onClick={toggle}>
+      <span>{open ? less : more}</span>
+      <motion.span animate={{ rotate: open ? 180 : 0 }} transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 30 }} style={{ display: 'grid' }}><ChevronDown size={16} aria-hidden="true" /></motion.span>
+    </button>
+    <AnimatePresence initial={false}>
+      {open && <motion.div key="detail" className={pa.detail} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
+        transition={reduced ? { duration: 0 } : { height: { type: 'spring', stiffness: 380, damping: 36 }, opacity: { duration: .2 } }}>
+        {breakdown}
+        <p className={pa.note}>{note}</p>
+      </motion.div>}
+    </AnimatePresence>
+    {notes}
+  </section>
+}
+
+/** Palette A page menu: text tabs pinned under the status bar; the selected one is ink and bold with a sliding rule. */
+function TopTabs<T extends string>({ value, onChange, label, options }: { value: T; onChange: (value: T) => void; label: string; options: Array<{ value: T; label: string }> }) {
+  const reduced = useReducedMotion()
+  return <nav className={pa.tabs} aria-label={label}>
+    <div role="tablist" aria-label={label}>
+      {options.map((option) => <button key={option.value} type="button" role="tab" aria-selected={value === option.value} onClick={() => { if (value !== option.value) { navigator.vibrate?.(4); onChange(option.value); window.scrollTo({ top: 0 }) } }}>
+        <span>{option.label}</span>
+        {value === option.value && <motion.i layoutId="portfolio-tab-rule" className={pa.rule} transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 38 }} />}
+      </button>)}
+    </div>
+  </nav>
 }

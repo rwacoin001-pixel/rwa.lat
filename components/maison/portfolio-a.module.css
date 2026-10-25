@@ -1,0 +1,28 @@
+/* Palette A asset total (PortfolioScreen PaperTotal): a paper card from the kit, one figure, actions, folded detail. */
+.total { position: relative; margin-top: 4px; padding: 18px var(--pa-card-pad, 16px) 0; border-radius: var(--pa-card-radius, 22px); background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+.head { display: flex; align-items: center; justify-content: space-between; color: var(--m-muted); font-size: 13px; font-weight: 500; }
+.eye { display: grid; place-items: center; width: 32px; height: 32px; margin: -6px -6px -6px 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted); cursor: pointer; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), color .2s; }
+.eye:active { transform: scale(.88); }
+.eye[aria-pressed='true'] { color: var(--m-ink); }
+.figure { display: flex; align-items: baseline; gap: 6px; margin: 6px 0 0; color: var(--m-ink); font-size: 44px; font-weight: 500; line-height: 1.05; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
+.figure small { color: var(--m-muted); font-size: 14px; font-weight: 500; letter-spacing: 0; }
+.line { margin: 8px 0 0; color: var(--m-muted); font-size: 13.5px; }
+.line b { color: var(--m-ink); font-weight: 600; }
+.actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 18px -6px 0; }
+.actions button { display: grid; justify-items: center; gap: 6px; padding: 10px 0; border: 0; border-radius: 16px; background: none; color: var(--m-ink); font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .2s; -webkit-tap-highlight-color: transparent; }
+.actions button:active { transform: scale(.94); background: var(--pa-fill); }
+.actions button:focus-visible, .disclose:focus-visible, .eye:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+.disclose { display: flex; align-items: center; justify-content: center; gap: 4px; width: calc(100% + 2 * var(--pa-card-pad, 16px)); margin: 8px calc(-1 * var(--pa-card-pad, 16px)) 0; padding: 12px 0; border: 0; border-top: .5px solid var(--pa-hair); background: none; color: var(--m-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.disclose[aria-expanded='true'] { color: var(--m-ink); }
+.detail { overflow: hidden; }
+.note { margin: 10px 2px 14px; color: var(--m-faint); font-size: 12px; line-height: 1.5; }
+@media (prefers-reduced-motion: reduce) { .actions button, .eye { transition: none; } }
+
+/* Page menu (TopTabs): pinned under the status bar, text only, a short ink rule under the selected tab. */
+.tabs { position: sticky; z-index: 6; top: 0; margin: 0 calc(-1 * var(--m-gutter, 20px)) 10px; padding: calc(env(safe-area-inset-top) + 10px) var(--m-gutter, 20px) 0; background: color-mix(in srgb, var(--m-bg) 86%, transparent); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); }
+.tabs > div { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; }
+.tabs > div::-webkit-scrollbar { display: none; }
+.tabs button { position: relative; flex: none; padding: 8px 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 17px; font-weight: 500; letter-spacing: -.01em; cursor: pointer; transition: color .2s; -webkit-tap-highlight-color: transparent; }
+.tabs button[aria-selected='true'] { color: var(--m-ink); font-weight: 650; }
+.tabs button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 6px; }
+.rule { position: absolute; left: 50%; bottom: 4px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--m-ink); }

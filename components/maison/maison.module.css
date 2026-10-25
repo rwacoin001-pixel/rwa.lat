@@ -1577,3 +1577,27 @@ span.compareName { padding-top: 28px; cursor: default; }
 /* Prediction feed: one translate switch under the filters, end-aligned. */
 .predFeedTranslate { display: flex; justify-content: flex-end; margin: 6px 0 -4px; }
 .predFeedTranslate .predTranslate { font-size: 12px; }
+/* Asset page and every Maison page: eyebrows are small muted text (no dash), cards carry no accent line, figures sit
+   on quiet fills, empty states are plain text, tool links are one paper card divided by hairlines. */
+:global(html[data-palette='a']) .kicker { gap: 6px; color: var(--m-muted); font-size: 12px; font-weight: 500; letter-spacing: .02em; text-transform: none; }
+:global(html[data-palette='a']) .kicker::before { display: none; }
+:global(html[data-palette='a']) .lacquer::after { display: none; }
+:global(html[data-palette='a']) .nest > div { padding: 12px 14px; border-radius: 16px; box-shadow: none; }
+:global(html[data-palette='a']) .nest > div > span { font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+:global(html[data-palette='a']) .nest > div > b { font-size: 18px; font-variant-numeric: tabular-nums; }
+:global(html[data-palette='a']) .nest > div > small { font-size: 12px; }
+:global(html[data-palette='a']) .state { gap: 4px; padding: 8px 2px; border: 0; border-radius: 0; }
+:global(html[data-palette='a']) .state svg { display: none; }
+:global(html[data-palette='a']) .state b { font-size: 15px; }
+:global(html[data-palette='a']) .state p { font-size: 13px; }
+:global(html[data-palette='a']) .toolGrid { gap: .5px; border: 0; border-radius: var(--pa-card-radius); background: var(--pa-hair); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .toolGrid button { min-height: 54px; padding: 0 16px; background: var(--pa-card); font-size: 14px; font-weight: 500; }
+:global(html[data-palette='a']) .toolGrid button:hover { background: color-mix(in srgb, var(--pa-card) 92%, var(--m-ink)); }
+:global(html[data-palette='a']) .listCard { gap: 0; padding: 4px 16px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .listCard .row { padding: 13px 0; border-radius: 0; background: none; box-shadow: none; }
+:global(html[data-palette='a']) .listCard .row + .row { border-top: .5px solid var(--pa-hair); }
+/* Stat labels everywhere: readable small text, not tiny capitals. */
+:global(html[data-palette='a']) .statStrip dt { font-size: 11.5px; font-weight: 500; letter-spacing: 0; text-transform: none; }
+:global(html[data-palette='a']) .statStrip dd { font-size: 14px; font-variant-numeric: tabular-nums; }
+:global(html[data-palette='a']) .statStrip > div { border-inline-start-width: .5px; }
+:global(html[data-palette='a']) .sectionHead h2 small { display: none; }
