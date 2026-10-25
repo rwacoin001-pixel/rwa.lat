@@ -1601,3 +1601,17 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .statStrip dd { font-size: 14px; font-variant-numeric: tabular-nums; }
 :global(html[data-palette='a']) .statStrip > div { border-inline-start-width: .5px; }
 :global(html[data-palette='a']) .sectionHead h2 small { display: none; }
+/* Wallet pages: money actions are icon + word (no tinted discs); notices are a quiet line of text (no box, no icon). */
+:global(html[data-palette='a']) .quickActions { gap: 0; margin: 14px -6px 0; }
+:global(html[data-palette='a']) .quickActions button { gap: 6px; padding: 10px 0; border-radius: 16px; font-size: 12.5px; font-weight: 500; transition: transform .22s cubic-bezier(.34, 1.56, .64, 1), background-color .2s; }
+:global(html[data-palette='a']) .quickActions button span { width: auto; height: auto; border: 0; border-radius: 0; background: none; color: var(--m-ink); }
+:global(html[data-palette='a']) .quickActions button:hover span { transform: none; }
+:global(html[data-palette='a']) .quickActions button:active { transform: scale(.94); background: var(--pa-fill); }
+:global(html[data-palette='a']) .quickActions button:active span { transform: none; }
+:global(html[data-palette='a']) .notice { gap: 0; padding: 0; border: 0; border-radius: 0; background: none; font-size: 12.5px; line-height: 1.55; }
+:global(html[data-palette='a']) .notice > svg { display: none; }
+:global(html[data-palette='a']) .notice[data-tone='error'] { color: var(--m-down); background: none; }
+:global(html[data-palette='a']) .notice[data-tone='ok'] { color: var(--m-up); background: none; }
+/* Amount: the figure, its unit and MAX on one line. */
+:global(html[data-palette='a']) .amount { align-items: center; border-bottom-width: .5px; }
+:global(html[data-palette='a']) .amount span { font-weight: 500; }

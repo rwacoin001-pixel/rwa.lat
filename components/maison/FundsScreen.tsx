@@ -28,6 +28,7 @@ import { transactionPinCopy } from '@/lib/maison-transaction-pin-copy'
 import { TransactionPinManager, TransactionPinPrompt } from './TransactionPin'
 import fp from './funds-polish.module.css'
 import fs from './funds-fullscreen.module.css'
+import { usePaletteA } from '@/lib/palette-preview'
 import tf from './transfer-feedback.module.css'
 
 const WITHDRAW_PATH = '/v1/wallet/withdrawals'
@@ -52,15 +53,18 @@ function AmountField({ id, value, onChange, unit, available, min, max, error, to
   /** Keep the typed text (comma → dot only) so toAtomic rejects signs and stray characters instead of silently dropping them. */
   preserveRaw?: boolean; disabled?: boolean
 }) {
+  const paletteA = usePaletteA()
+  const maxButton = max ? <button type="button" className={`${s.chip} ${fs.maxChip}`} style={paletteA ? undefined : { minHeight: 44, minWidth: 64 }} aria-pressed={value === max} disabled={disabled} onClick={() => onChange(max)}>{maxLabel}</button> : null
   return <>
     <label className={`${s.kicker} ${fs.label}`} htmlFor={id}>{label}</label>
-    <div className={`${s.amount} ${fs.amount}`}>
+    <div className={`${s.amount} ${fs.amount}`} data-inline-max={paletteA && max ? 'true' : undefined}>
       <input id={id} inputMode="decimal" autoComplete="off" placeholder="0.00" value={value} disabled={disabled} aria-invalid={Boolean(error && touched)} aria-describedby={`${id}-meta`} onChange={(event) => onChange(preserveRaw ? event.target.value.replace(',', '.') : sanitize(event.target.value))} onBlur={onBlur} />
       <span>{unit}</span>
+      {paletteA && maxButton}
     </div>
     <div className={`${s.fieldMeta} ${fs.meta}`} id={`${id}-meta`}><span>{available}</span>{min && <span className={s.num}>{min}</span>}</div>
     {touched && error && <p className={s.fieldError} role="alert">{error}</p>}
-    {max && <div className={fs.maxRow}><button type="button" className={`${s.chip} ${fs.maxChip}`} style={{ minHeight: 44, minWidth: 64 }} aria-pressed={value === max} disabled={disabled} onClick={() => onChange(max)}>{maxLabel}</button></div>}
+    {!paletteA && maxButton && <div className={fs.maxRow}>{maxButton}</div>}
   </>
 }
 
@@ -296,10 +300,10 @@ export function WithdrawScreen({ query }: { query: string }) {
           min={fill(f.common.min, { v: fmtAtomic(network.minimumWithdrawalAtomic, decimals, '', 0).trim() })} />
 
         <div aria-live="polite">
-          <dl className={`${s.summary} ${fs.rows}`}>
+          <dl className={`${s.summary} ${fs.rows}`} data-ready={Boolean(atomic && !fieldError) || undefined}>
             <div><dt>{w.to}</dt><dd>{destinationLine}</dd></div>
             <div><dt>{f.common.amount}</dt><dd className={s.num}>{atomic && !fieldError ? fmtAtomic(atomic, decimals, unit) : '—'}</dd></div>
-            <div><dt>{f.common.fee}</dt><dd className={s.num}>{current?.data ? fmtAtomic(current.data.feeAtomicAmount, decimals, unit) : fmtAtomic(network.withdrawalFeeAtomic, decimals, unit)}</dd></div>
+            <div data-keep="true"><dt>{f.common.fee}</dt><dd className={s.num}>{current?.data ? fmtAtomic(current.data.feeAtomicAmount, decimals, unit) : fmtAtomic(network.withdrawalFeeAtomic, decimals, unit)}</dd></div>
             <div data-strong="true"><dt>{w.total}</dt><dd className={s.num}>{current?.data ? fmtAtomic(current.data.totalDebitAtomic, decimals, unit) : '—'}</dd></div>
             <div><dt>{f.common.after}</dt><dd className={s.num}>{current?.data && !insufficient ? fmtAtomic((BigInt(current.data.availableAtomic) - BigInt(current.data.totalDebitAtomic)).toString(), decimals, unit) : '—'}</dd></div>
           </dl>
@@ -537,9 +541,9 @@ export function TransferScreen({ query }: { query: string }) {
         </div>
 
         <div aria-live="polite">
-          <dl className={`${s.summary} ${fs.rows}`}>
+          <dl className={`${s.summary} ${fs.rows}`} data-ready={Boolean(atomic && !fieldError) || undefined}>
             <div><dt>{t.to}</dt><dd>{id && !recipientError ? <Addr value={id} head={8} tail={4} /> : '—'}</dd></div>
-            <div><dt>{f.common.fee}</dt><dd className={s.num}>{t.feeValue}</dd></div>
+            <div data-keep="true"><dt>{f.common.fee}</dt><dd className={s.num}>{t.feeValue}</dd></div>
             <div data-strong="true"><dt>{f.common.amount}</dt><dd className={s.num}>{atomic && !fieldError ? exact(atomic) : '—'}</dd></div>
             <div><dt>{f.common.after}</dt><dd className={s.num}>{atomic && !fieldError && available !== null ? exact((BigInt(available) - BigInt(atomic)).toString()) : '—'}</dd></div>
           </dl>
