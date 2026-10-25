@@ -12,6 +12,8 @@ import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 const AiPearl = dynamic(() => import('../maison/AiPearl'), { ssr: false })
 import type { PrimaryScreen } from './shared'
 import { useQuantListed } from '@/lib/api/quant'
+import { usePaletteA } from '@/lib/palette-preview'
+import { BuddyOrb } from '@/components/buddy/BuddyOrb'
 
 type Screen = RwaScreen
 
@@ -19,6 +21,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
   const { locale, t } = useI18n()
   const shellCopy = rwaH5Copy[locale].shell
   const isCompact = useScrollChrome()
+  const paletteA = usePaletteA()
   const [quickOpen, setQuickOpen] = useState(false)
   const dockRef = useRef<HTMLElement>(null)
   const quickActions: Array<{ label: string; path: string; icon: LucideIcon }> = [
@@ -79,9 +82,12 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
           <Plus size={17} strokeWidth={1.9} />
         </button>
       </>}
-      <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => { if (screen !== 'ai') markTabNavigation(); setScreen('ai') }}>
-        <AiPearl size={46} inset={.48} state="idle" className="ai-orb__orb" />
-      </button>
+      {/* Palette A: the paper buddy (AI, notifications, how things stand); otherwise the lacquer pearl. */}
+      {paletteA
+        ? <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => { if (screen !== 'ai') { markTabNavigation(); setScreen('ai') } }} />
+        : <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => { if (screen !== 'ai') markTabNavigation(); setScreen('ai') }}>
+          <AiPearl size={46} inset={.48} state="idle" className="ai-orb__orb" />
+        </button>}
     </nav>
   )
 }

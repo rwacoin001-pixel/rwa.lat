@@ -642,8 +642,10 @@
 :global(html[data-palette='a'] .rwa-mobile) .root.root[data-auth-theme='warm'][data-auth-compact='true'] .ctaIcon { background: #19c7aa; color: #03211c; }
 :global(html[data-palette='a']) .root[data-auth-theme='warm'] .methods button { background: rgba(255, 255, 255, .78); border-color: rgba(11, 18, 32, .12); color: #0b1220; }
 :global(html[data-palette='a']) .root[data-auth-theme='cool'] .methods button { background: rgba(20, 23, 29, .72); border-color: rgba(255, 255, 255, .14); color: #f2f4f7; }
-:global(html[data-palette='a']) .root .error { color: var(--notice-error-fg); background: var(--notice-error-bg); border-color: var(--notice-error-line); }
-:global(html[data-palette='a']) .root[data-auth-theme='cool'] .error { color: #ff9a90; background: rgba(60, 22, 20, .66); border-color: rgba(255, 107, 94, .36); }
+/* Palette A: an error is a plain line of text under the field (no tinted box, no icon), set like the field's own text. */
+:global(html[data-palette='a']) .root .error { display: block; margin: 10px 0 0; padding: 0 22px; border: 0; border-radius: 0; background: none; color: #c0392b; font-size: 13px; font-weight: 500; line-height: 1.45; }
+:global(html[data-palette='a']) .root .error > svg { display: none; }
+:global(html[data-palette='a']) .root[data-auth-theme='cool'] .error { color: #ff8a7a; background: none; }
 
 /* Palette A preview: a calm still with a slow drift replaces the warm film. */
 :global(html[data-palette='a']) .sceneVideo { display: none; }

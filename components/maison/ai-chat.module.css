@@ -233,3 +233,4 @@ button.icon:active { transform: scale(.92); }
 .supportLink{align-self:center;font-size:10px;color:var(--m-muted);padding:3px 12px 5px;text-decoration:none}
 .fileNote{display:block;margin:5px 10px;color:var(--m-muted);font-size:10px;text-align:end;overflow-wrap:anywhere}
 .questionPrompt{font-size:13px;color:var(--m-muted);line-height:1.5;margin:0}
+:global(html[data-palette='a']) .welcomePearl { margin-bottom: 34px; }

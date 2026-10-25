@@ -26,6 +26,9 @@ import { showAiAnswer, type AiAttachment } from '@/lib/ai-attachment-policy'
 import { AI_CHAT_SESSION_KEY, clearAiChatSession, parseAiChatSession, serializeAiChatSession, type AiChatMessage } from '@/lib/ai-chat-session'
 import AiComposer, { type ComposerVoice } from './AiComposer'
 import AiPearl from './AiPearl'
+import { buddySignal } from '@/lib/buddy-signals'
+import { BuddyFace } from '@/components/buddy/BuddyFace'
+import { usePaletteA } from '@/lib/palette-preview'
 import { aiPearlCopy, pearlGreeting } from '@/lib/ai-pearl-copy'
 import { isVoiceActive, pearlFor, showsSuggestions } from '@/lib/ai-surface-state'
 import AiAnswerActions from './AiAnswerActions'
@@ -112,6 +115,9 @@ function Thinking({ label, slow, slower, seconds }: { label: string; slow: strin
 // The assistant's avatar is the same pearl as the welcome screen: still at rest, an orbiting arc while it
 // thinks, and one bright pulse as an answer lands.
 function Mark({ busy = false, speaking = false, size = 'sm' }: { busy?: boolean; speaking?: boolean; size?: 'sm' | 'lg' }) {
+  // Palette A: the paper buddy (thinking while it waits, talking as the answer lands, still otherwise).
+  const paperBuddy = usePaletteA()
+  if (paperBuddy) return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><BuddyFace size={size === 'lg' ? 56 : 26} mood={busy ? 'thinking' : speaking ? 'replying' : 'idle'} still={!busy && !speaking} /></span>
   return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><AiPearl size={size === 'lg' ? 64 : 28} inset={.37} state={busy ? 'thinking' : speaking ? 'speaking' : 'idle'} pulse={speaking ? 1 : 0} still={!busy && !speaking} /></span>
 }
 
@@ -119,6 +125,7 @@ function Mark({ busy = false, speaking = false, size = 'sm' }: { busy?: boolean;
 
 export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; onPlan: () => void; pageContext?: AiPageContext }) {
   const { locale } = useI18n()
+  const paletteA = usePaletteA()
   const pearl = aiPearlCopy(locale), prompts = aiVisualCopy(locale).prompts.slice(0, 3)
   const c = aiShellCopy[locale], chat = aiChatCopy[locale]
   const voiceCopy = aiVoiceCopy(locale)
@@ -215,6 +222,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     inflight.current = controller
     const userId = nextId.current++
     setError(null); setSending(true); setRevealId(null); setStarted(true)
+    buddySignal('thinking', { hold: true })
     setMessages((current) => [...current, { id: userId, role: 'user', content: message, attachments }])
     // Signed-in readers asking about their own account get only the snapshot slices the question
     // names; guests never send scopes, so the assistant can only point them to sign in.
@@ -225,6 +233,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     inflight.current = null
     setSending(false)
     if (!result.ok) {
+      buddySignal(result.error.code === 'ABORTED' ? 'idle' : result.error.code === 'AI_REFUSED' ? 'refusing' : 'error', { ms: 3200 })
       // Take the unanswered message back out of the thread and into the composer.
       setMessages((current) => current.filter((item) => item.id !== userId))
       const { status: code, code: reason } = result.error
@@ -237,6 +246,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     const data = result.data
     const answer = typeof data.reply === 'string' ? data.reply : typeof data.answer === 'string' ? data.answer : typeof data.response === 'string' ? data.response : typeof data.content === 'string' ? data.content : null
     if (typeof data.sessionId === 'string') setSessionId(data.sessionId)
+    buddySignal(answer ? 'replying' : 'error', { ms: answer ? 2800 : 3200 })
     if (answer) { const id = nextId.current++; setRevealId(id); const citations = Array.isArray(data.citations) ? data.citations.filter((c): c is Citation => typeof c?.id === 'string' && typeof c?.title === 'string' && Number.isInteger(c?.revision)) : []; const questions = Array.isArray(data.questions) ? data.questions as AiQuestion[] : []; setMessages((current) => [...current, { id, messageId: typeof data.messageId === 'string' ? data.messageId : undefined, role: 'assistant', content: answer, citations, questions }]); return true }
     else { setMessages(current => current.filter(item => item.id !== userId)); setError({ text: chat.badFormat, tone: 'error', retry: null }) }
     return false
@@ -249,6 +259,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     inflight.current = null
     controller.abort()
     setSending(false)
+    buddySignal('idle')
     // Same as a failed send: the unanswered question goes back into the composer.
     const last = messages.at(-1)
     const pending = last?.role === 'user' ? last.content : null
@@ -258,6 +269,16 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const empty = sessionRestored && messages.length === 0 && !sending
   // The welcome pearl stays while the reader holds to talk, and steps aside when the keyboard needs the room.
   const listeningHere = isVoiceActive(voice.state)
+  // The dock buddy listens while the reader talks or types (a passing mood while typing, held while the mic is open).
+  const sendingNow = useRef(sending)
+  sendingNow.current = sending
+  useEffect(() => {
+    if (listeningHere) buddySignal('listening', { hold: true })
+    else if (!sendingNow.current) buddySignal('idle')
+  }, [listeningHere])
+  useEffect(() => {
+    if (input.trim() && !sendingNow.current) buddySignal('listening', { ms: 2200 })
+  }, [input])
   const showWelcome = empty && (!started || keyboard <= 80 || listeningHere)
 
   return <MaisonPage page="ai">
@@ -281,7 +302,9 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
 
       <div id="ai-panel-ai" role="tabpanel" aria-labelledby="ai-tab-ai" hidden={community} className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
         {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined}>
-          <AiPearl size={184} state={pearlFor(voice.state)} pulse={voice.live.length} cancel={voice.state === 'cancelArmed'} className={a.welcomePearl} />
+          {paletteA
+            ? <BuddyFace size={132} mood={voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
+            : <AiPearl size={184} state={pearlFor(voice.state)} pulse={voice.live.length} cancel={voice.state === 'cancelArmed'} className={a.welcomePearl} />}
           {/* One line, always: the greeting at rest, the reader's own words while they speak. */}
           {listeningHere
             ? <p className={a.welcomeLive} dir="auto" role="status" aria-live="polite" data-empty={!voice.live || undefined} data-cancel={voice.state === 'cancelArmed' || undefined}>{voice.live || (voice.state === 'listening' ? pearl.listening : ' ')}</p>
