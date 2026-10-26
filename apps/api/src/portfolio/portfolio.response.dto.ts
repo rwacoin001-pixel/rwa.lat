@@ -1,5 +1,36 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 
+export class PortfolioTodayResponseDto {
+  @ApiProperty({ description: 'Signed net income posted since Singapore midnight, including realised prediction results.' })
+  changeAtomic!: string
+
+  @ApiProperty({ type: String, nullable: true, description: 'Signed percentage with two decimal places; null when total minus income is nonpositive.' })
+  changePct!: string | null
+
+  @ApiProperty({ format: 'date-time' })
+  since!: string
+
+  @ApiProperty({ enum: ['ledger'] })
+  basis!: 'ledger'
+}
+
+export class PortfolioSummaryResponseDto {
+  @ApiProperty({ enum: ['USDT'] })
+  currency!: 'USDT'
+
+  @ApiProperty({ enum: [6] })
+  decimals!: 6
+
+  @ApiProperty()
+  totalAtomic!: string
+
+  @ApiProperty({ type: () => PortfolioTodayResponseDto, nullable: true })
+  today!: PortfolioTodayResponseDto | null
+
+  @ApiProperty({ format: 'date-time' })
+  asOf!: string
+}
+
 export class PortfolioPositionResponseDto {
   @ApiProperty()
   productId!: string

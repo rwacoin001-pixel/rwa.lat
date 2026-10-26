@@ -12,8 +12,8 @@ import styles from './home-v2.module.css'
 
 type Copy = { total: string; detail: string; available: string; today: string; pending: string; pendingEta: string; startTitle: string; startBody: string; deposit: string; show: string; hide: string }
 const COPY: Partial<Record<AppLocale, Copy>> & { en: Copy } = {
-  en: { total: 'Total assets', detail: 'Details', available: 'Available {v}', today: 'Today {v}', pending: 'Deposit confirming · {v} USDT', pendingEta: 'A few minutes', startTitle: 'Deposit USDT to make your first investment', startBody: 'TRC20 network · invest in real estate, gold and Koala Quant once it arrives', deposit: 'Deposit', show: 'Show balance', hide: 'Hide balance' },
-  'zh-CN': { total: '总资产', detail: '明细', available: '可用 {v}', today: '今日 {v}', pending: '充值确认中 · {v} USDT', pendingEta: '约几分钟', startTitle: '充值 USDT，开始第一笔投资', startBody: '支持 TRC20 网络 · 到账后即可申购房地产、黄金和考拉量化', deposit: '去充值', show: '显示余额', hide: '隐藏余额' },
+  en: { total: 'Total assets', detail: 'Details', available: 'Available {v}', today: 'Today’s earnings {v}', pending: 'Deposit confirming · {v} USDT', pendingEta: 'A few minutes', startTitle: 'Deposit USDT to make your first investment', startBody: 'TRC20 network · invest in real estate, gold and Koala Quant once it arrives', deposit: 'Deposit', show: 'Show balance', hide: 'Hide balance' },
+  'zh-CN': { total: '总资产', detail: '明细', available: '可用 {v}', today: '今日收益 {v}', pending: '充值确认中 · {v} USDT', pendingEta: '约几分钟', startTitle: '充值 USDT，开始第一笔投资', startBody: '支持 TRC20 网络 · 到账后即可申购房地产、黄金和考拉量化', deposit: '去充值', show: '显示余额', hide: '隐藏余额' },
 }
 export const homeV2Copy = (locale: AppLocale) => COPY[locale] ?? COPY.en
 
@@ -103,7 +103,7 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, ct
 
   const change = today ? money(today.changeAtomic, 6, locale) : null
   const tone = change === null || change === 0 ? '' : change > 0 ? styles.up : styles.down
-  const pct = today && Number.isFinite(Number(today.changePct)) ? Number(today.changePct) : null
+  const pct = today && today.changePct !== '' && Number.isFinite(Number(today.changePct)) ? Number(today.changePct) : null
   return <section className={styles.card}>
     <div className={styles.label}>
       <span>{c.total} · {account?.currency ?? 'USDT'}</span>

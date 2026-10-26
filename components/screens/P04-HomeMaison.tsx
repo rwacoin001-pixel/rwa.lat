@@ -47,6 +47,7 @@ import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home
 import { HomeAssetCard, HomeAskAi, type TodayChange } from '@/components/home/HomeAssetCard'
 import { HomeReferral } from '@/components/home/HomeReferral'
 import v2 from '@/components/home/home-v2.module.css'
+import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { focusHomeEmailBinding } from '@/components/home/HomeEmailBinding'
 import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
 import { useI18n, type AppLocale } from '@/lib/i18n'
@@ -384,7 +385,9 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     return () => window.clearTimeout(timer)
   }, [sessionUserId])
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
-  const [today] = useState<TodayChange>(null)
+  // Today's earnings: income the ledger credited since 00:00 Singapore (quant settlement, referral, settled predictions).
+  const summary = useQuery(sessionProbe.status === 'ok' ? 'portfolio:summary' : null, getPortfolioSummary, { staleTime: 30_000, pollInterval: POLL.list })
+  const today: TodayChange = summary.data?.today ? { changeAtomic: summary.data.today.changeAtomic, changePct: summary.data.today.changePct ?? '' } : null
 
   // Signed in (or still finding out): the account is the first screen. The photo, slogan and ticker are for guests only.
   if (sessionProbe.status !== 'guest') {

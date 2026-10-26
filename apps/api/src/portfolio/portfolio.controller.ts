@@ -10,11 +10,18 @@ import { PortfolioHistoryPointResponseDto, PortfolioPositionResponseDto, Portfol
 import { RebalanceService } from './rebalance.service'
 import { ConfirmRebalanceBuysDto, CreateRebalancePlanDto } from './rebalance.dto'
 import type { AuthenticatedRequest } from '../security/session-auth.guard'
+import { PortfolioSummaryResponseDto } from './portfolio.response.dto'
 
 @Controller('portfolio')
 @UseGuards(SessionAuthGuard)
 export class PortfolioController {
   constructor(private readonly svc: PortfolioService, private readonly rebalances: RebalanceService) {}
+
+  @Get('summary')
+  @ApiOkResponse({ type: PortfolioSummaryResponseDto })
+  summary(@CurrentAuth() actor: SecurityActor) {
+    return this.svc.summary(actor.userId)
+  }
 
   @Get('positions')
   @ApiOkResponse({ type: [PortfolioPositionResponseDto] })

@@ -4,6 +4,7 @@ import { InjectRepository } from '@nestjs/typeorm'
 import { Repository } from 'typeorm'
 import { PositionSnapshot, Redemption } from './portfolio.entities'
 import { PortfolioError } from './portfolio.errors'
+import { readPortfolioSummary } from './portfolio-summary'
 import { LedgerService } from '../ledger/ledger.service'
 import { CatalogService } from '../catalog/catalog.service'
 import { calculateSettlementPayoutAtomic, isUsdUsdtEquivalent, SETTLEMENT_ASSET_DECIMALS } from '../financial/amounts'
@@ -60,6 +61,10 @@ export class PortfolioService {
     private readonly ledger: LedgerService,
     private readonly catalog: CatalogService,
   ) {}
+
+  summary(userId: string) {
+    return readPortfolioSummary(this.snapshotRepo.manager, userId)
+  }
 
   // 产品持仓：仅来自订单成交写入的 app.positions；现金账户不是持仓。
   async listPositions(userId: string): Promise<PositionView[]> {
