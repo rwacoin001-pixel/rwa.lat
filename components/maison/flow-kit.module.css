@@ -20,8 +20,11 @@ button.unit { cursor: pointer; }
 
 /* Bottom: the talking button, then the keypad. */
 .bottom { display: grid; gap: 10px; padding-bottom: calc(env(safe-area-inset-bottom) + 6px); }
-.cta { justify-content: center; min-height: 56px; padding: 0 20px; font-size: 16px; font-weight: 600; letter-spacing: 0; }
-.cta:disabled { opacity: 1; background: var(--pa-fill-strong, rgba(11, 18, 32, .08)); color: var(--m-muted); box-shadow: none; }
+/* The talking button is the guide's short pill, centred above the keypad (the page is centred top to bottom). */
+.bottom > .cta, .review > .cta, .successActions > .cta { justify-self: center; min-width: 168px; }
+.cta { justify-content: space-between; }
+.cta:disabled { opacity: 1 !important; justify-content: center; padding: 0 24px !important; background: var(--pa-fill-strong, rgba(11, 18, 32, .08)) !important; color: var(--m-muted) !important; box-shadow: none !important; }
+.cta:disabled::before { display: none; }
 .cta[aria-busy='true'] { opacity: .7; }
 
 .pad { display: grid; grid-template-columns: 1fr; gap: 6px; }
@@ -115,3 +118,4 @@ button.unit { cursor: pointer; }
 .codeInput:focus { outline: none; }
 .codeNote { min-height: 18px; margin: 0; color: var(--m-up); font-size: 12.5px; text-align: center; }
 .switch { justify-self: center; min-height: 40px; padding: 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 13px; cursor: pointer; }
+.cta:disabled > span:last-child:not(:first-child) { display: none; }

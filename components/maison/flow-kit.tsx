@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, ChevronDown, Delete } from 'lucide-react'
+import { ArrowRight, Check, ChevronDown, Delete } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { flowKitCopy } from '@/lib/flow-kit-copy'
@@ -145,7 +145,7 @@ export function AmountPad({ value, onChange, decimals, unit, onUnit, sub, error,
       <p className={k.sub} data-tone={error ? 'error' : undefined} role={error ? 'alert' : undefined}>{error ?? sub}</p>
     </div>
     <div className={k.bottom}>
-      <button type="button" className={`${s.cta} ${k.cta}`} disabled={cta.disabled || cta.busy} aria-busy={cta.busy} onClick={() => { haptic(8); cta.onClick() }}><span>{cta.label}</span></button>
+      <button type="button" className={`${s.cta} ${k.cta}`} disabled={cta.disabled || cta.busy} aria-busy={cta.busy} onClick={() => { haptic(8); cta.onClick() }}><span>{cta.label}</span>{!cta.disabled && !cta.busy && <span className={s.ctaIcon} aria-hidden="true"><ArrowRight size={18} /></span>}</button>
       <NumPad onKey={key} side={side} current={settled(text)} decimal={decimals > 0} disabled={disabled} onEnter={cta.disabled ? undefined : cta.onClick} />
     </div>
   </div>
@@ -191,7 +191,7 @@ export function FlowConfirm({ open, onClose, title, amount, unit, rows, consent,
       </label>}
       {note && <p className={k.reviewNote}>{note}</p>}
       {error && <p className={k.reviewError} role="alert">{error}</p>}
-      <button type="button" className={`${s.cta} ${k.cta}`} disabled={busy || Boolean(consent && !consent.checked)} aria-busy={busy} onClick={() => { haptic(8); onConfirm() }}><span>{confirmLabel}</span></button>
+      <button type="button" className={`${s.cta} ${k.cta}`} disabled={busy || Boolean(consent && !consent.checked)} aria-busy={busy} onClick={() => { haptic(8); onConfirm() }}><span>{confirmLabel}</span><span className={s.ctaIcon} aria-hidden="true"><ArrowRight size={18} /></span></button>
     </div>
   </Sheet>
 }
@@ -214,7 +214,7 @@ export function FlowSuccess({ title, amount, unit, rows, note, pending = false, 
     <dl className={k.receipt}>{rows.map((row) => <div key={row.label}><dt>{row.label}</dt><dd>{row.value}</dd></div>)}</dl>
     {note && <p className={k.successNote}>{note}</p>}
     <div className={k.successActions}>
-      <button type="button" className={`${s.cta} ${k.cta}`} onClick={onDone}><span>{c.done}</span></button>
+      <button type="button" className={`${s.cta} ${k.cta}`} onClick={onDone}><span>{c.done}</span><span className={s.ctaIcon} aria-hidden="true"><ArrowRight size={18} /></span></button>
       <div>
         <button type="button" className={k.textButton} onClick={onAgain}>{c.again}</button>
         <span aria-hidden="true">·</span>
