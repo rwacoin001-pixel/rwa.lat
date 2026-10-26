@@ -40,6 +40,25 @@ html[data-palette='a'] {
   --pa-fs-display: 40px; --pa-lh-display: 44px; /* the one hero number on a screen */
   --pa-sp-half: 2px; --pa-sp-1: 4px; --pa-sp-1h: 6px; --pa-sp-2: 8px; --pa-sp-3: 12px; --pa-sp-4: 16px; --pa-sp-5: 20px; --pa-sp-6: 24px; --pa-sp-8: 32px; --pa-sp-12: 48px;
   --pa-r-xs: 8px; --pa-r-sm: 12px; --pa-r-card: 22px; --pa-r-sheet: 28px; --pa-r-pill: 999px;
+  /* Tactile material (docs/design-system.md §4.1): porcelain tiles in light, graphite in dark; the AI input is a well. */
+  --pa-tile-bg: linear-gradient(160deg, #ffffff 0%, #f3f4f6 100%); --pa-tile-ink: #0b1220;
+  --pa-tile-shadow: inset 0 1px 0 #ffffff, 0 0 0 .5px rgba(11, 18, 32, .06), 0 6px 14px -8px rgba(15, 23, 42, .35), 0 1px 2px rgba(15, 23, 42, .08);
+  --pa-tile-shadow-pressed: inset 0 1px 0 #ffffff, 0 0 0 .5px rgba(11, 18, 32, .08), 0 2px 6px -4px rgba(15, 23, 42, .3);
+  --pa-well-bg: #e6e8ec; --pa-well-shadow: inset 0 2px 4px rgba(15, 23, 42, .12), inset 0 -1px 0 rgba(255, 255, 255, .9);
+  --pa-cta-bg: linear-gradient(180deg, #1a2130, #0b1220); --pa-cta-ink: #ffffff;
+  --pa-cta-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 10px 20px -10px rgba(11, 18, 32, .6);
+}
+html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='dark'] {
+  --pa-tile-bg: linear-gradient(160deg, #3a3c42 0%, #232428 100%); --pa-tile-ink: #d8dbe0;
+  --pa-tile-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 0 0 .5px rgba(255, 255, 255, .06), 0 10px 18px -10px #000;
+  --pa-tile-shadow-pressed: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(255, 255, 255, .06), 0 3px 8px -4px #000;
+  --pa-well-bg: #16171a; --pa-well-shadow: inset 0 2px 5px rgba(0, 0, 0, .7), inset 0 -1px 0 rgba(255, 255, 255, .06);
+  --pa-cta-bg: linear-gradient(180deg, #f4f5f7, #d9dce1); --pa-cta-ink: #0b0d12;
+  --pa-cta-shadow: inset 0 1px 0 #ffffff, 0 10px 20px -10px #000;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  html[data-palette='a'] { --pa-tile-bg: var(--pal-light-surface); --pa-tile-shadow: 0 0 0 .5px var(--pal-light-line); --pa-cta-bg: var(--pal-light-ink); }
+  html[data-palette='a'][data-theme='dark'], html[data-palette='a'] [data-theme='dark'] { --pa-tile-bg: var(--pal-dark-surface); --pa-tile-shadow: 0 0 0 .5px var(--pal-dark-line); --pa-cta-bg: var(--pal-dark-ink); }
 }
 html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='dark'] { --bg-texture: none; --font-display: var(--font-sans); }
 
