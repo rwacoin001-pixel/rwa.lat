@@ -238,15 +238,6 @@
 }
 
 /* ── Assets variant (PortfolioScreen) ─────────────────── */
-.capRow { display: flex; min-height: 24px; align-items: center; gap: 4px; color: var(--m-lacquer-accent); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
-.eye { position: relative; display: grid; place-items: center; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: rgba(169, 184, 208, .12); color: var(--m-lacquer-muted); cursor: pointer; transition: color .2s, background .2s, transform .2s var(--m-ease); }
-.eye::after { content: ''; position: absolute; inset: -10px; }
-.eye:active { transform: scale(.9); }
-.eye[aria-pressed='true'] { background: color-mix(in srgb, var(--m-lacquer-accent) 18%, transparent); color: var(--m-lacquer-accent); }
-.maskScope { display: contents; }
-.maskScope[data-masked='true'] dd { font-size: 0; }
-.maskScope[data-masked='true'] dd::after { content: '••••'; font-size: 15px; letter-spacing: .1em; }
-@media (prefers-reduced-motion: reduce) { .eye { transition: none; } }
 
 /* Palette A preview (styles/palette-a.css): the dark edge light turns brand green. */
 :global(html[data-palette='a']) .halo::before { background: conic-gradient(from 200deg, transparent 0deg, rgba(25, 199, 170, 0) 15deg, rgba(25, 199, 170, .85) 55deg, rgba(25, 199, 170, 0) 100deg, transparent 180deg, rgba(142, 163, 192, 0) 195deg, rgba(142, 163, 192, .35) 235deg, rgba(142, 163, 192, 0) 275deg, transparent 360deg); }

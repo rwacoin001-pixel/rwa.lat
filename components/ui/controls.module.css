@@ -15,7 +15,6 @@
   -webkit-backdrop-filter: var(--glass-blur, blur(20px)); backdrop-filter: var(--glass-blur, blur(20px)); }
 .icon { position: relative; display: grid; flex: none; place-items: center; width: var(--ctl-h, 56px); height: var(--ctl-h, 56px); padding: 0; border: 0; border-radius: 50%; overflow: hidden;
   font: inherit; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: transform .22s cubic-bezier(.34, 1.56, .64, 1); }
-.icon.small { width: 44px; height: 44px; }
 .primary:active, .glass:active { transform: scale(.97); }
 .icon:active { transform: scale(.92); }
 .primary:disabled, .glass:disabled, .icon:disabled { opacity: .45; cursor: default; transform: none; }

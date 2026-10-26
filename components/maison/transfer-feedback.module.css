@@ -10,29 +10,16 @@
   cursor: not-allowed;
 }
 
-.field[data-invalid] input,
 .amount[data-invalid] input {
   animation: nudge 200ms ease-out;
-}
-
-.field[data-valid] input {
-  box-shadow: inset 0 -1px 0 0 currentColor;
 }
 
 .error {
   animation: reveal 200ms ease-out;
 }
 
-.spin {
-  animation: spin 900ms linear infinite;
-}
-
 .cta[aria-busy='true'] {
   cursor: progress;
-}
-
-.receipt {
-  animation: reveal 240ms ease-out;
 }
 
 @keyframes reveal {
@@ -53,9 +40,6 @@
 @media (prefers-reduced-motion: reduce) {
   .form input,
   .form button { transition: none; }
-  .field[data-invalid] input,
   .amount[data-invalid] input,
-  .error,
-  .receipt,
-  .spin { animation: none; }
+  .error { animation: none; }
 }

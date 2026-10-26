@@ -23,11 +23,11 @@
 .picture img { transition: transform .6s var(--m-ease); }
 .meta { display: flex; justify-content: space-between; gap: 10px; color: var(--m-accent); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
 .nameLine { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 10px; row-gap: 2px; min-width: 0; }
-.mark, .markS, .markL { font-family: var(--m-display); font-weight: 400; letter-spacing: .04em; line-height: 1.1; }
+.mark, .markS { font-family: var(--m-display); font-weight: 400; letter-spacing: .04em; line-height: 1.1; }
 .mark { font-size: 30px; }
 .markS { font-size: 21px; }
 /* Romanised names (every locale but zh-CN) run 2–3× wider than the two-glyph mark; drop the CJK tracking. */
-.mark[lang='en'], .markS[lang='en'], .markL[lang='en'], .pager b[lang='en'] { letter-spacing: 0; }
+.mark[lang='en'], .markS[lang='en'], .pager b[lang='en'] { letter-spacing: 0; }
 .sub { min-width: 0; color: var(--m-muted); font-size: 12.5px; font-weight: 500; line-height: 1.35; }
 .oneLiner { color: var(--m-muted); font-size: 13px; line-height: 1.55; }
 
@@ -86,11 +86,7 @@
 .hero figcaption { margin-top: 7px; color: var(--m-faint); font-size: 10.5px; line-height: 1.4; }
 .head { padding: 16px 0 4px; }
 .title { display: grid; gap: 4px; margin: 6px 0 0; }
-.markL { font-size: clamp(40px, 12vw, 52px); letter-spacing: .06em; line-height: 1; }
-.titleSub { color: var(--m-muted); font-size: 14px; font-weight: 500; line-height: 1.35; }
-.badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 12px 0 0; }
 .shortTag { color: var(--m-faint); font-family: var(--m-mono); font-size: 11px; letter-spacing: .06em; }
-.lead { margin: 14px 0 0; padding-inline-start: 12px; border-inline-start: 2px solid var(--m-accent); font-family: var(--m-display); font-size: 16.5px; line-height: 1.5; text-wrap: pretty; }
 
 .facts { margin-top: 18px; }
 .factGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 0 0 14px; border-top: 1px solid var(--m-lacquer-line); }
