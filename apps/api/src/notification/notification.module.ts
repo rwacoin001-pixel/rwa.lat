@@ -19,6 +19,7 @@ import { ObjectStorageModule } from '../object-storage/object-storage.module'
 import { IdentityModule } from '../identity/identity.module'
 import { JobQueueModule } from '../job-queue/job-queue.module'
 import { NotificationDeliveryService } from './notification-delivery.service'
+import { NotificationFeedWorker } from './notification-feed.worker'
 import { AccountClosureService } from './account-closure.service'
 import { AccountClosureController, AdminAccountClosureController } from './account-closure.controller'
 
@@ -27,7 +28,7 @@ const models = [Notification, Ticket, TicketMessage, TicketEvent, Invitation, Su
 @Module({
   imports: [TypeOrmModule.forFeature(models), SecurityModule, AdminRbacModule, ObjectStorageModule, IdentityModule, JobQueueModule],
   controllers: [NotificationController, AdminNotificationController, UserOpsController, AdminSupportController, AccountClosureController, AdminAccountClosureController],
-  providers: [NotificationService, UserOpsService, NotificationDeliveryService, AccountClosureService],
+  providers: [NotificationService, UserOpsService, NotificationDeliveryService, AccountClosureService, NotificationFeedWorker],
   exports: [NotificationService, UserOpsService, NotificationDeliveryService],
 })
 export class NotificationModule {}
