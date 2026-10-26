@@ -17,7 +17,7 @@ export function Sparkline({ points, tone, className }: { points: number[] | null
   const line = values.map((v, i) => `${(i / (values.length - 1)) * 100},${y(v).toFixed(2)}`).join(' ')
   const end = y(values[values.length - 1])
   return <span className={`${styles.spark} ${className ?? ''}`} data-tone={tone ?? undefined} aria-hidden="true">
-    <svg viewBox="0 0 100 24" preserveAspectRatio="none"><polyline points={line} pathLength={1} vectorEffect="non-scaling-stroke" /></svg>
+    <svg viewBox="0 0 100 24" preserveAspectRatio="none"><polyline points={line} vectorEffect="non-scaling-stroke" /></svg>
     <i style={{ top: `${(end / 24) * 100}%` }} />
   </span>
 }

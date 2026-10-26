@@ -102,15 +102,15 @@
 
 /* 7-day sparkline: one muted 1.5px stroke that draws in, a 4px dot at today's end in the tone colour. */
 .spark { position: relative; display: block; height: 24px; color: var(--q-dim2, #7b8494); }
-.spark svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .6s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) .2s forwards; }
+.spark svg { display: block; width: 100%; height: 100%; overflow: visible; clip-path: inset(-2px 100% -2px -2px); animation: draw .6s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) .2s forwards; }
+.spark polyline { fill: none; stroke: currentColor; stroke-width: 1.5px; stroke-linecap: round; stroke-linejoin: round; }
 .spark i { position: absolute; right: -2px; width: 4px; height: 4px; margin-top: -2px; border-radius: 50%; background: var(--q-dim, #5b6472); opacity: 0; animation: dot .2s .8s forwards; }
 .spark[data-tone='up'] i { background: var(--q-gain, #067a5e); }
 .spark[data-tone='down'] i { background: var(--q-loss, #c23b33); }
-@keyframes draw { to { stroke-dashoffset: 0; } }
+@keyframes draw { to { clip-path: inset(-2px -2px -2px -2px); } }
 @keyframes dot { to { opacity: 1; } }
 .heroRow { display: flex; align-items: center; gap: 12px; }
 .heroRow .hero { flex: none; }
 .heroRow .spark { flex: 1 1 0; min-width: 0; max-width: 96px; margin-left: auto; }
 
-@media (prefers-reduced-motion: reduce) { .skel, .roll, .card, .tile, .ask, .invite, .faces > * { animation: none; } .spark polyline { animation: none; stroke-dashoffset: 0; } .spark i { animation: none; opacity: 1; } .tileFace, .cta, .rolling, .ghost { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .skel, .roll, .card, .tile, .ask, .invite, .faces > * { animation: none; } .spark svg { animation: none; clip-path: none; } .spark i { animation: none; opacity: 1; } .tileFace, .cta, .rolling, .ghost { transition: none; } }
