@@ -313,7 +313,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const submit = async (event: FormEvent) => {
     event.preventDefault()
     if (step === 'email') {
-      if (!EMAIL.test(email.trim())) { setError(copy.invalidEmail); input.current?.focus(); return }
+      // An empty field just takes the cursor; only a typed address that isn't one gets the error.
+      if (!EMAIL.test(email.trim())) { if (email.trim()) setError(copy.invalidEmail); input.current?.focus(); return }
       if (retryAfter <= 0) await identify()
       return
     }

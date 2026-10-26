@@ -713,6 +713,11 @@
   --sw: min(100vw, var(--app-max, 480px)); min-height: 100svh;
   background: linear-gradient(180deg, var(--cab-sky) 0%, var(--cab-sky) 30%, var(--cab-ground) 70%, var(--cab-ground) 100%); }
 :global(html) .root.root[data-auth-cabinet][data-auth-theme='cool'] { --cab-sky: #262b33; --cab-ground: #4e4b4e; }
+/* iOS home-screen apps measure 100svh a Home-indicator short, which left a white line and a grey band under the floor.
+   Installed, the window has no toolbar, so 100lvh is the whole screen; and whatever shows below the page is the floor. */
+@media (display-mode: standalone) { :global(html) .root.root[data-auth-cabinet] { min-height: 100lvh; } }
+:global(html):has(.root[data-auth-cabinet]), :global(html):has(.root[data-auth-cabinet]) :global(body), :global(html):has(.root[data-auth-cabinet]) :global(.rwa-mobile) { background: #dadbdd !important; }
+:global(html):has(.root[data-auth-cabinet][data-auth-theme='cool']), :global(html):has(.root[data-auth-cabinet][data-auth-theme='cool']) :global(body), :global(html):has(.root[data-auth-cabinet][data-auth-theme='cool']) :global(.rwa-mobile) { background: #4e4b4e !important; }
 .cabStage { position: absolute; z-index: 0; left: 50%; width: var(--sw); translate: -50% 0; aspect-ratio: 2 / 3; container-type: inline-size; pointer-events: none;
   top: clamp(-24px, calc(100svh - 212px - env(safe-area-inset-bottom) - var(--sw) * 1.38), calc(18px + env(safe-area-inset-top))); }
 .cabStage::before, .cabStage::after { content: ''; position: absolute; z-index: 4; left: 0; right: 0; height: 8%; pointer-events: none; }
