@@ -118,7 +118,16 @@ function shortenIds(value: string) {
   return value.replace(/[0-9a-f]{8}-[0-9a-f-]{27,}/gi, (match) => shortId(match))
 }
 
-export function notificationDisplay(item: { kind: string; title: string; body: string | null }, locale = 'en') {
+type NoticeText = { title?: string; body?: string | null }
+/** The notice in the phone's language when the server sent both (`payload.i18n`), else as stored. */
+export function localNotice<T extends { title: string; body: string | null; payload?: unknown }>(item: T, locale = 'en'): T {
+  const i18n = (item.payload as { i18n?: Record<string, NoticeText> } | null | undefined)?.i18n
+  const text = i18n?.[locale.startsWith('zh') ? 'zh' : 'en']
+  return text?.title ? { ...item, title: text.title, body: text.body ?? item.body } : item
+}
+
+export function notificationDisplay(raw: { kind: string; title: string; body: string | null; payload?: unknown }, locale = 'en') {
+  const item = localNotice(raw, locale)
   const source = `${item.title} ${item.body ?? ''}`
   const hasTechnicalCopy = /\b(?:demo|api|response|returned|seed)\b/i.test(source)
   const id = source.match(/[0-9a-f]{8}-[0-9a-f-]{27,}/i)?.[0]

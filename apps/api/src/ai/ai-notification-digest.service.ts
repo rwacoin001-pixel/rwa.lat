@@ -23,9 +23,10 @@ export class AiNotificationDigestService {
   constructor(private readonly notifications: NotificationService, private readonly model: AiModelClient) {}
 
   async digest(userId: string, locale: string): Promise<NotificationDigest> {
-    const unread = (await this.notifications.listForUser(userId, undefined, undefined, 'unread')).slice(0, MAX_ITEMS)
+    let unread = (await this.notifications.listForUser(userId, undefined, undefined, 'unread')).slice(0, MAX_ITEMS)
     if (!unread.length) return { summary: null, count: 0, source: 'none' }
     const lang = LANGS[locale] ? locale : 'en'
+    unread = unread.map((n) => inLanguage(n, lang))
     const key = createHash('sha256').update(lang + '|' + unread.map((n) => n.id).join(',')).digest('hex')
     const hit = this.cache.get(userId)
     if (hit && hit.key === key && Date.now() - hit.at < TTL_MS) return hit.digest
@@ -53,6 +54,13 @@ export class AiNotificationDigestService {
       return null
     }
   }
+}
+
+/** Feed notices carry both languages in `payload.i18n`; use the reader's so the sentence and the list agree. */
+function inLanguage(n: NotificationView, lang: string): NotificationView {
+  const i18n = (n.payload?.i18n ?? null) as Record<string, { title?: string; body?: string }> | null
+  const text = i18n?.[lang.startsWith('zh') ? 'zh' : 'en']
+  return text?.title ? { ...n, title: text.title, body: text.body ?? n.body } : n
 }
 
 const clip = (text: string, max: number) => (text.length > max ? `${text.slice(0, max - 1)}…` : text)

@@ -39,3 +39,12 @@ describe('AiNotificationDigestService', () => {
     expect(ruleLine([{ title: 'A' }, { title: 'B' }, { title: 'C' }], 'fr')).toBe('3 new: A; B; and more.')
   })
 })
+
+describe('AiNotificationDigestService languages', () => {
+  it('reads the notice in the reader language when both are stored', async () => {
+    const both = { ...note('a', 'Koala Quant settled 10-24'), payload: { i18n: { zh: { title: '考拉量化 10-24 已结算', body: '' }, en: { title: 'Koala Quant settled 10-24' } } } }
+    const notifications = { listForUser: jest.fn().mockResolvedValue([both]) }
+    const svc = new AiNotificationDigestService(notifications as never, { configured: false } as never)
+    await expect(svc.digest('u1', 'zh-CN')).resolves.toMatchObject({ summary: '1 条新消息：考拉量化 10-24 已结算。' })
+  })
+})

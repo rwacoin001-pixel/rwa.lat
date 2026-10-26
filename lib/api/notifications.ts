@@ -1,6 +1,6 @@
 import { invalidate } from './_query'
 import { request } from './_http'
-export type NotificationItem = { id: string; kind: string; title: string; body: string | null; readAt: string | null; createdAt: string; payload?: { route?: string } | null }
+export type NotificationItem = { id: string; kind: string; title: string; body: string | null; readAt: string | null; createdAt: string; payload?: { route?: string; i18n?: Record<string, { title?: string; body?: string | null }> } | null }
 export async function getNotifications(filter: 'all' | 'unread' = 'all') {
   return request<NotificationItem[]>(`/v1/notifications?filter=${filter}`)
 }

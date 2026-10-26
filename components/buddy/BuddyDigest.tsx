@@ -6,6 +6,7 @@ import { getNotificationDigest, markAllNotificationsRead, markNotificationRead, 
 import { openPath } from '@/lib/maison-nav'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { formatTime } from '@/lib/display/format'
+import { localNotice } from '@/lib/display/labels'
 import styles from './Buddy.module.css'
 
 type Topic = 'quant' | 'security' | 'wallet' | 'order' | 'other'
@@ -56,7 +57,7 @@ export function BuddyDigest({ items, onClose, onAllRead, onAskAi }: { items: Not
       <p className={styles.lede}>{c.lede(unread.length)}</p>
       {summary && <p className={styles.summary} aria-live="polite">{summary}</p>}
       <ul className={styles.list}>
-        {unread.slice(0, 5).map(item => <li key={item.id}><button type="button" onClick={() => void open(item)} disabled={busy}>
+        {unread.slice(0, 5).map(raw => localNotice(raw, locale)).map(item => <li key={item.id}><button type="button" onClick={() => void open(item)} disabled={busy}>
           <span className={styles.meta}><em>{c.topics[topicOf(item.kind)]}</em><time>{formatTime(item.createdAt, locale, { relative: true })}</time></span>
           <b>{item.title}</b>{item.body && <small>{item.body}</small>}
         </button></li>)}

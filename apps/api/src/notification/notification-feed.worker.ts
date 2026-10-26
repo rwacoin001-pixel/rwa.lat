@@ -9,7 +9,8 @@ import { DataSource } from 'typeorm'
  *    subscriptions, redemptions, prediction stakes and payouts, adjustments), with the exact amount;
  *  - devices first seen on an account that already had one (a new-device sign-in).
  * Each event becomes at most one notification (keyed by `payload.sourceKey`), dated when it happened, in the user's
- * language (Chinese for zh*, English otherwise). One instance works at a time (advisory lock). On by default; set
+ * language (Chinese for zh*, English otherwise), with both languages in `payload.i18n` so the app can show the one
+ * the phone is set to. One instance works at a time (advisory lock). On by default; set
  * NOTIFICATION_FEED_DISABLED=true to stop it.
  */
 @Injectable()
@@ -76,31 +77,46 @@ WITH moves AS (
     LEFT JOIN app.quant_daily_settlements qs ON m.type = 'quant_daily_settlement' AND qs.id = m.reference_id
    WHERE m.delta <> 0
 ), worded AS (
-  SELECT s.*, w.title, w.body, w.route FROM shaped s CROSS JOIN LATERAL (
+  SELECT s.*, w.* FROM shaped s CROSS JOIN LATERAL (
     SELECT
       CASE s.type
-        WHEN 'deposit' THEN CASE WHEN s.zh THEN '充值到账 ' || s.amt || ' ' || s.asset ELSE 'Deposit received: ' || s.amt || ' ' || s.asset END
-        WHEN 'withdrawal' THEN CASE WHEN s.zh THEN '提现 ' || s.amt || ' ' || s.asset ELSE 'Withdrawal: ' || s.amt || ' ' || s.asset END
-        WHEN 'internal_transfer' THEN CASE WHEN s.delta > 0
-          THEN CASE WHEN s.zh THEN '收到转账 ' || s.amt || ' ' || s.asset ELSE 'Transfer received: ' || s.amt || ' ' || s.asset END
-          ELSE CASE WHEN s.zh THEN '转账已发出 ' || s.amt || ' ' || s.asset ELSE 'Transfer sent: ' || s.amt || ' ' || s.asset END END
-        WHEN 'quant_daily_settlement' THEN CASE WHEN s.zh THEN '考拉量化' || COALESCE(' ' || s.day, '') || ' 已结算' ELSE 'Koala Quant settled' || COALESCE(' ' || s.day, '') END
-        WHEN 'quant_subscription' THEN CASE WHEN s.zh THEN '考拉量化申购成功 ' || s.amt || ' ' || s.asset ELSE 'Koala Quant subscription: ' || s.amt || ' ' || s.asset END
-        WHEN 'quant_redemption' THEN CASE WHEN s.zh THEN '考拉量化赎回到账 ' || s.amt || ' ' || s.asset ELSE 'Koala Quant redemption: ' || s.amt || ' ' || s.asset END
-        WHEN 'basket_subscription' THEN CASE WHEN s.zh THEN '篮子申购成功 ' || s.amt || ' ' || s.asset ELSE 'Basket subscription: ' || s.amt || ' ' || s.asset END
-        WHEN 'basket_redemption' THEN CASE WHEN s.zh THEN '篮子赎回到账 ' || s.amt || ' ' || s.asset ELSE 'Basket redemption: ' || s.amt || ' ' || s.asset END
-        WHEN 'prediction_stake' THEN CASE WHEN s.zh THEN '预测下注 ' || s.amt || ' ' || s.asset ELSE 'Prediction placed: ' || s.amt || ' ' || s.asset END
-        WHEN 'prediction_payout' THEN CASE WHEN s.zh THEN '预测结算到账 ' || s.amt || ' ' || s.asset ELSE 'Prediction paid out: ' || s.amt || ' ' || s.asset END
-        WHEN 'referral_reward' THEN CASE WHEN s.zh THEN '邀请奖励到账 ' || s.amt || ' ' || s.asset ELSE 'Referral reward: ' || s.amt || ' ' || s.asset END
-        WHEN 'adjustment' THEN CASE WHEN s.zh THEN '余额调整 ' || CASE WHEN s.delta > 0 THEN '+' ELSE '−' END || s.amt || ' ' || s.asset ELSE 'Balance adjusted: ' || CASE WHEN s.delta > 0 THEN '+' ELSE '−' END || s.amt || ' ' || s.asset END
-      END AS title,
+        WHEN 'deposit' THEN '充值到账 ' || s.amt || ' ' || s.asset
+        WHEN 'withdrawal' THEN '提现 ' || s.amt || ' ' || s.asset
+        WHEN 'internal_transfer' THEN CASE WHEN s.delta > 0 THEN '收到转账 ' ELSE '转账已发出 ' END || s.amt || ' ' || s.asset
+        WHEN 'quant_daily_settlement' THEN '考拉量化' || COALESCE(' ' || s.day, '') || ' 已结算'
+        WHEN 'quant_subscription' THEN '考拉量化申购成功 ' || s.amt || ' ' || s.asset
+        WHEN 'quant_redemption' THEN '考拉量化赎回到账 ' || s.amt || ' ' || s.asset
+        WHEN 'basket_subscription' THEN '篮子申购成功 ' || s.amt || ' ' || s.asset
+        WHEN 'basket_redemption' THEN '篮子赎回到账 ' || s.amt || ' ' || s.asset
+        WHEN 'prediction_stake' THEN '预测下注 ' || s.amt || ' ' || s.asset
+        WHEN 'prediction_payout' THEN '预测结算到账 ' || s.amt || ' ' || s.asset
+        WHEN 'referral_reward' THEN '邀请奖励到账 ' || s.amt || ' ' || s.asset
+        WHEN 'adjustment' THEN '余额调整 ' || CASE WHEN s.delta > 0 THEN '+' ELSE '−' END || s.amt || ' ' || s.asset
+      END AS title_zh,
+      CASE s.type
+        WHEN 'deposit' THEN 'Deposit received: ' || s.amt || ' ' || s.asset
+        WHEN 'withdrawal' THEN 'Withdrawal: ' || s.amt || ' ' || s.asset
+        WHEN 'internal_transfer' THEN CASE WHEN s.delta > 0 THEN 'Transfer received: ' ELSE 'Transfer sent: ' END || s.amt || ' ' || s.asset
+        WHEN 'quant_daily_settlement' THEN 'Koala Quant settled' || COALESCE(' ' || s.day, '')
+        WHEN 'quant_subscription' THEN 'Koala Quant subscription: ' || s.amt || ' ' || s.asset
+        WHEN 'quant_redemption' THEN 'Koala Quant redemption: ' || s.amt || ' ' || s.asset
+        WHEN 'basket_subscription' THEN 'Basket subscription: ' || s.amt || ' ' || s.asset
+        WHEN 'basket_redemption' THEN 'Basket redemption: ' || s.amt || ' ' || s.asset
+        WHEN 'prediction_stake' THEN 'Prediction placed: ' || s.amt || ' ' || s.asset
+        WHEN 'prediction_payout' THEN 'Prediction paid out: ' || s.amt || ' ' || s.asset
+        WHEN 'referral_reward' THEN 'Referral reward: ' || s.amt || ' ' || s.asset
+        WHEN 'adjustment' THEN 'Balance adjusted: ' || CASE WHEN s.delta > 0 THEN '+' ELSE '−' END || s.amt || ' ' || s.asset
+      END AS title_en,
       CASE
-        WHEN s.type = 'quant_daily_settlement' THEN CASE WHEN s.zh
-          THEN COALESCE('当日 ' || s.pct || '，', '') || CASE WHEN s.delta > 0 THEN '收益 ' ELSE '变动 ' END || s.amt || ' ' || s.asset || ' 已计入可用余额'
-          ELSE COALESCE('Day ' || s.pct || ', ', '') || s.amt || ' ' || s.asset || ' credited to your available balance' END
-        WHEN s.delta > 0 THEN CASE WHEN s.zh THEN '已计入可用余额' ELSE 'Added to your available balance' END
-        ELSE CASE WHEN s.zh THEN '已从可用余额扣除' ELSE 'Taken from your available balance' END
-      END AS body,
+        WHEN s.type = 'quant_daily_settlement' THEN COALESCE('当日 ' || s.pct || '，', '') || CASE WHEN s.delta > 0 THEN '收益 ' ELSE '变动 ' END || s.amt || ' ' || s.asset || ' 已计入可用余额'
+        WHEN s.delta > 0 THEN '已计入可用余额'
+        ELSE '已从可用余额扣除'
+      END AS body_zh,
+      CASE
+        WHEN s.type = 'quant_daily_settlement' THEN COALESCE('Day ' || s.pct || ', ', '') || s.amt || ' ' || s.asset || ' credited to your available balance'
+        WHEN s.delta > 0 THEN 'Added to your available balance'
+        ELSE 'Taken from your available balance'
+      END AS body_en,
       CASE
         WHEN s.type LIKE 'quant%' THEN '/quant'
         WHEN s.type LIKE 'basket%' THEN '/assets?tab=positions'
@@ -109,27 +125,45 @@ WITH moves AS (
         ELSE '/assets/activity?type=funding'
       END AS route
   ) w
+), filled AS (
+  -- notices made before both languages were stored get them now (read state untouched)
+  UPDATE app.notifications n SET payload = n.payload || jsonb_build_object('i18n', jsonb_build_object('zh', jsonb_build_object('title', d.title_zh, 'body', d.body_zh), 'en', jsonb_build_object('title', d.title_en, 'body', d.body_en)))
+    FROM worded d
+   WHERE d.title_zh IS NOT NULL AND n.recipient_user_id = d.user_id AND n.payload->>'sourceKey' = 'ledger:' || d.tx_id AND NOT (n.payload ? 'i18n')
+  RETURNING n.id
 )
 INSERT INTO app.notifications (recipient_user_id, channel, kind, title, body, payload, locale, created_at)
-SELECT d.user_id, 'in_app', 'wallet.' || d.type, d.title, d.body,
-       jsonb_build_object('sourceKey', 'ledger:' || d.tx_id, 'route', d.route, 'amountAtomic', d.delta::text, 'asset', d.asset),
+SELECT d.user_id, 'in_app', 'wallet.' || d.type,
+       CASE WHEN d.zh THEN d.title_zh ELSE d.title_en END, CASE WHEN d.zh THEN d.body_zh ELSE d.body_en END,
+       jsonb_build_object('sourceKey', 'ledger:' || d.tx_id, 'route', d.route, 'amountAtomic', d.delta::text, 'asset', d.asset, 'i18n', jsonb_build_object('zh', jsonb_build_object('title', d.title_zh, 'body', d.body_zh), 'en', jsonb_build_object('title', d.title_en, 'body', d.body_en))),
        d.lang, d.at
   FROM worded d
- WHERE d.title IS NOT NULL
+ WHERE d.title_zh IS NOT NULL
    AND NOT EXISTS (SELECT 1 FROM app.notifications n WHERE n.recipient_user_id = d.user_id AND n.payload->>'sourceKey' = 'ledger:' || d.tx_id)
 RETURNING id`
 
 /** A device first seen on an account that already had another device → "new device sign-in". */
 export const DEVICE_SQL = `
+WITH worded AS (
+  SELECT d.id, d.user_id, d.first_seen_at, (COALESCE(u.locale, '') ILIKE 'zh%') AS zh,
+         '新设备登录' AS title_zh, 'New device signed in' AS title_en,
+         COALESCE(NULLIF(d.display_name, '') || ' · ', '') || '如果不是你本人，请立即检查账户安全' AS body_zh,
+         COALESCE(NULLIF(d.display_name, '') || ' · ', '') || 'If this wasn''t you, check your account security now' AS body_en
+    FROM app.devices d
+    JOIN app.users u ON u.id = d.user_id
+   WHERE d.first_seen_at > now() - interval '3 days'
+     AND EXISTS (SELECT 1 FROM app.devices o WHERE o.user_id = d.user_id AND o.id <> d.id AND o.first_seen_at < d.first_seen_at)
+), filled AS (
+  UPDATE app.notifications n SET payload = n.payload || jsonb_build_object('i18n', jsonb_build_object('zh', jsonb_build_object('title', d.title_zh, 'body', d.body_zh), 'en', jsonb_build_object('title', d.title_en, 'body', d.body_en)))
+    FROM worded d
+   WHERE n.recipient_user_id = d.user_id AND n.payload->>'sourceKey' = 'device:' || d.id AND NOT (n.payload ? 'i18n')
+  RETURNING n.id
+)
 INSERT INTO app.notifications (recipient_user_id, channel, kind, title, body, payload, locale, created_at)
 SELECT d.user_id, 'in_app', 'security.new_device',
-       CASE WHEN COALESCE(u.locale, '') ILIKE 'zh%' THEN '新设备登录' ELSE 'New device signed in' END,
-       COALESCE(NULLIF(d.display_name, '') || ' · ', '') || CASE WHEN COALESCE(u.locale, '') ILIKE 'zh%' THEN '如果不是你本人，请立即检查账户安全' ELSE 'If this wasn''t you, check your account security now' END,
-       jsonb_build_object('sourceKey', 'device:' || d.id, 'route', '/profile/security'),
-       CASE WHEN COALESCE(u.locale, '') ILIKE 'zh%' THEN 'zh' ELSE 'en' END, d.first_seen_at
-  FROM app.devices d
-  JOIN app.users u ON u.id = d.user_id
- WHERE d.first_seen_at > now() - interval '3 days'
-   AND EXISTS (SELECT 1 FROM app.devices o WHERE o.user_id = d.user_id AND o.id <> d.id AND o.first_seen_at < d.first_seen_at)
-   AND NOT EXISTS (SELECT 1 FROM app.notifications n WHERE n.recipient_user_id = d.user_id AND n.payload->>'sourceKey' = 'device:' || d.id)
+       CASE WHEN d.zh THEN d.title_zh ELSE d.title_en END, CASE WHEN d.zh THEN d.body_zh ELSE d.body_en END,
+       jsonb_build_object('sourceKey', 'device:' || d.id, 'route', '/profile/security', 'i18n', jsonb_build_object('zh', jsonb_build_object('title', d.title_zh, 'body', d.body_zh), 'en', jsonb_build_object('title', d.title_en, 'body', d.body_en))),
+       CASE WHEN d.zh THEN 'zh' ELSE 'en' END, d.first_seen_at
+  FROM worded d
+ WHERE NOT EXISTS (SELECT 1 FROM app.notifications n WHERE n.recipient_user_id = d.user_id AND n.payload->>'sourceKey' = 'device:' || d.id)
 RETURNING id`
