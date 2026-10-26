@@ -140,3 +140,15 @@
 :global(html[data-palette='a']) .page [data-inline-max] .maxChip { flex: none; min-height: 32px; min-width: 0; padding: 0 14px; border-radius: 999px; font-size: 13px; }
 :global(html[data-palette='a']) .page .empty { border: 0; }
 :global(html[data-palette='a']) .page .flowNetworks { margin-bottom: 12px; }
+
+/* Deposit (palette A): network once (the tabs), facts as one quiet card, the address step centred, the QR and the
+   address on one paper card with Copy, the warning as plain text. */
+:global(html[data-palette='a']) .page .net { display: none; }
+:global(html[data-palette='a']) .page .rows:not([data-ready]):not(:has([data-keep])) > div { display: flex; }
+:global(html[data-palette='a']) .page .empty { justify-items: center; gap: 12px; margin-top: 20px; padding: 28px 16px; border: 0; border-radius: var(--pa-card-radius); background: var(--pa-card); box-shadow: var(--pa-card-shadow); color: var(--m-muted); font-size: 13px; }
+:global(html[data-palette='a']) .page .qrWrap { margin: 18px 0 0; padding: 22px 16px 10px; border-radius: var(--pa-card-radius) var(--pa-card-radius) 0 0; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .page .qr { background: #ffffff; }
+:global(html[data-palette='a']) .page .qrWrap + .addrRow { margin-top: 0; padding: 10px 16px 16px; border: 0; border-radius: 0 0 var(--pa-card-radius) var(--pa-card-radius); background: var(--pa-card); box-shadow: var(--pa-card-shadow); clip-path: inset(0 -40px -40px -40px); }
+:global(html[data-palette='a']) .page .addrText { font-size: 14.5px; }
+:global(html[data-palette='a']) .page .more summary svg { display: none; }
+:global(html[data-palette='a']) .page .empty > button { justify-self: center; }

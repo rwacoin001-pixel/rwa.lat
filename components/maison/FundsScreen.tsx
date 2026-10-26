@@ -222,6 +222,8 @@ export function WithdrawScreen({ query }: { query: string }) {
     setPending(true)
     setServerError(null)
     try {
+    // One step at a time: the PIN sheet leaves before the identity check comes up (palette A), instead of stacking.
+    if (paletteA) setPinPrompt(false)
     const result = await run(stepUpRequired(integration), (reauthentication) => {
       if (epoch !== generation.current) return Promise.resolve({ ok: false as const, error: { status: 0, code: 'SESSION_CHANGED', message: common.errorGeneric } })
       return createWithdrawal(body, { transactionPin, reauthentication }, key)

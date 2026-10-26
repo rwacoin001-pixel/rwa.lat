@@ -17,11 +17,11 @@ function load(relative) {
 const { documentPreferencesBootstrap } = load('lib/document-preferences-bootstrap.ts')
 const { launchSplashScript } = load('lib/launch-splash.ts')
 
-function runBootstrap({ path = '/home', standalone = false, ua = 'Mozilla/5.0', session = null } = {}) {
+function runBootstrap({ path = '/home', standalone = false, ua = 'Mozilla/5.0', session = null, search = '', saved = {} } = {}) {
   const dataset = {}
   const replaced = []
-  const store = (values) => ({ getItem: (key) => values[key] ?? null })
-  vm.runInNewContext(documentPreferencesBootstrap, {
+  const store = (values) => ({ getItem: (key) => values[key] ?? null, setItem: (key, value) => { values[key] = String(value) }, removeItem: (key) => { delete values[key] } })
+  const context = {
     document: {
       documentElement: { dataset, style: { setProperty() {} }, lang: 'en', dir: 'ltr' },
       querySelectorAll: () => [],
@@ -29,10 +29,15 @@ function runBootstrap({ path = '/home', standalone = false, ua = 'Mozilla/5.0', 
       head: { appendChild() {} },
     },
     navigator: { userAgent: ua, standalone: false },
-    location: { pathname: path, replace: (to) => replaced.push(to) },
-    localStorage: store(session ? { 'rwa.session': session } : {}),
+    location: { pathname: path, search, replace: (to) => replaced.push(to) },
+    localStorage: store({ ...saved, ...(session ? { 'rwa.session': session } : {}) }),
     matchMedia: (query) => ({ matches: standalone && /standalone/.test(query) }),
-  })
+    URLSearchParams,
+    addEventListener() {},
+  }
+  // The bootstrap is a page script: it reaches the global object as `window` (install prompt, colour scheme).
+  context.window = context
+  vm.runInNewContext(documentPreferencesBootstrap, context)
   return { dataset, replaced }
 }
 
@@ -102,4 +107,11 @@ test('outside the installed app the script does nothing (CSS keeps the element h
   splash.ready()
   assert.equal(splash.state, undefined)
   assert.equal(splash.timers.length, 0)
+})
+
+test('Paper & Glass is the default; a device can keep the classic colours', () => {
+  assert.equal(runBootstrap().dataset.palette, 'a')
+  assert.equal(runBootstrap({ search: '?palette=classic' }).dataset.palette, undefined)
+  assert.equal(runBootstrap({ saved: { 'rwa.palette': 'classic' } }).dataset.palette, undefined)
+  assert.equal(runBootstrap({ search: '?palette=a', saved: { 'rwa.palette': 'classic' } }).dataset.palette, 'a')
 })

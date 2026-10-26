@@ -20,9 +20,10 @@ button.unit { cursor: pointer; }
 
 /* Bottom: the talking button, then the keypad. */
 .bottom { display: grid; gap: 10px; padding-bottom: calc(env(safe-area-inset-bottom) + 6px); }
-/* The talking button is the guide's short pill, centred above the keypad (the page is centred top to bottom). */
-.bottom > .cta, .review > .cta, .successActions > .cta { justify-self: center; min-width: 168px; }
-.cta { justify-content: space-between; }
+/* Keypad pages keep a full-width button (as exchange apps do): it spans the keypad, takes the thumb anywhere along
+   it, and has room for the whole sentence it says. Ordinary pages use the short pill. */
+.bottom > .cta, .review > .cta, .successActions > .cta { display: flex !important; justify-self: stretch; width: 100% !important; justify-content: center !important; padding: 0 24px !important; }
+.bottom > .cta > span:last-child:not(:first-child), .review > .cta > span:last-child:not(:first-child), .successActions > .cta > span:last-child:not(:first-child) { display: none; }
 .cta:disabled { opacity: 1 !important; justify-content: center; padding: 0 24px !important; background: var(--pa-fill-strong, rgba(11, 18, 32, .08)) !important; color: var(--m-muted) !important; box-shadow: none !important; }
 .cta:disabled::before { display: none; }
 .cta[aria-busy='true'] { opacity: .7; }

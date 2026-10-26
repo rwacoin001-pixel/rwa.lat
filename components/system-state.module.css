@@ -109,3 +109,4 @@
 :global(html[data-palette='a']) .primaryIcon, :global(html[data-palette='a']) .page[data-theme='cool'] .primaryIcon { background: #ffffff; color: #0b1220; }
 :global(html[data-palette='a']) .page[data-theme='cool'] .primaryIcon { background: #03211c; color: #19c7aa; }
 :global(html[data-palette='a']) .glow, :global(html[data-palette='a']) .grain { display: none; }
+:global(html[data-palette='a']) .actions { justify-items: start; } :global(html[data-palette='a']) .primary { width: auto; min-width: 0; gap: 16px; }
