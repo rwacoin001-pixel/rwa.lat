@@ -54,6 +54,8 @@ function acceptedConsents(requirements: AuthConsentRequirements | null): AuthCon
   return requirements.required.map(item => ({ documentType: item.documentType, version: item.version, accepted: true }))
 }
 
+const LAST_ACCOUNT = 'rwa.lastPasskeyAccount'
+
 export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   mode: 'login' | 'register'
   go: (screen: RwaScreen) => void
@@ -106,6 +108,24 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     return () => clearTimeout(timer)
   }, [walletPhase])
   useEffect(() => { void prefetchAuthAttribution() }, [])
+  // Returning on this device: open on the remembered account's passkey step and ask at once. Chrome shows the sheet
+  // straight away; Safari wants a tap, so there the step's one button does it.
+  useEffect(() => {
+    if (mode !== 'login' || !passkeySupported || resumed.current) return
+    resumed.current = true
+    let remembered: string | null = null
+    try { remembered = localStorage.getItem(LAST_ACCOUNT) } catch { return }
+    if (!remembered || !EMAIL.test(remembered)) return
+    const value = remembered
+    let active = true
+    void lookupEmail(value, 'silent').then(result => {
+      if (!active || !result.ok || result.data.account === 'new' || result.data.passkey !== true || busy.current) return
+      setEmail(value); setAccount({ email: value, isNew: false, password: result.data.password, passkey: true })
+      autoPrompt.current = true; setStep('passkey')
+    })
+    return () => { active = false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- once, when passkey support is known
+  }, [passkeySupported])
   const [retryAfter, setRetryAfter] = useState(0)
   const [agreed, setAgreed] = useState(false)
   const [requirements, setRequirements] = useState<AuthConsentRequirements | null>(null)
@@ -127,6 +147,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const passkeyController = useRef<AbortController | null>(null)
   const autofillController = useRef<AbortController | null>(null)
   const autoPrompt = useRef(false)
+  const resumed = useRef(false)
   // The address someone backed out of ("change email"): it must not reopen registration by itself until it is edited.
   const dismissed = useRef('')
   useEffect(() => {
@@ -231,6 +252,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   // Account creation marks the tab so the first landing is the optional verification welcome.
   const finish = (isNew: boolean) => {
     markNewAccount(sessionStorage, isNew)
+    // Remember who signed in with a passkey here, so the next visit opens straight on that account's passkey.
+    try { if (account?.passkey) localStorage.setItem(LAST_ACCOUNT, account.email) } catch { /* Next visit asks for the email again. */ }
     onAuthenticated()
     location.replace(consumeAuthDestination(sessionStorage, location.origin))
   }
@@ -367,6 +390,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const usePasswordInstead = () => { stopPasskey(); setStep('password'); setCodeChallenge(null); setCode(''); setError('') }
   const changeEmail = () => {
     dismissed.current = (account?.email ?? email).trim().toLowerCase()
+    try { localStorage.removeItem(LAST_ACCOUNT) } catch { /* Nothing to forget. */ }
     restart()
     requestAnimationFrame(() => input.current?.focus())
   }
