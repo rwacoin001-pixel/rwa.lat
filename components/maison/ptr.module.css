@@ -41,3 +41,7 @@
 /* Custom refresh owns the pull indicator. Also suppress native edge bounce,
    which can visually move viewport-fixed controls; contain still allows it. */
 :global(html):has(.ptr) { overscroll-behavior-y: none; }
+/* The teal panel of the A-REIT mark opens like a door as the page is pulled, and stands open once armed. */
+.mark [data-accent] { transform-box: fill-box; transform-origin: 0 50%; transform: perspective(200px) rotateY(calc((1 - var(--ptr)) * -70deg)); }
+.ptr[data-phase='armed'] .mark [data-accent], .ptr[data-phase='refreshing'] .mark [data-accent] { transform: none; transition: transform .3s cubic-bezier(.34, 1.4, .64, 1); }
+@media (prefers-reduced-motion: reduce) { .mark [data-accent] { transform: none; } }

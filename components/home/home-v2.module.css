@@ -4,6 +4,7 @@
   --v2-card: var(--pa-card, #fff); --v2-card-sh: var(--pa-card-shadow); --v2-up: var(--q-gain, #067a5e); --v2-down: var(--q-loss, #c23b33);
   display: grid; gap: 12px; }
 
+.greeting { margin: 0 4px; color: var(--v2-muted); font-size: 13px; line-height: 18px; animation: rise .38s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
 .card { position: relative; padding: 20px 16px 16px; border-radius: 22px; background: var(--v2-card); box-shadow: var(--v2-card-sh); }
 .label { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; color: var(--v2-muted); font-size: 13px; line-height: 18px; }
 .label button { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: -12px 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
@@ -17,9 +18,12 @@
 /* The four money actions: porcelain tiles (graphite at night), label under the tile. */
 .tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 20px; }
 .tile { display: grid; justify-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--v2-muted); font: inherit; font-size: 12px; line-height: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.tileFace { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 22%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow);
+.tileFace { position: relative; display: grid; place-items: center; width: 56px; height: 56px; border-radius: 26%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow);
   transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring), box-shadow var(--pa-dur-press, 120ms); }
 .tile:active .tileFace { transform: scale(.95); box-shadow: var(--pa-tile-shadow-pressed); }
+.tileFace svg { position: relative; filter: var(--pa-tile-glyph, none); }
+/* Night: the glyph sits in a small well pressed into the graphite, like the reference terminal key. */
+:global(.rwa-mobile[data-theme='dark']) .tileFace::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: var(--pa-well-bg); box-shadow: var(--pa-well-shadow); }
 .tile:focus-visible { outline: none; }
 .tile:focus-visible .tileFace { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 

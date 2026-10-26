@@ -132,3 +132,20 @@ export function HomeAskAi({ prompt, onOpen }: { prompt: string; onOpen: () => vo
     <span>{prompt}</span><b aria-hidden="true"><ArrowUp size={16} strokeWidth={2} /></b>
   </button>
 }
+
+const GREETING: Partial<Record<AppLocale, [string, string, string, string]>> & { en: [string, string, string, string] } = {
+  en: ['Good night', 'Good morning', 'Good afternoon', 'Good evening'],
+  'zh-CN': ['夜深了', '早上好', '下午好', '晚上好'],
+}
+/** A quiet line over the card: greeting by the hour, then today's date. */
+export function HomeGreeting() {
+  const { locale } = useI18n()
+  const [text, setText] = useState('')
+  useEffect(() => {
+    const now = new Date(), h = now.getHours()
+    const words = GREETING[locale] ?? GREETING.en
+    const part = h < 5 ? 0 : h < 12 ? 1 : h < 18 ? 2 : 3
+    setText(`${words[part]} · ${new Intl.DateTimeFormat(locale, { month: 'long', day: 'numeric', weekday: 'short' }).format(now)}`)
+  }, [locale])
+  return <p className={styles.greeting}>{text || ' '}</p>
+}

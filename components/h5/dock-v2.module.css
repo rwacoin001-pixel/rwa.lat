@@ -3,19 +3,23 @@
    button that shows the current tab; scroll up or a tap opens it again. Sizes are on the §3.1 scale. */
 .plate { position: relative; flex: 1 1 auto; max-width: 360px; height: 56px; padding: 2px; overflow: hidden; border-radius: 999px; pointer-events: auto;
   background: var(--dock-plate); box-shadow: var(--dock-plate-shadow); transition: max-width .44s cubic-bezier(.34, 1.18, .64, 1); }
-.groove { position: relative; display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); height: 52px; padding: 2px; border-radius: 999px;
+.groove { --g: 1.9; position: relative; display: flex; height: 52px; padding: 2px; border-radius: 999px;
   background: var(--dock-groove); box-shadow: var(--dock-groove-shadow); transition: opacity .2s; }
-.cap { position: absolute; top: 2px; left: 2px; width: calc((100% - 4px) / var(--n, 4)); height: 48px; border-radius: 999px; pointer-events: none;
-  background: var(--dock-cap); box-shadow: var(--dock-cap-shadow); transform: translateX(calc(var(--i, 0) * 100%));
+/* With n tabs where the current one grows by g: its share is g / (n - 1 + g), and it starts after i ordinary tabs. */
+.cap { --total: calc(var(--n, 4) - 1 + var(--g)); position: absolute; top: 2px; left: 2px; width: calc((100% - 4px) * var(--g) / var(--total)); height: 48px; border-radius: 999px; pointer-events: none;
+  background: var(--dock-cap); box-shadow: var(--dock-cap-shadow); transform: translateX(calc(var(--i, 0) * 100% / var(--g)));
   transition: transform .38s cubic-bezier(.34, 1.28, .64, 1), box-shadow .12s, scale .12s; }
-:global([dir='rtl']) .cap { left: auto; right: 2px; transform: translateX(calc(var(--i, 0) * -100%)); }
+:global([dir='rtl']) .cap { left: auto; right: 2px; transform: translateX(calc(var(--i, 0) * -100% / var(--g))); }
 .groove:has(.tab[aria-current='page']:active) .cap { scale: .97; box-shadow: var(--dock-cap-shadow-pressed); }
-.tab { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; height: 48px; padding: 0; border: 0; border-radius: 999px;
-  background: none; color: var(--dock-tab); font: inherit; font-size: 12px; font-weight: 600; line-height: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color .22s; }
+.tab { position: relative; z-index: 1; flex: 1 1 0; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; height: 48px; padding: 0; border: 0; border-radius: 999px;
+  background: none; color: var(--dock-tab); font: inherit; font-size: 12px; font-weight: 600; line-height: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: color .22s, flex-grow .38s cubic-bezier(.34, 1.28, .64, 1); }
+.tab[aria-current='page'] { flex-grow: var(--g); }
 .tab svg { flex: none; }
 .label { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; transition: max-width .3s cubic-bezier(.22, 1, .36, 1), opacity .2s; }
 .tab[aria-current='page'] { color: var(--dock-tab-on); }
-.tab[aria-current='page'] .label { max-width: 4em; opacity: 1; transition-delay: .08s; }
+.tab[aria-current='page'] .label { max-width: 7em; opacity: 1; transition-delay: .08s; }
+.label { text-overflow: ellipsis; }
 .tab:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: -2px; }
 .cur { position: absolute; inset: 2px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--dock-cap); box-shadow: var(--dock-cap-shadow);
   color: var(--dock-tab-on); opacity: 0; scale: .8; pointer-events: none; cursor: pointer; transition: opacity .18s, scale .3s cubic-bezier(.34, 1.4, .64, 1); }

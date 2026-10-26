@@ -44,7 +44,7 @@ import { HomePolymarket } from '@/components/home/HomePolymarket'
 import { homeStateCopy } from '@/components/home/home-state-copy'
 import { CountUp, EASE, MaskLines, Rise } from '@/components/home/maison-motion'
 import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
-import { HomeAssetCard, HomeAskAi, type TodayChange } from '@/components/home/HomeAssetCard'
+import { HomeAssetCard, HomeAskAi, HomeGreeting, type TodayChange } from '@/components/home/HomeAssetCard'
 import { HomeReferral } from '@/components/home/HomeReferral'
 import v2 from '@/components/home/home-v2.module.css'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
@@ -394,10 +394,11 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
     const askPrompt = funded ? copy.askHoldings : copy.askStart
     return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
-      <RwaTopbar screen="home" r1={null} action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/profile/referral') }} />
+      <RwaTopbar screen="home" />
       <PullToRefresh />
       <div className={styles.v2Head}>
         <div className={v2.root}>
+          <HomeGreeting />
           <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today}
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
           <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
