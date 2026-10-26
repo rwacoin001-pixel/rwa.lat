@@ -109,9 +109,8 @@ test('outside the installed app the script does nothing (CSS keeps the element h
   assert.equal(splash.timers.length, 0)
 })
 
-test('Paper & Glass is the default; a device can keep the classic colours', () => {
+test('Paper & Glass is the only design; an old classic choice is cleared', () => {
   assert.equal(runBootstrap().dataset.palette, 'a')
-  assert.equal(runBootstrap({ search: '?palette=classic' }).dataset.palette, undefined)
-  assert.equal(runBootstrap({ saved: { 'rwa.palette': 'classic' } }).dataset.palette, undefined)
-  assert.equal(runBootstrap({ search: '?palette=a', saved: { 'rwa.palette': 'classic' } }).dataset.palette, 'a')
+  assert.equal(runBootstrap({ search: '?palette=classic' }).dataset.palette, 'a')
+  assert.equal(runBootstrap({ saved: { 'rwa.palette': 'classic' } }).dataset.palette, 'a')
 })

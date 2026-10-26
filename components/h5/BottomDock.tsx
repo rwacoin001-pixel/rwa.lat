@@ -1,7 +1,6 @@
 'use client'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { markTabNavigation } from '@/lib/app-navigation'
-import dynamic from 'next/dynamic'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartCandlestick, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
@@ -9,10 +8,8 @@ import { openPath } from '@/lib/maison-nav'
 import { fundsCopy } from '@/lib/maison-funds-copy'
 import { useI18n } from '@/lib/i18n'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
-const AiPearl = dynamic(() => import('../maison/AiPearl'), { ssr: false })
 import type { PrimaryScreen } from './shared'
 import { useQuantListed } from '@/lib/api/quant'
-import { usePaletteA } from '@/lib/palette-preview'
 import { BuddyOrb } from '@/components/buddy/BuddyOrb'
 
 type Screen = RwaScreen
@@ -21,7 +18,6 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
   const { locale, t } = useI18n()
   const shellCopy = rwaH5Copy[locale].shell
   const isCompact = useScrollChrome()
-  const paletteA = usePaletteA()
   const [quickOpen, setQuickOpen] = useState(false)
   const dockRef = useRef<HTMLElement>(null)
   const quickActions: Array<{ label: string; path: string; icon: LucideIcon }> = [
@@ -73,7 +69,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
       </div>
       <button type="button" className="liquid-dock__compact-button" aria-hidden={!isCompact} tabIndex={isCompact ? 0 : -1} aria-label={active.label} aria-expanded={false} onClick={expandChrome}><ActiveIcon size={19} strokeWidth={1.8} /></button>
       {/* Palette A: the asset page carries its own money actions under the total, so no extra "+" there. */}
-      {showQuickActions && !(paletteA && screen === 'portfolio') && <>
+      {showQuickActions && screen !== 'portfolio' && <>
         <div id="dock-quick-menu" className="liquid-dock__quick-menu" data-open={quickOpen ? 'true' : 'false'} role="group" aria-label={quickActions.map((action) => action.label).join(', ')} aria-hidden={!quickOpen}>
           {quickActions.map(({ label, path, icon: Icon }) => <button key={path} type="button" tabIndex={quickOpen ? 0 : -1} onClick={() => { setQuickOpen(false); openPath(path) }}>
             <Icon size={17} strokeWidth={1.8} /><span>{label}</span><ChevronRight size={14} aria-hidden="true" />
@@ -83,12 +79,8 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
           <Plus size={17} strokeWidth={1.9} />
         </button>
       </>}
-      {/* Palette A: the paper buddy (AI, notifications, how things stand); otherwise the lacquer pearl. */}
-      {paletteA
-        ? <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => { if (screen !== 'ai') { markTabNavigation(); setScreen('ai') } }} />
-        : <button type="button" className={`ai-orb ${screen === 'ai' ? 'is-active' : ''}`} aria-label={t('nav.ai')} title={t('nav.ai')} onClick={() => { if (screen !== 'ai') markTabNavigation(); setScreen('ai') }}>
-          <AiPearl size={46} inset={.48} state="idle" className="ai-orb__orb" />
-        </button>}
+      {/* The paper buddy: AI, notifications, how things stand. */}
+      <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => { if (screen !== 'ai') { markTabNavigation(); setScreen('ai') } }} />
     </nav>
   )
 }

@@ -1,4 +1,5 @@
-import type { PearlState } from '@/components/maison/AiPearl'
+/** What the AI mark shows: resting, listening to the user, waiting on the model, or speaking an answer. */
+export type PearlState = 'idle' | 'listening' | 'thinking' | 'speaking'
 
 /**
  * One state for the assistant's surface (pearl + composer), derived from the raw flags in a fixed priority order.

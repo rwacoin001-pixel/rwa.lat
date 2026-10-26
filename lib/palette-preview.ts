@@ -1,10 +1,5 @@
 'use client'
-import { useSyncExternalStore } from 'react'
 
-/** True on devices that opted in to the palette A preview (html[data-palette='a'], set before paint by the bootstrap). */
-const subscribe = () => () => {}
-export const usePaletteA = () => useSyncExternalStore(
-  subscribe,
-  () => document.documentElement.dataset.palette === 'a',
-  () => false,
-)
+/** Paper & Glass (palette A) is the only design now, on the server as on every device. Kept as a hook so call sites
+    read the same; branches that tested it have been reduced to the palette A path. */
+export const usePaletteA = () => true

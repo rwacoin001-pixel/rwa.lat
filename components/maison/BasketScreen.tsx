@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, ArrowRight, Check, Info } from 'lucide-react'
+import { ArrowRight, Info } from 'lucide-react'
 import { useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import {useContentTranslation} from '@/lib/use-content-translation'
@@ -17,6 +17,8 @@ import { Logo, MaisonPage, SectionHead, Skeleton, Sparkline, StateBlock, maison 
 import { DetailFlow, ProductHero, heroTopbar } from './ProductHero'
 import { basketCover, sharedKeys } from '@/lib/product-media'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
+import { AmountPad, FlowConfirm, FlowSuccess, share } from './flow-kit'
+import { flowKitCopy } from '@/lib/flow-kit-copy'
 
 const OPEN = new Set(['pilot', 'active'])
 const DEC_6 = /^\d+(\.\d{1,6})?$/
@@ -148,7 +150,8 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
   const [pending, setPending] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [done, setDone] = useState<Done | null>(null)
-  const [expanded, setExpanded] = useState(false)
+  const [reviewOpen, setReviewOpen] = useState(false)
+  const kit = flowKitCopy(locale)
   const keys = useRef(new Map<string, string>())
   const acknowledged = useRef(new Set<string>())
 
@@ -182,7 +185,6 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
   }, [basket?.navPerUnit, fieldError, side, value])
 
   const needsAck = side === 'subscribe' && Boolean(disclosure)
-  const ready = Boolean(basket && value && !fieldError && !pending && (!needsAck || ack) && (side === 'redeem' || disclosures.data || disclosures.error))
 
   const submit = async () => {
     if (!basket || !value || fieldError || pending) return
@@ -210,105 +212,76 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
       return
     }
     invalidate(['basket:', 'wallet:', 'portfolio:', 'home:', 'markets:baskets'])
+    setReviewOpen(false)
     setDone('subscription' in result.data
       ? { kind: 'subscribe', duplicate: Boolean(result.data.duplicate), data: result.data.subscription }
       : { kind: 'redeem', duplicate: Boolean(result.data.duplicate), data: result.data.redemption })
   }
 
   if (!validId) return <Missing page="basket-order" topbar={topbar} />
-  if (done) return <BasketDone done={done} basketId={validId} topbar={topbar} />
+  if (done) return <BasketDone done={done} basketId={validId} topbar={topbar} onAgain={() => { keys.current.clear(); setDone(null); setValue(''); setAck(false); setServerError(null) }} />
   if (!basket && !detail.error) return <MaisonPage page="basket-order" topbar={topbar}><div className={s.hero}><Skeleton rows={4} /></div></MaisonPage>
   if (!basket) return <Missing page="basket-order" topbar={topbar} error={detail.error} retry={detail.refetch} />
 
   const open = OPEN.has(basket.status)
   const held = scaled(basket.userUnits, 8)
   const unit = side === 'subscribe' ? (wallet.data?.asset.code ?? 'USDT') : t.units
+  const subscribe = side === 'subscribe'
+  // Quick amounts: a share of the balance (subscribe) or of the units held (redeem).
+  const pool = subscribe ? available : held !== null && held > BigInt(0) ? held.toString() : null
+  const poolDecimals = subscribe ? walletDecimals : 8
+  const talk = !value ? kit.enterAmount
+    : fieldError === t.errors.balance ? kit.insufficient
+    : fieldError ? fieldError
+    : !open ? t.server.BASKET_PORTFOLIO_NOT_ACTIVE
+    : pending ? t.submitting
+    : subscribe ? kit.buyN(`${value} ${unit}`) : `${t.confirmRedeem} · ${fmtUnits(value, locale)} ${unit}`
+  const canReview = Boolean(value && !fieldError && !pending && open && (!subscribe || disclosures.data || disclosures.error))
 
-  return <MaisonPage page="basket-order" topbar={topbar} cta>
-    <header className={s.hero}>
-      <p className={s.kicker}>{t.kicker}</p>
-      <h1 className={s.titleL}>{basket.name}</h1>
-      <p className={s.lede}>{t.navAt} <b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b></p>
-    </header>
-
-    {!open && <div className={s.notice} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{t.server.BASKET_PORTFOLIO_NOT_ACTIVE}</span></div>}
-
-    <label className={s.kicker} htmlFor="basket-amount" style={{ marginTop: 4 }}>{side === 'subscribe' ? t.amount : t.units}</label>
-    <div className={s.amount}>
-      <input id="basket-amount" inputMode="decimal" autoComplete="off" placeholder={side === 'subscribe' ? '0.00' : '0'} value={value} aria-invalid={Boolean(fieldError)} aria-describedby="basket-amount-meta"
-        onChange={(event) => { setValue(event.target.value.replace(',', '.').replace(/[^\d.]/g, '')); setServerError(null) }} />
-      <span>{unit}</span>
-    </div>
-    <div className={s.fieldMeta} id="basket-amount-meta">
-      {side === 'subscribe'
-        ? <span>{!wallet.data && !wallet.error ? '…' : wallet.error && !wallet.data ? <button type="button" className={s.link} onClick={wallet.refetch}>{copy.common.unavailable} · {copy.common.retry}</button> : fill(t.available, { v: fmtAtomic(available, walletDecimals, wallet.data?.asset.code ?? 'USDT') })}</span>
-        : <span>{fill(t.held, { v: fmtUnits(basket.userUnits ?? '0', locale) })}</span>}
-      {side === 'subscribe' && basket.minimumSubscriptionUsd && <span className={s.num}>{fill(t.errors.min, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) })}</span>}
-    </div>
-    {value && fieldError && <p className={s.fieldError} role="alert">{fieldError}</p>}
-    {side === 'redeem' && held !== null && held > BigInt(0) && <div className={s.chips}>
-      {[4, 2, 1].map((div) => { const part = fromAtomic((held / BigInt(div)).toString(), 8); return <button key={div} type="button" className={s.chip} aria-pressed={value === part} onClick={() => { setValue(part); setServerError(null) }}>{div === 1 ? 'MAX' : `1/${div}`}</button> })}
-    </div>}
-
-    <section className={s.lacquer} style={{ marginTop: 26 }} aria-live="polite">
-      <dl className={s.summary}>
-        <div><dt>{t.navAt}</dt><dd className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</dd></div>
-        {side === 'subscribe'
-          ? <div data-strong="true"><dt>{t.estUnits}</dt><dd className={s.num}>{estUnits ? `≈ ${Number(estUnits).toLocaleString(locale, { maximumFractionDigits: 8 })}` : '—'}</dd></div>
-          : <div data-strong="true"><dt>{t.units}</dt><dd className={s.num}>{value && !fieldError ? fmtUnits(value, locale) : '—'}</dd></div>}
-      </dl>
-    </section>
-
-    {side === 'subscribe' && <>
-      <SectionHead title={t.disclosure} />
-      {!disclosures.data && !disclosures.error ? <Skeleton rows={2} />
-        : disclosures.error && !disclosures.data ? <StateBlock tone="error" title={copy.common.errorGeneric} body={disclosures.error.message} retry={disclosures.refetch} retryLabel={copy.common.retry} />
-        : disclosure ? <>
-          <p className={s.prose} style={{ margin: 0 }}><b>{disclosure.title}</b></p>
-          <p className={s.prose} style={expanded ? undefined : { display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{disclosure.content}</p>
-          {!expanded && <button type="button" className={s.link} onClick={() => setExpanded(true)}>{t.readMore}</button>}
-          <label className={s.consent}>
-            <input type="checkbox" checked={ack} onChange={(event) => { setAck(event.target.checked); setServerError(null) }} />
-            <span>{fill(t.ack, { v: disclosure.version })}</span>
-          </label>
-        </> : <p className={s.muted} style={{ fontSize: 12.5 }}>{t.noDisclosure}</p>}
-    </>}
-
-    {serverError && <div className={s.notice} data-tone="error" role="alert"><AlertTriangle size={16} /><span>{serverError}</span></div>}
-
-    <div className={s.stickyCta}>
-      <p>{side === 'subscribe' ? t.eligibility : b.note}</p>
-      <button type="button" className={s.cta} onClick={submit} disabled={!ready || !open} aria-busy={pending}>
-        <span>{pending ? t.submitting : side === 'subscribe' ? t.confirm : t.confirmRedeem}</span>
-        <span className={s.ctaIcon}><ArrowRight size={17} /></span>
-      </button>
-    </div>
+  return <MaisonPage page="basket-order" topbar={topbar}>
+    <AmountPad value={value} onChange={(next) => { setValue(next); setServerError(null) }} decimals={subscribe ? 2 : 6} unit={unit} disabled={pending}
+      invalid={Boolean(fieldError)} error={serverError && !reviewOpen ? serverError : null}
+      sub={subscribe
+        ? (!wallet.data && !wallet.error ? '…' : <>{kit.available(fmtAtomic(available, walletDecimals, wallet.data?.asset.code ?? 'USDT'))}{basket.minimumSubscriptionUsd ? <> · {fill(t.errors.min, { v: fmtUsd(basket.minimumSubscriptionUsd, { locale }) })}</> : null}</>)
+        : fill(t.held, { v: fmtUnits(basket.userUnits ?? '0', locale) })}
+      side={[{ label: '25%', value: share(pool, 25, poolDecimals) }, { label: '50%', value: share(pool, 50, poolDecimals) }, { label: '75%', value: share(pool, 75, poolDecimals) }, { label: kit.max, value: share(pool, 100, poolDecimals) }]}
+      header={<div className={s.orderHead}>
+        <p className={s.kicker}>{t.kicker}</p>
+        <h1 className={s.orderTitle}>{content(basket.name)}</h1>
+        <p className={s.muted} style={{ margin: '4px 0 0', fontSize: 13 }}>{t.navAt} <b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b></p>
+      </div>}
+      cta={{ label: talk, disabled: !canReview, busy: pending, onClick: () => { setServerError(null); setReviewOpen(true) } }} />
+    <FlowConfirm open={reviewOpen} onClose={() => { if (!pending) setReviewOpen(false) }} busy={pending}
+      title={subscribe ? kit.reviewBuy : t.redeem} amount={value || '0'} unit={unit}
+      rows={[
+        { label: t.kicker, value: content(basket.name) },
+        { label: t.navAt, value: fmtUsd(basket.navPerUnit, { digits: 4, locale }) },
+        subscribe
+          ? { label: t.estUnits, value: estUnits ? `≈ ${Number(estUnits).toLocaleString(locale, { maximumFractionDigits: 8 })}` : '—', strong: true }
+          : { label: t.units, value: value && !fieldError ? fmtUnits(value, locale) : '—', strong: true },
+      ]}
+      note={subscribe && disclosure ? <><b>{disclosure.title}</b> · {disclosure.content.length > 140 ? `${disclosure.content.slice(0, 140)}…` : disclosure.content}<br />{t.eligibility}</> : subscribe ? t.eligibility : b.note}
+      consent={needsAck && disclosure ? { label: fill(t.ack, { v: disclosure.version }), checked: ack, onChange: (checked) => { setAck(checked); setServerError(null) } } : undefined}
+      error={serverError} confirmLabel={subscribe ? kit.confirmBuy : t.confirmRedeem} onConfirm={() => void submit()} />
   </MaisonPage>
 }
 
-function BasketDone({ done, basketId, topbar }: { done: Done; basketId: string; topbar: ReactNode }) {
+function BasketDone({ done, basketId, topbar, onAgain }: { done: Done; basketId: string; topbar: ReactNode; onAgain: () => void }) {
   const { locale, o: t } = useT()
+  const kit = flowKitCopy(locale)
   const settled = done.data.status === 'settled'
   const nav = fmtUsd(done.data.navPerUnit, { digits: 4, locale })
   return <MaisonPage page="basket-order" topbar={topbar}>
-    <section className={s.lacquer} style={{ marginTop: 18 }} aria-live="polite">
-      <div className={s.statusMark} data-tone={settled ? 'up' : 'pending'}><Check size={26} strokeWidth={1.6} /></div>
-      <span className={s.kicker}>{t.kicker}</span>
-      <h1 className={s.titleL} style={{ marginTop: 10 }}>{done.kind === 'subscribe' ? t.doneSub : t.doneRedeem}</h1>
-      <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 13, lineHeight: 1.55 }}>{done.kind === 'subscribe'
-        ? fill(t.doneBody, { u: fmtUnits(done.data.unitsIssued, locale), n: nav })
-        : fill(t.doneRedeemBody, { u: fmtUnits(done.data.units, locale), v: fmtUsd(done.data.netAmountUsd, { locale }) })}</p>
-      {done.duplicate && <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 12 }}>{t.duplicate}</p>}
-      <dl className={s.summary} style={{ marginTop: 18 }}>
-        {done.kind === 'subscribe' && <div data-strong="true"><dt>{t.amount}</dt><dd className={s.num}>{fmtUsd(done.data.amountUsd, { locale })}</dd></div>}
-        <div><dt>{t.navAt}</dt><dd className={s.num}>{nav}</dd></div>
-        <div><dt>{marketCopy[locale].status.orderId}</dt><dd className={s.num}>{done.data.id.slice(0, 8)}…</dd></div>
-        <div><dt>{marketCopy[locale].status.completed}</dt><dd>{fmtDateTime(done.data.settledAt, locale)}</dd></div>
-      </dl>
-    </section>
-    <div className={s.actions}>
-      <button type="button" className={s.cta} onClick={() => openPath('/assets')}><span>{t.toAssets}</span><span className={s.ctaIcon}><Check size={17} /></span></button>
-      <button type="button" className={s.ghost} onClick={() => openPath(`/basket/${encodeURIComponent(basketId)}`, { replace: true })}>{t.toBasket}</button>
-    </div>
+    <FlowSuccess title={done.kind === 'subscribe' ? t.doneSub : t.doneRedeem} pending={!settled}
+      amount={done.kind === 'subscribe' ? fmtUsd(done.data.amountUsd, { locale }).replace(/^\$/, '') : fmtUnits(done.data.units, locale)} unit={done.kind === 'subscribe' ? 'USD' : t.units}
+      rows={[
+        ...(done.kind === 'subscribe' ? [{ label: t.estUnits, value: fmtUnits(done.data.unitsIssued, locale) }] : [{ label: t.amount, value: fmtUsd(done.data.netAmountUsd, { locale }) }]),
+        { label: t.navAt, value: nav },
+        { label: marketCopy[locale].status.orderId, value: <span className={s.mono}>{done.data.id.slice(0, 8)}</span> },
+        { label: marketCopy[locale].status.completed, value: fmtDateTime(done.data.settledAt, locale) },
+      ]}
+      note={done.duplicate ? t.duplicate : undefined}
+      onDone={() => openPath('/assets')} onAgain={onAgain} onRecords={() => openPath(`/basket/${encodeURIComponent(basketId)}`, { replace: true })} />
+    <span hidden>{kit.done}</span>
   </MaisonPage>
 }

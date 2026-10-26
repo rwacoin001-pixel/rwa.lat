@@ -40,15 +40,9 @@ export const documentPreferencesBootstrap = `(() => {
   root.dataset.theme = theme;
   root.style.colorScheme = theme;
 
-  // Palette A (Paper & Glass: cool white + brand green, and a dark mode) is the design for everyone since 2026-10-26.
-  // The old colours stay reachable for comparison on this device only: ?palette=classic (or off); ?palette=a returns.
-  let palette = 'a';
-  try {
-    const asked = new URLSearchParams(location.search).get('palette');
-    if (asked === 'classic' || asked === 'off') localStorage.setItem('rwa.palette', 'classic');
-    else if (asked === 'a') localStorage.removeItem('rwa.palette');
-    palette = localStorage.getItem('rwa.palette') === 'classic' ? null : 'a';
-  } catch {}
+  // Paper & Glass (palette A) is the only design since 2026-10-26; the old colours and their switch are gone.
+  const palette = 'a';
+  try { localStorage.removeItem('rwa.palette'); } catch {}
   if (palette) root.dataset.palette = palette;
   // Palette A draws its own light and dark: tell browsers that recolour "light-only" pages (Xiaomi / Samsung night
   // modes, Chrome auto-dark) that this page handles dark itself, so they leave its colours and photos alone.

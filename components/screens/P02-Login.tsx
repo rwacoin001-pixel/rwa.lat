@@ -13,7 +13,7 @@ import {
 import { useI18n } from '@/lib/i18n'
 import { authRouteCopy, interpolateRouteCopy } from '@/lib/route-copy'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
-import { authSheetCopy, authPosterTitle, authPosterIntro } from '@/lib/maison-auth-copy'
+import { authSheetCopy } from '@/lib/maison-auth-copy'
 import { authEmailCopy, normalizeEmailCode } from '@/lib/auth-email-copy'
 import styles from './P02-Login.module.css'
 import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
@@ -24,7 +24,6 @@ import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
 import Onboarding from '@/components/onboarding/Onboarding'
-import { usePaletteA } from '@/lib/palette-preview'
 import { CodePad } from '@/components/maison/flow-kit'
 import { paletteASlogan } from '@/lib/palette-a-copy'
 import { InviteCodeField, useInviteCode } from './InviteCodeField'
@@ -63,15 +62,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 }) {
   const { locale, t } = useI18n()
   const copy = authRouteCopy[locale]
-  // Palette A preview: new brand line, and a first-run guide (replay with ?guide=1).
-  const paletteA = usePaletteA()
+  // First-run guide (replay with ?guide=1).
   const [guide, setGuide] = useState(false)
   useEffect(() => {
-    if (!paletteA) return
     let seen = false
     try { seen = localStorage.getItem('rwa.onboarded.v2') === '1' } catch { /* Show it again. */ }
     if (!seen || new URLSearchParams(location.search).has('guide')) setGuide(true)
-  }, [paletteA])
+  }, [])
   const visual = authVisualCopy[locale]
   const sheet = authSheetCopy[locale]
   const emailCopy = authEmailCopy[locale]
@@ -448,16 +445,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     void usePasskey(account.email)
   }, [step, pending])
 
-  const cta = (label: string) => paletteA
-    ? <><span>{label}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} strokeWidth={1.7} /></i></>
-    : <><span>{label}</span><span className={styles.ctaIcon} data-ready={Boolean(email.trim())} aria-hidden="true"><ArrowRight size={21} strokeWidth={1.6} /></span></>
-  // Palette A: the shared controls (components/ui/controls.module.css) instead of the sign-in page's own.
-  const ui = paletteA
-    ? { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: controls.icon }
-    : { field: `${styles.field} ${styles.emailField}`, submit: styles.inlineSubmit, primary: styles.primary, method: undefined }
+  const cta = (label: string) => <><span>{label}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} strokeWidth={1.7} /></i></>
+  // The shared controls (components/ui/controls.module.css).
+  const ui = { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: controls.icon }
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
-  const poster = paletteA ? paletteASlogan(locale).lines : authPosterTitle[locale]
+  const poster = paletteASlogan(locale).lines
   const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
@@ -493,7 +486,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const posterHero = !heading && <>
     <h1 className={styles.cardTitle}>{poster[0]} <em>{poster[1]}</em></h1>
-    <p className={styles.cardLede}>{paletteA ? paletteASlogan(locale).sub : authPosterIntro[locale]}</p>
+    <p className={styles.cardLede}>{paletteASlogan(locale).sub}</p>
   </>
 
   if (guide) return <Onboarding locale={locale} invite={invite} onDone={() => {
@@ -538,15 +531,11 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
       {step === 'new' && <>{inviteField}{agreement}</>}
 
-      {/* Palette A: the code goes in on our keypad (Paste, clipboard pick-up, a switch back to the system keyboard). */}
-      {step === 'code' && paletteA && <div key={shake} className={styles.kitCode}>
+      {/* The code goes in on our keypad (Paste, clipboard pick-up, a switch back to the system keyboard). */}
+      {step === 'code' && <div key={shake} className={styles.kitCode}>
         <CodePad value={code} label={emailCopy.codeLabel} invalid={Boolean(error)} disabled={pending || codeState === 'verified'}
           onChange={next => { const digits = normalizeEmailCode(next); setCode(digits); setError(''); if (digits.length === 6) void verifyCode(digits) }} />
       </div>}
-      {step === 'code' && !paletteA && <label key={shake} className={`${styles.field} ${styles.codeBox}`} data-state={codeState === 'verified' ? 'ok' : error ? 'error' : undefined}>
-        <span className={styles.srOnly}>{emailCopy.codeLabel}</span>
-        <input ref={codeInput} type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} enterKeyHint="done" placeholder="000000" value={code} onChange={event => { const next = normalizeEmailCode(event.target.value); setCode(next); setError(''); if (next.length === 6) void verifyCode(next) }} aria-invalid={Boolean(error)} disabled={pending || codeState === 'verified'} dir="ltr" />
-      </label>}
       {step === 'code' && (pending || codeState === 'verified') && <div className={styles.codeStatus} role="status" aria-live="polite" data-tone={codeState === 'verified' ? 'ok' : undefined}>
         {codeState === 'verified' ? <><Check size={16} strokeWidth={2.2} aria-hidden="true" />{copy.loginSuccess}</> : <><LoaderCircle className={styles.spinner} size={15} aria-hidden="true" />{emailCopy.verifying}</>}
       </div>}
@@ -572,7 +561,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
     {/* Each icon reuses the existing sign-in handler; email autofill remains available. */}
     {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <div className={paletteA ? styles.methodsA : styles.altMethods}>
+      <div className={styles.methodsA}>
         <button type="button" className={ui.method} disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /></button>
         <button type="button" className={ui.method} disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
         <button type="button" className={ui.method} disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>

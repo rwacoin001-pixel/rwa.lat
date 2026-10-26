@@ -1,8 +1,7 @@
 'use client'
 
-import { ArrowLeft, Delete, LockKeyhole, ShieldCheck, Shuffle } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
-import { usePaletteA } from '@/lib/palette-preview'
+import { ArrowLeft, ShieldCheck, Shuffle } from 'lucide-react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { flowKitCopy } from '@/lib/flow-kit-copy'
 import { NumPad } from './flow-kit'
 import { useI18n } from '@/lib/i18n'
@@ -47,32 +46,7 @@ function KitPinPad({ value, onChange, disabled, invalid, onBack, backLabel }: { 
 }
 
 export function TransactionPinPad({ value, onChange, disabled = false, invalid = false, onBack, backLabel }: { value: string; onChange: (value: string) => void; disabled?: boolean; invalid?: boolean; onBack?: () => void; backLabel?: string }) {
-  if (usePaletteA()) return <KitPinPad value={value} onChange={onChange} disabled={disabled} invalid={invalid} onBack={onBack} backLabel={backLabel} />
-  return <ClassicPinPad value={value} onChange={onChange} disabled={disabled} invalid={invalid} onBack={onBack} backLabel={backLabel} />
-}
-
-function ClassicPinPad({ value, onChange, disabled = false, invalid = false, onBack, backLabel }: { value: string; onChange: (value: string) => void; disabled?: boolean; invalid?: boolean; onBack?: () => void; backLabel?: string }) {
-  const { locale } = useI18n()
-  const copy = transactionPinCopy[locale].pad
-  const pad = useRef<HTMLDivElement>(null)
-  useEffect(() => { if (!disabled) pad.current?.focus({ preventScroll: true }) }, [disabled])
-  const digit = (n: string) => { if (!disabled && value.length < 6) onChange(value + n) }
-  const keyboard = (event: KeyboardEvent) => {
-    if (disabled || event.metaKey || event.ctrlKey || event.altKey) return
-    if (/^[0-9]$/.test(event.key)) { event.preventDefault(); digit(event.key) }
-    else if (event.key === 'Backspace' || event.key === 'Delete') { event.preventDefault(); onChange(value.slice(0, -1)) }
-  }
-  return <div className={x.pad} ref={pad} tabIndex={disabled ? -1 : 0} onKeyDown={keyboard} role="group" aria-label={copy.label} data-pin-pad="" data-invalid={invalid || undefined}>
-    <div className={x.slots} dir="ltr" role="img" aria-live="polite" aria-label={copy.filled(value.length, 6)}>
-      {Array.from({ length: 6 }, (_, i) => <span key={i} data-filled={i < value.length} aria-hidden="true" />)}
-    </div>
-    <div className={x.keys} dir="ltr">
-      {['1', '2', '3', '4', '5', '6', '7', '8', '9'].map(n => <button key={n} type="button" disabled={disabled || value.length >= 6} aria-label={copy.digit(n)} onClick={() => digit(n)}>{n}</button>)}
-      {onBack ? <button type="button" className={x.keyBack} disabled={disabled} aria-label={backLabel} onClick={onBack}><ArrowLeft size={20} aria-hidden="true" /></button> : <span aria-hidden="true" />}
-      <button type="button" disabled={disabled || value.length >= 6} aria-label={copy.digit('0')} onClick={() => digit('0')}>0</button>
-      <button type="button" disabled={disabled || !value} aria-label={copy.backspace} onClick={() => onChange(value.slice(0, -1))}><Delete size={23} aria-hidden="true" /></button>
-    </div>
-  </div>
+  return <KitPinPad value={value} onChange={onChange} disabled={disabled} invalid={invalid} onBack={onBack} backLabel={backLabel} />
 }
 
 export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy = false, error }: {
@@ -96,19 +70,15 @@ export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy =
     setValue(''); sending.current = true
     try { await onConfirm(pin) } finally { sending.current = false }
   }
-  // Palette A: the sixth digit confirms (the keypad has no Enter); the button stays only as a busy line.
-  const paletteA = usePaletteA()
+  // The sixth digit confirms (the keypad has no Enter); the button stays only as a busy line.
   const confirmRef = useRef(confirm)
   confirmRef.current = confirm
-  useEffect(() => { if (paletteA && open && isPin(value)) void confirmRef.current() }, [paletteA, open, value])
+  useEffect(() => { if (open && isPin(value)) void confirmRef.current() }, [open, value])
   return <Sheet open={open} busy={busy} onClose={() => { setValue(''); onClose() }} title={p.prompt.title} data-transaction-pin="confirm">
     <dl className={`${s.summary} ${x.summary}`}>{summary.map(line => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl>
     <TransactionPinPad value={value} onChange={setValue} disabled={busy} invalid={Boolean(error)} />
     {error && <p className={s.fieldError} role="alert">{error}</p>}
-    {paletteA ? <p className={x.working} aria-live="polite">{busy ? p.working : null}</p>
-      : <button type="button" className={s.cta} disabled={busy || !isPin(value)} aria-busy={busy} onClick={() => void confirm()}>
-        <span>{busy ? p.working : p.prompt.confirm}</span><LockKeyhole size={18} aria-hidden="true" />
-      </button>}
+    <p className={x.working} aria-live="polite">{busy ? p.working : null}</p>
   </Sheet>
 }
 

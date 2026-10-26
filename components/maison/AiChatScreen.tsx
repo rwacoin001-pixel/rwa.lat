@@ -25,10 +25,8 @@ import type { AiPageContext } from '@/lib/ai-page-context'
 import { showAiAnswer, type AiAttachment } from '@/lib/ai-attachment-policy'
 import { AI_CHAT_SESSION_KEY, clearAiChatSession, parseAiChatSession, serializeAiChatSession, type AiChatMessage } from '@/lib/ai-chat-session'
 import AiComposer, { type ComposerVoice } from './AiComposer'
-import AiPearl from './AiPearl'
 import { buddySignal } from '@/lib/buddy-signals'
 import { BuddyFace } from '@/components/buddy/BuddyFace'
-import { usePaletteA } from '@/lib/palette-preview'
 import { aiPearlCopy, pearlGreeting } from '@/lib/ai-pearl-copy'
 import { isVoiceActive, pearlFor, showsSuggestions } from '@/lib/ai-surface-state'
 import AiAnswerActions from './AiAnswerActions'
@@ -115,17 +113,14 @@ function Thinking({ label, slow, slower, seconds }: { label: string; slow: strin
 // The assistant's avatar is the same pearl as the welcome screen: still at rest, an orbiting arc while it
 // thinks, and one bright pulse as an answer lands.
 function Mark({ busy = false, speaking = false, size = 'sm' }: { busy?: boolean; speaking?: boolean; size?: 'sm' | 'lg' }) {
-  // Palette A: the paper buddy (thinking while it waits, talking as the answer lands, still otherwise).
-  const paperBuddy = usePaletteA()
-  if (paperBuddy) return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><BuddyFace size={size === 'lg' ? 56 : 26} mood={busy ? 'thinking' : speaking ? 'replying' : 'idle'} still={!busy && !speaking} /></span>
-  return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><AiPearl size={size === 'lg' ? 64 : 28} inset={.37} state={busy ? 'thinking' : speaking ? 'speaking' : 'idle'} pulse={speaking ? 1 : 0} still={!busy && !speaking} /></span>
+  // The paper buddy: thinking while it waits, talking as the answer lands, still otherwise.
+  return <span className={a.mark} data-size={size} data-busy={busy || undefined} aria-hidden="true"><BuddyFace size={size === 'lg' ? 56 : 26} mood={busy ? 'thinking' : speaking ? 'replying' : 'idle'} still={!busy && !speaking} /></span>
 }
 
 /* ---------- Screen ---------- */
 
 export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; onPlan: () => void; pageContext?: AiPageContext }) {
   const { locale } = useI18n()
-  const paletteA = usePaletteA()
   const pearl = aiPearlCopy(locale), prompts = aiVisualCopy(locale).prompts.slice(0, 3)
   const c = aiShellCopy[locale], chat = aiChatCopy[locale]
   const voiceCopy = aiVoiceCopy(locale)
@@ -302,9 +297,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
 
       <div id="ai-panel-ai" role="tabpanel" aria-labelledby="ai-tab-ai" hidden={community} className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
         {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined}>
-          {paletteA
-            ? <BuddyFace size={132} mood={voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
-            : <AiPearl size={184} state={pearlFor(voice.state)} pulse={voice.live.length} cancel={voice.state === 'cancelArmed'} className={a.welcomePearl} />}
+          <BuddyFace size={132} mood={voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
           {/* One line, always: the greeting at rest, the reader's own words while they speak. */}
           {listeningHere
             ? <p className={a.welcomeLive} dir="auto" role="status" aria-live="polite" data-empty={!voice.live || undefined} data-cancel={voice.state === 'cancelArmed' || undefined}>{voice.live || (voice.state === 'listening' ? pearl.listening : ' ')}</p>

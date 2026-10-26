@@ -21,17 +21,14 @@ import { fundsCopy } from '@/lib/maison-funds-copy'
 import { AMOUNT_MASK, useAmountMask } from '@/lib/use-amount-mask'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
-import { Figure, Lacquer, PollBar, Segmented, StatStrip, useAutoAnimate } from './motion'
+import { Figure, Lacquer, PollBar, StatStrip, useAutoAnimate } from './motion'
 import { PortfolioHistoryChart } from './PortfolioHistoryChart'
-import { MyPredictionsCard } from './MyPredictionsCard'
 import { RedeemDone, RedeemSheet, RedemptionsSection } from './RedeemSheet'
 import { assetToolsCopy } from '@/lib/maison-assets-tools-copy'
 import type { Redemption } from '@/lib/api/portfolio'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import bp from './basket-positions.module.css'
-import h from './hero-card.module.css'
 import pa from './portfolio-a.module.css'
-import { usePaletteA } from '@/lib/palette-preview'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -115,8 +112,6 @@ export function PortfolioScreen({ query }: { query: string }) {
   const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
   const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
   const { masked, toggle: toggleMask } = useAmountMask()
-  const paletteA = usePaletteA()
-  const hc = heroCardCopy[locale]
   const hide = (text: string) => masked ? AMOUNT_MASK : text
   const holdingsNote = holdings !== null && holdingsCount !== null ? `${holdingsCount} · ${hide(fmtUsdt(holdings.toString(), { locale }))}` : undefined
   // The value-trend section only exists once two snapshots do, so the numbering below follows what is actually on screen.
@@ -155,43 +150,18 @@ export function PortfolioScreen({ query }: { query: string }) {
   </>
   const pnlLine = totals && totals.rows.length > 0 ? <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span> : null
 
-  return <MaisonPage page="portfolio" dock topbar={paletteA ? undefined : <RwaTopbar screen="portfolio" title={p.title} />}>
-    {/* Palette A: no title bar; the page opens on its own menu, pinned at the top (as exchange wallets do). */}
-    {paletteA && <TopTabs value={tab} onChange={setTab} label={p.title} options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />}
-    {!paletteA && <header className={s.hero}>
-      <p className={s.kicker}><span className={s.liveDot} aria-hidden="true" />{p.kicker}</p>
-      <h1 className={s.display}>{p.title}</h1>
-    </header>}
+  return <MaisonPage page="portfolio" dock>
+    {/* No title bar: the page opens on its own menu, pinned at the top (as exchange wallets do). */}
+    <TopTabs value={tab} onChange={setTab} label={p.title} options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />
 
     {bothFailed ? <StateBlock tone="error" title={common.errorGeneric} body={positions.error?.message} retry={retryAll} retryLabel={common.retry} />
-      : paletteA ? tab === 'overview' && <PaperTotal masked={masked} onMask={toggleMask} loading={total === null && loadingAny}
+      : tab === 'overview' && <PaperTotal masked={masked} onMask={toggleMask} loading={total === null && loadingAny}
           figure={masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}
           line={pnlLine ?? <span>{p.available} <b className={s.num}>{hide(bare(balances?.availableAtomic))}</b> USDT</span>}
-          note={p.totalNote} breakdown={breakdown} notes={notes} />
-      : <Lacquer aria-live="polite">
-        <div className={h.capRow}>
-          <span className={s.kicker}>{p.total} · USDT</span>
-          <button type="button" className={h.eye} aria-pressed={masked} aria-label={masked ? hc.showAmounts : hc.hideAmounts} title={masked ? hc.showAmounts : hc.hideAmounts} onClick={toggleMask}>{masked ? <EyeOff size={14} aria-hidden="true" /> : <Eye size={14} aria-hidden="true" />}</button>
-        </div>
-        {total === null && loadingAny ? <Skeleton rows={1} />
-          : <p className={`${s.bigFigure} ${s.num}`}>{masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}<small>USDT</small></p>}
-        <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5 }}>
-          {pnlLine}
-          {p.totalNote}
-        </p>
-        {/* Cards set into the total: holdings and income side by side, cash below with its three balances. */}
-        {breakdown}
-        {notes}
-      </Lacquer>}
+          note={p.totalNote} breakdown={breakdown} notes={notes} />}
 
-    {(!paletteA || tab === 'overview') && <QuantAssetsCard />}
+    {tab === 'overview' && <QuantAssetsCard />}
 
-    {/* Palette A: "My predictions" lives in the tools list below, not as a second card under the total. */}
-    {!paletteA && <div className={h.maskScope} data-masked={masked}><MyPredictionsCard /></div>}
-
-    {!paletteA && <div style={{ marginTop: 20 }}>
-      <Segmented value={tab} onChange={setTab} label={p.title} sticky options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />
-    </div>}
 
     {tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
       <Allocation rows={totals?.rows} baskets={basketRows} cash={cash} loading={positions.loading || wallet.loading || baskets.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} partial={incomplete} />
@@ -275,9 +245,8 @@ function Allocation({ rows, baskets, cash, loading, error, retry, products, part
     return { whole, items: all.sort((a, b) => a.value === b.value ? 0 : a.value > b.value ? -1 : 1).map((slice) => ({ ...slice, ratio: share(slice.value, whole) })) }
   }, [baskets, cash, p.cash, p.product, products, rows])
   const { masked } = useAmountMask()
-  const paletteA = usePaletteA()
-  // Palette A: with nothing but cash there is no allocation to show; the holdings section below says "no holdings" once.
-  if (paletteA && !error && !(loading && !rows) && slices.items.every((slice) => slice.cash)) return null
+  // With nothing but cash there is no allocation to show; the holdings section below says "no holdings" once.
+  if (!error && !(loading && !rows) && slices.items.every((slice) => slice.cash)) return null
   return <>
     <SectionHead index="01" title={p.allocation} note={p.allocationNote} />
     {error ? <StateBlock tone="error" title={p.loadError} retry={retry} retryLabel={common.retry} />

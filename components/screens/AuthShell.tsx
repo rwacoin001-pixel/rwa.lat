@@ -10,7 +10,6 @@ import styles from './P02-Login.module.css'
 import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
 import { CabinetScene } from './CabinetFace'
-import { usePaletteA } from '@/lib/palette-preview'
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -46,8 +45,7 @@ export function AuthShell({ children, hero, footer, attrs }: {
   const cool = theme === 'dark'
   const media = cool ? 'cool' : 'warm'
   const poster = attrs?.['data-auth-poster'] === 'true'
-  const paletteA = usePaletteA()
-  const cabinet = poster && paletteA
+  const cabinet = poster
   const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>A<i>-</i>REIT</span>}</>
   return <section className={`screen ${styles.root}`} data-auth-cabinet={cabinet || undefined} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     <div className={styles.scene} aria-hidden="true">

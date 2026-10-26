@@ -9,7 +9,7 @@ import { aiVisualCopy } from '@/lib/ai-visual-copy'
 import { AI_FILE_ACCEPT, AI_FILE_LIMITS, type AiAttachment } from '@/lib/ai-attachment-policy'
 import { readAiFile } from '@/lib/ai-file-parser'
 import { useAiVoice } from './useAiVoice'
-import AiPearl from './AiPearl'
+import { BuddyFace } from '@/components/buddy/BuddyFace'
 import { aiPearlCopy } from '@/lib/ai-pearl-copy'
 import { holdLabel, isVoiceActive, pearlFor, showsSuggestions, surfaceState, type SurfaceState } from '@/lib/ai-surface-state'
 import AiFaqTicker from './AiFaqTicker'
@@ -99,10 +99,10 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   const voiceError = voice.error === 'unavailable' ? c.voiceUnavailable : voice.error === 'denied' ? v.denied : voice.error === 'timeout' ? v.timeout : voice.error === 'empty' ? c.voiceEmpty : voice.error === 'network' ? v.network : voice.error === 'capture' ? v.capture : voice.error === 'language' ? v.language : voice.error ? c.voiceFailed : ''
   return <div className={s.wrap} dir={locale === 'ar' ? 'rtl' : undefined}>
     {suggestions && showsSuggestions(state) && <AiFaqTicker questions={visual.prompts} label={visual.suggestions} onSelect={ask}/>}
-    {/* Holding to talk: a small pearl listens above the bar and only the recognised words appear; every
+    {/* Holding to talk: the paper buddy listens above the bar and only the recognised words appear; every
         instruction (release to send, slide up to cancel) lives on the bar under the thumb. */}
     <AnimatePresence>{voiceOverlay && isVoiceActive(state) && <motion.div className={s.recording} data-cancel={cancelled || undefined} data-phase={voice.phase} initial={{ opacity: 0, y: reduced ? 0 : 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: reduced ? 0 : 5 }}>
-      <AiPearl size={76} state={pearlFor(state)} pulse={voice.live.length} cancel={state === 'cancelArmed'}/>
+      <BuddyFace size={64} mood={state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(state)] ?? 'idle'} />
       <p className={s.live} dir="auto" data-empty={!voice.live || undefined}>{voice.live || (state === 'listening' ? pearl.listening : '')}</p>
     </motion.div>}</AnimatePresence>
     <AnimatePresence>{picker && <motion.div className={s.picker} initial={{ opacity: 0, y: reduced ? 0 : 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} role="group" aria-label={c.attach}>
