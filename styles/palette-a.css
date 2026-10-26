@@ -55,7 +55,6 @@ html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='d
   --pa-tile-shadow: inset 1px 1px 0 rgba(255, 255, 255, .16), inset -1px -2px 2px rgba(0, 0, 0, .35), 0 0 0 .5px rgba(0, 0, 0, .6), 5px 11px 20px -8px rgba(0, 0, 0, .85);
   --pa-tile-shadow-pressed: inset 1px 2px 4px rgba(0, 0, 0, .5), inset -1px -1px 0 rgba(255, 255, 255, .06), 0 0 0 .5px rgba(0, 0, 0, .6), 1px 2px 4px -2px #000;
   --pa-tile-glyph: drop-shadow(0 -1px 0 rgba(0, 0, 0, .5));
-  --pa-tile-well: 1;
   --pa-well-bg: #16171a; --pa-well-shadow: inset 0 2px 5px rgba(0, 0, 0, .7), inset 0 -1px 0 rgba(255, 255, 255, .06);
   --pa-cta-bg: linear-gradient(180deg, #f4f5f7, #d9dce1); --pa-cta-ink: #0b0d12;
   --pa-cta-shadow: inset 0 1px 0 #ffffff, 0 10px 20px -10px #000;

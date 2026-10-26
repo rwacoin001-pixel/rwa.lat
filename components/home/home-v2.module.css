@@ -22,8 +22,6 @@
   transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring), box-shadow var(--pa-dur-press, 120ms); }
 .tile:active .tileFace { transform: scale(.95); box-shadow: var(--pa-tile-shadow-pressed); }
 .tileFace svg { position: relative; filter: var(--pa-tile-glyph, none); }
-/* Night: the glyph sits in a small well pressed into the graphite, like the reference terminal key. */
-:global(.rwa-mobile[data-theme='dark']) .tileFace::before { content: ''; position: absolute; inset: 12px; border-radius: 50%; background: var(--pa-well-bg); box-shadow: var(--pa-well-shadow); }
 .tile:focus-visible { outline: none; }
 .tile:focus-visible .tileFace { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 
