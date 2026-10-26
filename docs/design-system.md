@@ -16,7 +16,7 @@
 ## 3. 字体
 - 拉丁字母和数字：**Satoshi**（自托管 `public/fonts/satoshi`，400/500/700/900）。
 - 中文：苹果设备用**苹方**；华为、荣耀用本机的**鸿蒙黑体**；其他设备用**思源黑体**（Noto Sans SC，OFL 授权，自托管切片 `public/fonts/noto-sans-sc`，`styles/noto-sans-sc.css`，页面用到哪块才下载）。
-  App 自己文案里的字（约 1,200 个）另有一套精简切片 `A-REIT Sans SC`（`public/fonts/noto-sans-sc-app`，约 400 KB，排在 Noto Sans SC 前面），所以页面只下几个小文件；其他字（名字、新闻、服务器消息）才用完整切片。**加了新的中文文案后，重新跑 `scripts/fonts/subset_noto_app.py <repo>`**（不跑也不会缺字，只是新字走完整切片）。
+  App 自己文案里的字（约 1,200 个）用精简文件 `public/fonts/noto-sans-sc-app`（共约 400 KB）；其他字（名字、新闻、服务器消息）用完整切片。两种文件在同一个字体名下，字符不重叠，所以每个字只下载一个文件。`styles/noto-sans-sc.css` 由 `scripts/fonts/subset_noto_app.py` 生成，**加了新的中文文案后重新跑一次**（不跑也不会缺字，只是新字走完整切片）。
   鸿蒙黑体授权不允许修改字体文件，不能切片，所以不作为网页字体下载。
 - 开关：`--pa-sans` 是整套字体栈；`--font-geist-sans` 和 `--home-display-latin` 都指向它（包括 next/font 在页面根上重设的地方）。
 - 中文标题用 600，不用 700 以上。

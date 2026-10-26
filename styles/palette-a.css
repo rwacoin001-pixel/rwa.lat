@@ -11,7 +11,7 @@
 /* next/font sets --font-geist-sans / --home-display-latin again on the Maison and home roots (a hashed __variable class). */
 html[data-palette='a'] [class*='__variable'] { --font-geist-sans: var(--pa-sans); --home-display-latin: var(--pa-sans); }
 html[data-palette='a'] {
-  --pa-sans: 'Satoshi', 'PingFang SC', 'HarmonyOS Sans SC', 'HarmonyOS Sans', 'Noto Sans CJK SC', 'A-REIT Sans SC', 'Noto Sans SC';
+  --pa-sans: 'Satoshi', 'PingFang SC', 'HarmonyOS Sans SC', 'HarmonyOS Sans', 'Noto Sans CJK SC', 'Noto Sans SC';
   --font-geist-sans: var(--pa-sans); --home-display-latin: var(--pa-sans);
   --font-sans: var(--font-geist-sans), 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
   --x-font: var(--font-sans);
