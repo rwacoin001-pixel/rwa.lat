@@ -47,6 +47,11 @@ export class NotificationService {
     return rows.map((r) => this.toView(r))
   }
 
+  /** How many notifications this user has not read yet (for the live count stream). */
+  countUnread(userId: string): Promise<number> {
+    return this.notificationRepo.count({ where: { recipient_user_id: userId, read_at: IsNull() } })
+  }
+
   async markRead(id: string, userId: string): Promise<NotificationView> {
     const note = await this.notificationRepo.findOne({
       where: { id, recipient_user_id: userId },

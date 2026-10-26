@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react'
 import { createPortal } from 'react-dom'
 import { ChevronRight } from 'lucide-react'
-import { markAllNotificationsRead, markNotificationRead, type NotificationItem } from '@/lib/api/notifications'
+import { getNotificationDigest, markAllNotificationsRead, markNotificationRead, type NotificationItem } from '@/lib/api/notifications'
 import { openPath } from '@/lib/maison-nav'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { formatTime } from '@/lib/display/format'
@@ -27,6 +27,14 @@ export function BuddyDigest({ items, onClose, onAllRead, onAskAi }: { items: Not
   const c = COPY[locale] ?? COPY.en!
   const unread = items.filter(item => !item.readAt).sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   const [busy, setBusy] = useState(false)
+  // The buddy's one-line read of what came in (AI, facts only). Shown only when the model wrote it; the plain fallback
+  // would just repeat the list below.
+  const [summary, setSummary] = useState<string | null>(null)
+  useEffect(() => {
+    let live = true
+    void getNotificationDigest(locale).then((result) => { if (live && result.ok && result.data.source === 'ai') setSummary(result.data.summary) })
+    return () => { live = false }
+  }, [locale])
   useEffect(() => {
     const key = (event: KeyboardEvent) => { if (event.key === 'Escape') onClose() }
     window.addEventListener('keydown', key)
@@ -46,6 +54,7 @@ export function BuddyDigest({ items, onClose, onAllRead, onAskAi }: { items: Not
   return createPortal(<div className={styles.scrim} onClick={onClose}>
     <section className={styles.sheet} role="dialog" aria-modal="true" aria-label={c.title} onClick={event => event.stopPropagation()}>
       <p className={styles.lede}>{c.lede(unread.length)}</p>
+      {summary && <p className={styles.summary} aria-live="polite">{summary}</p>}
       <ul className={styles.list}>
         {unread.slice(0, 5).map(item => <li key={item.id}><button type="button" onClick={() => void open(item)} disabled={busy}>
           <span className={styles.meta}><em>{c.topics[topicOf(item.kind)]}</em><time>{formatTime(item.createdAt, locale, { relative: true })}</time></span>

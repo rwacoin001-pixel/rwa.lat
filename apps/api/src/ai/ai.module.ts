@@ -22,11 +22,13 @@ import { AiMandateController, AdminAiInvestmentController } from './ai-mandate.c
 import { OrdersModule } from '../orders/orders.module'
 import { PortfolioModule } from '../portfolio/portfolio.module'
 import { ComplianceModule } from '../compliance/compliance.module'
+import { AiNotificationDigestService } from './ai-notification-digest.service'
+import { AiNotificationDigestController } from './ai-notification-digest.controller'
 
 @Module({
   imports: [TypeOrmModule.forFeature([AiChatSession, AiChatMessage]), SecurityModule, CatalogModule, AdminRbacModule, NotificationModule, OrdersModule, PortfolioModule, ComplianceModule],
-  controllers: [AiController, AiPlanningController, AdminAiKnowledgeController, AiKnowledgeController, AiCustomerToolsController, AiMandateController, AdminAiInvestmentController],
-  providers: [AiService, AiModelClient, AiPlanningService, AiKnowledgeService, AiPlatformKnowledgeService, AiCustomerToolsService, AiMandateService, AiAutomaticService],
+  controllers: [AiController, AiPlanningController, AdminAiKnowledgeController, AiKnowledgeController, AiCustomerToolsController, AiMandateController, AdminAiInvestmentController, AiNotificationDigestController],
+  providers: [AiService, AiModelClient, AiPlanningService, AiKnowledgeService, AiPlatformKnowledgeService, AiCustomerToolsService, AiMandateService, AiAutomaticService, AiNotificationDigestService],
   exports: [AiService],
 })
 export class AiModule {}

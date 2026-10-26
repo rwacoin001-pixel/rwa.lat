@@ -6,6 +6,7 @@ import { subscribeToast, getToast } from '@/lib/toast-store'
 import { useUnread } from '@/hooks/useUnread'
 import { useSignedIn } from '@/lib/maison-nav'
 import { BuddyDigest } from './BuddyDigest'
+import { watchUnread } from '@/lib/api/notification-stream'
 import styles from './Buddy.module.css'
 
 const QUIET_MS = 60_000
@@ -23,7 +24,7 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
   const host = useRef<HTMLSpanElement>(null)
   const buddy = useRef<PaperBuddy | null>(null)
   const signedIn = useSignedIn()
-  const { data, unread } = useUnread(signedIn)
+  const { data, unread, refetch } = useUnread(signedIn)
   const [digest, setDigest] = useState(false)
   const held = useRef(false)
   const passing = useRef(0)
@@ -51,6 +52,27 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
     buddy.current = b
     return () => { b.destroy(); buddy.current = null }
   }, [base])
+
+  // Live: the server tells us when the unread count changes, so a new notification shows at once (polling stays as
+  // the fallback). Only while the page is visible; the stream closes when the app goes to the background.
+  const latestUnread = useRef(unread)
+  latestUnread.current = unread
+  const reload = useRef(refetch)
+  reload.current = refetch
+  useEffect(() => {
+    if (!signedIn) return
+    let controller: AbortController | null = null
+    const start = () => {
+      if (controller || document.visibilityState !== 'visible') return
+      controller = new AbortController()
+      watchUnread((count) => { if (count !== latestUnread.current) void reload.current() }, controller.signal)
+    }
+    const stop = () => { controller?.abort(); controller = null }
+    const onVisibility = () => { if (document.visibilityState === 'visible') start(); else stop() }
+    start()
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => { stop(); document.removeEventListener('visibilitychange', onVisibility) }
+  }, [signedIn])
 
   // Notifications: the count on the rim; a rise lights the buddy up.
   useEffect(() => {

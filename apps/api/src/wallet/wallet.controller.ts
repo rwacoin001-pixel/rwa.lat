@@ -132,6 +132,13 @@ export class WalletController {
    * move. Complements `/transfers/quote` so the summary, the step-up sheet and
    * the receipt all read the same numbers.
    */
+  @Get('transfer-recipients')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'People the signed-in user recently sent transfers to (masked names, newest first)' })
+  recentTransferRecipients(@CurrentAuth() actor: SecurityActor) {
+    return this.wallet.recentTransferRecipients(actor.userId)
+  }
+
   @Get('transfer-recipients/:userId')
   @ApiOperation({ summary: 'Resolve a transfer recipient to a masked display hint' })
   transferRecipient(@CurrentAuth() actor: SecurityActor, @Param('userId', new ParseUUIDPipe()) userId: string) {

@@ -50,6 +50,19 @@ import {
   type WithdrawalState,
 } from './wallet.entities'
 
+/** A community name reduced to a hint ("张*", "L**n"); default "Member <hex>" names count as no name. */
+function maskedName(name: string | null) {
+  const raw = (name ?? '').trim()
+  const usable = raw && !/^Member [0-9a-f]{6}$/.test(raw) ? raw : ''
+  const chars = Array.from(usable)
+  const displayName = chars.length === 0
+    ? null
+    : chars.length <= 2
+      ? `${chars[0]}*`
+      : `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`
+  return { displayName, avatarInitial: chars.length > 0 ? chars[0] : null }
+}
+
 @Injectable()
 export class WalletService {
   private readonly executionRequested: boolean
@@ -405,15 +418,7 @@ export class WalletService {
     if (!row) {
       throw new NotFoundException({ code: WALLET_ERROR_CODES.TRANSFER_RECIPIENT_UNAVAILABLE, message: 'Recipient account does not exist.' })
     }
-    // Community names default to "Member <hex>"; those carry no information, so treat them as absent.
-    const raw = (row.display_name ?? '').trim()
-    const usable = raw && !/^Member [0-9a-f]{6}$/.test(raw) ? raw : ''
-    const chars = Array.from(usable)
-    const displayName = chars.length === 0
-      ? null
-      : chars.length <= 2
-        ? `${chars[0]}*`
-        : `${chars[0]}${'*'.repeat(chars.length - 2)}${chars[chars.length - 1]}`
+    const { displayName, avatarInitial } = maskedName(row.display_name)
     const active = row.status === 'active'
     const qualified = active && await hasQualifyingDeposit(this.db, recipientUserId)
     return {
@@ -422,7 +427,31 @@ export class WalletService {
       receivable: qualified,
       reason: active ? qualified ? null : 'deposit_threshold' : row.status,
       displayName,
-      avatarInitial: chars.length > 0 ? chars[0] : null,
+      avatarInitial,
+    }
+  }
+
+  /**
+   * The people this user has recently sent money to (posted transfers, newest first, five at most), so the transfer
+   * page can offer them on any device. Names are masked exactly as in the single-recipient check.
+   */
+  async recentTransferRecipients(userId: string) {
+    const rows = (await this.db.query(
+      `SELECT t.recipient_user_id AS user_id, MAX(COALESCE(t.posted_at, t.requested_at)) AS last_at, cp.display_name AS display_name
+         FROM app.internal_transfers t
+         LEFT JOIN app.community_profiles cp ON cp.user_id = t.recipient_user_id AND cp.kind = 'member'
+        WHERE t.sender_user_id = $1 AND t.state = 'posted' AND t.recipient_user_id <> $1
+        GROUP BY t.recipient_user_id, cp.display_name
+        ORDER BY last_at DESC
+        LIMIT 5`,
+      [userId],
+    )) as Array<{ user_id: string; last_at: Date | string; display_name: string | null }>
+    return {
+      recipients: rows.map((row) => ({
+        userId: row.user_id,
+        lastSentAt: new Date(row.last_at).toISOString(),
+        ...maskedName(row.display_name),
+      })),
     }
   }
 

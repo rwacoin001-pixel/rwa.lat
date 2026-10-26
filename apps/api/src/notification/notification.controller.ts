@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import { Body, Controller, Get, Param, Post, Query, Sse, UseGuards, type MessageEvent } from '@nestjs/common'
+import { distinctUntilChanged, from, interval, map, merge, startWith, switchMap, type Observable } from 'rxjs'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
@@ -25,6 +26,22 @@ export class NotificationController {
     @Query() query: ListNotificationsQueryDto,
   ) {
     return this.svc.listForUser(actor.userId, query.channel, query.kind, query.filter)
+  }
+
+  /**
+   * Live unread count for the AI buddy: the current count at once, then again whenever it changes (checked every
+   * 10 s), plus a keep-alive every 25 s so proxies hold the stream open. Clients read it with fetch + Authorization.
+   */
+  @Sse('stream')
+  stream(@CurrentAuth() actor: SecurityActor): Observable<MessageEvent> {
+    const counts = interval(10_000).pipe(
+      startWith(0),
+      switchMap(() => from(this.svc.countUnread(actor.userId))),
+      distinctUntilChanged(),
+      map((unread): MessageEvent => ({ type: 'unread', data: { unread } })),
+    )
+    const keepAlive = interval(25_000).pipe(map((): MessageEvent => ({ type: 'ping', data: {} })))
+    return merge(counts, keepAlive)
   }
 
   @Post(':id/read')

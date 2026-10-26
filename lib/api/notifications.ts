@@ -14,3 +14,9 @@ export async function markAllNotificationsRead() {
   if (result.ok) invalidate('notifications:')
   return result
 }
+
+/** The AI buddy's one-line digest of the unread notifications (facts only; a plain line when the model is unavailable). */
+export type NotificationDigest = { summary: string | null; count: number; source: 'ai' | 'rule' | 'none' }
+export async function getNotificationDigest(locale: string) {
+  return request<NotificationDigest>(`/v1/ai/notifications/digest?locale=${encodeURIComponent(locale)}`, { loading: 'silent', timeoutMs: 9_000 })
+}
