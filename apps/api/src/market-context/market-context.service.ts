@@ -111,9 +111,13 @@ export class MarketContextService {
     const onchain = llamaRead.value ?? []
     if (onchain.length === 0) degradedReasons.push('链上数据暂不可用')
 
+    // ---- 7 天走势（首页小走势线）：1 小时一次，宽限 24 小时。最多等 1.5 秒，取不到就是 null，绝不拖慢或拖垮报价 ----
+    const sparks = await this.readSparks([...anchors, ...tradfi].map((q) => q.symbol), crypto.map((q) => q.symbol))
+    const withSpark = (quotes: MarketQuote[]): MarketQuote[] => quotes.map((q) => ({ ...q, spark: sparks[q.symbol] ?? null }))
+
     // 过期标记：缓存层返回 stale 时，把过期的行情标出来
     const markStale = (quotes: MarketQuote[]): MarketQuote[] =>
-      yahooRead.stale ? quotes.map((q) => ({ ...q, stale: true })) : quotes
+      withSpark(yahooRead.stale ? quotes.map((q) => ({ ...q, stale: true })) : quotes)
 
     return {
       anchors: markStale(anchors),
@@ -121,13 +125,36 @@ export class MarketContextService {
       sections: {
         tradfi: markStale(tradfi),
         fx,
-        crypto,
+        crypto: withSpark(crypto),
         onchain,
       },
       usdtPeg,
       serverTime: new Date().toISOString(),
       degraded: degradedReasons.length > 0,
       degradedReasons,
+    }
+  }
+
+  private async readSparks(yahooSymbols: string[], cryptoSymbols: string[]): Promise<Record<string, number[]>> {
+    const read = this.cache
+      .getOrFetch<Record<string, number[]>>('spark:7d', 3_600_000, 24 * 3_600_000, async () => {
+        const entries = await Promise.all([
+          ...yahooSymbols.map(async (s) => [s, await this.yahoo.fetchSpark(s)] as const),
+          ...cryptoSymbols.map(async (s) => [s, await this.okx.fetchSpark(s)] as const),
+        ])
+        const found = entries.filter((e): e is readonly [string, number[]] => Array.isArray(e[1]))
+        return found.length > 0 ? Object.fromEntries(found) : null
+      })
+      .then((r) => r.value ?? {})
+      .catch(() => ({}))
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const timeout = new Promise<Record<string, number[]>>((resolve) => {
+      timer = setTimeout(() => resolve({}), 1_500)
+    })
+    try {
+      return await Promise.race([read, timeout])
+    } finally {
+      clearTimeout(timer)
     }
   }
 }

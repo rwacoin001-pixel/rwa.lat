@@ -7,6 +7,7 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fromAtomic } from '@/lib/money'
 import { fundsCopy } from '@/lib/maison-funds-copy'
 import { HomeEmailBinding } from './HomeEmailBinding'
+import { Sparkline } from './Sparkline'
 import type { HomePortfolioSnapshot } from './HomePortfolioCard'
 import styles from './home-v2.module.css'
 
@@ -56,6 +57,8 @@ type Props = {
   loading: boolean
   pendingUnits: number
   today: TodayChange
+  /** Total at the end of each of the last 6 days, then now (units). */
+  spark?: number[] | null
   ctaLabel: string | null
   onPrimary: () => void
   onPortfolio: () => void
@@ -64,7 +67,7 @@ type Props = {
 }
 
 /** Signed-in asset card: one hero number, today's change (or what is available), the four money actions as porcelain tiles. */
-export function HomeAssetCard({ state, account, loading, pendingUnits, today, ctaLabel, onPrimary, onPortfolio, onCashAction, emailBinding }: Props) {
+export function HomeAssetCard({ state, account, loading, pendingUnits, today, spark, ctaLabel, onPrimary, onPortfolio, onCashAction, emailBinding }: Props) {
   const { locale, t } = useI18n()
   const c = homeV2Copy(locale)
   const [hidden, setHidden] = useState(false)
@@ -112,10 +115,14 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, ct
         <button type="button" onClick={onPortfolio}>{c.detail}<ChevronRight size={14} aria-hidden="true" /></button>
       </span>
     </div>
-    <div className={styles.hero} dir="ltr">
-      {/* Screen readers get the final value; the count-up is visual only. */}
-      <span aria-hidden="true">{hidden ? '••••••' : shown === null ? '—' : fmt(shown, locale)}</span>
-      <span className="sr-only">{hidden ? '' : total === null ? '—' : fmt(total, locale)}</span>
+    <div className={styles.heroRow}>
+      <div className={styles.hero} dir="ltr">
+        {/* Screen readers get the final value; the count-up is visual only. */}
+        <span aria-hidden="true">{hidden ? '••••••' : shown === null ? '—' : fmt(shown, locale)}</span>
+        <span className="sr-only">{hidden ? '' : total === null ? '—' : fmt(total, locale)}</span>
+      </div>
+      {/* Neutral dot: the total moves with deposits too, so green/red would read as profit. */}
+      {!hidden && <Sparkline points={spark} />}
     </div>
     <div className={`${styles.sub} ${hidden ? '' : tone}`} dir="ltr">
       {hidden ? '' : change !== null ? c.today.replace('{v}', `${signed(change, locale)}${pct === null ? '' : ` (${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%)`}`) : available !== null ? c.available.replace('{v}', fmt(available, locale)) : ''}

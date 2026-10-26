@@ -23,7 +23,7 @@ interface YahooChartMeta {
 
 interface YahooChartResponse {
   chart?: {
-    result?: Array<{ meta?: YahooChartMeta }>
+    result?: Array<{ meta?: YahooChartMeta; indicators?: { quote?: Array<{ close?: Array<number | null> }> } }>
     error?: { code?: string; description?: string } | null
   }
 }
@@ -119,6 +119,29 @@ export class YahooProvider {
     }
   }
 
+  /** 最近 7 个日收盘价（旧→新）。失败返回 null。 */
+  async fetchSpark(symbol: string): Promise<number[] | null> {
+    const url = `${this.baseUrl}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=14d`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs)
+    try {
+      const res = await fetch(url, {
+        signal: controller.signal,
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; AReit-MarketContext/1.0)', Accept: 'application/json' },
+      })
+      if (!res.ok) {
+        this.log.warn(`Yahoo spark ${symbol} HTTP ${res.status}`)
+        return null
+      }
+      return parseYahooSpark((await res.json()) as YahooChartResponse)
+    } catch (err) {
+      this.log.warn(`Yahoo spark ${symbol} 抓取失败: ${(err as Error).message}`)
+      return null
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
   private quoteId(symbol: string, asOf: string | null, source: string): string {
     const raw = `${symbol}|${asOf ?? 'na'}|${source}`
     let h = 0
@@ -127,4 +150,11 @@ export class YahooProvider {
     }
     return `q_${Math.abs(h).toString(36)}`
   }
+}
+
+/** chart 接口的日收盘价 → 最后 7 个有效值（旧→新）；不足 2 个返回 null。 */
+export function parseYahooSpark(body: YahooChartResponse): number[] | null {
+  const closes = body.chart?.result?.[0]?.indicators?.quote?.[0]?.close ?? []
+  const valid = closes.filter((v): v is number => typeof v === 'number' && Number.isFinite(v))
+  return valid.length >= 2 ? valid.slice(-7) : null
 }

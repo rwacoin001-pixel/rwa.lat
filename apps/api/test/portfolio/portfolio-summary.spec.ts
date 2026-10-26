@@ -21,13 +21,13 @@ describe('Portfolio summary (unit)', () => {
   let transaction: jest.Mock
   let row: {
     totalAtomic: string; changeAtomic: string; hasIncome: boolean
-    since: Date; asOf: Date
+    since: Date; asOf: Date; spark: string[]
   }
 
   beforeEach(async () => {
     row = {
       totalAtomic: '100000000', changeAtomic: '0', hasIncome: true,
-      since: SINCE, asOf: AS_OF,
+      since: SINCE, asOf: AS_OF, spark: ['90000000', '90000000', '95000000', '95000000', '100000000', '100000000'],
     }
     query = jest.fn(async (sql: string) => sql === 'SET TRANSACTION READ ONLY' ? [] : [row])
     transaction = jest.fn(async (_isolation: string, work: (tx: unknown) => unknown) => work({ query }))
@@ -45,6 +45,7 @@ describe('Portfolio summary (unit)', () => {
     row.hasIncome = false
     expect(await svc.summary(USER)).toEqual({
       currency: 'USDT', decimals: 6, totalAtomic: '100000000', today: null, asOf: AS_OF.toISOString(),
+      sparkAtomic: ['90000000', '90000000', '95000000', '95000000', '100000000', '100000000', '100000000'],
     })
   })
 

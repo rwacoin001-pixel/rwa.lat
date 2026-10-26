@@ -10,6 +10,8 @@ export type PortfolioSummary = {
     since: string
     basis: 'ledger'
   }
+  /** Total at the end of each of the last 6 Singapore days, then now (oldest first). Older APIs omit it. */
+  sparkAtomic?: string[]
   asOf: string
 }
 

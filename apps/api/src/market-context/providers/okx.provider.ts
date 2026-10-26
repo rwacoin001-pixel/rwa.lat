@@ -67,6 +67,28 @@ export class OkxProvider {
     }
   }
 
+  /** BTC / ETH 最近 7 根 UTC 日线收盘价（旧→新）。失败返回 null。 */
+  async fetchSpark(symbol: string): Promise<number[] | null> {
+    const spec = CRYPTO_SPECS.find((s) => s.symbol === symbol)
+    if (!spec) return null
+    const url = `${this.baseUrl}/api/v5/market/candles?instId=${encodeURIComponent(spec.instId)}&bar=1Dutc&limit=7`
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), this.timeoutMs)
+    try {
+      const res = await fetch(url, { signal: controller.signal, headers: { Accept: 'application/json' } })
+      if (!res.ok) {
+        this.log.warn(`OKX spark HTTP ${res.status} (${spec.instId})`)
+        return null
+      }
+      return parseOkxSpark((await res.json()) as { code?: string; data?: string[][] })
+    } catch (err) {
+      this.log.warn(`OKX spark 抓取失败 (${spec.instId}): ${(err as Error).message}`)
+      return null
+    } finally {
+      clearTimeout(timer)
+    }
+  }
+
   async fetchQuotes(receivedAt: string): Promise<{ quotes: MarketQuote[]; usdt: UsdtPegStatus | null }> {
     const [cryptoRows, usdtRow] = await Promise.all([
       Promise.all(CRYPTO_SPECS.map((spec) => this.fetchTicker(spec.instId))),
@@ -126,4 +148,14 @@ export class OkxProvider {
 
     return { quotes, usdt }
   }
+}
+
+/** OKX candles 是新→旧，[ts, o, h, l, c, ...]；转成收盘价旧→新。不足 2 个返回 null。 */
+export function parseOkxSpark(body: { code?: string; data?: string[][] }): number[] | null {
+  if (body.code !== '0' || !Array.isArray(body.data)) return null
+  const closes = body.data
+    .filter((row) => Array.isArray(row) && Number.isFinite(Number(row[0])) && Number.isFinite(Number(row[4])))
+    .sort((a, b) => Number(a[0]) - Number(b[0]))
+    .map((row) => Number(row[4]))
+  return closes.length >= 2 ? closes.slice(-7) : null
 }

@@ -105,6 +105,23 @@ describeDatabase('Portfolio summary SQL (isolated PostgreSQL)', () => {
     })
   })
 
+  it('sparkAtomic: total at the end of each of the last 6 Singapore days, then now', async () => {
+    const D = 86400000
+    // beforeEach deposited 100 an hour before today's midnight (inside yesterday).
+    await post(50000000n, 'deposit', { at: new Date(day.getTime() - 3 * D + 1000) })   // 3 days ago
+    await post(-20000000n, 'withdrawal_settlement', { at: new Date(day.getTime() - 9 * D) }) // before the window
+    await post(310000n, 'quant_daily_settlement', { at: new Date(day.getTime() + 1000) })   // today
+    const result = await readPortfolioSummary(db.manager, USER)
+    // Each point = today's total minus every entry posted after it.
+    expect(result.sparkAtomic).toEqual([
+      '-20000000', '-20000000', '-20000000', '30000000', '30000000', '130000000', '130310000',
+    ])
+  })
+
+  it('sparkAtomic is flat zero for an empty wallet', async () => {
+    expect((await readPortfolioSummary(db.manager, OTHER)).sparkAtomic).toEqual(['0', '0', '0', '0', '0', '0', '0'])
+  })
+
   it('returns null for an empty wallet', async () => {
     expect(await readPortfolioSummary(db.manager, OTHER)).toMatchObject({ totalAtomic: '0', today: null })
   })

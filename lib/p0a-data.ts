@@ -23,6 +23,8 @@ export type MarketQuote = {
   quoteId: string
   assetClass: string
   disclaimer: string
+  /** Last 7 daily closes, oldest first; null when the history isn't available. */
+  spark?: number[] | null
 }
 
 export type MarketContext = {

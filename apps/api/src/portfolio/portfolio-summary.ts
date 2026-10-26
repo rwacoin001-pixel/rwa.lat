@@ -10,6 +10,8 @@ export interface PortfolioSummary {
     since: string
     basis: 'ledger'
   }
+  /** Total at the end of each of the last 6 Singapore days, then now (oldest first, 7 points). */
+  sparkAtomic: string[]
   asOf: string
 }
 
@@ -24,6 +26,9 @@ export interface PortfolioSummary {
  * Prediction stakes and net payouts share reference_type=prediction_bet and the
  * bet id. Recognise their sum only when that bet settles (won/lost), including
  * losses with no payout entry. Void refunds are returned principal, not income.
+ *
+ * sparkAtomic: the total is the sum of these ledger balances, so the total at any
+ * past moment is today's total minus every entry posted after it. Exact, no snapshots.
  */
 export const PORTFOLIO_SUMMARY_SQL = `
 WITH clock AS (
@@ -66,6 +71,9 @@ SELECT COALESCE((SELECT SUM(balance) FROM wallet_accounts), 0)::text AS "totalAt
        (SELECT since FROM clock) AS since,
        COALESCE((SELECT SUM(delta) FROM income), 0)::text AS "changeAtomic",
        EXISTS (SELECT 1 FROM income) AS "hasIncome",
+       ARRAY(SELECT ((SELECT COALESCE(SUM(balance), 0) FROM wallet_accounts)
+                     - COALESCE((SELECT SUM(m.delta) FROM moves m WHERE m.created_at > (SELECT since FROM clock) - k * interval '1 day'), 0))::text
+               FROM generate_series(5, 0, -1) AS k ORDER BY k DESC) AS "spark",
        now() AS "asOf"
 `
 
@@ -74,6 +82,7 @@ interface SummaryRow {
   since: Date
   changeAtomic: string
   hasIncome: boolean
+  spark: string[]
   asOf: Date
 }
 
@@ -91,7 +100,7 @@ export function readPortfolioSummary(manager: EntityManager, userId: string): Pr
     const [row] = await tx.query(PORTFOLIO_SUMMARY_SQL, [userId]) as SummaryRow[]
     const result: PortfolioSummary = {
       currency: 'USDT', decimals: 6, totalAtomic: row.totalAtomic,
-      today: null, asOf: row.asOf.toISOString(),
+      today: null, sparkAtomic: [...(row.spark ?? []), row.totalAtomic], asOf: row.asOf.toISOString(),
     }
     if (!row.hasIncome) return result
     const change = BigInt(row.changeAtomic)

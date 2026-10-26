@@ -12,6 +12,7 @@ import { HomeTradingView } from './HomeTradingView'
 import { HomeSectionHeading } from './HomeSectionHeading'
 import { EASE } from './maison-motion'
 import { RollingText } from './RollingText'
+import { Sparkline } from './Sparkline'
 import styles from './HomeMarkets.module.css'
 
 const copy: Record<AppLocale, { eyebrow: string; title: string; macro: string; gold: string; unavailable: string; note: string; retrieved: string; delayed: string }> = {
@@ -35,6 +36,10 @@ function formatQuote(quote: MarketQuote, value: number, locale: AppLocale) {
 function formatChange(quote: MarketQuote) {
   if (quote.changePct === null) return '—'
   return `${quote.changePct > 0 ? '+' : ''}${quote.changePct.toFixed(2)}%`
+}
+
+function toneName(quote: MarketQuote) {
+  return quote.changePct === null || quote.changePct === 0 ? null : quote.changePct < 0 ? 'down' as const : 'up' as const
 }
 
 function tone(quote: MarketQuote) {
@@ -88,12 +93,14 @@ export function HomeMarkets() {
             <span className={styles.symbol}>{quote.symbol === 'GC=F' ? goldFutures[locale] : symbolLabels[quote.symbol] ?? quote.name}{quote.stale && <i>{label.delayed}</i>}</span>
             <RollingText className={styles.bigValue} text={quote.value === null ? '—' : formatQuote(quote, quote.value, locale)} value={quote.value} />
             <span className={`${styles.change} ${tone(quote)}`} dir="ltr">{formatChange(quote)}</span>
+            <Sparkline points={quote.spark} tone={toneName(quote)} className={styles.sparkWide} />
             <small>{quote.source}{quote.asOf && !Number.isNaN(Date.parse(quote.asOf)) ? ' · ' + new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(quote.asOf)) : ''}</small>
           </div>)}
         </div>
         <ul className={styles.list}>
           {rest.map((quote, index) => <motion.li key={quote.symbol} className={styles.row} initial={reduced ? false : { opacity: 0, x: -8 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, ease: EASE, delay: index * 0.06 }}>
             <span className={styles.rowName}><b>{symbolLabels[quote.symbol] ?? quote.name}</b><small>{quote.source}{quote.stale ? ` · ${label.delayed}` : ''}</small></span>
+            <span className={styles.rowSpark}><Sparkline points={quote.spark} tone={toneName(quote)} /></span>
             <RollingText className={styles.rowValue} text={quote.value === null ? '—' : formatQuote(quote, quote.value, locale)} value={quote.value} />
             <span className={`${styles.chip} ${tone(quote)}`} dir="ltr">{formatChange(quote)}</span>
           </motion.li>)}

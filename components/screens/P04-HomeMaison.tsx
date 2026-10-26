@@ -387,6 +387,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
   // Today's earnings: income the ledger credited since 00:00 Singapore (quant settlement, referral, settled predictions).
   const summary = useQuery(sessionProbe.status === 'ok' ? 'portfolio:summary' : null, getPortfolioSummary, { staleTime: 30_000, pollInterval: POLL.list })
+  const assetSpark = summary.data?.sparkAtomic?.map(atomic => { try { return Number(fromAtomic(atomic, summary.data?.decimals ?? 6)) } catch { return NaN } }) ?? null
   const today: TodayChange = summary.data?.today ? { changeAtomic: summary.data.today.changeAtomic, changePct: summary.data.today.changePct ?? '' } : null
 
   // Signed in (or still finding out): the account is the first screen. The photo, slogan and ticker are for guests only.
@@ -399,7 +400,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       <div className={styles.v2Head}>
         <div className={v2.root}>
           <HomeGreeting />
-          <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today}
+          <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today} spark={assetSpark}
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
           <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
           <HomeReferral />

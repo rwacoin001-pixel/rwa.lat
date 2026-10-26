@@ -42,6 +42,8 @@ export interface MarketQuote {
   assetClass: MarketAssetClass
   /** 免责标注（前端必须展示） */
   disclaimer: string
+  /** 最近 7 个日收盘价（旧→新），画首页小走势线；取不到为 null，不影响报价本身 */
+  spark?: number[] | null
 }
 
 export interface MarketContextResponse {
