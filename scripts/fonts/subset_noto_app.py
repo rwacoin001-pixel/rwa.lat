@@ -39,10 +39,12 @@ def ranges(cps):
 
 
 faces, rest, total_in, total_out, kept_chars = [], [], 0, 0, 0
+taken = set()  # slices repeat spaces and common punctuation; each character gets exactly one file
 for name in sorted(n for n in os.listdir(src_dir) if n.endswith('.woff2')):
     path = os.path.join(src_dir, name)
     font = TTFont(path)
-    have = set(font.getBestCmap())
+    have = set(font.getBestCmap()) - taken
+    taken |= have
     want = have & chars
     if have - want:
         rest.append(f"@font-face{{font-family:'Noto Sans SC';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/noto-sans-sc/{name}') format('woff2');unicode-range:{ranges(have - want)}}}")
