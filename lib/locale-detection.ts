@@ -38,5 +38,7 @@ export function resolveInitialLocale(input: {
   const country = input.country?.trim().toUpperCase() ?? ''
   const deviceLocale = browserLocale(input.acceptLanguage)
   const regionalLocale = localeOptions.find(option => countriesByLanguage[option.code].split(' ').includes(country))?.code
-  return regionalLocale ?? deviceLocale ?? 'en'
+  // The phone's own language wins: a Chinese phone in Singapore reads Chinese. The country only helps when the
+  // phone's language is one the app doesn't have.
+  return deviceLocale ?? regionalLocale ?? 'en'
 }

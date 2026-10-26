@@ -12,7 +12,6 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import { useAccount, useSignedIn, type KycRing } from '@/hooks/useAccount'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { useLargeTitle } from '@/hooks/useLargeTitle'
-import { useUnread } from '@/hooks/useUnread'
 import { useEdgeSwipeBack } from '@/hooks/useEdgeSwipeBack'
 import { Segmented } from './ui/Segmented'
 import RwaLogoMark from './rwa-logo'
@@ -51,20 +50,19 @@ const shareCopy: Record<AppLocale, { copied: string; failed: string }> = {
   pt: { copied: 'Link copiado', failed: 'Não foi possível compartilhar ou copiar o link. Tente de novo.' },
 }
 
-function AccountButton({ copy, onProfile, unread }: { copy: TopbarCopy; onProfile?: () => void; unread: number }) {
+function AccountButton({ copy, onProfile }: { copy: TopbarCopy; onProfile?: () => void }) {
   const { signedIn, initial, ring, userId } = useAccount()
   const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false)
   const me = useCommunityMe(!signedIn)
   const avatar = me?.avatarUrl ?? me?.avatarSeed
   if (hydrated && !signedIn) return <button type="button" className="rwa-topbar__signin" onClick={() => navigate({ id: 'auth.login' })}><span>{copy.signIn}</span></button>
-  const label = [copy.account, ring && copy.ring[ring], unread > 0 && copy.unread.replace('{n}', String(unread))].filter(Boolean).join(' · ')
-  // The inbox count rides on the avatar (tab roots carry no bell); it outranks the verification dot.
-  return <button type="button" className="rwa-profile-trigger rwa-topbar__account" data-ring={unread > 0 ? 'none' : ring ?? 'none'} aria-label={label} title={copy.account} onClick={() => onProfile ? onProfile() : navigate({ id: 'profile' })}>
+  const label = [copy.account, ring && copy.ring[ring]].filter(Boolean).join(' · ')
+  // The avatar keeps its verification ring; unread notices live above the AI composer.
+  return <button type="button" className="rwa-profile-trigger rwa-topbar__account" data-ring={ring ?? 'none'} aria-label={label} title={copy.account} onClick={() => onProfile ? onProfile() : navigate({ id: 'profile' })}>
     {/* Seeded by the unique userId, never the nickname; the initial holds the disc until the avatar resolves. */}
     <span className="rwa-topbar__avatar-disc" data-avatar={avatar ? 'notionists' : 'initial'} data-seed={userId ?? undefined} aria-hidden="true">{avatar
       ? <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} size={38} />
       : initial ? <span className="rwa-topbar__initial">{initial}</span> : <UserRound size={22} strokeWidth={1.7} />}</span>
-    {unread > 0 && <span className="rwa-topbar__count" aria-hidden="true">{unread > 99 ? '99+' : unread}</span>}
   </button>
 }
 
@@ -84,7 +82,6 @@ export default function RwaTopbar(props: Props) {
   // A pushed page (back button) never carries the account entry, even when its screen is a tab kind (wallet).
   // `account` opts a pushed page in explicitly (community: the avatar is its profile and edit entry).
   const showAccount = props.account ?? (Boolean(kind && accountKinds.has(kind)) && config.l1 !== 'back')
-  const unread = useUnread(signedIn && showAccount).unread
   const largeTitle = useLargeTitle(props.screen ?? props.title)
   const center: TopbarCenter = props.c !== undefined ? props.c : config.template === 'T-Flow' ? (props.title ? { kind: 'title', text: props.title } : null) : config.template === 'T-Root' && props.title === undefined ? null : { kind: 'title', text: props.title ?? '' }
   const onSlot = (slot: Slot, position: string, event?: { clientX: number; clientY: number; currentTarget: Element }) => {
@@ -130,7 +127,7 @@ export default function RwaTopbar(props: Props) {
       <div className="rwa-topbar__context">{renderSlot(config.r2,'R2')}</div>
       <div className="rwa-topbar__utilities">
         {renderSlot(config.r1,'R1')}
-        {showAccount && <AccountButton copy={copy} onProfile={props.onProfile} unread={unread} />}
+        {showAccount && <AccountButton copy={copy} onProfile={props.onProfile} />}
       </div>
     </div>
   </header></>

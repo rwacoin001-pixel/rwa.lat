@@ -6,7 +6,6 @@ import {
 } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
-import { useUnread } from '@/hooks/useUnread'
 import { useI18n } from '@/lib/i18n'
 import { localeOptions } from '@/lib/app-locales'
 import { useRwaTheme, type RwaThemePreference } from '@/lib/rwa-theme'
@@ -29,7 +28,7 @@ import { NotificationPreferences } from './NotificationPreferences'
 
 const kycTone = (state: KycState | undefined) => state === 'approved' ? 'live' : state === 'rejected' || state === 'expired' ? 'down' : state === 'needs_information' ? 'warn' : state ? 'accent' : undefined
 
-type NavItem = { key: keyof typeof accountCopy.en.profile.rows; path: string; Icon: typeof Mail; badge?: ReactNode }
+type NavItem = { key: keyof typeof accountCopy.en.profile.rows | 'notifications'; path: string; Icon: typeof Mail; badge?: ReactNode }
 
 /** `/profile` — the signed-in account: identity plate, live status, grouped doors, sign-out. */
 export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?: boolean; onClose: () => void; onSignedOut: () => void }) {
@@ -40,7 +39,6 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const kyc = useQuery(guest ? null : 'account:kyc', () => settle(getKycStatus), { staleTime: 30_000 })
   const factors = useQuery(guest ? null : 'security:factors', listSecurityFactors, { staleTime: 30_000 })
   const [leaving, setLeaving] = useState(false)
-  const { unread } = useUnread(!guest)
   const [leaveError, setLeaveError] = useState(false)
   const [idCopied, setIdCopied] = useState(false)
   const copyId = async (userId: string) => {
@@ -91,6 +89,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       { key: 'trust', path: '/trust', Icon: ScrollText },
     ] },
     { title: p.groups.prefs, items: [
+      { key: 'notifications', path: '/notifications', Icon: Bell },
       { key: 'settings', path: '/profile/settings', Icon: Settings },
       { key: 'communication', path: '/profile/settings?section=marketing', Icon: Bell },
       { key: 'referral', path: '/profile/referral', Icon: Gift },
@@ -117,7 +116,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     </li>)}</ul>
   </MaisonPage>
 
-  return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={p.title} onBack={onClose} badge={{ slot: 'R2', count: unread }} />}>
+  return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={p.title} onBack={onClose} />}>
     {hero}
 
     {session.error && !view ? <StateBlock tone="error" title={common.errorGeneric} body={session.error.message} retry={session.refetch} retryLabel={common.retry} />
@@ -159,7 +158,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       <ul className={s.list} style={{ borderTop: 0 }}>{group.items.map(({ key, path, Icon, badge }) => <li key={key}>
         <button type="button" className={s.row} onClick={() => openPath(path)}>
           <span className={s.logo}><Icon size={16} strokeWidth={1.7} /></span>
-          <span className={s.rowMain}><b>{p.rows[key].title}</b><small className={s.clamp2}>{p.rows[key].body}</small></span>
+          <span className={s.rowMain}><b>{key === 'notifications' ? accountCopy[locale].settings.notifications : p.rows[key].title}</b>{key !== 'notifications' && <small className={s.clamp2}>{p.rows[key].body}</small>}</span>
           <span className={s.rowEnd}>{badge}<ChevronRight size={16} className={s.chev} /></span>
         </button>
       </li>)}</ul>

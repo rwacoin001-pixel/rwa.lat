@@ -12,16 +12,16 @@ const root: SlotConfig = { ...child, template: 'T-Root', l1: 'logo' }
 const flow: SlotConfig = { ...child, template: 'T-Flow', l1: 'close', r1: 'language', steps: 2 }
 export const pageSlots: Record<string, SlotConfig> = {
   P01: { ...child, hidden: true }, P02: { ...child, hidden: true }, P03: { ...child, r1: 'help' },
-  P04: { ...root, r2: 'bell', r1: 'language' }, P05: { ...root, r2: 'search', r1: 'language' }, P06: { ...child, r1: 'language' },
+  P04: { ...root, r2: null, r1: 'language' }, P05: { ...root, r2: 'search', r1: 'language' }, P06: { ...child, r1: 'language' },
   P07: { ...child, surface: 'transparent-over-media', r2: 'share' }, P08: { ...child, r2: 'search' },
-  'P08-detail': { ...child, surface: 'transparent-over-media', r2: 'share' }, P09: { ...child, template: 'T-Segment', r1: 'bell' },
-  P10: { ...child, r2: 'share', r1: 'info' }, P11: flow, P12: child, P13: { ...child, template: 'T-Segment', r1: 'bell' },
+  'P08-detail': { ...child, surface: 'transparent-over-media', r2: 'share' }, P09: { ...child, template: 'T-Segment', r1: null },
+  P10: { ...child, r2: 'share', r1: 'info' }, P11: flow, P12: child, P13: { ...child, template: 'T-Segment', r1: null },
   P14: { ...child, surface: 'transparent-over-media', r2: 'share', r1: 'info' }, P15: { ...flow, steps: 3 }, P16: flow,
   P17: child, P18: child, P19: { ...child, template: 'T-Segment', l1: null, r1: null }, P20: flow, P21: child,
   P22: { ...child, r2: 'ledger', r1: 'gear' }, P23: { ...child, l1: 'close', r1: 'info' }, P24: { ...flow, steps: 4, r1: 'book' },
   P25: { ...child, r1: 'plus' }, P26: { ...flow, steps: 3 }, P27: child, P28: { ...child, r1: 'readall' },
   P29: child, P30: { ...child, r1: 'more' }, P31: child, 'P31-compose': { ...flow, r1: null, steps: undefined },
-  P32: { ...flow, steps: 3 }, P33: { ...child, r1: 'bell' }, P34: { ...child, r1: 'info' },
+  P32: { ...flow, steps: 3 }, P33: { ...child, r1: null }, P34: { ...child, r1: 'info' },
 }
 const screenPages: Partial<Record<RwaScreen, string>> = {
   welcome: 'P01', login: 'P02', register: 'P03', 'verify-email': 'P03', recovery: 'P03', home: 'P04', invest: 'P09', quant: 'P09',
@@ -34,11 +34,11 @@ export function slotsForScreen(screen?: RwaScreen, kind?: TopbarKind): SlotConfi
   let resolved: SlotConfig
   if (screen === 'verify-email' || screen === 'recovery' || screen === 'login' || screen === 'register' || screen === 'welcome') return { ...child, hidden: true }
   if (screen === 'ai') resolved = { ...child, r2: null }
-  else if (screen === 'profile') resolved = { ...child, l1: 'back', r2: 'bell' }
+  else if (screen === 'profile') resolved = { ...child, l1: 'back', r2: null }
   else if (screen === 'search') resolved = { ...child, r2: null }
   else if (screen === 'invest') resolved = { ...root, l1: null, r2: null, r1: null }
   // Koala Quant is a dock tab of its own, not a pushed page: just its name, no wordmark and never a back arrow.
-  else if (screen === 'quant') resolved = { ...root, l1: null, r2: 'bell', r1: null }
+  else if (screen === 'quant') resolved = { ...root, l1: null, r2: null, r1: null }
   else if (screen && screenPages[screen]) resolved = { ...pageSlots[screenPages[screen]!] }
   else if (kind === 'immersive') resolved = { ...child, hidden: true }
   else if (kind === 'flow') resolved = { ...flow }
@@ -46,7 +46,7 @@ export function slotsForScreen(screen?: RwaScreen, kind?: TopbarKind): SlotConfi
   else resolved = { ...child }
   if (resolved.hidden) return resolved
   // Language and theme live in Settings; R1 is freed for the account entry on tab roots.
-  // Home keeps only the wordmark and the account: the inbox count rides on the avatar, search lives in Markets.
+  // Home keeps only the wordmark and the account: notifications live above the AI composer, search lives in Markets.
   if (screen === 'home') return { ...resolved, l1: 'logo', l2: null, r2: null, r1: 'theme' }
   return { ...resolved, r2: resolved.r2 ?? (resolved.r1 === 'language' ? null : resolved.r1), r1: null }
 }

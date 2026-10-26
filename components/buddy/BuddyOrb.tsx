@@ -1,11 +1,10 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { PaperBuddy, type BuddyMood } from '@/lib/paper-buddy'
 import { onBuddySignal } from '@/lib/buddy-signals'
 import { subscribeToast, getToast } from '@/lib/toast-store'
 import { useUnread } from '@/hooks/useUnread'
 import { useSignedIn } from '@/lib/maison-nav'
-import { BuddyDigest } from './BuddyDigest'
 import { watchUnread } from '@/lib/api/notification-stream'
 import styles from './Buddy.module.css'
 
@@ -18,14 +17,13 @@ const QUIET_MS = 60_000
  *   errors (signals from the chat screen, see lib/buddy-signals);
  * - the app: a success toast makes it celebrate, an error toast makes it droop;
  * - quiet: after a minute without input it drifts off; late at night it sleeps until tapped.
- * Tap: with unread notifications it opens a short digest of them; otherwise the AI chat.
+ * Tap: opens the AI chat; unread notifications wait above its composer
  */
 export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: boolean; onOpenAi: () => void }) {
   const host = useRef<HTMLSpanElement>(null)
   const buddy = useRef<PaperBuddy | null>(null)
   const signedIn = useSignedIn()
-  const { data, unread, refetch } = useUnread(signedIn)
-  const [digest, setDigest] = useState(false)
+  const { unread, refetch } = useUnread(signedIn)
   const held = useRef(false)
   const passing = useRef(0)
   const quiet = useRef(0)
@@ -113,11 +111,9 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
 
   const tap = () => {
     const b = buddy.current
-    if (!b) return
     navigator.vibrate?.(6)
-    if (b.mood === 'sleep') { b.set('wake'); return }
-    b.spin(); b.hop()
-    if (signedIn && unread > 0) { setDigest(true); show('listening', { hold: true }); return }
+    if (b?.mood === 'sleep') b.set('wake')
+    b?.spin(); b?.hop()
     onOpenAi()
   }
 
@@ -125,7 +121,5 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
     <button type="button" className={`ai-orb ${styles.orb}`} data-active={active || undefined} aria-label={unread > 0 ? `${label} · ${unread}` : label} title={label} onClick={tap}>
       <span ref={host} className={styles.host} aria-hidden="true" />
     </button>
-    {digest && <BuddyDigest items={Array.isArray(data) ? data : []} onClose={() => { setDigest(false); held.current = false; settle() }}
-      onAllRead={() => { setDigest(false); show('satisfied', { ms: 3000 }) }} onAskAi={() => { setDigest(false); held.current = false; onOpenAi() }} />}
   </>
 }

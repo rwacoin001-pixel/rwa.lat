@@ -7,7 +7,7 @@ import { aiNavigationLink } from '@/lib/ai-navigation-link'
 import type { Citation, AiQuestion } from '@/lib/api/ai-customer'
 import AiQuestionCard from './AiQuestionCard'
 
-import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { AlertCircle, ChevronLeft, RotateCcw, UserRound } from 'lucide-react'
 import { CommunityAvatar } from '../community-avatar'
 import { useCommunityMe } from '../community-compose'
@@ -30,6 +30,8 @@ import { BuddyFace } from '@/components/buddy/BuddyFace'
 import { aiPearlCopy, pearlGreeting } from '@/lib/ai-pearl-copy'
 import { isVoiceActive, pearlFor, showsSuggestions } from '@/lib/ai-surface-state'
 import AiAnswerActions from './AiAnswerActions'
+import { AiNoticeTray } from './AiNoticeTray'
+import { useReveal } from './useReveal'
 import { MaisonPage } from './primitives'
 import a from './ai-chat.module.css'
 // The 社区 tab loads the feed only when first opened, so the assistant stays light.
@@ -85,16 +87,21 @@ function blocks(source: string): Block[] {
   return result
 }
 
-function Answer({ text, reveal }: { text: string; reveal: boolean }) {
-  // Blocks rise in sequence once the reply lands; the delay is capped so long replies never feel slow.
-  const list = blocks(text)
-  return <div className={a.answer} data-reveal={reveal || undefined} dir="auto">{list.map((block, i) => {
-    const style = reveal ? { animationDelay: `${Math.min(i, 8) * 70}ms` } : undefined
-    if (block.kind === 'h') return <h3 key={i} style={style}>{inline(block.text, `h${i}`)}</h3>
-    if (block.kind === 'p') return <p key={i} style={style}>{block.text.split('\n').map((line, j) => <Fragment key={j}>{j > 0 && <br />}{inline(line, `p${i}-${j}`)}</Fragment>)}</p>
-    const Tag = block.kind, items = block.items
-    return <Tag key={i} style={style}>{items.map((item, j) => <li key={j}>{inline(item, `l${i}-${j}`)}</li>)}</Tag>
-  })}</div>
+function Answer({ text, reveal, onDone, onProgress }: { text: string; reveal: boolean; onDone: () => void; onProgress: () => void }) {
+  const { visible, revealing, finish } = useReveal(text, reveal)
+  const list = blocks(visible), caret = revealing ? <span className={a.caret} aria-hidden="true" /> : null
+  useEffect(() => { if (reveal && !revealing) onDone() }, [reveal, revealing, onDone])
+  useLayoutEffect(() => { if (reveal) onProgress() }, [visible, reveal, onProgress])
+  return <div onClick={finish} tabIndex={revealing ? 0 : undefined} onKeyDown={event => { if (event.target === event.currentTarget && (event.key === 'Enter' || event.key === ' ')) { event.preventDefault(); finish() } }}>
+    {revealing && <span className={a.srOnly}>{text}</span>}
+    <div className={a.answer} dir="auto" aria-hidden={revealing || undefined} inert={revealing}>{list.map((block, i) => {
+      const tail = i === list.length - 1 ? caret : null
+      if (block.kind === 'h') return <h3 key={i}>{inline(block.text, `h${i}`)}{tail}</h3>
+      if (block.kind === 'p') return <p key={i}>{block.text.split('\n').map((line, j) => <Fragment key={j}>{j > 0 && <br />}{inline(line, `p${i}-${j}`)}</Fragment>)}{tail}</p>
+      const Tag = block.kind, items = block.items
+      return <Tag key={i}>{items.map((item, j) => <li key={j}>{inline(item, `l${i}-${j}`)}{j === items.length - 1 && tail}</li>)}</Tag>
+    })}{!list.length && <p>{caret}</p>}</div>
+  </div>
 }
 
 /* ---------- Thinking: breathing mark, shimmering label, elapsed seconds, honest stage hints. ---------- */
@@ -144,6 +151,16 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const nextId = useRef(1)
   const end = useRef<HTMLDivElement>(null)
   const dock = useRef<HTMLDivElement>(null)
+  const followEnd = useRef(true), lastFollow = useRef(0), followTimer = useRef(0)
+  const followReveal = useCallback(() => {
+    const now = performance.now()
+    if (!followEnd.current || followTimer.current) return
+    const scroll = () => { followTimer.current = 0; if (followEnd.current) { lastFollow.current = performance.now(); end.current?.scrollIntoView({ block: 'end' }) } }
+    if (now - lastFollow.current < 120) followTimer.current = window.setTimeout(scroll, 120 - (now - lastFollow.current))
+    else scroll()
+  }, [])
+  useEffect(() => () => window.clearTimeout(followTimer.current), [])
+  const finishReveal = useCallback(() => setRevealId(null), [])
   const signedIn = useSignedIn(), me = useCommunityMe(!signedIn)
   const [tab, setTab] = useState<'ai' | 'community'>('ai')
   const chromeHidden = useScrollChrome()
@@ -194,7 +211,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   useEffect(() => {
     const reset = () => {
       inflight.current?.abort(); inflight.current = null
-      setSending(false); setMessages([]); setSessionId(null); setInput(''); setError(null); setStarted(false)
+      setSending(false); setMessages([]); setSessionId(null); setInput(''); setError(null); setStarted(false); setRevealId(null)
       try { clearAiChatSession(window.sessionStorage) } catch { /* Keep account transitions usable when storage is blocked. */ }
       setGeneration(n => n + 1)
     }
@@ -206,7 +223,12 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   useEffect(() => { if (!dock.current || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(entries => setDockHeight(Math.ceil(entries[0]?.contentRect.height ?? 150) + 40)); observer.observe(dock.current); return () => observer.disconnect() }, [])
 
   const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  useEffect(() => { if (messages.length || sending) end.current?.scrollIntoView({ block: 'end', behavior: reduced() ? 'auto' : 'smooth' }) }, [messages, sending, error, dockHeight, keyboard])
+  useEffect(() => {
+    const scroll = () => { const bottom = end.current?.getBoundingClientRect().bottom; if (bottom !== undefined) followEnd.current = bottom <= (window.visualViewport?.height ?? window.innerHeight) - dockHeight + 120 }
+    window.addEventListener('scroll', scroll, { passive: true })
+    return () => window.removeEventListener('scroll', scroll)
+  }, [dockHeight])
+  useEffect(() => { if (revealId !== null) { followReveal(); return }; if (followEnd.current && (messages.length || sending)) end.current?.scrollIntoView({ block: 'end', behavior: reduced() ? 'auto' : 'smooth' }) }, [messages, sending, error, dockHeight, keyboard, followReveal])
 
   // The chat endpoint is synchronous and has no server-side cancel: stopping only ends the wait
   // here, and the copy says the reply may still be stored in history.
@@ -216,6 +238,8 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     const controller = new AbortController()
     inflight.current = controller
     const userId = nextId.current++
+    navigator.vibrate?.(8)
+    followEnd.current = true
     setError(null); setSending(true); setRevealId(null); setStarted(true)
     buddySignal('thinking', { hold: true })
     setMessages((current) => [...current, { id: userId, role: 'user', content: message, attachments }])
@@ -260,6 +284,11 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
     const pending = last?.role === 'user' ? last.content : null
     if (pending !== null) setMessages(messages.slice(0, -1))
     setError({ text: chat.cancelled, tone: 'info', retry: pending, attachments: last?.attachments })
+  }
+  const summarize = (text: string) => {
+    const id = nextId.current++
+    setStarted(true); setError(null); setRevealId(id)
+    setMessages(current => [...current, { id, role: 'assistant', content: text }])
   }
   const empty = sessionRestored && messages.length === 0 && !sending
   // The welcome pearl stays while the reader holds to talk, and steps aside when the keyboard needs the room.
@@ -307,11 +336,12 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
             ? <li key={message.id} className={a.user}><span className={a.srOnly}>{c.you}: </span><p dir="auto">{message.content}</p>{message.attachments?.map((file, index) => <small key={`${file.name}-${index}`} className={a.fileNote}>{file.name} · {file.method === 'image' ? aiVisualCopy(locale).image : file.method === 'ocr' ? aiInputCopy(locale).ocr : aiInputCopy(locale).extracted}</small>)}</li>
             : <li key={message.id} className={a.assistant}>
               <div className={a.who}><Mark speaking={message.id === speakingId} /><b>{c.name}</b></div>
-              {showAiAnswer(message.questions) ? <><Answer text={message.content} reveal={message.id === revealId && !reduced()} />
+              {showAiAnswer(message.questions) ? <><Answer text={message.content} reveal={message.id === revealId} onDone={finishReveal} onProgress={followReveal} />
+                <div className={a.answerExtras} data-revealing={message.id === revealId || undefined} inert={message.id === revealId} aria-hidden={message.id === revealId || undefined}>
                 {message.citations?.map(c=><Link key={`${c.id}:${c.revision}`} prefetch={false} href={aiNavigationLink(c.url) ?? `/ai-assistant?knowledge=${encodeURIComponent(c.id)}&revision=${c.revision}`}>{c.title}{c.url ? '' : ` · v${c.revision}`}</Link>)}
-                <AiAnswerActions text={message.content} messageId={message.messageId} localId={`${sessionId ?? generation}:${message.id}`} locale={locale}/></> : <p className={a.questionPrompt}>{message.questions?.map(question => question.title).join(' · ')}</p>}
+                <AiAnswerActions text={message.content} messageId={message.messageId} localId={`${sessionId ?? generation}:${message.id}`} locale={locale}/></div></> : <p className={a.questionPrompt}>{message.questions?.map(question => question.title).join(' · ')}</p>}
             </li>)}
-          {sending && <li className={a.assistant}>
+          {sending && <li className={a.assistant} data-thinking>
             <div className={a.who}><Mark busy /><b>{c.name}</b></div>
             <Thinking label={c.thinking} slow={c.slow} slower={c.slower} seconds={c.seconds} />
           </li>}
@@ -327,6 +357,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
       <div ref={dock} className={a.dockWrap} hidden={community} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
         {showWelcome && showsSuggestions(voice.state) && <ul className={a.chips} aria-label={pearl.suggestions}>{prompts.map(question => <li key={question}><button type="button" disabled={status !== 'ready'} onClick={() => { void ask(question) }}><span dir="auto">{question}</span></button></li>)}</ul>}
+        <AiNoticeTray key={`notices-${generation}`} locale={locale} disabled={sending || status !== 'ready'} onAsk={ask} onSummary={summarize} hidden={!signedIn || input.trim().length > 0 || voice.state !== 'idle'} />
         <AiComposer key={generation} value={input} onChange={setInput} onVoice={setVoice} voiceOverlay={!showWelcome} suggestions={false} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}
       </div>
