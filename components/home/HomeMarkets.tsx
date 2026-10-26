@@ -10,7 +10,8 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import type { MarketQuote } from '@/lib/p0a-data'
 import { HomeTradingView } from './HomeTradingView'
 import { HomeSectionHeading } from './HomeSectionHeading'
-import { CountUp, EASE } from './maison-motion'
+import { EASE } from './maison-motion'
+import { RollingText } from './RollingText'
 import styles from './HomeMarkets.module.css'
 
 const copy: Record<AppLocale, { eyebrow: string; title: string; macro: string; gold: string; unavailable: string; note: string; retrieved: string; delayed: string }> = {
@@ -85,7 +86,7 @@ export function HomeMarkets() {
         <div className={styles.featured}>
           {featured.map(quote => <div className={styles.featuredQuote} key={quote.symbol}>
             <span className={styles.symbol}>{quote.symbol === 'GC=F' ? goldFutures[locale] : symbolLabels[quote.symbol] ?? quote.name}{quote.stale && <i>{label.delayed}</i>}</span>
-            <CountUp className={styles.bigValue} value={quote.value} format={value => formatQuote(quote, value, locale)} />
+            <RollingText className={styles.bigValue} text={quote.value === null ? '—' : formatQuote(quote, quote.value, locale)} value={quote.value} />
             <span className={`${styles.change} ${tone(quote)}`} dir="ltr">{formatChange(quote)}</span>
             <small>{quote.source}{quote.asOf && !Number.isNaN(Date.parse(quote.asOf)) ? ' · ' + new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(new Date(quote.asOf)) : ''}</small>
           </div>)}
@@ -93,7 +94,7 @@ export function HomeMarkets() {
         <ul className={styles.list}>
           {rest.map((quote, index) => <motion.li key={quote.symbol} className={styles.row} initial={reduced ? false : { opacity: 0, x: -8 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }} transition={{ duration: 0.6, ease: EASE, delay: index * 0.06 }}>
             <span className={styles.rowName}><b>{symbolLabels[quote.symbol] ?? quote.name}</b><small>{quote.source}{quote.stale ? ` · ${label.delayed}` : ''}</small></span>
-            <span className={styles.rowValue} dir="ltr">{quote.value === null ? '—' : formatQuote(quote, quote.value, locale)}</span>
+            <RollingText className={styles.rowValue} text={quote.value === null ? '—' : formatQuote(quote, quote.value, locale)} value={quote.value} />
             <span className={`${styles.chip} ${tone(quote)}`} dir="ltr">{formatChange(quote)}</span>
           </motion.li>)}
         </ul>

@@ -394,7 +394,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
     const askPrompt = funded ? copy.askHoldings : copy.askStart
     return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
-      <RwaTopbar screen="home" />
+      <RwaTopbar screen="home" r1={null} action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/profile/referral') }} />
       <PullToRefresh />
       <div className={styles.v2Head}>
         <div className={v2.root}>
@@ -406,12 +406,12 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
         </div>
       </div>
       <div className={styles.content}>
-        <section className={styles.section}>
+        <Rise as="section" className={styles.section}>
           <SectionHead index="" title={copy.forYou} />
           <HomeForYou assets={featured.data?.items ?? []} onBaskets={() => go('basket-list')} />
-        </section>
-        <section className={styles.section}><HomeMarkets /></section>
-        <section className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></section>
+        </Rise>
+        <Rise as="section" className={styles.section}><HomeMarkets /></Rise>
+        <Rise as="section" className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></Rise>
         <section className={`${styles.section} ${styles.community}`}>
           <SectionHead index="" title={copy.community} onMore={() => go('community')} more={lowerLabel.community} />
           <HomeSocialFeed onPinnedChange={onFeedPinned} onOpen={post => openPath(`/community/post/${encodeURIComponent(post.id)}`)} onAuthor={post => { const handle = post.author?.handle || post.author?.id; if (handle) openPath('/community/member/' + encodeURIComponent(handle)) }} labels={{ all: feedAll[locale], loading: utility.loading, retry: utility.retry, end: utility.end, emptyTitle: copy.communityEmpty, emptyBody: copy.communityBody }} />

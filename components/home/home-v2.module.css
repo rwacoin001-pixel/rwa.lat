@@ -55,4 +55,47 @@
 
 .ask:focus-visible, .refRow:focus-visible, .pill:focus-visible, .cta:focus-visible, .label button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 
-@media (prefers-reduced-motion: reduce) { .skel { animation: none; } .tileFace, .cta { transition: none; } }
+/* Live numbers: changed characters roll in; a short flash of the up/down colour. */
+.rolling { transition: color .4s; }
+.rolling[data-flash='up'] { color: var(--v2-up); transition: none; }
+.rolling[data-flash='down'] { color: var(--v2-down); transition: none; }
+.roll { display: inline-block; animation: roll .22s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+@keyframes roll { from { transform: translateY(60%); opacity: 0; } }
+
+/* Arrival: the card rises, then the four tiles follow one after another. */
+.card { animation: rise .38s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+.tile { animation: rise .42s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+.tile:nth-child(1) { animation-delay: .08s; } .tile:nth-child(2) { animation-delay: .12s; } .tile:nth-child(3) { animation-delay: .16s; } .tile:nth-child(4) { animation-delay: .2s; }
+.ask, .invite { animation: rise .42s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) .14s both; }
+@keyframes rise { from { opacity: 0; transform: translateY(12px); } }
+
+/* Invite card: porcelain faces of the people you invited (or empty wells waiting for them), one number, one ink button. */
+.invite { display: grid; gap: 12px; padding: 16px; border-radius: 22px; background: var(--v2-card); box-shadow: var(--v2-card-sh); }
+.invTop { display: flex; align-items: center; justify-content: space-between; color: var(--v2-muted); font-size: 13px; line-height: 18px; }
+.invTag { padding: 2px 8px; border-radius: 999px; background: color-mix(in srgb, var(--m-accent, #087a67) 10%, transparent); color: var(--m-accent, #087a67); font-size: 11px; font-weight: 600; line-height: 16px; }
+.invRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.faces { display: flex; align-items: center; }
+.faces > * { flex: none; width: 40px; height: 40px; border-radius: 50%; animation: pop .36s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) both; }
+.faces > * + * { margin-left: -8px; }
+.faces > :nth-child(2) { animation-delay: .05s; } .faces > :nth-child(3) { animation-delay: .1s; } .faces > :nth-child(4) { animation-delay: .15s; } .faces > :nth-child(5) { animation-delay: .2s; }
+@keyframes pop { from { opacity: 0; transform: scale(.6); } }
+.faces img { display: block; box-shadow: 0 0 0 2px var(--v2-card), 0 4px 10px -6px rgba(15, 23, 42, .4); }
+.slot { background: var(--pa-well-bg); box-shadow: 0 0 0 2px var(--v2-card), var(--pa-well-shadow); }
+.more { display: grid; place-items: center; background: var(--m-line-soft, rgba(11, 18, 32, .06)); box-shadow: 0 0 0 2px var(--v2-card); color: var(--v2-muted); font-size: 12px; font-weight: 600; }
+.add { display: grid; place-items: center; margin-left: 8px; padding: 0; border: 0; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); cursor: pointer; }
+.add:active { transform: scale(.94); }
+.invNum { text-align: end; }
+.invNum small { display: block; color: var(--v2-muted); font-size: 12px; line-height: 16px; }
+.invNum b { color: var(--v2-ink); font-size: 22px; font-weight: 500; line-height: 28px; font-variant-numeric: tabular-nums; }
+.invNum b span { margin-left: 4px; color: var(--v2-muted); font-size: 13px; font-weight: 400; }
+.invTitle { margin: 0; color: var(--v2-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.invSub { margin: 0; color: var(--v2-muted); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.invActs { display: flex; gap: 8px; }
+.invActs .cta { flex: 1; justify-content: space-between; height: 44px; margin: 0; padding: 0 6px 0 16px; font-size: 15px; }
+.invActs .cta i { width: 32px; height: 32px; }
+.ghost { height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring); }
+.ghost:active { transform: scale(.96); }
+.ghost:disabled { opacity: .6; }
+.add:focus-visible, .ghost:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { .skel, .roll, .card, .tile, .ask, .invite, .faces > * { animation: none; } .tileFace, .cta, .rolling, .ghost { transition: none; } }

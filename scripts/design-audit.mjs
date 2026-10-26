@@ -16,7 +16,7 @@ export const SCALE = {
   space: [0, 2, 4, 6, 8, 12, 16, 20, 24, 32, 48],
 }
 // Pages that have been moved onto the scale: no exceptions, no baseline.
-export const STRICT = ['components/h5/dock-v2.module.css', 'components/home/home-v2.module.css', 'components/home/HomeAssetCard.tsx', 'components/home/HomeReferral.tsx']
+export const STRICT = ['components/h5/dock-v2.module.css', 'components/home/home-v2.module.css', 'components/home/HomeAssetCard.tsx', 'components/home/HomeReferral.tsx', 'components/home/RollingText.tsx']
 const ROOTS = ['components', 'app', 'styles']
 const BASELINE = 'scripts/design-audit-baseline.json'
 
