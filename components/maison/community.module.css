@@ -316,6 +316,16 @@ b.name { cursor: default; }
 :global(.rwa-mobile:not([data-theme='dark'])) .editAvatarCam[data-busy='true'] { background: rgba(12, 10, 8, .52); }
 .editAvatarCam[data-busy='true']::after { content: ''; width: 24px; height: 24px; border: 2.5px solid rgba(255, 255, 255, .35); border-top-color: #fff; border-radius: 50%; animation: cSpin .8s linear infinite; }
 .editAvatarActions { display: grid; justify-items: start; gap: 2px; margin-inline-start: -12px; }
+/* Profession avatars: one scrolling row of 44px porcelain discs under the photo. */
+.editPresets { display: grid; gap: 8px; margin: 0 calc(-1 * var(--m-gutter, 20px)) 16px; }
+.editPresets > span { padding-inline: var(--m-gutter, 20px); color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.editPresets > div { display: flex; gap: 8px; padding: 2px var(--m-gutter, 20px); overflow-x: auto; scrollbar-width: none; scroll-snap-type: x proximity; }
+.editPresets > div::-webkit-scrollbar { display: none; }
+.editPresets button { flex: none; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; cursor: pointer; scroll-snap-align: start; transition: transform 120ms cubic-bezier(.34, 1.56, .64, 1); }
+.editPresets button:active { transform: scale(.94); }
+.editPresets button:disabled { opacity: .5; }
+.editPresets button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+.editPresets img { display: block; width: 44px; height: 44px; border-radius: 50%; }
 .editNote { margin: 0 0 12px; padding: 10px 12px; border-radius: 12px; background: color-mix(in srgb, var(--m-accent) 10%, transparent); color: var(--m-ink); font-size: 13px; line-height: 1.45; }
 .editNote[data-tone='error'] { background: color-mix(in srgb, var(--m-down) 10%, transparent); color: var(--m-down); }
 .editField { position: relative; display: grid; gap: 6px; margin-bottom: 14px; }

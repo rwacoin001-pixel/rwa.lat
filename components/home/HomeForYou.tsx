@@ -4,6 +4,7 @@
 import { ArrowUpRight } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { openPath } from '@/lib/maison-nav'
+import { porcelainArt } from '@/lib/home-asset-media'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, request } from '@/lib/api/_http'
 import { fmtUsd } from '@/lib/money'
@@ -40,10 +41,13 @@ export function HomeForYou({ assets, onBaskets }: { assets: ForYouAsset[]; onBas
 
   return <div className={styles.root}>
     <motion.button key={lead.key} type="button" className={styles.lead} data-image={lead.image} onClick={lead.open} whileTap={reduced ? undefined : { scale: .98 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-      <span className={styles.leadImage} aria-hidden="true" />
-      <span className={styles.badge}>{lead.badge}{riskLabel && <span className={styles.risk}>{riskLabel}</span>}</span>
-      <span className={styles.leadBody}><strong>{lead.title}</strong>{lead.body && <small>{lead.body}</small>}</span>
-      <span className={styles.leadArrow} aria-hidden="true"><ArrowUpRight size={18} /></span>
+      <span className={styles.leadText}>
+        <span className={styles.badge}>{lead.badge}{riskLabel && <span className={styles.risk}>{riskLabel}</span>}</span>
+        <span className={styles.leadBody}><strong>{lead.title}</strong>{lead.body && <small>{lead.body}</small>}</span>
+        <span className={styles.leadArrow} aria-hidden="true"><ArrowUpRight size={16} /></span>
+      </span>
+      {/* A porcelain miniature in a small display case (docs/design-system.md §7.4). */}
+      <span className={styles.leadArt} aria-hidden="true"><img src={porcelainArt(lead.image === 'treasury' ? 'treasury' : 'portfolio', 480)} alt="" width={112} height={112} decoding="async" /></span>
     </motion.button>
   </div>
 }

@@ -57,7 +57,7 @@ import { copyByLocale, ctaText, feedAll, utilityCopy } from './P04-Home-copy'
 import styles from './P04-HomeMaison.module.css'
 import { paletteASlogan } from '@/lib/palette-a-copy'
 import { PullToRefresh } from '../maison/PullToRefresh'
-import { featuredCover, homeAssetImage, HOME_ASSET_FALLBACK } from '@/lib/home-asset-media'
+import { homeAssetArt, HOME_ASSET_FALLBACK } from '@/lib/home-asset-media'
 import { sharedOpen } from '@/lib/market-shared-transition'
 import { sharedKeys } from '@/lib/product-media'
 
@@ -487,7 +487,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
               const change = toNumber(asset.change24hPct)
               return <motion.button type="button" key={asset.slug} className={styles.asset} onClick={(event) => sharedOpen(event.currentTarget, () => openPath('/asset/' + encodeURIComponent(asset.slug)))} whileTap={reduced ? undefined : { scale: .99 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
                 <span className={styles.assetIdentity}>
-                  <span className={styles.assetMedia} data-shared={featuredCover(asset.slug) ? sharedKeys.asset(asset.slug, 'image') : undefined}><FeaturedAssetPhoto src={homeAssetImage(asset, index)} /></span>
+                  <span className={styles.assetMedia}><FeaturedAssetPhoto src={homeAssetArt(asset)} /></span>
                   <span className={styles.assetInfo}><b data-shared={sharedKeys.asset(asset.slug, 'title')}>{asset.name}</b><small>{[symbol, asset.issuer?.name || classLabel(asset.assetClass ?? 'rwa', locale)].filter(Boolean).join(' · ')}</small></span>
                 </span>
                 <span className={styles.assetValue} dir="ltr"><span className={styles.srOnly}>{copy.marketCap} </span>{fmtUsd(asset.marketCapUsd, { compact: true, locale, digits: 1 })}</span>

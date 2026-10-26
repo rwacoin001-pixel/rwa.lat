@@ -22,6 +22,7 @@ export { useCommunityMe, publishCommunityMe, type CommunityMe } from '@/lib/use-
 /* ── Image upload ── */
 
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+const PROFESSION_AVATARS = Array.from({ length: 16 }, (_, i) => `/avatars/professions/${String(i + 1).padStart(2, '0')}.webp`)
 const MAX_IMAGES = 4
 const MAX_BYTES = { post: 10 * 1024 * 1024, avatar: 5 * 1024 * 1024 }
 type Uploaded = { objectId: string; scanStatus: string }
@@ -390,6 +391,13 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
     if (result.data.avatarPending) setNote({ tone: 'ok', text: k.avatarPending })
     onSaved()
   }
+  const pickPreset = async (src: string) => {
+    if (busy) return
+    try {
+      const blob = await (await fetch(src)).blob()
+      await pickAvatar(new File([blob], src.split('/').pop() ?? 'avatar.webp', { type: 'image/webp' }))
+    } catch { setNote({ tone: 'error', text: k.imageFailed }) }
+  }
   const removeAvatar = async () => {
     if (busy) return
     const actor=readSession()?.userId??null
@@ -438,6 +446,11 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
               <button type="button" className={x.textBtn} disabled={busy !== null} onClick={() => picker.current?.click()}>{busy === 'avatar' ? k.uploading : k.changeAvatar}</button>
               {hasAvatar && <button type="button" className={x.textBtnMuted} disabled={busy !== null} onClick={() => void removeAvatar()}>{k.removeAvatar}</button>}
             </div>
+          </div>
+          {/* Or one of the 16 porcelain profession avatars: uploaded through the same path as a photo. */}
+          <div className={x.editPresets} role="group" aria-label={k.pickAvatar}>
+            <span>{k.pickAvatar}</span>
+            <div>{PROFESSION_AVATARS.map(src => <button key={src} type="button" disabled={busy !== null} onClick={() => void pickPreset(src)}><img src={src} alt="" width={44} height={44} loading="lazy" decoding="async" /></button>)}</div>
           </div>
           {(note || me.avatarPending) && <p className={x.editNote} data-tone={note?.tone ?? 'ok'} role={note?.tone === 'error' ? 'alert' : 'status'}>{note?.text ?? k.avatarPending}</p>}
           <label className={x.editField}><span>{k.displayName}</span><input value={name} maxLength={64} dir="auto" onChange={event => setName(event.target.value)} /></label>

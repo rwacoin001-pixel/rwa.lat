@@ -13,6 +13,30 @@ export function featuredCover(slug: string): string | null {
   return Object.hasOwn(featuredCovers, slug) ? featuredCovers[slug] : null
 }
 
+/**
+ * Porcelain miniatures (public/media/porcelain, same world as the default avatars): one object per kind of asset.
+ * -160 for 44px thumbnails, -480 for cards. docs/design-system.md §7.4.
+ */
+export type PorcelainArt = 'gold' | 'reit' | 'chip' | 'rocket' | 'treasury' | 'portfolio' | 'quant' | 'energy'
+export const porcelainArt = (name: PorcelainArt, size: 160 | 480 = 160) => `/media/porcelain/${name}-${size}.webp`
+
+const slugArt: Record<string, PorcelainArt> = { gold: 'gold', nvidia: 'chip', spacex: 'rocket', 'micron-technology': 'chip', microstrategy: 'chip', circle: 'treasury' }
+
+function classArt(assetClass: string | undefined): PorcelainArt {
+  switch ((assetClass ?? '').toLowerCase()) {
+    case 'treasury': case 'bond': case 'stable_value': case 'private_credit': return 'treasury'
+    case 'real_estate': return 'reit'
+    case 'infrastructure': return 'energy'
+    case 'commodity': return 'gold'
+    default: return 'portfolio'
+  }
+}
+
+/** The 44px thumbnail for an asset in a list: its porcelain miniature. */
+export function homeAssetArt(asset: { slug: string; assetClass?: string }): string {
+  return porcelainArt(Object.hasOwn(slugArt, asset.slug) ? slugArt[asset.slug] : classArt(asset.assetClass))
+}
+
 // Thumbnails render at 44px: small derived copies, not the 1.2-1.4k originals (1.8MB and 2.4MB as PNG).
 export const HOME_ASSET_FALLBACK = '/media/home/derived/markets-collection-160.webp'
 
