@@ -11,7 +11,7 @@ import { invalidate, useQuery } from '@/lib/api/_query'
 import { readSession, SESSION_CHANGED, SESSION_EXPIRED, type ApiError } from '@/lib/api/_http'
 import { idempotencyKeyForIntent } from '@/lib/api/idempotency'
 import {
-  addAddress, createTransfer, createWithdrawal, getTransferEligibility, getTransferRecipient, getWalletDetail, isUuid, isValidAddress, listAddressBook, listNetworks, quoteWithdrawal, revokeAddress,
+  addAddress, createTransfer, listRecentTransferRecipients, createWithdrawal, getTransferEligibility, getTransferRecipient, getWalletDetail, isUuid, isValidAddress, listAddressBook, listNetworks, quoteWithdrawal, revokeAddress,
   type AddressBookEntry, type TransferBody, type TransferReceipt, type WalletNetwork, type WithdrawalBody, type WithdrawalQuote, type WithdrawalReceipt,
 } from '@/lib/api/wallet'
 import { fromAtomic, toAtomic } from '@/lib/money'
@@ -382,6 +382,8 @@ export function TransferScreen({ query }: { query: string }) {
   const kit = flowKitCopy(locale)
   const [reviewOpen, setReviewOpen] = useState(false)
   const recents = useRecentRecipients(self)
+  // Recent recipients from the server (any device, with masked names) first, then any kept only on this device.
+  const serverRecents = useQuery(self ? 'wallet:recent-recipients' : null, listRecentTransferRecipients, { staleTime: 60_000, loading: 'silent' })
 
   const decimals = wallet.data?.asset.decimals ?? 6
   const unit = wallet.data?.asset.code ?? 'USDT'
@@ -433,6 +435,7 @@ export function TransferScreen({ query }: { query: string }) {
       if (!result.ok) { setServerError(p.errors[result.error.code] ?? errorText(f, result.error, common.errorGeneric)); void recipientStatus.refetch(); return }
       invalidate(['wallet:', 'portfolio:', 'home:'])
       recents.remember(body.recipientUserId)
+      invalidate(['wallet:recent-recipients'])
       setReviewOpen(false)
       setReceipt(result.data)
     } catch {
@@ -499,7 +502,11 @@ export function TransferScreen({ query }: { query: string }) {
           onChange={(next) => { setRecipient(next); setServerError(null); setPasteFailed(false); setConsent(false) }}
           status={recipientError ?? (pasteFailed ? t.pasteFailed : id ? (eligibility ?? [recipientStatus.data?.displayName, p.eligibility.eligible].filter(Boolean).join(' · ')) : null)}
           actions={[{ label: kit.paste, icon: <ClipboardPaste size={19} strokeWidth={1.7} />, onClick: () => void paste() }, { label: kit.scan, icon: <QrCode size={19} strokeWidth={1.7} />, onClick: () => setScanning(true) }]}
-          recents={{ title: kit.recent, items: recents.items.filter((item) => item !== self).map((item) => ({ key: item, label: <bdi dir="ltr">{short(item)}</bdi>, active: item === id, onPick: () => { setRecipient(item); setServerError(null); setConsent(false) } })) }} />}
+          recents={{ title: kit.recent, items: [
+              ...(serverRecents.data?.recipients ?? []).map((item) => ({ id: item.userId, name: item.displayName })),
+              ...recents.items.map((item) => ({ id: item, name: null as string | null })),
+            ].filter((item, index, all) => item.id !== self && all.findIndex((other) => other.id === item.id) === index).slice(0, 6)
+              .map((item) => ({ key: item.id, label: item.name ? <>{item.name} <small className={s.mono} dir="ltr">…{item.id.slice(-4)}</small></> : <bdi dir="ltr">{short(item.id)}</bdi>, active: item.id === id, onPick: () => { setRecipient(item.id); setServerError(null); setConsent(false) } })) }} />}
         cta={{ label: talk, disabled: !canReview, busy: pending, onClick: () => { setServerError(null); setConsent(false); setReviewOpen(true) } }} />}
     <FlowConfirm open={reviewOpen} onClose={() => { if (!pending) setReviewOpen(false) }} busy={pending} title={kit.reviewTransfer} amount={amountShown} unit={unit}
       rows={[

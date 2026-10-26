@@ -111,3 +111,6 @@ export const revokeAddress = (id: string, reauthentication: string) => request<{
 /** Mirrors wallet.service assertAddress so the form can reject a malformed address before any request. */
 export const isValidAddress = (network: string, value: string) => network === 'tron' ? /^T[1-9A-HJ-NP-Za-km-z]{33}$/.test(value) : /^0x[a-fA-F0-9]{40}$/.test(value)
 export const isUuid = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value)
+/** People this user recently sent transfers to (newest first, at most five; names masked like the recipient check). */
+export type RecentTransferRecipient = { userId: string; lastSentAt: string; displayName: string | null; avatarInitial: string | null }
+export const listRecentTransferRecipients = () => request<{ recipients: RecentTransferRecipient[] }>('/v1/wallet/transfer-recipients', { loading: 'silent' })
