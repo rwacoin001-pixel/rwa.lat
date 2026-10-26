@@ -18,9 +18,10 @@ const INCLUDE = [
   /^\/media\/home\/derived\/[^/]+\.webp$/,
   /^\/auth\/[^/]+\.(?:png|svg|webp)$/,
   // Paper & Glass: its images (home, guide, sign-in cabinet, avatars; ~1.8 MB) and the Latin font (Satoshi, ~110 KB).
-  // The Chinese font slices stay on the network: browsers fetch only the slices a page uses, and cache them.
+  // The Chinese font cut to the app's own copy (~400 KB) ships too; the full slices (for names, news) stay on the network.
   /^\/media\/palette-a\/.+\.(?:webp|png|jpe?g|svg)$/,
   /^\/fonts\/satoshi\/[^/]+\.woff2$/,
+  /^\/fonts\/noto-sans-sc-app\/[^/]+\.woff2$/,
 ]
 const MAX_FILE = 8 * 1024 * 1024
 
