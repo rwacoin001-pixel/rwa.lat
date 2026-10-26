@@ -259,3 +259,7 @@ html[data-palette='a'] {
   --pa-ease-out: cubic-bezier(.22, 1, .36, 1); --pa-ease-spring: cubic-bezier(.34, 1.56, .64, 1); --pa-ease-inout: cubic-bezier(.65, 0, .35, 1);
 }
 @media (prefers-reduced-motion: reduce) { html[data-palette='a'] { --pa-dur-press: 0ms; --pa-dur-state: 0ms; --pa-dur-enter: 0ms; --pa-dur-sheet: 0ms; } }
+
+/* Smoothness: frosted blur is recomputed every frame while the page scrolls, which phones feel as stutter. Only the
+   floating dock keeps it; every other bar, chip and strip is a near-solid surface instead. */
+html[data-palette='a'] *:not(.liquid-dock__pill) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }

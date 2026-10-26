@@ -108,7 +108,9 @@ export function PortfolioScreen({ query }: { query: string }) {
   const incomplete = Boolean(totals && basketRows && holdings === null)
   // Cost, P&L and yield only exist for products; say so whenever baskets are or may be present.
   const scoped = Boolean(basketRows?.length) || Boolean(baskets.error)
-  const basketsEmpty = basketRows?.length === 0
+  // Until the baskets have loaded we don't know the section has anything in it; showing it early and then removing
+  // it made the page jump. So it appears only once there is something (or an error) to show.
+  const basketsEmpty = !baskets.error && !(basketRows && basketRows.length > 0)
   const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
   const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
   const { masked, toggle: toggleMask } = useAmountMask()
@@ -160,7 +162,6 @@ export function PortfolioScreen({ query }: { query: string }) {
           line={pnlLine ?? <span>{p.available} <b className={s.num}>{hide(bare(balances?.availableAtomic))}</b> USDT</span>}
           note={p.totalNote} breakdown={breakdown} notes={notes} />}
 
-    {tab === 'overview' && <QuantAssetsCard />}
 
 
     {tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
@@ -170,6 +171,8 @@ export function PortfolioScreen({ query }: { query: string }) {
         <SectionHead index={positionsIndex} title={p.positions} action={totals && totals.rows.length > 3 ? <button type="button" className={s.sectionMore} onClick={() => setTab('positions')}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
         <PositionTable rows={totals?.rows.slice(0, 3)} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
       </>}
+      {/* Quant holdings sit with the other holdings (they load on their own; below the fold they don't push the total). */}
+      <QuantAssetsCard />
       {!basketsEmpty && <BasketPositions index={basketsIndex} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} limit={3} onMore={() => setTab('positions')} />}
       <SectionHead index={toolsIndex} title={p.tools.cash} />
       <Tools />
@@ -246,7 +249,8 @@ function Allocation({ rows, baskets, cash, loading, error, retry, products, part
   }, [baskets, cash, p.cash, p.product, products, rows])
   const { masked } = useAmountMask()
   // With nothing but cash there is no allocation to show; the holdings section below says "no holdings" once.
-  if (!error && !(loading && !rows) && slices.items.every((slice) => slice.cash)) return null
+  // While loading it draws nothing either, so the page never shows bars here and then collapses them (a jump).
+  if (!error && ((loading && !rows) || slices.items.every((slice) => slice.cash))) return null
   return <>
     <SectionHead index="01" title={p.allocation} note={p.allocationNote} />
     {error ? <StateBlock tone="error" title={p.loadError} retry={retry} retryLabel={common.retry} />
@@ -306,7 +310,8 @@ function PositionTable({ rows, whole, weighted, state, products }: { rows: Posit
   const common = marketCopy[locale].common
   const [list] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
   if (state.error) return <StateBlock tone="error" title={p.loadError} body={state.error.message} retry={state.refetch} retryLabel={common.retry} />
-  if (!rows) return <Skeleton rows={3} />
+  // One row while loading: about the height of the empty state, so the section barely changes when data lands.
+  if (!rows) return <Skeleton rows={1} />
   if (!rows.length) return <StateBlock title={p.positionsEmpty} body={p.positionsEmptyBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets')}>{p.browse}</button>} />
   return <>
     <div className={s.tableHead} aria-hidden="true"><span>{p.product} · {p.qty}</span><span>{p.value} · {p.pnl}</span></div>
@@ -521,7 +526,8 @@ function PaperTotal({ masked, onMask, loading, figure, line, note, breakdown, no
       <span>{p.total} · USDT</span>
       <button type="button" className={pa.eye} aria-pressed={masked} aria-label={masked ? hc.showAmounts : hc.hideAmounts} onClick={onMask}>{masked ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
     </div>
-    {loading ? <Skeleton rows={1} /> : <p className={`${pa.figure} ${s.num}`}>{figure}<small>USDT</small></p>}
+    {/* Same line while loading (a dash, softly pulsing) so nothing below moves when the figure arrives. */}
+    <p className={`${pa.figure} ${s.num}`} data-loading={loading || undefined}>{loading ? '—' : figure}<small>USDT</small></p>
     <p className={pa.line}>{line}</p>
     <div className={pa.actions}>
       {actions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => openPath(path)}><Icon size={20} strokeWidth={1.7} aria-hidden="true" /><span>{label}</span></button>)}

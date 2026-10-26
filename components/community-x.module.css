@@ -351,13 +351,13 @@ span.act { cursor: default; }
 :global(html[data-palette='a']) .page.page {
   --x-bg: #f5f6f8; --x-ink: #0b1220; --x-muted: #5b6472; --x-line: rgba(11, 18, 32, .08); --x-line-strong: rgba(11, 18, 32, .14);
   --x-surface: #ffffff; --x-surface-2: rgba(11, 18, 32, .05); --x-accent: #0a8a73; --x-accent-ink: #ffffff;
-  --x-header: rgba(245, 246, 248, .86); --x-solid: #0e121a; --x-solid-ink: #ffffff;
+  --x-header: rgba(245, 246, 248, .97); --x-solid: #0e121a; --x-solid-ink: #ffffff;
   --x-font: var(--font-sans);
 }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .page.page {
   --x-bg: #0a0c10; --x-ink: #f2f4f7; --x-muted: #8a93a3; --x-line: rgba(255, 255, 255, .08); --x-line-strong: rgba(255, 255, 255, .14);
   --x-surface: #15181e; --x-surface-2: rgba(255, 255, 255, .06); --x-accent: #19c7aa; --x-accent-ink: #03211c;
-  --x-header: rgba(10, 12, 16, .78); --x-solid: #f2f4f7; --x-solid-ink: #0b0d12;
+  --x-header: rgba(10, 12, 16, .97); --x-solid: #f2f4f7; --x-solid-ink: #0b0d12;
 }
 :global(html[data-palette='a'] .rwa-mobile[data-screen^='community']):has(.page) { background: #f5f6f8; }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark'][data-screen^='community']):has(.page) { background: #0a0c10; }

@@ -1483,7 +1483,7 @@ span.compareName { padding-top: 28px; cursor: default; }
   --m-cta-chip-ink: #ffffff;
   --m-cta-quiet: rgba(11, 18, 32, .05);
   --m-cta-quiet-ink: #0b1220;
-  --m-topbar-bg: rgba(245, 246, 248, .78);
+  --m-topbar-bg: rgba(245, 246, 248, .97);
 }
 :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root {
   --m-glass: rgba(22, 25, 31, .66);
@@ -1501,7 +1501,7 @@ span.compareName { padding-top: 28px; cursor: default; }
   --m-lacquer-fill: rgba(255, 255, 255, .05);
   --m-lacquer-tick: rgba(255, 255, 255, .14);
   --m-rim: rgba(255, 255, 255, .1);
-  --m-topbar-bg: rgba(10, 12, 16, .7);
+  --m-topbar-bg: rgba(10, 12, 16, .97);
   --m-scrim: rgba(0, 0, 0, .5);
   --m-cta: #19c7aa;
   --m-cta-ink: #03211c;
@@ -1670,3 +1670,4 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .cta:disabled { opacity: .45; box-shadow: none; }
 :global(html[data-palette='a']) .ctaIcon { width: 44px; height: 44px; background: var(--btn-arrow-fill); color: var(--btn-arrow-ink); box-shadow: var(--btn-arrow-edge, none); }
 :global(html[data-palette='a']) .calDay[data-today] { border-style: solid; border-color: var(--pa-sel); }
+.tape:empty { min-height: 38px; }

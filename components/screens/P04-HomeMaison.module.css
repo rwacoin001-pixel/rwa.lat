@@ -556,3 +556,8 @@
 /* Palette A, unified with the guide: the balance in a light weight, larger; the unit small with open tracking. */
 :global(html[data-palette='a']) .cardValue > strong { font-size: clamp(32px, 10vw, 42px); font-weight: 300; letter-spacing: -.035em; }
 :global(html[data-palette='a']) .cardCurrency { font-size: 12px; letter-spacing: .08em; }
+
+/* Smoothness: the quote strip keeps its height before quotes arrive; sections below the first screen are only laid
+   out and painted when they come near (the browser keeps their size from last time, so nothing jumps). */
+.ticker { min-height: 39px; }
+.section { content-visibility: auto; contain-intrinsic-size: auto 640px; }

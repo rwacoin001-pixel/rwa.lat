@@ -19,10 +19,12 @@
 @media (prefers-reduced-motion: reduce) { .actions button, .eye { transition: none; } }
 
 /* Page menu (TopTabs): pinned under the status bar, text only, a short ink rule under the selected tab. */
-.tabs { position: sticky; z-index: 6; top: 0; margin: 0 calc(-1 * var(--m-gutter, 20px)) 10px; padding: calc(env(safe-area-inset-top) + 10px) var(--m-gutter, 20px) 0; background: color-mix(in srgb, var(--m-bg) 86%, transparent); -webkit-backdrop-filter: blur(18px) saturate(1.2); backdrop-filter: blur(18px) saturate(1.2); }
+.tabs { position: sticky; z-index: 6; top: 0; margin: 0 calc(-1 * var(--m-gutter, 20px)) 10px; padding: calc(env(safe-area-inset-top) + 10px) var(--m-gutter, 20px) 0; background: color-mix(in srgb, var(--m-bg) 97%, transparent); }
 .tabs > div { display: flex; gap: 22px; overflow-x: auto; scrollbar-width: none; }
 .tabs > div::-webkit-scrollbar { display: none; }
 .tabs button { position: relative; flex: none; padding: 8px 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 17px; font-weight: 500; letter-spacing: -.01em; cursor: pointer; transition: color .2s; -webkit-tap-highlight-color: transparent; }
 .tabs button[aria-selected='true'] { color: var(--m-ink); font-weight: 650; }
 .tabs button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 6px; }
 .rule { position: absolute; left: 50%; bottom: 4px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--m-ink); }
+.figure[data-loading] { color: var(--m-faint); animation: pulse 1.4s ease-in-out infinite; } @keyframes pulse { 50% { opacity: .45; } }
+.figure { height: 50px; }

@@ -250,3 +250,4 @@
 
 /* Palette A preview (styles/palette-a.css): the dark edge light turns brand green. */
 :global(html[data-palette='a']) .halo::before { background: conic-gradient(from 200deg, transparent 0deg, rgba(25, 199, 170, 0) 15deg, rgba(25, 199, 170, .85) 55deg, rgba(25, 199, 170, 0) 100deg, transparent 180deg, rgba(142, 163, 192, 0) 195deg, rgba(142, 163, 192, .35) 235deg, rgba(142, 163, 192, 0) 275deg, transparent 360deg); }
+.inner:has(> .skeleton) { min-height: 420px; }

@@ -121,7 +121,8 @@ export function StatStrip({ items, fit = false }: { items: { label: ReactNode; v
 
 /** Continuous marquee of quotes; duplicated once so the loop is seamless. Pauses on hover / reduced motion. */
 export function TickerTape({ items, label }: { items: { key: string; name: ReactNode; value: ReactNode; delta?: ReactNode; onClick?: () => void }[]; label: string }) {
-  if (!items.length) return null
+  // Before the quotes arrive, an empty strip of the same height holds the place, so the page below doesn't jump.
+  if (!items.length) return <div className={styles.tape} aria-hidden="true" />
   const track = (hidden: boolean) => items.map((item) => <button key={`${hidden ? 'b' : 'a'}${item.key}`} type="button" tabIndex={hidden ? -1 : 0} aria-hidden={hidden || undefined} onClick={item.onClick}>
     <b>{item.name}</b><span className={styles.num}>{item.value}</span>{item.delta}
   </button>)

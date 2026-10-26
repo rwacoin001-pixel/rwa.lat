@@ -221,9 +221,10 @@ function PredictionsPanel({ listed, loading }: { listed: CatalogProduct[]; loadi
   const m = copy.markets
   const orderable = listed.filter((product) => product.assetClassId === 'prediction')
   return <div className={s.tabPanel} role="tabpanel">
-    {(loading || orderable.length > 0) && <>
+    {/* Shown only once there is something in it: a placeholder that later vanished made the feed below jump. */}
+    {!loading && orderable.length > 0 && <>
       <SectionHead title={m.predictionOpen} />
-      {loading ? <Skeleton rows={1} /> : <div className={s.productGrid}>{orderable.map((product) => <ProductCard key={product.id} product={product} tone="lacquer" />)}</div>}
+      <div className={s.productGrid}>{orderable.map((product) => <ProductCard key={product.id} product={product} tone="lacquer" />)}</div>
     </>}
     <PredictionFeed />
   </div>
