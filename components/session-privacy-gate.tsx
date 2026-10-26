@@ -10,14 +10,25 @@ import { clearAiChatSession } from '@/lib/ai-chat-session'
 import { logout } from '@/lib/api/auth'
 import { listSecurityFactors, stepUpWithPasskey } from '@/lib/api/security'
 import { useI18n } from '@/lib/i18n'
-import { needsIdleVerification } from '@/lib/session-idle'
+import { AWAY_MS, maskEmail, needsIdleVerification, PASSKEY_ACCOUNT_KEY } from '@/lib/session-idle'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { sessionUnlockCopy } from '@/lib/session-unlock-copy'
 import { MaisonPage } from './maison/primitives'
 import { useStepUp } from './maison/StepUp'
 import styles from './session-privacy-gate.module.css'
 
-/** Local privacy lock. It does not replace server-side session and money-out authorization. */
+/** Installed (home-screen PWA or the Android client) with a passkey used on this device: lock like a banking app. */
+function quickLock(): string | null {
+  try {
+    const installed = matchMedia('(display-mode: standalone)').matches || matchMedia('(display-mode: fullscreen)').matches
+      || (navigator as Navigator & { standalone?: boolean }).standalone === true || navigator.userAgent.includes('RwaLatAndroidTrial/')
+    return installed ? localStorage.getItem(PASSKEY_ACCOUNT_KEY) : null
+  } catch { return null }
+}
+
+/** Local privacy lock. It does not replace server-side session and money-out authorization.
+ *  Browser tab: after a day without use. Installed app with a passkey here: every cold start and after 5 minutes away
+ *  (passkey to unlock, asked at once where the browser allows it). Signing in counts as unlocking. */
 export default function SessionPrivacyGate({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const { locale } = useI18n()
@@ -51,7 +62,11 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
     item.last = Date.now()
     try { localStorage.setItem(item.key, String(item.last)) } catch { /* Keep the in-memory clock. */ }
   }
-  const unlock = () => { locked.current = false; remember(); setStatus('open') }
+  const unlock = () => {
+    locked.current = false; remember(); setStatus('open')
+    try { if (current.current) sessionStorage.setItem(`${current.current.key}.unlocked`, '1') } catch { /* Locks again on the next start. */ }
+  }
+  const [account, setAccount] = useState<string | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -84,7 +99,17 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
       let last = current.current?.key === key ? current.current.last : Date.parse(session.loggedInAt)
       try { const stored = localStorage.getItem(key); if (stored !== null) last = Number(stored) } catch { /* Use the current session clock. */ }
       current.current = { key, last }
-      if (locked.current || needsIdleVerification(last)) {
+      const quick = quickLock()
+      setAccount(quick)
+      // Cold start: this app process has not been unlocked yet (a sign-in a moment ago counts).
+      let cold = false
+      if (quick) {
+        try {
+          cold = sessionStorage.getItem(`${key}.unlocked`) !== '1'
+          if (cold && Date.now() - Date.parse(session.loggedInAt) < 120_000) { cold = false; sessionStorage.setItem(`${key}.unlocked`, '1') }
+        } catch { /* No session storage: the away timer still applies. */ }
+      }
+      if (locked.current || cold || needsIdleVerification(last, Date.now(), quick ? AWAY_MS : undefined)) {
         const newlyLocked = !locked.current
         locked.current = true; setStatus('locked')
         if (newlyLocked) void autoPasskey()
@@ -146,7 +171,7 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
         <div className={styles.mid}>
           <div className={styles.mark} aria-hidden="true"><Fingerprint size={32} strokeWidth={1.5} /></div>
           <h1 id={titleId} className={styles.title}>{text.title}</h1>
-          <p className={styles.description}>{text.description}</p>
+          <p className={styles.description}>{account && maskEmail(account) ? maskEmail(account) : text.description}</p>
         </div>
         <div className={styles.actions}>
           <button type="button" className={styles.cta} onClick={() => void verify()} disabled={busy}>{busy ? text.verifying : text.unlock}</button>

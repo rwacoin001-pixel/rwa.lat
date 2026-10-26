@@ -5,6 +5,12 @@ import { IdentityCrypto } from '../identity/identity-crypto.service'
 import { Session } from '../identity/session.entity'
 import { SECURITY_ERROR_CODES } from './security.errors'
 
+const DAY_MS = 24 * 60 * 60 * 1000
+export const SESSION_IDLE_MS = 30 * DAY_MS
+export const SESSION_MAX_MS = 180 * DAY_MS
+// Push the expiry out at most about once a day, not on every request.
+const SESSION_SLIDE_STEP_MS = DAY_MS
+
 export interface AuthenticatedSession {
   userId: string
   sessionId: string
@@ -38,7 +44,12 @@ export class SessionAuthService {
       })
     }
 
-    session.lastSeenAt = new Date()
+    // Sliding, like a banking app: a session in use stays signed in (30 days from the last use), up to 180 days in all.
+    // The app lock (passkey) guards opening it on the device; money-out keeps its own step-up.
+    const now = Date.now()
+    const slid = Math.min(now + SESSION_IDLE_MS, (session.createdAt?.getTime() ?? now) + SESSION_MAX_MS)
+    if (slid - session.expiresAt.getTime() > SESSION_SLIDE_STEP_MS) session.expiresAt = new Date(slid)
+    session.lastSeenAt = new Date(now)
     await this.sessions.save(session)
     return { userId: session.userId, sessionId: session.id, deviceId: session.deviceId }
   }

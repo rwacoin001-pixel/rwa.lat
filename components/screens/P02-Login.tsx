@@ -1,5 +1,6 @@
 'use client'
 
+import { PASSKEY_ACCOUNT_KEY } from '@/lib/session-idle'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { ToastTone } from '@/lib/toast-tone'
 import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
@@ -54,7 +55,7 @@ function acceptedConsents(requirements: AuthConsentRequirements | null): AuthCon
   return requirements.required.map(item => ({ documentType: item.documentType, version: item.version, accepted: true }))
 }
 
-const LAST_ACCOUNT = 'rwa.lastPasskeyAccount'
+const LAST_ACCOUNT = PASSKEY_ACCOUNT_KEY
 
 export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   mode: 'login' | 'register'
