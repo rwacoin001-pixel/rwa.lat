@@ -344,3 +344,26 @@ span.act { cursor: default; }
 @media (prefers-reduced-motion: reduce) {
   .head, .fab, .toast, .sheet, .scrim, .like > svg, .like::before { animation: none !important; transition: none !important; }
 }
+
+/* ── Paper & Glass (palette A): the community keeps the timeline layout but wears the app's materials — paper
+   background, brand teal instead of X blue, fill-only topic pills, a short ink rule under the selected tab, and the
+   compose key in the primary-button material. ── */
+:global(html[data-palette='a']) .page.page {
+  --x-bg: #f5f6f8; --x-ink: #0b1220; --x-muted: #5b6472; --x-line: rgba(11, 18, 32, .08); --x-line-strong: rgba(11, 18, 32, .14);
+  --x-surface: #ffffff; --x-surface-2: rgba(11, 18, 32, .05); --x-accent: #0a8a73; --x-accent-ink: #ffffff;
+  --x-header: rgba(245, 246, 248, .86); --x-solid: #0e121a; --x-solid-ink: #ffffff;
+  --x-font: var(--font-sans);
+}
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .page.page {
+  --x-bg: #0a0c10; --x-ink: #f2f4f7; --x-muted: #8a93a3; --x-line: rgba(255, 255, 255, .08); --x-line-strong: rgba(255, 255, 255, .14);
+  --x-surface: #15181e; --x-surface-2: rgba(255, 255, 255, .06); --x-accent: #19c7aa; --x-accent-ink: #03211c;
+  --x-header: rgba(10, 12, 16, .78); --x-solid: #f2f4f7; --x-solid-ink: #0b0d12;
+}
+:global(html[data-palette='a'] .rwa-mobile[data-screen^='community']):has(.page) { background: #f5f6f8; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark'][data-screen^='community']):has(.page) { background: #0a0c10; }
+:global(html[data-palette='a']) .chip { border: 0; background: var(--x-surface-2); font-weight: 500; font-size: 13.5px; }
+:global(html[data-palette='a']) .chip[aria-pressed='true'] { background: var(--x-solid); }
+:global(html[data-palette='a']) .tab[aria-selected='true'] { font-weight: 650; }
+:global(html[data-palette='a']) .fab { background: var(--btn-solid-fill); color: var(--btn-solid-ink); box-shadow: var(--btn-solid-edge, none), 0 10px 24px -10px rgba(11, 18, 32, .5); }
+:global(html[data-palette='a']) .fab:hover { background: var(--btn-solid-fill); filter: brightness(1.05); }
+:global(html[data-palette='a']) .tabLine { width: 18px; min-width: 0; height: 3px; bottom: 6px; background: var(--x-ink); }
