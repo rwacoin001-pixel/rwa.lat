@@ -1,14 +1,14 @@
 /* For you: one recommendation on a paper card, its porcelain miniature in a small display case on the right
    (docs/design-system.md §4.2, §7.4). Ink text on paper in both themes' own card colour. */
 .root { min-width: 0; }
-.lead { display: flex; align-items: stretch; gap: 16px; width: 100%; padding: 16px; border: 0; border-radius: 22px; color: var(--q-num, #0b1220); background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); text-align: start; font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.lead { display: flex; align-items: stretch; gap: 16px; width: 100%; padding: 16px; border: 0; border-radius: 22px; color: var(--m-ink, #0b1220); background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); text-align: start; font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .leadText { display: grid; align-content: start; gap: 8px; flex: 1 1 0; min-width: 0; }
-.badge { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--q-dim, #5b6472); font-size: 13px; font-weight: 500; line-height: 18px; }
+.badge { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; color: var(--m-muted, #5b6472); font-size: 13px; font-weight: 500; line-height: 18px; }
 .risk { padding: 0 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); font-size: 11px; line-height: 20px; }
 .leadBody { display: grid; gap: 4px; min-width: 0; }
 .leadBody strong { display: -webkit-box; overflow: hidden; font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: -.01em; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
-.leadBody small { display: -webkit-box; overflow: hidden; color: var(--q-dim, #5b6472); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-.leadArrow { display: grid; place-items: center; width: 32px; height: 32px; margin-top: 4px; border-radius: 999px; color: var(--pa-card, #fff); background: var(--q-num, #0b1220); transition: transform .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.leadBody small { display: -webkit-box; overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.leadArrow { display: grid; place-items: center; width: 32px; height: 32px; margin-top: 4px; border-radius: 999px; color: var(--pa-card, #fff); background: var(--m-ink, #0b1220); transition: transform .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
 .lead:active .leadArrow { transform: rotate(45deg); }
 /* The case: the art's own studio grey, so the object sits in it without a visible edge. */
 .leadArt { display: block; flex: none; align-self: center; width: 112px; height: 112px; overflow: hidden; border-radius: 22px; background: #f3f4f6; box-shadow: inset 0 1px 2px rgba(11, 18, 32, .06); }
@@ -16,7 +16,9 @@
 @keyframes settle { from { opacity: 0; transform: translateY(8px) scale(.96); } }
 .lead:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
-:global(.rwa-mobile) .root.root .badge, :global(.rwa-mobile) .root.root .leadBody small { color: var(--q-dim, #5b6472); }
-:global(.rwa-mobile) .root.root .leadBody strong { color: var(--q-num, #0b1220); }
+:global(.rwa-mobile) .root.root .badge, :global(.rwa-mobile) .root.root .leadBody small { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .root.root .leadBody strong { color: var(--m-ink, #0b1220); }
 :global(.rwa-mobile) .root.root .leadArrow { color: var(--pa-card, #fff); }
+/* Night: the case is lit lower, so the white porcelain doesn't glare on graphite. */
+:global(.rwa-mobile[data-theme='dark']) .leadArt { filter: brightness(.82); }
 @media (prefers-reduced-motion: reduce) { .leadArrow { transition: none; } .leadArt img { animation: none; } }
