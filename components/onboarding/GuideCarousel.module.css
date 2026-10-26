@@ -595,4 +595,6 @@
    The top chip holds only the language switch. */
 .sceneFoot, .sceneFoot[data-last] { bottom: calc(132px + env(safe-area-inset-bottom)); }
 .topRight[data-lang-only] { padding: 4px; }
-.actionBar .signIn { flex: 1 1 auto; min-width: 0; }
+/* The sign-in pill hugs its words (it never stretches); the install key sits at the far end. */
+.actionBar { justify-content: space-between; }
+.actionBar .signIn { flex: 0 1 auto; min-width: 0; }
