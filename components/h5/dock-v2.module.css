@@ -1,0 +1,50 @@
+/* Dock (docs/design-system.md §5): a porcelain plate, a groove pressed into it, one raised capsule that slides to the
+   current tab. Quieter than the money tiles: thin plate shadow, low capsule relief. Scroll down closes the plate into one
+   button that shows the current tab; scroll up or a tap opens it again. Sizes are on the §3.1 scale. */
+.plate { position: relative; flex: 1 1 auto; max-width: 360px; height: 56px; padding: 2px; overflow: hidden; border-radius: 999px; pointer-events: auto;
+  background: var(--dock-plate); box-shadow: var(--dock-plate-shadow); transition: max-width .44s cubic-bezier(.34, 1.18, .64, 1); }
+.groove { position: relative; display: grid; grid-template-columns: repeat(var(--n, 4), 1fr); height: 52px; padding: 2px; border-radius: 999px;
+  background: var(--dock-groove); box-shadow: var(--dock-groove-shadow); transition: opacity .2s; }
+.cap { position: absolute; top: 2px; left: 2px; width: calc((100% - 4px) / var(--n, 4)); height: 48px; border-radius: 999px; pointer-events: none;
+  background: var(--dock-cap); box-shadow: var(--dock-cap-shadow); transform: translateX(calc(var(--i, 0) * 100%));
+  transition: transform .38s cubic-bezier(.34, 1.28, .64, 1), box-shadow .12s, scale .12s; }
+:global([dir='rtl']) .cap { left: auto; right: 2px; transform: translateX(calc(var(--i, 0) * -100%)); }
+.groove:has(.tab[aria-current='page']:active) .cap { scale: .97; box-shadow: var(--dock-cap-shadow-pressed); }
+.tab { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 44px; height: 48px; padding: 0; border: 0; border-radius: 999px;
+  background: none; color: var(--dock-tab); font: inherit; font-size: 12px; font-weight: 600; line-height: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; transition: color .22s; }
+.tab svg { flex: none; }
+.label { max-width: 0; overflow: hidden; white-space: nowrap; opacity: 0; transition: max-width .3s cubic-bezier(.22, 1, .36, 1), opacity .2s; }
+.tab[aria-current='page'] { color: var(--dock-tab-on); }
+.tab[aria-current='page'] .label { max-width: 4em; opacity: 1; transition-delay: .08s; }
+.tab:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: -2px; }
+.cur { position: absolute; inset: 2px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; background: var(--dock-cap); box-shadow: var(--dock-cap-shadow);
+  color: var(--dock-tab-on); opacity: 0; scale: .8; pointer-events: none; cursor: pointer; transition: opacity .18s, scale .3s cubic-bezier(.34, 1.4, .64, 1); }
+.cur:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+.plate[data-compact] { max-width: 56px; }
+.plate[data-compact] .groove { opacity: 0; pointer-events: none; }
+.plate[data-compact] .cur { opacity: 1; scale: 1; pointer-events: auto; transition-delay: .12s, .12s; }
+
+:global(.rwa-mobile[data-theme='light']) .plate, .plate {
+  --dock-plate: linear-gradient(180deg, #fbfbfc 0%, #f1f2f4 100%);
+  --dock-plate-shadow: inset 0 1px 0 #ffffff, 0 0 0 .5px rgba(11, 18, 32, .07), 0 10px 24px -16px rgba(15, 23, 42, .38), 0 2px 4px -2px rgba(15, 23, 42, .08);
+  --dock-groove: #e7e9ed;
+  --dock-groove-shadow: inset 0 1.5px 3px rgba(15, 23, 42, .13), inset 0 0 0 .5px rgba(11, 18, 32, .06), 0 1px 0 rgba(255, 255, 255, .9);
+  --dock-cap: linear-gradient(180deg, #ffffff 0%, #f2f3f5 100%);
+  --dock-cap-shadow: inset 0 1px 0 #ffffff, inset 0 -1px 0 rgba(11, 18, 32, .05), 0 0 0 .5px rgba(11, 18, 32, .1), 0 3px 6px -2px rgba(15, 23, 42, .18), 0 1px 1px rgba(15, 23, 42, .06);
+  --dock-cap-shadow-pressed: inset 0 1px 0 #ffffff, 0 0 0 .5px rgba(11, 18, 32, .12), 0 1px 2px rgba(15, 23, 42, .14);
+  --dock-tab: #5b6472; --dock-tab-on: #0b1220;
+}
+:global(.rwa-mobile[data-theme='dark']) .plate {
+  --dock-plate: linear-gradient(180deg, #2b2d32 0%, #1f2125 100%);
+  --dock-plate-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), 0 0 0 .5px rgba(255, 255, 255, .06), 0 14px 28px -14px #000;
+  --dock-groove: #111215;
+  --dock-groove-shadow: inset 0 2px 4px rgba(0, 0, 0, .75), inset 0 0 0 .5px rgba(0, 0, 0, .6), 0 1px 0 rgba(255, 255, 255, .05);
+  --dock-cap: linear-gradient(180deg, #43464d 0%, #2f3136 100%);
+  --dock-cap-shadow: inset 0 1px 0 rgba(255, 255, 255, .16), inset 0 -1px 0 rgba(0, 0, 0, .25), 0 0 0 .5px rgba(0, 0, 0, .5), 0 4px 8px -3px rgba(0, 0, 0, .7);
+  --dock-cap-shadow-pressed: inset 0 1px 0 rgba(255, 255, 255, .1), 0 0 0 .5px rgba(0, 0, 0, .5), 0 1px 2px rgba(0, 0, 0, .6);
+  --dock-tab: #9aa3b2; --dock-tab-on: #f2f4f7;
+}
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .plate, .cap, .cur { --dock-plate: var(--m-bg, #f5f6f8); --dock-cap: var(--m-card, #fff); }
+}
+@media (prefers-reduced-motion: reduce) { .plate, .cap, .label, .cur, .groove, .tab { transition: none; } }

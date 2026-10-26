@@ -1,7 +1,7 @@
 'use client'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { markTabNavigation } from '@/lib/app-navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartCandlestick, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { openPath } from '@/lib/maison-nav'
@@ -11,6 +11,7 @@ import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import type { PrimaryScreen } from './shared'
 import { useQuantListed } from '@/lib/api/quant'
 import { BuddyOrb } from '@/components/buddy/BuddyOrb'
+import d from './dock-v2.module.css'
 
 type Screen = RwaScreen
 
@@ -58,16 +59,18 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
   }
   return (
     <nav ref={dockRef} className={`liquid-dock ios-dock ${isCompact ? 'is-compact' : ''}`} aria-label={shellCopy.primaryNavigation}>
-      <div className="liquid-dock__pill" aria-hidden={isCompact}>
-        <span className="liquid-dock__shine" />
-        {items.map(({ id, label, icon: Icon }) => (
-          <button key={id} type="button" aria-label={label} tabIndex={isCompact ? -1 : 0} className={`dock-link ${screen === id ? 'is-active' : ''}`} aria-current={screen === id ? 'page' : undefined} onClick={() => select(id)}>
-            <span className="dock-link__icon"><Icon size={21} strokeWidth={screen === id ? 2 : 1.7} /></span>
-            <span className="dock-link__label" aria-hidden="true"><span>{label}</span></span>
-          </button>
-        ))}
+      <div className={d.plate} data-compact={isCompact || undefined}>
+        <div className={d.groove} style={{ '--n': items.length, '--i': Math.max(0, items.findIndex(item => item.id === screen)) } as CSSProperties} aria-hidden={isCompact}>
+          <span className={d.cap} aria-hidden="true" />
+          {items.map(({ id, label, icon: Icon }) => (
+            <button key={id} type="button" aria-label={label} tabIndex={isCompact ? -1 : 0} className={d.tab} aria-current={screen === id ? 'page' : undefined} onClick={() => select(id)}>
+              <Icon size={20} strokeWidth={screen === id ? 2 : 1.8} aria-hidden="true" />
+              <span className={d.label} aria-hidden="true">{label}</span>
+            </button>
+          ))}
+        </div>
+        <button type="button" className={d.cur} aria-hidden={!isCompact} tabIndex={isCompact ? 0 : -1} aria-label={active.label} onClick={expandChrome}><ActiveIcon size={20} strokeWidth={2} /></button>
       </div>
-      <button type="button" className="liquid-dock__compact-button" aria-hidden={!isCompact} tabIndex={isCompact ? 0 : -1} aria-label={active.label} aria-expanded={false} onClick={expandChrome}><ActiveIcon size={19} strokeWidth={1.8} /></button>
       {/* Palette A: the asset page carries its own money actions under the total, so no extra "+" there. */}
       {showQuickActions && screen !== 'portfolio' && <>
         <div id="dock-quick-menu" className="liquid-dock__quick-menu" data-open={quickOpen ? 'true' : 'false'} role="group" aria-label={quickActions.map((action) => action.label).join(', ')} aria-hidden={!quickOpen}>

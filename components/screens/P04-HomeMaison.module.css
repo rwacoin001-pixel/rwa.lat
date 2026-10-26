@@ -561,3 +561,8 @@
    out and painted when they come near (the browser keeps their size from last time, so nothing jumps). */
 .ticker { min-height: 39px; }
 .section { content-visibility: auto; contain-intrinsic-size: auto 640px; }
+
+/* Signed-in home (v2): no photo, no ticker; the account card sits under a solid top bar. Sizes are on the §3.1 scale. */
+.v2 { --m-ink: var(--home-ink); --m-muted: var(--home-muted); --m-faint: var(--home-faint); --m-line: var(--home-line); --m-line-soft: var(--home-line-soft); --m-accent: var(--home-accent); --q-gain: var(--home-up); --q-loss: var(--home-down); background: var(--home-bg); }
+.v2Head { padding: calc(var(--topbar-h, 56px) + env(safe-area-inset-top) + 8px) var(--home-gutter) 0; }
+.v2 .content { gap: 32px; padding-top: 32px; background: none; }

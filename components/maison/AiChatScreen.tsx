@@ -132,6 +132,8 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const c = aiShellCopy[locale], chat = aiChatCopy[locale]
   const voiceCopy = aiVoiceCopy(locale)
   const [input, setInput] = useState('')
+  // A question handed over from Home ("Ask AI: …") waits in the composer; the reader sends it.
+  useEffect(() => { try { const prefill = sessionStorage.getItem('rwa.ai.prefill'); if (prefill) { sessionStorage.removeItem('rwa.ai.prefill'); setInput(prefill.replace(/^[^:：]+[:：]\s*/, '')) } } catch { /* nothing waiting */ } }, [])
   const [messages, setMessages] = useState<Message[]>([])
   const [sessionId, setSessionId] = useState<string | null>(null)
   const [sending, setSending] = useState(false)

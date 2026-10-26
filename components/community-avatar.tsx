@@ -3,7 +3,6 @@
 import { useEffect, useId, useState, type CSSProperties } from 'react'
 import { apiUrl } from '@/lib/api/_http'
 import x from './maison/community.module.css'
-import { useNotionist } from '@/lib/use-notionist'
 import { useCommunityProfileSnapshot } from '@/lib/use-community-me'
 
 /** Community media is stored as API-relative paths (`/v1/community/media/<id>`); resolve them against the API origin. */
@@ -18,6 +17,8 @@ function seedHash(seed: string): number {
   for (const ch of seed.toLowerCase()) { h ^= ch.codePointAt(0) ?? 0; h = Math.imul(h, 0x01000193) >>> 0 }
   return h >>> 0
 }
+
+export const porcelainAvatar = (seed: string) => `/avatars/porcelain/${String(seedHash(seed) % 16 + 1).padStart(2, '0')}.webp`
 
 type Seeded = { tone: number; variant: number; turn: number; a: number; b: number; c: number }
 function seeded(seed: string): Seeded {
@@ -97,7 +98,8 @@ export function CommunityMark({ seed, size = 40, className, style }: { seed: str
 /** Real photo when the member has one and it loads; otherwise the generated seal for their handle. */
 export function CommunityAvatar({ avatarUrl, handle, seed, size = 40, className }: { avatarUrl?: string | null; handle?: string | null; seed?: string | null; size?: number; className?: string }) {
   const me=useCommunityProfileSnapshot()
-  const generated = useNotionist(seed || handle || 'anonymous')
+  // No photo: one of the 16 porcelain default avatars (public/avatars/porcelain), always the same one for a member.
+  const generated = porcelainAvatar(seed || handle || 'anonymous')
   const src = mediaSrc(me && me.avatarSeed===seed ? me.avatarUrl : avatarUrl)
   const [broken, setBroken] = useState<string | null>(null)
   useEffect(() => { setBroken(null) }, [src])

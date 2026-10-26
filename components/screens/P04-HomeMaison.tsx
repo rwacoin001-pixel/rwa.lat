@@ -44,6 +44,9 @@ import { HomePolymarket } from '@/components/home/HomePolymarket'
 import { homeStateCopy } from '@/components/home/home-state-copy'
 import { CountUp, EASE, MaskLines, Rise } from '@/components/home/maison-motion'
 import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
+import { HomeAssetCard, HomeAskAi, type TodayChange } from '@/components/home/HomeAssetCard'
+import { HomeReferral } from '@/components/home/HomeReferral'
+import v2 from '@/components/home/home-v2.module.css'
 import { focusHomeEmailBinding } from '@/components/home/HomeEmailBinding'
 import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
 import { useI18n, type AppLocale } from '@/lib/i18n'
@@ -381,6 +384,38 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     return () => window.clearTimeout(timer)
   }, [sessionUserId])
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
+  const [today] = useState<TodayChange>(null)
+
+  // Signed in (or still finding out): the account is the first screen. The photo, slogan and ticker are for guests only.
+  if (sessionProbe.status !== 'guest') {
+    const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
+    const askPrompt = funded ? copy.askHoldings : copy.askStart
+    return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
+      <RwaTopbar screen="home" />
+      <PullToRefresh />
+      <div className={styles.v2Head}>
+        <div className={v2.root}>
+          <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today}
+            ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
+          <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
+          <HomeReferral />
+        </div>
+      </div>
+      <div className={styles.content}>
+        <InstallStrip locale={locale} />
+        <section className={styles.section}>
+          <SectionHead index="" title={copy.forYou} />
+          <HomeForYou assets={featured.data?.items ?? []} onBaskets={() => go('basket-list')} />
+        </section>
+        <section className={styles.section}><HomeMarkets /></section>
+        <section className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></section>
+        <section className={`${styles.section} ${styles.community}`}>
+          <SectionHead index="" title={copy.community} onMore={() => go('community')} more={lowerLabel.community} />
+          <HomeSocialFeed onPinnedChange={onFeedPinned} onOpen={post => openPath(`/community/post/${encodeURIComponent(post.id)}`)} onAuthor={post => { const handle = post.author?.handle || post.author?.id; if (handle) openPath('/community/member/' + encodeURIComponent(handle)) }} labels={{ all: feedAll[locale], loading: utility.loading, retry: utility.retry, end: utility.end, emptyTitle: copy.communityEmpty, emptyBody: copy.communityBody }} />
+        </section>
+      </div>
+    </section>
+  }
 
   return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
     <div className={styles.heroBg} ref={heroBgRef} aria-hidden="true" />

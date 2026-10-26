@@ -1,0 +1,58 @@
+/* Signed-in home (docs/design-system.md §3.1, §4.1, home v2). Every size here is on the scale: scripts/design-audit.mjs
+   checks this file strictly. Porcelain / graphite material comes from the --pa-tile-* / --pa-well-* / --pa-cta-* tokens. */
+.root { --v2-ink: var(--m-ink, #0b1220); --v2-muted: var(--m-muted, #5b6472); --v2-faint: var(--m-faint, #8f97a5); --v2-line: var(--m-line, rgba(11, 18, 32, .1));
+  --v2-card: var(--pa-card, #fff); --v2-card-sh: var(--pa-card-shadow); --v2-up: var(--q-gain, #067a5e); --v2-down: var(--q-loss, #c23b33);
+  display: grid; gap: 12px; }
+
+.card { position: relative; padding: 20px 16px 16px; border-radius: 22px; background: var(--v2-card); box-shadow: var(--v2-card-sh); }
+.label { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; color: var(--v2-muted); font-size: 13px; line-height: 18px; }
+.label button { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: -12px 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.labelEnd { display: inline-flex; align-items: center; gap: 12px; }
+.hero { display: flex; align-items: baseline; gap: 4px; margin: 8px 0 4px; color: var(--v2-ink); font-size: 40px; font-weight: 500; line-height: 44px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.hero small { color: var(--v2-muted); font-size: 15px; font-weight: 400; letter-spacing: 0; }
+.sub { min-height: 18px; color: var(--v2-muted); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.up { color: var(--v2-up); }
+.down { color: var(--v2-down); }
+
+/* The four money actions: porcelain tiles (graphite at night), label under the tile. */
+.tiles { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 20px; }
+.tile { display: grid; justify-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--v2-muted); font: inherit; font-size: 12px; line-height: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.tileFace { display: grid; place-items: center; width: 56px; height: 56px; border-radius: 22%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow);
+  transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring), box-shadow var(--pa-dur-press, 120ms); }
+.tile:active .tileFace { transform: scale(.95); box-shadow: var(--pa-tile-shadow-pressed); }
+.tile:focus-visible { outline: none; }
+.tile:focus-visible .tileFace { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+
+.pending { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; padding-top: 12px; border-top: .5px solid var(--v2-line); color: var(--v2-muted); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+
+/* Zero balance: an invitation instead of a big 0.00. */
+.start h2 { margin: 0; color: var(--v2-ink); font-size: 22px; font-weight: 600; line-height: 28px; }
+.start p { margin: 8px 0 0; color: var(--v2-muted); font-size: 13px; line-height: 18px; }
+.cta { display: inline-flex; align-items: center; gap: 12px; height: 56px; margin-top: 20px; padding: 6px 6px 6px 24px; border: 0; border-radius: 999px; background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow);
+  font: inherit; font-size: 17px; font-weight: 500; cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring); }
+.cta:active { transform: scale(.96); }
+.cta i { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--v2-card); color: var(--v2-ink); font-style: normal; }
+
+/* Loading: shapes of the real card, never a 0.00. */
+.skel { display: block; border-radius: 8px; background: linear-gradient(90deg, var(--m-line-soft, rgba(11, 18, 32, .06)) 0%, var(--v2-line) 50%, var(--m-line-soft, rgba(11, 18, 32, .06)) 100%) 0 0 / 200% 100%; animation: sweep 1.6s linear infinite; }
+@keyframes sweep { from { background-position: 100% 0; } to { background-position: -100% 0; } }
+
+/* Ask the AI: a well pressed into the page; the send key is a small raised disc. */
+.ask { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; height: 52px; padding: 0 6px 0 16px; border: 0; border-radius: 999px; background: var(--pa-well-bg); box-shadow: var(--pa-well-shadow);
+  color: var(--v2-faint); font: inherit; font-size: 15px; line-height: 22px; text-align: start; cursor: pointer; }
+.ask span { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ask b { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); }
+
+/* Referral: one row; a card with the amount only when there is something to claim. */
+.refCard { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 12px 12px 16px; border-radius: 22px; background: var(--v2-card); box-shadow: var(--v2-card-sh); }
+.refMain { min-width: 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.refCard small { display: block; color: var(--v2-muted); font-size: 13px; line-height: 18px; }
+.refCard b { display: block; color: var(--v2-ink); font-size: 17px; font-weight: 500; line-height: 24px; font-variant-numeric: tabular-nums; }
+.pill { height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.pill:disabled { opacity: .6; }
+.refRow { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 48px; padding: 0 4px; border: 0; border-top: .5px solid var(--v2-line); border-bottom: .5px solid var(--v2-line); background: none; color: var(--v2-ink); font: inherit; font-size: 15px; line-height: 22px; cursor: pointer; }
+.refRow span:last-child { color: var(--v2-muted); font-size: 13px; }
+
+.ask:focus-visible, .refRow:focus-visible, .pill:focus-visible, .cta:focus-visible, .label button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) { .skel { animation: none; } .tileFace, .cta { transition: none; } }

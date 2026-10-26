@@ -22,6 +22,7 @@ const INCLUDE = [
   /^\/media\/palette-a\/.+\.(?:webp|png|jpe?g|svg)$/,
   /^\/fonts\/satoshi\/[^/]+\.woff2$/,
   /^\/fonts\/noto-sans-sc-app\/[^/]+\.woff2$/,
+  /^\/avatars\/porcelain\/[^/]+\.webp$/,
 ]
 const MAX_FILE = 8 * 1024 * 1024
 
