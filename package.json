@@ -17,7 +17,8 @@
     "deploy:cloudflare": "node scripts/require-merged-release.mjs && node scripts/build-production.mjs frontend && opennextjs-cloudflare deploy",
     "cf-typegen": "wrangler types --env-interface CloudflareEnv cloudflare-env.d.ts",
     "api:types": "openapi-typescript http://127.0.0.1:4000/v1/docs-json -o lib/api/schema.d.ts",
-    "api:count": "node -e \"fetch('http://127.0.0.1:4000/v1/docs-json').then(r=>r.json()).then(s=>{const p=s.paths;let t=0,c=0;for(const k of Object.keys(p))for(const m of Object.keys(p[k]))if(['get','post','put','patch','delete'].includes(m))t++;console.log('method-level endpoints:',t)})\""
+    "api:count": "node -e \"fetch('http://127.0.0.1:4000/v1/docs-json').then(r=>r.json()).then(s=>{const p=s.paths;let t=0,c=0;for(const k of Object.keys(p))for(const m of Object.keys(p[k]))if(['get','post','put','patch','delete'].includes(m))t++;console.log('method-level endpoints:',t)})\"",
+    "design:audit": "node scripts/design-audit.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.5.0",

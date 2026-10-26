@@ -29,6 +29,17 @@ html[data-palette='a'] {
   --pal-dark-accent: #19c7aa; --pal-dark-accent-rgb: 25 199 170; --pal-dark-on-accent: #03211c;
   --pal-dark-up: #2fd4a3; --pal-dark-down: #ff6b5e; --pal-dark-warn: #f2b84b; --pal-dark-info: #8ea3c0;
   --pal-a-brand: #19c7aa;
+  /* Scale (docs/design-system.md §3.1, checked by scripts/design-audit.mjs). Size / line height pairs. */
+  --pa-fs-micro: 11px; --pa-lh-micro: 14px;   /* badges, fine print: the smallest text anywhere */
+  --pa-fs-meta: 12px; --pa-lh-meta: 16px;     /* time, source, axis labels */
+  --pa-fs-sub: 13px; --pa-lh-sub: 18px;       /* secondary lines, tags */
+  --pa-fs-body: 15px; --pa-lh-body: 22px;     /* body, list values */
+  --pa-fs-title: 17px; --pa-lh-title: 24px;   /* row and card titles */
+  --pa-fs-section: 22px; --pa-lh-section: 28px; /* section headings */
+  --pa-fs-page: 28px; --pa-lh-page: 34px;     /* page titles, secondary big numbers */
+  --pa-fs-display: 40px; --pa-lh-display: 44px; /* the one hero number on a screen */
+  --pa-sp-half: 2px; --pa-sp-1: 4px; --pa-sp-1h: 6px; --pa-sp-2: 8px; --pa-sp-3: 12px; --pa-sp-4: 16px; --pa-sp-5: 20px; --pa-sp-6: 24px; --pa-sp-8: 32px; --pa-sp-12: 48px;
+  --pa-r-xs: 8px; --pa-r-sm: 12px; --pa-r-card: 22px; --pa-r-sheet: 28px; --pa-r-pill: 999px;
 }
 html[data-palette='a'] [data-theme='dark'], html[data-palette='a'][data-theme='dark'] { --bg-texture: none; --font-display: var(--font-sans); }
 
