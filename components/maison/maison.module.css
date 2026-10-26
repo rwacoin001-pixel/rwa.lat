@@ -1669,3 +1669,4 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .cta:active { transform: scale(.97); }
 :global(html[data-palette='a']) .cta:disabled { opacity: .45; box-shadow: none; }
 :global(html[data-palette='a']) .ctaIcon { width: 44px; height: 44px; background: var(--btn-arrow-fill); color: var(--btn-arrow-ink); box-shadow: var(--btn-arrow-edge, none); }
+:global(html[data-palette='a']) .calDay[data-today] { border-style: solid; border-color: var(--pa-sel); }
