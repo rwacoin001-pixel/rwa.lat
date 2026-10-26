@@ -399,10 +399,10 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
           <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
           <HomeReferral />
+          <InstallStrip locale={locale} />
         </div>
       </div>
       <div className={styles.content}>
-        <InstallStrip locale={locale} />
         <section className={styles.section}>
           <SectionHead index="" title={copy.forYou} />
           <HomeForYou assets={featured.data?.items ?? []} onBaskets={() => go('basket-list')} />

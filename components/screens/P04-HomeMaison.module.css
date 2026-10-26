@@ -564,5 +564,9 @@
 
 /* Signed-in home (v2): no photo, no ticker; the account card sits under a solid top bar. Sizes are on the §3.1 scale. */
 .v2 { --m-ink: var(--home-ink); --m-muted: var(--home-muted); --m-faint: var(--home-faint); --m-line: var(--home-line); --m-line-soft: var(--home-line-soft); --m-accent: var(--home-accent); --q-gain: var(--home-up); --q-loss: var(--home-down); background: var(--home-bg); }
-.v2Head { padding: calc(var(--topbar-h, 56px) + env(safe-area-inset-top) + 8px) var(--home-gutter) 0; }
+.v2Head { padding: 8px var(--home-gutter) 0; }
+.v2 :global([data-home-section]) { margin-bottom: 12px; }
+.v2 :global([data-home-section]) h2 { font-size: 22px; line-height: 28px; }
 .v2 .content { gap: 32px; padding-top: 32px; background: none; }
+/* content-visibility clips paint to the section box, which cut the full-bleed pinned feed tabs at the gutters. */
+.v2 .community { content-visibility: visible; contain: none; }
