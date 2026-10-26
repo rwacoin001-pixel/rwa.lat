@@ -21,7 +21,7 @@ html[data-palette='a'] {
   --pal-light-line: rgba(11, 18, 32, .10); --pal-light-line-soft: rgba(11, 18, 32, .06);
   /* Text-safe green on white (5:1); the bright logo green is for marks and dark mode. */
   --pal-light-accent: #087a67; --pal-light-accent-rgb: 8 122 103; --pal-light-on-accent: #ffffff;
-  --pal-light-up: #078a6a; --pal-light-down: #d6453d; --pal-light-warn: #b7791f; --pal-light-info: #4b6584;
+  --pal-light-up: #067a5e; --pal-light-down: #c23b33; --pal-light-warn: #b7791f; --pal-light-info: #4b6584;
   --pal-dark-bg: #0a0c10; --pal-dark-surface: #14171d; --pal-dark-surface-2: #1c2028;
   --pal-dark-ink: #f2f4f7; --pal-dark-ink-rgb: 242 244 247; --pal-dark-ink-2: #c9ced8;
   --pal-dark-muted: #8a93a3; --pal-dark-faint: #5d6573;
@@ -87,7 +87,7 @@ html[data-palette='a'] .rwa-mobile[data-theme="light"] { background-color: #f5f6
 
 /* Koala Quant watch (components/maison/watch/watch-scope.css): brushed steel instead of gilt, brand green for gains. */
 html[data-palette='a'] .watch-scope[data-theme] .study-stage.study-stage {
-  --q-num: #0b1220; --q-dim: #5b6472; --q-dim2: #7b8494; --q-gold: #087a67; --q-gold-rgb: 8, 122, 103; --q-gain: #078a6a; --q-loss: #d6453d; --q-loss-text: #c23b33;
+  --q-num: #0b1220; --q-dim: #5b6472; --q-dim2: #7b8494; --q-gold: #087a67; --q-gold-rgb: 8, 122, 103; --q-gain: #067a5e; --q-loss: #c23b33; --q-loss-text: #c23b33;
   --q-face: radial-gradient(ellipse at 39% 24%, #ffffff 0, #f6f8fa 54%, #e6eaef 100%); --q-face-inset: rgba(15, 23, 42, .12);
   --q-bezel: conic-gradient(from 25deg, #c9cfd8 0%, #fbfcfd 9%, #9ea6b2 22%, #c3c9d2 30%, #eef1f4 43%, #8e97a3 51%, #cdd3db 60%, #fafbfc 67%, #a8b0bb 81%, #d3d8df 95%, #c9cfd8);
   --q-bezel-shadow: 0 17px 24px -16px rgba(15, 23, 42, .38), 0 2px 5px rgba(15, 23, 42, .1), inset 0 .7px 0 #ffffff, inset 0 -.7px 0 rgba(15, 23, 42, .25);

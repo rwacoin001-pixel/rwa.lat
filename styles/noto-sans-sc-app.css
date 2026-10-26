@@ -1,4 +1,4 @@
-/* Noto Sans SC (SIL OFL 1.1) cut down to the characters in the app's own copy (G:/Media/a-reit-palette-a/tools/subset_noto_app.py).
+/* Noto Sans SC (SIL OFL 1.1) cut down to the characters in the app's own copy (scripts/fonts/subset_noto_app.py).
    Comes before the full 'Noto Sans SC' slices in --pa-sans, so the app's text loads a few small files; anything else
    (names, news, server notices) falls through to the full slices. Re-run the script after adding Chinese copy. */
 @font-face{font-family:'A-REIT Sans SC';font-style:normal;font-weight:400 700;font-display:swap;src:url('/fonts/noto-sans-sc-app/001.woff2') format('woff2');unicode-range:U+ff19}
