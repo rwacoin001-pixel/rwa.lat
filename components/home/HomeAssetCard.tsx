@@ -8,6 +8,7 @@ import { fromAtomic } from '@/lib/money'
 import { fundsCopy } from '@/lib/maison-funds-copy'
 import { HomeEmailBinding } from './HomeEmailBinding'
 import { Sparkline } from './Sparkline'
+import { porcelainCut } from '@/lib/home-asset-media'
 import type { HomePortfolioSnapshot } from './HomePortfolioCard'
 import styles from './home-v2.module.css'
 
@@ -116,27 +117,48 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, sp
       </span>
     </div>
     <div className={styles.heroRow}>
-      <div className={styles.hero} dir="ltr">
-        {/* Screen readers get the final value; the count-up is visual only. */}
-        <span aria-hidden="true">{hidden ? '••••••' : shown === null ? '—' : fmt(shown, locale)}</span>
-        <span className="sr-only">{hidden ? '' : total === null ? '—' : fmt(total, locale)}</span>
+      <div className={styles.heroMain}>
+        <div className={styles.hero} dir="ltr">
+          {/* Screen readers get the final value; the count-up is visual only. */}
+          <span aria-hidden="true">{hidden ? '••••••' : shown === null ? '—' : fmt(shown, locale)}</span>
+          <span className="sr-only">{hidden ? '' : total === null ? '—' : fmt(total, locale)}</span>
+        </div>
+        <div className={`${styles.sub} ${hidden ? '' : tone}`} dir="ltr">
+          {hidden ? '' : change !== null ? c.today.replace('{v}', `${signed(change, locale)}${pct === null ? '' : ` (${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%)`}`) : available !== null ? c.available.replace('{v}', fmt(available, locale)) : ''}
+        </div>
       </div>
-      {/* Neutral dot: the total moves with deposits too, so green/red would read as profit. */}
-      {!hidden && <Sparkline points={spark} />}
+      {/* The card's porcelain object: a stack of coins, floating over its own shadow. */}
+      <span className={styles.coins} aria-hidden="true"><span className={styles.coinsFloor} /><img src={porcelainCut('coins', 240)} alt="" width={88} height={88} decoding="async" /></span>
     </div>
-    <div className={`${styles.sub} ${hidden ? '' : tone}`} dir="ltr">
-      {hidden ? '' : change !== null ? c.today.replace('{v}', `${signed(change, locale)}${pct === null ? '' : ` (${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%)`}`) : available !== null ? c.available.replace('{v}', fmt(available, locale)) : ''}
-    </div>
+    {/* The last 7 days as a soft band across the card (grey: the total also moves with deposits). */}
+    {!hidden && <Sparkline points={spark} area className={styles.heroSpark} />}
     {tiles}
     {pendingUnits > 0 && <div className={styles.pending} role="status"><span>{c.pending.replace('{v}', fmt(pendingUnits, locale))}</span><span>{c.pendingEta}</span></div>}
     {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}
   </section>
 }
 
-/** Ask the AI: a well under the card; the prompt is left in the composer for the reader to send. */
-export function HomeAskAi({ prompt, onOpen }: { prompt: string; onOpen: () => void }) {
+/** Ask the AI (v5): the buddy's face, then a question that changes every few seconds; a tap takes the shown one along. */
+const ASK: Partial<Record<AppLocale, { funded: string[]; start: string[] }>> & { en: { funded: string[]; start: string[] } } = {
+  en: { funded: ['How are my holdings today?', 'How has gold moved lately?', 'How did Koala Quant do this week?', 'Will the Fed cut rates next?'],
+    start: ['Where should a beginner start?', 'How does Koala Quant earn?', 'How do prediction markets work?', 'How long does a USDT deposit take?'] },
+  'zh-CN': { funded: ['我的持仓今天怎么样？', '黄金最近怎么走？', '考拉量化这周表现如何？', '美联储下次会降息吗？'],
+    start: ['新手该从哪里开始？', '考拉量化是怎么赚钱的？', '预测市场怎么玩？', '充值 USDT 多久到账？'] },
+}
+export function HomeAskAi({ funded, onOpen }: { funded: boolean; onOpen: () => void }) {
+  const { locale } = useI18n()
+  const prompts = (ASK[locale] ?? ASK.en)[funded ? 'funded' : 'start']
+  const [index, setIndex] = useState(0)
+  useEffect(() => {
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const timer = window.setInterval(() => { if (document.visibilityState === 'visible') setIndex(i => i + 1) }, 4200)
+    return () => window.clearInterval(timer)
+  }, [])
+  const prompt = prompts[index % prompts.length]
   return <button type="button" className={styles.ask} onClick={() => { try { sessionStorage.setItem('rwa.ai.prefill', prompt) } catch { /* opens empty */ } onOpen() }}>
-    <span>{prompt}</span><b aria-hidden="true"><ArrowUp size={16} strokeWidth={2} /></b>
+    <span className={styles.askFace} aria-hidden="true"><i /><i /></span>
+    <span className={styles.askText} aria-live="off"><span key={index} className={styles.askLine}>{prompt}</span></span>
+    <b aria-hidden="true"><ArrowUp size={16} strokeWidth={2} /></b>
   </button>
 }
 

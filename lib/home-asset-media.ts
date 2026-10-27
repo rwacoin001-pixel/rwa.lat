@@ -57,5 +57,5 @@ export function homeAssetImage(asset: { slug: string; assetClass?: string }, ind
 }
 
 /** Porcelain objects cut out of their studio background (transparent WebP), for 3D cards where the object floats. */
-export type PorcelainCut = 'gift' | 'prediction' | 'quant'
+export type PorcelainCut = 'gift' | 'prediction' | 'quant' | 'coins'
 export const porcelainCut = (name: PorcelainCut, size: 240 | 480 = 480) => `/media/porcelain/${name}-cut-${size}.webp`

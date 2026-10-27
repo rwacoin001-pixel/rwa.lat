@@ -2,7 +2,7 @@
 
 // Maison home · Markets: three tabs of quotes, all from our own API (the TradingView chart was blocked in mainland China).
 // Data: GET /v1/market-context → { anchors, secondary, serverTime } (MarketQuote.stale marks delayed quotes).
-import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useQuery } from '@/lib/api/_query'
 import { getMarketContextView } from '@/lib/api/market-context'
@@ -49,16 +49,6 @@ function tone(quote: MarketQuote) {
   return quote.changePct === null || quote.changePct === 0 ? styles.flat : quote.changePct < 0 ? styles.down : styles.up
 }
 
-// Spotlight (after React Bits' Spotlight Card): a soft light follows the finger across a lead quote card.
-function spotlight(event: PointerEvent<HTMLDivElement>) {
-  if (event.pointerType !== 'mouse' && event.buttons === 0 && event.type !== 'pointerdown') return
-  const box = event.currentTarget.getBoundingClientRect()
-  event.currentTarget.style.setProperty('--mx', `${event.clientX - box.left}px`)
-  event.currentTarget.style.setProperty('--my', `${event.clientY - box.top}px`)
-  event.currentTarget.dataset.lit = 'true'
-}
-function unlight(event: PointerEvent<HTMLDivElement>) { delete event.currentTarget.dataset.lit }
-
 const OPEN_EVENT = 'home-markets:open'
 
 /** Scroll to the Markets module and select a tab. */
@@ -104,7 +94,7 @@ export function HomeMarkets() {
     <motion.div key={tab} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, ease: EASE }}>
       {result.loading && !data ? <div className={styles.loading}><span /><span /><span /></div> : result.error && !data ? <button type="button" className={styles.error} onClick={() => void result.refetch()}>{label.unavailable}</button> : <>
         <div className={styles.featured}>
-          {featured.map(quote => <div className={styles.featuredQuote} key={quote.symbol} onPointerDown={spotlight} onPointerMove={spotlight} onPointerUp={unlight} onPointerLeave={unlight} onPointerCancel={unlight}>
+          {featured.map(quote => <div className={styles.featuredQuote} key={quote.symbol}>
             <span className={styles.symbol}>{nameOf(quote, locale)}{quote.stale && <i>{label.delayed}</i>}</span>
             <RollingText className={styles.bigValue} text={quote.value === null ? '—' : formatQuote(quote, quote.value, locale)} value={quote.value} />
             <span className={`${styles.change} ${tone(quote)}`} dir="ltr">{formatChange(quote)}</span>

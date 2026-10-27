@@ -40,7 +40,8 @@ function translationKey(locale: AppLocale, market: Market) { return JSON.stringi
 
 const categoryIcon = { macro: Landmark, crypto: Coins, commodities: Waves, other: ChartNoAxesCombined }
 
-export function HomePolymarket() {
+/** compact: the signed-in home's three-row list (question + one probability), no cards. */
+export function HomePolymarket({ compact = false }: { compact?: boolean }) {
   const { locale } = useI18n()
   const label = copy[locale]
   const result = useQuery('polymarket:public-preview:finance', () => request<Preview>('/v1/polymarket/public-preview?scope=finance'), { staleTime: 60_000, pollInterval: POLL.quote })
@@ -87,7 +88,18 @@ export function HomePolymarket() {
 
   return <section className={styles.root} aria-label={label.title}>
     <HomeSectionHeading index="05" title={label.title} more={allMarkets[locale]} onMore={() => openPath('/markets?tab=predictions')} />
-    {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : (result.error && !result.data) || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{result.data.items.map(market => {
+    {result.loading && !result.data ? <div className={compact ? styles.rowsLoading : styles.loading}><span /><span /><span /></div> : (result.error && !result.data) || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : compact ? <ul className={styles.rows}>{result.data.items.slice(0, 3).map(market => {
+      const translated = translations[translationKey(locale, market)]
+      const lead = market.outcomes[0]
+      return <li key={market.id}><button type="button" className={styles.row} onClick={() => openPath(`/prediction/${encodeURIComponent(market.id)}`)}>
+        <span className={styles.rowText}>
+          <small>{label[market.category]}{market.volume24hUsd === null ? '' : ` · ${label.volume} ${fmtUsdCompact(market.volume24hUsd, { locale, digits: 1 })}`}</small>
+          <strong lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>
+        </span>
+        {lead && <span className={styles.rowOdds}><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 }).format(lead.impliedProbability)}</b><small lang={translated ? locale : 'en'}>{translated?.outcomes[0] ?? lead.label}</small></span>}
+        <span className={styles.rowBar} aria-hidden="true"><span style={{ width: `${(lead?.impliedProbability ?? 0) * 100}%` }} /></span>
+      </button></li>
+    })}</ul> : <div className={styles.list}>{result.data.items.map(market => {
       const Icon = categoryIcon[market.category]
       const key = translationKey(locale, market)
       const cached = translations[key]
