@@ -133,3 +133,4 @@
 :global(.rwa-mobile) .root .invite .invSub { color: var(--v2-muted); }
 :global(.rwa-mobile) .root .invPhoto .invNum small, :global(.rwa-mobile) .root .invPhoto .invNum b, :global(.rwa-mobile) .root .invPhoto .invTitle, :global(.rwa-mobile) .root .invLabel { color: #fff; }
 :global(html[data-shell='android']) .invLabel { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
+.ghost[data-empty] { color: var(--v2-muted); }

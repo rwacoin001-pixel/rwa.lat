@@ -12,10 +12,10 @@ import { porcelainAvatar } from '@/components/community-avatar'
 import { sparkBurst } from './Tilt3D'
 import styles from './home-v2.module.css'
 
-type Copy = { label: string; claimable: string; earned: string; startTitle: string; startBody: string; invited: string; invitedEarned: string; allClaimed: string; invite: string; claim: string; claiming: string; claimed: string; failed: string }
+type Copy = { label: string; claimable: string; earned: string; startTitle: string; startBody: string; invited: string; invitedEarned: string; allClaimed: string; invite: string; claim: string; claiming: string; claimed: string; failed: string; nothing: string }
 const COPY: Partial<Record<AppLocale, Copy>> & { en: Copy } = {
-  en: { label: 'Invite friends', claimable: 'Claimable', earned: 'Earned in total', startTitle: 'Invite friends, invest together', startBody: 'When they invest, your rewards go straight to your available balance', invited: '{n} invited', invitedEarned: '{n} invited · {v} earned in total', allClaimed: '{n} invited · all rewards claimed', invite: 'Invite friends', claim: 'Claim', claiming: 'Claiming…', claimed: '{v} USDT added to your balance', failed: 'Couldn’t claim. Try again.' },
-  'zh-CN': { label: '邀请好友', claimable: '可领取', earned: '累计已赚', startTitle: '邀请好友，一起投资', startBody: '好友投资后，奖励直接进你的可用余额', invited: '已邀请 {n} 人', invitedEarned: '已邀请 {n} 人 · 累计已赚 {v}', allClaimed: '已邀请 {n} 人 · 奖励已全部领取', invite: '邀请好友', claim: '领取', claiming: '领取中…', claimed: '{v} USDT 已到可用余额', failed: '领取失败，请再试一次' },
+  en: { label: 'Invite friends', claimable: 'Claimable', earned: 'Earned in total', startTitle: 'Invite friends, invest together', startBody: 'When they invest, your rewards go straight to your available balance', invited: '{n} invited', invitedEarned: '{n} invited · {v} earned in total', allClaimed: '{n} invited · all rewards claimed', invite: 'Invite friends', claim: 'Claim', claiming: 'Claiming…', claimed: '{v} USDT added to your balance', failed: 'Couldn’t claim. Try again.', nothing: 'Nothing to claim yet — invite a friend and rewards land here' },
+  'zh-CN': { label: '邀请好友', claimable: '可领取', earned: '累计已赚', startTitle: '邀请好友，一起投资', startBody: '好友投资后，奖励直接进你的可用余额', invited: '已邀请 {n} 人', invitedEarned: '已邀请 {n} 人 · 累计已赚 {v}', allClaimed: '已邀请 {n} 人 · 奖励已全部领取', invite: '邀请好友', claim: '领取', claiming: '领取中…', claimed: '{v} USDT 已到可用余额', failed: '领取失败，请再试一次', nothing: '还没有可领取的奖励，邀请好友后就会有' },
 }
 
 /** The invite card on home: faces of the people you invited (empty wells until there are some), one number, invite + claim. */
@@ -63,7 +63,8 @@ export function HomeReferral() {
     </div>
     <div className={styles.invActs}>
       <button type="button" className={styles.cta} onClick={event => { sparkBurst(event); open() }}><span>{c.invite}</span><i aria-hidden="true">→</i></button>
-      {claimable > 0 && <button type="button" className={styles.ghost} onClick={event => { sparkBurst(event); void claim() }} disabled={busy} aria-busy={busy}>{busy ? c.claiming : c.claim}</button>}
+      {/* Claim stays put, so the row never changes shape; with nothing to claim it says how rewards come. */}
+      <button type="button" className={styles.ghost} onClick={event => { if (claimable > 0) { sparkBurst(event); void claim() } else showToast(c.nothing, 'info') }} disabled={busy} aria-busy={busy} data-empty={claimable > 0 ? undefined : ''}>{busy ? c.claiming : c.claim}</button>
     </div>
   </section>
 }
