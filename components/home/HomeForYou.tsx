@@ -4,8 +4,6 @@
 import { ArrowUpRight } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { openPath } from '@/lib/maison-nav'
-import { porcelainCut } from '@/lib/home-asset-media'
-import { Tilt3D } from './Tilt3D'
 import { useQuantProducts } from '@/lib/api/quant'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import styles from './HomeForYou.module.css'
@@ -29,30 +27,26 @@ export function HomeForYou() {
   const pct = quant?.performance.last30d.pct ?? null
   const cards = [
     {
-      key: 'quant', title: quant?.name ?? label.quant, art: porcelainCut('quant'), open: () => openPath('/quant'),
+      key: 'quant', title: quant?.name ?? label.quant, photo: '/media/home/cards/quant-720.webp', sub: label.quantLine, open: () => openPath('/quant'),
       value: pct === null ? null : `${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%`, tone: pct === null || pct === 0 ? '' : pct > 0 ? styles.up : styles.down,
       line: pct === null ? label.quantLine : label.last30,
     },
     {
-      key: 'predict', title: label.predict, art: porcelainCut('prediction'), open: () => openPath('/markets?tab=predictions'),
+      key: 'predict', title: label.predict, photo: '/media/home/cards/predict-720.webp', sub: label.predictLine, open: () => openPath('/markets?tab=predictions'),
       value: null, tone: '', line: label.predictLine,
     },
   ]
+  // Photo cards (2026-10-28, after the user's reference): a real, warm photograph fills the card, the number sits on it
+  // in a glass chip, the name and one line at the bottom over a soft scrim, a glass arrow in the corner.
   return <div className={styles.root}>
-    {cards.map((card, index) => <Tilt3D key={card.key} className={styles.tilt}>
-      <motion.button type="button" className={styles.card} onClick={card.open} whileTap={reduced ? undefined : { scale: .98 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-        {/* The porcelain object stands in front of the card and floats over its own shadow. */}
-        <span className={styles.stageArt} aria-hidden="true">
-          <span className={styles.floor} style={{ animationDelay: `${index * -1.3}s` }} />
-          <img data-depth="" src={card.art} alt="" width={240} height={240} decoding="async" style={{ animationDelay: `${index * -1.3}s` }} />
-        </span>
-        <span className={styles.text}>
-          <strong>{card.title}</strong>
-          {card.value && <b className={card.tone} dir="ltr">{card.value}</b>}
-          <small>{card.line}</small>
-        </span>
-        <span className={styles.go} aria-hidden="true"><ArrowUpRight size={16} strokeWidth={2} /></span>
-      </motion.button>
-    </Tilt3D>)}
+    {cards.map(card => <motion.button key={card.key} type="button" className={styles.card} onClick={card.open} whileTap={reduced ? undefined : { scale: .98 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
+      <img className={styles.photo} src={card.photo} alt="" width={720} height={450} decoding="async" />
+      {card.value && <span className={`${styles.chip} ${card.tone}`} dir="ltr">{card.line} · {card.value}</span>}
+      <span className={styles.text}>
+        <strong>{card.title}</strong>
+        <small>{card.value ? card.sub : card.line}</small>
+      </span>
+      <span className={styles.go} aria-hidden="true"><ArrowUpRight size={16} strokeWidth={2} /></span>
+    </motion.button>)}
   </div>
 }

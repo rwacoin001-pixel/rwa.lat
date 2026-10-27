@@ -1,33 +1,22 @@
-/* For you (v4): two 3D product cards. The porcelain object (cut out, no case) stands in front of the card on a soft
-   stage of light, floats slowly over its own shadow, and leans with the card (components/home/Tilt3D.tsx).
-   Then the name, one real number and one line (docs/design-system.md §4.2, §7.4). */
-.root { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
-.tilt { min-width: 0; }
-.card { position: relative; display: grid; align-content: start; gap: 8px; width: 100%; height: 100%; min-width: 0; padding: 0 0 16px; border: 0; border-radius: 22px; color: var(--m-ink, #0b1220); background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); text-align: start; font: inherit; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
-/* The stage: a pool of light on the paper where the object stands. */
-.stageArt { position: relative; display: block; height: 148px; border-radius: 22px 22px 0 0; background: radial-gradient(70% 60% at 50% 72%, var(--pa-fill, rgba(11, 18, 32, .05)) 0%, rgba(11, 18, 32, 0) 70%); }
-.stageArt img { position: absolute; left: 0; right: 0; bottom: 8px; width: 132px; height: 132px; margin: 0 auto; transform: translateZ(36px); filter: drop-shadow(0 10px 12px rgba(11, 18, 32, .16)); animation: float 5.2s ease-in-out infinite, arrive .7s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) both; }
-.floor { position: absolute; left: 0; right: 0; bottom: 8px; width: 88px; height: 12px; margin: 0 auto; border-radius: 50%; background: radial-gradient(closest-side, rgba(11, 18, 32, .22), rgba(11, 18, 32, 0)); transform: translateZ(4px); animation: floor 5.2s ease-in-out infinite; }
-@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
-@keyframes floor { 0%, 100% { transform: translateZ(4px) scale(1); opacity: 1; } 50% { transform: translateZ(4px) scale(.84); opacity: .7; } }
-@keyframes arrive { from { opacity: 0; scale: .8; } }
-.text { display: grid; gap: 4px; min-width: 0; padding: 0 16px; transform: translateZ(16px); }
-.text strong { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
-.text b { font-size: 22px; font-weight: 500; line-height: 28px; font-variant-numeric: tabular-nums; }
-.text small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
-.up { color: var(--q-gain, #067a5e); }
-.down { color: var(--q-loss, #c23b33); }
-/* A small porcelain disc in the corner: the way in. */
-.go { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); transform: translateZ(24px); transition: rotate .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+/* For you (2026-10-28, photo cards after the user's reference): two wide cards side by side in a horizontal scroll.
+   A warm, real photograph fills each card; the number sits on it in a glass chip; the name and one line at the bottom
+   over a soft scrim; a glass arrow in the corner (docs/design-system.md §4.2). */
+.root { display: flex; gap: 12px; min-width: 0; margin: 0 calc(-1 * var(--home-gutter, 20px)); padding: 0 var(--home-gutter, 20px) 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--home-gutter, 20px); scrollbar-width: none; }
+.root::-webkit-scrollbar { display: none; }
+.card { position: relative; flex: 0 0 calc(100% - 32px); height: 216px; overflow: hidden; padding: 0; border: 0; border-radius: 22px; background: #d9d4cc; color: #fff; text-align: start; font: inherit; cursor: pointer; scroll-snap-align: start; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: settle .7s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+@keyframes settle { from { opacity: 0; transform: scale(1.04); } }
+/* A soft scrim so white text always reads, whatever the photo. */
+.card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .5) 100%); pointer-events: none; }
+.chip { position: absolute; z-index: 1; top: 12px; left: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45); color: #fff; font-size: 13px; font-weight: 600; line-height: 28px; font-variant-numeric: tabular-nums; }
+.text { position: absolute; z-index: 1; left: 16px; right: 64px; bottom: 16px; display: grid; gap: 2px; }
+.text strong { overflow: hidden; font-size: 22px; font-weight: 600; line-height: 28px; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
+.text small { overflow: hidden; font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; opacity: .9; }
+.go { position: absolute; z-index: 1; right: 12px; bottom: 12px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45); color: #fff; transition: rotate .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
 .card:active .go { rotate: 45deg; }
 .card:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+.up, .down { color: #fff; }
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
-:global(.rwa-mobile) .root.root .text small { color: var(--m-muted, #5b6472); }
-:global(.rwa-mobile) .root.root .text strong { color: var(--m-ink, #0b1220); }
-:global(.rwa-mobile) .root.root .text .up { color: var(--q-gain, #067a5e); }
-:global(.rwa-mobile) .root.root .text .down { color: var(--q-loss, #c23b33); }
-/* Night: a pool of soft light so the white porcelain glows a little instead of glaring. */
-:global(.rwa-mobile[data-theme='dark']) .stageArt { background: radial-gradient(70% 60% at 50% 72%, rgba(255, 255, 255, .07) 0%, rgba(255, 255, 255, 0) 70%); }
-:global(.rwa-mobile[data-theme='dark']) .stageArt img { filter: brightness(.9) drop-shadow(0 10px 14px rgba(0, 0, 0, .5)); }
-:global(.rwa-mobile[data-theme='dark']) .floor { background: radial-gradient(closest-side, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0)); }
-@media (prefers-reduced-motion: reduce) { .go { transition: none; } .stageArt img, .floor { animation: none; } }
+:global(.rwa-mobile) .root.root .text strong, :global(.rwa-mobile) .root.root .text small, :global(.rwa-mobile) .root.root .chip { color: #fff; }
+:global(html[data-shell='android']) .chip, :global(html[data-shell='android']) .go { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
+@media (prefers-reduced-motion: reduce) { .photo { animation: none; } .go { transition: none; } }

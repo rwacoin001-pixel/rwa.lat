@@ -35,22 +35,3 @@
 
 /* Palette A: no icon tile; the category word stands alone. */
 :global(html[data-palette='a']) .icon { display: none; }
-
-/* Compact (signed-in home v5): three plain rows, no cards. Question on the left (two lines at most), the leading
-   outcome's probability on the right, a hairline bar of that probability along the bottom. */
-.rows { margin: 0; padding: 0; list-style: none; }
-.row { position: relative; display: flex; align-items: center; gap: 16px; width: 100%; min-height: 72px; padding: 12px 0 16px; border: 0; border-bottom: .5px solid var(--home-line); color: var(--home-ink); background: none; text-align: start; font: inherit; cursor: pointer; touch-action: manipulation; }
-.rowText { display: grid; flex: 1 1 0; gap: 4px; min-width: 0; }
-.rowText small { color: var(--home-muted); font-size: 12px; line-height: 16px; }
-.rowText strong { display: -webkit-box; overflow: hidden; font-size: 15px; font-weight: 500; line-height: 22px; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere; }
-.rowOdds { display: grid; flex: none; justify-items: end; gap: 2px; min-width: 56px; }
-.rowOdds b { color: var(--home-ink); font-size: 22px; font-weight: 500; line-height: 28px; font-variant-numeric: tabular-nums; }
-.rowOdds small { max-width: 88px; overflow: hidden; color: var(--home-muted); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
-.rowBar { position: absolute; left: 0; right: 0; bottom: -.5px; height: 2px; }
-.rowBar > span { display: block; height: 100%; border-radius: 999px; background: var(--home-accent); opacity: .7; }
-.row:active { opacity: .7; }
-.row:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 2px; }
-.rowsLoading { display: grid; gap: 12px; }
-.rowsLoading span { height: 56px; border-radius: 12px; background: linear-gradient(100deg, var(--home-glass), var(--home-glass-deep), var(--home-glass)); background-size: 200% 100%; animation: poly-shimmer 1.5s linear infinite; }
-:global(.rwa-mobile) .root.root .rowText small, :global(.rwa-mobile) .root.root .rowOdds small { color: var(--home-muted); }
-@media (prefers-reduced-motion: reduce) { .rowsLoading span { animation: none; } }

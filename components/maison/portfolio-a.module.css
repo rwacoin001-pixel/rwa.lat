@@ -1,5 +1,5 @@
 /* Assets total (PortfolioScreen PaperTotal), 2026-10-28: the same card as the signed-in home (docs/design-system.md
-   §4.2): white paper, one 40px figure with the porcelain coins beside it, the four money actions as porcelain tiles,
+   §4.2): white paper, one 40px figure, the four money actions as porcelain tiles,
    the detail folded under a hairline. Every size is on the §3.1 scale (this file is in the audit's STRICT list). */
 .total { position: relative; margin-top: 4px; padding: 20px 16px 0; border-radius: 22px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
 .head { display: flex; align-items: center; justify-content: space-between; color: var(--m-muted); font-size: 13px; font-weight: 500; line-height: 18px; }
@@ -12,13 +12,7 @@
 .figure small { color: var(--m-muted); font-size: 15px; font-weight: 400; letter-spacing: 0; }
 .line { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
 .line b { color: var(--m-ink); font-weight: 500; }
-.coins { position: relative; display: block; flex: none; width: 88px; height: 88px; margin: -8px -4px -8px 0; }
-.coins img { position: relative; display: block; width: 100%; height: 100%; filter: drop-shadow(0 10px 10px rgba(15, 23, 42, .16)); animation: float 5.6s ease-in-out infinite; }
-.coins i { position: absolute; left: 0; right: 0; bottom: 0; width: 64px; height: 12px; margin: 0 auto; border-radius: 50%; background: radial-gradient(closest-side, rgba(15, 23, 42, .2), rgba(15, 23, 42, 0)); animation: floor 5.6s ease-in-out infinite; }
 @keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
-@keyframes floor { 0%, 100% { scale: 1; opacity: 1; } 50% { scale: .82; opacity: .7; } }
-:global(.rwa-mobile[data-theme='dark']) .coins img { filter: brightness(.9) drop-shadow(0 10px 12px rgba(0, 0, 0, .5)); }
-:global(.rwa-mobile[data-theme='dark']) .coins i { background: radial-gradient(closest-side, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0)); }
 /* The four money actions: porcelain tiles (graphite at night), label under the tile (§4.1). */
 .actions { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 20px 0 0; }
 .actions button { display: grid; justify-items: center; gap: 8px; padding: 0; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 12px; line-height: 16px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
@@ -31,7 +25,7 @@
 .disclose[aria-expanded='true'] { color: var(--m-ink); }
 .detail { overflow: hidden; }
 .note { margin: 12px 2px 16px; color: var(--m-faint); font-size: 12px; line-height: 16px; }
-@media (prefers-reduced-motion: reduce) { .tileFace, .eye { transition: none; } .coins img, .coins i { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .tileFace, .eye { transition: none; } }
 
 /* Empty holdings: the porcelain stopwatch, one line, a porcelain pill into Koala Quant and a quiet link to markets. */
 .empty { display: grid; justify-items: center; gap: 8px; padding: 16px 16px 24px; text-align: center; }

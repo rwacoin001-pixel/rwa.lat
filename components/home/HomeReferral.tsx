@@ -9,8 +9,7 @@ import { fromAtomic } from '@/lib/money'
 import { openPath } from '@/lib/maison-nav'
 import { showToast } from '@/lib/toast-store'
 import { porcelainAvatar } from '@/components/community-avatar'
-import { porcelainCut } from '@/lib/home-asset-media'
-import { Tilt3D, sparkBurst } from './Tilt3D'
+import { sparkBurst } from './Tilt3D'
 import styles from './home-v2.module.css'
 
 type Copy = { label: string; claimable: string; earned: string; startTitle: string; startBody: string; invited: string; invitedEarned: string; allClaimed: string; invite: string; claim: string; claiming: string; claimed: string; failed: string }
@@ -49,13 +48,14 @@ export function HomeReferral() {
   const sub = direct === 0 && earned <= 0 ? c.startBody
     : claimable > 0 ? c.invitedEarned.replace('{n}', String(direct)).replace('{v}', fmt(earned)) : earned > 0 ? c.allClaimed.replace('{n}', String(direct)) : c.invited.replace('{n}', String(direct))
   // A member card: the reward is the headline, a porcelain gift sits in its case, the people you invited below.
-  return <Tilt3D max={6}><section className={styles.invite} aria-label={c.label}>
-    <div className={styles.invTop}><span>{c.label}</span></div>
-    <div className={styles.invHead}>
+  // A warm photo across the top carries the reward in glass; the people you invited and the buttons sit below on paper.
+  return <section className={styles.invite} aria-label={c.label}>
+    <div className={styles.invPhoto}>
+      <img src="/media/home/cards/invite-720.webp" alt="" width={720} height={450} decoding="async" />
+      <span className={styles.invLabel}>{c.label}</span>
       {claimable > 0 ? <div className={styles.invNum}><small>{c.claimable}</small><b dir="ltr">{fmt(claimable)}<span>USDT</span></b></div>
         : earned > 0 ? <div className={styles.invNum}><small>{c.earned}</small><b dir="ltr">{fmt(earned)}<span>USDT</span></b></div>
         : <p className={styles.invTitle}>{c.startTitle}</p>}
-      <span className={styles.invArt} aria-hidden="true"><span className={styles.invFloor} /><img src={porcelainCut('gift')} alt="" width={240} height={240} decoding="async" /></span>
     </div>
     <div className={styles.invPeople}>
       <div className={styles.faces}>{faces}{claimable <= 0 && add}</div>
@@ -65,5 +65,5 @@ export function HomeReferral() {
       <button type="button" className={styles.cta} onClick={event => { sparkBurst(event); open() }}><span>{c.invite}</span><i aria-hidden="true">→</i></button>
       {claimable > 0 && <button type="button" className={styles.ghost} onClick={event => { sparkBurst(event); void claim() }} disabled={busy} aria-busy={busy}>{busy ? c.claiming : c.claim}</button>}
     </div>
-  </section></Tilt3D>
+  </section>
 }

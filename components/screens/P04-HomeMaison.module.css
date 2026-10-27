@@ -571,8 +571,7 @@
 .v2Head { padding: 8px var(--home-gutter) 0; }
 .v2 :global([data-home-section]) { margin-bottom: 12px; }
 .v2 :global([data-home-section]) h2 { font-size: 22px; line-height: 28px; }
-/* v5: more air between sections (48), so the page reads as a few calm blocks, not one long stack. */
-.v2 .content { gap: 48px; padding-top: 48px; padding-bottom: 32px; background: none; }
+.v2 .content { gap: 32px; padding-top: 32px; background: none; }
 /* content-visibility clips paint to the section box, which cut the full-bleed pinned feed tabs at the gutters. */
 .v2 .community { content-visibility: visible; contain: none; }
 /* Top-left mark on the signed-in home (v6): the original A-REIT mark, solid and slowly turning (components/brand/

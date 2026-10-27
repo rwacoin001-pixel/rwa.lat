@@ -41,7 +41,6 @@ import { HomeMarkets } from '@/components/home/HomeMarkets'
 import { HomeForYou } from '@/components/home/HomeForYou'
 import { HomeSectionHeading as SectionHead } from '@/components/home/HomeSectionHeading'
 import { HomePolymarket } from '@/components/home/HomePolymarket'
-import { HomeCommunityPicks } from '@/components/home/HomeCommunityPicks'
 import { homeStateCopy } from '@/components/home/home-state-copy'
 import { CountUp, EASE, MaskLines, Rise } from '@/components/home/maison-motion'
 import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
@@ -395,6 +394,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   // Signed in (or still finding out): the account is the first screen. The photo, slogan and ticker are for guests only.
   if (sessionProbe.status !== 'guest') {
     const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
+    const askPrompt = funded ? copy.askHoldings : copy.askStart
     return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
       <RwaTopbar screen="home" logo3d extra={<HomeGetApp />} />
       <PullToRefresh />
@@ -403,7 +403,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
           <HomeGreeting />
           <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today} spark={assetSpark}
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
-          <HomeAskAi funded={funded} onOpen={() => go('ai')} />
+          <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
           <HomeReferral />
         </div>
       </div>
@@ -413,12 +413,11 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
           <HomeForYou />
         </Rise>
         <Rise as="section" className={styles.section}><HomeMarkets /></Rise>
-        <Rise as="section" className={`${styles.section} ${styles.prediction}`}><HomePolymarket compact /></Rise>
-        {/* Three posts and a way in: the page ends here instead of scrolling forever. */}
-        <Rise as="section" className={styles.section}>
-          <SectionHead index="" title={copy.community} />
-          <HomeCommunityPicks onMore={() => go('community')} onOpen={post => openPath(`/community/post/${encodeURIComponent(post.id)}`)} onAuthor={post => { const handle = post.author?.handle || post.author?.id; if (handle) openPath('/community/member/' + encodeURIComponent(handle)) }} />
-        </Rise>
+        <Rise as="section" className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></Rise>
+        <section className={`${styles.section} ${styles.community}`}>
+          <SectionHead index="" title={copy.community} onMore={() => go('community')} more={lowerLabel.community} />
+          <HomeSocialFeed onPinnedChange={onFeedPinned} onOpen={post => openPath(`/community/post/${encodeURIComponent(post.id)}`)} onAuthor={post => { const handle = post.author?.handle || post.author?.id; if (handle) openPath('/community/member/' + encodeURIComponent(handle)) }} labels={{ all: feedAll[locale], loading: utility.loading, retry: utility.retry, end: utility.end, emptyTitle: copy.communityEmpty, emptyBody: copy.communityBody }} />
+        </section>
       </div>
     </section>
   }

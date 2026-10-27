@@ -553,8 +553,6 @@ function PaperTotal({ masked, onMask, loading, figure, line, note, breakdown, no
         <p className={`${pa.figure} ${s.num}`} data-loading={loading || undefined}>{loading ? '—' : figure}</p>
         <p className={pa.line}>{line}</p>
       </div>
-      {/* The same porcelain coins as the home card. */}
-      <span className={pa.coins} aria-hidden="true"><i /><img src={porcelainCut('coins', 240)} alt="" width={88} height={88} decoding="async" /></span>
     </div>
     <div className={pa.actions}>
       {actions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => { navigator.vibrate?.(6); openPath(path) }}><span className={pa.tileFace}><Icon size={22} strokeWidth={1.7} aria-hidden="true" /></span><span>{label}</span></button>)}
