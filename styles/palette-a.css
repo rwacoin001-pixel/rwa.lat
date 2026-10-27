@@ -15,7 +15,7 @@ html[data-palette='a'] {
   --font-geist-sans: var(--pa-sans); --home-display-latin: var(--pa-sans);
   --font-sans: var(--font-geist-sans), 'Hiragino Sans GB', 'Microsoft YaHei', system-ui, sans-serif;
   --x-font: var(--font-sans);
-  --pal-light-bg: #f5f6f8; --pal-light-surface: #ffffff; --pal-light-surface-2: #eceef2;
+  --pal-light-bg: #ffffff; --pal-light-surface: #ffffff; --pal-light-surface-2: #eceef2;
   --pal-light-ink: #0b1220; --pal-light-ink-rgb: 11 18 32; --pal-light-ink-2: #2b3443;
   --pal-light-muted: #5b6472; --pal-light-faint: #8f97a5;
   --pal-light-line: rgba(11, 18, 32, .10); --pal-light-line-soft: rgba(11, 18, 32, .06);
@@ -109,9 +109,8 @@ html[data-palette='a'] .rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liq
 }
 
 /* globals.css pins the light column to the ivory with !important; follow the palette instead. */
-html[data-palette='a'] .rwa-mobile[data-theme="light"] { background-color: #f5f6f8 !important; }
-/* The signed-in home is pure white (docs/design-system.md §4.2); keep the frame white under it too (overscroll). */
-html[data-palette='a'] .rwa-mobile[data-theme="light"]:is([data-screen='home'], [data-screen='portfolio']) { background-color: #ffffff !important; }
+/* Every page is pure white in light mode (2026-10-28, docs/design-system.md §2); the frame under it too (overscroll). */
+html[data-palette='a'] .rwa-mobile[data-theme="light"] { background-color: #ffffff !important; }
 
 @media (min-width: 700px) {
   html[data-palette='a'] .rwa-shell { background: #e9ecf1; }
@@ -233,7 +232,8 @@ html[data-palette='a'] { --page-gutter: 24px; }
 /* ── Component kit (docs/design-system.md §7). Every page maps its own cards, tags, tabs and fields to these. ── */
 html[data-palette='a'] {
   --pa-card: #ffffff; --pa-card-radius: 22px; --pa-card-pad: 16px;
-  --pa-card-shadow: 0 0 0 .5px rgba(11, 18, 32, .08), 0 12px 28px -20px rgba(15, 23, 42, .28);
+  /* On the white page a card needs a firmer edge: hairline, a short contact shadow, then the soft one. */
+  --pa-card-shadow: 0 0 0 .5px rgba(11, 18, 32, .1), 0 1px 3px rgba(15, 23, 42, .05), 0 14px 30px -18px rgba(15, 23, 42, .24);
   --pa-fill: rgba(11, 18, 32, .05); --pa-fill-strong: rgba(11, 18, 32, .08); --pa-hair: rgba(11, 18, 32, .1);
   --pa-sel: #0e121a; --pa-sel-ink: #ffffff;
   --pa-tag-h: 32px; --pa-seg-h: 40px; --pa-field-h: 44px;
@@ -298,3 +298,20 @@ html[data-palette='a'] {
 /* Smoothness: frosted blur is recomputed every frame while the page scrolls, which phones feel as stutter. Only the
    floating dock keeps it; every other bar, chip and strip is a near-solid surface instead. */
 html[data-palette='a'] *:not(.liquid-dock__pill) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* Trust center (2026-10-28, docs/design-system.md §6, §7): text-only rows in one paper card — no tinted icon tiles;
+   the published-only note is one plain line without a warning icon. */
+html[data-palette='a'] .trust-list { border-radius: 22px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+html[data-palette='a'] .rwa-mobile .trust-screen .trust-list button { grid-template-columns: minmax(0, 1fr) auto; gap: 12px; min-height: 64px; padding: 12px 16px; border-top: .5px solid var(--pa-hair); }
+html[data-palette='a'] .rwa-mobile .trust-screen .trust-list button > span { display: none; }
+html[data-palette='a'] .trust-list b { font-size: 17px; font-weight: 600; line-height: 24px; }
+html[data-palette='a'] .trust-list small { font-size: 13px; line-height: 18px; }
+html[data-palette='a'] .trust-note > svg { display: none; }
+html[data-palette='a'] .trust-note { font-size: 12px; line-height: 16px; }
+/* Status page (2026-10-28, §6): no tinted icon tile on the hero, status in words; rows and blocks on the scale. */
+html[data-palette='a'] .status-hero > span { display: none; }
+html[data-palette='a'] .status-hero { border: 0; border-radius: 22px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+html[data-palette='a'] .status-hero h1 { font-size: 22px; line-height: 28px; }
+html[data-palette='a'] .status-hero p { font-size: 13px; line-height: 18px; }
+html[data-palette='a'] .status-hero small { font-size: 12px; line-height: 16px; }
+html[data-palette='a'] .status-block { border: 0; border-radius: 22px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }

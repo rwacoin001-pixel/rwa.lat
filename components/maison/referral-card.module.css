@@ -143,3 +143,17 @@
 
 /* Palette A: the claim button is the short primary pill (it hugs its words, centred in its card). */
 :global(html[data-palette='a']) .claim { display: flex; align-items: center; justify-content: center; width: auto; min-width: 0; margin-inline: auto; padding: 0 28px; background: var(--btn-solid-fill); color: var(--btn-solid-ink); box-shadow: var(--btn-solid-edge, none), 0 1px 2px rgba(11, 18, 32, .2), 0 6px 12px -6px rgba(11, 18, 32, .35); }
+
+/* 2026-10-28 (docs/design-system.md §6, §7.1, §7.4): no editorial numbers on the reward rows; people are shown with
+   their porcelain avatar, never a two-letter monogram. */
+.ledgerNo{display:none}
+img.monogram{display:block;padding:0;border:0;background:none;object-fit:cover}
+.ledger li{grid-template-columns:minmax(0,1fr) auto;padding:16px 0;border-top-width:.5px}
+.ledger h3{font-size:17px;line-height:24px}
+.ledger li>p,.rates{grid-column:1/3}
+.ledger li>p{font-size:13px;line-height:18px}
+.tag{height:24px;padding:0 8px;font-size:12px;font-weight:500;line-height:24px;background:var(--pa-fill,var(--r-line))}
+.tag[data-tone='auto']{background:var(--pa-fill,var(--r-line));color:var(--m-accent,var(--c-mint-ink))}
+.rates{gap:8px}
+.rates div{padding:8px 12px;border-radius:12px}
+.rates span{font-size:12px;letter-spacing:0}

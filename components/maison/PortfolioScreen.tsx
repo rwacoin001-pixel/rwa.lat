@@ -29,6 +29,7 @@ import type { Redemption } from '@/lib/api/portfolio'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import bp from './basket-positions.module.css'
 import pa from './portfolio-a.module.css'
+import { TopTabs } from './TopTabs'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -572,15 +573,3 @@ function PaperTotal({ masked, onMask, loading, figure, line, note, breakdown, no
   </section>
 }
 
-/** Palette A page menu: text tabs pinned under the status bar; the selected one is ink and bold with a sliding rule. */
-function TopTabs<T extends string>({ value, onChange, label, options }: { value: T; onChange: (value: T) => void; label: string; options: Array<{ value: T; label: string }> }) {
-  const reduced = useReducedMotion()
-  return <nav className={pa.tabs} aria-label={label}>
-    <div role="tablist" aria-label={label}>
-      {options.map((option) => <button key={option.value} type="button" role="tab" aria-selected={value === option.value} onClick={() => { if (value !== option.value) { navigator.vibrate?.(4); onChange(option.value); window.scrollTo({ top: 0 }) } }}>
-        <span>{option.label}</span>
-        {value === option.value && <motion.i layoutId="portfolio-tab-rule" className={pa.rule} transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 520, damping: 38 }} />}
-      </button>)}
-    </div>
-  </nav>
-}

@@ -1672,15 +1672,37 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .calDay[data-today] { border-style: solid; border-color: var(--pa-sel); }
 .tape:empty { min-height: 38px; }
 
-/* Assets page (2026-10-28), moving to the signed-in home's look (docs/design-system.md §4.2): pure white in light
-   mode, no paper grain, section titles at 22px with no rule under them and more air above. */
-:global(.rwa-mobile[data-theme='light']) .root[data-maison-page='portfolio'] { --m-bg: #ffffff; background: #ffffff;
-  --pa-card-shadow: 0 0 0 .5px rgba(11, 18, 32, .1), 0 1px 3px rgba(15, 23, 42, .05), 0 14px 30px -18px rgba(15, 23, 42, .24); }
-.root[data-maison-page='portfolio'] .grain { display: none; }
-.root[data-maison-page='portfolio'] .sectionHead { margin: 32px 0 12px; padding-bottom: 0; border-bottom: 0; }
-:global(html[data-palette='a']) .root[data-maison-page='portfolio'] .sectionHead h2 { font-size: 22px; font-weight: 600; line-height: 28px; }
+/* Site-wide (2026-10-28, docs/design-system.md §2, §7): every Maison page is pure white in light mode with no paper
+   grain, and every section title is the home's: 22px/600, no rule under it, 32 above and 12 below. */
+:global(html[data-palette='a']) .grain { display: none; }
+:global(html[data-palette='a']) .sectionHead { margin: 32px 0 12px; padding-bottom: 0; border-bottom: 0; }
+:global(html[data-palette='a']) .sectionHead h2 { font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: 0; }
+:global(html[data-palette='a']) .sectionHead p { margin-top: 4px; font-size: 13px; line-height: 18px; }
 .root[data-maison-page='portfolio'] .toolGrid { margin-top: 0; border: 0; border-radius: 22px; background: var(--m-line); box-shadow: var(--pa-card-shadow); }
 .root[data-maison-page='portfolio'] .toolGrid button { min-height: 56px; padding: 0 16px; background: var(--pa-card, var(--m-bg)); font-size: 15px; font-weight: 500; }
 .root[data-maison-page='portfolio'] .toolGrid { gap: 0; }
 .root[data-maison-page='portfolio'] .toolGrid button { border-bottom: .5px solid var(--pa-hair, var(--m-line)); }
 .root[data-maison-page='portfolio'] .toolGrid button:nth-last-child(-n + 2) { border-bottom: 0; }
+/* Meta tags (2026-10-28, §7.5): the one fill chip on paper — 24 high, 12px/500, muted; "live" keeps a small dot. */
+:global(html[data-palette='a']) .srcTag { height: 24px; padding: 0 8px; border: 0; border-radius: 999px; background: var(--pa-fill); color: var(--m-muted); font-size: 12px; font-weight: 500; line-height: 24px; letter-spacing: 0; }
+:global(html[data-palette='a']) .srcTag[data-live] { color: var(--m-accent); }
+/* Money actions on every page are the home's porcelain tiles (2026-10-28, §4.1): 56px tile, 22px glyph, label under. */
+:global(html[data-palette='a']) .quickActions { gap: 16px; margin: 20px 0 0; }
+:global(html[data-palette='a']) .quickActions button { gap: 8px; padding: 0; border-radius: 0; background: none; color: var(--m-muted); font-size: 12px; font-weight: 400; line-height: 16px; }
+:global(html[data-palette='a']) .quickActions button:active { background: none; transform: none; }
+:global(html[data-palette='a']) .quickActions button span { width: 56px; height: 56px; border: 0; border-radius: 26%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+:global(html[data-palette='a']) .quickActions button span svg { width: 22px; height: 22px; filter: var(--pa-tile-glyph, none); }
+:global(html[data-palette='a']) .quickActions button:hover span { transform: none; }
+:global(html[data-palette='a']) .quickActions button:active span { transform: scale(.95); box-shadow: var(--pa-tile-shadow-pressed); }
+
+/* Type scale on every Maison page (2026-10-28, docs/design-system.md §3.1): the shared pieces mapped onto the scale —
+   intro lines 13, list titles 17 (15 in dense lists), list second lines 13, table heads 12 without caps tracking,
+   page titles 28, text links 13. Hairlines are 0.5px. */
+:global(html[data-palette='a']) .lede { font-size: 13px; line-height: 18px; }
+:global(html[data-palette='a']) .titleL { font-family: inherit; font-size: 28px; font-weight: 600; line-height: 34px; letter-spacing: 0; }
+:global(html[data-palette='a']) .rowMain b { font-size: 15px; font-weight: 500; line-height: 22px; }
+:global(html[data-palette='a']) .rowMain small { font-size: 13px; line-height: 18px; }
+:global(html[data-palette='a']) .tableHead { font-size: 12px; font-weight: 500; letter-spacing: 0; text-transform: none; border-bottom-width: .5px; }
+:global(html[data-palette='a']) .list { border-top-width: .5px; }
+:global(html[data-palette='a']) .link { font-size: 13px; font-weight: 500; }
+:global(html[data-palette='a']) .row::before { display: none; }

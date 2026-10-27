@@ -14,6 +14,7 @@ import { ReferralRules } from './ReferralRules'
 import { ReferralTeamRewards } from './ReferralTeamRewards'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
 import { displayInviteCode } from '@/lib/referral-invite'
+import { porcelainAvatar } from '@/components/community-avatar'
 import { Guilloche } from './Guilloche'
 import { nativeCan, nativeShare } from '@/lib/native-app'
 import x from './referral.module.css'
@@ -231,17 +232,17 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
         <h2 id={`${balanceId}-sources`} className={c.eyebrow}>{t('奖励来源', 'How rewards are earned')}<b>{t(`规则 V${sum.rules.version}`, `Rules v${sum.rules.version}`)}</b></h2>
         <ol className={c.ledger}>
           {sum.purchaseRewardsEnabled !== false && <li>
-            <span className={c.ledgerNo}>01</span><h3>{t('买入奖励', 'Purchase rewards')}</h3><span className={c.tag}>{t('手动领取', 'Claim')}</span>
+            <h3>{t('买入奖励', 'Purchase rewards')}</h3><span className={c.tag}>{t('手动领取', 'Claim')}</span>
             <p>{t('好友买入并成交后，按成交金额一次性计入；考拉量化仅首次申购计入。', 'One-time, on the settled amount of an invitee’s purchase. Koala Quant counts the first subscription only.')}</p>
             <Rates rates={sum.rules.holdingRatesBps} t={t} pct={pct} />
           </li>}
           {sum.feeRewardsEnabled !== false && <li>
-            <span className={c.ledgerNo}>02</span><h3>{t('手续费返佣', 'Fee rebates')}</h3><span className={c.tag}>{t('手动领取', 'Claim')}</span>
+            <h3>{t('手续费返佣', 'Fee rebates')}</h3><span className={c.tag}>{t('手动领取', 'Claim')}</span>
             <p>{t('按平台实际收取的合格手续费计算，不含本金、充值和余额。', 'On eligible fees the platform actually collects. Principal, deposits and balances never count.')}</p>
             <Rates rates={sum.rules.feeRatesBps} t={t} pct={pct} />
           </li>}
           <li>
-            <span className={c.ledgerNo}>03</span><h3>{t('团队月结', 'Monthly team settlement')}</h3><span className={c.tag} data-tone="auto">{t('自动到账', 'Automatic')}</span>
+            <h3>{t('团队月结', 'Monthly team settlement')}</h3><span className={c.tag} data-tone="auto">{t('自动到账', 'Automatic')}</span>
             <p>{t('按月净合格手续费分段累进计算，审核发放后直接进入可用余额。', 'Progressive on monthly net eligible fees; credited to available balance once reviewed and funded.')}</p>
           </li>
         </ol>
@@ -265,12 +266,12 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
               ? <p className={c.empty} role="status">{tab === 'rewards' ? t('暂无奖励记录', 'No rewards yet') : level === 'all' ? t('分享邀请卡，好友注册后会出现在这里', 'Share your card. Friends who sign up appear here') : t('该层级暂无成员', 'No members at this level')}</p>
               : tab === 'team'
                 ? <ul className={c.rows}>{members.data?.items.map((row, index) => <li key={`${row.memberLabel}:${index}`}>
-                  <span className={c.monogram} data-level={row.level} aria-hidden="true">{row.memberLabel.slice(0, 2)}</span>
+                  <img className={c.monogram} data-level={row.level} src={porcelainAvatar(row.memberLabel)} alt="" width={36} height={36} aria-hidden="true" />
                   <div><b dir="ltr">{t('用户', 'Member')} {row.memberLabel.slice(0, 6).toUpperCase()}</b><span>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</span></div>
                   <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
                 </li>)}</ul>
                 : <ul className={c.rows}>{awards.data?.items.map(row => <li key={row.id}>
-                  <span className={c.monogram} data-level={row.level} aria-hidden="true">{row.memberLabel.slice(0, 2)}</span>
+                  <img className={c.monogram} data-level={row.level} src={porcelainAvatar(row.memberLabel)} alt="" width={36} height={36} aria-hidden="true" />
                   <div><b>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><span>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {fmtDate(row.occurredAt, locale)}</span></div>
                   <span className={c.state}>{states[row.state] ?? row.state}</span>
                 </li>)}</ul>}

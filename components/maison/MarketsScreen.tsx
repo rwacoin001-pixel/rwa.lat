@@ -15,6 +15,7 @@ import { openPath } from '@/lib/maison-nav'
 import { usePageState } from '@/lib/app-navigation'
 import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Figure, PollBar, Segmented, TickerTape, useAutoAnimate } from './motion'
+import { TopTabs } from './TopTabs'
 import { fmtDate, fmtDateTime } from './format'
 import { BasketShelf } from './HengxuScreen'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -84,11 +85,12 @@ export function MarketsScreen({ query }: { query: string }) {
   const counts = useMemo(() => Object.fromEntries(CLASSES.map((key) => [key, listed.filter((product) => product.assetClassId !== 'prediction' && (key === 'all' || product.assetClassId === key)).length])), [listed])
 
   return <MaisonPage page="markets" dock>
+    {/* First-level page: the page opens on its own text menu, pinned under the status bar (docs/design-system.md §7.1). */}
+    <TopTabs value={tab} onChange={setTab} label={m.title} options={TABS.map((key) => ({ value: key, label: m.tabs[TAB_LABEL_INDEX[key]] }))} />
+
     <MarketHero tab={tab} />
 
     <TickerTape items={tape} label={pro.tape} />
-
-    <Segmented value={tab} onChange={setTab} label={m.title} sticky options={TABS.map((key) => ({ value: key, label: m.tabs[TAB_LABEL_INDEX[key]] }))} />
 
     {tab === 'assets' && <div className={s.tabPanel} role="tabpanel">
       <label className={s.search}>
