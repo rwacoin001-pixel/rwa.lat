@@ -1,0 +1,209 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex">
+<title>A-REIT 首页效果图 · Apple Card + Today + Liquid Glass</title>
+<style>
+/* Static design mockup (2026-10-28). Not wired to data: sample numbers only. */
+:root {
+  --bg: #f2f2f7; --card: #ffffff; --fill: #e9e9ee; --ink: #0b0b0f; --sub: #6e6e73; --faint: #a1a1a6; --line: rgba(60, 60, 67, .14);
+  --tint: #0a8a73; --up: #1f9d55; --down: #e5484d; --up-fill: rgba(31, 157, 85, .12); --down-fill: rgba(229, 72, 77, .12);
+  --glass: rgba(255, 255, 255, .62); --glass-edge: rgba(255, 255, 255, .8);
+  color-scheme: light;
+}
+html[data-theme='dark'] {
+  --bg: #000000; --card: #1c1c1e; --fill: #2c2c2e; --ink: #f5f5f7; --sub: #98989f; --faint: #6e6e73; --line: rgba(84, 84, 88, .5);
+  --tint: #2dd4b0; --up: #30d158; --down: #ff453a; --up-fill: rgba(48, 209, 88, .16); --down-fill: rgba(255, 69, 58, .16);
+  --glass: rgba(40, 40, 44, .55); --glass-edge: rgba(255, 255, 255, .14);
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); }
+body { color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "HarmonyOS Sans SC", "Noto Sans SC", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.num { font-variant-numeric: tabular-nums; }
+.round { font-family: ui-rounded, "SF Pro Rounded", -apple-system, "PingFang SC", system-ui, sans-serif; }
+.phone { max-width: 430px; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 8px) 20px 140px; }
+
+/* Top bar */
+.top { display: flex; align-items: center; justify-content: space-between; height: 52px; }
+.brand { display: flex; align-items: center; gap: 8px; font-size: 17px; font-weight: 600; letter-spacing: -.01em; }
+.brand svg { width: 34px; height: 20px; }
+.topActions { display: flex; align-items: center; gap: 12px; }
+.pill { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 12px; border-radius: 999px; background: var(--fill); color: var(--ink); font-size: 13px; font-weight: 600; }
+.avatar { width: 36px; height: 36px; border-radius: 50%; background: #ddd center / cover; }
+.greet { margin: 4px 0 16px; color: var(--sub); font-size: 15px; }
+.largeTitle { margin: 0 0 16px; font-size: 34px; font-weight: 700; letter-spacing: .01em; line-height: 41px; }
+
+/* The A-REIT Card: its colours come from what you hold (sample: Koala Quant 58 %, gold 24 %, predictions 6 %, cash 12 %). */
+.acard { position: relative; overflow: hidden; aspect-ratio: 1.586; padding: 20px; border-radius: 20px; color: #fff; isolation: isolate;
+  background:
+    radial-gradient(70% 90% at 12% 18%, #19c7aa 0%, rgba(25, 199, 170, 0) 62%),
+    radial-gradient(60% 80% at 88% 22%, #e3b964 0%, rgba(227, 185, 100, 0) 60%),
+    radial-gradient(55% 70% at 78% 96%, #7b6cf6 0%, rgba(123, 108, 246, 0) 58%),
+    radial-gradient(70% 80% at 18% 100%, #0d5c63 0%, rgba(13, 92, 99, 0) 70%),
+    linear-gradient(135deg, #0f6e66 0%, #2a7f74 45%, #8c7a4a 100%);
+  box-shadow: 0 20px 40px -24px rgba(13, 92, 99, .7); }
+.acard::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .18; mix-blend-mode: overlay;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.acard::after { content: ''; position: absolute; inset: 0; z-index: -1; border-radius: inherit; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 0 0 .5px rgba(255, 255, 255, .25); background: linear-gradient(160deg, rgba(255, 255, 255, .18) 0%, rgba(255, 255, 255, 0) 40%); }
+.acTop { display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600; opacity: .9; }
+.acTop svg { width: 30px; height: 18px; }
+.acLabel { margin-top: 18px; font-size: 13px; opacity: .85; }
+.acTotal { margin-top: 2px; font-size: 44px; font-weight: 600; letter-spacing: -.02em; line-height: 50px; }
+.acTotal small { margin-left: 6px; font-size: 15px; font-weight: 500; opacity: .8; letter-spacing: 0; }
+.acToday { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, .2); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); font-size: 13px; font-weight: 600; }
+.acMix { position: absolute; left: 20px; right: 20px; bottom: 18px; display: flex; gap: 12px; font-size: 12px; font-weight: 500; opacity: .92; }
+.acMix span { display: inline-flex; align-items: center; gap: 5px; }
+.acMix i { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(255, 255, 255, .7); }
+
+/* Money actions: Wallet-style grey discs. */
+.actions { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 20px 0 8px; }
+.act { display: grid; justify-items: center; gap: 6px; font-size: 12px; color: var(--ink); }
+.act b { display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--card); color: var(--tint); }
+.act svg { width: 22px; height: 22px; }
+
+/* Ask AI: one quiet row. */
+.ask { display: flex; align-items: center; gap: 10px; height: 48px; margin: 20px 0 0; padding: 0 6px 0 14px; border-radius: 14px; background: var(--card); color: var(--sub); font-size: 15px; }
+.ask .spark { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--fill); }
+.eyes { display: inline-flex !important; align-items: center; justify-content: center; gap: 5px; }
+.eyes i { width: 4px; height: 9px; border-radius: 999px; background: currentColor; }
+.ask .eyes i { background: var(--ink); width: 3px; height: 7px; }
+.ask span:not(.spark) { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.ask b { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--tint); color: #fff; }
+
+/* Section titles: Apple's 22pt bold title with a See All in the tint colour. */
+.sec { display: flex; align-items: baseline; justify-content: space-between; margin: 36px 0 12px; }
+.sec h2 { margin: 0; font-size: 22px; font-weight: 700; letter-spacing: .01em; }
+.sec a { color: var(--tint); font-size: 15px; text-decoration: none; }
+
+/* Today-style feature cards: full-bleed scene, title on the image. */
+.today { display: flex; gap: 12px; overflow-x: auto; margin: 0 -20px; padding: 0 20px 4px; scroll-snap-type: x mandatory; scrollbar-width: none; }
+.today::-webkit-scrollbar { display: none; }
+.tcard { position: relative; flex: 0 0 calc(100% - 28px); height: 440px; overflow: hidden; scroll-snap-align: center; border-radius: 22px; color: #fff; }
+.tcard .scene { position: absolute; inset: 0; }
+.tcard img { position: absolute; left: 50%; top: 46%; width: 260px; height: 260px; transform: translate(-50%, -50%); filter: drop-shadow(0 30px 30px rgba(0, 0, 0, .35)); }
+.tcard .eyebrow { position: absolute; top: 20px; left: 20px; font-size: 13px; font-weight: 600; letter-spacing: .02em; opacity: .85; text-transform: uppercase; }
+.tcard h3 { position: absolute; top: 40px; left: 20px; right: 20px; margin: 0; font-size: 30px; font-weight: 700; line-height: 34px; letter-spacing: -.01em; }
+.tfoot { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px 16px 16px 20px;
+  background: rgba(255, 255, 255, .16); -webkit-backdrop-filter: blur(24px) saturate(1.6); backdrop-filter: blur(24px) saturate(1.6); border-top: .5px solid rgba(255, 255, 255, .25); }
+.tfoot div { display: grid; gap: 2px; }
+.tfoot small { font-size: 12px; opacity: .85; }
+.tfoot strong { font-size: 22px; font-weight: 700; }
+.tbtn { height: 32px; padding: 0 16px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .95); color: #0b0b0f; font: inherit; font-size: 15px; font-weight: 600; }
+.sceneQuant { background: radial-gradient(80% 60% at 50% 40%, #2fd3b6 0%, rgba(47, 211, 182, 0) 70%), linear-gradient(170deg, #0e6f63 0%, #0a3f3c 100%); }
+.scenePredict { background: radial-gradient(80% 60% at 50% 40%, #a99bff 0%, rgba(169, 155, 255, 0) 70%), linear-gradient(170deg, #5b4bd6 0%, #2b2266 100%); }
+
+/* Invite: one white card row with the gift, the reward and a tinted button. */
+.invite { display: flex; align-items: center; gap: 14px; padding: 14px 14px 14px 10px; border-radius: 20px; background: var(--card); }
+.invite img { width: 72px; height: 72px; flex: none; }
+.invite .txt { flex: 1; min-width: 0; }
+.invite small { display: block; color: var(--sub); font-size: 13px; }
+.invite b { display: block; margin-top: 2px; font-size: 22px; font-weight: 700; }
+.invite b span { margin-left: 4px; color: var(--sub); font-size: 13px; font-weight: 500; }
+.invite .btn { height: 34px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--tint); color: #fff; font: inherit; font-size: 15px; font-weight: 600; }
+
+/* Markets: Stocks-style rows, coloured lines with a soft fill, filled change pills. */
+.list { overflow: hidden; border-radius: 20px; background: var(--card); }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) 76px 92px; align-items: center; gap: 10px; min-height: 64px; padding: 0 16px; }
+.row + .row { border-top: .5px solid var(--line); }
+.row .name b { display: block; font-size: 17px; font-weight: 600; }
+.row .name small { color: var(--sub); font-size: 13px; }
+.row svg { width: 76px; height: 32px; }
+.row .val { display: grid; justify-items: end; gap: 4px; }
+.row .val b { font-size: 17px; font-weight: 500; }
+.chg { min-width: 72px; padding: 3px 8px; border-radius: 6px; color: #fff; font-size: 13px; font-weight: 600; text-align: right; }
+.chg.up { background: var(--up); } .chg.down { background: var(--down); }
+.seg { display: inline-flex; padding: 2px; border-radius: 9px; background: var(--fill); font-size: 13px; font-weight: 600; }
+.seg span { padding: 5px 12px; border-radius: 7px; color: var(--sub); }
+.seg span.on { background: var(--card); color: var(--ink); box-shadow: 0 3px 8px rgba(0, 0, 0, .12), 0 0 0 .5px rgba(0, 0, 0, .04); }
+
+/* Liquid Glass tab bar, floating over the content (the colour underneath shows through). */
+.dock { position: fixed; left: 50%; bottom: calc(env(safe-area-inset-bottom) + 14px); z-index: 10; display: flex; align-items: center; gap: 4px; width: min(390px, calc(100% - 32px)); height: 62px; padding: 6px; transform: translateX(-50%); border-radius: 999px;
+  background: var(--glass); -webkit-backdrop-filter: blur(22px) saturate(1.8); backdrop-filter: blur(22px) saturate(1.8);
+  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 .5px var(--glass-edge), 0 10px 30px -12px rgba(0, 0, 0, .3); }
+.tab { display: grid; flex: 1; justify-items: center; gap: 2px; color: var(--sub); font-size: 10px; font-weight: 600; }
+.tab svg { width: 24px; height: 24px; }
+.tab.on { align-self: stretch; align-content: center; border-radius: 999px; background: rgba(120, 120, 128, .16); color: var(--tint); }
+.orb { display: grid; place-items: center; width: 50px; height: 50px; flex: none; border-radius: 50%; background: var(--tint); color: #fff; font-size: 20px; }
+
+/* Mockup chrome: theme switch, sample-data note. */
+.switch { position: fixed; bottom: calc(env(safe-area-inset-bottom) + 88px); right: 50%; z-index: 20; transform: translateX(50%); display: flex; padding: 2px; border-radius: 999px; background: var(--glass); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); box-shadow: inset 0 0 0 .5px var(--glass-edge); font-size: 12px; font-weight: 600; }
+.switch button { height: 26px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--sub); font: inherit; }
+.switch button.on { background: var(--card); color: var(--ink); }
+.note { margin: 32px 0 0; color: var(--faint); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+<div class="switch" role="group" aria-label="主题"><button type="button" data-t="light">浅色</button><button type="button" data-t="dark">深色</button></div>
+<div class="phone">
+  <div class="top">
+    <div class="brand"><svg viewBox="126 0 250 272"><g transform="translate(126 0)"><path fill="currentColor" d="M4 78Q4 69 13 65L139 8Q146 5 153 8L213 37Q222 42 222 53V144L154 113V71L77 106V199Q77 207 70 211L16 242Q4 248 4 235Z"/><path fill="#19c7aa" d="M113 95L238 152Q247 156 247 167V258Q247 270 236 265L121 213Q113 210 113 199Z"/></g></svg>A-REIT</div>
+    <div class="topActions"><span class="pill">↓ 下载 App</span><span class="avatar" style="background-image:url(/avatars/porcelain/03.webp)"></span></div>
+  </div>
+  <h1 class="largeTitle">晚上好</h1>
+
+  <!-- The A-REIT Card -->
+  <section class="acard" aria-label="总资产">
+    <div class="acTop"><span>A-REIT</span><svg viewBox="126 0 250 272"><g transform="translate(126 0)"><path fill="#fff" d="M4 78Q4 69 13 65L139 8Q146 5 153 8L213 37Q222 42 222 53V144L154 113V71L77 106V199Q77 207 70 211L16 242Q4 248 4 235Z"/><path fill="rgba(255,255,255,.6)" d="M113 95L238 152Q247 156 247 167V258Q247 270 236 265L121 213Q113 210 113 199Z"/></g></svg></div>
+    <div class="acLabel">总资产 · USDT</div>
+    <div class="acTotal round num">12,860.42</div>
+    <div class="acToday num">今日 +23.18 · +0.18%</div>
+    <div class="acMix"><span><i style="background:#19c7aa"></i>量化 58%</span><span><i style="background:#e3b964"></i>黄金 24%</span><span><i style="background:#7b6cf6"></i>预测 6%</span><span><i style="background:#c7c7cc"></i>现金 12%</span></div>
+  </section>
+
+  <div class="actions">
+    <div class="act"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 4v12M6 11l6 6 6-6M5 20h14"/></svg></b>充值</div>
+    <div class="act"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20V8M6 13l6-6 6 6M5 4h14"/></svg></b>提现</div>
+    <div class="act"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg></b>转账</div>
+    <div class="act"><b><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M14 14h2v2M20 14v6h-6"/></svg></b>收款</div>
+  </div>
+
+  <div class="ask"><span class="spark eyes" aria-hidden="true"><i></i><i></i></span><span>问 AI：黄金最近怎么走？</span><b>↑</b></div>
+
+  <div class="sec"><h2>为你精选</h2><a href="#">全部</a></div>
+  <div class="today">
+    <article class="tcard"><div class="scene sceneQuant"></div><img src="/media/porcelain/quant-cut-480.webp" alt=""><span class="eyebrow">每日结算</span><h3>考拉量化</h3>
+      <div class="tfoot"><div><small>过去 30 天</small><strong class="num">+15.48%</strong></div><button class="tbtn" type="button">查看</button></div></article>
+    <article class="tcard"><div class="scene scenePredict"></div><img src="/media/porcelain/prediction-cut-480.webp" alt=""><span class="eyebrow">宏观 · 加密 · 大宗</span><h3>预测市场</h3>
+      <div class="tfoot"><div><small>美联储 10 月不降息</small><strong class="num">93%</strong></div><button class="tbtn" type="button">参与</button></div></article>
+  </div>
+
+  <div class="sec"><h2>邀请好友</h2><a href="#">规则</a></div>
+  <div class="invite"><img src="/media/porcelain/gift-cut-240.webp" alt=""><div class="txt"><small>可领取 · 已邀请 3 人</small><b class="round num">7.56<span>USDT</span></b></div><button class="btn" type="button">领取</button></div>
+
+  <div class="sec"><h2>市场</h2><span class="seg"><span class="on">宏观</span><span>大宗</span><span>加密</span></span></div>
+  <div class="list">
+    <div class="row"><div class="name"><b>标普 500</b><small>S&amp;P 500</small></div>
+      <svg viewBox="0 0 76 32"><defs><linearGradient id="g1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--up)" stop-opacity=".3"/><stop offset="1" stop-color="var(--up)" stop-opacity="0"/></linearGradient></defs><path d="M0 22 C10 20 16 12 24 14 S36 24 44 20 S60 8 76 6 V32 H0Z" fill="url(#g1)"/><path d="M0 22 C10 20 16 12 24 14 S36 24 44 20 S60 8 76 6" fill="none" stroke="var(--up)" stroke-width="1.6"/></svg>
+      <div class="val"><b class="num">7,728.53</b><span class="chg up num">+1.38%</span></div></div>
+    <div class="row"><div class="name"><b>纳斯达克</b><small>NASDAQ</small></div>
+      <svg viewBox="0 0 76 32"><path d="M0 24 C12 22 16 10 26 12 S38 26 48 22 S64 10 76 4 V32 H0Z" fill="url(#g1)"/><path d="M0 24 C12 22 16 10 26 12 S38 26 48 22 S64 10 76 4" fill="none" stroke="var(--up)" stroke-width="1.6"/></svg>
+      <div class="val"><b class="num">26,513.15</b><span class="chg up num">+2.15%</span></div></div>
+    <div class="row"><div class="name"><b>美元指数</b><small>DXY</small></div>
+      <svg viewBox="0 0 76 32"><defs><linearGradient id="g2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--down)" stop-opacity=".3"/><stop offset="1" stop-color="var(--down)" stop-opacity="0"/></linearGradient></defs><path d="M0 8 C10 10 18 6 28 12 S44 20 54 18 S68 24 76 26 V32 H0Z" fill="url(#g2)"/><path d="M0 8 C10 10 18 6 28 12 S44 20 54 18 S68 24 76 26" fill="none" stroke="var(--down)" stroke-width="1.6"/></svg>
+      <div class="val"><b class="num">102.28</b><span class="chg down num">−0.12%</span></div></div>
+    <div class="row"><div class="name"><b>黄金</b><small>Gold</small></div>
+      <svg viewBox="0 0 76 32"><path d="M0 26 C14 24 20 18 30 20 S46 12 56 10 S68 6 76 5 V32 H0Z" fill="url(#g1)"/><path d="M0 26 C14 24 20 18 30 20 S46 12 56 10 S68 6 76 5" fill="none" stroke="var(--up)" stroke-width="1.6"/></svg>
+      <div class="val"><b class="num">4,072.10</b><span class="chg up num">+0.83%</span></div></div>
+  </div>
+
+  <p class="note">效果图 · 示例数据 · 不是线上页面</p>
+</div>
+
+<nav class="dock" aria-label="导航">
+  <span class="tab on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 11l8-7 8 7v9h-5v-6H9v6H4z"/></svg>首页</span>
+  <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>市场</span>
+  <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="13" r="7"/><path d="M12 9v4l2 2M10 3h4" stroke-linecap="round"/></svg>量化</span>
+  <span class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg>资产</span>
+  <span class="orb eyes" aria-hidden="true"><i></i><i></i></span>
+</nav>
+<script>
+const root = document.documentElement
+const set = t => { root.dataset.theme = t; document.querySelectorAll('.switch button').forEach(b => b.classList.toggle('on', b.dataset.t === t)) }
+set(new URLSearchParams(location.search).get('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'))
+document.querySelectorAll('.switch button').forEach(b => b.addEventListener('click', () => set(b.dataset.t)))
+</script>
+</body>
+</html>
