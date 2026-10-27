@@ -12,3 +12,6 @@
 
 /* Palette A: no editorial section numbers. */
 :global(html[data-palette='a']) .index { display: none; }
+
+/* Home (2026-10-28): every section's way in reads the same as the card's own "明细 >": 13px muted text + a chevron. */
+:global(html[data-palette='a']) .root > button { gap: 2px; font-size: 13px; font-weight: 400; }

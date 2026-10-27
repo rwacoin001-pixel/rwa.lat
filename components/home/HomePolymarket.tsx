@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ArrowUpRight, ChartNoAxesCombined, Coins, Landmark, Waves } from 'lucide-react'
+import { ChartNoAxesCombined, Coins, Landmark, Waves } from 'lucide-react'
 import { openPath } from '@/lib/maison-nav'
 import { useQuery } from '@/lib/api/_query'
 import { POLL, request } from '@/lib/api/_http'
@@ -94,7 +94,7 @@ export function HomePolymarket() {
       const translated = originals.has(key) ? undefined : cached
       return <div className={styles.card} key={market.id}>
       <button type="button" className={styles.cardLink} onClick={() => openPath(`/prediction/${encodeURIComponent(market.id)}`)}>
-        <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}<ArrowUpRight size={16} aria-hidden="true" /></span>
+        <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}</span>
         <strong className={styles.question} lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>
         <span className={styles.outcomes}>{market.outcomes.slice(0, 2).map((outcome, index) => <span className={styles.outcome} key={`${market.id}-${index}`}><span lang={translated ? locale : 'en'}>{translated?.outcomes[index] ?? outcome.label}</span><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(outcome.impliedProbability)}</b></span>)}</span>
         <span className={styles.probabilityBar} aria-hidden="true"><span style={{ width: `${(market.outcomes[0]?.impliedProbability ?? 0) * 100}%` }} /></span>

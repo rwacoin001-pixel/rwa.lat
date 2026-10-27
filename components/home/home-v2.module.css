@@ -5,7 +5,7 @@
   display: grid; gap: 12px; }
 
 .greeting { margin: 0 4px; color: var(--v2-muted); font-size: 13px; line-height: 18px; animation: rise .38s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
-.card { position: relative; padding: 20px 16px 16px; border-radius: 22px; background: var(--v2-card); box-shadow: var(--v2-card-sh); }
+.card { position: relative; padding: 16px; border-radius: 22px; background: var(--v2-card); box-shadow: var(--v2-card-sh); }
 .label { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 24px; color: var(--v2-muted); font-size: 13px; line-height: 18px; }
 .label button { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; margin: -12px 0; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
 .labelEnd { display: inline-flex; align-items: center; gap: 12px; }
@@ -114,10 +114,10 @@
 
 @media (prefers-reduced-motion: reduce) { .skel, .roll, .card, .tile, .ask, .invite, .faces > * { animation: none; } .spark svg { animation: none; clip-path: none; } .tileFace, .cta, .rolling, .ghost { transition: none; } }
 
-/* Invite card (2026-10-28, photo): a warm photograph across the top (8px inset, 12px corners) with the label and the
-   reward on it in white; the people you invited and the buttons below on plain paper. */
-.invite { position: relative; gap: 16px; padding: 8px 8px 16px; }
-.invPhoto { position: relative; height: 168px; overflow: hidden; border-radius: 12px; background: #d9cfc0; color: #fff; }
+/* Invite card (2026-10-28, photo): a real photograph across the top, edge to edge like the For you cards, with the
+   label (glass chip) and the reward on it in white; the people you invited and the buttons below on plain paper. */
+.invite { position: relative; gap: 16px; overflow: hidden; padding: 0 0 16px; }
+.invPhoto { position: relative; height: 176px; overflow: hidden; background: #d9cfc0; color: #fff; }
 .invPhoto img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
 .invPhoto::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, .28) 0%, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, .42) 100%); }
 .invLabel { position: absolute; z-index: 1; top: 12px; left: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45); font-size: 13px; font-weight: 600; line-height: 28px; }
@@ -126,9 +126,9 @@
 .invPhoto .invNum b { display: block; color: #fff; font-size: 28px; line-height: 34px; text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
 .invPhoto .invNum b span { color: rgba(255, 255, 255, .85); }
 .invPhoto .invTitle { color: #fff; font-size: 22px; line-height: 28px; }
-.invPeople { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 8px; }
+.invPeople { display: flex; align-items: center; gap: 12px; min-width: 0; padding: 0 16px; }
 .invPeople .invSub { min-width: 0; }
-.invite .invActs { padding: 0 8px; }
+.invite .invActs { padding: 0 16px; }
 .invActs .ghost { padding: 0 24px; }
 :global(.rwa-mobile) .root .invite .invSub { color: var(--v2-muted); }
 :global(.rwa-mobile) .root .invPhoto .invNum small, :global(.rwa-mobile) .root .invPhoto .invNum b, :global(.rwa-mobile) .root .invPhoto .invTitle, :global(.rwa-mobile) .root .invLabel { color: #fff; }

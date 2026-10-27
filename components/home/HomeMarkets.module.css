@@ -75,3 +75,13 @@
 .featured > :nth-child(1) { animation: quote-in .5s var(--home-ease, cubic-bezier(.22, 1, .36, 1)) both; }
 @keyframes quote-in { from { opacity: 0; transform: translateY(10px) scale(.98); } }
 @media (prefers-reduced-motion: reduce) { .featured > * { animation: none; } .featuredQuote::before { transition: none; } }
+
+/* Home cards made consistent (2026-10-28): labels and small text on the type scale (13 / 12, no uppercase tracking),
+   the "delayed" tag as the same fill chip as other meta tags, list figures at 15, the change at 13. */
+:global(html[data-palette='a']) .symbol { gap: 8px; color: var(--home-muted); font-size: 13px; font-weight: 500; line-height: 18px; letter-spacing: 0; }
+:global(html[data-palette='a']) .symbol i { height: 24px; padding: 0 8px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--home-muted); font-size: 12px; font-weight: 500; line-height: 24px; letter-spacing: 0; }
+:global(html[data-palette='a']) .featuredQuote small, :global(html[data-palette='a']) .rowName small, :global(html[data-palette='a']) .foot { font-size: 12px; line-height: 16px; }
+:global(html[data-palette='a']) .change { font-size: 13px; line-height: 18px; }
+:global(html[data-palette='a']) .rowName b, :global(html[data-palette='a']) .rowValue { font-size: 15px; line-height: 22px; }
+:global(html[data-palette='a']) .chip { font-size: 13px; }
+:global(html[data-palette='a']) .foot { margin-top: 12px; }

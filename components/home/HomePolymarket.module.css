@@ -35,3 +35,23 @@
 
 /* Palette A: no icon tile; the category word stands alone. */
 :global(html[data-palette='a']) .icon { display: none; }
+
+/* Home cards made consistent (2026-10-28, docs/design-system.md §3.1, §7): the same paper card as the rest of home
+   (22 radius, no border, card shadow, 16 padding), type on the scale, the category as the fill chip used for meta tags,
+   outcomes as quiet 12-radius rows, no arrow (paper cards are tappable as a whole; only photo cards carry one). */
+:global(html[data-palette='a']) .card { flex-basis: min(288px, 82vw); border: 0; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .list { padding-bottom: 12px; }
+:global(html[data-palette='a']) .cardLink { gap: 12px; padding: 16px 16px 12px; }
+:global(html[data-palette='a']) .cardLink:hover { background: none; }
+:global(html[data-palette='a']) .category { height: 24px; padding: 0 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); font-size: 12px; font-weight: 500; line-height: 24px; }
+:global(html[data-palette='a']) .mt { font-size: 12px; }
+:global(html[data-palette='a']) .question { min-height: 72px; font-family: inherit; font-size: 17px; font-weight: 600; line-height: 24px; letter-spacing: 0; }
+:global(html[data-palette='a']) .outcomes { gap: 8px; }
+:global(html[data-palette='a']) .outcome { min-height: 40px; padding: 0 12px; border-radius: 12px; background: var(--pa-fill, rgba(11, 18, 32, .05)); font-size: 13px; line-height: 18px; }
+:global(html[data-palette='a']) .outcome b { color: var(--home-ink); font-size: 17px; font-weight: 500; line-height: 24px; }
+:global(html[data-palette='a']) .outcome:first-child b { color: var(--home-accent); }
+:global(html[data-palette='a']) .probabilityBar { height: 4px; border-radius: 999px; }
+:global(html[data-palette='a']) .foot { font-size: 12px; line-height: 16px; }
+:global(html[data-palette='a']) .translate { min-height: 44px; margin-inline: 16px; font-size: 13px; }
+:global(html[data-palette='a']) .source { margin-top: 12px; font-size: 12px; line-height: 16px; }
+:global(html[data-palette='a']) .loading span { border-radius: 22px; }
