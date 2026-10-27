@@ -110,6 +110,8 @@ html[data-palette='a'] .rwa-mobile[data-theme='dark'][data-screen] .ios-dock.liq
 
 /* globals.css pins the light column to the ivory with !important; follow the palette instead. */
 html[data-palette='a'] .rwa-mobile[data-theme="light"] { background-color: #f5f6f8 !important; }
+/* The signed-in home is pure white (docs/design-system.md §4.2); keep the frame white under it too (overscroll). */
+html[data-palette='a'] .rwa-mobile[data-theme="light"][data-screen='home'] { background-color: #ffffff !important; }
 
 @media (min-width: 700px) {
   html[data-palette='a'] .rwa-shell { background: #e9ecf1; }
