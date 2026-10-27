@@ -1,26 +1,33 @@
-/* For you (v3): two product cards side by side, each a porcelain miniature in its display case on top, then the
-   name, one real number and one line (docs/design-system.md §4.2, §7.4). */
+/* For you (v4): two 3D product cards. The porcelain object (cut out, no case) stands in front of the card on a soft
+   stage of light, floats slowly over its own shadow, and leans with the card (components/home/Tilt3D.tsx).
+   Then the name, one real number and one line (docs/design-system.md §4.2, §7.4). */
 .root { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; min-width: 0; }
-.card { position: relative; display: grid; align-content: start; gap: 12px; min-width: 0; padding: 8px 8px 16px; border: 0; border-radius: 22px; color: var(--m-ink, #0b1220); background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); text-align: start; font: inherit; cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-/* The case: the art's own studio grey, so the object sits in it without a visible edge. */
-.art { display: block; aspect-ratio: 1; overflow: hidden; border-radius: 12px; background: #f3f4f6; box-shadow: inset 0 1px 2px rgba(11, 18, 32, .06); }
-.art img { display: block; width: 100%; height: 100%; object-fit: cover; animation: settle .6s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
-@keyframes settle { from { opacity: 0; transform: translateY(8px) scale(.96); } }
-.text { display: grid; gap: 4px; min-width: 0; padding: 0 8px; }
+.tilt { min-width: 0; }
+.card { position: relative; display: grid; align-content: start; gap: 8px; width: 100%; height: 100%; min-width: 0; padding: 0 0 16px; border: 0; border-radius: 22px; color: var(--m-ink, #0b1220); background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); text-align: start; font: inherit; cursor: pointer; touch-action: pan-y; -webkit-tap-highlight-color: transparent; }
+/* The stage: a pool of light on the paper where the object stands. */
+.stageArt { position: relative; display: block; height: 148px; border-radius: 22px 22px 0 0; background: radial-gradient(70% 60% at 50% 72%, var(--pa-fill, rgba(11, 18, 32, .05)) 0%, rgba(11, 18, 32, 0) 70%); }
+.stageArt img { position: absolute; left: 0; right: 0; bottom: 8px; width: 132px; height: 132px; margin: 0 auto; transform: translateZ(36px); filter: drop-shadow(0 10px 12px rgba(11, 18, 32, .16)); animation: float 5.2s ease-in-out infinite, arrive .7s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) both; }
+.floor { position: absolute; left: 0; right: 0; bottom: 8px; width: 88px; height: 12px; margin: 0 auto; border-radius: 50%; background: radial-gradient(closest-side, rgba(11, 18, 32, .22), rgba(11, 18, 32, 0)); transform: translateZ(4px); animation: floor 5.2s ease-in-out infinite; }
+@keyframes float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@keyframes floor { 0%, 100% { transform: translateZ(4px) scale(1); opacity: 1; } 50% { transform: translateZ(4px) scale(.84); opacity: .7; } }
+@keyframes arrive { from { opacity: 0; scale: .8; } }
+.text { display: grid; gap: 4px; min-width: 0; padding: 0 16px; transform: translateZ(16px); }
 .text strong { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
 .text b { font-size: 22px; font-weight: 500; line-height: 28px; font-variant-numeric: tabular-nums; }
 .text small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
 .up { color: var(--q-gain, #067a5e); }
 .down { color: var(--q-loss, #c23b33); }
-/* A small porcelain disc in the case's corner: the way in. */
-.go { position: absolute; top: 16px; right: 16px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); transition: transform .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
-.card:active .go { transform: rotate(45deg); }
+/* A small porcelain disc in the corner: the way in. */
+.go { position: absolute; top: 12px; right: 12px; display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); transform: translateZ(24px); transition: rotate .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.card:active .go { rotate: 45deg; }
 .card:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
 :global(.rwa-mobile) .root.root .text small { color: var(--m-muted, #5b6472); }
 :global(.rwa-mobile) .root.root .text strong { color: var(--m-ink, #0b1220); }
 :global(.rwa-mobile) .root.root .text .up { color: var(--q-gain, #067a5e); }
 :global(.rwa-mobile) .root.root .text .down { color: var(--q-loss, #c23b33); }
-/* Night: the case is lit lower, so the white porcelain doesn't glare on graphite. */
-:global(.rwa-mobile[data-theme='dark']) .art { filter: brightness(.82); }
-@media (prefers-reduced-motion: reduce) { .go { transition: none; } .art img { animation: none; } }
+/* Night: a pool of soft light so the white porcelain glows a little instead of glaring. */
+:global(.rwa-mobile[data-theme='dark']) .stageArt { background: radial-gradient(70% 60% at 50% 72%, rgba(255, 255, 255, .07) 0%, rgba(255, 255, 255, 0) 70%); }
+:global(.rwa-mobile[data-theme='dark']) .stageArt img { filter: brightness(.9) drop-shadow(0 10px 14px rgba(0, 0, 0, .5)); }
+:global(.rwa-mobile[data-theme='dark']) .floor { background: radial-gradient(closest-side, rgba(0, 0, 0, .55), rgba(0, 0, 0, 0)); }
+@media (prefers-reduced-motion: reduce) { .go { transition: none; } .stageArt img, .floor { animation: none; } }

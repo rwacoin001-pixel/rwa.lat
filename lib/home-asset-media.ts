@@ -17,7 +17,7 @@ export function featuredCover(slug: string): string | null {
  * Porcelain miniatures (public/media/porcelain, same world as the default avatars): one object per kind of asset.
  * -160 for 44px thumbnails, -480 for cards. docs/design-system.md §7.4.
  */
-export type PorcelainArt = 'gold' | 'reit' | 'chip' | 'rocket' | 'treasury' | 'portfolio' | 'quant' | 'energy' | 'gift' | 'prediction'
+export type PorcelainArt = 'gold' | 'reit' | 'chip' | 'rocket' | 'treasury' | 'portfolio' | 'quant' | 'energy'
 export const porcelainArt = (name: PorcelainArt, size: 160 | 480 = 160) => `/media/porcelain/${name}-${size}.webp`
 
 const slugArt: Record<string, PorcelainArt> = { gold: 'gold', nvidia: 'chip', spacex: 'rocket', 'micron-technology': 'chip', microstrategy: 'chip', circle: 'treasury' }
@@ -55,3 +55,7 @@ export function homeAssetImage(asset: { slug: string; assetClass?: string }, ind
     default: return HOME_ASSET_FALLBACK
   }
 }
+
+/** Porcelain objects cut out of their studio background (transparent WebP), for 3D cards where the object floats. */
+export type PorcelainCut = 'gift' | 'prediction' | 'quant'
+export const porcelainCut = (name: PorcelainCut, size: 240 | 480 = 480) => `/media/porcelain/${name}-cut-${size}.webp`
