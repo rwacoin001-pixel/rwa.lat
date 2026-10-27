@@ -22,7 +22,7 @@ import { showToast } from '@/lib/toast-store'
 export type { Slot }
 export type TopbarCenter = { kind: 'title'; text: ReactNode } | { kind: 'segment'; items: string[]; value: number; onChange: (index: number) => void } | { kind: 'steps'; total: number; current: number } | null
 export type RwaTopbarAction = { label: string; onClick: () => void; Icon?: LucideIcon; badge?: boolean; disabled?: boolean; busy?: boolean }
-type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; account?: boolean; action?: RwaTopbarAction; className?: string; badge?: { slot: 'R2' | 'R1'; count: number } }
+type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; account?: boolean; action?: RwaTopbarAction; className?: string; /** A small extra control before the context slot (home: the get-app pill). */ extra?: ReactNode; badge?: { slot: 'R2' | 'R1'; count: number } }
 const icons: Record<Exclude<Slot, null | 'logo' | 'language'>, LucideIcon> = { back: ChevronLeft, close: X, theme: Moon, filter: SlidersHorizontal, search: Search, bell: Bell, share: Share2, star: Star, avatar: UserRound, gear: Settings, more: MoreHorizontal, help: CircleHelp, edit: Pencil, calendar: Calendar, ledger: ReceiptText, export: Download, plus: Plus, follow: UserPlus, readall: CheckCheck, book: BookOpen, info: Info }
 type TopbarCopy = { slots: Record<Exclude<Slot, null>, string>; account: string; signIn: string; steps: string; unread: string; themeTo: Record<'light' | 'dark', string>; ring: Record<Exclude<KycRing, null>, string> }
 const topbarCopy: Record<AppLocale, TopbarCopy> = {
@@ -124,7 +124,7 @@ export default function RwaTopbar(props: Props) {
       {center?.kind === 'segment' && <Segmented {...center} />}
       {center?.kind === 'steps' && <span className="rwa-steps" role="img" aria-label={copy.steps.replace('{current}', String(center.current + 1)).replace('{total}', String(center.total))}>{Array.from({ length: center.total }, (_, index) => <i key={index} data-current={index === center.current} />)}</span>}
       </div>
-      <div className="rwa-topbar__context">{renderSlot(config.r2,'R2')}</div>
+      <div className="rwa-topbar__context">{props.extra}{renderSlot(config.r2,'R2')}</div>
       <div className="rwa-topbar__utilities">
         {renderSlot(config.r1,'R1')}
         {showAccount && <AccountButton copy={copy} onProfile={props.onProfile} />}

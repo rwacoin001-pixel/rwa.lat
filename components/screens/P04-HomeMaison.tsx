@@ -50,6 +50,7 @@ import v2 from '@/components/home/home-v2.module.css'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { focusHomeEmailBinding } from '@/components/home/HomeEmailBinding'
 import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
+import { HomeGetApp } from '@/components/home/HomeGetApp'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { homeDataCopy } from '@/lib/route-copy'
 import { assetClassLabel as classLabel } from '@/lib/maison-market-copy'
@@ -395,7 +396,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
     const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
     const askPrompt = funded ? copy.askHoldings : copy.askStart
     return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
-      <RwaTopbar screen="home" />
+      <RwaTopbar screen="home" extra={<HomeGetApp />} />
       <PullToRefresh />
       <div className={styles.v2Head}>
         <div className={v2.root}>
@@ -404,13 +405,12 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
           <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
           <HomeReferral />
-          <InstallStrip locale={locale} />
         </div>
       </div>
       <div className={styles.content}>
         <Rise as="section" className={styles.section}>
           <SectionHead index="" title={copy.forYou} />
-          <HomeForYou assets={featured.data?.items ?? []} onBaskets={() => go('basket-list')} />
+          <HomeForYou />
         </Rise>
         <Rise as="section" className={styles.section}><HomeMarkets /></Rise>
         <Rise as="section" className={`${styles.section} ${styles.prediction}`}><HomePolymarket /></Rise>
@@ -474,7 +474,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
 
       <Rise as="section" className={styles.section}>
         <SectionHead index="02" title={copy.forYou} />
-        <HomeForYou assets={featured.data?.items ?? []} onBaskets={() => go('basket-list')} />
+        <HomeForYou />
       </Rise>
 
       <Rise as="section" className={styles.section}>

@@ -54,3 +54,15 @@
 .sparkWide { height: 24px; margin: 4px 12px 0 0; }
 .rowSpark { display: block; min-width: 0; }
 .rowSpark > * { height: 20px; }
+
+/* Home v3 (2026-10-27): the tab track is a pressed-in well, the selected block a porcelain tile (§4.1), and the two
+   lead quotes are paper cards instead of a ruled table. */
+:global(html[data-palette='a']) .tabs { padding: 4px; border: 0; background: var(--pa-well-bg); box-shadow: var(--pa-well-shadow); -webkit-backdrop-filter: none; backdrop-filter: none; }
+:global(html[data-palette='a']) .tabs button { min-height: 36px; padding: 0 12px; font-size: 13px; }
+:global(html[data-palette='a']) .tabs button[aria-selected='true'] { color: var(--pa-tile-ink); }
+:global(html[data-palette='a']) .tabPill { background: var(--pa-tile-bg); box-shadow: var(--pa-tile-shadow); }
+:global(html[data-palette='a']) .featured { gap: 12px; border-block: 0; }
+:global(html[data-palette='a']) .featuredQuote,
+:global(html[data-palette='a']) .featuredQuote + .featuredQuote { gap: 8px; padding: 16px; border: 0; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+:global(html[data-palette='a']) .bigValue { font-size: clamp(22px, 7vw, 28px); letter-spacing: -.01em; }
+:global(html[data-palette='a']) .sparkWide { margin: 4px 0 0; }

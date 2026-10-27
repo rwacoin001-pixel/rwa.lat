@@ -114,3 +114,49 @@
 .heroRow .spark { flex: 1 1 0; min-width: 0; max-width: 96px; margin-left: auto; }
 
 @media (prefers-reduced-motion: reduce) { .skel, .roll, .card, .tile, .ask, .invite, .faces > * { animation: none; } .spark svg { animation: none; clip-path: none; } .spark i { animation: none; opacity: 1; } .tileFace, .cta, .rolling, .ghost { transition: none; } }
+
+/* Home v3 (2026-10-27): the asset card is the page's one lacquered object. Ink-teal with a soft teal light at the
+   top left, a sand glow at the bottom right, fine grain, a faint embossed mark and one sheen sweep on arrival.
+   Everything else on the page stays paper, so this card reads as the hero. The porcelain tiles sit under it. */
+.root { --v2-hero-bg: radial-gradient(130% 90% at 0% 0%, rgba(25, 199, 170, .3) 0%, rgba(25, 199, 170, 0) 52%), radial-gradient(90% 70% at 100% 100%, rgba(217, 192, 138, .16) 0%, rgba(217, 192, 138, 0) 60%), linear-gradient(155deg, #14232c 0%, #0c141d 55%, #0a1418 100%);
+  --v2-hero-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), inset 0 0 0 .5px rgba(255, 255, 255, .06), 0 1px 2px rgba(11, 18, 32, .18), 0 18px 36px -18px rgba(11, 30, 36, .55); }
+:global(.rwa-mobile[data-theme='dark']) .root { --v2-hero-bg: radial-gradient(130% 90% at 0% 0%, rgba(25, 199, 170, .24) 0%, rgba(25, 199, 170, 0) 52%), radial-gradient(90% 70% at 100% 100%, rgba(217, 192, 138, .1) 0%, rgba(217, 192, 138, 0) 60%), linear-gradient(155deg, #1b2a30 0%, #131a20 55%, #10161a 100%);
+  --v2-hero-shadow: inset 0 1px 0 rgba(255, 255, 255, .09), inset 0 0 0 .5px rgba(255, 255, 255, .06), 0 18px 40px -20px rgba(0, 0, 0, .85); }
+.heroCard { --v2-ink: #f4f6f8; --v2-muted: rgba(244, 246, 248, .66); --v2-faint: rgba(244, 246, 248, .5); --v2-line: rgba(255, 255, 255, .14); --m-line-soft: rgba(255, 255, 255, .06);
+  --v2-up: #2fd4a3; --v2-down: #ff8a7e; --q-dim2: rgba(244, 246, 248, .55); --q-dim: rgba(244, 246, 248, .85);
+  overflow: hidden; isolation: isolate; padding: 20px; border-radius: 28px; background: var(--v2-hero-bg); box-shadow: var(--v2-hero-shadow); color: var(--v2-ink); }
+.heroCard::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .14; mix-blend-mode: overlay; pointer-events: none;
+  background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>"); }
+.heroCard::after { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, .08) 45%, transparent 60%) no-repeat; background-size: 250% 100%; background-position: 120% 0; animation: sheen 1.4s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) .3s both; }
+@keyframes sheen { from { background-position: 120% 0; } to { background-position: -40% 0; } }
+.heroMark { position: absolute; right: -96px; bottom: -48px; z-index: -1; color: rgba(255, 255, 255, .035); pointer-events: none; }
+.heroCard .label button:focus-visible, .heroCard .cta:focus-visible { outline-color: #19c7aa; }
+/* The zero-balance invitation on the lacquer: a light pill, ink arrow. */
+.heroCard .cta { background: #f2f4f7; color: #0b1220; box-shadow: inset 0 1px 0 #fff, 0 8px 20px -10px rgba(0, 0, 0, .6); }
+.heroCard .cta i { background: #0b1220; color: #f2f4f7; }
+/* Tiles now sit on the page under the card. */
+.heroCard + .tiles { margin: 4px 0 0; }
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .heroCard { background: #0f1a20; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .3); }
+  .heroCard::before, .heroCard::after { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .heroCard::after { animation: none; opacity: 0; } }
+:global(.rwa-mobile) .root .heroCard.start p { color: var(--v2-muted); }
+
+/* Invite member card (v3): warm paper, the reward as the headline, a porcelain gift in its case on the right. */
+.invite { position: relative; gap: 16px; padding: 20px; background: linear-gradient(160deg, var(--v2-card) 40%, #f7f0e3 100%); }
+:global(.rwa-mobile[data-theme='dark']) .invite { background: linear-gradient(160deg, var(--v2-card) 40%, #201c16 100%); }
+.invHead { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 88px; }
+.invHead .invNum { text-align: start; }
+.invHead .invNum small { font-size: 13px; line-height: 18px; }
+.invHead .invNum b { display: block; margin-top: 4px; font-size: 28px; line-height: 34px; }
+.invHead .invTitle { font-size: 22px; line-height: 28px; }
+.invArt { display: block; flex: none; width: 88px; height: 88px; overflow: hidden; border-radius: 22px; background: #f3f4f6; box-shadow: inset 0 1px 2px rgba(11, 18, 32, .06); }
+.invArt img { display: block; width: 100%; height: 100%; object-fit: cover; animation: pop .5s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) .2s both; }
+:global(.rwa-mobile[data-theme='dark']) .invArt { filter: brightness(.82); }
+.invPeople { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.invPeople .invSub { min-width: 0; }
+.invActs .ghost { padding: 0 24px; }
+:global(.rwa-mobile) .root .invite .invSub, :global(.rwa-mobile) .root .invite .invNum small { color: var(--v2-muted); }
+:global(.rwa-mobile) .root .invite .invTitle { color: var(--v2-ink); }
+@media (prefers-reduced-motion: reduce) { .invArt img { animation: none; } }

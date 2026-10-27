@@ -9,6 +9,7 @@ import { fromAtomic } from '@/lib/money'
 import { openPath } from '@/lib/maison-nav'
 import { showToast } from '@/lib/toast-store'
 import { porcelainAvatar } from '@/components/community-avatar'
+import { porcelainArt } from '@/lib/home-asset-media'
 import styles from './home-v2.module.css'
 
 type Copy = { label: string; tag: string; claimable: string; earned: string; startTitle: string; startBody: string; invited: string; invitedEarned: string; allClaimed: string; invite: string; claim: string; claiming: string; claimed: string; failed: string }
@@ -44,15 +45,21 @@ export function HomeReferral() {
     setBusy(false)
     if (result.ok) { navigator.vibrate?.(10); showToast(c.claimed.replace('{v}', fmt(claimable)), 'ok'); void summary.refetch() } else showToast(c.failed, 'error')
   }
+  const sub = direct === 0 && earned <= 0 ? c.startBody
+    : claimable > 0 ? c.invitedEarned.replace('{n}', String(direct)).replace('{v}', fmt(earned)) : earned > 0 ? c.allClaimed.replace('{n}', String(direct)) : c.invited.replace('{n}', String(direct))
+  // A member card: the reward is the headline, a porcelain gift sits in its case, the people you invited below.
   return <section className={styles.invite} aria-label={c.label}>
     <div className={styles.invTop}><span>{c.label}</span><span className={styles.invTag}>{c.tag}</span></div>
-    <div className={styles.invRow}>
-      <div className={styles.faces}>{faces}{claimable <= 0 && add}</div>
+    <div className={styles.invHead}>
       {claimable > 0 ? <div className={styles.invNum}><small>{c.claimable}</small><b dir="ltr">{fmt(claimable)}<span>USDT</span></b></div>
-        : earned > 0 ? <div className={styles.invNum}><small>{c.earned}</small><b dir="ltr">{fmt(earned)}<span>USDT</span></b></div> : null}
+        : earned > 0 ? <div className={styles.invNum}><small>{c.earned}</small><b dir="ltr">{fmt(earned)}<span>USDT</span></b></div>
+        : <p className={styles.invTitle}>{c.startTitle}</p>}
+      <span className={styles.invArt} aria-hidden="true"><img src={porcelainArt('gift', 480)} alt="" width={88} height={88} decoding="async" /></span>
     </div>
-    {direct === 0 && earned <= 0 ? <div><p className={styles.invTitle}>{c.startTitle}</p><p className={styles.invSub}>{c.startBody}</p></div>
-      : <p className={styles.invSub}>{claimable > 0 ? c.invitedEarned.replace('{n}', String(direct)).replace('{v}', fmt(earned)) : earned > 0 ? c.allClaimed.replace('{n}', String(direct)) : c.invited.replace('{n}', String(direct))}</p>}
+    <div className={styles.invPeople}>
+      <div className={styles.faces}>{faces}{claimable <= 0 && add}</div>
+      <p className={styles.invSub}>{sub}</p>
+    </div>
     <div className={styles.invActs}>
       <button type="button" className={styles.cta} onClick={open}><span>{c.invite}</span><i aria-hidden="true">→</i></button>
       {claimable > 0 && <button type="button" className={styles.ghost} onClick={() => void claim()} disabled={busy} aria-busy={busy}>{busy ? c.claiming : c.claim}</button>}

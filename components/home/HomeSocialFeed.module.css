@@ -42,6 +42,10 @@
 .authorLink span { overflow: hidden; min-width: 0; text-overflow: ellipsis; white-space: nowrap; }
 .authorLink svg { margin-inline-start: auto; flex: none; }
 .postContext { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: -4px; color: var(--home-muted); font-size: 11px; line-height: 1.4; }
+/* City and date stay on one line: a long city name shortens, the date never moves. */
+.postContext { flex-wrap: nowrap; min-width: 0; }
+.postContext > span { overflow: hidden; min-width: 0; text-overflow: ellipsis; white-space: nowrap; }
+.postContext > time { flex: none; }
 .actions { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 44px; padding: 0; border: 0; color: var(--home-muted); background: none; text-align: start; font: inherit; font-size: 11px; cursor: pointer; }
 .avatarLink:focus-visible, .authorLink:focus-visible, .actions:focus-visible, .tabs button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 2px; border-radius: 8px; }
 :global(.rwa-mobile) .root.root .postContext, :global(.rwa-mobile) .root.root .authorLink > span { color: var(--home-muted); }

@@ -1,53 +1,52 @@
 'use client'
 
-// One live recommendation. Macro and prediction data live in their own sections.
+// For you: the two products we lead with, Koala Quant and the prediction markets, as porcelain display cases.
 import { ArrowUpRight } from 'lucide-react'
 import { motion, useReducedMotion } from 'motion/react'
 import { openPath } from '@/lib/maison-nav'
 import { porcelainArt } from '@/lib/home-asset-media'
-import { useQuery } from '@/lib/api/_query'
-import { POLL, request } from '@/lib/api/_http'
-import { fmtUsd } from '@/lib/money'
+import { useQuantProducts } from '@/lib/api/quant'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import styles from './HomeForYou.module.css'
 
-export type ForYouAsset = { slug: string; name: string; assetClass?: string; marketCapUsd?: string | null; issuer?: { name: string } | null }
-type Basket = { id: string; name: string; strategyName?: string | null; riskLevel?: string | null }
-type Copy = { basket: string; strategy: string; basketBody: string; pick: string; marketCap: string; low: string; medium: string; high: string }
+type Copy = { quant: string; quantLine: string; last30: string; predict: string; predictLine: string }
 const copy: Record<AppLocale, Copy> = {
-  en: { basket: 'Asset basket', strategy: 'Strategy', basketBody: 'Explore real asset strategies', pick: 'Treasury pick', marketCap: 'Market cap', low: 'Low risk', medium: 'Medium risk', high: 'High risk' },
-  'zh-CN': { basket: '资产组合', strategy: '策略', basketBody: '探索真实资产策略', pick: '精选国债', marketCap: '市值', low: '低风险', medium: '中风险', high: '高风险' },
-  hi: { basket: 'परिसंपत्ति बास्केट', strategy: 'रणनीति', basketBody: 'वास्तविक संपत्ति रणनीतियाँ देखें', pick: 'ट्रेज़री चयन', marketCap: 'बाज़ार पूंजी', low: 'कम जोखिम', medium: 'मध्यम जोखिम', high: 'उच्च जोखिम' },
-  es: { basket: 'Cesta de activos', strategy: 'Estrategia', basketBody: 'Explora estrategias de activos reales', pick: 'Selección del Tesoro', marketCap: 'Capitalización', low: 'Riesgo bajo', medium: 'Riesgo medio', high: 'Riesgo alto' },
-  ar: { basket: 'سلة الأصول', strategy: 'الاستراتيجية', basketBody: 'استكشف استراتيجيات الأصول الحقيقية', pick: 'اختيار سندات الخزانة', marketCap: 'القيمة السوقية', low: 'مخاطر منخفضة', medium: 'مخاطر متوسطة', high: 'مخاطر مرتفعة' },
-  fr: { basket: 'Panier d’actifs', strategy: 'Stratégie', basketBody: 'Explorer les stratégies d’actifs réels', pick: 'Sélection du Trésor', marketCap: 'Capitalisation', low: 'Risque faible', medium: 'Risque modéré', high: 'Risque élevé' },
-  pt: { basket: 'Cesta de ativos', strategy: 'Estratégia', basketBody: 'Explore estratégias de ativos reais', pick: 'Seleção do Tesouro', marketCap: 'Valor de mercado', low: 'Risco baixo', medium: 'Risco médio', high: 'Risco alto' },
+  en: { quant: 'Koala Quant', quantLine: 'Settled daily', last30: 'Past 30 days', predict: 'Prediction markets', predictLine: 'Macro · crypto · commodities' },
+  'zh-CN': { quant: '考拉量化', quantLine: '每日结算', last30: '过去 30 天', predict: '预测市场', predictLine: '宏观 · 加密 · 大宗' },
+  hi: { quant: 'Koala Quant', quantLine: 'रोज़ निपटान', last30: 'पिछले 30 दिन', predict: 'पूर्वानुमान बाज़ार', predictLine: 'मैक्रो · क्रिप्टो · कमोडिटी' },
+  es: { quant: 'Koala Quant', quantLine: 'Liquidación diaria', last30: 'Últimos 30 días', predict: 'Mercados de predicción', predictLine: 'Macro · cripto · materias primas' },
+  ar: { quant: 'Koala Quant', quantLine: 'تسوية يومية', last30: 'آخر 30 يومًا', predict: 'أسواق التنبؤ', predictLine: 'اقتصاد كلي · عملات رقمية · سلع' },
+  fr: { quant: 'Koala Quant', quantLine: 'Règlement quotidien', last30: '30 derniers jours', predict: 'Marchés de prédiction', predictLine: 'Macro · crypto · matières premières' },
+  pt: { quant: 'Koala Quant', quantLine: 'Liquidação diária', last30: 'Últimos 30 dias', predict: 'Mercados de previsão', predictLine: 'Macro · cripto · commodities' },
 }
 
-export function HomeForYou({ assets, onBaskets }: { assets: ForYouAsset[]; onBaskets: () => void }) {
+export function HomeForYou() {
   const { locale } = useI18n()
   const label = copy[locale]
   const reduced = useReducedMotion()
-  const baskets = useQuery('basket:portfolios:home', () => request<Basket[]>('/v1/basket/portfolios'), { staleTime: 60_000, pollInterval: POLL.list })
-  const basket = Array.isArray(baskets.data) && baskets.data.length ? baskets.data[0] : null
-  const treasury = assets.filter(asset => asset.assetClass === 'treasury').sort((a, b) => Number(b.marketCapUsd ?? 0) - Number(a.marketCapUsd ?? 0))[0] ?? null
-  const risk = basket?.riskLevel?.toLowerCase()
-  const riskLabel = risk === 'low' ? label.low : risk === 'medium' || risk === 'moderate' ? label.medium : risk === 'high' ? label.high : null
-  const lead = basket
-    ? { key: basket.id, badge: label.basket, title: basket.name, body: basket.strategyName ? label.strategy + ' · ' + basket.strategyName : label.basketBody, image: 'basket', open: onBaskets }
-    : treasury
-      ? { key: treasury.slug, badge: label.pick, title: treasury.name, body: treasury.marketCapUsd ? label.marketCap + ' ' + fmtUsd(treasury.marketCapUsd, { compact: true, locale }) : treasury.issuer?.name, image: 'treasury', open: () => openPath('/asset/' + encodeURIComponent(treasury.slug)) }
-      : { key: 'baskets', badge: label.basket, title: label.basket, body: label.basketBody, image: 'basket', open: onBaskets }
-
+  const quant = useQuantProducts().data?.[0] ?? null
+  const pct = quant?.performance.last30d.pct ?? null
+  const cards = [
+    {
+      key: 'quant', title: quant?.name ?? label.quant, art: porcelainArt('quant', 480), open: () => openPath('/quant'),
+      value: pct === null ? null : `${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%`, tone: pct === null || pct === 0 ? '' : pct > 0 ? styles.up : styles.down,
+      line: pct === null ? label.quantLine : label.last30,
+    },
+    {
+      key: 'predict', title: label.predict, art: porcelainArt('prediction', 480), open: () => openPath('/markets?tab=predictions'),
+      value: null, tone: '', line: label.predictLine,
+    },
+  ]
   return <div className={styles.root}>
-    <motion.button key={lead.key} type="button" className={styles.lead} data-image={lead.image} onClick={lead.open} whileTap={reduced ? undefined : { scale: .98 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-      <span className={styles.leadText}>
-        <span className={styles.badge}>{lead.badge}{riskLabel && <span className={styles.risk}>{riskLabel}</span>}</span>
-        <span className={styles.leadBody}><strong>{lead.title}</strong>{lead.body && <small>{lead.body}</small>}</span>
-        <span className={styles.leadArrow} aria-hidden="true"><ArrowUpRight size={16} /></span>
+    {cards.map((card, index) => <motion.button key={card.key} type="button" className={styles.card} onClick={card.open} whileTap={reduced ? undefined : { scale: .97 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
+      {/* A porcelain miniature in its display case (docs/design-system.md §7.4). */}
+      <span className={styles.art} aria-hidden="true"><img src={card.art} alt="" width={160} height={160} decoding="async" style={{ animationDelay: `${index * 0.08}s` }} /></span>
+      <span className={styles.text}>
+        <strong>{card.title}</strong>
+        {card.value && <b className={card.tone} dir="ltr">{card.value}</b>}
+        <small>{card.line}</small>
       </span>
-      {/* A porcelain miniature in a small display case (docs/design-system.md §7.4). */}
-      <span className={styles.leadArt} aria-hidden="true"><img src={porcelainArt(lead.image === 'treasury' ? 'treasury' : 'portfolio', 480)} alt="" width={112} height={112} decoding="async" /></span>
-    </motion.button>
+      <span className={styles.go} aria-hidden="true"><ArrowUpRight size={16} strokeWidth={2} /></span>
+    </motion.button>)}
   </div>
 }

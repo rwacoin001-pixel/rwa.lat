@@ -1,0 +1,8 @@
+/* Get-app pill in the home top bar: a small porcelain chip (docs/design-system.md §4.1, §4.2). */
+.pill { display: inline-flex; align-items: center; gap: 4px; height: 32px; margin: 0 4px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow);
+  font: inherit; font-size: 13px; font-weight: 500; line-height: 18px; white-space: nowrap; text-decoration: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.pill:active { transform: scale(.95); box-shadow: var(--pa-tile-shadow-pressed); }
+.pill svg { filter: var(--pa-tile-glyph, none); }
+.pill:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .pill { transition: none; } }

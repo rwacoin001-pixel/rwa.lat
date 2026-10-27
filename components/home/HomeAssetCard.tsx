@@ -8,6 +8,7 @@ import { fromAtomic } from '@/lib/money'
 import { fundsCopy } from '@/lib/maison-funds-copy'
 import { HomeEmailBinding } from './HomeEmailBinding'
 import { Sparkline } from './Sparkline'
+import RwaLogoMark from '@/components/rwa-logo'
 import type { HomePortfolioSnapshot } from './HomePortfolioCard'
 import styles from './home-v2.module.css'
 
@@ -88,26 +89,36 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, sp
     </button>)}
   </div>
 
-  if (loading && !account) return <section className={styles.card} aria-busy="true">
-    <span className={styles.skel} style={{ width: 96, height: 16 }} />
-    <span className={styles.skel} style={{ width: 200, height: 40, marginTop: 8 }} />
-    <span className={styles.skel} style={{ width: 140, height: 16, marginTop: 8 }} />
+  // The card is the page's one lacquered object: ink-teal with a faint embossed mark; the porcelain tiles sit below it.
+  const mark = <RwaLogoMark className={styles.heroMark} label="" primaryColor="currentColor" accentColor="currentColor" width={360} height={202} />
+  if (loading && !account) return <>
+    <section className={`${styles.card} ${styles.heroCard}`} aria-busy="true">
+      {mark}
+      <span className={styles.skel} style={{ width: 96, height: 16 }} />
+      <span className={styles.skel} style={{ width: 200, height: 40, marginTop: 8 }} />
+      <span className={styles.skel} style={{ width: 140, height: 16, marginTop: 8 }} />
+    </section>
     <div className={styles.tiles}>{[0, 1, 2, 3].map(i => <span key={i} className={styles.skel} style={{ width: 56, height: 56, borderRadius: '22%', justifySelf: 'center' }} />)}</div>
-  </section>
+  </>
 
   // A confirmed zero (nothing pending): an invitation, not a big 0.00.
   const empty = total === 0 && pendingUnits <= 0 && (state.lifecycle === 'unfunded' || state.lifecycle === 'kyc_incomplete' || state.lifecycle === 'email_unverified')
-  if (empty) return <section className={`${styles.card} ${styles.start}`}>
-    <h2>{c.startTitle}</h2>
-    <p>{c.startBody}</p>
-    {emailBinding ? <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />
-      : <button type="button" className={styles.cta} onClick={ctaLabel ? onPrimary : () => onCashAction('/assets/cash/deposit')}><span>{ctaLabel ?? c.deposit}</span><i aria-hidden="true">→</i></button>}
-  </section>
+  if (empty) return <>
+    <section className={`${styles.card} ${styles.heroCard} ${styles.start}`}>
+      {mark}
+      <h2>{c.startTitle}</h2>
+      <p>{c.startBody}</p>
+      {!emailBinding && <button type="button" className={styles.cta} onClick={ctaLabel ? onPrimary : () => onCashAction('/assets/cash/deposit')}><span>{ctaLabel ?? c.deposit}</span><i aria-hidden="true">→</i></button>}
+    </section>
+    {emailBinding && <section className={styles.card}><HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} /></section>}
+  </>
 
   const change = today ? money(today.changeAtomic, 6, locale) : null
   const tone = change === null || change === 0 ? '' : change > 0 ? styles.up : styles.down
   const pct = today && today.changePct !== '' && Number.isFinite(Number(today.changePct)) ? Number(today.changePct) : null
-  return <section className={styles.card}>
+  return <>
+  <section className={`${styles.card} ${styles.heroCard}`}>
+    {mark}
     <div className={styles.label}>
       <span>{c.total} · {account?.currency ?? 'USDT'}</span>
       <span className={styles.labelEnd}>
@@ -127,10 +138,11 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, sp
     <div className={`${styles.sub} ${hidden ? '' : tone}`} dir="ltr">
       {hidden ? '' : change !== null ? c.today.replace('{v}', `${signed(change, locale)}${pct === null ? '' : ` (${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%)`}`) : available !== null ? c.available.replace('{v}', fmt(available, locale)) : ''}
     </div>
-    {tiles}
     {pendingUnits > 0 && <div className={styles.pending} role="status"><span>{c.pending.replace('{v}', fmt(pendingUnits, locale))}</span><span>{c.pendingEta}</span></div>}
-    {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}
   </section>
+  {tiles}
+  {emailBinding && <section className={styles.card}><HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} /></section>}
+  </>
 }
 
 /** Ask the AI: a well under the card; the prompt is left in the composer for the reader to send. */

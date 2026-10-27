@@ -104,7 +104,6 @@ export function useInstallAction(): InstallKind | null {
     if (env.ios) { setKind('share'); return }
     if (!/Android/.test(navigator.userAgent)) return
     if (env.kind === 'wechat-android' || env.kind === 'inapp') { setKind('browser'); return }
-    if (env.kind === 'android-chrome') { setKind('pwa'); return }
     if (ANDROID_APP.url) setKind('apk')
   }, [])
   return kind

@@ -51,7 +51,10 @@ export function safariMajor() {
   return Number(/Version\/(\d+)/.exec(window.navigator.userAgent)?.[1] ?? 0)
 }
 
-/** Android browsers whose "add to desktop" is only a bookmark: they get the Android app (and Chrome) first. */
+/**
+ * Every Android browser gets the Android app (2026-10-27): one way to install, one guide, and the app can share and
+ * save posters natively. Chrome is included, so the web-app install is no longer offered on Android.
+ */
 export function needsAndroidApp(kind: InstallKind) {
-  return kind === 'android-xiaomi' || kind === 'android-huawei' || kind === 'android-other'
+  return kind === 'android-chrome' || kind === 'android-samsung' || kind === 'android-xiaomi' || kind === 'android-huawei' || kind === 'android-other'
 }

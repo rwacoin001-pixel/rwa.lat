@@ -45,6 +45,7 @@ test('Android browsers that cannot install the web app are offered the Android a
   assert.deepEqual(envFor(uc), { kind: 'android-other', offer: true })
   assert.deepEqual(envFor(via), { kind: 'android-other', offer: true })
   assert.deepEqual(envFor(miui), { kind: 'android-xiaomi', offer: true })
-  assert.deepEqual(envFor(chrome), { kind: 'android-chrome', offer: false })
+  // Since 2026-10-27 every Android browser gets the app, Chrome included.
+  assert.deepEqual(envFor(chrome), { kind: 'android-chrome', offer: true })
   assert.deepEqual(envFor(wechat), { kind: 'wechat-android', offer: false })
 })

@@ -564,6 +564,10 @@
 
 /* Signed-in home (v2): no photo, no ticker; the account card sits under a solid top bar. Sizes are on the §3.1 scale. */
 .v2 { --m-ink: var(--home-ink); --m-muted: var(--home-muted); --m-faint: var(--home-faint); --m-line: var(--home-line); --m-line-soft: var(--home-line-soft); --m-accent: var(--home-accent); --q-gain: var(--home-up); --q-loss: var(--home-down); background: var(--home-bg); }
+/* Home v3: a quiet light at the top of the page (teal from the left, sand from the right) fading into the paper. */
+.v2 { --v2-glow: radial-gradient(90% 380px at 12% 0, rgba(25, 199, 170, .14), rgba(25, 199, 170, 0) 72%), radial-gradient(70% 320px at 96% 0, rgba(217, 192, 138, .16), rgba(217, 192, 138, 0) 70%);
+  background: var(--v2-glow) top / 100% 480px no-repeat, var(--home-bg); }
+:global(.rwa-mobile[data-theme='dark']) .v2 { --v2-glow: radial-gradient(90% 380px at 12% 0, rgba(25, 199, 170, .1), rgba(25, 199, 170, 0) 72%), radial-gradient(70% 320px at 96% 0, rgba(217, 192, 138, .06), rgba(217, 192, 138, 0) 70%); }
 .v2Head { padding: 8px var(--home-gutter) 0; }
 .v2 :global([data-home-section]) { margin-bottom: 12px; }
 .v2 :global([data-home-section]) h2 { font-size: 22px; line-height: 28px; }
