@@ -1671,3 +1671,16 @@ span.compareName { padding-top: 28px; cursor: default; }
 :global(html[data-palette='a']) .ctaIcon { width: 44px; height: 44px; background: var(--btn-arrow-fill); color: var(--btn-arrow-ink); box-shadow: var(--btn-arrow-edge, none); }
 :global(html[data-palette='a']) .calDay[data-today] { border-style: solid; border-color: var(--pa-sel); }
 .tape:empty { min-height: 38px; }
+
+/* Assets page (2026-10-28), moving to the signed-in home's look (docs/design-system.md §4.2): pure white in light
+   mode, no paper grain, section titles at 22px with no rule under them and more air above. */
+:global(.rwa-mobile[data-theme='light']) .root[data-maison-page='portfolio'] { --m-bg: #ffffff; background: #ffffff;
+  --pa-card-shadow: 0 0 0 .5px rgba(11, 18, 32, .1), 0 1px 3px rgba(15, 23, 42, .05), 0 14px 30px -18px rgba(15, 23, 42, .24); }
+.root[data-maison-page='portfolio'] .grain { display: none; }
+.root[data-maison-page='portfolio'] .sectionHead { margin: 32px 0 12px; padding-bottom: 0; border-bottom: 0; }
+:global(html[data-palette='a']) .root[data-maison-page='portfolio'] .sectionHead h2 { font-size: 22px; font-weight: 600; line-height: 28px; }
+.root[data-maison-page='portfolio'] .toolGrid { margin-top: 0; border: 0; border-radius: 22px; background: var(--m-line); box-shadow: var(--pa-card-shadow); }
+.root[data-maison-page='portfolio'] .toolGrid button { min-height: 56px; padding: 0 16px; background: var(--pa-card, var(--m-bg)); font-size: 15px; font-weight: 500; }
+.root[data-maison-page='portfolio'] .toolGrid { gap: 0; }
+.root[data-maison-page='portfolio'] .toolGrid button { border-bottom: .5px solid var(--pa-hair, var(--m-line)); }
+.root[data-maison-page='portfolio'] .toolGrid button:nth-last-child(-n + 2) { border-bottom: 0; }

@@ -33,6 +33,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
 import { sharedKeys } from '@/lib/product-media'
+import { porcelainCut } from '@/lib/home-asset-media'
 
 // Portfolio amounts are in the platform unit (USDT / USD quote, 6 decimals).
 const DECIMALS = 6
@@ -174,7 +175,7 @@ export function PortfolioScreen({ query }: { query: string }) {
       {/* Quant holdings sit with the other holdings (they load on their own; below the fold they don't push the total). */}
       <QuantAssetsCard />
       {!basketsEmpty && <BasketPositions index={basketsIndex} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} limit={3} onMore={() => setTab('positions')} />}
-      <SectionHead index={toolsIndex} title={p.tools.cash} />
+      <SectionHead index={toolsIndex} title={(TOOLS_TITLE[locale] ?? TOOLS_TITLE.en)!} />
       <Tools />
     </div>}
     {tab === 'positions' && <div className={s.tabPanel} role="tabpanel">
@@ -312,7 +313,7 @@ function PositionTable({ rows, whole, weighted, state, products }: { rows: Posit
   if (state.error) return <StateBlock tone="error" title={p.loadError} body={state.error.message} retry={state.refetch} retryLabel={common.retry} />
   // One row while loading: about the height of the empty state, so the section barely changes when data lands.
   if (!rows) return <Skeleton rows={1} />
-  if (!rows.length) return <StateBlock title={p.positionsEmpty} body={p.positionsEmptyBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets')}>{p.browse}</button>} />
+  if (!rows.length) return <EmptyHoldings />
   return <>
     <div className={s.tableHead} aria-hidden="true"><span>{p.product} · {p.qty}</span><span>{p.value} · {p.pnl}</span></div>
     <ul className={`${s.list} ${s.listCard}`} ref={list}>{rows.map((row) => {
@@ -334,6 +335,26 @@ function PositionTable({ rows, whole, weighted, state, products }: { rows: Posit
       </li>
     })}</ul>
   </>
+}
+
+const TOOLS_TITLE: Partial<Record<string, string>> = { en: 'Tools', 'zh-CN': '工具' }
+const EMPTY_COPY: Partial<Record<string, { title: string; body: string; go: string }>> = {
+  en: { title: 'No holdings yet', body: 'Koala Quant settles every day — a simple place to start.', go: 'See Koala Quant' },
+  'zh-CN': { title: '还没有持仓', body: '考拉量化每天结算，是一个简单的起点。', go: '看看考拉量化' },
+}
+
+/** No holdings: the porcelain stopwatch, one line, Koala Quant first and the markets as the quiet alternative. */
+function EmptyHoldings() {
+  const { locale } = useI18n()
+  const p = portfolioCopy[locale]
+  const c = (EMPTY_COPY[locale] ?? EMPTY_COPY.en)!
+  return <div className={pa.empty}>
+    <img src={porcelainCut('quant', 240)} alt="" width={112} height={112} decoding="async" />
+    <h3>{c.title}</h3>
+    <p>{c.body}</p>
+    <button type="button" className={pa.emptyGo} onClick={() => openPath('/quant')}>{c.go}<ArrowRight size={16} strokeWidth={2} aria-hidden="true" /></button>
+    <button type="button" className={pa.emptyLink} onClick={() => openPath('/markets')}>{p.browse}</button>
+  </div>
 }
 
 function Tools() {
@@ -526,11 +547,17 @@ function PaperTotal({ masked, onMask, loading, figure, line, note, breakdown, no
       <span>{p.total} · USDT</span>
       <button type="button" className={pa.eye} aria-pressed={masked} aria-label={masked ? hc.showAmounts : hc.hideAmounts} onClick={onMask}>{masked ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
     </div>
-    {/* Same line while loading (a dash, softly pulsing) so nothing below moves when the figure arrives. */}
-    <p className={`${pa.figure} ${s.num}`} data-loading={loading || undefined}>{loading ? '—' : figure}<small>USDT</small></p>
-    <p className={pa.line}>{line}</p>
+    <div className={pa.figureRow}>
+      <div>
+        {/* Same line while loading (a dash, softly pulsing) so nothing below moves when the figure arrives. */}
+        <p className={`${pa.figure} ${s.num}`} data-loading={loading || undefined}>{loading ? '—' : figure}</p>
+        <p className={pa.line}>{line}</p>
+      </div>
+      {/* The same porcelain coins as the home card. */}
+      <span className={pa.coins} aria-hidden="true"><i /><img src={porcelainCut('coins', 240)} alt="" width={88} height={88} decoding="async" /></span>
+    </div>
     <div className={pa.actions}>
-      {actions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => openPath(path)}><Icon size={20} strokeWidth={1.7} aria-hidden="true" /><span>{label}</span></button>)}
+      {actions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => { navigator.vibrate?.(6); openPath(path) }}><span className={pa.tileFace}><Icon size={22} strokeWidth={1.7} aria-hidden="true" /></span><span>{label}</span></button>)}
     </div>
     <button type="button" className={pa.disclose} aria-expanded={open} onClick={toggle}>
       <span>{open ? less : more}</span>
