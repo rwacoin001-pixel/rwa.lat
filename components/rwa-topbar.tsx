@@ -17,12 +17,13 @@ import { Segmented } from './ui/Segmented'
 import RwaLogoMark from './rwa-logo'
 import {useCommunityMe} from '@/lib/use-community-me'
 import {CommunityAvatar} from './community-avatar'
+import { RwaLogo3D } from './brand/RwaLogo3D'
 import LanguageMenu from './language-menu'
 import { showToast } from '@/lib/toast-store'
 export type { Slot }
 export type TopbarCenter = { kind: 'title'; text: ReactNode } | { kind: 'segment'; items: string[]; value: number; onChange: (index: number) => void } | { kind: 'steps'; total: number; current: number } | null
 export type RwaTopbarAction = { label: string; onClick: () => void; Icon?: LucideIcon; badge?: boolean; disabled?: boolean; busy?: boolean }
-type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; account?: boolean; action?: RwaTopbarAction; className?: string; /** A small extra control before the context slot (home: the get-app pill). */ extra?: ReactNode; badge?: { slot: 'R2' | 'R1'; count: number } }
+type Props = Partial<SlotConfig> & { screen?: RwaScreen; kind?: TopbarKind; title?: ReactNode; meta?: ReactNode; c?: TopbarCenter; onSlot?: (slot: Slot) => void; onBack?: () => void; onClose?: () => void; onProfile?: () => void; account?: boolean; action?: RwaTopbarAction; className?: string; /** A small extra control before the context slot (home: the get-app pill). */ extra?: ReactNode; /** Signed-in home: the solid, slowly turning mark instead of the flat one. */ logo3d?: boolean; badge?: { slot: 'R2' | 'R1'; count: number } }
 const icons: Record<Exclude<Slot, null | 'logo' | 'language'>, LucideIcon> = { back: ChevronLeft, close: X, theme: Moon, filter: SlidersHorizontal, search: Search, bell: Bell, share: Share2, star: Star, avatar: UserRound, gear: Settings, more: MoreHorizontal, help: CircleHelp, edit: Pencil, calendar: Calendar, ledger: ReceiptText, export: Download, plus: Plus, follow: UserPlus, readall: CheckCheck, book: BookOpen, info: Info }
 type TopbarCopy = { slots: Record<Exclude<Slot, null>, string>; account: string; signIn: string; steps: string; unread: string; themeTo: Record<'light' | 'dark', string>; ring: Record<Exclude<KycRing, null>, string> }
 const topbarCopy: Record<AppLocale, TopbarCopy> = {
@@ -106,7 +107,7 @@ export default function RwaTopbar(props: Props) {
     // Guests have no inbox; the sign-in entry replaces it.
     if (!slot || (!custom && !props.onSlot && !hasDefaultTopbarAction(slot)) || (!custom && slot === 'bell' && !signedIn && !props.onSlot)) return null
     if (slot === 'language') return <span className="rwa-topbar__slot rwa-topbar__slot--language" data-slot={position}><LanguageMenu variant="compact" /></span>
-    if (slot === 'logo') return <button type="button" className="rwa-topbar__slot rwa-topbar__slot--logo rwa-sel" data-state="rest" data-slot={position} aria-label={copy.slots.logo} onClick={() => onSlot(slot, position)}><span className="rwa-topbar__brand"><RwaLogoMark className="rwa-topbar__logo" width="34" height="20" label="A-REIT" /><span>A-REIT</span></span>{props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count}</span>}</button>
+    if (slot === 'logo') return <button type="button" className="rwa-topbar__slot rwa-topbar__slot--logo rwa-sel" data-state="rest" data-slot={position} aria-label={copy.slots.logo} onClick={() => onSlot(slot, position)}><span className="rwa-topbar__brand">{props.logo3d ? <RwaLogo3D className="rwa-topbar__logo3d" /> : <RwaLogoMark className="rwa-topbar__logo" width="34" height="20" label="A-REIT" />}<span>A-REIT</span></span>{props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count}</span>}</button>
     const Icon = custom && props.action?.Icon ? props.action.Icon : icons[slot]
     return <button type="button" className="rwa-topbar__slot rwa-sel" data-state="rest" data-slot={position} disabled={custom ? props.action!.disabled || props.action!.busy : undefined} aria-busy={custom ? props.action!.busy : undefined} aria-label={custom ? props.action!.label : slot === 'theme' ? copy.themeTo[theme === 'dark' ? 'light' : 'dark'] : copy.slots[slot]} onClick={(event) => onSlot(slot, position, event)}>
       {slot === 'theme' ? theme === 'dark' ? <Sun size={22} strokeWidth={1.8} /> : <Moon size={21} strokeWidth={1.8} /> : Icon ? <Icon size={22} strokeWidth={slot === 'back' ? 2.2 : 1.8} /> : <RwaLogoMark width="32" height="22" label="A-REIT" />}

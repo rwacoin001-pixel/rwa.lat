@@ -396,7 +396,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   if (sessionProbe.status !== 'guest') {
     const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
     return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
-      <RwaTopbar screen="home" extra={<HomeGetApp />} />
+      <RwaTopbar screen="home" logo3d extra={<HomeGetApp />} />
       <PullToRefresh />
       <div className={styles.v2Head}>
         <div className={v2.root}>
