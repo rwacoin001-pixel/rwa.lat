@@ -422,7 +422,7 @@ span.act { cursor: default; }
 .media[data-count='3'] .mediaBtn:first-child { grid-row: span 2; }
 .mediaBtn:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: -2px; }
 /* Same top line as the other dock pages (2026-10-29): labels centred 32px down, the row 54px tall. */
-.headRow.headRowTabs { box-sizing: border-box; height: 54px; padding-top: 10px; }
+.headRow.headRowTabs { box-sizing: border-box; height: 54px; padding-top: 8px; }
 /* Same avatar as the home bar (2026-10-29): 38px in a 44px key. */
 .meBtn.meBtn { width: 44px; height: 44px; }
 /* The pinned follow takes no room until it shows, so the menu sits at the far right at rest (2026-10-29). */
