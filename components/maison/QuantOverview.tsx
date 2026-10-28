@@ -252,7 +252,13 @@ export function QuantDateStrip({ product, payouts, locale, copy }: { product: Qu
     <div key={picked} className={v2.slip}>
       <div className={v2.slipRow}><span>{zh ? '产品当日涨跌' : 'Product that day'}</span><b data-tone={value === undefined ? undefined : value > 0 ? 'up' : value < 0 ? 'down' : undefined} dir="ltr">{value === undefined ? (picked === today ? (zh ? '待结算' : 'Pending') : '—') : signed(value)}</b></div>
       {payout ? <QuantReceipt payout={payout} copy={copy} locale={locale} />
-        : <p className={v2.slipNote}>{zh ? '这一天你没有持仓，所以没有个人到账。' : 'You held nothing that day, so there is no payout of yours.'}</p>}
+        // Only say "nothing held" when the loaded records cover that day (2026-10-28): the list holds the latest 60
+        // payouts, so an older day is "not loaded here", never "you held nothing"; a day not yet settled is pending.
+        : <p className={v2.slipNote}>{payouts === undefined ? '…'
+          : value === undefined ? (zh ? '这一天还没有结算。' : 'This day has not settled yet.')
+          : payouts.length >= 60 && picked < (payouts.reduce((min, row) => row.tradeDate < min ? row.tradeDate : min, payouts[0].tradeDate))
+            ? (zh ? '更早的到账记录在对账单里查看。' : 'Older payouts are in your statements.')
+          : zh ? '这一天你没有持仓，所以没有个人到账。' : 'You held nothing that day, so there is no payout of yours.'}</p>}
     </div>
   </section>
 }
