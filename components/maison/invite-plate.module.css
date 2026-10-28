@@ -118,4 +118,23 @@
 
 /* Height (2026-10-29): exactly the viewport minus the tab bar, the action row, the dock and the safe areas, so the page
    never scrolls; short phones compress the card (down to 320px) rather than scroll. */
-.plate { height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--app-dock-height, 52px) - var(--plate-reserve, 212px)); min-height: 320px; max-height: 640px; }
+.plate { height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--app-dock-height, 52px) - var(--plate-reserve, 183px)); min-height: 320px; max-height: 720px; }
+
+/* 2026-10-29 d (user: the code bottom-left; every word printed on the card). The face stays open; the footer holds the
+   code. All type is letterpressed into the metal: slightly translucent ink with a light edge below (platinum) or a
+   dark edge above (graphite), the logo the same way, so nothing reads as a sticker on top of the card. */
+.foot { margin-top: auto; }
+.footText { gap: 4px; }
+.footText > small { color: var(--muted); font-size: 11px; line-height: 16px; letter-spacing: .2em; }
+.code.code { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.code span { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: .18em; font-variant-numeric: tabular-nums; }
+.meta { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; line-height: 16px; }
+.meta i { font-style: normal; opacity: .6; }
+.meta [data-done] { color: var(--ink); }
+.meta .inline.inline { min-height: 24px; color: var(--muted); }
+.content { --ink: rgba(22, 23, 27, .8); color: var(--ink); text-shadow: 0 1px 0 rgba(255, 255, 255, .75), 0 -.5px 0 rgba(0, 0, 0, .12); }
+.content img { opacity: .85; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .75)); }
+.plate[data-theme='dark'] .content { --ink: rgba(244, 244, 245, .86); text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 .5px 0 rgba(255, 255, 255, .08); }
+.plate[data-theme='dark'] .content img { filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, .55)); }
+.plate[data-theme='dark'] { --muted: rgba(244, 244, 245, .55); }
+.plate:not([data-theme='dark']) { --muted: rgba(22, 23, 27, .5); }

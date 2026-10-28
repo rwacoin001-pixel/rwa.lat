@@ -72,20 +72,22 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
       <i className={p.glare} aria-hidden="true" />
       <div className={p.content}>
         <header className={p.head}>
-          <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={14} height={16} />A-REIT</span>
+          <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={14} height={16} /><span>A-REIT</span></span>
           <span className={p.kind}>INVITATION</span>
         </header>
-        {/* The middle is left open (2026-10-29, user: more white space, less on the card): only the code, small and
-            spaced, which copies the link on a tap. */}
-        <button type="button" className={p.codeKey} onClick={onCopy} aria-label={t(`邀请码 ${code.toUpperCase()}，点按复制邀请链接`, `Invitation code ${code.toUpperCase()}, tap to copy the link`)}>
-          <small>{t('邀请码', 'Invitation code')}</small>
-          <b dir="ltr">{displayInviteCode(code)}</b>
-          <span data-done={copied || undefined}>{copied ? t('链接已复制', 'Link copied') : t('点按复制链接', 'Tap to copy the link')}</span>
-        </button>
+        {/* Like a card (2026-10-29, user): the face is left open; the code sits bottom-left, printed into the metal,
+            with the friends line under it; the QR bottom-right. Tapping the code copies the link. */}
         <footer className={p.foot}>
           <span className={p.footText}>
-            <b>{invited}</b>
-            <button type="button" className={p.inline} aria-haspopup="dialog" onClick={onEdit}>{t('修改邀请码', 'Edit code')}</button>
+            <small>{t('邀请码', 'INVITATION CODE')}</small>
+            <button type="button" className={p.code} onClick={onCopy} aria-label={t(`邀请码 ${code.toUpperCase()}，点按复制邀请链接`, `Invitation code ${code.toUpperCase()}, tap to copy the link`)}>
+              <span dir="ltr">{displayInviteCode(code)}</span>
+            </button>
+            <span className={p.meta}>
+              <span data-done={copied || undefined}>{copied ? t('链接已复制', 'Link copied') : invited}</span>
+              <i aria-hidden="true">·</i>
+              <button type="button" className={p.inline} aria-haspopup="dialog" onClick={onEdit}>{t('修改', 'Edit')}</button>
+            </span>
           </span>
           {/* Printed on the metal: no white tile, the modules in the plate's ink (blended in, like an etching). */}
           <button type="button" className={p.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={onQr}>

@@ -562,7 +562,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
             : <button type="button" className={c.meBtn} aria-label={t('community.viewProfile')} onClick={() => go('profile')}>
-              <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'me'} size={32} />
+              <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'me'} size={38} />
             </button>}
         </div>}
         {/* One chip row (2026-10-28): how to sort (hot, latest, my circle), then the topics; tap a topic again to clear it. */}
