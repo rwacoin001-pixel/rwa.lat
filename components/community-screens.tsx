@@ -783,8 +783,10 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
             <b dir="auto">{profile?.displayName ?? t('community.viewProfile')}{profile?.kind === 'official' && <BadgeCheck className={c.badge} size={18} strokeWidth={2.2} aria-hidden="true" />}</b>
             {data && <small>{p.postsCount.replace('{n}', compact(locale, data.stats.postCount))}</small>}
           </h1>
-          {profile && <button type="button" className={c.discBtn} aria-label={p.more} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>}
+          {/* The menu stays at the far right; the pinned follow button slides in to its left once the page scrolls
+              (2026-10-29, user: the menu sat in the middle because the hidden follow kept its width). */}
           {profile && !own && <CommunityFollowView state={follow} className={c.headFollow} />}
+          {profile && <button type="button" className={c.discBtn} aria-label={p.more} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>}
         </header>
         {!handle || failed ? (
           <XState title={failed ? communityCopy[locale].profileFailed : t('community.emptyTitle')}

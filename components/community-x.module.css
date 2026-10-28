@@ -425,3 +425,7 @@ span.act { cursor: default; }
 .headRow.headRowTabs { box-sizing: border-box; height: 54px; padding-top: 10px; }
 /* Same avatar as the home bar (2026-10-29): 38px in a 44px key. */
 .meBtn.meBtn { width: 44px; height: 44px; }
+/* The pinned follow takes no room until it shows, so the menu sits at the far right at rest (2026-10-29). */
+.profHeadTitle { flex: 1 1 auto; min-width: 0; }
+.x:not([data-pin-follow]) .headFollow { max-width: 0; padding: 0; border-width: 0; overflow: hidden; margin-inline-start: -12px; }
+.x[data-pin-follow] .headFollow { max-width: 160px; transition: opacity .18s, transform .18s, max-width .24s cubic-bezier(.22, 1, .36, 1); }

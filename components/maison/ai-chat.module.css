@@ -300,3 +300,14 @@ button.icon:active { transform: scale(.92); }
    relied on is off app-wide, so both get a near-solid paper fill, and the AI layer's dock fades the thread out under them. */
 .noticeTray { background: color-mix(in srgb, var(--m-bg) 97%, transparent); }
 .shell[data-overlay] .dockWrap { background: linear-gradient(to top, var(--m-bg) 58%, color-mix(in srgb, var(--m-bg) 0%, transparent)); }
+/* 2026-10-29 (user: the suggested questions neither scrolled nor answered taps; the pearl ignored taps). The dock
+   passes touches through to the page, so the chip row takes them back. The pearl is a key: squish, hop, settle. */
+.dockWrap .chips { pointer-events: auto; touch-action: pan-x; }
+.chips button { background: color-mix(in srgb, var(--m-bg) 92%, transparent); }
+.pearlKey { display: block; margin: 0 auto; padding: 0; border: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.pearlKey[data-poke='1'] { animation: pearlPoke .6s cubic-bezier(.34, 1.56, .64, 1); }
+.pearlKey[data-poke='0'] { animation: pearlPoke2 .6s cubic-bezier(.34, 1.56, .64, 1); }
+.welcomeHint { display: block; margin-inline: auto; padding: 0; border: 0; background: none; color: var(--m-ink); font: inherit; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--m-ink) 30%, transparent); text-underline-offset: 6px; cursor: pointer; animation: rise .4s var(--ai-spring) both; }
+@keyframes pearlPoke { 0% { transform: scale(1); } 25% { transform: scale(1.08, .9); } 55% { transform: translateY(-10px) scale(.97, 1.04); } 100% { transform: none; } }
+@keyframes pearlPoke2 { 0% { transform: scale(1); } 25% { transform: scale(1.08, .9); } 55% { transform: translateY(-10px) scale(.97, 1.04); } 100% { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pearlKey, .welcomeHint { animation: none; } }

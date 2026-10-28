@@ -301,6 +301,14 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
     if (input.trim() && !sendingNow.current) buddySignal('listening', { ms: 2200 })
   }, [input])
   const showWelcome = empty && (!started || keyboard <= 80 || listeningHere)
+  const [poke, setPoke] = useState(0), [poked, setPoked] = useState(false), pokeTimer = useRef<number | undefined>(undefined)
+  const pokePearl = () => {
+    navigator.vibrate?.(8)
+    setPoke(n => n + 1); setPoked(true)
+    window.clearTimeout(pokeTimer.current)
+    pokeTimer.current = window.setTimeout(() => setPoked(false), 1400)
+  }
+  useEffect(() => () => window.clearTimeout(pokeTimer.current), [])
 
   const body = <div className={a.shell} data-overlay={overlay || undefined}>
       <header className={a.bar} data-overlay={overlay || undefined}>
@@ -311,10 +319,15 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
 
       <div id="ai-panel-ai" className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
         {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined} data-tray={trayOpen || undefined}>
-          <BuddyFace size={132} mood={voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
+          {/* The pearl answers a tap (2026-10-29, user: tapping it did nothing): a squish and hop, a happy face for a
+              moment, and the line under it turns into a question worth asking — tap again for the next one. */}
+          <button type="button" className={a.pearlKey} data-poke={poke ? poke % 2 : undefined} aria-label={pearl.suggestions} onClick={pokePearl}>
+            <BuddyFace size={132} mood={poked ? 'replying' : voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
+          </button>
           {/* One line, always: the greeting at rest, the reader's own words while they speak. */}
           {listeningHere
             ? <p className={a.welcomeLive} dir="auto" role="status" aria-live="polite" data-empty={!voice.live || undefined} data-cancel={voice.state === 'cancelArmed' || undefined}>{voice.live || (voice.state === 'listening' ? pearl.listening : ' ')}</p>
+            : poke > 0 ? <button type="button" key={`hint-${poke}`} className={`${a.welcomeLine} ${a.welcomeHint}`} onClick={() => { void ask(prompts[(poke - 1) % prompts.length]) }}>{prompts[(poke - 1) % prompts.length]}</button>
             : <h2 className={a.welcomeLine}>{pearlGreeting(locale)}</h2>}
         </section> : <ol className={a.messages}>
           {messages.map((message) => message.role === 'user'

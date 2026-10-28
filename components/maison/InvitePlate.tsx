@@ -10,6 +10,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { displayInviteCode } from '@/lib/referral-invite'
+import { useCommunityMe } from '@/lib/use-community-me'
 import p from './invite-plate.module.css'
 
 type Translate = (cn: string, en: string) => string
@@ -62,6 +63,8 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
     tilt(((event.clientX - box.left) / box.width) * 2 - 1, ((event.clientY - box.top) / box.height) * 2 - 1)
   }
 
+  const me = useCommunityMe(false)
+  const name = me?.displayName?.trim() || t('A-REIT 会员', 'A-REIT member')
   return <div className={p.stage}>
     <div ref={ref} className={p.plate} data-theme={shot} data-touched={touched || undefined}
       onPointerMove={onMove} onPointerLeave={rest} onPointerCancel={rest} onPointerUp={rest}
@@ -73,12 +76,15 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
       <div className={p.content}>
         <header className={p.head}>
           <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={14} height={16} /><span>A-REIT</span></span>
-          <span className={p.kind}>INVITATION</span>
+          <span className={p.kind}><i aria-hidden="true" />{t('邀请有效', 'Active')}</span>
         </header>
         {/* Like a card (2026-10-29, user): the face is left open; the code sits bottom-left, printed into the metal,
             with the friends line under it; the QR bottom-right. Tapping the code copies the link. */}
         <footer className={p.foot}>
           <span className={p.footText}>
+            {/* After the ID-card reference (2026-10-29): a name in large, one line under it, then the code. */}
+            <b className={p.name} dir="auto">{name}</b>
+            <span className={p.role}>{t('邀请你加入 A-REIT', 'invites you to A-REIT')}</span>
             <small>{t('邀请码', 'INVITATION CODE')}</small>
             <button type="button" className={p.code} onClick={onCopy} aria-label={t(`邀请码 ${code.toUpperCase()}，点按复制邀请链接`, `Invitation code ${code.toUpperCase()}, tap to copy the link`)}>
               <span dir="ltr">{displayInviteCode(code)}</span>
