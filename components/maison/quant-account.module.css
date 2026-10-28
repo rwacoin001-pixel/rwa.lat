@@ -1,34 +1,34 @@
 /* Account information uses shared Maison lacquer; watch materials stay in the dials. */
 .card { margin-top: 4px; padding: 20px; }
-.head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.head h2 { margin: 0; color: var(--m-lacquer-ink); font-family: var(--m-sans); font-size: 14px; font-weight: 600; line-height: 20px; }
-.badge { display: inline-flex; align-items: center; gap: 6px; min-height: 22px; padding: 0 9px; border-radius: 11px; background: var(--m-lacquer-fill); box-shadow: inset 0 0 0 .5px var(--m-lacquer-line); color: var(--m-lacquer-muted); font-size: 11px; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.head h2 { margin: 0; color: var(--m-lacquer-ink); font-family: var(--m-sans); font-size: 15px; font-weight: 600; line-height: 20px; }
+.badge { display: inline-flex; align-items: center; gap: 6px; min-height: 22px; padding: 0 8px; border-radius: 12px; background: var(--m-lacquer-fill); box-shadow: inset 0 0 0 .5px var(--m-lacquer-line); color: var(--m-lacquer-muted); font-size: 11px; }
 .badge[data-tone='idle'] { color: var(--m-lacquer-muted); box-shadow: inset 0 0 0 .5px var(--m-lacquer-line); }
 .badge i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
 
-.hero { margin-top: 18px; }
+.hero { margin-top: 20px; }
 .hero small { display: block; color: var(--m-lacquer-muted); font-size: 12px; line-height: 18px; }
 .hero b { display: block; margin-top: 6px; color: var(--m-lacquer-ink); font-family: var(--m-mono), var(--m-display); font-size: clamp(28px, 8vw, 36px); font-weight: 600; line-height: 1.2; letter-spacing: -.04em; font-variant-numeric: lining-nums tabular-nums; direction: ltr; unicode-bidi: isolate; }
 .hero b em { margin-inline-start: 6px; color: var(--m-lacquer-muted); font-family: var(--m-sans); font-size: 11px; font-style: normal; font-weight: 500; letter-spacing: .04em; }
-.hero p { margin: 10px 0 0; color: var(--m-lacquer-muted); font-size: 12px; line-height: 1.6; }
+.hero p { margin: 12px 0 0; color: var(--m-lacquer-muted); font-size: 12px; line-height: 1.6; }
 
-.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 20px 0 0; padding: 14px 0 0; border-top: .5px solid var(--m-lacquer-line); }
-.strip div { min-width: 0; padding: 0 10px; }
+.strip { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 20px 0 0; padding: 16px 0 0; border-top: .5px solid var(--m-lacquer-line); }
+.strip div { min-width: 0; padding: 0 12px; }
 .strip div:first-child { padding-inline-start: 0; }
 .strip div + div { border-inline-start: .5px solid var(--m-lacquer-line); }
 .strip dt { color: var(--m-lacquer-muted); font-size: 11px; line-height: 1.5; }
-.strip dd { margin: 6px 0 0; color: var(--m-lacquer-ink); font-family: var(--m-mono), var(--m-display); font-size: 16px; font-weight: 500; line-height: 1.3; font-variant-numeric: lining-nums tabular-nums; direction: ltr; unicode-bidi: isolate; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.strip dd { margin: 6px 0 0; color: var(--m-lacquer-ink); font-family: var(--m-mono), var(--m-display); font-size: 15px; font-weight: 500; line-height: 1.3; font-variant-numeric: lining-nums tabular-nums; direction: ltr; unicode-bidi: isolate; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .strip dd[data-tone='up'] { color: var(--m-lacquer-up); }
 .strip dd[data-tone='down'] { color: var(--m-lacquer-down); }
 
-.orders { margin: 18px 0 0; padding: 0; list-style: none; }
-.orders li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 11px 0; border-top: .5px solid var(--m-lacquer-line); }
+.orders { margin: 20px 0 0; padding: 0; list-style: none; }
+.orders li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; padding: 12px 0; border-top: .5px solid var(--m-lacquer-line); }
 .orders b { color: var(--m-ink); font-size: 13px; font-weight: 500; }
-.orders span { color: var(--m-lacquer-ink); font-family: var(--m-mono), var(--m-display); font-size: 14px; text-align: end; font-variant-numeric: tabular-nums; }
+.orders span { color: var(--m-lacquer-ink); font-family: var(--m-mono), var(--m-display); font-size: 15px; text-align: end; font-variant-numeric: tabular-nums; }
 .orders small { color: var(--m-lacquer-muted); font-size: 11px; }
 .orders small:last-child { text-align: end; color: var(--m-lacquer-muted); }
 
-.actions { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 10px; margin-top: 20px; }
+.actions { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; margin-top: 20px; }
 .actions button { min-width: 0; min-height: 52px; width: 100%; }
 .note { margin: 12px 0 0; color: var(--m-lacquer-muted); font-size: 12px; line-height: 1.6; text-align: center; }
 

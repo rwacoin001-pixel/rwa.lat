@@ -1,9 +1,9 @@
 /* Official PDF panel (/assets/statements, /profile/documents). Sits under a SectionHead inside MaisonPage. */
-.intro { margin: 0 0 12px; color: var(--m-muted); font-size: 12.5px; line-height: 1.6; }
+.intro { margin: 0 0 12px; color: var(--m-muted); font-size: 13px; line-height: 1.6; }
 
 /* Month request: one glass row, label above a native month field restyled as a Maison input. */
-.request { display: grid; gap: 10px; margin-top: 14px; padding: 14px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); box-shadow: inset 0 1px var(--m-rim); }
-.request label { display: grid; gap: 6px; color: var(--m-muted); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.request { display: grid; gap: 12px; margin-top: 16px; padding: 16px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); box-shadow: inset 0 1px var(--m-rim); }
+.request label { display: grid; gap: 6px; color: var(--m-muted); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .request input {
   width: 100%; min-height: 44px; padding: 0 12px; border: 1px solid var(--m-line); border-radius: 12px; box-sizing: border-box;
   background: var(--m-glass-deep); color: var(--m-ink); color-scheme: light; font: 500 15px/1 var(--m-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; text-transform: none;
@@ -12,23 +12,23 @@
 :global(.rwa-mobile[data-theme='dark']) .request input { color-scheme: dark; }
 .request input:focus-visible { outline: 0; border-color: var(--m-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--m-accent) 16%, transparent); }
 .requestFoot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
-.requestFoot small { color: var(--m-faint); font: 500 10.5px/1.4 var(--m-mono); }
+.requestFoot small { color: var(--m-faint); font: 500 11px/1.4 var(--m-mono); }
 
 /* Agreement reader: a quiet paper sheet, numbered terms in mono. */
-.agreement { margin-top: 14px; padding: 16px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass-deep); animation: fdIn .3s var(--m-ease) both; }
-.agreement h3 { margin: 0; color: var(--m-ink); font: 400 20px/1.2 var(--m-display); }
-.agreement h3 small { margin-inline-start: 8px; color: var(--m-accent); font: 500 10.5px/1 var(--m-mono); }
-.entity { margin: 6px 0 0; color: var(--m-faint); font-size: 11.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.agreement { margin-top: 16px; padding: 16px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass-deep); animation: fdIn .3s var(--m-ease) both; }
+.agreement h3 { margin: 0; color: var(--m-ink); font: 400 22px/1.2 var(--m-display); }
+.agreement h3 small { margin-inline-start: 8px; color: var(--m-accent); font: 500 11px/1 var(--m-mono); }
+.entity { margin: 6px 0 0; color: var(--m-faint); font-size: 12px; line-height: 1.5; overflow-wrap: anywhere; }
 .agreement > p:not(.entity) { margin: 12px 0 0; color: var(--m-muted); font-size: 13px; line-height: 1.65; white-space: pre-wrap; }
-.terms { display: grid; gap: 10px; margin: 14px 0 0; padding: 12px 0 0; border-top: 1px solid var(--m-line-soft); counter-reset: term; list-style: none; }
+.terms { display: grid; gap: 12px; margin: 16px 0 0; padding: 12px 0 0; border-top: 1px solid var(--m-line-soft); counter-reset: term; list-style: none; }
 .terms li { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 6px; color: var(--m-ink); font-size: 13px; line-height: 1.6; white-space: pre-wrap; counter-increment: term; }
-.terms li::before { content: counter(term, decimal-leading-zero); color: var(--m-faint); font: 500 10.5px/2.1 var(--m-mono); }
+.terms li::before { content: counter(term, decimal-leading-zero); color: var(--m-faint); font: 500 11px/2.1 var(--m-mono); }
 
 /* Issued files */
 .files { margin-top: 16px; }
 .fileRow { grid-template-columns: 32px minmax(0, 1fr) auto; }
-.fileRow .rowText { display: grid; gap: 3px; min-width: 0; }
-.fileRow b { color: var(--m-ink); font-size: 13.5px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.fileRow .rowText { display: grid; gap: 4px; min-width: 0; }
+.fileRow b { color: var(--m-ink); font-size: 13px; font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
 .fileRow small { color: var(--m-muted); font-size: 11px; line-height: 1.45; overflow-wrap: anywhere; }
 .fileRow small .no { font-family: var(--m-mono); direction: ltr; unicode-bidi: isolate; }
 .fileEnd { display: grid; justify-items: end; gap: 6px; }

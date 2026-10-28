@@ -5,7 +5,7 @@
    icon     clear glass round key (add .small for 44 px)
    field    glass input pill; .action is its solid round key */
 .primary, .glass { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 12px; min-height: var(--ctl-h, 56px); padding: 0 24px;
-  border: 0; border-radius: 999px; font: inherit; font-size: 16px; font-weight: 600; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; cursor: pointer;
+  border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 600; letter-spacing: -.01em; text-decoration: none; white-space: nowrap; cursor: pointer;
   -webkit-tap-highlight-color: transparent; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), box-shadow .25s ease, opacity .2s ease; }
 .primary { color: var(--btn-solid-ink, #fff); background: var(--btn-solid-fill, #0b0d11); box-shadow: var(--btn-solid-edge, none); }
 .primary:has(> .arrow) { justify-content: space-between; padding: 0 6px 0 24px; }
@@ -19,7 +19,7 @@
 .icon:active { transform: scale(.92); }
 .primary:disabled, .glass:disabled, .icon:disabled { opacity: .45; cursor: default; transform: none; }
 .primary:focus-visible, .glass:focus-visible, .icon:focus-visible { outline: 2px solid rgba(10, 138, 115, .6); outline-offset: 3px; }
-.field { display: flex; align-items: center; gap: 8px; min-height: var(--ctl-h, 56px); padding: 0 6px 0 22px; border: 0; border-radius: 999px; box-sizing: border-box; transition: box-shadow .25s ease; }
+.field { display: flex; align-items: center; gap: 8px; min-height: var(--ctl-h, 56px); padding: 0 6px 0 24px; border: 0; border-radius: 999px; box-sizing: border-box; transition: box-shadow .25s ease; }
 .field:focus-within { box-shadow: var(--ctl-focus, none); }
 .field input { flex: 1 1 auto; min-width: 0; height: 44px; padding: 0; border: 0; outline: none; background: none; color: inherit; font: inherit; font-size: 17px; letter-spacing: -.01em; }
 .field input::placeholder { color: var(--ctl-placeholder, rgba(60, 60, 67, .5)); }

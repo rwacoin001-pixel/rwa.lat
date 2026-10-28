@@ -11,7 +11,7 @@
 
 .hero { position: sticky; top: 0; z-index: 10; height: calc(132px + env(safe-area-inset-top)); margin-inline: calc(var(--mobile-gutter, 16px) * -1); container-type: inline-size; pointer-events: none; }
 
-.heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(132px + env(safe-area-inset-top)); border-radius: 0 0 24px 24px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
+.heroBg { position: absolute; left: 0; right: 0; top: 0; height: calc(132px + env(safe-area-inset-top)); border-radius: 0 0 22px 22px; background: color-mix(in srgb, var(--bg) 66%, transparent); -webkit-backdrop-filter: blur(22px) saturate(1.3); backdrop-filter: blur(22px) saturate(1.3); box-shadow: inset 0 -.5px 0 var(--m-line), 0 18px 26px -22px rgba(0, 0, 0, .5); opacity: var(--p, 0); }
 
 /* The dial. Rest: left 50% - 166px, top 60 + E. Pinned: scale 116/332 (.3494) at the top-left corner. */
 .heroDial { position: absolute; left: calc(50cqw - 166px); top: calc(60px + env(safe-area-inset-top)); width: 332px; transform-origin: 0 0; transform: translate3d(calc(var(--p, 0) * (180px - 50cqw)), calc(var(--p, 0) * -54px), 0) scale(calc(1 - var(--p, 0) * .6506)); pointer-events: auto; touch-action: none; will-change: transform; }
@@ -39,7 +39,7 @@
 .spacer { position: relative; height: 448px; }
 
 /* The menu: sticks directly under the pinned hero. */
-.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 10px 0 8px; }
+.menu { position: sticky; top: calc(132px + env(safe-area-inset-top)); z-index: 9; padding: 12px 0 8px; }
 
 @media (prefers-reduced-motion: reduce) {
   .heroDial, .heroSubs > div > [data-sub] { transition: none; }

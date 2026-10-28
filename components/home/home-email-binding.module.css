@@ -28,8 +28,8 @@ div.slot[role='status'] .slotText { color: var(--b-ink); }
 .okDot { display: grid; flex: none; width: 18px; height: 18px; place-items: center; border-radius: 999px; color: var(--b-cta-ink); background: var(--b-cta); }
 
 .slotBtn {
-  position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 10px;
-  border: 0; color: var(--b-accent); background: none; font: inherit; font-size: 12.5px; font-weight: 500; white-space: nowrap; cursor: pointer;
+  position: relative; display: inline-flex; flex: none; align-items: center; justify-content: center; min-width: 44px; height: 44px; padding: 0 12px;
+  border: 0; color: var(--b-accent); background: none; font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer;
 }
 .pill { min-width: 84px; height: 32px; padding: 0 12px; border-radius: 999px; color: var(--b-cta-ink); background: var(--b-cta); }
 .pill::after { content: ''; position: absolute; inset: -6px -2px; }
@@ -40,7 +40,7 @@ div.slot[role='status'] .slotText { color: var(--b-ink); }
 
 .slotInput {
   flex: 1; min-width: 0; height: 32px; padding: 0; border: 0; border-radius: 0; color: var(--b-ink); background: transparent;
-  font: inherit; font-size: 16px; outline: none; appearance: none; -webkit-appearance: none;
+  font: inherit; font-size: 15px; outline: none; appearance: none; -webkit-appearance: none;
 }
 .slotInput::placeholder { color: var(--b-muted); opacity: .85; }
 .code { font-variant-numeric: tabular-nums; letter-spacing: .24em; }
@@ -49,7 +49,7 @@ div.slot[role='status'] .slotText { color: var(--b-ink); }
 
 .msg {
   position: absolute; inset: auto 0 0; display: flex; align-items: center; justify-content: space-between; gap: 8px; height: 24px;
-  padding-block: 3px 0; padding-inline-start: 14px; padding-inline-end: 4px; color: var(--b-muted); font-size: 11px; line-height: 1.4;
+  padding-block: 4px 0; padding-inline-start: 16px; padding-inline-end: 4px; color: var(--b-muted); font-size: 11px; line-height: 1.4;
 }
 .msg[hidden] { display: none; }
 .err { color: var(--b-accent); font-weight: 500; }

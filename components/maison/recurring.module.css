@@ -2,15 +2,15 @@
 .form { margin-top: 4px; }
 .fields { display: grid; gap: 16px; min-width: 0; margin: 0; padding: 0; border: 0; }
 .fields:disabled { opacity: .7; }
-.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 7px; min-width: 0; }
-.field > span:first-child { color: var(--m-muted); font-size: 10px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.field { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; min-width: 0; }
+.field > span:first-child { color: var(--m-muted); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 
 .input, .select select, .amount {
-  width: 100%; min-height: 48px; box-sizing: border-box; border: 1px solid var(--m-line); border-radius: 14px;
+  width: 100%; min-height: 48px; box-sizing: border-box; border: 1px solid var(--m-line); border-radius: 12px;
   background: var(--m-glass-deep); color: var(--m-ink); font: inherit; font-size: 15px;
   transition: border-color .2s var(--m-ease), box-shadow .2s var(--m-ease);
 }
-.input { padding: 0 14px; font-family: var(--m-mono); font-variant-numeric: tabular-nums; color-scheme: light; }
+.input { padding: 0 16px; font-family: var(--m-mono); font-variant-numeric: tabular-nums; color-scheme: light; }
 :global(.rwa-mobile[data-theme='dark']) .input { color-scheme: dark; }
 .input:focus-visible, .select select:focus-visible, .amount:focus-within {
   outline: 0; border-color: color-mix(in srgb, var(--m-accent) 65%, var(--m-line)); box-shadow: 0 0 0 4px color-mix(in srgb, var(--m-accent) 13%, transparent);
@@ -18,31 +18,31 @@
 
 /* Native select kept for a11y and mobile pickers; our own chevron replaces the platform arrow. */
 .select { position: relative; display: block; }
-.select select { padding-block: 0; padding-inline: 14px 40px; appearance: none; -webkit-appearance: none; cursor: pointer; text-overflow: ellipsis; }
+.select select { padding-block: 0; padding-inline: 16px 48px; appearance: none; -webkit-appearance: none; cursor: pointer; text-overflow: ellipsis; }
 .select select option { background: var(--m-bg); color: var(--m-ink); }
 .select svg { position: absolute; inset-inline-end: 14px; top: 50%; color: var(--m-muted); transform: translateY(-50%); pointer-events: none; }
 
 /* Amount: large tabular figure with a fixed unit, same idiom as the order ticket. */
-.amount { display: flex; align-items: center; gap: 10px; padding: 0 14px; direction: ltr; }
+.amount { display: flex; align-items: center; gap: 12px; padding: 0 16px; direction: ltr; }
 .utc { min-height: 16px; color: var(--m-muted); font: 500 11px/1.4 var(--m-mono); text-align: start; }
 .amount input { flex: 1; width: 0; min-width: 0; min-height: 64px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--m-ink); font: 400 clamp(36px, 11vw, 48px)/1 var(--m-sans); font-variant-numeric: tabular-nums; letter-spacing: -.02em; }
 .amount input::placeholder { color: var(--m-faint); }
 .amount em { flex: none; color: var(--m-muted); font: 600 11px/1 var(--m-mono); font-style: normal; letter-spacing: .06em; }
 
 /* Frequency: three-way segmented track, ink thumb on the chosen value. */
-.segment { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 3px; padding: 3px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass-deep); box-shadow: inset 0 1px var(--m-rim); }
+.segment { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass-deep); box-shadow: inset 0 1px var(--m-rim); }
 .segment button { min-height: 38px; padding: 0 8px; border: 0; border-radius: 999px; background: transparent; color: var(--m-muted); font: 600 13px/1.1 var(--m-sans); cursor: pointer; transition: background-color .25s var(--m-ease), color .25s var(--m-ease); }
 .segment button[aria-pressed='true'] { background: var(--m-ink); color: var(--m-bg); box-shadow: 0 1px 2px rgba(0, 0, 0, .12); }
 .segment button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 
 /* Existing plans */
-.plansHead { display: flex; justify-content: flex-end; margin: 22px 0 8px; }
-.plan { padding: 14px 0; border-bottom: 1px solid var(--m-line-soft); }
+.plansHead { display: flex; justify-content: flex-end; margin: 24px 0 8px; }
+.plan { padding: 16px 0; border-bottom: 1px solid var(--m-line-soft); }
 .planTop { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-.planTop b { min-width: 0; color: var(--m-ink); font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
-.planAmt { flex: none; color: var(--m-ink); font-size: 13.5px; font-weight: 600; }
-.planMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 8px; }
-.planMeta small { color: var(--m-muted); font-size: 11.5px; }
-.runs { display: grid; gap: 4px; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px dashed var(--m-line); list-style: none; }
-.runs li { display: flex; justify-content: space-between; gap: 10px; color: var(--m-faint); font: 500 11px/1.4 var(--m-mono); }
+.planTop b { min-width: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; overflow-wrap: anywhere; }
+.planAmt { flex: none; color: var(--m-ink); font-size: 13px; font-weight: 600; }
+.planMeta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; margin-top: 8px; }
+.planMeta small { color: var(--m-muted); font-size: 12px; }
+.runs { display: grid; gap: 4px; margin: 12px 0 0; padding: 12px 0 0; border-top: 1px dashed var(--m-line); list-style: none; }
+.runs li { display: flex; justify-content: space-between; gap: 12px; color: var(--m-faint); font: 500 11px/1.4 var(--m-mono); }
 .runs li[data-state='failed'] span:last-child { color: var(--m-down); }

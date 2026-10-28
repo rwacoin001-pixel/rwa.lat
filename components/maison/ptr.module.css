@@ -30,7 +30,7 @@
 .ptr:is([data-phase='armed'], [data-phase='refreshing'], [data-phase='done']) .mark path { stroke-dashoffset: 0; fill-opacity: 1; }
 .ptr[data-phase='refreshing'] .mark svg { animation: ptrBreathe 1s var(--m-ease) infinite; }
 .ptr[data-phase='done'] .mark { animation: ptrPop .42s var(--m-spring, var(--m-ease)) both; }
-.label, .hint { padding: 5px 10px; border-radius: 999px; background: var(--ptr-glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--m-muted, currentColor); font: 500 11.5px/1 var(--m-sans, inherit); letter-spacing: .02em; }
+.label, .hint { padding: 6px 12px; border-radius: 999px; background: var(--ptr-glass); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); color: var(--m-muted, currentColor); font: 500 12px/1 var(--m-sans, inherit); letter-spacing: .02em; }
 .label:empty, .hint:empty { display: none; }
 @keyframes ptrBreathe { 50% { opacity: .45; transform: scale(.92); } }
 @keyframes ptrPop { 40% { transform: scale(1.12); } }

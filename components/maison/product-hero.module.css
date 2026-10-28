@@ -54,15 +54,15 @@
     linear-gradient(180deg, transparent 46%, color-mix(in srgb, var(--m-bg) 55%, transparent) 76%, var(--m-bg) 100%);
 }
 /* Sits on the picture itself, above the fade and clear of the title block. */
-.caption { position: absolute; z-index: 2; inset-inline-end: var(--m-gutter); bottom: 84px; margin: 0; color: rgba(255, 255, 255, .78); font-size: 10.5px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
+.caption { position: absolute; z-index: 2; inset-inline-end: var(--m-gutter); bottom: 84px; margin: 0; color: rgba(255, 255, 255, .78); font-size: 11px; line-height: 1.4; text-shadow: 0 1px 2px rgba(0, 0, 0, .45); }
 
 .head { position: relative; z-index: 2; margin-top: -64px; padding: 0 var(--m-gutter) 6px; }
-.kicker { display: flex; align-items: center; gap: 10px; margin: 0; color: var(--m-accent); font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
+.kicker { display: flex; align-items: center; gap: 12px; margin: 0; color: var(--m-accent); font-size: 11px; font-weight: 650; letter-spacing: .14em; text-transform: uppercase; }
 .title { margin: 8px 0 0; color: var(--m-ink); font-family: var(--m-display); font-size: clamp(32px, 9.4vw, 44px); font-weight: 400; line-height: 1.04; letter-spacing: -.01em; overflow-wrap: anywhere; }
 .title > span { display: inline-block; }
-.sub { margin: 6px 0 0; color: var(--m-muted); font-size: 14px; font-weight: 500; line-height: 1.4; }
+.sub { margin: 6px 0 0; color: var(--m-muted); font-size: 15px; font-weight: 500; line-height: 1.4; }
 .badges { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 12px; }
-.lede { margin: 12px 0 0; color: var(--m-muted); font-size: 14px; line-height: 1.55; }
+.lede { margin: 12px 0 0; color: var(--m-muted); font-size: 15px; line-height: 1.55; }
 
 /* Topbar over the picture: frosted dark discs with white glyphs at rest; the page's own glass once content scrolls under it. */
 :global(.rwa-mobile[data-theme][data-screen]) :global(.rwa-topbar.rwa-topbar--s1[data-template][data-surface='transparent-over-media']:not([data-scrolled='true'])):has(~ * .wrap) :global(button.rwa-topbar__slot:not(.rwa-topbar__slot--logo)) {

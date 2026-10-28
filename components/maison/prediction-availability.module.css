@@ -1,14 +1,14 @@
-.countdown{display:flex;align-items:center;gap:7px;font:600 12px var(--m-sans);color:var(--m-accent);margin:8px 0 18px;font-variant-numeric:tabular-nums}
-.countdown time{font-size:14px;letter-spacing:.025em}
-.controls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:22px 0 4px;min-height:36px}
-.toggle{display:flex;align-items:center;gap:8px;background:transparent;border:0;color:var(--m-muted);padding:9px 0;font:500 12px var(--m-sans);cursor:pointer}
-.switch{width:30px;height:18px;border-radius:12px;background:var(--m-line);padding:3px;transition:background .15s;flex-shrink:0}
+.countdown{display:flex;align-items:center;gap:8px;font:600 12px var(--m-sans);color:var(--m-accent);margin:8px 0 20px;font-variant-numeric:tabular-nums}
+.countdown time{font-size:15px;letter-spacing:.025em}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:24px 0 4px;min-height:36px}
+.toggle{display:flex;align-items:center;gap:8px;background:transparent;border:0;color:var(--m-muted);padding:8px 0;font:500 12px var(--m-sans);cursor:pointer}
+.switch{width:30px;height:18px;border-radius:12px;background:var(--m-line);padding:4px;transition:background .15s;flex-shrink:0}
 .switch i{display:block;width:12px;height:12px;border-radius:50%;background:var(--m-bg);box-shadow:0 1px 3px #0002;transition:transform .15s}
 .toggle[aria-checked=true] .switch{background:var(--m-accent)}
 .toggle[aria-checked=true] .switch i{transform:translateX(12px)}
 :global([dir=rtl]) .toggle[aria-checked=true] .switch i{transform:translateX(-12px)}
-.retry{display:inline-flex;gap:5px;align-items:center;padding:8px;border:0;background:none;color:var(--m-accent);font:500 11px var(--m-sans);cursor:pointer;min-height:32px}
-.quoteStatus{display:flex;align-items:center;gap:6px;margin-top:7px;color:var(--m-muted);font:400 11px var(--m-sans)}
+.retry{display:inline-flex;gap:6px;align-items:center;padding:8px;border:0;background:none;color:var(--m-accent);font:500 11px var(--m-sans);cursor:pointer;min-height:32px}
+.quoteStatus{display:flex;align-items:center;gap:6px;margin-top:8px;color:var(--m-muted);font:400 11px var(--m-sans)}
 .row[hidden]{display:none}
 .unavailable{opacity:.4;cursor:not-allowed!important;filter:grayscale(1)}
 .toggle:focus-visible,.retry:focus-visible{outline:2px solid var(--m-accent);outline-offset:3px;border-radius:8px}

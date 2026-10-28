@@ -1,14 +1,14 @@
 /* Keypad: six dots that fill, soft keys without borders (the iOS / banking-app convention). */
 .pad { margin: 20px auto 4px; width: min(100%, 320px); outline: none; }
-.slots { display: flex; justify-content: center; gap: 16px; margin-bottom: 26px; }
+.slots { display: flex; justify-content: center; gap: 16px; margin-bottom: 24px; }
 .slots span { width: 13px; height: 13px; border: 1.5px solid color-mix(in srgb, var(--m-ink) 30%, transparent); border-radius: 50%; transition: background 140ms, border-color 140ms, transform 140ms; }
 .slots span[data-filled="true"] { border-color: var(--m-accent); background: var(--m-accent); transform: scale(1.1); }
 .pad[data-invalid="true"] .slots { animation: pinShake .4s var(--m-ease); }
 .pad[data-invalid="true"] .slots span { border-color: var(--m-down); }
-.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-.keys button { min-height: 56px; border: 0; border-radius: 16px; background: var(--m-glass); box-shadow: inset 0 0 0 .5px var(--m-line); color: var(--m-ink); font: 500 24px/1 var(--m-sans); display: grid; place-items: center; cursor: pointer; touch-action: manipulation; transition: transform 120ms, background 120ms; }
+.keys { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.keys button { min-height: 56px; border: 0; border-radius: 12px; background: var(--m-glass); box-shadow: inset 0 0 0 .5px var(--m-line); color: var(--m-ink); font: 500 22px/1 var(--m-sans); display: grid; place-items: center; cursor: pointer; touch-action: manipulation; transition: transform 120ms, background 120ms; }
 .keys button:active:not(:disabled) { transform: scale(.95); background: var(--m-cta-quiet); }
-.keys button:focus-visible, .pad:focus-visible .slots { outline: 2px solid var(--m-accent); outline-offset: 3px; border-radius: 16px; }
+.keys button:focus-visible, .pad:focus-visible .slots { outline: 2px solid var(--m-accent); outline-offset: 3px; border-radius: 12px; }
 .keys button:disabled { opacity: .38; cursor: default; }
 .keys .keyBack { background: transparent; box-shadow: none; color: var(--m-muted); }
 .summary { margin-top: 12px; }
@@ -19,19 +19,19 @@
 .progress li[data-state="done"] { background: color-mix(in srgb, var(--m-accent) 55%, var(--m-line)); }
 .progress li[data-state="now"] { background: var(--m-accent); }
 .lead { margin-top: 20px; text-align: center; animation: pinIn .28s var(--m-ease) both; }
-.lead h3 { margin: 0; color: var(--m-ink); font: 600 16px/1.3 var(--m-sans); }
-.lead p { margin: 6px 0 0; color: var(--m-muted); font-size: 12.5px; line-height: 1.5; }
-.msgSlot { min-height: 18px; margin-top: 10px; text-align: center; }
+.lead h3 { margin: 0; color: var(--m-ink); font: 600 15px/1.3 var(--m-sans); }
+.lead p { margin: 6px 0 0; color: var(--m-muted); font-size: 13px; line-height: 1.5; }
+.msgSlot { min-height: 18px; margin-top: 12px; text-align: center; }
 .msgSlot p { margin: 0; color: var(--m-down); font-size: 12px; font-weight: 600; line-height: 1.5; }
 .msgSlot p[data-tone="info"] { color: var(--m-muted); font-weight: 500; }
-.back { display: flex; align-items: center; gap: 4px; width: fit-content; min-height: 40px; margin: 8px auto 0; padding: 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 12.5px; cursor: pointer; }
+.back { display: flex; align-items: center; gap: 4px; width: fit-content; min-height: 40px; margin: 8px auto 0; padding: 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 13px; cursor: pointer; }
 .back:disabled { opacity: .4; cursor: default; }
 .back:focus-visible, .altList button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 :global([dir="rtl"]) .back svg { transform: scaleX(-1); }
 
 /* Inline verification (StepUpPanel, email-first). */
-.verify { display: grid; gap: 0; margin-top: 18px; }
-.sent { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 20px; margin: 0 0 14px; color: var(--m-muted); font-size: 12.5px; text-align: center; }
+.verify { display: grid; gap: 0; margin-top: 20px; }
+.sent { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 20px; margin: 0 0 16px; color: var(--m-muted); font-size: 13px; text-align: center; }
 .sent svg { flex: none; color: var(--m-accent); }
 .otp { position: relative; display: block; width: min(100%, 320px); margin: 0 auto; }
 .otpSlots { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
@@ -41,12 +41,12 @@
 .otp[data-invalid="true"] .otpSlots { animation: pinShake .4s var(--m-ease); }
 .otp[data-invalid="true"] .otpSlots i { border-color: var(--m-down); }
 .otp[data-locked="true"] { opacity: .6; }
-.otpInput { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 16px; cursor: text; }
-.resend { display: flex; align-items: center; justify-content: center; min-height: 36px; color: var(--m-muted); font-size: 12.5px; }
-.alt { display: grid; justify-items: center; gap: 8px; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--m-line-soft); }
-.alt small { color: var(--m-faint); font-size: 10.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
+.otpInput { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; padding: 0; border: 0; opacity: 0; font-size: 15px; cursor: text; }
+.resend { display: flex; align-items: center; justify-content: center; min-height: 36px; color: var(--m-muted); font-size: 13px; }
+.alt { display: grid; justify-items: center; gap: 8px; margin-top: 8px; padding-top: 16px; border-top: 1px solid var(--m-line-soft); }
+.alt small { color: var(--m-faint); font-size: 11px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; }
 .altList { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; }
-.altList button { min-height: 36px; padding: 0 14px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass); color: var(--m-ink); font: inherit; font-size: 12.5px; cursor: pointer; transition: transform 120ms; }
+.altList button { min-height: 36px; padding: 0 16px; border: 1px solid var(--m-line); border-radius: 999px; background: var(--m-glass); color: var(--m-ink); font: inherit; font-size: 13px; cursor: pointer; transition: transform 120ms; }
 .altList button:active:not(:disabled) { transform: scale(.97); }
 .altList button:disabled { opacity: .45; cursor: default; }
 .spin { animation: pinSpin 1s linear infinite; }
@@ -61,11 +61,11 @@
 }
 
 /* Palette A PIN pad (KitPinPad): the shared keypad under six dots; ink dots, not accent. */
-.kitPad { display: grid; gap: 6px; margin: 18px 0 4px; }
-.kitPad .slots { margin-bottom: 18px; }
+.kitPad { display: grid; gap: 6px; margin: 20px 0 4px; }
+.kitPad .slots { margin-bottom: 20px; }
 .kitPad .slots span[data-filled="true"] { border-color: var(--m-ink); background: var(--m-ink); }
 .kitPad[data-invalid="true"] .slots { animation: pinShake .4s var(--m-ease); }
 .kitPad[data-invalid="true"] .slots span { border-color: var(--m-down); }
-.shuffle { display: inline-flex; align-items: center; justify-self: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--m-muted); font: inherit; font-size: 12.5px; cursor: pointer; }
+.shuffle { display: inline-flex; align-items: center; justify-self: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--m-muted); font: inherit; font-size: 13px; cursor: pointer; }
 .shuffle[aria-pressed="true"] { color: var(--m-ink); background: var(--pa-fill); }
 .working { min-height: 20px; margin: 4px 0 0; color: var(--m-muted); font-size: 13px; text-align: center; }

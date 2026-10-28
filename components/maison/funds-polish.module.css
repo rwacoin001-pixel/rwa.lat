@@ -9,7 +9,7 @@
 .touchSeg > div button { min-height: 44px; }
 .touchSeg + .touchSeg { margin-top: 12px; }
 
-.warn { display: flex; align-items: flex-start; gap: 10px; width: 100%; min-height: 44px; margin-top: 12px; padding: 10px 13px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-glass-deep); color: var(--m-muted); font: inherit; font-size: 12px; line-height: 1.45; text-align: start; cursor: pointer; box-sizing: border-box; }
+.warn { display: flex; align-items: flex-start; gap: 12px; width: 100%; min-height: 44px; margin-top: 12px; padding: 12px 12px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-glass-deep); color: var(--m-muted); font: inherit; font-size: 12px; line-height: 1.45; text-align: start; cursor: pointer; box-sizing: border-box; }
 .warn b { color: var(--m-ink); font-weight: 600; }
 .warn svg { flex: none; margin-top: 1px; color: var(--m-accent); }
 .warn span { min-width: 0; overflow-wrap: anywhere; }

@@ -10,26 +10,26 @@
 .iconButton, .gallery { display: grid; place-items: center; box-sizing: border-box; width: 46px; height: 46px; flex: none; border: 1px solid rgba(240, 245, 253, .15); border-radius: 50%; background: rgba(17, 23, 33, .56); backdrop-filter: blur(16px); color: #f4f1e9; cursor: pointer; }
 .viewfinder { display: flex; flex: 1; min-height: 0; flex-direction: column; align-items: center; justify-content: center; padding: 8px 24px; }
 .title { margin: 0; max-width: 100%; text-align: center; text-wrap: balance; font-size: clamp(19px, 5vw, 24px); font-weight: 500; letter-spacing: -.035em; line-height: 1.35; }
-.hint { margin: 10px 0 28px; max-width: 270px; color: rgba(240, 244, 251, .67); text-align: center; font-size: 12px; line-height: 1.55; text-wrap: pretty; }
+.hint { margin: 12px 0 32px; max-width: 270px; color: rgba(240, 244, 251, .67); text-align: center; font-size: 12px; line-height: 1.55; text-wrap: pretty; }
 .frame { position: relative; display: grid; place-items: center; width: min(70vw, 272px, 33dvh); aspect-ratio: 1; flex: none; color: rgba(240, 244, 251, .5); }
 .frame i { position: absolute; width: 27px; height: 27px; border-color: var(--capture-accent); border-style: solid; border-width: 0; opacity: .95; }
-.frame i:nth-child(1) { inset: 0 auto auto 0; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 13px; }
-.frame i:nth-child(2) { inset: 0 0 auto auto; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 13px; }
-.frame i:nth-child(3) { inset: auto 0 0 auto; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 13px; }
-.frame i:nth-child(4) { inset: auto auto 0 0; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 13px; }
-.status { display: grid; justify-items: center; gap: 10px; min-height: 72px; width: 100%; max-width: 302px; margin-top: 22px; text-align: center; }
+.frame i:nth-child(1) { inset: 0 auto auto 0; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 12px; }
+.frame i:nth-child(2) { inset: 0 0 auto auto; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 12px; }
+.frame i:nth-child(3) { inset: auto 0 0 auto; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 12px; }
+.frame i:nth-child(4) { inset: auto auto 0 0; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 12px; }
+.status { display: grid; justify-items: center; gap: 12px; min-height: 72px; width: 100%; max-width: 302px; margin-top: 24px; text-align: center; }
 .status p { display: inline-flex; align-items: flex-start; justify-content: center; gap: 8px; margin: 0; color: rgba(240, 244, 251, .68); font-size: 12px; line-height: 1.55; overflow-wrap: anywhere; }
 .status p > i { width: 5px; height: 5px; margin-top: 6px; border-radius: 50%; background: #8d97a5; flex: none; }
 .status p > i[data-active='true'] { background: var(--capture-accent); box-shadow: 0 0 12px rgba(217, 183, 126, .32); }
 .status .error { color: #f2b5a4; }
-.retry { display: inline-flex; align-items: center; justify-content: center; gap: 7px; min-height: 44px; padding: 6px 15px; border: 1px solid rgba(217, 183, 126, .28); border-radius: 999px; background: rgba(217, 183, 126, .08); color: var(--capture-accent); font: inherit; font-size: 12px; cursor: pointer; }
+.retry { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 6px 16px; border: 1px solid rgba(217, 183, 126, .28); border-radius: 999px; background: rgba(217, 183, 126, .08); color: var(--capture-accent); font: inherit; font-size: 12px; cursor: pointer; }
 .footer { flex: none; padding: 16px max(24px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left)); }
 .controls { display: flex; align-items: flex-start; justify-content: center; gap: clamp(24px, 7vw, 44px); }
-.tool { display: grid; justify-items: center; gap: 10px; max-width: 90px; min-width: 62px; padding: 0; border: 0; background: none; color: #f4f1e9; font: inherit; cursor: pointer; }
+.tool { display: grid; justify-items: center; gap: 12px; max-width: 90px; min-width: 62px; padding: 0; border: 0; background: none; color: #f4f1e9; font: inherit; cursor: pointer; }
 .tool small { max-width: 100%; font-size: 11px; line-height: 1.35; text-align: center; overflow-wrap: anywhere; color: rgba(240, 244, 251, .72); }
-.gallery { width: 56px; height: 56px; margin-top: -5px; background: rgba(225, 203, 170, .13); border-color: rgba(225, 203, 170, .35); color: var(--capture-accent); }
+.gallery { width: 56px; height: 56px; margin-top: -6px; background: rgba(225, 203, 170, .13); border-color: rgba(225, 203, 170, .35); color: var(--capture-accent); }
 .iconButton[data-active='true'] { background: rgba(225, 203, 170, .18); border-color: var(--capture-accent); color: var(--capture-accent); }
-.note { margin: 24px auto 0; max-width: 270px; font-size: 10px; line-height: 1.5; text-align: center; color: rgba(240, 244, 251, .42); }
+.note { margin: 24px auto 0; max-width: 270px; font-size: 11px; line-height: 1.5; text-align: center; color: rgba(240, 244, 251, .42); }
 .fileInput { display: none; }
 .root button { touch-action: manipulation; -webkit-tap-highlight-color: transparent; transition: background .18s ease, border-color .18s ease, opacity .18s ease; }
 .root button:focus-visible { outline: 2px solid var(--capture-accent); outline-offset: 5px; }
@@ -37,5 +37,5 @@
 .spinner { animation: spin .9s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
 @media (hover: hover) { .iconButton:hover, .tool:hover .iconButton, .tool:hover .gallery, .retry:hover { border-color: rgba(225, 203, 170, .62); background: rgba(225, 203, 170, .16); } }
-@media (max-height: 640px) { .hint { margin-bottom: 18px; } .status { margin-top: 16px; min-height: 58px; } .footer { padding-top: 8px; } .note { margin-top: 16px; } }
+@media (max-height: 640px) { .hint { margin-bottom: 20px; } .status { margin-top: 16px; min-height: 58px; } .footer { padding-top: 8px; } .note { margin-top: 16px; } }
 @media (prefers-reduced-motion: reduce) { .spinner { animation: none; } .root button { transition: none; } }

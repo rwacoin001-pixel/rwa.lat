@@ -1,11 +1,11 @@
-.root { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; margin-bottom: 14px; }
-.root h2 { display: flex; align-items: baseline; gap: 9px; min-width: 0; margin: 0; color: var(--home-ink); font-family: var(--home-display); font-size: 28px; font-weight: 400; line-height: 1.15; letter-spacing: -.01em; text-wrap: balance; }
+.root { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; margin-bottom: 16px; }
+.root h2 { display: flex; align-items: baseline; gap: 8px; min-width: 0; margin: 0; color: var(--home-ink); font-family: var(--home-display); font-size: 28px; font-weight: 400; line-height: 1.15; letter-spacing: -.01em; text-wrap: balance; }
 .index { flex: none; font-family: var(--home-sans); font-size: 11px; font-weight: 600; letter-spacing: .1em; font-variant-numeric: tabular-nums; }
 .root > button { display: inline-flex; flex: none; align-items: center; justify-content: center; gap: 4px; min-height: 44px; padding: 0 2px; border: 0; color: var(--home-muted); background: none; font: inherit; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: pointer; touch-action: manipulation; }
 .root > button:hover { color: var(--home-ink); }
-.root > button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; border-radius: 5px; }
+.root > button:focus-visible { outline: 2px solid var(--home-accent); outline-offset: 3px; border-radius: 8px; }
 :global(.rwa-mobile) .root.root .index { color: var(--home-accent); }
-@media (max-width: 350px) { .root h2 { font-size: 25px; } }
+@media (max-width: 350px) { .root h2 { font-size: 28px; } }
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .root h2 { font-weight: 600; letter-spacing: -.03em; }
