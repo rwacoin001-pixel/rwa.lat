@@ -109,3 +109,7 @@ button.glass:active { transform: scale(.95); }
 /* The card fits the screen exactly, so the page under it never slides (2026-10-29, user: the card must stay still). */
 .shell { grid-template-rows: minmax(150px, 1fr) auto auto; min-height: 0; height: calc(100dvh - var(--app-dock-height, 52px) - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 148px); max-height: 760px; }
 @media (max-height: 640px) { .shell { height: auto; } }
+/* Equal air above and below (2026-10-29, user: the card was too far from the dock): 20px to the tabs, 20px to the dock.
+   The page keeps its dock clearance; the card reaches into it by the same 30px, so the page still never slides. */
+.shell { height: calc(100dvh - var(--app-dock-height, 52px) - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 118px); margin-bottom: -30px; max-height: 790px; }
+.badge { background: rgba(16, 20, 26, .3); }
