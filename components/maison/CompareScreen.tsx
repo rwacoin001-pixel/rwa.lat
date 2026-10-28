@@ -90,7 +90,7 @@ export function CompareScreen({ query }: { query: string }) {
     </div>
       : <StateBlock title={t.empty} body={t.emptyBody} />}
 
-    {slugs.length < MAX ? <div style={{ marginTop: 18 }}>
+    {slugs.length < MAX ? <div style={{ marginTop: 20 }}>
       {adding ? <>
         <label className={s.search}>
           <Search size={17} strokeWidth={1.7} aria-hidden="true" />

@@ -149,7 +149,7 @@ export function RedeemSheet({ open, onClose, onDone, productId, name, positions,
               </dl>
               {redeemable <= ZERO ? <div className={s.notice} data-tone="info"><Info size={16} /><span>{t.nothing}</span></div>
                 : <>
-                  <label className={s.kicker} htmlFor="redeem-quantity" style={{ marginTop: 18 }}>{t.qty}</label>
+                  <label className={s.kicker} htmlFor="redeem-quantity" style={{ marginTop: 20 }}>{t.qty}</label>
                   <div className={s.amount}>
                     <input id="redeem-quantity" value={qty} name="redeem-quantity" inputMode="decimal" autoComplete="off" placeholder="0" aria-invalid={Boolean(fieldError)} aria-describedby="redeem-error"
                       onChange={(event) => { setQty(event.target.value.replace(',', '.').replace(/[^\d.]/g, '')); setServerError(null) }} />

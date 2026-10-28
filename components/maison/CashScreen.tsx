@@ -52,7 +52,7 @@ export function CashScreen() {
         <span className={s.kicker}>{c.available} · {wallet.data?.asset.code ?? 'USDT'}</span>
         {!balances ? <Skeleton rows={1} />
           : <p className={`${s.bigFigure} ${s.num}`}><Figure value={Number(fromAtomic(balances.availableAtomic, DECIMALS))} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} /><small>{wallet.data?.asset.code ?? 'USDT'}</small></p>}
-        {balances?.asOf && <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5 }}>{fill(c.asOf, { t: fmtDateTime(balances.asOf, locale) })}</p>}
+        {balances?.asOf && <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 12 }}>{fill(c.asOf, { t: fmtDateTime(balances.asOf, locale) })}</p>}
         <StatStrip fit items={[
           { label: c.locked, value: bare(balances?.lockedAtomic) },
           { label: c.pending, value: bare(balances?.pendingAtomic) },
@@ -315,7 +315,7 @@ export function DepositScreen({ query }: { query: string }) {
         </details>
       </>}
     {network && <Sheet open={helpOpen} onClose={() => setHelpOpen(false)} kicker={`${network.assetCode} · ${network.displayName}`} title={d.before}>
-      <dl className={s.summary} style={{ marginTop: 14 }}>
+      <dl className={s.summary} style={{ marginTop: 16 }}>
         <div><dt>{c.minDeposit}</dt><dd className={s.num}>{fmtAtomic(network.minimumDepositAtomic, network.assetDecimals, network.assetCode, 2)}</dd></div>
         <div><dt>{c.confirmations}</dt><dd className={s.num}>{network.requiredConfirmations}</dd></div>
         <div><dt>{c.eta}</dt><dd className={s.num}>{fill(c.etaValue, { a: String(network.estimatedArrivalMinutes[0] ?? '—'), b: String(network.estimatedArrivalMinutes[1] ?? '—') })}</dd></div>

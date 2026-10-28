@@ -113,7 +113,7 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
         <span>{translated?.outcomes[index] ?? outcomeLabel(label, copy)}</span><b className={s.num}>{pct(m.prices[index])}</b>
         <span className={s.probBar}><i style={{ ['--p' as string]: Math.max(0, Math.min(1, m.prices[index] ?? 0)) }} /></span>
       </div>)}</div>
-      <dl className={s.stats} style={{ marginTop: 18 }}>
+      <dl className={s.stats} style={{ marginTop: 20 }}>
         <div><dt>{t.volume}</dt><dd className={s.num}>{fmtUsd(String(m.volume24h ?? ''), { compact: true, locale })}</dd></div>
         <div><dt>{t.liquidity}</dt><dd className={s.num}>{fmtUsd(String(m.liquidity ?? ''), { compact: true, locale })}</dd></div>
       </dl>
@@ -216,8 +216,8 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
 
   if (done) return <section className={s.lacquer} aria-live="polite">
     <div className={s.statusMark} data-tone="up"><Check size={26} strokeWidth={1.6} /></div>
-    <h2 className={s.titleL} style={{ marginTop: 0, fontSize: 30 }}>{t.done}</h2>
-    <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 13, lineHeight: 1.55 }}>{fill(t.doneBody, { s: Number(done.shares).toLocaleString(locale, { maximumFractionDigits: 4 }), p: pct(Number(done.price)) })}</p>
+    <h2 className={s.titleL} style={{ marginTop: 0, fontSize: 28 }}>{t.done}</h2>
+    <p className={s.muted} style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55 }}>{fill(t.doneBody, { s: Number(done.shares).toLocaleString(locale, { maximumFractionDigits: 4 }), p: pct(Number(done.price)) })}</p>
     <dl className={s.summary} style={{ marginTop: 16 }}>
       <div data-strong="true"><dt>{t.stake}</dt><dd className={s.num}>{fmtAtomic(done.stakeAtomic, decimals, 'USDT')}</dd></div>
       {done.feeAtomic && <div><dt>{fill(t.feePlace, { r: pct(placeFeeRate) })}</dt><dd className={s.num}>{fmtAtomic(done.feeAtomic, decimals, 'USDT')}</dd></div>}

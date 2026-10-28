@@ -103,7 +103,7 @@ export function MarketsScreen({ query }: { query: string }) {
       <div className={s.chips} role="group" aria-label={m.investable}>
         {CLASSES.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={klass === key} onClick={() => setKlass(key)}>{m.classes[key]}{products.data && <small className={s.num}>{counts[key]}</small>}</button>)}
       </div>
-      <div style={{ marginTop: 14 }}>
+      <div style={{ marginTop: 16 }}>
         {!products.data && !products.error ? <Skeleton rows={2} />
           : products.error && !products.data ? <StateBlock tone="error" title={m.loadError} body={products.error.message} retry={products.refetch} retryLabel={copy.common.retry} />
           : investable.length ? <ProductTable products={investable} featured={klass === 'all' && !term} />
@@ -114,7 +114,7 @@ export function MarketsScreen({ query }: { query: string }) {
       <div className={s.chips} role="group" aria-label={m.directory}>
         {SORTS.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={sort === key} onClick={() => setSort(key)}>{m.sort[key as keyof typeof m.sort]}</button>)}
       </div>
-      <div style={{ marginTop: 10 }}>
+      <div style={{ marginTop: 12 }}>
         {!directory.data && !directory.error ? <Skeleton />
           : directory.error && !directory.data ? <StateBlock tone="error" title={m.loadError} body={directory.error.message} retry={directory.refetch} retryLabel={copy.common.retry} />
           : directory.data?.items.length ? <>

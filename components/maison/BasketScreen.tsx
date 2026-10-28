@@ -89,7 +89,7 @@ export function BasketDetailScreen({ id }: { id: string | null }) {
     <section className={s.lacquer}>
       <span className={s.kicker}>{b.nav}</span>
       <p className={`${s.bigFigure} ${s.num}`}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</p>
-      <dl className={s.stats} style={{ marginTop: 18 }}>
+      <dl className={s.stats} style={{ marginTop: 20 }}>
         <div><dt>{b.aum}</dt><dd className={s.num}>{fmtUsd(basket.aumUsd, { compact: true, locale })}</dd></div>
         <div><dt>{b.units}</dt><dd className={s.num}>{fmtUnits(basket.totalUnits, locale)}</dd></div>
         <div><dt>{b.min}</dt><dd className={s.num}>{fmtUsd(basket.minimumSubscriptionUsd ?? null, { locale })}</dd></div>

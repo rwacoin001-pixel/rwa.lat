@@ -111,7 +111,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
             onChange={(event) => { setAmount(event.target.value.replace(/[^0-9.]/g, '')); setError(null) }} />
           <span>USDT</span>
         </label>
-        <p className={`${s.muted} ${s.num}`} style={{ margin: '8px 2px 0', fontSize: 11.5 }}>
+        <p className={`${s.muted} ${s.num}`} style={{ margin: '8px 2px 0', fontSize: 12 }}>
           {c.sheet.available} {available === null ? '—' : usdtNumber(available, locale)} · {c.sheet.min(usdtNumber(product.minSubscriptionAtomic, locale))}
         </p>
         <div className={styles.chips} aria-label={c.sheet.quick}>
@@ -119,11 +119,11 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
         </div>
         {problem && <p className={styles.err} role="alert">{problem}</p>}
 
-        <p className={s.kicker} style={{ marginTop: 18 }}>{c.sheet.timelineTitle}</p>
+        <p className={s.kicker} style={{ marginTop: 20 }}>{c.sheet.timelineTitle}</p>
         {p
           ? <Timeline steps={steps.map((step, index) => ({ ...stepCopy[index], date: step.date, done: index === 0 }))} />
           : <p className={s.muted} style={{ fontSize: 12 }}>…</p>}
-        {p?.afterCutoff && <p className={s.muted} style={{ margin: '-4px 0 0', fontSize: 11.5 }}>{c.sheet.afterCutoff}</p>}
+        {p?.afterCutoff && <p className={s.muted} style={{ margin: '-4px 0 0', fontSize: 12 }}>{c.sheet.afterCutoff}</p>}
 
         <div className={s.notice}><span>{c.riskLine}</span></div>
         {needsAck && disclosure.error && !disclosure.data && <p className={styles.err} role="alert">{c.loadError} <button type="button" className={s.link} onClick={() => void disclosure.refetch()}>{c.retry}</button></p>}
@@ -202,12 +202,12 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
         </label>}
         {problem && <p className={styles.err} role="alert">{problem}</p>}
 
-        <p className={s.kicker} style={{ marginTop: 18 }}>{c.sheet.estimateTitle}</p>
+        <p className={s.kicker} style={{ marginTop: 20 }}>{c.sheet.estimateTitle}</p>
         <ul className={styles.lines}>
           <li><span>{c.sheet.estimateFee}</span><span>{p ? usdtNumber(p.feeAtomic, locale) : '—'} USDT</span></li>
           <li><span>{c.sheet.estimatePayout}</span><span><b>{p ? usdtNumber(p.payoutAtomic, locale) : '—'}</b> USDT</span></li>
         </ul>
-        <p className={s.muted} style={{ margin: '6px 0 0', fontSize: 11.5, lineHeight: 1.5 }}>{c.sheet.estimateNote}</p>
+        <p className={s.muted} style={{ margin: '6px 0 0', fontSize: 12, lineHeight: 1.5 }}>{c.sheet.estimateNote}</p>
         <Timeline steps={[
           { title: c.sheet.redeemSteps.submit, body: '', done: true },
           { title: c.sheet.redeemSteps.settle, date: p?.tradeDate, body: '' },

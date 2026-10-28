@@ -83,7 +83,7 @@ function StepUpSheet({ open, summary, onDone }: { open: boolean; summary?: StepU
   // Not `busy`-locked: closing mid-passkey unmounts the panel, which aborts the pending verification, as before.
   return <Sheet open={open} onClose={() => onDone(null)} data-step-up=""
     kicker={<><ShieldCheck size={13} aria-hidden="true" />{t.required}</>} title={t.title} description={t.body}>
-    {summary && summary.length > 0 && <dl className={s.summary} style={{ marginTop: 14 }}>
+    {summary && summary.length > 0 && <dl className={s.summary} style={{ marginTop: 16 }}>
       {summary.map((line) => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}
     </dl>}
     {open && <StepUpPanel onVerified={onDone} onLeave={() => onDone(null)} />}
@@ -209,7 +209,7 @@ export function StepUpPanel({ emailFirst = false, locked = false, onVerified, on
   const alternatives = methods.filter((item) => item !== active)
   const message = note && <p className={emailFirst ? undefined : note.tone === 'error' ? s.fieldError : s.muted} id="step-up-error" role={note.tone === 'error' ? 'alert' : 'status'} data-tone={note.tone}>{note.text}</p>
   return <form className={emailFirst ? x.verify : undefined} onSubmit={(event) => { event.preventDefault(); void verify() }}>
-    {!emailFirst && methods.length > 1 && <div style={{ marginTop: 14 }}><Segmented value={active} onChange={pick} label={t.title} role="group" options={methods.map((item) => ({ value: item, label: label(item) }))} /></div>}
+    {!emailFirst && methods.length > 1 && <div style={{ marginTop: 16 }}><Segmented value={active} onChange={pick} label={t.title} role="group" options={methods.map((item) => ({ value: item, label: label(item) }))} /></div>}
     {emailActive ? <>
       <p className={x.sent} aria-live="polite">
         {mail.challenge ? <><Mail size={14} aria-hidden="true" />{e.sentTo(mail.challenge.maskedEmail)}</>
@@ -217,7 +217,7 @@ export function StepUpPanel({ emailFirst = false, locked = false, onVerified, on
       </p>
       <CodeField value={code} onChange={(next) => { setCode(next); setNote(null) }} disabled={lock || !mail.challenge} invalid={note?.tone === 'error' && Boolean(mail.challenge)} label={e.codeLabel} focusToken={mail.challenge?.challengeId} />
     </> : active === 'totp' ? <CodePad value={code} onChange={(next) => { setCode(next); setNote(null) }} disabled={locked || busy} invalid={note?.tone === 'error'} label={t.totpLabel} />
-      : active === 'passkey' ? <p className={s.muted} style={{ margin: '14px 0 0', fontSize: 12.5 }}><Fingerprint size={14} aria-hidden="true" style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />{t.passkeyBody}</p>
+      : active === 'passkey' ? <p className={s.muted} style={{ margin: '16px 0 0', fontSize: 13 }}><Fingerprint size={14} aria-hidden="true" style={{ verticalAlign: '-2px', marginInlineEnd: 6 }} />{t.passkeyBody}</p>
       : <label className={s.field}>
         <span>{t.recoveryLabel}</span>
         <input autoFocus value={code} name="step-up-code" aria-invalid={note?.tone === 'error'} aria-describedby="step-up-error" disabled={locked}

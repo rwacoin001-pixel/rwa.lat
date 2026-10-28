@@ -53,7 +53,7 @@ export function Sheet({ open, onClose, title, kicker, description, busy = false,
           <header className={s.sheetHeader}>
             {kicker && <p className={s.kicker}>{kicker}</p>}
             <Dialog.Title className={s.sheetTitle}>{title}</Dialog.Title>
-            {description && <Dialog.Description className={s.muted} style={{ margin: '6px 0 0', fontSize: 12.5, lineHeight: 1.5 }}>{description}</Dialog.Description>}
+            {description && <Dialog.Description className={s.muted} style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5 }}>{description}</Dialog.Description>}
           </header>
           {children}
         </Dialog.Popup>

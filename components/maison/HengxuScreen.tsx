@@ -172,7 +172,7 @@ export function BasketShelf() {
 
       {featured && <FeaturedCard product={featured} listing={listings.get(featured.id)} />}
 
-      {bands.length > 0 && <div style={{ marginTop: 18 }}>{termsHead}</div>}
+      {bands.length > 0 && <div style={{ marginTop: 20 }}>{termsHead}</div>}
       {bands.map((band) => <section key={band.horizon} className={h.band} aria-labelledby={`hx-band-${band.horizon}`}>
         <h4 className={h.bandHead} id={`hx-band-${band.horizon}`}><Clock3 size={12} strokeWidth={1.8} aria-hidden="true" /><span>{copy.horizon[band.horizon]}</span><small className={s.num}>{fill(band.items.length === 1 ? copy.countOne : copy.count, { n: band.items.length })}</small></h4>
         <ul className={h.rows}>{band.items.map((product) => <li key={product.id}><StrategyRow product={product} listing={listings.get(product.id)} /></li>)}</ul>

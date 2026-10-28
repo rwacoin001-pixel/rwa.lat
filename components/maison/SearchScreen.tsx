@@ -72,7 +72,7 @@ export function SearchScreen({ query }: { query: string }) {
         <input type="search" value={input} onChange={(event) => setInput(event.target.value)} placeholder={t.placeholder} aria-label={t.placeholder} maxLength={80} enterKeyHint="search" autoFocus />
         {input && <button type="button" onClick={() => setInput('')} aria-label={copy.common.clear}><X size={14} /></button>}
       </label>
-      {!needle && <p className={s.foot} style={{ marginTop: 10 }}><span>{t.hint}</span></p>}
+      {!needle && <p className={s.foot} style={{ marginTop: 12 }}><span>{t.hint}</span></p>}
     </div>
 
     {!needle && history.length > 0 && <>
@@ -125,7 +125,7 @@ export function SearchScreen({ query }: { query: string }) {
       </li>)}
     </Group>}
 
-    {nothing && <div style={{ marginTop: 18 }}><StateBlock title={fill(copy.markets.noMatch, { q: term })} /></div>}
+    {nothing && <div style={{ marginTop: 20 }}><StateBlock title={fill(copy.markets.noMatch, { q: term })} /></div>}
   </MaisonPage>
 }
 

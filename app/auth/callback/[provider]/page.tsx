@@ -191,11 +191,11 @@ export default function OAuthCallbackPage() {
         >!</div>
         <p role="alert" style={{ fontSize: 15, lineHeight: 1.65, opacity: 0.92 }}>{message}</p>
         {(phase === 'error' || phase === 'registration-required') && (
-          <div style={{ marginTop: 20, display: 'flex', gap: 18, justifyContent: 'center' }}>
+          <div style={{ marginTop: 20, display: 'flex', gap: 20, justifyContent: 'center' }}>
             {phase === 'registration-required'
-              ? <a href="/register" style={{ color: 'var(--accent)', fontSize: 14, textDecoration: 'none' }}>{visual.createAccount}</a>
-              : <a href="/login" style={{ color: 'var(--accent)', fontSize: 14, textDecoration: 'none' }}>{visual.signIn}</a>}
-            <a href="/home" style={{ color: 'var(--ink-3)', fontSize: 14, textDecoration: 'none' }}>{t('nav.home')}</a>
+              ? <a href="/register" style={{ color: 'var(--accent)', fontSize: 15, textDecoration: 'none' }}>{visual.createAccount}</a>
+              : <a href="/login" style={{ color: 'var(--accent)', fontSize: 15, textDecoration: 'none' }}>{visual.signIn}</a>}
+            <a href="/home" style={{ color: 'var(--ink-3)', fontSize: 15, textDecoration: 'none' }}>{t('nav.home')}</a>
           </div>
         )}
       </div>

@@ -499,7 +499,7 @@ export default function PolymarketDetailPanel({ marketId, marketHint, regionStat
             className={styles.reviewButton}
             disabled={betState === 'submitting' || betState === 'done'}
             onClick={() => void placeRealBet()}
-            style={{ marginTop: 10 }}
+            style={{ marginTop: 12 }}
           >
             <span>
               <small>{hasSession() ? `余额支付 · 约 ${formatAmount(preview.estimatedShares)} 份` : '需要登录'}</small>

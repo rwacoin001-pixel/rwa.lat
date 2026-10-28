@@ -109,7 +109,7 @@ export function SecondaryTransferScreen() {
       <label className={s.field}><span>期望单价（USDT）</span><input inputMode="decimal" value={targetPrice} onChange={(event) => setTargetPrice(event.target.value)} placeholder="如 1.05" /></label>
       <label className={s.field}><span>备注（可选）</span><textarea rows={2} value={note} onChange={(event) => setNote(event.target.value)} placeholder="期望成交时间等" /></label>
       {formError && <p className={s.fieldError} role="alert">{formError}</p>}
-      <button className={s.ghost} type="submit" disabled={submitted} style={{ marginTop: 14 }}>{submitted ? <><Check size={15} aria-hidden="true" /> 已登记</> : '提交转让意向'}</button>
+      <button className={s.ghost} type="submit" disabled={submitted} style={{ marginTop: 16 }}>{submitted ? <><Check size={15} aria-hidden="true" /> 已登记</> : '提交转让意向'}</button>
     </form>
 
     <ul className={s.list} style={{ marginTop: 12 }}><li>

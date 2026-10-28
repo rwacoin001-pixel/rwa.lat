@@ -266,7 +266,7 @@ export function KycScreen() {
       </>}
     </Lacquer>
 
-    {record && <dl className={s.summary} style={{ marginTop: 14 }}>
+    {record && <dl className={s.summary} style={{ marginTop: 16 }}>
       <div><dt>{t.provider}</dt><dd className={s.mono}>{record.provider}</dd></div>
       <div><dt>{t.caseRef}</dt><dd className={s.mono}>{shortId(record.id)}</dd></div>
       {record.decidedAt && <div><dt>{t.decided}</dt><dd>{fmtDateTime(record.decidedAt, locale)}</dd></div>}

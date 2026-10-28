@@ -75,11 +75,38 @@ export function migrate(css, { keepDisplay = false } = {}) {
   return { out, changes }
 }
 
+/** Inline styles in TSX: fontSize: 11.5, borderRadius: 10, padding: '10px 14px'. */
+export function migrateTsx(source, { keepDisplay = false } = {}) {
+  const edits = [], changes = []
+  for (const m of source.matchAll(/(fontSize|borderRadius|padding|margin|gap|rowGap|columnGap|padding[A-Z]\w*|margin[A-Z]\w*)(\s*:\s*)(\d*\.?\d+|'[^']*'|"[^"]*")/g)) {
+    const prop = m[1].replace(/[A-Z]/g, (c) => '-' + c.toLowerCase())
+    const kind = kindOf(prop)
+    const at = m.index + m[1].length + m[2].length
+    const line = source.slice(0, m.index).split('\n').length
+    const keep = (n) => keepDisplay && kind === 'font' && n >= 25
+    if (/^\d/.test(m[3])) {
+      const n = Number(m[3]), to = keep(n) ? n : mapValue(kind, n)
+      if (to !== n) { edits.push([at, m[3].length, fmt(to)]); changes.push(`${line}: ${kind} ${n} → ${to}`) }
+      continue
+    }
+    if (/calc|clamp|min\(|max\(|var\(/.test(m[3])) continue
+    for (const lm of m[3].matchAll(/(-?)(\d*\.?\d+)px/g)) {
+      const n = Number(lm[2]), to = keep(n) ? n : mapValue(kind, n)
+      if (to === n) continue
+      edits.push([at + lm.index + lm[1].length, lm[2].length, fmt(to)]); changes.push(`${line}: ${kind} ${n} → ${to}`)
+    }
+  }
+  let out = source
+  for (const [i, len, value] of edits.sort((a, b) => b[0] - a[0])) out = out.slice(0, i) + value + out.slice(i + len)
+  return { out, changes }
+}
+
 const args = process.argv.slice(2)
 const dry = args.includes('--dry')
 for (const file of args.filter((a) => !a.startsWith('--'))) {
   const css = readFileSync(file, 'utf8')
-  const { out, changes } = migrate(css, { keepDisplay: args.includes('--keep-display') })
+  const opts = { keepDisplay: args.includes('--keep-display') }
+  const { out, changes } = file.endsWith('.tsx') ? migrateTsx(css, opts) : migrate(css, opts)
   if (!dry && out !== css) writeFileSync(file, out)
   console.log(`${file}: ${changes.length} value(s) ${dry ? 'would change' : 'changed'}`)
   if (process.env.VERBOSE) changes.forEach((c) => console.log('  ' + c))

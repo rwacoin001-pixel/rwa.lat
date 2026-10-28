@@ -34,7 +34,7 @@ export function PredictionDiscussion({eventId}:{eventId:string}) {
   }
   const like=async(c:Comment)=>{const desired=!liked.has(c.id),r=await request<{likeCount:number}>(`/v1/community/me/comments/${c.id}/like`,{method:desired?'PUT':'DELETE'});if(!r.ok){setError(r.error.message);return}setLiked(old=>{const n=new Set(old);if(desired)n.add(c.id);else n.delete(c.id);return n});setItems(old=>old.map(x=>x.id===c.id?{...x,likeCount:r.data.likeCount}:x))}
   const report=async(c:Comment)=>{const r=await request('/v1/community/reports',{method:'POST',body:JSON.stringify({targetType:'comment',targetId:c.id,reason:'Prediction discussion content report'})});setError(r.ok?(tr('Report submitted')):r.error.message)}
-  return <section id="prediction-discussion" style={{marginTop:30}}>
+  return <section id="prediction-discussion" style={{marginTop:32}}>
     <div className={s.chips} role="group" aria-label={tr('Discussion')} style={{position:'sticky',top:0,zIndex:2,backdropFilter:'blur(18px)'}}>
       <button className={s.chip} aria-pressed={source==='polymarket'} onClick={()=>change('polymarket')}>Polymarket · {tr('Read only')}</button><button className={s.chip} aria-pressed={source==='rwa'} onClick={()=>change('rwa')}>A-REIT · {t('community.comments')}</button>
     </div>
@@ -44,11 +44,11 @@ export function PredictionDiscussion({eventId}:{eventId:string}) {
       <button className={s.ghost} disabled={pending||!body.trim()} onClick={submit}>{pending?'…':tr('Post comment')}</button>
     </div>:<button className={s.ghost} onClick={()=>signInThenReturn()}>{tr('Sign in to join the discussion')}</button>)}
     <button className={s.link} onClick={()=>setOriginal(v=>!v)}>{original?polymarketTranslationCopy[locale].hideOriginal:polymarketTranslationCopy[locale].original}</button>
-    {items.map(c=><article key={c.id} style={{padding:'18px 0',borderBottom:'1px solid #9b8f7b33'}}>
+    {items.map(c=><article key={c.id} style={{padding:'20px 0',borderBottom:'1px solid #9b8f7b33'}}>
       <div className={s.foot}><b>{c.author?.displayName??(tr('Member'))}</b> · {c.createdAt?new Date(c.createdAt).toLocaleString(locale):''}</div>
       {c.parentId&&<small className={s.muted}>{tr('Reply')}</small>}
       <p className={s.prose} style={{whiteSpace:'pre-wrap',overflowWrap:'anywhere'}}>{original?c.body:content(c.body)}</p>
-      {source==='rwa'?<div style={{display:'flex',gap:18}}><button className={s.link} disabled={!signedIn} aria-pressed={liked.has(c.id)} onClick={()=>void like(c)}>♡ {c.likeCount}</button><button className={s.link} disabled={!signedIn} onClick={()=>setParent(c)}>{tr('Reply')}</button><button className={s.link} onClick={()=>void report(c)}>{tr('Report')}</button></div>:<p className={s.foot}>♡ {c.likeCount}</p>}
+      {source==='rwa'?<div style={{display:'flex',gap:20}}><button className={s.link} disabled={!signedIn} aria-pressed={liked.has(c.id)} onClick={()=>void like(c)}>♡ {c.likeCount}</button><button className={s.link} disabled={!signedIn} onClick={()=>setParent(c)}>{tr('Reply')}</button><button className={s.link} onClick={()=>void report(c)}>{tr('Report')}</button></div>:<p className={s.foot}>♡ {c.likeCount}</p>}
     </article>)}
     {loading&&<Skeleton rows={2}/>}
     {error&&<p className={s.fieldError} role="status">{error} <button className={s.link} onClick={()=>setRefresh(v=>v+1)}>{tr('Retry')}</button></p>}

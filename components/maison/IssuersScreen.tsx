@@ -43,11 +43,11 @@ export function IssuersScreen() {
       <input type="search" value={filter} onChange={(event) => setFilter(event.target.value)} placeholder={t.filter} aria-label={t.filter} maxLength={80} />
       {filter && <button type="button" onClick={() => setFilter('')} aria-label={copy.common.clear}><X size={14} /></button>}
     </label>
-    <div className={s.chips} role="group" aria-label={t.title} style={{ marginTop: 14 }}>
+    <div className={s.chips} role="group" aria-label={t.title} style={{ marginTop: 16 }}>
       {(['cap', 'name'] as const).map((key) => <button key={key} type="button" className={s.chip} aria-pressed={sort === key} onClick={() => setSort(key)}>{t.sort[key]}</button>)}
     </div>
 
-    <div style={{ marginTop: 10 }}>
+    <div style={{ marginTop: 12 }}>
       {!issuers.data && !issuers.error ? <Skeleton rows={4} />
         : issuers.error && !issuers.data ? <StateBlock tone="error" title={t.loadError} body={issuers.error.message} retry={issuers.refetch} retryLabel={copy.common.retry} />
         : visible.length ? <ul className={s.list}>{visible.map((issuer) => <li key={issuer.slug}>
@@ -88,7 +88,7 @@ export function IssuerProfileScreen({ slug }: { slug: string | null }) {
         <Logo src={typeof issuer.logoUrl === 'string' ? issuer.logoUrl : null} name={issuer.name} />
         <p className={s.kicker}>{t.kicker}</p>
       </div>
-      <h1 className={s.titleL} style={{ marginTop: 14 }}>{issuer.name}</h1>
+      <h1 className={s.titleL} style={{ marginTop: 16 }}>{issuer.name}</h1>
       <p className={s.lede} style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
         {issuer.verified && <span className={s.badge} data-tone="accent"><BadgeCheck size={12} />{t.verified}</span>}
         <span className={s.badge}>{d.research}</span>
@@ -98,7 +98,7 @@ export function IssuerProfileScreen({ slug }: { slug: string | null }) {
     <section className={s.lacquer}>
       <span className={s.kicker}>{t.marketCap}</span>
       <p className={`${s.bigFigure} ${s.num}`}>{fmtUsd(issuer.totalMarketCapUsd, { compact: true, locale })}</p>
-      <dl className={s.stats} style={{ marginTop: 18 }}>
+      <dl className={s.stats} style={{ marginTop: 20 }}>
         <div><dt>{t.managed}</dt><dd className={s.num}>{assets.length}</dd></div>
         <div><dt>{d.website}</dt><dd>{issuer.websiteUrl ? <a className={s.link} style={{ color: 'inherit' }} href={issuer.websiteUrl} target="_blank" rel="noopener noreferrer"><bdi>{hostOf(issuer.websiteUrl)}</bdi><ExternalLink size={12} /></a> : '—'}</dd></div>
       </dl>
@@ -119,7 +119,7 @@ export function IssuerProfileScreen({ slug }: { slug: string | null }) {
     </> : <StateBlock title={t.noAssets} />}
 
     <div className={s.notice}><Info size={16} /><span>{t.note}</span></div>
-    <div className={s.actions2} style={{ marginTop: 14 }}>
+    <div className={s.actions2} style={{ marginTop: 16 }}>
       <button type="button" className={s.ghost} onClick={() => openPath('/issuers')}>{t.all}</button>
       <button type="button" className={s.ghost} onClick={() => openPath('/markets')}>{copy.status.backMarkets}</button>
     </div>

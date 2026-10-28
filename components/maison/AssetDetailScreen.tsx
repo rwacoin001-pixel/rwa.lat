@@ -82,22 +82,22 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
 
     <DetailFlow>
     <Lacquer aria-live="polite">
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, alignItems: 'center' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'center' }}>
         <span className={s.kicker}>{d.unitPrice}</span>
         {quote.data && <span className={s.badge} data-tone={expired ? 'warn' : 'live'}>{expired ? d.stale : d.live}</span>}
       </div>
       {!quote.data && !quote.error ? <p className={`${s.bigFigure} ${s.muted}`}>—</p>
-        : quote.error && !quote.data ? <><p className={`${s.bigFigure} ${s.muted}`}>—</p><p className={s.muted} style={{ margin: '8px 0 0', fontSize: 12.5 }}>{d.quoteUnavailable} · <button type="button" className={s.link} onClick={quote.refetch}>{copy.common.retry}</button></p></>
+        : quote.error && !quote.data ? <><p className={`${s.bigFigure} ${s.muted}`}>—</p><p className={s.muted} style={{ margin: '8px 0 0', fontSize: 13 }}>{d.quoteUnavailable} · <button type="button" className={s.link} onClick={quote.refetch}>{copy.common.retry}</button></p></>
         : quote.data && <>
           <p className={`${s.bigFigure} ${s.num}`}><Figure value={unitPrice} locale="en-US" format={{ minimumFractionDigits: 2, maximumFractionDigits: unitDigits }} /><small>{quote.data.currency}</small></p>
           {validity && !expired && <div style={{ marginTop: 12 }}><PollBar every={validity.span} elapsed={validity.elapsed} stamp={quote.data.capturedAt} label={fill(d.validUntil, { t: fmtDateTime(quote.data.validUntil, locale) })} /></div>}
-          <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 11.5 }}>{copy.common.source}: {quote.data.source} · {fill(copy.common.updated, { t: fmtDateTime(quote.data.capturedAt, locale) })}</p>
-          <p className={s.muted} style={{ margin: '4px 0 0', fontSize: 11.5 }}>{fill(d.validUntil, { t: fmtDateTime(quote.data.validUntil, locale) })}</p>
+          <p className={s.muted} style={{ margin: '12px 0 0', fontSize: 12 }}>{copy.common.source}: {quote.data.source} · {fill(copy.common.updated, { t: fmtDateTime(quote.data.capturedAt, locale) })}</p>
+          <p className={s.muted} style={{ margin: '4px 0 0', fontSize: 12 }}>{fill(d.validUntil, { t: fmtDateTime(quote.data.validUntil, locale) })}</p>
         </>}
       <StatStrip items={keyStats} />
     </Lacquer>
 
-    <div style={{ marginTop: 22 }}>
+    <div style={{ marginTop: 24 }}>
       <Segmented value={String(tab)} onChange={(value) => setTab(Number(value))} label={content(product.displayName)} options={d.tabs.map((label, index) => ({ value: String(index), label }))} />
     </div>
     {tab === 0 && <div className={s.tabPanel} role="tabpanel">
@@ -109,7 +109,7 @@ function InvestableDetail({ product, topbar }: { product: CatalogProduct; topbar
       ]} />
       <SectionHead title={d.orderRules} />
       <p className={s.prose}>{d.orderRulesBody}</p>
-      <button type="button" className={s.link} style={{ marginTop: 10 }} onClick={() => openPath('/fees-and-limits')}>{copy.review.fees}<ArrowRight size={13} /></button>
+      <button type="button" className={s.link} style={{ marginTop: 12 }} onClick={() => openPath('/fees-and-limits')}>{copy.review.fees}<ArrowRight size={13} /></button>
     </div>}
     {tab === 1 && <div className={s.tabPanel} role="tabpanel">
       {quote.data ? <dl className={s.summary}>
@@ -219,7 +219,7 @@ function ResearchDetail({ slug }: { slug: string }) {
 
     <div className={s.notice}><Info size={16} /><span>{d.researchNote}</span></div>
     </DetailFlow>
-    <div className={s.actions2} style={{ marginTop: 14 }}>
+    <div className={s.actions2} style={{ marginTop: 16 }}>
       <button type="button" className={s.ghost} onClick={() => openPath(`/compare?slugs=${encodeURIComponent(slug)}`)}>{copy.markets.compare}</button>
       <button type="button" className={s.ghost} onClick={() => openPath('/markets')}>{copy.status.backMarkets}</button>
     </div>

@@ -65,7 +65,7 @@ export function QuantPositionPlate({ product, showReceipt = true }: { product: Q
       </div>
       <p className={styles.note2}>{c.position.paidNote}</p>
     </Lacquer>
-    {showReceipt && (payout ? <QuantReceipt payout={payout} copy={c} locale={locale} /> : principal > BigInt(0) && payouts.data && payouts.data.length === 0 ? <p className={s.muted} style={{ margin: '10px 2px 0', fontSize: 12 }}>{c.position.emptyPayouts}</p> : null)}
+    {showReceipt && (payout ? <QuantReceipt payout={payout} copy={c} locale={locale} /> : principal > BigInt(0) && payouts.data && payouts.data.length === 0 ? <p className={s.muted} style={{ margin: '12px 2px 0', fontSize: 12 }}>{c.position.emptyPayouts}</p> : null)}
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />
   </>

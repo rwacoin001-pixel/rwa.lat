@@ -180,7 +180,7 @@ export function PriceChart({ points, candles, height = 188, digits = 2, locale, 
       const chart = createChart(node, {
         autoSize: true,
         height,
-        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: c.faint, fontSize: 10, fontFamily: 'var(--font-geist-sans), system-ui', attributionLogo: false },
+        layout: { background: { type: ColorType.Solid, color: 'transparent' }, textColor: c.faint, fontSize: 11, fontFamily: 'var(--font-geist-sans), system-ui', attributionLogo: false },
         grid: { vertLines: { visible: false }, horzLines: { color: c.line, style: LineStyle.Dotted } },
         rightPriceScale: { borderVisible: false, scaleMargins: { top: .14, bottom: ohlc.length ? .24 : .08 } },
         timeScale: { borderVisible: false, timeVisible: ohlc.length > 0, secondsVisible: false, fixLeftEdge: true, fixRightEdge: true },

@@ -624,11 +624,11 @@ export function AddressBookScreen() {
           <button type="submit" className={s.cta} style={{ marginTop: 12 }} disabled={Boolean(busy) || !addressOk || !labelOk} aria-busy={busy === 'add'}>
             <span>{busy === 'add' ? b.saving : b.save}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span>
           </button>
-          <button type="button" className={s.link} style={{ marginTop: 10 }} onClick={() => { setAdding(false); setTouched(false) }}>{b.close}</button>
+          <button type="button" className={s.link} style={{ marginTop: 12 }} onClick={() => { setAdding(false); setTouched(false) }}>{b.close}</button>
         </form>
       </div>}
 
-    <div style={{ marginTop: 18 }}>
+    <div style={{ marginTop: 20 }}>
       {book.error && !book.data ? <StateBlock tone="error" title={b.loadError} body={book.error.message} retry={book.refetch} retryLabel={common.retry} />
         : !book.data ? <Skeleton rows={3} />
         : !live.length && !revoked.length ? <StateBlock title={b.empty} body={b.emptyBody} />
@@ -637,7 +637,7 @@ export function AddressBookScreen() {
           {revoked.length > 0 && <button type="button" className={s.link} style={{ marginTop: 12 }} onClick={() => setShowRevoked((v) => !v)} aria-expanded={showRevoked}>{showRevoked ? b.hideRevoked : fill(b.showRevoked, { n: String(revoked.length) })}</button>}
         </>}
     </div>
-    <button type="button" className={s.link} style={{ marginTop: 18 }} onClick={() => openPath('/assets/cash/withdraw')}>{f.withdraw.title}<ChevronRight size={13} /></button>
+    <button type="button" className={s.link} style={{ marginTop: 20 }} onClick={() => openPath('/assets/cash/withdraw')}>{f.withdraw.title}<ChevronRight size={13} /></button>
     {sheet}
   </MaisonPage>
 }

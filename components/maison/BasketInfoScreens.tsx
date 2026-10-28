@@ -44,7 +44,7 @@ export function BasketDisclosuresScreen() {
     {items && !items.length && <StateBlock title={copy.noHoldings} />}
     {items && items.length > 0 && <ul className={s.list}>{items.map((item) => {
       const done = acked.has(item.id)
-      return <li key={item.id} className={s.card} style={{ marginBottom: 10 }}>
+      return <li key={item.id} className={s.card} style={{ marginBottom: 12 }}>
         <p className={s.kicker}><FileText size={13} aria-hidden="true" /> v{item.version}</p>
         <h2 style={{ margin: '4px 0 6px', fontSize: 15 }}>{item.title}</h2>
         <p className={s.lede} style={{ whiteSpace: 'pre-line' }}>{item.content}</p>

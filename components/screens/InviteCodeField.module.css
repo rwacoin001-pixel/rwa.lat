@@ -1,15 +1,15 @@
 /* Signup invitation code: the same glass field as the email box, with the hint written inside it.
    Reads the auth surface's own tokens (--ink, --field, --auth-*), so it follows the app palette in either theme. */
-.wrap { --invite-bad: #b8361f; margin-top: 10px; }
+.wrap { --invite-bad: #b8361f; margin-top: 12px; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 
-.field { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 24px; align-items: center; column-gap: 10px; min-height: 58px; padding: 7px 14px 7px 16px; border: .5px solid var(--field-edge); border-radius: 14px; background: var(--field); cursor: text; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
+.field { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 24px; align-items: center; column-gap: 12px; min-height: 58px; padding: 8px 16px 8px 16px; border: .5px solid var(--field-edge); border-radius: 12px; background: var(--field); cursor: text; transition: border-color .2s var(--ease), box-shadow .2s var(--ease); }
 .field:focus-within { border-color: color-mix(in srgb, var(--auth-accent) 70%, transparent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--auth-accent) 14%, transparent); }
 .field[data-state='ok'] { border-color: color-mix(in srgb, var(--auth-accent) 70%, transparent); }
 .field[data-state='error'] { border-color: color-mix(in srgb, var(--invite-bad) 60%, transparent); }
 
 .field input { width: 100%; min-width: 0; height: 30px; padding: 0; border: 0; outline: none; background: transparent; color: var(--ink); font: 600 17px/1 var(--sans); letter-spacing: .14em; text-transform: uppercase; font-variant-numeric: tabular-nums; }
-.field input::placeholder { color: var(--auth-muted); opacity: 1; font: 500 16px/1 var(--sans); letter-spacing: 0; text-transform: none; }
+.field input::placeholder { color: var(--auth-muted); opacity: 1; font: 500 15px/1 var(--sans); letter-spacing: 0; text-transform: none; }
 .status { display: grid; place-items: center; color: var(--auth-muted); }
 .wrap .field[data-state='ok'] .status { color: var(--auth-accent); }
 .wrap .field[data-state='error'] .status { color: var(--invite-bad); }
@@ -23,6 +23,6 @@
 @media (prefers-reduced-motion: reduce) { .spin { animation: none; } }
 
 /* Android app only: paste the code the browser copied on download. */
-.paste { display: inline-flex; grid-column: 2; grid-row: 1; justify-self: end; align-items: center; gap: 4px; min-height: 32px; padding: 0 10px; border: 0; border-radius: 999px; color: var(--auth-accent); background: color-mix(in srgb, var(--auth-accent) 12%, transparent); font: 600 12px/1 var(--sans); white-space: nowrap; cursor: pointer; }
+.paste { display: inline-flex; grid-column: 2; grid-row: 1; justify-self: end; align-items: center; gap: 4px; min-height: 32px; padding: 0 12px; border: 0; border-radius: 999px; color: var(--auth-accent); background: color-mix(in srgb, var(--auth-accent) 12%, transparent); font: 600 12px/1 var(--sans); white-space: nowrap; cursor: pointer; }
 .field:has(.paste) { grid-template-columns: minmax(0, 1fr) auto; }
 .field:has(.paste) .status { display: none; }

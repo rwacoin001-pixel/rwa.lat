@@ -273,8 +273,8 @@ export function YieldCalendarScreen({ query }: { query: string }) {
           })}
         </div>
 
-        {!credited.length && !expectedInMonth.length ? <div style={{ marginTop: 18 }}><StateBlock title={t.none} body={t.noneBody} /></div>
-          : !inMonth.length && !expectedInMonth.length ? <div style={{ marginTop: 18 }}><StateBlock title={t.empty} body={t.emptyBody} /></div>
+        {!credited.length && !expectedInMonth.length ? <div style={{ marginTop: 20 }}><StateBlock title={t.none} body={t.noneBody} /></div>
+          : !inMonth.length && !expectedInMonth.length ? <div style={{ marginTop: 20 }}><StateBlock title={t.empty} body={t.emptyBody} /></div>
           : inMonth.length ? <>
             <SectionHead index="01" title={t.byProduct} note={monthLabel(month, locale)} />
             <ul className={s.list}>{byProduct.map(([productId, sum]) => <li key={productId}>
@@ -434,7 +434,7 @@ export function RebalanceScreen() {
         <Lacquer aria-live="polite">
           <span className={s.kicker}>{t.total} · USDT</span>
           <p className={`${s.bigFigure} ${s.num}`}><Figure value={Number(fromAtomic(whole.toString(), DECIMALS))} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} /><small>USDT</small></p>
-          <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5, color: 'var(--m-lacquer-muted)' }}>{t.reference}</p>
+          <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 12, color: 'var(--m-lacquer-muted)' }}>{t.reference}</p>
         </Lacquer>
         {totals.unpriced > 0 && <div className={s.notice} data-tone="info"><Info size={16} /><span>{fill(t.unpriced, { n: String(totals.unpriced) })}</span></div>}
 
@@ -483,7 +483,7 @@ export function RebalanceScreen() {
             <input type="checkbox" checked={sellConsent} onChange={(event) => setSellConsent(event.target.checked)} />
             <span>{cn ? '我确认先按上述目标提交卖出申请；实际到账前不会买入。' : 'I confirm the sell requests above. No buy order will be placed before actual proceeds arrive.'}</span>
           </label>
-          <button type="button" className={s.cta} style={{ marginTop: 14, width: '100%' }} disabled={!balanced || !sellConsent || busy !== null || !plans.data} aria-busy={busy === 'sell'} onClick={() => void submitSells()}>
+          <button type="button" className={s.cta} style={{ marginTop: 16, width: '100%' }} disabled={!balanced || !sellConsent || busy !== null || !plans.data} aria-busy={busy === 'sell'} onClick={() => void submitSells()}>
             <span>{busy === 'sell' ? (cn ? '正在提交…' : 'Submitting…') : (cn ? '确认并提交卖出' : 'Confirm and submit sells')}</span><span className={s.ctaIcon}><ChevronRight size={17} /></span>
           </button>
         </>}
@@ -493,7 +493,7 @@ export function RebalanceScreen() {
             <input type="checkbox" checked={buyConsent} onChange={(event) => setBuyConsent(event.target.checked)} />
             <span>{cn ? '我已核对实际卖出到账净额和重新计算的买入金额，并确认提交买入申请。' : 'I reviewed the actual net proceeds and recalculated buy amounts, and confirm the buy orders.'}</span>
           </label>
-          <button type="button" className={s.cta} style={{ marginTop: 14, width: '100%' }} disabled={!buyConsent || busy !== null} aria-busy={busy === 'buy'} onClick={() => void submitBuys()}>
+          <button type="button" className={s.cta} style={{ marginTop: 16, width: '100%' }} disabled={!buyConsent || busy !== null} aria-busy={busy === 'buy'} onClick={() => void submitBuys()}>
             <span>{busy === 'buy' ? (cn ? '正在提交…' : 'Submitting…') : latestPlan.state === 'attention' ? (cn ? '重试未提交的买入' : 'Retry unsubmitted buys') : (cn ? '二次确认并提交买入' : 'Second confirmation and submit buys')}</span><span className={s.ctaIcon}><ChevronRight size={17} /></span>
           </button>
         </>}

@@ -2,36 +2,36 @@
 .offer {
   --ink: #0b1220; --muted: #5b6472; --surface: rgba(255, 255, 255, .78); --line: rgba(255, 255, 255, .9);
   position: relative; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px;
-  padding: 10px 10px 10px 12px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface);
+  padding: 12px 12px 12px 12px; border: 1px solid var(--line); border-radius: 22px; background: var(--surface);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .7), 0 14px 28px -20px rgba(15, 23, 42, .4);
   -webkit-backdrop-filter: blur(20px) saturate(160%); backdrop-filter: blur(20px) saturate(160%);
 }
 :global(html[data-theme='dark']) .offer { --ink: #f2f4f7; --muted: #9aa3b1; --surface: rgba(24, 27, 33, .72); --line: rgba(255, 255, 255, .08); }
-.offer[data-size='row'] { padding: 14px 12px 14px 14px; border-radius: 24px; }
-.icon { width: 40px; height: 40px; border-radius: 11px; box-shadow: 0 6px 12px -6px rgba(15, 23, 42, .4); }
+.offer[data-size='row'] { padding: 16px 12px 16px 16px; border-radius: 22px; }
+.icon { width: 40px; height: 40px; border-radius: 12px; box-shadow: 0 6px 12px -6px rgba(15, 23, 42, .4); }
 .text { display: grid; gap: 2px; min-width: 0; }
-.text b { overflow: hidden; color: var(--ink); font-size: 13.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-.text small { overflow: hidden; color: var(--muted); font-size: 11.5px; text-overflow: ellipsis; white-space: nowrap; }
+.text b { overflow: hidden; color: var(--ink); font-size: 13px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+.text small { overflow: hidden; color: var(--muted); font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
 .offer[data-kind='browser'] .text small { white-space: normal; }
-.alt { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: #087a67; font-size: 11.5px; font-weight: 600; text-decoration: none; }
+.alt { display: inline-flex; align-items: center; gap: 4px; margin-top: 4px; color: #087a67; font-size: 12px; font-weight: 600; text-decoration: none; }
 :global(html[data-theme='dark']) .alt { color: #5fe0c8; }
-.get { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; color: #03211c; background: #19c7aa; font-family: inherit; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; box-shadow: 0 8px 16px -10px rgba(25, 199, 170, .8); transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
+.get { display: inline-flex; align-items: center; gap: 6px; min-height: 36px; padding: 0 16px; border: 0; border-radius: 999px; color: #03211c; background: #19c7aa; font-family: inherit; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; box-shadow: 0 8px 16px -10px rgba(25, 199, 170, .8); transition: transform .2s cubic-bezier(.34, 1.56, .64, 1); }
 .get:active { transform: scale(.95); }
 .get:disabled { opacity: .7; }
 .hint { display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; color: var(--ink); background: rgba(11, 18, 32, .06); }
-.toast { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 8px); width: max-content; max-width: 92%; margin: 0; padding: 9px 14px; border-radius: 14px; color: #ffffff; background: rgba(11, 18, 32, .92); font-size: 12.5px; text-align: center; translate: -50% 0; box-shadow: 0 12px 24px -12px rgba(0, 0, 0, .5); }
+.toast { position: absolute; z-index: 5; left: 50%; bottom: calc(100% + 8px); width: max-content; max-width: 92%; margin: 0; padding: 8px 16px; border-radius: 12px; color: #ffffff; background: rgba(11, 18, 32, .92); font-size: 13px; text-align: center; translate: -50% 0; box-shadow: 0 12px 24px -12px rgba(0, 0, 0, .5); }
 .get:focus-visible { outline: 2px solid #19c7aa; outline-offset: 3px; }
 
 /* In the app's own language: a white card with a hairline (like the home asset card), icon in a soft tile,
    one outlined pill action in ink; teal only as a small accent. */
-.offer { --surface: #ffffff; --line: rgba(11, 18, 32, .08); gap: 12px; padding: 10px 10px 10px 10px; border: 1px solid var(--line); border-radius: 24px;
+.offer { --surface: #ffffff; --line: rgba(11, 18, 32, .08); gap: 12px; padding: 12px 12px 12px 12px; border: 1px solid var(--line); border-radius: 22px;
   box-shadow: 0 1px 0 rgba(255, 255, 255, .9) inset, 0 18px 34px -26px rgba(15, 23, 42, .45); -webkit-backdrop-filter: none; backdrop-filter: none; }
 :global(html[data-theme='dark']) .offer { --surface: #15181e; --line: rgba(255, 255, 255, .08); box-shadow: 0 18px 34px -26px rgba(0, 0, 0, .8); }
-.offer[data-size='row'] { padding: 10px; border-radius: 24px; }
-.icon { width: 44px; height: 44px; border-radius: 13px; box-shadow: 0 0 0 1px rgba(11, 18, 32, .06), 0 6px 12px -8px rgba(15, 23, 42, .35); }
-.text b { font-size: 14px; font-weight: 600; letter-spacing: -.005em; }
+.offer[data-size='row'] { padding: 12px; border-radius: 22px; }
+.icon { width: 44px; height: 44px; border-radius: 12px; box-shadow: 0 0 0 1px rgba(11, 18, 32, .06), 0 6px 12px -8px rgba(15, 23, 42, .35); }
+.text b { font-size: 15px; font-weight: 600; letter-spacing: -.005em; }
 .text small { font-size: 12px; }
-.get { min-height: 38px; padding: 0 16px 0 13px; color: var(--ink); background: transparent; font-weight: 600; box-shadow: inset 0 0 0 1.2px rgba(11, 18, 32, .22); }
+.get { min-height: 38px; padding: 0 16px 0 12px; color: var(--ink); background: transparent; font-weight: 600; box-shadow: inset 0 0 0 1.2px rgba(11, 18, 32, .22); }
 .get svg { color: #0a8a73; }
 :global(html[data-theme='dark']) .get { box-shadow: inset 0 0 0 1.2px rgba(255, 255, 255, .2); }
 :global(html[data-theme='dark']) .get svg { color: #3ce0b1; }
@@ -42,15 +42,15 @@
 /* Install row (guide, last page): iOS-style small liquid-glass pills, centred in one line. */
 .row { --ink: #0b1220; --muted: #5b6472; position: relative; display: flex; justify-content: center; gap: 8px; }
 :global(html[data-theme='dark']) .row { --ink: #f2f4f7; --muted: #9aa3b1; }
-.pill { position: relative; display: inline-flex; align-items: center; gap: 7px; min-height: 40px; padding: 0 16px 0 14px; overflow: hidden; isolation: isolate;
-  border: 0; border-radius: 999px; color: var(--ink); background: rgba(255, 255, 255, .42); font: inherit; font-size: 13.5px; font-weight: 600; letter-spacing: .005em;
+.pill { position: relative; display: inline-flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 16px 0 16px; overflow: hidden; isolation: isolate;
+  border: 0; border-radius: 999px; color: var(--ink); background: rgba(255, 255, 255, .42); font: inherit; font-size: 13px; font-weight: 600; letter-spacing: .005em;
   text-decoration: none; white-space: nowrap; cursor: pointer;
   box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 -1px .5px rgba(255, 255, 255, .35), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 8px 18px -12px rgba(15, 23, 42, .45);
   -webkit-backdrop-filter: blur(18px) saturate(180%); backdrop-filter: blur(18px) saturate(180%); transition: transform .25s cubic-bezier(.34, 1.56, .64, 1), background-color .2s ease; }
 .pill svg { color: #0a8a73; }
 .pill:active { transform: scale(.95); background: rgba(255, 255, 255, .6); }
 .pill:disabled { opacity: .75; }
-.pill[data-static] { cursor: default; font-weight: 500; font-size: 12.5px; white-space: normal; text-align: start; padding-block: 8px; }
+.pill[data-static] { cursor: default; font-weight: 500; font-size: 13px; white-space: normal; text-align: start; padding-block: 8px; }
 :global(html[data-theme='dark']) .pill { background: rgba(40, 44, 52, .5);
   box-shadow: inset 0 1px .5px rgba(255, 255, 255, .22), inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 8px 18px -12px rgba(0, 0, 0, .8); }
 :global(html[data-theme='dark']) .pill svg { color: #3ce0b1; }
@@ -64,7 +64,7 @@
 .row .toast { bottom: calc(100% + 10px); }
 
 /* In the bottom bar the install pill matches the main action's height. */
-.pill { min-height: 58px; padding: 0 18px 0 16px; font-size: 14.5px; }
+.pill { min-height: 58px; padding: 0 20px 0 16px; font-size: 15px; }
 .pill .toast { position: absolute; }
 
 /* Steady on every browser: the light sweep moves by transform (no repaint), and a glowing pill drops backdrop blur

@@ -106,15 +106,15 @@ function PairScreen({ symbol }: { symbol: string }) {
   const priceFormat = { minimumFractionDigits: Math.min(digits, 2), maximumFractionDigits: digits }
 
   return <MaisonPage page="trade" dock topbar={topbar}>
-    <header className={s.hero} style={{ paddingBottom: 10 }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+    <header className={s.hero} style={{ paddingBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
         <Logo name={baseOf(p)} />
         <div style={{ minWidth: 0 }}>
-          <h1 className={`${s.titleL} ${s.num}`} style={{ margin: 0, fontSize: 24 }}>{title}</h1>
+          <h1 className={`${s.titleL} ${s.num}`} style={{ margin: 0, fontSize: 22 }}>{title}</h1>
           <p className={s.kicker} style={{ marginTop: 4 }}>{active ? <><span className={s.liveDot} aria-hidden="true" />{pro.live}</> : copy.markets.paused}</p>
         </div>
       </div>
-      <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 12px', marginTop: 14 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '4px 12px', marginTop: 16 }}>
         <p className={s.bigFigure} style={{ margin: 0 }} aria-label={t.last}><Figure value={last} format={priceFormat} /><small>{p.quoteAssetCode}</small></p>
         {change !== null && <span className={`${s.pill} ${s.num} ${change > 0 ? s.up : change < 0 ? s.down : ''}`}>{change > 0 ? '+' : ''}{(change * 100).toFixed(2)}%</span>}
       </div>
@@ -146,7 +146,7 @@ function PairScreen({ symbol }: { symbol: string }) {
     </section>
 
     <section className={s.panel} aria-label={t.book}>
-      <div className={s.panelHead}><h3>{t.book}</h3>{book.data && <small className={s.muted} style={{ fontSize: 10.5 }}>{active && signedIn ? pro.tapLevel : fmtDateTime(book.data.updatedAt, locale, { timeStyle: 'medium' })}</small>}</div>
+      <div className={s.panelHead}><h3>{t.book}</h3>{book.data && <small className={s.muted} style={{ fontSize: 11 }}>{active && signedIn ? pro.tapLevel : fmtDateTime(book.data.updatedAt, locale, { timeStyle: 'medium' })}</small>}</div>
       {!book.data && !book.error ? <Skeleton rows={3} />
         : book.error && !book.data ? <StateBlock tone="error" title={t.loadError} body={book.error.message} retry={book.refetch} retryLabel={copy.common.retry} />
         : book.data && (book.data.bids.length || book.data.asks.length) ? <>
@@ -169,7 +169,7 @@ function PairScreen({ symbol }: { symbol: string }) {
     <div className={s.notice} role="note"><AlertTriangle size={16} /><span>{t.settlement}</span></div>
     {!active ? <div style={{ marginTop: 12 }}><StateBlock tone="unavailable" title={t.paused} /></div>
       : signedIn ? <Ticket pair={p} digits={digits} bestBid={bestBid} bestAsk={bestAsk} picked={picked} />
-      : <button type="button" className={s.cta} style={{ marginTop: 14, width: '100%' }} onClick={() => signInThenReturn()}><span>{t.signIn}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>}
+      : <button type="button" className={s.cta} style={{ marginTop: 16, width: '100%' }} onClick={() => signInThenReturn()}><span>{t.signIn}</span><span className={s.ctaIcon}><ArrowRight size={17} /></span></button>}
 
     {signedIn && <>
       <SectionHead title={t.myOrders} action={mine.length ? <small className={`${s.muted} ${s.num}`}>{mine.length}</small> : undefined} />
@@ -292,7 +292,7 @@ function Ticket({ pair, digits, bestBid, bestAsk, picked }: { pair: MarketPair; 
       <button type="button" data-side="yes" aria-pressed={side === 'buy'} onClick={() => { setSide('buy'); clear() }}>{t.buy}</button>
       <button type="button" data-side="no" aria-pressed={side === 'sell'} onClick={() => { setSide('sell'); clear() }}>{t.sell}</button>
     </div>
-    <div style={{ marginTop: 10 }}>
+    <div style={{ marginTop: 12 }}>
       <Segmented role="group" label={t.place} value={type} onChange={(value) => { setType(value); clear() }} options={[{ value: 'limit', label: t.limit }, { value: 'market', label: t.market }]} />
     </div>
     {type === 'limit' && <div className={s.field}>

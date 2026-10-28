@@ -148,9 +148,9 @@ export function PortfolioScreen({ query }: { query: string }) {
     </div>
   </>
   const notes = <>
-    {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '10px 0 0', fontSize: 11.5 }}>
+    {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '12px 0 0', fontSize: 12 }}>
       {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
-    </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
+    </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '12px 0 0', fontSize: 12 }}>{bc.partial}</p>}
   </>
   const pnlLine = totals && totals.rows.length > 0 ? <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span> : null
 
@@ -268,7 +268,7 @@ function Allocation({ rows, baskets, cash, loading, error, retry, products, part
           <small className={s.num}>{masked ? AMOUNT_MASK : bare(slice.value)}</small>
           <b className={s.num}>{pct(slice.ratio, locale)}</b>
         </li>)}</ul>
-        {partial && <p className={s.muted} role="status" style={{ margin: '10px 0 0', fontSize: 11.5 }}>{bc.partial}</p>}
+        {partial && <p className={s.muted} role="status" style={{ margin: '12px 0 0', fontSize: 12 }}>{bc.partial}</p>}
       </>}
   </>
 }
@@ -482,7 +482,7 @@ export function PositionDetailScreen({ id }: { id: string | null }) {
     <Lacquer aria-live="polite">
       <span className={s.kicker}>{p.marketValue} · USDT</span>
       <p className={`${s.bigFigure} ${s.num}`}>{value === null ? '—' : <Figure value={asNumber(value)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}<small>USDT</small></p>
-      <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 11.5 }}>
+      <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 12 }}>
         <span dir="ltr" className={toneOfBig(pnl) === 'up' ? s.up : toneOfBig(pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{signed(pnl, locale)}</span> · {fill(p.valued, { t: fmtDateTime(first.valuedAt, locale) })}
       </p>
       <StatStrip fit items={[

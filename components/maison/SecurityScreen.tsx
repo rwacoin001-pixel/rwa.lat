@@ -475,7 +475,7 @@ function TotpEnroll({ t, onDone }: { t: SecurityCopy; onDone: () => void }) {
               onChange={(event) => { setCode(event.target.value.replace(/\D/g, '')); setError(null) }} />
           </label>
           {error && <p className={s.fieldError} role="alert">{error}</p>}
-          <div className={s.ctaPair} style={{ marginTop: 14 }}>
+          <div className={s.ctaPair} style={{ marginTop: 16 }}>
             <button type="button" className={s.ghost} onClick={cancel} disabled={busy}>{e.cancel}</button>
             <button type="submit" className={s.cta} disabled={busy || !saved || !/^\d{6}$/.test(code)} aria-busy={busy}>
               <span>{busy ? e.confirming : e.confirm}</span><span className={s.ctaIcon}><ShieldCheck size={17} /></span>

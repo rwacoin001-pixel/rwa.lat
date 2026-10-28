@@ -1,8 +1,8 @@
 .flow { display: block; }
-.success { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; padding: 10px 12px; border: 1px solid var(--notice-ok-line); border-radius: 12px; color: var(--notice-ok-fg); background: var(--notice-ok-bg); font-size: 12.5px; line-height: 1.5; overflow-wrap: anywhere; }
+.success { display: flex; align-items: flex-start; gap: 8px; margin: 12px 0 0; padding: 12px 12px; border: 1px solid var(--notice-ok-line); border-radius: 12px; color: var(--notice-ok-fg); background: var(--notice-ok-bg); font-size: 13px; line-height: 1.5; overflow-wrap: anywhere; }
 .success > svg { flex: none; margin-top: 1px; }
 .footer { margin: 12px -2px 0; }
-.footer button { display: inline-flex; gap: 8px; align-items: center; min-height: 40px; padding: 0 2px; border: 0; background: transparent; color: var(--auth-muted); font: 500 12.5px/1.4 var(--sans); cursor: pointer; }
+.footer button { display: inline-flex; gap: 8px; align-items: center; min-height: 40px; padding: 0 2px; border: 0; background: transparent; color: var(--auth-muted); font: 500 13px/1.4 var(--sans); cursor: pointer; }
 .footer button:hover { color: var(--ink); }
 .footer button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 4px; }
 [dir='rtl'] .footer svg { transform: rotate(180deg); }

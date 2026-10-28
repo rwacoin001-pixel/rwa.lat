@@ -86,15 +86,15 @@ export function OrderStatusScreen({ orderId, variant }: { orderId: string | null
 
   return <MaisonPage page="order-status" topbar={topbar}>
     <div ref={momentNode} className={s.momentSurface}>
-    <Lacquer style={{ marginTop: 18 }} aria-live="polite">
+    <Lacquer style={{ marginTop: 20 }} aria-live="polite">
       <div className={s.statusMark} data-tone={t}><Mark size={26} strokeWidth={1.6} /></div>
       <span className={s.kicker}>{st.states[state] ?? state}</span>
-      <h1 className={s.titleL} style={{ marginTop: 10 }}>{st.headline[state] ?? state}</h1>
-      <p className={s.muted} style={{ margin: '10px 0 0', fontSize: 13, lineHeight: 1.55 }}>{st.body[state] ?? ''}</p>
-      {isLive && <p className={s.muted} style={{ margin: '12px 0 0', fontSize: 11.5, display: 'flex', alignItems: 'center', gap: 8 }}><span className={s.liveDot} aria-hidden="true" />{fill(st.live, { s: POLL.pendingOrder / 1000 })}</p>}
+      <h1 className={s.titleL} style={{ marginTop: 12 }}>{st.headline[state] ?? state}</h1>
+      <p className={s.muted} style={{ margin: '12px 0 0', fontSize: 13, lineHeight: 1.55 }}>{st.body[state] ?? ''}</p>
+      {isLive && <p className={s.muted} style={{ margin: '12px 0 0', fontSize: 12, display: 'flex', alignItems: 'center', gap: 8 }}><span className={s.liveDot} aria-hidden="true" />{fill(st.live, { s: POLL.pendingOrder / 1000 })}</p>}
       {isLive && <div style={{ marginTop: 8 }}><PollBar every={POLL.pendingOrder} stamp={beat} /></div>}
-      {result.error && order && <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--m-lacquer-accent)' }} role="alert">{copy.common.errorGeneric} · <button type="button" className={s.link} style={{ color: 'inherit' }} onClick={result.refetch}>{copy.common.retry}</button></p>}
-      <dl className={s.summary} style={{ marginTop: 18 }}>
+      {result.error && order && <p style={{ margin: '12px 0 0', fontSize: 12, color: 'var(--m-lacquer-accent)' }} role="alert">{copy.common.errorGeneric} · <button type="button" className={s.link} style={{ color: 'inherit' }} onClick={result.refetch}>{copy.common.retry}</button></p>}
+      <dl className={s.summary} style={{ marginTop: 20 }}>
         <div><dt>{st.product}</dt><dd>{order.productName}</dd></div>
         <div data-strong="true"><dt>{st.requested}</dt><dd className={s.num}>{fmtAtomic(order.requestedAtomicAmount, order.settlementAssetDecimals, 'USDT')}</dd></div>
         {TERMINAL_ORDER_STATES.has(state) && <div><dt>{st.filled}</dt><dd className={s.num}>{fmtAtomic(order.filledAtomicAmount, order.settlementAssetDecimals, 'USDT')}</dd></div>}

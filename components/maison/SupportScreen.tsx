@@ -158,7 +158,7 @@ export function SupportNewScreen({ query = '' }: { query?: string }) {
     <Lacquer aria-live="polite">
       <span className={s.statusMark} data-tone="up"><Check size={22} /></span>
       <h1 className={s.titleL} style={{ margin: 0 }}>{t.created}</h1>
-      <p className={s.muted} style={{ margin: '6px 0 12px', fontSize: 12.5, lineHeight: 1.5 }}>{t.createdBody}</p>
+      <p className={s.muted} style={{ margin: '6px 0 12px', fontSize: 13, lineHeight: 1.5 }}>{t.createdBody}</p>
       <dl className={s.summary}>
         <div data-strong="true"><dt>{t.reference}</dt><dd className={s.mono}>{created.reference}</dd></div>
         <div><dt>{t.topic}</dt><dd>{sup.categories[created.category]}</dd></div>
@@ -344,7 +344,7 @@ export function SupportTicketScreen({ id }: { id: string | null }) {
       <div className={s.notice} data-tone="info" role="status"><Info size={16} /><span>{t.closedNote}</span></div>
       <div className={s.actions}><button type="button" className={s.ghost} onClick={() => openPath('/profile/support/new')}><Plus size={15} />{t.newTicket}</button></div>
     </> : <>
-      <form onSubmit={(event) => void send(event)} noValidate className={s.actions} style={{ marginTop: 18 }}>
+      <form onSubmit={(event) => void send(event)} noValidate className={s.actions} style={{ marginTop: 20 }}>
         <label className={s.field}>
           <span>{t.reply}</span>
           <textarea dir="auto" rows={3} value={reply} maxLength={BODY_MAX} placeholder={t.replyPh} onChange={(event) => setReply(event.target.value)}
@@ -373,7 +373,7 @@ export function SupportTicketScreen({ id }: { id: string | null }) {
           </button>
         </div>
       </section>
-        : <div className={s.actions} style={{ marginTop: 14 }}>
+        : <div className={s.actions} style={{ marginTop: 16 }}>
           <button type="button" className={s.link} style={{ justifySelf: 'center' }} onClick={() => setConfirming(true)}>{t.close}</button>
         </div>}
     </>}

@@ -99,7 +99,7 @@ export function QuantScreen() {
 
   const body = <>
     {sample && <p style={{
-      margin: '0 0 14px', padding: '10px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.6,
+      margin: '0 0 16px', padding: '12px 12px', borderRadius: 12, fontSize: 12, lineHeight: 1.6,
       color: 'var(--m-lacquer-muted)', border: '1px solid rgba(227,187,122,.45)', background: 'rgba(227,187,122,.10)',
     }}>{c.previewNotice}</p>}
     {tab === 'overview' && <>
