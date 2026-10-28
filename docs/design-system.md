@@ -363,3 +363,9 @@
 - Sheets: the page behind frosts (blur 14px); 28px top radius, soft shadow, 36x5 grip, 32px round close.
 - Invitation plate: brand, the code alone in the open middle (tap copies the link), friends joined, a small printed QR; sized so the invite tab never scrolls.
 - Poster studio: four sizes and swipeable posters (the poster artwork itself is unchanged, by the user's call).
+
+### 7.13 Assets (2026-10-29)
+- Tabs: 资产 · 收益 · 记录. RWA products are being retired: never say "RWA"; older holdings show quietly as 其他持仓.
+- Overview: open hero (总资产 includes wallet cash, Koala Quant principal + waiting, predictions in play, baskets, other holdings), today / all-time line, the value line, three capsules (deposit in ink). Then 资产构成: one bar + legend (each opens its product). Then one paper card per product (photo, three figures). Baskets, other holdings and tools follow.
+- Income: a month calendar tinted by each day's signed result (tap a day to filter the list), the per-source strip, the list by month.
+- Records: open orders across products, then recently completed, with a link to all records.

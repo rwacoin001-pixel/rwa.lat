@@ -1,10 +1,7 @@
 'use client'
-import { QuantAssetsCard, useHoldsQuant } from './QuantPositionCard'
-import { MyPredictionsCard, OpenBets, useMyBets } from './MyPredictionsCard'
-import { betStatus } from '@/lib/api/my-predictions'
 import { usePageState } from '@/lib/app-navigation'
 
-import { ArrowDownToLine, ArrowRight, ArrowRightLeft, ArrowUpFromLine, ChevronDown, ChevronRight, Eye, EyeOff, QrCode } from 'lucide-react'
+import { ArrowRight, ArrowUpFromLine, ChevronRight } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -18,8 +15,6 @@ import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { basketPositionsCopy } from '@/lib/maison-basket-positions-copy'
 import { portfolioCopy } from '@/lib/maison-portfolio-copy'
 import { myPredictionsCopy } from '@/lib/maison-my-predictions-copy'
-import { heroCardCopy } from '@/lib/hero-card-copy'
-import { fundsCopy } from '@/lib/maison-funds-copy'
 import { AMOUNT_MASK, useAmountMask } from '@/lib/use-amount-mask'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
@@ -33,14 +28,15 @@ import bp from './basket-positions.module.css'
 import pa from './portfolio-a.module.css'
 import { TopTabs } from './TopTabs'
 import { useOtherIncome, useOtherOrders, type OrderRecord } from './money-records'
-import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
+import { AssetsOverview } from './AssetsOverview'
+import { IncomeCalendar } from './IncomeCalendar'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
 import { sharedKeys } from '@/lib/product-media'
 
 // Portfolio amounts are in the platform unit (USDT / USD quote, 6 decimals).
 const DECIMALS = 6
-const TABS = ['overview', 'positions', 'income', 'orders'] as const
+const TABS = ['overview', 'income', 'orders'] as const
 type Tab = (typeof TABS)[number]
 
 /** Display-only float for rolling figures; every sum above this line is BigInt. */
@@ -88,6 +84,7 @@ export function PortfolioScreen({ query }: { query: string }) {
   const bc = basketPositionsCopy[locale]
   const common = marketCopy[locale].common
   const initial = new URLSearchParams(query).get('tab')
+  // 2026-10-29: three tabs (assets · income · records); the old positions tab folds into the overview.
   const [tab, setTabState] = usePageState<Tab>('portfolio:tab', TABS.includes(initial as Tab) ? initial as Tab : 'overview')
   const setTab = (next: Tab) => {
     setTabState(next)
@@ -103,104 +100,43 @@ export function PortfolioScreen({ query }: { query: string }) {
   const cash = balances ? BigInt(balances.availableAtomic) + BigInt(balances.lockedAtomic) : null
   // Only a complete total is shown as a total: products, baskets and wallet must all be loaded and priced.
   const holdings = totals && !positions.error && basketRows ? holdingsTotal(totals.value, totals.unpriced, basketRows) : null
-  const total = holdings !== null && cash !== null && !wallet.error ? holdings + cash : null
-  const pnlRatio = totals && totals.cost > BigInt(0) ? Number(totals.pnl * BigInt(1_000_000) / totals.cost) / 1_000_000 : null
   const retryAll = () => { positions.refetch(); wallet.refetch(); baskets.refetch() }
   const bothFailed = positions.error && wallet.error
   const anyFailed = Boolean(positions.error || wallet.error || baskets.error)
-  const loadingAny = !anyFailed && (!positions.data || !wallet.data || !baskets.data)
   const incomplete = Boolean(totals && basketRows && holdings === null)
   // Cost, P&L and yield only exist for products; say so whenever baskets are or may be present.
   const scoped = Boolean(basketRows?.length) || Boolean(baskets.error)
   // Until the baskets have loaded we don't know the section has anything in it; showing it early and then removing
   // it made the page jump. So it appears only once there is something (or an error) to show.
   const basketsEmpty = !baskets.error && !(basketRows && basketRows.length > 0)
-  const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
-  // Quant and open bets count as holdings (2026-10-29): with either, an empty RWA list is left out instead of "no positions".
-  const holdsQuant = useHoldsQuant()
-  const myBets = useMyBets({ loading: 'silent' })
-  const betsOpen = (Array.isArray(myBets.data?.items) ? myBets.data.items : []).some((bet) => betStatus(bet.status) === 'placed')
-  const rwaEmpty = Boolean(totals) && totals?.rows.length === 0
-  const otherHoldings = holdsQuant || betsOpen
-  const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
   const { masked, toggle: toggleMask } = useAmountMask()
-  const hide = (text: string) => masked ? AMOUNT_MASK : text
-  const holdingsNote = holdings !== null && holdingsCount !== null ? `${holdingsCount} · ${hide(fmtUsdt(holdings.toString(), { locale }))}` : undefined
   // The value-trend section only exists once two snapshots do, so the numbering below follows what is actually on screen.
   const historyShown = useHistoryPoints().length >= 2
-  const section = (n: number) => String(n).padStart(2, '0')
-  const positionsIndex = section(historyShown ? 3 : 2)
-  const basketsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1))
-  const toolsIndex = section((historyShown ? 3 : 2) + (productsHidden ? 0 : 1) + (basketsEmpty ? 0 : 1))
 
-  const breakdown = <>
-    <div className={s.nest}>
-      <div>
-        <span>{p.positions}</span>
-        <b className={s.num}>{hide(holdings === null ? '—' : bare(holdings))}</b>
-        <small className={s.num}>{scoped ? bc.productCost : p.cost} {hide(bare(totals?.cost))}</small>
-      </div>
-      <div>
-        <span>{scoped ? bc.productYield : p.yield}</span>
-        <b className={`${s.num} ${!masked && totals && toneOfBig(totals.yield) === 'up' ? s.up : !masked && totals && toneOfBig(totals.yield) === 'down' ? s.down : ''}`}>{hide(bare(totals?.yield, true))}</b>
-        <small className={s.num}>{scoped ? bc.productPnl : p.pnl} {hide(bare(totals?.pnl, true))}</small>
-      </div>
-      <div data-wide="true">
-        <span>{p.cash}</span>
-        <StatStrip fit items={[
-          { label: p.available, value: hide(bare(balances?.availableAtomic)) },
-          { label: p.locked, value: hide(bare(balances?.lockedAtomic)) },
-          { label: p.pending, value: hide(bare(balances?.pendingAtomic)) },
-        ]} />
-      </div>
-    </div>
-  </>
   const notes = <>
     {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '12px 0 0', fontSize: 12 }}>
       {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
     </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '12px 0 0', fontSize: 12 }}>{bc.partial}</p>}
   </>
-  const pnlLine = totals && totals.rows.length > 0 ? <span dir="ltr" className={masked ? undefined : toneOfBig(totals.pnl) === 'up' ? s.up : toneOfBig(totals.pnl) === 'down' ? s.down : undefined} style={{ fontWeight: 600 }}>{scoped && `${bc.productPnl} `}{hide(signed(totals.pnl, locale))}{pnlRatio !== null && !masked && ` · ${pnlRatio > 0 ? '+' : ''}${pct(pnlRatio, locale)}`} </span> : null
 
   return <MaisonPage page="portfolio" dock>
     {/* No title bar: the page opens on its own menu, pinned at the top (as exchange wallets do). */}
-    <TopTabs value={tab} onChange={setTab} label={p.title} options={TABS.map((key, index) => ({ value: key, label: p.tabs[index] }))} />
+    <TopTabs value={tab} onChange={setTab} label={p.title} options={TABS.map((key) => ({ value: key, label: (TAB_LABELS[locale] ?? TAB_LABELS.en!)[key] }))} />
 
     {bothFailed ? <StateBlock tone="error" title={common.errorGeneric} body={positions.error?.message} retry={retryAll} retryLabel={common.retry} />
-      : tab === 'overview' && <PaperTotal masked={masked} onMask={toggleMask} loading={total === null && loadingAny}
-          figure={masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={asNumber(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}
-          line={pnlLine ?? <span>{p.available} <b className={s.num}>{hide(bare(balances?.availableAtomic))}</b> USDT</span>}
-          note={p.totalNote} breakdown={breakdown} notes={notes} />}
-
-
-
-    {tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
-      <Allocation rows={totals?.rows} baskets={basketRows} cash={cash} loading={positions.loading || wallet.loading || baskets.loading} error={Boolean(positions.error)} retry={positions.refetch} products={products.data} partial={incomplete} />
-      {historyShown && <History index="02" />}
-      {!productsHidden && <>
-        <SectionHead index={positionsIndex} title={p.positions} action={totals && totals.rows.length > 3 ? <button type="button" className={s.sectionMore} onClick={() => setTab('positions')}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
-        <PositionTable rows={totals?.rows.slice(0, 3)} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
-      </>}
-      {/* Quant holdings sit with the other holdings (they load on their own; below the fold they don't push the total). */}
-      <QuantAssetsCard />
-      <MyPredictionsCard />
-      {!basketsEmpty && <BasketPositions index={basketsIndex} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} limit={3} onMore={() => setTab('positions')} />}
-      <SectionHead index={toolsIndex} title={(TOOLS_TITLE[locale] ?? TOOLS_TITLE.en)!} />
-      <Tools />
-    </div>}
-    {tab === 'positions' && <div className={s.tabPanel} role="tabpanel">
-      {/* Quant and predictions are holdings too (2026-10-29): the quant position, then the bets still in play. */}
-      {holdsQuant && <SectionHead index="01" title={HOLDING_TITLES[locale]?.quant ?? 'Koala Quant'} />}
-      <QuantAssetsCard />
-      {betsOpen && <SectionHead index={holdsQuant ? '02' : '01'} title={HOLDING_TITLES[locale]?.bets ?? 'Predictions in play'} />}
-      <OpenBets />
-      <MyPredictionsCard />
-      {otherHoldings && rwaEmpty && basketsEmpty ? null : productsHidden ? <BasketPositions index="01" note={holdingsNote} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} /> : <>
-        <SectionHead index="01" title={p.positions} note={holdingsNote} />
-        <PositionTable rows={totals?.rows} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
-        {!basketsEmpty && <BasketPositions index="02" rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} />}
-      </>}
-    </div>}
+      : tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
+        <AssetsOverview cash={wallet.error ? null : cash} extraValue={totals?.value ?? BigInt(0)} basketValue={holdings !== null && totals ? holdings - totals.value : BigInt(0)}
+          masked={masked} onMask={toggleMask} history={historyShown ? <HistoryChart /> : null}
+          others={<>
+            {notes}
+            {!basketsEmpty && <div id="baskets"><BasketPositions index="" rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} /></div>}
+            {totals && totals.rows.length > 0 && <div id="other">
+              <SectionHead index="" title={(TAB_LABELS[locale] ?? TAB_LABELS.en!).other} />
+              <PositionTable rows={totals.rows} whole={holdings ?? totals.value} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
+            </div>}
+          </>}
+          tools={<div><SectionHead index="" title={(TOOLS_TITLE[locale] ?? TOOLS_TITLE.en)!} /><Tools /></div>} />
+      </div>}
     {tab === 'income' && <div className={s.tabPanel} role="tabpanel"><Income products={products.data} /></div>}
     {tab === 'orders' && <div className={s.tabPanel} role="tabpanel"><OpenOrders /></div>}
   </MaisonPage>
@@ -252,42 +188,6 @@ function BasketPositions({ index, rows, error, retry, limit, onMore, note }: { i
   </>
 }
 
-function Allocation({ rows, baskets, cash, loading, error, retry, products, partial }: { rows: PositionRow[] | undefined; baskets: BasketPosition[] | undefined; cash: bigint | null; loading: boolean; error: boolean; retry: () => void; products: CatalogProduct[] | undefined; partial: boolean }) {
-  const { locale } = useI18n()
-  const p = portfolioCopy[locale]
-  const bc = basketPositionsCopy[locale]
-  const common = marketCopy[locale].common
-  const slices = useMemo(() => {
-    const priced = (rows ?? []).filter((row) => row.value !== null && row.value > BigInt(0)).map((row) => ({ key: row.position.productId + row.position.outcomeKey, label: nameFor(products, row.position.productId, p.product), value: row.value as bigint, cash: false }))
-    const held = (baskets ?? []).flatMap((row) => { const value = basketMarketValue(row); return value !== null && value > BigInt(0) ? [{ key: `basket:${row.portfolioId}`, label: row.portfolioName, value, cash: false }] : [] })
-    const all = cash !== null && cash > BigInt(0) ? [...priced, ...held, { key: 'cash', label: p.cash, value: cash, cash: true }] : [...priced, ...held]
-    const whole = all.reduce((sum, slice) => sum + slice.value, BigInt(0))
-    return { whole, items: all.sort((a, b) => a.value === b.value ? 0 : a.value > b.value ? -1 : 1).map((slice) => ({ ...slice, ratio: share(slice.value, whole) })) }
-  }, [baskets, cash, p.cash, p.product, products, rows])
-  const { masked } = useAmountMask()
-  // With nothing but cash there is no allocation to show; the holdings section below says "no holdings" once.
-  // While loading it draws nothing either, so the page never shows bars here and then collapses them (a jump).
-  if (!error && ((loading && !rows) || slices.items.every((slice) => slice.cash))) return null
-  return <>
-    <SectionHead index="01" title={p.allocation} note={p.allocationNote} />
-    {error ? <StateBlock tone="error" title={p.loadError} retry={retry} retryLabel={common.retry} />
-      : loading && !rows ? <Skeleton rows={3} />
-      : slices.items.length === 0 ? <StateBlock title={p.positionsEmpty} body={p.positionsEmptyBody} action={<button type="button" className={s.link} onClick={() => openPath('/markets')}>{p.browse}</button>} />
-      : <>
-        <div className={s.alloc} role="img" aria-label={slices.items.map((slice) => `${slice.label} ${pct(slice.ratio, locale)}`).join(', ')}>
-          {slices.items.map((slice, index) => <i key={slice.key} data-cash={slice.cash || undefined} style={{ flexBasis: `${slice.ratio * 100}%`, animationDelay: `${index * 60}ms` }} />)}
-        </div>
-        <ul className={s.allocLegend}>{slices.items.map((slice) => <li key={slice.key} data-cash={slice.cash || undefined}>
-          <span className={s.allocKey} aria-hidden="true" />
-          <span>{slice.label}</span>
-          <small className={s.num}>{masked ? AMOUNT_MASK : bare(slice.value)}</small>
-          <b className={s.num}>{pct(slice.ratio, locale)}</b>
-        </li>)}</ul>
-        {partial && <p className={s.muted} role="status" style={{ margin: '12px 0 0', fontSize: 12 }}>{bc.partial}</p>}
-      </>}
-  </>
-}
-
 function useHistory(productId?: string) {
   const history = useQuery(`portfolio:history:${productId ?? 'all'}`, () => getPortfolioHistory(productId), { staleTime: 60_000 })
   const points = useMemo(() => (history.data ?? [])
@@ -301,6 +201,13 @@ function useHistory(productId?: string) {
 
 function useHistoryPoints() {
   return useHistory().points
+}
+
+/** The value line alone, for the overview hero (2026-10-29). */
+function HistoryChart() {
+  const { locale } = useI18n()
+  const { points } = useHistory()
+  return points.length >= 2 ? <PortfolioHistoryChart points={points} locale={locale} unit="USDT" /> : null
 }
 
 function History({ productId, index = '02' }: { productId?: string; index?: string }) {
@@ -377,7 +284,7 @@ function EmptyHoldings() {
 function Tools() {
   const { locale } = useI18n()
   const t = portfolioCopy[locale].tools
-  const items: Array<[string, string]> = [[t.cash, '/assets/cash'], [t.activity, '/assets/activity'], [t.calendar, '/assets/yield-calendar'], [t.rebalance, '/assets/rebalance'], [t.statements, '/assets/statements'], [myPredictionsCopy[locale].entry, '/assets/predictions']]
+  const items: Array<[string, string]> = [[t.cash, '/assets/cash'], [t.activity, '/assets/activity'], [t.statements, '/assets/statements'], [myPredictionsCopy[locale].entry, '/assets/predictions']]
   return <div className={s.toolGrid}>{items.map(([label, path]) => <button key={path} type="button" onClick={() => openPath(path)}><span>{label}</span><ChevronRight size={15} /></button>)}</div>
 }
 
@@ -405,6 +312,8 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
     return out
   }, [rows])
   const sourceLabels = INCOME_SOURCES[locale] ?? INCOME_SOURCES.en!
+  const [day, setDay] = useState<string | null>(null)
+  const shownRows = useMemo(() => day ? rows.filter((item) => new Date(item.date).toLocaleDateString('en-CA') === day) : rows, [rows, day])
   const knownCredits = useRef<Set<string> | null>(null)
   const momentNode = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -423,13 +332,14 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
       : !settled ? <Skeleton rows={3} />
       : !rows.length ? <StateBlock title={p.incomeEmpty} body={p.incomeEmptyBody} />
       : <>
-        {!productId && <StatStrip fit items={(['quant', 'prediction', 'rwa'] as const).map((key) => ({
+        {!productId && <IncomeCalendar rows={rows} locale={locale} masked={masked} day={day} onDay={setDay} />}
+        {!productId && <StatStrip fit items={(['quant', 'prediction', 'rwa'] as const).filter((key) => key !== 'rwa' || bySource.rwa !== BigInt(0)).map((key) => ({
           label: sourceLabels[key], value: masked ? AMOUNT_MASK : signed(bySource[key], locale).replace(/ USDT$/, ''),
           tone: masked || bySource[key] === BigInt(0) ? undefined : bySource[key] > BigInt(0) ? 'up' as const : 'down' as const,
         }))} />}
         <div className={s.tableHead} aria-hidden="true"><span>{p.product} · {p.period}</span><span>{p.income}</span></div>
-        <ul className={s.list}>{rows.map((item, index) => {
-          const month = item.date.slice(0, 7), head = index === 0 || rows[index - 1]!.date.slice(0, 7) !== month
+        <ul className={s.list}>{shownRows.map((item, index) => {
+          const month = item.date.slice(0, 7), head = index === 0 || shownRows[index - 1]!.date.slice(0, 7) !== month
           const down = item.atomic !== null && item.atomic < BigInt(0)
           const body = <>
             <span className={s.rowMain}><b className={s.clamp2} dir="auto">{item.title}</b><small>{item.sub}</small></span>
@@ -500,15 +410,16 @@ function OpenOrders({ productId }: { productId?: string }) {
   </>
 }
 
-const HOLDING_TITLES: Partial<Record<string, { quant: string; bets: string }>> = {
-  'zh-CN': { quant: '考拉量化', bets: '进行中的预测' }, en: { quant: 'Koala Quant', bets: 'Predictions in play' }, es: { quant: 'Koala Quant', bets: 'Predicciones en juego' },
-  fr: { quant: 'Koala Quant', bets: 'Prédictions en cours' }, pt: { quant: 'Koala Quant', bets: 'Previsões em jogo' }, ar: { quant: 'Koala Quant', bets: 'توقعات قائمة' }, hi: { quant: 'Koala Quant', bets: 'चालू प्रेडिक्शन' },
+const TAB_LABELS: Partial<Record<string, Record<Tab | 'other', string>>> = {
+  'zh-CN': { overview: '资产', income: '收益', orders: '记录', other: '其他持仓' }, en: { overview: 'Assets', income: 'Income', orders: 'Records', other: 'Other holdings' },
+  es: { overview: 'Activos', income: 'Ingresos', orders: 'Registros', other: 'Otras posiciones' }, fr: { overview: 'Actifs', income: 'Revenus', orders: 'Historique', other: 'Autres avoirs' },
+  pt: { overview: 'Ativos', income: 'Rendimentos', orders: 'Registros', other: 'Outras posições' }, ar: { overview: 'الأصول', income: 'الدخل', orders: 'السجل', other: 'حيازات أخرى' }, hi: { overview: 'संपत्ति', income: 'आय', orders: 'रिकॉर्ड', other: 'अन्य होल्डिंग' },
 }
 
 const INCOME_SOURCES: Partial<Record<string, Record<'quant' | 'prediction' | 'rwa', string>>> = {
-  'zh-CN': { quant: '考拉量化', prediction: '预测', rwa: 'RWA 产品' }, en: { quant: 'Koala Quant', prediction: 'Predictions', rwa: 'RWA products' },
-  es: { quant: 'Koala Quant', prediction: 'Predicciones', rwa: 'Productos RWA' }, fr: { quant: 'Koala Quant', prediction: 'Prédictions', rwa: 'Produits RWA' },
-  pt: { quant: 'Koala Quant', prediction: 'Previsões', rwa: 'Produtos RWA' }, ar: { quant: 'Koala Quant', prediction: 'التوقعات', rwa: 'منتجات RWA' }, hi: { quant: 'Koala Quant', prediction: 'प्रेडिक्शन', rwa: 'RWA उत्पाद' },
+  'zh-CN': { quant: '考拉量化', prediction: '预测', rwa: '其他' }, en: { quant: 'Koala Quant', prediction: 'Predictions', rwa: 'Other' },
+  es: { quant: 'Koala Quant', prediction: 'Predicciones', rwa: 'Otros' }, fr: { quant: 'Koala Quant', prediction: 'Prédictions', rwa: 'Autres' },
+  pt: { quant: 'Koala Quant', prediction: 'Previsões', rwa: 'Outros' }, ar: { quant: 'Koala Quant', prediction: 'التوقعات', rwa: 'أخرى' }, hi: { quant: 'Koala Quant', prediction: 'प्रेडिक्शन', rwa: 'अन्य' },
 }
 const fmtMonth = (iso: string, locale: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(locale, { year: 'numeric', month: 'long' }) }
 
@@ -605,55 +516,4 @@ export function PositionDetailScreen({ id }: { id: string | null }) {
   </MaisonPage>
 }
 
-const DETAIL_KEY = 'rwa.assets.detail'
-const detailCopy: Partial<Record<string, [string, string]>> = { 'zh-CN': ['明细', '收起'], en: ['Details', 'Hide'], es: ['Detalle', 'Ocultar'], fr: ['Détail', 'Masquer'], pt: ['Detalhes', 'Ocultar'], ar: ['التفاصيل', 'إخفاء'], hi: ['विवरण', 'छिपाएँ'] }
-
-/**
- * Palette A total: one figure, one line under it (P&L once there are holdings, otherwise what is free to use), the four
- * money actions right there, and the breakdown folded away until asked for (remembered on this device).
- */
-function PaperTotal({ masked, onMask, loading, figure, line, note, breakdown, notes }: { masked: boolean; onMask: () => void; loading: boolean; figure: ReactNode; line: ReactNode; note: string; breakdown: ReactNode; notes: ReactNode }) {
-  const { locale, t } = useI18n()
-  const p = portfolioCopy[locale]
-  const hc = heroCardCopy[locale]
-  const reduced = useReducedMotion()
-  const [open, setOpen] = useState(false)
-  useEffect(() => { try { setOpen(window.localStorage.getItem(DETAIL_KEY) === '1') } catch { /* closed by default */ } }, [])
-  const toggle = () => setOpen((value) => { try { window.localStorage.setItem(DETAIL_KEY, value ? '0' : '1') } catch { /* not remembered */ } return !value })
-  const [more, less] = detailCopy[locale] ?? detailCopy.en!
-  const actions = [
-    { label: t('wallet.deposit'), path: '/assets/cash/deposit', Icon: ArrowDownToLine },
-    { label: t('wallet.withdraw'), path: '/assets/cash/withdraw', Icon: ArrowUpFromLine },
-    { label: t('wallet.transfer'), path: '/assets/cash/transfer', Icon: ArrowRightLeft },
-    { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', Icon: QrCode },
-  ]
-  return <section className={pa.total} aria-live="polite">
-    <div className={pa.head}>
-      <span>{p.total} · USDT</span>
-      <button type="button" className={pa.eye} aria-pressed={masked} aria-label={masked ? hc.showAmounts : hc.hideAmounts} onClick={onMask}>{masked ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
-    </div>
-    <div className={pa.figureRow}>
-      <div>
-        {/* Same line while loading (a dash, softly pulsing) so nothing below moves when the figure arrives. */}
-        <p className={`${pa.figure} ${s.num}`} data-loading={loading || undefined}>{loading ? '—' : figure}</p>
-        <p className={pa.line}>{line}</p>
-      </div>
-    </div>
-    <div className={pa.actions}>
-      {actions.map(({ label, path, Icon }) => <button key={path} type="button" onClick={() => { navigator.vibrate?.(6); openPath(path) }}><span className={pa.tileFace}><Icon size={22} strokeWidth={1.7} aria-hidden="true" /></span><span>{label}</span></button>)}
-    </div>
-    <button type="button" className={pa.disclose} aria-expanded={open} onClick={toggle}>
-      <span>{open ? less : more}</span>
-      <motion.span animate={{ rotate: open ? 180 : 0 }} transition={reduced ? { duration: 0 } : { type: 'spring', stiffness: 420, damping: 30 }} style={{ display: 'grid' }}><ChevronDown size={16} aria-hidden="true" /></motion.span>
-    </button>
-    <AnimatePresence initial={false}>
-      {open && <motion.div key="detail" className={pa.detail} initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-        transition={reduced ? { duration: 0 } : { height: { type: 'spring', stiffness: 380, damping: 36 }, opacity: { duration: .2 } }}>
-        {breakdown}
-        <p className={pa.note}>{note}</p>
-      </motion.div>}
-    </AnimatePresence>
-    {notes}
-  </section>
-}
 

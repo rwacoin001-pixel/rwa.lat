@@ -1,0 +1,23 @@
+/* Income calendar (2026-10-29): paper card, 7 columns; a day with a result is tinted by its sign and size. */
+.cal { margin-bottom: 24px; padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.head { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; gap: 8px; margin-bottom: 12px; }
+.head > span { display: grid; justify-items: center; gap: 2px; }
+.head b { color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.head small { color: var(--m-muted); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.head small[data-tone='up'] { color: var(--m-up); }
+.head small[data-tone='down'] { color: var(--m-down); }
+.head button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); cursor: pointer; }
+.head button:disabled { opacity: .3; cursor: default; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.weekday { padding-bottom: 4px; color: var(--m-faint); font-size: 11px; line-height: 16px; text-align: center; }
+.day { display: grid; align-content: center; justify-items: center; gap: 0; aspect-ratio: 1 / 1.05; min-width: 0; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--m-ink); font: inherit; cursor: pointer; transition: transform 120ms cubic-bezier(.34, 1.56, .64, 1); }
+.day:disabled { color: var(--m-faint); cursor: default; }
+.day b { font-size: 13px; font-weight: 500; line-height: 16px; }
+.day small { overflow: hidden; max-width: 100%; font-size: 11px; line-height: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.day[data-tone='up'] { background: color-mix(in srgb, var(--m-up, #0f9d7a) calc(var(--depth) * 100%), transparent); }
+.day[data-tone='down'] { background: color-mix(in srgb, var(--m-down, #d14b4b) calc(var(--depth) * 100%), transparent); }
+.day[data-tone='flat'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.day[data-today] b { text-decoration: underline; text-underline-offset: 3px; }
+.day[aria-pressed='true'] { box-shadow: inset 0 0 0 2px var(--m-ink); }
+.day:active:not(:disabled) { transform: scale(.94); }
+.day[data-strong] { color: #fff; }
