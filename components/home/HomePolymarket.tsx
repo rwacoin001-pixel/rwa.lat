@@ -16,6 +16,8 @@ type Market = {
   id: string
   slug: string
   eventSlug: string | null
+  /** Polymarket event id: open the same event page the Prediction tab opens (/prediction/event-<id>). */
+  eventKey?: string | null
   question: string
   category: 'macro' | 'crypto' | 'commodities' | 'other'
   outcomes: Array<{ label: string; impliedProbability: number }>
@@ -93,7 +95,7 @@ export function HomePolymarket() {
       const cached = translations[key]
       const translated = originals.has(key) ? undefined : cached
       return <div className={styles.card} key={market.id}>
-      <button type="button" className={styles.cardLink} onClick={() => openPath(`/prediction/${encodeURIComponent(market.id)}`)}>
+      <button type="button" className={styles.cardLink} onClick={() => openPath(market.eventKey ? `/prediction/event-${encodeURIComponent(market.eventKey)}` : `/prediction/${encodeURIComponent(market.id)}`)}>
         <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}</span>
         <strong className={styles.question} lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>
         <span className={styles.outcomes}>{market.outcomes.slice(0, 2).map((outcome, index) => <span className={styles.outcome} key={`${market.id}-${index}`}><span lang={translated ? locale : 'en'}>{translated?.outcomes[index] ?? outcome.label}</span><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(outcome.impliedProbability)}</b></span>)}</span>

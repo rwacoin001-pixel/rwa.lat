@@ -120,3 +120,12 @@ button.unit { cursor: pointer; }
 .codeNote { min-height: 18px; margin: 0; color: var(--m-up); font-size: 13px; text-align: center; }
 .switch { justify-self: center; min-height: 40px; padding: 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 13px; cursor: pointer; }
 .cta:disabled > span:last-child:not(:first-child) { display: none; }
+
+/* iPhone home-screen app (2026-10-28): when the page was a little shorter than its content, WebKit shrank the stage and
+   the keypad instead of scrolling, and the amount spilled onto the keys. Blocks never shrink now; on phones up to
+   900px tall the stage and keys are a touch more compact, so header + amount + keypad fit without scrolling. */
+.flow > * { flex-shrink: 0; }
+@media (max-height: 900px) {
+  .stage { min-height: 136px; padding: 12px 0 8px; }
+  .keys { grid-auto-rows: 52px; }
+}

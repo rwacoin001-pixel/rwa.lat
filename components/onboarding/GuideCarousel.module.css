@@ -598,3 +598,12 @@
 /* The sign-in pill hugs its words (it never stretches); the install key sits at the far end. */
 .actionBar { justify-content: space-between; }
 .actionBar .signIn { flex: 0 1 auto; min-width: 0; }
+
+/* 2026-10-28 (iPhone home-screen app): the scene photos end in a mid-grey studio floor (about #bcbec2), so the light
+   page behind them showed as a pale band under the photo on tall phones. The page now takes the photos' own grey, the
+   photo's top and bottom edges fade into it, and the scene sits a little lower under the status bar. */
+:global(html:not([data-theme='dark'])) .guide { --page: #bdbfc3; background: linear-gradient(180deg, #bcc0c5 0%, #bdbfc3 60%, #bebfc2 100%); }
+.paperStage { top: calc(48px + env(safe-area-inset-top));
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 86%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0, #000 6%, #000 86%, transparent 100%); }
+:global(html:not([data-theme='dark'])) .sceneFoot .fact { color: #3a414c; }

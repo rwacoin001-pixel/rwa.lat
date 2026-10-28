@@ -77,14 +77,6 @@ function beanPath(len: number, wid: number, bend: number) {
 type Params = { gx: number; gy: number; len: number; wid: number; lean: number; bend: number; dy: number; r: number; open: number; conv: number; by: number; bs: number; bt: number; tint: number }
 type Chip = { el: SVGRectElement; x: number; y: number; vx: number; vy: number; rot: number; vr: number; life: number }
 
-/** Until when the page counts as scrolling (shared by every buddy on the page). */
-let scrollingUntil = 0
-if (typeof window !== 'undefined') {
-  const mark = () => { scrollingUntil = performance.now() + 160 }
-  window.addEventListener('scroll', mark, { passive: true, capture: true })
-  window.addEventListener('touchmove', mark, { passive: true })
-}
-
 export class PaperBuddy {
   private id = ++uid
   private svg!: SVGSVGElement
@@ -139,12 +131,13 @@ export class PaperBuddy {
     else { this.last = performance.now(); this.frame = requestAnimationFrame(this.loop) }
   }
 
-  // Phones: draw at most ~30 times a second, and hold still while the page scrolls (scrolling gets every frame).
+  // Phones: draw at most ~30 times a second. It keeps moving while the page scrolls (2026-10-28: the user saw it
+  // freeze mid-scroll as "stuck"; a small SVG at 30fps costs little).
   private drawn = 0
   private loop(now: number) {
     if (!this.alive) return
     this.frame = requestAnimationFrame(this.loop)
-    if (now < scrollingUntil || now - this.drawn < 32) return
+    if (now - this.drawn < 32) return
     const dt = Math.min(.05, (now - this.last) / 1000)
     this.last = now
     this.drawn = now

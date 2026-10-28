@@ -52,3 +52,4 @@
   .plate, .cap, .cur { --dock-plate: var(--m-bg, #f5f6f8); --dock-cap: var(--m-card, #fff); }
 }
 @media (prefers-reduced-motion: reduce) { .plate, .cap, .label, .cur, .groove, .tab { transition: none; } }
+

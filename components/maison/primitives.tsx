@@ -4,22 +4,26 @@ import { Instrument_Serif } from 'next/font/google'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { AlertTriangle, CircleSlash, Inbox, RotateCw } from 'lucide-react'
-import { useId, type ReactNode } from 'react'
+import { useId, useRef, type ReactNode } from 'react'
 import { fmtPct } from '@/lib/money'
 import { PredictionImage } from '@/components/prediction-image'
 import styles from './maison.module.css'
 import { PullToRefresh } from './PullToRefresh'
+import { useScrollReveal } from './useScrollReveal'
 
 const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--home-display-latin', display: 'swap' })
 
 export { styles as maison }
 
 export function MaisonPage({ page, topbar, children, dock = false, cta = false, hero = false, className }: { page: string; topbar?: ReactNode; children: ReactNode; dock?: boolean; cta?: boolean; hero?: boolean; className?: string }) {
+  const body = useRef<HTMLDivElement>(null)
+  // Blocks below the first screen fade and rise in as they scroll into view (apple.com style).
+  useScrollReveal(body, ':scope > *, :scope > [role=tabpanel] > *')
   return <section className={`${styles.root} ${display.variable} ${GeistSans.variable} ${GeistMono.variable}${className ? ` ${className}` : ''}`} data-maison-page={page} data-dock={dock} data-cta={cta} data-hero={hero || undefined}>
     {topbar}
     {dock && <PullToRefresh />}
     <div className={styles.grain} aria-hidden="true" />
-    <div className={styles.body}>{children}</div>
+    <div ref={body} className={styles.body}>{children}</div>
   </section>
 }
 
