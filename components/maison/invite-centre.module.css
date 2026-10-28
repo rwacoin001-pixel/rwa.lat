@@ -1,0 +1,91 @@
+/* Invite centre in the Community tab (2026-10-28, docs/design-system.md §7.7). Paper & Glass: one paper pass with a warm
+   photo, the code and the link; porcelain + ink buttons; a three-figure row; the rewards card; one rules row; the team as
+   a paper list. No guilloche, foil or card chip. Every size is on the §3.1 scale. */
+.pass { overflow: hidden; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.photo { position: relative; height: 160px; background: #d9d4cc; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 40%; }
+.chip { position: absolute; top: 12px; left: 12px; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(11, 18, 32, .26); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .4); color: #fff; font-size: 13px; font-weight: 600; }
+.codeRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 16px 12px; }
+.codeRow > div { display: grid; gap: 2px; min-width: 0; }
+.codeRow small { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.code { overflow: hidden; color: var(--m-ink); font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: .04em; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.qr.qr { display: grid; flex: none; place-items: center; width: 64px; height: 64px; padding: 0; border: 0; border-radius: 12px; background: #ffffff; box-shadow: inset 0 0 0 .5px rgba(11, 18, 32, .1), 0 6px 16px -10px rgba(15, 23, 42, .35); cursor: zoom-in; }
+.qr.qr svg { display: block; }
+.linkRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 0 16px; padding: 12px 0 16px; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.linkRow span { overflow: hidden; min-width: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.linkRow.linkRow button { flex: none; min-height: 44px; padding: 0; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+
+/* Buttons: porcelain copy and poster, ink share (the main action) with its round icon. */
+.actions { display: grid; grid-template-columns: 1fr 1fr 1.4fr; gap: 8px; margin-top: 12px; }
+.tile.tile, .share.share { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 0; height: 56px; padding: 0 12px; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.tile.tile { background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); }
+.share.share { justify-content: space-between; padding: 6px 6px 6px 20px; background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow); }
+.share.share i { display: grid; flex: none; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--pa-card, #fff); color: var(--m-ink); font-style: normal; }
+.tile.tile:active, .share.share:active { transform: scale(.96); }
+.tile.tile:disabled { opacity: .45; cursor: default; }
+.feedback { min-height: 16px; margin: 8px 4px 0; color: var(--m-muted); font-size: 12px; line-height: 16px; text-align: center; }
+.feedback[data-tone='error'] { color: var(--m-down); }
+
+/* What sharing did: three figures under a 15px label. */
+.funnel { margin-top: 16px; padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.funnel h2 { margin: 0 0 8px; color: var(--m-muted); font-size: 13px; font-weight: 500; line-height: 18px; }
+.funnel dl, .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.funnel dl div, .stats div { display: grid; gap: 2px; min-width: 0; }
+.funnel dt, .stats dt { color: var(--m-muted); font-size: 12px; line-height: 16px; white-space: nowrap; }
+.funnel dd { margin: 0; color: var(--m-ink); font-size: 22px; font-weight: 600; line-height: 28px; font-variant-numeric: tabular-nums; }
+
+/* Rewards: the claimable figure large, three small figures under a hairline, the ink claim button. */
+.card { margin-top: 16px; padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.cardHead { margin: 0; color: var(--m-muted); font-size: 13px; font-weight: 500; line-height: 18px; }
+.amount { display: flex; align-items: baseline; gap: 8px; margin: 4px 0 0; }
+.amount span { color: var(--m-ink); font-size: 40px; font-weight: 600; line-height: 48px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.amount small { color: var(--m-muted); font-size: 13px; font-weight: 500; }
+.stats { margin-top: 12px; padding-top: 12px; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.stats dd { margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; }
+.claim.claim { width: 100%; height: 56px; margin-top: 16px; border: 0; border-radius: 999px; background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.claim.claim:disabled { background: var(--pa-fill-strong, rgba(11, 18, 32, .08)); color: var(--m-muted); box-shadow: none; cursor: default; }
+.hint { margin: 8px 0 0; color: var(--m-faint); font-size: 12px; line-height: 16px; }
+.error { margin: 8px 0 0; color: var(--m-down); font-size: 13px; line-height: 18px; }
+
+/* Rules: one row; the full rules (and the team tiers) open in the sheet. */
+.rulesRow.rulesRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; margin-top: 16px; padding: 16px; border: 0; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; }
+.rulesRow.rulesRow > span { display: grid; gap: 2px; min-width: 0; }
+.rulesRow.rulesRow b { font-size: 15px; font-weight: 500; line-height: 22px; }
+.rulesRow.rulesRow small { color: var(--m-muted); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.rulesRow.rulesRow small i { margin: 0 4px; font-style: normal; color: var(--m-faint); }
+.rulesRow.rulesRow svg { flex: none; color: var(--m-faint); }
+
+/* Team and rewards: two text tabs as a 22px head, fill chips for the level, a paper list. */
+.team { margin-top: 32px; }
+.teamHead { display: flex; gap: 20px; margin-bottom: 12px; }
+.teamHead.teamHead button { padding: 0; border: 0; background: none; color: var(--m-faint); font: inherit; font-size: 22px; font-weight: 600; line-height: 28px; cursor: pointer; }
+.teamHead.teamHead button[aria-pressed='true'] { color: var(--m-ink); }
+.chips { display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chips.chips button { display: inline-flex; flex: none; align-items: center; gap: 4px; height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.chips.chips button b { font-weight: 500; font-variant-numeric: tabular-nums; opacity: .7; }
+.chips.chips button[aria-pressed='true'] { background: var(--m-ink); color: var(--m-bg); }
+.rows { margin: 0; padding: 0 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); list-style: none; }
+.rows li { display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.rows li:last-child { border-bottom: 0; }
+.rows img { flex: none; width: 40px; height: 40px; border-radius: 50%; }
+.rows li > div { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.rows b { overflow: hidden; color: var(--m-ink); font-size: 15px; font-weight: 500; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.rows small, .rows time { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.rows time { flex: none; }
+.state { flex: none; height: 24px; padding: 0 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted); font-size: 12px; font-weight: 500; line-height: 24px; }
+.state[data-state='earned'] { color: var(--m-up, #067a5e); }
+.empty { margin: 0; padding: 24px 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); color: var(--m-muted); font-size: 15px; line-height: 22px; text-align: center; }
+.pager { display: flex; align-items: center; justify-content: space-between; margin-top: 12px; color: var(--m-muted); font-size: 13px; }
+.pager.pager button { min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.pager.pager button:disabled { color: var(--m-faint); cursor: default; }
+.disclaimer { margin: 16px 4px 0; color: var(--m-faint); font-size: 12px; line-height: 16px; }
+
+.qr.qr:focus-visible, .linkRow.linkRow button:focus-visible, .tile.tile:focus-visible, .share.share:focus-visible, .claim.claim:focus-visible, .rulesRow.rulesRow:focus-visible, .teamHead.teamHead button:focus-visible, .chips.chips button:focus-visible, .pager.pager button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .tile, .share.share { transition: none; } }
+
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .pass.pass .chip { color: #fff; }
+:global(.rwa-mobile) .pass.pass .codeRow small, :global(.rwa-mobile) .pass.pass .linkRow span, :global(.rwa-mobile) .card.card .amount small, :global(.rwa-mobile) .rulesRow.rulesRow small, :global(.rwa-mobile) .rows.rows small, :global(.rwa-mobile) .feedback.feedback { color: var(--m-muted); }
+:global(.rwa-mobile) .card.card .hint, :global(.rwa-mobile) .disclaimer.disclaimer { color: var(--m-faint); }
+:global(html[data-shell='android']) .chip { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }

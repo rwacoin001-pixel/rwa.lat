@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2, ImagePlus } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, CircleHelp, Copy, Share2, ImagePlus } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -15,10 +15,10 @@ import { ReferralTeamRewards } from './ReferralTeamRewards'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
 import { displayInviteCode } from '@/lib/referral-invite'
 import { porcelainAvatar } from '@/components/community-avatar'
-import { Guilloche } from './Guilloche'
 import { nativeCan, nativeShare } from '@/lib/native-app'
 import x from './referral.module.css'
 import c from './referral-card.module.css'
+import v from './invite-centre.module.css'
 
 type Tab = 'team' | 'rewards'
 type SheetKind = 'rules' | 'qr' | 'edit' | 'poster' | null
@@ -30,10 +30,6 @@ const ReferralPosterComposer = dynamic(() => import('./ReferralPosterComposer').
 const lengthClass = (code: string) => code.length <= 8 ? 's' : code.length <= 12 ? 'm' : 'l'
 
 /** One rate per level, side by side; never summed into a single figure. */
-function Rates({ rates, t, pct }: { rates: number[]; t: Translate; pct: (bps: number) => string }) {
-  return <div className={c.rates}>{rates.slice(0, 3).map((rate, i) => <div key={i}><span>{t(['一级', '二级', '三级'][i], `Level ${i + 1}`)}</span><b>{pct(rate)}</b></div>)}</div>
-}
-
 function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: string; busy: boolean; error: string; onSave: (code: string) => void; onDraftChange: () => void; t: Translate }) {
   const id = useId(), [draft, setDraft] = useState(code), [local, setLocal] = useState('')
   const submit = (event: FormEvent) => {
@@ -184,88 +180,86 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       <h1>{t('邀请好友', 'Invite friends')}</h1>
       <button type="button" className={x.iconBtn} aria-label={t('查看邀请规则', 'View invitation rules')} aria-haspopup="dialog" onClick={() => setSheet('rules')}><CircleHelp size={21} strokeWidth={1.75} /></button>
     </header>}>
-      <section className={c.stage} aria-label={t('我的邀请卡', 'My invitation card')}>
+      {/* Invite (2026-10-28, docs/design-system.md §7.7): one paper pass with a warm photo, the code and the link; three
+          buttons (porcelain copy and poster, ink share); what sharing did; the rewards card; the rules as one row that opens
+          the sheet; the team as a list. */}
+      <section className={v.pass} aria-label={t('我的邀请卡', 'My invitation card')}>
         {me.error
           ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={retryLabel} />
-          : !code ? <div className={c.card} aria-busy="true"><Skeleton rows={3} /></div> : <>
-            <article className={c.card}>
-              <Guilloche className={c.guilloche} />
-              <span className={c.foil} aria-hidden="true" />
-              <div className={c.cardHead}>
-                <span className={c.brand}><b>A-REIT</b>{t('邀请卡', 'Invitation')}</span>
-                <span className={c.chip} aria-hidden="true" />
-              </div>
-              <div className={c.codeBlock}>
-                <p className={c.codeLabel}>{t('我的邀请码', 'My invitation code')}
-                  <button type="button" className={c.edit} aria-label={t('修改邀请码', 'Edit invitation code')} aria-haspopup="dialog" onClick={openEdit}><Pencil size={11} strokeWidth={1.8} aria-hidden="true" />{t('修改', 'Edit')}</button>
-                </p>
-                <p className={c.code} data-len={lengthClass(code)} dir="ltr">{displayInviteCode(code)}</p>
-              </div>
-              <div className={c.cardFoot}>
-                <p><small>{t('专属链接', 'Your link')}</small><span dir="ltr">{link.replace(/^https?:\/\//, '')}</span></p>
-                <button type="button" className={c.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={() => setSheet('qr')}>
-                  <QRCodeSVG value={link} size={50} marginSize={0} level="M" bgColor="#ffffff" fgColor="#1c1a15" title={t('邀请链接二维码', 'Invitation QR code')} />
-                </button>
-              </div>
-            </article>
-            <div className={c.actions}>
-              <button type="button" onClick={() => void copy()}><CopyIcon size={17} strokeWidth={1.8} aria-hidden="true" />{copyLabel}</button>
-              <button type="button" onClick={() => void share()}><Share2 size={17} strokeWidth={1.8} aria-hidden="true" />{t('分享', 'Share')}</button>
-              <button type="button" aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={17} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
+          : !code ? <div aria-busy="true"><Skeleton rows={3} /></div> : <>
+            <div className={v.photo}>
+              <img src="/media/home/cards/invite-720.webp" alt="" width={720} height={450} decoding="async" />
+              <span className={v.chip}>{t('邀请好友', 'Invite friends')}</span>
             </div>
-            {/* What sharing did (2026-10-28): opens → sign-ups → first Koala Quant subscriptions, last 30 days. */}
-            {funnel.data && <p className={c.funnel}>{t('近 30 天', 'Last 30 days')}<b>{t(`链接打开 ${funnel.data.opened.last30d} 次`, `${funnel.data.opened.last30d} opens`)}</b><i aria-hidden="true">·</i><b>{t(`注册 ${funnel.data.registered.last30d} 人`, `${funnel.data.registered.last30d} sign-ups`)}</b><i aria-hidden="true">·</i><b>{t(`首次申购 ${funnel.data.subscribed.last30d} 人`, `${funnel.data.subscribed.last30d} first subscriptions`)}</b></p>}
-            <p className={c.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
+            <div className={v.codeRow}>
+              <div>
+                <small>{t('我的邀请码', 'My invitation code')}</small>
+                <b className={v.code} dir="ltr">{displayInviteCode(code)}</b>
+              </div>
+              <button type="button" className={v.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={() => setSheet('qr')}>
+                <QRCodeSVG value={link} size={48} marginSize={0} level="M" bgColor="#ffffff" fgColor="#0b1220" title={t('邀请链接二维码', 'Invitation QR code')} />
+              </button>
+            </div>
+            <div className={v.linkRow}>
+              <span dir="ltr">{link.replace(/^https?:\/\//, '')}</span>
+              <button type="button" onClick={openEdit} aria-haspopup="dialog">{t('修改邀请码', 'Edit code')}</button>
+            </div>
           </>}
       </section>
+      {code && <div className={v.actions}>
+        <button type="button" className={v.tile} onClick={() => void copy()}><CopyIcon size={18} strokeWidth={1.8} aria-hidden="true" />{copyLabel}</button>
+        <button type="button" className={v.tile} aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={18} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
+        <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享邀请', 'Share')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
+      </div>}
+      <p className={v.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
 
-      <section className={c.panel} aria-labelledby={balanceId}>
-        <h2 id={balanceId} className={c.eyebrow}>{t('可领取奖励', 'Claimable rewards')}{sum && <button type="button" aria-haspopup="dialog" onClick={() => setSheet('rules')}>{t('规则', 'Rules')}</button>}</h2>
+      {/* What sharing did, last 30 days: opens (per browser) → sign-ups → first Koala Quant subscriptions. */}
+      {funnel.data?.opened && <section className={v.funnel} aria-label={t('近 30 天邀请效果', 'Last 30 days')}>
+        <h2>{t('近 30 天', 'Last 30 days')}</h2>
+        <dl>
+          <div><dt>{t('链接打开', 'Link opens')}</dt><dd>{funnel.data.opened.last30d}</dd></div>
+          <div><dt>{t('注册', 'Sign-ups')}</dt><dd>{funnel.data.registered.last30d}</dd></div>
+          <div><dt>{t('首次申购', 'First subscriptions')}</dt><dd>{funnel.data.subscribed.last30d}</dd></div>
+        </dl>
+      </section>}
+
+      <section className={v.card} aria-labelledby={balanceId}>
+        <h2 id={balanceId} className={v.cardHead}>{t('可领取奖励', 'Claimable rewards')}</h2>
         {summary.error
           ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
           : !sum ? <Skeleton rows={2} /> : <>
-            <p className={c.amount}><span>{money(sum.balances.available)}</span><small>{unit}</small></p>
-            <dl className={c.meta}>
+            <p className={v.amount} dir="ltr"><span>{money(sum.balances.available)}</span><small>{unit}</small></p>
+            <dl className={v.stats}>
               <div><dt>{t('已领取', 'Claimed')}</dt><dd>{money(sum.balances.claimed)}</dd></div>
               <div><dt>{t('累计奖励', 'Total earned')}</dt><dd>{money(sum.balances.total)}</dd></div>
               <div><dt>{t('邀请人数', 'Invited')}</dt><dd>{totalCount}</dd></div>
             </dl>
-            {sum.payoutsEnabled && <button type="button" className={c.claim} disabled={!claimable || claiming} aria-busy={claiming} onClick={() => void claim()}>
+            {sum.payoutsEnabled && <button type="button" className={v.claim} disabled={!claimable || claiming} aria-busy={claiming} onClick={() => void claim()}>
               {claiming ? t('领取中', 'Claiming') : t('领取到可用余额', 'Claim to available balance')}
             </button>}
-            <p className={c.claimHint} role="status">{claimNote || t('买入奖励与手续费返佣需手动领取；团队月结自动到账。', 'Purchase and fee rewards are claimed here; team settlement is credited automatically.')}</p>
-            {claimError && <p className={x.error} role="alert">{claimError}</p>}
+            <p className={v.hint} role="status">{claimNote || t('买入奖励和手续费返佣在这里领取；团队月结自动到账。', 'Purchase and fee rewards are claimed here; team settlement is credited automatically.')}</p>
+            {claimError && <p className={v.error} role="alert">{claimError}</p>}
           </>}
       </section>
 
-      {sum && <section className={c.panel} aria-labelledby={`${balanceId}-sources`}>
-        <h2 id={`${balanceId}-sources`} className={c.eyebrow}>{t('奖励来源', 'How rewards are earned')}<b>{t(`规则 V${sum.rules.version}`, `Rules v${sum.rules.version}`)}</b></h2>
-        <ol className={c.ledger}>
-          {sum.purchaseRewardsEnabled !== false && <li>
-            <h3>{t('买入奖励', 'Purchase rewards')}</h3><span className={c.tag}>{t('手动领取', 'Claim')}</span>
-            <p>{t('好友买入并成交后，按成交金额一次性计入；考拉量化仅首次申购计入。', 'One-time, on the settled amount of an invitee’s purchase. Koala Quant counts the first subscription only.')}</p>
-            <Rates rates={sum.rules.holdingRatesBps} t={t} pct={pct} />
-          </li>}
-          {sum.feeRewardsEnabled !== false && <li>
-            <h3>{t('手续费返佣', 'Fee rebates')}</h3><span className={c.tag}>{t('手动领取', 'Claim')}</span>
-            <p>{t('按平台实际收取的合格手续费计算，不含本金、充值和余额。', 'On eligible fees the platform actually collects. Principal, deposits and balances never count.')}</p>
-            <Rates rates={sum.rules.feeRatesBps} t={t} pct={pct} />
-          </li>}
-          <li>
-            <h3>{t('团队月结', 'Monthly team settlement')}</h3><span className={c.tag} data-tone="auto">{t('自动到账', 'Automatic')}</span>
-            <p>{t('按月净合格手续费分段累进计算，审核发放后直接进入可用余额。', 'Progressive on monthly net eligible fees; credited to available balance once reviewed and funded.')}</p>
-          </li>
-        </ol>
-      </section>}
+      {sum && <button type="button" className={v.rulesRow} aria-haspopup="dialog" onClick={() => setSheet('rules')}>
+        <span>
+          <b>{t('奖励规则', 'How rewards work')}</b>
+          <small>
+            {sum.purchaseRewardsEnabled !== false && <>{t('买入', 'Purchase')} {sum.rules.holdingRatesBps.slice(0, 3).map(pct).join(' · ')}</>}
+            {sum.purchaseRewardsEnabled !== false && sum.feeRewardsEnabled !== false && <i aria-hidden="true">／</i>}
+            {sum.feeRewardsEnabled !== false && <>{t('手续费', 'Fees')} {sum.rules.feeRatesBps.slice(0, 3).map(pct).join(' · ')}</>}
+          </small>
+        </span>
+        <ChevronRight size={18} aria-hidden="true" />
+      </button>}
 
-      {sum && <ReferralTeamRewards locale={locale} tiers={sum.rules.teamTiers} />}
-
-      <section className={c.panel} aria-label={t('团队与奖励记录', 'Team and reward records')}>
-        <div className={c.segmented} role="group" aria-label={t('记录类型', 'Record type')}>
-          {([['team', t(`团队成员 ${totalCount}`, `Members ${totalCount}`)], ['rewards', t('奖励记录', 'Rewards')]] as const).map(([key, label]) =>
+      <section className={v.team} aria-label={t('团队与奖励记录', 'Team and reward records')}>
+        <div className={v.teamHead}>
+          {([['team', t('我的团队', 'My team')], ['rewards', t('奖励记录', 'Rewards')]] as const).map(([key, label]) =>
             <button key={key} type="button" aria-pressed={tab === key} onClick={() => { setTab(key); setPage(1) }}>{label}</button>)}
         </div>
-        {tab === 'team' && <div className={c.levels} role="group" aria-label={t('团队层级', 'Team level')}>
+        {tab === 'team' && <div className={v.chips} role="group" aria-label={t('团队层级', 'Team level')}>
           {([['all', t('全部', 'All'), totalCount], ['1', t('一级', 'Level 1'), levelCount(1)], ['2', t('二级', 'Level 2'), levelCount(2)], ['3', t('三级', 'Level 3'), levelCount(3)]] as const).map(([value, label, count]) =>
             <button key={value} type="button" aria-pressed={level === value} onClick={() => { setLevel(value); setPage(1) }}>{label}<b>{count}</b></button>)}
         </div>}
@@ -273,31 +267,31 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
           ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={list.error.message} retry={list.refetch} retryLabel={retryLabel} />
           : !list.data ? <Skeleton rows={3} /> : <>
             {!list.data.items.length
-              ? <p className={c.empty} role="status">{tab === 'rewards' ? t('暂无奖励记录', 'No rewards yet') : level === 'all' ? t('分享邀请卡，好友注册后会出现在这里', 'Share your card. Friends who sign up appear here') : t('该层级暂无成员', 'No members at this level')}</p>
+              ? <p className={v.empty} role="status">{tab === 'rewards' ? t('还没有奖励记录', 'No rewards yet') : level === 'all' ? t('分享邀请，好友注册后会出现在这里。', 'Share your invite. Friends who sign up appear here.') : t('这一级还没有成员', 'No members at this level')}</p>
               : tab === 'team'
-                ? <ul className={c.rows}>{members.data?.items.map((row, index) => <li key={`${row.memberLabel}:${index}`}>
-                  <img className={c.monogram} data-level={row.level} src={porcelainAvatar(row.memberLabel)} alt="" width={36} height={36} aria-hidden="true" />
-                  <div><b dir="ltr">{t('用户', 'Member')} {row.memberLabel.slice(0, 6).toUpperCase()}</b><span>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</span></div>
+                ? <ul className={v.rows}>{members.data?.items.map((row, index) => <li key={`${row.memberLabel}:${index}`}>
+                  <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
+                  <div><b dir="ltr">{t('用户', 'Member')} {row.memberLabel.slice(0, 6).toUpperCase()}</b><small>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</small></div>
                   <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
                 </li>)}</ul>
-                : <ul className={c.rows}>{awards.data?.items.map(row => <li key={row.id}>
-                  <img className={c.monogram} data-level={row.level} src={porcelainAvatar(row.memberLabel)} alt="" width={36} height={36} aria-hidden="true" />
-                  <div><b>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><span>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {fmtDate(row.occurredAt, locale)}</span></div>
-                  <span className={c.state}>{states[row.state] ?? row.state}</span>
+                : <ul className={v.rows}>{awards.data?.items.map(row => <li key={row.id}>
+                  <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
+                  <div><b>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><small>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {fmtDate(row.occurredAt, locale)}</small></div>
+                  <span className={v.state} data-state={row.state}>{states[row.state] ?? row.state}</span>
                 </li>)}</ul>}
-            {list.data.total > PAGE_SIZE && <nav className={c.pager} aria-label={t('分页', 'Pagination')}>
+            {list.data.total > PAGE_SIZE && <nav className={v.pager} aria-label={t('分页', 'Pagination')}>
               <button type="button" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('上一页', 'Previous')}</button>
               <span>{page} / {pages}</span>
               <button type="button" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>{t('下一页', 'Next')}</button>
             </nav>}
           </>}
       </section>
-      <p className={c.disclaimer}>{t('奖励比例按层级分别计算，不代表投资收益，也不构成收益承诺。', 'Rates apply per level separately. They are not investment returns and carry no promise of income.')}</p>
+      <p className={v.disclaimer}>{t('奖励比例按层级分别计算，不代表投资收益，也不构成收益承诺。', 'Rates apply per level separately. They are not investment returns and carry no promise of income.')}</p>
     </Shell>
 
     {sheet === 'rules' && <ReferralSheet tall title={t('邀请规则', 'Invitation rules')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
       {sum
-        ? <ReferralRules rules={sum.rules} locale={locale} teamEnabled={sum.teamSettlementEnabled} />
+        ? <><ReferralRules rules={sum.rules} locale={locale} teamEnabled={sum.teamSettlementEnabled} /><ReferralTeamRewards locale={locale} tiers={sum.rules.teamTiers} /></>
         : summary.error
           ? <StateBlock tone="error" title={t('规则暂不可用', 'Rules unavailable')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
           : <Skeleton rows={3} />}

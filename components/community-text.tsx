@@ -7,7 +7,18 @@ import styles from './community-text.module.css'
 type Translation={text:string;sourceLang:string}
 const cache=new Map<string,Translation>()
 const flights=new Map<string,Promise<Translation>>()
-export function CommunityText({body,targetId,targetType='post',className,compact=false,onOpen}:{body:string;targetId:string;targetType?:'post'|'comment';className?:string;compact?:boolean;onOpen?:()=>void}){
+/** Already in the reader's language? Then "show translation" is noise (2026-10-28). Uses the stored language when there is one. */
+function sameLanguage(body:string,lang:string|undefined,locale:string){
+  const base=(value:string)=>value.toLowerCase().split('-')[0]
+  if(lang)return base(lang)===base(locale)
+  const letters=body.replace(/[\s\d\p{P}\p{S}]/gu,'')
+  if(!letters)return true
+  const han=(letters.match(/\p{Script=Han}/gu)??[]).length,kana=(letters.match(/[\p{Script=Hiragana}\p{Script=Katakana}]/gu)??[]).length,latin=(letters.match(/\p{Script=Latin}/gu)??[]).length
+  if(base(locale)==='zh')return han/letters.length>.5&&kana===0
+  if(base(locale)==='en')return latin/letters.length>.95&&han===0&&kana===0
+  return false
+}
+export function CommunityText({body,targetId,targetType='post',className,compact=false,onOpen,lang}:{body:string;targetId:string;targetType?:'post'|'comment';className?:string;compact?:boolean;onOpen?:()=>void;lang?:string}){
   const {locale}=useI18n(),copy=communityExperienceCopy[locale]
   const targetLang=locale==='zh-CN'?'zh-Hans':locale
   const key=JSON.stringify([targetType,targetId,body,targetLang])
@@ -47,7 +58,7 @@ export function CommunityText({body,targetId,targetType='post',className,compact
     <div className={styles.controls} onClick={e=>e.stopPropagation()}>
       {canExpand&&<button type="button" onClick={()=>setExpandedFor(expanded?null:identity)} aria-expanded={expanded}>{expanded?copy.collapse:copy.expand}</button>}
       {translated&&<span>{copy.from.replace('{language}',language)}</span>}
-      {body.trim()&&<button type="button" disabled={Boolean(busy)} onClick={()=>void translate()}>{busy?copy.translating:translated?copy.original:failed?copy.retry:copy.translate}</button>}
+      {body.trim()&&(translated||!sameLanguage(body,lang,locale))&&<button type="button" disabled={Boolean(busy)} onClick={()=>void translate()}>{busy?copy.translating:translated?copy.original:failed?copy.retry:copy.translate}</button>}
     </div>
   </div>
 }

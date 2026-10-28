@@ -21,7 +21,6 @@ import { CommunityFollowButton, CommunityFollowView, CommunityLike, useCommunity
 import { CommunityText } from './community-text'
 import { CommunityProofCard } from './community-proof'
 import { CommunityAvatar, CommunityMark, mediaSrc } from './community-avatar'
-import { CommunityBanner } from './community-banner'
 import { CommunityCompose, CommunityProfileEditor, CommunityReplyBar, useCommunityMe, type ComposeTarget } from './community-compose'
 import { communityComposeCopy } from '@/lib/maison-community-compose-copy'
 import { PublicShareButton } from './public-sharing'
@@ -280,7 +279,7 @@ function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, in
           </button>
           <button type="button" className={`${c.circleBtn} ${c.rowMore}`} aria-label={p.more} aria-haspopup="dialog" onClick={() => actions.onMore(post)}><MoreHorizontal size={18} strokeWidth={1.9} aria-hidden="true" /></button>
         </div>
-        <CommunityText body={post.body} targetId={post.id} className={c.text} compact onOpen={open} />
+        <CommunityText body={post.body} targetId={post.id} className={c.text} compact onOpen={open} lang={post.lang} />
         {post.proof && <CommunityProofCard proof={post.proof} locale={locale} />}
         <Images images={post.images} onOpen={open} />
         <Tags list={post.topics} topics={topics} locale={locale} />
@@ -426,11 +425,11 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const ui = communityUiCopy[locale]
   const p = profileCopy[locale]
   const circleText = circleCopy[locale] ?? circleCopy.en
-  const tabs = [{ key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }, ...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }])]
   // My circle (2026-10-28): who I invited / who invited me, for the tag on their posts and the circle timeline.
   const [circle, setCircle] = useState<{ members: CircleMember[]; showToInviter: boolean } | null>(null)
   useEffect(() => { if (isGuest) { setCircle(null); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => undefined) }, [isGuest])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
+  const tabs = [{ key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }, ...(isGuest || embedded || !circle ? [] : [{ key: 'circle' as const, label: circleText.tab }])]
   const actions = usePostActions(isGuest, go, locale, (postId) => setItems((previous) => previous.map((item) => item.id === postId ? { ...item, commentCount: item.commentCount + 1 } : item)))
   const rowActions: RowActions = { guest: isGuest, onLogin: actions.login, onReply: actions.onReply, onShare: actions.onShare, onMore: actions.onMore }
 
@@ -528,10 +527,13 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
               <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'me'} size={32} />
             </button>}
         </div>}
-        {view === 'feed' && <TimelineTabs label={ui.feed} value={sort} onChange={pickSort} options={tabs} />}
-        {view === 'feed' && sort !== 'circle' && topics.length > 0 && <div className={c.topics} role="group" aria-label={ui.topics}>
-          <button type="button" className={c.chip} aria-pressed={topic === null} onClick={() => setTopic(null)}>{t('common.viewAll')}</button>
-          {topics.map((entry) => <button key={entry.slug} type="button" className={c.chip} aria-pressed={topic === entry.slug} onClick={() => setTopic(entry.slug)}>{communityTopicTitle(entry.slug, topics, locale)}</button>)}
+        {/* One chip row (2026-10-28): how to sort (hot, latest, my circle), then the topics; tap a topic again to clear it. */}
+        {view === 'feed' && <div className={c.topics} role="group" aria-label={ui.feed}>
+          {tabs.map((option) => <button key={option.key} type="button" className={c.chip} aria-pressed={sort === option.key} onClick={() => pickSort(option.key)}>{option.label}</button>)}
+          {sort !== 'circle' && topics.length > 0 && <>
+            <i className={c.chipRule} aria-hidden="true" />
+            {topics.map((entry) => <button key={entry.slug} type="button" className={`${c.chip} ${c.topicChip}`} aria-pressed={topic === entry.slug} onClick={() => setTopic(topic === entry.slug ? null : entry.slug)}>#{communityTopicTitle(entry.slug, topics, locale)}</button>)}
+          </>}
         </div>}
       </header>
       {view === 'invite' ? (isGuest
@@ -640,7 +642,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
                 </div>
                 {author?.handle && !own && <CommunityFollowButton className={c.follow} handle={author.handle} guest={isGuest} onLogin={() => go('login')} />}
               </div>
-              <CommunityText body={data.post.body} targetId={data.post.id} className={c.focusText} />
+              <CommunityText body={data.post.body} targetId={data.post.id} className={c.focusText} lang={data.post.lang} />
               {data.post.proof && <CommunityProofCard proof={data.post.proof} locale={locale} />}
               <Images images={data.post.images} />
               <Tags list={data.post.topics} topics={topics} locale={locale} />
@@ -677,7 +679,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
                         <time className={c.time} dateTime={comment.createdAt ?? undefined}>{timeAgo(comment.createdAt)}</time>
                       </div>
                       {author?.handle && <p className={c.replyTo}>{p.replyingTo} <b dir="ltr">@{author.handle}</b></p>}
-                      {comment.body && <CommunityText body={comment.body} targetId={comment.id} targetType="comment" className={c.text} />}
+                      {comment.body && <CommunityText body={comment.body} targetId={comment.id} targetType="comment" className={c.text} lang={comment.lang} />}
                       <Images images={comment.images ?? []} />
                     </div>
                   </li>
@@ -729,7 +731,12 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
   const openMenu = () => profile && actions.openMenu({ type: 'profile', id: profile.id, title: profile.displayName }, shareProfile)
   const follow = useCommunityFollow(handle ?? '', isGuest || !handle, () => go('login'), () => void load(true))
   const head = useProfileHead(Boolean(profile))
-  const art = profile ? (profile.coverUrl ? <img src={mediaSrc(profile.coverUrl) ?? undefined} alt="" /> : <CommunityBanner seed={profile.handle || handle || ''} />) : null
+  // Banner (2026-10-28): their own cover; else their photo, blurred and softened (as Apple Music artist pages); else a plain
+  // fill. No generated colour fields.
+  const avatarArt = profile?.avatarUrl ? mediaSrc(profile.avatarUrl) : null
+  const art = profile ? (profile.coverUrl ? <img src={mediaSrc(profile.coverUrl) ?? undefined} alt="" />
+    : avatarArt ? <span className={c.bannerBlur} aria-hidden="true"><img src={avatarArt} alt="" /></span>
+    : <span className={c.bannerPlain} aria-hidden="true" />) : null
   return (
     <MaisonPage page="community-profile" className={c.page}>
       <div className={c.x} ref={head.root}>
