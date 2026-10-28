@@ -113,3 +113,18 @@ button.glass:active { transform: scale(.95); }
    The page keeps its dock clearance; the card reaches into it by the same 30px, so the page still never slides. */
 .shell { height: calc(100dvh - var(--app-dock-height, 52px) - env(safe-area-inset-bottom) - env(safe-area-inset-top) - 118px); --reach: 30px; margin-bottom: calc(var(--reach) * -1); max-height: 790px; }
 .badge { background: rgba(16, 20, 26, .3); }
+
+/* Light theme ground (2026-10-29, user: the frosted bottom should be near white to melt into the page). The blurred
+   photo sits under a warm-white veil; the ruler's type turns ink, the bars take the darker market colours. */
+:global(.rwa-mobile:not([data-theme='dark'])) .shell { background: #f4f3f0; }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell::before { background: linear-gradient(180deg, rgba(250, 249, 246, .55), rgba(250, 249, 246, .82)); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .days :is(small, b, span) { color: var(--m-ink, #111722); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .days b[data-tone='up'] { color: var(--q-gain, #0f9f80); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .days b[data-tone='down'] { color: var(--q-loss-text, #d0533f); }
+:global(.rwa-mobile:not([data-theme='dark'])) .bar { background: rgba(17, 23, 34, .22); }
+:global(.rwa-mobile:not([data-theme='dark'])) .col[data-tone='up'] .bar { background: #19c7aa; }
+:global(.rwa-mobile:not([data-theme='dark'])) .col[data-tone='down'] .bar { background: #e8806f; }
+:global(.rwa-mobile:not([data-theme='dark'])) .col[data-on] .bar { background: var(--m-ink, #111722); }
+:global(.rwa-mobile:not([data-theme='dark'])) .marker i { background: rgba(255, 255, 255, .85); box-shadow: 0 2px 8px -2px rgba(17, 23, 34, .18), inset 0 0 0 .5px rgba(17, 23, 34, .08); }
+:global(.rwa-mobile:not([data-theme='dark'])) .col small { opacity: .5; }
+:global(.rwa-mobile:not([data-theme='dark'])) .col[data-on] small { opacity: 1; }
