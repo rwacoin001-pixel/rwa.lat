@@ -269,7 +269,7 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
         <Timeline steps={[
           { title: c.sheet.redeemSteps.submit, body: '', done: true },
           { title: c.sheet.redeemSteps.settle, date: p?.tradeDate, body: '' },
-          { title: c.sheet.redeemSteps.arrive, body: '' },
+          { title: c.sheet.redeemSteps.arrive, body: c.sheet.redeemSteps.arriveNote },
         ]} />
         {error && <p className={styles.err} role="alert">{error}</p>}
         <div className={styles.reviewActs}>

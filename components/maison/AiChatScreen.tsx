@@ -135,6 +135,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
   const [status, setStatus] = useState<'loading' | 'ready' | 'disabled'>('loading')
   const [generation, setGeneration] = useState(0)
   const [keyboard, setKeyboard] = useState(0)
+  const [trayOpen, setTrayOpen] = useState(false)
   const [dockHeight, setDockHeight] = useState(150)
   const [revealId, setRevealId] = useState<number | null>(null)
   const [voice, setVoice] = useState<ComposerVoice>({ state: 'idle', live: '' })
@@ -309,7 +310,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
       </header>
 
       <div id="ai-panel-ai" className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
-        {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined}>
+        {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined} data-tray={trayOpen || undefined}>
           <BuddyFace size={132} mood={voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
           {/* One line, always: the greeting at rest, the reader's own words while they speak. */}
           {listeningHere
@@ -341,7 +342,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
       <div ref={dock} className={a.dockWrap} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
         {showWelcome && showsSuggestions(voice.state) && <ul className={a.chips} aria-label={pearl.suggestions}>{prompts.map(question => <li key={question}><button type="button" disabled={status !== 'ready'} onClick={() => { void ask(question) }}><span dir="auto">{question}</span></button></li>)}</ul>}
-        <AiNoticeTray key={`notices-${generation}`} locale={locale} disabled={sending || status !== 'ready'} onAsk={ask} onSummary={summarize} hidden={!signedIn || input.trim().length > 0 || voice.state !== 'idle'} />
+        <AiNoticeTray key={`notices-${generation}`} onOpenChange={setTrayOpen} locale={locale} disabled={sending || status !== 'ready'} onAsk={ask} onSummary={summarize} hidden={!signedIn || input.trim().length > 0 || voice.state !== 'idle'} />
         <AiComposer key={generation} value={input} onChange={setInput} onVoice={setVoice} voiceOverlay={!showWelcome} suggestions={false} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}
       </div>

@@ -27,15 +27,15 @@ import v2 from './quant-v2.module.css'
  * "For you" row, one paper card with the since-inception figure and three small ones, the NAV curve, the daily bars,
  * then how subscribing works and the specification as text rows. Everything on the §3 type scale and the Palette A colours.
  */
-type HeroCopy = { minLabel: string; cutoffLabel: string; cutoffShort: string; settleLabel: string; view: string; mine: string; min: (v: string) => string; cutoff: string; risk: string; basis: string; range: (a: string, b: string) => string; strategy: string; line: string; last30: string; days: (n: number) => string; nav: string; since: string; d7: string; d30: string; mdd: string; process: string; specs: string }
+type HeroCopy = { runningLabel: string; daysN: (n: number) => string; coverTag: string; coverLine: string; minLabel: string; cutoffLabel: string; cutoffShort: string; settleLabel: string; view: string; mine: string; min: (v: string) => string; cutoff: string; risk: string; basis: string; range: (a: string, b: string) => string; strategy: string; line: string; last30: string; days: (n: number) => string; nav: string; since: string; d7: string; d30: string; mdd: string; process: string; specs: string }
 const hero: Record<AppLocale, HeroCopy> = {
-  en: { minLabel: 'Minimum', cutoffLabel: 'Cut-off (SGT)', cutoffShort: '15:00 daily', settleLabel: 'Settlement', view: 'View product', mine: 'My position', min: (v) => `From ${v} USDT`, cutoff: 'Cut-off 15:00 SGT', risk: 'Capital at risk. Past results do not promise future ones.', basis: 'After management fees, before your own performance fee. Your payout can differ.', range: (a, b) => `${a} – ${b}`, strategy: 'About the product', line: 'Settled daily', last30: 'Past 30 days', days: (n) => `running ${n} days`, nav: 'NAV', since: 'Since inception', d7: '7 days', d30: '30 days', mdd: 'Max drawdown', process: 'How subscribing works', specs: 'Specification' },
-  'zh-CN': { minLabel: '起投', cutoffLabel: '截止（新加坡）', cutoffShort: '每天 15:00', settleLabel: '结算', view: '查看产品', mine: '我的持仓', min: (v) => `${v} USDT 起`, cutoff: '每天 15:00 截止（新加坡时间）', risk: '本金有亏损风险，过去的表现不代表将来。', basis: '已扣管理费，未扣你个人的业绩费；你自己的到账可能不同。', range: (a, b) => `${a} – ${b}`, strategy: '产品说明', line: '每日结算', last30: '过去 30 天', days: (n) => `已运行 ${n} 天`, nav: '净值', since: '成立以来', d7: '近 7 天', d30: '近 30 天', mdd: '最大回撤', process: '申购流程', specs: '产品规格' },
-  hi: { minLabel: 'न्यूनतम', cutoffLabel: 'दैनिक कट-ऑफ़', cutoffShort: '15:00 SGT', settleLabel: 'निपटान', view: 'प्रोडक्ट देखें', mine: 'मेरी होल्डिंग', min: (v) => `${v} USDT से`, cutoff: 'कट-ऑफ़ 15:00 SGT', risk: 'पूंजी जोखिम में है। पिछला प्रदर्शन भविष्य का वादा नहीं।', basis: 'प्रबंधन शुल्क के बाद, आपके प्रदर्शन शुल्क से पहले।', range: (a, b) => `${a} – ${b}`, strategy: 'प्रोडक्ट के बारे में', line: 'रोज़ निपटान', last30: 'पिछले 30 दिन', days: (n) => `${n} दिन से चालू`, nav: 'NAV', since: 'शुरुआत से', d7: '7 दिन', d30: '30 दिन', mdd: 'अधिकतम गिरावट', process: 'सब्सक्रिप्शन कैसे होता है', specs: 'विवरण' },
-  es: { minLabel: 'Mínimo', cutoffLabel: 'Cierre diario', cutoffShort: '15:00 SGT', settleLabel: 'Liquidación', view: 'Ver producto', mine: 'Mi posición', min: (v) => `Desde ${v} USDT`, cutoff: 'Cierre 15:00 SGT', risk: 'El capital está en riesgo. El pasado no garantiza el futuro.', basis: 'Tras comisión de gestión, antes de tu comisión de rendimiento.', range: (a, b) => `${a} – ${b}`, strategy: 'Sobre el producto', line: 'Liquidación diaria', last30: 'Últimos 30 días', days: (n) => `${n} días en marcha`, nav: 'Valor', since: 'Desde el inicio', d7: '7 días', d30: '30 días', mdd: 'Caída máxima', process: 'Cómo suscribirse', specs: 'Especificación' },
-  ar: { minLabel: 'الحد الأدنى', cutoffLabel: 'الإغلاق اليومي', cutoffShort: '15:00 SGT', settleLabel: 'التسوية', view: 'عرض المنتج', mine: 'مركزي', min: (v) => `ابتداءً من ${v} USDT`, cutoff: 'الإغلاق 15:00 بتوقيت سنغافورة', risk: 'رأس المال معرض للخطر. الأداء السابق لا يضمن المستقبل.', basis: 'بعد رسوم الإدارة وقبل رسوم الأداء الخاصة بك.', range: (a, b) => `${a} – ${b}`, strategy: 'عن المنتج', line: 'تسوية يومية', last30: 'آخر 30 يومًا', days: (n) => `يعمل منذ ${n} يومًا`, nav: 'صافي القيمة', since: 'منذ الإطلاق', d7: '7 أيام', d30: '30 يومًا', mdd: 'أقصى تراجع', process: 'كيف يتم الاكتتاب', specs: 'المواصفات' },
-  fr: { minLabel: 'Minimum', cutoffLabel: 'Clôture du jour', cutoffShort: '15:00 SGT', settleLabel: 'Règlement', view: 'Voir le produit', mine: 'Ma position', min: (v) => `Dès ${v} USDT`, cutoff: 'Clôture 15:00 SGT', risk: 'Capital à risque. Le passé ne garantit pas l’avenir.', basis: 'Après frais de gestion, avant votre commission de performance.', range: (a, b) => `${a} – ${b}`, strategy: 'À propos du produit', line: 'Règlement quotidien', last30: '30 derniers jours', days: (n) => `${n} jours d’activité`, nav: 'VL', since: 'Depuis le lancement', d7: '7 jours', d30: '30 jours', mdd: 'Baisse max.', process: 'Comment souscrire', specs: 'Caractéristiques' },
-  pt: { minLabel: 'Mínimo', cutoffLabel: 'Corte diário', cutoffShort: '15:00 SGT', settleLabel: 'Liquidação', view: 'Ver produto', mine: 'Minha posição', min: (v) => `A partir de ${v} USDT`, cutoff: 'Corte 15:00 SGT', risk: 'Capital em risco. O passado não garante o futuro.', basis: 'Após taxa de gestão, antes da sua taxa de desempenho.', range: (a, b) => `${a} – ${b}`, strategy: 'Sobre o produto', line: 'Liquidação diária', last30: 'Últimos 30 dias', days: (n) => `${n} dias em operação`, nav: 'Cota', since: 'Desde o início', d7: '7 dias', d30: '30 dias', mdd: 'Queda máxima', process: 'Como subscrever', specs: 'Especificação' },
+  en: { runningLabel: 'Running', daysN: (n) => `${n} days`, coverTag: 'Singapore', coverLine: 'A quant strategy settled every day; profits land in your available balance.', minLabel: 'Minimum', cutoffLabel: 'Cut-off (SGT)', cutoffShort: '15:00 daily', settleLabel: 'Settlement', view: 'View product', mine: 'My position', min: (v) => `From ${v} USDT`, cutoff: 'Cut-off 15:00 SGT', risk: 'Capital at risk. Past results do not promise future ones.', basis: 'After management fees, before your own performance fee. Your payout can differ.', range: (a, b) => `${a} – ${b}`, strategy: 'About the product', line: 'Settled daily', last30: 'Past 30 days', days: (n) => `running ${n} days`, nav: 'NAV', since: 'Since inception', d7: '7 days', d30: '30 days', mdd: 'Max drawdown', process: 'How subscribing works', specs: 'Specification' },
+  'zh-CN': { runningLabel: '已运行', daysN: (n) => `${n} 天`, coverTag: '新加坡', coverLine: '量化策略，每天结算；收益每天到你的可用余额。', minLabel: '起投', cutoffLabel: '截止（新加坡）', cutoffShort: '每天 15:00', settleLabel: '结算', view: '查看产品', mine: '我的持仓', min: (v) => `${v} USDT 起`, cutoff: '每天 15:00 截止（新加坡时间）', risk: '本金有亏损风险，过去的表现不代表将来。', basis: '已扣管理费，未扣你个人的业绩费；你自己的到账可能不同。', range: (a, b) => `${a} – ${b}`, strategy: '产品说明', line: '每日结算', last30: '过去 30 天', days: (n) => `已运行 ${n} 天`, nav: '净值', since: '成立以来', d7: '近 7 天', d30: '近 30 天', mdd: '最大回撤', process: '申购流程', specs: '产品规格' },
+  hi: { runningLabel: 'चालू', daysN: (n) => `${n} दिन`, coverTag: 'सिंगापुर', coverLine: 'हर दिन निपटने वाली क्वांट रणनीति; लाभ आपके उपलब्ध बैलेंस में।', minLabel: 'न्यूनतम', cutoffLabel: 'दैनिक कट-ऑफ़', cutoffShort: '15:00 SGT', settleLabel: 'निपटान', view: 'प्रोडक्ट देखें', mine: 'मेरी होल्डिंग', min: (v) => `${v} USDT से`, cutoff: 'कट-ऑफ़ 15:00 SGT', risk: 'पूंजी जोखिम में है। पिछला प्रदर्शन भविष्य का वादा नहीं।', basis: 'प्रबंधन शुल्क के बाद, आपके प्रदर्शन शुल्क से पहले।', range: (a, b) => `${a} – ${b}`, strategy: 'प्रोडक्ट के बारे में', line: 'रोज़ निपटान', last30: 'पिछले 30 दिन', days: (n) => `${n} दिन से चालू`, nav: 'NAV', since: 'शुरुआत से', d7: '7 दिन', d30: '30 दिन', mdd: 'अधिकतम गिरावट', process: 'सब्सक्रिप्शन कैसे होता है', specs: 'विवरण' },
+  es: { runningLabel: 'En marcha', daysN: (n) => `${n} días`, coverTag: 'Singapur', coverLine: 'Una estrategia cuantitativa liquidada a diario; las ganancias van a tu saldo disponible.', minLabel: 'Mínimo', cutoffLabel: 'Cierre diario', cutoffShort: '15:00 SGT', settleLabel: 'Liquidación', view: 'Ver producto', mine: 'Mi posición', min: (v) => `Desde ${v} USDT`, cutoff: 'Cierre 15:00 SGT', risk: 'El capital está en riesgo. El pasado no garantiza el futuro.', basis: 'Tras comisión de gestión, antes de tu comisión de rendimiento.', range: (a, b) => `${a} – ${b}`, strategy: 'Sobre el producto', line: 'Liquidación diaria', last30: 'Últimos 30 días', days: (n) => `${n} días en marcha`, nav: 'Valor', since: 'Desde el inicio', d7: '7 días', d30: '30 días', mdd: 'Caída máxima', process: 'Cómo suscribirse', specs: 'Especificación' },
+  ar: { runningLabel: 'يعمل منذ', daysN: (n) => `${n} يومًا`, coverTag: 'سنغافورة', coverLine: 'استراتيجية كمية تُسوّى يوميًا؛ الأرباح تصل إلى رصيدك المتاح.', minLabel: 'الحد الأدنى', cutoffLabel: 'الإغلاق اليومي', cutoffShort: '15:00 SGT', settleLabel: 'التسوية', view: 'عرض المنتج', mine: 'مركزي', min: (v) => `ابتداءً من ${v} USDT`, cutoff: 'الإغلاق 15:00 بتوقيت سنغافورة', risk: 'رأس المال معرض للخطر. الأداء السابق لا يضمن المستقبل.', basis: 'بعد رسوم الإدارة وقبل رسوم الأداء الخاصة بك.', range: (a, b) => `${a} – ${b}`, strategy: 'عن المنتج', line: 'تسوية يومية', last30: 'آخر 30 يومًا', days: (n) => `يعمل منذ ${n} يومًا`, nav: 'صافي القيمة', since: 'منذ الإطلاق', d7: '7 أيام', d30: '30 يومًا', mdd: 'أقصى تراجع', process: 'كيف يتم الاكتتاب', specs: 'المواصفات' },
+  fr: { runningLabel: 'Activité', daysN: (n) => `${n} jours`, coverTag: 'Singapour', coverLine: 'Une stratégie quantitative réglée chaque jour ; les gains vont sur votre solde disponible.', minLabel: 'Minimum', cutoffLabel: 'Clôture du jour', cutoffShort: '15:00 SGT', settleLabel: 'Règlement', view: 'Voir le produit', mine: 'Ma position', min: (v) => `Dès ${v} USDT`, cutoff: 'Clôture 15:00 SGT', risk: 'Capital à risque. Le passé ne garantit pas l’avenir.', basis: 'Après frais de gestion, avant votre commission de performance.', range: (a, b) => `${a} – ${b}`, strategy: 'À propos du produit', line: 'Règlement quotidien', last30: '30 derniers jours', days: (n) => `${n} jours d’activité`, nav: 'VL', since: 'Depuis le lancement', d7: '7 jours', d30: '30 jours', mdd: 'Baisse max.', process: 'Comment souscrire', specs: 'Caractéristiques' },
+  pt: { runningLabel: 'Em operação', daysN: (n) => `${n} dias`, coverTag: 'Singapura', coverLine: 'Uma estratégia quantitativa liquidada todos os dias; os ganhos vão para o seu saldo disponível.', minLabel: 'Mínimo', cutoffLabel: 'Corte diário', cutoffShort: '15:00 SGT', settleLabel: 'Liquidação', view: 'Ver produto', mine: 'Minha posição', min: (v) => `A partir de ${v} USDT`, cutoff: 'Corte 15:00 SGT', risk: 'Capital em risco. O passado não garante o futuro.', basis: 'Após taxa de gestão, antes da sua taxa de desempenho.', range: (a, b) => `${a} – ${b}`, strategy: 'Sobre o produto', line: 'Liquidação diária', last30: 'Últimos 30 dias', days: (n) => `${n} dias em operação`, nav: 'Cota', since: 'Desde o início', d7: '7 dias', d30: '30 dias', mdd: 'Queda máxima', process: 'Como subscrever', specs: 'Especificação' },
 }
 export const quantHeroCopy = (locale: AppLocale) => hero[locale] ?? hero.en
 
@@ -101,23 +101,37 @@ export function QuantMarketCard() {
   const from = history.length > 30 ? history[history.length - 30]?.tradeDate : history[0]?.tradeDate
   const to = history[history.length - 1]?.tradeDate
   const holder = audience === 'holder' || audience === 'pending'
+  const perf = product.performance
+  // Cover (2026-10-28, user: one big card filling the screen, the introduction written on the photo). A full-bleed
+  // photo from under the tabs to above the dock; a soft scrim at the top for the name and one line; a glass panel at
+  // the bottom with the dated 30-day figure, two real facts and the way in. Every number is the API's own.
   return <div className={root} data-quant-v2="" role="tabpanel">
-    <button type="button" className={v2.cardPhoto} onClick={() => openPath('/quant')} aria-label={`${product.name} · ${h.view}`}>
-      <QuantPhoto product={product} h={h} />
-    </button>
-    <section className={v2.cardFacts}>
-      <div className={v2.cardFigure}>
-        <small>{h.last30} · {h.range(day(from, locale), day(to, locale))}</small>
-        <b data-tone={toneOf(product.performance.last30d.pct)} dir="ltr">{signed(product.performance.last30d.pct)}</b>
+    <section className={v2.cover} aria-label={product.name}>
+      <img className={v2.coverImg} src="/media/quant/cover-768.webp" srcSet="/media/quant/cover-768.webp 768w, /media/quant/cover.webp 1024w" sizes="(max-width: 480px) 100vw, 480px" alt="" width={1024} height={1536} decoding="async" />
+      <div className={v2.coverTop}>
+        <div className={v2.coverHead}>
+          <span className={v2.coverChip} data-glass="">{h.line} · {h.coverTag}</span>
+          {holder && <button type="button" className={v2.coverMine} data-glass="" onClick={() => openPath('/quant?tab=account')}>{h.mine}</button>}
+        </div>
+        <h2>{product.name}</h2>
+        <p>{h.coverLine}</p>
+        <small className={v2.coverRule}>{h.min(usdtNumber(product.minSubscriptionAtomic, locale))} · {h.cutoff}</small>
       </div>
-      <p className={v2.cardLine}>{h.line} · {h.min(usdtNumber(product.minSubscriptionAtomic, locale))} · {h.cutoff}</p>
-      <p className={v2.cardRisk}>{h.risk}</p>
-      {holder && product.position && <QuantStrip position={product.position} c={c} />}
-      <div className={v2.cardActs}>
-        {holder && <button type="button" className={v2.cardGhost} onClick={() => openPath('/quant?tab=account')}>{h.mine}</button>}
-        <button type="button" className={v2.cardInk} onClick={() => openPath('/quant')}>{h.view}<ArrowRight size={16} aria-hidden="true" /></button>
+      <div className={v2.coverPanel} data-glass="">
+        <small>{h.last30} · {h.range(day(from, locale), day(to, locale))}</small>
+        <b data-tone={toneOf(perf.last30d.pct)} dir="ltr">{signed(perf.last30d.pct)}</b>
+        <dl>
+          <div><dt>{h.since}</dt><dd dir="ltr">{signed(perf.sinceInceptionPct)}</dd></div>
+          <div><dt>{h.mdd}</dt><dd dir="ltr">{perf.maxDrawdownPct === null ? '—' : `${perf.maxDrawdownPct ? '−' : ''}${Math.abs(perf.maxDrawdownPct).toFixed(2)}%`}</dd></div>
+          <div><dt>{h.runningLabel}</dt><dd>{h.daysN(perf.days)}</dd></div>
+        </dl>
+        <div className={v2.coverActs}>
+          <button type="button" className={v2.coverMain} onClick={() => openPath('/quant')}>{h.view}<ArrowRight size={16} aria-hidden="true" /></button>
+        </div>
+        <p className={v2.coverRisk}>{h.risk}</p>
       </div>
     </section>
+    {holder && product.position && <QuantStrip position={product.position} c={c} />}
   </div>
 }
 

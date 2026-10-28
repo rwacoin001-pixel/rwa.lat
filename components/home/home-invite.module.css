@@ -125,3 +125,36 @@
 .claim.claim { background: var(--pa-fill, rgba(11, 18, 32, .05)); box-shadow: none; }
 .invite.invite { box-shadow: none; }
 :global(.rwa-mobile[data-theme='dark']) .round.round, :global(.rwa-mobile[data-theme='dark']) .claim.claim { background: rgba(255, 255, 255, .08); }
+
+/* Fourth pass (2026-10-28, after the user's balance-card reference). Depth in three tones: the shell a quiet grey, the
+   top panel raised (lighter at its top, a white rim, a soft shadow under it), the reward row the lightest. Faces 36px,
+   half inside the panel. Lighter type: name 13/400, label 11 on a pale pill, figure 28/500, the empty line 15/400. */
+.card { gap: 12px; padding: 8px 8px 8px; background: #f3f3f5; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(11, 18, 32, .06), 0 24px 48px -30px rgba(15, 23, 42, .35); }
+.panel { padding: 12px 12px 32px; background: linear-gradient(180deg, #fbfbfc 0%, #ececef 100%); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(11, 18, 32, .04), 0 1px 2px rgba(15, 23, 42, .06), 0 12px 24px -16px rgba(15, 23, 42, .28); }
+.who { font-size: 13px; font-weight: 400; }
+.who b { font-weight: 400; }
+.pill { background: rgba(11, 18, 32, .05); color: var(--m-faint, #8a9099); font-size: 11px; font-weight: 500; letter-spacing: .06em; }
+.figure { font-size: 28px; font-weight: 500; letter-spacing: -.01em; }
+.figure small { font-size: 13px; font-weight: 400; }
+.lead { max-width: 240px; color: var(--m-muted); font-size: 15px; font-weight: 400; line-height: 22px; }
+.faces { --face: 36px; gap: 8px; margin-top: calc(-1 * (var(--face) / 2 + 12px)); }
+.faces > * { width: 36px; height: 36px; box-shadow: 0 0 0 2px #fbfbfc, 0 4px 10px -6px rgba(15, 23, 42, .45); }
+.more { font-size: 12px; }
+.last { padding: 12px; background: #fbfbfc; box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgba(11, 18, 32, .04); }
+.lastHead { color: var(--m-faint, #8a9099); }
+.lastRow b { font-weight: 500; }
+.amount.amount { font-weight: 500; }
+.none { color: var(--m-faint, #8a9099); }
+/* Keys as in the reference: porcelain rounds and a porcelain pill, raised a little; one ink pill. */
+.round.round, .claim.claim { background: linear-gradient(180deg, #ffffff, #f1f1f3); box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgba(11, 18, 32, .06), 0 4px 10px -6px rgba(15, 23, 42, .25); color: var(--m-ink); }
+.claim.claim, .invite.invite { font-weight: 500; }
+.invite.invite { background: linear-gradient(180deg, #2a2f38, #0b0f15); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .18), 0 6px 14px -8px rgba(11, 18, 32, .6); }
+:global(.rwa-mobile) .card.card .lead { color: var(--m-muted); }
+:global(.rwa-mobile) .card.card .pill, :global(.rwa-mobile) .card.card .lastHead span, :global(.rwa-mobile) .card.card .none { color: var(--m-faint, #8a9099); }
+/* Dark: the same three tones in low light. */
+:global(.rwa-mobile[data-theme='dark']) .card { background: #14171c; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 0 .5px rgba(255, 255, 255, .06); }
+:global(.rwa-mobile[data-theme='dark']) .panel { background: linear-gradient(180deg, #252a32, #1b1f26); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 12px 24px -16px rgba(0, 0, 0, .7); }
+:global(.rwa-mobile[data-theme='dark']) .faces > * { box-shadow: 0 0 0 2px #252a32; }
+:global(.rwa-mobile[data-theme='dark']) .last { background: #1e2229; box-shadow: none; }
+:global(.rwa-mobile[data-theme='dark']) .round.round, :global(.rwa-mobile[data-theme='dark']) .claim.claim { background: linear-gradient(180deg, #2a2f37, #20242b); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .invite.invite { background: linear-gradient(180deg, #ffffff, #e6e8ec); color: #0b1220; }

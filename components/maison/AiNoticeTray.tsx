@@ -21,12 +21,14 @@ const topicOf = (kind: string): Topic => /quant/i.test(kind) ? 'quant'
   : /deposit|withdraw|transfer|wallet|payout|settle/i.test(kind) ? 'wallet'
   : /order|subscription|redemption|basket|asset/i.test(kind) ? 'order' : 'other'
 
-export function AiNoticeTray({ locale, disabled, onAsk, onSummary, hidden }: { locale: AppLocale; disabled: boolean; onAsk: (text: string) => void; onSummary: (text: string) => void; hidden: boolean }) {
+export function AiNoticeTray({ locale, disabled, onAsk, onSummary, hidden, onOpenChange }: { locale: AppLocale; disabled: boolean; onAsk: (text: string) => void; onSummary: (text: string) => void; hidden: boolean; onOpenChange?: (open: boolean) => void }) {
   const { data, unread, refetch } = useUnread(true)
   const c = COPY[locale === 'zh-CN' ? locale : 'en'], panelId = useId()
   const items = useMemo(() => (Array.isArray(data) ? data : []).filter(item => !item.readAt).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(item => localNotice(item, locale)), [data, locale])
   const show = !hidden && unread > 0 && items.length > 0
   const [present, setPresent] = useState(false), [visible, setVisible] = useState(false), [expanded, setExpanded] = useState(false)
+  // The page under the tray steps aside while it is open (2026-10-28): the open list sat over the welcome line.
+  useEffect(() => { onOpenChange?.(expanded && visible) }, [expanded, visible])
   const [index, setIndex] = useState(0), [pulse, setPulse] = useState(0), [busy, setBusy] = useState<'read' | 'summary' | null>(null)
   const [reduced, setReduced] = useState(false), [foreground, setForeground] = useState(true)
   const previous = useRef(unread), retained = useRef({ items, unread }), locked = useRef(false), alive = useRef(true)

@@ -40,3 +40,14 @@
 
 /* Review after speaking (2026-10-28): a text link to clear the transcript. */
 .reviewClear{margin-inline-start:4px;padding:0;border:0;background:none;color:var(--m-ink,#0b1220);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+
+/* A quiet light runs round the input's edge, always (2026-10-28, user): a thin turning gradient ring and a soft halo.
+   It is the AI's "I'm here" once the screen-edge flash has faded. */
+@property --ai-ring { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.composer{position:relative;isolation:isolate}
+.composer::before,.composer::after{content:'';position:absolute;inset:-1px;border-radius:inherit;pointer-events:none;background:conic-gradient(from var(--ai-ring),transparent 0deg,#19c7aa 60deg,#2f80ff 120deg,#7b6cff 170deg,transparent 230deg,transparent 360deg);animation:aiRing 5s linear infinite}
+.composer::before{padding:2px;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);opacity:.85}
+.composer::after{z-index:-1;inset:2px;filter:blur(10px);opacity:.35}
+@keyframes aiRing{to{--ai-ring:360deg}}
+.composer[data-recording]::before{animation-duration:2s;opacity:1}
+@media (prefers-reduced-motion:reduce){.composer::before,.composer::after{animation:none}}

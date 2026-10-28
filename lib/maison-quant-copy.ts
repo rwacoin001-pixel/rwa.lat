@@ -188,7 +188,7 @@ export type QuantCopy = {
     estimateFee: string
     estimatePayout: string
     estimateNote: string
-    redeemSteps: { submit: string; settle: string; arrive: string }
+    redeemSteps: { submit: string; settle: string; arrive: string; arriveNote: string }
     done: string
     doneSubscribe: (date: string) => string
     doneRedeem: string
@@ -384,7 +384,7 @@ const en: QuantCopy = {
     estimateFee: 'Redemption fee',
     estimatePayout: 'You receive',
     estimateNote: 'An estimate. The final amount is set at the end of the trade date, after that day’s result is applied.',
-    redeemSteps: { submit: 'Request submitted', settle: 'Trade date is settled', arrive: 'Fee deducted, paid to available balance' },
+    redeemSteps: { submit: 'Request submitted', settle: 'Trade date is settled', arrive: 'Fee deducted, paid to available balance', arriveNote: 'Paid once that day is settled, usually the next day. We will notify you when it lands.' },
     done: 'Done',
     doneSubscribe: (date) => `Subscribed. It starts earning on ${date}.`,
     doneRedeem: 'Redemption requested. It’s paid after its trade date settles.',
@@ -588,7 +588,7 @@ const zh: QuantCopy = {
     estimateFee: '赎回费',
     estimatePayout: '预计到账',
     estimateNote: '仅为预估。最终金额在其交易日结束、计入当日收益后确定。',
-    redeemSteps: { submit: '提交申请', settle: '交易日结算', arrive: '扣除赎回费,转入可用余额' },
+    redeemSteps: { submit: '提交申请', settle: '交易日结算', arrive: '扣除赎回费,转入可用余额', arriveNote: '这一天结算完成后到账，通常是第二天；到账时会通知你。' },
     done: '完成',
     doneSubscribe: (date) => `申购成功,${date} 起息。`,
     doneRedeem: '已提交赎回,其交易日结算后兑付。',

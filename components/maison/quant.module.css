@@ -288,6 +288,8 @@
 .flowSteps li[data-on] { background: var(--m-ink, #0b1220); }
 :global(.rwa-mobile[data-theme='dark']) .flowSteps li[data-on] { background: #f2f4f7; }
 .flowPage .stepPane { padding-bottom: 8px; }
-.flowPage .stepPane > button, .flowPage .reviewActs > button:last-child { width: 100%; }
+.flowPage .stepPane > button { box-sizing: border-box; width: 100%; max-width: 100%; }
+.flowPage .reviewActs > button { box-sizing: border-box; min-width: 0; max-width: 100%; }
 .flowPage .autoHeight { height: auto !important; overflow: visible; }
 .flowPage .stepPane > button { justify-content: center; }
+.flowPage > *, .flowPage .stepPane { min-width: 0; }

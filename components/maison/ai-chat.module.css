@@ -289,3 +289,10 @@ button.icon:active { transform: scale(.92); }
 /* The composer follows the keyboard in one smooth move (2026-10-28). */
 .dockWrap { transition: bottom .2s cubic-bezier(.22, 1, .36, 1); }
 @media (prefers-reduced-motion: reduce) { .dockWrap { transition: none; } }
+
+/* An open notice tray takes the stage (2026-10-28): the welcome pearl and line fade back so the list never sits on them. */
+.welcome { transition: opacity .24s var(--m-ease), transform .24s var(--m-ease); }
+.welcome[data-tray] { opacity: 0; transform: translateY(-12px) scale(.98); pointer-events: none; }
+.welcome[data-tray] ~ .chips { opacity: 0; pointer-events: none; }
+.welcome[data-tray] { animation: none; }
+.shell:has(.welcome[data-tray]) .chips { opacity: 0; pointer-events: none; transition: opacity .2s ease; }

@@ -298,7 +298,7 @@ html[data-palette='a'] {
 
 /* Smoothness: frosted blur is recomputed every frame while the page scrolls, which phones feel as stutter. Only the
    floating dock keeps it; every other bar, chip and strip is a near-solid surface instead. */
-html[data-palette='a'] *:not(.liquid-dock__pill):not([data-ai-backdrop]):not([data-glass-bar]) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-palette='a'] *:not(.liquid-dock__pill):not([data-ai-backdrop]):not([data-glass-bar]):not([data-glass]) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 
 /* Trust center (2026-10-28, docs/design-system.md §6, §7): text-only rows in one paper card — no tinted icon tiles;
    the published-only note is one plain line without a warning icon. */

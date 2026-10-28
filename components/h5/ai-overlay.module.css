@@ -57,3 +57,10 @@
 @media (prefers-reduced-motion: reduce) {
   .backdrop, .scroller, .dots, .glow { animation: none; }
 }
+
+/* The edge only flashes (2026-10-28, user): it lights up as the layer opens, holds a moment and fades out within about
+   2.5 seconds, then stays off; the input carries the quiet glow from there (ai-composer.module.css). */
+.edge { animation: edgeFlash 2.6s cubic-bezier(.22, 1, .36, 1) forwards; }
+@keyframes edgeFlash { 0% { opacity: 0; } 14% { opacity: 1; } 55% { opacity: .9; } 100% { opacity: 0; visibility: hidden; } }
+.layer[data-active] .dots, .layer[data-active] .glow { opacity: inherit; }
+@media (prefers-reduced-motion: reduce) { .edge { animation: none; opacity: 0; } }
