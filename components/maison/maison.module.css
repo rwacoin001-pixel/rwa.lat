@@ -1723,3 +1723,6 @@ span.compareName { padding-top: 32px; cursor: default; }
 :global(html[data-palette='a']) .predSortMenu[data-anchored] button { height: 46px; padding: 0 12px; }
 @keyframes sortIn { from { opacity: 0; transform: scaleY(.6); } }
 @media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .predSortMenu[data-anchored] { animation: none; } }
+/* No tinted boxes (2026-10-29). */
+.orderConfirmAmount { background: rgba(17, 23, 34, .04); }
+:global(.rwa-mobile[data-theme='dark']) .orderConfirmAmount { background: rgba(255, 255, 255, .06); }

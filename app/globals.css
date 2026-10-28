@@ -1364,3 +1364,6 @@ html[data-keyboard='open'] .liquid-dock { visibility: hidden; }
    dock keeps a lighter glass. Browsers and the iPhone app are unchanged. */
 html[data-shell='android'] .rwa-topbar.rwa-topbar--s1 { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--bg) 98%, transparent); }
 html[data-shell='android'] .liquid-dock__pill { -webkit-backdrop-filter: blur(12px) saturate(150%) !important; backdrop-filter: blur(12px) saturate(150%) !important; }
+/* No tinted icon tiles (2026-10-29, docs/design-system.md: no AI look). */
+.empty-state__icon { background: none !important; color: var(--muted, currentColor) !important; }
+.p0a-ledger-icon.direction-in { background: none; }

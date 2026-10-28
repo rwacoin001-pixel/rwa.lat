@@ -365,3 +365,6 @@ b.name { cursor: default; }
 /* Sheets show no scrollbar (2026-10-28): on phones it read as a stray bar on the right edge. */
 .sheet { scrollbar-width: none; }
 .sheet::-webkit-scrollbar { display: none; }
+/* No tinted boxes (2026-10-29): notes sit on the neutral sunk surface. */
+.editNote { background: rgba(17, 23, 34, .04); color: var(--m-ink); }
+:global(.rwa-mobile[data-theme='dark']) .editNote { background: rgba(255, 255, 255, .06); }

@@ -491,10 +491,10 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const cooldownLabel = interpolateRouteCopy(copy.retryAfter, { seconds: retryAfter })
 
   // The address every later step acts on, with a way back to change it.
+  // Plain text, no tinted box or icon (2026-10-29, user: the blue box looked AI-made): where the code went, and a text link.
   const identity = account && <div className={styles.codeDelivery} role="status">
-    {step === 'code' ? <Mail size={17} aria-hidden="true" /> : <UserRound size={17} aria-hidden="true" />}
-    <span><b dir="ltr">{account.email}</b></span>
-    <button type="button" disabled={pending} aria-label={emailCopy.changeEmail} title={emailCopy.changeEmail} onClick={changeEmail}><Pencil size={16} aria-hidden="true" /></button>
+    <span>{step === 'code' && <small>{sheet.sentTo}</small>}<b dir="ltr">{account.email}</b></span>
+    <button type="button" disabled={pending} onClick={changeEmail}>{emailCopy.changeEmail}</button>
   </div>
 
   const primaryLabel = step === 'email' ? sheet.continue : step === 'passkey' ? passwordCopy.passkey : step === 'password' ? passwordCopy.signIn : step === 'new' ? emailCopy.sendCode : emailCopy.verify

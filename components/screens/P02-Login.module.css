@@ -882,3 +882,7 @@
 .kitCode > div { display: flex; flex: 1 1 auto; flex-direction: column; }
 .kitCode [role='group'] { margin-top: auto; }
 .root.root[data-auth-cabinet]:has(.kitCode) .cabBody, .root.root[data-auth-cabinet]:has(.kitCode) .cabBody > *:has(.kitCode), .root.root[data-auth-cabinet]:has(.kitCode) .cabBody *:has(> .kitCode) { display: flex; flex: 1 1 auto; flex-direction: column; }
+
+/* Delivery line as plain text (2026-10-29): no tint, no icon; a muted label, the address in ink, a text link. */
+.codeDelivery { gap: 16px; margin: 0 0 16px; padding: 0; border-radius: 0; background: none; }
+.codeDelivery button { width: auto; height: 44px; padding: 0 4px; border-radius: 8px; color: var(--ink); font: 550 15px/1 var(--sans); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }

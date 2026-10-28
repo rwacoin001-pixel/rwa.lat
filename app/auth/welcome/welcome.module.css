@@ -9,3 +9,5 @@
 .status { color: var(--auth-faint); font: 500 12px/1 var(--sans); white-space: nowrap; }
 .steps li[data-state='done'] .status { color: var(--ok); }
 .note { margin: 2px 0 4px; color: var(--auth-faint); font: 400 12px/1.5 var(--sans); text-align: center; }
+/* No tinted icon tiles (2026-10-29): the icon stands alone in ink. */
+.icon { background: none; color: var(--ink); }
