@@ -67,6 +67,7 @@ export class ReferralUserFoundationController {
   @Get('summary') summary(@Req() req:AuthenticatedRequest) { return this.read.summary(req.auth.userId) }
   @Get('invitees') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string) { return this.read.invitees(req.auth.userId,page,size,level) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }
+  @Get('funnel') funnel(@Req() req:AuthenticatedRequest) { return this.read.funnel(req.auth.userId) }
   @Get('me') async me(@Req() req: AuthenticatedRequest) { return {code:await this.binding.getCode(req.auth.userId),stage:1,payoutsEnabled:true} }
   @Post('code') async code(@Req() req: AuthenticatedRequest,@Body() dto: CodeDto) { return {code:await this.binding.changeCode(req.auth.userId,dto.code)} }
   /** Claims every earned reward into available USDT. Requires an Idempotency-Key header; a replay returns the same claim. */
@@ -84,6 +85,7 @@ export class ReferralAdminFoundationController {
   @Get('overview') async overview(@CurrentAdmin() admin:AuthenticatedAdmin,@Query('page') page?:string,@Query('pageSize') size?:string) {
     await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.read.overview(page,size)
   }
+  @Get('funnel') async funnel(@CurrentAdmin() admin:AuthenticatedAdmin) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.read.funnel(null) }
   @Get('settings') async settings(@CurrentAdmin() admin: AuthenticatedAdmin) { await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.settings() }
   @Post('settings/save') async save(@CurrentAdmin() admin: AuthenticatedAdmin,@Body() dto: SettingsDto) {
     await assertAdminPermission(admin,this.rbac,'platform.manage'); return this.core.saveSettings(dto.config,admin.id)

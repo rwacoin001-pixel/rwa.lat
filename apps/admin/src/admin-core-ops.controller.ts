@@ -36,6 +36,8 @@ export class AdminCoreOpsController {
   referralSettings(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/settings') }
   @Get('referral/overview') @RequireAdminPermissions('platform.manage')
   referralOverview(@Req() r:AdminRequest,@Query() q:QueryMap) { return this.core.get(adminId(r),'/referral/overview',q) }
+  @Get('referral/funnel') @RequireAdminPermissions('platform.manage')
+  referralFunnel(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/funnel') }
   @Get('referral/reconciliation') @RequireAdminPermissions('platform.manage')
   referralReconciliation(@Req() r:AdminRequest) { return this.core.get(adminId(r),'/referral/reconciliation') }
   @Post('referral/settings/save') @RequireAdminPermissions('platform.manage')

@@ -160,3 +160,7 @@ img.monogram{display:block;padding:0;border:0;background:none;object-fit:cover}
 
 /* Inside the Community tab (2026-10-28): the page shell belongs to Community; keep the column's own top air. */
 .embedded { padding: 12px var(--m-gutter, 20px) calc(96px + env(safe-area-inset-bottom)); }
+/* Invitation funnel line under the share buttons (2026-10-28): one quiet row of three counts. */
+.funnel { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 8px; margin: 12px 0 0; color: var(--m-muted, var(--r-muted)); font-size: 13px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
+.funnel b { color: var(--m-ink, var(--r-ink)); font-weight: 500; }
+.funnel i { font-style: normal; color: var(--m-faint, var(--r-muted)); }

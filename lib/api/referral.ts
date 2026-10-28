@@ -13,3 +13,6 @@ export const referralAwards=(page:number)=>request<Page<ReferralAward>>(`/v1/ref
 export const changeReferralCode=(code:string)=>request<{code:string}>('/v1/referral/code',{method:'POST',body:JSON.stringify({code})})
 /** Moves every earned reward into available USDT. Reuse the same key when retrying one claim. */
 export const claimReferralRewards=(idempotencyKey:string)=>request<ReferralClaim>('/v1/referral/claim',{method:'POST',body:'{}',idempotencyKey})
+export type ReferralFunnelCount={last30d:number;all:number}
+/** Link opened (one per browser) → signed up → first Koala Quant subscription; direct invitees, counts only. */
+export const referralFunnel=()=>request<{opened:ReferralFunnelCount;registered:ReferralFunnelCount;subscribed:ReferralFunnelCount}>('/v1/referral/funnel')

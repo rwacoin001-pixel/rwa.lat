@@ -15,7 +15,7 @@ import type { INestApplication } from '@nestjs/common'
 const id = '078c875a-fc72-4ce0-904b-3731bd46927c'
 const token = 'admin-ops-service-token-at-least-thirty-two-bytes'
 const ordinary = { id, email: 'operator@example.test', roleId: 'core-role', roleName: 'operator', permissions: [], sessionId: 'real-session' }
-const methods = ['listAiAnalysis', 'listAssets', 'listYieldBatches', 'listSettlements', 'listCollections', 'listNetworks', 'listKycCases', 'listEligibility', 'listRiskFlags', 'overview', 'settings', 'reconcile', 'saveSettings', 'rollbackSettings', 'listTicketsForAdmin', 'getTicketTimelineForAdmin', 'respondToTicket', 'listByState', 'listDead', 'listUnprocessedCallbacks', 'replay', 'listForAdmin', 'channels', 'enqueue', 'reviewEvidence', 'decideKyc', 'toPublicKycCase']
+const methods = ['listAiAnalysis', 'listAssets', 'listYieldBatches', 'listSettlements', 'listCollections', 'listNetworks', 'listKycCases', 'listEligibility', 'listRiskFlags', 'overview', 'funnel', 'settings', 'reconcile', 'saveSettings', 'rollbackSettings', 'listTicketsForAdmin', 'getTicketTimelineForAdmin', 'respondToTicket', 'listByState', 'listDead', 'listUnprocessedCallbacks', 'replay', 'listForAdmin', 'channels', 'enqueue', 'reviewEvidence', 'decideKyc', 'toPublicKycCase']
 type Harness = ReturnType<typeof harness>
 function harness() {
   const svc: any = Object.fromEntries(methods.map(name => [name, jest.fn().mockResolvedValue({ ok: true })]))
@@ -37,6 +37,7 @@ const routes: Array<[string, string, (h: Harness, admin: any) => Promise<unknown
   ...['aiAnalysis', 'assets', 'yields', 'settlements', 'collections', 'networks', 'kyc', 'eligibility', 'riskFlags'].map(method => [method, 'console.view', (h: Harness, a: any) => (h.console as any)[method](a)] as [string, string, (h: Harness, a: any) => Promise<unknown>]),
   ['referral settings', 'platform.manage', (h, a) => h.referral.settings(a)],
   ['referral overview', 'platform.manage', (h, a) => h.referral.overview(a)],
+  ['referral funnel', 'platform.manage', (h, a) => h.referral.funnel(a)],
   ['team batches', 'platform.manage', (h, a) => h.referral.teamBatches(a)],
   ['team detail', 'platform.manage', (h, a) => h.referral.teamDetail(a,id)],
   ['team generation', 'platform.manage', (h, a) => h.referral.generateTeam(a, {month:'2026-09'})],
@@ -134,7 +135,7 @@ describe('Operations service-channel HTTP matrix', () => {
   afterAll(async () => { if (app) await app.close() })
   const paths = [
     '/admin/ai-analysis?limit=100', '/admin/assets?page=1&pageSize=50', '/admin/yields?limit=200', '/admin/settlements?limit=200',
-    '/admin/referral/settings', '/admin/referral/overview?page=1&pageSize=20', '/admin/referral/reconciliation',
+    '/admin/referral/settings', '/admin/referral/overview?page=1&pageSize=20', '/admin/referral/funnel', '/admin/referral/reconciliation',
     '/admin/collections', '/admin/networks', '/admin/kyc?limit=200', '/admin/eligibility?limit=200', '/admin/risk-flags?limit=200',
     '/admin/tickets?limit=100', '/admin/tickets?category=appeal&limit=100', '/admin/tickets?category=dispute&limit=100',
     '/admin/job-queue/jobs?queueName=default&limit=100', '/admin/job-queue/jobs/dead?queueName=default&limit=100',

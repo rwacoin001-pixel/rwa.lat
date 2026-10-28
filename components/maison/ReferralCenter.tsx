@@ -6,7 +6,7 @@ import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { getSessionToken, SESSION_CHANGED } from '@/lib/api/_http'
-import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode, claimReferralRewards } from '@/lib/api/referral'
+import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode, claimReferralRewards, referralFunnel } from '@/lib/api/referral'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
@@ -80,6 +80,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const balanceId = useId()
   const me = useQuery('referral:v2:me', referralMe, { staleTime: 30_000 })
   const summary = useQuery('referral:v2:summary', referralSummary, { staleTime: 30_000 })
+  const funnel = useQuery('referral:v2:funnel', referralFunnel, { staleTime: 60_000 })
   const members = useQuery(tab === 'team' ? `referral:v2:members:${page}:${level}` : null, () => referralInvitees(page, level), { staleTime: 30_000 })
   const awards = useQuery(tab === 'rewards' ? `referral:v2:awards:${page}` : null, () => referralAwards(page), { staleTime: 30_000 })
   const editGen = useRef(0), mounted = useRef(true)
@@ -212,6 +213,8 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
               <button type="button" onClick={() => void share()}><Share2 size={17} strokeWidth={1.8} aria-hidden="true" />{t('分享', 'Share')}</button>
               <button type="button" aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={17} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
             </div>
+            {/* What sharing did (2026-10-28): opens → sign-ups → first Koala Quant subscriptions, last 30 days. */}
+            {funnel.data && <p className={c.funnel}>{t('近 30 天', 'Last 30 days')}<b>{t(`链接打开 ${funnel.data.opened.last30d} 次`, `${funnel.data.opened.last30d} opens`)}</b><i aria-hidden="true">·</i><b>{t(`注册 ${funnel.data.registered.last30d} 人`, `${funnel.data.registered.last30d} sign-ups`)}</b><i aria-hidden="true">·</i><b>{t(`首次申购 ${funnel.data.subscribed.last30d} 人`, `${funnel.data.subscribed.last30d} first subscriptions`)}</b></p>}
             <p className={c.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
           </>}
       </section>

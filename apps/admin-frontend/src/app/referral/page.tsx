@@ -14,9 +14,11 @@ export default function ReferralPage() {
   const [page,setPage]=useState(1),[draft,setDraft]=useState<Config|null>(null),[busy,setBusy]=useState(false),[message,setMessage]=useState(''),[confirmVersion,setConfirmVersion]=useState<number|null>(null)
   const versions=useApi<Version[]>('/api/admin/referral/settings')
   const overview=useApi<Overview>(`/api/admin/referral/overview?page=${page}&pageSize=20`)
+  // Invitation funnel (2026-10-28): link opened (per browser) → signed up → first Koala Quant subscription, platform-wide.
+  const funnel=useApi<{opened:{last30d:number;all:number};registered:{last30d:number;all:number};subscribed:{last30d:number;all:number}}>('/api/admin/referral/funnel')
   const reconciliation=useApi<{mappedAccounts:number;discrepancyCount:number}>('/api/admin/referral/reconciliation')
   const current=versions.data?.[0], config=draft??current?.config
-  const reload=()=>{versions.reload();overview.reload();reconciliation.reload()}
+  const reload=()=>{versions.reload();overview.reload();reconciliation.reload();funnel.reload()}
   const update=(key:string,value:unknown)=>{if(config)setDraft({...config,[key]:value})}
   const mutate=async(path:string,body:unknown)=>{
     setBusy(true);setMessage('')
@@ -28,7 +30,8 @@ export default function ReferralPage() {
   return <AdminLayout><div className="space-y-6"><PageHeader title="推荐奖励" subtitle="归因 · 规则版本 · 审计" actions={<RefreshButton loading={versions.loading||overview.loading} onClick={reload}/>}/>
     <div className="glass-strong rounded-xl p-4 text-sm">发放已开启：买入返佣与手续费返佣即时计入，用户可随时领取到可用余额（可提现）· 考拉仅首次成功申购计买入返佣；团队月结从启用时点累计，不追补历史</div>
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">{[['绑定用户',overview.data?.counts.bindings],['奖励笔数',overview.data?.counts.rewards],['累计奖励 USDT',usdt(overview.data?.counts.rewardsAtomic)],['已领取 USDT',usdt(overview.data?.counts.claimedAtomic)]].map(([label,value])=><StatChip key={String(label)} label={String(label)} value={value??'—'}/>)}</div>
-    {[versions.error,overview.error,reconciliation.error].filter(Boolean).map((error,i)=><p key={i} role="alert" className="text-sm text-red-500">{error}</p>)}
+    <div className="grid grid-cols-3 gap-4">{[['链接打开（近 30 天 / 全部）',funnel.data?.opened],['注册',funnel.data?.registered],['首次申购量化',funnel.data?.subscribed]].map(([label,value])=><StatChip key={String(label)} label={String(label)} value={value&&typeof value==='object'?`${value.last30d} / ${value.all}`:'—'}/>)}</div>
+    {[versions.error,overview.error,reconciliation.error,funnel.error].filter(Boolean).map((error,i)=><p key={i} role="alert" className="text-sm text-red-500">{error}</p>)}
     {message&&<p role="status" className="rounded-xl border p-3 text-sm">{message}</p>}
     {config&&<Panel title={`规则配置 · v${current?.version}`} subtitle="保存生成新版本：手续费返佣立即生效，买入返佣次日生效，团队次月生效。关闭某项规则后，不再产生该类奖励。">
       <form onSubmit={e=>{e.preventDefault();void mutate('save',{config})}} className="space-y-6">

@@ -74,4 +74,26 @@ export class ReferralReadService {
       return {counts,audit:{items,total:counts.total,page:p.page,pageSize:p.pageSize},stage:1,payoutsEnabled:true}
     })
   }
+  /**
+   * Invitation funnel (2026-10-28): how often the link was opened (one attribution per browser — first click wins),
+   * how many signed up through it, and how many of them made a first Koala Quant subscription. Direct invitees only.
+   * Counts only; never who. `userId` null = the whole platform (admin).
+   */
+  async funnel(userId: string | null) {
+    await this.requireInstalled()
+    const [ready]=await this.db.query("SELECT to_regclass('app.referral_quant_first_subscriptions') IS NOT NULL AS ready")
+    const scope=(column:string)=>userId?`${column}=$1`:'true'
+    const args=userId?[userId]:[]
+    const count=(sql:string)=>this.db.query(sql,args).then((rows:any[])=>({last30d:Number(rows[0].recent),all:Number(rows[0].total)}))
+    const window=(column:string)=>`count(*) FILTER (WHERE ${column}>now()-interval '30 days')::int AS recent,count(*)::int AS total`
+    const [opened,registered,subscribed]=await Promise.all([
+      count(`SELECT ${window('clicked_at')} FROM app.referral_attributions WHERE ${scope('inviter_user_id')}`),
+      count(`SELECT ${window('bound_at')} FROM app.referral_edges WHERE ${scope('inviter_user_id')}`),
+      ready.ready
+        ? count(`SELECT ${window('f.recorded_at')} FROM app.referral_quant_first_subscriptions f JOIN app.referral_edges e ON e.invitee_user_id=f.user_id WHERE ${scope('e.inviter_user_id')}`)
+        : Promise.resolve({last30d:0,all:0}),
+    ])
+    return {opened,registered,subscribed}
+  }
+
 }
