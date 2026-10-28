@@ -31,9 +31,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       signal: AbortSignal.timeout(35_000),
     })
     const headers = new Headers()
-    if (path[0] === 'users') headers.set('cache-control', 'private, no-store')
+    if (path[0] === 'users' || path[0] === 'mail') headers.set('cache-control', 'private, no-store')
     const contentType = upstream.headers.get('content-type')
     if (contentType) headers.set('content-type', contentType)
+    if (path[0] === 'mail' && path[1] === 'attachments') {
+      const disposition = upstream.headers.get('content-disposition')
+      if (disposition) headers.set('content-disposition', disposition)
+      headers.set('x-content-type-options', 'nosniff')
+      return new NextResponse(await upstream.arrayBuffer(), { status: upstream.status, headers })
+    }
     return new NextResponse(await upstream.text(), { status: upstream.status, headers })
   } catch (error) {
     const timeout = error instanceof Error && ['AbortError', 'TimeoutError'].includes(error.name)

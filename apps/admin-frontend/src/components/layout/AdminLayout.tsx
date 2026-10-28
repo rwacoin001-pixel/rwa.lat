@@ -45,6 +45,7 @@ import {
   CalendarCheck,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { MailUnreadBadge } from '@/components/mail-unread-badge'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -127,6 +128,7 @@ const NAV_SECTIONS: NavSection[] = [
       { name: '社区审核', href: '/community', icon: MessageCircle },
       { name: '风险控制', href: '/risk', icon: ShieldAlert },
       { name: '工单中心', href: '/support', icon: LifeBuoy },
+      { name: '收件箱', href: '/inbox', icon: Bell },
       { name: '审计日志', href: '/audit', icon: ScrollText },
     ],
   },
@@ -210,6 +212,7 @@ function SidebarLink({ item, pathname }: { item: NavItem; pathname: string }) {
         )}
       />
       <span className="truncate">{item.name}</span>
+      {item.href === '/inbox' && <MailUnreadBadge />}
     </Link>
   )
 }
