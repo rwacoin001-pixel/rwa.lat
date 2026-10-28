@@ -15,6 +15,7 @@ import { fmtAtomic, fmtDateTime } from './format'
 import { settle } from './settle'
 import { MY_BETS_PAGE, useMyBets } from './MyPredictionsCard'
 import mp from './my-predictions.module.css'
+import { ShareWinLine, type WinMoment } from './ShareWin'
 
 const PAGE = MY_BETS_PAGE
 const FILTERS = ['all', 'open', 'won', 'lost', 'void'] as const
@@ -126,6 +127,17 @@ export function MyPredictionsScreen() {
     }
     return result
   }, [bets])
+  // The latest win from the last three days, for the share line (figures from the bet record, never typed).
+  const win = useMemo<WinMoment | null>(() => {
+    const bet = bets.find((row) => betStatus(row.status) === 'won')
+    if (!bet) return null
+    const { stake, netPayout } = betAmounts(bet)
+    const settled = String(bet.settledAt ?? bet.createdAt ?? '')
+    if (!stake || stake <= BigInt(0) || netPayout === null || !settled || Date.now() - Date.parse(settled) > 3 * 86_400_000) return null
+    const pct = Number((netPayout - stake) * BigInt(10000) / stake) / 100
+    const target = bet.marketEventId ? `/prediction/event-${encodeURIComponent(String(bet.marketEventId))}` : bet.marketId ? `/prediction/${encodeURIComponent(String(bet.marketId))}` : '/markets?tab=predictions'
+    return { id: `prediction-${bet.id}`, kind: 'prediction', date: settled.slice(0, 10), pct, title: String(bet.marketQuestion ?? '').trim() || t.title, path: target }
+  }, [bets, t.title])
   const shown = filter === 'all' ? bets : bets.filter((bet) => betStatus(bet.status) === FILTER_STATUS[filter])
 
   const loadMore = async () => {
@@ -156,6 +168,7 @@ export function MyPredictionsScreen() {
             <div><dt>{sc.inPlayStake}</dt><dd className={s.num}>{bare(totals.inPlay)}</dd></div>
             <div><dt>{sc.paidPayout}</dt><dd className={s.num} data-tone={totals.won > BigInt(0) ? 'up' : undefined}>{bare(totals.won)}</dd></div>
           </dl>
+          <ShareWinLine moment={win} />
         </section>
         <div className={mp.scope}>
           <span>{fill(sc.scope, { m: bets.length, n: total })}</span>

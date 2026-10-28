@@ -157,3 +157,6 @@ img.monogram{display:block;padding:0;border:0;background:none;object-fit:cover}
 .rates{gap:8px}
 .rates div{padding:8px 12px;border-radius:12px}
 .rates span{font-size:12px;letter-spacing:0}
+
+/* Inside the Community tab (2026-10-28): the page shell belongs to Community; keep the column's own top air. */
+.embedded { padding: 12px var(--m-gutter, 20px) calc(96px + env(safe-area-inset-bottom)); }

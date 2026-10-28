@@ -190,7 +190,7 @@ function InviteStrip({ copy, locale }: { copy: MaisonCopy; locale: AppLocale }) 
   }
   if (!visible) return null
   return <motion.div className={styles.invite} initial={reduced ? false : { opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: .9, ease: EASE, delay: .7 }}>
-    <button type="button" className={styles.inviteMain} onClick={() => openPath('/profile/referral')}>
+    <button type="button" className={styles.inviteMain} onClick={() => openPath('/community?tab=invite')}>
       <span className={styles.inviteIcon} aria-hidden="true"><Gift size={16} strokeWidth={1.6} /></span>
       <span className={styles.inviteText}>
         <b>{copy.invite}</b>
@@ -425,7 +425,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   return <section className={`screen s2-home ${styles.root} ${display.variable} ${GeistSans.variable}`} data-home-s2="true" data-home-design="maison" data-locale={locale} data-home-lifecycle={state.lifecycle} data-home-variant={state.variant ?? 'none'} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
     <div className={styles.heroBg} ref={heroBgRef} aria-hidden="true" />
     <div className={styles.grain} aria-hidden="true" />
-    <RwaTopbar screen="home" surface="transparent-over-media" action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/profile/referral') }} />
+    <RwaTopbar screen="home" surface="transparent-over-media" action={{ label: extra.inviteOpen, Icon: Gift, onClick: () => openPath('/community?tab=invite') }} />
     <PullToRefresh />
 
     <div className={styles.firstScreen}>

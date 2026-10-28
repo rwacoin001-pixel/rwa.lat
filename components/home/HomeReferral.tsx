@@ -32,7 +32,7 @@ export function HomeReferral() {
   const fmt = (n: number) => new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n)
   const claimable = units(data.balances.available), earned = units(data.balances.total)
   const people = invitees.data?.items ?? []
-  const open = () => openPath('/profile/referral')
+  const open = () => openPath('/community?tab=invite')
   const add = <button type="button" className={styles.add} onClick={open} aria-label={c.invite}><Plus size={18} strokeWidth={2} aria-hidden="true" /></button>
   const faces = direct > 0
     ? <>{people.slice(0, 4).map((person, i) => <img key={`${person.memberLabel}-${i}`} src={porcelainAvatar(person.memberLabel)} alt="" width={40} height={40} />)}

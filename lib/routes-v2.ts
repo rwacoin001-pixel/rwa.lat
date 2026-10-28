@@ -15,10 +15,10 @@
 
 // ─── 类型 ───
 
-export type Domain = 'public' | 'home' | 'markets' | 'quant' | 'ai' | 'assets' | 'profile' | 'system'
+export type Domain = 'public' | 'home' | 'markets' | 'quant' | 'community' | 'ai' | 'assets' | 'profile' | 'system'
 
 /** Dock 高亮归属：null = 不做任何高亮（无选中态） */
-export type DockTab = 'home' | 'markets' | 'quant' | 'assets' | 'ai' | null
+export type DockTab = 'home' | 'markets' | 'quant' | 'community' | 'assets' | 'ai' | null
 
 export type AuthLevel = 'public' | 'optional' | 'required'
 
@@ -58,14 +58,15 @@ export const ROUTES = {
   notificationLink: R('/n/:id', { domain: 'public', dock: null, showDock: false, auth: 'public' }),
   maintenance: R('/maintenance', { domain: 'public', dock: null, showDock: false, auth: 'public' }),
   shareLanding: R('/share/:token', { domain: 'public', dock: null, showDock: false, auth: 'public' }),
+  inviteLanding: R('/invite', { domain: 'public', dock: null, showDock: false, auth: 'public' }),
 
   // ═══ Tab 1 · 首页域（10）═══
   home: R('/home', { domain: 'home', dock: 'home', showDock: true, auth: 'required' }),
   search: R('/search', { domain: 'home', dock: 'home', showDock: false, auth: 'optional' }),
   notifications: R('/notifications', { domain: 'home', dock: 'home', showDock: true, auth: 'required' }),
-  community: R('/community', { domain: 'home', dock: 'home', showDock: true, auth: 'optional' }),
-  communityPost: R('/community/post/:id', { domain: 'home', dock: 'home', showDock: true, auth: 'optional' }),
-  communityMember: R('/community/member/:handle', { domain: 'home', dock: 'home', showDock: true, auth: 'optional' }),
+  community: R('/community', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
+  communityPost: R('/community/post/:id', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
+  communityMember: R('/community/member/:handle', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
   learn: R('/learn', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
   learnArticle: R('/learn/:slug', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
 

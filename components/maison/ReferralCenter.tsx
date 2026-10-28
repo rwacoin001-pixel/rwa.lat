@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useId, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, Check, CircleHelp, Copy, Pencil, Share2, ImagePlus } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -7,7 +7,7 @@ import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { getSessionToken, SESSION_CHANGED } from '@/lib/api/_http'
 import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode, claimReferralRewards } from '@/lib/api/referral'
-import { backOr } from '@/lib/maison-nav'
+import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
@@ -59,7 +59,14 @@ function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: strin
   </form>
 }
 
-export function ReferralScreen({ query = '' }: { query?: string }) {
+/** The invite centre. `embedded`: the Community tab's 邀请 view (2026-10-28), no page shell or top bar of its own. */
+export function ReferralScreen({ query = '', embedded = false }: { query?: string; embedded?: boolean }) {
+  // /profile/referral now opens the Community tab's 邀请 view (a tick later: the shell re-adds its path listener after this effect).
+  useEffect(() => {
+    if (embedded) return
+    const timer = window.setTimeout(() => openPath('/community?tab=invite', { replace: true }), 0)
+    return () => window.clearTimeout(timer)
+  }, [embedded])
   const { locale } = useI18n(), zh = locale.startsWith('zh')
   const t: Translate = (cn, en) => zh ? cn : en
   const [tab, setTab] = useState<Tab>('team'), [level, setLevel] = useState('all'), [page, setPage] = useState(1)
@@ -171,7 +178,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
   const retryLabel = t('重试', 'Retry')
 
   return <div ref={rootRef} className={`${x.ref} ${x.screen} ${c.page}`}>
-    <MaisonPage page="referral" topbar={<header className={`${x.topbar} ${c.topbarPlain}`}>
+    <Shell embedded={embedded} topbar={<header className={`${x.topbar} ${c.topbarPlain}`}>
       <button type="button" className={x.iconBtn} aria-label={t('返回', 'Back')} onClick={() => backOr('/profile')}><ArrowLeft size={22} strokeWidth={1.75} /></button>
       <h1>{t('邀请好友', 'Invite friends')}</h1>
       <button type="button" className={x.iconBtn} aria-label={t('查看邀请规则', 'View invitation rules')} aria-haspopup="dialog" onClick={() => setSheet('rules')}><CircleHelp size={21} strokeWidth={1.75} /></button>
@@ -283,7 +290,7 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
           </>}
       </section>
       <p className={c.disclaimer}>{t('奖励比例按层级分别计算，不代表投资收益，也不构成收益承诺。', 'Rates apply per level separately. They are not investment returns and carry no promise of income.')}</p>
-    </MaisonPage>
+    </Shell>
 
     {sheet === 'rules' && <ReferralSheet tall title={t('邀请规则', 'Invitation rules')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
       {sum
@@ -307,4 +314,8 @@ export function ReferralScreen({ query = '' }: { query?: string }) {
     </ReferralSheet>}
     {sheet === 'poster' && code && sum && <ReferralPosterComposer key={code} code={code.toUpperCase()} summary={sum} locale={locale} theme={theme} inertRef={rootRef} onClose={closeSheet} sourceReady={!summary.loading && !me.loading && !summary.error && !me.error} />}
   </div>
+}
+
+function Shell({ embedded, topbar, children }: { embedded: boolean; topbar: ReactNode; children: ReactNode }) {
+  return embedded ? <div className={c.embedded}>{children}</div> : <MaisonPage page="referral" topbar={topbar}>{children}</MaisonPage>
 }

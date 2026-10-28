@@ -8,7 +8,11 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{code:string}
     const upstream=await fetch(`${base}/r/${encodeURIComponent(code)}`,{headers:old?{cookie:`rwa_referral=${encodeURIComponent(old)}`}:{},cache:'no-store',signal:AbortSignal.timeout(20000)})
     if(!upstream.ok) return NextResponse.json({message:'Invitation link is unavailable'},{status:upstream.status,headers:{'Cache-Control':'no-store'}})
     const data=await upstream.json() as {attributionToken:string;expiresAt:string}
-    const response=NextResponse.redirect(new URL('/register',req.url),303)
+    // Where the link should land (2026-10-28): a shared post or profile (`?next=`, same-site paths only), else the invitation page.
+    const next=req.nextUrl.searchParams.get('next')
+    const sameSite=Boolean(next)&&next!.startsWith('/')&&!next!.startsWith('//')&&!next!.includes('\\')&&!/\s/.test(next!)
+    const target=sameSite?next!:'/invite'
+    const response=NextResponse.redirect(new URL(target,req.url),303)
     response.headers.set('Cache-Control','no-store')
     response.cookies.set('rwa_referral',data.attributionToken,{httpOnly:true,secure:req.nextUrl.protocol==='https:',sameSite:'lax',path:'/',expires:new Date(data.expiresAt)})
     return response

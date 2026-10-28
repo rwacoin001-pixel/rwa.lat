@@ -10,6 +10,15 @@ export const displayInviteCode = (code: string) => /^[A-Za-z0-9]{6}$/.test(code)
 
 export type InviteAttribution = { code: string; expiresAt: string }
 
+/**
+ * Share = invite (2026-10-28): a shared page goes out as /r/<code>?next=<path>, so whoever opens it is attributed to the
+ * sharer and still lands on what was shared. Without a code the plain page link is used.
+ */
+export function inviteLinkFor(path: string, code?: string | null): string {
+  const origin = typeof window === 'undefined' ? '' : window.location.origin
+  return code ? `${origin}/r/${encodeURIComponent(code.toUpperCase())}?next=${encodeURIComponent(path)}` : origin + path
+}
+
 export const lookupInviteCode = (code: string) =>
   request<{ valid: boolean; code?: string }>(`/v1/referral/public/codes/${encodeURIComponent(code)}`, { loading: 'silent', timeoutMs: 8_000 })
 

@@ -89,6 +89,7 @@ export const rwaScreenTopbarKinds: Record<RwaScreen, TopbarKind> = {
   community: 'list', 'community-post': 'detail', 'community-profile': 'detail',
   learn: 'list', 'learn-article': 'detail',
   'share-landing': 'immersive',
+  'invite-landing': 'immersive',
   'onboarding-overview': 'list', valuation: 'detail', 'issuer-profile': 'detail', issuers: 'list', search: 'tool', 'yield-calendar': 'list', rebalance: 'tool', statements: 'list', recurring: 'tool', 'my-predictions': 'list',
 }
 

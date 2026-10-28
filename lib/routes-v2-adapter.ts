@@ -98,6 +98,7 @@ const KEY_TO_SCREEN: Partial<Record<RouteKey, RwaScreen>> = {
 
   // 系统
   shareLanding: 'share-landing',
+  inviteLanding: 'invite-landing',
   notificationLink: 'notifications',
   maintenance: 'status',
 }

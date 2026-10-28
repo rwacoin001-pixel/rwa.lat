@@ -311,7 +311,7 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
   const setSignedOut = () => setSessionMode('guest')
   // The order sheet keeps the Dock behind it; funds routes occupy the full screen.
   const isFloatingSheet = screen === 'order-review'
-  const showDock = ['home', 'invest', 'portfolio'].includes(screen) || isFloatingSheet
+  const showDock = ['home', 'invest', 'community', 'portfolio'].includes(screen) || isFloatingSheet
   const dockActiveScreen: PrimaryScreen | undefined = screen === 'order-review' ? 'invest' : undefined
   const isProtectedWaiting = (protectedScreens.includes(screen) || routeRequiresAuth(routePath || initialPath)) && !sessionReady
   return { screen, go, notify, closeOverlay, setAuthenticated, setSignedOut, aiContext, sessionMode, sessionReady, routeQuery, routeParams, routePath, selectedProduct, products, localizedSelectedProduct, detailSlug, predictionId, selectedBasketId, communityPostId, communityHandle, supportTicketId, orderDetailId, routeSymbol, openOrder, openDynamicScreen, openCommunityPost, openCommunityProfile, openSupportTicket, navigationMotion, isOnline, showDock, isFloatingSheet, dockActiveScreen, isProtectedWaiting, theme, mode }

@@ -20,6 +20,7 @@ const AiPlanningScreen = dynamic(() => import('../maison/AiPlanningScreen').then
 const PublicShareLanding = dynamic(() => import('../public-sharing').then((m) => ({ default: m.PublicShareLanding })), { ssr: false, loading: AppLoading })
 const StatusScreen = dynamic(() => import('../status-screen').then((m) => ({ default: m.StatusScreen })), { ssr: false, loading: AppLoading })
 const SecondaryTransferScreen = dynamic(() => import('../maison/SecondaryTransferScreen').then((m) => ({ default: m.SecondaryTransferScreen })), { ssr: false, loading: AppLoading })
+const InviteLanding = dynamic(() => import('../maison/InviteLanding').then((m) => ({ default: m.InviteLanding })), { ssr: false, loading: AppLoading })
 const CommunityFeedScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityFeedScreen })), { ssr: false, loading: AppLoading })
 const CommunityPostScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityPostScreen })), { ssr: false, loading: AppLoading })
 const CommunityProfileScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityProfileScreen })), { ssr: false, loading: AppLoading })
@@ -102,6 +103,7 @@ export function H5Screens({ h }: { h: H5Controller }) {
         {(screen === 'learn' || screen === 'learn-article') && <LearnScreen key={`${locale}:${routeParams.slug ?? ''}`} slug={screen === 'learn-article' ? routeParams.slug : undefined} />}
         {screen === 'community-post' && <CommunityPostScreen key={communityPostId} postId={communityPostId} go={go} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
         {screen === 'community-profile' && <CommunityProfileScreen key={communityHandle} handle={communityHandle} go={go} openPost={openCommunityPost} isGuest={sessionMode === 'guest'} />}
+        {screen === 'invite-landing' && <InviteLanding go={go} />}
         {screen === 'share-landing' && <PublicShareLanding key={routeParams.token} token={routeParams.token??null} />}
         {screen === 'rwa-detail' && routePath === '/compare' && <MaisonCompareScreen query={routeQuery} />}
         {screen === 'rwa-detail' && routePath !== '/compare' && (detailSlug ? <MaisonAssetDetailScreen slug={detailSlug} /> : <RwaDetailScreen product={selectedProduct.category === 'RWA' ? localizedSelectedProduct : localizeProduct(products.find((product) => product.category === 'RWA') ?? selectedProduct, locale)} go={go} notify={notify} openOrder={openOrder} openDynamic={openDynamicScreen} />)}

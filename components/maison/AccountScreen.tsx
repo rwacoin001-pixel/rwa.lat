@@ -92,7 +92,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       { key: 'notifications', path: '/notifications', Icon: Bell },
       { key: 'settings', path: '/profile/settings', Icon: Settings },
       { key: 'communication', path: '/profile/settings?section=marketing', Icon: Bell },
-      { key: 'referral', path: '/profile/referral', Icon: Gift },
+      { key: 'referral', path: '/community?tab=invite', Icon: Gift },
     ] },
   ]
 

@@ -8,7 +8,7 @@ export type RwaScreen =
   | 'ai-plan' | 'notifications' | 'kyc' | 'eligibility' | 'risk-profile' | 'security' | 'referral' | 'records' | 'support' | 'support-new' | 'support-ticket' | 'fees' | 'settings' | 'marketing' | 'official-channels' | 'scam-report' | 'close-account'
   | 'trust-center' | 'access-regions' | 'product-disclosures' | 'legal-center' | 'status' | 'disclosures' | 'secondary' | 'trade'
   | 'community' | 'community-post' | 'community-profile' | 'learn' | 'learn-article'
-  | 'share-landing'
+  | 'share-landing' | 'invite-landing'
   | 'onboarding-overview' | 'valuation' | 'issuer-profile' | 'issuers' | 'search' | 'yield-calendar' | 'rebalance' | 'statements' | 'recurring' | 'my-predictions'
 
 const screenPaths: Record<RwaScreen, string> = {
@@ -87,6 +87,7 @@ const screenPaths: Record<RwaScreen, string> = {
   issuers: '/issuers',
   search: '/search',
   'share-landing': '/share',
+  'invite-landing': '/invite',
   'yield-calendar': '/portfolio/yield-calendar',
   rebalance: '/portfolio/rebalance',
   statements: '/statements',

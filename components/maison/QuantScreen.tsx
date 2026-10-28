@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -11,7 +11,8 @@ import { MaisonPage, Skeleton, StateBlock } from './primitives'
 import { QuantDisclosureSheet } from './QuantDisclosureSheet'
 import { QuantAccount, QuantHistory } from './QuantAccount'
 import { QuantAccountPlaceholder } from './QuantSpec'
-import { QuantMonth, useQuantView } from './QuantOverview'
+import { QuantMonth, quantWin, useQuantView } from './QuantOverview'
+import { ShareWinLine } from './ShareWin'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import stage from './quant.module.css'
 import v2 from './quant-v2.module.css'
@@ -44,6 +45,7 @@ function MyQuant() {
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   const involved = audience !== 'visitor'
+  const win = useMemo(() => quantWin(product), [product])
   const payouts = useQuery(involved && slug ? `quant:payouts:${slug}` : null, () => listQuantPayouts(slug as string, 60), { staleTime: 30_000 })
   const title = product ? `${product.name} · ${c.charts.tabAccount}` : c.title
   const topbar = <RwaTopbar screen="quant" title={title} onBack={() => backOr('/assets')} />
@@ -59,6 +61,7 @@ function MyQuant() {
           {involved
             ? <>
               <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
+              <ShareWinLine moment={win} />
               <QuantHistory payouts={payouts} c={c} />
             </>
             : <QuantAccountPlaceholder product={product} c={c} />}

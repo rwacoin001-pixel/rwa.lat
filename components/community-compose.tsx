@@ -1,5 +1,6 @@
 'use client'
 
+import { riskyPost, riskyPostMessage } from '@/lib/community-guard'
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
 import { Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Trash2, X } from 'lucide-react'
@@ -228,6 +229,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
 
   const send = async () => {
     if (!canSend) return
+    if (riskyPost(trimmed)) { setError(riskyPostMessage[locale] ?? riskyPostMessage.en); return }
     if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
     const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location }), ...(imageIds.length ? { imageIds } : {}) })

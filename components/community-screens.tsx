@@ -12,6 +12,9 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
+import { useQuery } from '@/lib/api/_query'
+import { referralMe } from '@/lib/api/referral'
+import { inviteLinkFor } from '@/lib/referral-invite'
 import RwaLogoMark from './rwa-logo'
 import { CommunityFollowButton, CommunityFollowView, CommunityLike, useCommunityFollow } from './community-actions'
 import { CommunityText } from './community-text'
@@ -26,6 +29,7 @@ import { communityExperienceCopy } from '@/lib/community-experience-copy'
 import { useScrollChrome } from '@/hooks/useScrollChrome'
 import { MaisonPage } from './maison/primitives'
 import c from './community-x.module.css'
+import dynamic from 'next/dynamic'
 import {
   getCommunityFeed,
   getCommunityPost,
@@ -225,7 +229,9 @@ function usePostActions(isGuest: boolean, go: (screen: RwaScreen) => void, local
   useEffect(() => { if (!notice) return; const timer = setTimeout(() => setNotice(null), 2800); return () => clearTimeout(timer) }, [notice])
   const login = () => go('login')
   const onReply = (post: CommunityPost) => { if (isGuest) { go('login'); return } setReply({ post, open: true }) }
-  const share = (path: string) => void sharePage(location.origin + path, navigator).then(result => {
+  // Signed-in shares carry the sharer's invite code (same query key as the invite centre, so it is usually cached).
+  const inviteCode = useQuery(isGuest ? null : 'referral:v2:me', referralMe, { staleTime: 300_000 }).data?.code
+  const share = (path: string) => void sharePage(inviteLinkFor(path, inviteCode), navigator).then(result => {
     if (result === 'copied') setNotice({ text: p.copied })
     else if (result === 'failed') setNotice({ text: p.shareFailed, error: true })
   })
@@ -362,6 +368,20 @@ function useInfinite(onReach: () => void, enabled: boolean, page: unknown) {
 /* ── Feed ── */
 
 /** `embedded` renders the bare feed for a host that owns the page and bar (the AI screen's 社区 tab). */
+/** The invite centre lives in the Community tab (2026-10-28); loaded only when someone opens it. */
+const InviteCentre = dynamic(() => import('./maison/ReferralCenter').then((m) => ({ default: m.ReferralScreen })), { ssr: false })
+const inviteLabel: Record<AppLocale, { tab: string; guest: string; guestBody: string }> = {
+  en: { tab: 'Invite', guest: 'Sign in to invite friends', guestBody: 'Your invite code, link and rewards appear here.' },
+  'zh-CN': { tab: '邀请', guest: '登录后邀请好友', guestBody: '你的邀请码、专属链接和奖励都在这里。' },
+  hi: { tab: 'आमंत्रण', guest: 'दोस्तों को बुलाने के लिए साइन इन करें', guestBody: 'आपका कोड, लिंक और इनाम यहाँ दिखेंगे।' },
+  es: { tab: 'Invitar', guest: 'Inicia sesión para invitar', guestBody: 'Aquí verás tu código, tu enlace y tus recompensas.' },
+  ar: { tab: 'دعوة', guest: 'سجّل الدخول لدعوة الأصدقاء', guestBody: 'يظهر هنا رمزك ورابطك ومكافآتك.' },
+  fr: { tab: 'Inviter', guest: 'Connectez-vous pour inviter', guestBody: 'Votre code, votre lien et vos récompenses s’affichent ici.' },
+  pt: { tab: 'Convidar', guest: 'Entre para convidar amigos', guestBody: 'Seu código, link e recompensas aparecem aqui.' },
+}
+type CommunityView = 'feed' | 'invite'
+const viewFromUrl = (): CommunityView => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'invite' ? 'invite' : 'feed'
+
 export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true, embedded = false }: { go: (screen: RwaScreen) => void; openPost: (id: string) => void; openProfile: (handle: string) => void; isGuest?: boolean; embedded?: boolean }) {
   const { t, locale } = useI18n()
   const timeAgo = useTimeAgo()
@@ -447,28 +467,44 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   }
   const sentinel = useInfinite(() => void loadMore(), Boolean(nextCursor) && !loading && !failed, nextCursor)
 
+  // First-level tab (2026-10-28): 社区 · 邀请 at the top instead of a back arrow; ?tab=invite opens the invite centre.
+  const [view, setView] = useState<CommunityView>(viewFromUrl)
+  useEffect(() => {
+    if (embedded) return
+    const params = new URLSearchParams(window.location.search)
+    if (view === 'invite') params.set('tab', 'invite'); else params.delete('tab')
+    const next = `${window.location.pathname}${params.size ? `?${params}` : ''}`
+    if (next !== `${window.location.pathname}${window.location.search}`) window.history.replaceState({ ...window.history.state }, '', next)
+  }, [view, embedded])
+  const invite = inviteLabel[locale] ?? inviteLabel.en
+  const pick = (next: CommunityView) => { if (next === view) { window.scrollTo({ top: 0 }); return } navigator.vibrate?.(4); setView(next); window.scrollTo({ top: 0 }) }
+
   const pickSort = (next: 'latest' | 'hot') => { if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
     <div className={c.x} data-embedded={embedded || undefined}>
       {/* Reading down slides the top row away; the tabs stay pinned. A small upward scroll brings it back (X mobile). */}
       <header className={c.head} data-hidden={chromeHidden}>
-        {!embedded && <div className={c.headRow}>
-          <BackButton label={p.back} onClick={() => go('home')} />
-          <span className={c.logo}><RwaLogoMark label="A-REIT" /></span>
+        {!embedded && <div className={`${c.headRow} ${c.headRowTabs}`}>
+          <div className={c.pageTabs} role="tablist" aria-label={t('nav.community')}>
+            {([['feed', t('nav.community')], ['invite', invite.tab]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={view === key} onClick={() => pick(key)}>{label}</button>)}
+          </div>
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
             : <button type="button" className={c.meBtn} aria-label={t('community.viewProfile')} onClick={() => me ? openProfile(me.handle || me.id) : go('login')}>
               <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'me'} size={32} />
             </button>}
         </div>}
-        <TimelineTabs label={ui.feed} value={sort} onChange={pickSort} options={tabs} />
-        {topics.length > 0 && <div className={c.topics} role="group" aria-label={ui.topics}>
+        {view === 'feed' && <TimelineTabs label={ui.feed} value={sort} onChange={pickSort} options={tabs} />}
+        {view === 'feed' && topics.length > 0 && <div className={c.topics} role="group" aria-label={ui.topics}>
           <button type="button" className={c.chip} aria-pressed={topic === null} onClick={() => setTopic(null)}>{t('common.viewAll')}</button>
           {topics.map((entry) => <button key={entry.slug} type="button" className={c.chip} aria-pressed={topic === entry.slug} onClick={() => setTopic(entry.slug)}>{communityTopicTitle(entry.slug, topics, locale)}</button>)}
         </div>}
       </header>
-      {loading ? <SkeletonRows />
+      {view === 'invite' ? (isGuest
+        ? <XState title={invite.guest} body={invite.guestBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => go('login')}>{p.signIn}</button>} />
+        : <InviteCentre embedded />)
+      : loading ? <SkeletonRows />
         : failed ? <XState title={communityCopy[locale].feedFailed} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => void load()}>{t('common.refresh')}</button>} />
         : items.length === 0 ? <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />
         : <>
@@ -479,9 +515,9 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           {loadingMore && <span className={c.spinner} role="status" aria-label={t('community.loadMore')} />}
           {moreFailed && <button type="button" className={c.more} onClick={() => { setMoreFailed(false); void loadMore() }}>{communityCopy[locale].moreFailed} · {t('common.refresh')}</button>}
         </>}
-      <button type="button" className={c.fab} data-compact={chromeHidden} aria-label={ui.compose} onClick={() => isGuest ? go('login') : setComposing(true)}>
+      {view === 'feed' && <button type="button" className={c.fab} data-compact={chromeHidden} aria-label={ui.compose} onClick={() => isGuest ? go('login') : setComposing(true)}>
         <span className={c.fabIcon} aria-hidden="true"><Feather size={24} strokeWidth={2} /><Plus size={13} strokeWidth={3} /></span>
-      </button>
+      </button>}
       {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic }} me={me} topics={topics} onPublished={openPost} />}
       {actions.overlays(me)}
     </div>

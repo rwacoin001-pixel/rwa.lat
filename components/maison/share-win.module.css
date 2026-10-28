@@ -1,0 +1,23 @@
+/* Share the good moments (2026-10-28, docs/design-system.md §7.7): one quiet text line with a close key, then a sheet
+   with the card preview and two buttons (porcelain save, ink share). Every size is on the §3.1 scale. */
+.line { display: flex; align-items: center; gap: 4px; margin-top: 12px; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.open { display: inline-flex; flex: 1 1 auto; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 15px; font-weight: 500; text-align: start; cursor: pointer; }
+.dismiss { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; background: none; color: var(--m-faint); cursor: pointer; }
+.scrim { position: fixed; z-index: 80; inset: 0; display: flex; align-items: flex-end; justify-content: center; background: rgba(11, 18, 32, .4); }
+.sheet { display: grid; gap: 16px; width: min(100%, var(--app-max, 480px)); max-height: 92dvh; overflow: auto; padding: 16px 20px calc(16px + env(safe-area-inset-bottom)); border-radius: 28px 28px 0 0; background: var(--pa-card, #fff); }
+.sheet > header { display: flex; align-items: center; justify-content: space-between; }
+.sheet h2 { margin: 0; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.sheet header button { display: grid; place-items: center; width: 44px; height: 44px; margin-inline-end: -12px; border: 0; background: none; color: var(--m-ink); cursor: pointer; }
+.preview { display: grid; place-items: center; aspect-ratio: 3 / 4; max-height: 56dvh; margin: 0 auto; overflow: hidden; border-radius: 22px; background: var(--pa-fill, rgba(11, 18, 32, .05)); box-shadow: var(--pa-card-shadow); }
+.preview img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.note { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; text-align: center; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.save, .share { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 56px; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.save { background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); }
+.share { background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow); }
+.save:disabled, .share:disabled { opacity: .45; cursor: default; }
+.qrSource { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+.open:focus-visible, .dismiss:focus-visible, .save:focus-visible, .share:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .line.line .open span { color: var(--m-accent); }
+:global(.rwa-mobile) .sheet.sheet .note { color: var(--m-muted); }

@@ -2,7 +2,7 @@
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { markTabNavigation } from '@/lib/app-navigation'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
+import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, MessagesSquare, Plus, QrCode, type LucideIcon } from 'lucide-react'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { openPath } from '@/lib/maison-nav'
 import { fundsCopy } from '@/lib/maison-funds-copy'
@@ -26,10 +26,11 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
     { label: t('wallet.transfer'), path: '/assets/cash/transfer', icon: ArrowRightLeft },
     { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', icon: QrCode },
   ]
-  // Three tabs (2026-10-28): Koala Quant lives on Markets now (its first tab), "My Koala Quant" on Assets.
+  // Four tabs (2026-10-28): Koala Quant lives on Markets (its first tab); Community holds the feed and the invite centre.
   const items: Array<{ id: PrimaryScreen; label: string; icon: typeof House }> = [
     { id: 'home', label: t('nav.home'), icon: House },
     { id: 'invest', label: t('nav.markets'), icon: ChartNoAxesColumnIncreasing },
+    { id: 'community', label: t('nav.community'), icon: MessagesSquare },
     { id: 'portfolio', label: t('nav.assets'), icon: ChartPie },
   ]
   useEffect(() => { expandChrome() }, [screen])

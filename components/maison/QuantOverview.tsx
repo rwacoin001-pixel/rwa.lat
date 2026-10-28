@@ -15,6 +15,7 @@ import { QuantProcess, QuantSpecSheet } from './QuantSpec'
 import { QuantStrip } from './QuantAccount'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
+import { ShareWinLine, type WinMoment } from './ShareWin'
 import stage from './quant.module.css'
 import page from './quant-page.module.css'
 import v2 from './quant-v2.module.css'
@@ -62,6 +63,15 @@ export function useQuantView() {
   return { list, slug, detail, product, sample, audience, ticks }
 }
 
+/** The latest paid day (within three days), with the product's settled return for it, for the share line. */
+export function quantWin(product: QuantProduct | undefined | null): WinMoment | null {
+  const last = product?.position?.lastDay
+  if (!product || !last || BigInt(last.netAtomic) <= BigInt(0) || Date.now() - Date.parse(`${last.tradeDate}T00:00:00Z`) > 3 * 86_400_000) return null
+  const row = product.history.find((entry) => entry.tradeDate === last.tradeDate)
+  if (!row) return null
+  return { id: `quant-${product.slug}-${last.tradeDate}`, kind: 'quant', date: last.tradeDate, pct: Number(row.netReturnPct), title: product.name, path: '/markets?tab=quant' }
+}
+
 /** The quant tab of Markets. */
 export function QuantOverview() {
   const { locale } = useI18n()
@@ -74,6 +84,7 @@ export function QuantOverview() {
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   const wantsSubscribe = audience === 'visitor' || audience === 'ex-holder'
   const preview = useQuery(wantsSubscribe && slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
+  const win = useMemo(() => sample ? null : quantWin(product), [product, sample])
 
   const root = `${stage.stage} ${v2.root}`
   if (list.loading && !list.data) return <div className={root}><Skeleton rows={5} /></div>
@@ -88,7 +99,10 @@ export function QuantOverview() {
     <QuantPhoto product={product} h={h} />
 
     {sample && <p className={v2.sample}>{c.previewNotice}</p>}
-    {(audience === 'holder' || audience === 'pending') && product.position && <QuantStrip position={product.position} c={c} />}
+    {(audience === 'holder' || audience === 'pending') && product.position && <div>
+      <QuantStrip position={product.position} c={c} />
+      <ShareWinLine moment={win} />
+    </div>}
 
     <section className={v2.perf} aria-label={h.since}>
       <small>{h.since}</small>
