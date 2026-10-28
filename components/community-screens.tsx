@@ -7,7 +7,7 @@
  */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
-import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Feather, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Plus, Share, Share2 } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Share, Share2, SquarePen } from 'lucide-react'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, getCircleFeed, setCircleVisibility, type CircleMember } from '@/lib/community-data'
@@ -21,6 +21,7 @@ import { CommunityFollowButton, CommunityFollowView, CommunityLike, useCommunity
 import { CommunityText } from './community-text'
 import { CommunityProofCard } from './community-proof'
 import { CommunityAvatar, CommunityMark, mediaSrc } from './community-avatar'
+import { PhotoViewer } from './community-photo-viewer'
 import { CommunityCompose, CommunityProfileEditor, CommunityReplyBar, useCommunityMe, type ComposeTarget } from './community-compose'
 import { communityComposeCopy } from '@/lib/maison-community-compose-copy'
 import { PublicShareButton } from './public-sharing'
@@ -117,10 +118,20 @@ function SkeletonRows({ rows = 5 }: { rows?: number }) {
   return <div aria-busy="true" aria-live="polite">{Array.from({ length: rows }, (_, index) => <div key={index} className={c.skel}><i /><div><i /><i /><i /></div></div>)}</div>
 }
 
-function Images({ images, onOpen }: { images: string[]; onOpen?: () => void }) {
+/** A post's photos; tapping one opens the viewer at that photo (2026-10-28), not the post. */
+function Images({ images }: { images: string[]; onOpen?: () => void }) {
+  const { locale } = useI18n()
+  const [viewing, setViewing] = useState<number | null>(null)
   if (!images.length) return null
   const shown = images.slice(0, 4)
-  return <div className={c.media} data-count={shown.length} onClick={onOpen}>{shown.map((src) => <img key={src} src={mediaSrc(src) ?? undefined} alt="" loading="lazy" decoding="async" />)}</div>
+  const all = images.map((src) => mediaSrc(src) ?? src)
+  const label = locale === 'zh-CN' ? { close: '关闭', photo: '照片' } : { close: 'Close', photo: 'Photo' }
+  return <>
+    <div className={c.media} data-count={shown.length}>{shown.map((src, i) => <button key={src} type="button" className={c.mediaBtn} aria-label={`${label.photo} ${i + 1}`} onClick={(event) => { event.stopPropagation(); setViewing(i) }}>
+      <img src={mediaSrc(src) ?? undefined} alt="" loading="lazy" decoding="async" />
+    </button>)}</div>
+    {viewing !== null && <PhotoViewer images={all} start={viewing} label={label} onClose={() => setViewing(null)} />}
+  </>
 }
 
 function Tags({ list, topics, locale }: { list: string[]; topics: CommunityTopic[]; locale: keyof typeof communityTopicCopy }) {
@@ -545,6 +556,9 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           <div className={c.pageTabs} role="tablist" aria-label={t('nav.community')}>
             {([['feed', t('nav.community')], ['invite', invite.tab]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={view === key} onClick={() => pick(key)}>{label}</button>)}
           </div>
+          {/* Compose lives in the header (2026-10-28): one floating thing per screen — the AI ball keeps its place and its
+              unread count; the pen fades in on the feed and leaves on Invite. */}
+          {view === 'feed' && <button type="button" className={c.composeBtn} onClick={() => isGuest ? go('login') : setComposing(true)}><SquarePen size={18} strokeWidth={1.9} aria-hidden="true" /><span>{ui.compose}</span></button>}
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
             : <button type="button" className={c.meBtn} aria-label={t('community.viewProfile')} onClick={() => go('profile')}>
@@ -578,9 +592,6 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         </>}
       {view === 'feed' && sort === 'circle' && circle && !loading && <CircleVisibility value={circle.showToInviter} label={circleText.visible} note={circleText.visibleNote}
         onChange={(visible) => { setCircle({ ...circle, showToInviter: visible }); setCircleVisibility(visible).catch(() => setCircle({ ...circle, showToInviter: !visible })) }} />}
-      {view === 'feed' && <button type="button" className={c.fab} data-compact={chromeHidden} aria-label={ui.compose} onClick={() => isGuest ? go('login') : setComposing(true)}>
-        <span className={c.fabIcon} aria-hidden="true"><Feather size={24} strokeWidth={2} /><Plus size={13} strokeWidth={3} /></span>
-      </button>}
       {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic }} me={me} topics={topics} onPublished={openPost} />}
       {actions.overlays(me)}
     </div>

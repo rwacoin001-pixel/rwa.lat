@@ -285,3 +285,7 @@ button.icon:active { transform: scale(.92); }
 .bar[data-overlay] { grid-template-columns: 1fr 44px; background: transparent; box-shadow: none; }
 .overlayTitle { margin: 0; padding-inline-start: 8px; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
 .shell[data-overlay] .dockWrap { background: none; }
+
+/* The composer follows the keyboard in one smooth move (2026-10-28). */
+.dockWrap { transition: bottom .2s cubic-bezier(.22, 1, .36, 1); }
+@media (prefers-reduced-motion: reduce) { .dockWrap { transition: none; } }

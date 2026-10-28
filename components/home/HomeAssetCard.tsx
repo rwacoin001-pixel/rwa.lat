@@ -5,6 +5,7 @@ import { ArrowDownToLine, ArrowRightLeft, ArrowUp, ArrowUpFromLine, ChevronRight
 import type { HomeState } from '@/lib/home-lifecycle'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fromAtomic } from '@/lib/money'
+import { MASK, setBalancesHidden, useBalancesHidden } from '@/lib/hide-balance'
 import { fundsCopy } from '@/lib/maison-funds-copy'
 import { HomeEmailBinding } from './HomeEmailBinding'
 import { Sparkline } from './Sparkline'
@@ -70,9 +71,10 @@ type Props = {
 export function HomeAssetCard({ state, account, loading, pendingUnits, today, spark, ctaLabel, onPrimary, onPortfolio, onCashAction, emailBinding }: Props) {
   const { locale, t } = useI18n()
   const c = homeV2Copy(locale)
-  const [hidden, setHidden] = useState(false)
-  useEffect(() => { try { setHidden(localStorage.getItem('rwa.home.hide-balance') === '1') } catch { /* shown */ } }, [])
-  const toggle = () => setHidden(value => { try { localStorage.setItem('rwa.home.hide-balance', value ? '0' : '1') } catch { /* session only */ } return !value })
+  // One app-wide switch (lib/hide-balance); unknown on the first render counts as hidden, so nothing flashes.
+  const known = useBalancesHidden()
+  const hidden = known !== false
+  const toggle = () => setBalancesHidden(!hidden)
   const total = account ? money(account.totalAssetsAtomic, account.totalAssetsDecimals, locale) : null
   const available = account ? money(account.availableAtomic, account.availableDecimals, locale) : null
   const shown = useCountOnce(total)
@@ -128,7 +130,7 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, sp
       {hidden ? '' : change !== null ? c.today.replace('{v}', `${signed(change, locale)}${pct === null ? '' : ` (${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%)`}`) : available !== null ? c.available.replace('{v}', fmt(available, locale)) : ''}
     </div>
     {tiles}
-    {pendingUnits > 0 && <div className={styles.pending} role="status"><span>{c.pending.replace('{v}', fmt(pendingUnits, locale))}</span><span>{c.pendingEta}</span></div>}
+    {pendingUnits > 0 && <div className={styles.pending} role="status"><span>{c.pending.replace('{v}', hidden ? MASK : fmt(pendingUnits, locale))}</span><span>{c.pendingEta}</span></div>}
     {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}
   </section>
 }

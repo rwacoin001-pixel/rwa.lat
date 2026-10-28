@@ -77,12 +77,16 @@ function writeDrafts(drafts: Draft[]) {
   try { window.localStorage.setItem(draftsKey(), JSON.stringify(drafts.slice(0, 30))) } catch { /* storage full or disabled: drafts are best effort */ }
 }
 
-/** Page portal target so overlays keep the Maison theme tokens. */
+/**
+ * Page portal target so overlays keep the Maison theme tokens. The target is settled once, after mount, and the dialog
+ * opens only then (2026-10-28): a reply composer mounts already open, and moving its portal from the default host to
+ * the page a moment later tore the portal down mid-commit ("removeChild of null"), which blanked the whole app.
+ */
 function useMaisonContainer() {
   const anchor = useRef<HTMLSpanElement>(null)
-  const [container, setContainer] = useState<HTMLElement | null>(null)
-  useEffect(() => { setContainer(anchor.current?.closest<HTMLElement>('[data-maison-page]') ?? null) }, [])
-  return { anchor, container }
+  const [target, setTarget] = useState<{ el: HTMLElement | null } | null>(null)
+  useEffect(() => { setTarget({ el: anchor.current?.closest<HTMLElement>('[data-maison-page]') ?? document.body }) }, [])
+  return { anchor, container: target?.el ?? undefined, ready: target !== null }
 }
 
 /** Character ring: fills as the limit nears, shows the remainder in the last 20, turns red past it. */
@@ -110,8 +114,15 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
 }) {
   const { locale } = useI18n()
   const k = communityComposeCopy[locale]; const c = communityCopy[locale]
-  const { anchor, container } = useMaisonContainer()
+  const { anchor, container, ready: hostReady } = useMaisonContainer()
   const reply = target.kind === 'reply'
+  // While writing, the dock and the AI ball step aside (2026-10-28): they sat over the composer's own bottom bar.
+  useEffect(() => {
+    if (!open) return
+    const root = document.documentElement
+    root.dataset.composeOpen = 'true'
+    return () => { delete root.dataset.composeOpen }
+  }, [open])
   const max = reply ? 2000 : 4000
   const [body, setBody] = useState('')
   const [topic, setTopic] = useState<string | null>(null)
@@ -255,7 +266,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const topicLabel = topic ? topics.find(t => t.slug === topic)?.title ?? topic : k.topic
 
   return <><span ref={anchor} hidden />
-    <Dialog.Root open={open} onOpenChange={next => { if (!next) requestClose() }}>
+    <Dialog.Root open={open && hostReady} onOpenChange={next => { if (!next) requestClose() }}>
       <Dialog.Portal container={container}>
         <Dialog.Popup ref={popup} className={x.compose} initialFocus={field} aria-busy={busy}>
           <div className={x.composeHead}>
@@ -362,7 +373,7 @@ function MemberReplyBar({ me, onOpen }: { me: CommunityMe | null; onOpen: (files
 
 export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { open: boolean; onOpenChange: (open: boolean) => void; me: CommunityMe; onSaved: () => void }) {
   const { locale } = useI18n(); const k = communityComposeCopy[locale]
-  const { anchor, container } = useMaisonContainer()
+  const { anchor, container, ready: hostReady } = useMaisonContainer()
   const [name, setName] = useState(me.displayName)
   const [handle, setHandle] = useState(me.handleBase || '')
   const [profileLocation, setProfileLocation] = useState<PostLocation | null>(null)
@@ -433,7 +444,7 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
   const hasAvatar = Boolean(preview || me.avatarUrl || me.avatarPending)
 
   return <><span ref={anchor} hidden />
-    <Dialog.Root open={open} onOpenChange={onOpenChange}>
+    <Dialog.Root open={open && hostReady} onOpenChange={onOpenChange}>
       <Dialog.Portal container={container}>
         <Dialog.Backdrop className={x.backdrop} />
         <Dialog.Popup className={`${x.sheet} ${x.editSheet}`}>

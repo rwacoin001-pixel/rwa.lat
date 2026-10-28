@@ -51,7 +51,10 @@ export function useQuantView() {
   const raw = detail.data
   const [flagged, setFlagged] = useState(false)
   useEffect(() => {
-    try { setFlagged(new URLSearchParams(window.location.search).get('preview') === '1') } catch { setFlagged(false) }
+    // Sample figures are for local design review only (2026-10-28): never on a public host, where a shared ?preview=1
+    // link would show made-up performance as if it were real.
+    const local = /^(localhost|127\.0\.0\.1|\[::1\])$|\.localhost$|\.test$/.test(window.location.hostname)
+    try { setFlagged(local && new URLSearchParams(window.location.search).get('preview') === '1') } catch { setFlagged(false) }
   }, [])
   const sample = Boolean(raw) && flagged
   const product = useMemo(() => {

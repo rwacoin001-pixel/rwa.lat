@@ -107,3 +107,10 @@
 /* Solid grounds only (2026-10-28, user): no gradient on the panel. */
 .panel { background: #eef0f3; }
 :global(.rwa-mobile[data-theme='dark']) .panel { background: #1b1f26; }
+/* Claim ring and receipt (2026-10-28): same language as the invite centre. */
+.ring { display: block; width: 20px; height: 20px; border: 2.5px solid rgba(11, 18, 32, .15); border-top-color: var(--m-ink, #0b1220); border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.claim.claim[data-state='done'] { color: var(--m-up, #067a5e); }
+.receipt { display: flex; align-items: center; gap: 8px; margin: 0 4px; color: var(--m-up, #067a5e); font-size: 13px; font-weight: 500; line-height: 18px; animation: pop .3s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+:global(.rwa-mobile) .card.card .receipt { color: var(--m-up, #067a5e); }
+@media (prefers-reduced-motion: reduce) { .ring, .receipt { animation: none; } }

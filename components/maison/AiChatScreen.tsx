@@ -148,13 +148,20 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
   const end = useRef<HTMLDivElement>(null)
   const dock = useRef<HTMLDivElement>(null)
   const followEnd = useRef(true), lastFollow = useRef(0), followTimer = useRef(0)
+  const scrollerRef = useRef<HTMLElement | null>(null)
+  scrollerRef.current = scroller
+  const toEnd = useCallback((smooth = false) => {
+    const box = scrollerRef.current
+    if (box) box.scrollTo({ top: box.scrollHeight, behavior: smooth ? 'smooth' : 'auto' })
+    else end.current?.scrollIntoView({ block: 'end', behavior: smooth ? 'smooth' : 'auto' })
+  }, [])
   const followReveal = useCallback(() => {
     const now = performance.now()
     if (!followEnd.current || followTimer.current) return
-    const scroll = () => { followTimer.current = 0; if (followEnd.current) { lastFollow.current = performance.now(); end.current?.scrollIntoView({ block: 'end' }) } }
+    const scroll = () => { followTimer.current = 0; if (followEnd.current) { lastFollow.current = performance.now(); toEnd() } }
     if (now - lastFollow.current < 120) followTimer.current = window.setTimeout(scroll, 120 - (now - lastFollow.current))
     else scroll()
-  }, [])
+  }, [toEnd])
   useEffect(() => () => window.clearTimeout(followTimer.current), [])
   const finishReveal = useCallback(() => setRevealId(null), [])
   const signedIn = useSignedIn()
@@ -198,7 +205,15 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
     window.addEventListener(SESSION_EXPIRED, reset)
     return () => { window.removeEventListener(SESSION_CHANGED, reset); window.removeEventListener(SESSION_EXPIRED, reset) }
   }, [])
-  useEffect(() => { const viewport = window.visualViewport; if (!viewport) return; const update = () => setKeyboard(Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)); viewport.addEventListener('resize', update); viewport.addEventListener('scroll', update); update(); return () => { viewport.removeEventListener('resize', update); viewport.removeEventListener('scroll', update) } }, [])
+  useEffect(() => {
+    const viewport = window.visualViewport
+    if (!viewport) return
+    let frame = 0
+    const read = () => { frame = 0; const next = Math.round(Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)); setKeyboard(previous => Math.abs(previous - next) < 24 && next !== 0 ? previous : next) }
+    const update = () => { if (!frame) frame = window.requestAnimationFrame(read) }
+    viewport.addEventListener('resize', update); viewport.addEventListener('scroll', update); read()
+    return () => { window.cancelAnimationFrame(frame); viewport.removeEventListener('resize', update); viewport.removeEventListener('scroll', update) }
+  }, [])
   useEffect(() => { if (!dock.current || typeof ResizeObserver === 'undefined') return; const observer = new ResizeObserver(entries => setDockHeight(Math.ceil(entries[0]?.contentRect.height ?? 150) + 40)); observer.observe(dock.current); return () => observer.disconnect() }, [])
 
   const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
@@ -208,7 +223,8 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
     target.addEventListener('scroll', scroll, { passive: true })
     return () => target.removeEventListener('scroll', scroll)
   }, [dockHeight, scroller])
-  useEffect(() => { if (revealId !== null) { followReveal(); return }; if (followEnd.current && (messages.length || sending)) end.current?.scrollIntoView({ block: 'end', behavior: reduced() ? 'auto' : 'smooth' }) }, [messages, sending, error, dockHeight, keyboard, followReveal])
+  useEffect(() => { if (revealId !== null) { followReveal(); return }; if (followEnd.current && (messages.length || sending)) toEnd(!reduced()) }, [messages, sending, error, followReveal, toEnd])
+  useEffect(() => { if (followEnd.current && (messages.length || sending)) toEnd() }, [dockHeight, keyboard])
 
   // The chat endpoint is synchronous and has no server-side cancel: stopping only ends the wait
   // here, and the copy says the reply may still be stored in history.

@@ -128,3 +128,11 @@
 /* The photo keeps its own rounded top. */
 .pass.pass { overflow: visible; }
 .photo.photo { overflow: hidden; border-radius: 28px 28px 0 0; }
+/* Narrow phones (2026-10-28): two-character labels and tighter keys so the row never overflows at 320px. */
+.tile.tile, .share.share > span { overflow: hidden; text-overflow: ellipsis; }
+@media (max-width: 374px) {
+  .actions { gap: 8px; }
+  .tile.tile { gap: 4px; padding: 0 8px; font-size: 13px; }
+  .share.share { padding-left: 12px; font-size: 13px; }
+  .share.share i { width: 40px; height: 40px; }
+}

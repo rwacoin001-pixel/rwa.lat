@@ -186,9 +186,12 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
+  // Steps (2026-10-28), as subscribing: amount → review (server estimate, refreshed on entry) → receipt.
+  const [step, setStep] = useState<'amount' | 'review'>('amount')
+  const [shake, setShake] = useState(0)
   const keys = useRef(new Map<string, string>())
   useHideDock(open)
-  useEffect(() => { if (!open) { setAmount(''); setAll(true); setError(null); setDone(false); setPending(false) } }, [open])
+  useEffect(() => { if (!open) { setAmount(''); setAll(true); setError(null); setDone(false); setPending(false); setStep('amount') } }, [open])
 
   const text = amount.trim()
   const key = open ? `quant:redeem-preview:${product.slug}:${all ? 'all' : text}` : null
@@ -222,13 +225,42 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
     setDone(true)
   }
 
+  const next = () => {
+    if (!ready) { setShake((n) => n + 1); navigator.vibrate?.(14); return }
+    void preview.refetch()
+    setStep('review')
+  }
+  const amountText = all ? (p ? usdtNumber(p.redeemableAtomic, locale) : '—') : (wanted !== null && !problem ? usdtNumber(wanted.toString(), locale) : '—')
+
   return <Sheet open={open} onClose={onClose} busy={pending} kicker={c.kicker} title={done ? c.sheet.done : c.sheet.redeemTitle}>
+    <AutoHeight>
     {done
-      ? <>
+      ? <div className={styles.stepPane} key="done">
+        <span className={styles.doneMark} aria-hidden="true"><Check size={28} strokeWidth={2.4} /></span>
         <p className={s.lede}>{c.sheet.doneRedeem}</p>
         <button type="button" className={s.cta} style={{ marginTop: 16 }} onClick={onClose}><span>{c.sheet.close}</span></button>
-      </>
-      : <>
+      </div>
+      : step === 'review' ? <div className={styles.stepPane} key="review">
+        <dl className={styles.review}>
+          <div><dt>{c.sheet.amount}</dt><dd>{amountText} USDT</dd></div>
+          <div><dt>{c.sheet.estimateFee}</dt><dd>{p ? usdtNumber(p.feeAtomic, locale) : '—'} USDT</dd></div>
+          <div><dt>{c.sheet.estimatePayout}</dt><dd><b>{p ? usdtNumber(p.payoutAtomic, locale) : '—'}</b> USDT</dd></div>
+        </dl>
+        <p className={s.muted} style={{ margin: '8px 0 0', fontSize: 12, lineHeight: 1.5 }}>{c.sheet.estimateNote}</p>
+        <Timeline steps={[
+          { title: c.sheet.redeemSteps.submit, body: '', done: true },
+          { title: c.sheet.redeemSteps.settle, date: p?.tradeDate, body: '' },
+          { title: c.sheet.redeemSteps.arrive, body: '' },
+        ]} />
+        {error && <p className={styles.err} role="alert">{error}</p>}
+        <div className={styles.reviewActs}>
+          <button type="button" className={s.ghost} disabled={pending} onClick={() => setStep('amount')}>{c.sheet.back}</button>
+          <button type="button" className={`${s.cta} ${styles.confirm}`} data-busy={pending || undefined} disabled={!ready || preview.loading} aria-busy={pending} onClick={() => void submit()}>
+            {pending ? <i className={styles.ring} aria-hidden="true" /> : <span>{c.sheet.confirmRedeem}</span>}
+          </button>
+        </div>
+      </div>
+      : <div className={styles.stepPane} key="amount">
         <p className={`${s.muted} ${s.num}`} style={{ margin: '4px 2px 0', fontSize: 12 }}>
           {c.sheet.redeemable} {p ? usdtNumber(p.redeemableAtomic, locale) : '—'} USDT
           {p && BigInt(p.waitingAtomic) > BigInt(0) ? ` · ${c.sheet.waitingLocked}: ${usdtNumber(p.waitingAtomic, locale)}` : ''}
@@ -237,27 +269,19 @@ export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; on
           <button type="button" aria-pressed={all} style={all ? { boxShadow: 'inset 0 0 0 1.5px var(--m-accent)' } : undefined} onClick={() => { setAll(true); setError(null) }}>{c.sheet.redeemAll}</button>
           <button type="button" aria-pressed={!all} style={!all ? { boxShadow: 'inset 0 0 0 1.5px var(--m-accent)' } : undefined} onClick={() => { setAll(false); setError(null) }}>{c.sheet.amount}</button>
         </div>
-        {!all && <label className={styles.amountBox}>
+        {!all && <label key={shake} className={styles.amountBox} data-shake={shake > 0 && problem ? '' : undefined}>
           <input inputMode="decimal" autoComplete="off" placeholder="0.00" value={amount} aria-label={c.sheet.amount} aria-invalid={Boolean(problem) || undefined}
             onChange={(event) => { setAmount(event.target.value.replace(/[^0-9.]/g, '')); setError(null) }} />
           <span>USDT</span>
         </label>}
         {problem && <p className={styles.err} role="alert">{problem}</p>}
 
-        <p className={s.kicker} style={{ marginTop: 20 }}>{c.sheet.estimateTitle}</p>
-        <ul className={styles.lines}>
-          <li><span>{c.sheet.estimateFee}</span><span>{p ? usdtNumber(p.feeAtomic, locale) : '—'} USDT</span></li>
+        <ul className={styles.lines} style={{ marginTop: 16 }}>
           <li><span>{c.sheet.estimatePayout}</span><span><b>{p ? usdtNumber(p.payoutAtomic, locale) : '—'}</b> USDT</span></li>
         </ul>
-        <p className={s.muted} style={{ margin: '6px 0 0', fontSize: 12, lineHeight: 1.5 }}>{c.sheet.estimateNote}</p>
-        <Timeline steps={[
-          { title: c.sheet.redeemSteps.submit, body: '', done: true },
-          { title: c.sheet.redeemSteps.settle, date: p?.tradeDate, body: '' },
-          { title: c.sheet.redeemSteps.arrive, body: '' },
-        ]} />
-        {error && <p className={styles.err} role="alert">{error}</p>}
-        <button type="button" className={s.cta} style={{ marginTop: 8 }} disabled={!ready} onClick={() => void submit()}><span>{c.sheet.confirmRedeem}</span></button>
-      </>}
+        <button type="button" className={s.cta} style={{ marginTop: 20 }} disabled={!p} onClick={next}><span>{c.sheet.next}</span></button>
+      </div>}
+    </AutoHeight>
   </Sheet>
 }
 

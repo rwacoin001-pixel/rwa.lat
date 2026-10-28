@@ -114,7 +114,8 @@ export function PredictionFeed() {
     <div className={s.predSearchToolbar} ref={toolbar}>
       <label className={s.predSearch}><Search size={18}/><input type="search" aria-label={text('search')} placeholder={text('search')} maxLength={120} value={draftSearch} onChange={e=>setDraftSearch(e.target.value)}/></label>
       <button type="button" className={s.predSortButton} aria-label={text('sort')} aria-expanded={sortOpen} aria-controls="prediction-sort" onClick={()=>setSortOpen(v=>!v)}><SlidersHorizontal size={20}/></button>
-      {sortOpen&&<div className={s.predSortMenu} id="prediction-sort" role="group" aria-label={text('sort')}>{POLYMARKET_SORTS.map(key=><button key={key} type="button" aria-pressed={sort===key} onClick={()=>{setSort(key);setSortOpen(false);if(key!==sort){setOffset(0);setItems([]);setNextOffset(null);setLoadedOnce(false)}}}><span>{text(key)}</span>{sort===key&&<Check size={16}/>}</button>)}</div>}
+      {/* The menu opens from the current choice (2026-10-28): the selected row lands over the button, the list unfolds from it. */}
+      {sortOpen&&<div className={s.predSortMenu} id="prediction-sort" role="group" aria-label={text('sort')} data-anchored="" style={{top:-6-Math.max(0,POLYMARKET_SORTS.indexOf(sort))*46,transformOrigin:`100% ${6+Math.max(0,POLYMARKET_SORTS.indexOf(sort))*46+23}px`}}>{POLYMARKET_SORTS.map(key=><button key={key} type="button" aria-pressed={sort===key} onClick={()=>{setSort(key);setSortOpen(false);if(key!==sort){setOffset(0);setItems([]);setNextOffset(null);setLoadedOnce(false)}}}><span>{text(key)}</span>{sort===key&&<Check size={16}/>}</button>)}</div>}
     </div>
     <div className={s.chips} role="group" aria-label={m.discovery}>
       {POLYMARKET_CATEGORIES.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={category === key} onClick={() => selectCategory(key)}>{labels.categories[key]}</button>)}

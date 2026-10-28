@@ -172,7 +172,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
     } finally { if (mounted.current) setClaiming(false) }
   }
 
-  const copyLabel = copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')
+  const copyLabel = copied ? t('已复制', 'Copied') : t('复制', 'Copy')
   const CopyIcon = copied ? Check : Copy
   const retryLabel = t('重试', 'Retry')
 
@@ -213,7 +213,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       {code && <div className={v.actions}>
         <button type="button" className={v.tile} data-copied={copied || undefined} onClick={() => void copy()}><CopyIcon key={copied ? 'done' : 'copy'} className={v.morph} size={18} strokeWidth={1.8} aria-hidden="true" /><span key={copyLabel} className={v.morph}>{copyLabel}</span></button>
         <button type="button" className={v.tile} aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={18} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
-        <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享邀请', 'Share')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
+        <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享', 'Share')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
       </div>}
       <p className={v.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
 

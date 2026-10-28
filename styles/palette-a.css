@@ -335,6 +335,8 @@ html[data-palette='a'] .liquid-dock > .ai-orb { margin-inline-start: auto; trans
 
 /* AI layer open (2026-10-28): the dock steps away under the veil; the conversation has its own input. */
 html[data-ai-open] .liquid-dock, html[data-ai-open] .ai-orb { visibility: hidden; }
+html[data-compose-open] .liquid-dock, html[data-compose-open] .ai-orb { visibility: hidden; }
+html[data-photo-open] .liquid-dock, html[data-photo-open] .ai-orb { visibility: hidden; }
 
 /* Top bars over content (2026-10-28, user): once the page scrolls under a bar — it comes back on a small upward
    scroll — it wears frosted glass (translucent paper + blur), so its buttons and title never clash with what is under

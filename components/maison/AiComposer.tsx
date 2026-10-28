@@ -24,10 +24,12 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
 }) {
   const c = aiInputCopy(locale), v = aiVoiceCopy(locale), visual = aiVisualCopy(locale), pearl = aiPearlCopy(locale), reduced = useReducedMotion()
   const [focused, setFocused] = useState(false), [picker, setPicker] = useState(false), [files, setFiles] = useState<AiAttachment[]>([]), [reading, setReading] = useState<number | null>(null), [error, setError] = useState('')
-  const [voiceMode, setVoiceMode] = useState(false), [cancelled, setCancelled] = useState(false)
+  const [voiceMode, setVoiceMode] = useState(false), [cancelled, setCancelled] = useState(false), [review, setReview] = useState(false)
   const field = useRef<HTMLTextAreaElement>(null), fileInput = useRef<HTMLInputElement>(null), imageInput = useRef<HTMLInputElement>(null), processing = useRef<AbortController | null>(null), ime = useRef(false), sending = useRef(false)
   const hold = useRef<{ pointer: number; y: number; cancel: boolean; at: number } | null>(null), keyHeld = useRef(false), [held, setHeld] = useState(false)
-  const voice = useAiVoice(locale, text => { const message = [value.trimEnd(), text].filter(Boolean).join(' ').slice(0, 4000); onChange(message); void submit(message, true) }, { deferResult: true })
+  // Spoken words land in the box for a look before sending (2026-10-28): names and amounts are easy to mishear, so the
+  // bar switches back to text with the transcript in place and the send key ready; nothing goes out on release.
+  const voice = useAiVoice(locale, text => { const message = [value.trimEnd(), text].filter(Boolean).join(' ').slice(0, 4000); onChange(message); setVoiceMode(false); setReview(true) }, { deferResult: true })
   const expanded = !voiceMode && (focused || !!value || files.length > 0 || reading !== null)
   useLayoutEffect(() => { const el = field.current; if (el) { el.style.height = '0px'; el.style.height = `${Math.min(el.scrollHeight, 148)}px` } }, [value, expanded])
   useEffect(() => () => { processing.current?.abort() }, [])
@@ -35,6 +37,7 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   useEffect(() => { onVoice?.({ state, live: voice.live }) }, [state, voice.live])
   useEffect(() => { if (!voice.listening && !voice.processing) { hold.current=null; keyHeld.current=false; setCancelled(false); setHeld(false) } }, [voice.listening, voice.processing, voice.error])
   const submit = async (message = value, releasedVoice = false) => {
+    setReview(false)
     if (busy || disabled || reading !== null || sending.current || (!releasedVoice && (voice.listening || voice.processing)) || (!message.trim() && !files.length)) return
     sending.current = true; setPicker(false); setError('')
     onInteraction?.()
@@ -133,6 +136,7 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
         {reading !== null ? <span className={s.reading} role="status"><LoaderCircle size={18}/><span>{reading}%</span></span> : busy && onStop ? <button key="stop" type="button" className={s.send} aria-label={stopLabel} onClick={onStop}><Square size={12} fill="currentColor"/></button> : !voiceMode && (value.trim() || files.length) ? <button key="send" type="submit" className={s.send} disabled={disabled || busy} aria-label={sendLabel}><ArrowUp size={19}/></button> : null}
       </div>
     </motion.form>
+    {review && value.trim() && !error && !voiceError && <p className={s.status} role="status">{v.reviewHint} <button type="button" className={s.reviewClear} onClick={() => { onChange(''); setReview(false) }}>{v.discard}</button></p>}
     {(error || voiceError || reading !== null || (voice.processing && !voiceOverlay)) && <p className={s.status} data-tone={error || voiceError ? 'error' : undefined} role={error || voiceError ? 'alert' : 'status'}>{error || voiceError || (voice.processing ? v.transcribing : `${c.reading} ${reading}%`)}</p>}
   </div>
 }

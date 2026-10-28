@@ -37,3 +37,6 @@
 .wrap .composer .hold[data-held]{transform:scale(.98);background:color-mix(in srgb,var(--m-ink,#0b1220) 8%,transparent)}
 .composer[data-cancel] .hold[data-held]{background:color-mix(in srgb,var(--m-down,#b64c4c) 14%,transparent)}
 @media (prefers-reduced-motion:reduce){.wrap .composer .hold{transition:none}}
+
+/* Review after speaking (2026-10-28): a text link to clear the transcript. */
+.reviewClear{margin-inline-start:4px;padding:0;border:0;background:none;color:var(--m-ink,#0b1220);font:inherit;font-weight:600;text-decoration:underline;text-underline-offset:3px;cursor:pointer}

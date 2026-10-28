@@ -2,6 +2,7 @@
 
 // For you: the two products we lead with, Koala Quant and the prediction markets, as porcelain display cases.
 import { ArrowUpRight } from 'lucide-react'
+import { useRef, type CSSProperties } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { openPath } from '@/lib/maison-nav'
 import { useQuantProducts } from '@/lib/api/quant'
@@ -23,6 +24,11 @@ export function HomeForYou() {
   const { locale } = useI18n()
   const label = copy[locale]
   const reduced = useReducedMotion()
+  // Two dots under the row follow the real scroll (2026-10-28): the wide pill flows from one to the other as you swipe.
+  const row = useRef<HTMLDivElement>(null)
+  const dots = useRef<HTMLDivElement>(null)
+  const onScroll = () => { const el = row.current; if (!el || !dots.current) return; const max = el.scrollWidth - el.clientWidth; const p = max > 0 ? Math.min(1, Math.max(0, Math.abs(el.scrollLeft) / max)) : 0; dots.current.style.setProperty('--p', p.toFixed(3)) }
+  const jump = (i: number) => { const el = row.current; if (!el) return; const card = el.children[i] as HTMLElement | undefined; if (card) el.scrollTo({ left: card.offsetLeft - el.offsetLeft - parseFloat(getComputedStyle(el).paddingLeft || '0'), behavior: reduced ? 'auto' : 'smooth' }) }
   const quant = useQuantProducts().data?.[0] ?? null
   const pct = quant?.performance.last30d.pct ?? null
   const cards = [
@@ -38,7 +44,7 @@ export function HomeForYou() {
   ]
   // Photo cards (2026-10-28, after the user's reference): a real, warm photograph fills the card, the number sits on it
   // in a glass chip, the name and one line at the bottom over a soft scrim, a glass arrow in the corner.
-  return <div className={styles.root}>
+  return <><div ref={row} className={styles.root} onScroll={onScroll}>
     {cards.map(card => <motion.button key={card.key} type="button" className={styles.card} onClick={card.open} whileTap={reduced ? undefined : { scale: .98 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
       <img className={styles.photo} src={card.photo} alt="" width={720} height={450} decoding="async" />
       {card.value && <span className={`${styles.chip} ${card.tone}`} dir="ltr">{card.line} · {card.value}</span>}
@@ -49,4 +55,7 @@ export function HomeForYou() {
       <span className={styles.go} aria-hidden="true"><ArrowUpRight size={16} strokeWidth={2} /></span>
     </motion.button>)}
   </div>
+  <div ref={dots} className={styles.dots} style={{ '--p': 0 } as CSSProperties}>
+    {cards.map((card, i) => <button key={card.key} type="button" aria-label={card.title} onClick={() => jump(i)} data-i={i} />)}
+  </div></>
 }

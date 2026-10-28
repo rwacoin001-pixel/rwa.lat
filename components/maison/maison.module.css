@@ -1717,3 +1717,9 @@ span.compareName { padding-top: 32px; cursor: default; }
 /* Sheets show no scrollbar (2026-10-28): on phones it read as a stray bar on the right edge. */
 .sheet { scrollbar-width: none; }
 .sheet::-webkit-scrollbar { display: none; }
+
+/* Sort menu anchored on the current choice (2026-10-28): fixed 46px rows, unfolds from the selected one. */
+:global(html[data-palette='a']) .predSortMenu[data-anchored] { min-width: 200px; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08), 0 18px 40px -16px rgba(15, 23, 42, .35); animation: sortIn .2s cubic-bezier(.22, 1, .36, 1) both; }
+:global(html[data-palette='a']) .predSortMenu[data-anchored] button { height: 46px; padding: 0 12px; }
+@keyframes sortIn { from { opacity: 0; transform: scaleY(.6); } }
+@media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .predSortMenu[data-anchored] { animation: none; } }

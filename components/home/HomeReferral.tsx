@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useQuery } from '@/lib/api/_query'
 import { Check, Copy, ImagePlus } from 'lucide-react'
 import { claimReferralRewards, referralAwards, referralInvitees, referralMe, referralSummary } from '@/lib/api/referral'
 import { inviteLinkFor } from '@/lib/referral-invite'
+import { MASK, useBalancesHidden } from '@/lib/hide-balance'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { useCommunityMe } from '@/components/community-compose'
 import { useI18n, type AppLocale } from '@/lib/i18n'
@@ -34,6 +35,11 @@ export function HomeReferral() {
   const me = useCommunityMe(false)
   const code = useQuery('referral:v2:me', referralMe, { staleTime: 300_000 }).data?.code
   const [copied, setCopied] = useState(false)
+  const hideMoney = useBalancesHidden() !== false
+  // Claim (2026-10-28): one idempotency key per claim attempt, kept across retries; the key folds into a ring while the
+  // server works, shows a check once it confirms, and the receipt names the amount the server actually moved.
+  const claimKey = useRef<string | null>(null)
+  const [receipt, setReceipt] = useState<string | null>(null)
   const copyLink = async () => {
     if (!code) return
     try { await navigator.clipboard.writeText(inviteLinkFor('/invite', code).replace(/\?next=.*$/, '')); setCopied(true); navigator.vibrate?.(8); window.setTimeout(() => setCopied(false), 1200) }
@@ -51,9 +57,16 @@ export function HomeReferral() {
   const claim = async () => {
     if (busy) return
     setBusy(true)
-    const result = await claimReferralRewards(crypto.randomUUID())
+    claimKey.current ??= crypto.randomUUID()
+    const result = await claimReferralRewards(claimKey.current)
     setBusy(false)
-    if (result.ok) { navigator.vibrate?.(10); showToast(c.claimed.replace('{v}', fmt(claimable)), 'ok'); void summary.refetch(); void awards.refetch() } else showToast(c.failed, 'error')
+    if (result.ok) {
+      claimKey.current = null
+      navigator.vibrate?.(10)
+      setReceipt(c.claimed.replace('{v}', fmt(units(result.data.amountAtomic, result.data.decimals))))
+      window.setTimeout(() => setReceipt(null), 4200)
+      void summary.refetch(); void awards.refetch()
+    } else showToast(c.failed, 'error')
   }
   const figure = claimable > 0 ? { label: c.claimable, value: claimable } : earned > 0 ? { label: c.earned, value: earned } : null
   // Invite card (2026-10-28, after the user's wallet reference): a soft grey panel with a pill label and the reward
@@ -66,7 +79,7 @@ export function HomeReferral() {
         <button type="button" className={r.info} aria-label={c.rules} onClick={() => openPath('/community?tab=invite')}>i</button>
       </div>
       <span className={r.pill}>{figure ? figure.label : c.startTitle}</span>
-      {figure ? <b className={r.figure} dir="ltr">{fmt(figure.value)}<small>USDT</small></b> : <p className={r.lead}>{c.startBody}</p>}
+      {figure ? <b className={r.figure} dir="ltr">{hideMoney ? MASK : fmt(figure.value)}<small>USDT</small></b> : <p className={r.lead}>{c.startBody}</p>}
     </div>
     <div className={r.faces}>
       {seats.map((seat, i) => 'person' in seat && seat.person
@@ -87,8 +100,10 @@ export function HomeReferral() {
     <div className={r.acts}>
       <button type="button" className={r.round} aria-label={copied ? c.copied : c.copy} data-done={copied || undefined} onClick={() => void copyLink()}>{copied ? <Check size={20} strokeWidth={2} aria-hidden="true" /> : <Copy size={20} strokeWidth={1.8} aria-hidden="true" />}</button>
       <button type="button" className={r.round} aria-label={c.poster} onClick={open}><ImagePlus size={20} strokeWidth={1.8} aria-hidden="true" /></button>
-      <button type="button" className={r.claim} onClick={event => { if (claimable > 0) { sparkBurst(event); void claim() } else showToast(c.nothing, 'info') }} disabled={busy} aria-busy={busy} data-empty={claimable > 0 ? undefined : ''}>{busy ? c.claiming : c.claim}<i aria-hidden="true">↓</i></button>
+      <button type="button" className={r.claim} onClick={() => { if (claimable > 0) void claim(); else showToast(c.nothing, 'info') }} disabled={busy} aria-busy={busy} aria-label={busy ? c.claiming : undefined} data-state={busy ? 'busy' : receipt ? 'done' : undefined} data-empty={claimable > 0 || receipt ? undefined : ''}>
+        {busy ? <i className={r.ring} aria-hidden="true" /> : receipt ? <Check size={20} strokeWidth={2.4} aria-hidden="true" /> : <>{c.claim}<i aria-hidden="true">↓</i></>}</button>
       <button type="button" className={r.invite} onClick={event => { sparkBurst(event); open() }}>{c.inviteShort}<i aria-hidden="true">↑</i></button>
     </div>
+    {receipt && <p className={r.receipt} role="status"><Check size={14} strokeWidth={2.4} aria-hidden="true" />{receipt}</p>}
   </section>
 }

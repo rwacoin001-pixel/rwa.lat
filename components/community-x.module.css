@@ -410,3 +410,14 @@ span.act { cursor: default; }
 /* Sheets show no scrollbar (2026-10-28): on phones it read as a stray bar on the right edge. */
 .sheet { scrollbar-width: none; }
 .sheet::-webkit-scrollbar { display: none; }
+
+/* Compose in the header (2026-10-28): a porcelain pill with a pen; fades in on the feed. */
+.composeBtn { display: inline-flex; align-items: center; gap: 4px; height: 32px; margin-inline: auto 12px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--pa-tile-bg, #fff); color: var(--pa-tile-ink, #0b1220); box-shadow: var(--pa-tile-shadow, 0 0 0 .5px rgba(11, 18, 32, .1)); font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; animation: composeIn .22s cubic-bezier(.22, 1, .36, 1) both; transition: transform .12s cubic-bezier(.34, 1.56, .64, 1); }
+.composeBtn:active { transform: scale(.94); }
+.composeBtn:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+@keyframes composeIn { from { opacity: 0; transform: scale(.9); } }
+@media (prefers-reduced-motion: reduce) { .composeBtn { animation: none; transition: none; } }
+/* Each photo is a button that opens the viewer (2026-10-28). */
+.mediaBtn { display: block; min-width: 0; min-height: 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
+.media[data-count='3'] .mediaBtn:first-child { grid-row: span 2; }
+.mediaBtn:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: -2px; }

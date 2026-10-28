@@ -20,3 +20,11 @@
 :global(.rwa-mobile) .root.root .text strong, :global(.rwa-mobile) .root.root .text small, :global(.rwa-mobile) .root.root .chip { color: #fff; }
 :global(html[data-shell='android']) .chip, :global(html[data-shell='android']) .go { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
 @media (prefers-reduced-motion: reduce) { .photo { animation: none; } .go { transition: none; } }
+/* Position dots (2026-10-28): the first is wide at rest and hands its width to the second as the row scrolls. */
+.dots { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
+.dots button { position: relative; width: 24px; height: 16px; padding: 0; border: 0; background: none; cursor: pointer; }
+.dots button::after { content: ''; position: absolute; top: 6px; left: 50%; height: 4px; border-radius: 999px; background: var(--m-ink, #0b1220); translate: -50% 0; }
+.dots button[data-i='0']::after { width: calc(4px + 12px * (1 - var(--p))); opacity: calc(.25 + .55 * (1 - var(--p))); }
+.dots button[data-i='1']::after { width: calc(4px + 12px * var(--p)); opacity: calc(.25 + .55 * var(--p)); }
+.dots button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; border-radius: 8px; }
+:global(.rwa-mobile[data-theme='dark']) .dots button::after { background: #f2f4f7; }

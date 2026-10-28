@@ -14,7 +14,7 @@
 :global(html[data-shell='android']) .backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--ds-bg, #ffffff) 90%, transparent); }
 :global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .backdrop { background: rgba(7, 9, 13, .9); }
 
-.scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; animation: rise .42s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+.scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; animation: rise .42s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) backwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
 /* The Maison page inside is see-through: the blurred page is its background. */
 .scroller :global([data-maison-page='ai-overlay']) { min-height: 100%; padding: 0; background: transparent; }

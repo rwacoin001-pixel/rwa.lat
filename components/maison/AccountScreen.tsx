@@ -1,6 +1,6 @@
 'use client'
 
-import { BadgePercent, Check, ChevronRight, Copy, Info, Languages, LogOut, Monitor, Moon, RotateCw, ScrollText, ShieldCheck, Sun, Wallet } from 'lucide-react'
+import { BadgePercent, Check, Eye, EyeOff, ChevronRight, Copy, Info, Languages, LogOut, Monitor, Moon, RotateCw, ScrollText, ShieldCheck, Sun, Wallet } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -31,6 +31,7 @@ import { useUnread } from '@/hooks/useUnread'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { referralMe, referralSummary } from '@/lib/api/referral'
 import { fromAtomic } from '@/lib/money'
+import { MASK, setBalancesHidden, useBalancesHidden } from '@/lib/hide-balance'
 
 const kycTone = (state: KycState | undefined) => state === 'approved' ? 'live' : state === 'rejected' || state === 'expired' ? 'down' : state === 'needs_information' ? 'warn' : state ? 'accent' : undefined
 
@@ -54,6 +55,8 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const community = useCommunityMe(guest)
   const [editing, setEditing] = useState(false)
   const { preference } = useRwaTheme()
+  const hideKnown = useBalancesHidden()
+  const hideMoney = hideKnown !== false
   const { unread } = useUnread(!guest)
   const portfolio = useQuery(guest ? null : 'portfolio:summary', getPortfolioSummary, { staleTime: 30_000 })
   const referral = useQuery(guest ? null : 'referral:summary', referralSummary, { staleTime: 60_000 })
@@ -172,13 +175,16 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     {community && <CommunityProfileEditor open={editing} onOpenChange={setEditing} me={community} onSaved={() => setEditing(false)} />}
 
     <section className={m.money} aria-label={me.assets}>
-      <button type="button" className={m.moneyTop} onClick={() => openPath('/assets')}>
-        <span><small>{me.assets} · USDT</small><b>{portfolio.data ? fmtAtomicN(portfolio.data.totalAtomic, portfolio.data.decimals) : portfolio.error ? '—' : '…'}</b></span>
-        <ChevronRight size={16} className={s.chev} aria-hidden="true" />
-      </button>
+      <div className={m.moneyHead}>
+        <button type="button" className={m.moneyTop} onClick={() => openPath('/assets')}>
+          <span><small>{me.assets} · USDT</small><b>{hideMoney ? MASK : portfolio.data ? fmtAtomicN(portfolio.data.totalAtomic, portfolio.data.decimals) : portfolio.error ? '—' : '…'}</b></span>
+          <ChevronRight size={16} className={s.chev} aria-hidden="true" />
+        </button>
+        <button type="button" className={m.eye} onClick={() => setBalancesHidden(!hideMoney)} aria-pressed={hideMoney} aria-label={hideMoney ? me.show : me.hide}>{hideMoney ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
+      </div>
       <dl className={m.moneyFacts}>
-        <div><dt>{me.today}</dt><dd data-tone={portfolio.data?.today ? (Number(portfolio.data.today.changeAtomic) > 0 ? 'up' : Number(portfolio.data.today.changeAtomic) < 0 ? 'down' : undefined) : undefined}>{portfolio.data?.today ? fmtAtomicN(portfolio.data.today.changeAtomic, portfolio.data.decimals, true) : '—'}</dd></div>
-        <div><dt>{me.rewards}</dt><dd>{referral.data ? fmtAtomicN(referral.data.balances.available, referral.data.decimals) : '—'}</dd></div>
+        <div><dt>{me.today}</dt><dd data-tone={portfolio.data?.today ? (Number(portfolio.data.today.changeAtomic) > 0 ? 'up' : Number(portfolio.data.today.changeAtomic) < 0 ? 'down' : undefined) : undefined}>{hideMoney ? MASK : portfolio.data?.today ? fmtAtomicN(portfolio.data.today.changeAtomic, portfolio.data.decimals, true) : '—'}</dd></div>
+        <div><dt>{me.rewards}</dt><dd>{hideMoney ? MASK : referral.data ? fmtAtomicN(referral.data.balances.available, referral.data.decimals) : '—'}</dd></div>
       </dl>
       <div className={m.keys}>
         {([['deposit', '/assets/cash/deposit'], ['withdraw', '/assets/cash/withdraw'], ['activity', '/assets/activity'], ['inviteKey', '/community?tab=invite']] as const).map(([key, path]) =>
@@ -212,14 +218,14 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
 }
 
 /** "Me" page copy (2026-10-28). */
-const meCopy: Record<string, { invited: string; editShort: string; noneUnread: string; assets: string; today: string; rewards: string; deposit: string; withdraw: string; activity: string; inviteKey: string; title: string; card: string; followers: string; following: string; posts: string; publicPage: string; edit: string; setup: string; setupBody: string; account: string }> = {
-  en: { invited: 'invited', editShort: 'Edit', noneUnread: 'All read', assets: 'Total assets', today: 'Today', rewards: 'Rewards to claim', deposit: 'Deposit', withdraw: 'Withdraw', activity: 'Activity', inviteKey: 'Invite', title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'My public page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
-  'zh-CN': { invited: '邀请', editShort: '编辑', noneUnread: '已读完', assets: '总资产', today: '今日', rewards: '待领奖励', deposit: '充值', withdraw: '提现', activity: '记录', inviteKey: '邀请', title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '我的主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
-  hi: { invited: 'आमंत्रित', editShort: 'बदलें', noneUnread: 'सब पढ़ा', assets: 'कुल संपत्ति', today: 'आज', rewards: 'दावा योग्य इनाम', deposit: 'जमा', withdraw: 'निकासी', activity: 'गतिविधि', inviteKey: 'आमंत्रण', title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'मेरा पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
-  es: { invited: 'invitados', editShort: 'Editar', noneUnread: 'Todo leído', assets: 'Activos totales', today: 'Hoy', rewards: 'Recompensas por cobrar', deposit: 'Depositar', withdraw: 'Retirar', activity: 'Actividad', inviteKey: 'Invitar', title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Mi página', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
-  ar: { invited: 'مدعوون', editShort: 'تعديل', noneUnread: 'كلها مقروءة', assets: 'إجمالي الأصول', today: 'اليوم', rewards: 'مكافآت للمطالبة', deposit: 'إيداع', withdraw: 'سحب', activity: 'السجل', inviteKey: 'دعوة', title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحتي', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
-  fr: { invited: 'invités', editShort: 'Modifier', noneUnread: 'Tout lu', assets: 'Actifs totaux', today: 'Aujourd’hui', rewards: 'Récompenses à réclamer', deposit: 'Déposer', withdraw: 'Retirer', activity: 'Activité', inviteKey: 'Inviter', title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Ma page', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
-  pt: { invited: 'convidados', editShort: 'Editar', noneUnread: 'Tudo lido', assets: 'Ativos totais', today: 'Hoje', rewards: 'Recompensas a resgatar', deposit: 'Depositar', withdraw: 'Sacar', activity: 'Atividade', inviteKey: 'Convidar', title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Minha página', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
+const meCopy: Record<string, { show: string; hide: string; invited: string; editShort: string; noneUnread: string; assets: string; today: string; rewards: string; deposit: string; withdraw: string; activity: string; inviteKey: string; title: string; card: string; followers: string; following: string; posts: string; publicPage: string; edit: string; setup: string; setupBody: string; account: string }> = {
+  en: { show: 'Show balances', hide: 'Hide balances', invited: 'invited', editShort: 'Edit', noneUnread: 'All read', assets: 'Total assets', today: 'Today', rewards: 'Rewards to claim', deposit: 'Deposit', withdraw: 'Withdraw', activity: 'Activity', inviteKey: 'Invite', title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'My public page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
+  'zh-CN': { show: '显示金额', hide: '隐藏金额', invited: '邀请', editShort: '编辑', noneUnread: '已读完', assets: '总资产', today: '今日', rewards: '待领奖励', deposit: '充值', withdraw: '提现', activity: '记录', inviteKey: '邀请', title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '我的主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
+  hi: { show: 'राशि दिखाएँ', hide: 'राशि छिपाएँ', invited: 'आमंत्रित', editShort: 'बदलें', noneUnread: 'सब पढ़ा', assets: 'कुल संपत्ति', today: 'आज', rewards: 'दावा योग्य इनाम', deposit: 'जमा', withdraw: 'निकासी', activity: 'गतिविधि', inviteKey: 'आमंत्रण', title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'मेरा पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
+  es: { show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'invitados', editShort: 'Editar', noneUnread: 'Todo leído', assets: 'Activos totales', today: 'Hoy', rewards: 'Recompensas por cobrar', deposit: 'Depositar', withdraw: 'Retirar', activity: 'Actividad', inviteKey: 'Invitar', title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Mi página', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
+  ar: { show: 'إظهار الأرصدة', hide: 'إخفاء الأرصدة', invited: 'مدعوون', editShort: 'تعديل', noneUnread: 'كلها مقروءة', assets: 'إجمالي الأصول', today: 'اليوم', rewards: 'مكافآت للمطالبة', deposit: 'إيداع', withdraw: 'سحب', activity: 'السجل', inviteKey: 'دعوة', title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحتي', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
+  fr: { show: 'Afficher les soldes', hide: 'Masquer les soldes', invited: 'invités', editShort: 'Modifier', noneUnread: 'Tout lu', assets: 'Actifs totaux', today: 'Aujourd’hui', rewards: 'Récompenses à réclamer', deposit: 'Déposer', withdraw: 'Retirer', activity: 'Activité', inviteKey: 'Inviter', title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Ma page', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
+  pt: { show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'convidados', editShort: 'Editar', noneUnread: 'Tudo lido', assets: 'Ativos totais', today: 'Hoje', rewards: 'Recompensas a resgatar', deposit: 'Depositar', withdraw: 'Sacar', activity: 'Atividade', inviteKey: 'Convidar', title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Minha página', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
 }
 
 const THEMES: { value: RwaThemePreference; Icon: typeof Sun }[] = [{ value: 'light', Icon: Sun }, { value: 'dark', Icon: Moon }, { value: 'system', Icon: Monitor }]
