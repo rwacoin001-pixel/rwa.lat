@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { ArrowRight } from 'lucide-react'
 import type { AppLocale } from '@/lib/i18n'
+import { useRwaTheme } from '@/lib/rwa-theme'
 import type { QuantProduct } from '@/lib/api/quant'
 import { openPath } from '@/lib/maison-nav'
 import { signedUsdt, usdtNumber } from './QuantParts'
@@ -31,7 +32,7 @@ const tone = (v: number | null | undefined) => !v ? undefined : v > 0 ? 'up' : '
 const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Counts from the last shown value to `to` in ~600 ms (ease-out); the number never jumps. */
-function useTween(to: number, ms = 600) {
+export function useTween(to: number, ms = 600) {
   const [value, setValue] = useState(to)
   const from = useRef(to)
   useEffect(() => {
@@ -52,6 +53,10 @@ function useTween(to: number, ms = 600) {
 
 export function QuantCover({ product, locale, holder }: { product: QuantProduct; locale: AppLocale; holder: boolean }) {
   const t = copy[locale] ?? copy.en
+  // One photo per theme (2026-10-29, user): daylight for light, blue hour for dark — the same photo never fits both.
+  const { theme } = useRwaTheme()
+  const shot = theme === 'dark' ? 'dark' : 'light'
+  const [loaded, setLoaded] = useState(false)
   const days = useMemo(() => product.history.slice(-14).map((row) => ({ date: row.tradeDate, value: Number(row.netReturnPct) })), [product.history])
   const last = days.length - 1
   // The marker starts on the first day and glides to the latest once the bars have grown in.
@@ -87,9 +92,9 @@ export function QuantCover({ product, locale, holder }: { product: QuantProduct;
   const buy = () => openPath('/quant?step=subscribe')
 
   return <section className={q.shell} aria-label={product.name}>
-    <img className={q.ground} src="/media/quant/cover-768.webp" alt="" aria-hidden="true" decoding="async" />
-    <figure className={q.photo}>
-      <img src="/media/quant/cover-768.webp" srcSet="/media/quant/cover-768.webp 768w, /media/quant/cover.webp 1024w" sizes="(max-width: 480px) 100vw, 480px" alt="" width={1024} height={1536} decoding="async" />
+    <img key={`g-${shot}`} className={q.ground} src={`/media/quant/cover-${shot}-ground.webp`} alt="" aria-hidden="true" decoding="async" />
+    <figure className={q.photo} data-in={loaded || undefined}>
+      <img key={shot} src={`/media/quant/cover-${shot}-768.webp`} srcSet={`/media/quant/cover-${shot}-768.webp 768w, /media/quant/cover-${shot}.webp 1024w`} sizes="(max-width: 480px) 100vw, 480px" alt="" width={1024} height={1536} decoding="async" ref={(el) => { if (el?.complete) setLoaded(true) }} onLoad={() => setLoaded(true)} />
       <div className={q.photoHead}>
         <span className={q.glass} data-glass="">{t.tag}</span>
         {holder && <button type="button" className={q.glass} data-glass="" onClick={() => openPath('/quant?tab=account')}>{t.mine}</button>}

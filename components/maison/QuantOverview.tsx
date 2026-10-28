@@ -18,7 +18,9 @@ import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import { ShareWinLine, type WinMoment } from './ShareWin'
 import { QuantCover } from './QuantCover'
-import { QuantStrategy } from './QuantStrategy'
+import { QuantFilm } from './QuantStrategy'
+import { QuantResearch } from './QuantResearch'
+import { QuantDrawdown, QuantFactsheet } from './QuantFactsheet'
 import { openPath } from '@/lib/maison-nav'
 import stage from './quant.module.css'
 import page from './quant-page.module.css'
@@ -129,13 +131,8 @@ export function QuantOverview() {
   const holding = audience === 'holder' || audience === 'pending'
   return <div className={root} data-quant-v2="">
     <QuantMiniBar product={product} />
-    <QuantPhoto product={product} h={h} />
-    {/* 1 The rules in one look: minimum, cut-off, settlement; the risk said plainly. */}
-    <ul className={v2.facts}>
-      <li><small>{h.minLabel}</small><b>{usdtNumber(product.minSubscriptionAtomic, locale)} USDT</b></li>
-      <li><small>{h.cutoffLabel}</small><b>{h.cutoffShort}</b></li>
-      <li><small>{h.settleLabel}</small><b>{h.line}</b></li>
-    </ul>
+    {/* Factsheet head (2026-10-29): photo band, since inception with the NAV line, key figures, the rules. */}
+    <QuantFactsheet product={product} locale={locale} />
     <p className={v2.cardRisk}>{h.risk}</p>
 
     {sample && <p className={v2.sample}>{c.previewNotice}</p>}
@@ -144,17 +141,6 @@ export function QuantOverview() {
       <ShareWinLine moment={win} />
     </div>}
 
-    <section className={v2.perf} aria-label={h.since}>
-      <small>{h.since}</small>
-      <b className={v2.big} data-tone={toneOf(p.sinceInceptionPct)} dir="ltr">{signed(p.sinceInceptionPct)}</b>
-      <p>{h.nav} {Number(p.index).toFixed(4)} · {h.days(p.days)}</p>
-      <p className={v2.basis}>{h.basis}</p>
-      <dl className={v2.kpis}>
-        <div><dt>{h.d7}</dt><dd data-tone={toneOf(p.last7d.pct)} dir="ltr">{signed(p.last7d.pct)}</dd></div>
-        <div><dt>{h.d30}</dt><dd data-tone={toneOf(last30)} dir="ltr">{signed(last30)}</dd></div>
-        <div><dt>{h.mdd}</dt><dd data-tone={p.maxDrawdownPct ? 'down' : undefined} dir="ltr">{p.maxDrawdownPct === null ? '—' : `${p.maxDrawdownPct ? '−' : ''}${Math.abs(p.maxDrawdownPct).toFixed(2)}%`}</dd></div>
-      </dl>
-    </section>
 
     {product.history.length > 1
       ? <>
@@ -162,8 +148,10 @@ export function QuantOverview() {
         <QuantDailyBars product={product} ticks={ticks} selected={picked} onSelect={setPicked} c={c} />
       </>
       : <p className={v2.note}>{c.perfPending}</p>}
+    <QuantDrawdown product={product} locale={locale} />
 
-    <QuantStrategy locale={locale} />
+    <QuantResearch locale={locale} />
+    <QuantFilm locale={locale} />
 
     <section className={v2.sec}><h2>{h.specs}</h2><QuantSpecSheet product={product} c={c} /></section>
     {wantsSubscribe && <section className={v2.sec}><h2>{h.process}</h2><QuantProcess preview={preview} c={c} /></section>}

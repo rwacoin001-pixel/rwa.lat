@@ -1,0 +1,90 @@
+/* Research method (2026-10-29, docs/design-system.md §7.12): a factsheet-style editorial panel. Paper card, hairline
+   rules between pillars, formulas in a maths serif on a faint ruled plate, diagrams in ink and the two market colours.
+   Every animation runs once when seen, transform/opacity/stroke only. */
+.root { display: grid; gap: 12px; }
+.root h2 { margin: 8px 0 0; color: var(--m-ink); font-size: 22px; font-weight: 600; line-height: 28px; }
+.lead { margin: 0; color: var(--m-muted); font-size: 15px; line-height: 24px; }
+.note { margin: 0; color: var(--m-faint, #8a9099); font-size: 12px; line-height: 16px; }
+
+/* Pipeline: five stations on one rule; a light runs along it. */
+.pipe { position: relative; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin: 0; padding: 16px 12px 12px; list-style: none; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); overflow: hidden; }
+.pipe::before { content: ''; position: absolute; inset-inline: 24px; top: 20px; height: 1px; background: var(--pa-hair, rgba(11, 18, 32, .12)); }
+.pipe li { position: relative; display: grid; justify-items: center; gap: 4px; padding-top: 12px; text-align: center; opacity: 0; transform: translateY(6px); transition: opacity .4s calc(var(--i) * 90ms), transform .5s calc(var(--i) * 90ms) var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.pipe li::before { content: ''; position: absolute; top: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--pa-card, #fff); box-shadow: inset 0 0 0 1.5px var(--m-ink); }
+.pipe[data-seen] li { opacity: 1; transform: none; }
+.pipe b { color: var(--m-ink); font-size: 13px; font-weight: 600; line-height: 18px; }
+.pipe small { color: var(--m-faint, #8a9099); font-size: 11px; line-height: 14px; }
+.pulse { position: absolute; top: 18px; inset-inline-start: 24px; width: 24px; height: 5px; border-radius: 999px; background: linear-gradient(90deg, transparent, #19c7aa, transparent); opacity: 0; }
+.pipe[data-seen] .pulse { animation: run 3.2s .8s linear infinite; }
+@keyframes run { 0% { opacity: 0; transform: translateX(0); } 8% { opacity: 1; } 92% { opacity: 1; } 100% { opacity: 0; transform: translateX(calc(min(100vw, 480px) - 104px)); } }
+:global([dir='rtl']) .pipe[data-seen] .pulse { animation: none; }
+
+/* The panel of pillars. */
+.panel { display: grid; padding: 4px 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.pillar { display: grid; gap: 8px; padding: 20px 0; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); min-width: 0; }
+.pillar:first-child { border-top: 0; }
+.pillar header { display: flex; align-items: center; gap: 8px; }
+.num { color: var(--m-faint, #8a9099); font-size: 12px; font-weight: 600; line-height: 16px; font-variant-numeric: tabular-nums; }
+.tag { padding: 0 8px; border-radius: 999px; box-shadow: inset 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .2)); color: var(--m-muted); font-size: 11px; font-weight: 600; line-height: 20px; letter-spacing: .02em; }
+.pillar h3 { margin: 0; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.pillar > p { margin: 0; color: var(--m-muted); font-size: 15px; line-height: 24px; }
+.read { color: var(--m-muted); font-size: 13px; line-height: 20px; }
+.pillar > p.read { font-size: 13px; line-height: 20px; }
+.read b { margin-inline-end: 8px; color: var(--m-ink); font-weight: 600; }
+
+/* Formula plate. */
+.formula { display: flex; align-items: center; min-height: 64px; padding: 12px 8px; overflow-x: auto; border-radius: 12px; background: var(--pa-sunk, rgba(11, 18, 32, .035)); box-shadow: inset 0 0 0 .5px var(--pa-hair, rgba(11, 18, 32, .08)); scrollbar-width: none; }
+.formula::-webkit-scrollbar { display: none; }
+.math { margin: auto; display: inline-flex; align-items: center; gap: 0 1px; color: var(--m-ink); font-family: 'Cambria Math', 'STIX Two Math', 'Latin Modern Math', 'Times New Roman', serif; --fm: 17px; font-size: var(--fm); line-height: 1.2; white-space: nowrap; direction: ltr; }
+.v { font-style: italic; padding-inline-end: 1px; }
+.sub, .sup { font-size: calc(var(--fm) * .68); line-height: 0; }
+.sub { vertical-align: -.35em; }
+.sup { vertical-align: .55em; }
+.frac { display: inline-grid; margin: 0 4px; text-align: center; vertical-align: middle; }
+.frac > span { padding: 1px 4px; font-size: calc(var(--fm) * .9); }
+.frac > span + span { border-top: 1px solid currentColor; }
+.op { display: inline-grid; justify-items: center; margin: 0 4px; line-height: 1; }
+.op b { font-size: calc(var(--fm) * 1.6); font-weight: 400; line-height: 1.05; }
+.op small { min-height: .7em; font-size: calc(var(--fm) * .62); }
+.paren { font-size: calc(var(--fm) * 1.7); font-weight: 300; line-height: 1; }
+.radical { display: inline-flex; align-items: stretch; }
+.radical > span:first-child { font-size: calc(var(--fm) * 1.1); line-height: 1; }
+.radical > span + span { padding: 1px 2px 0; border-top: 1px solid currentColor; }
+:global(.rwa-mobile) .root .math :is(span, small, b, i, sub, sup) { color: inherit; }
+
+/* Diagrams. */
+.figure { display: grid; gap: 8px; margin: 4px 0 0; padding: 12px; border-radius: 12px; box-shadow: inset 0 0 0 .5px var(--pa-hair, rgba(11, 18, 32, .1)); }
+.sketch { justify-self: start; color: var(--m-faint, #8a9099); font-size: 11px; font-weight: 600; line-height: 14px; letter-spacing: .04em; }
+.figure figcaption { color: var(--m-faint, #8a9099); font-size: 12px; line-height: 16px; }
+:global(.rwa-mobile) .root .figure :is(figcaption, span) { color: var(--m-faint, #8a9099); }
+.svg { display: block; width: 100%; height: auto; overflow: visible; }
+.axis { stroke: var(--m-ink); stroke-width: 1; stroke-dasharray: 2 3; opacity: .5; }
+.base { stroke: var(--pa-hair-strong, rgba(11, 18, 32, .2)); stroke-width: 1; }
+.bid { fill: #19c7aa; }
+.ask { fill: #e8806f; }
+.grow { transform: scaleX(0); transition: transform .7s calc(var(--i) * 50ms) var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.figure[data-seen] .grow { transform: scaleX(1); animation: breathe 3.6s calc(1s + var(--i) * 120ms) ease-in-out infinite alternate; }
+@keyframes breathe { to { transform: scaleX(.86); } }
+.draw { fill: none; stroke: var(--m-ink); stroke-width: 1.6; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; }
+.figure[data-seen] .draw { transition: stroke-dashoffset 1.8s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); stroke-dashoffset: 0; }
+.tick { stroke: #19c7aa; stroke-width: 2; stroke-linecap: round; opacity: 0; }
+.figure[data-seen] .tick { opacity: 1; transition: opacity .3s calc(var(--i) * 110ms); }
+.cell { opacity: 0; transform: scale(.7); transform-box: fill-box; transform-origin: center; transition: opacity .35s calc(var(--i) * 40ms), transform .45s calc(var(--i) * 40ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.figure[data-seen] .cell { opacity: 1; transform: none; }
+.test { fill: var(--m-ink); }
+.train { fill: var(--pa-hair-strong, rgba(11, 18, 32, .16)); }
+.purge { fill: none; stroke: var(--pa-hair-strong, rgba(11, 18, 32, .3)); stroke-width: 1; stroke-dasharray: 2 2; }
+.rise { transform: scaleY(0); transform-box: fill-box; transform-origin: 50% 100%; transition: transform .6s calc(var(--i) * 25ms) var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.figure[data-seen] .rise { transform: none; }
+.mass { fill: var(--pa-hair-strong, rgba(11, 18, 32, .22)); }
+.loss { fill: #e8806f; }
+.cut { stroke: #e8806f; stroke-width: 1; stroke-dasharray: 3 3; }
+:global(.rwa-mobile[data-theme='dark']) .train, :global(.rwa-mobile[data-theme='dark']) .mass { fill: rgba(255, 255, 255, .18); }
+:global(.rwa-mobile[data-theme='dark']) .purge { stroke: rgba(255, 255, 255, .3); }
+:global(.rwa-mobile[data-theme='dark']) .formula { background: rgba(255, 255, 255, .04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .pipe li, .grow, .draw, .tick, .cell, .rise { transition: none; }
+  .figure[data-seen] .grow, .pipe[data-seen] .pulse { animation: none; }
+}
+:global(.rwa-mobile[data-theme='dark']) .tag { box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .24); }
