@@ -1,0 +1,112 @@
+/* The invitation plate (2026-10-29, docs/design-system.md §7.7). A brushed platinum card in light, graphite in dark,
+   tilting under the finger. Layers, bottom to top: the metal base, the blurred photo as its reflection (moving against
+   the tilt), a fine brush grain, one soft light band, a glare that follows the finger, the content, a 1px rim.
+   Motion: transform and opacity only; it rises once on entry; reduced motion keeps it flat. Every size is on the §3.1 scale. */
+.stage { perspective: 900px; padding: 4px 0 0; }
+
+.plate {
+  --rx: 0deg; --ry: 0deg; --gx: 30%; --gy: 20%; --tx: 0; --ty: 0;
+  --base: linear-gradient(160deg, #f4f4f6 0%, #e4e4e8 46%, #d7d8dd 100%);
+  --ink: #16171b; --muted: rgba(22, 23, 27, .58);
+  --shadow: 0 28px 48px -28px rgba(24, 24, 27, .45), 0 8px 20px -12px rgba(24, 24, 27, .22);
+  --rim: rgba(24, 24, 27, .1); --rim-hi: rgba(255, 255, 255, .9);
+  --reflect: .38; --reflect-blend: multiply; --glare: rgba(255, 255, 255, .7); --band: rgba(255, 255, 255, .55);
+  position: relative;
+  display: block;
+  aspect-ratio: 5 / 6;
+  max-height: 440px;
+  margin: 0 auto;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--base);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  transform: rotateX(var(--rx)) rotateY(var(--ry));
+  transform-style: preserve-3d;
+  transition: transform 700ms cubic-bezier(.22, 1, .36, 1);
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  isolation: isolate;
+  animation: rise 900ms cubic-bezier(.22, 1, .36, 1) backwards;
+}
+.plate[data-touched] { transition: transform 120ms linear; }
+.plate[data-theme='dark'] {
+  --base: linear-gradient(160deg, #2a2a31 0%, #1d1c22 50%, #141418 100%);
+  --ink: #f4f4f5; --muted: rgba(244, 244, 245, .6);
+  --shadow: 0 28px 48px -24px rgba(0, 0, 0, .85), 0 8px 20px -10px rgba(0, 0, 0, .5);
+  --rim: rgba(255, 255, 255, .08); --rim-hi: rgba(255, 255, 255, .14);
+  --reflect: .42; --reflect-blend: screen; --glare: rgba(255, 255, 255, .22); --band: rgba(255, 255, 255, .14);
+}
+
+/* The reflection: the photo, blurred and grey, slid against the tilt so it reads as something mirrored in the metal. */
+.reflection {
+  position: absolute; inset: -12%; z-index: 0;
+  background: var(--photo) center / cover no-repeat;
+  filter: blur(24px) grayscale(.55) contrast(1.1);
+  opacity: var(--reflect);
+  mix-blend-mode: var(--reflect-blend);
+  transform: translate3d(calc(var(--tx) * -24px), calc(var(--ty) * -24px), 0) scale(1.04);
+  transition: transform 700ms cubic-bezier(.22, 1, .36, 1);
+}
+.plate[data-touched] .reflection { transition: transform 120ms linear; }
+
+/* Brush grain: hairlines across the plate, too fine to see as lines, enough to stop it reading as flat plastic. */
+.brush {
+  position: absolute; inset: 0; z-index: 1;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .06) 0 1px, rgba(0, 0, 0, .025) 1px 2px, transparent 2px 4px);
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* One soft band of light that crosses once on entry and then rides the tilt. */
+.band {
+  position: absolute; inset: -40% -60%; z-index: 2;
+  background: linear-gradient(115deg, transparent 42%, var(--band) 50%, transparent 58%);
+  transform: translate3d(calc(var(--tx) * 18% - 4%), 0, 0);
+  transition: transform 700ms cubic-bezier(.22, 1, .36, 1);
+  animation: sweep 1400ms 300ms cubic-bezier(.22, 1, .36, 1) backwards;
+  pointer-events: none;
+}
+.plate[data-touched] .band { transition: transform 120ms linear; }
+
+.glare {
+  position: absolute; inset: 0; z-index: 3;
+  background: radial-gradient(circle at var(--gx) var(--gy), var(--glare), transparent 55%);
+  mix-blend-mode: soft-light;
+  pointer-events: none;
+}
+
+.rim {
+  position: absolute; inset: 0; z-index: 5;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--rim), inset 0 1px 0 var(--rim-hi);
+  pointer-events: none;
+}
+
+.content { position: relative; z-index: 4; display: flex; flex-direction: column; height: 100%; padding: 24px; box-sizing: border-box; }
+.head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.brand { display: inline-flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; line-height: 22px; letter-spacing: .02em; }
+.brand img { display: block; width: 18px; height: 20px; }
+.kind { color: var(--muted); font-size: 13px; line-height: 18px; letter-spacing: .08em; }
+
+.identity { margin-top: auto; }
+.avatar.avatar { display: block; width: 48px; height: 48px; margin-bottom: 12px; border-radius: 50%; box-shadow: 0 0 0 2px rgba(255, 255, 255, .7), 0 6px 14px -8px rgba(0, 0, 0, .45); }
+.plate[data-theme='dark'] .avatar.avatar { box-shadow: 0 0 0 2px rgba(255, 255, 255, .16), 0 6px 14px -8px rgba(0, 0, 0, .7); }
+.name { overflow: hidden; margin: 0; font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: -.02em; white-space: nowrap; text-overflow: ellipsis; }
+.line { margin: 4px 0 0; color: var(--muted); font-size: 15px; line-height: 22px; }
+
+.foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; margin-top: 24px; padding-top: 16px; border-top: .5px solid var(--rim); }
+.id { display: grid; gap: 4px; min-width: 0; }
+.id small { color: var(--muted); font-size: 12px; line-height: 16px; }
+.id b { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: .06em; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.qr.qr { display: grid; flex: none; place-items: center; width: 64px; height: 64px; padding: 0; border: 0; border-radius: 12px; background: #fff; box-shadow: inset 0 0 0 .5px rgba(11, 18, 32, .12), 0 6px 14px -8px rgba(0, 0, 0, .4); cursor: zoom-in; }
+.qr.qr svg { display: block; }
+
+@keyframes rise { from { opacity: 0; transform: translate3d(0, 24px, 0) rotateX(14deg); } }
+@keyframes sweep { from { opacity: 0; transform: translate3d(-40%, 0, 0); } 30% { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .plate, .band { animation: none; }
+  .plate, .reflection, .band { transition: none; }
+}

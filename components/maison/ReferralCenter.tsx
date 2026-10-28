@@ -13,6 +13,7 @@ import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
 import { ReferralTeamRewards } from './ReferralTeamRewards'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
+import { InvitePlate } from './InvitePlate'
 import { displayInviteCode } from '@/lib/referral-invite'
 import { porcelainAvatar } from '@/components/community-avatar'
 import { nativeCan, nativeShare } from '@/lib/native-app'
@@ -182,39 +183,20 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       <h1>{t('邀请好友', 'Invite friends')}</h1>
       <button type="button" className={x.iconBtn} aria-label={t('查看邀请规则', 'View invitation rules')} aria-haspopup="dialog" onClick={() => setSheet('rules')}><CircleHelp size={21} strokeWidth={1.75} /></button>
     </header>}>
-      {/* Invite (2026-10-28, docs/design-system.md §7.7): one paper pass with a warm photo, the code and the link; three
-          buttons (porcelain copy and poster, ink share); what sharing did; the rewards card; the rules as one row that opens
-          the sheet; the team as a list. */}
-      <section className={v.pass} aria-label={t('我的邀请卡', 'My invitation card')}>
-        {me.error
-          ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={retryLabel} />
-          : !code ? <div aria-busy="true"><Skeleton rows={3} /></div> : <>
-            <div className={v.photo}>
-              <img src="/media/home/cards/invite-720.webp" alt="" width={720} height={450} decoding="async" />
-              <span className={v.chip}>{t('邀请好友', 'Invite friends')}</span>
-            </div>
-            <div className={v.codeRow}>
-              <div>
-                <small>{t('我的邀请码', 'My invitation code')}</small>
-                <b className={v.code} dir="ltr">{displayInviteCode(code)}</b>
-              </div>
-              <button type="button" className={v.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={() => setSheet('qr')}>
-                <QRCodeSVG value={link} size={48} marginSize={0} level="M" bgColor="#ffffff" fgColor="#0b1220" title={t('邀请链接二维码', 'Invitation QR code')} />
-              </button>
-            </div>
-            <div>
-              <div className={v.linkRow}>
-                <span dir="ltr">{link.replace(/^https?:\/\//, '')}</span>
-                <button type="button" onClick={openEdit} aria-haspopup="dialog">{t('修改邀请码', 'Edit code')}</button>
-              </div>
-            </div>
-          </>}
-      </section>
-      {code && <div className={v.actions}>
-        <button type="button" className={v.tile} data-copied={copied || undefined} onClick={() => void copy()}><CopyIcon key={copied ? 'done' : 'copy'} className={v.morph} size={18} strokeWidth={1.8} aria-hidden="true" /><span key={copyLabel} className={v.morph}>{copyLabel}</span></button>
-        <button type="button" className={v.tile} aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={18} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
-        <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享', 'Share')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
-      </div>}
+      {/* Invite (2026-10-29, docs/design-system.md §7.7): the first screen is one metal invitation plate (name, code, QR),
+          one ink share button, and the quiet actions as text under it. Rewards, rules and the team follow. */}
+      {me.error
+        ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={retryLabel} />
+        : !code ? <div className={v.platePlaceholder} aria-busy="true" />
+        : <InvitePlate code={code} link={link} onQr={() => setSheet('qr')} t={t} />}
+      {code && <>
+        <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享邀请函', 'Share invitation')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
+        <div className={v.quiet}>
+          <button type="button" data-copied={copied || undefined} onClick={() => void copy()}><CopyIcon key={copied ? 'done' : 'copy'} className={v.morph} size={15} strokeWidth={1.8} aria-hidden="true" />{copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}</button>
+          <button type="button" aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={15} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
+          <button type="button" aria-haspopup="dialog" onClick={openEdit}>{t('修改邀请码', 'Edit code')}</button>
+        </div>
+      </>}
       <p className={v.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
 
       {/* What sharing did, last 30 days: opens (per browser) → sign-ups → first Koala Quant subscriptions. */}

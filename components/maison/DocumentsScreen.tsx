@@ -16,6 +16,7 @@ import { Lacquer, StatStrip } from './motion'
 import { fmtAtomic, fmtDate } from './format'
 import styles from './documents.module.css'
 import { FormalDocumentsPanel } from './FormalDocumentsPanel'
+import { useOtherOrders, type OrderRecord } from './money-records'
 
 // Orders settle in the platform unit (USDT, 6 decimals).
 const DECIMALS = 6
@@ -45,8 +46,8 @@ function stateBadge(c: DocumentsCopy, state: string): { label: string; tone: Ton
 const shortId = (value: string) => `${value.slice(0, 4)}…${value.slice(-4)}`
 
 /** Requested total in USDT atomic units. BigInt only — display goes through fmtAtomic. */
-const sumRequested = (rows: Order[]) =>
-  rows.reduce((total, row) => (/^\d+$/.test(row.requestedAtomicAmount) ? total + BigInt(row.requestedAtomicAmount) : total), BigInt(0)).toString()
+const sumRequested = (rows: OrderRecord[]) =>
+  rows.reduce((total, row) => (/^\d+$/.test(row.atomic) ? total + BigInt(row.atomic) : total), BigInt(0)).toString()
 
 const RELATED = [
   { key: 'ledger', path: '/assets/statements', Icon: ScrollText },
@@ -58,19 +59,25 @@ function ErrorBlock({ error, retry, c }: { error: ApiError; retry: () => void; c
   return <StateBlock tone="error" title={c.common.errorGeneric} body={<span className={s.mono}>{error.status || '—'} · {error.code}</span>} retry={retry} retryLabel={c.common.retry} />
 }
 
-function OrderRow({ order, c, locale }: { order: Order; c: DocumentsCopy; locale: string }) {
+/** An RWA order as a record row; quant and prediction rows come from money-records. */
+function rwaRecord(order: Order, c: DocumentsCopy): OrderRecord {
   const badge = stateBadge(c, order.state)
-  return <button type="button" className={s.row} onClick={() => openPath(`/orders/${encodeURIComponent(order.id)}`)}>
+  return { id: order.id, source: 'rwa', title: order.productName, sub: `${c.orders.rowLabel} · ${shortId(order.id)}`, atomic: order.requestedAtomicAmount,
+    date: order.submittedAt, bucket: bucketOf(order.state), label: badge.label, tone: badge.tone, path: `/orders/${encodeURIComponent(order.id)}` }
+}
+
+function OrderRow({ row, locale }: { row: OrderRecord; locale: string }) {
+  return <button type="button" className={s.row} onClick={() => openPath(row.path)}>
     <span className={s.logo} aria-hidden="true"><ScrollText size={15} strokeWidth={1.7} /></span>
     <span className={s.rowMain}>
-      <b className={s.clamp2} dir="auto">{order.productName}</b>
-      <small className={s.clamp2}>{c.orders.rowLabel} · <bdi className={s.mono}>{shortId(order.id)}</bdi> · <bdi>{fmtDate(order.submittedAt, locale)}</bdi></small>
+      <b className={s.clamp2} dir="auto">{row.title}</b>
+      <small className={s.clamp2}>{row.sub} · <bdi>{fmtDate(row.date, locale)}</bdi></small>
     </span>
     <span className={s.rowEnd}>
       <span className={s.rowFig}>
-        <b className={s.num}>{fmtAtomic(order.requestedAtomicAmount, DECIMALS, 'USDT')}</b>
+        <b className={s.num}>{fmtAtomic(row.atomic, DECIMALS, 'USDT')}</b>
         <span className={styles.badgeSlot}>
-          <span className={s.badge} data-tone={badge.tone}>{badge.raw ? <bdi className={s.mono}>{badge.label}</bdi> : badge.label}</span>
+          <span className={s.badge} data-tone={row.tone}>{row.label}</span>
         </span>
       </span>
       <ChevronRight size={16} className={s.chev} />
@@ -102,17 +109,19 @@ export function DocumentsScreen() {
     window.history.replaceState(window.history.state, '', `${url.pathname}${url.search}`)
   }
 
-  const all = useMemo(() => (orders.data ? [...orders.data].sort((a, b) => b.submittedAt.localeCompare(a.submittedAt)) : []), [orders.data])
+  // Quant subscriptions/redemptions and prediction bets are orders too (2026-10-29), not only RWA product orders.
+  const other = useOtherOrders(locale)
+  const all = useMemo(() => [...(orders.data ?? []).map((order) => rwaRecord(order, c)), ...other.rows].sort((a, b) => Date.parse(b.date) - Date.parse(a.date)), [orders.data, other.rows, c])
   const counts: Record<Filter, number> = {
     all: all.length,
-    open: all.filter((row) => bucketOf(row.state) === 'open').length,
-    completed: all.filter((row) => bucketOf(row.state) === 'completed').length,
-    'failed-or-cancelled': all.filter((row) => bucketOf(row.state) === 'failed-or-cancelled').length,
+    open: all.filter((row) => row.bucket === 'open').length,
+    completed: all.filter((row) => row.bucket === 'completed').length,
+    'failed-or-cancelled': all.filter((row) => row.bucket === 'failed-or-cancelled').length,
   }
   // Failed and cancelled orders never moved money, so they stay out of the headline figure.
-  const requested = sumRequested(all.filter((row) => bucketOf(row.state) !== 'failed-or-cancelled'))
-  const shown = filter === 'all' ? all : all.filter((row) => bucketOf(row.state) === filter)
-  const loaded = orders.data !== undefined
+  const requested = sumRequested(all.filter((row) => row.bucket !== 'failed-or-cancelled'))
+  const shown = filter === 'all' ? all : all.filter((row) => row.bucket === filter)
+  const loaded = (orders.data !== undefined || orders.error !== undefined) && other.ready
   const figure = (value: number | string) => (loaded ? value : orders.error ? '—' : '…')
   const topbar = <RwaTopbar screen="records" template="T-Child" l1="back" title={c.hero.kicker} onBack={() => backOr('/profile')} />
 
@@ -146,8 +155,8 @@ export function DocumentsScreen() {
     </Lacquer>
 
     <SectionHead index="01" title={c.orders.section} note={c.orders.sectionNote} />
-    {orders.error && !orders.data ? <ErrorBlock error={orders.error} retry={orders.refetch} c={c} />
-      : !orders.data ? <Skeleton rows={4} />
+    {orders.error && !orders.data && !other.rows.length ? <ErrorBlock error={orders.error} retry={orders.refetch} c={c} />
+      : !loaded ? <Skeleton rows={4} />
       : all.length === 0 ? <StateBlock tone="empty" title={c.orders.emptyTitle} body={c.orders.emptyBody}
           action={<button type="button" className={s.link} onClick={() => openPath('/markets')}>{c.orders.emptyCta}<ChevronRight size={13} /></button>} />
       : <>
@@ -157,7 +166,7 @@ export function DocumentsScreen() {
           </button>)}
         </div>
         {shown.length === 0 ? <StateBlock title={c.orders.emptyFilterTitle} body={c.orders.emptyFilterBody} />
-          : <ul className={s.list}>{shown.map((order) => <li key={order.id}><OrderRow order={order} c={c} locale={locale} /></li>)}</ul>}
+          : <ul className={s.list}>{shown.map((row) => <li key={row.id}><OrderRow row={row} locale={locale} /></li>)}</ul>}
       </>}
 
     <SectionHead index="02" title={c.docs.section} note="PDF" />

@@ -12,7 +12,8 @@ type Agreement={company:{companyName:string;registration:string};companyRevision
 const root='/v1/documents'
 export function FormalDocumentsPanel(){
   const {locale}=useI18n(),c=formalDocsCopy[locale]
-  const query=useQuery('documents:formal',()=>request<Issued[]>(root),{staleTime:5000})
+  // A non-list reply (old API, proxy error page) reads as no documents instead of crashing the records page.
+  const query=useQuery('documents:formal',()=>request<Issued[]>(root).then(r=>r.ok&&!Array.isArray(r.data)?{...r,data:[] as Issued[]}:r),{staleTime:5000})
   const [busy,setBusy]=useState(false),[error,setError]=useState(''),[notice,setNotice]=useState(''),[agreement,setAgreement]=useState<Agreement|null>(null),[accepted,setAccepted]=useState(false)
   const [month,setMonth]=useState(()=>{const date=new Date();date.setUTCMonth(date.getUTCMonth()-1,1);return date.toISOString().slice(0,7)})
   useEffect(()=>{if(!query.data?.some(row=>row.state==='queued'||row.state==='rendering'||row.state==='ready'&&row.scanStatus==='pending'))return;const timer=setInterval(query.refetch,5000);return()=>clearInterval(timer)},[query.data,query.refetch])

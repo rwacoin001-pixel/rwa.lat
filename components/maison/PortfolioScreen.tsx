@@ -30,6 +30,7 @@ import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import bp from './basket-positions.module.css'
 import pa from './portfolio-a.module.css'
 import { TopTabs } from './TopTabs'
+import { useOtherIncome, useOtherOrders } from './money-records'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -371,8 +372,17 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
   const p = portfolioCopy[locale]
   const common = marketCopy[locale].common
   const credits = useQuery('portfolio:yield', listYield, { staleTime: 60_000, pollInterval: 60_000 })
-  const rows = useMemo(() => (credits.data ?? []).filter((item) => !productId || item.productId === productId).sort((a, b) => Date.parse(b.creditedAt) - Date.parse(a.creditedAt)), [credits.data, productId])
-  const sum = useMemo(() => rows.reduce((total, item) => total + (/^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : BigInt(0)), BigInt(0)), [rows])
+  // Quant settlements and prediction results are income too (2026-10-29); a product detail keeps to its own credits.
+  const other = useOtherIncome(locale)
+  const rows = useMemo(() => {
+    const own = (credits.data ?? []).filter((item) => !productId || item.productId === productId).map((item: YieldCredit) => ({
+      id: item.id, title: nameFor(products, item.productId, p.product), sub: `${fmtDate(item.periodStart, locale)} – ${fmtDate(item.periodEnd, locale)}`,
+      atomic: /^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : null, date: item.creditedAt, path: undefined as string | undefined,
+    }))
+    const extra = productId ? [] : other.rows.map((item) => ({ id: item.id, title: item.title, sub: item.sub, atomic: item.atomic as bigint | null, date: item.date, path: item.path as string | undefined }))
+    return [...own, ...extra].sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
+  }, [credits.data, productId, products, p.product, locale, other.rows])
+  const sum = useMemo(() => rows.reduce((total, item) => total + (item.atomic ?? BigInt(0)), BigInt(0)), [rows])
   const knownCredits = useRef<Set<string> | null>(null)
   const momentNode = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -384,19 +394,26 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
     knownCredits.current = current
     if (newlyCredited[0]?.id === rows[0]?.id) playMoment(momentNode.current, 'credit')
   }, [credits.data, rows])
+  const settled = credits.data !== undefined && (productId !== undefined || other.ready)
   return <>
-    <SectionHead index={productId ? '03' : '01'} title={productId ? p.detail.incomeFor : p.income} note={credits.data && rows.length ? `${rows.length} · ${masked ? AMOUNT_MASK : signed(sum, locale)}` : p.incomeNote} />
-    {credits.error ? <StateBlock tone="error" title={p.loadError} body={credits.error.message} retry={credits.refetch} retryLabel={common.retry} />
-      : !credits.data ? <Skeleton rows={3} />
+    <SectionHead index={productId ? '03' : '01'} title={productId ? p.detail.incomeFor : p.income} note={settled && rows.length ? `${rows.length} · ${masked ? AMOUNT_MASK : signed(sum, locale)}` : p.incomeNote} />
+    {credits.error && !rows.length ? <StateBlock tone="error" title={p.loadError} body={credits.error.message} retry={credits.refetch} retryLabel={common.retry} />
+      : !settled ? <Skeleton rows={3} />
       : !rows.length ? <StateBlock title={p.incomeEmpty} body={p.incomeEmptyBody} />
       : <>
         <div className={s.tableHead} aria-hidden="true"><span>{p.product} · {p.period}</span><span>{p.income}</span></div>
-        <ul className={s.list}>{rows.map((item: YieldCredit) => <li key={item.id}>
-          <div ref={item.id === rows[0]?.id ? momentNode : undefined} className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto', cursor: 'default' }}>
-            <span className={s.rowMain}><b>{nameFor(products, item.productId, p.product)}</b><small>{fmtDate(item.periodStart, locale)} – {fmtDate(item.periodEnd, locale)}</small></span>
-            <span className={s.rowFig}><b className={`${s.num} ${masked ? '' : s.up}`}>{masked ? AMOUNT_MASK : signed(/^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : null, locale)}</b><small className={s.muted}>{fmtDate(item.creditedAt, locale)}</small></span>
-          </div>
-        </li>)}</ul>
+        <ul className={s.list}>{rows.map((item) => {
+          const down = item.atomic !== null && item.atomic < BigInt(0)
+          const body = <>
+            <span className={s.rowMain}><b className={s.clamp2} dir="auto">{item.title}</b><small>{item.sub}</small></span>
+            <span className={s.rowFig}><b className={`${s.num} ${masked ? '' : down ? s.down : s.up}`}>{masked ? AMOUNT_MASK : signed(item.atomic, locale)}</b><small className={s.muted}>{fmtDate(item.date, locale)}</small></span>
+          </>
+          return <li key={item.id}>
+            {item.path
+              ? <button type="button" className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }} onClick={() => openPath(item.path!)}>{body}</button>
+              : <div ref={item.id === rows[0]?.id ? momentNode : undefined} className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto', cursor: 'default' }}>{body}</div>}
+          </li>
+        })}</ul>
       </>}
   </>
 }
