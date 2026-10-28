@@ -45,7 +45,7 @@ describeDatabase('koala quant full flow', () => {
     await ds.runMigrations({ transaction: 'all' })
     const ledger = new LedgerService(ds)
     quant = new QuantService(ds, ledger, allowAll, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService)
-    settlements = new QuantSettlementService(ds, ledger, quant)
+    settlements = new QuantSettlementService(ds, ledger, quant, { create: async () => ({}) } as never)
   })
 
   afterAll(async () => {

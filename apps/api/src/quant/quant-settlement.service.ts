@@ -3,6 +3,8 @@ import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { format18, parse18 } from '../basket/basket.decimals'
 import { LedgerService } from '../ledger/ledger.service'
+import { NotificationService } from '../notification/notification.service'
+import { dailyNotice, redemptionNotice, redemptionRejectedNotice, type QuantNotice } from './quant-notices'
 import { addDays, localDateAndMinutes } from './quant.dates'
 import { aggregateByUser, applyDay, dailyManagementRate, dayDeltas, planRedemptions, stepIndex, type LotDay, type QuantLot } from './quant.math'
 import { parseUsdt, QuantService } from './quant.service'
@@ -32,6 +34,7 @@ export class QuantSettlementService {
     private readonly ds: DataSource,
     private readonly ledger: LedgerService,
     private readonly quant: QuantService,
+    private readonly notifications: NotificationService,
   ) {}
 
   async listProducts() {
@@ -220,6 +223,8 @@ export class QuantSettlementService {
 
     // ---- database (one transaction) ----
     const sum = (pick: (u: (typeof users)[number]) => bigint) => users.reduce((total, u) => total + pick(u), 0n)
+    let postedNow = false
+    const rejected: string[] = []
     await this.ds.transaction(async (manager) => {
       const [locked] = (await manager.query(`SELECT status FROM app.quant_daily_settlements WHERE id = $1 FOR UPDATE`, [settlement.id])) as Array<{ status: string }>
       if (locked.status === 'posted') return
@@ -242,7 +247,7 @@ export class QuantSettlementService {
             `SELECT 1 AS ok FROM app.quant_lots WHERE user_id = $1 AND product_id = $2 AND principal_atomic > 0 AND effective_date > $3 LIMIT 1`,
             [result.userId, product.id, settlement.trade_date],
           )) as Array<{ ok: number }>
-          if (!waiting) await manager.query(`UPDATE app.quant_orders SET status = 'rejected', reject_reason = 'nothing_to_redeem', settled_at = now() WHERE id = $1`, [result.orderId])
+          if (!waiting) { await manager.query(`UPDATE app.quant_orders SET status = 'rejected', reject_reason = 'nothing_to_redeem', settled_at = now() WHERE id = $1`, [result.orderId]); rejected.push(result.orderId) }
           continue
         }
         await manager.query(
@@ -268,9 +273,32 @@ export class QuantSettlementService {
         `INSERT INTO app.audit_logs (id, actor_type, actor_id, action, object_type, object_id, request_id, metadata) VALUES ($1, 'admin', $2, 'quant.settlement.posted', 'quant_settlement', $3, $4, $5)`,
         [randomUUID(), adminId, settlement.id, requestId, JSON.stringify({ productId: product.id, tradeDate: settlement.trade_date, users: users.length, redemptions: redemption.results.length })],
       )
+      postedNow = true
     })
+    // Notices go out once, from the call that actually posted the day, after the ledger and the database agree.
+    if (postedNow) {
+      const notices: QuantNotice[] = []
+      const ids = [...new Set([...users.map((u) => u.userId), ...redemption.results.map((r) => r.userId)])]
+      const localeRows = ids.length ? (await this.ds.query(`SELECT id::text AS id, locale FROM app.users WHERE id = ANY($1::uuid[])`, [ids])) as Array<{ id: string; locale: string | null }> : []
+      const localeOf = new Map(localeRows.map((row) => [row.id, row.locale]))
+      const meta = { slug: product.slug, name: product.name }
+      for (const user of users) notices.push(dailyNotice({ userId: user.userId, locale: localeOf.get(user.userId) ?? null, product: meta, tradeDate: settlement.trade_date, net: user.net, paid: user.paid }))
+      for (const result of redemption.results) {
+        if (result.principal > 0n) notices.push(redemptionNotice({ userId: result.userId, locale: localeOf.get(result.userId) ?? null, product: meta, tradeDate: settlement.trade_date, orderId: result.orderId, payout: result.payout, fee: result.fee }))
+        else if (rejected.includes(result.orderId)) notices.push(redemptionRejectedNotice({ userId: result.userId, locale: localeOf.get(result.userId) ?? null, product: meta, orderId: result.orderId }))
+      }
+      await this.sendNotices(notices)
+    }
     this.log.log(`quant settlement ${settlement.id} posted for ${settlement.trade_date}: ${users.length} users, ${redemption.results.length} redemptions`)
     return { ...(await this.getSettlement(settlement.id)), duplicate: false }
+  }
+
+  /** Delivery never undoes a posted day: a failed notice is logged and skipped. */
+  private async sendNotices(notices: QuantNotice[]) {
+    for (const notice of notices) {
+      try { await this.notifications.create({ recipient_user_id: notice.userId, channel: 'in_app', kind: notice.kind, title: notice.title, body: notice.body, payload: notice.payload }) }
+      catch (error) { this.log.warn(`quant notice ${notice.kind} for ${notice.userId} not sent: ${(error as Error).message}`) }
+    }
   }
 
   /** Quant risk disclosures, newest first. The newest one is what a user must acknowledge before subscribing. */
