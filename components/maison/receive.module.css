@@ -1,0 +1,44 @@
+/* Receive (2026-10-28, docs/design-system.md §4.1, §6, §7). One paper pass with who you are, the QR on a white tile
+   (white in both themes so any camera reads it) and your id with a copy key; under it one line of status and one line
+   of scope; two buttons pinned at the bottom: porcelain "copy", ink "share". Every size is on the §3.1 scale. */
+.page { --rc-up: var(--m-up, #067a5e); }
+
+.pass { display: grid; justify-items: center; gap: 16px; margin-top: 8px; padding: 20px 16px 16px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.who { display: flex; align-items: center; gap: 12px; justify-self: stretch; min-width: 0; }
+.who > div { display: grid; min-width: 0; }
+.who b { overflow: hidden; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+.who small { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+
+.tile { display: grid; place-items: center; padding: 16px; border-radius: 22px; background: #ffffff; box-shadow: inset 0 0 0 .5px rgba(11, 18, 32, .08), 0 8px 24px -16px rgba(15, 23, 42, .35); }
+.tile svg { display: block; width: 216px; height: 216px; }
+.caption { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; text-align: center; }
+
+/* The id: a quiet row under a hairline; tapping anywhere on it copies. */
+.id { display: flex; align-items: center; gap: 12px; justify-self: stretch; min-width: 0; margin: 0; padding: 12px 0 0; border: 0; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.id > span { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.id small { color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.idText { color: var(--m-ink); font-family: var(--m-mono, ui-monospace, monospace); font-size: 13px; line-height: 18px; overflow-wrap: anywhere; user-select: all; }
+.id i { display: grid; flex: none; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); font-style: normal; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.id:active i { transform: scale(.95); box-shadow: var(--pa-tile-shadow-pressed); }
+
+/* Status: one line, a small dot, the words. Green only when receiving is open. */
+.status { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 16px 4px 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.status > i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .7; }
+.status[data-tone='ready'] { color: var(--rc-up); }
+.status[data-tone='error'] { color: var(--m-down); }
+.scope { margin: 4px 4px 0; color: var(--m-faint); font-size: 12px; line-height: 16px; }
+.inline { display: inline-flex; align-items: center; gap: 2px; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+
+/* Bottom buttons: porcelain copy, ink share (the main action, with its round arrow). */
+.actions { display: grid; grid-template-columns: 1fr 1.4fr; gap: 12px; }
+.copyBtn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 56px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.shareBtn { display: inline-flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding: 6px 6px 6px 24px; border: 0; border-radius: 999px; background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.shareBtn i { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: var(--pa-card, #fff); color: var(--m-ink); font-style: normal; }
+.copyBtn, .shareBtn { transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.copyBtn:active, .shareBtn:active { transform: scale(.96); }
+.id:focus-visible, .inline:focus-visible, .copyBtn:focus-visible, .shareBtn:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .page.page .who small, :global(.rwa-mobile) .page.page .caption, :global(.rwa-mobile) .page.page .id small { color: var(--m-muted); }
+:global(.rwa-mobile) .page.page .scope { color: var(--m-faint); }
+@media (prefers-reduced-motion: reduce) { .id i, .copyBtn, .shareBtn { transition: none; } }

@@ -28,6 +28,9 @@ import { transactionPinCopy } from '@/lib/maison-transaction-pin-copy'
 import { TransactionPinManager, TransactionPinPrompt } from './TransactionPin'
 import fp from './funds-polish.module.css'
 import fs from './funds-fullscreen.module.css'
+import rc from './receive.module.css'
+import { CommunityAvatar } from '@/components/community-avatar'
+import { useCommunityMe } from '@/lib/use-community-me'
 import tf from './transfer-feedback.module.css'
 import { AmountPad, FlowConfirm, FlowSuccess, RecipientField, share, useRecentRecipients } from './flow-kit'
 import { flowKitCopy } from '@/lib/flow-kit-copy'
@@ -304,6 +307,7 @@ export function ReceiveScreen() {
   const [copied, setCopied] = useState(false)
   useEffect(() => { setUserId(readSession()?.userId ?? null); setOrigin(window.location.origin) }, [])
   useFundsSessionBoundary(() => { setUserId(readSession()?.userId ?? null); setCopied(false) })
+  const me = useCommunityMe(!userId)
   const eligibility = useQuery(typeof userId === 'string' ? 'wallet:transfer-eligibility' : null, getTransferEligibility, { staleTime: 0, loading: 'silent' })
   const link = userId ? `${origin}/assets/cash/transfer?to=${encodeURIComponent(userId)}` : ''
 
@@ -320,27 +324,42 @@ export function ReceiveScreen() {
   }
 
   const topbar = <RwaTopbar screen="receive" template="T-Child" l1="close" title={r.title} onBack={() => backOr('/assets/cash')} />
-  return <MaisonPage page="receive" className={fs.page} topbar={topbar} cta={typeof userId === 'string'}>
+  const x = RECEIVE_EXTRA[locale] ?? RECEIVE_EXTRA.en!
+  const status = eligibility.error ? common.unavailable : eligibility.loading || !eligibility.data ? p.eligibility.checking : eligibility.data.receivable ? x.ready : p.receiveLocked
+  const tone = eligibility.error ? 'error' : eligibility.data?.receivable ? 'ready' : 'muted'
+  // 2026-10-28 (docs/design-system.md §4.1, §6, §7): one paper pass — who you are, the code on a white tile with the
+  // mark in its centre, your id with a copy key — then one line of status, one line of scope, and two buttons.
+  return <MaisonPage page="receive" className={`${fs.page} ${rc.page}`} topbar={topbar} cta={typeof userId === 'string'}>
     <h1 className={fp.srTitle}>{r.title}</h1>
     {userId === undefined ? <Skeleton rows={4} />
       : userId === null ? <StateBlock tone="unavailable" title={r.unavailable}
         action={<button type="button" className={s.ghost} onClick={() => signInThenReturn('/assets/cash/receive')}>{r.signIn}<ChevronRight size={15} className={s.chev} /></button>} />
       : <>
-        <div className={fs.qrWrap}><div className={fs.qr} role="img" aria-label={r.qr}><QRCodeSVG value={link} size={232} level="M" bgColor="transparent" fgColor="#16130f" /></div></div>
-        <p className={fs.scope}><b>{r.qr}</b><br />{r.scope}</p>
-        <div className={`${s.notice} ${fs.note}`} data-tone={eligibility.error ? 'error' : eligibility.data?.receivable ? 'info' : 'warn'} role="status">
-          <ShieldCheck size={16} aria-hidden="true" /><span>{eligibility.error ? common.unavailable : eligibility.loading || !eligibility.data ? p.eligibility.checking : eligibility.data.receivable ? p.eligibility.eligible : p.receiveLocked}</span>
-          {eligibility.error && <button type="button" className={s.link} style={{ minHeight: 44 }} onClick={() => void eligibility.refetch()}>{common.retry}</button>}
-        </div>
-        {!eligibility.error && eligibility.data?.reason === 'deposit_threshold' && <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/deposit')}>{p.deposit}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>}
-        <div className={fs.addrRow}>
-          <div><small>{r.idLabel}</small><p className={`${s.mono} ${fs.addrText}`} dir="ltr">{userId}</p></div>
-        </div>
-        <p className={s.foot}><ShieldCheck size={13} aria-hidden="true" /><span>{r.safety}</span></p>
-        <button type="button" className={fs.flow} onClick={() => openPath('/assets/cash/transfer')}><Send size={13} aria-hidden="true" />{r.transfer}<ChevronRight size={14} className={s.chev} aria-hidden="true" /></button>
+        <section className={rc.pass} aria-label={x.code}>
+          <div className={rc.who}>
+            <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed ?? userId} handle={me?.handle} size={44} />
+            <div><b>{me?.displayName || `${userId.slice(0, 8)}…`}</b><small>{x.code}</small></div>
+          </div>
+          <div className={rc.tile} role="img" aria-label={r.qr}>
+            <QRCodeSVG value={link} size={216} level="H" bgColor="#ffffff" fgColor="#0b1220"
+              imageSettings={{ src: '/icons/a-reit-v1-192.png', width: 44, height: 44, excavate: true }} />
+          </div>
+          <p className={rc.caption}>{r.qr}</p>
+          <button type="button" className={rc.id} onClick={() => void copy()} aria-label={`${r.copy} · ${userId}`}>
+            <span><small>{r.idLabel}</small><span className={rc.idText} dir="ltr">{userId}</span></span>
+            <i aria-hidden="true">{copied ? <Check size={16} /> : <Copy size={16} />}</i>
+          </button>
+        </section>
+        <p className={rc.status} data-tone={tone} role="status"><i aria-hidden="true" />{status}
+          {eligibility.error && <button type="button" className={rc.inline} onClick={() => void eligibility.refetch()}>{common.retry}</button>}
+          {!eligibility.error && eligibility.data?.reason === 'deposit_threshold' && <button type="button" className={rc.inline} onClick={() => openPath('/assets/cash/deposit')}>{p.deposit}<ChevronRight size={14} aria-hidden="true" /></button>}
+        </p>
+        <p className={rc.scope}>{r.scope}</p>
+        <button type="button" className={rc.inline} onClick={() => openPath('/assets/cash/transfer')}>{r.transfer}<ChevronRight size={14} aria-hidden="true" /></button>
         <details className={fs.more}>
           <summary><span>{fundsCopy[locale].common.more}</span></summary>
           <div className={fs.moreBody}>
+            <p>{r.safety}</p>
             <p>{p.depositRule}</p>
             <p>{r.lede}</p>
             <p>{r.note}</p>
@@ -348,13 +367,23 @@ export function ReceiveScreen() {
           </div>
         </details>
         <div className={`${s.stickyCta} ${fs.fixedCta}`}>
-          <div className={fs.actions}>
-            <button type="button" className={s.ghost} onClick={() => void copy()} aria-live="polite">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? r.copied : r.copy}</button>
-            <button type="button" className={s.ghost} onClick={() => void share()}><Share2 size={15} />{r.share}</button>
+          <div className={rc.actions}>
+            <button type="button" className={rc.copyBtn} onClick={() => void copy()} aria-live="polite">{copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />}{copied ? r.copied : r.copy}</button>
+            <button type="button" className={rc.shareBtn} onClick={() => void share()}><span>{x.share}</span><i aria-hidden="true"><Share2 size={16} /></i></button>
           </div>
         </div>
       </>}
   </MaisonPage>
+}
+
+const RECEIVE_EXTRA: Partial<Record<string, { code: string; ready: string; share: string }>> = {
+  en: { code: 'Internal receive code', ready: 'Ready to receive', share: 'Share code' },
+  'zh-CN': { code: '站内收款码', ready: '已开通站内收款', share: '分享收款码' },
+  hi: { code: 'आंतरिक प्राप्ति कोड', ready: 'प्राप्त करने के लिए तैयार', share: 'कोड साझा करें' },
+  es: { code: 'Código de cobro interno', ready: 'Listo para recibir', share: 'Compartir código' },
+  ar: { code: 'رمز الاستلام الداخلي', ready: 'جاهز للاستلام', share: 'مشاركة الرمز' },
+  fr: { code: 'Code de réception interne', ready: 'Prêt à recevoir', share: 'Partager le code' },
+  pt: { code: 'Código de recebimento interno', ready: 'Pronto para receber', share: 'Compartilhar código' },
 }
 
 /** `/assets/cash/transfer` — internal USDT transfer to another user id; posts instantly, so consent + idempotency + step-up. */
