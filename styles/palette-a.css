@@ -353,3 +353,9 @@ html[data-palette='a'][data-shell='android'] .rwa-mobile.rwa-mobile .rwa-topbar.
 /* Community's own header: the same frosted glass. */
 html[data-palette='a'] .rwa-mobile [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #f5f6f8) 72%, transparent) !important; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
 html[data-palette='a'][data-shell='android'] .rwa-mobile [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #f5f6f8) 96%, transparent) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+/* Dark (2026-10-29, user: the home bar came back as white glass in dark): home sits outside the Maison root, so
+   --m-bg was unset and the glass fell back to the light paper. Dark bars fall back to the dark ground instead. */
+html[data-palette='a'] .rwa-mobile.rwa-mobile[data-theme='dark'] .rwa-topbar.rwa-topbar--s1.rwa-topbar--s1[data-scrolled='true'],
+html[data-palette='a'] .rwa-mobile[data-theme='dark'] [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #0b0d12) 72%, transparent) !important; }
+html[data-palette='a'][data-shell='android'] .rwa-mobile.rwa-mobile[data-theme='dark'] .rwa-topbar.rwa-topbar--s1.rwa-topbar--s1[data-scrolled='true'],
+html[data-palette='a'][data-shell='android'] .rwa-mobile[data-theme='dark'] [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #0b0d12) 96%, transparent) !important; }

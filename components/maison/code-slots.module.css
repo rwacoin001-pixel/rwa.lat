@@ -1,0 +1,29 @@
+/* Code slots (2026-10-29, after React Bits Code Slots). Porcelain boxes; a filled box is ink with the character in paper;
+   the current box has an ink ring and a caret. Motion: transform, opacity and clip-path only; each plays once per change. */
+.row { position: relative; display: grid; gap: 8px; cursor: text; -webkit-tap-highlight-color: transparent; }
+.slot { position: relative; display: grid; place-items: center; height: 56px; overflow: hidden; border-radius: 12px; background: var(--pa-fill, rgba(11, 18, 32, .05)); transition: box-shadow .2s ease; }
+.slot[data-current] { box-shadow: inset 0 0 0 1.5px var(--m-ink, #111); }
+.slot[data-current]::after { content: ''; width: 2px; height: 24px; border-radius: 2px; background: var(--m-ink, #111); animation: blink 1s steps(1) infinite; }
+.fill { position: absolute; inset: 0; border-radius: inherit; background: var(--m-ink, #111); animation: fillIn .32s cubic-bezier(.34, 1.56, .64, 1) both; }
+.char { position: relative; z-index: 1; color: var(--m-bg, #fff); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; animation: rise .28s .04s cubic-bezier(.23, 1, .32, 1) both; }
+
+.row[data-invalid] .fill { background: var(--m-down, #c2413a); }
+.row[data-invalid] .slot:not([data-filled]) { box-shadow: inset 0 0 0 1.5px var(--m-down, #c2413a); }
+.row[data-invalid] { animation: nudge .38s cubic-bezier(.36, .07, .19, .97); }
+
+/* Confirmed: the row washes into one ink bar from the left, the characters sink one after another, a check rises. */
+.row[data-done] .char { animation: sink .3s calc(.06s + var(--i) * .03s) cubic-bezier(.23, 1, .32, 1) both; }
+.wash { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border-radius: 12px; background: var(--m-ink, #111); color: var(--m-bg, #fff); animation: wash .3s cubic-bezier(.23, 1, .32, 1) both; pointer-events: none; }
+.check { animation: rise .32s .28s cubic-bezier(.34, 1.56, .64, 1) both; }
+
+@keyframes fillIn { from { transform: scale(.4); opacity: 0; } }
+@keyframes rise { from { transform: translateY(8px); opacity: 0; } }
+@keyframes sink { to { transform: translateY(6px); opacity: 0; } }
+@keyframes wash { from { clip-path: inset(0 100% 0 0 round 12px); } to { clip-path: inset(0 0 0 0 round 12px); } }
+@keyframes blink { 50% { opacity: 0; } }
+@keyframes nudge { 20%, 60% { transform: translateX(-4px); } 40%, 80% { transform: translateX(4px); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .fill, .char, .check, .wash, .row[data-done] .char, .row[data-invalid] { animation: none; }
+  .slot[data-current]::after { animation: none; }
+}

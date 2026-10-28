@@ -12,6 +12,7 @@
   --rim: rgba(24, 24, 27, .1); --rim-hi: rgba(255, 255, 255, .9);
   --reflect: .38; --reflect-blend: multiply; --glare: rgba(255, 255, 255, .7); --band: rgba(255, 255, 255, .55);
   position: relative;
+  height: var(--plate-h, auto);
   min-height: 440px;
   display: flex;
   flex-direction: column;
@@ -90,16 +91,21 @@
 .brand img { display: block; width: 18px; height: 20px; }
 .kind { color: var(--muted); font-size: 13px; line-height: 18px; letter-spacing: .08em; }
 
-.codeRow { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-top: 32px; }
-.id { display: grid; gap: 4px; min-width: 0; }
-.id small, .stats dt { color: var(--muted); font-size: 12px; line-height: 16px; }
-.id b { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: .06em; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
-.link { overflow: hidden; color: var(--muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.codeBlock { display: grid; gap: 4px; margin-top: 24px; }
+.label { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.label small, .stats dt { color: var(--muted); font-size: 12px; line-height: 16px; }
+.code { overflow: hidden; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 40px; font-weight: 600; line-height: 48px; letter-spacing: .06em; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.linkRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.link { overflow: hidden; min-width: 0; color: var(--muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.inline.inline { flex: none; min-height: 32px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.inline.inline[data-done] { text-decoration: none; }
 /* The QR is printed, not stuck on: ink modules multiplied into platinum, light modules screened into graphite. */
-.qr.qr { flex: none; padding: 0; border: 0; background: none; color: #16171b; mix-blend-mode: multiply; opacity: .88; cursor: zoom-in; }
-.plate[data-theme='dark'] .qr.qr { color: #f4f4f5; mix-blend-mode: screen; opacity: .82; }
-.qr.qr svg { display: block; width: 96px; height: 96px; }
-.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; margin: auto 0 0; padding-top: 16px; border-top: .5px solid var(--rim); }
+.qr.qr { display: grid; justify-items: center; gap: 8px; margin: auto; padding: 16px 0; border: 0; background: none; color: #16171b; cursor: zoom-in; }
+.qr.qr svg { display: block; width: clamp(96px, calc(100dvh - 600px), 160px); height: auto; aspect-ratio: 1; mix-blend-mode: multiply; opacity: .88; }
+.plate[data-theme='dark'] .qr.qr { color: #f4f4f5; }
+.plate[data-theme='dark'] .qr.qr svg { mix-blend-mode: screen; opacity: .82; }
+.qr.qr small { color: var(--muted); font-size: 12px; line-height: 16px; }
+.stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 12px; margin: 0; padding-top: 16px; border-top: .5px solid var(--rim); }
 .stats div { display: grid; gap: 2px; min-width: 0; }
 .stats dd { margin: 0; font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
 .stats dd small { margin-inline-start: 4px; color: var(--muted); font-size: 12px; font-weight: 500; }
@@ -113,3 +119,8 @@
   .plate, .band { animation: none; }
   .plate, .reflection, .band { transition: none; }
 }
+
+/* Height (2026-10-29, user: the card should reach down to just above one row of buttons): the viewport minus the tab
+   bar, the action row, the dock and the safe areas; short phones fall back to the natural height. */
+.plate { --plate-h: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--app-dock-height, 52px) - var(--plate-reserve, 212px)); max-height: 760px; }
+@media (max-height: 700px) { .plate { --plate-h: auto; min-height: 0; } .qr.qr svg { width: 120px; } }

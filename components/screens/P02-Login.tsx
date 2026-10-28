@@ -559,7 +559,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
       {/* The code goes in on our keypad (Paste, clipboard pick-up, a switch back to the system keyboard). */}
       {step === 'code' && <div key={shake} className={styles.kitCode}>
-        <CodePad value={code} label={emailCopy.codeLabel} invalid={Boolean(error)} disabled={pending || codeState === 'verified'}
+        <CodePad value={code} label={emailCopy.codeLabel} invalid={Boolean(error)} done={codeState === 'verified'} disabled={pending || codeState === 'verified'}
           onChange={next => { const digits = normalizeEmailCode(next); setCode(digits); setError(''); if (digits.length === 6) void verifyCode(digits) }} />
       </div>}
       {step === 'code' && (pending || codeState === 'verified') && <div className={styles.codeStatus} role="status" aria-live="polite" data-tone={codeState === 'verified' ? 'ok' : undefined}>

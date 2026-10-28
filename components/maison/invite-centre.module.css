@@ -172,3 +172,35 @@
 .sheetRows small, .sheetRows time { color: var(--m-muted); font-size: 13px; line-height: 18px; }
 .sheetRows time { flex: none; }
 .platePlaceholder { aspect-ratio: auto; min-height: 440px; }
+
+/* 2026-10-29 c: one action row under the card — five round keys with a label (share in ink); a dot on Rewards when
+   something can be claimed. The member sheet: avatar and level, the reward it earned you in large, then plain rows. */
+.actionRow { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; margin-top: 16px; }
+.actionRow.actionRow button { display: grid; justify-items: center; gap: 4px; min-width: 0; padding: 0; border: 0; background: none; color: var(--m-ink); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.actionRow i { position: relative; display: grid; place-items: center; width: 52px; height: 52px; border-radius: 50%; background: var(--pa-tile-bg); box-shadow: var(--pa-tile-shadow); color: var(--pa-tile-ink, var(--m-ink)); font-style: normal; transition: transform 120ms cubic-bezier(.34, 1.56, .64, 1); }
+.actionRow button[data-kind='share'] i { background: var(--pa-cta-bg); box-shadow: var(--pa-cta-shadow); color: var(--pa-cta-ink); }
+.actionRow button:active i { transform: scale(.92); }
+.actionRow button:disabled { opacity: .45; cursor: default; }
+.actionRow span { overflow: hidden; max-width: 100%; font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.actionRow em { position: absolute; top: 4px; right: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--m-accent, #19c7aa); box-shadow: 0 0 0 2px var(--pa-card, #fff); }
+.sheetHead { margin: 24px 0 8px; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.memberRow.memberRow { display: flex; flex: 1 1 auto; align-items: center; gap: 12px; min-width: 0; min-height: 64px; padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; }
+.memberRow.memberRow > div { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.memberRow.memberRow > svg { flex: none; color: var(--m-faint); }
+.member { display: grid; gap: 16px; padding-bottom: 8px; }
+.memberHead { display: flex; align-items: center; gap: 12px; }
+.memberHead img { flex: none; width: 56px; height: 56px; border-radius: 50%; }
+.memberHead div { display: grid; gap: 2px; min-width: 0; }
+.memberHead b { color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.memberHead small { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.memberReward { display: grid; gap: 2px; padding: 16px; border-radius: 22px; background: var(--m-ink); color: var(--m-bg); }
+.memberReward > small, .memberReward > span { opacity: .7; font-size: 12px; line-height: 16px; }
+.memberReward p { display: flex; align-items: baseline; gap: 8px; margin: 0; }
+.memberReward p span { font-size: 40px; font-weight: 600; line-height: 48px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.memberReward p small { opacity: .7; font-size: 13px; font-weight: 500; }
+.memberRows { margin: 0; }
+.memberRows div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 48px; padding: 12px 0; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); box-sizing: border-box; }
+.memberRows div:last-child { border-bottom: 0; }
+.memberRows dt { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.memberRows dd { display: grid; justify-items: end; margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; }
+.memberRows dd small { color: var(--m-muted); font-size: 12px; font-weight: 400; line-height: 16px; }

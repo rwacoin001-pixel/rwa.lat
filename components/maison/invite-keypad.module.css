@@ -1,15 +1,10 @@
 /* Invitation-code keypad (2026-10-29): a 4 × 4 grid — A 1 2 3 / R 4 5 6 / E 7 8 9 / I T 0 ⌫. Porcelain keys, the
    brand letters in ink on a slightly darker fill so the column reads as the word A-R-E-I-T, delete as a plain glyph. */
-.display { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; min-height: 56px; padding: 0 4px 8px; border-bottom: 1px solid var(--m-ink, #111); outline: none; }
-.display b { overflow: hidden; color: var(--m-ink, #111); font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: .08em; white-space: nowrap; }
-.display span { flex: none; color: var(--m-muted); font-size: 13px; font-variant-numeric: tabular-nums; }
-.display[aria-invalid='true'] { border-color: var(--m-down, #b64c4c); }
-.caret { display: inline-block; width: 2px; height: 28px; margin-inline-start: 2px; vertical-align: -4px; background: var(--m-accent, #19c7aa); animation: blink 1s steps(1) infinite; }
+.display { padding: 4px 0 0; outline: none; }
 .pad { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 8px 0 12px; }
 .key.key { display: grid; place-items: center; height: 52px; padding: 0; border: 0; border-radius: 12px; background: var(--pa-tile-bg, rgba(11, 18, 32, .05)); box-shadow: var(--pa-tile-shadow, none); color: var(--m-ink, #111); font: inherit; font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; transition: transform 120ms cubic-bezier(.34, 1.56, .64, 1); -webkit-tap-highlight-color: transparent; }
 .key.key[data-kind='letter'] { background: var(--m-ink, #111); color: var(--m-bg, #fff); font-weight: 600; letter-spacing: .02em; box-shadow: none; }
 .key.key[data-kind='del'] { background: none; box-shadow: none; }
 .key.key:active { transform: scale(.94); }
 .key.key:disabled { opacity: .35; cursor: default; }
-@keyframes blink { 50% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { .caret { animation: none; } .key.key { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .key.key { transition: none; } }

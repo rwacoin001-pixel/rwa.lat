@@ -13,6 +13,7 @@ import { consumeAuthDestination, markNewAccount } from '@/lib/api/auth-navigatio
 import { authErrorMessage } from '@/lib/auth-error-copy'
 import styles from '@/components/screens/P02-Login.module.css'
 import flowStyles from '@/components/screens/P03-AuthFlow.module.css'
+import { CodeSlots } from '@/components/maison/CodeSlots'
 import { AuthShell } from '@/components/screens/AuthShell'
 import { InviteCodeField, useInviteCode } from '@/components/screens/InviteCodeField'
 
@@ -137,10 +138,9 @@ export default function ContinueAuthPage() {
           <li data-met={lengthOk}><Check size={13} strokeWidth={2.2} aria-hidden="true" />{sheet.ruleLength}</li>
           <li data-met={matchOk}><Check size={13} strokeWidth={2.2} aria-hidden="true" />{sheet.ruleMatch}</li>
         </ul>
-      </> : <label className={`${styles.field} ${styles.codeBox}`}>
-        <span className={styles.srOnly}>{label}</span>
-        <input value={value} onChange={e => setValue(e.target.value.replace(/\D/g, '').slice(0, 6))} type="text" autoComplete="one-time-code" inputMode="numeric" placeholder="000000" maxLength={6} disabled={busy} dir="ltr" />
-      </label>}
+      </> : <CodeSlots value={value} label={label} invalid={Boolean(error)}>
+        <input className={styles.slotInput} autoFocus value={value} onChange={e => setValue(e.target.value.replace(/\D/g, '').slice(0, 6))} type="text" autoComplete="one-time-code" inputMode="numeric" placeholder="000000" maxLength={6} disabled={busy} dir="ltr" />
+      </CodeSlots>}
       {error && <p className={styles.error} role="alert">{error}</p>}
       {flow?.step === 'consent' && !requirements && error && <button type="button" className={styles.textLink} onClick={() => setAttempt(n => n + 1)}>{t.retry}</button>}
       <button className={styles.primary} disabled={!flow || busy || (needsEmail ? !address.trim() : flow.step === 'consent' ? !agreed || !requirements : password ? !lengthOk || !matchOk : value.length !== 6)}>{busy ? <LoaderCircle size={20} className={styles.spinner} aria-label={t.confirm} /> : <span>{t.confirm}</span>}</button>
