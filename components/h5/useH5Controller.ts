@@ -1,4 +1,5 @@
 'use client'
+import { openAi } from '@/lib/ai-overlay'
 import { aiPageContext, type AiPageContext } from '@/lib/ai-page-context'
 import { captureWalletBackdrop } from '../wallet-page-backdrop'
 import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
@@ -237,7 +238,8 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
     return () => window.removeEventListener(PATH_EVENT, receive)
   })
   const go = (next: Screen) => {
-    if (next === 'ai' && screen !== 'ai') setAiContext(aiPageContext(window.location.pathname, window.location.search))
+    // The assistant is a layer over the current page (2026-10-28), not a screen.
+    if (next === 'ai') { openAi(aiPageContext(window.location.pathname, window.location.search)); return }
     if (sessionMode === 'guest' && protectedScreens.includes(next)) {
       window.sessionStorage.setItem('rwa.return-to', pathForScreen(next))
       notify(t('guest.protected'), 'info')
@@ -247,7 +249,7 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
     const returningToProfile = next === 'profile' && (
       PROFILE_SECTION_SCREENS.has(screen) || resolveRoute(window.location.pathname)?.def.domain === 'profile'
     )
-    if (next === 'ai' || (next === 'profile' && !returningToProfile)) {
+    if (next === 'profile' && !returningToProfile) {
       window.sessionStorage.setItem('rwa-overlay-base', screen)
     }
     setProfileBaseScreen(null)

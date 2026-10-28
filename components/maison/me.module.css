@@ -1,0 +1,51 @@
+/* "Me" (2026-10-28, docs/design-system.md §7.8): the community name card on top (blurred photo band, 72px avatar over
+   its edge, 22px name, porcelain buttons), the account at a glance, then the settings as grouped lists. Every size is on
+   the §3.1 scale. */
+.card { position: relative; overflow: hidden; margin-top: 8px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.banner { position: relative; height: 88px; overflow: hidden; background: linear-gradient(135deg, #e9edf2, #dfe5ec); }
+.banner img { position: absolute; inset: -30%; width: 160%; height: 160%; object-fit: cover; filter: blur(24px) saturate(1.2); }
+.banner::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .2)); }
+.cardBody { display: grid; justify-items: start; gap: 2px; padding: 0 16px 16px; }
+.avatar { position: relative; z-index: 1; margin-top: calc(var(--me-avatar, 72px) / -2); margin-bottom: 8px; border-radius: 50%; box-shadow: 0 0 0 4px var(--pa-card, #fff), 0 8px 20px -12px rgba(15, 23, 42, .5); }
+.avatar > * { display: block; }
+.avatarEmpty { display: block; width: 72px; height: 72px; border-radius: 50%; background: var(--pa-fill-strong, rgba(11, 18, 32, .08)); }
+.name { margin: 0; color: var(--m-ink); font-size: 22px; font-weight: 600; line-height: 28px; }
+.handle { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.stats { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px; margin: 8px 0 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.stats b { color: var(--m-ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.stats i { margin: 0 4px; font-style: normal; color: var(--m-faint); }
+.bio { margin: 8px 0 0; color: var(--m-ink); font-size: 15px; line-height: 22px; }
+.buttons { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; justify-self: stretch; margin-top: 16px; }
+.tile.tile, .ink.ink { height: 44px; padding: 0 16px; border: 0; border-radius: 999px; font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.tile.tile { background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); }
+.ink.ink { background: var(--pa-cta-bg); color: var(--pa-cta-ink); box-shadow: var(--pa-cta-shadow); }
+.tile.tile:active, .ink.ink:active { transform: scale(.96); }
+
+/* Account at a glance: three figures and the user id with a copy key. */
+.status { margin-top: 16px; padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.status dl { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; }
+.status dl div { display: grid; gap: 2px; min-width: 0; }
+.status dt { color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.status dd { margin: 0; overflow: hidden; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.status dd[data-tone='up'] { color: var(--m-up, #067a5e); }
+.idRow.idRow { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; margin-top: 12px; padding: 12px 0 0; border: 0; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); background: none; color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; }
+.idRow small { color: var(--m-muted); font-size: 12px; }
+.idRow bdi { flex: 1 1 auto; font-family: var(--m-mono, ui-monospace, monospace); font-size: 13px; }
+.idRow span { display: inline-flex; align-items: center; gap: 4px; color: var(--m-accent); font-size: 12px; font-weight: 500; }
+.demo { margin: 8px 0 0; color: var(--m-faint); font-size: 12px; line-height: 16px; }
+
+/* Settings: grouped lists — a 13px label over one paper card of rows. */
+.groupTitle { margin: 24px 4px 8px; color: var(--m-muted); font-size: 13px; font-weight: 500; line-height: 18px; }
+.group { margin: 0; padding: 0 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); list-style: none; }
+.group li + li { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.group li > button { padding-inline: 0; }
+.group li > button::before { content: none; }
+
+.tile:focus-visible, .ink:focus-visible, .idRow:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+:global(.rwa-mobile[data-theme='dark']) .banner { background: linear-gradient(135deg, #1b2028, #12161c); }
+:global(.rwa-mobile[data-theme='dark']) .banner::after { background: linear-gradient(180deg, rgba(0, 0, 0, .1), rgba(0, 0, 0, .35)); }
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .card.card .handle, :global(.rwa-mobile) .card.card .stats, :global(.rwa-mobile) .status.status .idRow small { color: var(--m-muted); }
+:global(.rwa-mobile) .card.card .bio { color: var(--m-ink); }
+:global(.rwa-mobile) .status.status .idRow span { color: var(--m-accent); }
+@media (prefers-reduced-motion: reduce) { .tile, .ink { transition: none; } }

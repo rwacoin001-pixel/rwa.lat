@@ -55,3 +55,12 @@
 :global(html[data-palette='a']) .translate { min-height: 44px; margin-inline: 16px; font-size: 13px; }
 :global(html[data-palette='a']) .source { margin-top: 12px; font-size: 12px; line-height: 16px; }
 :global(html[data-palette='a']) .loading span { border-radius: 22px; }
+
+/* Card family (2026-10-28, §7.9): each market wears its category's soft colour field (macro sand, crypto sky,
+   commodities sage), the same tints as the prediction list. */
+.card.card.card[data-cat='macro'] { background: #f7f1e6; }
+.card.card.card[data-cat='crypto'] { background: #e9f1fc; }
+.card.card.card[data-cat='commodities'] { background: #e9f5ee; }
+:global(.rwa-mobile[data-theme='dark']) .card.card.card[data-cat='macro'] { background: #242019; }
+:global(.rwa-mobile[data-theme='dark']) .card.card.card[data-cat='crypto'] { background: #15202d; }
+:global(.rwa-mobile[data-theme='dark']) .card.card.card[data-cat='commodities'] { background: #162420; }

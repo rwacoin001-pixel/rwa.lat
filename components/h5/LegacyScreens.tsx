@@ -3,6 +3,7 @@ import type { RwaScreen } from '@/lib/rwa-routes'
 import { type AiPageContext } from '@/lib/ai-page-context'
 import dynamic from 'next/dynamic'
 import { useEffect, useState, type FormEvent } from 'react'
+import { openPath } from '@/lib/maison-nav'
 import { ArrowRight, AlertTriangle, Bell, ChartNoAxesColumnIncreasing, Bookmark, CalendarDays, ChevronRight, Building2, CircleCheck, CircleDollarSign, Copy, Cpu, FileText, Globe2, Headphones, Network, ReceiptText, ShieldCheck, type LucideIcon } from 'lucide-react'
 import { type AssetSceneKind } from '../asset-scenes'
 import RwaTopbar from '../rwa-topbar'
@@ -11,7 +12,7 @@ import { portfolioDetailCopy } from '@/lib/portfolio-detail-copy'
 import { trustActionCopy } from '@/lib/trust-action-copy'
 import { assetExperienceCopy } from '@/lib/asset-experience-copy'
 import { categoryLabel } from '@/lib/catalog-localization'
-import { AiChatScreen } from '@/components/maison/AiChatScreen'
+import { openAi } from '@/lib/ai-overlay'
 import { trustCopy as trustPageCopy, scamCopy } from '@/lib/maison-trust-copy'
 import { getWallet, toUnits as walletUnits, type WalletView } from '@/lib/wallet-data'
 import { getAssetHistory, type AssetHistoryPoint } from '@/lib/p0a-data'
@@ -145,8 +146,13 @@ export function RwaDetailScreen({ product, go, notify, openOrder, openDynamic }:
   )
 }
 
-export function AiScreen({ go, onClose, pageContext }: { go: (screen: Screen) => void; notify: (message: string) => void; onClose: () => void; pageContext?: AiPageContext }) {
-  return <AiChatScreen onClose={onClose} onPlan={() => go('ai-plan')} pageContext={pageContext} />
+/** /ai links (2026-10-28): the assistant is a layer now, so land on Home and open it there. */
+export function AiScreen({ pageContext }: { go: (screen: Screen) => void; notify: (message: string) => void; onClose: () => void; pageContext?: AiPageContext }) {
+  useEffect(() => {
+    const timers = [window.setTimeout(() => openPath('/home', { replace: true }), 0), window.setTimeout(() => openAi(pageContext), 60)]
+    return () => timers.forEach((timer) => window.clearTimeout(timer))
+  }, [pageContext])
+  return null
 }
 
 

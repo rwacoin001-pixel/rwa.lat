@@ -2,19 +2,13 @@
 import { containsWalletSecret } from '@/lib/ai-input-guard'
 import { accountScopesFor } from '@/lib/ai-account-intent'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { aiNavigationLink } from '@/lib/ai-navigation-link'
 import type { Citation, AiQuestion } from '@/lib/api/ai-customer'
 import AiQuestionCard from './AiQuestionCard'
 
 import { Fragment, useCallback, useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
-import { AlertCircle, ChevronLeft, RotateCcw, UserRound } from 'lucide-react'
-import { CommunityAvatar } from '../community-avatar'
-import { useCommunityMe } from '../community-compose'
+import { AlertCircle, ChevronLeft, RotateCcw, X } from 'lucide-react'
 import { useSignedIn } from '@/hooks/useAccount'
-import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
-import { openPath } from '@/lib/maison-nav'
-import { navigate } from '@/lib/routes'
 import { request, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
 import { aiChatCopy } from '@/lib/maison-content-copy'
@@ -34,10 +28,6 @@ import { AiNoticeTray } from './AiNoticeTray'
 import { useReveal } from './useReveal'
 import { MaisonPage } from './primitives'
 import a from './ai-chat.module.css'
-// The 社区 tab loads the feed only when first opened, so the assistant stays light.
-const CommunityFeed = dynamic(() => import('../community-screens').then(module => module.CommunityFeedScreen), { ssr: false })
-const TAB_KEY = 'rwa-ai-tab'
-const memberPath = (id: string) => '/community/member/' + encodeURIComponent(id)
 
 type Message = AiChatMessage
 type SendError = { text: string; tone: 'error' | 'info'; retry: string | null; attachments?: AiAttachment[] }
@@ -126,7 +116,11 @@ function Mark({ busy = false, speaking = false, size = 'sm' }: { busy?: boolean;
 
 /* ---------- Screen ---------- */
 
-export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; onPlan: () => void; pageContext?: AiPageContext }) {
+/**
+ * The assistant (2026-10-28): conversation only — Community has its own tab and "Me" its own page. In `overlay` mode it
+ * sits on the current page (components/h5/AiOverlay.tsx) and scrolls inside `scroller` instead of the window.
+ */
+export function AiChatScreen({ onClose, pageContext, overlay = false, scroller = null }: { onClose: () => void; onPlan: () => void; pageContext?: AiPageContext; overlay?: boolean; scroller?: HTMLElement | null }) {
   const { locale } = useI18n()
   const pearl = aiPearlCopy(locale), prompts = aiVisualCopy(locale).prompts.slice(0, 3)
   const c = aiShellCopy[locale], chat = aiChatCopy[locale]
@@ -163,24 +157,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   }, [])
   useEffect(() => () => window.clearTimeout(followTimer.current), [])
   const finishReveal = useCallback(() => setRevealId(null), [])
-  const signedIn = useSignedIn(), me = useCommunityMe(!signedIn)
-  const [tab, setTab] = useState<'ai' | 'community'>('ai')
-  const chromeHidden = useScrollChrome()
-  // Returning from a post or profile restores the tab the reader left.
-  useEffect(() => { try { if (sessionStorage.getItem(TAB_KEY) === 'community') setTab('community') } catch { /* Storage can be blocked. */ } }, [])
-  const switchTab = (next: 'ai' | 'community') => {
-    if (next === tab) { if (next === 'community') window.scrollTo({ top: 0, behavior: reduced() ? 'auto' : 'smooth' }); return }
-    setTab(next); expandChrome()
-    try { sessionStorage.setItem(TAB_KEY, next) } catch { /* Storage can be blocked. */ }
-    requestAnimationFrame(() => { if (next === 'community') window.scrollTo({ top: 0 }); else end.current?.scrollIntoView({ block: 'end' }) })
-  }
-  // The avatar is the reader's community profile (with its edit entry); guests sign in first.
-  const openMe = () => {
-    if (!signedIn) { navigate({ id: 'auth.login' }); return }
-    const id = me?.handle || me?.id
-    if (id) openPath(memberPath(id)); else navigate({ id: 'profile' })
-  }
-  const community = tab === 'community'
+  const signedIn = useSignedIn()
 
   useEffect(() => {
     try {
@@ -227,9 +204,10 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   const reduced = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
   useEffect(() => {
     const scroll = () => { const bottom = end.current?.getBoundingClientRect().bottom; if (bottom !== undefined) followEnd.current = bottom <= (window.visualViewport?.height ?? window.innerHeight) - dockHeight + 120 }
-    window.addEventListener('scroll', scroll, { passive: true })
-    return () => window.removeEventListener('scroll', scroll)
-  }, [dockHeight])
+    const target: HTMLElement | Window = scroller ?? window
+    target.addEventListener('scroll', scroll, { passive: true })
+    return () => target.removeEventListener('scroll', scroll)
+  }, [dockHeight, scroller])
   useEffect(() => { if (revealId !== null) { followReveal(); return }; if (followEnd.current && (messages.length || sending)) end.current?.scrollIntoView({ block: 'end', behavior: reduced() ? 'auto' : 'smooth' }) }, [messages, sending, error, dockHeight, keyboard, followReveal])
 
   // The chat endpoint is synchronous and has no server-side cancel: stopping only ends the wait
@@ -307,26 +285,14 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
   }, [input])
   const showWelcome = empty && (!started || keyboard <= 80 || listeningHere)
 
-  return <MaisonPage page="ai">
-    <div className={a.shell}>
-      <header className={a.bar} data-hidden={(community && chromeHidden) || undefined} onFocusCapture={expandChrome}>
-        <button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><ChevronLeft size={23} strokeWidth={1.85} /></button>
-        <h1 className={a.srOnly}>{community ? voiceCopy.communityTab : voiceCopy.title}</h1>
-        <div className={a.capsule} role="tablist" aria-label={voiceCopy.tabs} data-tab={tab}>
-          <i className={a.capsuleThumb} aria-hidden="true" />
-          <button type="button" role="tab" id="ai-tab-ai" aria-controls="ai-panel-ai" aria-selected={!community} onClick={() => switchTab('ai')}>{voiceCopy.assistantTab}</button>
-          <button type="button" role="tab" id="ai-tab-community" aria-controls="ai-panel-community" aria-selected={community} onClick={() => switchTab('community')}>{voiceCopy.communityTab}</button>
-        </div>
-        <button type="button" className={a.account} aria-label={signedIn ? voiceCopy.account : voiceCopy.signIn} title={signedIn ? voiceCopy.account : voiceCopy.signIn} onClick={openMe}>
-          {signedIn && me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle} size={32} /> : <UserRound size={19} strokeWidth={1.8} aria-hidden="true" />}
-        </button>
+  const body = <div className={a.shell} data-overlay={overlay || undefined}>
+      <header className={a.bar} data-overlay={overlay || undefined}>
+        {overlay
+          ? <><h1 className={a.overlayTitle}>{voiceCopy.title}</h1><button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><X size={22} strokeWidth={1.9} /></button></>
+          : <><button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><ChevronLeft size={23} strokeWidth={1.85} /></button><h1 className={a.srOnly}>{voiceCopy.title}</h1></>}
       </header>
 
-      {community && <section id="ai-panel-community" role="tabpanel" aria-labelledby="ai-tab-community" className={a.communityPanel}>
-        <CommunityFeed embedded isGuest={!signedIn} go={(screen) => { if (screen === 'login') navigate({ id: 'auth.login' }); else openPath('/community') }} openPost={(id) => openPath('/community/post/' + encodeURIComponent(id))} openProfile={(id) => openPath(memberPath(id))} />
-      </section>}
-
-      <div id="ai-panel-ai" role="tabpanel" aria-labelledby="ai-tab-ai" hidden={community} className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
+      <div id="ai-panel-ai" className={a.thread} aria-busy={sending} style={{ paddingBottom: dockHeight + keyboard + 24 }}>
         {showWelcome ? <section className={a.welcome} aria-label={voiceCopy.title} data-listening={listeningHere || undefined}>
           <BuddyFace size={132} mood={voice.state === 'cancelArmed' ? 'puzzled' : ({ idle: 'idle', listening: 'listening', thinking: 'thinking', speaking: 'replying' } as const)[pearlFor(voice.state)] ?? 'idle'} className={a.welcomePearl} />
           {/* One line, always: the greeting at rest, the reader's own words while they speak. */}
@@ -356,7 +322,7 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
         <div ref={end} className={a.end} style={{ scrollMarginBottom: dockHeight + keyboard + 16 }}/>
       </div>
 
-      <div ref={dock} className={a.dockWrap} hidden={community} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
+      <div ref={dock} className={a.dockWrap} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
         {showWelcome && showsSuggestions(voice.state) && <ul className={a.chips} aria-label={pearl.suggestions}>{prompts.map(question => <li key={question}><button type="button" disabled={status !== 'ready'} onClick={() => { void ask(question) }}><span dir="auto">{question}</span></button></li>)}</ul>}
         <AiNoticeTray key={`notices-${generation}`} locale={locale} disabled={sending || status !== 'ready'} onAsk={ask} onSummary={summarize} hidden={!signedIn || input.trim().length > 0 || voice.state !== 'idle'} />
@@ -364,5 +330,5 @@ export function AiChatScreen({ onClose, pageContext }: { onClose: () => void; on
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}
       </div>
     </div>
-  </MaisonPage>
+  return <MaisonPage page={overlay ? 'ai-overlay' : 'ai'}>{body}</MaisonPage>
 }

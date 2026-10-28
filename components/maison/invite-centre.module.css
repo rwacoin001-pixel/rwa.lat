@@ -89,3 +89,22 @@
 :global(.rwa-mobile) .pass.pass .codeRow small, :global(.rwa-mobile) .pass.pass .linkRow span, :global(.rwa-mobile) .card.card .amount small, :global(.rwa-mobile) .rulesRow.rulesRow small, :global(.rwa-mobile) .rows.rows small, :global(.rwa-mobile) .feedback.feedback { color: var(--m-muted); }
 :global(.rwa-mobile) .card.card .hint, :global(.rwa-mobile) .disclaimer.disclaimer { color: var(--m-faint); }
 :global(html[data-shell='android']) .chip { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
+
+/* Ticket (card family, 2026-10-28, §7.9): the code is a voucher — a dashed tear line with a half-round notch at each
+   edge between the code and the link. The notches are page-coloured discs clipped by the pass. */
+.linkRow.linkRow { position: relative; border-top: 0; }
+.linkRow.linkRow::before { content: ''; position: absolute; top: 0; left: 4px; right: 4px; border-top: 1.5px dashed var(--pa-hair, rgba(11, 18, 32, .14)); }
+.linkRow.linkRow::after { content: ''; position: absolute; top: -10px; left: -26px; right: -26px; height: 20px; pointer-events: none;
+  background: radial-gradient(circle at 10px 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px), radial-gradient(circle at calc(100% - 10px) 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px); }
+
+/* Ink card (card family, §7.9): the claimable money is the page's one dark card — white figures, a white claim pill. */
+.card.card { background: linear-gradient(160deg, #1a2230, #0b1018 70%); box-shadow: 0 18px 36px -22px rgba(11, 18, 32, .7); }
+.card.card .cardHead, .card.card .amount small, .card.card .stats dt { color: rgba(255, 255, 255, .62); }
+.card.card .amount span, .card.card .stats dd { color: #ffffff; }
+.card.card .stats { border-top-color: rgba(255, 255, 255, .12); }
+.card.card .hint { color: rgba(255, 255, 255, .45); }
+.claim.claim { background: #ffffff; color: #0b1220; box-shadow: 0 8px 20px -12px rgba(0, 0, 0, .6); }
+.claim.claim:disabled { background: rgba(255, 255, 255, .14); color: rgba(255, 255, 255, .5); box-shadow: none; }
+:global(.rwa-mobile[data-theme='dark']) .card.card { background: linear-gradient(160deg, #222a37, #141922 70%); box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08); }
+:global(.rwa-mobile) .card.card .cardHead, :global(.rwa-mobile) .card.card .amount small { color: rgba(255, 255, 255, .62); }
+:global(.rwa-mobile) .card.card .hint { color: rgba(255, 255, 255, .45); }

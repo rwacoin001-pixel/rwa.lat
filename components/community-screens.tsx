@@ -523,7 +523,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           </div>
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
-            : <button type="button" className={c.meBtn} aria-label={t('community.viewProfile')} onClick={() => me ? openProfile(me.handle || me.id) : go('login')}>
+            : <button type="button" className={c.meBtn} aria-label={t('community.viewProfile')} onClick={() => go('profile')}>
               <CommunityAvatar avatarUrl={me?.avatarUrl} seed={me?.avatarSeed} handle={me?.handle ?? 'me'} size={32} />
             </button>}
         </div>}

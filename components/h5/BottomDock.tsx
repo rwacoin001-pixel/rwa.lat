@@ -1,4 +1,5 @@
 'use client'
+import { openAi } from '@/lib/ai-overlay'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { markTabNavigation } from '@/lib/app-navigation'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
@@ -81,7 +82,7 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
         </button>
       </>}
       {/* The paper buddy: AI, notifications, how things stand. */}
-      <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => { if (screen !== 'ai') { markTabNavigation(); setScreen('ai') } }} />
+      <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => openAi()} />
     </nav>
   )
 }

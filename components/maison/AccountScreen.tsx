@@ -25,6 +25,11 @@ import { fmtAtomic, fmtDate, fmtDateTime, fmtDuration } from './format'
 import { settle } from './settle'
 import { KYC_REQUIRED } from '@/lib/kyc-policy'
 import { NotificationPreferences } from './NotificationPreferences'
+import { CommunityAvatar, mediaSrc } from '@/components/community-avatar'
+import { CommunityProfileEditor, useCommunityMe } from '@/components/community-compose'
+import type { CommunityProfileResponse } from '@/lib/community-data'
+import { request } from '@/lib/api/_http'
+import m from './me.module.css'
 
 const kycTone = (state: KycState | undefined) => state === 'approved' ? 'live' : state === 'rejected' || state === 'expired' ? 'down' : state === 'needs_information' ? 'warn' : state ? 'accent' : undefined
 
@@ -46,6 +51,12 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   }
 
   const view = session.data
+  const me = meCopy[locale] ?? meCopy.en
+  const community = useCommunityMe(guest)
+  const [editing, setEditing] = useState(false)
+  const statsQuery = useQuery(community?.identityConfigured && community.handle ? `community:profile:${community.handle}` : null, () => request<CommunityProfileResponse>(`/v1/community/profiles/${encodeURIComponent(community!.handle)}`, { token: null, loading: 'silent' }), { staleTime: 60_000 })
+  const stats = statsQuery.data?.stats ?? null
+  const avatarSrc = community?.avatarUrl ? mediaSrc(community.avatarUrl) : null
   const label = view?.accountLabel?.trim() || null
   const kycState = kyc.data === undefined ? undefined : kyc.data?.state ?? 'not_started'
   const totp = factors.data?.totp.filter((item) => item.state === 'active').length ?? 0
@@ -116,36 +127,45 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     </li>)}</ul>
   </MaisonPage>
 
-  return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={p.title} onBack={onClose} />}>
-    {hero}
+  // "Me" (2026-10-28, docs/design-system.md §7.8): one page for the person. On top the community name card (what others
+  // see; tap for the public page, edit name and photo here); then the account at a glance; then grouped settings.
+  return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={me.title} onBack={onClose} />}>
+    <section className={m.card} aria-label={me.card}>
+      <div className={m.banner} aria-hidden="true">{avatarSrc ? <img src={avatarSrc} alt="" /> : null}</div>
+      <div className={m.cardBody}>
+        <span className={m.avatar}>{community ? <CommunityAvatar avatarUrl={community.avatarUrl} seed={community.avatarSeed} handle={community.handle || 'me'} size={72} /> : <span className={m.avatarEmpty} />}</span>
+        {!community ? <Skeleton rows={2} /> : community.identityConfigured ? <>
+          <h1 className={m.name} dir="auto">{community.displayName}</h1>
+          <p className={m.handle} dir="ltr">@{community.handle}</p>
+          {stats && <p className={m.stats}><b>{stats.followerCount}</b> {me.followers}<i aria-hidden="true">·</i><b>{stats.followingCount}</b> {me.following}<i aria-hidden="true">·</i><b>{stats.postCount}</b> {me.posts}</p>}
+          {community.bio && <p className={m.bio} dir="auto">{community.bio}</p>}
+          <div className={m.buttons}>
+            <button type="button" className={m.tile} onClick={() => openPath(`/community/member/${encodeURIComponent(community.handle)}`)}>{me.publicPage}</button>
+            <button type="button" className={m.tile} onClick={() => setEditing(true)}>{me.edit}</button>
+          </div>
+        </> : <>
+          <h1 className={m.name}>{label ?? p.unknown}</h1>
+          <p className={m.bio}>{me.setupBody}</p>
+          <div className={m.buttons}><button type="button" className={m.ink} onClick={() => setEditing(true)}>{me.setup}</button></div>
+        </>}
+      </div>
+    </section>
+    {community && <CommunityProfileEditor open={editing} onOpenChange={setEditing} me={community} onSaved={() => setEditing(false)} />}
 
     {session.error && !view ? <StateBlock tone="error" title={common.errorGeneric} body={session.error.message} retry={session.refetch} retryLabel={common.retry} />
-      : <Lacquer aria-live="polite">
-        <div className={s.plate}>
-          <span className={s.monogram} aria-hidden="true"><i />{(label ?? '·').trim().charAt(0).toUpperCase()}</span>
-          <div className={s.plateMain}>
-            <span className={s.kicker}>{p.plate}</span>
-            {!view ? <Skeleton rows={1} /> : <>
-              <b dir="auto">{label ?? p.unknown}</b>
-            </>}
-          </div>
-          {view && view.authAdapter !== 'production' && <span className={s.badge} data-tone="warn">{p.demo}</span>}
-        </div>
-        {view && <div className={s.idRow}>
-          <button type="button" className={s.idCopy} onClick={() => void copyId(view.userId)} aria-label={`${p.copyId}: ${view.userId}`}>
-            <small>{p.userId}</small>
-            <bdi dir="ltr" className={s.mono}>{view.userId.length > 16 ? `${view.userId.slice(0, 8)}…${view.userId.slice(-4)}` : view.userId}</bdi>
-            <span className={s.idCopyHint} aria-live="polite">{idCopied ? <><Check size={12} aria-hidden="true" />{p.idCopied}</> : <><Copy size={12} aria-hidden="true" />{p.copyId}</>}</span>
-          </button>
-          <button type="button" className={s.idQr} onClick={() => openPath('/assets/cash/receive')} aria-label={p.receiveCode}><QrCode size={18} strokeWidth={1.6} /></button>
-        </div>}
-        <StatStrip fit items={[
-          { label: p.email, value: !view ? '…' : view.emailVerified ? p.emailOk : p.emailNo, tone: view?.emailVerified ? 'up' : undefined },
-          { label: p.identity, value: kycState ? (kycState === 'not_started' && !KYC_REQUIRED ? p.optional : p.kyc[kycState]) : kyc.error ? p.unknown : '…', tone: kycState === 'approved' ? 'up' : kycState === 'rejected' || kycState === 'expired' ? 'down' : undefined },
-          { label: p.security, value: securityText, tone: protectedSignIn ? 'up' : undefined },
-        ]} />
-        {view && <p className={s.plateFoot}><span className={s.liveDot} aria-hidden="true" />{fill(p.sessionEnds, { t: fmtDateTime(view.expiresAt, locale) })}</p>}
-      </Lacquer>}
+      : <section className={m.status} aria-label={me.account}>
+        <dl>
+          <div><dt>{p.email}</dt><dd data-tone={view?.emailVerified ? 'up' : undefined}>{!view ? '…' : view.emailVerified ? p.emailOk : p.emailNo}</dd></div>
+          <div><dt>{p.identity}</dt><dd data-tone={kycState === 'approved' ? 'up' : undefined}>{kycState ? (kycState === 'not_started' && !KYC_REQUIRED ? p.optional : p.kyc[kycState]) : kyc.error ? p.unknown : '…'}</dd></div>
+          <div><dt>{p.security}</dt><dd data-tone={protectedSignIn ? 'up' : undefined}>{securityText}</dd></div>
+        </dl>
+        {view && <button type="button" className={m.idRow} onClick={() => void copyId(view.userId)} aria-label={`${p.copyId}: ${view.userId}`}>
+          <small>{p.userId}</small>
+          <bdi dir="ltr">{view.userId.length > 16 ? `${view.userId.slice(0, 8)}…${view.userId.slice(-4)}` : view.userId}</bdi>
+          <span aria-live="polite">{idCopied ? <><Check size={13} aria-hidden="true" />{p.idCopied}</> : <><Copy size={13} aria-hidden="true" />{p.copyId}</>}</span>
+        </button>}
+        {view && view.authAdapter !== 'production' && <p className={m.demo}>{p.demo}</p>}
+      </section>}
 
     {next === null ? <div className={s.notice} data-tone="info" role="status"><Check size={16} /><span>{p.allSet}</span></div>
       : next && <button type="button" className={s.nextStep} onClick={() => openPath(next.path)}>
@@ -153,11 +173,10 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         <span className={s.nextGo}>{p.open}<ChevronRight size={15} /></span>
       </button>}
 
-    {groups.map((group, index) => <div key={group.title}>
-      <h2 className={s.groupTitle}>{group.title}</h2>
-      <ul className={s.list} style={{ borderTop: 0 }}>{group.items.map(({ key, path, Icon, badge }) => <li key={key}>
+    {groups.map((group) => <div key={group.title}>
+      <h2 className={m.groupTitle}>{group.title}</h2>
+      <ul className={m.group}>{group.items.map(({ key, path, badge }) => <li key={key}>
         <button type="button" className={s.row} onClick={() => openPath(path)}>
-          <span className={s.logo}><Icon size={16} strokeWidth={1.7} /></span>
           <span className={s.rowMain}><b>{key === 'notifications' ? accountCopy[locale].settings.notifications : p.rows[key].title}</b>{key !== 'notifications' && <small className={s.clamp2}>{p.rows[key].body}</small>}</span>
           <span className={s.rowEnd}>{badge}<ChevronRight size={16} className={s.chev} /></span>
         </button>
@@ -171,6 +190,17 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       {leaveError && <div className={s.notice} data-tone="error" role="alert"><Info size={16} /><span>{p.signOutFailed}</span></div>}
     </div>
   </MaisonPage>
+}
+
+/** "Me" page copy (2026-10-28). */
+const meCopy: Record<string, { title: string; card: string; followers: string; following: string; posts: string; publicPage: string; edit: string; setup: string; setupBody: string; account: string }> = {
+  en: { title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'My public page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
+  'zh-CN': { title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '我的主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
+  hi: { title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'मेरा पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
+  es: { title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Mi página', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
+  ar: { title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحتي', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
+  fr: { title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Ma page', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
+  pt: { title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Minha página', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
 }
 
 const THEMES: { value: RwaThemePreference; Icon: typeof Sun }[] = [{ value: 'light', Icon: Sun }, { value: 'dark', Icon: Moon }, { value: 'system', Icon: Monitor }]

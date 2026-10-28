@@ -133,9 +133,9 @@ export function PredictionFeed() {
               : 'binary'
       const shown = layout === 'multi' ? item.outcomes.slice(0, 4) : item.outcomes.slice(0, 2)
       const remaining = Math.max(0, (item.optionCount ?? item.outcomes.length) - shown.length)
-      return <article key={item.id} className={s.predFeedArticle}><button type="button" data-layout={layout} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
+      return <article key={item.id} className={s.predFeedArticle}><button type="button" data-layout={layout} data-cat={item.featured || item.category === 'all' ? undefined : item.category} className={`${s.predCard} ${s.predFeedCard}`} onClick={() => openPath(`/prediction/${encodeURIComponent(item.id)}`)}>
         <span className={s.predCardHead}>
-          <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : category === 'all' ? 'Polymarket' : labels.categories[category]}</span>{item.endAt && layout !== 'pulse' && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
+          <span className={s.predCardMeta}><span>{item.featured ? content('2026 Midterms') : (item.category && item.category !== 'all' ? labels.categories[item.category as PolymarketCategory] : undefined) ?? (category === 'all' ? 'Polymarket' : labels.categories[category])}</span>{item.endAt && layout !== 'pulse' && <span>{fill(m.closes, { d: fmtDate(item.endAt, locale) })}</span>}</span>
           {item.image && <PredictionImage className={s.predThumb} src={item.image} name={item.question} />}
         </span>
         <b className={s.predQuestion}>{layout === 'pulse' ? pulseTitle(locale) : content(item.question)}</b>

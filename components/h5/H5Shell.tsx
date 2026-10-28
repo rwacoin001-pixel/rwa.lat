@@ -1,4 +1,5 @@
 'use client'
+import { AiOverlay } from './AiOverlay'
 import type { ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { ToastHost } from '@/components/ui/ToastHost'
@@ -21,6 +22,7 @@ export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode 
         <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen} motion={navigationMotion}>
         {children}
         </ScreenTransition>
+        <AiOverlay />
         {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home' && screen !== 'invest' && screen !== 'quant' && screen !== 'community'} />}
       </div>
       <ToastHost />

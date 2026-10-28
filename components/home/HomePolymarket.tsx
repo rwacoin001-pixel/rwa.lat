@@ -94,7 +94,7 @@ export function HomePolymarket() {
       const key = translationKey(locale, market)
       const cached = translations[key]
       const translated = originals.has(key) ? undefined : cached
-      return <div className={styles.card} key={market.id}>
+      return <div className={styles.card} data-cat={market.category} key={market.id}>
       <button type="button" className={styles.cardLink} onClick={() => openPath(market.eventKey ? `/prediction/event-${encodeURIComponent(market.eventKey)}` : `/prediction/${encodeURIComponent(market.id)}`)}>
         <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}</span>
         <strong className={styles.question} lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>

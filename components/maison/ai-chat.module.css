@@ -280,3 +280,8 @@ button.icon:active { transform: scale(.92); }
   .noticeDot[data-pulse], .noticeTicker, .noticePanel[data-expanded] .noticeItem { animation: none; }
 }
 :global(html[data-palette='a']) .welcomePearl { margin-bottom: 32px; }
+
+/* As a layer over the page (2026-10-28): a clear bar with the title and a close key; the dock fades into the veil. */
+.bar[data-overlay] { grid-template-columns: 1fr 44px; background: transparent; box-shadow: none; }
+.overlayTitle { margin: 0; padding-inline-start: 8px; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.shell[data-overlay] .dockWrap { background: none; }

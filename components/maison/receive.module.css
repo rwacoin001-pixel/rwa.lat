@@ -42,3 +42,10 @@
 :global(.rwa-mobile) .page.page .who small, :global(.rwa-mobile) .page.page .caption, :global(.rwa-mobile) .page.page .id small { color: var(--m-muted); }
 :global(.rwa-mobile) .page.page .scope { color: var(--m-faint); }
 @media (prefers-reduced-motion: reduce) { .id i, .copyBtn, .shareBtn { transition: none; } }
+
+/* Ticket (card family, 2026-10-28, §7.9): the receive pass tears off above the id like a voucher. */
+.id.id { position: relative; border-top: 0; }
+.id.id::before { content: ''; position: absolute; top: 0; left: 4px; right: 4px; border-top: 1.5px dashed var(--pa-hair, rgba(11, 18, 32, .14)); }
+.pass { overflow: hidden; }
+.id.id::after { content: ''; position: absolute; top: -10px; left: -26px; right: -26px; height: 20px; pointer-events: none;
+  background: radial-gradient(circle at 10px 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px), radial-gradient(circle at calc(100% - 10px) 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px); }

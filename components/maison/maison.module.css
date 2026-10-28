@@ -1706,3 +1706,24 @@ span.compareName { padding-top: 32px; cursor: default; }
 :global(html[data-palette='a']) .list { border-top-width: .5px; }
 :global(html[data-palette='a']) .link { font-size: 13px; font-weight: 500; }
 :global(html[data-palette='a']) .row::before { display: none; }
+
+/* Card family (2026-10-28, docs/design-system.md §7.9): prediction cards wear their category's soft colour field, so a
+   long list reads as topics at a glance instead of one white stack. Light: pale tints; dark: low-light tints. */
+:global(html[data-palette='a']) .predFeedCard[data-cat] { --cat: #f2f4f7; background: var(--cat); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .06), 0 10px 24px -20px rgba(15, 23, 42, .3); }
+:global(html[data-palette='a']) .predFeedCard[data-cat='politics'] { --cat: #eef0fb; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='sports'] { --cat: #e9f5ee; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='crypto'] { --cat: #e9f1fc; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='finance'] { --cat: #f7f1e6; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='geopolitics'] { --cat: #f8ecea; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='earnings'] { --cat: #f0f4e6; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='tech'] { --cat: #e8f3f5; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='culture'] { --cat: #f9edf3; }
+:global(html[data-palette='a']) .predFeedCard[data-cat='world'] { --cat: #edf3f0; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat] { --cat: #171a20; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .06); }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='politics'] { --cat: #1b1c2b; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='sports'] { --cat: #162420; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='crypto'] { --cat: #15202d; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='finance'] { --cat: #242019; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='geopolitics'] { --cat: #261b1b; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='tech'] { --cat: #142326; }
+:global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .predFeedCard[data-cat='culture'] { --cat: #261a22; }
