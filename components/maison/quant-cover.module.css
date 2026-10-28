@@ -128,3 +128,8 @@ button.glass:active { transform: scale(.95); }
 :global(.rwa-mobile:not([data-theme='dark'])) .marker i { background: rgba(255, 255, 255, .85); box-shadow: 0 2px 8px -2px rgba(17, 23, 34, .18), inset 0 0 0 .5px rgba(17, 23, 34, .08); }
 :global(.rwa-mobile:not([data-theme='dark'])) .col small { opacity: .5; }
 :global(.rwa-mobile:not([data-theme='dark'])) .col[data-on] small { opacity: 1; }
+/* Cool white frost (2026-10-29, user: the light ground still read yellow): the blurred photo loses its colour
+   (saturate .15, a touch brighter) and the veil is a cool paper white, so the card reads as frosted glass, not cream. */
+:global(.rwa-mobile:not([data-theme='dark'])) .shell { background: #f2f4f7; }
+:global(.rwa-mobile:not([data-theme='dark'])) .ground { filter: blur(28px) saturate(.15) brightness(1.08); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell::before { background: linear-gradient(180deg, rgba(244, 246, 250, .62), rgba(246, 248, 251, .88)); }

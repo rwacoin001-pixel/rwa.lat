@@ -377,8 +377,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       const result = await confirmEmailCode(account.email, account.isNew ? 'register' : 'login', codeChallenge.challengeId, value)
       if (!result.ok) { showAuthError(result.error); return }
       accepted = true
-      setCode(''); setCodeState('verified')
-      await new Promise(resolve => setTimeout(resolve, 450))
+      // Keep the digits: the slots wash into one ink bar, the digits sink and a check rises (≈600ms) before the page moves.
+      setCodeState('verified')
+      await new Promise(resolve => setTimeout(resolve, 900))
       finish(account.isNew)
     })
     if (accepted) return

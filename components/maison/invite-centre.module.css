@@ -204,3 +204,4 @@
 .memberRows dt { color: var(--m-muted); font-size: 13px; line-height: 18px; }
 .memberRows dd { display: grid; justify-items: end; margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; }
 .memberRows dd small { color: var(--m-muted); font-size: 12px; font-weight: 400; line-height: 16px; }
+.feedback:empty { display: none; }

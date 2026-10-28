@@ -74,7 +74,7 @@ export function ReferralSheet({ title, closeLabel, theme, inertRef, tall = false
   if (typeof document === 'undefined') return null
   return createPortal(
     // Portaled outside MaisonPage, so re-attach the existing Geist font variables here.
-    <div className={`${x.ref} ${x.layer} ${GeistSans.variable} ${GeistMono.variable}`} data-ref-theme={theme}
+    <div className={`${x.ref} ${x.layer} ${GeistSans.variable} ${GeistMono.variable}`} data-ref-theme={theme} data-glass=""
       onPointerDown={event => { pressedScrim.current = event.target === event.currentTarget }}
       onClick={event => { if (pressedScrim.current && event.target === event.currentTarget) onClose(); pressedScrim.current = false }}>
       <section ref={dialogRef} className={x.sheet} data-tall={tall || undefined} data-fullscreen={fullScreen || undefined} role="dialog" aria-modal="true" aria-labelledby={titleId} tabIndex={-1}>

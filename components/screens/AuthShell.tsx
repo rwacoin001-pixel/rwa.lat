@@ -7,7 +7,6 @@ import { useRwaTheme } from '@/lib/rwa-theme'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
 import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
-import { AndroidAppBanner } from '@/components/android-app-banner'
 import RwaLogoMark from '../rwa-logo'
 import { CabinetScene } from './CabinetFace'
 
@@ -70,7 +69,7 @@ export function AuthShell({ children, hero, footer, attrs }: {
       </div>
     </header>
 
-    <AndroidAppBanner />
+    {/* No Android banner on sign-in (2026-10-29, user: it covered the page; the round download key stays). */}
     {cabinet ? <>
       {/* Palette A: the scene is a rounded paper cabinet (day / night with the theme) whose face shows the Koala
           Quant page; the real form sits below it, on the floor. */}

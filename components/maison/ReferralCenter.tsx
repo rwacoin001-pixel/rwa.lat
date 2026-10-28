@@ -13,7 +13,7 @@ import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
 import { ReferralTeamRewards } from './ReferralTeamRewards'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
-import { InvitePlate, type PlateStat } from './InvitePlate'
+import { InvitePlate } from './InvitePlate'
 import { CodeSlots } from './CodeSlots'
 import { MemberSheet } from './ReferralMemberSheet'
 import type { ReferralMember } from '@/lib/api/referral'
@@ -199,13 +199,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
     } finally { if (mounted.current) setClaiming(false) }
   }
 
-  // The plate's figures (2026-10-29): people invited with the split by level, total earned, claimable, and the last 30 days.
-  const plateStats: PlateStat[] = [
-    { label: t('邀请人数', 'Invited'), value: totalCount, note: sum ? `${t('一级', 'L1')} ${levelCount(1)} · ${t('二级', 'L2')} ${levelCount(2)} · ${t('三级', 'L3')} ${levelCount(3)}` : undefined },
-    { label: t('累计奖励', 'Total earned'), value: sum ? money(sum.balances.total) : '—', unit },
-    { label: t('可领取', 'Claimable'), value: sum ? money(sum.balances.available) : '—', unit },
-    { label: t('近 30 天注册', 'Sign-ups, 30 days'), value: funnel.data?.registered ? String(funnel.data.registered.last30d) : '—', note: funnel.data?.opened ? t(`打开 ${funnel.data.opened.last30d} · 首投 ${funnel.data.subscribed.last30d}`, `${funnel.data.opened.last30d} opens · ${funnel.data.subscribed.last30d} first buys`) : undefined },
-  ]
+  const invited = sum ? t(`${totalCount} 位好友已加入`, `${totalCount} friends joined`) : '…'
   const copyLabel = copied ? t('已复制', 'Copied') : t('复制', 'Copy')
   const CopyIcon = copied ? Check : Copy
   const retryLabel = t('重试', 'Retry')
@@ -221,7 +215,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       {me.error
         ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={retryLabel} />
         : !code ? <div className={v.platePlaceholder} aria-busy="true" />
-        : <InvitePlate code={code} link={link} stats={plateStats} copied={copied} onCopy={() => void copy()} onEdit={openEdit} onQr={() => setSheet('qr')} t={t} />}
+        : <InvitePlate code={code} link={link} invited={invited} copied={copied} onCopy={() => void copy()} onEdit={openEdit} onQr={() => setSheet('qr')} t={t} />}
       {/* One row under the card (2026-10-29): share in ink, then poster, rewards, team and rules — each opens its own
           sheet (or the poster composer). Copy and edit live on the card next to the link and the code. */}
       <nav className={v.actionRow} aria-label={t('邀请操作', 'Invitation actions')}>
@@ -238,7 +232,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
           <span>{label}</span>
         </button>)}
       </nav>
-      <p className={v.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
+      <p className={v.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError}</p>
     </Shell>
 
     {sheet === 'rewards' && <ReferralSheet tall title={t('奖励', 'Rewards')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>

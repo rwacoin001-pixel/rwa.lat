@@ -967,7 +967,7 @@ span.compareName { padding-top: 32px; cursor: default; }
 /* ── Step-up sheet + money-out (batch 2b) ─────────────── */
 /* One sheet for the whole App (StepUp, Redeem, prediction, deposit help): radius 28, --m-scrim + blur 4, grip on top,
    44px ✕ top-right, drag down to dismiss, a single primary action — no stacked ghost "cancel". */
-.sheetBackdrop { position: fixed; z-index: 60; inset: 0; background: var(--m-scrim); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); transition: opacity var(--dur-long) var(--ease-out); }
+.sheetBackdrop { position: fixed; z-index: 60; inset: 0; background: var(--m-scrim); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); transition: opacity var(--dur-long) var(--ease-out); }
 .sheetBackdrop[data-ending-style] { transition-duration: calc(var(--dur-long) * .75); transition-timing-function: var(--ease-in); }
 .sheetBackdrop[data-starting-style], .sheetBackdrop[data-ending-style] { opacity: 0; }
 .sheet { position: fixed; z-index: 61; inset-inline: 0; bottom: 0; box-sizing: border-box; width: min(100%, var(--app-max)); max-height: calc(100dvh - 48px); margin-inline: auto; padding: 10px var(--m-gutter) calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; border: 1px solid var(--m-line); border-bottom: 0; border-radius: 28px 28px 0 0; background: var(--m-bg); color: var(--m-ink); box-shadow: var(--m-shadow); outline: 0; overscroll-behavior: contain; transition: transform var(--dur-long) var(--ease-out); }

@@ -164,3 +164,8 @@ img.monogram{display:block;padding:0;border:0;background:none;object-fit:cover}
 .funnel { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 8px; margin: 12px 0 0; color: var(--m-muted, var(--r-muted)); font-size: 13px; line-height: 18px; text-align: center; font-variant-numeric: tabular-nums; }
 .funnel b { color: var(--m-ink, var(--r-ink)); font-weight: 500; }
 .funnel i { font-style: normal; color: var(--m-faint, var(--r-muted)); }
+/* Invite tab never scrolls (2026-10-29, user: the page should not drag): the card is sized to the viewport, so the
+   wrappers drop their full-height minimum and the bottom padding they keep for long feeds. */
+.embedded { padding-bottom: 0; }
+.page:has(> .embedded) { min-height: 0; }
+:global(*):has(> .page > .embedded) { padding-bottom: 0 !important; }

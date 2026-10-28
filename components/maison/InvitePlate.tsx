@@ -15,10 +15,8 @@ import p from './invite-plate.module.css'
 type Translate = (cn: string, en: string) => string
 const MAX_TILT = 9
 
-export type PlateStat = { label: string; value: string; unit?: string; note?: string }
-
-/** The plate shows the code, the link, a printed QR and the member's own figures (no avatar: the bar above has it). */
-export function InvitePlate({ code, link, stats, trail, copied = false, onQr, onCopy, onEdit, t }: { code: string; link: string; stats: PlateStat[]; trail?: string; copied?: boolean; onQr: () => void; onCopy: () => void; onEdit: () => void; t: Translate }) {
+/** The plate: the brand, the code in the open middle, how many friends joined, a small printed QR. */
+export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy, onEdit, t }: { code: string; link: string; invited: string; copied?: boolean; onQr: () => void; onCopy: () => void; onEdit: () => void; t: Translate }) {
   const { theme } = useRwaTheme()
   const shot = theme === 'dark' ? 'dark' : 'light'
   const ref = useRef<HTMLDivElement>(null)
@@ -74,23 +72,26 @@ export function InvitePlate({ code, link, stats, trail, copied = false, onQr, on
       <i className={p.glare} aria-hidden="true" />
       <div className={p.content}>
         <header className={p.head}>
-          <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={18} height={20} />A-REIT</span>
-          <span className={p.kind}>{t('邀请函', 'INVITATION')}</span>
+          <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={14} height={16} />A-REIT</span>
+          <span className={p.kind}>INVITATION</span>
         </header>
-        <div className={p.codeBlock}>
-          <span className={p.label}><small>{t('邀请码', 'Invitation code')}</small><button type="button" className={p.inline} aria-haspopup="dialog" onClick={onEdit}>{t('修改', 'Edit')}</button></span>
-          <b className={p.code} dir="ltr">{displayInviteCode(code)}</b>
-          <span className={p.linkRow}><span className={p.link} dir="ltr">{link.replace(/^https?:\/\//, '')}</span><button type="button" className={p.inline} data-done={copied || undefined} onClick={onCopy}>{copied ? t('已复制', 'Copied') : t('复制', 'Copy')}</button></span>
-        </div>
-        {/* Printed on the metal: no white tile, the modules in the plate's ink (blended in, like an etching). */}
-        <button type="button" className={p.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={onQr}>
-          <QRCodeSVG value={link} size={148} marginSize={0} level="M" bgColor="transparent" fgColor="currentColor" title={t('邀请链接二维码', 'Invitation QR code')} />
-          <small>{t('扫码加入', 'Scan to join')}</small>
+        {/* The middle is left open (2026-10-29, user: more white space, less on the card): only the code, small and
+            spaced, which copies the link on a tap. */}
+        <button type="button" className={p.codeKey} onClick={onCopy} aria-label={t(`邀请码 ${code.toUpperCase()}，点按复制邀请链接`, `Invitation code ${code.toUpperCase()}, tap to copy the link`)}>
+          <small>{t('邀请码', 'Invitation code')}</small>
+          <b dir="ltr">{displayInviteCode(code)}</b>
+          <span data-done={copied || undefined}>{copied ? t('链接已复制', 'Link copied') : t('点按复制链接', 'Tap to copy the link')}</span>
         </button>
-        <dl className={p.stats}>
-          {stats.map(item => <div key={item.label}><dt>{item.label}</dt><dd dir="ltr">{item.value}{item.unit && <small>{item.unit}</small>}</dd>{item.note && <span>{item.note}</span>}</div>)}
-        </dl>
-        {trail && <p className={p.trail}>{trail}</p>}
+        <footer className={p.foot}>
+          <span className={p.footText}>
+            <b>{invited}</b>
+            <button type="button" className={p.inline} aria-haspopup="dialog" onClick={onEdit}>{t('修改邀请码', 'Edit code')}</button>
+          </span>
+          {/* Printed on the metal: no white tile, the modules in the plate's ink (blended in, like an etching). */}
+          <button type="button" className={p.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={onQr}>
+            <QRCodeSVG value={link} size={72} marginSize={0} level="M" bgColor="transparent" fgColor="currentColor" title={t('邀请链接二维码', 'Invitation QR code')} />
+          </button>
+        </footer>
       </div>
       <i className={p.rim} aria-hidden="true" />
     </div>

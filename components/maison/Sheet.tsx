@@ -46,7 +46,7 @@ export function Sheet({ open, onClose, title, kicker, description, busy = false,
     <span ref={anchor} hidden />
     <Dialog.Root open={open} onOpenChange={(next) => { if (!next && !busy) onClose() }}>
       <Dialog.Portal container={container}>
-        <Dialog.Backdrop className={s.sheetBackdrop} />
+        <Dialog.Backdrop className={s.sheetBackdrop} data-glass="" />
         <Dialog.Popup ref={popup} className={`${s.sheet}${className ? ` ${className}` : ''}`} data-sheet="" aria-busy={busy || undefined} {...data}>
           <div className={s.sheetGripArea} onTouchStart={grab} onTouchMove={drag} onTouchEnd={release} onTouchCancel={release}><i className={s.sheetGrip} aria-hidden="true" /></div>
           <Dialog.Close className={s.sheetClose} disabled={busy} aria-label={marketCopy[locale].common.close}><X size={20} aria-hidden="true" /></Dialog.Close>
