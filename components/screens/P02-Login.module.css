@@ -886,3 +886,15 @@
 /* Delivery line as plain text (2026-10-29): no tint, no icon; a muted label, the address in ink, a text link. */
 .codeDelivery { gap: 16px; margin: 0 0 16px; padding: 0; border-radius: 0; background: none; }
 .codeDelivery button { width: auto; height: 44px; padding: 0 4px; border-radius: 8px; color: var(--ink); font: 550 15px/1 var(--sans); text-decoration: underline; text-decoration-thickness: 1px; text-underline-offset: 4px; }
+
+/* /auth/continue (2026-10-29): the continue steps (code, password, consent) in the sign-in sheet's language — pill
+   fields on porcelain, an ink pill button, the title in the sans at 22/28 — instead of the older boxed form. */
+.v2 .cardTitle { font: 600 22px/28px var(--sans); letter-spacing: -.01em; }
+.v2 .cardLede { margin-top: 4px; font-size: 13px; line-height: 18px; }
+.v2 .field { min-height: 56px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--pa-tile-bg, rgba(255, 255, 255, .9)); box-shadow: var(--pa-tile-shadow, inset 0 0 0 .5px rgba(11, 18, 32, .1)); }
+.v2 .field:focus-within { box-shadow: inset 0 0 0 1.5px var(--ink); }
+.v2 .fieldLabel { padding-top: 8px; font-size: 12px; line-height: 16px; }
+.v2 .field + .field { margin-top: 12px; }
+.v2 .codeBox { padding-block: 0; }
+.v2 .primary { min-height: 56px; border-radius: 999px; letter-spacing: 0; box-shadow: none; }
+.v2 .primary:disabled { background: var(--pa-fill-strong, rgba(11, 18, 32, .08)); color: var(--auth-muted); opacity: 1; }

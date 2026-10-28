@@ -115,7 +115,7 @@ export default function ContinueAuthPage() {
   const matchOk = Boolean(repeat) && value === repeat
   const reveal = <button type="button" className={styles.reveal} aria-label={show ? sheet.hidePassword : sheet.showPassword} aria-pressed={show} onClick={() => setShow(v => !v)}>{show ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
   return <AuthShell>
-    {ready && !flow ? <p role="alert" className={styles.error}>{t.expired}</p> : <form onSubmit={submit} aria-busy={busy}>
+    {ready && !flow ? <p role="alert" className={styles.error}>{t.expired}</p> : <form className={styles.v2} onSubmit={submit} aria-busy={busy}>
       <header className={styles.cardHead}>
         <h1 className={styles.cardTitle}>{label}</h1>
         {lede && <p className={styles.cardLede}>{lede}</p>}

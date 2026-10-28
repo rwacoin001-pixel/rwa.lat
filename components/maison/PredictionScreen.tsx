@@ -65,6 +65,12 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
   const [quoteRefreshing,setQuoteRefreshing]=useState(false)
   const market = useQuery(validId ? `prediction:market:${validId}` : null, () => getPolymarketMarket(validId!, 'max', freshRequest.current), { staleTime: 30_000, pollInterval: POLL.quote, loading:'silent' })
   const refreshQuote=async()=>{if(quoteRefreshing)return;freshRequest.current=true;setQuoteRefreshing(true);try{const wasLoading=market.loading;await market.refetch();if(wasLoading)await market.refetch()}finally{freshRequest.current=false;setQuoteRefreshing(false)}}
+  // A market that belongs to an event opens the event page (2026-10-29): links from My predictions and older bets
+  // carried the bare market id and landed on the single-market layout instead of the page the markets tab uses.
+  const parentEvent = market.data?.market.eventId
+  useEffect(() => {
+    if (eventId === undefined && !eventHeader && parentEvent && /^\d+$/.test(parentEvent)) openPath(`/prediction/event-${encodeURIComponent(parentEvent)}`, { replace: true })
+  }, [parentEvent, eventId, eventHeader])
   const translation = useQuery(validId && locale !== 'en' ? `prediction:translation:${validId}:${locale}` : null,
     () => translatePolymarketMarkets([validId!], locale as Exclude<typeof locale, 'en'>, true), { staleTime: 10 * 60_000, loading: 'silent' })
   const [localTicketOpen,setLocalTicketOpen]=useState(false),[ticketSide,setTicketSide]=useState(initialOutcome),[busy,setBusy]=useState(false)

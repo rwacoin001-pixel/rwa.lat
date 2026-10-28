@@ -50,7 +50,7 @@
 .card { min-width: 0; padding: 12px 16px 2px; border: 1px solid var(--m-line); border-radius: var(--m-radius); background: var(--m-glass); box-shadow: var(--m-shadow-soft); }
 
 .meta { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; color: var(--m-muted); font-size: 12px; }
-.meta time { margin-inline-start: auto; }
+.meta .when { margin-inline-start: auto; font-variant-numeric: tabular-nums; }
 .state { color: var(--m-accent); font-weight: 600; }
 .card[data-status='won'] .state { color: var(--m-up); }
 .card[data-status='lost'] .state, .card[data-status='unknown'] .state { color: var(--m-muted); }

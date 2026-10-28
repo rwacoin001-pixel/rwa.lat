@@ -145,3 +145,30 @@
 .quiet.quiet button { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0; border: 0; background: none; color: var(--m-ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
 .quiet.quiet button:disabled { opacity: .45; cursor: default; }
 .quiet.quiet button[data-copied] { color: var(--m-up, #067a5e); }
+
+/* 2026-10-29 b: the card, the ink share key, three porcelain capsules, then one grouped menu whose rows open sheets
+   (claim, team, records, rules). The claimable figure gets a small accent dot when there is something to claim. */
+.capsules { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 8px; }
+.capsules.capsules button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 0; height: 44px; padding: 0 8px; border: 0; border-radius: 999px; background: var(--pa-tile-bg); box-shadow: var(--pa-tile-shadow); color: var(--pa-tile-ink, var(--m-ink)); font: inherit; font-size: 13px; font-weight: 500; white-space: nowrap; cursor: pointer; transition: transform 120ms cubic-bezier(.34, 1.56, .64, 1); }
+.capsules.capsules button:active { transform: scale(.96); }
+.capsules.capsules button:disabled { opacity: .45; cursor: default; }
+.capsules.capsules button[data-copied] { color: var(--m-up, #067a5e); }
+.share.share { margin-top: 16px; }
+.menu { margin-top: 8px; padding: 0 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.menu.menu button { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; width: 100%; min-height: 56px; padding: 0; border: 0; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); background: none; color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; }
+.menu.menu button:last-child { border-bottom: 0; }
+.menu b { font-size: 15px; font-weight: 500; line-height: 22px; }
+.menu span { overflow: hidden; color: var(--m-muted); font-size: 13px; line-height: 18px; text-align: end; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.menu span[data-on] { color: var(--m-ink); font-weight: 600; }
+.menu span[data-on]::before { content: ''; display: inline-block; width: 6px; height: 6px; margin-inline-end: 6px; border-radius: 50%; background: var(--m-accent, #19c7aa); vertical-align: 2px; }
+.menu svg { color: var(--m-faint); }
+.sheetCard { padding: 4px 0 8px; }
+.sheetRows { margin: 0; padding: 0; list-style: none; }
+.sheetRows li { display: flex; align-items: center; gap: 12px; min-height: 64px; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.sheetRows li:last-child { border-bottom: 0; }
+.sheetRows img { flex: none; width: 40px; height: 40px; border-radius: 50%; }
+.sheetRows li > div { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
+.sheetRows b { overflow: hidden; color: var(--m-ink); font-size: 15px; font-weight: 500; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.sheetRows small, .sheetRows time { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.sheetRows time { flex: none; }
+.platePlaceholder { aspect-ratio: auto; min-height: 440px; }

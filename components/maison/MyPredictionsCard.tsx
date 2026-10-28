@@ -4,7 +4,7 @@ import { ChevronRight } from 'lucide-react'
 import { useMemo } from 'react'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { betTotals } from '@/lib/api/my-predictions'
+import { betAmounts, betStatus, betTotals } from '@/lib/api/my-predictions'
 import { predictionApi } from '@/lib/rwa-api'
 import { fill } from '@/lib/maison-market-copy'
 import { myPredictionsCopy } from '@/lib/maison-my-predictions-copy'
@@ -50,4 +50,27 @@ export function MyPredictionsCard() {
     </dl>}
     {partial && <small className={mp.entryNote}>{fill(t.partial, { n: items?.length ?? 0 })}</small>}
   </button>
+}
+
+/**
+ * Bets still in play, as holdings on the Assets positions tab (2026-10-29): the question and side, the stake, and what it
+ * pays if right (gross, before any payout fee). Each row opens its market; the header opens all predictions.
+ */
+export function OpenBets() {
+  const { locale } = useI18n()
+  const t = myPredictionsCopy[locale]
+  const bets = useMyBets({ loading: 'silent' })
+  const rows = useMemo(() => (Array.isArray(bets.data?.items) ? bets.data.items : []).filter((bet) => betStatus(bet.status) === 'placed'), [bets.data])
+  if (!rows.length) return null
+  return <ul className={s.list}>{rows.map((bet) => {
+    const { stake, grossPayout } = betAmounts(bet)
+    const outcome = bet.tokenOutcome?.trim()
+    const target = bet.marketEventId ? `/prediction/event-${encodeURIComponent(String(bet.marketEventId))}` : bet.marketId ? `/prediction/${encodeURIComponent(String(bet.marketId))}` : '/assets/predictions'
+    return <li key={bet.id}>
+      <button type="button" className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }} onClick={() => openPath(target)}>
+        <span className={s.rowMain}><b className={s.clamp2} dir="auto">{bet.marketQuestion?.trim() || t.market}</b><small>{outcome ? fill(t.backed, { outcome }) : t.market} · {t.stake} {stake === null ? '—' : bare(stake)}</small></span>
+        <span className={s.rowFig}><b className={s.num}>{grossPayout === null ? '—' : bare(grossPayout)}</b><small className={s.muted}>USDT · {t.ifRight}</small></span>
+      </button>
+    </li>
+  })}</ul>
 }

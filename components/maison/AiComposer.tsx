@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type KeyboardEvent } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { ArrowUp, FileText, ImagePlus, Keyboard, LoaderCircle, Mic, Plus, Square, X } from 'lucide-react'
+import { ArrowUp, FileText, ImagePlus, LoaderCircle, Mic, Plus, Square, X } from 'lucide-react'
 import type { AppLocale } from '@/lib/i18n'
 import { aiInputCopy } from '@/lib/maison-ai-copy'
 import { aiVoiceCopy } from '@/lib/ai-voice-copy'
@@ -11,7 +11,8 @@ import { readAiFile } from '@/lib/ai-file-parser'
 import { useAiVoice } from './useAiVoice'
 import { BuddyFace } from '@/components/buddy/BuddyFace'
 import { aiPearlCopy } from '@/lib/ai-pearl-copy'
-import { holdLabel, isVoiceActive, pearlFor, showsSuggestions, surfaceState, type SurfaceState } from '@/lib/ai-surface-state'
+import { isVoiceActive, pearlFor, showsSuggestions, surfaceState, type SurfaceState } from '@/lib/ai-surface-state'
+import { VoiceWave } from './VoiceWave'
 import AiFaqTicker from './AiFaqTicker'
 import s from './ai-composer.module.css'
 
@@ -24,18 +25,18 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
 }) {
   const c = aiInputCopy(locale), v = aiVoiceCopy(locale), visual = aiVisualCopy(locale), pearl = aiPearlCopy(locale), reduced = useReducedMotion()
   const [focused, setFocused] = useState(false), [picker, setPicker] = useState(false), [files, setFiles] = useState<AiAttachment[]>([]), [reading, setReading] = useState<number | null>(null), [error, setError] = useState('')
-  const [voiceMode, setVoiceMode] = useState(false), [cancelled, setCancelled] = useState(false), [review, setReview] = useState(false)
+  const [review, setReview] = useState(false)
   const field = useRef<HTMLTextAreaElement>(null), fileInput = useRef<HTMLInputElement>(null), imageInput = useRef<HTMLInputElement>(null), processing = useRef<AbortController | null>(null), ime = useRef(false), sending = useRef(false)
-  const hold = useRef<{ pointer: number; y: number; cancel: boolean; at: number } | null>(null), keyHeld = useRef(false), [held, setHeld] = useState(false)
-  // Spoken words land in the box for a look before sending (2026-10-28): names and amounts are easy to mishear, so the
-  // bar switches back to text with the transcript in place and the send key ready; nothing goes out on release.
-  const voice = useAiVoice(locale, text => { const message = [value.trimEnd(), text].filter(Boolean).join(' ').slice(0, 4000); onChange(message); setVoiceMode(false); setReview(true) }, { deferResult: true })
+  // Voice (2026-10-29, after React Bits Voice Pill; the user found hold-to-talk unreliable): tap the mic to start, the
+  // bar turns into a capsule with a waveform and a timer, tap the stop key to finish and the words are sent at once.
+  // The ✕ in the capsule (or Escape) cancels without sending.
+  const voice = useAiVoice(locale, text => { const message = [value.trimEnd(), text].filter(Boolean).join(' ').slice(0, 4000); void submit(message, true) }, { deferResult: true })
+  const voiceMode = voice.listening || voice.processing, cancelled = false
   const expanded = !voiceMode && (focused || !!value || files.length > 0 || reading !== null)
   useLayoutEffect(() => { const el = field.current; if (el) { el.style.height = '0px'; el.style.height = `${Math.min(el.scrollHeight, 148)}px` } }, [value, expanded])
   useEffect(() => () => { processing.current?.abort() }, [])
   const state = surfaceState({ available: !disabled, busy, voiceMode, voicePhase: voice.phase, cancelled, reading: reading !== null, hasDraft: !!value.trim() || files.length > 0, focused })
   useEffect(() => { onVoice?.({ state, live: voice.live }) }, [state, voice.live])
-  useEffect(() => { if (!voice.listening && !voice.processing) { hold.current=null; keyHeld.current=false; setCancelled(false); setHeld(false) } }, [voice.listening, voice.processing, voice.error])
   const submit = async (message = value, releasedVoice = false) => {
     setReview(false)
     if (busy || disabled || reading !== null || sending.current || (!releasedVoice && (voice.listening || voice.processing)) || (!message.trim() && !files.length)) return
@@ -52,44 +53,12 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
     if (event.key === 'Enter' && !event.shiftKey && !ime.current && !event.nativeEvent.isComposing) { event.preventDefault(); void submit() }
     if (event.key === 'Escape') { if (voice.listening || voice.processing) voice.cancel(); else if (busy) onStop?.(); else setPicker(false) }
   }
-  const beginHold = () => {
-    if (disabled || busy || reading !== null || voice.processing) return false
-    setPicker(false); setError(''); setCancelled(false)
-    if (!voice.start()) return false
-    // Press feedback the instant the finger lands (2026-10-28): a tick and the pressed bar, before the mic is ready.
-    setHeld(true); navigator.vibrate?.(10)
-    onInteraction?.(); return true
+  const toggleVoice = () => {
+    if (voice.listening) { navigator.vibrate?.(8); voice.stop(); return }
+    if (disabled || busy || reading !== null || voice.processing) return
+    setPicker(false); setError(''); setReview(false); field.current?.blur()
+    if (voice.start()) { navigator.vibrate?.(10); onInteraction?.() }
   }
-  const pointerDown = (event: PointerEvent<HTMLButtonElement>) => {
-    if (event.button !== 0 || hold.current || !beginHold()) return
-    event.preventDefault(); hold.current = { pointer: event.pointerId, y: event.clientY, cancel: false, at: performance.now() }
-    // A very fast tap can end before capture; the hold still works, it just won't follow a finger off the bar.
-    try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* Pointer already released. */ }
-  }
-  // The hold ends where the finger lifts, wherever that is (2026-10-28): previously a lost pointer capture (a re-render,
-  // the permission prompt, the overlay appearing) cancelled the hold at once, which read as "pressed and nothing happened".
-  useEffect(() => {
-    if (!held) return
-    const move = (event: globalThis.PointerEvent) => { const current = hold.current; if (!current || current.pointer !== event.pointerId) return; current.cancel = current.y - event.clientY >= 80; setCancelled(current.cancel) }
-    const up = (event: globalThis.PointerEvent) => { if (hold.current?.pointer === event.pointerId) finishHold(undefined, event.type === 'pointercancel') }
-    window.addEventListener('pointermove', move); window.addEventListener('pointerup', up); window.addEventListener('pointercancel', up)
-    return () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); window.removeEventListener('pointercancel', up) }
-  })
-  const pointerMove = (event: PointerEvent<HTMLButtonElement>) => {
-    const current = hold.current
-    if (!current || current.pointer !== event.pointerId) return
-    current.cancel = current.y - event.clientY >= 80; setCancelled(current.cancel)
-  }
-  const finishHold = (event?: PointerEvent<HTMLButtonElement>, cancel = false) => {
-    const current = hold.current
-    if (event && (!current || current.pointer !== event.pointerId)) return
-    hold.current = null; keyHeld.current = false; setCancelled(false); setHeld(false)
-    // A tap, not a hold: say how it works instead of a failed recognition a few seconds later.
-    if (!cancel && current && performance.now() - current.at < 350 && !voice.live) { voice.cancel(); setError(v.tapHint); return }
-    if (cancel || current?.cancel) voice.cancel(); else voice.stop()
-    if (event?.currentTarget?.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId)
-  }
-  const switchKeyboard = () => { hold.current = null; keyHeld.current = false; setHeld(false); voice.cancel(); setVoiceMode(false); setCancelled(false); window.requestAnimationFrame(() => field.current?.focus()) }
   const load = async (list: FileList | null) => {
     if (!list?.length || processing.current || disabled || busy || voice.listening || voice.processing) return
     setPicker(false); setError('')
@@ -107,7 +76,6 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
   }
   // Tapping a suggestion asks it at once: the composer clears on success and the thread shows "thinking".
   const ask = (question: string) => {
-    setVoiceMode(false)
     if (busy || disabled || reading !== null) { onChange(question); onInteraction?.(); return }
     void submit(question)
   }
@@ -130,13 +98,24 @@ export default function AiComposer({ value, onChange, onSend, onStop, onInteract
     <motion.form layout="size" className={s.composer} data-mode={voiceMode ? 'voice' : 'text'} data-recording={voice.listening || undefined} data-phase={voice.phase} data-cancel={cancelled || undefined} data-expanded={expanded || undefined} data-busy={busy || undefined} data-state={state} data-disabled={disabled || undefined} animate={{ borderRadius: expanded ? 25 : 30 }} transition={{ duration: reduced ? 0 : .22, ease: [.22, 1, .36, 1] }} onSubmit={event => { event.preventDefault(); void submit() }}>
       {!!files.length && <ul className={s.files}>{files.map((file, i) => <li key={`${file.name}-${i}`}><details><summary>{file.method === 'image' && file.dataUrl ? <img className={s.thumbnail} src={file.dataUrl} alt=""/> : <FileText size={15}/>}<span>{file.name}<small>{file.method === 'image' ? `${visual.image} · ${file.width} × ${file.height}` : `${file.method === 'ocr' ? c.ocr : c.extracted} · ${file.text.length.toLocaleString(locale)}`}</small></span></summary>{file.method === 'image' && file.dataUrl ? <img className={s.imageReview} src={file.dataUrl} alt={file.name}/> : <pre>{file.text}</pre>}</details><button type="button" disabled={busy || reading !== null} aria-label={`${c.remove}: ${file.name}`} onClick={() => setFiles(old => old.filter((_, index) => index !== i))}><X size={15}/></button></li>)}</ul>}
       <button type="button" className={s.add} aria-label={c.attach} aria-expanded={picker} disabled={disabled || busy || reading !== null || voice.listening || voice.processing} onClick={() => setPicker(open => !open)}><Plus size={22}/></button>
-      {voiceMode ? <button type="button" className={s.hold} disabled={disabled || busy || reading !== null || voice.processing} aria-label={v.hold} aria-pressed={voice.listening} data-held={held || undefined} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={event => finishHold(event)} onPointerCancel={event => finishHold(event, true)} onContextMenu={event => event.preventDefault()} onKeyDown={event => { if (event.key === 'Escape') finishHold(undefined, true); if ((event.key === ' ' || event.key === 'Enter') && !event.repeat && !keyHeld.current) { event.preventDefault(); keyHeld.current = beginHold() } }} onKeyUp={event => { if ((event.key === ' ' || event.key === 'Enter') && keyHeld.current) { event.preventDefault(); finishHold() } }} onBlur={() => { if (keyHeld.current) finishHold(undefined, true) }}><span>{busy ? v.answering : held && state === 'connecting' ? v.release : holdLabel(state, v)}</span></button> : <textarea ref={field} value={value} rows={1} maxLength={4000} dir="auto" disabled={disabled || busy} placeholder={busy ? pearl.busy : placeholder} aria-label={placeholder} onChange={e => { onChange(e.target.value); if (e.target.value) onInteraction?.() }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onKeyDown={keyDown} onCompositionStart={() => { ime.current = true }} onCompositionEnd={() => { ime.current = false }} />}
+      {voiceMode ? <div className={s.pill} role="status" aria-live="polite">
+        <button type="button" className={s.pillCancel} aria-label={v.discard} disabled={voice.processing} onClick={() => voice.cancel()}><X size={18}/></button>
+        <VoiceWave active={voice.listening} speaking={voice.speaking} />
+        <span className={s.pillTime}>{voice.processing ? v.transcribing : <VoiceClock />}</span>
+      </div> : <textarea ref={field} value={value} rows={1} maxLength={4000} dir="auto" disabled={disabled || busy} placeholder={busy ? pearl.busy : placeholder} aria-label={placeholder} onChange={e => { onChange(e.target.value); if (e.target.value) onInteraction?.() }} onFocus={() => setFocused(true)} onBlur={() => setFocused(false)} onKeyDown={keyDown} onCompositionStart={() => { ime.current = true }} onCompositionEnd={() => { ime.current = false }} />}
       <div className={s.controls}>
-        {voiceMode ? <button type="button" className={s.voice} aria-label={v.keyboard} disabled={voice.listening} onClick={switchKeyboard}><Keyboard size={21}/></button> : <button type="button" className={s.voice} disabled={disabled || busy || reading !== null} aria-label={c.voice} onClick={() => { setError(''); setVoiceMode(true); setFocused(false); field.current?.blur() }}><Mic size={22}/></button>}
+        <button type="button" className={s.voice} data-on={voice.listening || undefined} disabled={(!voice.listening && (disabled || busy || reading !== null)) || voice.processing} aria-label={voice.listening ? v.stopLabel : c.voice} aria-pressed={voice.listening} onClick={toggleVoice}>{voice.processing ? <LoaderCircle size={20} className={s.spin}/> : voice.listening ? <i className={s.stopGlyph} aria-hidden="true"/> : <Mic size={22}/>}</button>
         {reading !== null ? <span className={s.reading} role="status"><LoaderCircle size={18}/><span>{reading}%</span></span> : busy && onStop ? <button key="stop" type="button" className={s.send} aria-label={stopLabel} onClick={onStop}><Square size={12} fill="currentColor"/></button> : !voiceMode && (value.trim() || files.length) ? <button key="send" type="submit" className={s.send} disabled={disabled || busy} aria-label={sendLabel}><ArrowUp size={19}/></button> : null}
       </div>
     </motion.form>
     {review && value.trim() && !error && !voiceError && <p className={s.status} role="status">{v.reviewHint} <button type="button" className={s.reviewClear} onClick={() => { onChange(''); setReview(false) }}>{v.discard}</button></p>}
     {(error || voiceError || reading !== null || (voice.processing && !voiceOverlay)) && <p className={s.status} data-tone={error || voiceError ? 'error' : undefined} role={error || voiceError ? 'alert' : 'status'}>{error || voiceError || (voice.processing ? v.transcribing : `${c.reading} ${reading}%`)}</p>}
   </div>
+}
+
+/** Seconds since the capsule opened, as m:ss. */
+function VoiceClock() {
+  const [seconds, setSeconds] = useState(0)
+  useEffect(() => { const started = Date.now(), timer = window.setInterval(() => setSeconds(Math.floor((Date.now() - started) / 1000)), 250); return () => window.clearInterval(timer) }, [])
+  return <>{Math.floor(seconds / 60)}:{String(seconds % 60).padStart(2, '0')}</>
 }

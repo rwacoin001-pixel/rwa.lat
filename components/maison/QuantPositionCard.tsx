@@ -74,6 +74,14 @@ export function QuantPositionPlate({ product, showReceipt = true }: { product: Q
 }
 
 /** Assets page module: only for people who hold Koala Quant (or have an order waiting); everyone else sees the page unchanged. */
+/** True once the signed-in user holds Koala Quant principal or has an order in flight. */
+export function useHoldsQuant(): boolean {
+  const list = useQuantProducts()
+  const product = useQuantProduct(list.data?.[0]?.slug)
+  const position = product.data?.position
+  return Boolean(position && (BigInt(position.principalAtomic) > BigInt(0) || position.pendingOrders.length > 0))
+}
+
 export function QuantAssetsCard() {
   const list = useQuantProducts()
   const slug = list.data?.[0]?.slug

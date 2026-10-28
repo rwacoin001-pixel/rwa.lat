@@ -394,7 +394,6 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   // Signed in (or still finding out): the account is the first screen. The photo, slogan and ticker are for guests only.
   if (sessionProbe.status !== 'guest') {
     const funded = state.lifecycle === 'funded' || state.lifecycle === 'invested'
-    const askPrompt = funded ? copy.askHoldings : copy.askStart
     return <section className={`screen s2-home ${styles.root} ${styles.v2} ${GeistSans.variable}`} data-home-s2="true" data-home-design="v2" data-home-v2="" data-locale={locale} data-home-lifecycle={state.lifecycle} data-topbar-hidden={topbarHidden} data-feed-pinned={feedPinned}>
       <RwaTopbar screen="home" logo3d extra={<HomeGetApp />} />
       <PullToRefresh />
@@ -403,7 +402,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
           <HomeGreeting />
           <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today} spark={assetSpark}
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
-          <HomeAskAi prompt={askPrompt} onOpen={() => go('ai')} />
+          {/* No "Ask AI" bar (2026-10-29): the AI ball is always at the bottom right; the bar repeated it and pushed the cards down. */}
           <HomeReferral />
         </div>
       </div>

@@ -58,7 +58,9 @@ function BetCard({ bet, locale, t, sc }: { bet: PredictionBet; locale: string; t
       <div className={mp.meta}>
         <span className={mp.side} data-side={side}>{sideLabel}</span>
         <span className={mp.state}>{sc.statusShort[status]}</span>
-        <time dateTime={bet.createdAt}>{fmtDateTime(bet.createdAt, locale, { month: 'short', day: 'numeric' })}</time>
+        <span className={mp.when}>{bet.settledAt
+          ? <>{t.settledAt} <time dateTime={bet.settledAt}>{fmtDateTime(bet.settledAt, locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></>
+          : <>{t.placedAt} <time dateTime={bet.createdAt}>{fmtDateTime(bet.createdAt, locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>{status === 'placed' && <> · {sc.pending}</>}</>}</span>
       </div>
       {target
         ? <button type="button" className={mp.question} aria-label={`${t.open}: ${name}`} onClick={() => openPath(target)}><span>{name}</span></button>

@@ -9,18 +9,18 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useRwaTheme } from '@/lib/rwa-theme'
-import { CommunityAvatar } from '@/components/community-avatar'
-import { useCommunityMe } from '@/lib/use-community-me'
 import { displayInviteCode } from '@/lib/referral-invite'
 import p from './invite-plate.module.css'
 
 type Translate = (cn: string, en: string) => string
 const MAX_TILT = 9
 
-export function InvitePlate({ code, link, onQr, t }: { code: string; link: string; onQr: () => void; t: Translate }) {
+export type PlateStat = { label: string; value: string; unit?: string; note?: string }
+
+/** The plate shows the code, the link, a printed QR and the member's own figures (no avatar: the bar above has it). */
+export function InvitePlate({ code, link, stats, trail, onQr, t }: { code: string; link: string; stats: PlateStat[]; trail?: string; onQr: () => void; t: Translate }) {
   const { theme } = useRwaTheme()
   const shot = theme === 'dark' ? 'dark' : 'light'
-  const me = useCommunityMe(false)
   const ref = useRef<HTMLDivElement>(null)
   const frame = useRef(0)
   const [touched, setTouched] = useState(false)
@@ -64,7 +64,6 @@ export function InvitePlate({ code, link, onQr, t }: { code: string; link: strin
     tilt(((event.clientX - box.left) / box.width) * 2 - 1, ((event.clientY - box.top) / box.height) * 2 - 1)
   }
 
-  const name = me?.displayName?.trim() || t('A-REIT 会员', 'A-REIT member')
   return <div className={p.stage}>
     <div ref={ref} className={p.plate} data-theme={shot} data-touched={touched || undefined}
       onPointerMove={onMove} onPointerLeave={rest} onPointerCancel={rest} onPointerUp={rest}
@@ -76,22 +75,23 @@ export function InvitePlate({ code, link, onQr, t }: { code: string; link: strin
       <div className={p.content}>
         <header className={p.head}>
           <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={18} height={20} />A-REIT</span>
-          <span className={p.kind}>{t('邀请函', 'Invitation')}</span>
+          <span className={p.kind}>{t('邀请函', 'INVITATION')}</span>
         </header>
-        <div className={p.identity}>
-          <CommunityAvatar avatarUrl={me?.avatarUrl} handle={me?.handle} seed={me?.avatarSeed ?? code} size={48} className={p.avatar} />
-          <p className={p.name} dir="auto">{name}</p>
-          <p className={p.line}>{t('邀请你加入 A-REIT', 'invites you to join A-REIT')}</p>
-        </div>
-        <footer className={p.foot}>
+        <div className={p.codeRow}>
           <span className={p.id}>
             <small>{t('邀请码', 'Invitation code')}</small>
             <b dir="ltr">{displayInviteCode(code)}</b>
+            <span className={p.link} dir="ltr">{link.replace(/^https?:\/\//, '')}</span>
           </span>
+          {/* Printed on the metal: no white tile, the modules in the plate's ink (blended in, like an etching). */}
           <button type="button" className={p.qr} aria-label={t('放大邀请二维码', 'Enlarge invitation QR code')} aria-haspopup="dialog" onClick={onQr}>
-            <QRCodeSVG value={link} size={52} marginSize={0} level="M" bgColor="#ffffff" fgColor="#0b1220" title={t('邀请链接二维码', 'Invitation QR code')} />
+            <QRCodeSVG value={link} size={96} marginSize={0} level="M" bgColor="transparent" fgColor="currentColor" title={t('邀请链接二维码', 'Invitation QR code')} />
           </button>
-        </footer>
+        </div>
+        <dl className={p.stats}>
+          {stats.map(item => <div key={item.label}><dt>{item.label}</dt><dd dir="ltr">{item.value}{item.unit && <small>{item.unit}</small>}</dd>{item.note && <span>{item.note}</span>}</div>)}
+        </dl>
+        {trail && <p className={p.trail}>{trail}</p>}
       </div>
       <i className={p.rim} aria-hidden="true" />
     </div>

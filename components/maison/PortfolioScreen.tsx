@@ -1,5 +1,7 @@
 'use client'
-import { QuantAssetsCard } from './QuantPositionCard'
+import { QuantAssetsCard, useHoldsQuant } from './QuantPositionCard'
+import { MyPredictionsCard, OpenBets, useMyBets } from './MyPredictionsCard'
+import { betStatus } from '@/lib/api/my-predictions'
 import { usePageState } from '@/lib/app-navigation'
 
 import { ArrowDownToLine, ArrowRight, ArrowRightLeft, ArrowUpFromLine, ChevronDown, ChevronRight, Eye, EyeOff, QrCode } from 'lucide-react'
@@ -30,7 +32,7 @@ import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import bp from './basket-positions.module.css'
 import pa from './portfolio-a.module.css'
 import { TopTabs } from './TopTabs'
-import { useOtherIncome, useOtherOrders } from './money-records'
+import { useOtherIncome, useOtherOrders, type OrderRecord } from './money-records'
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -114,6 +116,12 @@ export function PortfolioScreen({ query }: { query: string }) {
   // it made the page jump. So it appears only once there is something (or an error) to show.
   const basketsEmpty = !baskets.error && !(basketRows && basketRows.length > 0)
   const productsHidden = Boolean(totals) && totals?.rows.length === 0 && !basketsEmpty
+  // Quant and open bets count as holdings (2026-10-29): with either, an empty RWA list is left out instead of "no positions".
+  const holdsQuant = useHoldsQuant()
+  const myBets = useMyBets({ loading: 'silent' })
+  const betsOpen = (Array.isArray(myBets.data?.items) ? myBets.data.items : []).some((bet) => betStatus(bet.status) === 'placed')
+  const rwaEmpty = Boolean(totals) && totals?.rows.length === 0
+  const otherHoldings = holdsQuant || betsOpen
   const holdingsCount = totals && basketRows ? totals.rows.length + basketRows.length : null
   const { masked, toggle: toggleMask } = useAmountMask()
   const hide = (text: string) => masked ? AMOUNT_MASK : text
@@ -175,12 +183,19 @@ export function PortfolioScreen({ query }: { query: string }) {
       </>}
       {/* Quant holdings sit with the other holdings (they load on their own; below the fold they don't push the total). */}
       <QuantAssetsCard />
+      <MyPredictionsCard />
       {!basketsEmpty && <BasketPositions index={basketsIndex} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} limit={3} onMore={() => setTab('positions')} />}
       <SectionHead index={toolsIndex} title={(TOOLS_TITLE[locale] ?? TOOLS_TITLE.en)!} />
       <Tools />
     </div>}
     {tab === 'positions' && <div className={s.tabPanel} role="tabpanel">
-      {productsHidden ? <BasketPositions index="01" note={holdingsNote} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} /> : <>
+      {/* Quant and predictions are holdings too (2026-10-29): the quant position, then the bets still in play. */}
+      {holdsQuant && <SectionHead index="01" title={HOLDING_TITLES[locale]?.quant ?? 'Koala Quant'} />}
+      <QuantAssetsCard />
+      {betsOpen && <SectionHead index={holdsQuant ? '02' : '01'} title={HOLDING_TITLES[locale]?.bets ?? 'Predictions in play'} />}
+      <OpenBets />
+      <MyPredictionsCard />
+      {otherHoldings && rwaEmpty && basketsEmpty ? null : productsHidden ? <BasketPositions index="01" note={holdingsNote} rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} /> : <>
         <SectionHead index="01" title={p.positions} note={holdingsNote} />
         <PositionTable rows={totals?.rows} whole={holdings ?? totals?.value ?? BigInt(0)} weighted={!scoped || holdings !== null} state={positions} products={products.data} />
         {!basketsEmpty && <BasketPositions index="02" rows={basketRows} error={Boolean(baskets.error)} retry={baskets.refetch} />}
@@ -377,12 +392,19 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
   const rows = useMemo(() => {
     const own = (credits.data ?? []).filter((item) => !productId || item.productId === productId).map((item: YieldCredit) => ({
       id: item.id, title: nameFor(products, item.productId, p.product), sub: `${fmtDate(item.periodStart, locale)} – ${fmtDate(item.periodEnd, locale)}`,
-      atomic: /^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : null, date: item.creditedAt, path: undefined as string | undefined,
+      atomic: /^\d+$/.test(item.atomicAmount) ? BigInt(item.atomicAmount) : null, date: item.creditedAt, path: undefined as string | undefined, source: 'rwa' as const,
     }))
-    const extra = productId ? [] : other.rows.map((item) => ({ id: item.id, title: item.title, sub: item.sub, atomic: item.atomic as bigint | null, date: item.date, path: item.path as string | undefined }))
+    const extra = productId ? [] : other.rows.map((item) => ({ id: item.id, title: item.title, sub: item.sub, atomic: item.atomic as bigint | null, date: item.date, path: item.path as string | undefined, source: item.source }))
     return [...own, ...extra].sort((a, b) => Date.parse(b.date) - Date.parse(a.date))
   }, [credits.data, productId, products, p.product, locale, other.rows])
   const sum = useMemo(() => rows.reduce((total, item) => total + (item.atomic ?? BigInt(0)), BigInt(0)), [rows])
+  // Per source (2026-10-29): where the income came from, each signed, so a quant loss day is not hidden in the total.
+  const bySource = useMemo(() => {
+    const out = { quant: BigInt(0), prediction: BigInt(0), rwa: BigInt(0) }
+    for (const item of rows) out[item.source] += item.atomic ?? BigInt(0)
+    return out
+  }, [rows])
+  const sourceLabels = INCOME_SOURCES[locale] ?? INCOME_SOURCES.en!
   const knownCredits = useRef<Set<string> | null>(null)
   const momentNode = useRef<HTMLDivElement>(null)
   useEffect(() => {
@@ -401,14 +423,20 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
       : !settled ? <Skeleton rows={3} />
       : !rows.length ? <StateBlock title={p.incomeEmpty} body={p.incomeEmptyBody} />
       : <>
+        {!productId && <StatStrip fit items={(['quant', 'prediction', 'rwa'] as const).map((key) => ({
+          label: sourceLabels[key], value: masked ? AMOUNT_MASK : signed(bySource[key], locale).replace(/ USDT$/, ''),
+          tone: masked || bySource[key] === BigInt(0) ? undefined : bySource[key] > BigInt(0) ? 'up' as const : 'down' as const,
+        }))} />}
         <div className={s.tableHead} aria-hidden="true"><span>{p.product} · {p.period}</span><span>{p.income}</span></div>
-        <ul className={s.list}>{rows.map((item) => {
+        <ul className={s.list}>{rows.map((item, index) => {
+          const month = item.date.slice(0, 7), head = index === 0 || rows[index - 1]!.date.slice(0, 7) !== month
           const down = item.atomic !== null && item.atomic < BigInt(0)
           const body = <>
             <span className={s.rowMain}><b className={s.clamp2} dir="auto">{item.title}</b><small>{item.sub}</small></span>
             <span className={s.rowFig}><b className={`${s.num} ${masked ? '' : down ? s.down : s.up}`}>{masked ? AMOUNT_MASK : signed(item.atomic, locale)}</b><small className={s.muted}>{fmtDate(item.date, locale)}</small></span>
           </>
           return <li key={item.id}>
+            {head && <p className={s.muted} style={{ margin: index ? '16px 0 4px' : '4px 0', fontSize: 12, fontWeight: 600 }}>{fmtMonth(item.date, locale)}</p>}
             {item.path
               ? <button type="button" className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }} onClick={() => openPath(item.path!)}>{body}</button>
               : <div ref={item.id === rows[0]?.id ? momentNode : undefined} className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto', cursor: 'default' }}>{body}</div>}
@@ -443,20 +471,59 @@ function OpenOrders({ productId }: { productId?: string }) {
   const orders = useQuery('orders:list', listOrders, { staleTime: 10_000, pollInterval: live ? POLL.pendingOrder : undefined })
   const scoped = useMemo(() => (orders.data ?? []).filter((order) => !productId || order.productId === productId).sort((a, b) => Date.parse(b.submittedAt) - Date.parse(a.submittedAt)), [orders.data, productId])
   const open = scoped.filter((order) => !TERMINAL_ORDER_STATES.has(order.state))
+  // Quant subscriptions/redemptions and prediction bets are orders too (2026-10-29); a product detail keeps to its own.
+  const other = useOtherOrders(locale)
+  const otherOpen = productId ? [] : other.rows.filter((row) => row.bucket === 'open')
+  const otherDone = productId ? [] : other.rows.filter((row) => row.bucket !== 'open').sort((a, b) => Date.parse(b.date) - Date.parse(a.date)).slice(0, 6)
   const hasOpen = open.length > 0
   useEffect(() => { setLive(hasOpen) }, [hasOpen])
   const [beat, setBeat] = useState(0)
   useEffect(() => { if (orders.data) setBeat((value) => value + 1) }, [orders.data])
   // Product scope shows its full record; the overview tab shows what is still moving.
   const shown = productId ? scoped.slice(0, 8) : open
+  const anyOpen = shown.length + otherOpen.length > 0
   return <>
     <SectionHead index={productId ? '04' : '01'} title={productId ? p.detail.ordersFor : p.orders} note={hasOpen ? p.ordersNote : undefined}
       action={<button type="button" className={s.sectionMore} onClick={() => openPath('/profile/documents')}>{p.allOrders}<ChevronRight size={14} /></button>} />
     {hasOpen && <PollBar every={POLL.pendingOrder} stamp={beat} label={p.ordersNote} />}
-    {orders.error ? <StateBlock tone="error" title={p.loadError} body={orders.error.message} retry={orders.refetch} retryLabel={common.retry} />
-      : !orders.data ? <Skeleton rows={3} />
-      : <OrderRows orders={shown} empty={<StateBlock title={p.ordersEmpty} />} />}
+    {orders.error && !otherOpen.length ? <StateBlock tone="error" title={p.loadError} body={orders.error.message} retry={orders.refetch} retryLabel={common.retry} />
+      : !orders.data || (!productId && !other.ready) ? <Skeleton rows={3} />
+      : !anyOpen ? <StateBlock title={p.ordersEmpty} />
+      : <>
+        {shown.length > 0 && <OrderRows orders={shown} empty={null} />}
+        {otherOpen.length > 0 && <RecordRows rows={otherOpen} />}
+      </>}
+    {otherDone.length > 0 && <>
+      <SectionHead index="02" title={RECENT_TITLE[locale] ?? RECENT_TITLE.en!} action={<button type="button" className={s.sectionMore} onClick={() => openPath('/profile/documents')}>{p.allOrders}<ChevronRight size={14} /></button>} />
+      <RecordRows rows={otherDone} />
+    </>}
   </>
+}
+
+const HOLDING_TITLES: Partial<Record<string, { quant: string; bets: string }>> = {
+  'zh-CN': { quant: '考拉量化', bets: '进行中的预测' }, en: { quant: 'Koala Quant', bets: 'Predictions in play' }, es: { quant: 'Koala Quant', bets: 'Predicciones en juego' },
+  fr: { quant: 'Koala Quant', bets: 'Prédictions en cours' }, pt: { quant: 'Koala Quant', bets: 'Previsões em jogo' }, ar: { quant: 'Koala Quant', bets: 'توقعات قائمة' }, hi: { quant: 'Koala Quant', bets: 'चालू प्रेडिक्शन' },
+}
+
+const INCOME_SOURCES: Partial<Record<string, Record<'quant' | 'prediction' | 'rwa', string>>> = {
+  'zh-CN': { quant: '考拉量化', prediction: '预测', rwa: 'RWA 产品' }, en: { quant: 'Koala Quant', prediction: 'Predictions', rwa: 'RWA products' },
+  es: { quant: 'Koala Quant', prediction: 'Predicciones', rwa: 'Productos RWA' }, fr: { quant: 'Koala Quant', prediction: 'Prédictions', rwa: 'Produits RWA' },
+  pt: { quant: 'Koala Quant', prediction: 'Previsões', rwa: 'Produtos RWA' }, ar: { quant: 'Koala Quant', prediction: 'التوقعات', rwa: 'منتجات RWA' }, hi: { quant: 'Koala Quant', prediction: 'प्रेडिक्शन', rwa: 'RWA उत्पाद' },
+}
+const fmtMonth = (iso: string, locale: string) => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '' : d.toLocaleDateString(locale, { year: 'numeric', month: 'long' }) }
+
+const RECENT_TITLE: Partial<Record<string, string>> = { 'zh-CN': '最近完成', en: 'Recently completed', es: 'Completadas recientes', fr: 'Terminées récemment', pt: 'Concluídas recentes', ar: 'المكتملة مؤخرًا', hi: 'हाल में पूरे' }
+
+/** Quant and prediction order records: what, when, how much, and the server's status. */
+function RecordRows({ rows }: { rows: OrderRecord[] }) {
+  const { locale } = useI18n()
+  const { masked } = useAmountMask()
+  return <ul className={s.list}>{rows.map((row) => <li key={row.id}>
+    <button type="button" className={s.row} style={{ gridTemplateColumns: 'minmax(0, 1fr) auto' }} onClick={() => openPath(row.path)}>
+      <span className={s.rowMain}><b className={s.clamp2} dir="auto">{row.title}</b><small>{row.sub} · {fmtDateTime(row.date, locale)}</small></span>
+      <span className={s.rowFig}><b className={s.num}>{masked ? AMOUNT_MASK : fmtUsdt(row.atomic, { locale })}</b><small><span className={s.badge} data-tone={row.tone}>{row.label}</span></small></span>
+    </button>
+  </li>)}</ul>
 }
 
 /** `/assets/positions/:id` — one product position, joined to its quote, income and orders. */

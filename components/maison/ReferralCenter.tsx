@@ -1,7 +1,7 @@
 'use client'
-import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowLeft, Check, ChevronRight, CircleHelp, Copy, Share2, ImagePlus } from 'lucide-react'
+import { ArrowLeft, Check, ChevronRight, CircleHelp, Copy, Delete, ImagePlus, PenLine, Share2 } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -13,16 +13,16 @@ import { fmtAtomic, fmtDate } from './format'
 import { ReferralRules } from './ReferralRules'
 import { ReferralTeamRewards } from './ReferralTeamRewards'
 import { ReferralSheet, useHostTheme } from './ReferralSheet'
-import { InvitePlate } from './InvitePlate'
+import { InvitePlate, type PlateStat } from './InvitePlate'
 import { displayInviteCode } from '@/lib/referral-invite'
 import { porcelainAvatar } from '@/components/community-avatar'
 import { nativeCan, nativeShare } from '@/lib/native-app'
 import x from './referral.module.css'
 import c from './referral-card.module.css'
 import v from './invite-centre.module.css'
+import k from './invite-keypad.module.css'
 
-type Tab = 'team' | 'rewards'
-type SheetKind = 'rules' | 'qr' | 'edit' | 'poster' | null
+type SheetKind = 'rules' | 'qr' | 'edit' | 'poster' | 'rewards' | 'team' | 'awards' | null
 type Translate = (cn: string, en: string) => string
 
 const PAGE_SIZE = 20
@@ -32,29 +32,48 @@ const lengthClass = (code: string) => code.length <= 8 ? 's' : code.length <= 12
 
 /** One rate per level, side by side; never summed into a single figure. */
 function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: string; busy: boolean; error: string; onSave: (code: string) => void; onDraftChange: () => void; t: Translate }) {
-  const id = useId(), [draft, setDraft] = useState(code), [local, setLocal] = useState('')
+  const id = useId(), [draft, setDraft] = useState(code.toUpperCase()), [local, setLocal] = useState('')
   const submit = (event: FormEvent) => {
     event.preventDefault()
     if (busy) return
     if (!CODE_PATTERN.test(draft)) { setLocal(t('请输入 6–16 位字母或数字', 'Enter 6–16 letters or digits')); return }
-    if (draft === code) { setLocal(t('与当前邀请码相同', 'Same as the current code')); return }
+    if (draft.toLowerCase() === code.toLowerCase()) { setLocal(t('与当前邀请码相同', 'Same as the current code')); return }
     setLocal('')
-    onSave(draft)
+    onSave(draft.toLowerCase())
   }
   const message = local || error
+  const press = (key: string) => {
+    if (busy) return
+    navigator.vibrate?.(6)
+    setDraft(value => key === 'del' ? value.slice(0, -1) : value.length >= 16 ? value : value + key)
+    setLocal(''); onDraftChange()
+  }
+  // Our own keypad (2026-10-29): the brand letters down the left — A·R·E·I·T — and the digits, so a code is always the
+  // brand plus numbers and the system keyboard never covers the sheet. A hardware keyboard still types.
+  const typed = (event: KeyboardEvent<HTMLDivElement>) => {
+    const key = event.key.toUpperCase()
+    if (KEYPAD_KEYS.includes(key)) { event.preventDefault(); press(key) }
+    else if (event.key === 'Backspace') { event.preventDefault(); press('del') }
+  }
   return <form className={x.editForm} onSubmit={submit} noValidate>
-    <label htmlFor={`${id}-input`}>{t('新邀请码', 'New invitation code')}</label>
-    <div className={x.field}>
-      <input id={`${id}-input`} data-autofocus value={draft} minLength={6} maxLength={16} pattern="[a-zA-Z0-9]{6,16}" required readOnly={busy}
-        autoComplete="off" autoCapitalize="off" spellCheck={false} aria-invalid={message ? true : undefined} aria-describedby={`${id}-hint ${id}-error`}
-        onChange={event => { setDraft(event.target.value.replace(/\s/g, '')); setLocal(''); onDraftChange() }} />
-      <span className={x.count} aria-hidden="true">{draft.length}/16</span>
+    <label id={`${id}-label`}>{t('新邀请码', 'New invitation code')}</label>
+    <div className={k.display} role="textbox" aria-readonly="true" aria-labelledby={`${id}-label`} aria-invalid={message ? true : undefined} aria-describedby={`${id}-hint ${id}-error`} tabIndex={0} onKeyDown={typed} data-autofocus>
+      <b dir="ltr">{draft}<i className={k.caret} aria-hidden="true" /></b>
+      <span aria-hidden="true">{draft.length}/16</span>
     </div>
     <p id={`${id}-error`} className={x.formError} role="alert">{message}</p>
-    <p id={`${id}-hint`} className={x.hint}>{t('6–16 位字母或数字，每 30 天可修改一次；旧链接仍可使用。', '6–16 letters or digits. Change once every 30 days; previous links remain valid.')}</p>
+    <div className={k.pad} role="group" aria-label={t('邀请码键盘', 'Code keypad')}>
+      {KEYPAD.map(key => <button key={key} type="button" className={k.key} data-kind={key === 'del' ? 'del' : /\d/.test(key) ? 'digit' : 'letter'} disabled={busy || (key === 'del' ? !draft : draft.length >= 16)} aria-label={key === 'del' ? t('删除', 'Delete') : key} onClick={() => press(key)}>
+        {key === 'del' ? <Delete size={22} strokeWidth={1.8} aria-hidden="true" /> : key}
+      </button>)}
+    </div>
+    <p id={`${id}-hint`} className={x.hint}>{t('6–16 位，每 30 天可修改一次；旧链接仍可使用。', '6–16 characters. Change once every 30 days; previous links remain valid.')}</p>
     <button type="submit" className={x.primary} disabled={busy} aria-busy={busy}>{busy ? t('保存中', 'Saving') : t('保存邀请码', 'Save code')}</button>
   </form>
 }
+
+const KEYPAD = ['A', '1', '2', '3', 'R', '4', '5', '6', 'E', '7', '8', '9', 'I', 'T', '0', 'del']
+const KEYPAD_KEYS = KEYPAD.filter(key => key !== 'del')
 
 /** The invite centre. `embedded`: the Community tab's 邀请 view (2026-10-28), no page shell or top bar of its own. */
 export function ReferralScreen({ query = '', embedded = false }: { query?: string; embedded?: boolean }) {
@@ -66,7 +85,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   }, [embedded])
   const { locale } = useI18n(), zh = locale.startsWith('zh')
   const t: Translate = (cn, en) => zh ? cn : en
-  const [tab, setTab] = useState<Tab>('team'), [level, setLevel] = useState('all'), [page, setPage] = useState(1)
+  const [level, setLevel] = useState('all'), [page, setPage] = useState(1)
   const [sheet, setSheet] = useState<SheetKind>(null)
   const [copied, setCopied] = useState(false), [copyError, setCopyError] = useState('')
   const [saving, setSaving] = useState(false), [editError, setEditError] = useState('')
@@ -79,8 +98,8 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const me = useQuery('referral:v2:me', referralMe, { staleTime: 30_000 })
   const summary = useQuery('referral:v2:summary', referralSummary, { staleTime: 30_000 })
   const funnel = useQuery('referral:v2:funnel', referralFunnel, { staleTime: 60_000 })
-  const members = useQuery(tab === 'team' ? `referral:v2:members:${page}:${level}` : null, () => referralInvitees(page, level), { staleTime: 30_000 })
-  const awards = useQuery(tab === 'rewards' ? `referral:v2:awards:${page}` : null, () => referralAwards(page), { staleTime: 30_000 })
+  const members = useQuery(sheet === 'team' ? `referral:v2:members:${page}:${level}` : null, () => referralInvitees(page, level), { staleTime: 30_000 })
+  const awards = useQuery(sheet === 'awards' ? `referral:v2:awards:${page}` : null, () => referralAwards(page), { staleTime: 30_000 })
   const editGen = useRef(0), mounted = useRef(true)
   useEffect(() => {
     mounted.current = true
@@ -104,7 +123,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const states: Record<string, string> = { earned: t('可领取', 'Claimable'), claimed: t('已领取', 'Claimed') }
   const kinds: Record<string, string> = { purchase: t('买入返佣', 'Purchase rebate'), fee: t('手续费返佣', 'Fee rebate') }
   const claimable = sum ? BigInt(sum.balances.available) > BigInt(0) : false
-  const list = tab === 'team' ? members : awards
+  const list = sheet === 'awards' ? awards : members
   const pages = list.data ? Math.max(1, Math.ceil(list.data.total / PAGE_SIZE)) : 1
   // Each edit session gets a generation; a completion from an older one must not touch the current sheet.
   const bumpEdit = () => { editGen.current += 1; setSaving(false) }
@@ -173,6 +192,14 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
     } finally { if (mounted.current) setClaiming(false) }
   }
 
+  // The plate's figures (2026-10-29): people invited with the split by level, total earned, claimable, and the last 30 days.
+  const plateStats: PlateStat[] = [
+    { label: t('邀请人数', 'Invited'), value: totalCount, note: sum ? `${t('一级', 'L1')} ${levelCount(1)} · ${t('二级', 'L2')} ${levelCount(2)} · ${t('三级', 'L3')} ${levelCount(3)}` : undefined },
+    { label: t('累计奖励', 'Total earned'), value: sum ? money(sum.balances.total) : '—', unit },
+    { label: t('可领取', 'Claimable'), value: sum ? money(sum.balances.available) : '—', unit },
+    { label: t('近 30 天注册', 'Sign-ups, 30 days'), value: funnel.data?.registered ? String(funnel.data.registered.last30d) : '—', note: funnel.data?.opened ? t(`打开 ${funnel.data.opened.last30d} · 首投 ${funnel.data.subscribed.last30d}`, `${funnel.data.opened.last30d} opens · ${funnel.data.subscribed.last30d} first buys`) : undefined },
+  ]
+  const trail = t('扫码或打开链接注册，邀请关系自动绑定。', 'Scan or open the link to sign up; the invitation is linked automatically.')
   const copyLabel = copied ? t('已复制', 'Copied') : t('复制', 'Copy')
   const CopyIcon = copied ? Check : Copy
   const retryLabel = t('重试', 'Retry')
@@ -188,28 +215,35 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       {me.error
         ? <StateBlock tone="error" title={t('邀请码暂不可用', 'Invitation code unavailable')} body={me.error.message} retry={me.refetch} retryLabel={retryLabel} />
         : !code ? <div className={v.platePlaceholder} aria-busy="true" />
-        : <InvitePlate code={code} link={link} onQr={() => setSheet('qr')} t={t} />}
+        : <InvitePlate code={code} link={link} stats={plateStats} trail={trail} onQr={() => setSheet('qr')} t={t} />}
       {code && <>
         <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享邀请函', 'Share invitation')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
-        <div className={v.quiet}>
-          <button type="button" data-copied={copied || undefined} onClick={() => void copy()}><CopyIcon key={copied ? 'done' : 'copy'} className={v.morph} size={15} strokeWidth={1.8} aria-hidden="true" />{copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}</button>
-          <button type="button" aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={15} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
-          <button type="button" aria-haspopup="dialog" onClick={openEdit}>{t('修改邀请码', 'Edit code')}</button>
+        <div className={v.capsules}>
+          <button type="button" data-copied={copied || undefined} onClick={() => void copy()}><CopyIcon key={copied ? 'done' : 'copy'} className={v.morph} size={16} strokeWidth={1.8} aria-hidden="true" />{copied ? t('已复制', 'Copied') : t('复制链接', 'Copy link')}</button>
+          <button type="button" aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={16} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
+          <button type="button" aria-haspopup="dialog" onClick={openEdit}><PenLine size={16} strokeWidth={1.8} aria-hidden="true" />{t('改邀请码', 'Edit code')}</button>
         </div>
       </>}
       <p className={v.feedback} role="status" data-tone={copyError ? 'error' : undefined}>{copyError || (copied ? t('邀请链接已复制', 'Invitation link copied') : '')}</p>
 
-      {/* What sharing did, last 30 days: opens (per browser) → sign-ups → first Koala Quant subscriptions. */}
-      {funnel.data?.opened && <section className={v.funnel} aria-label={t('近 30 天邀请效果', 'Last 30 days')}>
-        <h2>{t('近 30 天', 'Last 30 days')}</h2>
-        <dl>
-          <div><dt>{t('链接打开', 'Link opens')}</dt><dd>{funnel.data.opened.last30d}</dd></div>
-          <div><dt>{t('注册', 'Sign-ups')}</dt><dd>{funnel.data.registered.last30d}</dd></div>
-          <div><dt>{t('首次申购', 'First subscriptions')}</dt><dd>{funnel.data.subscribed.last30d}</dd></div>
-        </dl>
-      </section>}
+      {/* Second level (2026-10-29): rewards, team, records and rules are one tap away in sheets, not stacked on the page. */}
+      <nav className={v.menu} aria-label={t('邀请详情', 'Invitation details')}>
+        {([
+          ['rewards', t('领取奖励', 'Claim rewards'), sum ? `${money(sum.balances.available)} ${unit}` : '…', claimable],
+          ['team', t('我的团队', 'My team'), sum ? t(`${totalCount} 人`, `${totalCount}`) : '…', false],
+          ['awards', t('奖励记录', 'Reward records'), '', false],
+          ['rules', t('邀请规则', 'How rewards work'), sum && sum.purchaseRewardsEnabled !== false ? `${t('买入', 'Purchase')} ${sum.rules.holdingRatesBps.slice(0, 3).map(pct).join(' · ')}` : '', false],
+        ] as const).map(([key, label, value, dot]) => <button key={key} type="button" aria-haspopup="dialog" onClick={() => { setPage(1); setSheet(key) }}>
+          <b>{label}</b>
+          <span data-on={dot || undefined}>{value}</span>
+          <ChevronRight size={18} aria-hidden="true" />
+        </button>)}
+      </nav>
+      <p className={v.disclaimer}>{t('奖励比例按层级分别计算，不代表投资收益，也不构成收益承诺。', 'Rates apply per level separately. They are not investment returns and carry no promise of income.')}</p>
+    </Shell>
 
-      <section className={v.card} aria-labelledby={balanceId}>
+    {sheet === 'rewards' && <ReferralSheet title={t('领取奖励', 'Claim rewards')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
+      <section className={v.sheetCard} aria-labelledby={balanceId}>
         <h2 id={balanceId} className={v.cardHead}>{t('可领取奖励', 'Claimable rewards')}</h2>
         {summary.error
           ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={summary.error.message} retry={summary.refetch} retryLabel={retryLabel} />
@@ -220,8 +254,6 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
               <div><dt>{t('累计奖励', 'Total earned')}</dt><dd>{money(sum.balances.total)}</dd></div>
               <div><dt>{t('邀请人数', 'Invited')}</dt><dd>{totalCount}</dd></div>
             </dl>
-            {/* Claim (2026-10-28): the button folds into a ring while the server works, shows a check once it confirms,
-                then a receipt says where the money went. Nothing is shown as done before the server says so. */}
             {sum.payoutsEnabled && <div className={v.claimWrap}><button type="button" className={v.claim} data-state={claiming ? 'busy' : claimDone ? 'done' : undefined} disabled={(!claimable && !claimDone) || claiming} aria-busy={claiming} aria-label={claiming ? t('领取中', 'Claiming') : undefined} onClick={() => void claim()}>
               {claiming ? <i className={v.ring} aria-hidden="true" /> : claimDone ? <Check size={22} strokeWidth={2.4} aria-hidden="true" /> : t('领取到可用余额', 'Claim to available balance')}
             </button></div>}
@@ -230,54 +262,35 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
             {claimError && <p className={v.error} role="alert">{claimError}</p>}
           </>}
       </section>
-
-      {sum && <button type="button" className={v.rulesRow} aria-haspopup="dialog" onClick={() => setSheet('rules')}>
-        <span>
-          <b>{t('奖励规则', 'How rewards work')}</b>
-          <small>
-            {sum.purchaseRewardsEnabled !== false && <>{t('买入', 'Purchase')} {sum.rules.holdingRatesBps.slice(0, 3).map(pct).join(' · ')}</>}
-            {sum.purchaseRewardsEnabled !== false && sum.feeRewardsEnabled !== false && <i aria-hidden="true">／</i>}
-            {sum.feeRewardsEnabled !== false && <>{t('手续费', 'Fees')} {sum.rules.feeRatesBps.slice(0, 3).map(pct).join(' · ')}</>}
-          </small>
-        </span>
-        <ChevronRight size={18} aria-hidden="true" />
-      </button>}
-
-      <section className={v.team} aria-label={t('团队与奖励记录', 'Team and reward records')}>
-        <div className={v.teamHead}>
-          {([['team', t('我的团队', 'My team')], ['rewards', t('奖励记录', 'Rewards')]] as const).map(([key, label]) =>
-            <button key={key} type="button" aria-pressed={tab === key} onClick={() => { setTab(key); setPage(1) }}>{label}</button>)}
-        </div>
-        {tab === 'team' && <div className={v.chips} role="group" aria-label={t('团队层级', 'Team level')}>
-          {([['all', t('全部', 'All'), totalCount], ['1', t('一级', 'Level 1'), levelCount(1)], ['2', t('二级', 'Level 2'), levelCount(2)], ['3', t('三级', 'Level 3'), levelCount(3)]] as const).map(([value, label, count]) =>
-            <button key={value} type="button" aria-pressed={level === value} onClick={() => { setLevel(value); setPage(1) }}>{label}<b>{count}</b></button>)}
-        </div>}
-        {list.error
-          ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={list.error.message} retry={list.refetch} retryLabel={retryLabel} />
-          : !list.data ? <Skeleton rows={3} /> : <>
-            {!list.data.items.length
-              ? <p className={v.empty} role="status">{tab === 'rewards' ? t('还没有奖励记录', 'No rewards yet') : level === 'all' ? t('分享邀请，好友注册后会出现在这里。', 'Share your invite. Friends who sign up appear here.') : t('这一级还没有成员', 'No members at this level')}</p>
-              : tab === 'team'
-                ? <ul className={v.rows}>{members.data?.items.map((row, index) => <li key={`${row.memberLabel}:${index}`}>
-                  <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
-                  <div><b dir="ltr">{t('用户', 'Member')} {row.memberLabel.slice(0, 6).toUpperCase()}</b><small>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</small></div>
-                  <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
-                </li>)}</ul>
-                : <ul className={v.rows}>{awards.data?.items.map(row => <li key={row.id}>
-                  <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
-                  <div><b>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><small>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {fmtDate(row.occurredAt, locale)}</small></div>
-                  <span className={v.state} data-state={row.state}>{states[row.state] ?? row.state}</span>
-                </li>)}</ul>}
-            {list.data.total > PAGE_SIZE && <nav className={v.pager} aria-label={t('分页', 'Pagination')}>
-              <button type="button" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('上一页', 'Previous')}</button>
-              <span>{page} / {pages}</span>
-              <button type="button" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>{t('下一页', 'Next')}</button>
-            </nav>}
-          </>}
-      </section>
-      <p className={v.disclaimer}>{t('奖励比例按层级分别计算，不代表投资收益，也不构成收益承诺。', 'Rates apply per level separately. They are not investment returns and carry no promise of income.')}</p>
-    </Shell>
-
+    </ReferralSheet>}
+    {(sheet === 'team' || sheet === 'awards') && <ReferralSheet tall title={sheet === 'team' ? t('我的团队', 'My team') : t('奖励记录', 'Reward records')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
+      {sheet === 'team' && <div className={v.chips} role="group" aria-label={t('团队层级', 'Team level')}>
+        {([['all', t('全部', 'All'), totalCount], ['1', t('一级', 'Level 1'), levelCount(1)], ['2', t('二级', 'Level 2'), levelCount(2)], ['3', t('三级', 'Level 3'), levelCount(3)]] as const).map(([value, label, count]) =>
+          <button key={value} type="button" aria-pressed={level === value} onClick={() => { setLevel(value); setPage(1) }}>{label}<b>{count}</b></button>)}
+      </div>}
+      {list.error
+        ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={list.error.message} retry={list.refetch} retryLabel={retryLabel} />
+        : !list.data ? <Skeleton rows={3} /> : <>
+          {!list.data.items.length
+            ? <p className={v.empty} role="status">{sheet === 'awards' ? t('还没有奖励记录', 'No rewards yet') : level === 'all' ? t('分享邀请，好友注册后会出现在这里。', 'Share your invite. Friends who sign up appear here.') : t('这一级还没有成员', 'No members at this level')}</p>
+            : sheet === 'team'
+              ? <ul className={v.sheetRows}>{members.data?.items.map((row, index) => <li key={`${row.memberLabel}:${index}`}>
+                <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
+                <div><b dir="ltr">{t('用户', 'Member')} {row.memberLabel.slice(0, 6).toUpperCase()}</b><small>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</small></div>
+                <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
+              </li>)}</ul>
+              : <ul className={v.sheetRows}>{awards.data?.items.map(row => <li key={row.id}>
+                <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
+                <div><b>{fmtAtomic(row.amountAtomic, row.decimals, row.currency)}</b><small>{kinds[row.kind] ?? row.kind} · {t(`第 ${row.level} 级`, `Level ${row.level}`)} · {fmtDate(row.occurredAt, locale)}</small></div>
+                <span className={v.state} data-state={row.state}>{states[row.state] ?? row.state}</span>
+              </li>)}</ul>}
+          {list.data.total > PAGE_SIZE && <nav className={v.pager} aria-label={t('分页', 'Pagination')}>
+            <button type="button" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>{t('上一页', 'Previous')}</button>
+            <span>{page} / {pages}</span>
+            <button type="button" disabled={page >= pages} onClick={() => setPage(p => p + 1)}>{t('下一页', 'Next')}</button>
+          </nav>}
+        </>}
+    </ReferralSheet>}
     {sheet === 'rules' && <ReferralSheet tall title={t('邀请规则', 'Invitation rules')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
       {sum
         ? <><ReferralRules rules={sum.rules} locale={locale} teamEnabled={sum.teamSettlementEnabled} /><ReferralTeamRewards locale={locale} tiers={sum.rules.teamTiers} /></>
