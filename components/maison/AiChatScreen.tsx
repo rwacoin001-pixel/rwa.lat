@@ -305,7 +305,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
   const body = <div className={a.shell} data-overlay={overlay || undefined}>
       <header className={a.bar} data-overlay={overlay || undefined}>
         {overlay
-          ? <><h1 className={a.overlayTitle}>{voiceCopy.title}</h1><button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><X size={22} strokeWidth={1.9} /></button></>
+          ? <><h1 className={a.srOnly}>{voiceCopy.title}</h1><span aria-hidden="true" /><button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><X size={22} strokeWidth={1.9} /></button></>
           : <><button type="button" className={a.icon} aria-label={voiceCopy.back} onClick={onClose}><ChevronLeft size={23} strokeWidth={1.85} /></button><h1 className={a.srOnly}>{voiceCopy.title}</h1></>}
       </header>
 

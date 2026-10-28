@@ -342,3 +342,9 @@
 - **首页邀请卡第四版**：三层深浅（外壳浅灰、上面板凸起：上亮下暗 + 白色内描边 + 下方软阴影、奖励行最亮），头像 36px 一半在面板里，字更轻（昵称 13/400、数字 28/500、无人时那句 15/400 灰色）。
 - **AI 浮层**：四周光边只在打开时闪约 2.5 秒就停；输入框一直有一圈缓慢流转的细光环和柔光。打开通知列表时，欢迎语和建议问题会淡出，不再重叠。
 - **量化通知（后端）**：每日结算后给每位持有人发当天结果；赎回到账（金额、赎回费）或被关闭也会通知；按用户语言写（中文/英文）。
+
+### 7.12 Koala Quant cover and strategy (2026-10-29)
+- Markets quant tab = `QuantCover`: one 28px card whose ground is the cover photo blurred; inside it the sharp photo card (name, 30-day badge), a ruler of the last 14 settled days (bars grow in, marker glides to the latest day; tap or drag to read a day), and an ink card with the rules or, for holders, principal and latest day. Keys: 了解策略 → `/quant`; 申购 / 追加申购 → `/quant?step=subscribe`. Nothing under the card.
+- Product page: `QuantStrategy` (lead, maxim, film card → full-screen player from help.a-reit.com, six numbered steps with plain words and the terms in a faint line). The sticky key shows for holders too (追加申购).
+- Pushed pages (back or close in L1) never hide their bar on scroll; only tab roots slide away. `/quant` is a pushed page.
+- AI composer: one 1px arc turning on the border, no outer halo; no visible title on the AI overlay.

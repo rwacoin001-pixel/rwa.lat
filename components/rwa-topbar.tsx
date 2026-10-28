@@ -114,10 +114,11 @@ export default function RwaTopbar(props: Props) {
       {props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count > 99 ? '99+' : props.badge.count}</span>}
     </button>
   }
-  // The edge swipe keeps a hidden bar's back or close action reachable.
+  // The edge swipe keeps a hidden bar's back or close action reachable. A pushed page (back or close) never hides its
+  // bar on scroll (2026-10-29, user: pages with no way back): the way out is always on screen; only tab roots slide away.
   useEdgeSwipeBack(!config.hidden && (config.l1 === 'back' || config.l1 === 'close'), () => onSlot(config.l1, 'L1'))
   if (config.hidden) return null
-  return <><header className={`rwa-topbar rwa-topbar--s1 ${props.className ?? ''}`} data-template={config.template} data-surface={transparent ? 'transparent-over-media' : 'solid'} data-scrolled={scrolled} data-chrome-hidden={chromeHidden} data-large-title={largeTitle} onFocusCapture={expandChrome}>
+  return <><header className={`rwa-topbar rwa-topbar--s1 ${props.className ?? ''}`} data-template={config.template} data-surface={transparent ? 'transparent-over-media' : 'solid'} data-scrolled={scrolled} data-chrome-hidden={chromeHidden && config.l1 !== 'back' && config.l1 !== 'close'} data-large-title={largeTitle} onFocusCapture={expandChrome}>
     <div className="rwa-topbar__grid">
       <div className="rwa-topbar__leading">{renderSlot(config.l1,'L1')}{renderSlot(config.l2,'L2')}</div>
       <div className="rwa-topbar__center">

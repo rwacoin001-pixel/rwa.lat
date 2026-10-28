@@ -1,0 +1,35 @@
+/* Strategy section of the product page (2026-10-29, docs/design-system.md §7.12): heading, lead, the maxim, a film card,
+   six numbered steps as text — no icon tiles. Paper card in the Palette A colours. */
+.root { display: grid; gap: 12px; }
+.root h2 { margin: 8px 0 0; color: var(--m-ink); font-size: 22px; font-weight: 600; line-height: 28px; }
+.lead { margin: 0; color: var(--m-muted); font-size: 15px; line-height: 24px; }
+.motto { margin: 0; color: var(--m-ink); font-size: 17px; font-weight: 500; line-height: 24px; }
+
+.film { position: relative; display: grid; grid-template-columns: 72px minmax(0, 1fr) 44px; align-items: center; gap: 12px; width: 100%; padding: 8px 12px 8px 8px; border: 0; border-radius: 22px; background: #141416; color: #fff; font: inherit; text-align: start; cursor: pointer; box-shadow: 0 12px 28px -18px rgba(0, 0, 0, .5); transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.film:active { transform: scale(.98); }
+.film:focus-visible { outline: 2px solid var(--m-ink); outline-offset: 2px; }
+.film img { width: 72px; height: 96px; border-radius: 12px; object-fit: cover; }
+.filmText { display: grid; gap: 4px; min-width: 0; }
+.filmText b { font-size: 15px; font-weight: 600; line-height: 22px; }
+.filmText small { font-size: 13px; line-height: 18px; opacity: .66; }
+.play { display: grid; place-items: center; width: 44px; height: 44px; border-radius: 50%; background: #fff; color: #141416; padding-inline-start: 2px; }
+:global(.rwa-mobile) .root .film :is(b, small, span) { color: inherit; }
+:global(.rwa-mobile) .root .film .play { color: #141416; }
+
+.steps { display: grid; margin: 0; padding: 4px 16px; list-style: none; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.steps li { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 8px; padding: 16px 0; border-top: .5px solid var(--pa-hair, rgba(0, 0, 0, .08)); }
+.steps li:first-child { border-top: 0; }
+.num { color: var(--m-faint, #8a9099); font-size: 13px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; }
+.steps h3 { margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.steps p { margin: 4px 0 0; color: var(--m-muted); font-size: 15px; line-height: 22px; }
+.steps small { display: block; margin-top: 8px; color: var(--m-faint, #8a9099); font-size: 12px; line-height: 16px; }
+:global(.rwa-mobile) .root .steps p { color: var(--m-muted); }
+:global(.rwa-mobile) .root .steps small, :global(.rwa-mobile) .root .num { color: var(--m-faint, #8a9099); }
+
+/* Full-screen player: black, the film centred, one close key. */
+.player { position: fixed; z-index: 1000; inset: 0; display: grid; place-items: center; background: #000; animation: fade .25s ease-out; }
+.player video { width: 100%; height: 100%; object-fit: contain; background: #000; }
+.close { position: absolute; top: calc(env(safe-area-inset-top) + 12px); inset-inline-end: 12px; display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .16); color: #fff; cursor: pointer; }
+.close:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+@keyframes fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .player { animation: none; } .film { transition: none; } }

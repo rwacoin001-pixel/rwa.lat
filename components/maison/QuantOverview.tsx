@@ -17,6 +17,8 @@ import { QuantReceipt, usdtNumber } from './QuantParts'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import { ShareWinLine, type WinMoment } from './ShareWin'
+import { QuantCover } from './QuantCover'
+import { QuantStrategy } from './QuantStrategy'
 import { openPath } from '@/lib/maison-nav'
 import stage from './quant.module.css'
 import page from './quant-page.module.css'
@@ -83,56 +85,21 @@ export function quantWin(product: QuantProduct | undefined | null): WinMoment | 
 const day = (date: string | undefined, locale: AppLocale) => date ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`)) : '—'
 
 /**
- * The quant tab of Markets (2026-10-28, IA plan docs/handoff/2026-10-28-quant-ia-plan.md): browsing only — the photo, the
- * dated 30-day figure, minimum and cut-off, one risk line, and the way in ("View product"); holders also get their
- * position. Deciding and buying happen on the product page and the subscribe page, not here.
+ * The quant tab of Markets (2026-10-28, IA plan docs/handoff/2026-10-28-quant-ia-plan.md): one cover card with the recent
+ * days, the rules, and both ways in — the strategy (product page) and subscribing (or adding more, for holders).
  */
 export function QuantMarketCard() {
   const { locale } = useI18n()
   const c = quantCopyFor(locale)
-  const h = quantHeroCopy(locale)
   const { list, slug, detail, product, audience } = useQuantView()
   const root = `${stage.stage} ${v2.root}`
   if (list.loading && !list.data) return <div className={root}><Skeleton rows={3} /></div>
   if (list.error && !list.data) return <div className={root}><StateBlock tone="error" title={c.loadError} retry={list.refetch} retryLabel={c.retry} /></div>
   if (!slug) return <div className={root}><StateBlock title={c.comingSoon} body={c.comingSoonBody} /></div>
   if (!product) return <div className={root}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <Skeleton rows={3} />}</div>
-  const history = product.history
-  const from = history.length > 30 ? history[history.length - 30]?.tradeDate : history[0]?.tradeDate
-  const to = history[history.length - 1]?.tradeDate
   const holder = audience === 'holder' || audience === 'pending'
-  const perf = product.performance
-  // Cover (2026-10-28, user: one big card filling the screen, the introduction written on the photo). A full-bleed
-  // photo from under the tabs to above the dock; a soft scrim at the top for the name and one line; a glass panel at
-  // the bottom with the dated 30-day figure, two real facts and the way in. Every number is the API's own.
-  return <div className={root} data-quant-v2="" role="tabpanel">
-    <section className={v2.cover} aria-label={product.name}>
-      <img className={v2.coverImg} src="/media/quant/cover-768.webp" srcSet="/media/quant/cover-768.webp 768w, /media/quant/cover.webp 1024w" sizes="(max-width: 480px) 100vw, 480px" alt="" width={1024} height={1536} decoding="async" />
-      <div className={v2.coverTop}>
-        <div className={v2.coverHead}>
-          <span className={v2.coverChip} data-glass="">{h.line} · {h.coverTag}</span>
-          {holder && <button type="button" className={v2.coverMine} data-glass="" onClick={() => openPath('/quant?tab=account')}>{h.mine}</button>}
-        </div>
-        <h2>{product.name}</h2>
-        <p>{h.coverLine}</p>
-        <small className={v2.coverRule}>{h.min(usdtNumber(product.minSubscriptionAtomic, locale))} · {h.cutoff}</small>
-      </div>
-      <div className={v2.coverPanel} data-glass="">
-        <small>{h.last30} · {h.range(day(from, locale), day(to, locale))}</small>
-        <b data-tone={toneOf(perf.last30d.pct)} dir="ltr">{signed(perf.last30d.pct)}</b>
-        <dl>
-          <div><dt>{h.since}</dt><dd dir="ltr">{signed(perf.sinceInceptionPct)}</dd></div>
-          <div><dt>{h.mdd}</dt><dd dir="ltr">{perf.maxDrawdownPct === null ? '—' : `${perf.maxDrawdownPct ? '−' : ''}${Math.abs(perf.maxDrawdownPct).toFixed(2)}%`}</dd></div>
-          <div><dt>{h.runningLabel}</dt><dd>{h.daysN(perf.days)}</dd></div>
-        </dl>
-        <div className={v2.coverActs}>
-          <button type="button" className={v2.coverMain} onClick={() => openPath('/quant')}>{h.view}<ArrowRight size={16} aria-hidden="true" /></button>
-        </div>
-        <p className={v2.coverRisk}>{h.risk}</p>
-      </div>
-    </section>
-    {holder && product.position && <QuantStrip position={product.position} c={c} />}
-  </div>
+  // Cover (2026-10-29, user's reference): QuantCover — position, latest day and the keys live inside the card.
+  return <div className={root} data-quant-v2="" role="tabpanel"><QuantCover product={product} locale={locale} holder={holder} /></div>
 }
 
 /** The product page (/quant): understand before deciding — rules, performance, fees, how it works, documents. */
@@ -146,7 +113,7 @@ export function QuantOverview() {
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
   const wantsSubscribe = audience === 'visitor' || audience === 'ex-holder'
-  const preview = useQuery(wantsSubscribe && slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
+  const preview = useQuery(slug ? `quant:preview:${slug}` : null, () => getQuantSubscriptionPreview(slug as string), { staleTime: 20_000 })
   const win = useMemo(() => sample ? null : quantWin(product), [product, sample])
 
   const root = `${stage.stage} ${v2.root}`
@@ -157,7 +124,9 @@ export function QuantOverview() {
 
   const p = product.performance
   const last30 = p.last30d.pct
-  const open = wantsSubscribe && product.open
+  // Holders can add more from here too (2026-10-29, user: a holder had no way to buy).
+  const open = product.open
+  const holding = audience === 'holder' || audience === 'pending'
   return <div className={root} data-quant-v2="">
     <QuantMiniBar product={product} />
     <QuantPhoto product={product} h={h} />
@@ -194,6 +163,8 @@ export function QuantOverview() {
       </>
       : <p className={v2.note}>{c.perfPending}</p>}
 
+    <QuantStrategy locale={locale} />
+
     <section className={v2.sec}><h2>{h.specs}</h2><QuantSpecSheet product={product} c={c} /></section>
     {wantsSubscribe && <section className={v2.sec}><h2>{h.process}</h2><QuantProcess preview={preview} c={c} /></section>}
 
@@ -206,10 +177,10 @@ export function QuantOverview() {
       ? <div className={s.stickyCta}>
         {preview.data && <CutoffPill preview={preview.data} locale={locale} />}
         <button type="button" className={`${s.cta} ${page.cta}`} onClick={() => openPath('/quant?step=subscribe')}>
-          <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
+          <span>{holding ? c.addMore : c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
         </button>
       </div>
-      : wantsSubscribe && <p className={v2.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
+      : <p className={v2.note} style={{ textAlign: 'center' }}>{c.closedNote}</p>}
 
     <QuantSubscribeSheet open={subscribeOpen} onClose={() => setSubscribeOpen(false)} product={product} />
     <QuantRedeemSheet open={redeemOpen} onClose={() => setRedeemOpen(false)} product={product} />

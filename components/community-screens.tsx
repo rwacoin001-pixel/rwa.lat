@@ -614,8 +614,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
   const ui = communityUiCopy[locale]
   const p = profileCopy[locale]
   const actions = usePostActions(isGuest, go, locale)
-  // Reading down hides the whole bar; any scroll back up (or reaching the top) brings it back.
-  const chromeHidden = useScrollChrome()
+  // The bar with the back key stays on screen while reading (2026-10-29).
 
   // `silent` keeps the current post on screen while counts refresh after a like or reply.
   const load = useCallback(async (silent = false) => {
@@ -652,7 +651,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
   return (
     <MaisonPage page="community-post" className={c.page}>
       <div className={c.x} data-reply-bar={data ? '' : undefined}>
-        <header className={c.subHead} data-hidden={chromeHidden} data-glass-bar="">
+        <header className={c.subHead} data-glass-bar="">
           <BackButton label={p.back} onClick={() => go('community')} />
           <h1 className={c.subTitle}><b>{p.post}</b></h1>
           {postId && <button type="button" className={c.circleBtn} aria-label={t('community.report')} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>}

@@ -37,8 +37,8 @@ export function slotsForScreen(screen?: RwaScreen, kind?: TopbarKind): SlotConfi
   else if (screen === 'profile') resolved = { ...child, l1: 'back', r2: null }
   else if (screen === 'search') resolved = { ...child, r2: null }
   else if (screen === 'invest') resolved = { ...root, l1: null, r2: null, r1: null }
-  // Koala Quant is a dock tab of its own, not a pushed page: just its name, no wordmark and never a back arrow.
-  else if (screen === 'quant') resolved = { ...root, l1: null, r2: null, r1: null }
+  // Koala Quant (/quant) is a pushed page since 2026-10-28 (the card lives on Markets): a back arrow, its name.
+  else if (screen === 'quant') resolved = { ...child, r2: null, r1: null }
   else if (screen && screenPages[screen]) resolved = { ...pageSlots[screenPages[screen]!] }
   else if (kind === 'immersive') resolved = { ...child, hidden: true }
   else if (kind === 'flow') resolved = { ...flow }
