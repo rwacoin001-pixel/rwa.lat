@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from 'react'
 import { ArrowRight, ChevronRight } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
-import type { QuantPayout, QuantPosition, QuantProduct } from '@/lib/api/quant'
+import { listQuantOrders, type QuantPayout, type QuantPosition, type QuantProduct } from '@/lib/api/quant'
+import { useQuery } from '@/lib/api/_query'
 import { quantCopyFor, type QuantCopy } from '@/lib/maison-quant-copy'
 import { pendingCount, shortDate } from '@/lib/quant-view-model'
 import { QuantReceipt, signedUsdt, usdtNumber } from './QuantParts'
@@ -147,5 +148,33 @@ export function QuantHistory({ payouts, c }: { payouts: Query<QuantPayout[]>; c:
         {sorted.length > 8 && <button type="button" className={styles.more} onClick={() => setAll((value) => !value)}>{all ? c.view.historyLess : c.view.historyMore}</button>}
       </>
     }}</BlockState>
+  </section>
+}
+
+/**
+ * Orders (2026-10-28): every subscription and redemption, including refused ones, newest first — what was asked, when it
+ * counts from, and where it stands. Statuses are the server's own; nothing is inferred.
+ */
+const orderCopy: Record<string, { title: string; sub: string; empty: string; subscription: string; redemption: string; from: string; status: Record<string, string> }> = {
+  'zh-CN': { title: '订单', sub: '申购和赎回，最近 30 笔', empty: '还没有订单', subscription: '申购', redemption: '赎回', from: '起算日', status: { pending: '处理中', settled: '已完成', rejected: '未成功', approved: '已确认', posted: '已入账', voided: '已作废' } },
+  en: { title: 'Orders', sub: 'Subscriptions and redemptions, latest 30', empty: 'No orders yet', subscription: 'Subscription', redemption: 'Redemption', from: 'Counts from', status: { pending: 'Processing', settled: 'Done', rejected: 'Not completed', approved: 'Confirmed', posted: 'Posted', voided: 'Voided' } },
+}
+export function QuantOrders({ slug }: { slug: string }) {
+  const { locale } = useI18n()
+  const t = orderCopy[locale] ?? orderCopy.en
+  const orders = useQuery('quant:orders', () => listQuantOrders(30), { staleTime: 30_000 })
+  const rows = (orders.data ?? []).filter((row) => row.slug === slug)
+  if (!orders.data && !orders.error) return null
+  return <section className={styles.block} aria-label={t.title}>
+    <h2 className={styles.h2}>{t.title}</h2>
+    <p className={styles.sub}>{t.sub}</p>
+    {orders.error && !orders.data ? <p className={styles.state}>—</p>
+      : rows.length === 0 ? <p className={styles.state}>{t.empty}</p>
+      : <ul className={styles.hist}>{rows.map((row) => <li key={row.id}>
+        <div className={styles.histRow} data-static="">
+          <span>{row.kind === 'subscription' ? t.subscription : t.redemption}<small>{t.from} {row.effectiveDate} · {t.status[row.status] ?? row.status}</small></span>
+          <b className={styles.num} data-tone={row.status === 'rejected' ? 'down' : undefined}>{row.amountAtomic ? `${usdtNumber(row.amountAtomic, locale)} USDT` : '—'}</b>
+        </div>
+      </li>)}</ul>}
   </section>
 }

@@ -36,6 +36,9 @@ export const getQuantDisclosure = () => request<QuantDisclosure | null>('/v1/qua
 export const getQuantSubscriptionPreview = (slug: string) => DEMO ? demo().then((m) => ok(m.demoPreview())) : request<QuantSubscriptionPreview>(`/v1/quant/products/${encodeURIComponent(slug)}/subscription-preview`)
 export const getQuantRedemptionPreview = (slug: string, input: { amountUsd?: string; all?: boolean }) =>
   request<QuantRedemptionPreview>(`/v1/quant/me/products/${encodeURIComponent(slug)}/redemption-preview?${new URLSearchParams({ ...(input.amountUsd ? { amountUsd: input.amountUsd } : {}), ...(input.all ? { all: 'true' } : {}) })}`)
+/** Your subscriptions and redemptions, newest first (server keeps up to 100). */
+export type QuantMyOrder = { id: string; slug: string; kind: 'subscription' | 'redemption'; status: string; amountAtomic: string | null; principalAtomic: string | null; feeAtomic: string | null; payoutAtomic: string | null; effectiveDate: string; rejectReason: string | null; createdAt: string; settledAt: string | null }
+export const listQuantOrders = (limit = 30) => DEMO ? Promise.resolve(ok([] as QuantMyOrder[])) : request<QuantMyOrder[]>(`/v1/quant/me/orders?limit=${limit}`)
 export const listQuantPayouts = (slug: string, limit = 30) => DEMO ? demo().then((m) => ok(m.demoPayouts())) : request<QuantPayout[]>(`/v1/quant/me/products/${encodeURIComponent(slug)}/payouts?limit=${limit}`)
 export const subscribeQuant = (slug: string, amountUsd: string, idempotencyKey: string) =>
   request<{ duplicate?: boolean; order: QuantOrder }>(`/v1/quant/products/${encodeURIComponent(slug)}/subscriptions`, { method: 'POST', body: JSON.stringify({ amountUsd }), idempotencyKey })

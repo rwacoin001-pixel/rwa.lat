@@ -34,7 +34,11 @@ function Timeline({ steps }: { steps: Array<{ title: string; date?: string; body
   </ol>
 }
 
-export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean; onClose: () => void; product: QuantProduct }) {
+/**
+ * Subscribe (2026-10-28). `page` renders the same three steps as a full page (/quant?step=subscribe — the product page's
+ * key leads here); without it, the sheet used elsewhere. The receipt names the order and leads to the position.
+ */
+export function QuantSubscribeSheet({ open, onClose, product, page = false, onViewPosition }: { open: boolean; onClose: () => void; product: QuantProduct; page?: boolean; onViewPosition?: () => void }) {
   const { locale } = useI18n()
   const c = quantCopyFor(locale)
   const [amount, setAmount] = useState('')
@@ -42,6 +46,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [doneDate, setDoneDate] = useState<string | null>(null)
+  const [orderId, setOrderId] = useState<string | null>(null)
   // Steps (2026-10-28): amount → review → receipt; an error shows after leaving the field or tapping Next, with one shake.
   const [step, setStep] = useState<'amount' | 'review'>('amount')
   const [touched, setTouched] = useState(false)
@@ -50,8 +55,8 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
   const wallet = useQuery(open ? 'wallet:summary:quant' : null, getWallet, { staleTime: 15_000 })
   const preview = useQuery(open ? `quant:preview:${product.slug}` : null, () => getQuantSubscriptionPreview(product.slug), { staleTime: 20_000 })
   const disclosure = useQuery(open && product.disclosureId ? 'quant:disclosure' : null, getQuantDisclosure, { staleTime: 5 * 60_000 })
-  useHideDock(open)
-  useEffect(() => { if (!open) { setAmount(''); setAck(false); setError(null); setDoneDate(null); setPending(false); setStep('amount'); setTouched(false) } }, [open])
+  useHideDock(open && !page)
+  useEffect(() => { if (!open) { setAmount(''); setAck(false); setError(null); setDoneDate(null); setOrderId(null); setPending(false); setStep('amount'); setTouched(false) } }, [open])
 
   const available = wallet.data?.balances.availableAtomic ?? null
   const value = atomicOf(amount.trim())
@@ -93,6 +98,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
     }
     refreshAll()
     retireIntentKey(keys.current, 'POST', path, { amountUsd: text }) // a confirmed order is done; other unresolved retries keep their keys
+    setOrderId(result.data.order.id)
     setDoneDate(result.data.order.effectiveDate)
   }
 
@@ -112,13 +118,27 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
   const shown = touched ? problem ?? (amount.trim() ? null : c.sheet.errors.QUANT_AMOUNT_INVALID) : null
   const amountText = value !== null && !problem ? usdtNumber(value.toString(), locale) : '—'
 
-  return <Sheet open={open} onClose={onClose} busy={pending} kicker={c.kicker} title={doneDate ? c.sheet.done : c.sheet.subscribeTitle}>
-    <AutoHeight>
+  const frame = (children: ReactNode) => page
+    ? <section className={styles.flowPage} aria-label={c.sheet.subscribeTitle}>
+      <p className={s.kicker}>{c.kicker}</p>
+      <h1 className={styles.flowTitle}>{doneDate ? c.sheet.done : c.sheet.subscribeTitle}</h1>
+      <ol className={styles.flowSteps} aria-hidden="true">{[0, 1, 2].map((i) => <li key={i} data-on={(doneDate ? 2 : step === 'review' ? 1 : 0) >= i || undefined} />)}</ol>
+      {children}
+    </section>
+    : <Sheet open={open} onClose={onClose} busy={pending} kicker={c.kicker} title={doneDate ? c.sheet.done : c.sheet.subscribeTitle}>{children}</Sheet>
+
+  return frame(<AutoHeight>
     {doneDate
       ? <div className={styles.stepPane} key="done">
         <span className={styles.doneMark} aria-hidden="true"><Check size={28} strokeWidth={2.4} /></span>
         <p className={s.lede}>{c.sheet.doneSubscribe(doneDate)}</p>
-        <button type="button" className={s.cta} style={{ marginTop: 16 }} onClick={onClose}><span>{c.sheet.close}</span></button>
+        {orderId && <dl className={styles.review} style={{ marginTop: 12 }}><div><dt>{c.sheet.orderId}</dt><dd dir="ltr" style={{ fontFamily: 'var(--m-mono, ui-monospace, monospace)' }}>{orderId.slice(0, 8).toUpperCase()}</dd></div><div><dt>{c.sheet.amount}</dt><dd>{amountText} USDT</dd></div></dl>}
+        {onViewPosition
+          ? <div className={styles.reviewActs} style={{ marginTop: 16 }}>
+            <button type="button" className={s.ghost} onClick={onClose}>{c.sheet.close}</button>
+            <button type="button" className={s.cta} onClick={onViewPosition}><span>{c.sheet.viewPosition}</span></button>
+          </div>
+          : <button type="button" className={s.cta} style={{ marginTop: 16 }} onClick={onClose}><span>{c.sheet.close}</span></button>}
       </div>
       : step === 'amount' ? <div className={styles.stepPane} key="amount">
         <label key={shake} className={styles.amountBox} data-shake={shake > 0 && shown ? '' : undefined}>
@@ -160,8 +180,7 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
           </button>
         </div>
       </div>}
-    </AutoHeight>
-  </Sheet>
+    </AutoHeight>)
 }
 
 /** Animates its own height to its content (step changes), so the sheet grows and shrinks smoothly. */

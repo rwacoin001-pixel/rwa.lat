@@ -1,6 +1,6 @@
 'use client'
 
-import { BadgePercent, Check, Eye, EyeOff, ChevronRight, Copy, Info, Languages, LogOut, Monitor, Moon, RotateCw, ScrollText, ShieldCheck, Sun, Wallet } from 'lucide-react'
+import { BadgePercent, Check, Eye, EyeOff, MessageSquareText, PenLine, UserPlus, Users, ChevronRight, Copy, Info, Languages, LogOut, Monitor, Moon, RotateCw, ScrollText, ShieldCheck, Sun, Wallet } from 'lucide-react'
 import { useState, type ReactNode } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
@@ -27,6 +27,10 @@ import { CommunityProfileEditor, useCommunityMe } from '@/components/community-c
 import type { CommunityProfileResponse } from '@/lib/community-data'
 import { request } from '@/lib/api/_http'
 import m from './me.module.css'
+import { Iridescence } from '@/components/backgrounds/Iridescence'
+
+// The band's colour wash: light, so it reads as our paper, not a neon poster.
+const BAND: [number, number, number] = [0.98, 0.98, 1]
 import { useUnread } from '@/hooks/useUnread'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { referralMe, referralSummary } from '@/lib/api/referral'
@@ -121,10 +125,10 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   }
   const kycText = kycState ? (kycState === 'not_started' && !KYC_REQUIRED ? p.optional : p.kyc[kycState]) : kyc.error ? p.unknown : '…'
   const counts = [
-    { n: stats?.postCount, label: me.posts, path: community?.handle ? `/community/member/${encodeURIComponent(community.handle)}` : null },
-    { n: stats?.followerCount, label: me.followers, path: null },
-    { n: stats?.followingCount, label: me.following, path: null },
-    { n: invited, label: me.invited, path: '/community?tab=invite' },
+    { n: stats?.followerCount, label: me.followers, path: null, Icon: Users },
+    { n: stats?.postCount, label: me.posts, path: community?.handle ? `/community/member/${encodeURIComponent(community.handle)}` : null, Icon: MessageSquareText },
+    { n: stats?.followingCount, label: me.following, path: null, Icon: Users },
+    { n: invited, label: me.invited, path: '/community?tab=invite', Icon: UserPlus },
   ]
   const rows: { key: string; title: string; path: string; value?: ReactNode }[][] = [
     [
@@ -144,34 +148,44 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const help = (['support', 'channels', 'scam', 'trust'] as const).map((key) => ({ key, path: { support: '/profile/support', channels: '/trust/official-channels', scam: '/trust/report-scam', trust: '/trust' }[key] }))
 
   return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={me.title} onBack={onClose} />}>
-    <section className={m.id} aria-label={me.card}>
-      <div className={m.idTop}>
-        <button type="button" className={m.who} disabled={!community?.identityConfigured} onClick={() => community?.handle && openPath(`/community/member/${encodeURIComponent(community.handle)}`)} aria-label={me.publicPage}>
-          <span className={m.avatar}>{community ? <CommunityAvatar avatarUrl={community.avatarUrl} seed={community.avatarSeed} handle={community.handle || 'me'} size={56} /> : <span className={m.avatarEmpty} />}</span>
-          <span className={m.names}>
-            {!community ? <Skeleton rows={1} /> : <>
-              <b className={m.name} dir="auto">{community.identityConfigured ? community.displayName : label ?? p.unknown}</b>
-              <small className={m.handle} dir="ltr">{community.identityConfigured ? `@${community.handle}` : me.setupBody}</small>
-            </>}
-          </span>
-        </button>
-        <button type="button" className={community?.identityConfigured ? m.edit : m.editInk} onClick={() => setEditing(true)}>{community?.identityConfigured ? me.editShort : me.setup}</button>
+    {/* Name card (2026-10-28, after the user's profile-card reference): a living colour band on top, the photo half over
+        its edge on the left and the membership chip on the right; name and @handle with a round edit key; three counts;
+        one ink key to the public page. The account checks follow under the card. */}
+    <section className={m.pcard} aria-label={me.card}>
+      <div className={m.pband}>
+        <Iridescence className={m.pcanvas} color={BAND} />
+      </div>
+      <div className={m.pmid}>
+        <span className={m.pavatar}>{community ? <CommunityAvatar avatarUrl={community.avatarUrl} seed={community.avatarSeed} handle={community.handle || 'me'} size={80} /> : <span className={m.avatarEmpty} />}</span>
+        <span className={m.pchip}>{kycState === 'approved' ? <><Check size={14} strokeWidth={2.4} aria-hidden="true" />{me.verified}</> : me.member}</span>
+      </div>
+      <div className={m.prow}>
+        <span className={m.names}>
+          {!community ? <Skeleton rows={1} /> : <>
+            <b className={m.name} dir="auto">{community.identityConfigured ? community.displayName : label ?? p.unknown}</b>
+            <small className={m.handle} dir="ltr">{community.identityConfigured ? `@${community.handle}` : me.setupBody}</small>
+          </>}
+        </span>
+        <button type="button" className={m.pedit} aria-label={community?.identityConfigured ? me.edit : me.setup} onClick={() => setEditing(true)}><PenLine size={18} strokeWidth={1.9} aria-hidden="true" /></button>
       </div>
       {community?.identityConfigured && community.bio && <p className={m.bio} dir="auto">{community.bio}</p>}
-      <dl className={m.counts}>{counts.map(({ n, label: countLabel, path }) => <div key={countLabel}>
-        {path ? <button type="button" onClick={() => openPath(path)}><dd>{n ?? '—'}</dd><dt>{countLabel}</dt></button> : <><dd>{n ?? '—'}</dd><dt>{countLabel}</dt></>}
+      <dl className={m.pstats}>{counts.filter((item) => item.label !== me.following).map(({ n, label: countLabel, path, Icon }) => <div key={countLabel}>
+        {path ? <button type="button" onClick={() => openPath(path)}><dd><Icon size={16} strokeWidth={2} aria-hidden="true" />{n ?? '—'}</dd><dt>{countLabel}</dt></button> : <><dd><Icon size={16} strokeWidth={2} aria-hidden="true" />{n ?? '—'}</dd><dt>{countLabel}</dt></>}
       </div>)}</dl>
-      {session.error && !view ? <StateBlock tone="error" title={common.errorGeneric} body={session.error.message} retry={session.refetch} retryLabel={common.retry} />
-        : <div className={m.chips} aria-label={me.account}>
-          <span data-ok={view?.emailVerified || undefined}>{view?.emailVerified && <Check size={12} strokeWidth={2.4} aria-hidden="true" />}{p.email} {!view ? '…' : view.emailVerified ? p.emailOk : p.emailNo}</span>
-          <span data-ok={kycState === 'approved' || undefined}>{kycState === 'approved' && <Check size={12} strokeWidth={2.4} aria-hidden="true" />}{p.identity} {kycText}</span>
-          <span data-ok={protectedSignIn || undefined}>{protectedSignIn && <Check size={12} strokeWidth={2.4} aria-hidden="true" />}{p.security} {securityText}</span>
-          {view && <button type="button" onClick={() => void copyId(view.userId)} aria-label={`${p.copyId}: ${view.userId}`}>
-            ID <bdi dir="ltr">{view.userId.length > 12 ? `${view.userId.slice(0, 4)}…${view.userId.slice(-4)}` : view.userId}</bdi>{idCopied ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
-          </button>}
-        </div>}
-      {view && view.authAdapter !== 'production' && <p className={m.demo}>{p.demo}</p>}
+      {community?.identityConfigured
+        ? <button type="button" className={m.pcta} onClick={() => openPath(`/community/member/${encodeURIComponent(community.handle)}`)}>{me.publicPage}</button>
+        : <button type="button" className={m.pcta} onClick={() => setEditing(true)}>{me.setup}</button>}
     </section>
+    {session.error && !view ? <StateBlock tone="error" title={common.errorGeneric} body={session.error.message} retry={session.refetch} retryLabel={common.retry} />
+      : <div className={`${m.chips} ${m.chipsOut}`} aria-label={me.account}>
+        <span data-ok={view?.emailVerified || undefined}>{view?.emailVerified && <Check size={12} strokeWidth={2.4} aria-hidden="true" />}{p.email} {!view ? '…' : view.emailVerified ? p.emailOk : p.emailNo}</span>
+        <span data-ok={kycState === 'approved' || undefined}>{kycState === 'approved' && <Check size={12} strokeWidth={2.4} aria-hidden="true" />}{p.identity} {kycText}</span>
+        <span data-ok={protectedSignIn || undefined}>{protectedSignIn && <Check size={12} strokeWidth={2.4} aria-hidden="true" />}{p.security} {securityText}</span>
+        {view && <button type="button" onClick={() => void copyId(view.userId)} aria-label={`${p.copyId}: ${view.userId}`}>
+          ID <bdi dir="ltr">{view.userId.length > 12 ? `${view.userId.slice(0, 4)}…${view.userId.slice(-4)}` : view.userId}</bdi>{idCopied ? <Check size={12} aria-hidden="true" /> : <Copy size={12} aria-hidden="true" />}
+        </button>}
+      </div>}
+    {view && view.authAdapter !== 'production' && <p className={m.demo}>{p.demo}</p>}
     {community && <CommunityProfileEditor open={editing} onOpenChange={setEditing} me={community} onSaved={() => setEditing(false)} />}
 
     <section className={m.money} aria-label={me.assets}>
@@ -218,14 +232,14 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
 }
 
 /** "Me" page copy (2026-10-28). */
-const meCopy: Record<string, { show: string; hide: string; invited: string; editShort: string; noneUnread: string; assets: string; today: string; rewards: string; deposit: string; withdraw: string; activity: string; inviteKey: string; title: string; card: string; followers: string; following: string; posts: string; publicPage: string; edit: string; setup: string; setupBody: string; account: string }> = {
-  en: { show: 'Show balances', hide: 'Hide balances', invited: 'invited', editShort: 'Edit', noneUnread: 'All read', assets: 'Total assets', today: 'Today', rewards: 'Rewards to claim', deposit: 'Deposit', withdraw: 'Withdraw', activity: 'Activity', inviteKey: 'Invite', title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'My public page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
-  'zh-CN': { show: '显示金额', hide: '隐藏金额', invited: '邀请', editShort: '编辑', noneUnread: '已读完', assets: '总资产', today: '今日', rewards: '待领奖励', deposit: '充值', withdraw: '提现', activity: '记录', inviteKey: '邀请', title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '我的主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
-  hi: { show: 'राशि दिखाएँ', hide: 'राशि छिपाएँ', invited: 'आमंत्रित', editShort: 'बदलें', noneUnread: 'सब पढ़ा', assets: 'कुल संपत्ति', today: 'आज', rewards: 'दावा योग्य इनाम', deposit: 'जमा', withdraw: 'निकासी', activity: 'गतिविधि', inviteKey: 'आमंत्रण', title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'मेरा पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
-  es: { show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'invitados', editShort: 'Editar', noneUnread: 'Todo leído', assets: 'Activos totales', today: 'Hoy', rewards: 'Recompensas por cobrar', deposit: 'Depositar', withdraw: 'Retirar', activity: 'Actividad', inviteKey: 'Invitar', title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Mi página', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
-  ar: { show: 'إظهار الأرصدة', hide: 'إخفاء الأرصدة', invited: 'مدعوون', editShort: 'تعديل', noneUnread: 'كلها مقروءة', assets: 'إجمالي الأصول', today: 'اليوم', rewards: 'مكافآت للمطالبة', deposit: 'إيداع', withdraw: 'سحب', activity: 'السجل', inviteKey: 'دعوة', title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحتي', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
-  fr: { show: 'Afficher les soldes', hide: 'Masquer les soldes', invited: 'invités', editShort: 'Modifier', noneUnread: 'Tout lu', assets: 'Actifs totaux', today: 'Aujourd’hui', rewards: 'Récompenses à réclamer', deposit: 'Déposer', withdraw: 'Retirer', activity: 'Activité', inviteKey: 'Inviter', title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Ma page', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
-  pt: { show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'convidados', editShort: 'Editar', noneUnread: 'Tudo lido', assets: 'Ativos totais', today: 'Hoje', rewards: 'Recompensas a resgatar', deposit: 'Depositar', withdraw: 'Sacar', activity: 'Atividade', inviteKey: 'Convidar', title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Minha página', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
+const meCopy: Record<string, { verified: string; member: string; show: string; hide: string; invited: string; editShort: string; noneUnread: string; assets: string; today: string; rewards: string; deposit: string; withdraw: string; activity: string; inviteKey: string; title: string; card: string; followers: string; following: string; posts: string; publicPage: string; edit: string; setup: string; setupBody: string; account: string }> = {
+  en: { verified: 'Verified', member: 'A-REIT member', show: 'Show balances', hide: 'Hide balances', invited: 'invited', editShort: 'Edit', noneUnread: 'All read', assets: 'Total assets', today: 'Today', rewards: 'Rewards to claim', deposit: 'Deposit', withdraw: 'Withdraw', activity: 'Activity', inviteKey: 'Invite', title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'My public page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
+  'zh-CN': { verified: '已认证', member: 'A-REIT 会员', show: '显示金额', hide: '隐藏金额', invited: '邀请', editShort: '编辑', noneUnread: '已读完', assets: '总资产', today: '今日', rewards: '待领奖励', deposit: '充值', withdraw: '提现', activity: '记录', inviteKey: '邀请', title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '我的主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
+  hi: { verified: 'सत्यापित', member: 'A-REIT सदस्य', show: 'राशि दिखाएँ', hide: 'राशि छिपाएँ', invited: 'आमंत्रित', editShort: 'बदलें', noneUnread: 'सब पढ़ा', assets: 'कुल संपत्ति', today: 'आज', rewards: 'दावा योग्य इनाम', deposit: 'जमा', withdraw: 'निकासी', activity: 'गतिविधि', inviteKey: 'आमंत्रण', title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'मेरा पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
+  es: { verified: 'Verificado', member: 'Miembro de A-REIT', show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'invitados', editShort: 'Editar', noneUnread: 'Todo leído', assets: 'Activos totales', today: 'Hoy', rewards: 'Recompensas por cobrar', deposit: 'Depositar', withdraw: 'Retirar', activity: 'Actividad', inviteKey: 'Invitar', title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Mi página', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
+  ar: { verified: 'موثّق', member: 'عضو A-REIT', show: 'إظهار الأرصدة', hide: 'إخفاء الأرصدة', invited: 'مدعوون', editShort: 'تعديل', noneUnread: 'كلها مقروءة', assets: 'إجمالي الأصول', today: 'اليوم', rewards: 'مكافآت للمطالبة', deposit: 'إيداع', withdraw: 'سحب', activity: 'السجل', inviteKey: 'دعوة', title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحتي', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
+  fr: { verified: 'Vérifié', member: 'Membre A-REIT', show: 'Afficher les soldes', hide: 'Masquer les soldes', invited: 'invités', editShort: 'Modifier', noneUnread: 'Tout lu', assets: 'Actifs totaux', today: 'Aujourd’hui', rewards: 'Récompenses à réclamer', deposit: 'Déposer', withdraw: 'Retirer', activity: 'Activité', inviteKey: 'Inviter', title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Ma page', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
+  pt: { verified: 'Verificado', member: 'Membro A-REIT', show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'convidados', editShort: 'Editar', noneUnread: 'Tudo lido', assets: 'Ativos totais', today: 'Hoje', rewards: 'Recompensas a resgatar', deposit: 'Depositar', withdraw: 'Sacar', activity: 'Atividade', inviteKey: 'Convidar', title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Minha página', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
 }
 
 const THEMES: { value: RwaThemePreference; Icon: typeof Sun }[] = [{ value: 'light', Icon: Sun }, { value: 'dark', Icon: Moon }, { value: 'system', Icon: Monitor }]

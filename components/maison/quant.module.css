@@ -279,3 +279,15 @@
 @keyframes pop { from { opacity: 0; transform: scale(.5); } }
 @media (prefers-reduced-motion: reduce) { .autoHeight, .confirm.confirm { transition: none; } .stepPane, .amountBox[data-shake], .ring, .doneMark { animation: none; } }
 .review dt { flex: none; white-space: nowrap; }
+
+/* Subscribe as a page (2026-10-28): a 28px title and a three-dot step line above the same three steps as the sheet. */
+.flowPage { display: grid; gap: 8px; padding-top: 8px; }
+.flowTitle { margin: 0; color: var(--m-ink); font-size: 28px; font-weight: 600; line-height: 36px; }
+.flowSteps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; margin: 4px 0 16px; padding: 0; list-style: none; }
+.flowSteps li { height: 4px; border-radius: 999px; background: var(--pa-fill-strong, rgba(11, 18, 32, .1)); transition: background .3s ease; }
+.flowSteps li[data-on] { background: var(--m-ink, #0b1220); }
+:global(.rwa-mobile[data-theme='dark']) .flowSteps li[data-on] { background: #f2f4f7; }
+.flowPage .stepPane { padding-bottom: 8px; }
+.flowPage .stepPane > button, .flowPage .reviewActs > button:last-child { width: 100%; }
+.flowPage .autoHeight { height: auto !important; overflow: visible; }
+.flowPage .stepPane > button { justify-content: center; }

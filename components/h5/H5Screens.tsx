@@ -89,7 +89,7 @@ export function H5Screens({ h }: { h: H5Controller }) {
           notifications: <MaisonBridge page="notifications"><NotificationsScreen go={go} notify={notify} enabled={sessionReady && sessionMode === 'authenticated'} guest={sessionReady && sessionMode === 'guest'} focusId={routeParams.id} /></MaisonBridge>,
         }}>
         {screen === 'invest' && <MaisonMarketsScreen query={routeQuery} />}
-        {screen === 'quant' && <MaisonQuantScreen />}
+        {screen === 'quant' && <MaisonQuantScreen key={routeQuery} />}
         {screen === 'basket-list' && <MaisonMarketsScreen query={new URLSearchParams(routeQuery).get('tab') ? routeQuery : 'tab=baskets'} />}
         {screen === 'strategy-detail' && <MaisonHengxuDetailScreen key={routeParams.id ?? ''} id={routeParams.id ?? null} />}
         {screen === 'basket-detail' && <MaisonBasketDetailScreen key={routeParams.id ?? selectedBasketId ?? ''} id={routeParams.id ?? selectedBasketId} />}

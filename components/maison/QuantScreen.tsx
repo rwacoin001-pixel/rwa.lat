@@ -9,31 +9,51 @@ import { quantCopyFor } from '@/lib/maison-quant-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, Skeleton, StateBlock } from './primitives'
 import { QuantDisclosureSheet } from './QuantDisclosureSheet'
-import { QuantAccount, QuantHistory } from './QuantAccount'
+import { QuantAccount, QuantHistory, QuantOrders } from './QuantAccount'
 import { QuantAccountPlaceholder } from './QuantSpec'
-import { QuantDateStrip, quantWin, useQuantView } from './QuantOverview'
+import { QuantDateStrip, QuantOverview, quantWin, useQuantView } from './QuantOverview'
 import { ShareWinLine } from './ShareWin'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import stage from './quant.module.css'
 import v2 from './quant-v2.module.css'
 
 /**
- * /quant (2026-10-28). Koala Quant itself now lives on Markets (the quant tab), so a plain /quant goes there. What stays here
- * is "My Koala Quant" (/quant?tab=account), opened from the Assets card: the return calendar, my position with add and
- * redeem, and my payout history, in the Paper & Glass look (docs/design-system.md §7.6).
+ * /quant (2026-10-28, IA plan docs/handoff/2026-10-28-quant-ia-plan.md). Four layers, one job each: Markets shows the
+ * card (browse); /quant is the product page (understand); /quant?step=subscribe is the full-page subscribe flow
+ * (decide); /quant?tab=account is "My Koala Quant" (position, orders, daily slips, add and redeem).
  */
 export function QuantScreen() {
-  const [mine, setMine] = useState<boolean | null>(null)
+  const [mode, setMode] = useState<'product' | 'subscribe' | 'account' | null>(null)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    if (params.get('tab') === 'account') { setMine(true); return }
-    setMine(false)
-    // A tick later: the shell re-adds its path listener after this first effect runs.
-    const timer = window.setTimeout(() => openPath(`/markets?tab=quant${params.get('preview') === '1' ? '&preview=1' : ''}`, { replace: true }), 0)
-    return () => window.clearTimeout(timer)
+    setMode(params.get('tab') === 'account' ? 'account' : params.get('step') === 'subscribe' ? 'subscribe' : 'product')
   }, [])
-  if (!mine) return <MaisonPage page="quant"><Skeleton rows={5} /></MaisonPage>
-  return <MyQuant />
+  if (!mode) return <MaisonPage page="quant"><Skeleton rows={5} /></MaisonPage>
+  if (mode === 'account') return <MyQuant />
+  if (mode === 'subscribe') return <QuantSubscribePage />
+  return <QuantProductPage />
+}
+
+function QuantProductPage() {
+  const { locale } = useI18n()
+  const c = quantCopyFor(locale)
+  const { product } = useQuantView()
+  return <MaisonPage page="quant" cta topbar={<RwaTopbar screen="quant" title={product?.name ?? c.title} onBack={() => backOr('/markets?tab=quant')} />}>
+    <QuantOverview />
+  </MaisonPage>
+}
+
+function QuantSubscribePage() {
+  const { locale } = useI18n()
+  const c = quantCopyFor(locale)
+  const { list, slug, detail, product } = useQuantView()
+  const topbar = <RwaTopbar screen="quant" title={product?.name ?? c.title} onBack={() => backOr('/quant')} />
+  return <MaisonPage page="quant" topbar={topbar}>
+    {list.error && !list.data ? <StateBlock tone="error" title={c.loadError} retry={list.refetch} retryLabel={c.retry} />
+      : list.data && !slug ? <StateBlock title={c.comingSoon} body={c.comingSoonBody} />
+      : !product ? (detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <Skeleton rows={4} />)
+      : <QuantSubscribeSheet page open product={product} onClose={() => backOr('/quant')} onViewPosition={() => openPath('/quant?tab=account', { replace: true })} />}
+  </MaisonPage>
 }
 
 function MyQuant() {
@@ -59,8 +79,9 @@ function MyQuant() {
           <QuantDateStrip product={product} payouts={payouts.data} locale={locale} copy={c} />
           {involved
             ? <>
-              <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />
+              <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => openPath('/quant?step=subscribe')} onRedeem={() => setRedeemOpen(true)} />
               <ShareWinLine moment={win} />
+              <QuantOrders slug={product.slug} />
               <QuantHistory payouts={payouts} c={c} />
             </>
             : <QuantAccountPlaceholder product={product} c={c} />}

@@ -175,6 +175,8 @@ export type QuantCopy = {
     ack: string
     confirmSubscribe: (amount: string) => string
     next: string
+    orderId: string
+    viewPosition: string
     back: string
     feeLine: string
     feeValue: (management: string, performance: string) => string
@@ -369,6 +371,8 @@ const en: QuantCopy = {
     ack: 'I’ve read and accept the risk disclosure',
     confirmSubscribe: (amount) => `Subscribe ${amount} USDT`,
     next: 'Next: review',
+    orderId: 'Order',
+    viewPosition: 'View my position',
     back: 'Back',
     feeLine: 'Fees',
     feeValue: (management, performance) => `${management}% a year · ${performance}% of new highs`,
@@ -571,6 +575,8 @@ const zh: QuantCopy = {
     ack: '我已阅读并接受风险披露',
     confirmSubscribe: (amount) => `确认申购 ${amount} USDT`,
     next: '下一步：核对',
+    orderId: '订单号',
+    viewPosition: '查看我的持仓',
     back: '返回修改',
     feeLine: '费用',
     feeValue: (management, performance) => `管理费 ${management}%/年 · 业绩报酬 ${performance}%（仅超过历史最高部分）`,

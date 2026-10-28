@@ -114,3 +114,14 @@
 .receipt { display: flex; align-items: center; gap: 8px; margin: 0 4px; color: var(--m-up, #067a5e); font-size: 13px; font-weight: 500; line-height: 18px; animation: pop .3s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
 :global(.rwa-mobile) .card.card .receipt { color: var(--m-up, #067a5e); }
 @media (prefers-reduced-motion: reduce) { .ring, .receipt { animation: none; } }
+/* Faces half inside the panel (2026-10-28, user): the card's 12px row gap plus half a face (20px) pulls each face up so
+   its centre sits on the panel's lower edge. Lighter button row: 44px keys, flat porcelain (hairline, no drop shadow). */
+.panel { padding-bottom: 32px; }
+.faces { margin-top: -32px; }
+.acts { grid-template-columns: 44px 44px minmax(0, 1fr) minmax(0, 1fr); }
+.round.round { width: 44px; height: 44px; background: var(--pa-fill, rgba(11, 18, 32, .05)); box-shadow: none; }
+.round.round svg { width: 18px; height: 18px; }
+.claim.claim, .invite.invite { height: 44px; font-size: 15px; font-weight: 500; }
+.claim.claim { background: var(--pa-fill, rgba(11, 18, 32, .05)); box-shadow: none; }
+.invite.invite { box-shadow: none; }
+:global(.rwa-mobile[data-theme='dark']) .round.round, :global(.rwa-mobile[data-theme='dark']) .claim.claim { background: rgba(255, 255, 255, .08); }

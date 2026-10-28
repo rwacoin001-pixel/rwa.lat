@@ -13,10 +13,11 @@ import { QuantDisclosureSheet } from './QuantDisclosureSheet'
 import { QuantDailyBars, QuantNavChart } from './QuantCharts'
 import { QuantProcess, QuantSpecSheet } from './QuantSpec'
 import { QuantStrip } from './QuantAccount'
-import { QuantReceipt } from './QuantParts'
+import { QuantReceipt, usdtNumber } from './QuantParts'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import { ShareWinLine, type WinMoment } from './ShareWin'
+import { openPath } from '@/lib/maison-nav'
 import stage from './quant.module.css'
 import page from './quant-page.module.css'
 import v2 from './quant-v2.module.css'
@@ -26,15 +27,15 @@ import v2 from './quant-v2.module.css'
  * "For you" row, one paper card with the since-inception figure and three small ones, the NAV curve, the daily bars,
  * then how subscribing works and the specification as text rows. Everything on the §3 type scale and the Palette A colours.
  */
-type HeroCopy = { line: string; last30: string; days: (n: number) => string; nav: string; since: string; d7: string; d30: string; mdd: string; process: string; specs: string }
+type HeroCopy = { minLabel: string; cutoffLabel: string; cutoffShort: string; settleLabel: string; view: string; mine: string; min: (v: string) => string; cutoff: string; risk: string; basis: string; range: (a: string, b: string) => string; strategy: string; line: string; last30: string; days: (n: number) => string; nav: string; since: string; d7: string; d30: string; mdd: string; process: string; specs: string }
 const hero: Record<AppLocale, HeroCopy> = {
-  en: { line: 'Settled daily', last30: 'Past 30 days', days: (n) => `running ${n} days`, nav: 'NAV', since: 'Since inception', d7: '7 days', d30: '30 days', mdd: 'Max drawdown', process: 'How subscribing works', specs: 'Specification' },
-  'zh-CN': { line: '每日结算', last30: '过去 30 天', days: (n) => `已运行 ${n} 天`, nav: '净值', since: '成立以来', d7: '近 7 天', d30: '近 30 天', mdd: '最大回撤', process: '申购流程', specs: '产品规格' },
-  hi: { line: 'रोज़ निपटान', last30: 'पिछले 30 दिन', days: (n) => `${n} दिन से चालू`, nav: 'NAV', since: 'शुरुआत से', d7: '7 दिन', d30: '30 दिन', mdd: 'अधिकतम गिरावट', process: 'सब्सक्रिप्शन कैसे होता है', specs: 'विवरण' },
-  es: { line: 'Liquidación diaria', last30: 'Últimos 30 días', days: (n) => `${n} días en marcha`, nav: 'Valor', since: 'Desde el inicio', d7: '7 días', d30: '30 días', mdd: 'Caída máxima', process: 'Cómo suscribirse', specs: 'Especificación' },
-  ar: { line: 'تسوية يومية', last30: 'آخر 30 يومًا', days: (n) => `يعمل منذ ${n} يومًا`, nav: 'صافي القيمة', since: 'منذ الإطلاق', d7: '7 أيام', d30: '30 يومًا', mdd: 'أقصى تراجع', process: 'كيف يتم الاكتتاب', specs: 'المواصفات' },
-  fr: { line: 'Règlement quotidien', last30: '30 derniers jours', days: (n) => `${n} jours d’activité`, nav: 'VL', since: 'Depuis le lancement', d7: '7 jours', d30: '30 jours', mdd: 'Baisse max.', process: 'Comment souscrire', specs: 'Caractéristiques' },
-  pt: { line: 'Liquidação diária', last30: 'Últimos 30 dias', days: (n) => `${n} dias em operação`, nav: 'Cota', since: 'Desde o início', d7: '7 dias', d30: '30 dias', mdd: 'Queda máxima', process: 'Como subscrever', specs: 'Especificação' },
+  en: { minLabel: 'Minimum', cutoffLabel: 'Cut-off (SGT)', cutoffShort: '15:00 daily', settleLabel: 'Settlement', view: 'View product', mine: 'My position', min: (v) => `From ${v} USDT`, cutoff: 'Cut-off 15:00 SGT', risk: 'Capital at risk. Past results do not promise future ones.', basis: 'After management fees, before your own performance fee. Your payout can differ.', range: (a, b) => `${a} – ${b}`, strategy: 'About the product', line: 'Settled daily', last30: 'Past 30 days', days: (n) => `running ${n} days`, nav: 'NAV', since: 'Since inception', d7: '7 days', d30: '30 days', mdd: 'Max drawdown', process: 'How subscribing works', specs: 'Specification' },
+  'zh-CN': { minLabel: '起投', cutoffLabel: '截止（新加坡）', cutoffShort: '每天 15:00', settleLabel: '结算', view: '查看产品', mine: '我的持仓', min: (v) => `${v} USDT 起`, cutoff: '每天 15:00 截止（新加坡时间）', risk: '本金有亏损风险，过去的表现不代表将来。', basis: '已扣管理费，未扣你个人的业绩费；你自己的到账可能不同。', range: (a, b) => `${a} – ${b}`, strategy: '产品说明', line: '每日结算', last30: '过去 30 天', days: (n) => `已运行 ${n} 天`, nav: '净值', since: '成立以来', d7: '近 7 天', d30: '近 30 天', mdd: '最大回撤', process: '申购流程', specs: '产品规格' },
+  hi: { minLabel: 'न्यूनतम', cutoffLabel: 'दैनिक कट-ऑफ़', cutoffShort: '15:00 SGT', settleLabel: 'निपटान', view: 'प्रोडक्ट देखें', mine: 'मेरी होल्डिंग', min: (v) => `${v} USDT से`, cutoff: 'कट-ऑफ़ 15:00 SGT', risk: 'पूंजी जोखिम में है। पिछला प्रदर्शन भविष्य का वादा नहीं।', basis: 'प्रबंधन शुल्क के बाद, आपके प्रदर्शन शुल्क से पहले।', range: (a, b) => `${a} – ${b}`, strategy: 'प्रोडक्ट के बारे में', line: 'रोज़ निपटान', last30: 'पिछले 30 दिन', days: (n) => `${n} दिन से चालू`, nav: 'NAV', since: 'शुरुआत से', d7: '7 दिन', d30: '30 दिन', mdd: 'अधिकतम गिरावट', process: 'सब्सक्रिप्शन कैसे होता है', specs: 'विवरण' },
+  es: { minLabel: 'Mínimo', cutoffLabel: 'Cierre diario', cutoffShort: '15:00 SGT', settleLabel: 'Liquidación', view: 'Ver producto', mine: 'Mi posición', min: (v) => `Desde ${v} USDT`, cutoff: 'Cierre 15:00 SGT', risk: 'El capital está en riesgo. El pasado no garantiza el futuro.', basis: 'Tras comisión de gestión, antes de tu comisión de rendimiento.', range: (a, b) => `${a} – ${b}`, strategy: 'Sobre el producto', line: 'Liquidación diaria', last30: 'Últimos 30 días', days: (n) => `${n} días en marcha`, nav: 'Valor', since: 'Desde el inicio', d7: '7 días', d30: '30 días', mdd: 'Caída máxima', process: 'Cómo suscribirse', specs: 'Especificación' },
+  ar: { minLabel: 'الحد الأدنى', cutoffLabel: 'الإغلاق اليومي', cutoffShort: '15:00 SGT', settleLabel: 'التسوية', view: 'عرض المنتج', mine: 'مركزي', min: (v) => `ابتداءً من ${v} USDT`, cutoff: 'الإغلاق 15:00 بتوقيت سنغافورة', risk: 'رأس المال معرض للخطر. الأداء السابق لا يضمن المستقبل.', basis: 'بعد رسوم الإدارة وقبل رسوم الأداء الخاصة بك.', range: (a, b) => `${a} – ${b}`, strategy: 'عن المنتج', line: 'تسوية يومية', last30: 'آخر 30 يومًا', days: (n) => `يعمل منذ ${n} يومًا`, nav: 'صافي القيمة', since: 'منذ الإطلاق', d7: '7 أيام', d30: '30 يومًا', mdd: 'أقصى تراجع', process: 'كيف يتم الاكتتاب', specs: 'المواصفات' },
+  fr: { minLabel: 'Minimum', cutoffLabel: 'Clôture du jour', cutoffShort: '15:00 SGT', settleLabel: 'Règlement', view: 'Voir le produit', mine: 'Ma position', min: (v) => `Dès ${v} USDT`, cutoff: 'Clôture 15:00 SGT', risk: 'Capital à risque. Le passé ne garantit pas l’avenir.', basis: 'Après frais de gestion, avant votre commission de performance.', range: (a, b) => `${a} – ${b}`, strategy: 'À propos du produit', line: 'Règlement quotidien', last30: '30 derniers jours', days: (n) => `${n} jours d’activité`, nav: 'VL', since: 'Depuis le lancement', d7: '7 jours', d30: '30 jours', mdd: 'Baisse max.', process: 'Comment souscrire', specs: 'Caractéristiques' },
+  pt: { minLabel: 'Mínimo', cutoffLabel: 'Corte diário', cutoffShort: '15:00 SGT', settleLabel: 'Liquidação', view: 'Ver produto', mine: 'Minha posição', min: (v) => `A partir de ${v} USDT`, cutoff: 'Corte 15:00 SGT', risk: 'Capital em risco. O passado não garante o futuro.', basis: 'Após taxa de gestão, antes da sua taxa de desempenho.', range: (a, b) => `${a} – ${b}`, strategy: 'Sobre o produto', line: 'Liquidação diária', last30: 'Últimos 30 dias', days: (n) => `${n} dias em operação`, nav: 'Cota', since: 'Desde o início', d7: '7 dias', d30: '30 dias', mdd: 'Queda máxima', process: 'Como subscrever', specs: 'Especificação' },
 }
 export const quantHeroCopy = (locale: AppLocale) => hero[locale] ?? hero.en
 
@@ -79,7 +80,48 @@ export function quantWin(product: QuantProduct | undefined | null): WinMoment | 
   return { id: `quant-${product.slug}-${last.tradeDate}`, kind: 'quant', date: last.tradeDate, pct: Number(row.netReturnPct), title: product.name, path: '/markets?tab=quant', proof: { kind: 'quant_day', product: product.slug, date: last.tradeDate } }
 }
 
-/** The quant tab of Markets. */
+const day = (date: string | undefined, locale: AppLocale) => date ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`)) : '—'
+
+/**
+ * The quant tab of Markets (2026-10-28, IA plan docs/handoff/2026-10-28-quant-ia-plan.md): browsing only — the photo, the
+ * dated 30-day figure, minimum and cut-off, one risk line, and the way in ("View product"); holders also get their
+ * position. Deciding and buying happen on the product page and the subscribe page, not here.
+ */
+export function QuantMarketCard() {
+  const { locale } = useI18n()
+  const c = quantCopyFor(locale)
+  const h = quantHeroCopy(locale)
+  const { list, slug, detail, product, audience } = useQuantView()
+  const root = `${stage.stage} ${v2.root}`
+  if (list.loading && !list.data) return <div className={root}><Skeleton rows={3} /></div>
+  if (list.error && !list.data) return <div className={root}><StateBlock tone="error" title={c.loadError} retry={list.refetch} retryLabel={c.retry} /></div>
+  if (!slug) return <div className={root}><StateBlock title={c.comingSoon} body={c.comingSoonBody} /></div>
+  if (!product) return <div className={root}>{detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <Skeleton rows={3} />}</div>
+  const history = product.history
+  const from = history.length > 30 ? history[history.length - 30]?.tradeDate : history[0]?.tradeDate
+  const to = history[history.length - 1]?.tradeDate
+  const holder = audience === 'holder' || audience === 'pending'
+  return <div className={root} data-quant-v2="" role="tabpanel">
+    <button type="button" className={v2.cardPhoto} onClick={() => openPath('/quant')} aria-label={`${product.name} · ${h.view}`}>
+      <QuantPhoto product={product} h={h} />
+    </button>
+    <section className={v2.cardFacts}>
+      <div className={v2.cardFigure}>
+        <small>{h.last30} · {h.range(day(from, locale), day(to, locale))}</small>
+        <b data-tone={toneOf(product.performance.last30d.pct)} dir="ltr">{signed(product.performance.last30d.pct)}</b>
+      </div>
+      <p className={v2.cardLine}>{h.line} · {h.min(usdtNumber(product.minSubscriptionAtomic, locale))} · {h.cutoff}</p>
+      <p className={v2.cardRisk}>{h.risk}</p>
+      {holder && product.position && <QuantStrip position={product.position} c={c} />}
+      <div className={v2.cardActs}>
+        {holder && <button type="button" className={v2.cardGhost} onClick={() => openPath('/quant?tab=account')}>{h.mine}</button>}
+        <button type="button" className={v2.cardInk} onClick={() => openPath('/quant')}>{h.view}<ArrowRight size={16} aria-hidden="true" /></button>
+      </div>
+    </section>
+  </div>
+}
+
+/** The product page (/quant): understand before deciding — rules, performance, fees, how it works, documents. */
 export function QuantOverview() {
   const { locale } = useI18n()
   const c = quantCopyFor(locale)
@@ -102,9 +144,16 @@ export function QuantOverview() {
   const p = product.performance
   const last30 = p.last30d.pct
   const open = wantsSubscribe && product.open
-  return <div className={root} data-quant-v2="" role="tabpanel">
+  return <div className={root} data-quant-v2="">
     <QuantMiniBar product={product} />
     <QuantPhoto product={product} h={h} />
+    {/* 1 The rules in one look: minimum, cut-off, settlement; the risk said plainly. */}
+    <ul className={v2.facts}>
+      <li><small>{h.minLabel}</small><b>{usdtNumber(product.minSubscriptionAtomic, locale)} USDT</b></li>
+      <li><small>{h.cutoffLabel}</small><b>{h.cutoffShort}</b></li>
+      <li><small>{h.settleLabel}</small><b>{h.line}</b></li>
+    </ul>
+    <p className={v2.cardRisk}>{h.risk}</p>
 
     {sample && <p className={v2.sample}>{c.previewNotice}</p>}
     {(audience === 'holder' || audience === 'pending') && product.position && <div>
@@ -116,6 +165,7 @@ export function QuantOverview() {
       <small>{h.since}</small>
       <b className={v2.big} data-tone={toneOf(p.sinceInceptionPct)} dir="ltr">{signed(p.sinceInceptionPct)}</b>
       <p>{h.nav} {Number(p.index).toFixed(4)} · {h.days(p.days)}</p>
+      <p className={v2.basis}>{h.basis}</p>
       <dl className={v2.kpis}>
         <div><dt>{h.d7}</dt><dd data-tone={toneOf(p.last7d.pct)} dir="ltr">{signed(p.last7d.pct)}</dd></div>
         <div><dt>{h.d30}</dt><dd data-tone={toneOf(last30)} dir="ltr">{signed(last30)}</dd></div>
@@ -130,8 +180,8 @@ export function QuantOverview() {
       </>
       : <p className={v2.note}>{c.perfPending}</p>}
 
-    {wantsSubscribe && <section className={v2.sec}><h2>{h.process}</h2><QuantProcess preview={preview} c={c} /></section>}
     <section className={v2.sec}><h2>{h.specs}</h2><QuantSpecSheet product={product} c={c} /></section>
+    {wantsSubscribe && <section className={v2.sec}><h2>{h.process}</h2><QuantProcess preview={preview} c={c} /></section>}
 
     <div className={v2.foot}>
       <span>{c.riskLine}</span>
@@ -139,9 +189,9 @@ export function QuantOverview() {
     </div>
 
     {open
-      ? <div className={`${s.stickyCta} ${page.dockCta}`}>
+      ? <div className={s.stickyCta}>
         {preview.data && <CutoffPill preview={preview.data} locale={locale} />}
-        <button type="button" className={`${s.cta} ${page.cta}`} onClick={() => setSubscribeOpen(true)}>
+        <button type="button" className={`${s.cta} ${page.cta}`} onClick={() => openPath('/quant?step=subscribe')}>
           <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
         </button>
       </div>

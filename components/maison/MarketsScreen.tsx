@@ -22,7 +22,7 @@ import { sharedOpen } from '@/lib/market-shared-transition'
 import { productCover, sharedKeys } from '@/lib/product-media'
 import { MarketHero } from './MarketHero'
 import { PredictionFeed } from './PredictionFeed'
-import { QuantOverview } from './QuantOverview'
+import { QuantMarketCard } from './QuantOverview'
 
 // Koala Quant leads (2026-10-28): it replaced the Trade tab, whose pairs had no liquidity; /trade/:symbol still opens.
 const TABS = ['quant', 'predictions', 'baskets', 'assets'] as const
@@ -86,11 +86,11 @@ export function MarketsScreen({ query }: { query: string }) {
   })), [directory.data, locale])
   const counts = useMemo(() => Object.fromEntries(CLASSES.map((key) => [key, listed.filter((product) => product.assetClassId !== 'prediction' && (key === 'all' || product.assetClassId === key)).length])), [listed])
 
-  return <MaisonPage page="markets" dock cta={tab === 'quant'}>
+  return <MaisonPage page="markets" dock>
     {/* First-level page: the page opens on its own text menu, pinned under the status bar (docs/design-system.md §7.1). */}
     <TopTabs value={tab} onChange={setTab} label={m.title} options={TABS.map((key) => ({ value: key, label: m.tabs[TAB_LABEL_INDEX[key]] }))} />
 
-    {tab === 'quant' ? <QuantOverview /> : <>
+    {tab === 'quant' ? <QuantMarketCard /> : <>
       <MarketHero tab={tab} />
       <TickerTape items={tape} label={pro.tape} />
     </>}
