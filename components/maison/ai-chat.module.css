@@ -296,3 +296,7 @@ button.icon:active { transform: scale(.92); }
 .welcome[data-tray] ~ .chips { opacity: 0; pointer-events: none; }
 .welcome[data-tray] { animation: none; }
 .shell:has(.welcome[data-tray]) .chips { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+/* Legible over a long chat (2026-10-29, user: messages showed through the input and the notice card). The blur these
+   relied on is off app-wide, so both get a near-solid paper fill, and the AI layer's dock fades the thread out under them. */
+.noticeTray { background: color-mix(in srgb, var(--m-bg) 97%, transparent); }
+.shell[data-overlay] .dockWrap { background: linear-gradient(to top, var(--m-bg) 58%, color-mix(in srgb, var(--m-bg) 0%, transparent)); }

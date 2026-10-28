@@ -362,4 +362,4 @@
 - The personal centre (/profile) has no top bar: it slides in from the trailing edge (SwipePanel) and a horizontal swipe toward it goes back.
 - Sheets: the page behind frosts (blur 14px); 28px top radius, soft shadow, 36x5 grip, 32px round close.
 - Invitation plate: brand, the code alone in the open middle (tap copies the link), friends joined, a small printed QR; sized so the invite tab never scrolls.
-- Poster studio: four sizes, swipeable posters, real photographs instead of 3D renders.
+- Poster studio: four sizes and swipeable posters (the poster artwork itself is unchanged, by the user's call).

@@ -51,7 +51,6 @@ const templates: PosterTemplate[] = POSTER_PLATFORMS.flatMap(platform => {
   ]
   return styles.map((style, index) => ({ ...style, id: `${platform.id}-${index < 3 ? style.kind : style.style}`, platform: platform.id }))
 })
-const POSTER_PHOTOS: Record<PosterTemplate['art'], string> = { portal: 'photo-table', graphite: 'photo-night', connection: 'photo-sofa', night: 'photo-night', fold: 'photo-window', planes: 'photo-sofa' }
 export function posterTemplates(platform: string): PosterTemplate[] { return templates.filter(template => template.platform === platform) }
 export function invitationUrl(code: string): string {
   if (!/^[a-zA-Z0-9]{6,16}$/.test(code)) throw new Error('Invalid invitation code')
@@ -78,8 +77,7 @@ export function buildPosterModel(input: PosterInput) {
     description: (template.kind === 'purchase' ? copy.purchaseText : template.kind === 'fee' ? copy.feeText : copy.brandText).replace('{rate}', rate),
     rate, levels: numeric ? rates.map((value, index) => `${copy.level} ${index + 1}: ${pct(value)}`).join('   /   ') : '',
     disclaimer: copy.disclaimer, scanLabel: copy.scan, codeLabel: copy.code, steps: copy.steps,
-    // Real photographs (2026-10-29, photos over 3D): people at home with the app, white walls for the headline.
-    background: `/media/referral/posters/${POSTER_PHOTOS[template.art]}.webp`,
+    background: `/media/referral/posters/${template.art === 'night' ? 'night-v2' : template.art}.webp`,
     logo: `/brand/a-reit/logo-${template.dark ? 'dark' : 'light'}.svg`,
     filename: `A-REIT-${platform.id}-${template.style}-${input.locale}-v${input.rules.version}.png`,
   }

@@ -63,3 +63,5 @@
 @keyframes stopIn{from{transform:scale(.6);opacity:0}}
 @keyframes spin{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.pill,.stopGlyph{animation:none}.spin{animation-duration:3s}}
+/* Near-solid fill (2026-10-29): the thread never shows through the input. Recording keeps its ink capsule. */
+.wrap .composer:not([data-recording]){background:color-mix(in srgb,var(--m-bg,#fff) 97%,transparent)}

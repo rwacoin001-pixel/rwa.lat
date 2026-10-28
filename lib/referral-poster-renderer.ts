@@ -128,8 +128,7 @@ export async function drawReferralPoster(canvas: HTMLCanvasElement, model: Poste
   } else {
     // Reframe empty sky/floor instead of shrinking a photograph into a card.
     // The focal sculpture remains complete; only unused margins may leave the canvas.
-    // Share of each photo above the person's head (the wall or the night sky) that the copy may cover.
-    const empty = { portal: .24, statement: .28, connection: .26, skyline: .28, orbit: .22, terrace: .26 }[style]
+    const empty = { portal: .40, statement: .50, connection: .34, skyline: .38, orbit: .32, terrace: .36 }[style]
     const subjectEnd = .90, minimumCopy = model.rate || model.template.kind === 'guide' ? 260 : 220
     const space = footerY - 36 - body.y - minimumCopy
     const imageH = Math.min(W * art.height / art.width, space / (subjectEnd - empty))
