@@ -429,7 +429,8 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const [circle, setCircle] = useState<{ members: CircleMember[]; showToInviter: boolean } | null>(null)
   useEffect(() => { if (isGuest) { setCircle(null); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => undefined) }, [isGuest])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
-  const tabs = [{ key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }, ...(isGuest || embedded || !circle ? [] : [{ key: 'circle' as const, label: circleText.tab }])]
+  // My circle leads when there is one (2026-10-28): the people you invited come first.
+  const tabs = [...(isGuest || embedded || !circle ? [] : [{ key: 'circle' as const, label: circleText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
   const actions = usePostActions(isGuest, go, locale, (postId) => setItems((previous) => previous.map((item) => item.id === postId ? { ...item, commentCount: item.commentCount + 1 } : item)))
   const rowActions: RowActions = { guest: isGuest, onLogin: actions.login, onReply: actions.onReply, onShare: actions.onShare, onMore: actions.onMore }
 
@@ -510,11 +511,34 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   }, [view, embedded])
   const invite = inviteLabel[locale] ?? inviteLabel.en
   const pick = (next: CommunityView) => { if (next === view) { window.scrollTo({ top: 0 }); return } navigator.vibrate?.(4); setView(next); window.scrollTo({ top: 0 }) }
+  // Swipe between 社区 and 邀请 (2026-10-28): left goes to 邀请, right comes back. A swipe that starts on something that
+  // scrolls sideways itself (chips, image strips) belongs to that thing; mostly-vertical drags are scrolling.
+  const swipe = useRef<{ x: number; y: number; t: number } | null>(null)
+  const scrollsSideways = (target: EventTarget | null) => {
+    for (let el = target as HTMLElement | null; el && el !== document.body; el = el.parentElement) {
+      if (el.scrollWidth > el.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return true
+      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.getAttribute('role') === 'dialog') return true
+    }
+    return false
+  }
+  const swipeHandlers = embedded ? {} : {
+    onTouchStart: (event: React.TouchEvent) => { const touch = event.touches[0]; swipe.current = event.touches.length === 1 && !scrollsSideways(event.target) ? { x: touch.clientX, y: touch.clientY, t: Date.now() } : null },
+    onTouchEnd: (event: React.TouchEvent) => {
+      const start = swipe.current; swipe.current = null
+      if (!start) return
+      const touch = event.changedTouches[0], dx = touch.clientX - start.x, dy = touch.clientY - start.y
+      if (Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 1.6 || Date.now() - start.t > 700) return
+      const rtl = document.documentElement.dir === 'rtl'
+      const forward = rtl ? dx > 0 : dx < 0
+      if (forward && view === 'feed') pick('invite')
+      else if (!forward && view === 'invite') pick('feed')
+    },
+  }
 
   const pickSort = (next: 'latest' | 'hot' | 'circle') => { if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
-    <div className={c.x} data-embedded={embedded || undefined}>
+    <div className={c.x} data-embedded={embedded || undefined} data-view={view} {...swipeHandlers}>
       {/* Reading down slides the top row away; the tabs stay pinned. A small upward scroll brings it back (X mobile). */}
       <header className={c.head} data-hidden={chromeHidden}>
         {!embedded && <div className={`${c.headRow} ${c.headRowTabs}`}>

@@ -381,7 +381,7 @@ span.act { cursor: default; }
 /* My circle (2026-10-28): a small text tag after the handle, and the visibility switch at the end of the circle timeline. */
 .relation { flex: none; padding: 0 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--x-muted); font-size: 12px; font-weight: 500; line-height: 20px; white-space: nowrap; }
 .circleVisible { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px var(--m-gutter, 20px) 0; padding: 12px 0; border-top: .5px solid var(--x-line); cursor: pointer; }
-.circleVisible > span { display: grid; gap: 2px; min-width: 0; }
+.circleVisible > span { display: grid; flex: 1 1 auto; gap: 2px; min-width: 0; }
 .circleVisible b { color: var(--x-ink); font-size: 15px; font-weight: 500; line-height: 22px; }
 .circleVisible small { color: var(--x-muted); font-size: 12px; line-height: 16px; }
 /* The switch itself is the app's (maison .switchRow). */
@@ -399,3 +399,10 @@ span.act { cursor: default; }
 .bannerBlur img { position: absolute; inset: -20%; width: 140%; height: 140%; object-fit: cover; filter: blur(28px) saturate(1.2); transform: scale(1.1); }
 .bannerBlur::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .25), rgba(255, 255, 255, .05)); }
 :global(.rwa-mobile[data-theme='dark']) .bannerBlur::after { background: linear-gradient(180deg, rgba(0, 0, 0, .2), rgba(0, 0, 0, .35)); }
+
+/* Swiping 社区 ⇄ 邀请 (2026-10-28): the new view slides in from the side it came from. */
+.x[data-view='invite'] > :not(header) { animation: fromRight .32s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+.x[data-view='feed'] > ul, .x[data-view='feed'] > :global([data-state-block]) { animation: fromLeft .32s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+@keyframes fromRight { from { opacity: 0; transform: translateX(24px); } }
+@keyframes fromLeft { from { opacity: 0; transform: translateX(-24px); } }
+@media (prefers-reduced-motion: reduce) { .x[data-view] > * { animation: none !important; } }
