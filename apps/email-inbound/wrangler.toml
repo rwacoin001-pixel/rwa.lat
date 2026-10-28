@@ -1,0 +1,9 @@
+name = "a-reit-email-inbound"
+main = "src/index.ts"
+compatibility_date = "2026-10-29"
+workers_dev = false
+# account_id = "<CLOUDFLARE_ACCOUNT_ID>"
+
+[vars]
+INBOUND_EMAIL_API_URL = "https://api.a-reit.com/v1/internal/inbound-email"
+# Set INBOUND_EMAIL_SECRET with `wrangler secret put INBOUND_EMAIL_SECRET`.

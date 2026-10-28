@@ -4,7 +4,12 @@ import { createTransport, type Transporter } from 'nodemailer'
 const RESEND_EMAIL_ENDPOINT = 'https://api.resend.com/emails'
 
 export interface EmailDeliveryMessage {
-  to: string
+  to: string | string[]
+  from?: string
+  cc?: string[]
+  messageId?: string
+  inReplyTo?: string
+  references?: string[]
   subject: string
   text: string
   html?: string
@@ -86,8 +91,14 @@ export class EmailDeliveryClient {
           'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
         },
         body: JSON.stringify({
-          from: `${this.fromName} <${this.fromAddress}>`,
-          to: [message.to],
+          from: message.from ?? `${this.fromName} <${this.fromAddress}>`,
+          to: Array.isArray(message.to) ? message.to : [message.to],
+          cc: message.cc,
+          headers: {
+            ...(message.messageId ? { 'Message-ID': message.messageId } : {}),
+            ...(message.inReplyTo ? { 'In-Reply-To': message.inReplyTo } : {}),
+            ...(message.references?.length ? { References: message.references.join(' ') } : {}),
+          },
           subject: message.subject,
           text: message.text,
           html: message.html,

@@ -57,7 +57,7 @@ export class AdminCoreOpsService {
         signal: controller.signal,
       })
       const text = await response.text()
-      if (text.length > MAX_RESPONSE_BYTES) {
+      if (text.length > (path.startsWith('/mail/') ? 32 * 1024 * 1024 : MAX_RESPONSE_BYTES)) {
         throw new BadGatewayException({ code: 'CORE_ADMIN_OPS_FAILED', message: 'The core operations response was too large.' })
       }
       const data = text ? safeJson(text) : null
