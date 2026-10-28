@@ -26,3 +26,15 @@
 .face :global(.pb-dots) :global(circle) { animation: pbDot 1.2s ease-in-out infinite; }
 .face :global(.pb-dots) :global(circle:nth-child(2)) { animation-delay: .2s; }
 .face :global(.pb-dots) :global(circle:nth-child(3)) { animation-delay: .4s; }
+
+/* Press and tap (2026-10-28): the ball squashes under the finger and springs back; a ring of the AI's colours spreads
+   from it over the page as the AI layer opens; when the layer closes the ball pops back into the dock. */
+.host { transition: transform .32s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.orb:active .host { transform: scale(.86, .82); transition-duration: .1s; }
+.orb[data-back] .host { animation: orbBack .5s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+@keyframes orbBack { from { transform: scale(.4); opacity: 0; } }
+.ripple { position: fixed; z-index: 120; width: 64px; height: 64px; margin: -32px 0 0 -32px; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(circle, transparent 46%, rgba(25, 199, 170, .55) 60%, rgba(47, 128, 255, .45) 72%, rgba(123, 108, 255, .3) 84%, transparent 100%);
+  animation: orbRipple .8s cubic-bezier(.2, .7, .2, 1) forwards; }
+@keyframes orbRipple { from { transform: scale(.6); opacity: 1; } to { transform: scale(26); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .host { transition: none; } .orb[data-back] .host { animation: none; } }

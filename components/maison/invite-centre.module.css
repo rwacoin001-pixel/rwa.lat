@@ -98,7 +98,7 @@
   background: radial-gradient(circle at 10px 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px), radial-gradient(circle at calc(100% - 10px) 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px); }
 
 /* Ink card (card family, §7.9): the claimable money is the page's one dark card — white figures, a white claim pill. */
-.card.card { background: linear-gradient(160deg, #1a2230, #0b1018 70%); box-shadow: 0 18px 36px -22px rgba(11, 18, 32, .7); }
+.card.card { background: #111722; box-shadow: 0 18px 36px -22px rgba(11, 18, 32, .7); }
 .card.card .cardHead, .card.card .amount small, .card.card .stats dt { color: rgba(255, 255, 255, .62); }
 .card.card .amount span, .card.card .stats dd { color: #ffffff; }
 .card.card .stats { border-top-color: rgba(255, 255, 255, .12); }
@@ -124,16 +124,7 @@
 .receipt { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; padding: 8px 12px; border-radius: 12px; background: rgba(255, 255, 255, .08); color: #fff; font-size: 13px; font-weight: 500; line-height: 18px; animation: morph .32s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
 :global(.rwa-mobile) .card.card .receipt span { color: #fff; }
 
-/* Tear-off stub: the lower half of the pass follows the pull and tilts; past the line it drops away. */
-.stub { position: relative; transform: translateY(var(--pull, 0px)) rotate(var(--tilt, 0deg)); transform-origin: 12% 0; transition: transform .42s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
-.stub[data-pulling] { transition: none; }
-.stub[data-torn] { transform: translateY(160px) rotate(8deg); opacity: 0; transition: transform .26s ease-in, opacity .26s ease-in; }
-.grip.grip { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 32px; margin: -8px 0 4px; padding: 0 0 8px; border: 0; background: none; color: var(--m-faint); font: inherit; font-size: 12px; line-height: 16px; cursor: grab; touch-action: none; }
-.grip i { width: 32px; height: 4px; border-radius: 999px; background: var(--pa-fill-strong, rgba(11, 18, 32, .12)); }
-.grip.grip:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -2px; border-radius: 12px; }
-:global(.rwa-mobile) .pass.pass .grip span { color: var(--m-faint); }
-@media (prefers-reduced-motion: reduce) { .morph, .receipt, .ring { animation: none; } .stub, .claim.claim { transition: none; } }
-/* The stub may leave the pass while it is pulled: the pass no longer clips; the photo keeps its own rounded top. */
+@media (prefers-reduced-motion: reduce) { .morph, .receipt, .ring { animation: none; } .claim.claim { transition: none; } }
+/* The photo keeps its own rounded top. */
 .pass.pass { overflow: visible; }
 .photo.photo { overflow: hidden; border-radius: 28px 28px 0 0; }
-.stub[data-pulling] .linkRow, .stub[data-torn] .linkRow { background: var(--pa-card, #fff); border-radius: 0 0 22px 22px; box-shadow: var(--pa-card-shadow); }

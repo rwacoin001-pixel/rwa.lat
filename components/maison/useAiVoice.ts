@@ -67,7 +67,7 @@ export function useAiVoice(locale: string, onText: (text: string) => void, optio
     try {
       if (recognition.current) recognition.current.stop(); else (window as VoiceWindow).RwaNativeVoice?.stop()
       // Android sometimes emits only an interim result, or omits the final end callback.
-      if (active.current) releaseTimer.current = setTimeout(() => { if (textSoFar()) finish(); else { cancel(); setError('failed') } }, 6000)
+      if (active.current) releaseTimer.current = setTimeout(() => { if (textSoFar()) finish(); else { cancel(); setError('failed') } }, textSoFar() ? 1200 : 4000)
     } catch { if (textSoFar()) finish(); else { cancel(); setError('failed') } }
   }, [cancel, finish, textSoFar])
   useEffect(() => {

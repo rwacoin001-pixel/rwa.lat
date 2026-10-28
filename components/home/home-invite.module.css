@@ -104,3 +104,6 @@
 .panel { padding: 12px 12px 48px; gap: 8px; }
 .top { margin-bottom: 8px; }
 .faces { margin-top: -20px; }
+/* Solid grounds only (2026-10-28, user): no gradient on the panel. */
+.panel { background: #eef0f3; }
+:global(.rwa-mobile[data-theme='dark']) .panel { background: #1b1f26; }

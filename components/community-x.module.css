@@ -406,3 +406,7 @@ span.act { cursor: default; }
 @keyframes fromRight { from { opacity: 0; transform: translateX(24px); } }
 @keyframes fromLeft { from { opacity: 0; transform: translateX(-24px); } }
 @media (prefers-reduced-motion: reduce) { .x[data-view] > * { animation: none !important; } }
+
+/* Sheets show no scrollbar (2026-10-28): on phones it read as a stray bar on the right edge. */
+.sheet { scrollbar-width: none; }
+.sheet::-webkit-scrollbar { display: none; }

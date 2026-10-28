@@ -298,7 +298,7 @@ html[data-palette='a'] {
 
 /* Smoothness: frosted blur is recomputed every frame while the page scrolls, which phones feel as stutter. Only the
    floating dock keeps it; every other bar, chip and strip is a near-solid surface instead. */
-html[data-palette='a'] *:not(.liquid-dock__pill):not([data-ai-backdrop]) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html[data-palette='a'] *:not(.liquid-dock__pill):not([data-ai-backdrop]):not([data-glass-bar]) { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
 
 /* Trust center (2026-10-28, docs/design-system.md §6, §7): text-only rows in one paper card — no tinted icon tiles;
    the published-only note is one plain line without a warning icon. */
@@ -335,3 +335,19 @@ html[data-palette='a'] .liquid-dock > .ai-orb { margin-inline-start: auto; trans
 
 /* AI layer open (2026-10-28): the dock steps away under the veil; the conversation has its own input. */
 html[data-ai-open] .liquid-dock, html[data-ai-open] .ai-orb { visibility: hidden; }
+
+/* Top bars over content (2026-10-28, user): once the page scrolls under a bar — it comes back on a small upward
+   scroll — it wears frosted glass (translucent paper + blur), so its buttons and title never clash with what is under
+   it. At the top of a page the bar stays clear. Android keeps it opaque (no blur there). */
+html[data-palette='a'] .rwa-mobile.rwa-mobile .rwa-topbar.rwa-topbar--s1.rwa-topbar--s1[data-scrolled='true'] {
+  background: color-mix(in srgb, var(--m-bg, #f5f6f8) 72%, transparent) !important;
+  -webkit-backdrop-filter: blur(20px) saturate(1.6) !important; backdrop-filter: blur(20px) saturate(1.6) !important;
+  box-shadow: 0 .5px 0 rgba(11, 18, 32, .08) !important;
+}
+html[data-palette='a'] .rwa-mobile.rwa-mobile[data-theme='dark'] .rwa-topbar.rwa-topbar--s1.rwa-topbar--s1[data-scrolled='true'] { box-shadow: 0 .5px 0 rgba(255, 255, 255, .08) !important; }
+html[data-palette='a'][data-shell='android'] .rwa-mobile.rwa-mobile .rwa-topbar.rwa-topbar--s1.rwa-topbar--s1[data-scrolled='true'] {
+  background: color-mix(in srgb, var(--m-bg, #f5f6f8) 96%, transparent) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+}
+/* Community's own header: the same frosted glass. */
+html[data-palette='a'] .rwa-mobile [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #f5f6f8) 72%, transparent) !important; -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+html[data-palette='a'][data-shell='android'] .rwa-mobile [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #f5f6f8) 96%, transparent) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }

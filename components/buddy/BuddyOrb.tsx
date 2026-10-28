@@ -6,6 +6,7 @@ import { subscribeToast, getToast } from '@/lib/toast-store'
 import { useUnread } from '@/hooks/useUnread'
 import { useSignedIn } from '@/lib/maison-nav'
 import { watchUnread } from '@/lib/api/notification-stream'
+import { useAiOverlay } from '@/lib/ai-overlay'
 import styles from './Buddy.module.css'
 
 const QUIET_MS = 60_000
@@ -109,16 +110,44 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
     return () => { clearTimeout(quiet.current); events.forEach(name => window.removeEventListener(name, wake)) }
   }, [settle])
 
+  // Tap (2026-10-28): the ball squashes under the finger, springs, and a ring of the AI's colours spreads from it
+  // across the page as the AI layer arrives — the layer visibly comes out of the ball. When the layer closes, the
+  // ball pops back into the dock.
+  const button = useRef<HTMLButtonElement>(null)
+  const opening = useRef(false)
   const tap = () => {
+    if (opening.current) return
     const b = buddy.current
-    navigator.vibrate?.(6)
+    navigator.vibrate?.([8, 40, 12])
     if (b?.mood === 'sleep') b.set('wake')
     b?.spin(); b?.hop()
-    onOpenAi()
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    const rect = button.current?.getBoundingClientRect()
+    if (rect && !reduced) {
+      const ripple = document.createElement('span')
+      ripple.className = styles.ripple
+      ripple.setAttribute('aria-hidden', 'true')
+      ripple.style.left = `${rect.left + rect.width / 2}px`
+      ripple.style.top = `${rect.top + rect.height / 2}px`
+      document.body.appendChild(ripple)
+      window.setTimeout(() => ripple.remove(), 900)
+    }
+    opening.current = true
+    window.setTimeout(() => { opening.current = false; onOpenAi() }, reduced ? 0 : 140)
   }
+  const { open } = useAiOverlay()
+  const wasOpen = useRef(open)
+  useEffect(() => {
+    if (wasOpen.current && !open) {
+      const el = button.current
+      if (el) { el.dataset.back = ''; window.setTimeout(() => { delete el.dataset.back }, 520) }
+      buddy.current?.hop()
+    }
+    wasOpen.current = open
+  }, [open])
 
   return <>
-    <button type="button" className={`ai-orb ${styles.orb}`} data-active={active || undefined} aria-label={unread > 0 ? `${label} · ${unread}` : label} title={label} onClick={tap}>
+    <button ref={button} type="button" className={`ai-orb ${styles.orb}`} data-active={active || undefined} aria-label={unread > 0 ? `${label} · ${unread}` : label} title={label} onClick={tap}>
       <span ref={host} className={styles.host} aria-hidden="true" />
     </button>
   </>

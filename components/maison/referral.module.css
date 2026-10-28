@@ -235,3 +235,6 @@
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .ref :is(.amount span, .teamLevels b) { font-weight: 600; }
+
+/* No scrollbar in sheets (2026-10-28): on phones it showed as a stray vertical bar on the right. */
+.sheetBody{scrollbar-width:none}.sheetBody::-webkit-scrollbar{display:none}

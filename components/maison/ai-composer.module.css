@@ -30,3 +30,10 @@
 .recording[data-cancel] .live{color:var(--m-down,#b64c4c);text-decoration:line-through;text-decoration-thickness:1px}
 @keyframes composerSweep{to{--composer-sweep:360deg}}
 @media(prefers-reduced-motion:reduce){.wrap .composer{transition:none}.wrap .composer:focus-within:not([data-recording]){transform:none}.wrap .composer[data-busy]::before{animation:none;--composer-sweep:300deg}.wrap .send{animation:none;transition:none}}
+
+/* Hold to talk (2026-10-28): the bar answers the finger at once — a filled, slightly pressed bar and a tick — and stays
+   filled while held; the cancel zone turns it red. */
+.wrap .composer .hold{transition:transform .16s var(--pa-ease-spring,cubic-bezier(.34,1.56,.64,1)),background-color .16s ease}
+.wrap .composer .hold[data-held]{transform:scale(.98);background:color-mix(in srgb,var(--m-ink,#0b1220) 8%,transparent)}
+.composer[data-cancel] .hold[data-held]{background:color-mix(in srgb,var(--m-down,#b64c4c) 14%,transparent)}
+@media (prefers-reduced-motion:reduce){.wrap .composer .hold{transition:none}}

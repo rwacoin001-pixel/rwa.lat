@@ -202,12 +202,12 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
                 <QRCodeSVG value={link} size={48} marginSize={0} level="M" bgColor="#ffffff" fgColor="#0b1220" title={t('邀请链接二维码', 'Invitation QR code')} />
               </button>
             </div>
-            <TearStub label={t('往下拉，撕下二维码', 'Pull down to tear off the QR code')} onTear={() => setSheet('qr')}>
+            <div>
               <div className={v.linkRow}>
                 <span dir="ltr">{link.replace(/^https?:\/\//, '')}</span>
                 <button type="button" onClick={openEdit} aria-haspopup="dialog">{t('修改邀请码', 'Edit code')}</button>
               </div>
-            </TearStub>
+            </div>
           </>}
       </section>
       {code && <div className={v.actions}>
@@ -317,35 +317,6 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       <CodeForm code={code} busy={saving} error={editError} onSave={next => void save(next)} onDraftChange={() => setEditError('')} t={t} />
     </ReferralSheet>}
     {sheet === 'poster' && code && sum && <ReferralPosterComposer key={code} code={code.toUpperCase()} summary={sum} locale={locale} theme={theme} inertRef={rootRef} onClose={closeSheet} sourceReady={!summary.loading && !me.loading && !summary.error && !me.error} />}
-  </div>
-}
-
-/**
- * Tear-off stub (2026-10-28, after the "tear-off sheet" reference): the lower half of the invite pass follows a downward
- * pull on its grip, tilting a little; past the line it tears away and the QR sheet opens; short of it, it springs back.
- * Only the grip takes the gesture (the page still scrolls everywhere else), and tapping the grip opens the sheet too.
- */
-function TearStub({ label, onTear, children }: { label: string; onTear: () => void; children: ReactNode }) {
-  const [pull, setPull] = useState(0), [torn, setTorn] = useState(false)
-  const start = useRef<{ y: number; id: number } | null>(null), moved = useRef(false)
-  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  const finish = () => {
-    const tear = pull > 56
-    start.current = null
-    if (!tear) { setPull(0); return }
-    navigator.vibrate?.(12)
-    setTorn(true)
-    window.setTimeout(() => { onTear(); setTorn(false); setPull(0) }, reduced ? 0 : 260)
-  }
-  return <div className={v.stub} data-torn={torn || undefined} data-pulling={pull > 0 || undefined} style={{ '--pull': `${pull}px`, '--tilt': `${Math.min(pull / 18, 4)}deg` } as CSSProperties}>
-    {children}
-    <button type="button" className={v.grip} aria-label={label}
-      onClick={() => { if (!moved.current) onTear(); moved.current = false }}
-      onPointerDown={(event) => { start.current = { y: event.clientY, id: event.pointerId }; moved.current = false; try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* capture is a nicety */ } }}
-      onPointerMove={(event) => { if (!start.current || start.current.id !== event.pointerId) return; const dy = Math.max(0, event.clientY - start.current.y); if (dy > 4) moved.current = true; setPull(Math.min(dy * .8, 120)) }}
-      onPointerUp={finish} onPointerCancel={() => { start.current = null; setPull(0) }}>
-      <i aria-hidden="true" /><span>{label}</span>
-    </button>
   </div>
 }
 

@@ -540,7 +540,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const feed = (
     <div className={c.x} data-embedded={embedded || undefined} data-view={view} {...swipeHandlers}>
       {/* Reading down slides the top row away; the tabs stay pinned. A small upward scroll brings it back (X mobile). */}
-      <header className={c.head} data-hidden={chromeHidden}>
+      <header className={c.head} data-hidden={chromeHidden} data-glass-bar="">
         {!embedded && <div className={`${c.headRow} ${c.headRowTabs}`}>
           <div className={c.pageTabs} role="tablist" aria-label={t('nav.community')}>
             {([['feed', t('nav.community')], ['invite', invite.tab]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={view === key} onClick={() => pick(key)}>{label}</button>)}
@@ -641,7 +641,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
   return (
     <MaisonPage page="community-post" className={c.page}>
       <div className={c.x} data-reply-bar={data ? '' : undefined}>
-        <header className={c.subHead} data-hidden={chromeHidden}>
+        <header className={c.subHead} data-hidden={chromeHidden} data-glass-bar="">
           <BackButton label={p.back} onClick={() => go('community')} />
           <h1 className={c.subTitle}><b>{p.post}</b></h1>
           {postId && <button type="button" className={c.circleBtn} aria-label={t('community.report')} aria-haspopup="dialog" onClick={openMenu}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>}
