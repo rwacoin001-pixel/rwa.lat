@@ -29,7 +29,8 @@
 
 /* Empty holdings: the porcelain stopwatch, one line, a porcelain pill into Koala Quant and a quiet link to markets. */
 .empty { display: grid; justify-items: center; gap: 8px; padding: 16px 16px 24px; text-align: center; }
-.empty img { width: 112px; height: 112px; filter: drop-shadow(0 10px 12px rgba(15, 23, 42, .16)); animation: float 5.2s ease-in-out infinite; }
+.emptyPhoto { justify-self: stretch; height: 168px; overflow: hidden; border-radius: 22px; background: #d9d4cc; box-shadow: var(--pa-card-shadow); }
+.emptyPhoto img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 35%; }
 .empty h3 { margin: 8px 0 0; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
 .empty p { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
 .emptyGo { display: inline-flex; align-items: center; gap: 8px; height: 44px; margin-top: 12px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--pa-tile-bg); color: var(--pa-tile-ink); box-shadow: var(--pa-tile-shadow); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }

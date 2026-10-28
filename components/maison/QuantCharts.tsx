@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from 'react'
 import { CalendarClock, Coins, Percent, Target } from 'lucide-react'
+import { motion } from 'motion/react'
 import { useI18n } from '@/lib/i18n'
 import type { QuantProduct } from '@/lib/api/quant'
 import type { QuantCopy } from '@/lib/maison-quant-copy'
@@ -211,7 +212,7 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
       <div>
         <h2>{c.charts.navTitle}</h2><p>{c.charts.navSub}</p>
         <div className={styles.ranges} role="group" aria-label={c.charts.ranges.label}>
-          {(['d7', 'd30', 'all'] as const).map((key) => <button key={key} type="button" aria-pressed={range === key} onClick={() => setRange(key)}>{c.charts.ranges[key]}</button>)}
+          {(['d7', 'd30', 'all'] as const).map((key) => <button key={key} type="button" aria-pressed={range === key} onClick={() => setRange(key)}>{range === key && <motion.i layoutId="quant-range-thumb" className={styles.rangeThumb} transition={{ type: 'spring', stiffness: 520, damping: 40 }} aria-hidden="true" />}<span>{c.charts.ranges[key]}</span></button>)}
         </div>
       </div>
       <div className={styles.readout} key={focus.date}>
@@ -244,7 +245,7 @@ export function QuantNavChart({ product, ticks, selected, onSelect, c }: { produ
         <circle className={styles.dot} cx={fx} cy={fy} r="3.4" />
       </svg>
       {/* The day's move lives in the daily-return card; here it only appears for a day the reader picked. */}
-      {pickedDate && found >= 0 && <div className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>}
+      {pickedDate && found >= 0 && <div className={styles.tip} style={{ left, transform: `translateX(${fx / W > .84 ? -92 : fx / W < .2 ? -8 : -50}%)` }}><small>{shortDate(focus.date)} · {focus.nav.toFixed(4)}</small> <span className={focus.value < 0 ? styles.down : styles.up}>{formatPct(focus.value)}</span></div>}
     </div>
     <DateAxis dates={shownDates} left={`${(x(series.length - shownDates.length) / W) * 100}%`} right={`${(PAD.right / W) * 100}%`} />
     </div>

@@ -1,18 +1,19 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
-import { getQuantSubscriptionPreview, useQuantProducts, type QuantProduct } from '@/lib/api/quant'
-import { quantCopyFor } from '@/lib/maison-quant-copy'
+import { getQuantSubscriptionPreview, useQuantProducts, type QuantPayout, type QuantProduct, type QuantSubscriptionPreview } from '@/lib/api/quant'
+import { quantCopyFor, type QuantCopy } from '@/lib/maison-quant-copy'
 import { demoProduct } from '@/lib/quant-demo'
-import { buildTicks, localToday, quantAudience, type Tick } from '@/lib/quant-view-model'
+import { buildTicks, localToday, quantAudience, subscriptionTimeline, type Tick } from '@/lib/quant-view-model'
 import { Skeleton, StateBlock, maison as s } from './primitives'
 import { QuantDisclosureSheet } from './QuantDisclosureSheet'
 import { QuantDailyBars, QuantNavChart } from './QuantCharts'
 import { QuantProcess, QuantSpecSheet } from './QuantSpec'
 import { QuantStrip } from './QuantAccount'
+import { QuantReceipt } from './QuantParts'
 import { useQuantProduct } from './QuantPositionCard'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import { ShareWinLine, type WinMoment } from './ShareWin'
@@ -40,6 +41,8 @@ export const quantHeroCopy = (locale: AppLocale) => hero[locale] ?? hero.en
 const signed = (value: number | null | undefined) => value === null || value === undefined ? '—' : `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(2)}%`
 const toneOf = (value: number | null | undefined) => value === null || value === undefined || value === 0 ? undefined : value > 0 ? 'up' : 'down'
 
+const daysSince = (first: string | undefined, today: string) => first ? Math.min(800, Math.max(1, Math.round((Date.parse(`${today}T00:00:00Z`) - Date.parse(`${first}T00:00:00Z`)) / 86_400_000) + 1)) : 30
+
 /** Everything the quant views read: the first product, its detail (sample figures only with ?preview=1), who is looking, the ticks. */
 export function useQuantView() {
   const list = useQuantProducts()
@@ -58,7 +61,8 @@ export function useQuantView() {
   }, [raw, sample])
   const audience = quantAudience(product?.position)
   const ticks = useMemo(() => product
-    ? buildTicks(product.history.map((row) => ({ date: row.tradeDate, value: Number(row.netReturnPct) })), { today: localToday(product.timezone), count: 30 })
+    // Every settled day since inception (2026-10-28; was the last 30), so any day can be picked on the charts and the strip.
+    ? buildTicks(product.history.map((row) => ({ date: row.tradeDate, value: Number(row.netReturnPct) })), { today: localToday(product.timezone), count: daysSince(product.history[0]?.tradeDate, localToday(product.timezone)) })
     : [], [product])
   return { list, slug, detail, product, sample, audience, ticks }
 }
@@ -96,6 +100,7 @@ export function QuantOverview() {
   const last30 = p.last30d.pct
   const open = wantsSubscribe && product.open
   return <div className={root} data-quant-v2="" role="tabpanel">
+    <QuantMiniBar product={product} />
     <QuantPhoto product={product} h={h} />
 
     {sample && <p className={v2.sample}>{c.previewNotice}</p>}
@@ -132,6 +137,7 @@ export function QuantOverview() {
 
     {open
       ? <div className={`${s.stickyCta} ${page.dockCta}`}>
+        {preview.data && <CutoffPill preview={preview.data} locale={locale} />}
         <button type="button" className={`${s.cta} ${page.cta}`} onClick={() => setSubscribeOpen(true)}>
           <span>{c.subscribe}</span><span className={s.ctaIcon}><ArrowRight size={17} aria-hidden="true" /></span>
         </button>
@@ -144,14 +150,111 @@ export function QuantOverview() {
   </div>
 }
 
+/**
+ * 15:00 pill (2026-10-28, after the "focus timer" reference): one small line above the subscribe key — when today's
+ * cut-off is; tap and it opens sideways into the three real dates from the server preview (submit, start, first
+ * settlement); tap again to fold. No countdown: the time is information, not pressure.
+ */
+const cutoffCopy: Record<string, { before: (t: string) => string; after: (t: string) => string; submit: string; start: string; settle: string }> = {
+  en: { before: (time) => `Cut-off ${time} today (Singapore)`, after: (time) => `Past ${time}: counts from the next day`, submit: 'Submit', start: 'Starts', settle: 'First settled' },
+  'zh-CN': { before: (time) => `今天 ${time} 截止（新加坡时间）`, after: (time) => `已过 ${time}，按下一个交易日`, submit: '提交', start: '起息', settle: '首次结算' },
+}
+export function CutoffPill({ preview, locale }: { preview: QuantSubscriptionPreview; locale: AppLocale }) {
+  const c = cutoffCopy[locale] ?? cutoffCopy.en
+  const [open, setOpen] = useState(false)
+  const time = preview.cutoffTime.slice(0, 5)
+  const day = (date: string) => new Intl.DateTimeFormat(locale, { month: 'numeric', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
+  const steps = subscriptionTimeline(preview)
+  return <button type="button" className={v2.cutoff} data-open={open || undefined} aria-expanded={open} onClick={() => setOpen((value) => !value)}>
+    <i aria-hidden="true" />
+    {open
+      ? <span className={v2.cutoffSteps}>{steps.map((step, i) => <span key={step.key}>{i > 0 && <em aria-hidden="true">→</em>}{[c.submit, c.start, c.settle][i]} <b dir="ltr">{day(step.date)}</b></span>)}</span>
+      : <span>{preview.afterCutoff ? c.after(time) : c.before(time)}</span>}
+  </button>
+}
+
+/**
+ * When the photo has scrolled away, a slim bar slides in under the page menu with the name and the since-inception
+ * figure (2026-10-28, the "photo drawer" reference used the other way round), so the reader never loses which product
+ * and how it has done. The risk text is never covered: the bar is one line.
+ */
+function QuantMiniBar({ product }: { product: QuantProduct }) {
+  const [show, setShow] = useState(false)
+  useEffect(() => {
+    const photo = document.querySelector('[data-quant-photo]')
+    if (!photo || typeof IntersectionObserver === 'undefined') return
+    const io = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting && entry.boundingClientRect.top < 0), { threshold: 0 })
+    io.observe(photo)
+    return () => io.disconnect()
+  }, [])
+  const pct = product.performance.sinceInceptionPct
+  return <div className={v2.mini} data-show={show || undefined} aria-hidden={!show}>
+    <b>{product.name}</b>{pct !== null && <span data-tone={toneOf(pct)} dir="ltr">{signed(pct)}</span>}
+  </div>
+}
+
 /** The home "For you" photo, as the head of the tab: the same picture and glass chip, so tapping through feels continuous. */
 export function QuantPhoto({ product, h }: { product: QuantProduct; h: HeroCopy }) {
   const pct = product.performance.last30d.pct
-  return <div className={v2.photo}>
+  return <div className={v2.photo} data-quant-photo="">
     <img src="/media/home/cards/quant-720.webp" alt="" width={720} height={450} decoding="async" />
     {pct !== null && <span className={v2.chip} dir="ltr">{h.last30} · {signed(pct)}</span>}
     <span className={v2.photoText}><strong>{product.name}</strong><small>{h.line}</small></span>
   </div>
+}
+
+/**
+ * Date strip on "My Koala Quant" (2026-10-28, after the "date strip" reference): one row of days, newest at the end,
+ * each with a gain or loss dot; the month above follows the row as it scrolls. Tap a day and its slip opens below:
+ * the product's settled return that day, and — only if you held — your own payout (net, fees). Never one from the other.
+ */
+export function QuantDateStrip({ product, payouts, locale, copy }: { product: QuantProduct; payouts: QuantPayout[] | undefined; locale: AppLocale; copy: QuantCopy }) {
+  const zh = locale === 'zh-CN'
+  const today = localToday(product.timezone)
+  const first = product.history[0]?.tradeDate ?? today
+  const days = useMemo(() => {
+    const out: string[] = []
+    for (let d = Date.parse(`${first}T00:00:00Z`); d <= Date.parse(`${today}T00:00:00Z`) && out.length < 800; d += 86_400_000) out.push(new Date(d).toISOString().slice(0, 10))
+    return out
+  }, [first, today])
+  const rows = useMemo(() => new Map(product.history.map((row) => [row.tradeDate, Number(row.netReturnPct)])), [product.history])
+  const paid = useMemo(() => new Map((payouts ?? []).map((row) => [row.tradeDate, row])), [payouts])
+  const lastSettled = [...days].reverse().find((date) => rows.has(date)) ?? today
+  const [picked, setPicked] = useState(lastSettled)
+  const [month, setMonth] = useState(lastSettled.slice(0, 7))
+  const strip = useRef<HTMLDivElement>(null)
+  useEffect(() => { const el = strip.current; if (el) el.scrollLeft = el.scrollWidth }, [days.length])
+  // The month label follows the day nearest the middle of the row.
+  const onScroll = () => {
+    const el = strip.current
+    if (!el) return
+    const mid = el.scrollLeft + el.clientWidth / 2
+    const child = [...el.children].find((node) => (node as HTMLElement).offsetLeft + (node as HTMLElement).offsetWidth > mid) as HTMLElement | undefined
+    const date = child?.dataset.date
+    if (date && date.slice(0, 7) !== month) setMonth(date.slice(0, 7))
+  }
+  const fmtMonth = (m: string) => new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${m}-01T00:00:00Z`))
+  const weekday = (date: string) => new Intl.DateTimeFormat(locale, { weekday: 'narrow', timeZone: 'UTC' }).format(new Date(`${date}T00:00:00Z`))
+  const value = rows.get(picked)
+  const payout = paid.get(picked)
+  return <section className={v2.strip} aria-label={zh ? '每日结算' : 'Daily settlement'}>
+    <header><h2>{fmtMonth(month)}</h2><small>{zh ? '点一天，看当天结算' : 'Tap a day to see its settlement'}</small></header>
+    <div ref={strip} className={v2.days} onScroll={onScroll} role="listbox" aria-label={zh ? '日期' : 'Dates'}>
+      {days.map((date) => {
+        const r = rows.get(date)
+        const kind = r === undefined ? (date === today ? 'today' : 'none') : r > 0 ? 'gain' : r < 0 ? 'loss' : 'flat'
+        return <button key={date} type="button" role="option" data-date={date} data-kind={kind} aria-selected={date === picked} onClick={() => setPicked(date)}
+          aria-label={`${date} ${r === undefined ? '—' : signed(r)}`}>
+          <small>{weekday(date)}</small><b>{Number(date.slice(8))}</b><i aria-hidden="true" />
+        </button>
+      })}
+    </div>
+    <div key={picked} className={v2.slip}>
+      <div className={v2.slipRow}><span>{zh ? '产品当日涨跌' : 'Product that day'}</span><b data-tone={value === undefined ? undefined : value > 0 ? 'up' : value < 0 ? 'down' : undefined} dir="ltr">{value === undefined ? (picked === today ? (zh ? '待结算' : 'Pending') : '—') : signed(value)}</b></div>
+      {payout ? <QuantReceipt payout={payout} copy={copy} locale={locale} />
+        : <p className={v2.slipNote}>{zh ? '这一天你没有持仓，所以没有个人到账。' : 'You held nothing that day, so there is no payout of yours.'}</p>}
+    </div>
+  </section>
 }
 
 /**

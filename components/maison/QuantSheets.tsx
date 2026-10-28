@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { Check } from 'lucide-react'
 import { Sheet } from './Sheet'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
@@ -41,12 +42,16 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
   const [pending, setPending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [doneDate, setDoneDate] = useState<string | null>(null)
+  // Steps (2026-10-28): amount → review → receipt; an error shows after leaving the field or tapping Next, with one shake.
+  const [step, setStep] = useState<'amount' | 'review'>('amount')
+  const [touched, setTouched] = useState(false)
+  const [shake, setShake] = useState(0)
   const keys = useRef(new Map<string, string>())
   const wallet = useQuery(open ? 'wallet:summary:quant' : null, getWallet, { staleTime: 15_000 })
   const preview = useQuery(open ? `quant:preview:${product.slug}` : null, () => getQuantSubscriptionPreview(product.slug), { staleTime: 20_000 })
   const disclosure = useQuery(open && product.disclosureId ? 'quant:disclosure' : null, getQuantDisclosure, { staleTime: 5 * 60_000 })
   useHideDock(open)
-  useEffect(() => { if (!open) { setAmount(''); setAck(false); setError(null); setDoneDate(null); setPending(false) } }, [open])
+  useEffect(() => { if (!open) { setAmount(''); setAck(false); setError(null); setDoneDate(null); setPending(false); setStep('amount'); setTouched(false) } }, [open])
 
   const available = wallet.data?.balances.availableAtomic ?? null
   const value = atomicOf(amount.trim())
@@ -99,15 +104,26 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
     { title: c.sheet.stepSettle, body: c.sheet.stepSettleBody },
   ]
 
+  const next = () => {
+    setTouched(true)
+    if (!amount.trim() || value === null || problem) { setShake((n) => n + 1); navigator.vibrate?.(14); return }
+    setStep('review')
+  }
+  const shown = touched ? problem ?? (amount.trim() ? null : c.sheet.errors.QUANT_AMOUNT_INVALID) : null
+  const amountText = value !== null && !problem ? usdtNumber(value.toString(), locale) : '—'
+
   return <Sheet open={open} onClose={onClose} busy={pending} kicker={c.kicker} title={doneDate ? c.sheet.done : c.sheet.subscribeTitle}>
+    <AutoHeight>
     {doneDate
-      ? <>
+      ? <div className={styles.stepPane} key="done">
+        <span className={styles.doneMark} aria-hidden="true"><Check size={28} strokeWidth={2.4} /></span>
         <p className={s.lede}>{c.sheet.doneSubscribe(doneDate)}</p>
         <button type="button" className={s.cta} style={{ marginTop: 16 }} onClick={onClose}><span>{c.sheet.close}</span></button>
-      </>
-      : <>
-        <label className={styles.amountBox}>
-          <input inputMode="decimal" autoComplete="off" placeholder="0.00" value={amount} aria-label={c.sheet.amount} aria-invalid={Boolean(problem) || undefined}
+      </div>
+      : step === 'amount' ? <div className={styles.stepPane} key="amount">
+        <label key={shake} className={styles.amountBox} data-shake={shake > 0 && shown ? '' : undefined}>
+          <input inputMode="decimal" autoComplete="off" placeholder="0.00" value={amount} aria-label={c.sheet.amount} aria-invalid={Boolean(shown) || undefined}
+            onBlur={() => { if (amount.trim()) setTouched(true) }}
             onChange={(event) => { setAmount(event.target.value.replace(/[^0-9.]/g, '')); setError(null) }} />
           <span>USDT</span>
         </label>
@@ -117,23 +133,49 @@ export function QuantSubscribeSheet({ open, onClose, product }: { open: boolean;
         <div className={styles.chips} aria-label={c.sheet.quick}>
           {[100, 500, 1000].map((quick) => <button key={quick} type="button" onClick={() => { setAmount(String(quick)); setError(null) }}>{quick.toLocaleString(locale)}</button>)}
         </div>
-        {problem && <p className={styles.err} role="alert">{problem}</p>}
-
-        <p className={s.kicker} style={{ marginTop: 20 }}>{c.sheet.timelineTitle}</p>
+        {shown && <p className={styles.err} role="alert">{shown}</p>}
+        <button type="button" className={s.cta} style={{ marginTop: 20 }} disabled={available === null || !preview.data} onClick={next}>
+          <span>{c.sheet.next}</span>
+        </button>
+      </div>
+      : <div className={styles.stepPane} key="review">
+        <dl className={styles.review}>
+          <div><dt>{c.sheet.amount}</dt><dd>{amountText} USDT</dd></div>
+          <div><dt>{c.sheet.feeLine}</dt><dd>{c.sheet.feeValue((product.fees.managementBps / 100).toFixed(2), (product.fees.performanceBps / 100).toFixed(0))}</dd></div>
+        </dl>
+        <p className={s.kicker} style={{ marginTop: 16 }}>{c.sheet.timelineTitle}</p>
         {p
-          ? <Timeline steps={steps.map((step, index) => ({ ...stepCopy[index], date: step.date, done: index === 0 }))} />
+          ? <Timeline steps={steps.map((item, index) => ({ ...stepCopy[index], date: item.date, done: index === 0 }))} />
           : <p className={s.muted} style={{ fontSize: 12 }}>…</p>}
         {p?.afterCutoff && <p className={s.muted} style={{ margin: '-4px 0 0', fontSize: 12 }}>{c.sheet.afterCutoff}</p>}
-
         <div className={s.notice}><span>{c.riskLine}</span></div>
         {needsAck && disclosure.error && !disclosure.data && <p className={styles.err} role="alert">{c.loadError} <button type="button" className={s.link} onClick={() => void disclosure.refetch()}>{c.retry}</button></p>}
         {needsAck && <label className={styles.ack}><input type="checkbox" checked={ack} onChange={(event) => setAck(event.target.checked)} /><span>{c.sheet.ack}{disclosure.data ? ` · v${disclosure.data.version}` : ''}</span></label>}
         {error && <p className={styles.err} role="alert">{error}</p>}
-        <button type="button" className={s.cta} style={{ marginTop: 16 }} disabled={!ready} onClick={() => void submit()}>
-          <span>{c.sheet.confirmSubscribe(value !== null && !problem ? usdtNumber(value.toString(), locale) : '—')}</span>
-        </button>
-      </>}
+        <div className={styles.reviewActs}>
+          <button type="button" className={s.ghost} disabled={pending} onClick={() => setStep('amount')}>{c.sheet.back}</button>
+          {/* The confirm key folds into a ring while the server works; the receipt replaces the sheet only once it confirms. */}
+          <button type="button" className={`${s.cta} ${styles.confirm}`} data-busy={pending || undefined} disabled={!ready} aria-busy={pending} onClick={() => void submit()}>
+            {pending ? <i className={styles.ring} aria-hidden="true" /> : <span>{c.sheet.confirmSubscribe(amountText)}</span>}
+          </button>
+        </div>
+      </div>}
+    </AutoHeight>
   </Sheet>
+}
+
+/** Animates its own height to its content (step changes), so the sheet grows and shrinks smoothly. */
+function AutoHeight({ children }: { children: ReactNode }) {
+  const inner = useRef<HTMLDivElement>(null)
+  const [height, setHeight] = useState<number | 'auto'>('auto')
+  useEffect(() => {
+    const el = inner.current
+    if (!el || typeof ResizeObserver === 'undefined') return
+    const observer = new ResizeObserver(([entry]) => setHeight(Math.ceil(entry.contentRect.height)))
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+  return <div className={styles.autoHeight} style={{ height }}><div ref={inner}>{children}</div></div>
 }
 
 export function QuantRedeemSheet({ open, onClose, product }: { open: boolean; onClose: () => void; product: QuantProduct }) {

@@ -34,7 +34,6 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
 import { sharedKeys } from '@/lib/product-media'
-import { porcelainCut } from '@/lib/home-asset-media'
 
 // Portfolio amounts are in the platform unit (USDT / USD quote, 6 decimals).
 const DECIMALS = 6
@@ -349,8 +348,9 @@ function EmptyHoldings() {
   const { locale } = useI18n()
   const p = portfolioCopy[locale]
   const c = (EMPTY_COPY[locale] ?? EMPTY_COPY.en)!
+  // A real photo, not a 3D prop (2026-10-28): the same Koala Quant picture as Home's "For you".
   return <div className={pa.empty}>
-    <img src={porcelainCut('quant', 240)} alt="" width={112} height={112} decoding="async" />
+    <div className={pa.emptyPhoto}><img src="/media/home/cards/quant-720.webp" alt="" width={720} height={450} decoding="async" /></div>
     <h3>{c.title}</h3>
     <p>{c.body}</p>
     <button type="button" className={pa.emptyGo} onClick={() => openPath('/markets?tab=quant')}>{c.go}<ArrowRight size={16} strokeWidth={2} aria-hidden="true" /></button>

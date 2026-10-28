@@ -108,7 +108,8 @@ export function AiNoticeTray({ locale, disabled, onAsk, onSummary, hidden }: { l
             <button type="button" className={a.noticeOpen} disabled={blocked} onClick={() => read(notice)}><span className={a.noticeMeta}><b>{c.topics[topicOf(notice.kind)]}</b><time dateTime={notice.createdAt}>{formatTime(notice.createdAt, locale, { relative: true })}</time></span><strong dir="auto">{notice.title}</strong>{notice.body && <small dir="auto">{notice.body}</small>}</button>
             <button type="button" className={a.noticeAsk} disabled={blocked} onClick={() => read(notice, true)}>{c.ask}</button>
           </li>)}</ul>
-          <div className={a.noticeFooter}><button type="button" disabled={blocked} onClick={allRead}>{c.all}</button>{snapshot.unread > 5 && <button type="button" disabled={blocked} onClick={() => openPath('/notifications')}>{c.more}</button>}<button type="button" className={a.noticeSummary} disabled={blocked} aria-busy={busy === 'summary'} aria-label={c.summary} onClick={summary}>{busy === 'summary' ? '…' : c.summary}</button></div>
+          {/* "Mark all read" is the main action (2026-10-28); the AI summary is a quiet extra. */}
+          <div className={a.noticeFooter}><button type="button" disabled={blocked} aria-busy={busy === 'summary'} aria-label={c.summary} onClick={summary}>{busy === 'summary' ? '…' : c.summary}</button>{snapshot.unread > 5 && <button type="button" disabled={blocked} onClick={() => openPath('/notifications')}>{c.more}</button>}<button type="button" className={a.noticeSummary} disabled={blocked} aria-busy={busy === 'read'} onClick={allRead}>{busy === 'read' ? '…' : c.all}</button></div>
         </div></div>
       </div>
       <button type="button" className={a.noticeToggle} aria-expanded={expanded} aria-controls={panelId} aria-label={`${snapshot.unread} ${c.unread} · ${item.title}`} onClick={() => { if (!expanded) navigator.vibrate?.(6); setExpanded(value => !value) }}>

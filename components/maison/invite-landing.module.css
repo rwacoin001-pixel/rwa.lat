@@ -18,3 +18,8 @@
 :global(.rwa-mobile) .root.root .risk { color: var(--m-faint); }
 :global(.rwa-mobile) .root.root .chip { color: #fff; }
 :global(html[data-shell='android']) .chip { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
+/* The saved invite code fades in where the placeholder was (2026-10-28): fixed height, no jump. */
+.lede { min-height: 44px; }
+.fade { display: block; animation: fade .4s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+@keyframes fade { from { opacity: 0; transform: translateY(4px); } }
+@media (prefers-reduced-motion: reduce) { .fade { animation: none; } }

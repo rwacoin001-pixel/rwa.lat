@@ -11,7 +11,7 @@ import { MaisonPage, Skeleton, StateBlock } from './primitives'
 import { QuantDisclosureSheet } from './QuantDisclosureSheet'
 import { QuantAccount, QuantHistory } from './QuantAccount'
 import { QuantAccountPlaceholder } from './QuantSpec'
-import { QuantMonth, quantWin, useQuantView } from './QuantOverview'
+import { QuantDateStrip, quantWin, useQuantView } from './QuantOverview'
 import { ShareWinLine } from './ShareWin'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import stage from './quant.module.css'
@@ -39,8 +39,7 @@ export function QuantScreen() {
 function MyQuant() {
   const { locale } = useI18n()
   const c = quantCopyFor(locale)
-  const { list, slug, detail, product, audience, ticks } = useQuantView()
-  const [picked, setPicked] = useState<number | null>(null)
+  const { list, slug, detail, product, audience } = useQuantView()
   const [subscribeOpen, setSubscribeOpen] = useState(false)
   const [redeemOpen, setRedeemOpen] = useState(false)
   const [disclosureOpen, setDisclosureOpen] = useState(false)
@@ -57,7 +56,7 @@ function MyQuant() {
         : list.data && !slug ? <StateBlock title={c.comingSoon} body={c.comingSoonBody} />
         : !product ? (detail.error ? <StateBlock tone="error" title={c.loadError} retry={detail.refetch} retryLabel={c.retry} /> : <Skeleton rows={5} />)
         : <>
-          <QuantMonth product={product} ticks={ticks} selected={picked} onSelect={setPicked} locale={locale} />
+          <QuantDateStrip product={product} payouts={payouts.data} locale={locale} copy={c} />
           {involved
             ? <>
               <QuantAccount product={product} actions={audience !== 'ex-holder'} onAdd={() => setSubscribeOpen(true)} onRedeem={() => setRedeemOpen(true)} />

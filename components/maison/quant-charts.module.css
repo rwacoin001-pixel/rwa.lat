@@ -222,3 +222,9 @@
 :global([data-quant-v2]) .barCol[data-kind='loss'] i { background: var(--q-loss); }
 :global([data-quant-v2]) .bars[data-picking] .barCol[data-on] i { box-shadow: 0 0 0 1.5px var(--pa-card, #fff), 0 0 0 2.5px var(--m-ink); }
 :global([data-quant-v2]) .svg { --q-gold: var(--m-muted); }
+:global([data-quant-v2]) .tip small { margin-inline-end: 4px; color: var(--m-muted); font-size: 11px; font-weight: 500; }
+/* The picked period's ink slides to the next chip (2026-10-28, §7.6); the curve itself is never morphed. */
+:global([data-quant-v2]) .ranges button { position: relative; isolation: isolate; }
+:global([data-quant-v2]) .ranges button[aria-pressed='true'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+:global([data-quant-v2]) .ranges button > span { position: relative; z-index: 1; }
+.rangeThumb { position: absolute; inset: 0; z-index: 0; border-radius: 999px; background: var(--m-ink); }

@@ -257,3 +257,25 @@
   --q-crown-hi: #ffffff; --q-crown-mid: #b8c0cb; --q-crown-lo: #6b737f;
 }
 :global(html[data-palette='a']) .faceBg { background: var(--q-face); }
+
+/* Subscribe sheet steps (2026-10-28, §7.6): the sheet's height follows its step; the amount box shakes once on a wrong
+   amount; the confirm key folds into a ring while the server works; a check heads the receipt. */
+.autoHeight { overflow: hidden; transition: height .34s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.stepPane { animation: paneIn .3s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
+@keyframes paneIn { from { opacity: 0; transform: translateY(8px); } }
+.amountBox[data-shake] { animation: shake .36s cubic-bezier(.36, .07, .19, .97) both; }
+@keyframes shake { 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
+.review { display: grid; gap: 0; margin: 0; padding: 0 16px; border-radius: 22px; background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.review > div { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 12px 0; }
+.review > div + div { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.review dt { color: var(--m-muted); font-size: 13px; }
+.review dd { margin: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; text-align: end; font-variant-numeric: tabular-nums; }
+.reviewActs { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 12px; margin-top: 16px; }
+.confirm.confirm { justify-content: center; transition: width .3s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.confirm.confirm[data-busy] { justify-self: end; width: 56px; padding: 0; }
+.ring { display: block; width: 22px; height: 22px; border: 2.5px solid rgba(255, 255, 255, .25); border-top-color: currentColor; border-radius: 50%; animation: ringSpin .8s linear infinite; }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+.doneMark { display: grid; place-items: center; width: 64px; height: 64px; margin: 8px 0 12px; border-radius: 50%; background: var(--m-up, #067a5e); color: #fff; animation: pop .4s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)) both; }
+@keyframes pop { from { opacity: 0; transform: scale(.5); } }
+@media (prefers-reduced-motion: reduce) { .autoHeight, .confirm.confirm { transition: none; } .stepPane, .amountBox[data-shake], .ring, .doneMark { animation: none; } }
+.review dt { flex: none; white-space: nowrap; }

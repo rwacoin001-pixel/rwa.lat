@@ -49,7 +49,7 @@ export function InviteLanding({ go }: { go: (screen: RwaScreen) => void }) {
         <span className={styles.chip}>{c.chip}</span>
       </div>
       <h1 className={styles.title}>{c.title}</h1>
-      <p className={styles.lede} aria-live="polite">{invite === undefined ? ' ' : invite ? c.kept(displayInviteCode(invite.code)) : c.none}</p>
+      <p className={styles.lede} aria-live="polite"><span key={invite === undefined ? 'wait' : invite ? 'kept' : 'none'} className={styles.fade}>{invite === undefined ? ' ' : invite ? c.kept(displayInviteCode(invite.code)) : c.none}</span></p>
       <ul className={styles.rows}>
         {rows.map((row) => <li key={row.key}><b>{row.title}</b><span dir="auto">{row.line}</span></li>)}
       </ul>

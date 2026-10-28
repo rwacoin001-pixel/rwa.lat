@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, Check, ChevronRight, CircleHelp, Copy, Share2, ImagePlus } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
@@ -70,6 +70,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const [copied, setCopied] = useState(false), [copyError, setCopyError] = useState('')
   const [saving, setSaving] = useState(false), [editError, setEditError] = useState('')
   const [claiming, setClaiming] = useState(false), [claimNote, setClaimNote] = useState(''), [claimError, setClaimError] = useState('')
+  const [claimDone, setClaimDone] = useState(false)
   const claimKey = useRef<string | null>(null)
   const rootRef = useRef<HTMLDivElement>(null), copyTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
   const theme = useHostTheme(rootRef)
@@ -163,6 +164,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
         return
       }
       claimKey.current = null
+      setClaimDone(true); window.setTimeout(() => { if (mounted.current) setClaimDone(false) }, 1600)
       setClaimNote(t(`已领取 ${money(result.data.amountAtomic)} ${unit} 到可用余额`, `${money(result.data.amountAtomic)} ${unit} added to your available balance`))
       await invalidate(['referral:v2:summary', 'referral:v2:awards', 'wallet:', 'portfolio:', 'home:'])
     } catch {
@@ -200,14 +202,16 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
                 <QRCodeSVG value={link} size={48} marginSize={0} level="M" bgColor="#ffffff" fgColor="#0b1220" title={t('邀请链接二维码', 'Invitation QR code')} />
               </button>
             </div>
-            <div className={v.linkRow}>
-              <span dir="ltr">{link.replace(/^https?:\/\//, '')}</span>
-              <button type="button" onClick={openEdit} aria-haspopup="dialog">{t('修改邀请码', 'Edit code')}</button>
-            </div>
+            <TearStub label={t('往下拉，撕下二维码', 'Pull down to tear off the QR code')} onTear={() => setSheet('qr')}>
+              <div className={v.linkRow}>
+                <span dir="ltr">{link.replace(/^https?:\/\//, '')}</span>
+                <button type="button" onClick={openEdit} aria-haspopup="dialog">{t('修改邀请码', 'Edit code')}</button>
+              </div>
+            </TearStub>
           </>}
       </section>
       {code && <div className={v.actions}>
-        <button type="button" className={v.tile} onClick={() => void copy()}><CopyIcon size={18} strokeWidth={1.8} aria-hidden="true" />{copyLabel}</button>
+        <button type="button" className={v.tile} data-copied={copied || undefined} onClick={() => void copy()}><CopyIcon key={copied ? 'done' : 'copy'} className={v.morph} size={18} strokeWidth={1.8} aria-hidden="true" /><span key={copyLabel} className={v.morph}>{copyLabel}</span></button>
         <button type="button" className={v.tile} aria-haspopup="dialog" disabled={!sum || !!summary.error || summary.loading || me.loading} onClick={() => setSheet('poster')}><ImagePlus size={18} strokeWidth={1.8} aria-hidden="true" />{t('海报', 'Poster')}</button>
         <button type="button" className={v.share} onClick={() => void share()}><span>{t('分享邀请', 'Share')}</span><i><Share2 size={17} strokeWidth={1.9} aria-hidden="true" /></i></button>
       </div>}
@@ -234,10 +238,13 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
               <div><dt>{t('累计奖励', 'Total earned')}</dt><dd>{money(sum.balances.total)}</dd></div>
               <div><dt>{t('邀请人数', 'Invited')}</dt><dd>{totalCount}</dd></div>
             </dl>
-            {sum.payoutsEnabled && <button type="button" className={v.claim} disabled={!claimable || claiming} aria-busy={claiming} onClick={() => void claim()}>
-              {claiming ? t('领取中', 'Claiming') : t('领取到可用余额', 'Claim to available balance')}
-            </button>}
-            <p className={v.hint} role="status">{claimNote || t('买入奖励和手续费返佣在这里领取；团队月结自动到账。', 'Purchase and fee rewards are claimed here; team settlement is credited automatically.')}</p>
+            {/* Claim (2026-10-28): the button folds into a ring while the server works, shows a check once it confirms,
+                then a receipt says where the money went. Nothing is shown as done before the server says so. */}
+            {sum.payoutsEnabled && <div className={v.claimWrap}><button type="button" className={v.claim} data-state={claiming ? 'busy' : claimDone ? 'done' : undefined} disabled={(!claimable && !claimDone) || claiming} aria-busy={claiming} aria-label={claiming ? t('领取中', 'Claiming') : undefined} onClick={() => void claim()}>
+              {claiming ? <i className={v.ring} aria-hidden="true" /> : claimDone ? <Check size={22} strokeWidth={2.4} aria-hidden="true" /> : t('领取到可用余额', 'Claim to available balance')}
+            </button></div>}
+            {claimNote ? <p className={v.receipt} role="status"><span>{claimNote}</span></p>
+              : <p className={v.hint} role="status">{t('买入奖励和手续费返佣在这里领取；团队月结自动到账。', 'Purchase and fee rewards are claimed here; team settlement is credited automatically.')}</p>}
             {claimError && <p className={v.error} role="alert">{claimError}</p>}
           </>}
       </section>
@@ -310,6 +317,35 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
       <CodeForm code={code} busy={saving} error={editError} onSave={next => void save(next)} onDraftChange={() => setEditError('')} t={t} />
     </ReferralSheet>}
     {sheet === 'poster' && code && sum && <ReferralPosterComposer key={code} code={code.toUpperCase()} summary={sum} locale={locale} theme={theme} inertRef={rootRef} onClose={closeSheet} sourceReady={!summary.loading && !me.loading && !summary.error && !me.error} />}
+  </div>
+}
+
+/**
+ * Tear-off stub (2026-10-28, after the "tear-off sheet" reference): the lower half of the invite pass follows a downward
+ * pull on its grip, tilting a little; past the line it tears away and the QR sheet opens; short of it, it springs back.
+ * Only the grip takes the gesture (the page still scrolls everywhere else), and tapping the grip opens the sheet too.
+ */
+function TearStub({ label, onTear, children }: { label: string; onTear: () => void; children: ReactNode }) {
+  const [pull, setPull] = useState(0), [torn, setTorn] = useState(false)
+  const start = useRef<{ y: number; id: number } | null>(null), moved = useRef(false)
+  const reduced = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  const finish = () => {
+    const tear = pull > 56
+    start.current = null
+    if (!tear) { setPull(0); return }
+    navigator.vibrate?.(12)
+    setTorn(true)
+    window.setTimeout(() => { onTear(); setTorn(false); setPull(0) }, reduced ? 0 : 260)
+  }
+  return <div className={v.stub} data-torn={torn || undefined} data-pulling={pull > 0 || undefined} style={{ '--pull': `${pull}px`, '--tilt': `${Math.min(pull / 18, 4)}deg` } as CSSProperties}>
+    {children}
+    <button type="button" className={v.grip} aria-label={label}
+      onClick={() => { if (!moved.current) onTear(); moved.current = false }}
+      onPointerDown={(event) => { start.current = { y: event.clientY, id: event.pointerId }; moved.current = false; try { event.currentTarget.setPointerCapture(event.pointerId) } catch { /* capture is a nicety */ } }}
+      onPointerMove={(event) => { if (!start.current || start.current.id !== event.pointerId) return; const dy = Math.max(0, event.clientY - start.current.y); if (dy > 4) moved.current = true; setPull(Math.min(dy * .8, 120)) }}
+      onPointerUp={finish} onPointerCancel={() => { start.current = null; setPull(0) }}>
+      <i aria-hidden="true" /><span>{label}</span>
+    </button>
   </div>
 }
 

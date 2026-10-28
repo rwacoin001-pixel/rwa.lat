@@ -132,7 +132,7 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
       <p className={x.status} role={error ? 'alert' : 'status'}>{status}</p>
       <div className={x.toolbar}>
         {expanded && <button type="button" className={x.collapse} aria-label={ui.templates} onClick={() => setExpanded(false)}><Minimize2 size={18} /></button>}
-        <a className={x.save} href={ready ? output!.url : undefined} download={selected?.filename} aria-disabled={!ready} tabIndex={ready ? 0 : -1} onClick={event => { if (!ready || !current()) { event.preventDefault(); return } if (nativeCan('save-image')) { event.preventDefault(); saveNative(); return } setStatus(ui.saveHint) }}><Download size={18} />{ui.save}</a>
+        <a className={x.save} href={ready ? output!.url : undefined} download={selected?.filename} aria-disabled={!ready} tabIndex={ready ? 0 : -1} onClick={event => { if (!ready || !current()) { event.preventDefault(); return } if (nativeCan('save-image')) { event.preventDefault(); saveNative(); return } setStatus(ui.saveHint) }}>{ready || error ? <Download size={18} /> : <i className={x.ring} aria-hidden="true" />}{ready || error ? ui.save : ui.preparing}</a>
         <button type="button" className={x.share} disabled={!ready || sharing} onClick={share} aria-busy={sharing}><Share2 size={18} />{ui.share}</button>
       </div>
     </div>

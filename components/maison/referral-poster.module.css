@@ -33,3 +33,8 @@
 .composer button:active:not(:disabled){transform:translateY(1px)}
 @media(hover:hover){.template:hover:not(:disabled){border-color:var(--r-ink)}.platforms button:hover:not([aria-pressed=true]){background:var(--r-surface)}}
 @media(prefers-reduced-motion:reduce){.composer *{transition:none!important}}
+
+/* While the image is being made the save key shows a ring and "正在生成" (2026-10-28); it never claims "saved" early. */
+.ring { display: inline-block; width: 16px; height: 16px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; opacity: .7; animation: ringSpin .8s linear infinite; }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .ring { animation: none; } }

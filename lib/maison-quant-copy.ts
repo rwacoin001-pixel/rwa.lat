@@ -174,6 +174,10 @@ export type QuantCopy = {
     afterCutoff: string
     ack: string
     confirmSubscribe: (amount: string) => string
+    next: string
+    back: string
+    feeLine: string
+    feeValue: (management: string, performance: string) => string
     confirmRedeem: string
     redeemAll: string
     redeemable: string
@@ -364,6 +368,10 @@ const en: QuantCopy = {
     afterCutoff: 'It’s past today’s cutoff, so this order counts for tomorrow.',
     ack: 'I’ve read and accept the risk disclosure',
     confirmSubscribe: (amount) => `Subscribe ${amount} USDT`,
+    next: 'Next: review',
+    back: 'Back',
+    feeLine: 'Fees',
+    feeValue: (management, performance) => `${management}% a year · ${performance}% of new highs`,
     confirmRedeem: 'Request redemption',
     redeemAll: 'Redeem all',
     redeemable: 'Redeemable now',
@@ -562,6 +570,10 @@ const zh: QuantCopy = {
     afterCutoff: '已过今日截止时间,这笔申请算明天。',
     ack: '我已阅读并接受风险披露',
     confirmSubscribe: (amount) => `确认申购 ${amount} USDT`,
+    next: '下一步：核对',
+    back: '返回修改',
+    feeLine: '费用',
+    feeValue: (management, performance) => `管理费 ${management}%/年 · 业绩报酬 ${performance}%（仅超过历史最高部分）`,
     confirmRedeem: '确认申请赎回',
     redeemAll: '全部赎回',
     redeemable: '当前可赎回',
