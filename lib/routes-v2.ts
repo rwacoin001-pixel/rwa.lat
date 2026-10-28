@@ -70,7 +70,7 @@ export const ROUTES = {
   learnArticle: R('/learn/:slug', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
 
   // ═══ Koala Quant · 主打产品(Dock 第 4 项「量化」)═══
-  quant: R('/quant', { domain: 'quant', dock: 'quant', showDock: true, auth: 'public' }),
+  quant: R('/quant', { domain: 'assets', dock: 'assets', showDock: false, auth: 'public' }),
 
   // ═══ Tab 2 · 市场（11）═══
   markets: R('/markets', { domain: 'markets', dock: 'markets', showDock: true, auth: 'public' }),

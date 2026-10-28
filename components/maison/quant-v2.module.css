@@ -1,0 +1,83 @@
+/* Koala Quant on Markets and "My Koala Quant" (2026-10-28, docs/design-system.md §7.6). No dial, no lacquer, no display
+   fonts: a photo card, paper cards, 22px section heads, text rows. Every size is on the §3.1 scale. The charts keep their
+   own module (quant-charts.module.css) and switch to this look under [data-quant-v2]. */
+.root { display: grid; gap: 16px; min-width: 0; margin-top: 8px; }
+.root > * { min-width: 0; }
+
+/* Photo card: the home "For you" card at full width. */
+.photo { position: relative; height: 216px; overflow: hidden; border-radius: 22px; background: #d9d4cc; color: #fff; }
+.photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .5) 100%); pointer-events: none; }
+.chip { position: absolute; z-index: 1; top: 12px; left: 12px; display: inline-flex; align-items: center; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .4); font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.photoText { position: absolute; z-index: 1; left: 16px; right: 16px; bottom: 16px; display: grid; gap: 2px; }
+.photoText strong { overflow: hidden; font-size: 22px; font-weight: 600; line-height: 28px; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
+.photoText small { font-size: 13px; line-height: 18px; opacity: .9; }
+
+/* Performance: one paper card, the since-inception figure large, three small figures under a hairline. */
+.perf { display: grid; gap: 4px; padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.perf > small { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.big { color: var(--m-ink); font-size: 40px; font-weight: 600; line-height: 48px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; justify-self: start; }
+.perf > p { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 12px 0 0; padding-top: 12px; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.kpis div { display: grid; gap: 2px; min-width: 0; }
+.kpis dt { color: var(--m-muted); font-size: 12px; line-height: 16px; white-space: nowrap; }
+.kpis dd { margin: 0; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; font-variant-numeric: tabular-nums; justify-self: start; }
+.root [data-tone='up'], :global(.rwa-mobile) .root.root [data-tone='up'] { color: var(--q-gain); }
+.root [data-tone='down'], :global(.rwa-mobile) .root.root [data-tone='down'] { color: var(--q-loss-text); }
+
+/* Sections: a 22px head, then the rows. */
+.sec { margin-top: 16px; }
+.sec > h2 { margin: 0 0 12px; color: var(--m-ink); font-size: 22px; font-weight: 600; line-height: 28px; }
+.note, .sample { margin: 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.foot { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-top: 8px; color: var(--m-faint); font-size: 12px; line-height: 16px; }
+.foot button { flex: none; min-height: 44px; padding: 0; border: 0; background: none; color: var(--m-accent); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+
+/* Return calendar: a paper card of day cells; the date, then the day's return in gain or loss colour with a dot. */
+.month { padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.month > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.month h2 { margin: 0; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.month header small { color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.monthNav { display: inline-flex; align-items: center; gap: 4px; flex: none; }
+.monthNav b { color: var(--m-ink); font-size: 13px; font-weight: 600; line-height: 18px; white-space: nowrap; }
+.monthNav button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); cursor: pointer; }
+.monthNav button:disabled { opacity: .35; cursor: default; }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+.wd { padding-bottom: 4px; color: var(--m-faint); font-size: 11px; line-height: 14px; text-align: center; }
+.day { position: relative; display: grid; align-content: center; justify-items: center; gap: 2px; min-height: 44px; padding: 4px 0; border: 0; border-radius: 12px; background: none; color: var(--m-ink); font: inherit; cursor: pointer; }
+.day b { font-size: 13px; font-weight: 500; line-height: 18px; font-variant-numeric: tabular-nums; }
+.day small { min-height: 14px; color: var(--m-faint); font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; }
+.day[data-kind='gain'], .day[data-kind='loss'], .day[data-kind='flat'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.day[data-kind='gain'] small { color: var(--q-gain); }
+.day[data-kind='loss'] small { color: var(--q-loss-text); }
+.day[data-kind='gain']::after, .day[data-kind='loss']::after { content: ''; position: absolute; top: 6px; right: 6px; width: 4px; height: 4px; border-radius: 50%; background: var(--q-gain); }
+.day[data-kind='loss']::after { background: var(--q-loss); }
+.day[data-kind='none'] b { color: var(--m-faint); }
+.day[data-kind='today'] { box-shadow: inset 0 0 0 1px var(--pa-hair, rgba(11, 18, 32, .1)); }
+.day:disabled { cursor: default; }
+.day[aria-pressed='true'] { background: var(--m-ink); }
+.day[aria-pressed='true'] b, .day[aria-pressed='true'] small { color: var(--m-bg); }
+.day:focus-visible, .monthNav button:focus-visible, .foot button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .root.root .photoText strong, :global(.rwa-mobile) .root.root .photoText small, :global(.rwa-mobile) .root.root .chip { color: #fff; }
+:global(.rwa-mobile) .root.root .perf > small, :global(.rwa-mobile) .root.root .perf > p, :global(.rwa-mobile) .root.root .note, :global(.rwa-mobile) .root.root .sample, :global(.rwa-mobile) .root.root .month header small { color: var(--m-muted); }
+:global(.rwa-mobile) .root.root .foot span, :global(.rwa-mobile) .root.root .day small { color: var(--m-faint); }
+:global(.rwa-mobile) .root.root .day[data-kind='gain'] small { color: var(--q-gain); }
+:global(.rwa-mobile) .root.root .day[data-kind='loss'] small { color: var(--q-loss-text); }
+:global(.rwa-mobile) .root.root .day[aria-pressed='true'] small { color: var(--m-bg); }
+:global(html[data-shell='android']) .chip { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
+
+/* The Assets card that opens "My Koala Quant". */
+.assetCard { display: grid; gap: 12px; width: 100%; margin-top: 16px; padding: 16px; border: 0; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
+.assetCard:active { transform: scale(.98); }
+.assetCard:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+.assetHead { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.assetHead b { font-size: 17px; font-weight: 600; line-height: 24px; }
+.assetHead svg { color: var(--m-faint); }
+.assetNums { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.assetNums > span { display: grid; gap: 2px; min-width: 0; }
+.assetNums small, .assetNote { color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.assetNums b { font-size: 17px; font-weight: 600; line-height: 24px; font-variant-numeric: tabular-nums; }
+.assetNums b[data-tone='up'] { color: var(--m-up, #067a5e); }
+:global(.rwa-mobile) .assetCard.assetCard small { color: var(--m-muted); }
+@media (prefers-reduced-motion: reduce) { .assetCard { transition: none; } }

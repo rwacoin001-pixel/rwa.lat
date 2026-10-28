@@ -1,6 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
+import { ChevronRight } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { getSessionToken } from '@/lib/api/_http'
@@ -13,6 +14,7 @@ import { maison as s } from './primitives'
 import { QuantLedger, QuantReceipt, signedUsdt, usdtNumber } from './QuantParts'
 import { QuantRedeemSheet, QuantSubscribeSheet } from './QuantSheets'
 import styles from './quant.module.css'
+import v2 from './quant-v2.module.css'
 
 /** Loads the product for one slug. The query key carries the sign-in state so a session change refetches. */
 export function useQuantProduct(slug: string | undefined) {
@@ -80,5 +82,20 @@ export function QuantAssetsCard() {
   if (!product.data || !position) return null
   const holds = BigInt(position.principalAtomic) > BigInt(0) || position.pendingOrders.length > 0
   if (!holds) return null
-  return <div style={{ marginTop: 20 }}><QuantPositionPlate product={product.data} showReceipt={false} /></div>
+  return <QuantAssetsRow product={product.data} />
+}
+
+/** One paper card on Assets (2026-10-28, docs/design-system.md §7.6): name, principal, paid so far; it opens "My Koala Quant". */
+function QuantAssetsRow({ product }: { product: QuantProduct }) {
+  const { locale } = useI18n()
+  const c = quantCopyFor(locale)
+  const position = product.position!
+  return <button type="button" className={v2.assetCard} onClick={() => openPath('/quant?tab=account')}>
+    <span className={v2.assetHead}><b>{product.name}</b><ChevronRight size={18} aria-hidden="true" /></span>
+    <span className={v2.assetNums}>
+      <span><small>{c.position.principal}</small><b>{usdtNumber(position.principalAtomic, locale)}</b></span>
+      <span><small>{c.position.paid}</small><b data-tone={BigInt(position.totalPaidAtomic) > BigInt(0) ? 'up' : undefined}>{signedUsdt(position.totalPaidAtomic, locale)}</b></span>
+    </span>
+    {position.pendingOrders.length > 0 && <small className={v2.assetNote}>{c.position.pending}</small>}
+  </button>
 }

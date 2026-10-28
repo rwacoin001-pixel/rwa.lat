@@ -4,7 +4,7 @@ import type { AppLocale } from '@/lib/app-locales'
 export type MarketCopy = {
   common: { back: string; close: string; clear: string; retry: string; unavailable: string; updated: string; source: string; signIn: string; errorGeneric: string; empty: string }
   markets: {
-    kicker: string; title: string; lede: string; tabs: [string, string, string, string]; search: string
+    kicker: string; title: string; lede: string; tabs: [string, string, string, string, string]; search: string
     investable: string; investableNote: string; directory: string; directoryNote: string
     classes: { all: string; rwa: string; compute: string; stocks: string; prediction: string }
     from: string; sort: { market_cap: string; change_24h: string; name: string }; noMatch: string; issuers: string; compare: string
@@ -37,7 +37,7 @@ export type MarketCopy = {
 const en: MarketCopy = {
   common: { back: 'Back', close: 'Close', clear: 'Clear', retry: 'Retry', unavailable: 'Unavailable', updated: 'Updated {t}', source: 'Source', signIn: 'Sign in to invest', errorGeneric: 'Something went wrong. Please retry.', empty: 'Nothing here yet' },
   markets: {
-    kicker: 'Markets · Live', title: 'Markets', lede: '{n} investable · {m} tracked', tabs: ['Assets', 'Baskets', 'Trade', 'Predictions'], search: 'Search name, symbol or issuer',
+    kicker: 'Markets · Live', title: 'Markets', lede: '{n} investable · {m} tracked', tabs: ['Assets', 'Baskets', 'Trade', 'Predictions', 'Quant'], search: 'Search name, symbol or issuer',
     investable: 'Investable', investableNote: 'Quoted by A-REIT and open for subscription.', directory: 'Market directory', directoryNote: 'Third-party market data · research only',
     classes: { all: 'All', rwa: 'Real assets', compute: 'Compute', stocks: 'Equities', prediction: 'Predictions' },
     from: 'From {v}', sort: { market_cap: 'Market cap', change_24h: '24h', name: 'Name' }, noMatch: 'No results for “{q}”', issuers: 'Issuers', compare: 'Compare',
@@ -72,7 +72,7 @@ const en: MarketCopy = {
 const zh: MarketCopy = {
   common: { back: '返回', close: '关闭', clear: '清除', retry: '重试', unavailable: '暂不可用', updated: '更新于 {t}', source: '来源', signIn: '登录后投资', errorGeneric: '出现问题，请重试。', empty: '暂无内容' },
   markets: {
-    kicker: '市场 · 实时', title: '市场', lede: '{n} 个可投资 · {m} 个追踪', tabs: ['资产', '篮子', '交易', '预测'], search: '搜索名称、代码或发行方',
+    kicker: '市场 · 实时', title: '市场', lede: '{n} 个可投资 · {m} 个追踪', tabs: ['资产', '篮子', '交易', '预测', '量化'], search: '搜索名称、代码或发行方',
     investable: '可投资', investableNote: '由 A-REIT 报价，开放申购。', directory: '市场名录', directoryNote: '第三方市场数据 · 仅供研究',
     classes: { all: '全部', rwa: '实物资产', compute: '算力', stocks: '股票', prediction: '预测' },
     from: '{v} 起投', sort: { market_cap: '市值', change_24h: '24 小时', name: '名称' }, noMatch: '没有与“{q}”匹配的结果', issuers: '发行方', compare: '比较',
@@ -107,7 +107,7 @@ const zh: MarketCopy = {
 const hi: MarketCopy = {
   common: { back: 'वापस', close: 'बंद करें', clear: 'साफ़ करें', retry: 'फिर कोशिश करें', unavailable: 'उपलब्ध नहीं', updated: '{t} अपडेट', source: 'स्रोत', signIn: 'निवेश के लिए लॉग इन करें', errorGeneric: 'कुछ गलत हुआ। फिर कोशिश करें।', empty: 'अभी कुछ नहीं' },
   markets: {
-    kicker: 'बाज़ार · लाइव', title: 'बाज़ार', lede: '{n} निवेश योग्य · {m} ट्रैक', tabs: ['संपत्ति', 'बास्केट', 'ट्रेड', 'पूर्वानुमान'], search: 'नाम, प्रतीक या जारीकर्ता खोजें',
+    kicker: 'बाज़ार · लाइव', title: 'बाज़ार', lede: '{n} निवेश योग्य · {m} ट्रैक', tabs: ['संपत्ति', 'बास्केट', 'ट्रेड', 'पूर्वानुमान', 'क्वांट'], search: 'नाम, प्रतीक या जारीकर्ता खोजें',
     investable: 'निवेश योग्य', investableNote: 'A-REIT द्वारा कोट किया गया, सदस्यता के लिए खुला।', directory: 'बाज़ार निर्देशिका', directoryNote: 'तृतीय-पक्ष बाज़ार डेटा · केवल शोध',
     classes: { all: 'सभी', rwa: 'वास्तविक संपत्ति', compute: 'कंप्यूट', stocks: 'इक्विटी', prediction: 'पूर्वानुमान' },
     from: '{v} से', sort: { market_cap: 'मार्केट कैप', change_24h: '24 घं', name: 'नाम' }, noMatch: '“{q}” के लिए कोई परिणाम नहीं', issuers: 'जारीकर्ता', compare: 'तुलना',
@@ -142,7 +142,7 @@ const hi: MarketCopy = {
 const es: MarketCopy = {
   common: { back: 'Atrás', close: 'Cerrar', clear: 'Borrar', retry: 'Reintentar', unavailable: 'No disponible', updated: 'Actualizado {t}', source: 'Fuente', signIn: 'Entra para invertir', errorGeneric: 'Algo salió mal. Reintenta.', empty: 'Aún no hay nada' },
   markets: {
-    kicker: 'Mercados · En vivo', title: 'Mercados', lede: '{n} invertibles · {m} seguidos', tabs: ['Activos', 'Cestas', 'Trading', 'Predicciones'], search: 'Buscar nombre, símbolo o emisor',
+    kicker: 'Mercados · En vivo', title: 'Mercados', lede: '{n} invertibles · {m} seguidos', tabs: ['Activos', 'Cestas', 'Trading', 'Predicciones', 'Quant'], search: 'Buscar nombre, símbolo o emisor',
     investable: 'Invertibles', investableNote: 'Cotizados por A-REIT y abiertos a suscripción.', directory: 'Directorio de mercado', directoryNote: 'Datos de terceros · solo investigación',
     classes: { all: 'Todo', rwa: 'Activos reales', compute: 'Cómputo', stocks: 'Acciones', prediction: 'Predicciones' },
     from: 'Desde {v}', sort: { market_cap: 'Capitalización', change_24h: '24 h', name: 'Nombre' }, noMatch: 'Sin resultados para «{q}»', issuers: 'Emisores', compare: 'Comparar',
@@ -177,7 +177,7 @@ const es: MarketCopy = {
 const ar: MarketCopy = {
   common: { back: 'رجوع', close: 'إغلاق', clear: 'مسح', retry: 'إعادة المحاولة', unavailable: 'غير متاح', updated: 'حُدّث {t}', source: 'المصدر', signIn: 'سجّل الدخول للاستثمار', errorGeneric: 'حدث خطأ. أعد المحاولة.', empty: 'لا يوجد شيء بعد' },
   markets: {
-    kicker: 'الأسواق · مباشر', title: 'الأسواق', lede: '{n} قابلة للاستثمار · {m} متابَعة', tabs: ['الأصول', 'السلال', 'التداول', 'التوقعات'], search: 'ابحث بالاسم أو الرمز أو المُصدِر',
+    kicker: 'الأسواق · مباشر', title: 'الأسواق', lede: '{n} قابلة للاستثمار · {m} متابَعة', tabs: ['الأصول', 'السلال', 'التداول', 'التوقعات', 'كمّي'], search: 'ابحث بالاسم أو الرمز أو المُصدِر',
     investable: 'قابلة للاستثمار', investableNote: 'مسعّرة من A-REIT ومتاحة للاكتتاب.', directory: 'دليل السوق', directoryNote: 'بيانات سوق من طرف ثالث · للبحث فقط',
     classes: { all: 'الكل', rwa: 'أصول حقيقية', compute: 'الحوسبة', stocks: 'الأسهم', prediction: 'التوقعات' },
     from: 'ابتداءً من {v}', sort: { market_cap: 'القيمة السوقية', change_24h: '24 س', name: 'الاسم' }, noMatch: 'لا نتائج لـ «{q}»', issuers: 'المُصدِرون', compare: 'مقارنة',
@@ -212,7 +212,7 @@ const ar: MarketCopy = {
 const fr: MarketCopy = {
   common: { back: 'Retour', close: 'Fermer', clear: 'Effacer', retry: 'Réessayer', unavailable: 'Indisponible', updated: 'Mis à jour {t}', source: 'Source', signIn: 'Connectez-vous pour investir', errorGeneric: 'Une erreur est survenue. Réessayez.', empty: 'Rien pour le moment' },
   markets: {
-    kicker: 'Marchés · En direct', title: 'Marchés', lede: '{n} investissables · {m} suivis', tabs: ['Actifs', 'Paniers', 'Trading', 'Prédictions'], search: 'Rechercher nom, symbole ou émetteur',
+    kicker: 'Marchés · En direct', title: 'Marchés', lede: '{n} investissables · {m} suivis', tabs: ['Actifs', 'Paniers', 'Trading', 'Prédictions', 'Quant'], search: 'Rechercher nom, symbole ou émetteur',
     investable: 'Investissables', investableNote: 'Cotés par A-REIT et ouverts à la souscription.', directory: 'Annuaire du marché', directoryNote: 'Données tierces · recherche uniquement',
     classes: { all: 'Tout', rwa: 'Actifs réels', compute: 'Calcul', stocks: 'Actions', prediction: 'Prédictions' },
     from: 'Dès {v}', sort: { market_cap: 'Capitalisation', change_24h: '24 h', name: 'Nom' }, noMatch: 'Aucun résultat pour « {q} »', issuers: 'Émetteurs', compare: 'Comparer',
@@ -247,7 +247,7 @@ const fr: MarketCopy = {
 const pt: MarketCopy = {
   common: { back: 'Voltar', close: 'Fechar', clear: 'Limpar', retry: 'Tentar novamente', unavailable: 'Indisponível', updated: 'Atualizado {t}', source: 'Fonte', signIn: 'Entre para investir', errorGeneric: 'Algo deu errado. Tente novamente.', empty: 'Nada por aqui ainda' },
   markets: {
-    kicker: 'Mercados · Ao vivo', title: 'Mercados', lede: '{n} investíveis · {m} acompanhados', tabs: ['Ativos', 'Cestas', 'Negociação', 'Previsões'], search: 'Buscar nome, símbolo ou emissor',
+    kicker: 'Mercados · Ao vivo', title: 'Mercados', lede: '{n} investíveis · {m} acompanhados', tabs: ['Ativos', 'Cestas', 'Negociação', 'Previsões', 'Quant'], search: 'Buscar nome, símbolo ou emissor',
     investable: 'Investíveis', investableNote: 'Cotados pela A-REIT e abertos para subscrição.', directory: 'Diretório de mercado', directoryNote: 'Dados de terceiros · apenas pesquisa',
     classes: { all: 'Todos', rwa: 'Ativos reais', compute: 'Computação', stocks: 'Ações', prediction: 'Previsões' },
     from: 'A partir de {v}', sort: { market_cap: 'Valor de mercado', change_24h: '24 h', name: 'Nome' }, noMatch: 'Nenhum resultado para “{q}”', issuers: 'Emissores', compare: 'Comparar',

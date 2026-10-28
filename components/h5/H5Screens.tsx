@@ -24,11 +24,6 @@ const CommunityFeedScreen = dynamic(() => import('../community-screens').then((m
 const CommunityPostScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityPostScreen })), { ssr: false, loading: AppLoading })
 const CommunityProfileScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityProfileScreen })), { ssr: false, loading: AppLoading })
 
-/** Koala Quant now lives on its own route, so the dock and a pasted link land on the same page instead of two designs. */
-function QuantRouteRedirect() {
-  useEffect(() => { window.location.replace('/quant') }, [])
-  return <AppLoading />
-}
 const MaisonQuantScreen = dynamic(() => import('../maison/QuantScreen').then((m) => ({ default: m.QuantScreen })), { ssr: false, loading: AppLoading })
 const MaisonMarketsScreen = dynamic(() => import('../maison/MarketsScreen').then((m) => ({ default: m.MarketsScreen })), { ssr: false, loading: AppLoading })
 const MaisonAssetDetailScreen = dynamic(() => import('../maison/AssetDetailScreen').then((m) => ({ default: m.AssetDetailScreen })), { ssr: false, loading: AppLoading })

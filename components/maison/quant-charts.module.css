@@ -201,3 +201,24 @@
 .ranges button { transition: background-color .2s, color .2s, transform .12s cubic-bezier(.2, .8, .2, 1), box-shadow .2s; }
 .ranges button[aria-pressed='true'] { background: linear-gradient(180deg, color-mix(in srgb, var(--m-ink) 80%, #fff), var(--m-ink)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 2px rgba(0, 0, 0, .35), 0 3px 6px -3px rgba(0, 0, 0, .35); }
 .ranges button:active { transform: translateY(.5px) scale(.97); }
+
+/* Koala Quant on Markets (2026-10-28, docs/design-system.md §7.6): each chart is a paper card, the NAV a smooth grey line
+   over a light fill (as the home sparkline), the range switch a fill-chip row, figures in the app sans. */
+:global([data-quant-v2]) .card { margin: 0; padding: 16px; border: 0; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+:global([data-quant-v2]) .card + .card { margin-top: 0; padding-top: 16px; border-top: 0; }
+:global([data-quant-v2]) .head h2 { font-size: 17px; line-height: 24px; }
+:global([data-quant-v2]) .readout span { font-family: var(--m-sans); font-size: 12px; letter-spacing: 0; color: var(--m-muted); }
+:global([data-quant-v2]) .readout b, :global([data-quant-v2]) .tip { font-family: var(--m-sans); font-weight: 600; }
+:global([data-quant-v2]) .line { stroke: var(--m-muted); stroke-width: 2; filter: none; }
+:global([data-quant-v2]) .area { opacity: .45; }
+:global([data-quant-v2]) .dot { stroke: var(--m-ink); }
+:global([data-quant-v2]) .halo { fill: var(--pa-fill-strong, rgba(11, 18, 32, .08)); }
+:global([data-quant-v2]) .grid, :global([data-quant-v2]) .base { stroke: var(--pa-hair, rgba(11, 18, 32, .1)); }
+:global([data-quant-v2]) .cursor { stroke: var(--m-faint); }
+:global([data-quant-v2]) .ranges { gap: 4px; padding: 0; border-radius: 0; background: none; box-shadow: none; }
+:global([data-quant-v2]) .ranges button { min-height: 32px; padding: 0 12px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); box-shadow: none; color: var(--m-muted); font: 500 13px/1 var(--m-sans); }
+:global([data-quant-v2]) .ranges button[aria-pressed='true'] { background: var(--m-ink); box-shadow: none; color: var(--m-bg); }
+:global([data-quant-v2]) .barCol[data-kind='gain'] i { background: var(--q-gain); }
+:global([data-quant-v2]) .barCol[data-kind='loss'] i { background: var(--q-loss); }
+:global([data-quant-v2]) .bars[data-picking] .barCol[data-on] i { box-shadow: 0 0 0 1.5px var(--pa-card, #fff), 0 0 0 2.5px var(--m-ink); }
+:global([data-quant-v2]) .svg { --q-gold: var(--m-muted); }

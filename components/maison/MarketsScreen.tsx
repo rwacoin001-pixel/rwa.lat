@@ -7,14 +7,14 @@ import {useContentTranslation} from '@/lib/use-content-translation'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
 import { POLL } from '@/lib/api/_http'
-import { isListed, listPairs, listProducts, listRwaAssets, type CatalogProduct, type RwaSort } from '@/lib/api/markets'
+import { isListed, listProducts, listRwaAssets, type CatalogProduct, type RwaSort } from '@/lib/api/markets'
 import { fmtUsd, fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { proCopy } from '@/lib/maison-pro-copy'
 import { openPath } from '@/lib/maison-nav'
 import { usePageState } from '@/lib/app-navigation'
 import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
-import { Figure, PollBar, Segmented, TickerTape, useAutoAnimate } from './motion'
+import { Segmented, TickerTape, useAutoAnimate } from './motion'
 import { TopTabs } from './TopTabs'
 import { fmtDate, fmtDateTime } from './format'
 import { BasketShelf } from './HengxuScreen'
@@ -22,10 +22,12 @@ import { sharedOpen } from '@/lib/market-shared-transition'
 import { productCover, sharedKeys } from '@/lib/product-media'
 import { MarketHero } from './MarketHero'
 import { PredictionFeed } from './PredictionFeed'
+import { QuantOverview } from './QuantOverview'
 
-const TABS = ['predictions', 'baskets', 'trade', 'assets'] as const
+// Koala Quant leads (2026-10-28): it replaced the Trade tab, whose pairs had no liquidity; /trade/:symbol still opens.
+const TABS = ['quant', 'predictions', 'baskets', 'assets'] as const
 type Tab = typeof TABS[number]
-const TAB_LABEL_INDEX: Record<Tab, number> = { assets: 0, baskets: 1, trade: 2, predictions: 3 }
+const TAB_LABEL_INDEX: Record<Tab, number> = { assets: 0, baskets: 1, predictions: 3, quant: 4 }
 const CLASSES = ['all', 'rwa', 'compute', 'stocks'] as const
 type ClassFilter = typeof CLASSES[number]
 const SORTS: RwaSort[] = ['market_cap', 'change_24h', 'name']
@@ -33,8 +35,8 @@ const SORTS: RwaSort[] = ['market_cap', 'change_24h', 'name']
 function tabFrom(query: string): Tab {
   const raw = new URLSearchParams(query).get('tab')
   // 衡序 lives inside Baskets; keep old ?tab=hengxu links working.
-  const value = raw === 'hengxu' ? 'baskets' : raw
-  return (TABS as readonly string[]).includes(value ?? '') ? value as Tab : 'predictions'
+  const value = raw === 'hengxu' ? 'baskets' : raw === 'trade' ? 'quant' : raw
+  return (TABS as readonly string[]).includes(value ?? '') ? value as Tab : 'quant'
 }
 
 function useDebounced(value: string, delay = 320) {
@@ -84,13 +86,14 @@ export function MarketsScreen({ query }: { query: string }) {
   })), [directory.data, locale])
   const counts = useMemo(() => Object.fromEntries(CLASSES.map((key) => [key, listed.filter((product) => product.assetClassId !== 'prediction' && (key === 'all' || product.assetClassId === key)).length])), [listed])
 
-  return <MaisonPage page="markets" dock>
+  return <MaisonPage page="markets" dock cta={tab === 'quant'}>
     {/* First-level page: the page opens on its own text menu, pinned under the status bar (docs/design-system.md §7.1). */}
     <TopTabs value={tab} onChange={setTab} label={m.title} options={TABS.map((key) => ({ value: key, label: m.tabs[TAB_LABEL_INDEX[key]] }))} />
 
-    <MarketHero tab={tab} />
-
-    <TickerTape items={tape} label={pro.tape} />
+    {tab === 'quant' ? <QuantOverview /> : <>
+      <MarketHero tab={tab} />
+      <TickerTape items={tape} label={pro.tape} />
+    </>}
 
     {tab === 'assets' && <div className={s.tabPanel} role="tabpanel">
       <label className={s.search}>
@@ -133,7 +136,6 @@ export function MarketsScreen({ query }: { query: string }) {
     </div>}
 
     {tab === 'baskets' && <BasketShelf />}
-    {tab === 'trade' && <TradePanel />}
     {tab === 'predictions' && <PredictionsPanel listed={listed} loading={!products.data && !products.error} />}
   </MaisonPage>
 }
@@ -188,33 +190,6 @@ function ProductCard({ product, tone }: { product: CatalogProduct; tone?: 'lacqu
     {product.summary && <span className={s.productSummary}>{content(product.summary)}</span>}
     <span className={s.productFoot}><span>{copy.detail.investable}</span><b className={s.num}>{fill(copy.markets.from, { v: fmtUsdt(product.minOrderAtomicAmount) })}</b></span>
   </button>
-}
-
-function TradePanel() {
-  const { locale } = useI18n()
-  const copy = marketCopy[locale]
-  const pro = proCopy[locale]
-  const pairs = useQuery('markets:pairs', listPairs, { staleTime: 30_000, pollInterval: POLL.market })
-  const [beat, setBeat] = useState(0)
-  useEffect(() => { if (pairs.data) setBeat((value) => value + 1) }, [pairs.data])
-  const [pairList] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
-  return <div className={s.tabPanel} role="tabpanel">
-    <SectionHead title={copy.markets.tabs[2]} note={fill(pro.refresh, { s: POLL.market / 1000 })} />
-    {pairs.data && <PollBar every={POLL.market} stamp={beat} label={fill(pro.refresh, { s: POLL.market / 1000 })} />}
-    {!pairs.data && !pairs.error ? <Skeleton />
-      : pairs.error && !pairs.data ? <StateBlock tone="error" title={copy.markets.loadError} body={pairs.error.message} retry={pairs.refetch} retryLabel={copy.common.retry} />
-      : pairs.data?.length ? <><div className={s.tableHead} aria-hidden="true"><span>{pro.name}</span><span>{pro.last}</span></div><ul className={s.list} ref={pairList}>{pairs.data.map((pair) => {
-        const base = pair.symbol.replace(new RegExp(`-${pair.quoteAssetCode}$`), '')
-        return <li key={pair.id}>
-          <button type="button" className={s.row} onClick={() => openPath(`/trade/${encodeURIComponent(pair.symbol)}`)}>
-            <Logo name={base} />
-            <span className={s.rowMain}><b className={s.num}>{base} / {pair.quoteAssetCode}</b><small>{pair.state === 'active' ? copy.markets.active : copy.markets.paused}{pair.updatedAt ? ` · ${fmtDateTime(pair.updatedAt, locale, { timeStyle: 'short' })}` : ''}</small></span>
-            <span className={s.rowFig}><b><Figure value={pair.lastPrice} locale="en-US" format={{ maximumFractionDigits: 6 }} /></b><small className={s.muted}>{pair.quoteAssetCode}</small></span>
-          </button>
-        </li>
-      })}</ul></>
-      : <StateBlock title={copy.markets.pairsEmpty} />}
-  </div>
 }
 
 function PredictionsPanel({ listed, loading }: { listed: CatalogProduct[]; loading: boolean }) {

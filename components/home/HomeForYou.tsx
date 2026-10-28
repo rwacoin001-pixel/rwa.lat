@@ -27,7 +27,7 @@ export function HomeForYou() {
   const pct = quant?.performance.last30d.pct ?? null
   const cards = [
     {
-      key: 'quant', title: label.quant, photo: '/media/home/cards/quant-720.webp', sub: label.quantLine, open: () => openPath('/quant'),
+      key: 'quant', title: label.quant, photo: '/media/home/cards/quant-720.webp', sub: label.quantLine, open: () => openPath('/markets?tab=quant'),
       value: pct === null ? null : `${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%`, tone: pct === null || pct === 0 ? '' : pct > 0 ? styles.up : styles.down,
       line: pct === null ? label.quantLine : label.last30,
     },

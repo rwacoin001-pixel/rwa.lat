@@ -2,14 +2,13 @@
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { markTabNavigation } from '@/lib/app-navigation'
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
-import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartCandlestick, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
+import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartNoAxesColumnIncreasing, ChartPie, ChevronRight, House, Plus, QrCode, type LucideIcon } from 'lucide-react'
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { openPath } from '@/lib/maison-nav'
 import { fundsCopy } from '@/lib/maison-funds-copy'
 import { useI18n } from '@/lib/i18n'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import type { PrimaryScreen } from './shared'
-import { useQuantListed } from '@/lib/api/quant'
 import { BuddyOrb } from '@/components/buddy/BuddyOrb'
 import d from './dock-v2.module.css'
 
@@ -27,12 +26,10 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
     { label: t('wallet.transfer'), path: '/assets/cash/transfer', icon: ArrowRightLeft },
     { label: fundsCopy[locale].receive.action, path: '/assets/cash/receive', icon: QrCode },
   ]
-  // Koala Quant is the featured product: its own tab, shown once an operator has opened it.
-  const quantListed = useQuantListed()
+  // Three tabs (2026-10-28): Koala Quant lives on Markets now (its first tab), "My Koala Quant" on Assets.
   const items: Array<{ id: PrimaryScreen; label: string; icon: typeof House }> = [
     { id: 'home', label: t('nav.home'), icon: House },
     { id: 'invest', label: t('nav.markets'), icon: ChartNoAxesColumnIncreasing },
-    ...(quantListed || screen === 'quant' ? [{ id: 'quant' as const, label: t('nav.quant'), icon: ChartCandlestick }] : []),
     { id: 'portfolio', label: t('nav.assets'), icon: ChartPie },
   ]
   useEffect(() => { expandChrome() }, [screen])

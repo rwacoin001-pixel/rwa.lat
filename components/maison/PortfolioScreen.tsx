@@ -353,7 +353,7 @@ function EmptyHoldings() {
     <img src={porcelainCut('quant', 240)} alt="" width={112} height={112} decoding="async" />
     <h3>{c.title}</h3>
     <p>{c.body}</p>
-    <button type="button" className={pa.emptyGo} onClick={() => openPath('/quant')}>{c.go}<ArrowRight size={16} strokeWidth={2} aria-hidden="true" /></button>
+    <button type="button" className={pa.emptyGo} onClick={() => openPath('/markets?tab=quant')}>{c.go}<ArrowRight size={16} strokeWidth={2} aria-hidden="true" /></button>
     <button type="button" className={pa.emptyLink} onClick={() => openPath('/markets')}>{p.browse}</button>
   </div>
 }
