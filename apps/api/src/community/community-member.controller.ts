@@ -8,14 +8,16 @@ import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 import { CommunityMemberService } from './community-member.service'
-import { MemberAvatarDto, MemberCommentDto, MemberMediaQueryDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
+import { CommunityService } from './community.service'
+import { CommunityFeedQueryDto } from './dto/community.dto'
+import { CircleVisibilityDto, MemberAvatarDto, MemberCommentDto, MemberMediaQueryDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
 import { ObjectStorageService, COMMUNITY_IMAGE_MAX_BYTES } from '../object-storage/object-storage.service'
 
 type UploadedImage = { buffer: Buffer; mimetype?: string; size: number }
 
 @Controller('community/me') @UseGuards(SessionAuthGuard)
 export class CommunityMemberController {
-  constructor(private readonly member: CommunityMemberService) {}
+  constructor(private readonly member: CommunityMemberService, private readonly community: CommunityService) {}
   @Get() profile(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.member.profile(a.userId) }
   @Put() update(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: MemberProfileDto) { return this.member.updateProfile(a.userId, dto) }
   /** Multipart `file`: JPEG/PNG/WebP/GIF, sniffed server-side. Stored pending; served only after the malware scan clears it. */
@@ -24,6 +26,12 @@ export class CommunityMemberController {
   @Put('avatar') setAvatar(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: MemberAvatarDto) { return this.member.setAvatar(a.userId, dto.objectId) }
   @Delete('avatar') clearAvatar(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.member.setAvatar(a.userId, null) }
   @Get('state') state(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query('postId', new ParseUUIDPipe({ optional: true })) postId?: string, @Query('handle') handle?: string) { return this.member.state(a.userId, postId, handle) }
+  /** My circle (2026-10-28): the people I invited and who invited me, public profiles only; and my own visibility. */
+  @Get('circle') circle(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.community.circle(a.userId) }
+  @Get('circle/feed') circleFeed(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: CommunityFeedQueryDto) { return this.community.circleFeed(a.userId, q) }
+  @Put('circle/visibility') circleVisibility(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: CircleVisibilityDto) { return this.member.setCircleVisibility(a.userId, dto.visible) }
+  /** The verified figure the share card and a proof post will show (2026-10-28); 404 when there is no qualifying gain. */
+  @Get('proofs/preview') proofPreview(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: Record<string, string>) { return this.member.proofPreview(a.userId, q) }
   @Post('posts') post(@CurrentAuth() a: AuthenticatedRequest['auth'], @Headers('idempotency-key') key: string, @Body() dto: MemberPostDto) { return this.member.post(a.userId, key, dto) }
   @Post('posts/:id/comments') comment(@CurrentAuth() a: AuthenticatedRequest['auth'], @Headers('idempotency-key') key: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: MemberCommentDto) { return this.member.comment(a.userId, key, id, dto) }
   @Put('comments/:id/like') commentLike(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.member.commentLike(a.userId,id,true) }

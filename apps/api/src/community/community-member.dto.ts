@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ArrayMaxSize, IsArray, IsDefined, IsIn, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsDefined, IsBoolean, IsIn, IsObject, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator'
 import { Type } from 'class-transformer'
 
 /** X-style media limit shared by posts and replies. */
@@ -17,6 +17,8 @@ export class MemberPostDto {
   @ApiPropertyOptional() @IsOptional() @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(32, { each: true }) topics?: string[]
   @ApiPropertyOptional({ description: 'Object ids from POST /community/me/media?purpose=post' }) @IsOptional() @IsArray() @ArrayMaxSize(MEMBER_MEDIA_MAX) @IsUUID('all', { each: true }) imageIds?: string[]
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(16) lang?: string
+  /** A ledger-verified result to attach: { kind: 'quant_day', product, date } or { kind: 'prediction_win', bet }. */
+  @ApiPropertyOptional() @IsOptional() @IsObject() proof?: Record<string, unknown>
 }
 export class MemberCommentDto {
   @ApiProperty() @IsString() @MaxLength(2000) body!: string
@@ -29,6 +31,10 @@ export class MemberProfileDto {
   @ApiProperty() @IsString() @Matches(/^[a-zA-Z0-9_]{3,20}$/) handle!: string
   @ApiPropertyOptional() @IsOptional() @ValidateNested() @Type(() => MemberPostLocationDto) location?: MemberPostLocationDto
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(280) bio?: string
+}
+/** Whether the person who invited me sees me in their circle (2026-10-28). */
+export class CircleVisibilityDto {
+  @ApiProperty() @IsBoolean() visible!: boolean
 }
 export class MemberAvatarDto {
   @ApiProperty({ description: 'Object id from POST /community/me/media?purpose=avatar' }) @IsUUID('all') objectId!: string

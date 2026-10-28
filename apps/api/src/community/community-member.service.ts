@@ -1,4 +1,5 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
+import { parseProofRequest, resolveProof } from './community-proof'
 import { createHash, randomUUID } from 'node:crypto'
 import { predictionThreadId } from './prediction-discussion'
 import { communityCityCode } from './community-identity'
@@ -105,16 +106,37 @@ export class CommunityMemberService {
       return { id: result.id, duplicate: false }
     })
   }
+  async setCircleVisibility(userId: string, visible: boolean) {
+    return this.db.transaction(async m => {
+      const profile = await this.member(m, userId)
+      await m.query('UPDATE app.community_profiles SET show_to_inviter = $2 WHERE id = $1', [profile.id, visible])
+      return { showToInviter: visible }
+    })
+  }
+  async proofPreview(userId: string, query: Record<string, unknown>) {
+    const { kind, refId, title, pct, tradeDate } = await resolveProof(this.db, userId, parseProofRequest(query))
+    const [table] = await this.db.query("SELECT to_regclass('app.community_post_proofs') IS NOT NULL AS ready")
+    const shared = table?.ready ? (await this.db.query('SELECT 1 FROM app.community_post_proofs WHERE kind=$1 AND ref_id=$2', [kind, refId])).length > 0 : false
+    return { kind, title, pct, tradeDate, shared }
+  }
   async post(userId: string, key: string | undefined, input: MemberPostDto) {
     const body = (input.body ?? '').trim(); const lang = normalizeCommunityLang(input.lang)
     const imageIds = input.imageIds ?? []
-    if ((!body && !imageIds.length) || body.length > 4000) throw new BadRequestException('Invalid post body')
+    if ((!body && !imageIds.length && !input.proof) || body.length > 4000) throw new BadRequestException('Invalid post body')
     if (!input.location?.city?.trim() || input.location.city.trim().length > 80 || !/^[A-Z]{2}$/.test(input.location.countryCode ?? '') || input.location.source !== 'device') throw new BadRequestException('Device location required to publish')
     const location = { city: input.location.city.trim(), countryCode: input.location.countryCode, source: 'device' as const }
     const images = await this.media(userId, imageIds, 'post')
-    return this.write(userId, key, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}) }, 'post', async (m, p) => {
+    const proof = input.proof ? parseProofRequest(input.proof) : null
+    return this.write(userId, key, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}), ...(proof ? { proof } : {}) }, 'post', async (m, p) => {
+      // The figure is resolved here, inside the same transaction, from the author's own ledger row.
+      const resolved = proof ? await resolveProof(m, userId, proof) : null
+      if (resolved && (await m.query('SELECT 1 FROM app.community_post_proofs WHERE kind=$1 AND ref_id=$2', [resolved.kind, resolved.refId])).length) throw new ConflictException('PROOF_ALREADY_SHARED')
       const topics = await m.getRepository(CommunityTopic).find()
-      return m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, location, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date() }))
+      const saved = await m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, location, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date() }))
+      if (resolved) await m.query('INSERT INTO app.community_post_proofs(post_id,user_id,kind,ref_id,title,pct,trade_date) VALUES($1,$2,$3,$4,$5,$6,$7)',
+        [saved.id, userId, resolved.kind, resolved.refId, resolved.title, resolved.pct, resolved.tradeDate])
+        .catch((error: { code?: string }) => { throw error?.code === '23505' ? new ConflictException('PROOF_ALREADY_SHARED') : error })
+      return saved
     })
   }
   async ensurePredictionThread(userId: string, eventId: string) {

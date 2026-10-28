@@ -69,7 +69,7 @@ export function quantWin(product: QuantProduct | undefined | null): WinMoment | 
   if (!product || !last || BigInt(last.netAtomic) <= BigInt(0) || Date.now() - Date.parse(`${last.tradeDate}T00:00:00Z`) > 3 * 86_400_000) return null
   const row = product.history.find((entry) => entry.tradeDate === last.tradeDate)
   if (!row) return null
-  return { id: `quant-${product.slug}-${last.tradeDate}`, kind: 'quant', date: last.tradeDate, pct: Number(row.netReturnPct), title: product.name, path: '/markets?tab=quant' }
+  return { id: `quant-${product.slug}-${last.tradeDate}`, kind: 'quant', date: last.tradeDate, pct: Number(row.netReturnPct), title: product.name, path: '/markets?tab=quant', proof: { kind: 'quant_day', product: product.slug, date: last.tradeDate } }
 }
 
 /** The quant tab of Markets. */

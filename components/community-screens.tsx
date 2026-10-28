@@ -10,6 +10,7 @@ import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
 import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Feather, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Plus, Share, Share2 } from 'lucide-react'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
+import { getCircle, getCircleFeed, setCircleVisibility, type CircleMember } from '@/lib/community-data'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
 import { useQuery } from '@/lib/api/_query'
@@ -18,6 +19,7 @@ import { inviteLinkFor } from '@/lib/referral-invite'
 import RwaLogoMark from './rwa-logo'
 import { CommunityFollowButton, CommunityFollowView, CommunityLike, useCommunityFollow } from './community-actions'
 import { CommunityText } from './community-text'
+import { CommunityProofCard } from './community-proof'
 import { CommunityAvatar, CommunityMark, mediaSrc } from './community-avatar'
 import { CommunityBanner } from './community-banner'
 import { CommunityCompose, CommunityProfileEditor, CommunityReplyBar, useCommunityMe, type ComposeTarget } from './community-compose'
@@ -27,7 +29,7 @@ import { communityCopy } from '@/lib/maison-content-copy'
 import { communityUiCopy } from '@/lib/maison-community-ui-copy'
 import { communityExperienceCopy } from '@/lib/community-experience-copy'
 import { useScrollChrome } from '@/hooks/useScrollChrome'
-import { MaisonPage } from './maison/primitives'
+import { MaisonPage, maison as mp } from './maison/primitives'
 import c from './community-x.module.css'
 import dynamic from 'next/dynamic'
 import {
@@ -251,7 +253,7 @@ type RowActions = { guest: boolean; onLogin: () => void; onReply: (post: Communi
  * One X timeline row: 40px avatar column; name · badge · @handle · time · more; text; media; action bar.
  * The whole row opens the post (stretched link on the time); avatar, name and every bar button sit above it.
  */
-function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, index = 0, actions }: { post: CommunityPost; timeAgo: (iso?: string | null) => string; openPost: (id: string) => void; openProfile?: (handle: string) => void; topics?: CommunityTopic[]; locale: keyof typeof communityTopicCopy; index?: number; actions: RowActions }) {
+function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, index = 0, actions, relation }: { relation?: CircleMember['relation']; post: CommunityPost; timeAgo: (iso?: string | null) => string; openPost: (id: string) => void; openProfile?: (handle: string) => void; topics?: CommunityTopic[]; locale: keyof typeof communityTopicCopy; index?: number; actions: RowActions }) {
   const author = post.author
   const ui = communityUiCopy[locale]
   const p = profileCopy[locale]
@@ -271,6 +273,7 @@ function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, in
           {toProfile ? <button type="button" className={c.name} dir="auto" onClick={toProfile}>{author?.displayName ?? '—'}</button> : <b className={c.name} dir="auto">{author?.displayName ?? '—'}</b>}
           {author?.kind === 'official' && <BadgeCheck className={c.badge} size={18} strokeWidth={2.2} role="img" aria-label={p.verified} />}
           {author?.handle && <span className={c.handle} dir="ltr">@{author.handle}</span>}
+          {relation && <span className={c.relation}>{(circleCopy[locale] ?? circleCopy.en)[relation]}</span>}
           <span className={c.dot} aria-hidden="true">·</span>
           <button type="button" className={c.openPost} aria-label={when ? `${openLabel}, ${when}` : openLabel} onClick={open}>
             <time className={c.time} dateTime={post.publishedAt ?? undefined}>{when}</time>
@@ -278,6 +281,7 @@ function PostRow({ post, timeAgo, openPost, openProfile, topics = [], locale, in
           <button type="button" className={`${c.circleBtn} ${c.rowMore}`} aria-label={p.more} aria-haspopup="dialog" onClick={() => actions.onMore(post)}><MoreHorizontal size={18} strokeWidth={1.9} aria-hidden="true" /></button>
         </div>
         <CommunityText body={post.body} targetId={post.id} className={c.text} compact onOpen={open} />
+        {post.proof && <CommunityProofCard proof={post.proof} locale={locale} />}
         <Images images={post.images} onOpen={open} />
         <Tags list={post.topics} topics={topics} locale={locale} />
         <div className={c.bar}>
@@ -368,6 +372,24 @@ function useInfinite(onReach: () => void, enabled: boolean, page: unknown) {
 /* ── Feed ── */
 
 /** `embedded` renders the bare feed for a host that owns the page and bar (the AI screen's 社区 tab). */
+/** My circle copy (2026-10-28). */
+const circleCopy: Record<AppLocale, { tab: string; invited: string; inviter: string; emptyTitle: string; emptyBody: string; invite: string; visible: string; visibleNote: string }> = {
+  en: { tab: 'Circle', invited: 'You invited', inviter: 'Invited you', emptyTitle: 'Your circle is empty', emptyBody: 'Invite friends; their posts show up here.', invite: 'Invite friends', visible: 'Show me in my inviter’s circle', visibleNote: 'Only your community name and avatar are shown.' },
+  'zh-CN': { tab: '圈子', invited: '你邀请的', inviter: '邀请你的人', emptyTitle: '你的圈子还是空的', emptyBody: '邀请朋友加入，他们发的帖子会出现在这里。', invite: '去邀请', visible: '让邀请我的人在圈子里看到我', visibleNote: '只显示你的社区昵称和头像。' },
+  hi: { tab: 'सर्कल', invited: 'आपने बुलाया', inviter: 'आपको बुलाया', emptyTitle: 'आपका सर्कल खाली है', emptyBody: 'दोस्तों को बुलाएँ; उनकी पोस्ट यहाँ दिखेंगी।', invite: 'दोस्तों को बुलाएँ', visible: 'मुझे बुलाने वाले के सर्कल में दिखाएँ', visibleNote: 'सिर्फ़ आपका समुदाय नाम और अवतार दिखेगा।' },
+  es: { tab: 'Círculo', invited: 'Invitaste tú', inviter: 'Te invitó', emptyTitle: 'Tu círculo está vacío', emptyBody: 'Invita a amigos; sus publicaciones aparecerán aquí.', invite: 'Invitar amigos', visible: 'Mostrarme en el círculo de quien me invitó', visibleNote: 'Solo se ven tu nombre y avatar de la comunidad.' },
+  ar: { tab: 'الدائرة', invited: 'دعوتَه', inviter: 'دعاك', emptyTitle: 'دائرتك فارغة', emptyBody: 'ادعُ أصدقاءك وستظهر منشوراتهم هنا.', invite: 'ادعُ أصدقاء', visible: 'أظهرني في دائرة من دعاني', visibleNote: 'يظهر اسمك وصورتك في المجتمع فقط.' },
+  fr: { tab: 'Cercle', invited: 'Invité par vous', inviter: 'Vous a invité', emptyTitle: 'Votre cercle est vide', emptyBody: 'Invitez des amis ; leurs publications apparaîtront ici.', invite: 'Inviter des amis', visible: 'Me montrer dans le cercle de mon parrain', visibleNote: 'Seuls votre nom et votre avatar de la communauté sont visibles.' },
+  pt: { tab: 'Círculo', invited: 'Você convidou', inviter: 'Convidou você', emptyTitle: 'Seu círculo está vazio', emptyBody: 'Convide amigos; as publicações deles aparecem aqui.', invite: 'Convidar amigos', visible: 'Mostrar-me no círculo de quem me convidou', visibleNote: 'Só seu nome e avatar da comunidade aparecem.' },
+}
+
+function CircleVisibility({ value, label, note, onChange }: { value: boolean; label: string; note: string; onChange: (value: boolean) => void }) {
+  return <label className={`${c.circleVisible} ${mp.switchRow}`}>
+    <input type="checkbox" role="switch" checked={value} onChange={(event) => onChange(event.target.checked)} />
+    <span><b>{label}</b><small>{note}</small></span>
+  </label>
+}
+
 /** The invite centre lives in the Community tab (2026-10-28); loaded only when someone opens it. */
 const InviteCentre = dynamic(() => import('./maison/ReferralCenter').then((m) => ({ default: m.ReferralScreen })), { ssr: false })
 const inviteLabel: Record<AppLocale, { tab: string; guest: string; guestBody: string }> = {
@@ -387,7 +409,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const timeAgo = useTimeAgo()
   // Match the home module's public feed so the community route does not
   // render an empty latest-only view while the hot feed already has content.
-  const [sort, setSort] = useState<'latest' | 'hot'>('hot')
+  const [sort, setSort] = useState<'latest' | 'hot' | 'circle'>('hot')
   const [topic, setTopic] = useState<string | null>(null)
   const [topics, setTopics] = useState<CommunityTopic[]>([])
   const [items, setItems] = useState<CommunityPost[]>([])
@@ -397,13 +419,18 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const [failed, setFailed] = useState(false)
   const [moreFailed, setMoreFailed] = useState(false)
   const requestVersion = useRef(0)
-  const pageSort = useRef<'latest' | 'hot'>(sort)
+  const pageSort = useRef<'latest' | 'hot' | 'circle'>(sort)
   const [composing, setComposing] = useState(false)
   const me = useCommunityMe(isGuest)
   const chromeHidden = useScrollChrome()
   const ui = communityUiCopy[locale]
   const p = profileCopy[locale]
-  const tabs = [{ key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
+  const circleText = circleCopy[locale] ?? circleCopy.en
+  const tabs = [{ key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }, ...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }])]
+  // My circle (2026-10-28): who I invited / who invited me, for the tag on their posts and the circle timeline.
+  const [circle, setCircle] = useState<{ members: CircleMember[]; showToInviter: boolean } | null>(null)
+  useEffect(() => { if (isGuest) { setCircle(null); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => undefined) }, [isGuest])
+  const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
   const actions = usePostActions(isGuest, go, locale, (postId) => setItems((previous) => previous.map((item) => item.id === postId ? { ...item, commentCount: item.commentCount + 1 } : item)))
   const rowActions: RowActions = { guest: isGuest, onLogin: actions.login, onReply: actions.onReply, onShare: actions.onShare, onMore: actions.onMore }
 
@@ -423,6 +450,12 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       let page
       let effectiveSort = sort
       try {
+        if (sort === 'circle') {
+          const circlePage = await getCircleFeed({ limit: 20 })
+          if (version !== requestVersion.current) return
+          pageSort.current = 'circle'; setItems(circlePage.items ?? []); setNextCursor(circlePage.nextCursor ?? null)
+          return
+        }
         page = await getCommunityFeed({ sort, topic: topic ?? undefined, limit: 20 })
         if (sort === 'hot' && page.items.length === 0) {
           const latest = await getCommunityFeed({ sort: 'latest', topic: topic ?? undefined, limit: 20 })
@@ -455,9 +488,9 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     setMoreFailed(false)
     const version = requestVersion.current
     try {
-      const page = await getCommunityFeed({ sort: pageSort.current, topic: topic ?? undefined, cursor: nextCursor, limit: 20 })
+      const page = pageSort.current === 'circle' ? await getCircleFeed({ cursor: nextCursor, limit: 20 }) : await getCommunityFeed({ sort: pageSort.current, topic: topic ?? undefined, cursor: nextCursor, limit: 20 })
       if (version !== requestVersion.current) return
-      setItems((previous) => [...previous, ...page.items.filter(item => !previous.some(row => row.id === item.id))])
+      setItems((previous) => [...previous, ...(page.items ?? []).filter(item => !previous.some(row => row.id === item.id))])
       setNextCursor(page.nextCursor)
     } catch {
       if (version === requestVersion.current) setMoreFailed(true)
@@ -479,7 +512,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const invite = inviteLabel[locale] ?? inviteLabel.en
   const pick = (next: CommunityView) => { if (next === view) { window.scrollTo({ top: 0 }); return } navigator.vibrate?.(4); setView(next); window.scrollTo({ top: 0 }) }
 
-  const pickSort = (next: 'latest' | 'hot') => { if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
+  const pickSort = (next: 'latest' | 'hot' | 'circle') => { if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
     <div className={c.x} data-embedded={embedded || undefined}>
@@ -496,7 +529,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
             </button>}
         </div>}
         {view === 'feed' && <TimelineTabs label={ui.feed} value={sort} onChange={pickSort} options={tabs} />}
-        {view === 'feed' && topics.length > 0 && <div className={c.topics} role="group" aria-label={ui.topics}>
+        {view === 'feed' && sort !== 'circle' && topics.length > 0 && <div className={c.topics} role="group" aria-label={ui.topics}>
           <button type="button" className={c.chip} aria-pressed={topic === null} onClick={() => setTopic(null)}>{t('common.viewAll')}</button>
           {topics.map((entry) => <button key={entry.slug} type="button" className={c.chip} aria-pressed={topic === entry.slug} onClick={() => setTopic(entry.slug)}>{communityTopicTitle(entry.slug, topics, locale)}</button>)}
         </div>}
@@ -506,15 +539,19 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         : <InviteCentre embedded />)
       : loading ? <SkeletonRows />
         : failed ? <XState title={communityCopy[locale].feedFailed} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => void load()}>{t('common.refresh')}</button>} />
-        : items.length === 0 ? <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />
+        : items.length === 0 ? (sort === 'circle'
+          ? <XState title={circleText.emptyTitle} body={circleText.emptyBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => pick('invite')}>{circleText.invite}</button>} />
+          : <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />)
         : <>
           <ul className={c.feed} aria-label={ui.feed}>
-            {items.map((post, index) => <PostRow key={post.id} index={index} post={post} timeAgo={timeAgo} openPost={openPost} openProfile={openProfile} topics={topics} locale={locale} actions={rowActions} />)}
+            {items.map((post, index) => <PostRow key={post.id} index={index} post={post} timeAgo={timeAgo} openPost={openPost} openProfile={openProfile} topics={topics} locale={locale} actions={rowActions} relation={post.author?.id ? relations.get(post.author.id) : undefined} />)}
           </ul>
           {nextCursor && !moreFailed && <div ref={sentinel} className={c.sentinel} aria-hidden="true" />}
           {loadingMore && <span className={c.spinner} role="status" aria-label={t('community.loadMore')} />}
           {moreFailed && <button type="button" className={c.more} onClick={() => { setMoreFailed(false); void loadMore() }}>{communityCopy[locale].moreFailed} · {t('common.refresh')}</button>}
         </>}
+      {view === 'feed' && sort === 'circle' && circle && !loading && <CircleVisibility value={circle.showToInviter} label={circleText.visible} note={circleText.visibleNote}
+        onChange={(visible) => { setCircle({ ...circle, showToInviter: visible }); setCircleVisibility(visible).catch(() => setCircle({ ...circle, showToInviter: !visible })) }} />}
       {view === 'feed' && <button type="button" className={c.fab} data-compact={chromeHidden} aria-label={ui.compose} onClick={() => isGuest ? go('login') : setComposing(true)}>
         <span className={c.fabIcon} aria-hidden="true"><Feather size={24} strokeWidth={2} /><Plus size={13} strokeWidth={3} /></span>
       </button>}
@@ -604,6 +641,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
                 {author?.handle && !own && <CommunityFollowButton className={c.follow} handle={author.handle} guest={isGuest} onLogin={() => go('login')} />}
               </div>
               <CommunityText body={data.post.body} targetId={data.post.id} className={c.focusText} />
+              {data.post.proof && <CommunityProofCard proof={data.post.proof} locale={locale} />}
               <Images images={data.post.images} />
               <Tags list={data.post.topics} topics={topics} locale={locale} />
               <p className={c.stamp}>

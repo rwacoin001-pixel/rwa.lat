@@ -1,5 +1,7 @@
 'use client'
 
+import { CommunityProofCard } from './community-proof'
+import type { CommunityProof, CommunityProofRequest } from '@/lib/community-data'
 import { riskyPost, riskyPostMessage } from '@/lib/community-guard'
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
@@ -99,7 +101,7 @@ function CharRing({ used, max, label }: { used: number; max: number; label: stri
 
 /* ── Full-screen composer ── */
 
-export type ComposeTarget = { kind: 'post'; topic?: string | null } | { kind: 'reply'; postId: string; handle?: string | null }
+export type ComposeTarget = { kind: 'post'; topic?: string | null; proof?: { request: CommunityProofRequest; view: CommunityProof } } | { kind: 'reply'; postId: string; handle?: string | null }
 type Shot = { key: string; preview: string; status: 'uploading' | 'done' | 'error'; id?: string; pending?: boolean }
 
 export function CommunityCompose({ open, onClose, target, me, topics = [], initialFiles, onPublished }: {
@@ -196,7 +198,9 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const ready = shots.filter(s => s.status === 'done')
   const uploading = shots.some(s => s.status === 'uploading')
   const hasContent = trimmed.length > 0 || shots.length > 0
-  const canSend = (trimmed.length > 0 || ready.length > 0) && !uploading && body.length <= max && !busy && (reply || Boolean(location))
+  // A post carrying a verified result may go without text (2026-10-28).
+  const proof = target.kind === 'post' ? target.proof ?? null : null
+  const canSend = (trimmed.length > 0 || ready.length > 0 || Boolean(proof)) && !uploading && body.length <= max && !busy && (reply || Boolean(location))
 
   const finish = () => { clearShots(); setBody(''); onClose() }
   const requestClose = () => {
@@ -232,7 +236,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
     if (riskyPost(trimmed)) { setError(riskyPostMessage[locale] ?? riskyPostMessage.en); return }
     if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
-    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location }), ...(imageIds.length ? { imageIds } : {}) })
+    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
     if (intent.current?.text !== payload) intent.current = { text: payload, key: crypto.randomUUID() }
     setBusy(true); setError('')
@@ -275,6 +279,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
                   <button type="button" className={x.shotRemove} aria-label={k.removeImage} onClick={() => { URL.revokeObjectURL(shot.preview); setShots(list => list.filter(s => s.key !== shot.key)) }}><X size={15} strokeWidth={2.4} /></button>
                 </li>)}
               </ul>}
+              {proof && <CommunityProofCard proof={proof.view} locale={locale} />}
               {ready.some(s => s.pending) && <p className={x.composeNote}>{k.imagesPending}</p>}
             </div>
           </div>

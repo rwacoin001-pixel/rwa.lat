@@ -136,7 +136,7 @@ export function MyPredictionsScreen() {
     if (!stake || stake <= BigInt(0) || netPayout === null || !settled || Date.now() - Date.parse(settled) > 3 * 86_400_000) return null
     const pct = Number((netPayout - stake) * BigInt(10000) / stake) / 100
     const target = bet.marketEventId ? `/prediction/event-${encodeURIComponent(String(bet.marketEventId))}` : bet.marketId ? `/prediction/${encodeURIComponent(String(bet.marketId))}` : '/markets?tab=predictions'
-    return { id: `prediction-${bet.id}`, kind: 'prediction', date: settled.slice(0, 10), pct, title: String(bet.marketQuestion ?? '').trim() || t.title, path: target }
+    return { id: `prediction-${bet.id}`, kind: 'prediction', date: settled.slice(0, 10), pct, title: String(bet.marketQuestion ?? '').trim() || t.title, path: target, proof: { kind: 'prediction_win', bet: bet.id } }
   }, [bets, t.title])
   const shown = filter === 'all' ? bets : bets.filter((bet) => betStatus(bet.status) === FILTER_STATUS[filter])
 

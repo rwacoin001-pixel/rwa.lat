@@ -1,0 +1,13 @@
+/* Ledger-verified result under a post (2026-10-28, docs/design-system.md §7.7): a quiet fill card, the figure in the gain
+   colour, the verified line and the risk line. Every size is on the §3.1 scale. */
+.card { display: grid; gap: 2px; margin-top: 8px; padding: 12px 16px; border-radius: 12px; background: var(--pa-fill, rgba(11, 18, 32, .05)); text-align: start; }
+.kind { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.title { overflow: hidden; color: var(--m-ink, #0b1220); font-size: 15px; font-weight: 500; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.pct { color: var(--m-up, #078a6a); font-size: 28px; font-weight: 600; line-height: 36px; font-variant-numeric: tabular-nums; justify-self: start; }
+.verified { display: inline-flex; align-items: center; gap: 4px; color: var(--m-ink, #0b1220); font-size: 12px; font-weight: 500; line-height: 16px; }
+.risk { color: var(--m-faint, #8f97a5); font-size: 11px; line-height: 14px; }
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .card.card .kind { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .card.card .pct { color: var(--m-up, #078a6a); }
+:global(.rwa-mobile) .card.card .verified { color: var(--m-ink, #0b1220); }
+:global(.rwa-mobile) .card.card .risk { color: var(--m-faint, #8f97a5); }

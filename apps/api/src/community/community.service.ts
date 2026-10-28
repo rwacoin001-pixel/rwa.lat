@@ -6,10 +6,11 @@ import {
   Optional,
   ServiceUnavailableException,
 } from '@nestjs/common'
+import { proofsFor, type ProofView } from './community-proof'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
 import { createHash } from 'node:crypto'
 import { InjectRepository } from '@nestjs/typeorm'
-import { DataSource, EntityManager, QueryFailedError, Repository } from 'typeorm'
+import { DataSource, EntityManager, In, QueryFailedError, Repository } from 'typeorm'
 import { COMMUNITY_ERROR_CODES } from './community.errors'
 import {
   CommunityComment,
@@ -97,7 +98,39 @@ export class CommunityService {
 
   // ---- public reads ----
 
-  async getFeed(query: CommunityFeedQueryDto) {
+  /**
+   * "My circle" (2026-10-28): community profiles of the people I invited (direct, visible to me) and of whoever invited
+   * me. Public profile fields only. Empty until the referral and circle schema exist.
+   */
+  async circle(userId: string) {
+    const [ready] = await this.posts.manager.query(`SELECT to_regclass('app.referral_edges') IS NOT NULL AND EXISTS (SELECT 1 FROM information_schema.columns
+      WHERE table_schema='app' AND table_name='community_profiles' AND column_name='show_to_inviter') AS ready`)
+    if (!ready?.ready) return { members: [] as Array<{ relation: 'invited' | 'inviter'; profile: ReturnType<CommunityService['shapeProfile']> }>, showToInviter: true }
+    const rows: Array<{ id: string; relation: 'invited' | 'inviter' }> = await this.posts.manager.query(`
+      SELECT p.id, 'invited' AS relation FROM app.referral_edges e JOIN app.community_profiles p ON p.user_id = e.invitee_user_id
+        WHERE e.inviter_user_id = $1 AND p.kind = 'member' AND p.identity_configured AND p.is_active AND p.show_to_inviter
+      UNION ALL
+      SELECT p.id, 'inviter' FROM app.referral_edges e JOIN app.community_profiles p ON p.user_id = e.inviter_user_id
+        WHERE e.invitee_user_id = $1 AND p.kind = 'member' AND p.identity_configured AND p.is_active
+      LIMIT 500`, [userId])
+    const [mine] = await this.posts.manager.query('SELECT show_to_inviter FROM app.community_profiles WHERE user_id = $1 LIMIT 1', [userId])
+    const profiles = rows.length ? await this.profiles.findBy({ id: In(rows.map((row) => row.id)) }) : []
+    const gate = await this.mediaGate([], profiles.map((profile) => profile.avatar_url))
+    const byId = new Map(profiles.map((profile) => [profile.id, profile]))
+    return {
+      members: rows.filter((row) => byId.has(row.id)).map((row) => ({ relation: row.relation, profile: this.shapeProfile(byId.get(row.id)!, false, gate) })),
+      showToInviter: mine?.show_to_inviter !== false,
+    }
+  }
+
+  /** Latest posts from my circle, newest first, same cursor as the public latest feed. */
+  async circleFeed(userId: string, query: CommunityFeedQueryDto) {
+    const { members } = await this.circle(userId)
+    if (!members.length) return { items: [], nextCursor: null }
+    return this.getFeed({ ...query, sort: 'latest', topic: undefined }, members.map((member) => member.profile.id))
+  }
+
+  async getFeed(query: CommunityFeedQueryDto, profileIds?: string[]) {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 50)
     const sort = query.sort ?? 'latest'
     const qb = this.posts
@@ -106,6 +139,7 @@ export class CommunityService {
       .where("post.state = 'published'")
       .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
       .andWhere('post.published_at IS NOT NULL')
+    if (profileIds) qb.andWhere('post.profile_id IN (:...circleIds)', { circleIds: profileIds })
     if (query.topic) {
       const requestedTopic = query.topic.trim().toLowerCase()
       const topic = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(requestedTopic)
@@ -149,8 +183,8 @@ export class CommunityService {
       const last = items[items.length - 1]
       nextCursor = encodeCursor(last.published_at as Date, last.id)
     }
-    const gate = await this.mediaGate(items)
-    return { items: items.map((post) => this.shapePost(post, gate)), nextCursor }
+    const [gate, proofs] = await Promise.all([this.mediaGate(items), proofsFor(this.posts.manager.connection, items.map((post) => post.id))])
+    return { items: items.map((post) => this.shapePost(post, gate, proofs.get(post.id))), nextCursor }
   }
 
   async getPost(id: string) {
@@ -166,8 +200,8 @@ export class CommunityService {
       }),
       this.comments.count({ where: { post_id: id, state: 'published' } }),
     ])
-    const gate = await this.mediaGate([post, ...comments])
-    return { post: this.shapePost(post, gate), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
+    const [gate, proofs] = await Promise.all([this.mediaGate([post, ...comments]), proofsFor(this.posts.manager.connection, [post.id])])
+    return { post: this.shapePost(post, gate, proofs.get(post.id)), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
   }
 
   async listComments(postId: string, query: CommunityCommentsQueryDto) {
@@ -214,11 +248,11 @@ export class CommunityService {
         take: 20,
       }),
     ])
-    const gate = await this.mediaGate(recent, [profile.avatar_url])
+    const [gate, proofs] = await Promise.all([this.mediaGate(recent, [profile.avatar_url]), proofsFor(this.posts.manager.connection, recent.map((post) => post.id))])
     return {
       profile: this.shapeProfile(profile, true, gate),
       stats: { postCount, followerCount, followingCount },
-      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate)),
+      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate, proofs.get(post.id))),
     }
   }
 
@@ -685,7 +719,7 @@ export class CommunityService {
     }
   }
 
-  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE) {
+  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE, proof?: ProofView) {
     return {
       id: post.id,
       body: post.body,
@@ -698,6 +732,7 @@ export class CommunityService {
       publishedAt: post.published_at,
       location: post.location ?? null,
       author: post.author ? this.shapeProfile(post.author, false, gate) : null,
+      proof: proof ?? null,
     }
   }
 

@@ -377,3 +377,11 @@ span.act { cursor: default; }
 .pageTabs button[aria-selected='true']::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--x-ink); }
 /* With the dock showing, the compose button stacks above the AI ball in the same column instead of sitting on it. */
 :global(.rwa-mobile[data-dock='true']) .fab { bottom: calc(max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) + var(--app-dock-height, 52px) + 16px); }
+
+/* My circle (2026-10-28): a small text tag after the handle, and the visibility switch at the end of the circle timeline. */
+.relation { flex: none; padding: 0 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--x-muted); font-size: 12px; font-weight: 500; line-height: 20px; white-space: nowrap; }
+.circleVisible { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 16px var(--m-gutter, 20px) 0; padding: 12px 0; border-top: .5px solid var(--x-line); cursor: pointer; }
+.circleVisible > span { display: grid; gap: 2px; min-width: 0; }
+.circleVisible b { color: var(--x-ink); font-size: 15px; font-weight: 500; line-height: 22px; }
+.circleVisible small { color: var(--x-muted); font-size: 12px; line-height: 16px; }
+/* The switch itself is the app's (maison .switchRow). */

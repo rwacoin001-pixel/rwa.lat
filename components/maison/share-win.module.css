@@ -21,3 +21,7 @@
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
 :global(.rwa-mobile) .line.line .open span { color: var(--m-accent); }
 :global(.rwa-mobile) .sheet.sheet .note { color: var(--m-muted); }
+/* Post the verified result to Community: a quiet full-width text button above the two main buttons. */
+.post { min-height: 44px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.post:disabled { color: var(--m-muted); cursor: default; }
+.post:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }

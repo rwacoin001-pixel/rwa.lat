@@ -22,7 +22,13 @@ export type CommunityAuthor = {
   coverUrl?: string | null
 }
 
+/** A ledger-verified result attached to a post; the server computed the figure (2026-10-28). */
+export type CommunityProof = { kind: 'quant_day' | 'prediction_win'; title: string; pct: number; tradeDate: string }
+/** What a client asks to attach; the server resolves it from the author's own ledger rows. */
+export type CommunityProofRequest = { kind: 'quant_day'; product: string; date: string } | { kind: 'prediction_win'; bet: string }
+
 export type CommunityPost = {
+  proof?: CommunityProof | null
   lang?: string
   location?: { city: string; countryCode: string } | null
   id: string
@@ -108,6 +114,25 @@ export async function getCommunityProfile(handle: string) {
 
 export async function submitCommunityReport(params: { targetType: 'post' | 'comment' | 'profile'; targetId: string; reason: string }) {
   const result = await request<{ id: string; state: string; createdAt: string }>('/v1/community/reports', { method: 'POST', token: null, body: JSON.stringify(params) })
+  if (!result.ok) throw new Error(result.error.message)
+  return result.data
+}
+
+/** My circle (2026-10-28): people I invited and who invited me, with my own visibility to my inviter. Signed-in only. */
+export type CircleMember = { relation: 'invited' | 'inviter'; profile: CommunityAuthor }
+export async function getCircle() {
+  const result = await request<{ members: CircleMember[]; showToInviter: boolean }>('/v1/community/me/circle', { loading: 'silent' })
+  if (!result.ok) throw new Error(result.error.message)
+  return result.data
+}
+export async function getCircleFeed(params: { cursor?: string; limit?: number } = {}) {
+  const query = new URLSearchParams({ limit: String(params.limit ?? 20), ...(params.cursor ? { cursor: params.cursor } : {}) })
+  const result = await request<{ items: CommunityPost[]; nextCursor: string | null }>(`/v1/community/me/circle/feed?${query}`, { loading: 'silent' })
+  if (!result.ok) throw new Error(result.error.message)
+  return result.data
+}
+export async function setCircleVisibility(visible: boolean) {
+  const result = await request<{ showToInviter: boolean }>('/v1/community/me/circle/visibility', { method: 'PUT', body: JSON.stringify({ visible }), loading: 'silent' })
   if (!result.ok) throw new Error(result.error.message)
   return result.data
 }
