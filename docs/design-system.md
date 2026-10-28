@@ -356,3 +356,10 @@
 - No camera and no WebGL. The reflection is our Marina Bay ground photo, blurred and grey, sliding against the tilt; one light band crosses once on entry; a glare follows the finger. Tilt follows the finger on the card and, on Android, the phone itself (iOS would need a permission prompt, which we never show for decoration). Reduced motion keeps it flat.
 - Under it: one ink "分享邀请函" button at full width and the quiet actions (复制链接 · 海报 · 修改邀请码) as 15px text buttons.
 - Records: the income tab and `/profile/documents` also read quant settlements/orders and prediction bets (`components/maison/money-records.ts`).
+
+#### 2026-10-29 b
+- Dock pages share one top line: tab labels (and the home logo row) centre 32px below the safe area; bars end at 54px.
+- The personal centre (/profile) has no top bar: it slides in from the trailing edge (SwipePanel) and a horizontal swipe toward it goes back.
+- Sheets: the page behind frosts (blur 14px); 28px top radius, soft shadow, 36x5 grip, 32px round close.
+- Invitation plate: brand, the code alone in the open middle (tap copies the link), friends joined, a small printed QR; sized so the invite tab never scrolls.
+- Poster studio: four sizes, swipeable posters, real photographs instead of 3D renders.

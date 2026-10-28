@@ -34,7 +34,7 @@ export function slotsForScreen(screen?: RwaScreen, kind?: TopbarKind): SlotConfi
   let resolved: SlotConfig
   if (screen === 'verify-email' || screen === 'recovery' || screen === 'login' || screen === 'register' || screen === 'welcome') return { ...child, hidden: true }
   if (screen === 'ai') resolved = { ...child, r2: null }
-  else if (screen === 'profile') resolved = { ...child, l1: 'back', r2: null }
+  else if (screen === 'profile') resolved = { ...child, hidden: true }
   else if (screen === 'search') resolved = { ...child, r2: null }
   else if (screen === 'invest') resolved = { ...root, l1: null, r2: null, r1: null }
   // Koala Quant (/quant) is a pushed page since 2026-10-28 (the card lives on Markets): a back arrow, its name.

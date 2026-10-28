@@ -6,3 +6,6 @@
 .tabs button[aria-selected='true'] { color: var(--m-ink); font-weight: 600; }
 .tabs button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 8px; }
 .rule { position: absolute; left: 50%; bottom: 4px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--m-ink); }
+/* One top line for the four dock pages (2026-10-29, user: the bars sat at different heights): the tab labels centre
+   32px below the safe area, like the home bar's logo row and the community tabs; the bar ends at 56px. */
+.tabs { padding-top: calc(env(safe-area-inset-top) + 4px); }

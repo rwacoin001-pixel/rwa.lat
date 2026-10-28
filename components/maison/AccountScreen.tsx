@@ -16,6 +16,7 @@ import { accountCopy } from '@/lib/maison-account-copy'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { walletCopy } from '@/lib/maison-wallet-copy'
 import { backOr, openPath, signInThenReturn } from '@/lib/maison-nav'
+import { SwipePanel } from './SwipePanel'
 import { MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Lacquer, StatStrip } from './motion'
 import { fmtAtomic, fmtDate, fmtDateTime, fmtDuration } from './format'
@@ -101,7 +102,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     <p className={s.lede}>{p.lede}</p>
   </header>
 
-  if (guest) return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={p.title} onBack={onClose} />}>
+  if (guest) return <SwipePanel onClose={onClose}><MaisonPage page="profile">
     {hero}
     <StateBlock tone="unavailable" title={p.signIn} body={p.guestBody}
       action={<button type="button" className={s.ghost} onClick={() => signInThenReturn('/profile')}>{p.signIn}<ChevronRight size={15} className={s.chev} /></button>} />
@@ -113,7 +114,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         <span className={s.rowEnd}><ChevronRight size={16} className={s.chev} /></span>
       </button>
     </li>)}</ul>
-  </MaisonPage>
+  </MaisonPage></SwipePanel>
 
   // "Me" (2026-10-28, second pass, docs/design-system.md §7.8): denser — every block carries live facts, not labels.
   // 1 the name card in one row (photo, name, @handle) with the four counts and the account's three checks as chips;
@@ -147,7 +148,8 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   ]
   const help = (['support', 'channels', 'scam', 'trust'] as const).map((key) => ({ key, path: { support: '/profile/support', channels: '/trust/official-channels', scam: '/trust/report-scam', trust: '/trust' }[key] }))
 
-  return <MaisonPage page="profile" topbar={<RwaTopbar screen="profile" title={me.title} onBack={onClose} />}>
+  // No top bar (2026-10-29): the personal centre slides in from the right and a swipe back toward it returns.
+  return <SwipePanel onClose={onClose}><MaisonPage page="profile">
     {/* Name card (2026-10-28, after the user's profile-card reference): a living colour band on top, the photo half over
         its edge on the left and the membership chip on the right; name and @handle with a round edit key; three counts;
         one ink key to the public page. The account checks follow under the card. */}
@@ -228,18 +230,18 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       </button>
       {leaveError && <div className={s.notice} data-tone="error" role="alert"><Info size={16} /><span>{p.signOutFailed}</span></div>}
     </div>
-  </MaisonPage>
+  </MaisonPage></SwipePanel>
 }
 
 /** "Me" page copy (2026-10-28). */
 const meCopy: Record<string, { verified: string; member: string; show: string; hide: string; invited: string; editShort: string; noneUnread: string; assets: string; today: string; rewards: string; deposit: string; withdraw: string; activity: string; inviteKey: string; title: string; card: string; followers: string; following: string; posts: string; publicPage: string; edit: string; setup: string; setupBody: string; account: string }> = {
-  en: { verified: 'Verified', member: 'A-REIT member', show: 'Show balances', hide: 'Hide balances', invited: 'invited', editShort: 'Edit', noneUnread: 'All read', assets: 'Total assets', today: 'Today', rewards: 'Rewards to claim', deposit: 'Deposit', withdraw: 'Withdraw', activity: 'Activity', inviteKey: 'Invite', title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'My public page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
-  'zh-CN': { verified: '已认证', member: 'A-REIT 会员', show: '显示金额', hide: '隐藏金额', invited: '邀请', editShort: '编辑', noneUnread: '已读完', assets: '总资产', today: '今日', rewards: '待领奖励', deposit: '充值', withdraw: '提现', activity: '记录', inviteKey: '邀请', title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '我的主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
-  hi: { verified: 'सत्यापित', member: 'A-REIT सदस्य', show: 'राशि दिखाएँ', hide: 'राशि छिपाएँ', invited: 'आमंत्रित', editShort: 'बदलें', noneUnread: 'सब पढ़ा', assets: 'कुल संपत्ति', today: 'आज', rewards: 'दावा योग्य इनाम', deposit: 'जमा', withdraw: 'निकासी', activity: 'गतिविधि', inviteKey: 'आमंत्रण', title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'मेरा पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
-  es: { verified: 'Verificado', member: 'Miembro de A-REIT', show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'invitados', editShort: 'Editar', noneUnread: 'Todo leído', assets: 'Activos totales', today: 'Hoy', rewards: 'Recompensas por cobrar', deposit: 'Depositar', withdraw: 'Retirar', activity: 'Actividad', inviteKey: 'Invitar', title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Mi página', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
-  ar: { verified: 'موثّق', member: 'عضو A-REIT', show: 'إظهار الأرصدة', hide: 'إخفاء الأرصدة', invited: 'مدعوون', editShort: 'تعديل', noneUnread: 'كلها مقروءة', assets: 'إجمالي الأصول', today: 'اليوم', rewards: 'مكافآت للمطالبة', deposit: 'إيداع', withdraw: 'سحب', activity: 'السجل', inviteKey: 'دعوة', title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحتي', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
-  fr: { verified: 'Vérifié', member: 'Membre A-REIT', show: 'Afficher les soldes', hide: 'Masquer les soldes', invited: 'invités', editShort: 'Modifier', noneUnread: 'Tout lu', assets: 'Actifs totaux', today: 'Aujourd’hui', rewards: 'Récompenses à réclamer', deposit: 'Déposer', withdraw: 'Retirer', activity: 'Activité', inviteKey: 'Inviter', title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Ma page', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
-  pt: { verified: 'Verificado', member: 'Membro A-REIT', show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'convidados', editShort: 'Editar', noneUnread: 'Tudo lido', assets: 'Ativos totais', today: 'Hoje', rewards: 'Recompensas a resgatar', deposit: 'Depositar', withdraw: 'Sacar', activity: 'Atividade', inviteKey: 'Convidar', title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Minha página', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
+  en: { verified: 'Verified', member: 'A-REIT member', show: 'Show balances', hide: 'Hide balances', invited: 'invited', editShort: 'Edit', noneUnread: 'All read', assets: 'Total assets', today: 'Today', rewards: 'Rewards to claim', deposit: 'Deposit', withdraw: 'Withdraw', activity: 'Activity', inviteKey: 'Invite', title: 'Me', card: 'Community card', followers: 'followers', following: 'following', posts: 'posts', publicPage: 'Community page', edit: 'Edit profile', setup: 'Set up my card', setupBody: 'Pick a name and photo for Community.', account: 'Account' },
+  'zh-CN': { verified: '已认证', member: 'A-REIT 会员', show: '显示金额', hide: '隐藏金额', invited: '邀请', editShort: '编辑', noneUnread: '已读完', assets: '总资产', today: '今日', rewards: '待领奖励', deposit: '充值', withdraw: '提现', activity: '记录', inviteKey: '邀请', title: '我', card: '社区名片', followers: '关注者', following: '正在关注', posts: '帖子', publicPage: '社区主页', edit: '编辑资料', setup: '设置我的名片', setupBody: '给社区设置一个昵称和头像。', account: '账户' },
+  hi: { verified: 'सत्यापित', member: 'A-REIT सदस्य', show: 'राशि दिखाएँ', hide: 'राशि छिपाएँ', invited: 'आमंत्रित', editShort: 'बदलें', noneUnread: 'सब पढ़ा', assets: 'कुल संपत्ति', today: 'आज', rewards: 'दावा योग्य इनाम', deposit: 'जमा', withdraw: 'निकासी', activity: 'गतिविधि', inviteKey: 'आमंत्रण', title: 'मैं', card: 'समुदाय कार्ड', followers: 'फ़ॉलोअर', following: 'फ़ॉलो कर रहे', posts: 'पोस्ट', publicPage: 'समुदाय पेज', edit: 'प्रोफ़ाइल बदलें', setup: 'मेरा कार्ड बनाएँ', setupBody: 'समुदाय के लिए नाम और फ़ोटो चुनें।', account: 'खाता' },
+  es: { verified: 'Verificado', member: 'Miembro de A-REIT', show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'invitados', editShort: 'Editar', noneUnread: 'Todo leído', assets: 'Activos totales', today: 'Hoy', rewards: 'Recompensas por cobrar', deposit: 'Depositar', withdraw: 'Retirar', activity: 'Actividad', inviteKey: 'Invitar', title: 'Yo', card: 'Tarjeta de la comunidad', followers: 'seguidores', following: 'siguiendo', posts: 'publicaciones', publicPage: 'Página en la comunidad', edit: 'Editar perfil', setup: 'Crear mi tarjeta', setupBody: 'Elige un nombre y una foto para la comunidad.', account: 'Cuenta' },
+  ar: { verified: 'موثّق', member: 'عضو A-REIT', show: 'إظهار الأرصدة', hide: 'إخفاء الأرصدة', invited: 'مدعوون', editShort: 'تعديل', noneUnread: 'كلها مقروءة', assets: 'إجمالي الأصول', today: 'اليوم', rewards: 'مكافآت للمطالبة', deposit: 'إيداع', withdraw: 'سحب', activity: 'السجل', inviteKey: 'دعوة', title: 'أنا', card: 'بطاقة المجتمع', followers: 'متابِع', following: 'يتابع', posts: 'منشورات', publicPage: 'صفحة المجتمع', edit: 'تعديل الملف', setup: 'أنشئ بطاقتي', setupBody: 'اختر اسمًا وصورة للمجتمع.', account: 'الحساب' },
+  fr: { verified: 'Vérifié', member: 'Membre A-REIT', show: 'Afficher les soldes', hide: 'Masquer les soldes', invited: 'invités', editShort: 'Modifier', noneUnread: 'Tout lu', assets: 'Actifs totaux', today: 'Aujourd’hui', rewards: 'Récompenses à réclamer', deposit: 'Déposer', withdraw: 'Retirer', activity: 'Activité', inviteKey: 'Inviter', title: 'Moi', card: 'Carte communauté', followers: 'abonnés', following: 'abonnements', posts: 'publications', publicPage: 'Page communauté', edit: 'Modifier le profil', setup: 'Créer ma carte', setupBody: 'Choisissez un nom et une photo pour la communauté.', account: 'Compte' },
+  pt: { verified: 'Verificado', member: 'Membro A-REIT', show: 'Mostrar saldos', hide: 'Ocultar saldos', invited: 'convidados', editShort: 'Editar', noneUnread: 'Tudo lido', assets: 'Ativos totais', today: 'Hoje', rewards: 'Recompensas a resgatar', deposit: 'Depositar', withdraw: 'Sacar', activity: 'Atividade', inviteKey: 'Convidar', title: 'Eu', card: 'Cartão da comunidade', followers: 'seguidores', following: 'seguindo', posts: 'publicações', publicPage: 'Página na comunidade', edit: 'Editar perfil', setup: 'Criar meu cartão', setupBody: 'Escolha um nome e uma foto para a comunidade.', account: 'Conta' },
 }
 
 const THEMES: { value: RwaThemePreference; Icon: typeof Sun }[] = [{ value: 'light', Icon: Sun }, { value: 'dark', Icon: Moon }, { value: 'system', Icon: Monitor }]

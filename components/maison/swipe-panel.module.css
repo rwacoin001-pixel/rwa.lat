@@ -1,0 +1,7 @@
+/* Swipe panel (2026-10-29): slides in from the trailing edge once, follows a horizontal drag, a soft shadow on its
+   leading edge so it reads as a sheet laid over the page it came from. Transform only. */
+.panel { position: relative; min-height: 100dvh; padding-top: env(safe-area-inset-top); background: var(--m-bg, var(--bg)); box-shadow: -12px 0 32px -24px rgba(0, 0, 0, .35); animation: slideIn .42s cubic-bezier(.22, 1, .36, 1) both; will-change: transform; touch-action: pan-y; }
+:global([dir='rtl']) .panel { animation-name: slideInRtl; }
+@keyframes slideIn { from { transform: translate3d(100%, 0, 0); } }
+@keyframes slideInRtl { from { transform: translate3d(-100%, 0, 0); } }
+@media (prefers-reduced-motion: reduce) { .panel { animation: none; } }
