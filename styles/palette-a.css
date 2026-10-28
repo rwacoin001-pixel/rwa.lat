@@ -181,7 +181,7 @@ html[data-palette='a'][data-theme='light'] .rwa-mobile { color-scheme: light dar
 
 /* Checkboxes in the app's language (were the browser default): a rounded square with a hairline, ink when checked. */
 html[data-palette='a'] input[type='checkbox'] { -webkit-appearance: none; appearance: none; flex: none; display: inline-grid; place-content: center; width: 18px; height: 18px; margin: 0 8px 0 0;
-  vertical-align: -3px; border-radius: 6px; background: rgba(255, 255, 255, .7); box-shadow: inset 0 0 0 1.2px rgba(11, 18, 32, .28); cursor: pointer; transition: background-color .15s ease, box-shadow .15s ease; }
+  vertical-align: -3px; border-radius: 8px; background: rgba(255, 255, 255, .7); box-shadow: inset 0 0 0 1.2px rgba(11, 18, 32, .28); cursor: pointer; transition: background-color .15s ease, box-shadow .15s ease; }
 html[data-palette='a'] input[type='checkbox']::after { content: ''; width: 9px; height: 5px; margin-top: -2px; border: solid #ffffff; border-width: 0 0 1.8px 1.8px; transform: rotate(-45deg) scale(0); transition: transform .18s cubic-bezier(.34, 1.56, .64, 1); }
 html[data-palette='a'] input[type='checkbox']:checked { background: #0b1220; box-shadow: none; }
 html[data-palette='a'] input[type='checkbox']:checked::after { transform: rotate(-45deg) scale(1); }
@@ -268,7 +268,7 @@ html[data-palette='a'] .rwa-mobile:not([data-screen='home']) .rwa-topbar--s1 .rw
 
 /* Notifications: one paper list, type only (like the buddy digest). Unread rows: bolder title and a small ink dot. */
 html[data-palette='a'] .s2-notification-list { gap: 0; padding: 2px 16px; border-radius: var(--pa-card-radius); background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
-html[data-palette='a'] .s2-notification-row { position: relative; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; min-height: 0; margin: 0; padding: 14px 0 14px 14px; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
+html[data-palette='a'] .s2-notification-row { position: relative; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; min-height: 0; margin: 0; padding: 16px 0 16px 16px; border: 0 !important; border-radius: 0 !important; background: none !important; box-shadow: none !important; }
 html[data-palette='a'] .s2-notification-row + .s2-notification-row { border-top: .5px solid var(--pa-hair) !important; }
 html[data-palette='a'] .s2-notification-row > svg { display: none; }
 html[data-palette='a'] .s2-notification-row::before { content: ''; position: absolute; left: 0; top: 21px; width: 6px; height: 6px; border-radius: 50%; background: transparent; }
@@ -277,7 +277,7 @@ html[data-palette='a'] .s2-notification-row b { font-size: 15px; font-weight: 50
 html[data-palette='a'] .s2-notification-row[data-unread='true'] b { font-weight: 650; }
 html[data-palette='a'] .s2-notification-row small { font-size: 13px; }
 html[data-palette='a'] .s2-notification-row time { font-size: 12px; font-variant-numeric: tabular-nums; }
-html[data-palette='a'] .s2-notification-filters .rwa-sel { min-height: var(--pa-tag-h); padding: 0 14px; border: 0 !important; border-radius: 999px; background: var(--pa-fill) !important; color: var(--ink-2, inherit); font-size: 13px; font-weight: 500; box-shadow: none !important; }
+html[data-palette='a'] .s2-notification-filters .rwa-sel { min-height: var(--pa-tag-h); padding: 0 16px; border: 0 !important; border-radius: 999px; background: var(--pa-fill) !important; color: var(--ink-2, inherit); font-size: 13px; font-weight: 500; box-shadow: none !important; }
 html[data-palette='a'] .s2-notification-filters .rwa-sel[aria-selected='true'] { background: var(--pa-sel) !important; color: var(--pa-sel-ink) !important; }
 
 /* Empty states: type only (no tinted icon tile), on a paper card; one title, one line, one way forward. */
@@ -285,7 +285,7 @@ html[data-palette='a'] .empty-state { grid-template-columns: minmax(0, 1fr); }
 html[data-palette='a'] .empty-state__icon { display: none; }
 html[data-palette='a'] .empty-state b { font-size: 15px; font-weight: 600; }
 html[data-palette='a'] .empty-state small { font-size: 13px; }
-html[data-palette='a'] .empty-state--card { padding: 18px; border: 0 !important; border-radius: var(--pa-card-radius); background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+html[data-palette='a'] .empty-state--card { padding: 20px; border: 0 !important; border-radius: var(--pa-card-radius); background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
 html[data-palette='a'] .empty-state--page { background: none; }
 
 /* Motion (docs/design-system.md §9): one set of durations and curves for the whole app. */
@@ -315,3 +315,9 @@ html[data-palette='a'] .status-hero h1 { font-size: 22px; line-height: 28px; }
 html[data-palette='a'] .status-hero p { font-size: 13px; line-height: 18px; }
 html[data-palette='a'] .status-hero small { font-size: 12px; line-height: 16px; }
 html[data-palette='a'] .status-block { border: 0; border-radius: 22px; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+/* Official channels / scam report (2026-10-28, §6): the anti-scam warning is one plain line of warning-coloured text —
+   no tinted box, no icon; the page's hero icon tile is dropped too. */
+html[data-palette='a'] .rwa-mobile .anti-scam-callout.anti-scam-callout { padding: 0; border: 0; border-radius: 0; background: none; box-shadow: none; }
+html[data-palette='a'] .rwa-mobile .anti-scam-callout.anti-scam-callout > svg { display: none; }
+html[data-palette='a'] .rwa-mobile .anti-scam-callout.anti-scam-callout b { color: var(--q-loss, #c23b33); }
+html[data-palette='a'] .account-flow-hero > span:first-child { display: none; }
