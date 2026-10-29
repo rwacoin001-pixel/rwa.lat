@@ -24,6 +24,7 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/risk': ['core.console.view'],
   '/collections': ['core.console.view'],
   '/networks': ['core.console.view'],
+  '/ai': ['ai.ops.query'],
   '/ai-ops': ['core.console.view'],
   '/polymarket': ['core.console.view', 'polymarket.manage'],
   '/files': ['storage.manage'],

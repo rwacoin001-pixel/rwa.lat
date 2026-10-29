@@ -135,6 +135,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: '系统',
     icon: Settings,
     items: [
+      { name: '数据 AI', href: '/ai', icon: BarChart3 },
       { name: 'AI 运维', href: '/ai-ops', icon: Bot },
       { name: '客服知识库', href: '/ai-knowledge', icon: BookOpen },
       { name: 'AI 投资管理', href: '/ai-investment', icon: PieChart },
