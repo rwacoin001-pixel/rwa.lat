@@ -3,7 +3,7 @@
 /**
  * Assets overview (2026-10-29, user: the assets page felt messy; RWA products are being retired, never say "RWA").
  * One question per layer, as top money apps do it:
- *   1. How much do I have — one large figure (cash + Koala Quant principal + predictions in play + anything else held),
+ *   1. How much do I have — one large figure (cash + Koala Quant principal, waiting lots included + predictions in play + anything else held),
  *      today's and the running result under it, the value line, and three capsules (deposit, withdraw, transfer).
  *   2. Where is it — one composition bar with a legend; each part opens its product.
  *   3. Each product as one card — Koala Quant and predictions, a real photo, three figures; a tap opens the product.
@@ -49,7 +49,8 @@ export function AssetsOverview({ cash, extraValue, basketValue, masked, onMask, 
   const bets = useMyBets({ loading: 'silent' })
   const income = useOtherIncome(locale)
 
-  const quantValue = position ? big(position.principalAtomic) + big(position.waitingAtomic) : ZERO
+  // principalAtomic already holds every lot, including the ones still waiting to start (waitingAtomic is a part of it, not extra).
+  const quantValue = position ? big(position.principalAtomic) : ZERO
   const betRows = useMemo(() => Array.isArray(bets.data?.items) ? bets.data.items : [], [bets.data])
   const inPlay = useMemo(() => betRows.filter(bet => betStatus(bet.status) === 'placed'), [betRows])
   const betsValue = useMemo(() => inPlay.reduce((sum, bet) => sum + (betAmounts(bet).stake ?? ZERO), ZERO), [inPlay])
