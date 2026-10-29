@@ -573,6 +573,16 @@ export class WalletService {
     }
   }
 
+  async listUserDeposits(userId: string, limit = 20) {
+    const rows = await this.deposits.find({ where: { userId }, order: { detectedAt: 'DESC' }, take: Math.min(Math.max(limit, 1), 50) })
+    return rows.map(row => ({ id: row.id, state: row.state, atomicAmount: row.atomicAmount, assetCode: row.assetCode, assetDecimals: row.assetDecimals, detectedAt: row.detectedAt }))
+  }
+
+  async listUserWithdrawals(userId: string, limit = 20) {
+    const rows = await this.withdrawals.find({ where: { userId }, order: { requestedAt: 'DESC' }, take: Math.min(Math.max(limit, 1), 50) })
+    return rows.map(row => ({ id: row.id, state: row.state, atomicAmount: row.atomicAmount, feeAtomicAmount: row.feeAtomicAmount, assetCode: row.assetCode, assetDecimals: row.assetDecimals, requestedAt: row.requestedAt, completedAt: row.completedAt }))
+  }
+
   async createTransfer(actor: SecurityActor, dto: CreateTransferDto, idempotencyKey: string, requestId: string) {
     this.assertIdempotencyKey(idempotencyKey)
     await this.operations.assertEnabled(

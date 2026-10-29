@@ -229,7 +229,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
 
   // The chat endpoint is synchronous and has no server-side cancel: stopping only ends the wait
   // here, and the copy says the reply may still be stored in history.
-  const ask = useCallback(async (message: string, attachments: AiAttachment[] = []) => {
+  const ask = useCallback(async (message: string, attachments: AiAttachment[] = [], notificationId?: string) => {
     if (!message || sending || inflight.current || status !== 'ready') return false
     if (message.length > MAX || containsWalletSecret([message, ...attachments.map(file => file.name + '\n' + file.text)].join('\n'))) { setError({ text: message.length > MAX ? chat.tooLong : chat.secret, tone: 'info', retry: null }); return false }
     const controller = new AbortController()
@@ -243,7 +243,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
     // Signed-in readers asking about their own account get only the snapshot slices the question
     // names; guests never send scopes, so the assistant can only point them to sign in.
     const accountScopes = signedIn ? accountScopesFor(message) : []
-    const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(attachments.length ? { attachments } : {}), ...(pageContext ? { context: pageContext } : {}), ...(sessionId ? { sessionId } : {}), ...(accountScopes.length ? { accountScopes } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
+    const result = await request<Record<string, unknown>>('/v1/ai/chat', { method: 'POST', body: JSON.stringify({ message, ...(notificationId ? { notificationId } : {}), ...(attachments.length ? { attachments } : {}), ...(pageContext ? { context: pageContext } : {}), ...(sessionId ? { sessionId } : {}), ...(accountScopes.length ? { accountScopes } : {}), locale }), signal: controller.signal, timeoutMs: 95_000, loading: 'silent' })
     // Stop / New chat already settled the UI; a late result from an abandoned request is dropped.
     if (controller.signal.aborted || inflight.current !== controller) return false
     inflight.current = null
@@ -342,7 +342,7 @@ export function AiChatScreen({ onClose, pageContext, overlay = false, scroller =
       <div ref={dock} className={a.dockWrap} style={{ bottom: keyboard }} data-keyboard={keyboard > 80 || undefined}>
         {(() => { const latest = messages.findLast(m => m.role === 'assistant'); return latest?.questions?.length ? <AiQuestionCard key={latest.id} questions={latest.questions} locale={locale} disabled={sending || status !== 'ready'} onConfirm={ask} /> : null })()}
         {showWelcome && showsSuggestions(voice.state) && <ul className={a.chips} aria-label={pearl.suggestions}>{prompts.map(question => <li key={question}><button type="button" disabled={status !== 'ready'} onClick={() => { void ask(question) }}><span dir="auto">{question}</span></button></li>)}</ul>}
-        <AiNoticeTray key={`notices-${generation}`} onOpenChange={setTrayOpen} locale={locale} disabled={sending || status !== 'ready'} onAsk={ask} onSummary={summarize} hidden={!signedIn || input.trim().length > 0 || voice.state !== 'idle'} />
+        <AiNoticeTray key={`notices-${generation}`} onOpenChange={setTrayOpen} locale={locale} disabled={sending || status !== 'ready'} onAsk={(text, notificationId) => { void ask(text, [], notificationId) }} onSummary={summarize} hidden={!signedIn || input.trim().length > 0 || voice.state !== 'idle'} />
         <AiComposer key={generation} value={input} onChange={setInput} onVoice={setVoice} voiceOverlay={!showWelcome} suggestions={false} onInteraction={() => setStarted(true)} onSend={ask} onStop={stop} busy={sending} disabled={status !== 'ready'} placeholder={c.placeholder} sendLabel={chat.send} stopLabel={c.stop} locale={locale} secretLabel={chat.secret}/>
         {!empty && <p className={a.disclaimer}>{c.footnote}</p>}
       </div>

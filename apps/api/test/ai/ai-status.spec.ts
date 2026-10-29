@@ -16,8 +16,8 @@ describe('AI public status contract', () => {
       enabled: configured,
       available: configured,
       configured,
-      model: 'test-model',
-      provider: 'test-provider',
+      model: 'large model',
+      provider: 'large model',
     })
   })
 })

@@ -1,9 +1,12 @@
-import { ArrayMaxSize, ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, Length } from 'class-validator'
+import { ArrayMaxSize, ArrayNotEmpty, ArrayUnique, IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, IsUUID, Length } from 'class-validator'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
 import { AI_ACCOUNT_SCOPES, AiAccountScope } from '../ai-customer-tools.service'
 import type { AiAttachment } from '../ai-attachments'
 
 export class AiChatDto {
+  @ApiPropertyOptional({ description: 'Owned in-app notification to explain. The server verifies ownership and settlement.' })
+  @IsOptional() @IsUUID()
+  notificationId?: string
   @ApiPropertyOptional({ description: 'Up to three local document excerpts or resized JPEG image data URLs. No remote URLs; image pixels are transient and not stored.' })
   @IsOptional() @IsArray() @ArrayMaxSize(3)
   attachments?: AiAttachment[]

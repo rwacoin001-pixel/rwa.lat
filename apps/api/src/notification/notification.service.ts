@@ -48,6 +48,12 @@ export class NotificationService {
   }
 
   /** How many notifications this user has not read yet (for the live count stream). */
+  async getForUser(id: string, userId: string): Promise<NotificationView> {
+    const note = await this.notificationRepo.findOne({ where: { id, recipient_user_id: userId, channel: 'in_app' } })
+    if (!note) throw NotificationError.notFound(id)
+    return this.toView(note)
+  }
+
   countUnread(userId: string): Promise<number> {
     return this.notificationRepo.count({ where: { recipient_user_id: userId, read_at: IsNull() } })
   }

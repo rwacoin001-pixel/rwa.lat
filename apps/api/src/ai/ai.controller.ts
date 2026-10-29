@@ -6,6 +6,7 @@ import { AiChatResponseDto } from './dto/ai-chat-response.dto'
 import { OptionalSessionAuthGuard, type OptionallyAuthenticatedRequest } from '../security/optional-session-auth.guard'
 import { SessionAuthGuard, type AuthenticatedRequest } from '../security/session-auth.guard'
 import { CurrentAuth } from '../security/current-auth.decorator'
+import { AiChatRateLimitGuard } from './ai-rate-limit.guard'
 
 interface OptionalAuth {
   userId: string | null
@@ -40,7 +41,7 @@ export class AiController {
   }
 
   @Post('chat')
-  @UseGuards(OptionalSessionAuthGuard)
+  @UseGuards(OptionalSessionAuthGuard, AiChatRateLimitGuard)
   @ApiOperation({ summary: 'Send a message to the AI assistant (works anonymous; history requires login)' })
   @ApiOkResponse({ type: AiChatResponseDto, description: 'Verified reply and optional clarification cards; cards do not authorize actions.' })
   async chat(

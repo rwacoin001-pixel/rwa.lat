@@ -24,11 +24,21 @@ import { PortfolioModule } from '../portfolio/portfolio.module'
 import { ComplianceModule } from '../compliance/compliance.module'
 import { AiNotificationDigestService } from './ai-notification-digest.service'
 import { AiNotificationDigestController } from './ai-notification-digest.controller'
+import { AiReadToolsService } from './ai-read-tools.service'
+import { AiChatRateLimitGuard } from './ai-rate-limit.guard'
+import { IdentityModule } from '../identity/identity.module'
+import { LedgerModule } from '../ledger/ledger.module'
+import { WalletModule } from '../wallet/wallet.module'
+import { QuantModule } from '../quant/quant.module'
+import { PredictionModule } from '../prediction/prediction.module'
+import { ReferralModule } from '../referral/referral.module'
+import { PolymarketModule } from '../polymarket/polymarket.module'
+import { PlatformModule } from '../platform/platform.module'
 
 @Module({
-  imports: [TypeOrmModule.forFeature([AiChatSession, AiChatMessage]), SecurityModule, CatalogModule, AdminRbacModule, NotificationModule, OrdersModule, PortfolioModule, ComplianceModule],
+  imports: [TypeOrmModule.forFeature([AiChatSession, AiChatMessage]), SecurityModule, CatalogModule, AdminRbacModule, NotificationModule, OrdersModule, PortfolioModule, ComplianceModule, IdentityModule, LedgerModule, WalletModule, QuantModule, PredictionModule, ReferralModule, PolymarketModule, PlatformModule],
   controllers: [AiController, AiPlanningController, AdminAiKnowledgeController, AiKnowledgeController, AiCustomerToolsController, AiMandateController, AdminAiInvestmentController, AiNotificationDigestController],
-  providers: [AiService, AiModelClient, AiPlanningService, AiKnowledgeService, AiPlatformKnowledgeService, AiCustomerToolsService, AiMandateService, AiAutomaticService, AiNotificationDigestService],
+  providers: [AiService, AiModelClient, AiPlanningService, AiKnowledgeService, AiPlatformKnowledgeService, AiCustomerToolsService, AiMandateService, AiAutomaticService, AiNotificationDigestService, AiReadToolsService, AiChatRateLimitGuard],
   exports: [AiService],
 })
 export class AiModule {}

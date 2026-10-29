@@ -117,6 +117,12 @@ export class ApiRateLimiter {
   private readonly buckets = new Map<string, Bucket>()
   private nextSweepAt = 0
 
+  /** Called after optional authentication, so a signed-in allowance is keyed by session identity, never a client field. */
+  consumeAi(userId: string | null, guestIp: string, now = Date.now()): RateLimitDecision {
+    this.sweepExpired(now)
+    return this.consumeRule({ name: userId ? 'ai-user' : 'ai-guest', limit: userId ? 30 : 10, windowMs: 10 * MINUTE, matches: () => true }, userId ?? normalizeIp(guestIp), now)
+  }
+
   consume(input: { method: string; path: string; ip: string; now?: number }): RateLimitDecision {
     const now = input.now ?? Date.now()
     this.sweepExpired(now)

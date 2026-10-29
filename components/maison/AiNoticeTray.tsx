@@ -21,7 +21,7 @@ const topicOf = (kind: string): Topic => /quant/i.test(kind) ? 'quant'
   : /deposit|withdraw|transfer|wallet|payout|settle/i.test(kind) ? 'wallet'
   : /order|subscription|redemption|basket|asset/i.test(kind) ? 'order' : 'other'
 
-export function AiNoticeTray({ locale, disabled, onAsk, onSummary, hidden, onOpenChange }: { locale: AppLocale; disabled: boolean; onAsk: (text: string) => void; onSummary: (text: string) => void; hidden: boolean; onOpenChange?: (open: boolean) => void }) {
+export function AiNoticeTray({ locale, disabled, onAsk, onSummary, hidden, onOpenChange }: { locale: AppLocale; disabled: boolean; onAsk: (text: string, notificationId?: string) => void; onSummary: (text: string) => void; hidden: boolean; onOpenChange?: (open: boolean) => void }) {
   const { data, unread, refetch } = useUnread(true)
   const c = COPY[locale === 'zh-CN' ? locale : 'en'], panelId = useId()
   const items = useMemo(() => (Array.isArray(data) ? data : []).filter(item => !item.readAt).sort((a, b) => b.createdAt.localeCompare(a.createdAt)).map(item => localNotice(item, locale)), [data, locale])
@@ -84,7 +84,7 @@ export function AiNoticeTray({ locale, disabled, onAsk, onSummary, hidden, onOpe
     await refetch()
     if (!alive.current || !result.ok) return
     setExpanded(false)
-    if (ask) onAsk(c.explain + item.title + (item.body ? c.separator + item.body : ''))
+    if (ask) onAsk(c.explain + item.title + (item.body ? c.separator + item.body : ''), item.id)
     else { const route = item.payload?.route; openPath(route?.startsWith('/') && !route.startsWith('//') && !route.includes('\\') ? route : '/notifications') }
   })
   const allRead = () => run('read', async () => { await markAllNotificationsRead(); await refetch() })
