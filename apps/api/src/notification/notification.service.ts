@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common'
 import { InjectRepository } from '@nestjs/typeorm'
-import { IsNull, Repository } from 'typeorm'
+import { EntityManager, IsNull, Repository } from 'typeorm'
 import { Notification } from './notification.entity'
 import { NotificationError } from './notification.errors'
 
@@ -103,6 +103,22 @@ export class NotificationService {
       }),
     )
     return this.toView(note)
+  }
+
+  /** Transactional DM delivery. The partial unique index arbitrates concurrent sends/read transitions. */
+  async coalesceCommunityDm(m: EntityManager, userId: string, threadId: string, fromHandle: string): Promise<void> {
+    await m.query(`INSERT INTO app.notifications(recipient_user_id,channel,kind,title,payload)
+      VALUES($1,'in_app','community.dm',$2,$3::jsonb)
+      ON CONFLICT (recipient_user_id,(payload->>'threadId'))
+        WHERE kind='community.dm' AND channel='in_app' AND read_at IS NULL
+      DO UPDATE SET title=EXCLUDED.title,payload=EXCLUDED.payload,body=NULL,created_at=clock_timestamp()`,
+    [userId, `New message from @${fromHandle}`, JSON.stringify({ threadId, fromHandle, route: `/community/messages/${threadId}` })])
+  }
+
+  async readCommunityDm(m: EntityManager, userId: string, threadId: string): Promise<void> {
+    await m.query(`UPDATE app.notifications SET read_at=clock_timestamp()
+      WHERE recipient_user_id=$1 AND payload->>'threadId'=$2
+      AND kind='community.dm' AND channel='in_app' AND read_at IS NULL`, [userId, threadId])
   }
 
   private toView(n: Notification): NotificationView {

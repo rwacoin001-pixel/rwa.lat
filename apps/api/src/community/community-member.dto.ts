@@ -27,6 +27,7 @@ export class MemberCommentDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(16) lang?: string
 }
 export class MemberProfileDto {
+  @ApiPropertyOptional({ enum: ['everyone', 'following'] }) @IsOptional() @IsIn(['everyone', 'following']) dmPolicy?: 'everyone' | 'following'
   @ApiProperty() @IsString() @MinLength(1) @MaxLength(64) displayName!: string
   @ApiProperty() @IsString() @Matches(/^[a-zA-Z0-9_]{3,20}$/) handle!: string
   @ApiPropertyOptional() @IsOptional() @ValidateNested() @Type(() => MemberPostLocationDto) location?: MemberPostLocationDto

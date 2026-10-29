@@ -5,10 +5,12 @@ import {
   NotFoundException,
   Optional,
   ServiceUnavailableException,
+  UnauthorizedException,
 } from '@nestjs/common'
 import { proofsFor, type ProofView } from './community-proof'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
+import { requireDmIdentity } from './community-dm.service'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, In, QueryFailedError, Repository } from 'typeorm'
 import { COMMUNITY_ERROR_CODES } from './community.errors'
@@ -270,10 +272,25 @@ export class CommunityService {
 
   // ---- public reports ----
 
-  async submitReport(dto: CreateCommunityReportDto) {
+  async submitReport(dto: CreateCommunityReportDto, userId?: string) {
     const reason = dto.reason.trim()
     if (reason.length < 2 || reason.length > COMMUNITY_REPORT_REASON_MAX) {
       throw new BadRequestException(COMMUNITY_ERROR_CODES.REPORT_REASON_INVALID)
+    }
+    if (dto.targetType === 'dm_message') {
+      if (!userId) throw new UnauthorizedException('A valid session token is required.')
+      return this.dataSource.transaction(async m => {
+        const profile = await requireDmIdentity(m, userId)
+        const [target] = await m.query(`SELECT msg.id FROM app.community_dm_messages msg
+          JOIN app.community_dm_members member ON member.thread_id=msg.thread_id
+          WHERE msg.id=$1 AND member.profile_id=$2 AND msg.deleted_at IS NULL`, [dto.targetId, profile.id])
+        if (!target) throw new NotFoundException(COMMUNITY_ERROR_CODES.TARGET_NOT_FOUND)
+        const repo = m.getRepository(CommunityReport)
+        const report = await repo.save(repo.create({ target_type: 'dm_message', target_id: dto.targetId, profile_id: profile.id, reason, state: 'open' }))
+        await m.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata)
+          VALUES($1,'user',$2,'community.dm.report','community_report',$3,$4,$5::jsonb)`, [randomUUID(), userId, report.id, randomUUID(), JSON.stringify({ targetId: dto.targetId })])
+        return { id: report.id, state: report.state, createdAt: report.created_at }
+      })
     }
     await this.assertReportTarget(dto.targetType, dto.targetId)
     const report = this.reports.create({

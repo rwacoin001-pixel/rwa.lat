@@ -61,6 +61,9 @@ export class CommunityProfile {
   @Column({ type: 'boolean', default: false })
   identity_configured!: boolean
 
+  @Column({ type: 'text', default: 'everyone' })
+  dm_policy!: 'everyone' | 'following'
+
   @Column({ type: 'varchar', length: 20, nullable: true })
   handle_base?: string | null
 
@@ -224,7 +227,7 @@ export class CommunityReport {
   id!: string
 
   @Column({ type: 'varchar' })
-  target_type!: 'post' | 'comment' | 'profile'
+  target_type!: 'post' | 'comment' | 'profile' | 'dm_message'
 
   @Column({ type: 'uuid' })
   target_id!: string
