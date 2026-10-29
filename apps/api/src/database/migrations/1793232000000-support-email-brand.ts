@@ -18,8 +18,8 @@ export class SupportEmailBrand1793232000000 implements MigrationInterface {
     const draft = { ...supportBrand(row.draft) as object, supportEmail: 'support@a-reit.com' }
     const published = row.published === null ? null : { ...supportBrand(row.published) as object, supportEmail: 'support@a-reit.com' }
     await q.query(`INSERT INTO app.platform_configuration_versions(revision,content,published_by) VALUES ($1,$2::jsonb,NULL)`, [revision, JSON.stringify(published ?? draft)])
-    await q.query(`UPDATE app.platform_configuration SET draft=$1::jsonb,published=$2::jsonb,revision=$3,
-      published_revision=CASE WHEN $2::jsonb IS NULL THEN NULL ELSE $4 END,
+    await q.query(`UPDATE app.platform_configuration SET draft=$1::jsonb,published=$2::jsonb,revision=$3::integer,
+      published_revision=CASE WHEN $2::jsonb IS NULL THEN NULL ELSE $4::integer END,
       published_at=CASE WHEN $2::jsonb IS NULL THEN NULL ELSE now() END,updated_at=now(),updated_by=NULL WHERE id=true`,
     [JSON.stringify(draft), published ? JSON.stringify(published) : null, published && JSON.stringify(draft) !== JSON.stringify(published) ? revision + 1 : revision, revision])
     const [audit] = await q.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata)
