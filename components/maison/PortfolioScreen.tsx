@@ -29,7 +29,8 @@ import pa from './portfolio-a.module.css'
 import { TopTabs } from './TopTabs'
 import { useOtherIncome, useOtherOrders, type OrderRecord } from './money-records'
 import { AssetsOverview } from './AssetsOverview'
-import { IncomeCalendar } from './IncomeCalendar'
+import { AssetsIncome } from './AssetsIncome'
+import { AssetsLedger } from './AssetsLedger'
 import { playMoment } from '@/lib/moment'
 import { sharedOpen } from '@/lib/market-shared-transition'
 import { sharedKeys } from '@/lib/product-media'
@@ -137,8 +138,8 @@ export function PortfolioScreen({ query }: { query: string }) {
           </>}
           tools={<div><SectionHead index="" title={(TOOLS_TITLE[locale] ?? TOOLS_TITLE.en)!} /><Tools /></div>} />
       </div>}
-    {tab === 'income' && <div className={s.tabPanel} role="tabpanel"><Income products={products.data} /></div>}
-    {tab === 'orders' && <div className={s.tabPanel} role="tabpanel"><OpenOrders /></div>}
+    {tab === 'income' && <div className={s.tabPanel} role="tabpanel"><AssetsIncome /></div>}
+    {tab === 'orders' && <div className={s.tabPanel} role="tabpanel"><AssetsLedger /></div>}
   </MaisonPage>
 }
 
@@ -312,7 +313,7 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
     return out
   }, [rows])
   const sourceLabels = INCOME_SOURCES[locale] ?? INCOME_SOURCES.en!
-  const [day, setDay] = useState<string | null>(null)
+  const day: string | null = null
   const shownRows = useMemo(() => day ? rows.filter((item) => new Date(item.date).toLocaleDateString('en-CA') === day) : rows, [rows, day])
   const knownCredits = useRef<Set<string> | null>(null)
   const momentNode = useRef<HTMLDivElement>(null)
@@ -332,7 +333,6 @@ function Income({ products, productId }: { products: CatalogProduct[] | undefine
       : !settled ? <Skeleton rows={3} />
       : !rows.length ? <StateBlock title={p.incomeEmpty} body={p.incomeEmptyBody} />
       : <>
-        {!productId && <IncomeCalendar rows={rows} locale={locale} masked={masked} day={day} onDay={setDay} />}
         {!productId && <StatStrip fit items={(['quant', 'prediction', 'rwa'] as const).filter((key) => key !== 'rwa' || bySource.rwa !== BigInt(0)).map((key) => ({
           label: sourceLabels[key], value: masked ? AMOUNT_MASK : signed(bySource[key], locale).replace(/ USDT$/, ''),
           tone: masked || bySource[key] === BigInt(0) ? undefined : bySource[key] > BigInt(0) ? 'up' as const : 'down' as const,

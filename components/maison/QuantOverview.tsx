@@ -130,7 +130,6 @@ export function QuantOverview() {
   const open = product.open
   const holding = audience === 'holder' || audience === 'pending'
   return <div className={root} data-quant-v2="">
-    <QuantMiniBar product={product} />
     {/* Factsheet head (2026-10-29): photo band, since inception with the NAV line, key figures, the rules. */}
     <QuantFactsheet product={product} locale={locale} />
     <p className={v2.cardRisk}>{h.risk}</p>
@@ -197,26 +196,6 @@ export function CutoffPill({ preview, locale }: { preview: QuantSubscriptionPrev
       ? <span className={v2.cutoffSteps}>{steps.map((step, i) => <span key={step.key}>{i > 0 && <em aria-hidden="true">→</em>}{[c.submit, c.start, c.settle][i]} <b dir="ltr">{day(step.date)}</b></span>)}</span>
       : <span>{preview.afterCutoff ? c.after(time) : c.before(time)}</span>}
   </button>
-}
-
-/**
- * When the photo has scrolled away, a slim bar slides in under the page menu with the name and the since-inception
- * figure (2026-10-28, the "photo drawer" reference used the other way round), so the reader never loses which product
- * and how it has done. The risk text is never covered: the bar is one line.
- */
-function QuantMiniBar({ product }: { product: QuantProduct }) {
-  const [show, setShow] = useState(false)
-  useEffect(() => {
-    const photo = document.querySelector('[data-quant-photo]')
-    if (!photo || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(([entry]) => setShow(!entry.isIntersecting && entry.boundingClientRect.top < 0), { threshold: 0 })
-    io.observe(photo)
-    return () => io.disconnect()
-  }, [])
-  const pct = product.performance.sinceInceptionPct
-  return <div className={v2.mini} data-show={show || undefined} aria-hidden={!show}>
-    <b>{product.name}</b>{pct !== null && <span data-tone={toneOf(pct)} dir="ltr">{signed(pct)}</span>}
-  </div>
 }
 
 /** The home "For you" photo, as the head of the tab: the same picture and glass chip, so tapping through feels continuous. */

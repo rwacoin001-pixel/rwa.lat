@@ -154,3 +154,7 @@
 :global(.rwa-mobile) .root.root .cardRisk, :global(.rwa-mobile) .root.root .cardFigure small, :global(.rwa-mobile) .root.root .facts small { color: var(--m-muted); }
 :global(.rwa-mobile) .root.root .cardLine { color: var(--m-ink); }
 @media (prefers-reduced-motion: reduce) { .cardGhost, .cardInk { transition: none; } }
+/* The since-inception return in the top bar's trailing slot (2026-10-29). */
+.barPct { padding-inline-end: 8px; font-size: 15px; font-weight: 600; line-height: 22px; font-variant-numeric: tabular-nums; }
+.barPct[data-tone='up'] { color: var(--m-up); }
+.barPct[data-tone='down'] { color: var(--m-down); }

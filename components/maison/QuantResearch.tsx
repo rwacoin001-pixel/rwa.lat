@@ -1,6 +1,7 @@
 'use client'
+import { FORMULA_SVG } from './quant-formulas'
 
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { AppLocale } from '@/lib/i18n'
 import r from './quant-research.module.css'
 
@@ -12,22 +13,7 @@ import r from './quant-research.module.css'
  * Formulas are plain HTML (no maths library): italic variables, real fractions, operators with limits.
  */
 
-/* ── Formula typesetting ─────────────────────────────────────────────────────────────────────────────────────────── */
-const V = ({ children }: { children: ReactNode }) => <i className={r.v}>{children}</i>
-const Sub = ({ children }: { children: ReactNode }) => <sub className={r.sub}>{children}</sub>
-const Sup = ({ children }: { children: ReactNode }) => <sup className={r.sup}>{children}</sup>
-const Frac = ({ n, d }: { n: ReactNode; d: ReactNode }) => <span className={r.frac}><span>{n}</span><span>{d}</span></span>
-const Op = ({ sym, over, under }: { sym: string; over?: ReactNode; under?: ReactNode }) => <span className={r.op}><small>{over}</small><b>{sym}</b><small>{under}</small></span>
-const Root = ({ children }: { children: ReactNode }) => <span className={r.radical}><span aria-hidden="true">√</span><span>{children}</span></span>
-
-const formulas: Record<string, ReactNode> = {
-  ofi: <><V>OFI</V><Sub><V>t</V></Sub> = <Op sym="∑" over={<V>K</V>} under={<><V>k</V>=1</>} /><V>w</V><Sub><V>k</V></Sub> Δ<V>I</V><Sub><V>t</V></Sub><Sup>(<V>k</V>)</Sup></>,
-  micro: <><V>P</V><Sub>micro</Sub> = <Frac n={<><V>P</V><Sub><V>a</V></Sub><V>Q</V><Sub><V>b</V></Sub> + <V>P</V><Sub><V>b</V></Sub><V>Q</V><Sub><V>a</V></Sub></>} d={<><V>Q</V><Sub><V>a</V></Sub> + <V>Q</V><Sub><V>b</V></Sub></>} /></>,
-  hawkes: <><V>λ</V>(<V>t</V>) = <V>μ</V> + <Op sym="∑" under={<><V>t</V><Sub><V>i</V></Sub>&lt;<V>t</V></>} /><V>α</V> <V>e</V><Sup>−<V>β</V>(<V>t</V>−<V>t</V><Sub><V>i</V></Sub>)</Sup></>,
-  dsr: <><V>DSR</V> = <V>Φ</V><span className={r.paren}>(</span><Frac n={<>(<V>SR</V> − <V>SR</V><Sub>0</Sub>)<Root><V>T</V> − 1</Root></>} d={<Root>1 − <V>γ</V><Sub>3</Sub><V>SR</V> + <Frac n={<><V>γ</V><Sub>4</Sub> − 1</>} d="4" /><V>SR</V><Sup>2</Sup></Root>} /><span className={r.paren}>)</span></>,
-  es: <><V>ES</V><Sub>97.5%</Sub> = <Frac n="1" d="0.025" /><Op sym="∫" over="1" under="0.975" /><V>VaR</V><Sub><V>u</V></Sub>(<V>L</V>) d<V>u</V></>,
-  kelly: <><V>f</V><Sup>&thinsp;*</Sup> = <V>c</V><span className={r.paren}>(</span><V>p</V> − <Frac n={<>1 − <V>p</V></>} d={<V>b</V>} /><span className={r.paren}>)</span>,&nbsp; 0 &lt; <V>c</V> &lt; 1</>,
-}
+const formulas = { ofi: 1, micro: 1, hawkes: 1, dsr: 1, es: 1, kelly: 1 } as const
 
 /* ── Copy ────────────────────────────────────────────────────────────────────────────────────────────────────────── */
 type Pillar = { key: keyof typeof formulas; tag: string; title: string; body: string; read: string; diagram?: 'book' | 'hawkes' | 'cpcv' | 'tail' }
@@ -158,7 +144,8 @@ export function QuantResearch({ locale }: { locale: AppLocale }) {
         <header><span className={r.num}>{String(index + 1).padStart(2, '0')}</span><span className={r.tag}>{pillar.tag}</span></header>
         <h3>{pillar.title}</h3>
         <p>{pillar.body}</p>
-        <div className={r.formula} role="math" aria-label={`${t.formula}: ${pillar.tag}`}><span className={r.math}>{formulas[pillar.key]}</span></div>
+        {/* Typeset by MathJax into SVG at build time (2026-10-29, user: the formulas must look properly written). */}
+        <div className={r.formula} role="img" aria-label={`${t.formula}: ${FORMULA_SVG[pillar.key]?.tex ?? pillar.tag}`}><span className={r.mathSvg} dangerouslySetInnerHTML={{ __html: FORMULA_SVG[pillar.key]?.svg ?? '' }} /></div>
         <p className={r.read}><b>{t.read}</b>{pillar.read}</p>
         {pillar.diagram && <Figure kind={pillar.diagram} label={t.sketch} zhLegend={locale === 'zh-CN'} />}
       </article>)}

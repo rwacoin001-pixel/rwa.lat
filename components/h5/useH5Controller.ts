@@ -1,5 +1,6 @@
 'use client'
 import { openAi } from '@/lib/ai-overlay'
+import { openProfile } from '@/lib/profile-overlay'
 import { aiPageContext, type AiPageContext } from '@/lib/ai-page-context'
 import { captureWalletBackdrop } from '../wallet-page-backdrop'
 import { nextNavigationState, useNavigationViewport } from '@/lib/app-navigation'
@@ -245,6 +246,8 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
       notify(t('guest.protected'), 'info')
       next = 'login'
     }
+    // The personal centre is a layer over the current page (2026-10-29): swiping it away reveals the page below.
+    if (next === 'profile' && sessionMode !== 'guest') { openProfile(); return }
     ;(document.activeElement as HTMLElement | null)?.blur()
     const returningToProfile = next === 'profile' && (
       PROFILE_SECTION_SCREENS.has(screen) || resolveRoute(window.location.pathname)?.def.domain === 'profile'

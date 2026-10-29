@@ -88,3 +88,8 @@
   .figure[data-seen] .grow, .pipe[data-seen] .pulse { animation: none; }
 }
 :global(.rwa-mobile[data-theme='dark']) .tag { box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .24); }
+/* MathJax SVG (2026-10-29): sized by its own ex units against the plate's font size, centred, scrolling sideways only
+   if a phone is too narrow; the glyphs fill with the text colour, so both themes work. */
+.mathSvg { display: block; max-width: 100%; margin: auto; overflow-x: auto; color: var(--m-ink); font-size: 15px; text-align: center; scrollbar-width: none; }
+.mathSvg::-webkit-scrollbar { display: none; }
+.mathSvg svg { display: inline-block; max-width: none; height: auto; vertical-align: middle; }

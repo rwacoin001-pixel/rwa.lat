@@ -38,7 +38,10 @@ function QuantProductPage() {
   const { locale } = useI18n()
   const c = quantCopyFor(locale)
   const { product } = useQuantView()
-  return <MaisonPage page="quant" cta topbar={<RwaTopbar screen="quant" title={product?.name ?? c.title} onBack={() => backOr('/markets?tab=quant')} />}>
+  // The return since inception sits in the bar itself (2026-10-29, user: no second row under the bar).
+  const pct = product?.performance.sinceInceptionPct ?? null
+  const gain = pct === null ? null : <span className={v2.barPct} data-tone={pct > 0 ? 'up' : pct < 0 ? 'down' : undefined} dir="ltr">{`${pct > 0 ? '+' : ''}${pct.toFixed(2)}%`}</span>
+  return <MaisonPage page="quant" cta topbar={<RwaTopbar screen="quant" title={product?.name ?? c.title} extra={gain} onBack={() => backOr('/markets?tab=quant')} />}>
     <QuantOverview />
   </MaisonPage>
 }

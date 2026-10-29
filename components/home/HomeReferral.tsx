@@ -12,14 +12,21 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fromAtomic } from '@/lib/money'
 import { openPath } from '@/lib/maison-nav'
 import { showToast } from '@/lib/toast-store'
-import { porcelainAvatar } from '@/components/community-avatar'
+// Colour portraits of different professions (2026-10-29, user: every face in colour, many trades), one per member,
+// always the same one for a member; empty seats take a fixed spread so the row reads as a mix of people.
+const professionAvatar = (seed: string, seat?: number) => {
+  let h = 0
+  for (const ch of seed) h = (h * 31 + ch.charCodeAt(0)) >>> 0
+  const n = seat === undefined ? h % 16 : [2, 7, 11, 4, 14][seat % 5]
+  return `/avatars/professions/${String(n + 1).padStart(2, '0')}.webp`
+}
 import { sparkBurst } from './Tilt3D'
 import r from './home-invite.module.css'
 
 type Copy = { inviteShort: string; copy: string; copied: string; copyFailed: string; poster: string; rules: string; latest: string; all: string; kindFee: string; kindPurchase: string; member: string; noneYet: string; label: string; claimable: string; earned: string; startTitle: string; startBody: string; invited: string; invitedEarned: string; allClaimed: string; invite: string; claim: string; claiming: string; claimed: string; failed: string; nothing: string }
 const COPY: Partial<Record<AppLocale, Copy>> & { en: Copy } = {
-  en: { inviteShort: 'Invite', copy: 'Copy invite link', copied: 'Link copied', copyFailed: 'Could not copy the link', poster: 'Make a poster', rules: 'How invites work', latest: 'Latest reward', all: 'View all', kindFee: 'Fee rebate', kindPurchase: 'Purchase reward', member: 'Member', noneYet: 'Rewards from friends will show here', label: 'Invite friends', claimable: 'Claimable', earned: 'Earned in total', startTitle: 'Invite friends, invest together', startBody: 'When they invest, your rewards go straight to your available balance', invited: '{n} invited', invitedEarned: '{n} invited · {v} earned in total', allClaimed: '{n} invited · all rewards claimed', invite: 'Invite friends', claim: 'Claim', claiming: 'Claiming…', claimed: '{v} USDT added to your balance', failed: 'Couldn’t claim. Try again.', nothing: 'Nothing to claim yet — invite a friend and rewards land here' },
-  'zh-CN': { inviteShort: '邀请', copy: '复制邀请链接', copied: '链接已复制', copyFailed: '复制失败，请再试一次', poster: '生成海报', rules: '邀请规则', latest: '最近奖励', all: '查看全部', kindFee: '手续费返佣', kindPurchase: '买入奖励', member: '用户', noneYet: '好友带来的奖励会出现在这里', label: '邀请好友', claimable: '可领取', earned: '累计已赚', startTitle: '邀请好友，一起投资', startBody: '好友投资后，奖励直接进你的可用余额', invited: '已邀请 {n} 人', invitedEarned: '已邀请 {n} 人 · 累计已赚 {v}', allClaimed: '已邀请 {n} 人 · 奖励已全部领取', invite: '邀请好友', claim: '领取', claiming: '领取中…', claimed: '{v} USDT 已到可用余额', failed: '领取失败，请再试一次', nothing: '还没有可领取的奖励，邀请好友后就会有' },
+  en: { inviteShort: 'Invite', copy: 'Copy invite link', copied: 'Link copied', copyFailed: 'Could not copy the link', poster: 'Make a poster', rules: 'How invites work', latest: 'Latest reward', all: 'View all', kindFee: 'Fee rebate', kindPurchase: 'Purchase reward', member: 'Member', noneYet: 'Rewards from friends will show here', label: 'Invite friends', claimable: 'Claimable', earned: 'Earned in total', startTitle: 'Invite friends, invest together', startBody: 'Friends invest, you get rewarded', invited: '{n} invited', invitedEarned: '{n} invited · {v} earned in total', allClaimed: '{n} invited · all rewards claimed', invite: 'Invite friends', claim: 'Claim', claiming: 'Claiming…', claimed: '{v} USDT added to your balance', failed: 'Couldn’t claim. Try again.', nothing: 'Nothing to claim yet — invite a friend and rewards land here' },
+  'zh-CN': { inviteShort: '邀请', copy: '复制邀请链接', copied: '链接已复制', copyFailed: '复制失败，请再试一次', poster: '生成海报', rules: '邀请规则', latest: '最近奖励', all: '查看全部', kindFee: '手续费返佣', kindPurchase: '买入奖励', member: '用户', noneYet: '好友带来的奖励会出现在这里', label: '邀请好友', claimable: '可领取', earned: '累计已赚', startTitle: '邀请好友，一起投资', startBody: '好友投资，奖励直接到账', invited: '已邀请 {n} 人', invitedEarned: '已邀请 {n} 人 · 累计已赚 {v}', allClaimed: '已邀请 {n} 人 · 奖励已全部领取', invite: '邀请好友', claim: '领取', claiming: '领取中…', claimed: '{v} USDT 已到可用余额', failed: '领取失败，请再试一次', nothing: '还没有可领取的奖励，邀请好友后就会有' },
 }
 
 /** The invite card on home: faces of the people you invited (empty wells until there are some), one number, invite + claim. */
@@ -75,23 +82,24 @@ export function HomeReferral() {
   return <section className={r.card} aria-label={c.label}>
     <div className={r.panel}>
       <div className={r.top}>
-        <span className={r.who}>{me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle || 'me'} size={24} /> : null}<b dir="auto">{me?.displayName || c.label}</b></span>
+        <span className={r.who}>{me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle || 'me'} size={20} /> : null}<b dir="auto">{me?.displayName || c.label}</b></span>
         <button type="button" className={r.info} aria-label={c.rules} onClick={() => openPath('/community?tab=invite')}>i</button>
       </div>
-      <span className={r.pill}>{figure ? figure.label : c.startTitle}</span>
+      {/* With nothing earned yet (2026-10-29): one short line, no pill, never more than two lines. */}
+      {figure && <span className={r.pill}>{figure.label}</span>}
       {figure ? <b className={r.figure} dir="ltr">{hideMoney ? MASK : fmt(figure.value)}<small>USDT</small></b> : <p className={r.lead}>{c.startBody}</p>}
     </div>
     <div className={r.faces}>
       {seats.map((seat, i) => 'person' in seat && seat.person
-        ? <span key={i} className={r.face} data-tone={i % 5}><img src={porcelainAvatar(seat.person.memberLabel)} alt="" width={56} height={56} /></span>
+        ? <span key={i} className={r.face} data-tone={i % 5}><img src={professionAvatar(seat.person.memberLabel)} alt="" width={56} height={56} /></span>
         : 'more' in seat ? <span key={i} className={r.more} data-tone={i % 5}>+{seat.more}</span>
-        : <button key={i} type="button" className={r.seat} onClick={open} aria-label={c.invite}><img src={porcelainAvatar(`seat-${i}`)} alt="" width={56} height={56} /></button>)}
+        : <button key={i} type="button" className={r.seat} onClick={open} aria-label={c.invite}><img src={professionAvatar(`seat-${i}`, i)} alt="" width={56} height={56} /></button>)}
     </div>
     <div className={r.last}>
       <div className={r.lastHead}><span>{c.latest}</span><button type="button" onClick={open}>{c.all}</button></div>
       {latest
         ? <div className={r.lastRow}>
-          <img src={porcelainAvatar(latest.memberLabel)} alt="" width={44} height={44} />
+          <img src={professionAvatar(latest.memberLabel)} alt="" width={44} height={44} />
           <span><b>{latest.kind === 'fee' ? c.kindFee : c.kindPurchase}</b><small>{c.member} {latest.memberLabel.slice(0, 6).toUpperCase()} · {new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(latest.occurredAt))}</small></span>
           <b className={r.amount} dir="ltr">+{fmt(units(latest.amountAtomic, latest.decimals))}</b>
         </div>

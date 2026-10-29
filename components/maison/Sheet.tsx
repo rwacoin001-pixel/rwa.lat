@@ -24,6 +24,13 @@ export function Sheet({ open, onClose, title, kicker, description, busy = false,
   const start = useRef<number | null>(null)
   const [container, setContainer] = useState<HTMLElement | null>(null)
   useEffect(() => setContainer(anchor.current?.closest<HTMLElement>('[data-maison-page]') ?? null), [])
+  // The sheet lives inside the page's layer, under the floating dock; hide the dock while it is open (2026-10-29).
+  useEffect(() => {
+    if (!open) return
+    const root = document.documentElement
+    root.dataset.sheetOpen = 'true'
+    return () => { delete root.dataset.sheetOpen }
+  }, [open])
 
   const pull = (y: number | null) => {
     const node = popup.current

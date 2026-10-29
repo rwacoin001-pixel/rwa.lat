@@ -158,3 +158,8 @@
 :global(.rwa-mobile[data-theme='dark']) .last { background: #1e2229; box-shadow: none; }
 :global(.rwa-mobile[data-theme='dark']) .round.round, :global(.rwa-mobile[data-theme='dark']) .claim.claim { background: linear-gradient(180deg, #2a2f37, #20242b); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); color: #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .invite.invite { background: linear-gradient(180deg, #ffffff, #e6e8ec); color: #0b1220; }
+/* 2026-10-29 (user): every face in colour; the owner's name smaller; the empty-state line at most two lines. */
+.seat img { filter: none; opacity: 1; }
+.faces img { background: #eef1f4; }
+.who { font-size: 12px; line-height: 16px; gap: 6px; }
+.lead { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }

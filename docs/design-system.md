@@ -369,3 +369,10 @@
 - Overview: open hero (总资产 includes wallet cash, Koala Quant principal + waiting, predictions in play, baskets, other holdings), today / all-time line, the value line, three capsules (deposit in ink). Then 资产构成: one bar + legend (each opens its product). Then one paper card per product (photo, three figures). Baskets, other holdings and tools follow.
 - Income: a month calendar tinted by each day's signed result (tap a day to filter the list), the per-source strip, the list by month.
 - Records: open orders across products, then recently completed, with a link to all records.
+
+#### 7.13 update (2026-10-29 b, agreed with Codex)
+- 记录 is the money ledger (GET /v1/ledger/transactions): filter chips 类型 / 产品 / 日期 (sheets; date has 7/30/90 and a custom range), a context line (count, "等待结果 N" toggle), day groups with 12px headers, 72px rows: one-line title (the market question for bets), "押 X · type · time", signed amount, status only when not final.
+- 收益 is settled net performance for one scope, the month: month selector, net in 40px, all-time net, an open calendar (figures in their sign colour, no heat fills), the month's settlements by day. Bets count as their net.
+- Sheets hide the floating dock while open (html[data-sheet-open]).
+- The personal centre opens as a layer over the current page (lib/profile-overlay.ts); swiping it reveals the live page below.
+- Quant formulas are MathJax SVG generated at build time (components/maison/quant-formulas.ts, scripts/render-quant-formulas.mjs); the since-inception return sits in the top bar.

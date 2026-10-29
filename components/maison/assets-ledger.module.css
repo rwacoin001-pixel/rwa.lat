@@ -1,0 +1,68 @@
+/* Records and income (2026-10-29, agreed with Codex). No section heads and no cards around lists: 16px under the
+   tabs, small day headers, 72px rows on hairlines, tabular figures, signs explicit, teal only for gains and selection.
+   Every size on the §3.1 scale. */
+.root { display: grid; padding-bottom: 24px; }
+
+/* Filter chips: 32px pills inside 44px targets. */
+.filters { display: flex; gap: 8px; padding-top: 4px; }
+.filters button { display: inline-flex; align-items: center; gap: 4px; height: 32px; margin: 6px 0; padding: 0 12px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.filters button[data-on] { background: var(--m-ink); color: var(--m-bg); }
+.filters button svg { opacity: .6; }
+.context { display: flex; align-items: center; justify-content: space-between; min-height: 32px; margin: 4px 0 0; color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.context button { padding: 0; border: 0; background: none; color: var(--m-accent, #0f9d7a); font: inherit; font-weight: 600; cursor: pointer; }
+.context button[aria-pressed='true'] { text-decoration: underline; text-underline-offset: 3px; }
+
+.list { margin: 0; padding: 0; list-style: none; }
+.day { display: flex; align-items: baseline; justify-content: space-between; padding: 24px 0 8px; color: var(--m-muted); font-size: 12px; font-weight: 500; line-height: 16px; }
+.list > .day:first-child { padding-top: 12px; }
+.day b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 16px; width: 100%; min-height: 72px; padding: 16px 0; border: 0; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); background: none; color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; }
+div.row { cursor: default; }
+.main { display: grid; gap: 4px; min-width: 0; }
+.main b { overflow: hidden; font-size: 15px; font-weight: 500; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.main small { overflow: hidden; color: var(--m-muted); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.fig { display: grid; justify-items: end; gap: 4px; }
+.fig b { font-size: 17px; font-weight: 600; line-height: 24px; font-variant-numeric: tabular-nums; }
+.fig small { color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.fig small[data-waiting] { color: var(--m-accent, #0f9d7a); font-weight: 500; }
+.root [data-tone='up'] { color: var(--m-up); }
+.root [data-tone='down'] { color: var(--m-down); }
+.more { justify-self: center; min-height: 44px; margin-top: 8px; padding: 0 16px; border: 0; background: none; color: var(--m-ink); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+
+/* Sheets. */
+.options { display: grid; gap: 4px; padding-bottom: 8px; }
+.options button { min-height: 52px; padding: 0 16px; border: 0; border-radius: 12px; background: none; color: var(--m-ink); font: inherit; font-size: 15px; text-align: start; cursor: pointer; }
+.options button[aria-pressed='true'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); font-weight: 600; }
+.ranges { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.ranges button { height: 48px; border: 0; border-radius: 12px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); font: inherit; font-size: 15px; cursor: pointer; }
+.ranges button[aria-pressed='true'] { box-shadow: inset 0 0 0 1.5px var(--m-ink); font-weight: 600; }
+.custom { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: end; gap: 8px; margin-top: 24px; }
+.custom label { display: grid; gap: 8px; color: var(--m-muted); font-size: 13px; }
+.custom input { height: 48px; padding: 0 12px; border: 0; border-radius: 12px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); font: inherit; font-size: 15px; }
+.custom i { padding-bottom: 12px; color: var(--m-faint); font-style: normal; }
+.sheetKeys { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 24px; }
+.sheetKeys button { height: 48px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.sheetKeys button[data-primary] { background: var(--pa-cta-bg, var(--m-ink)); color: var(--pa-cta-ink, var(--m-bg)); }
+.sheetKeys button:disabled { opacity: .4; }
+
+/* Income: month, the figure, an open calendar (no heat fills), the day list. */
+.monthHead { display: grid; grid-template-columns: 32px minmax(0, 1fr) 32px; align-items: center; gap: 8px; padding-top: 4px; text-align: center; }
+.monthHead b { font-size: 15px; font-weight: 600; line-height: 22px; }
+.monthHead button { display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink); cursor: pointer; }
+.monthHead button:disabled { opacity: .3; cursor: default; }
+.summary { display: grid; justify-items: center; gap: 4px; margin-top: 16px; text-align: center; }
+.summary small { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.summary p { margin: 0; color: var(--m-ink); font-size: 40px; font-weight: 600; line-height: 48px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.summary span { color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.summary span b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 2px; margin-top: 24px; }
+.weekday { padding-bottom: 4px; color: var(--m-faint); font-size: 12px; line-height: 16px; text-align: center; }
+.cell { display: grid; align-content: center; justify-items: center; height: 48px; padding: 0; border: 0; border-radius: 12px; background: none; color: var(--m-ink); font: inherit; cursor: pointer; }
+.cell:disabled { color: var(--m-faint); cursor: default; }
+.cell b { font-size: 13px; font-weight: 500; line-height: 18px; }
+.cell small { min-height: 14px; font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; }
+.cell[data-tone='up'] small { color: var(--m-up); }
+.cell[data-tone='down'] small { color: var(--m-down); }
+.cell[data-today] b { text-decoration: underline; text-underline-offset: 3px; }
+.cell[aria-pressed='true'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); box-shadow: inset 0 0 0 1.5px var(--m-ink); }
+.showAll { justify-self: center; min-height: 44px; margin-top: 4px; padding: 0 12px; border: 0; background: none; color: var(--m-ink); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }

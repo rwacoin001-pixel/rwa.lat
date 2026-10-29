@@ -359,3 +359,4 @@ html[data-palette='a'] .rwa-mobile.rwa-mobile[data-theme='dark'] .rwa-topbar.rwa
 html[data-palette='a'] .rwa-mobile[data-theme='dark'] [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #0b0d12) 72%, transparent) !important; }
 html[data-palette='a'][data-shell='android'] .rwa-mobile.rwa-mobile[data-theme='dark'] .rwa-topbar.rwa-topbar--s1.rwa-topbar--s1[data-scrolled='true'],
 html[data-palette='a'][data-shell='android'] .rwa-mobile[data-theme='dark'] [data-glass-bar] { background: color-mix(in srgb, var(--m-bg, #0b0d12) 96%, transparent) !important; }
+html[data-sheet-open] .liquid-dock, html[data-sheet-open] .ai-orb { visibility: hidden; }
