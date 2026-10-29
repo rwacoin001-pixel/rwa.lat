@@ -5,6 +5,7 @@ import type { Request, Response } from 'express'
 import { IsInt, IsObject, IsString, Matches, Min } from 'class-validator'
 import { ReferralModule } from './referral.module'
 import { ReferralContext } from './referral-context'
+import { CUSTOM_REFERRAL_CODE_PATTERN, CUSTOM_REFERRAL_CODE_MESSAGE } from './referral-code'
 import { ReferralBindingService } from './referral-binding.service'
 import { ReferralFoundationService } from './referral-foundation.service'
 import { ReferralReadService } from './referral-read.service'
@@ -35,7 +36,7 @@ export class ReferralContextInterceptor implements NestInterceptor {
     return new Observable(subscriber=>this.context.run(token,()=>next.handle().subscribe(subscriber)))
   }
 }
-class CodeDto { @IsString() @Matches(/^[a-zA-Z0-9]{6,16}$/) code!: string }
+export class CodeDto { @IsString() @Matches(CUSTOM_REFERRAL_CODE_PATTERN,{message:CUSTOM_REFERRAL_CODE_MESSAGE}) code!: string }
 class SettingsDto { @IsObject() config!: Record<string,unknown> }
 class RollbackDto { @IsInt() @Min(1) version!: number }
 class TeamMonthDto { @IsString() @Matches(/^20\d{2}-(0[1-9]|1[0-2])$/) month!: string }
@@ -66,6 +67,7 @@ export class ReferralUserFoundationController {
   @Get('team') teamRewards(@Req() req:AuthenticatedRequest) { return this.team.records(req.auth.userId) }
   @Get('summary') summary(@Req() req:AuthenticatedRequest) { return this.read.summary(req.auth.userId) }
   @Get('invitees') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string) { return this.read.invitees(req.auth.userId,page,size,level) }
+  @Get('invitees/:memberLabel') @Header('Cache-Control','no-store') invitee(@Req() req:AuthenticatedRequest,@Param('memberLabel') label:string) { return this.read.invitee(req.auth.userId,label) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }
   @Get('funnel') funnel(@Req() req:AuthenticatedRequest) { return this.read.funnel(req.auth.userId) }
   @Get('me') async me(@Req() req: AuthenticatedRequest) { return {code:await this.binding.getCode(req.auth.userId),stage:1,payoutsEnabled:true} }

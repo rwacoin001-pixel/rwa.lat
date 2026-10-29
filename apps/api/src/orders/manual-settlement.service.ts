@@ -5,6 +5,7 @@ import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operat
 import { ManualSettlementDto, ReviewSettlementDto } from './manual-settlement.dto'
 import { GeneratedDocumentsService } from '../generated-documents/generated-documents.service'
 import { recordReferralRewards } from '../referral/referral-rewards'
+import { enqueueReferralPurchase } from '../referral/referral-purchase'
 
 @Injectable()
 export class ManualSettlementService {
@@ -32,7 +33,8 @@ export class ManualSettlementService {
   async post(kind: 'order' | 'redemption', id: string, input: ManualSettlementDto, actor: string) {
     await this.operations.assertEnabled(OPERATIONAL_SWITCH_KEYS.orders, '普通交易入账已暂停')
     const externalReference = input.externalReference.trim()
-    return this.db.transaction(async em => {
+    let purchase = false
+    const result = await this.db.transaction(async em => {
       // Lock the business request before examining the receipt: concurrent retries serialize.
       const table = kind === 'order' ? 'orders' : 'redemptions'
       const [request] = await em.query(`SELECT r.*, p.asset_class_id FROM app.${table} r
@@ -66,10 +68,13 @@ export class ManualSettlementService {
       if (!inserted.length) throw new ConflictException('该外部成交编号已使用')
       if (kind === 'order') await this.invest(em, request, input, actor, settlementId)
       else await this.redeem(em, request, input, actor, settlementId)
+      purchase = kind === 'order' && request.side === 'buy'
       await this.audit(em, actor, 'admin.trade.posted', settlementId, { kind, referenceId: id, externalReference, amountAtomic: input.amountAtomic, quantityAtomic: input.quantityAtomic,feeAtomic:input.feeAtomic??null })
       await this.documents.queueTrade(em, settlementId)
       return { id: settlementId, replay: false, reviewState: 'pending' }
     })
+    if (purchase) enqueueReferralPurchase(this.db, 'rwa', id)
+    return result
   }
 
   async review(id: string, input: ReviewSettlementDto, actor: string) {

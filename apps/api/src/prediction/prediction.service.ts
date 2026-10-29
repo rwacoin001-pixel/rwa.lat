@@ -20,6 +20,7 @@ import { validatedPredictionPrice } from './prediction-quote'
 import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
 import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
 import { recordReferralRewards } from '../referral/referral-rewards'
+import { enqueueReferralPurchase } from '../referral/referral-purchase'
 
 // 18 位定标换算已抽到 prediction-hedge-math（纯函数模块，可独立测试）；此处 re-export 保持既有引用不变。
 export { formatDecimal18, parseDecimal18 }
@@ -257,6 +258,7 @@ export class PredictionService {
       })
 
       await runner.commitTransaction()
+      enqueueReferralPurchase(this.dataSource, 'prediction', betId)
       return this.toBetView(bet, false)
     } catch (error) {
       await runner.rollbackTransaction()
