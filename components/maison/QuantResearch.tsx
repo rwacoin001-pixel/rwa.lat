@@ -1,7 +1,7 @@
 'use client'
 import { FORMULA_SVG } from './quant-formulas'
 
-import { useEffect, useRef, useState } from 'react'
+import { memo, useEffect, useRef, useState, type ReactNode } from 'react'
 import type { AppLocale } from '@/lib/i18n'
 import r from './quant-research.module.css'
 
@@ -50,17 +50,17 @@ const en: Copy = {
 }
 
 /** True once the element has been on screen (diagrams start then, once). */
-function useSeen<T extends Element>() {
+function useSeen<T extends Element>(margin = '0px 0px -30% 0px') {
   const ref = useRef<T>(null)
   const [seen, setSeen] = useState(false)
   useEffect(() => {
     const el = ref.current
     if (!el) return
     if (typeof IntersectionObserver === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setSeen(true); return }
-    const io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setSeen(true); io.disconnect() } }, { threshold: 0.35 })
+    const io = new IntersectionObserver(([entry]) => { if (entry.isIntersecting) { setSeen(true); io.disconnect() } }, { threshold: 0, rootMargin: margin })
     io.observe(el)
     return () => io.disconnect()
-  }, [])
+  }, [margin])
   return [ref, seen] as const
 }
 
@@ -129,6 +129,36 @@ function Figure({ kind, label, zhLegend }: { kind: keyof typeof diagrams; label:
   </figure>
 }
 
+/** The MathJax SVGs with a pen order: every glyph and rule gets its start time (--k) in document order, which is
+ *  MathJax's writing order (left to right, numerator before denominator), at most 3.6 s for the whole formula. */
+const WRITTEN: Record<string, string> = Object.fromEntries(Object.entries(FORMULA_SVG).map(([key, { svg }]) => {
+  const count = (svg.match(/<(path|rect)(?=[\s/>])/g) ?? []).length || 1
+  const step = Math.min(120, 3600 / count)
+  let i = 0
+  return [key, svg.replace(/<(path|rect)(?=[\s/>])/g, (_, tag: string) => `<${tag} ${tag === 'path' ? 'pathLength="1" ' : ''}style="--k:${Math.round(i++ * step)}ms"`)]
+}))
+
+/**
+ * A formula written out by hand when it scrolls into view (2026-10-29, user: write the formulas slowly, not all at
+ * once). MathJax glyphs are filled outlines; each is first traced with a thin pen (stroke-dashoffset, pathLength 1),
+ * in pen order, then its ink fills in. Rules (fraction bars, radicals) are drawn as lines from the left.
+ */
+function Formula({ k, label }: { k: string; label: string }) {
+  const [ref, seen] = useSeen<HTMLDivElement>('0px 0px -25% 0px')
+  return <div ref={ref} className={r.formula} data-seen={seen || undefined} role="img" aria-label={label}>
+    <MathInk html={WRITTEN[k] ?? ''} />
+  </div>
+}
+// Memoised so a re-render never rewrites the SVG mid-stroke (fresh nodes would skip their transitions).
+const MathInk = memo(function MathInk({ html }: { html: string }) {
+  return <span className={r.mathSvg} dangerouslySetInnerHTML={{ __html: html }} />
+})
+
+function Pillar({ children }: { children: ReactNode }) {
+  const [ref, seen] = useSeen<HTMLElement>('0px 0px -15% 0px')
+  return <article ref={ref} className={r.pillar} data-seen={seen || undefined}>{children}</article>
+}
+
 export function QuantResearch({ locale }: { locale: AppLocale }) {
   const t = locale === 'zh-CN' ? zh : en
   const [flow, seen] = useSeen<HTMLOListElement>()
@@ -140,15 +170,15 @@ export function QuantResearch({ locale }: { locale: AppLocale }) {
       <i className={r.pulse} aria-hidden="true" />
     </ol>
     <div className={r.panel}>
-      {t.pillars.map((pillar, index) => <article key={pillar.key} className={r.pillar}>
+      {t.pillars.map((pillar, index) => <Pillar key={pillar.key}>
         <header><span className={r.num}>{String(index + 1).padStart(2, '0')}</span><span className={r.tag}>{pillar.tag}</span></header>
         <h3>{pillar.title}</h3>
         <p>{pillar.body}</p>
-        {/* Typeset by MathJax into SVG at build time (2026-10-29, user: the formulas must look properly written). */}
-        <div className={r.formula} role="img" aria-label={`${t.formula}: ${FORMULA_SVG[pillar.key]?.tex ?? pillar.tag}`}><span className={r.mathSvg} dangerouslySetInnerHTML={{ __html: FORMULA_SVG[pillar.key]?.svg ?? '' }} /></div>
+        {/* Typeset by MathJax into SVG at build time, then written out stroke by stroke when seen. */}
+        <Formula k={pillar.key} label={`${t.formula}: ${FORMULA_SVG[pillar.key]?.tex ?? pillar.tag}`} />
         <p className={r.read}><b>{t.read}</b>{pillar.read}</p>
         {pillar.diagram && <Figure kind={pillar.diagram} label={t.sketch} zhLegend={locale === 'zh-CN'} />}
-      </article>)}
+      </Pillar>)}
     </div>
     <p className={r.note}>{t.note}</p>
   </section>
