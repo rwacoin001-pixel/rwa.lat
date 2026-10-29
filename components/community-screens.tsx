@@ -32,6 +32,11 @@ import { useScrollChrome } from '@/hooks/useScrollChrome'
 import { MaisonPage, maison as mp } from './maison/primitives'
 import c from './community-x.module.css'
 import dynamic from 'next/dynamic'
+import { dmUnreadCount } from '@/lib/api/community-dm'
+import type { DmProfile } from '@/lib/api/community-dm'
+
+/** Direct messages load on demand: the screen module comes in only when a conversation opens. */
+const openDm = (handle: string, peer: DmProfile) => import('./community/DmScreens').then(m => m.openConversation(handle, peer))
 import {
   getCommunityFeed,
   getCommunityPost,
@@ -94,13 +99,13 @@ function useTimeAgo() {
 const compact = (locale: string, value: number) => new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(value)
 
 type ProfileCopy = {
-  dm: string; dmSoon: string; media: string; noMedia: string; joined: string; more: string; shareProfile: string; reportProfile: string
+  dm: string; dmSoon: string; dmBlocked?: string; dmPolicy?: string; media: string; noMedia: string; joined: string; more: string; shareProfile: string; reportProfile: string
   copied: string; shareFailed: string; verified: string; back: string; post: string; postsCount: string; sharePost: string; reportPost: string
   copyLink: string; cancel: string; replyingTo: string; publicLink: string; signIn: string
 }
 const profileCopy: Record<AppLocale, ProfileCopy> = {
-  'zh-CN': { dm: '私信', dmSoon: '私信即将开放，先关注 TA 吧', media: '媒体', noMedia: '还没有带图的帖子', joined: '{date} 加入', more: '更多', shareProfile: '分享主页', reportProfile: '举报此用户', copied: '链接已复制', shareFailed: '分享失败，请稍后再试', verified: '官方认证', back: '返回', post: '帖子', postsCount: '{n} 条帖子', sharePost: '分享帖子', reportPost: '举报帖子', copyLink: '复制链接', cancel: '取消', replyingTo: '回复', publicLink: '生成公开链接', signIn: '登录' },
-  en: { dm: 'Message', dmSoon: 'Direct messages are coming soon. Follow them for now.', media: 'Media', noMedia: 'No posts with media yet', joined: 'Joined {date}', more: 'More', shareProfile: 'Share profile', reportProfile: 'Report this account', copied: 'Link copied', shareFailed: 'Could not share. Try again.', verified: 'Official', back: 'Back', post: 'Post', postsCount: '{n} posts', sharePost: 'Share post', reportPost: 'Report post', copyLink: 'Copy link', cancel: 'Cancel', replyingTo: 'Replying to', publicLink: 'Create public link', signIn: 'Sign in' },
+  'zh-CN': { dm: '私信', dmSoon: '私信即将开放，先关注 TA 吧', dmBlocked: '你们之间有拉黑，无法私信。', dmPolicy: 'TA 只接收自己关注的人的私信。', media: '媒体', noMedia: '还没有带图的帖子', joined: '{date} 加入', more: '更多', shareProfile: '分享主页', reportProfile: '举报此用户', copied: '链接已复制', shareFailed: '分享失败，请稍后再试', verified: '官方认证', back: '返回', post: '帖子', postsCount: '{n} 条帖子', sharePost: '分享帖子', reportPost: '举报帖子', copyLink: '复制链接', cancel: '取消', replyingTo: '回复', publicLink: '生成公开链接', signIn: '登录' },
+  en: { dm: 'Message', dmSoon: 'Direct messages are coming soon. Follow them for now.', dmBlocked: 'One of you has blocked the other.', dmPolicy: 'They only accept messages from people they follow.', media: 'Media', noMedia: 'No posts with media yet', joined: 'Joined {date}', more: 'More', shareProfile: 'Share profile', reportProfile: 'Report this account', copied: 'Link copied', shareFailed: 'Could not share. Try again.', verified: 'Official', back: 'Back', post: 'Post', postsCount: '{n} posts', sharePost: 'Share post', reportPost: 'Report post', copyLink: 'Copy link', cancel: 'Cancel', replyingTo: 'Replying to', publicLink: 'Create public link', signIn: 'Sign in' },
   es: { dm: 'Mensaje', dmSoon: 'Los mensajes directos llegarán pronto. De momento, síguele.', media: 'Multimedia', noMedia: 'Aún no hay publicaciones con imágenes', joined: 'Se unió en {date}', more: 'Más', shareProfile: 'Compartir perfil', reportProfile: 'Denunciar esta cuenta', copied: 'Enlace copiado', shareFailed: 'No se pudo compartir. Inténtalo de nuevo.', verified: 'Oficial', back: 'Atrás', post: 'Publicación', postsCount: '{n} publicaciones', sharePost: 'Compartir publicación', reportPost: 'Denunciar publicación', copyLink: 'Copiar enlace', cancel: 'Cancelar', replyingTo: 'En respuesta a', publicLink: 'Crear enlace público', signIn: 'Iniciar sesión' },
   fr: { dm: 'Message', dmSoon: 'Les messages privés arrivent bientôt. Abonnez-vous en attendant.', media: 'Médias', noMedia: 'Aucune publication avec média', joined: 'A rejoint en {date}', more: 'Plus', shareProfile: 'Partager le profil', reportProfile: 'Signaler ce compte', copied: 'Lien copié', shareFailed: 'Partage impossible. Réessayez.', verified: 'Officiel', back: 'Retour', post: 'Publication', postsCount: '{n} publications', sharePost: 'Partager la publication', reportPost: 'Signaler la publication', copyLink: 'Copier le lien', cancel: 'Annuler', replyingTo: 'En réponse à', publicLink: 'Créer un lien public', signIn: 'Se connecter' },
   pt: { dm: 'Mensagem', dmSoon: 'Mensagens diretas em breve. Siga por enquanto.', media: 'Mídia', noMedia: 'Ainda sem publicações com mídia', joined: 'Entrou em {date}', more: 'Mais', shareProfile: 'Compartilhar perfil', reportProfile: 'Denunciar esta conta', copied: 'Link copiado', shareFailed: 'Não foi possível compartilhar. Tente de novo.', verified: 'Oficial', back: 'Voltar', post: 'Publicação', postsCount: '{n} publicações', sharePost: 'Compartilhar publicação', reportPost: 'Denunciar publicação', copyLink: 'Copiar link', cancel: 'Cancelar', replyingTo: 'Respondendo a', publicLink: 'Criar link público', signIn: 'Entrar' },
@@ -415,6 +420,15 @@ type CommunityView = 'feed' | 'invite'
 const viewFromUrl = (): CommunityView => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'invite' ? 'invite' : 'feed'
 
 export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true, embedded = false }: { go: (screen: RwaScreen) => void; openPost: (id: string) => void; openProfile: (handle: string) => void; isGuest?: boolean; embedded?: boolean }) {
+  // Unread direct messages: a dot on the envelope, refreshed while the feed is open.
+  const [dmUnread, setDmUnread] = useState(0)
+  useEffect(() => {
+    if (isGuest) return
+    const check = () => { if (document.visibilityState === 'visible') void dmUnreadCount().then(res => { if (res.ok && typeof res.data?.count === 'number') setDmUnread(res.data.count) }) }
+    check()
+    const timer = window.setInterval(check, 30_000)
+    return () => window.clearInterval(timer)
+  }, [isGuest])
   const { t, locale } = useI18n()
   const timeAgo = useTimeAgo()
   // Match the home module's public feed so the community route does not
@@ -558,6 +572,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           </div>
           {/* Compose lives in the header (2026-10-28): one floating thing per screen — the AI ball keeps its place and its
               unread count; the pen fades in on the feed and leaves on Invite. */}
+          {!isGuest && <button type="button" className={c.inboxBtn} aria-label={p.dm} data-view={view} onClick={() => go('community-messages')}><Mail size={20} strokeWidth={1.9} aria-hidden="true" />{dmUnread > 0 && <i aria-hidden="true" />}</button>}
           {view === 'feed' && <button type="button" className={c.composeBtn} onClick={() => isGuest ? go('login') : setComposing(true)}><SquarePen size={18} strokeWidth={1.9} aria-hidden="true" /><span>{ui.compose}</span></button>}
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
@@ -804,7 +819,7 @@ export function CommunityProfileScreen({ handle, go, openPost, isGuest = true }:
                 {own
                   ? <button type="button" className={c.pill} onClick={() => setEditing(true)}>{communityComposeCopy[locale].editProfile}</button>
                   : <>
-                    <button type="button" className={c.outlineCircle} aria-label={p.dm} onClick={() => isGuest ? go('login') : actions.notify({ text: p.dmSoon })}><Mail size={18} strokeWidth={1.9} aria-hidden="true" /></button>
+                    <button type="button" className={c.outlineCircle} aria-label={p.dm} onClick={() => isGuest ? go('login') : void openDm(profile.handle, { id: profile.id, handle: profile.handle, displayName: profile.displayName, avatarUrl: profile.avatarUrl ?? null, avatarSeed: profile.avatarSeed ?? profile.handle, kind: profile.kind ?? 'member' }).then(e => { if (e) actions.notify({ text: e.status === 404 && !/^DM_/.test(e.code) ? p.dmSoon : e.code === 'DM_BLOCKED' ? p.dmBlocked ?? e.message : /FOLLOW|POLICY/.test(e.code) ? p.dmPolicy ?? e.message : e.message }) })}><Mail size={18} strokeWidth={1.9} aria-hidden="true" /></button>
                     <span ref={head.follow} className={c.followSlot}><CommunityFollowView state={follow} className={c.follow} /></span>
                   </>}
               </div>

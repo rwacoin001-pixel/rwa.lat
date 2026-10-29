@@ -86,7 +86,7 @@ export const rwaScreenTopbarKinds: Record<RwaScreen, TopbarKind> = {
   deposit: 'flow', withdraw: 'flow', transfer: 'flow', receive: 'tool', 'wallet-success': 'flow', activity: 'list', 'asset-detail': 'detail', 'position-detail': 'detail', 'address-book': 'tool',
   'ai-plan': 'detail', notifications: 'tool', kyc: 'tool', eligibility: 'tool', 'risk-profile': 'tool', security: 'tool', referral: 'tool', records: 'list', support: 'tool', 'support-new': 'detail', 'support-ticket': 'detail', fees: 'tool', settings: 'tool', marketing: 'tool', 'official-channels': 'trust', 'scam-report': 'tool', 'close-account': 'flow',
   'trust-center': 'trust', 'access-regions': 'trust', 'product-disclosures': 'trust', 'legal-center': 'trust', status: 'tool', disclosures: 'trust', secondary: 'list', trade: 'tool',
-  community: 'list', 'community-post': 'detail', 'community-profile': 'detail',
+  community: 'list', 'community-post': 'detail', 'community-profile': 'detail', 'community-messages': 'list', 'community-thread': 'detail',
   learn: 'list', 'learn-article': 'detail',
   'share-landing': 'immersive',
   'invite-landing': 'immersive',

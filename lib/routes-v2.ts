@@ -67,6 +67,8 @@ export const ROUTES = {
   community: R('/community', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
   communityPost: R('/community/post/:id', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
   communityMember: R('/community/member/:handle', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
+  communityMessages: R('/community/messages', { domain: 'community', dock: 'community', showDock: false, auth: 'required' }),
+  communityThread: R('/community/messages/:id', { domain: 'community', dock: 'community', showDock: false, auth: 'required' }),
   learn: R('/learn', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
   learnArticle: R('/learn/:slug', { domain: 'home', dock: 'home', showDock: true, auth: 'public' }),
 

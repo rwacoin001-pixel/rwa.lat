@@ -429,3 +429,9 @@ span.act { cursor: default; }
 .profHeadTitle { flex: 1 1 auto; min-width: 0; }
 .x:not([data-pin-follow]) .headFollow { max-width: 0; padding: 0; border-width: 0; overflow: hidden; margin-inline-start: -12px; }
 .x[data-pin-follow] .headFollow { max-width: 160px; transition: opacity .18s, transform .18s, max-width .24s cubic-bezier(.22, 1, .36, 1); }
+/* Direct messages entry (2026-10-29): a line envelope before compose, an ink dot when something is unread. */
+.inboxBtn { position: relative; display: grid; flex: none; place-items: center; width: 36px; height: 36px; margin-inline-start: auto; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--x-ink); cursor: pointer; }
+.inboxBtn i { position: absolute; top: 6px; inset-inline-end: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--m-down, #e5484d); box-shadow: 0 0 0 2px var(--x-bg); }
+.inboxBtn:active { transform: scale(.94); }
+.inboxBtn + .composeBtn { margin-inline-start: 4px; }
+.inboxBtn[data-view='invite'] { margin-inline-end: 8px; }

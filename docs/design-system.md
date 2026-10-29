@@ -376,3 +376,11 @@
 - Sheets hide the floating dock while open (html[data-sheet-open]).
 - The personal centre opens as a layer over the current page (lib/profile-overlay.ts); swiping it reveals the live page below.
 - Quant formulas are MathJax SVG generated at build time (components/maison/quant-formulas.ts, scripts/render-quant-formulas.mjs); the since-inception return sits in the top bar.
+
+### 7.14 Direct messages (2026-10-29)
+- Entry: a line envelope in the community bar (red 8px dot when unread), and the envelope circle on a member page. Guests go to sign-in.
+- Inbox `/community/messages`: 72px rows on hairlines — 48px face, name 15/600, time 12 faint, one-line preview 13 muted. Unread = ink preview and an ink count pill; muted = a small bell-off. No tiles, no cards.
+- Conversation `/community/messages/:id`: their bubbles on paper with a hairline, mine in ink (light on dark theme), radius 22 with an 8px corner at the end of a group; a group ends on a sender change or a 5-minute gap. Times 11px only at group ends; day labels centred 12 faint. Opening card: face, name, handle and one safety line (never share passwords, codes or keys).
+- Composer: glass bar fixed above the home indicator; pill field, 17px text (no iOS zoom), 36px ink send key, faded when empty. Errors are one plain grey line above the field.
+- Long-press (or right-click) a received bubble to report it. The ⋯ menu: view profile, mute, block (red text).
+- A missing backend reads as "coming soon", never as an error.

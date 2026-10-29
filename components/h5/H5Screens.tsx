@@ -22,6 +22,8 @@ const StatusScreen = dynamic(() => import('../status-screen').then((m) => ({ def
 const SecondaryTransferScreen = dynamic(() => import('../maison/SecondaryTransferScreen').then((m) => ({ default: m.SecondaryTransferScreen })), { ssr: false, loading: AppLoading })
 const InviteLanding = dynamic(() => import('../maison/InviteLanding').then((m) => ({ default: m.InviteLanding })), { ssr: false, loading: AppLoading })
 const CommunityFeedScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityFeedScreen })), { ssr: false, loading: AppLoading })
+const DmInboxScreen = dynamic(() => import('../community/DmScreens').then((m) => ({ default: m.DmInboxScreen })), { ssr: false, loading: AppLoading })
+const DmThreadScreen = dynamic(() => import('../community/DmScreens').then((m) => ({ default: m.DmThreadScreen })), { ssr: false, loading: AppLoading })
 const CommunityPostScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityPostScreen })), { ssr: false, loading: AppLoading })
 const CommunityProfileScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityProfileScreen })), { ssr: false, loading: AppLoading })
 
@@ -102,6 +104,8 @@ export function H5Screens({ h }: { h: H5Controller }) {
         {screen === 'community' && <CommunityFeedScreen go={go} openPost={openCommunityPost} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
         {(screen === 'learn' || screen === 'learn-article') && <LearnScreen key={`${locale}:${routeParams.slug ?? ''}`} slug={screen === 'learn-article' ? routeParams.slug : undefined} />}
         {screen === 'community-post' && <CommunityPostScreen key={communityPostId} postId={communityPostId} go={go} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
+        {screen === 'community-messages' && <DmInboxScreen />}
+        {screen === 'community-thread' && <DmThreadScreen key={routeParams.id} id={routeParams.id ?? null} />}
         {screen === 'community-profile' && <CommunityProfileScreen key={communityHandle} handle={communityHandle} go={go} openPost={openCommunityPost} isGuest={sessionMode === 'guest'} />}
         {screen === 'invite-landing' && <InviteLanding go={go} />}
         {screen === 'share-landing' && <PublicShareLanding key={routeParams.token} token={routeParams.token??null} />}

@@ -12,7 +12,7 @@ export const PROFILE_SECTION_SCREENS = new Set<Screen>([
   'access-regions', 'product-disclosures', 'legal-center', 'status',
 ])
 
-export const protectedScreens: Screen[] = ['home', 'portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem']
+export const protectedScreens: Screen[] = ['home', 'portfolio', 'wallet', 'order-review', 'order-processing', 'order-success', 'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw', 'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail', 'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile', 'security', 'referral', 'records', 'support', 'support-new', 'support-ticket', 'settings', 'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements', 'recurring', 'my-predictions', 'community-messages', 'community-thread', 'basket-subscribe', 'basket-redeem']
 export const routeRequiresAuth = (pathname: string) => resolveRoute(pathname)?.def.auth === 'required'
 
 /** Slug for the Maison asset page: RWA directory rows carry `rwa-<slug>`, catalog listings a UUID. */

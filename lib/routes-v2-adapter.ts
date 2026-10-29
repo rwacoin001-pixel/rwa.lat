@@ -19,6 +19,8 @@ const KEY_TO_SCREEN: Partial<Record<RouteKey, RwaScreen>> = {
   community: 'community',
   communityPost: 'community-post',
   communityMember: 'community-profile',
+  communityMessages: 'community-messages',
+  communityThread: 'community-thread',
 
   // Koala Quant
   quant: 'quant',

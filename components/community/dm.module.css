@@ -1,0 +1,62 @@
+/* Direct messages (2026-10-29, docs/design-system.md §7.14). Inbox: 72px type-only rows on hairlines, a 48px face,
+   unread as weight plus an ink count — no tinted tiles. Conversation: the other side on paper, mine in ink, 20px
+   radius with a tighter corner at the end of a group, small grey times only at group ends, a glass composer with an
+   ink send key. Every size on the §3.1 scale. */
+.page { padding-bottom: 24px; }
+.plainKey { min-height: 44px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--pa-cta-bg, var(--m-ink)); color: var(--pa-cta-ink, var(--m-bg)); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+
+/* Inbox. */
+.inbox { margin: 0; padding: 0; list-style: none; }
+.row { display: grid; grid-template-columns: 48px minmax(0, 1fr); align-items: center; gap: 12px; width: 100%; min-height: 72px; padding: 12px 0; border: 0; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); background: none; color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; }
+.row:active { opacity: .7; }
+.rowMain { display: grid; gap: 4px; min-width: 0; }
+.rowTop, .rowBottom { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.rowTop b { overflow: hidden; flex: 1; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.rowTop small { flex: none; color: var(--m-faint, #8a9099); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.preview { overflow: hidden; flex: 1; color: var(--m-muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.rowBottom svg { flex: none; color: var(--m-faint, #8a9099); }
+.row[data-unread] .preview { color: var(--m-ink); font-weight: 500; }
+.row[data-unread] .rowTop small { color: var(--m-ink); }
+.count { display: inline-grid; flex: none; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--m-ink); color: var(--m-bg); font-size: 11px; font-style: normal; font-weight: 600; line-height: 1; font-variant-numeric: tabular-nums; }
+
+/* Conversation. */
+.thread { display: grid; align-content: start; gap: 2px; min-height: calc(100dvh - 160px); padding: 8px 0 calc(96px + env(safe-area-inset-bottom)); }
+.start { display: grid; justify-items: center; gap: 4px; padding: 24px 16px 16px; text-align: center; }
+.start b { margin-top: 8px; color: var(--m-ink); font-size: 17px; font-weight: 600; line-height: 24px; }
+.start small { color: var(--m-faint, #8a9099); font-size: 13px; line-height: 18px; }
+.start p { max-width: 280px; margin: 8px 0 0; color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.older { justify-self: center; min-height: 44px; padding: 0 16px; border: 0; background: none; color: var(--m-ink); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.day { justify-self: center; margin: 16px 0 8px; color: var(--m-faint, #8a9099); font-size: 12px; font-weight: 500; line-height: 16px; }
+
+.line { display: grid; justify-items: start; }
+.line[data-mine] { justify-items: end; }
+.line[data-tail] { margin-bottom: 8px; }
+.bubble { max-width: min(78%, 320px); padding: 8px 12px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px var(--pa-hair, rgba(11, 18, 32, .08)), 0 1px 2px rgba(11, 18, 32, .04); color: var(--m-ink); font-size: 15px; line-height: 22px; white-space: pre-wrap; overflow-wrap: anywhere; -webkit-user-select: text; user-select: text; -webkit-touch-callout: none; }
+.line[data-tail] .bubble { border-end-start-radius: 8px; }
+.line[data-mine] .bubble { background: var(--m-ink); box-shadow: none; color: var(--m-bg); }
+.line[data-mine][data-tail] .bubble { border-end-start-radius: 22px; border-end-end-radius: 8px; }
+.bubble[data-state='sending'] { opacity: .6; }
+.bubble[data-state='failed'] { opacity: .6; cursor: pointer; }
+.time { margin: 4px 4px 0; color: var(--m-faint, #8a9099); font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; }
+.failed { margin: 4px 4px 0; color: var(--m-down); font-size: 12px; line-height: 16px; }
+
+/* Composer: glass bar above the keyboard and the home indicator. */
+.composer { position: fixed; z-index: 20; inset-inline: 0; bottom: 0; display: grid; gap: 8px; max-width: 480px; margin: 0 auto; padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--m-bg) 82%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: 0 -.5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+.notice { margin: 0; padding: 0 4px; color: var(--m-muted); font-size: 12px; line-height: 16px; }
+.field { display: flex; align-items: flex-end; gap: 8px; padding: 4px 4px 4px 16px; border-radius: 999px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); }
+.field textarea { flex: 1; min-width: 0; max-height: 120px; padding: 8px 0; border: 0; outline: 0; background: none; color: var(--m-ink); font: inherit; font-size: 17px; line-height: 24px; resize: none; }
+.field textarea::placeholder { color: var(--m-faint, #8a9099); }
+.send { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--m-ink); color: var(--m-bg); cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)), opacity .2s; }
+.send:disabled { opacity: .3; cursor: default; }
+.send:not(:disabled):active { transform: scale(.92); }
+
+/* Sheets. */
+.options { display: grid; gap: 4px; padding-bottom: 8px; }
+.options button { min-height: 52px; padding: 0 16px; border: 0; border-radius: 12px; background: none; color: var(--m-ink); font: inherit; font-size: 15px; text-align: start; cursor: pointer; }
+.options button:active { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.options button[data-danger] { color: var(--m-down); }
+
+:global(.rwa-mobile[data-theme='dark']) .bubble { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1); }
+:global(.rwa-mobile[data-theme='dark']) .line[data-mine] .bubble { background: #f2f4f7; color: #0b1220; }
+:global(.rwa-mobile[data-theme='dark']) .count { background: #f2f4f7; color: #0b1220; }
+@media (prefers-reduced-motion: reduce) { .send { transition: none; } }
