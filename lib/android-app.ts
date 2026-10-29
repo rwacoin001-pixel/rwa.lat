@@ -7,9 +7,9 @@ import type { AppLocale } from './i18n'
  * to public/download/; while `url` is null the install sheet offers only "Open in Chrome".
  */
 export const ANDROID_APP: { url: string | null; version: string; sha256: string } = {
-  url: '/download/a-reit-android-1.1.3.apk',
-  version: '1.1.3',
-  sha256: 'ccc617531f38cfbda3b31d067f554deedf87d55552d603ec2d7343add748baec',
+  url: '/download/a-reit-android-1.1.4.apk',
+  version: '1.1.4',
+  sha256: 'e5a54ff67f051b9701f728912bd1999f9a6c7433d4706bb7ab855be3152a0552',
 }
 
 /** Signing certificate SHA-256 (apksigner verify --print-certs); every later version must show the same one. */
