@@ -1,4 +1,6 @@
-import { Injectable } from '@nestjs/common'
+import { Injectable, Optional } from '@nestjs/common'
+import { QuantService } from '../quant/quant.service'
+import { quantProjection } from './ai-read-tools.service'
 import { createHash } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { KnowledgeSource, knowledgeSearchPatterns } from './ai-knowledge.policy'
@@ -6,7 +8,7 @@ import { PAGE_DIRECTORY, PLATFORM_GUIDES, GUIDE_LOCALE_TERMS } from './ai-platfo
 import { predictionFeeConfig } from '../prediction/prediction-fees'
 import { SETTLEMENT_ASSET_CODE, SETTLEMENT_ASSET_DECIMALS } from '../financial/amounts'
 
-type Query = { kind: 'products' | 'baskets' | 'reference-assets' | 'predictions' | 'articles' | 'profile'; patterns: string[]; locale: string }
+type Query = { kind: 'products' | 'baskets' | 'reference-assets' | 'predictions' | 'articles' | 'profile' | 'quant'; patterns: string[]; locale: string }
 export type LiveKnowledgeSource = KnowledgeSource & { liveQuery?: Query }
 const ALIASES: Array<[RegExp, string[]]> = [
   [/黄金|金价|gold/i, ['gold', 'xau', 'paxg']], [/白银|silver/i, ['silver', 'xag']],
@@ -48,7 +50,7 @@ function source(key: string, title: string, body: string, locale: string, url: s
 /** Public, read-only snapshots; publication is visible on the next question without a sync job. */
 @Injectable()
 export class AiPlatformKnowledgeService {
-  constructor(private readonly ds: DataSource) {}
+  constructor(private readonly ds: DataSource, @Optional() private readonly quant?: QuantService) {}
   async retrieve(question: string, locale: string): Promise<LiveKnowledgeSource[]> {
     const navigation = source('pages', 'A-REIT 页面与操作入口 Pages and actions', JSON.stringify({
       pages: PAGE_DIRECTORY,
@@ -59,6 +61,7 @@ export class AiPlatformKnowledgeService {
       .sort((a,b) => b.score - a.score).slice(0,3).map(({guide}) => source(`guide-${guide.key}`, guide.title, guide.body, locale, guide.url))
     const patterns = search(question)
     const queries: Query[] = (['products','baskets','profile'] as const).map(kind => ({ kind, patterns, locale }))
+    if (this.quant) queries.push({ kind: 'quant', patterns: [], locale })
     if (patterns.length) queries.push(...(['reference-assets','predictions','articles'] as const).map(kind => ({kind,patterns,locale})))
     const snapshots = await Promise.all(queries.map(query => this.snapshot(query)))
     return [navigation,...guides,...snapshots.filter((item): item is LiveKnowledgeSource => item !== null),
@@ -77,7 +80,10 @@ export class AiPlatformKnowledgeService {
     const { kind, patterns, locale } = query
     let rows: Array<Record<string, any>>
     let url = '/markets', note = ''
-    if (kind === 'products') {
+    if (kind === 'quant') {
+      rows = (await this.quant!.listProducts()).slice(0, 20).map(({ history, ...product }) => ({ ...quantProjection(product), url: '/quant' }))
+      url = '/quant'; note = 'Official A-REIT Koala Quant / 考拉量化. Published rules and settled performance from the quant service. Targets are not guaranteed returns. Missing records do not imply fraud.'
+    } else if (kind === 'products') {
       rows = await this.ds.query(`SELECT p.id,p.display_name AS name,left(p.summary,3000) AS summary,p.asset_class_id AS "assetClass",p.asset_code AS symbol,p.asset_decimals AS decimals,p.network,p.state,p.version,
         (SELECT jsonb_agg(jsonb_build_object('title',d.title,'kind',d.kind,'locale',d.locale,'publishedAt',d.published_at) ORDER BY d.published_at DESC)
           FROM app.disclosure_files d WHERE d.product_id=p.id AND d.state='active' AND p.state='published') AS disclosures,
@@ -122,7 +128,7 @@ export class AiPlatformKnowledgeService {
       url='/trust';note='Operator-published profile, not independent proof of licenses/affiliations. No draft/nonpublic documents.'
     }
     if (!rows.length && ['reference-assets','predictions','articles'].includes(kind)) return null
-    const titles: Record<Query['kind'],string> = {products:'当前资产产品 Current products',baskets:'篮子组合 Basket portfolios','reference-assets':'资产市场资料 Market research',predictions:'预测市场与规则 Predictions',articles:'学习文章 Learning articles',profile:'平台主体与准入 Platform profile'}
+    const titles: Record<Query['kind'],string> = {quant:'考拉量化 Koala Quant',products:'当前资产产品 Current products',baskets:'篮子组合 Basket portfolios','reference-assets':'资产市场资料 Market research',predictions:'预测市场与规则 Predictions',articles:'学习文章 Learning articles',profile:'平台主体与准入 Platform profile'}
     return source(kind,titles[kind],JSON.stringify({note,records:rows}),locale,url,query)
   }
 }

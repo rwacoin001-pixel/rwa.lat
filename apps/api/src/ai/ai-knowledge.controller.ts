@@ -16,6 +16,7 @@ export class AdminAiKnowledgeController {
   @Get() async list(@CurrentAdmin() admin: AuthenticatedAdmin) { await this.permission(admin); return this.knowledge.listAdmin() }
   @Get('products') async products(@CurrentAdmin() admin: AuthenticatedAdmin) { await this.permission(admin); return this.catalog.listProducts() }
   @Get('coverage') async coverage(@CurrentAdmin() admin: AuthenticatedAdmin) { await this.permission(admin); return this.knowledge.coverage() }
+  @Get('feedback') async feedback(@CurrentAdmin() admin: AuthenticatedAdmin) { await this.permission(admin); return this.knowledge.negativeFeedback(admin.id) }
   @Post('preview') async preview(@CurrentAdmin() admin: AuthenticatedAdmin,@Body() input: KnowledgePreviewDto) { await this.permission(admin); return this.knowledge.retrieve(input.question,input.locale,input.authenticated) }
   @Post() async create(@CurrentAdmin() admin: AuthenticatedAdmin, @Body() input: SaveKnowledgeDto) { await this.permission(admin); return this.knowledge.save(null, input, admin.id) }
   @Put(':id') async save(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', ParseUUIDPipe) id: string, @Body() input: SaveKnowledgeDto) { await this.permission(admin); return this.knowledge.save(id, input, admin.id) }
