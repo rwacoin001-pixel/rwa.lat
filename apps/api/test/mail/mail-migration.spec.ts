@@ -1,4 +1,5 @@
-import { SupportEmailBrand1793232000000, supportBrand } from '../../src/database/migrations/1793232000000-support-email-brand'
+import { SupportEmailBrand1793232000000 } from '../../src/database/migrations/1793232000000-support-email-brand'
+import { supportBrand } from '../../src/database/support-brand'
 import { MailInbox1793232000100 } from '../../src/database/migrations/1793232000100-mail-inbox'
 
 describe('mail migrations', () => {
