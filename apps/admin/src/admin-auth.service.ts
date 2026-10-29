@@ -17,6 +17,7 @@ export interface AdminSessionProfile {
 
 export interface AdminSessionActor extends AdminSessionProfile {
   sessionId: string
+  mfaVerifiedAt?: Date | null
 }
 
 export function hashAdminPassword(password: string, salt = randomBytes(16)): string {
@@ -153,7 +154,7 @@ export class AdminAuthService {
        WHERE id = $1`,
       [profile.id],
     )
-    const issued = await this.issueSession(profile, input)
+    const issued = await this.issueSession(profile, input, profile.mfaState === 'enabled' ? new Date() : null)
     await this.writeAudit({
       actorId: profile.id,
       action: 'admin.session.login_succeeded',
@@ -208,16 +209,16 @@ export class AdminAuthService {
     if (token.length < 32) throw new UnauthorizedException('Admin session is invalid')
     const hash = createHash('sha256').update(token).digest()
     const rows = await this.ds.query(
-      `SELECT s.id AS session_id, s.token_hash, u.id, u.email, u.role_id, u.disabled_at,
+      `SELECT s.id AS session_id, s.mfa_verified_at, s.token_hash, u.id, u.email, u.role_id, u.disabled_at,
               r.name AS role_name, COALESCE(array_agg(rp.permission) FILTER (WHERE rp.permission IS NOT NULL), '{}') AS permissions
        FROM app.admin_sessions s
        JOIN app.admin_users u ON u.id = s.admin_user_id
        JOIN app.admin_roles r ON r.id = u.role_id
        LEFT JOIN app.admin_role_permissions rp ON rp.role_id = r.id
        WHERE s.token_hash = $1 AND s.revoked_at IS NULL AND s.expires_at > now()
-       GROUP BY s.id, s.token_hash, u.id, u.email, u.role_id, u.disabled_at, r.name`,
+       GROUP BY s.id, s.mfa_verified_at, s.token_hash, u.id, u.email, u.role_id, u.disabled_at, r.name`,
       [hash],
-    ) as Array<{ session_id: string; token_hash: Buffer; id: string; email: string; role_id: string; disabled_at: Date | null; role_name: string; permissions: string[] }>
+    ) as Array<{ session_id: string; mfa_verified_at: Date | null; token_hash: Buffer; id: string; email: string; role_id: string; disabled_at: Date | null; role_name: string; permissions: string[] }>
     const row = rows[0]
     if (!row || row.disabled_at || !timingSafeEqual(row.token_hash, hash)) {
       throw new UnauthorizedException('Admin session is invalid or expired')
@@ -230,6 +231,7 @@ export class AdminAuthService {
       roleName: row.role_name,
       permissions: row.permissions,
       sessionId: row.session_id,
+      mfaVerifiedAt: row.mfa_verified_at,
     }
   }
 
@@ -259,7 +261,7 @@ export class AdminAuthService {
       `UPDATE app.admin_sessions SET revoked_at = now() WHERE id = $1 AND revoked_at IS NULL`,
       [actor.sessionId],
     )
-    const issued = await this.issueSession(actor, context)
+    const issued = await this.issueSession(actor, context, actor.mfaVerifiedAt ?? null)
     await this.writeAudit({
       actorId: actor.id,
       action: 'admin.session.refreshed',
@@ -270,15 +272,15 @@ export class AdminAuthService {
     return issued
   }
 
-  private async issueSession(profile: AdminSessionProfile, context: { ipAddress?: string; userAgent?: string }) {
+  private async issueSession(profile: AdminSessionProfile, context: { ipAddress?: string; userAgent?: string }, mfaVerifiedAt: Date | null) {
     const token = `ras_${randomBytes(32).toString('base64url')}`
     const tokenHash = createHash('sha256').update(token).digest()
     const expiresAt = new Date(Date.now() + this.sessionTtlSeconds * 1000)
     const sessionRows = await this.ds.query(
-      `INSERT INTO app.admin_sessions (admin_user_id, token_hash, expires_at, ip_address, user_agent)
-       VALUES ($1, $2, $3, NULLIF($4, '')::inet, NULLIF($5, ''))
+      `INSERT INTO app.admin_sessions (admin_user_id, token_hash, expires_at, ip_address, user_agent, mfa_verified_at)
+       VALUES ($1, $2, $3, NULLIF($4, '')::inet, NULLIF($5, ''), $6)
        RETURNING id`,
-      [profile.id, tokenHash, expiresAt, context.ipAddress ?? '', this.safeUserAgent(context.userAgent) ?? ''],
+      [profile.id, tokenHash, expiresAt, context.ipAddress ?? '', this.safeUserAgent(context.userAgent) ?? '', mfaVerifiedAt],
     ) as Array<{ id: string }>
     return {
       sessionToken: token,
