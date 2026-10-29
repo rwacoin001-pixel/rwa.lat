@@ -6,6 +6,8 @@ export const SHORT_CODE_LENGTH = 6
 /** Every code ever issued (16-hex legacy, short, custom) keeps resolving; this is the accepted shape. */
 export const REFERRAL_CODE_PATTERN = /^[a-z0-9]{6,16}$/
 export const RESERVED_REFERRAL_CODES = new Set(['admin', 'signup', 'signin', 'system', 'support', 'referral'])
+export const CUSTOM_REFERRAL_CODE_PATTERN = /^[areit0-9]{6}$/i
+export const CUSTOM_REFERRAL_CODE_MESSAGE = 'Referral code must be exactly 6 characters using A, R, E, I, T and 0–9'
 const LEGACY_CODE = /^[a-f0-9]{16}$/
 
 export function generateShortCode(random: (max: number) => number = randomInt): string {

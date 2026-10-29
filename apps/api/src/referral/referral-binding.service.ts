@@ -3,7 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import { DataSource, EntityManager } from 'typeorm'
 import { ReferralContext } from './referral-context'
-import { generateShortCode, normalizeReferralCode, RESERVED_REFERRAL_CODES } from './referral-code'
+import { generateShortCode, normalizeReferralCode, RESERVED_REFERRAL_CODES, CUSTOM_REFERRAL_CODE_PATTERN, CUSTOM_REFERRAL_CODE_MESSAGE } from './referral-code'
 
 type Attribution = { id: string; inviter_user_id: string; code: string; clicked_at: Date; expires_at: Date }
 
@@ -59,7 +59,7 @@ export class ReferralBindingService {
   async changeCode(userId: string, input: string) {
     await this.requireInstalled()
     const code = input.toLowerCase()
-    if (!/^[a-z0-9]{6,16}$/.test(code) || RESERVED_REFERRAL_CODES.has(code)) throw new BadRequestException('Invalid referral code')
+    if (!CUSTOM_REFERRAL_CODE_PATTERN.test(code) || RESERVED_REFERRAL_CODES.has(code)) throw new BadRequestException(CUSTOM_REFERRAL_CODE_MESSAGE)
     return this.db.transaction(async m => {
       await m.query('SELECT pg_advisory_xact_lock(1790760000)')
       const [user] = await m.query('SELECT status FROM app.users WHERE id=$1',[userId])

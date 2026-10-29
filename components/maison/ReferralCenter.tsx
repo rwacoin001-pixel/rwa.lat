@@ -26,7 +26,7 @@ type SheetKind = 'rules' | 'qr' | 'edit' | 'poster' | 'rewards' | 'team' | 'awar
 type Translate = (cn: string, en: string) => string
 
 const PAGE_SIZE = 20
-const CODE_PATTERN = /^[A-Za-z0-9]{6,16}$/
+const CODE_PATTERN = /^[AREIT0-9]{6}$/i
 const ReferralPosterComposer = dynamic(() => import('./ReferralPosterComposer').then(module => module.ReferralPosterComposer), { ssr: false })
 const lengthClass = (code: string) => code.length <= 8 ? 's' : code.length <= 12 ? 'm' : 'l'
 
@@ -36,7 +36,7 @@ function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: strin
   const submit = (event: FormEvent) => {
     event.preventDefault()
     if (busy) return
-    if (!CODE_PATTERN.test(draft)) { setLocal(t('请输入 6–16 位字母或数字', 'Enter 6–16 letters or digits')); return }
+    if (!CODE_PATTERN.test(draft)) { setLocal(t('请输入 6 位邀请码，仅限 A、R、E、I、T 和数字 0–9', 'Enter exactly 6 characters using A, R, E, I, T and 0–9')); return }
     if (draft.toLowerCase() === code.toLowerCase()) { setLocal(t('与当前邀请码相同', 'Same as the current code')); return }
     setLocal('')
     onSave(draft.toLowerCase())
@@ -45,7 +45,7 @@ function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: strin
   const press = (key: string) => {
     if (busy) return
     navigator.vibrate?.(6)
-    setDraft(value => key === 'del' ? value.slice(0, -1) : value.length >= 16 ? value : value + key)
+    setDraft(value => key === 'del' ? value.slice(0, -1) : value.length >= 6 ? value : value + key)
     setLocal(''); onDraftChange()
   }
   // Our own keypad (2026-10-29): the brand letters down the left — A·R·E·I·T — and the digits, so a code is always the
@@ -59,15 +59,15 @@ function CodeForm({ code, busy, error, onSave, onDraftChange, t }: { code: strin
     <label id={`${id}-label`}>{t('新邀请码', 'New invitation code')}</label>
     <div className={k.display} role="textbox" aria-readonly="true" aria-labelledby={`${id}-label`} aria-invalid={message ? true : undefined} aria-describedby={`${id}-hint ${id}-error`} tabIndex={0} onKeyDown={typed} data-autofocus>
       <b dir="ltr">{draft}<i className={k.caret} aria-hidden="true" /></b>
-      <span aria-hidden="true">{draft.length}/16</span>
+      <span aria-hidden="true">{draft.length}/6</span>
     </div>
     <p id={`${id}-error`} className={x.formError} role="alert">{message}</p>
     <div className={k.pad} role="group" aria-label={t('邀请码键盘', 'Code keypad')}>
-      {KEYPAD.map(key => <button key={key} type="button" className={k.key} data-kind={key === 'del' ? 'del' : /\d/.test(key) ? 'digit' : 'letter'} disabled={busy || (key === 'del' ? !draft : draft.length >= 16)} aria-label={key === 'del' ? t('删除', 'Delete') : key} onClick={() => press(key)}>
+      {KEYPAD.map(key => <button key={key} type="button" className={k.key} data-kind={key === 'del' ? 'del' : /\d/.test(key) ? 'digit' : 'letter'} disabled={busy || (key === 'del' ? !draft : draft.length >= 6)} aria-label={key === 'del' ? t('删除', 'Delete') : key} onClick={() => press(key)}>
         {key === 'del' ? <Delete size={22} strokeWidth={1.8} aria-hidden="true" /> : key}
       </button>)}
     </div>
-    <p id={`${id}-hint`} className={x.hint}>{t('6–16 位，每 30 天可修改一次；旧链接仍可使用。', '6–16 characters. Change once every 30 days; previous links remain valid.')}</p>
+    <p id={`${id}-hint`} className={x.hint}>{t('6 位，仅限 A、R、E、I、T 和数字 0–9。每 30 天可修改一次；旧链接仍可使用。', '6 characters using A, R, E, I, T and 0–9. Change once every 30 days; previous links remain valid.')}</p>
     <button type="submit" className={x.primary} disabled={busy} aria-busy={busy}>{busy ? t('保存中', 'Saving') : t('保存邀请码', 'Save code')}</button>
   </form>
 }

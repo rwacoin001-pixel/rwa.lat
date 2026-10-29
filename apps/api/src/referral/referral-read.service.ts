@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ServiceUnavailableException } from '@nestjs/common'
+import { Injectable, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 
 @Injectable()
@@ -46,6 +46,43 @@ export class ReferralReadService {
       const items=await m.query(`${cte} SELECT substr(invitee_user_id::text,1,8) AS "memberLabel",level,bound_at AS "boundAt" FROM team
         WHERE ($2='all' OR level::text=$2) ORDER BY bound_at DESC,invitee_user_id LIMIT $3 OFFSET $4`,[userId,level,p.pageSize,p.offset])
       return {items,total:count.total,page:p.page,pageSize:p.pageSize}
+    })
+  }
+  async invitee(userId:string,memberLabel:string) {
+    if (!/^[a-f0-9]{8}$/.test(memberLabel)) throw new BadRequestException('Invalid member label')
+    await this.requireInstalled()
+    return this.db.transaction('REPEATABLE READ',async m=>{
+      const members=await m.query(`WITH RECURSIVE team AS (
+        SELECT invitee_user_id,bound_at,1 AS level FROM app.referral_edges WHERE inviter_user_id=$1
+        UNION ALL SELECT e.invitee_user_id,e.bound_at,t.level+1 FROM app.referral_edges e JOIN team t ON e.inviter_user_id=t.invitee_user_id WHERE t.level<3
+      ) SELECT substr(t.invitee_user_id::text,1,8) AS "memberLabel",t.invitee_user_id AS "userId",t.level,t.bound_at AS "boundAt",u.created_at AS "registeredAt"
+        FROM team t JOIN app.users u ON u.id=t.invitee_user_id WHERE substr(t.invitee_user_id::text,1,8)=$2 LIMIT 2`,[userId,memberLabel])
+      // The list's short label can collide. Never guess which member's finances to disclose.
+      if (members.length!==1) throw new NotFoundException('Member not found')
+      const member=members[0]
+      const [deposits]=await m.query(`WITH credited AS (
+        SELECT trunc(atomic_amount*power(10::numeric,6-asset_decimals)) AS amount,credited_at AS at FROM app.deposits
+          WHERE user_id=$1 AND state='credited' AND asset_code='USDT'
+        UNION ALL SELECT trunc(atomic_amount*power(10::numeric,6-asset_decimals)),posted_at FROM app.internal_transfers
+          WHERE recipient_user_id=$1 AND state='posted' AND asset_code='USDT'
+      ) SELECT coalesce(sum(amount),0)::text AS "totalAtomic",count(*)::int AS count,max(at) AS "lastAt" FROM credited`,[member.userId])
+      const [purchases]=await m.query(`WITH purchases AS (
+        SELECT 'quant' AS product,amount_atomic AS amount,coalesce(settled_at,created_at) AS at FROM app.quant_orders
+          WHERE user_id=$1 AND kind='subscription' AND status IN ('accepted','settled')
+        UNION ALL SELECT 'rwa',filled_atomic_amount,coalesce(completed_at,processed_at,submitted_at) FROM app.orders
+          WHERE user_id=$1 AND side='buy' AND state IN ('filled','partially_filled') AND filled_atomic_amount>0
+            AND settlement_asset_code='USDT' AND settlement_asset_decimals=6
+        UNION ALL SELECT 'prediction',stake_atomic,created_at FROM app.prediction_bets WHERE user_id=$1 AND status IN ('placed','won','lost')
+      ) SELECT coalesce(sum(amount) FILTER(WHERE product='quant'),0)::text AS "quantAtomic",
+        coalesce(sum(amount) FILTER(WHERE product='rwa'),0)::text AS "rwaAtomic",
+        coalesce(sum(amount) FILTER(WHERE product='prediction'),0)::text AS "predictionAtomic",
+        coalesce(sum(amount),0)::text AS "totalAtomic",count(*)::int AS count,max(at) AS "lastAt" FROM purchases`,[member.userId])
+      // Team awards are progressive totals per beneficiary/month, without persisted per-member shares.
+      const [rewardsToMe]=await m.query(`SELECT coalesce(sum(amount_atomic),0)::text AS "totalAtomic",
+        coalesce(sum(amount_atomic) FILTER(WHERE state='earned'),0)::text AS "earnedAtomic",
+        coalesce(sum(amount_atomic) FILTER(WHERE state='claimed'),0)::text AS "claimedAtomic"
+        FROM app.referral_rewards WHERE user_id=$1 AND source_user_id=$2 AND kind IN ('purchase','fee') AND asset_code='USDT' AND asset_decimals=6`,[userId,member.userId])
+      return {memberLabel:member.memberLabel,level:member.level,boundAt:member.boundAt,registeredAt:member.registeredAt,deposits,purchases,rewardsToMe,currency:'USDT',decimals:6}
     })
   }
   async rewards(userId:string,page?:string,pageSize?:string) {
