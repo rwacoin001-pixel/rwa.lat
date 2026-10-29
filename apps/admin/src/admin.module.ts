@@ -1,3 +1,7 @@
+import { AdminAiQueryController } from './admin-ai-query.controller'
+import { AdminAiQueryService } from './admin-ai-query.service'
+import { AdminAiModelClient } from './admin-ai-model.client'
+import { AdminAiMfaGuard } from './admin-ai-mfa.guard'
 import { DynamicModule, Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -36,11 +40,13 @@ import { AdminAiKnowledgeController } from './admin-ai-knowledge.controller'
 import { AdminAiInvestmentController } from './admin-ai-investment.controller'
 
 const controllers = [
+  AdminAiQueryController,
   AdminController, AdminAuthController, AdminTotpController, AdminControlController, AdminStorageController,
   AdminWalletOpsController, AdminFundsOpsController, AdminBasketController, AdminQuantController,
   AdminCommunityController, AdminPredictionController, AdminCoreOpsController, AdminPlatformController, AdminLegalController, AdminAiKnowledgeController, AdminAiInvestmentController,
 ]
 const providers = [
+  AdminAiQueryService, AdminAiModelClient, AdminAiMfaGuard,
   AdminService, AdminAuthService, AdminTotpService, AdminSessionGuard, AdminCorePrincipalService, AdminPermissionGuard, AdminControlService,
   AdminStorageService, AdminWalletOpsService, AdminBasketService, AdminQuantService, AdminCommunityOpsService,
   AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService,

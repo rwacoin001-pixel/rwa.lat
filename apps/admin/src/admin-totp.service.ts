@@ -52,7 +52,7 @@ export class AdminTotpService {
       const sessionToken = `ras_${randomBytes(32).toString('base64url')}`
       const ttl = Number(this.config.get('ADMIN_SESSION_TTL_SECONDS') ?? 28800)
       const expiresAt = new Date(Date.now() + Math.max(300,Math.min(86400,ttl))*1000)
-      const [session] = await em.query(`INSERT INTO app.admin_sessions(admin_user_id,token_hash,expires_at,ip_address,user_agent) VALUES($1,$2,$3,NULLIF($4,'')::inet,NULLIF($5,'')) RETURNING id`, [u.id,this.hash(sessionToken),expiresAt,context.ipAddress ?? '',(context.userAgent ?? '').slice(0,1024)])
+      const [session] = await em.query(`INSERT INTO app.admin_sessions(admin_user_id,token_hash,expires_at,ip_address,user_agent,mfa_verified_at) VALUES($1,$2,$3,NULLIF($4,'')::inet,NULLIF($5,''),now()) RETURNING id`, [u.id,this.hash(sessionToken),expiresAt,context.ipAddress ?? '',(context.userAgent ?? '').slice(0,1024)])
       await em.query('UPDATE app.admin_users SET mfa_last_counter=$2,failed_login_count=0,locked_until=NULL,last_login_at=now() WHERE id=$1',[u.id,counter])
       await this.audit(em,u.id,'admin.session.login_succeeded',{method:'totp',sessionId:session.id})
       return {sessionToken,expiresAt,admin:{id:u.id,email:u.email,roleId:u.role_id,roleName:role.name,permissions:role.permissions}}
