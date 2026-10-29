@@ -5,6 +5,7 @@ import type { ReactNode } from 'react'
 import { AlertTriangle } from 'lucide-react'
 import { ToastHost } from '@/components/ui/ToastHost'
 import { useI18n } from '@/lib/i18n'
+import { useFreshBuild } from '@/hooks/useFreshBuild'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import { ScreenTransition } from '../motion-effects'
 import { BottomDock } from './BottomDock'
@@ -12,6 +13,7 @@ import type { H5Controller } from './useH5Controller'
 
 export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode }) {
   const { locale } = useI18n()
+  useFreshBuild()
   const shellCopy = rwaH5Copy[locale].shell
   const { screen, go, isOnline, theme, mode, showDock, isFloatingSheet, dockActiveScreen, navigationMotion } = h
   return (
