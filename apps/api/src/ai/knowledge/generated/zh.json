@@ -1,0 +1,562 @@
+[
+  {
+    "id": "e7fd8ed0-2554-5c42-861e-14703af5502f",
+    "content": {
+      "title": "考拉量化 (1)",
+      "summary": "考拉量化 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n量化\nKOALA QUANT\n考拉量化\n即将开放\n考拉量化暂未开放,敬请期待。\n考拉量化加载失败。\n重试\n已结算至\n尚未开始结算\n收益率\n净值\n切换收益率与净值\n成立以来\n净值指数(已扣管理费)\n圆环满格:7 日 3% · 30 日 8% · 回撤 5%\n已记录 {runtime value} 日\n示例数据 · 历史数据不代表未来收益 · 仅版式预览,不是本产品的结算记录。\n首笔结算完成后,这里显示每日净值与收益表。\n每日结算\n上弦\n盈利日\n亏损日(本金减少)\n已结算 0.00%\n暂无记录\n今日未结算\n盈利\n亏损\n持平\n今日结束后才会结算\n近 7 日\n近 30 日\n最大回撤\n目标区间\n年化目标 {runtime value}–{runtime value}%,不保证收益\n仅为目标,不是承诺。实际表现可能更低,本金可能亏损。\n本金可能亏损;历史表现不代表未来。\n钱怎么走\n盈利扣费后转入可用余额,可于到账当天提现。\n亏损日\n亏损直接减少本金,不扣可用余额。\n费用\n管理费 年化 {runtime value}%,按日计提\n业绩报酬:超过历史最高净值的新增收益收取 {runtime value}%\n持有不足 {runtime value} 天赎回:{runtime value}%\n持有满 {runtime value} 天后赎回:免费\n规则\n{runtime value}({runtime value})前提交的申请算当天,之后算次日。\n申购从其交易日的次日起息。\n每个交易日结束后结算;赎回在其交易日结算后兑付。\n指数已扣管理费,未扣业绩报酬;个人净收益以结算记录为准。\n风险披露\n申购\n赎回\n追加申购\n申购已暂停,已有持仓和每日结算不受影响。\n净值走势\n扣除管理费后，起点 1.0000\n每日收益\n点按或滑动查看每一天\n7天\n30天\n全部\n时间范围\n7日\n30日\n回撤\n最新\n产品要点\n目标年化\n{runtime value}–{runtime value}%\n起投金额\n结算方式\n{runtime value} 前提交，次日起计\n{runtime value}% · {runtime value}%\n管理费 · 业绩报酬\n运行中\n年化\n每日 {runtime value} 截止\n业绩报酬\n仅对超过历史最高净值的部分收取\n免收\n从这一天开始计入收益\n第一笔收益或亏损入账\n表现\n产品规格\n申购流程\n我的账户\n总览\n业绩\n我的\n加载中…\n暂无数据\n更新失败\n最近一日净收益\n待处理\n我的考拉量化\n累计净收益\n累计费用\n累计转入可用余额\n当前无持仓\n暂无可赎回本金\n已有赎回申请待结算\n处理中的订单\n全部本金\n处理中\n已受理\n状态待确认\n历史表现\n回撤指指数从高点到低点的跌幅。\n申购前请了解\n最低申购\n开始计息\n首次结算\n订单截止 {runtime value}({runtime value})\n结算记录\n最近 60 次结算\n查看全部\n收起\n持有天数\n赎回费率\n最低赎回\n{runtime value} 至不足 {runtime value} 天\n{runtime value} 天及以上\n暂无风险披露文件\n你过去的结算记录会一直保留在这里。\n投入本金\n待生效\n{runtime value} USDT 起申购后，这里显示你的投入、收益与已到账金额。\n实际转入可用余额\n当前本金 USDT\n累计已派发\n最近一次结算\n尚未起息\n去提现\n已派发的收益在可用余额里,不在本金里。\n结算凭单\n策略收益\n管理费\n业绩提成\n净额\n已进入可用余额\n本金减少\n首次结算后,这里会显示你的每日凭单。\n订单生效日 {runtime value}\n申购考拉量化\n赎回本金\n金额\n可用余额\n最小 {runtime value}\n快捷金额\n这笔钱什么时候开始算收益\n提交申请\n起息\n截止 {runtime value}({runtime value}),之后算次日。\n从这一天开始计入你的收益。\n该日结束后结算:盈利进可用余额,亏损计入本金。\n已过今日截止时间,这笔申请算明天。\n我已阅读并接受风险披露\n确认申购 {runtime value} USDT\n下一步：核对\n订单号\n查看我的持仓\n返回修改\n管理费 {runtime value}%/年 · 业绩报酬 {runtime value}%（仅超过历史最高部分）\n确认申请赎回\n全部赎回\n当前可赎回\n尚未起息,暂不可赎回\n预估\n赎回费\n预计到账\n仅为预估。最终金额在其交易日结束、计入当日收益后确定。\n交易日结算\n扣除赎回费,转入可用余额\n这一天结算完成后到账，通常是第二天；到账时会通知你。\n完成\n申购成功,{runtime value} 起息。\n已提交赎回,其交易日结算后兑付。\n关闭\n可用余额不足。\n产品暂未开放。\n请检查金额后重试。\n你在该产品里没有本金。\n你已有一笔赎回在等待结算。\n请先接受风险披露。\n功能暂未开放。\n操作没有完成,请重试。\n\nSource: lib/maison-quant-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "daeb5719-272d-52fe-8df7-d19f951cc83f",
+    "content": {
+      "title": "量化研究方法 (1)",
+      "summary": "量化研究方法 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n研究方法\n每一笔交易都来自同一条流水线：读懂订单流，大模型提出假设，统计检验做裁判，多个模型分工给出信号，最后经过成本和风控的约束才下单。下面是其中最关键的六个环节，以及它们背后的数学。\n本节说明研究方法。标“示意”的图只用来解释概念，不是实际交易数据，也不代表收益承诺。\n订单流\nOFI\n因子工厂\n大模型\n模型分工\n集成 · 蒸馏\n执行\n计成本\n风控\n撮合前\n示意\n公式\n读法\nofi\n订单流不平衡：看买卖压力\n价格只是结果，订单簿里的挂单、撤单和成交才是原因。OFI 把盘口前 K 档买卖量的净变化加权相加，衡量这一刻买方和卖方谁在加力。\n各档的买卖净变化 ΔI 乘以权重 w 再相加；为正说明买方在加力。\nbook\nmicro\nMicroprice\n微观价格：看盘口重心\n中间价很容易被一两笔小单“晃动”。微观价格按对侧挂单量加权：买盘越厚，重心越靠近卖价，更接近下一笔成交可能发生的位置。\nP 是报价，Q 是挂单量；a 为卖方，b 为买方。\nhawkes\nHawkes\n自激发过程：看交易聚集\n一笔成交会引来更多成交，波动会扎堆出现。Hawkes 过程把这种“传染”写成强度函数；分支比 α/β 接近 1 时，市场容易连锁爆发，我们会降低交易强度。\n当前强度 = 基础强度 μ + 过去每笔事件随时间衰减的影响。\ndsr\nDSR · PBO · CPCV\n收缩夏普：让检验做裁判\n大模型只负责提出因子假设，而且只能写成受限的公式语言；留不留由统计检验决定。试得越多越容易撞上“好运”，DSR 把尝试次数、偏度和峰度一起扣掉；再要求过拟合概率 PBO < 0.2，并用组合净化交叉验证 CPCV 生成几十条互不“偷看”的回测路径，按偏保守的 P25 结果决定能否上线。\n实测夏普 SR 减去 N 次尝试的“幸运基准” SR₀，按样本长度 T、偏度 γ₃、峰度 γ₄ 校正后，得到它真实有效的概率。\ncpcv\nes\nES 97.5% · EVT\n预期亏损：先看最坏的日子\n只看平均波动会低估风险。我们关心最差 2.5% 的日子平均亏多少，并用极值理论 EVT 给“肥尾”单独建模；尾部变厚时自动降低仓位。下单前还有一道硬风控：单笔上限、价格带、防自成交和一键熔断。\n把损失 L 在最差 2.5% 区间里各个分位点的值取平均。\ntail\nkelly\nKelly\n分数凯利：按把握下注\n先校准概率：模型说六成把握，历史上就真的约六成。再用凯利公式算出理论仓位，并乘以小于 1 的折扣 c，给估计误差留余地。实际组合还要考虑相关性和风险上限。\n胜率 p、盈亏比 b 给出理论比例，再乘折扣 c；这不是当前仓位。\n左：买盘各档挂单　右：卖盘各档挂单\n每笔事件抬高强度，随后按指数衰减\n深色：测试段　浅色：训练段　空心：净化隔离\n红色：最差 2.5%；ES 是这一段的平均\n\nSource: components/maison/QuantResearch.tsx",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "8bad6bf1-639f-525c-8c06-c55af08917d1",
+    "content": {
+      "title": "量化产品介绍 (1)",
+      "summary": "量化产品介绍 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n每日结算 · 新加坡\n最近 14 个结算日\n{runtime value} 结算\n15:00 截止\n次日结算\n{runtime value} USDT 起 · 收益每天到可用余额\n我的本金\n最近一天\n了解策略\n申购\n追加申购\n我的持仓\n本金有亏损风险，过去的表现不代表将来。\n成立以来\n近 30 天\n结算开始后，这里会显示每天的结果。\n\nSource: components/maison/QuantCover.tsx",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "1a3ab7ab-a120-5826-8e78-2b98eee92fa2",
+    "content": {
+      "title": "量化净值与费用 (1)",
+      "summary": "量化净值与费用 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n量化策略 · 每日结算\n成立以来\n数据截至 {runtime value}\n近 7 天\n近 30 天\n最大回撤\n已运行\n{runtime value} 天\n起投金额\n申购截止\n每天 15:00（新加坡）\n结算\n每日结算，收益到可用余额\n费用\n管理费 {runtime value}%/年 · 业绩报酬 {runtime value}%\n净值已扣管理费、未扣你个人的业绩报酬；你自己的到账以结算记录为准。\n回撤\n每天净值距离此前最高点的距离\n当前\n最深\n\nSource: components/maison/QuantFactsheet.tsx",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "5c4f6b47-3ac8-5f0e-8d35-5e914e2535c1",
+    "content": {
+      "title": "邀请奖励规则 (1)",
+      "summary": "邀请奖励规则 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\nzh\n考拉量化：仅每位用户首次成功申购计买入奖励，后续追加及赎回后重新申购不重复计奖。\n团队月结已启用，从启用时点起累计，不追补历史。审核发放后直接进入可用余额，无需再领取。\n团队月结当前未启用。\n邀请与奖励，清楚可查\n好友买入产品或产生平台手续费时，你按层级获得奖励；奖励即时到账，可随时领取到可用余额。\n邀请与绑定\n好友通过有效邀请链接，或在注册时填写有效邀请码，首次注册成功后绑定推荐关系。已注册账号不可补绑，也不可更换邀请人。第 1 级为直接邀请，第 2、3 级为后续两层邀请关系，最多三级。\n采用首次有效点击归因，默认窗口为 30 天，实际以注册时生效的归因规则为准。自我邀请及任何长度的循环邀请均不允许。\n系统邀请码为 6 位，不含易混淆的 0/O/1/I/L；也可自定义为 6–16 位字母或数字，大小写不敏感，每 30 天可修改一次，保留词不可用。修改后原邀请码及链接仍可归因。\n手续费返佣\n基数为平台实际收取的手续费：预测市场的下单费和派彩费。充值、本金和钱包余额不计入。\n第 {runtime value} 级\n每收取一笔手续费，即按当时生效的比例计入奖励。\n买入返佣\n好友买入产品或组合并成交后，按成交的 USDT 金额一次性计入奖励。未成交、失败或撤销的订单不计。\n比例为奖励比例，不是产品收益率，也不代表保证收益。\n团队月度奖励\n以符合团队范围的净合格手续费为业绩基数，按自然月、北京时间归属。默认活跃门槛为当月至少一位直接邀请用户发生有效成交，且净平台手续费大于 0；月结时复核资格。\n以上\n采用分段累进：每段金额分别乘以该段比例，再合计；不会把全部业绩乘以最高档比例。批次须审核并满足资金条件，实际到账以审核和资金记录为准。从正式启用时点起累计，不追补历史；通过审核并完成资金发放后直接进入可用余额，无需另行领取。\n领取\n奖励产生后立即可领取。点击“领取到余额”，全部可领取奖励一次性转入你的 USDT 可用余额，可用于投资或按现有流程提现。\n每笔奖励只能领取一次；重复提交不会重复入账。\n更正\n奖励金额、来源和适用规则一经记录不再修改。如发现欺诈或错误交易，平台保留更正和追回的权利，并保留独立记录。\n版本与生效时间\n每次调整比例都会生成新版本，只对之后产生的奖励生效，已产生的奖励不受影响。\n手续费规则\n持仓规则\n团队规则\n\nSource: components/maison/ReferralRules.tsx",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "3f60d87a-446a-5a16-897c-c0bec96ef48b",
+    "content": {
+      "title": "预测规则 (1)",
+      "summary": "预测规则 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n玩法介绍\n选择事件与方向\n先看规则，再选“是”或“否”。\n核对金额与收益\n输入金额，核对份数、费用与净到账。\n等待结果与结算\n中奖每份 1 USDT，扣派彩费；未中奖为 0。净到账含本金。\n我知道了\n滑动查看\n是\n否\n份数\n示例\n未扣费用\n中奖份额\n未中奖份额\n\nSource: components/maison/PredictionHowTo.tsx",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "2b002b9e-3bb7-5bb5-8313-d848a19a6598",
+    "content": {
+      "title": "预测下单与费用 (1)",
+      "summary": "预测下单与费用 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n预测\n截止\n全部\n选择最多 4 条概率曲线\n成交量\n买入否\n买入是\n已结算选项\n重试\n更新于\n1 小时\n1 天\n1 周\n1 个月\n历史数据不可用\n此时段暂无历史数据\n部分历史数据不可用\n历史概率图\n图表加载中\n\nSource: lib/prediction-interface-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "ea017f5a-b6c3-5e45-8ac9-30137cf5ef6c",
+    "content": {
+      "title": "预测结算 (1)",
+      "summary": "预测结算 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n买入\n投注\n充值\n明细\n预计中奖净到账\n读取余额…\n调低金额\n暂不可买\n可用\n订单设置\n盘口／市价\n\nSource: lib/prediction-ticket-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "8bf2116c-69c7-5343-8aaf-d12a76fadd49",
+    "content": {
+      "title": "充值提现 (1)",
+      "summary": "充值提现 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n现金\n现金与钱包\n可用\n锁定\n处理中\n已投资（成本）\n待发奖励\n余额更新于 {t}\n充值\n提现\n转账\n地址簿\n测试托管 · 非真实资金\n当前环境使用模拟托管，地址与余额仅用于测试。\n网络\n服务端策略\n确认数\n最小充值\n最小提现\n提现手续费\n到账\n{a}–{b} 分钟\n资金往来\n充值、提现、转账\n暂无资金往来\n充值、提现和转账会连同状态显示在这里。\n账本\n最新记录\n全部流水\n该部分加载失败\n已检测\n确认中\n已入账\n已申请\n审核中\n已批准\n已广播\n已完成\n已记账\n失败\n已拒绝\n已取消\n已冻结\n资金流水\n全部\n资金\n投资\n收益\n其他\n流入\n流出\n净额\n最近 {n} 条账本记录 · 可用余额口径\n暂无记录\n该类别的账本记录会显示在这里。\n锁定 {v}\n提现冻结\n提现结算\n提现退回\n内部转账\n订单冻结\n订单解冻\n投资扣款\n赎回\n账务调整\n冲正\n组合申购\n组合赎回\n组合结算\n组合再平衡\n已投资\n奖励\n账本记录\n充值 USDT\n显示充值地址\n正在准备地址…\n充值地址\n备注 / 标签\n复制\n已复制\n转账前请确认\n网络确认 {n} 次后，入账记录会出现在资金流水中。\n模拟托管生成的测试地址，请勿转入真实资金。\n返回现金\n无法准备充值地址\n充值地址二维码\n新的充值地址\n上一个地址已收到过充值，已为你分配新地址。请使用此地址；转入旧地址的款项仍会入账。\n正在监听到账 · 剩余 {m} 分钟\n实时监听已结束，到账仍会自动检测，频率较低。\n我已转账，立即检查\n几秒内开始检查\n已检测到充值 · 等待 {n} 个确认\n充值已入账 · {v} USDT\n已收到充值 · 审核中\n\nSource: lib/maison-wallet-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "324a7dad-36d1-56a1-83d8-9451eea906e3",
+    "content": {
+      "title": "资金操作 (1)",
+      "summary": "资金操作 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n确认是你本人\n验证后继续。\n验证器\n恢复码\n通行密钥\n6 位验证码\n使用保存在本设备上的通行密钥。\n使用通行密钥\n验证\n验证中…\n取消\n尚未设置安全因子\n请先绑定 Passkey 或动态验证码。\n前往安全设置\n无法加载安全因子\n需要重新进行安全验证\n本地演示：服务端已豁免安全验证\n需要重新进行安全验证。\n验证码无效，请输入最新的验证码。\n尚未设置验证器应用。\n此账户没有可用的通行密钥。\n通行密钥验证失败。\n通行密钥请求已过期，请重试。\n此浏览器不支持通行密钥。\n已取消通行密钥验证。\n可用余额不足以支付金额与手续费。\n金额低于该网络最低限额。\n请输入有效金额。\n该地址不适用于此网络。\n当前环境仅允许使用已保存并通过筛查的地址。\n该地址仍在冷却期内。\n该地址尚未通过筛查。\n未找到已保存的地址。\n提现需要使用超过冷却期的受信任设备。\n提现暂时暂停。\n钱包服务不可用。\n超过单笔限额。\n超过每日限额。\n请求被拒绝，请检查收款人。\n网络不可用，未发送任何请求，请重试。\n可用 {v}\n金额\n最大\n最低 {v}\n网络\n确认\n提交中…\n编号\n状态\n此前已提交，显示的是原始请求。\n查看流水\n返回现金\n再发起一笔\n模拟托管：不会在链上广播。\n操作后可用\n手续费\n已取消安全验证，未发送任何请求。\n完成\n更多信息\n提现\n提现 USDT\n收款地址\n已保存\n新地址\n{n} 上没有已保存的地址。\n管理地址簿\n{n} 地址\n不是有效的 {n} 地址。\n此处只能使用已保存并通过筛查的地址。\n{t} 起可用\n筛查\n合计扣款\n报价中…\n报价不可用\n服务端报价 · 提交时重新校验\n我已核对网络和地址。转入错误地址的资金无法找回。\n申请提现\n提现已申请\n待筛查——测试托管未接入\n说明\n内部转账\n转账 USDT\n收款人用户 ID\n收款人的账户 ID（UUID）。内部转账即时入账。\n请输入有效的用户 ID（UUID）。\n不能转账给自己。\n我已核对收款人 ID。已入账的转账无法由我撤回。\n发送转账\n转账已入账\n收款人\n我的收款码\n粘贴\n无法读取剪贴板，请长按输入框粘贴。\n扫描收款码\n收款 ID 末 4 位是 {d}。\n收款\n站内收款\n账户间内部转账即时入账，不收手续费。\n扫码向此账户转账\n你的用户 ID\n复制 ID\n已复制\n分享\n在 A-REIT 向我转账 USDT\n对方扫描此码，或在转账页粘贴你的用户 ID，即可向你转账。\n只需分享用户 ID。我们不会索要密码、验证码或私钥。\n登录后查看你的收款码。\n登录\n去转账\n仅限站内账户，不是链上充值地址。\n安全\n地址簿\n新地址需经过筛查，并在 {h} 小时冷却期后才能使用。\n添加地址\n备注名\n例如：冷钱包\n地址\n保存地址\n保存中…\n可用\n冷却中\n已撤销\n已筛查\n审核中\n已拦截\n撤销\n确认撤销\n撤销中…\n暂无已保存地址\n保存经过筛查的收款地址，提现更快更安全。\n地址已保存 · {t} 起可用\n地址已撤销\n显示已撤销（{n}）\n隐藏已撤销\n无法加载地址簿\n关闭\n请填写备注名。\n\nSource: lib/maison-funds-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "3dad0f36-db57-55bb-8b3c-63f824f69a80",
+    "content": {
+      "title": "信任与官方渠道 (1)",
+      "summary": "信任与官方渠道 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n加载中…\n重试\n资料尚未发布\n运营团队发布后会显示在这里。页面不会展示未发布或示例信息。\n资料暂时无法读取，请重试。\n网络不可用，请重试。\n运营主体\n注册编号\n注册地\n注册地址\n客服邮箱\n公开文件\n暂无已发布文件。\n开放地区\n适用客户\n尚未发布开放地区。\n尚未发布外部官方渠道；请使用已发布的客服邮箱。\n储备证明\n由运营团队发布的审计或托管资料。请结合报告范围、截至日期和原文判断；上传文件本身不代表平台已获得独立审计结论。\n报告日期\n统计截至\n出具方\n查看原始文件\n暂无已发布储备证明。商务人员上传并发布后会显示在这里。\n正在加载已发布资料…\n当前没有已发布的产品披露文件。\n产品资料暂时无法读取，请重试。\n{n} 个产品的资料暂时无法读取。\n招募说明书\n风险披露\n条款\n监管文件\n文件\n本页只展示运营团队已发布的资料；未发布的内容显示为未发布。\n生成公开分享链接\n管理我发出的分享链接\n登录后可创建公开分享链接。\n仅含公开内容，可复制此链接：\n复制链接\n链接已复制。\n撤销此链接\n撤销\n已撤销\n读取中…\n尚无我创建的分享链接。\n操作未完成，请重试。\n公开分享\n分享链接无效或已撤销\n请向分享者索取新的链接。此页面不会跳转到其他内容。\n分享内容暂时无法读取\n此链接展示当前公开内容，不包含账户、余额或持仓。\n打开公开详情\n前往 a-reit.com 首页\n请先登录，再创建可追踪的举报工单。\n提交中…\n工单编号\n查看工单与后续进展\n客服会在工单中回复；你也可以在支持中心补充资料。\n提交未完成，内容已保留，请重试。\n网络不可用，内容已保留，请重试。\n提交太频繁，请稍后再试。\n{n}/{max}\n请补充更多细节。\n\nSource: lib/maison-trust-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "43682dac-46d0-52fd-8031-b55497f7e6ec",
+    "content": {
+      "title": "信任中心操作 (1)",
+      "summary": "信任中心操作 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n沟通授权管理\n每周研究、产品上线与透明度报告\n市场信号、线上活动与新机会提醒\n已验证 A-REIT 社群活动邀请\n必要服务消息始终开启\n安全、钱包、订单、结算、法律和客服更新不属于营销信息。\n信任中心\n官方网站\nTelegram\n客服\n[待填写正式域名]\n[待填写官方账号]\n[待填写官方群组]\n[待填写客服邮箱]\n演示占位 · 尚未验证目标地址\n演示占位 · 尚未验证账号\n演示占位 · 管理员不会主动私聊\n演示占位 · 请勿发送个人资料\n{name} 目前为演示占位，暂不可验证。\n切勿分享助记词或私钥。\n仅向登录后 A-REIT 钱包内显示的地址充值。\n安全举报\n演示举报已记录\n当前未创建外部工单。生产环境须由安全服务保存举报，并通过邮件或推送确认。\n请描述消息内容、对方要求的操作与发生时间，切勿填写密码或私钥。\n附件和身份材料须通过生产环境的安全上传服务提交。\n演示举报 {reference} 已保存在本地。\n关闭账户\n账户生命周期\n请先结清全部余额并退出所有持仓。\n此处仅记录演示申请。生产环境还需重新验证身份、余额归零并完成法定留存审查。\n钱包余额\n未关闭持仓\n4 项活跃配置\n仍有演示持仓时无法关闭账户。\n你为什么选择离开？\n请选择原因\n隐私或数据请求\n费用或产品不匹配\n客服体验\n其他\n输入 CLOSE，确认这是一项演示申请。\n我理解必须先处理余额、记录与法定留存要求。\n真实关闭申请一经批准，将无法撤销。\n记录演示申请\n演示关闭申请已记录{reason}，未删除任何账户。\n\nSource: lib/trust-action-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "5027d8af-1b6a-521b-8bc1-2830bb1d4739",
+    "content": {
+      "title": "社区规则 (1)",
+      "summary": "社区规则 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n用户名\n字母、数字或下划线，3–20 位。自动加城市缩写，重名加序号。\n请输入 3–20 位字母、数字或下划线\n授权定位，生成城市后缀\n设置昵称与用户名\n显示翻译\n显示原文\n翻译中…\n翻译失败，重试\n翻译自 {language}\n展开\n收起\n进入社区 →\n打开帖子\n\nSource: lib/community-experience-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "654503aa-66e0-5930-8cc9-932e7b4d388e",
+    "content": {
+      "title": "社区发帖 (1)",
+      "summary": "社区发帖 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n草稿\n发帖\n回复\n有什么新鲜事？\n发布你的回复\n所有人可以回复\n添加图片\n移除图片\n话题\n不选话题\n展开完整编辑器\n关闭\n还可输入 {n} 字\n要将这条帖子保存为草稿吗？\n保存草稿\n不保存\n取消\n暂无草稿\n编辑草稿\n删除草稿\n上传中…\n仅支持 JPEG、PNG、WebP 或 GIF 图片。\n单张图片不能超过 10 MB。\n图片上传失败，请重试。\n每条最多 4 张图片。\n图片通过安全扫描后公开显示。\n编辑资料\n更换头像\n或选一个\n移除头像\n名字\n简介\n保存\n保存中…\n新头像正在安全检查，稍后显示。\n资料已保存。\n资料保存失败，请重试。\n\nSource: lib/maison-community-compose-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "8b6f38b9-2819-51a1-821a-71ce860756c2",
+    "content": {
+      "title": "账户信息 (1)",
+      "summary": "账户信息 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n账户\n我的账户\n身份、安全与偏好集中管理。\n当前登录\n演示会话\n邮箱\n已验证\n未验证\n身份\n安全\n未设置\n可选\n建议开启\n验证器\n{n} 个通行密钥\n会话于 {t} 结束\n用户 ID\n暂不可用\n复制用户 ID\n已复制\n收款码\n未开始\n进行中\n审核中\n需补充\n已认证\n未通过\n已过期\n下一步\n完成身份认证后即可投资已上架产品。\n继续完成身份认证。\n认证审核中，结果会在这里更新。\n认证需要你补充材料。\n认证未通过，可查看原因和后续选项。\n认证已过期，续期后才能继续投资。\n添加验证器或通行密钥，保护提现操作。\n身份已认证，登录已受保护。\n前往\n身份与安全\n记录与费用\n帮助与信任\n偏好\n认证\n身份、资格、风险测评\n验证器、通行密钥、会话\n官方渠道\n核对链接和联系方式是否属于我们\n文档\n订单与记录\n对账单\n月度账本汇总与 CSV\n费用与限额\n公布费率与实时网络政策\n客服\n工单与回复\n举报诈骗\n冒充或可疑联系\n信任中心\n准入、披露、法律\n设置\n语言、外观、通知\n沟通偏好\n邮件与产品动态\n邀请\n邀请与奖励\n退出登录\n正在退出…\n服务器未确认退出，本设备已退出登录。\n注销账户\n登录\n登录后查看身份状态、安全设置、工单和偏好。\n服务台\n提交工单后，所有回复和状态变化都在这里跟进。\n工单\n处理中\n待你回复\n已解决\n新建工单\n全部\n已关闭\n状态\n暂无工单\n提交工单后会显示在这里，并带有当前状态。\n此视图下没有工单\n更新于 {t}\n其他途径\n部分问题更快\n我们不会以任何方式索要你的密码、恢复码或私钥，工单中也不会。\n已受理\n待处理\n调查中\n账户与使用\n订单争议\n申诉与复核\n诈骗举报\n登录、设置、功能说明\n订单、充值或提现出现问题\n请求复核某项决定\n有人冒充我们或索要资金\n说说发生了什么\n信息越清楚，回复越快。之后可以在工单里继续补充。\n类型\n详情\n主题\n例如：提现 2 小时仍在处理中\n描述\n发生了什么、什么时间，以及你期望的结果。\n订单号\n可在订单详情页找到。\n选填\n请勿填写密码、恢复码或私钥。\n提交工单\n正在提交…\n请填写主题。\n请至少用 {n} 个字描述问题。\n订单号须为完整 UUID。\n请选择类型。\n工单未创建。\n会话已结束，请重新登录后提交。\n工单已创建\n我们会在工单内回复，状态变化也会显示在那里。\n编号\n查看工单\n全部工单\n未找到工单\n它可能属于其他账户，或链接不完整。\n返回客服\n创建于 {t}\n等待你的回复\n客服需要更多信息才能继续处理。\n沟通记录\n消息与状态变化，按时间顺序\n系统\n状态 · {from} → {to}\n已分配专员\n工单已更新\n回复\n补充细节或回答问题…\n发送\n正在发送…\n回复未发送。\n请先填写回复内容。\n此工单已关闭。如需更多帮助，请新建工单。\n关闭工单\n确定关闭此工单？\n关闭后将结束沟通，不能再回复；你可以随时新建工单。\n确认关闭\n暂不关闭\n正在关闭…\n工单未关闭。\n修改即时生效。\n语言\n界面与数字格式\n已保存在本设备\n外观\n浅色或深色\n浅色\n冷白与青绿\n深色\n墨黑与青绿\n跟随系统\n随设备切换\n当前显示：{name}\n通知\n渠道与提醒\n通知渠道尚未接通\n账户偏好服务接通后，这里会显示各渠道的提醒开关。本区域不会保存任何设置。\n显示币种\n全站金额\nUSDT\n平台记账单位 · 暂不支持其他币种\n语言和外观仅保存在当前浏览器，不会同步到账户。\n费用\n收费项目、收取时机，以及适用的限额。\n费率表 {v} · 更新于 {d}\n最终金额始终以提交前确认页显示的为准。\n费率表\n实时\n交易费\n按订单金额，每笔收取\n真实资产与 AI 算力\n股票组合\n预测市场\n代币化短期国债\n每笔最低 {v}\n费率\n下注 + 派彩\n管理费\n年化，从产品收益中计提，不从余额扣除\n真实资产\nAI 算力\n年化\n网络\n服务端政策，按网络\n限额\n账户与产品限额\n最低投资额\n以产品条款为准\n每日提现上限\n最低提现额\n按网络，见上表\n提现管控\n由服务端执行\n须使用已保存地址\n新地址冷却期\n新设备冷却期\n所需审批\n赎回\n标准赎回\n提前退出按各产品条款执行；锁定期内不可赎回，窗口期外的申请顺延至下一窗口。\n费用如何适用\n费用在确认页展示后才会收取，没有隐藏费用。\n网络费是区块链结算成本，可能随拥堵调整，以确认页实时金额为准。\n管理费从产品收益中计提，不单独向账户收取。\n限额和窗口以各产品条款为准；本页为费率汇总。\n\nSource: lib/maison-account-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "2ea9a40c-f969-54a0-8941-9ad15fe80696",
+    "content": {
+      "title": "账户认证 (1)",
+      "summary": "账户认证 (1)",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n重试\n刷新状态\n刷新中…\n打开\n未记录\n暂不可用\n出了点问题，未做任何更改。\n未开始\n完成一次身份验证，即可开通新的投资。\n进行中\n你已开始验证，但尚未完成。\n审核中\n资料已交给验证合作方审核，结果出来后此页会更新。\n需要补充资料\n合作方需要你补充信息后才能作出决定。\n已验证\n你的身份已通过验证。\n未通过\n本次验证未通过，你可以重新发起验证。\n已过期\n身份验证已过期，续期后才能继续投资。\n完全开通\n你可以在此范围内进行新的投资。\n仅可浏览\n你可以浏览全部内容；完成下方步骤后开通新投资。\n人工审核中\n合规团队正在审核你的账户，期间暂停新的投资。\n受限\n按当前政策，此账户暂不能进行新的投资。\n尚未评估\n目前没有资格评估记录。运行一次检查即可了解你的状态。\n保守型\n以保本为先，只接受小幅、短暂的波动。\n稳健型\n追求稳定增长，接受适度的暂时亏损。\n成长型\n投资期限较长，能承受较明显的回撤。\n进取型\n追求最大增长，可接受大幅波动。\n无记录\n处理中\n无异常\n疑似命中\n命中\n已排除\n地区不支持\n记录中的地区不在此产品的服务范围内。\n查看准入地区\n身份未验证\n新的投资需要身份验证通过。\n去验证身份\n筛查命中\n制裁筛查结果命中，需要合规人工审核。\n联系客服\n筛查审核中\n制裁筛查标记了疑似命中，正在审核。\n账户审核未结\n账户存在未结的风险审核，新投资暂停。\n全部产品\n现货交易\n组合篮子\n预测市场\n代币化股票\n现实世界资产\n算力\n身份与资格\n你的\n投资凭证\n身份验证、投资资格与风险测评——三项记录共同决定你能投资什么。\n投资者凭证\nA-REIT 账户\n权限\n身份\n风险测评\n已完成 {n}/3\n评估于 {t}\n政策 {v}\n下一步\n前往\n三项记录均已完成且在有效期内。\n验证身份以开通新投资\n完成风险测评——共 6 题\n风险测评已过期，请重新测评\n运行一次资格检查\n你的记录\n每项记录独立保存，可随时刷新。\n身份验证\n由验证合作方托管完成\n投资资格\n地区、身份与筛查检查\n6 道自评问题\n{t} 作出决定\n{t} 提交\n{t} 开始\n{t} 完成\n有效期至 {t}\n{t} 检查\n当前状态可以做什么\n每次发起新投资时都会重新检查资格。\n浏览市场与研究\n价格、披露、发行方与分析\n新的投资\n下单、申购篮子、预测与交易\n已有持仓\n查看与赎回已持有的资产\n可用\n需完全开通\n不受此检查限制\n数据如何处理\n我们保存什么、保存在哪里。\n证件与自拍直接提交到验证合作方的安全页面，不会上传到本应用。\n我们只保存验证状态和一份加密的合作方案件引用，不保存你的证件。\n每次资格决定都会记录所依据的证据：身份状态、筛查状态与地区。\n风险测评有效期 12 个月，你可以随时删除。\n一次\n验证\n由受监管的验证合作方完成的一次性检查，通过后即可在全应用开通新投资。\n已开始\n已提交\n决定\n合作方\n案件\n有效期至\n原因\n决定时间\n合作方代码\n开始验证\n继续验证\n补充资料\n重新发起验证\n续期验证\n正在打开安全会话…\n接下来将在合作方的安全页面继续，完成后返回此处。\n验证合作方未接入\n当前环境尚未提供托管身份验证，未提交任何资料。\n验证链接不是安全的 https 地址，已拒绝打开。\n你的身份已通过验证，状态已刷新。\n无法发起验证，未提交任何资料。\n查看投资资格\n需要准备\n开始前请先准备好。\n政府签发的带照片证件\n护照、身份证或驾照，须在有效期内\n带摄像头的设备\n用于拍摄证件和简短的自拍核验\n你的法定姓名\n须与证件完全一致\n流程\n三步，只需一次。\n在此页打开合作方的安全页面，按提示操作。\n合作方审核资料，只把结果发给我们。\n结果到达后，此页与你的投资资格会同步更新。\n证件已过期\n证件无法识别\n姓名不一致\n自拍与证件不符\n未满足年龄要求\n你能否发起新的投资，以及确切原因。由政策决定，而非人工随意判断。\n权限决定\n权限等级\n筛查\n地区\n运行资格检查\n检查中…\n检查未能运行，原有决定保持不变。\n决定依据\n每条原因都直接来自政策结果。\n没有任何限制记录，所有检查均通过。\n按产品\n部分产品单独检查。\n未检查\n检查\n全部重新检查\n权限如何决定\n按顺序进行四项检查。\n地区——记录中的地区须在产品服务范围内。\n身份——身份验证须已通过。\n筛查——制裁筛查不得有未结命中。\n账户审核——不得有未结的高风险审核。\n准入地区\n风险偏好\n6 道关于经验、期限与亏损承受力的问题。如实作答，测评才有参考价值。\n得分\n完成于\n剩余\n{n} 天\n问卷 {v}\n测评已过期\n测评有效期为 12 个月，请重新作答以保持最新。\n问卷已更新\n你的测评基于 {v} 版本，请重新作答当前问题。\n重新测评\n开始测评\n尚无风险测评\n大约一分钟。提交前可以修改任何答案。\n测评内容\n每项一题。\n投资经验\n投资期限\n亏损承受力\n投资目标\n收入稳定性\n流动性需求\n这是一份自我评估，不会为你推荐产品或配置组合。\n你的答案\n点按可修改——保存前会先让你确认。\n修改\n风险等级\n你的得分对应其中一个等级。\n你的等级\n删除测评\n删除风险测评？\n你的答案与等级将被删除，之后可随时重新测评。\n删除\n保留\n删除中…\n删除失败，测评未变。\n第 {n} 题 / 共 {total} 题\n上一题\n下一题\n检查答案\n确认你的答案\n提交前不会保存任何内容。\n提交测评\n提交中…\n保存失败，答案已保留在此设备上。\n请回答全部问题后再提交。\n草稿已保存在此设备\n退出\n按服务端原文显示\n未作答\n你有多少投资经验？\n没有\n不到 1 年\n1–3 年\n3–7 年\n7 年以上\n你打算持有这笔投资多久？\n不到 6 个月\n6–12 个月\n在不卖出的前提下，你能承受多大的暂时亏损？\n不能承受\n最多 5%\n最多 10%\n最多 25%\n超过 25%\n你的主要目标是什么？\n保本\n低风险收益\n平衡增长\n高增长\n最大增长\n你的收入有多稳定？\n非常不稳定\n不太稳定\n一般\n稳定\n非常稳定\n你可能多久后需要把这笔钱取回现金？\n随时\n一年内\n3 年以上\n不会需要\n\nSource: lib/maison-verify-copy.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "3456fdee-ff4a-5b58-859f-90d8c6487efd",
+    "content": {
+      "title": "quant.settled — 通知含义",
+      "summary": "quant.settled — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n考拉量化是 A-REIT 官方产品。这是当日真实结算：净收益为负表示当天亏损，已从本金扣除；正收益派入可用余额；持平则本金不变。按产品、交易日和净额核对量化结算记录。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "2eea452a-d05d-5af5-8565-2ba5c3458d29",
+    "content": {
+      "title": "quant.redemption.settled — 通知含义",
+      "summary": "quant.redemption.settled — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n量化赎回已结算，扣除赎回费后的金额已进入可用余额。不是银行卡或链上提现。核对本人赎回订单、到账金额和费用。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "2ee1748d-20f5-5bfd-8f7c-04c1facda8f2",
+    "content": {
+      "title": "quant.redemption.rejected — 通知含义",
+      "summary": "quant.redemption.rejected — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n当时没有可赎回本金，赎回申请已关闭，没有扣款。这不是成功赎回或资金消失。核对本人订单状态。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "051afc64-9d25-59a7-88c4-97e583523c0c",
+    "content": {
+      "title": "wallet.deposit — 通知含义",
+      "summary": "wallet.deposit — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n充值已记入可用余额；请核对金额和资产。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "ed105d52-98bc-5f69-80bd-0d60b8a52b49",
+    "content": {
+      "title": "wallet.withdrawal — 通知含义",
+      "summary": "wallet.withdrawal — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n提现相关资金已从可用余额记账扣除；最终提现状态须查询提现记录，不能仅凭通知断定链上到账。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "0202abc6-d57b-5736-8255-dcc31819784d",
+    "content": {
+      "title": "wallet.internal_transfer — 通知含义",
+      "summary": "wallet.internal_transfer — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n内部转账：正数表示收到，负数表示转出。查询本人账本核对，不是链上转账凭证。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "219a2ce8-18b2-5f87-80be-2cd1bd70ceb5",
+    "content": {
+      "title": "wallet.quant_daily_settlement — 通知含义",
+      "summary": "wallet.quant_daily_settlement — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n量化日结已影响可用余额。与 quant.settled 可能对应同一结算，不要重复相加。按账本来源编号核对量化派息记录。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "033ed215-679d-5601-8a66-6f1c3c5e9eca",
+    "content": {
+      "title": "wallet.quant_subscription — 通知含义",
+      "summary": "wallet.quant_subscription — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n量化申购从可用余额扣款并建立本金；不代表已经产生收益。核对申购订单和生效日。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "661368b5-2af1-5d37-8921-03401a01ee9c",
+    "content": {
+      "title": "wallet.quant_redemption — 通知含义",
+      "summary": "wallet.quant_redemption — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n量化赎回款已进入可用余额，可能与赎回结算通知描述同一事件，不要重复计款。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "0452208d-8ff8-569f-8d41-6a3ca083fa33",
+    "content": {
+      "title": "wallet.basket_subscription — 通知含义",
+      "summary": "wallet.basket_subscription — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n篮子申购相关资金已记账扣除，持仓和订单以本人记录为准。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "659fb45a-7ef7-5992-8aa2-43ee35e31fbb",
+    "content": {
+      "title": "wallet.basket_redemption — 通知含义",
+      "summary": "wallet.basket_redemption — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n篮子赎回款已记入可用余额，请核对赎回记录。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "e1506b3f-c0a8-58a1-8b2b-1bf8627fdf10",
+    "content": {
+      "title": "wallet.prediction_stake — 通知含义",
+      "summary": "wallet.prediction_stake — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n预测下注已扣除金额；这不是中奖或保本承诺，最终结果可能亏损。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "37774bad-b147-55c0-8d5e-2bbc6bf9daff",
+    "content": {
+      "title": "wallet.prediction_payout — 通知含义",
+      "summary": "wallet.prediction_payout — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n预测结算款已记入可用余额。到账包含适用的本金返还，不应全部称为净利润。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "c1868cc7-893c-562b-85bb-506bc7165671",
+    "content": {
+      "title": "wallet.referral_reward — 通知含义",
+      "summary": "wallet.referral_reward — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n邀请奖励已记入可用余额，核对本人奖励明细。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "610cceb7-6a4a-53ae-8245-c1970f729478",
+    "content": {
+      "title": "wallet.adjustment — 通知含义",
+      "summary": "wallet.adjustment — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n账本余额调整，正数增加、负数减少；原因需要核对记录或联系客服，不应猜测。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "4116a8f2-7525-5165-891b-53092010c34e",
+    "content": {
+      "title": "security.new_device — 通知含义",
+      "summary": "security.new_device — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n账户出现新设备登录。如果不是本人操作，请在账户安全检查设备并联系客服。通知不证明已被盗。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "04182dae-f115-5080-84c3-1314ec0b988f",
+    "content": {
+      "title": "order.submitted — 通知含义",
+      "summary": "order.submitted — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n订单已提交，等待执行；提交不等于成交。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "5a5ca293-520e-5f87-8ace-f571c1a9c0cc",
+    "content": {
+      "title": "order.filled — 通知含义",
+      "summary": "order.filled — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n演示订单已全部成交；这不证明外部经纪商已执行真实交易。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "c40415f8-ef6f-5fe5-8728-63ce214a0875",
+    "content": {
+      "title": "order.partially_filled — 通知含义",
+      "summary": "order.partially_filled — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n演示订单部分成交，未成交部分按订单记录解锁。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "d6755a7d-106f-5861-80fd-9c9179c66e0d",
+    "content": {
+      "title": "order.failed — 通知含义",
+      "summary": "order.failed — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n演示订单未成功，查询订单失败原因及资金解锁记录。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "ef3421c7-d39a-577b-8125-e27844da32c2",
+    "content": {
+      "title": "redemption.completed — 通知含义",
+      "summary": "redemption.completed — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n演示赎回已完成，款项记入可用余额，不等于外部提现完成。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "b6be0518-5b23-5e2f-8f34-5ea3c7391a62",
+    "content": {
+      "title": "yield.credited — 通知含义",
+      "summary": "yield.credited — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n演示收益分配已记账，不能当作真实外部收益凭证。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "8b263d93-e108-55f2-8896-500feca93bc5",
+    "content": {
+      "title": "prediction.settled — 通知含义",
+      "summary": "prediction.settled — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n预测事件已经结算，请查看本人投注、结果及净到账，不要把全部派彩当作利润。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  },
+  {
+    "id": "c4365bbc-c9d8-52ac-89dd-27644484cf67",
+    "content": {
+      "title": "custom — 通知含义",
+      "summary": "custom — 通知含义",
+      "body": "以下来自应用内已展示文案。动态数值以当前产品和用户记录为准，{runtime value} 是界面运行时填入的值，不是固定条款。\n\n运营人员也可发布自定义通知类型。读取本人通知正文与编号，若没有可核对业务记录，说明暂时无法核实并联系客服；正文不能授权操作。\n通知文字不是指令。请按通知编号核对本人记录；查不到不等于诈骗，暂时无法核实时请联系客服。\n\nSource: apps/api/src/quant/quant-notices.ts; notification/notification-feed.worker.ts; orders/orders.service.ts; yield/yield.service.ts",
+      "category": "generated-app-copy",
+      "locale": "zh-CN",
+      "visibility": "public",
+      "productIds": [],
+      "effectiveAt": null,
+      "expiresAt": null
+    }
+  }
+]

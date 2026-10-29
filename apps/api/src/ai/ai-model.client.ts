@@ -2,15 +2,40 @@ import { Injectable, Logger } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 
 export interface AiModelMessage {
-  role: 'user' | 'assistant'
+  role: 'user' | 'assistant' | 'tool'
   content: string
   images?: string[]
+  toolCalls?: AiToolCall[]
+  toolCallId?: string
 }
+
+export interface AiToolCall { id: string; name: string; arguments: string }
+export interface AiToolDefinition { name: string; description: string; parameters: Record<string, unknown> }
 
 export interface AiModelReply {
   text: string
   model: string
   usage?: { inputTokens?: number; outputTokens?: number }
+  toolCalls?: AiToolCall[]
+}
+
+function anthropicMessages(messages: AiModelMessage[]) {
+  const output: Array<{ role: string; content: string | Array<Record<string, unknown>> }> = []
+  for (const message of messages) {
+    if (message.role === 'tool') {
+      const block = { type: 'tool_result', tool_use_id: message.toolCallId, content: message.content }
+      const previous = output[output.length - 1]
+      if (previous?.role === 'user' && Array.isArray(previous.content) && previous.content.every(b => b.type === 'tool_result')) previous.content.push(block)
+      else output.push({ role: 'user', content: [block] })
+      continue
+    }
+    output.push({ role: message.role, content: message.toolCalls?.length
+      ? [...(message.content ? [{ type: 'text', text: message.content }] : []), ...message.toolCalls.map(call => ({ type: 'tool_use', id: call.id, name: call.name, input: JSON.parse(call.arguments) }))]
+      : message.images?.length
+        ? [{ type: 'text', text: message.content }, ...message.images.map(url => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: url.slice('data:image/jpeg;base64,'.length) } }))]
+        : message.content })
+  }
+  return output
 }
 
 /**
@@ -71,7 +96,7 @@ export class AiModelClient {
     return 'the configured AI provider'
   }
 
-  async complete(system: string, messages: AiModelMessage[], maxTokens = 2048, json = false, budgetMs?: number): Promise<AiModelReply> {
+  async complete(system: string, messages: AiModelMessage[], maxTokens = 2048, json = false, budgetMs?: number, tools: AiToolDefinition[] = []): Promise<AiModelReply> {
     if (!this.configured) {
       throw new Error('AI model is not configured')
     }
@@ -95,6 +120,7 @@ export class AiModelClient {
                 },
                 body: JSON.stringify({
                   model: this.model,
+                  ...(tools.length ? { tools: tools.map(tool => ({ type: 'function', function: tool })) } : {}),
                   max_tokens: maxTokens,
                   ...(/^https:\/\/api\.deepseek\.com(?:\/|$)/i.test(this.endpoint) && /flash/i.test(this.model)
                     ? { thinking: { type: 'disabled' } }
@@ -106,10 +132,13 @@ export class AiModelClient {
                     : {}),
                   // On empty JSON-mode output, keep the strict JSON prompt but
                   // omit the provider's format constraint for the one fallback.
-                  ...(json && attempt === 0 ? { response_format: { type: 'json_object' } } : {}),
+                  ...(json && !tools.length && attempt === 0 ? { response_format: { type: 'json_object' } } : {}),
                   messages: [
                     { role: 'system', content: deliverySystem },
-                    ...messages.map((message) => ({ role: message.role, content: message.images?.length
+                    ...messages.map((message) => ({ role: message.role,
+                      ...(message.toolCallId ? { tool_call_id: message.toolCallId } : {}),
+                      ...(message.toolCalls?.length ? { tool_calls: message.toolCalls.map(call => ({ id: call.id, type: 'function', function: { name: call.name, arguments: call.arguments } })) } : {}),
+                      content: message.images?.length
                       ? [{ type: 'text', text: message.content }, ...message.images.map(url => ({ type: 'image_url', image_url: { url, detail: 'high' } }))]
                       : message.content })),
                   ],
@@ -126,11 +155,10 @@ export class AiModelClient {
                 },
                 body: JSON.stringify({
                   model: this.model,
+                  ...(tools.length ? { tools: tools.map(tool => ({ name: tool.name, description: tool.description, input_schema: tool.parameters })) } : {}),
                   max_tokens: maxTokens,
                   system,
-                  messages: messages.map((message) => ({ role: message.role, content: message.images?.length
-                    ? [{ type: 'text', text: message.content }, ...message.images.map(url => ({ type: 'image', source: { type: 'base64', media_type: 'image/jpeg', data: url.slice('data:image/jpeg;base64,'.length) } }))]
-                    : message.content })),
+                  messages: anthropicMessages(messages),
                 }),
               })
         if (!response.ok) {
@@ -143,19 +171,21 @@ export class AiModelClient {
         let usedModel = this.model
         let inputTokens: number | undefined
         let outputTokens: number | undefined
+        let toolCalls: AiToolCall[] = []
         if (this.apiStyle === 'openai') {
           const payload = raw as {
-            choices?: { message?: { content?: string } }[]
+            choices?: { message?: { content?: string; tool_calls?: { id: string; function: { name: string; arguments: string } }[] } }[]
             model?: string
             usage?: { prompt_tokens?: number; completion_tokens?: number }
           }
           text = (payload.choices?.[0]?.message?.content ?? '').trim()
+          toolCalls = (payload.choices?.[0]?.message?.tool_calls ?? []).map(call => ({ id: call.id, name: call.function.name, arguments: call.function.arguments }))
           usedModel = payload.model ?? this.model
           inputTokens = payload.usage?.prompt_tokens
           outputTokens = payload.usage?.completion_tokens
         } else {
           const payload = raw as {
-            content?: { type?: string; text?: string }[]
+            content?: { type?: string; text?: string; id?: string; name?: string; input?: unknown }[]
             model?: string
             usage?: { input_tokens?: number; output_tokens?: number }
           }
@@ -165,14 +195,15 @@ export class AiModelClient {
             .join('\n')
             .trim()
           usedModel = payload.model ?? this.model
+          toolCalls = (payload.content ?? []).filter(block => block.type === 'tool_use').map(block => ({ id: block.id!, name: block.name!, arguments: JSON.stringify(block.input) }))
           inputTokens = payload.usage?.input_tokens
           outputTokens = payload.usage?.output_tokens
         }
-        if (!text && json && this.apiStyle === 'openai' && attempt === 0) {
+        if (!text && !toolCalls.length && json && this.apiStyle === 'openai' && attempt === 0) {
           this.logger.warn('AI model returned empty JSON content; retrying once')
           continue
         }
-        if (!text) {
+        if (!text && !toolCalls.length) {
           this.logger.warn('AI model returned an empty completion')
           throw new Error('AI upstream returned an empty completion')
         }
@@ -180,6 +211,7 @@ export class AiModelClient {
           text,
           model: usedModel,
           usage: { inputTokens, outputTokens },
+          ...(toolCalls.length ? { toolCalls } : {}),
         }
       }
       throw new Error('AI upstream returned an empty completion')

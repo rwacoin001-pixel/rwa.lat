@@ -9,6 +9,9 @@ import { AiPlatformKnowledgeService } from './ai-platform-knowledge.service'
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 const liveFields = `id,published,published_revision AS "publishedRevision",published_at AS "publishedAt",archived_at AS "archivedAt"`
 export const SUPPORT_POLICY_ID = '9e9e8a8a-dcfa-4b2f-8f68-6b308af9a101'
+// Stable service actor for the explicit knowledge-as-code seeder, not a login identity.
+export const GENERATED_KNOWLEDGE_ACTOR = '13fa5310-cc19-59a4-83d5-1d59f80a286c'
+export const GENERATED_KNOWLEDGE_CATEGORY = 'generated-app-copy'
 
 @Injectable()
 export class AiKnowledgeService {
@@ -37,6 +40,60 @@ export class AiKnowledgeService {
       COUNT(*) FILTER(WHERE helpful=true)::int AS helpful,COUNT(*) FILTER(WHERE helpful=false)::int AS unhelpful
       FROM app.ai_chat_messages WHERE role='assistant' AND created_at>=now()-interval '30 days'
       GROUP BY (created_at AT TIME ZONE 'UTC')::date ORDER BY day DESC`)
+  }
+  async negativeFeedback(adminId: string) {
+    return this.ds.transaction(async tx => {
+      const rows = await tx.query(`SELECT m.id,m.content AS answer,m.created_at AS "createdAt"
+        FROM app.ai_chat_messages m JOIN app.ai_chat_sessions s ON s.id=m.session_id
+        WHERE m.role='assistant' AND m.helpful=false AND s.deleted_at IS NULL
+        ORDER BY m.created_at DESC,m.id LIMIT 100`)
+      await this.audit(tx, adminId, 'ai.feedback.reviewed', null, { rowCount: rows.length })
+      return rows.map((row: any) => {
+        try {
+          const card = JSON.parse(row.answer)
+          if (card.cardVersion === 1 && typeof card.reply === 'string') return { ...row, answer: card.reply }
+        } catch { /* Legacy replies are plain text. */ }
+        return row
+      })
+    })
+  }
+
+  /** Explicit operator seed only. One transaction: immutable versions, audit, and stale generated-item archival. */
+  async syncGenerated(articles: Array<{ id: string; content: Record<string, any> }>) {
+    if (!articles.length || articles.length > 500 || new Set(articles.map(a => a.id)).size !== articles.length) throw new BadRequestException('Invalid generated manifest')
+    const normalized = articles.map(article => {
+      if (!UUID.test(article.id) || article.content.category !== GENERATED_KNOWLEDGE_CATEGORY || article.content.visibility !== 'public') throw new BadRequestException('Invalid generated article')
+      return { id: article.id, content: normalizeContent(article.content) }
+    })
+    return this.ds.transaction(async tx => {
+      await tx.query(`SELECT pg_advisory_xact_lock(hashtext('ai-generated-knowledge'))`)
+      const existing = await tx.query(`SELECT id,revision,draft,published,archived_at AS "archivedAt" FROM app.ai_knowledge_items
+        WHERE draft->>'category'=$1 OR id=ANY($2::uuid[]) FOR UPDATE`, [GENERATED_KNOWLEDGE_CATEGORY, normalized.map(a => a.id)])
+      let published = 0, archived = 0
+      for (const { id, content } of normalized) {
+        const previous = existing.find((row: any) => row.id === id)
+        if (previous && previous.draft.category !== GENERATED_KNOWLEDGE_CATEGORY) throw new ConflictException('Generated id belongs to a manual article')
+        const same = (value: any) => value && Object.keys(content).every(key => JSON.stringify(value[key]) === JSON.stringify(content[key as keyof typeof content]))
+        if (previous && same(previous.draft) && same(previous.published) && !previous.archivedAt) continue
+        const revision = previous ? previous.revision + (same(previous.draft) ? 0 : 1) : 1
+        await tx.query(`INSERT INTO app.ai_knowledge_items(id,locale,draft,revision,updated_by) VALUES ($1,$2,$3::jsonb,$4,$5)
+          ON CONFLICT(id) DO UPDATE SET draft=EXCLUDED.draft,revision=EXCLUDED.revision,updated_by=EXCLUDED.updated_by,updated_at=now()`, [id, content.locale, JSON.stringify(content), revision, GENERATED_KNOWLEDGE_ACTOR])
+        await this.audit(tx, GENERATED_KNOWLEDGE_ACTOR, 'ai.knowledge.saved', id, { revision, generator: 'app-copy-v1' }, 'service')
+        await tx.query(`INSERT INTO app.ai_knowledge_versions(item_id,revision,content,published_by) VALUES ($1,$2,$3::jsonb,$4) ON CONFLICT(item_id,revision) DO NOTHING`, [id, revision, JSON.stringify(content), GENERATED_KNOWLEDGE_ACTOR])
+        await tx.query(`UPDATE app.ai_knowledge_items SET published=draft,published_revision=revision,archived_at=NULL,
+          published_at=(SELECT published_at FROM app.ai_knowledge_versions WHERE item_id=$1 AND revision=$2) WHERE id=$1`, [id, revision])
+        await this.audit(tx, GENERATED_KNOWLEDGE_ACTOR, 'ai.knowledge.published', id, { revision, generator: 'app-copy-v1' }, 'service')
+        published++
+      }
+      const ids = new Set(normalized.map(a => a.id))
+      for (const row of existing) {
+        if (ids.has(row.id) || row.archivedAt) continue
+        await tx.query(`UPDATE app.ai_knowledge_items SET archived_at=now(),updated_at=now(),updated_by=$2 WHERE id=$1`, [row.id, GENERATED_KNOWLEDGE_ACTOR])
+        await this.audit(tx, GENERATED_KNOWLEDGE_ACTOR, 'ai.knowledge.archived', row.id, { revision: row.revision, generator: 'app-copy-v1' }, 'service')
+        archived++
+      }
+      return { published, archived, unchanged: normalized.length - published }
+    })
   }
   async save(id: string | null, input: SaveKnowledgeDto, adminId: string) {
     const content = normalizeContent(input)
@@ -119,8 +176,8 @@ export class AiKnowledgeService {
     if (!item || item.revision !== expectedRevision) throw new ConflictException('The knowledge item changed. Refresh before continuing.')
     return item
   }
-  private audit(tx: EntityManager, actor: string, action: string, id: string, metadata: object) {
-    return tx.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata) VALUES ($1,'admin',$2,$3,'ai_knowledge',$4,$5,$6::jsonb)`, [randomUUID(), actor, action, id, randomUUID(), JSON.stringify(metadata)])
+  private audit(tx: EntityManager, actor: string, action: string, id: string | null, metadata: object, actorType = 'admin') {
+    return tx.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata) VALUES ($1,$7,$2,$3,'ai_knowledge',$4,$5,$6::jsonb)`, [randomUUID(), actor, action, id, randomUUID(), JSON.stringify(metadata), actorType])
   }
 }
 

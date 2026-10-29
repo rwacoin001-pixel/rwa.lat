@@ -68,6 +68,6 @@ import { PlatformModule } from '../platform/platform.module'
       inject: [ConfigService],
     },
   ],
-  exports: [ComplianceService],
+  exports: [ComplianceService, RiskProfileService],
 })
 export class ComplianceModule {}

@@ -11,6 +11,7 @@ export class AdminAiKnowledgeController {
   @Get() list(@Req() request: AdminRequest) { return this.core.get(request.admin!.id, '/ai-knowledge') }
   @Get('products') products(@Req() request: AdminRequest) { return this.core.get(request.admin!.id, '/ai-knowledge/products') }
   @Get('coverage') coverage(@Req() request: AdminRequest) { return this.core.get(request.admin!.id,'/ai-knowledge/coverage') }
+  @Get('feedback') feedback(@Req() request: AdminRequest) { return this.core.get(request.admin!.id,'/ai-knowledge/feedback') }
   @Post('preview') preview(@Req() request: AdminRequest,@Body() body: Record<string,unknown>) { return this.core.post(request.admin!.id,'/ai-knowledge/preview',body) }
   @Post() create(@Req() request: AdminRequest, @Body() body: Record<string, unknown>) { return this.core.post(request.admin!.id, '/ai-knowledge', body) }
   @Post(':id/save') save(@Req() request: AdminRequest, @Param('id', ParseUUIDPipe) id: string, @Body() body: Record<string, unknown>) { return this.core.put(request.admin!.id, `/ai-knowledge/${id}`, body) }

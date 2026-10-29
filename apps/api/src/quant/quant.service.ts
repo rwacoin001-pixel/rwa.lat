@@ -229,6 +229,39 @@ export class QuantService {
     return row ?? null
   }
 
+  /** Exact owned records for notice provenance, including notices older than the list window. */
+  async getMyPayout(userId: string, slug: string, tradeDate: string) {
+    const product = await this.getProductRow(slug)
+    const [row] = await this.ds.query(`SELECT trade_date::text AS "tradeDate", net_atomic::text AS "netAtomic", paid_atomic::text AS "paidAtomic"
+      FROM app.quant_payouts WHERE user_id=$1 AND product_id=$2 AND trade_date=$3::date`, [userId, product.id, tradeDate])
+    return row ?? null
+  }
+
+  async getMyOrder(userId: string, id: string) {
+    const [row] = await this.ds.query(`SELECT o.id,p.slug,o.kind,o.status,o.payout_atomic::text AS "payoutAtomic",o.fee_atomic::text AS "feeAtomic",o.effective_date::text AS "effectiveDate"
+      FROM app.quant_orders o JOIN app.quant_products p ON p.id=o.product_id WHERE o.user_id=$1 AND o.id=$2`, [userId, id])
+    return row ?? null
+  }
+
+  /** Feed notices carry a ledger source key instead of a product/date. Resolve only this user's posted quant record. */
+  async getMyNoticeLedgerRecord(userId: string, transactionId: string) {
+    const [tx] = await this.ds.query(`SELECT t.transaction_type AS type,t.reference_id AS "referenceId"
+      FROM app.ledger_transactions t WHERE t.id=$2 AND EXISTS
+      (SELECT 1 FROM app.ledger_entries e JOIN app.ledger_accounts a ON a.id=e.account_id
+       WHERE e.transaction_id=t.id AND a.user_id=$1 AND a.owner_type='user' AND a.purpose='available')`, [userId, transactionId])
+    if (!tx) return null
+    if (tx.type === 'quant_daily_settlement') {
+      const [row] = await this.ds.query(`SELECT p.slug,q.trade_date::text AS "tradeDate",q.net_atomic::text AS "netAtomic",q.paid_atomic::text AS "paidAtomic"
+        FROM app.quant_payouts q JOIN app.quant_products p ON p.id=q.product_id
+        JOIN app.quant_daily_settlements s ON s.id=q.settlement_id AND s.status='posted'
+        WHERE q.user_id=$1 AND q.settlement_id=$2`, [userId, tx.referenceId])
+      return row ? { type: tx.type, ...row } : null
+    }
+    if (!['quant_subscription', 'quant_redemption'].includes(tx.type)) return null
+    const order = await this.getMyOrder(userId, tx.referenceId)
+    return order ? { type: tx.type, ...order } : null
+  }
+
   private async assertDisclosureAcknowledged(userId: string) {
     const latest = await this.latestDisclosure()
     if (!latest) return

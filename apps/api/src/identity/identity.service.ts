@@ -86,6 +86,13 @@ export class IdentityService {
     throw new UnauthorizedException({ code: 'AUTH_FLOW_REQUIRED', message: 'Second factor is required.' })
   }
 
+  /** Minimal read-only account state; no login identities or credentials leave this service. */
+  async accountStatus(userId: string) {
+    const user = await this.users.findOne({ where: { id: userId } })
+    if (!user) throw new NotFoundException('Account not found')
+    return { status: user.status }
+  }
+
   async managePassword(rawToken: string, device?: AuthDevice, email?: string, reauthentication?: string) {
     const session = await this.getSessionViewByToken(rawToken)
     if (reauthentication) assertReauthentication(this.crypto, session, reauthentication)
