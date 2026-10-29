@@ -31,13 +31,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       signal: AbortSignal.timeout(35_000),
     })
     const headers = new Headers()
-    if (path[0] === 'users' || path[0] === 'ai') headers.set('cache-control', 'private, no-store')
+    if (path[0] === 'users' || path[0] === 'ai' || path[0] === 'mail') headers.set('cache-control', 'private, no-store')
     const contentType = upstream.headers.get('content-type')
     if (contentType) headers.set('content-type', contentType)
-    if (path[0] === 'ai') {
+    const attachment = path[0] === 'mail' && path[1] === 'attachments'
+    if (path[0] === 'ai' || attachment) {
       const disposition = upstream.headers.get('content-disposition')
       if (disposition) headers.set('content-disposition', disposition)
-      // Preserve the CSV UTF-8 BOM; text() strips it and breaks Chinese CSVs in Excel.
+      if (attachment) headers.set('x-content-type-options', 'nosniff')
+      // Binary pass-through: keeps the CSV UTF-8 BOM (text() strips it) and attachment bytes intact.
       return new NextResponse(await upstream.arrayBuffer(), { status: upstream.status, headers })
     }
     return new NextResponse(await upstream.text(), { status: upstream.status, headers })

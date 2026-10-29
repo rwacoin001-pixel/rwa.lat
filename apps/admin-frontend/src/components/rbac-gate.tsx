@@ -12,6 +12,7 @@ export type ProfileState = { profile: AdminProfile | null; status: 'loading' | '
 
 /** 路由 → 访问所需权限（满足任一即可）。与 apps/admin/src/*.controller.ts 中该页面主要接口的 @RequireAdminPermissions 对应。 */
 export const ROUTE_PERMISSIONS: Record<string, string[]> = {
+  '/inbox': ['mail.read'],
   '/control': ['catalog.manage'],
   '/basket': ['basket.operations.manage'],
   '/quant': ['quant.operations.manage'],

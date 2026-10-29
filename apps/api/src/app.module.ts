@@ -1,4 +1,5 @@
 import { ActivityModule } from './analytics/activity.module'
+import { MailModule } from './mail/mail.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { DatabaseModule } from './database/database.module'
@@ -51,6 +52,7 @@ import { RobotsController } from './common/robots.controller'
       validate: validateApplicationEnvironment,
     }),
     DatabaseModule,
+    MailModule,
     HealthModule,
     IdentityModule,
     ComplianceModule,
