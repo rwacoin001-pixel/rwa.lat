@@ -7,6 +7,7 @@ import { ComplianceService } from '../compliance/compliance.service'
 import { NotificationService } from '../notification/notification.service'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import { recordReferralRewards } from '../referral/referral-rewards'
+import { enqueueReferralPurchase } from '../referral/referral-purchase'
 import {
   calculateProductQuantityAtomic,
   calculateSettlementPayoutAtomic,
@@ -278,8 +279,9 @@ export class OrdersService {
         await recordReferralRewards(runner, { kind: 'purchase', sourceType: 'order', sourceId: order.id, sourceUserId: order.user_id, baseAtomic: filled })
       }
       await this.event(runner, order.id, order.state, nextState, 'admin', null, failureReason ?? undefined, { releasedAtomicAmount: released.toString() })
-      return { userId: order.user_id, state: nextState }
+      return { userId: order.user_id, state: nextState, purchase: nextState !== 'failed' && order.side === 'buy' }
     })
+    if (result.purchase) enqueueReferralPurchase(this.dataSource, 'rwa', id)
     const view = await this.getById(id)
     await this.notify(result.userId, `order.${result.state}`, `Demo order ${result.state}`, `Order ${id} is now ${result.state}.`, { orderId: id })
     return view

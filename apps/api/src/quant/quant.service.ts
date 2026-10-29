@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, Injectable, Logger, NotFoundExc
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { recordReferralRewards } from '../referral/referral-rewards'
+import { enqueueReferralPurchase } from '../referral/referral-purchase'
 import { LedgerService } from '../ledger/ledger.service'
 import { OperationalCapabilityService, OPERATIONAL_SWITCH_KEYS } from '../operations/operational-capability.service'
 import { ComplianceService } from '../compliance/compliance.service'
@@ -298,6 +299,7 @@ export class QuantService {
         [randomUUID(), userId, orderId, requestId, JSON.stringify({ productId: product.id, amountAtomic: amount.toString(), effectiveDate })],
       )
     })
+    enqueueReferralPurchase(this.ds, 'quant', orderId)
     return { duplicate: false, order: await this.findOrderByKey(userId, idempotencyKey) }
   }
 
