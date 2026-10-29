@@ -24,6 +24,13 @@ const INCLUDE = [
   /^\/fonts\/noto-sans-sc-app\/[^/]+\.woff2$/,
   /^\/avatars\/(?:porcelain|professions)\/[^/]+\.webp$/,
   /^\/media\/porcelain\/[^/]+\.webp$/,
+  // 2026-10-30: everything the phone pages show, so the app does not wait on the network for any picture or glyph:
+  // Koala Quant covers, invitation posters, and the full Chinese font slices (names, news).
+  // Desktop-only media, retired product photos and videos stay on the network.
+  // Every folder here must also be in AppPack.PATH (apps/android-client), or it ships but is never served.
+  /^\/media\/quant\/.+\.(?:webp|png|jpe?g|svg)$/,
+  /^\/media\/referral\/.+\.(?:webp|png|jpe?g|svg)$/,
+  /^\/fonts\/noto-sans-sc\/[^/]+\.woff2$/,
 ]
 const MAX_FILE = 8 * 1024 * 1024
 

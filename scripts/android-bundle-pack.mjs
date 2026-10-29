@@ -8,6 +8,11 @@ import { join } from 'node:path'
 const [assets, out] = process.argv.slice(2)
 if (!assets || !out) throw new Error('usage: android-bundle-pack.mjs <assetsDir> <outDir>')
 const manifest = JSON.parse(readFileSync(join(assets, 'app-pack', 'manifest.json'), 'utf8'))
+// The app serves only paths matching AppPack.PATH; a packed file outside it would ship and never be used (10/30 bug).
+const java = readFileSync(new URL('../apps/android-client/app/src/main/java/lat/rwa/trial/AppPack.java', import.meta.url), 'utf8')
+const served = new RegExp(JSON.parse(java.match(/Pattern PATH = Pattern\.compile\(("(?:[^"\\]|\\.)*")\)/)[1]))
+const unserved = manifest.files.filter(file => !served.test(file.p)).map(file => file.p)
+if (unserved.length) throw new Error(`AppPack.PATH does not serve ${unserved.length} packed files, e.g. ${unserved.slice(0, 3).join(', ')}`)
 rmSync(out, { recursive: true, force: true })
 mkdirSync(join(out, 'files'), { recursive: true })
 let total = 0

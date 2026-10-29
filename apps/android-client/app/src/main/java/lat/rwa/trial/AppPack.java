@@ -31,7 +31,8 @@ import java.util.regex.Pattern;
  */
 final class AppPack {
     private static final String ORIGIN = UrlPolicy.ORIGIN;
-    private static final Pattern PATH = Pattern.compile("^/(?:_next/static|icons|brand/a-reit|media/home|auth)/[A-Za-z0-9._~@+\\-/\\[\\]()]+$");
+    // Must cover every folder scripts/app-pack-manifest.mjs packs: a file outside these ships in the APK but is never served.
+    private static final Pattern PATH = Pattern.compile("^/(?:_next/static|icons|brand/a-reit|media/(?:home|palette-a|porcelain|quant|referral)|auth|fonts|avatars)/[A-Za-z0-9._~@+\\-/\\[\\]()]+$");
     private static final Pattern HASH = Pattern.compile("^[0-9a-f]{64}$");
     private static final long MAX_FILE = 8L * 1024 * 1024, MAX_UPDATE = 80L * 1024 * 1024;
 
@@ -68,11 +69,13 @@ final class AppPack {
         for (int i = 0; i < files.length(); i++) {
             JSONObject file = files.getJSONObject(i);
             String path = file.getString("p"), hash = file.getString("h");
-            if (!PATH.matcher(path).matches() || traversal(path) || !HASH.matcher(hash).matches() || file.getLong("s") > MAX_FILE) continue;
+            if (!servable(path) || !HASH.matcher(hash).matches() || file.getLong("s") > MAX_FILE) continue;
             if (hashes != null) hashes.add(hash);
             if (paths != null) paths.put(path, hash);
         }
     }
+
+    static boolean servable(String path) { return PATH.matcher(path).matches() && !traversal(path); }
 
     /** A segment that is exactly ".." or "." is traversal; Next's catch-all folder "[[...rwa]]" is not. */
     static boolean traversal(String path) {
