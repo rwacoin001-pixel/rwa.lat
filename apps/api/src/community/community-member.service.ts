@@ -56,7 +56,7 @@ export class CommunityMemberService {
   private publicProfile(p: CommunityProfile) { return { id: p.id, handle: p.identity_configured ? p.handle : '', handleBase: p.handle_base ?? '', city: p.city ?? null, countryCode: p.country_code ?? null, displayName: /^Member [0-9a-f]{6}$/.test(p.display_name) ? '' : p.display_name, identityConfigured: p.identity_configured, avatarSeed: p.id, kind: p.kind, bio: p.bio ?? null, avatarUrl: p.avatar_url ?? null } }
   /** Own-profile view: an avatar still in malware scan is reported as pending instead of a URL that would not load yet. */
   private async view(p: CommunityProfile) {
-    const base = this.publicProfile(p)
+    const base = { ...this.publicProfile(p), dmPolicy: p.dm_policy ?? 'everyone' }
     const id = communityMediaId(base.avatarUrl)
     if (!id) return { ...base, avatarPending: false }
     const readable = this.storage ? await this.storage.readableCommunityImageIds([id]).catch(() => new Set<string>()) : new Set<string>()
@@ -66,6 +66,11 @@ export class CommunityMemberService {
   updateProfile(userId: string, input: MemberProfileDto) {
     return this.db.transaction(async m => {
       const p = await this.member(m, userId)
+      const previousDmPolicy = p.dm_policy ?? 'everyone'
+      if (input.dmPolicy !== undefined) {
+        if (!['everyone', 'following'].includes(input.dmPolicy)) throw new BadRequestException('Invalid DM policy')
+        p.dm_policy = input.dmPolicy
+      }
       if (!input.displayName.trim()) throw new BadRequestException('Display name cannot be blank')
       const base = (input.handle ?? '').trim().toLowerCase()
       if (!/^[a-z0-9_]{3,20}$/.test(base)) throw new BadRequestException('COMMUNITY_HANDLE_INVALID')
@@ -87,7 +92,13 @@ export class CommunityMemberService {
       await m.query('INSERT INTO app.community_handle_aliases(handle,profile_id) VALUES(lower($1),$3),($2,$3) ON CONFLICT DO NOTHING', [p.handle, handle, p.id])
       p.handle = handle; p.handle_base = base; p.city = city; p.country_code = country; p.identity_configured = true
       p.display_name = input.displayName.trim(); p.bio = input.bio?.trim() ?? p.bio
-      return m.save(p)
+      const saved = await m.save(p)
+      if (input.dmPolicy !== undefined && previousDmPolicy !== saved.dm_policy) {
+        await m.query(`INSERT INTO app.audit_logs(id,actor_type,actor_id,action,object_type,object_id,request_id,metadata)
+          VALUES($1,'user',$2,'community.dm.policy','community_profile',$3,$4,$5::jsonb)`,
+        [randomUUID(), userId, p.id, randomUUID(), JSON.stringify({ from: previousDmPolicy, to: saved.dm_policy })])
+      }
+      return saved
     }).then(p => this.view(p))
   }
   private write(userId: string, key: string | undefined, intent: Record<string, unknown>, kind: 'post' | 'comment', work: (m: EntityManager, profile: CommunityProfile) => Promise<{ id: string }>) {

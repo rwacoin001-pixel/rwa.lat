@@ -327,8 +327,8 @@ export class PublishDueCommunityQueueDto {
 
 export class CreateCommunityReportDto {
   @ApiProperty()
-  @IsIn(['post', 'comment', 'profile'])
-  targetType!: 'post' | 'comment' | 'profile'
+  @IsIn(['post', 'comment', 'profile', 'dm_message'])
+  targetType!: 'post' | 'comment' | 'profile' | 'dm_message'
 
   @ApiProperty()
   @IsUUID()

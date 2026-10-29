@@ -1,7 +1,10 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query } from '@nestjs/common'
+import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { CommunityService } from './community.service'
 import { CommunityCommentsQueryDto, CommunityFeedQueryDto, CreateCommunityReportDto, TranslateCommunityTargetDto } from './dto/community.dto'
+import { CurrentAuth } from '../security/current-auth.decorator'
+import { AuthenticatedRequest } from '../security/session-auth.guard'
+import { CommunityReportAuthGuard } from './community-report-auth.guard'
 
 /**
  * Public community reads. Anonymous access by design: the feed, posts,
@@ -43,9 +46,10 @@ export class CommunityController {
   }
 
   @Post('reports')
-  @ApiOperation({ summary: 'Submit a content report (anonymous accepted)' })
-  report(@Body() dto: CreateCommunityReportDto) {
-    return this.community.submitReport(dto)
+  @UseGuards(CommunityReportAuthGuard)
+  @ApiOperation({ summary: 'Submit a content report (private messages require membership)' })
+  report(@Body() dto: CreateCommunityReportDto, @CurrentAuth() a?: AuthenticatedRequest['auth']) {
+    return this.community.submitReport(dto, a?.userId)
   }
 
   @Post('translate')
