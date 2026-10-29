@@ -133,3 +133,19 @@ button.glass:active { transform: scale(.95); }
 :global(.rwa-mobile:not([data-theme='dark'])) .shell { background: #f2f4f7; }
 :global(.rwa-mobile:not([data-theme='dark'])) .ground { filter: blur(28px) saturate(.15) brightness(1.08); }
 :global(.rwa-mobile:not([data-theme='dark'])) .shell::before { background: linear-gradient(180deg, rgba(244, 246, 250, .62), rgba(246, 248, 251, .88)); }
+/* White key card (2026-10-29, user: the ink card should be white too, yet stand apart from the ground). Light theme
+   only: an opaque paper-white card raised off the frosted ground by a contact shadow, a long soft drop and a hairline;
+   ink type, the darker market colours, the primary key in ink and the secondary as a quiet fill (§3.4 keys). Dark
+   theme keeps the ink card — a white slab would glare at night. */
+:global(.rwa-mobile:not([data-theme='dark'])) .ink { background: #fff; box-shadow: 0 1px 2px rgba(17, 23, 34, .06), 0 12px 28px -14px rgba(17, 23, 34, .22), inset 0 0 0 .5px rgba(17, 23, 34, .06); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .ink :is(small, b, p, span, em) { color: var(--m-ink, #111722); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .ink :is(small, em, .rules, .risk) { color: var(--m-muted, #5b6472); opacity: 1; }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .ink b[data-tone='up'] { color: var(--q-gain, #0f9f80); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .ink b[data-tone='down'] { color: var(--q-loss-text, #d0533f); }
+:global(.rwa-mobile:not([data-theme='dark'])) .mine { padding-bottom: 12px; border-bottom: .5px solid rgba(17, 23, 34, .08); }
+:global(.rwa-mobile:not([data-theme='dark'])) .flow i { background: var(--m-ink, #111722); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .flow i { color: #fff; }
+:global(.rwa-mobile:not([data-theme='dark'])) .ghost.ghost { background: rgba(17, 23, 34, .05); color: var(--m-ink, #111722); box-shadow: none; }
+:global(.rwa-mobile:not([data-theme='dark'])) .main.main { background: var(--m-ink, #111722); box-shadow: 0 4px 10px -4px rgba(17, 23, 34, .35); }
+:global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .main, :global(.rwa-mobile:not([data-theme='dark'])) .shell.shell.shell .main svg { color: #fff; }
+:global(.rwa-mobile:not([data-theme='dark'])) .ghost:focus-visible, :global(.rwa-mobile:not([data-theme='dark'])) .main:focus-visible { outline-color: var(--m-ink, #111722); }
