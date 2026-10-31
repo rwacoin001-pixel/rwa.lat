@@ -7,7 +7,8 @@
  */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
-import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Share, Share2, SquarePen } from 'lucide-react'
+import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Share, Share2 } from 'lucide-react'
+import { claimFeatherCompose, setFeather } from '@/lib/community-feather'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, getCircleFeed, setCircleVisibility, type CircleMember } from '@/lib/community-data'
@@ -453,6 +454,22 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   // My circle (2026-10-28): who I invited / who invited me, for the tag on their posts and the circle timeline.
   const [circle, setCircle] = useState<{ members: CircleMember[]; showToInviter: boolean } | null>(null)
   useEffect(() => { if (isGuest) { setCircle(null); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => undefined) }, [isGuest])
+  // The feather (2026-10-31): it composes from whichever feed is on screen. On the page itself it rises above the AI orb
+  // while the reader scrolls down the feed, and pales when they pull back up. The embedded feed on home leaves the
+  // visibility to the home page's pinned tabs.
+  useEffect(() => claimFeatherCompose(() => { if (isGuest) go('login'); else setComposing(true) }), [isGuest, go])
+  useEffect(() => {
+    if (embedded) return
+    let last = window.scrollY
+    const onScroll = () => {
+      const y = window.scrollY, dy = y - last
+      last = y
+      if (y < 160) setFeather({ visible: false, faded: false })
+      else if (Math.abs(dy) > 2) setFeather({ visible: true, faded: dy < 0 })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => { window.removeEventListener('scroll', onScroll); setFeather({ visible: false, faded: false }) }
+  }, [embedded])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
   // My circle leads when there is one (2026-10-28): the people you invited come first.
   const tabs = [...(isGuest || embedded || !circle ? [] : [{ key: 'circle' as const, label: circleText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
@@ -570,10 +587,8 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           <div className={c.pageTabs} role="tablist" aria-label={t('nav.community')}>
             {([['feed', t('nav.community')], ['invite', invite.tab]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={view === key} onClick={() => pick(key)}>{label}</button>)}
           </div>
-          {/* Compose lives in the header (2026-10-28): one floating thing per screen — the AI ball keeps its place and its
-              unread count; the pen fades in on the feed and leaves on Invite. */}
+          {/* No compose button in the header (2026-10-31): posting is the feather above the AI orb. */}
           {!isGuest && <button type="button" className={c.inboxBtn} aria-label={p.dm} data-view={view} onClick={() => go('community-messages')}><Mail size={20} strokeWidth={1.9} aria-hidden="true" />{dmUnread > 0 && <i aria-hidden="true" />}</button>}
-          {view === 'feed' && <button type="button" className={c.composeBtn} onClick={() => isGuest ? go('login') : setComposing(true)}><SquarePen size={18} strokeWidth={1.9} aria-hidden="true" /><span>{ui.compose}</span></button>}
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
             : <button type="button" className={c.meBtn} aria-label={t('community.viewProfile')} onClick={() => go('profile')}>

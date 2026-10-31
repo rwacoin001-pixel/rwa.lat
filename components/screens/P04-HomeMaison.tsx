@@ -33,6 +33,7 @@ import { getPositions, sumPositionMarketValueAtomic } from '@/lib/portfolio-data
 import { isAuthenticated } from '@/lib/h5-data'
 import { listRewards, type Reward } from '@/lib/api/account'
 import { openPath } from '@/lib/maison-nav'
+import { setFeather } from '@/lib/community-feather'
 import type { MarketQuote } from '@/lib/p0a-data'
 import RwaTopbar from '@/components/rwa-topbar'
 import { ErrorBlock } from '@/components/ui/ErrorBlock'
@@ -250,8 +251,11 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const onFeedPinned = useCallback((pinned: boolean) => {
     feedPinnedRef.current = pinned
     setFeedPinned(pinned)
+    // The feather above the AI orb rides with the pinned community tabs (2026-10-31).
+    setFeather({ visible: pinned, faded: false })
     if (pinned) setTopbarHidden(true)
   }, [])
+  useEffect(() => () => setFeather({ visible: false, faded: false }), [])
   // Only the session probe is refreshed after an in-place email bind; wallet and positions are left alone.
   const refreshSessionView = useCallback(() => {
     void getSessionView().then(view => setSessionProbe(prev => prev.view && view.userId !== prev.view.userId ? prev : { status: 'ok', view })).catch(() => undefined)

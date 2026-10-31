@@ -43,7 +43,7 @@
 /* Composer: glass bar above the keyboard and the home indicator. */
 .composer { position: fixed; z-index: 20; inset-inline: 0; bottom: 0; display: grid; gap: 8px; max-width: 480px; margin: 0 auto; padding: 8px 16px calc(8px + env(safe-area-inset-bottom)); background: color-mix(in srgb, var(--m-bg) 82%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); box-shadow: 0 -.5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
 .notice { margin: 0; padding: 0 4px; color: var(--m-muted); font-size: 12px; line-height: 16px; }
-.field { display: flex; align-items: flex-end; gap: 8px; padding: 4px 4px 4px 16px; border-radius: 999px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); }
+.field { display: flex; align-items: flex-end; gap: 4px; padding: 4px 4px 4px 4px; border-radius: 999px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); }
 .field textarea { flex: 1; min-width: 0; max-height: 120px; padding: 8px 0; border: 0; outline: 0; background: none; color: var(--m-ink); font: inherit; font-size: 17px; line-height: 24px; resize: none; }
 .field textarea::placeholder { color: var(--m-faint, #8a9099); }
 .send { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: var(--m-ink); color: var(--m-bg); cursor: pointer; transition: transform var(--pa-dur-press, 120ms) var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)), opacity .2s; }
@@ -53,10 +53,40 @@
 /* Sheets. */
 .options { display: grid; gap: 4px; padding-bottom: 8px; }
 .options button { min-height: 52px; padding: 0 16px; border: 0; border-radius: 12px; background: none; color: var(--m-ink); font: inherit; font-size: 15px; text-align: start; cursor: pointer; }
+.options button { display: flex; align-items: center; gap: 10px; }
 .options button:active { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.confirmBody { margin: 0; padding: 0 16px 8px; color: var(--m-muted); font-size: 14px; line-height: 20px; }
 .options button[data-danger] { color: var(--m-down); }
 
 :global(.rwa-mobile[data-theme='dark']) .bubble { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1); }
 :global(.rwa-mobile[data-theme='dark']) .line[data-mine] .bubble { background: #f2f4f7; color: #0b1220; }
 :global(.rwa-mobile[data-theme='dark']) .count { background: #f2f4f7; color: #0b1220; }
+/* Top bar (2026-10-31): a round back, the other member in a name pill, and a round "…" pill on the right. */
+.top { position: sticky; top: 0; z-index: 15; display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: color-mix(in srgb, var(--m-bg) 82%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.6); backdrop-filter: blur(20px) saturate(1.6); }
+.circle, .pill { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 999px; background: var(--pa-card, #fff); color: var(--m-ink); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); cursor: pointer; }
+.pill:disabled { opacity: .4; cursor: default; }
+.namePill { display: flex; flex: 1; align-items: center; gap: 8px; min-width: 0; height: 44px; padding: 0 16px 0 6px; border-radius: 999px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); }
+.namePill b { overflow: hidden; min-width: 0; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+
+/* Member card at the top of the conversation. */
+.facts { display: flex; flex-wrap: wrap; justify-content: center; gap: 2px 12px; margin: 6px 0 0; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.profileKey { min-height: 40px; margin-top: 10px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--pa-card, #fff); color: var(--m-ink); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+/* Bubbles that carry a photo or a file. */
+.bubble[data-kind='image'] { padding: 4px; }
+.bubble[data-kind='image'] .text { display: block; padding: 6px 8px 2px; }
+.photo { display: block; width: 100%; max-width: 240px; height: auto; border-radius: 16px; }
+.file { display: flex; align-items: center; gap: 8px; min-width: 0; color: inherit; font-size: 14px; line-height: 20px; text-decoration: none; }
+.file span { min-width: 0; overflow-wrap: anywhere; }
+.text { display: block; }
+.uploading { display: block; margin-top: 4px; font-size: 12px; line-height: 16px; opacity: .7; }
+
+/* Quick replies and the composer's plus and mic keys. */
+.quick { display: flex; gap: 8px; overflow-x: auto; padding: 0 4px; scrollbar-width: none; }
+.quick::-webkit-scrollbar { display: none; }
+.quickPill { flex: none; min-height: 36px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--pa-card, #fff); color: var(--m-ink); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); font: inherit; font-size: 14px; cursor: pointer; }
+.quickPill:active { opacity: .7; }
+.plus, .mic { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-ink); cursor: pointer; }
+.mic:disabled { opacity: .35; cursor: default; }
+
 @media (prefers-reduced-motion: reduce) { .send { transition: none; } }

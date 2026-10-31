@@ -1,18 +1,20 @@
 'use client'
 
 /**
- * Direct messages (2026-10-29): the inbox and a conversation. Paper & Glass: plain rows on hairlines, the other side's
- * bubbles on paper, mine in ink, a glass composer pinned above the keyboard. The server owns every rule (membership,
- * blocks, follow-only, rate limits, keyword guard); this screen only shows its answers in plain words. New messages
- * arrive by polling while the screen is open (every few seconds), so nothing runs in the background.
+ * Direct messages (2026-10-29, redone 2026-10-31): the inbox and a conversation. The conversation opens on the other
+ * member's card (avatar, name, joined date, followers, view profile), quick replies sit above a composer with a plus
+ * menu (photo, camera, file), and a long-press on a message gives copy, reply, delete (your own messages, both sides)
+ * and report. The server owns every rule (membership, blocks, follow-only, rate limits, keyword guard, the upload
+ * scan); this screen only shows its answers in plain words. New messages arrive by polling while the screen is open.
  */
-import { ArrowUp, BellOff, MoreHorizontal } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
+import { ArrowUp, BellOff, ChevronLeft, Copy, FileText, Mic, MoreHorizontal, Plus, Reply, Flag, Trash2 } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
-import { CommunityAvatar } from '@/components/community-avatar'
+import { CommunityAvatar, mediaSrc } from '@/components/community-avatar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import type { ApiError } from '@/lib/api/_http'
-import { dmBlock, dmMessages, dmRead, dmReport, dmSend, dmThreadSettings, dmThreads, dmUnblock, type DmMessage, type DmProfile, type DmThread } from '@/lib/api/community-dm'
+import { dmBlock, dmDeleteMessage, dmMessages, dmRead, dmReport, dmSend, dmThreadSettings, dmThreads, dmUnblock, dmUploadAttachment, type DmMessage, type DmProfile, type DmThread } from '@/lib/api/community-dm'
+import { getCommunityProfile } from '@/lib/community-data'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, Skeleton, StateBlock } from '@/components/maison/primitives'
 import { Sheet } from '@/components/maison/Sheet'
@@ -24,6 +26,9 @@ type Copy = {
   notSent: string; tapRetry: string; blocked: string; policy: string; tooFast: string; guard: string; tooLong: string; sendFailed: string
   menu: string; viewProfile: string; mute: string; unmute: string; block: string; unblock: string; report: string; reportTitle: string
   reasons: [string, string][]; reported: string; cancel: string; today: string; yesterday: string; firstLine: string
+  joined: string; followers: string; quick: string[]; quickLabel: string; attach: string; photo: string; camera: string; file: string
+  voice: string; copy: string; copied: string; reply: string; del: string; delTitle: string; delBody: string; delConfirm: string
+  messageActions: string; uploading: string; tooLarge: string; fileType: string; imageLabel: string; fileLabel: string; back: string
 }
 const COPY: Partial<Record<AppLocale, Copy>> = {
   'zh-CN': {
@@ -31,9 +36,12 @@ const COPY: Partial<Record<AppLocale, Copy>> = {
     identity: '先设置社区昵称', identityBody: '有了昵称，别人才知道是谁在和他说话。', toCommunity: '去社区', failed: '加载失败', retry: '重试', you: '你：', muted: '免打扰',
     title: '私信', older: '查看更早的消息', placeholder: '发消息…', send: '发送', notSent: '未发送', tapRetry: '点按重试',
     blocked: '你们之间有拉黑，无法发送。', policy: '对方只接收 TA 关注的人的私信。', tooFast: '发得太快了，稍等一下再发。', guard: '消息里有联系方式或「带单」「拉群」等内容，不能发送。',
-    tooLong: '消息最多 2000 字。', sendFailed: '没有发出去，请重试。', menu: '更多', viewProfile: '查看主页', mute: '免打扰', unmute: '取消免打扰', block: '拉黑', unblock: '取消拉黑',
+    tooLong: '消息最多 2000 字。', sendFailed: '没有发出去，请重试。', menu: '更多', viewProfile: '查看个人资料', mute: '免打扰', unmute: '取消免打扰', block: '拉黑', unblock: '取消拉黑',
     report: '举报这条消息', reportTitle: '举报原因', reasons: [['spam', '垃圾信息或广告'], ['scam', '诈骗或带单'], ['abuse', '辱骂或骚扰'], ['other', '其他']], reported: '已收到举报，我们会尽快处理。', cancel: '取消',
     today: '今天', yesterday: '昨天', firstLine: '这是你们对话的开始。不要透露密码、验证码或私钥。',
+    joined: '加入于 {date}', followers: '{n} 位关注者', quick: ['👋', '嗨！', '怎么样？'], quickLabel: '快捷回复', attach: '添加附件', photo: '照片', camera: '相机', file: '文件',
+    voice: '语音输入，即将开放', copy: '复制', copied: '已复制', reply: '回复', del: '删除', delTitle: '删除这条消息？', delBody: '删除后，你和对方都看不到这条消息。', delConfirm: '删除',
+    messageActions: '消息', uploading: '正在上传…', tooLarge: '文件太大了，请换一个再试。', fileType: '这种文件暂不支持。', imageLabel: '照片', fileLabel: '文件', back: '返回',
   },
   en: {
     inbox: 'Messages', empty: 'No messages yet', emptyBody: 'Tap the envelope on a member’s page to start a conversation.', soon: 'Messages are coming soon', soonBody: 'The feature is rolling out. Check back shortly.',
@@ -43,9 +51,18 @@ const COPY: Partial<Record<AppLocale, Copy>> = {
     tooLong: 'Messages can be up to 2,000 characters.', sendFailed: 'Not sent. Try again.', menu: 'More', viewProfile: 'View profile', mute: 'Mute', unmute: 'Unmute', block: 'Block', unblock: 'Unblock',
     report: 'Report this message', reportTitle: 'Why are you reporting it?', reasons: [['spam', 'Spam or advertising'], ['scam', 'Scam or signal group'], ['abuse', 'Abuse or harassment'], ['other', 'Something else']], reported: 'Report received. We will look at it soon.', cancel: 'Cancel',
     today: 'Today', yesterday: 'Yesterday', firstLine: 'This is the start of your conversation. Never share passwords, codes or keys.',
+    joined: 'Joined {date}', followers: '{n} followers', quick: ['👋', 'Hi!', 'How are you?'], quickLabel: 'Quick replies', attach: 'Add attachment', photo: 'Photo', camera: 'Camera', file: 'File',
+    voice: 'Voice input, coming soon', copy: 'Copy', copied: 'Copied', reply: 'Reply', del: 'Delete', delTitle: 'Delete this message?', delBody: 'Once deleted, you and they will both stop seeing this message.', delConfirm: 'Delete',
+    messageActions: 'Message', uploading: 'Uploading…', tooLarge: 'That file is too large. Try a smaller one.', fileType: 'That file type is not supported.', imageLabel: 'Photo', fileLabel: 'File', back: 'Back',
   },
 }
 const useCopy = () => { const { locale } = useI18n(); return { c: COPY[locale] ?? COPY.en!, locale } }
+
+/** Limits mirrored by the server (2026-10-31): photos 10 MB, files 20 MB. The server is the rule; this is the early warning. */
+const MAX_PHOTO = 10 * 1024 * 1024
+const MAX_FILE = 20 * 1024 * 1024
+const PHOTO_TYPES = 'image/jpeg,image/png,image/webp,image/gif'
+const FILE_TYPES = '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip'
 
 /** The backend is not live everywhere yet: a missing route reads as "coming soon", not as an error. */
 const unavailable = (e: ApiError) => e.status === 404 && !/^DM_/.test(e.code)
@@ -123,7 +140,8 @@ export function DmInboxScreen() {
 }
 
 /* ── Conversation ─────────────────────────────────────────────────────────────────────────────────────────────── */
-type Local = DmMessage & { state?: 'sending' | 'failed'; clientId?: string }
+/** A message as the screen holds it: sent ones come from the server; `state`, `file` and `preview` are this device's. */
+type Local = DmMessage & { state?: 'sending' | 'failed'; clientId?: string; file?: File; attachKind?: 'image' | 'file'; preview?: string; seen?: number }
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`.replace(/\D/g, '').padEnd(32, '0').replace(/^(.{8})(.{4})(.{3})(.{3})(.{12}).*/, '$1-$2-4$3-8$4-$5'))
 const byTime = (a: DmMessage, b: DmMessage) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
 
@@ -131,31 +149,50 @@ export function DmThreadScreen({ id }: { id: string | null }) {
   const { c, locale } = useCopy()
   const [peer, setPeer] = useState<DmProfile | null>(() => id ? recallPeer(id) : null)
   const [thread, setThread] = useState<DmThread | null>(null)
+  const [facts, setFacts] = useState<{ joinedAt: string | null; followerCount: number } | null>(null)
   const [items, setItems] = useState<Local[] | null>(null)
   const [older, setOlder] = useState<string | null>(null)
   const [error, setError] = useState<ApiError | null>(null)
   const [draft, setDraft] = useState('')
   const [notice, setNotice] = useState<string | null>(null)
   const [menu, setMenu] = useState(false)
+  const [attachOpen, setAttachOpen] = useState(false)
+  const [acting, setActing] = useState<Local | null>(null)
+  const [confirming, setConfirming] = useState<Local | null>(null)
   const [reporting, setReporting] = useState<DmMessage | null>(null)
   const [blocked, setBlocked] = useState(false)
   const list = useRef<HTMLDivElement>(null)
+  const composer = useRef<HTMLTextAreaElement>(null)
   const atBottom = useRef(true)
   const lastRead = useRef<string | null>(null)
+  const photoPicker = useRef<HTMLInputElement>(null)
+  const cameraPicker = useRef<HTMLInputElement>(null)
+  const filePicker = useRef<HTMLInputElement>(null)
 
-  const merge = useCallback((incoming: DmMessage[]) => setItems(prev => {
+  // Merge a page into the list. The newest page (requestedAt set) also settles what is gone: a message this device saw
+  // before that request began, newer than the page's oldest entry, but missing from the page was unsent by the other
+  // side (or on another device). Pending ones stay, and so do messages seen after the request began (a slow response
+  // must not drop a message that was just sent).
+  const merge = useCallback((incoming: DmMessage[], requestedAt?: number) => setItems(prev => {
     const map = new Map<string, Local>((prev ?? []).map(m => [m.id, m]))
-    for (const m of incoming) map.set(m.id, m)
+    if (requestedAt !== undefined) {
+      const present = new Set(incoming.map(m => m.id))
+      const floor = incoming.length ? Math.min(...incoming.map(m => Date.parse(m.createdAt))) : -Infinity
+      for (const m of [...map.values()]) if (!m.state && !m.id.startsWith('local-') && !present.has(m.id) && (m.seen ?? 0) < requestedAt && Date.parse(m.createdAt) >= floor) map.delete(m.id)
+    }
+    const now = Date.now()
+    for (const m of incoming) map.set(m.id, { ...m, seen: map.get(m.id)?.seen ?? now })
     return [...map.values()].sort(byTime)
   }), [])
 
   const loadLatest = useCallback(async () => {
     if (!id) return
+    const started = Date.now()
     const res = await dmMessages(id)
     if (!res.ok) { setError(res.error); setItems(prev => prev ?? []); return }
     setError(null)
     const page = Array.isArray(res.data?.items) ? res.data.items : []
-    merge(page)
+    merge(page, started)
     setOlder(prev => prev === null && page.length ? res.data.nextBefore : prev)
   }, [id, merge])
 
@@ -167,6 +204,14 @@ export function DmThreadScreen({ id }: { id: string | null }) {
       if (found) { setThread(found); setPeer(found.otherProfile); rememberPeer(id, found.otherProfile) }
     })
   }, [id])
+  // The card's facts (joined date, followers) come from the member's public profile.
+  const handle = peer?.handle ?? null
+  useEffect(() => {
+    if (!handle) return
+    let live = true
+    getCommunityProfile(handle).then(res => { if (live) setFacts({ joinedAt: res.profile.joinedAt ?? null, followerCount: res.stats.followerCount }) }).catch(() => undefined)
+    return () => { live = false }
+  }, [handle])
   useEffect(() => {
     void loadLatest()
     const timer = window.setInterval(() => { if (document.visibilityState === 'visible') void loadLatest() }, 4_000)
@@ -187,21 +232,32 @@ export function DmThreadScreen({ id }: { id: string | null }) {
 
   const reason = (e: ApiError) => e.code === 'DM_BLOCKED' ? c.blocked : /FOLLOW|POLICY/.test(e.code) ? c.policy : e.status === 429 ? c.tooFast
     : /GUARD|CONTENT|SOLICIT|CONTACT/.test(e.code) ? c.guard : /TOO_LONG|LENGTH/.test(e.code) ? c.tooLong : c.sendFailed
+  const uploadReason = (e: ApiError) => e.status === 413 ? c.tooLarge : e.status === 415 || /TYPE|MIME/.test(e.code) ? c.fileType : c.sendFailed
+  const fail = (messageId: string, text: string) => {
+    setItems(prev => (prev ?? []).map(m => m.id === messageId ? { ...m, state: 'failed' } : m))
+    setNotice(text)
+  }
 
+  // Sends a text, a photo or a file. A photo or file is uploaded first (the server scans it), then the message goes.
   const deliver = async (message: Local) => {
     if (!id || !message.clientId) return
     setItems(prev => (prev ?? []).map(m => m.id === message.id ? { ...m, state: 'sending' } : m))
-    const res = await dmSend(id, message.body, message.clientId)
-    if (res.ok) {
-      setItems(prev => [...(prev ?? []).filter(m => m.id !== message.id && m.id !== res.data.id), res.data].sort(byTime))
-      setNotice(null)
-    } else {
-      setItems(prev => (prev ?? []).map(m => m.id === message.id ? { ...m, state: 'failed' } : m))
-      setNotice(reason(res.error))
+    let attachment = message.attachment ?? null
+    if (message.file && !attachment) {
+      const up = await dmUploadAttachment(message.file)
+      if (!up.ok) { fail(message.id, uploadReason(up.error)); return }
+      attachment = up.data
+      setItems(prev => (prev ?? []).map(m => m.id === message.id ? { ...m, attachment } : m))
     }
+    const res = await dmSend(id, message.body, message.clientId, attachment ? { mediaId: attachment.mediaId, kind: attachment.kind } : undefined)
+    if (res.ok) {
+      if (message.preview) URL.revokeObjectURL(message.preview)
+      setItems(prev => [...(prev ?? []).filter(m => m.id !== message.id && m.id !== res.data.id), { ...res.data, seen: Date.now() }].sort(byTime))
+      setNotice(null)
+    } else fail(message.id, reason(res.error))
   }
-  const send = () => {
-    const body = draft.trim()
+  const send = (text = draft) => {
+    const body = text.trim()
     if (!body || !id) return
     if (body.length > 2000) { setNotice(c.tooLong); return }
     const clientId = newId()
@@ -211,15 +267,31 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     atBottom.current = true
     void deliver(local)
   }
+  const attach = (file: File, kind: 'image' | 'file') => {
+    if (!id) return
+    if (file.size > (kind === 'image' ? MAX_PHOTO : MAX_FILE)) { setNotice(c.tooLarge); return }
+    const clientId = newId()
+    const local: Local = { id: `local-${clientId}`, clientId, threadId: id, senderProfileId: 'me', body: '', createdAt: new Date().toISOString(), deletedAt: null, state: 'sending',
+      file, attachKind: kind, preview: kind === 'image' ? URL.createObjectURL(file) : undefined }
+    setItems(prev => [...(prev ?? []), local])
+    atBottom.current = true
+    void deliver(local)
+  }
+  const pick = (kind: 'image' | 'file' | 'camera') => (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    event.target.value = ''
+    setAttachOpen(false)
+    if (file) attach(file, kind === 'file' ? 'file' : 'image')
+  }
   const loadOlder = async () => {
     if (!id || !older) return
     const res = await dmMessages(id, older)
     if (res.ok) { merge(Array.isArray(res.data?.items) ? res.data.items : []); setOlder(res.data.nextBefore) }
   }
 
-  // Long-press (or right-click) a received message to report it.
+  // Long-press (or right-click) any message opens its actions; a pointer that moves away cancels the hold.
   const press = useRef<number | null>(null)
-  const holdStart = (m: DmMessage) => (e: ReactPointerEvent) => { if (e.pointerType === 'mouse' && e.button !== 0) return; press.current = window.setTimeout(() => setReporting(m), 550) }
+  const holdStart = (m: Local) => (e: ReactPointerEvent) => { if (e.pointerType === 'mouse' && e.button !== 0) return; press.current = window.setTimeout(() => setActing(m), 550) }
   const holdEnd = () => { if (press.current) window.clearTimeout(press.current); press.current = null }
 
   const mineOf = (m: Local) => peer ? m.senderProfileId !== peer.id : m.senderProfileId === 'me'
@@ -261,8 +333,34 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     setNotice(res.ok ? c.reported : c.sendFailed)
   }
 
-  const topbar = <RwaTopbar screen="community-thread" title={peer?.displayName ?? c.title} onBack={() => backOr('/community/messages')}
-    action={peer ? { label: c.menu, Icon: MoreHorizontal, onClick: () => setMenu(true) } : undefined} />
+  // The message actions. Copy and reply work on any message; delete is only for your own, and removes it for both sides.
+  const snippet = (m: Local) => m.body ? Array.from(m.body).slice(0, 40).join('') : c.imageLabel
+  const copyText = async (m: Local) => {
+    setActing(null)
+    try { await navigator.clipboard.writeText(m.body); setNotice(c.copied) } catch { setNotice(c.sendFailed) }
+  }
+  const replyTo = (m: Local) => {
+    setActing(null)
+    setDraft(current => `「${snippet(m)}」\n${current}`)
+    window.setTimeout(() => composer.current?.focus(), 0)
+  }
+  const unsend = async (m: Local) => {
+    setConfirming(null)
+    if (!id) return
+    if (m.state || m.id.startsWith('local-')) { setItems(prev => (prev ?? []).filter(x => x.id !== m.id)); return }
+    const res = await dmDeleteMessage(id, m.id)
+    if (res.ok) setItems(prev => (prev ?? []).filter(x => x.id !== m.id))
+    else setNotice(c.sendFailed)
+  }
+
+  const topbar = <header className={d.top} data-glass-bar="">
+    <button type="button" className={d.circle} aria-label={c.back} onClick={() => backOr('/community/messages')}><ChevronLeft size={20} strokeWidth={2} aria-hidden="true" /></button>
+    <span className={d.namePill}>
+      {peer && <CommunityAvatar avatarUrl={peer.avatarUrl} seed={peer.avatarSeed} handle={peer.handle} size={28} />}
+      <b dir="auto">{peer?.displayName ?? c.title}</b>
+    </span>
+    <button type="button" className={d.pill} aria-label={c.menu} disabled={!peer} onClick={() => setMenu(true)}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>
+  </header>
 
   if (!id) return <MaisonPage page="community-thread" topbar={topbar}><StateBlock title={c.failed} /></MaisonPage>
   if (error && !items?.length) {
@@ -272,38 +370,74 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     return <MaisonPage page="community-thread" topbar={topbar}><div className={d.page}>{block}</div></MaisonPage>
   }
 
+  const joinedText = facts?.joinedAt && !Number.isNaN(Date.parse(facts.joinedAt))
+    ? c.joined.replace('{date}', new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'long' }).format(new Date(facts.joinedAt))) : ''
+  const followersText = facts ? c.followers.replace('{n}', new Intl.NumberFormat(locale).format(facts.followerCount)) : ''
+  const actingMine = acting ? mineOf(acting) : false
+  const actingSettled = acting ? !acting.state && !acting.id.startsWith('local-') : false
+
   return <MaisonPage page="community-thread" topbar={topbar}>
     <div className={d.thread} ref={list}>
       {items === null ? <Skeleton rows={4} /> : <>
-        {older ? <button type="button" className={d.older} onClick={() => void loadOlder()}>{c.older}</button>
-          : peer && <div className={d.start}>
-            <CommunityAvatar avatarUrl={peer.avatarUrl} seed={peer.avatarSeed} handle={peer.handle} size={64} />
-            <b dir="auto">{peer.displayName}</b>
-            <small dir="ltr">@{peer.handle}</small>
-            <p>{c.firstLine}</p>
-          </div>}
+        {peer && <div className={d.start}>
+          <CommunityAvatar avatarUrl={peer.avatarUrl} seed={peer.avatarSeed} handle={peer.handle} size={72} />
+          <b dir="auto">{peer.displayName}</b>
+          <small dir="ltr">@{peer.handle}</small>
+          {(joinedText || followersText) && <p className={d.facts}>{joinedText && <span>{joinedText}</span>}{followersText && <span>{followersText}</span>}</p>}
+          <button type="button" className={d.profileKey} onClick={() => openPath(`/community/member/${encodeURIComponent(peer.handle)}`)}>{c.viewProfile}</button>
+          <p>{c.firstLine}</p>
+        </div>}
+        {older && <button type="button" className={d.older} onClick={() => void loadOlder()}>{c.older}</button>}
         {rows.map(row => row.kind === 'day'
           ? <p key={row.key} className={d.day}>{row.label}</p>
-          : <div key={row.m.id} className={d.line} data-mine={row.mine || undefined} data-tail={row.tail || undefined}>
-            <div className={d.bubble} dir="auto" data-state={row.m.state}
-              onPointerDown={row.mine ? undefined : holdStart(row.m)} onPointerUp={holdEnd} onPointerLeave={holdEnd} onPointerCancel={holdEnd}
-              onContextMenu={row.mine ? undefined : (e) => { e.preventDefault(); setReporting(row.m) }}
-              onClick={row.m.state === 'failed' ? () => void deliver(row.m) : undefined}>
-              {row.m.deletedAt ? '—' : row.m.body}
-            </div>
-            {row.m.state === 'failed' ? <small className={d.failed}>{c.notSent} · {c.tapRetry}</small>
-              : row.tail && <small className={d.time}>{new Date(row.m.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</small>}
-          </div>)}
+          : <Bubble key={row.m.id} m={row.m} mine={row.mine} tail={row.tail} locale={locale} c={c}
+            onHoldStart={holdStart} onHoldEnd={holdEnd}
+            onMenu={(m) => setActing(m)}
+            onRetry={(m) => void deliver(m)} />)}
       </>}
     </div>
     <form className={d.composer} data-glass-bar="" onSubmit={(e) => { e.preventDefault(); send() }}>
       {notice && <p className={d.notice} role="status">{notice}</p>}
+      {!draft.trim() && <div className={d.quick} role="group" aria-label={c.quickLabel}>
+        {c.quick.map(text => <button key={text} type="button" className={d.quickPill} onClick={() => send(text)}>{text}</button>)}
+      </div>}
       <div className={d.field}>
-        <textarea value={draft} rows={1} maxLength={2000} placeholder={c.placeholder} aria-label={c.placeholder} dir="auto"
+        <button type="button" className={d.plus} aria-label={c.attach} aria-haspopup="dialog" onClick={() => setAttachOpen(true)}><Plus size={20} strokeWidth={2} aria-hidden="true" /></button>
+        <textarea ref={composer} value={draft} rows={1} maxLength={2000} placeholder={c.placeholder} aria-label={c.placeholder} dir="auto"
           onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px` }} />
+        <button type="button" className={d.mic} aria-label={c.voice} title={c.voice} disabled><Mic size={18} strokeWidth={1.9} aria-hidden="true" /></button>
         <button type="submit" className={d.send} aria-label={c.send} disabled={!draft.trim()}><ArrowUp size={18} strokeWidth={2.4} aria-hidden="true" /></button>
       </div>
     </form>
+
+    <input ref={photoPicker} type="file" accept={PHOTO_TYPES} hidden onChange={pick('image')} />
+    <input ref={cameraPicker} type="file" accept="image/*" capture="environment" hidden onChange={pick('camera')} />
+    <input ref={filePicker} type="file" accept={FILE_TYPES} hidden onChange={pick('file')} />
+
+    <Sheet open={attachOpen} onClose={() => setAttachOpen(false)} title={c.attach}>
+      <div className={d.options}>
+        <button type="button" onClick={() => { setAttachOpen(false); photoPicker.current?.click() }}>{c.photo}</button>
+        <button type="button" onClick={() => { setAttachOpen(false); cameraPicker.current?.click() }}>{c.camera}</button>
+        <button type="button" onClick={() => { setAttachOpen(false); filePicker.current?.click() }}>{c.file}</button>
+      </div>
+    </Sheet>
+
+    <Sheet open={acting !== null} onClose={() => setActing(null)} title={c.messageActions}>
+      {acting && <div className={d.options}>
+        {acting.body && actingSettled && <button type="button" onClick={() => void copyText(acting)}><Copy size={17} strokeWidth={1.9} aria-hidden="true" /> {c.copy}</button>}
+        {actingSettled && <button type="button" onClick={() => replyTo(acting)}><Reply size={17} strokeWidth={1.9} aria-hidden="true" /> {c.reply}</button>}
+        {actingMine && actingSettled && <button type="button" data-danger="" onClick={() => { setConfirming(acting); setActing(null) }}><Trash2 size={17} strokeWidth={1.9} aria-hidden="true" /> {c.del}</button>}
+        {!actingMine && actingSettled && <button type="button" data-danger="" onClick={() => { setReporting(acting); setActing(null) }}><Flag size={17} strokeWidth={1.9} aria-hidden="true" /> {c.report}</button>}
+      </div>}
+    </Sheet>
+
+    <Sheet open={confirming !== null} onClose={() => setConfirming(null)} title={c.delTitle}>
+      <div className={d.options}>
+        <p className={d.confirmBody}>{c.delBody}</p>
+        <button type="button" data-danger="" onClick={() => confirming && void unsend(confirming)}>{c.delConfirm}</button>
+        <button type="button" onClick={() => setConfirming(null)}>{c.cancel}</button>
+      </div>
+    </Sheet>
 
     <Sheet open={menu} onClose={() => setMenu(false)} title={peer?.displayName ?? c.menu}>
       <div className={d.options}>
@@ -318,4 +452,31 @@ export function DmThreadScreen({ id }: { id: string | null }) {
       </div>
     </Sheet>
   </MaisonPage>
+}
+
+/** One message. A photo shows as a picture, a file as a link with its name; the bubble keeps its long-press. */
+function Bubble({ m, mine, tail, locale, c, onHoldStart, onHoldEnd, onMenu, onRetry }: {
+  m: Local; mine: boolean; tail: boolean; locale: string; c: Copy
+  onHoldStart: (m: Local) => (e: ReactPointerEvent) => void; onHoldEnd: () => void; onMenu: (m: Local) => void; onRetry: (m: Local) => void
+}) {
+  const photo = m.attachment?.kind === 'image' ? mediaSrc(m.attachment.url) : m.preview ?? null
+  const file = m.attachment?.kind === 'file' ? m.attachment : null
+  const fileName = file ? (file.name || c.fileLabel) : m.attachKind === 'file' ? (m.file?.name || c.fileLabel) : null
+  return <div className={d.line} data-mine={mine || undefined} data-tail={tail || undefined}>
+    <div className={d.bubble} dir="auto" data-state={m.state} data-kind={photo ? 'image' : fileName ? 'file' : undefined}
+      onPointerDown={onHoldStart(m)} onPointerUp={onHoldEnd} onPointerLeave={onHoldEnd} onPointerCancel={onHoldEnd}
+      onContextMenu={(e) => { e.preventDefault(); onMenu(m) }}
+      onClick={m.state === 'failed' ? () => onRetry(m) : undefined}>
+      {m.deletedAt ? '—' : <>
+        {photo && <img className={d.photo} src={photo} alt={c.imageLabel} loading="lazy" decoding="async" draggable={false} />}
+        {fileName && (file && mediaSrc(file.url)
+          ? <a className={d.file} href={mediaSrc(file.url) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></a>
+          : <span className={d.file}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></span>)}
+        {m.body && <span className={d.text}>{m.body}</span>}
+        {m.state === 'sending' && m.file && !m.attachment ? <small className={d.uploading}>{c.uploading}</small> : null}
+      </>}
+    </div>
+    {m.state === 'failed' ? <small className={d.failed}>{c.notSent} · {c.tapRetry}</small>
+      : tail && <small className={d.time}>{new Date(m.createdAt).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })}</small>}
+  </div>
 }

@@ -255,13 +255,6 @@ span.act { cursor: default; }
 }
 .outlineCircle { composes: circleBtn; width: 34px; height: 34px; border: 1px solid var(--x-line-strong); }
 
-/* ── Compose FAB: X's blue feather-plus, fades back while reading down. ── */
-.fab { position: fixed; z-index: 20; inset-inline-end: max(16px, calc((100vw - var(--app-max, 480px)) / 2 + 16px)); bottom: calc(20px + env(safe-area-inset-bottom)); display: grid; place-items: center; width: 56px; height: 56px; padding: 0; border: 0; border-radius: 50%; background: var(--x-accent); color: var(--x-accent-ink); box-shadow: var(--x-shadow); cursor: pointer; transition: opacity .3s, transform .2s cubic-bezier(.2, .8, .2, 1), background-color .2s; }
-.fab:hover { background: color-mix(in srgb, var(--x-accent) 90%, #000); }
-.fab:active { transform: scale(.92); }
-.fab[data-compact='true'] { opacity: .55; }
-.fabIcon { position: relative; display: block; width: 24px; height: 24px; }
-.fabIcon > svg:last-child { position: absolute; top: -3px; inset-inline-start: -5px; }
 
 /* ── Profile ── */
 .banner { position: relative; aspect-ratio: 3 / 1; overflow: hidden; background: var(--x-banner); }
@@ -342,7 +335,7 @@ span.act { cursor: default; }
   @keyframes xRise { from { opacity: 0; transform: translateY(8px); } }
 }
 @media (prefers-reduced-motion: reduce) {
-  .head, .fab, .toast, .sheet, .scrim, .like > svg, .like::before { animation: none !important; transition: none !important; }
+  .head, .toast, .sheet, .scrim, .like > svg, .like::before { animation: none !important; transition: none !important; }
 }
 
 /* ── Paper & Glass (palette A): the community keeps the timeline layout but wears the app's materials — paper
@@ -364,8 +357,6 @@ span.act { cursor: default; }
 :global(html[data-palette='a']) .chip { border: 0; background: var(--x-surface-2); font-weight: 500; font-size: 13px; }
 :global(html[data-palette='a']) .chip[aria-pressed='true'] { background: var(--x-solid); }
 :global(html[data-palette='a']) .tab[aria-selected='true'] { font-weight: 650; }
-:global(html[data-palette='a']) .fab { background: var(--btn-solid-fill); color: var(--btn-solid-ink); box-shadow: var(--btn-solid-edge, none), 0 10px 24px -10px rgba(11, 18, 32, .5); }
-:global(html[data-palette='a']) .fab:hover { background: var(--btn-solid-fill); filter: brightness(1.05); }
 :global(html[data-palette='a']) .tabLine { width: 18px; min-width: 0; height: 3px; bottom: 6px; background: var(--x-ink); }
 
 /* Community as a first-level tab (2026-10-28, docs/design-system.md §7.6): the top row is the page menu 社区 · 邀请
@@ -375,8 +366,6 @@ span.act { cursor: default; }
 .pageTabs button { position: relative; flex: none; padding: 8px 0 12px; border: 0; background: none; color: var(--m-muted, var(--x-muted)); font-size: 17px; font-weight: 500; line-height: 24px; cursor: pointer; }
 .pageTabs button[aria-selected='true'] { color: var(--x-ink); font-weight: 600; }
 .pageTabs button[aria-selected='true']::after { content: ''; position: absolute; left: 50%; bottom: 4px; width: 16px; height: 3px; margin-left: -8px; border-radius: 3px; background: var(--x-ink); }
-/* With the dock showing, the compose button stacks above the AI ball in the same column instead of sitting on it. */
-:global(.rwa-mobile[data-dock='true']) .fab { bottom: calc(max(var(--app-dock-air, 12px), env(safe-area-inset-bottom)) + var(--app-dock-height, 52px) + 16px); }
 
 /* My circle (2026-10-28): a small text tag after the handle, and the visibility switch at the end of the circle timeline. */
 .relation { flex: none; padding: 0 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--x-muted); font-size: 12px; font-weight: 500; line-height: 20px; white-space: nowrap; }
@@ -411,12 +400,6 @@ span.act { cursor: default; }
 .sheet { scrollbar-width: none; }
 .sheet::-webkit-scrollbar { display: none; }
 
-/* Compose in the header (2026-10-28): a porcelain pill with a pen; fades in on the feed. */
-.composeBtn { display: inline-flex; align-items: center; gap: 4px; height: 32px; margin-inline: auto 12px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--pa-tile-bg, #fff); color: var(--pa-tile-ink, #0b1220); box-shadow: var(--pa-tile-shadow, 0 0 0 .5px rgba(11, 18, 32, .1)); font: inherit; font-size: 13px; font-weight: 600; white-space: nowrap; cursor: pointer; animation: composeIn .22s cubic-bezier(.22, 1, .36, 1) both; transition: transform .12s cubic-bezier(.34, 1.56, .64, 1); }
-.composeBtn:active { transform: scale(.94); }
-.composeBtn:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
-@keyframes composeIn { from { opacity: 0; transform: scale(.9); } }
-@media (prefers-reduced-motion: reduce) { .composeBtn { animation: none; transition: none; } }
 /* Each photo is a button that opens the viewer (2026-10-28). */
 .mediaBtn { display: block; min-width: 0; min-height: 0; padding: 0; border: 0; background: none; cursor: zoom-in; }
 .media[data-count='3'] .mediaBtn:first-child { grid-row: span 2; }
@@ -433,5 +416,4 @@ span.act { cursor: default; }
 .inboxBtn { position: relative; display: grid; flex: none; place-items: center; width: 36px; height: 36px; margin-inline-start: auto; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--x-ink); cursor: pointer; }
 .inboxBtn i { position: absolute; top: 6px; inset-inline-end: 5px; width: 8px; height: 8px; border-radius: 50%; background: var(--m-down, #e5484d); box-shadow: 0 0 0 2px var(--x-bg); }
 .inboxBtn:active { transform: scale(.94); }
-.inboxBtn + .composeBtn { margin-inline-start: 4px; }
 .inboxBtn[data-view='invite'] { margin-inline-end: 8px; }
