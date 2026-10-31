@@ -11,6 +11,7 @@ import { useI18n } from '@/lib/i18n'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import type { PrimaryScreen } from './shared'
 import { BuddyOrb } from '@/components/buddy/BuddyOrb'
+import { CommunityFeather } from '@/components/community/CommunityFeather'
 import d from './dock-v2.module.css'
 
 type Screen = RwaScreen
@@ -82,7 +83,9 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
         </button>
       </>}
       {/* The paper buddy: AI, notifications, how things stand. */}
-      <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => openAi()} />
+      <CommunityFeather>
+        <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => openAi()} />
+      </CommunityFeather>
     </nav>
   )
 }

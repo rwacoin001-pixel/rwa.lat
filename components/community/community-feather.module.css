@@ -1,0 +1,9 @@
+/* The community feather (2026-10-31): a small pen above the AI orb. Hidden at rest; it rises in while the feed is read,
+   and pales (colour and opacity) when the reader pulls back up. The orb keeps its place and its own states. */
+.anchor { position: relative; display: inline-flex; flex: none; }
+.feather { position: absolute; bottom: calc(100% + 6px); left: 50%; z-index: 1; display: grid; place-items: center; width: 30px; height: 30px; padding: 0; border: 0; border-radius: 50%; background: var(--pa-card, #fff); color: var(--m-ink, #0b1220); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .12), 0 4px 10px -6px rgba(11, 18, 32, .4); cursor: pointer; opacity: 0; pointer-events: none; transform: translate(-50%, 6px) scale(.8); transition: opacity .25s, transform .3s cubic-bezier(.34, 1.56, .64, 1), color .3s; }
+.feather[data-visible] { opacity: 1; pointer-events: auto; transform: translate(-50%, 0) scale(1); }
+.feather[data-faded] { color: var(--m-faint, #8a9099); opacity: .45; }
+.feather:active { transform: translate(-50%, 0) scale(.92); }
+.feather:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .feather { transition: none; } }
