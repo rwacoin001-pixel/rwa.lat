@@ -55,7 +55,7 @@ export default function AppStartup() {
         Boolean((navigator as Navigator & { standalone?: boolean }).standalone) || /RwaLatAndroidTrial\//.test(navigator.userAgent)
       let seen = false
       try { seen = sessionStorage.getItem(APP_STARTUP_KEY) === '1' } catch { /* Storage is optional. */ }
-      showEntrance.current = shouldShowAppStartup({ pathname: initialPathname.current, installed, seen, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches })
+      showEntrance.current = shouldShowAppStartup({ pathname: initialPathname.current ?? '', installed, seen, reducedMotion: matchMedia('(prefers-reduced-motion: reduce)').matches })
       if (showEntrance.current) {
         try { sessionStorage.setItem(APP_STARTUP_KEY, '1') } catch { /* The decision ref prevents navigation repeats. */ }
       }
