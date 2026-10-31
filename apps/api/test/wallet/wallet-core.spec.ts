@@ -417,7 +417,7 @@ describe('WalletService', () => {
       network: 'arbitrum' as const,
       transactionHash: '0x1111111111111111111111111111111111111111111111111111111111111111',
       destinationAddress: '0x2222222222222222222222222222222222222222',
-      atomicAmount: '1000000',
+      atomicAmount: '300000000',
       confirmations: 60,
       outputIndex: 0,
       riskDecision: 'clear' as const,
@@ -428,7 +428,7 @@ describe('WalletService', () => {
 
     const response = await service.processDepositCallback(eventId, timestamp, signature, payload)
 
-    expect(ledger.creditDeposit).toHaveBeenCalledWith(expect.any(String), 'user-1', 'arbitrum', '1000000', eventId)
+    expect(ledger.creditDeposit).toHaveBeenCalledWith(expect.any(String), 'user-1', 'arbitrum', '300000000', eventId)
     expect(response.deposit.state).toBe('credited')
     expect(response.retryPolicy.duplicateEventsAreIdempotent).toBe(true)
   })
@@ -445,7 +445,7 @@ describe('WalletService', () => {
       network: 'arbitrum' as const,
       transactionHash: '0x3333333333333333333333333333333333333333333333333333333333333333',
       destinationAddress: '0x4444444444444444444444444444444444444444',
-      atomicAmount: '1000000',
+      atomicAmount: '300000000',
       confirmations: 60,
       outputIndex: 0,
       riskDecision: 'clear' as const,
@@ -456,7 +456,7 @@ describe('WalletService', () => {
 
     const response = await service.processDepositCallback(eventId, timestamp, signature, payload)
 
-    expect(ledger.creditDeposit).toHaveBeenCalledWith(expect.any(String), 'user-1', 'arbitrum', '1000000', eventId)
+    expect(ledger.creditDeposit).toHaveBeenCalledWith(expect.any(String), 'user-1', 'arbitrum', '300000000', eventId)
     expect(response.integration).toMatchObject({ adapterMode: 'stub', demoCreditEnabled: true, realFunds: false })
   })
 })
