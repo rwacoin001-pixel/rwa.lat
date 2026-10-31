@@ -24,7 +24,7 @@ export interface WalletNetworkConfig {
 const NETWORKS: Readonly<Record<WalletNetwork, WalletNetworkConfig>> = Object.freeze({
   tron: {
     id: 'tron', displayName: 'TRON', assetCode: 'USDT', assetDecimals: 6,
-    requiredConfirmations: 20, minimumDepositAtomic: '1000000', minimumWithdrawalAtomic: '10000000',
+    requiredConfirmations: 20, minimumDepositAtomic: '300000000', minimumWithdrawalAtomic: '10000000',
     withdrawalFeeAtomic: '1000000', estimatedArrivalMinutes: [2, 10],
     warning: 'Send TRC-20 USDT only. Other assets or networks require manual recovery review.',
     warningCode: 'wrong_network_loss',
@@ -32,7 +32,7 @@ const NETWORKS: Readonly<Record<WalletNetwork, WalletNetworkConfig>> = Object.fr
   },
   ethereum: {
     id: 'ethereum', displayName: 'Ethereum', assetCode: 'USDT', assetDecimals: 6,
-    requiredConfirmations: 64, minimumDepositAtomic: '10000000', minimumWithdrawalAtomic: '50000000',
+    requiredConfirmations: 64, minimumDepositAtomic: '300000000', minimumWithdrawalAtomic: '50000000',
     withdrawalFeeAtomic: '12000000', estimatedArrivalMinutes: [12, 30],
     warning: 'Send ERC-20 USDT only. Network fees can change before approval.',
     warningCode: 'wrong_network_loss',
@@ -40,7 +40,7 @@ const NETWORKS: Readonly<Record<WalletNetwork, WalletNetworkConfig>> = Object.fr
   },
   arbitrum: {
     id: 'arbitrum', displayName: 'Arbitrum One', assetCode: 'USDT', assetDecimals: 6,
-    requiredConfirmations: 60, minimumDepositAtomic: '1000000', minimumWithdrawalAtomic: '10000000',
+    requiredConfirmations: 60, minimumDepositAtomic: '300000000', minimumWithdrawalAtomic: '10000000',
     withdrawalFeeAtomic: '500000', estimatedArrivalMinutes: [2, 10],
     warning: 'Send native Arbitrum USDT only. Bridged variants are not automatically credited.',
     warningCode: 'bridged_variant_loss',

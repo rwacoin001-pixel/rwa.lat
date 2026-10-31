@@ -11,8 +11,8 @@
 .backdrop { position: absolute; inset: 0; animation: layerIn .32s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); background: color-mix(in srgb, var(--ds-bg, #ffffff) 58%, transparent); -webkit-backdrop-filter: blur(26px) saturate(1.25); backdrop-filter: blur(26px) saturate(1.25); }
 :global(.rwa-mobile[data-theme='dark']) .backdrop { background: color-mix(in srgb, #07090d 62%, transparent); }
 /* The Android app keeps blur off for smoothness (§8): a stronger veil instead. */
-:global(html[data-shell='android']) .backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--ds-bg, #ffffff) 90%, transparent); }
-:global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .backdrop { background: rgba(7, 9, 13, .9); }
+:global(html[data-shell='android']) .backdrop { -webkit-backdrop-filter: none; backdrop-filter: none; background: color-mix(in srgb, var(--ds-bg, #ffffff) 98%, transparent); }
+:global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .backdrop { background: rgba(7, 9, 13, .98); }
 
 .scroller { position: absolute; inset: 0; overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; animation: rise .42s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) backwards; }
 @keyframes rise { from { opacity: 0; transform: translateY(24px); } }
@@ -60,7 +60,7 @@
 
 /* The edge only flashes (2026-10-28, user): it lights up as the layer opens, holds a moment and fades out within about
    2.5 seconds, then stays off; the input carries the quiet glow from there (ai-composer.module.css). */
-.edge { animation: edgeFlash 2.6s cubic-bezier(.22, 1, .36, 1) forwards; }
-@keyframes edgeFlash { 0% { opacity: 0; } 14% { opacity: 1; } 55% { opacity: .9; } 100% { opacity: 0; visibility: hidden; } }
+.edge { animation: edgeFlash 5.6s cubic-bezier(.33, 0, .2, 1) forwards; }
+@keyframes edgeFlash { 0% { opacity: 0; } 10% { opacity: 1; } 45% { opacity: .85; } 75% { opacity: .35; } 100% { opacity: 0; visibility: hidden; } }
 .layer[data-active] .dots, .layer[data-active] .glow { opacity: inherit; }
 @media (prefers-reduced-motion: reduce) { .edge { animation: none; opacity: 0; } }

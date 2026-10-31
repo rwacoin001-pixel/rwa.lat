@@ -1,25 +1,30 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { MeshGradient } from '@paper-design/shaders-react'
 import styles from './colour-band.module.css'
 
+const COLOURS = ['#14b8a6', '#3b82f6', '#8b5cf6', '#f472b6', '#fb923c', '#fde68a']
+
 /**
- * ColourBand (2026-10-31): the living colour band on the profile card, drawn with CSS only. Two saturated gradient layers
- * slide sideways on transform (composited, no repaint) on 10 s and 12 s loops, so they never line up for long. It pauses
- * while it is off screen and stays still under reduced motion. It replaces the WebGL shader of 2026-10-28, which was too
- * pale to see and redrew every frame.
+ * ColourBand (2026-11-01): the living colour band on the profile card, drawn by the open-source Paper Design mesh-gradient
+ * shader (@paper-design/shaders-react): soft colour spots on their own paths, bent by organic noise, so it reads as one
+ * smooth, deep surface with no seams or stripes. The canvas is small and capped in pixels; it stops while it is off
+ * screen or under reduced motion, and the soft gradient behind it shows if WebGL is not available.
  */
 export function ColourBand({ className }: { className?: string }) {
   const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(true)
+  const [still, setStill] = useState(false)
   useEffect(() => {
+    setStill(matchMedia('(prefers-reduced-motion: reduce)').matches)
     const el = ref.current
     if (!el || typeof IntersectionObserver === 'undefined') return
-    const io = new IntersectionObserver(([entry]) => el.toggleAttribute('data-paused', !entry.isIntersecting))
+    const io = new IntersectionObserver(([entry]) => setVisible(entry.isIntersecting))
     io.observe(el)
     return () => io.disconnect()
   }, [])
   return <div ref={ref} className={className ? `${styles.band} ${className}` : styles.band} aria-hidden="true">
-    <span className={styles.a} />
-    <span className={styles.b} />
+    <MeshGradient className={styles.mesh} colors={COLOURS} distortion={0.85} swirl={0.55} speed={visible && !still ? 0.45 : 0} minPixelRatio={1} maxPixelCount={500 * 200} />
   </div>
 }

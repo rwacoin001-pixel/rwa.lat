@@ -27,7 +27,7 @@ type Copy = {
   menu: string; viewProfile: string; mute: string; unmute: string; block: string; unblock: string; report: string; reportTitle: string
   reasons: [string, string][]; reported: string; cancel: string; today: string; yesterday: string; firstLine: string
   joined: string; followers: string; quick: string[]; quickLabel: string; attach: string; photo: string; camera: string; file: string
-  voice: string; copy: string; copied: string; reply: string; del: string; delTitle: string; delBody: string; delConfirm: string
+  voice: string; voiceKey: string; micDenied: string; recording: string; copy: string; copied: string; reply: string; del: string; delTitle: string; delBody: string; delConfirm: string
   messageActions: string; uploading: string; tooLarge: string; fileType: string; imageLabel: string; fileLabel: string; back: string
 }
 const COPY: Partial<Record<AppLocale, Copy>> = {
@@ -40,7 +40,7 @@ const COPY: Partial<Record<AppLocale, Copy>> = {
     report: '举报这条消息', reportTitle: '举报原因', reasons: [['spam', '垃圾信息或广告'], ['scam', '诈骗或带单'], ['abuse', '辱骂或骚扰'], ['other', '其他']], reported: '已收到举报，我们会尽快处理。', cancel: '取消',
     today: '今天', yesterday: '昨天', firstLine: '这是你们对话的开始。不要透露密码、验证码或私钥。',
     joined: '加入于 {date}', followers: '{n} 位关注者', quick: ['👋', '嗨！', '怎么样？'], quickLabel: '快捷回复', attach: '添加附件', photo: '照片', camera: '相机', file: '文件',
-    voice: '语音输入，即将开放', copy: '复制', copied: '已复制', reply: '回复', del: '删除', delTitle: '删除这条消息？', delBody: '删除后，你和对方都看不到这条消息。', delConfirm: '删除',
+    voice: '语音消息即将开放', voiceKey: '发送语音', micDenied: '没有麦克风权限，请在系统设置里允许。', recording: '正在录音…', copy: '复制', copied: '已复制', reply: '回复', del: '删除', delTitle: '删除这条消息？', delBody: '删除后，你和对方都看不到这条消息。', delConfirm: '删除',
     messageActions: '消息', uploading: '正在上传…', tooLarge: '文件太大了，请换一个再试。', fileType: '这种文件暂不支持。', imageLabel: '照片', fileLabel: '文件', back: '返回',
   },
   en: {
@@ -52,7 +52,7 @@ const COPY: Partial<Record<AppLocale, Copy>> = {
     report: 'Report this message', reportTitle: 'Why are you reporting it?', reasons: [['spam', 'Spam or advertising'], ['scam', 'Scam or signal group'], ['abuse', 'Abuse or harassment'], ['other', 'Something else']], reported: 'Report received. We will look at it soon.', cancel: 'Cancel',
     today: 'Today', yesterday: 'Yesterday', firstLine: 'This is the start of your conversation. Never share passwords, codes or keys.',
     joined: 'Joined {date}', followers: '{n} followers', quick: ['👋', 'Hi!', 'How are you?'], quickLabel: 'Quick replies', attach: 'Add attachment', photo: 'Photo', camera: 'Camera', file: 'File',
-    voice: 'Voice input, coming soon', copy: 'Copy', copied: 'Copied', reply: 'Reply', del: 'Delete', delTitle: 'Delete this message?', delBody: 'Once deleted, you and they will both stop seeing this message.', delConfirm: 'Delete',
+    voice: 'Voice messages are coming soon', voiceKey: 'Record a voice message', micDenied: 'Microphone access is off. Allow it in settings.', recording: 'Recording…', copy: 'Copy', copied: 'Copied', reply: 'Reply', del: 'Delete', delTitle: 'Delete this message?', delBody: 'Once deleted, you and they will both stop seeing this message.', delConfirm: 'Delete',
     messageActions: 'Message', uploading: 'Uploading…', tooLarge: 'That file is too large. Try a smaller one.', fileType: 'That file type is not supported.', imageLabel: 'Photo', fileLabel: 'File', back: 'Back',
   },
 }
@@ -141,7 +141,7 @@ export function DmInboxScreen() {
 
 /* ── Conversation ─────────────────────────────────────────────────────────────────────────────────────────────── */
 /** A message as the screen holds it: sent ones come from the server; `state`, `file` and `preview` are this device's. */
-type Local = DmMessage & { state?: 'sending' | 'failed'; clientId?: string; file?: File; attachKind?: 'image' | 'file'; preview?: string; seen?: number }
+type Local = DmMessage & { state?: 'sending' | 'failed'; clientId?: string; file?: File; attachKind?: 'image' | 'file' | 'voice'; preview?: string; seen?: number }
 const newId = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`.replace(/\D/g, '').padEnd(32, '0').replace(/^(.{8})(.{4})(.{3})(.{3})(.{12}).*/, '$1-$2-4$3-8$4-$5'))
 const byTime = (a: DmMessage, b: DmMessage) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
 
@@ -161,6 +161,8 @@ export function DmThreadScreen({ id }: { id: string | null }) {
   const [confirming, setConfirming] = useState<Local | null>(null)
   const [reporting, setReporting] = useState<DmMessage | null>(null)
   const [blocked, setBlocked] = useState(false)
+  const [rec, setRec] = useState<null | { seconds: number }>(null)
+  const recorder = useRef<{ media: MediaRecorder; stream: MediaStream; chunks: Blob[]; timer: number; send: boolean } | null>(null)
   const list = useRef<HTMLDivElement>(null)
   const composer = useRef<HTMLTextAreaElement>(null)
   const atBottom = useRef(true)
@@ -267,12 +269,12 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     atBottom.current = true
     void deliver(local)
   }
-  const attach = (file: File, kind: 'image' | 'file') => {
+  const attach = (file: File, kind: 'image' | 'file' | 'voice') => {
     if (!id) return
     if (file.size > (kind === 'image' ? MAX_PHOTO : MAX_FILE)) { setNotice(c.tooLarge); return }
     const clientId = newId()
     const local: Local = { id: `local-${clientId}`, clientId, threadId: id, senderProfileId: 'me', body: '', createdAt: new Date().toISOString(), deletedAt: null, state: 'sending',
-      file, attachKind: kind, preview: kind === 'image' ? URL.createObjectURL(file) : undefined }
+      file, attachKind: kind, preview: kind === 'image' || kind === 'voice' ? URL.createObjectURL(file) : undefined }
     setItems(prev => [...(prev ?? []), local])
     atBottom.current = true
     void deliver(local)
@@ -283,6 +285,39 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     setAttachOpen(false)
     if (file) attach(file, kind === 'file' ? 'file' : 'image')
   }
+  // Voice: tap the mic to record, then send or cancel. The clip goes as an attachment like a photo or a file.
+  const stopRecording = (send: boolean) => {
+    const r = recorder.current
+    if (!r) return
+    r.send = send
+    window.clearInterval(r.timer)
+    if (r.media.state !== 'inactive') r.media.stop()
+    setRec(null)
+  }
+  const startRecording = async () => {
+    if (!DM_SERVER_FEATURES.voice || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') { setNotice(c.voice); return }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const media = new MediaRecorder(stream)
+      const chunks: Blob[] = []
+      const state = { media, stream, chunks, timer: 0, send: false }
+      media.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data) }
+      media.onstop = () => {
+        stream.getTracks().forEach(t => t.stop())
+        recorder.current = null
+        if (!state.send || !chunks.length) return
+        const type = media.mimeType || 'audio/webm'
+        attach(new File(chunks, `voice.${type.includes('mp4') ? 'm4a' : type.includes('ogg') ? 'ogg' : 'webm'}`, { type }), 'voice')
+      }
+      state.timer = window.setInterval(() => setRec(r => r ? { seconds: r.seconds + 1 } : r), 1000)
+      recorder.current = state
+      media.start()
+      setRec({ seconds: 0 })
+    } catch { setNotice(c.micDenied) }
+  }
+  useEffect(() => { if (rec && rec.seconds >= 120) stopRecording(true) }, [rec])
+  useEffect(() => () => { const r = recorder.current; if (r) { r.send = false; window.clearInterval(r.timer); if (r.media.state !== 'inactive') r.media.stop() } }, [])
+
   const loadOlder = async () => {
     if (!id || !older) return
     const res = await dmMessages(id, older)
@@ -355,9 +390,9 @@ export function DmThreadScreen({ id }: { id: string | null }) {
 
   const topbar = <header className={d.top} data-glass-bar="">
     <button type="button" className={d.circle} aria-label={c.back} onClick={() => backOr('/community/messages')}><ChevronLeft size={20} strokeWidth={2} aria-hidden="true" /></button>
-    <span className={d.namePill}>
-      {peer && <CommunityAvatar avatarUrl={peer.avatarUrl} seed={peer.avatarSeed} handle={peer.handle} size={28} />}
-      <b dir="auto">{peer?.displayName ?? c.title}</b>
+    <span className={d.who}>
+      {peer && <span className={d.whoFace}><CommunityAvatar avatarUrl={peer.avatarUrl} seed={peer.avatarSeed} handle={peer.handle} size={60} /></span>}
+      <b className={d.whoName} dir="auto">{peer?.displayName ?? c.title}</b>
     </span>
     <button type="button" className={d.pill} aria-label={c.menu} disabled={!peer} onClick={() => setMenu(true)}><MoreHorizontal size={20} strokeWidth={1.9} aria-hidden="true" /></button>
   </header>
@@ -380,9 +415,6 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     <div className={d.thread} ref={list}>
       {items === null ? <Skeleton rows={4} /> : <>
         {peer && <div className={d.start}>
-          <CommunityAvatar avatarUrl={peer.avatarUrl} seed={peer.avatarSeed} handle={peer.handle} size={72} />
-          <b dir="auto">{peer.displayName}</b>
-          <small dir="ltr">@{peer.handle}</small>
           {(joinedText || followersText) && <p className={d.facts}>{joinedText && <span>{joinedText}</span>}{followersText && <span>{followersText}</span>}</p>}
           <button type="button" className={d.profileKey} onClick={() => openPath(`/community/member/${encodeURIComponent(peer.handle)}`)}>{c.viewProfile}</button>
           <p>{c.firstLine}</p>
@@ -398,15 +430,22 @@ export function DmThreadScreen({ id }: { id: string | null }) {
     </div>
     <form className={d.composer} data-glass-bar="" onSubmit={(e) => { e.preventDefault(); send() }}>
       {notice && <p className={d.notice} role="status">{notice}</p>}
-      {!draft.trim() && <div className={d.quick} role="group" aria-label={c.quickLabel}>
+      <div className={d.box}>
+      {!draft.trim() && !rec && <div className={d.quick} role="group" aria-label={c.quickLabel}>
         {c.quick.map(text => <button key={text} type="button" className={d.quickPill} onClick={() => send(text)}>{text}</button>)}
       </div>}
-      <div className={d.field}>
+      {rec ? <div className={d.recording} role="status">
+        <button type="button" className={d.plus} aria-label={c.cancel} onClick={() => stopRecording(false)}><Trash2 size={19} strokeWidth={1.9} aria-hidden="true" /></button>
+        <span className={d.recDot} aria-hidden="true" /><b dir="ltr">{Math.floor(rec.seconds / 60)}:{String(rec.seconds % 60).padStart(2, '0')}</b><span className={d.recHint}>{c.recording}</span>
+        <button type="button" className={d.send} aria-label={c.send} onClick={() => stopRecording(true)}><ArrowUp size={18} strokeWidth={2.4} aria-hidden="true" /></button>
+      </div> : <div className={d.field}>
         {DM_SERVER_FEATURES.attachments && <button type="button" className={d.plus} aria-label={c.attach} aria-haspopup="dialog" onClick={() => setAttachOpen(true)}><Plus size={20} strokeWidth={2} aria-hidden="true" /></button>}
         <textarea ref={composer} value={draft} rows={1} maxLength={2000} placeholder={c.placeholder} aria-label={c.placeholder} dir="auto"
           onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px` }} />
-        <button type="button" className={d.mic} aria-label={c.voice} title={c.voice} disabled><Mic size={18} strokeWidth={1.9} aria-hidden="true" /></button>
-        <button type="submit" className={d.send} aria-label={c.send} disabled={!draft.trim()}><ArrowUp size={18} strokeWidth={2.4} aria-hidden="true" /></button>
+        {draft.trim()
+          ? <button type="submit" className={d.send} aria-label={c.send}><ArrowUp size={18} strokeWidth={2.4} aria-hidden="true" /></button>
+          : <button type="button" className={d.mic} aria-label={c.voiceKey} title={c.voiceKey} onClick={() => void startRecording()}><Mic size={20} strokeWidth={1.9} aria-hidden="true" /></button>}
+      </div>}
       </div>
     </form>
 
@@ -461,9 +500,10 @@ function Bubble({ m, mine, tail, locale, c, onHoldStart, onHoldEnd, onMenu, onRe
 }) {
   const photo = m.attachment?.kind === 'image' ? mediaSrc(m.attachment.url) : m.preview ?? null
   const file = m.attachment?.kind === 'file' ? m.attachment : null
+  const voice = m.attachment?.kind === 'voice' ? mediaSrc(m.attachment.url) : m.attachKind === 'voice' ? m.preview ?? null : null
   const fileName = file ? (file.name || c.fileLabel) : m.attachKind === 'file' ? (m.file?.name || c.fileLabel) : null
   return <div className={d.line} data-mine={mine || undefined} data-tail={tail || undefined}>
-    <div className={d.bubble} dir="auto" data-state={m.state} data-kind={photo ? 'image' : fileName ? 'file' : undefined}
+    <div className={d.bubble} dir="auto" data-state={m.state} data-kind={photo ? 'image' : voice ? 'voice' : fileName ? 'file' : undefined}
       onPointerDown={onHoldStart(m)} onPointerUp={onHoldEnd} onPointerLeave={onHoldEnd} onPointerCancel={onHoldEnd}
       onContextMenu={(e) => { e.preventDefault(); onMenu(m) }}
       onClick={m.state === 'failed' ? () => onRetry(m) : undefined}>
@@ -472,6 +512,7 @@ function Bubble({ m, mine, tail, locale, c, onHoldStart, onHoldEnd, onMenu, onRe
         {fileName && (file && mediaSrc(file.url)
           ? <a className={d.file} href={mediaSrc(file.url) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></a>
           : <span className={d.file}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></span>)}
+        {voice && <audio className={d.audio} controls preload="metadata" src={voice} onPointerDown={(e) => e.stopPropagation()} />}
         {m.body && <span className={d.text}>{m.body}</span>}
         {m.state === 'sending' && m.file && !m.attachment ? <small className={d.uploading}>{c.uploading}</small> : null}
       </>}

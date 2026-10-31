@@ -90,3 +90,35 @@
 .mic:disabled { opacity: .35; cursor: default; }
 
 @media (prefers-reduced-motion: reduce) { .send { transition: none; } }
+
+/* Round 2 (2026-11-01, after the user's screenshots): the other member sits in the top bar (face over a name pill), the
+   conversation card has no face, and the composer is one rounded box: quick replies above, the field below with a mic
+   that becomes the send key once there is text. The bar clears the status bar (Android showed it underneath). */
+.top { align-items: flex-start; padding: calc(10px + env(safe-area-inset-top)) 12px 10px; background: color-mix(in srgb, var(--m-bg) 92%, transparent); }
+.top .circle, .top .pill { margin-top: 6px; background: var(--pa-fill-strong, var(--pa-card, #fff)); }
+.top .pill { width: 64px; }
+.who { position: relative; display: grid; flex: 1; justify-items: center; min-width: 0; padding-bottom: 14px; }
+.whoFace { display: block; line-height: 0; border-radius: 50%; overflow: hidden; }
+.whoName { position: absolute; bottom: 0; max-width: 100%; height: 34px; padding: 0 16px; border-radius: 999px; overflow: hidden; background: var(--pa-fill-strong, var(--pa-card, #fff)); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)); color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 34px; white-space: nowrap; text-overflow: ellipsis; }
+.start { padding-top: 48px; }
+.thread { align-content: start; }
+
+.composer { background: none; -webkit-backdrop-filter: none; backdrop-filter: none; box-shadow: none; padding: 8px 12px calc(10px + env(safe-area-inset-bottom)); pointer-events: none; }
+.composer > * { pointer-events: auto; }
+.box { display: grid; gap: 10px; padding: 10px; border-radius: 28px; background: var(--pa-fill-strong, var(--pa-card, #fff)); box-shadow: 0 0 0 .5px var(--pa-hair-strong, rgba(11, 18, 32, .14)), 0 10px 30px -18px rgba(11, 18, 32, .5); }
+.box .quick { padding: 0; }
+.box .quickPill { background: var(--pa-fill, rgba(11, 18, 32, .06)); box-shadow: none; min-height: 40px; padding: 0 16px; }
+.box .field { padding: 0 0 0 8px; border-radius: 0; background: none; box-shadow: none; align-items: center; }
+.box .field textarea { padding: 10px 0; }
+.mic { width: 44px; height: 44px; }
+.mic:disabled { opacity: .35; }
+.box .send { width: 44px; height: 44px; background: var(--m-accent, #087a67); color: #fff; }
+.recording { display: flex; align-items: center; gap: 12px; min-height: 44px; padding-inline-start: 4px; color: var(--m-ink); }
+.recording b { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.recHint { flex: 1; min-width: 0; color: var(--m-muted); font-size: 13px; }
+.recDot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--m-down, #d6453d); animation: recPulse 1.2s ease-in-out infinite; }
+@keyframes recPulse { 50% { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .recDot { animation: none; } }
+.bubble[data-kind='voice'] { padding: 6px 8px; }
+.audio { display: block; width: min(220px, 56vw); height: 36px; }
+.thread { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }

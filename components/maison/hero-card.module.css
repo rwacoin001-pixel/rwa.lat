@@ -128,8 +128,8 @@
    --mk-hero-h is the A′ predictions card measured at 375px wide; every body is cropped to it, never grows it, so the
    tab bar below cannot move. Predictions pins its action tier to the bottom so a one-line question leaves the gap
    above the buttons, not under them. `clip` (not `hidden`) keeps the frame from becoming a scroll container. */
-.frame { --mk-hero-h: 420px; height: var(--mk-hero-h); overflow: hidden; overflow: clip; }
-.body { position: relative; height: 100%; }
+.frame { --mk-hero-h: 420px; display: grid; height: auto; min-height: var(--mk-hero-h); overflow: hidden; overflow: clip; }  /* 2026-11-01: a floor, not a cap — larger system fonts and long questions grew past 420px and cut the facts row. */
+.body { position: relative; display: grid; min-height: 0; }
 .frame .inner { height: 100%; grid-template-rows: auto auto 1fr; align-content: start; }
 .frame .inner > .tier[data-tier='3'] { align-self: end; }
 

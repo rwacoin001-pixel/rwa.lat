@@ -1,16 +1,6 @@
-/* Profile colour band (2026-10-31). Each layer is twice the band wide and repeats its palette once per band width, so
-   sliding it by half its own width (exactly one band width) loops with no seam. Only transform animates. */
-.band { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: #2fb8a6; }
-.a, .b { position: absolute; top: 0; bottom: 0; left: 0; width: 200%; background-size: 50% 100%; background-repeat: repeat-x; will-change: transform; }
-.a {
-  background-image: linear-gradient(105deg, #1fb5a0 0%, #3f86f0 20%, #8a5cf0 40%, #f0607a 60%, #f59a3d 80%, #1fb5a0 100%);
-  animation: drift 10s linear infinite;
-}
-.b {
-  background-image: linear-gradient(-75deg, #f59a3d 0%, #f0607a 22%, #3f86f0 48%, #1fc9a6 74%, #f59a3d 100%);
-  opacity: .5;
-  animation: drift 12s linear infinite reverse;
-}
-@keyframes drift { from { transform: translate3d(0, 0, 0); } to { transform: translate3d(-50%, 0, 0); } }
-.band[data-paused='true'] .a, .band[data-paused='true'] .b { animation-play-state: paused; }
-@media (prefers-reduced-motion: reduce) { .a, .b { animation: none; } }
+/* Profile colour band (2026-11-01). The mesh-gradient canvas fills the band; the layered gradient behind it is what shows
+   before the canvas is ready or when WebGL is unavailable. No stripes: only soft radial colour spots. */
+.band { position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+  background: radial-gradient(70% 120% at 12% 20%, #14b8a6 0%, transparent 70%), radial-gradient(60% 110% at 55% 90%, #8b5cf6 0%, transparent 70%),
+    radial-gradient(60% 100% at 92% 15%, #fb923c 0%, transparent 70%), #3b82f6; }
+.mesh { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }

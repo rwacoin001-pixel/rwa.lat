@@ -912,3 +912,35 @@
 .methodDock .dockGoogle { flex: 1.9 1 0; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .methodDock img { flex: none; width: 22px; height: 22px; display: block; object-fit: contain; }
 .root[data-auth-theme='cool'] .methodDock img[data-mono] { filter: invert(1); }
+
+/* Round 45 (2026-11-01): sign-in is two views. Welcome: one very large card under the top keys (fixed size: full width less
+   12 px, capped by the height left for one row and the legal line), one row below it (sign in / create), the legal line at
+   the foot. Form: a solid page, no card; the email field, then Google, then three quiet keys. */
+:global(html) .root.root[data-auth-cabinet] {
+  --card-top: calc(54px + env(safe-area-inset-top));
+  --sw: max(240px, min(calc(100vw - 24px), calc(var(--app-max, 480px) - 24px), calc((100svh - var(--card-top) - 12px - 56px - 56px - env(safe-area-inset-bottom)) / 1.5))); }
+:global(html) .root.root[data-auth-cabinet][data-auth-view='welcome'] .cabStage { top: var(--card-top); border-radius: 32px; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='welcome'] .stage { position: absolute; inset: 0; display: flex; flex-direction: column; margin-top: 0; padding: calc(var(--card-top) + var(--sw) * 1.5 + 12px) 12px calc(6px + env(safe-area-inset-bottom)); pointer-events: none; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='welcome'] .stage > * { pointer-events: auto; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='welcome'] .cabFoot { margin-top: auto; }
+.welcomeRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(100%, calc(var(--sw))); margin-inline: auto; }
+.welcomeBtn { width: 100%; justify-content: center; font: 600 16px/1 var(--sans); letter-spacing: -.01em; cursor: pointer; }
+
+:global(html) .root.root[data-auth-cabinet][data-auth-view='form'] { --form-bg: #fbf8f2; --cab-sky: var(--form-bg); --cab-ground: var(--form-bg); background: var(--form-bg); }
+:global(html) .root.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool'] { --form-bg: #141a22; }
+:global(html):has(.root[data-auth-cabinet][data-auth-view='form']), :global(html):has(.root[data-auth-cabinet][data-auth-view='form']) :global(body), :global(html):has(.root[data-auth-cabinet][data-auth-view='form']) :global(.rwa-mobile) { background: #fbf8f2 !important; }
+:global(html):has(.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool']), :global(html):has(.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool']) :global(body), :global(html):has(.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool']) :global(.rwa-mobile) { background: #141a22 !important; }
+:global(html) .root.root[data-auth-cabinet][data-auth-view='form'] .cabStage { display: none; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .stage { display: flex; flex: 1 1 auto; flex-direction: column; margin-top: 0; padding-top: 32px; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .cabBody { flex: 1 1 auto; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .cabFoot { margin-top: auto; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .stage .cardHead { margin-bottom: 28px; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .stage .cardHead .cardTitle { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -.03em; }
+.orLine { display: flex; align-items: center; gap: 14px; margin: 28px 0 20px; color: var(--auth-muted, #5b6472); font: 500 12px/1 var(--sans); }
+.orLine::before, .orLine::after { content: ''; flex: 1; height: .5px; background: color-mix(in srgb, currentColor 35%, transparent); }
+.googleBtn { width: 100%; gap: 12px; font: 600 16px/1 var(--sans); letter-spacing: -.01em; cursor: pointer; }
+.googleBtn img { flex: none; width: 22px; height: 22px; }
+.altRow { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 12px; }
+.altRow button { display: grid; place-items: center; min-height: 52px; padding: 0; border: 0; cursor: pointer; }
+.altRow button:disabled, .googleBtn:disabled { opacity: .42; cursor: default; }
+.root[data-auth-theme='cool'] .altRow img[data-mono] { filter: invert(1); }

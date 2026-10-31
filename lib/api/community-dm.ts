@@ -4,18 +4,18 @@ export type DmPolicy='everyone'|'following'
 export type DmProfile={id:string;handle:string;displayName:string;avatarUrl:string|null;avatarSeed:string;kind:'member'|'persona'|'official'}
 export type DmThread={id:string;otherProfile:DmProfile;lastMessage:{id:string;senderProfileId:string;preview:string}|null;unreadCount:number;updatedAt:string;muted:boolean;archived:boolean}
 /** A photo or a file sent in a message (2026-10-31). `url` is an API path that resolves once the object is clean. */
-export type DmAttachment={mediaId:string;kind:'image'|'file';url:string;name:string|null}
+export type DmAttachment={mediaId:string;kind:'image'|'file'|'voice';url:string;name:string|null}
 export type DmMessage={id:string;threadId:string;senderProfileId:string;body:string;createdAt:string;deletedAt:string|null;attachment?:DmAttachment|null}
 export type DmProfileSettings={displayName:string;handle:string;dmPolicy:DmPolicy;bio?:string;location?:{city:string;countryCode:string;source:'device'}}
 const base='/v1/community/dm'
 /** Features whose API is not live yet. The screens hide their entry points until the matching server release; flip each to true then. */
-export const DM_SERVER_FEATURES={attachments:false,unsend:false}
+export const DM_SERVER_FEATURES={attachments:false,unsend:false,voice:false}
 export const dmThreads=(cursor?:string)=>request<{items:DmThread[];nextCursor:string|null}>(`${base}/threads${cursor?`?cursor=${encodeURIComponent(cursor)}`:''}`)
 export const dmOpenThread=(handle:string)=>request<{id:string}>(`${base}/threads`,{method:'POST',body:JSON.stringify({handle})})
 export const dmMessages=(id:string,before?:string,limit=30)=>request<{items:DmMessage[];nextBefore:string|null}>(`${base}/threads/${encodeURIComponent(id)}/messages?limit=${limit}${before?`&before=${encodeURIComponent(before)}`:''}`)
 /** Reuse the same UUID v4 clientId when retrying a send. A different body/thread requires a new clientId. A photo or file
  *  goes with `attachment` (uploaded first by dmUploadAttachment); its body may be empty then. */
-export const dmSend=(id:string,body:string,clientId:string,attachment?:{mediaId:string;kind:'image'|'file'})=>request<DmMessage&{duplicate:boolean}>(`${base}/threads/${encodeURIComponent(id)}/messages`,{method:'POST',body:JSON.stringify(attachment?{body,clientId,attachment}:{body,clientId})})
+export const dmSend=(id:string,body:string,clientId:string,attachment?:{mediaId:string;kind:'image'|'file'|'voice'})=>request<DmMessage&{duplicate:boolean}>(`${base}/threads/${encodeURIComponent(id)}/messages`,{method:'POST',body:JSON.stringify(attachment?{body,clientId,attachment}:{body,clientId})})
 /** Upload a photo or a file for a message. The server checks the type and size, and the malware scan, before it can be sent. */
 export const dmUploadAttachment=(file:File)=>{
   const form=new FormData()

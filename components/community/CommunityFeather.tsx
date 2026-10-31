@@ -14,7 +14,7 @@ export function CommunityFeather({ children }: { children: ReactNode }) {
   return <span className={d.anchor}>
     <button type="button" className={d.feather} data-visible={feather.visible || undefined} data-faded={feather.faded || undefined}
       aria-label={communityUiCopy[locale].compose} tabIndex={feather.visible ? 0 : -1} aria-hidden={!feather.visible} onClick={openFeatherCompose}>
-      <Feather size={15} strokeWidth={2} aria-hidden="true" />
+      <Feather size={22} strokeWidth={1.9} aria-hidden="true" />
     </button>
     {children}
   </span>

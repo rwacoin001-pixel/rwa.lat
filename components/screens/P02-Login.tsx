@@ -77,6 +77,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const emailCopy = authEmailCopy[locale]
   const passwordCopy = authPasswordCopy[locale]
   const [step, setStep] = useState<Step>('email')
+  // Two views on the cabinet page: the welcome (big card, sign in / create) and the solid form page that follows.
+  const [view, setView] = useState<'welcome' | 'form'>('welcome')
+  const [intent, setIntent] = useState<'login' | 'register'>(mode)
   // The address the later steps act on, fixed when the lookup answers; editing it restarts at the email step.
   const [account, setAccount] = useState<{ email: string; isNew: boolean; password: boolean; passkey: boolean } | null>(null)
   const [password, setPassword] = useState('')
@@ -478,7 +481,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
   const poster = paletteASlogan(locale).lines
-  const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
+  const showWelcome = view === 'welcome' && step === 'email' && !walletChallenge
+  const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? (showWelcome ? null : intent === 'register' ? visual.createAccount : visual.signIn) : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
     <span>{visual.consentStart} <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span>
@@ -522,13 +526,17 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     requestAnimationFrame(() => input.current?.focus())
   }} />
 
-  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer}>
+  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer} onBack={!showWelcome && step === 'email' && !walletChallenge && !pending ? () => { setView('welcome'); setError('') } : undefined}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
-    {heading && <header className={styles.cardHead}>
+    {showWelcome && <div className={styles.welcomeRow}>
+      <button type="button" className={`${controls.primary} ${styles.welcomeBtn}`} onClick={() => { setIntent('login'); setView('form') }}>{visual.signIn}</button>
+      <button type="button" className={`${controls.glass} ${styles.welcomeBtn}`} onClick={() => { setIntent('register'); setView('form') }}>{visual.createAccount}</button>
+    </div>}
+    {!showWelcome && heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>
     </header>}
 
-    {walletChallenge ? <>
+    {showWelcome ? null : walletChallenge ? <>
       {inviteField}
       <div className={styles.walletIdentity}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} style={{ width: 22, height: 22 }} /><span>{walletChallenge.address.slice(0, 6)}…{walletChallenge.address.slice(-4)}</span></div>
       {agreement}
@@ -586,13 +594,14 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
-    {/* Two rows in all: the email field, then one glass bar. Google has the widest segment; the other ways in are icon segments. */}
-    {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <div className={`${controls.glass} ${styles.methodDock}`}>
-        <button type="button" className={styles.dockGoogle} disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>Google</span></button>
-        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
-        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
-        <button type="button" disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
+    {/* Form page: the email field above; below it Google (the strong way in), then three quiet keys. */}
+    {!walletChallenge && step === 'email' && !showWelcome && <div className={styles.otherMethods}>
+      <p className={styles.orLine} aria-hidden="true"><span>{visual.otherMethods}</span></p>
+      <button type="button" className={`${controls.glass} ${styles.googleBtn}`} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>{visual.google}</span></button>
+      <div className={styles.altRow}>
+        <button type="button" className={controls.glass} disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
+        <button type="button" className={controls.glass} disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
+        <button type="button" className={controls.glass} disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
       </div>
     </div>}
     {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}

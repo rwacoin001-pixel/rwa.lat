@@ -27,6 +27,9 @@ export function closeAi() {
   else emit({ open: false })
 }
 
+/** An answer's link was followed: the page changes, so the layer goes without stepping back over its entry. */
+export function dismissAi() { if (state.open) emit({ open: false }) }
+
 /** Called on popstate: the layer is open only while its history entry is current. */
 export function syncAiWithHistory() {
   if (state.open && !window.history.state?.rwaAi) emit({ open: false })

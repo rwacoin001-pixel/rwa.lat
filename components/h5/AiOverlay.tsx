@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { AiChatScreen } from '@/components/maison/AiChatScreen'
-import { closeAi, syncAiWithHistory, useAiOverlay } from '@/lib/ai-overlay'
+import { closeAi, dismissAi, syncAiWithHistory, useAiOverlay } from '@/lib/ai-overlay'
 import { onBuddySignal } from '@/lib/buddy-signals'
 import styles from './ai-overlay.module.css'
 
@@ -45,8 +45,15 @@ export function AiOverlay() {
   useEffect(() => onBuddySignal((signal) => setActive(signal.mood === 'listening' || signal.mood === 'thinking' || signal.mood === 'replying')), [])
   useEffect(() => { if (!open) setActive(false) }, [open])
 
+  // Following a link in an answer leaves the assistant (2026-11-01): the layer closes as the page changes.
+  const followed = (event: ReactMouseEvent) => {
+    const link = (event.target as HTMLElement).closest?.('a[href]') as HTMLAnchorElement | null
+    if (!link || link.target === '_blank' || link.origin !== window.location.origin) return
+    dismissAi()
+  }
+
   if (!open) return null
-  return <div className={styles.layer} role="dialog" aria-modal="true" aria-label="A-REIT AI" data-active={active || undefined}>
+  return <div className={styles.layer} role="dialog" aria-modal="true" aria-label="A-REIT AI" data-active={active || undefined} onClick={followed}>
     <div className={styles.backdrop} data-ai-backdrop="" onClick={closeAi} aria-hidden="true" />
     <div ref={setScroller} className={styles.scroller}>
       <AiChatScreen overlay scroller={scroller} onClose={closeAi} onPlan={() => undefined} pageContext={context} />

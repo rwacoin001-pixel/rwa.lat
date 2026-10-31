@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { Moon, Sun } from 'lucide-react'
+import { ArrowLeft, Moon, Sun } from 'lucide-react'
 import { localeOptions, useI18n } from '@/lib/i18n'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { authVisualCopy } from '@/lib/auth-visual-copy'
@@ -16,11 +16,13 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 }
 
 /** Shared frame for every sign-in surface: the scene film, the wordmark bar, and a centred plaque above the card. */
-export function AuthShell({ children, hero, footer, attrs }: {
+export function AuthShell({ children, hero, footer, attrs, onBack }: {
   children: ReactNode
   hero?: ReactNode
   footer?: ReactNode
   attrs?: Record<`data-${string}`, string>
+  /** A back key in the brand's place (the sign-in form page returns to its welcome). */
+  onBack?: () => void
 }) {
   const { locale, setLocale, t } = useI18n()
   const { theme, toggleTheme } = useRwaTheme()
@@ -56,7 +58,8 @@ export function AuthShell({ children, hero, footer, attrs }: {
     <div className={styles.sceneWash} aria-hidden="true" />
 
     <header className={styles.topbar}>
-      <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>
+      {onBack ? <button type="button" className={styles.iconButton} onClick={onBack} aria-label={t('common.back')}><ArrowLeft size={19} strokeWidth={1.7} /></button>
+        : <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>}
       <div className={styles.topActions}>
         <button type="button" className={styles.iconButton} onClick={(event) => revealTheme(toggleTheme, cool ? 'light' : 'dark', event)} aria-label={visual.switchTheme} title={visual.switchTheme}>{cool ? <Sun size={19} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}</button>
         <div className={styles.localeWrap} ref={localeWrap}>
