@@ -134,3 +134,17 @@
 :global(html[data-palette='a']) .page .addrText { font-size: 15px; }
 :global(html[data-palette='a']) .page .more summary svg { display: none; }
 :global(html[data-palette='a']) .page .empty > button { justify-self: center; }
+
+/* One-screen forms (2026-10-31): withdraw, transfer and receive fill exactly the viewport and never page. Only the
+   class `oneScreen` opts a page in; receipts, deposit and the rest of `.page` keep the normal scrolling page.
+   Withdraw / transfer: the amount pad and stage hold their place; only the header (network, address, saved picks) can
+   give way, and only when the phone is too short for it all. Receive: the page holds still and the expanded 更多信息
+   body scrolls inside its own box. */
+.page.oneScreen { height: 100vh; height: 100dvh; min-height: 0; padding-bottom: 0; display: flex; flex-direction: column; overflow: hidden; }
+.page.oneScreen > :global(.rwa-topbar) { flex: none; }
+.page.oneScreen > div:last-child { display: flex; flex: 1 1 auto; flex-direction: column; min-height: 0; overflow: hidden; }
+.page.oneScreen [data-money-flow] { flex: 1 1 auto; min-height: 0; }
+.page.oneScreen [data-money-flow] > * { flex-shrink: 0; }
+.page.oneScreen [data-money-flow] > :first-child { flex-shrink: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.page.oneScreen[data-cta='true'] { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+.page.oneScreen .more[open] .moreBody { max-height: 22dvh; overflow-y: auto; overscroll-behavior: contain; }

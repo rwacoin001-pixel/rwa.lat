@@ -218,7 +218,8 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
       if (url.origin !== window.location.origin) return
       const segs = url.pathname.split('/').filter(Boolean)
       const base = screenForSegments(segs) ?? screenForV2Segments(segs)
-      if (!base) { window.location.assign(url.pathname + url.search); return }
+      // Not a shell screen: hand it to the router (a client transition to the real route) instead of a full page load.
+      if (!base) { if (replace) router.replace(url.pathname + url.search); else router.push(url.pathname + url.search); return }
       const next = screenForV2Query(url.pathname, url.searchParams, base)
       if (next === 'ai' && screen !== 'ai') setAiContext(aiPageContext(window.location.pathname, window.location.search))
       if (sessionMode === 'guest' && (protectedScreens.includes(next) || routeRequiresAuth(url.pathname))) {

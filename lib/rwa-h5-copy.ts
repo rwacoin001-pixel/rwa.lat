@@ -10,6 +10,8 @@ export type RwaH5Copy = {
     skipContent: string
     offlineTitle: string
     offlineBody: string
+    newVersion: string
+    updateNow: string
     openMasRecord: string
     disclosureOpened: string
   }
@@ -42,7 +44,7 @@ export type RwaH5Copy = {
 
 export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
   en: {
-    shell: { notifications: 'Notifications', openProfile: 'Open profile', primaryNavigation: 'Primary navigation', skipContent: 'Skip to main content', offlineTitle: 'You are offline', offlineBody: 'Live prices and order previews are paused. Cached content remains available.', openMasRecord: 'Open MAS institution record', disclosureOpened: 'Disclosure opened.' },
+    shell: { newVersion: 'A new version is ready', updateNow: 'Update', notifications: 'Notifications', openProfile: 'Open profile', primaryNavigation: 'Primary navigation', skipContent: 'Skip to main content', offlineTitle: 'You are offline', offlineBody: 'Live prices and order previews are paused. Cached content remains available.', openMasRecord: 'Open MAS institution record', disclosureOpened: 'Disclosure opened.' },
     portfolio: {
       positions: [
         { name: 'H100 inference pool', detail: 'Compute · 2 units', change: '+12.40 today' },
@@ -87,7 +89,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
     },
   },
   'zh-CN': {
-    shell: { notifications: '通知', openProfile: '打开个人中心', primaryNavigation: '主导航', skipContent: '跳转到主要内容', offlineTitle: '当前处于离线状态', offlineBody: '实时价格与订单预览已暂停，仍可查看已缓存的演示内容。', openMasRecord: '打开 MAS 机构记录', disclosureOpened: '已在演示环境中打开披露内容。' },
+    shell: { newVersion: '有新版本可用', updateNow: '更新', notifications: '通知', openProfile: '打开个人中心', primaryNavigation: '主导航', skipContent: '跳转到主要内容', offlineTitle: '当前处于离线状态', offlineBody: '实时价格与订单预览已暂停，仍可查看已缓存的演示内容。', openMasRecord: '打开 MAS 机构记录', disclosureOpened: '已在演示环境中打开披露内容。' },
     portfolio: {
       positions: [
         { name: 'H100 推理算力池', detail: '算力 · 2 个份额', change: '今日 +12.40' },
@@ -132,7 +134,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
     },
   },
   hi: {
-    shell: { notifications: 'सूचनाएँ', openProfile: 'प्रोफ़ाइल खोलें', primaryNavigation: 'मुख्य नेविगेशन', skipContent: 'मुख्य सामग्री पर जाएँ', offlineTitle: 'आप ऑफ़लाइन हैं', offlineBody: 'लाइव मूल्य और ऑर्डर पूर्वावलोकन रुके हैं। कैश की गई डेमो सामग्री उपलब्ध है।', openMasRecord: 'MAS संस्था रिकॉर्ड खोलें', disclosureOpened: 'डेमो में प्रकटीकरण खोल दिया गया।' },
+    shell: { newVersion: 'नया संस्करण तैयार है', updateNow: 'अपडेट करें', notifications: 'सूचनाएँ', openProfile: 'प्रोफ़ाइल खोलें', primaryNavigation: 'मुख्य नेविगेशन', skipContent: 'मुख्य सामग्री पर जाएँ', offlineTitle: 'आप ऑफ़लाइन हैं', offlineBody: 'लाइव मूल्य और ऑर्डर पूर्वावलोकन रुके हैं। कैश की गई डेमो सामग्री उपलब्ध है।', openMasRecord: 'MAS संस्था रिकॉर्ड खोलें', disclosureOpened: 'डेमो में प्रकटीकरण खोल दिया गया।' },
     portfolio: {
       positions: [
         { name: 'H100 इन्फ़रेंस पूल', detail: 'कंप्यूट · 2 यूनिट', change: 'आज +12.40' },
@@ -154,7 +156,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
     },
   },
   es: {
-    shell: { notifications: 'Notificaciones', openProfile: 'Abrir perfil', primaryNavigation: 'Navegación principal', skipContent: 'Ir al contenido principal', offlineTitle: 'Estás sin conexión', offlineBody: 'Los precios en tiempo real y las vistas previas de órdenes están en pausa. El contenido Demo en caché sigue disponible.', openMasRecord: 'Abrir registro de la entidad en MAS', disclosureOpened: 'Información abierta en esta Demo.' },
+    shell: { newVersion: 'Hay una nueva versión', updateNow: 'Actualizar', notifications: 'Notificaciones', openProfile: 'Abrir perfil', primaryNavigation: 'Navegación principal', skipContent: 'Ir al contenido principal', offlineTitle: 'Estás sin conexión', offlineBody: 'Los precios en tiempo real y las vistas previas de órdenes están en pausa. El contenido Demo en caché sigue disponible.', openMasRecord: 'Abrir registro de la entidad en MAS', disclosureOpened: 'Información abierta en esta Demo.' },
     portfolio: {
       positions: [{ name: 'Pool de inferencia H100', detail: 'Cómputo · 2 unidades', change: '+12,40 hoy' }, { name: 'Solar Income 2027', detail: 'Activos reales · distribución mensual', change: '+4,82 hoy' }, { name: 'Cesta AI Leaders', detail: 'Acciones · horario de mercado', change: '+1,12 hoy' }],
       nextIncome: 'Solar Income 2027 · 28 may', incomeRows: [{ date: 'Hoy', label: 'Ingresos de inferencia H100' }, { date: '10 may', label: 'Liquidación de ingresos de cómputo' }, { date: '02 may', label: 'Distribución de ingresos solares' }, { date: '30 abr', label: 'Devengo de referencia del Tesoro' }],
@@ -171,7 +173,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
     },
   },
   ar: {
-    shell: { notifications: 'الإشعارات', openProfile: 'فتح الملف الشخصي', primaryNavigation: 'التنقل الرئيسي', skipContent: 'انتقل إلى المحتوى الرئيسي', offlineTitle: 'أنت غير متصل', offlineBody: 'تم إيقاف الأسعار المباشرة ومعاينات الأوامر مؤقتًا. يبقى محتوى العرض المخزّن متاحًا.', openMasRecord: 'فتح سجل المؤسسة لدى MAS', disclosureOpened: 'تم فتح الإفصاح في هذا العرض.' },
+    shell: { newVersion: 'تتوفر نسخة جديدة', updateNow: 'تحديث', notifications: 'الإشعارات', openProfile: 'فتح الملف الشخصي', primaryNavigation: 'التنقل الرئيسي', skipContent: 'انتقل إلى المحتوى الرئيسي', offlineTitle: 'أنت غير متصل', offlineBody: 'تم إيقاف الأسعار المباشرة ومعاينات الأوامر مؤقتًا. يبقى محتوى العرض المخزّن متاحًا.', openMasRecord: 'فتح سجل المؤسسة لدى MAS', disclosureOpened: 'تم فتح الإفصاح في هذا العرض.' },
     portfolio: {
       positions: [{ name: 'مجمع استدلال H100', detail: 'حوسبة · وحدتان', change: '+12.40 اليوم' }, { name: 'Solar Income 2027', detail: 'الأصول الحقيقية · توزيع شهري', change: '+4.82 اليوم' }, { name: 'سلة AI Leaders', detail: 'أسهم · ساعات السوق', change: '+1.12 اليوم' }],
       nextIncome: 'Solar Income 2027 · 28 مايو', incomeRows: [{ date: 'اليوم', label: 'إيراد استدلال H100' }, { date: '10 مايو', label: 'تسوية إيراد الحوسبة' }, { date: '02 مايو', label: 'توزيع دخل الطاقة الشمسية' }, { date: '30 أبريل', label: 'استحقاق مرجعي للخزانة' }],
@@ -188,7 +190,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
     },
   },
   fr: {
-    shell: { notifications: 'Notifications', openProfile: 'Ouvrir le profil', primaryNavigation: 'Navigation principale', skipContent: 'Aller au contenu principal', offlineTitle: 'Vous êtes hors ligne', offlineBody: 'Les cours en direct et aperçus d’ordres sont suspendus. Le contenu démo en cache reste disponible.', openMasRecord: 'Ouvrir la fiche MAS de l’établissement', disclosureOpened: 'Information ouverte dans cette démo.' },
+    shell: { newVersion: 'Une nouvelle version est prête', updateNow: 'Mettre à jour', notifications: 'Notifications', openProfile: 'Ouvrir le profil', primaryNavigation: 'Navigation principale', skipContent: 'Aller au contenu principal', offlineTitle: 'Vous êtes hors ligne', offlineBody: 'Les cours en direct et aperçus d’ordres sont suspendus. Le contenu démo en cache reste disponible.', openMasRecord: 'Ouvrir la fiche MAS de l’établissement', disclosureOpened: 'Information ouverte dans cette démo.' },
     portfolio: {
       positions: [{ name: 'Pool d’inférence H100', detail: 'Calcul · 2 unités', change: '+12,40 aujourd’hui' }, { name: 'Solar Income 2027', detail: 'Actifs réels · distribution mensuelle', change: '+4,82 aujourd’hui' }, { name: 'Panier AI Leaders', detail: 'Actions · heures de marché', change: '+1,12 aujourd’hui' }],
       nextIncome: 'Solar Income 2027 · 28 mai', incomeRows: [{ date: 'Aujourd’hui', label: 'Revenu d’inférence H100' }, { date: '10 mai', label: 'Règlement du revenu de calcul' }, { date: '02 mai', label: 'Distribution du revenu solaire' }, { date: '30 avr.', label: 'Intérêt de référence du Trésor' }],
@@ -205,7 +207,7 @@ export const rwaH5Copy: Record<AppLocale, RwaH5Copy> = {
     },
   },
   pt: {
-    shell: { notifications: 'Notificações', openProfile: 'Abrir perfil', primaryNavigation: 'Navegação principal', skipContent: 'Ir para o conteúdo principal', offlineTitle: 'Você está offline', offlineBody: 'Preços ao vivo e prévias de ordens estão pausados. O conteúdo Demo em cache continua disponível.', openMasRecord: 'Abrir registro da instituição na MAS', disclosureOpened: 'Informação aberta nesta Demo.' },
+    shell: { newVersion: 'Nova versão disponível', updateNow: 'Atualizar', notifications: 'Notificações', openProfile: 'Abrir perfil', primaryNavigation: 'Navegação principal', skipContent: 'Ir para o conteúdo principal', offlineTitle: 'Você está offline', offlineBody: 'Preços ao vivo e prévias de ordens estão pausados. O conteúdo Demo em cache continua disponível.', openMasRecord: 'Abrir registro da instituição na MAS', disclosureOpened: 'Informação aberta nesta Demo.' },
     portfolio: {
       positions: [{ name: 'Pool de inferência H100', detail: 'Computação · 2 unidades', change: '+12,40 hoje' }, { name: 'Solar Income 2027', detail: 'Ativos reais · distribuição mensal', change: '+4,82 hoje' }, { name: 'Cesta AI Leaders', detail: 'Ações · horário de mercado', change: '+1,12 hoje' }],
       nextIncome: 'Solar Income 2027 · 28 mai', incomeRows: [{ date: 'Hoje', label: 'Receita de inferência H100' }, { date: '10 mai', label: 'Liquidação da receita de computação' }, { date: '02 mai', label: 'Distribuição de renda solar' }, { date: '30 abr', label: 'Apropriação de referência do Tesouro' }],

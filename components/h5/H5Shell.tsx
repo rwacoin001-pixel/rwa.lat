@@ -9,11 +9,12 @@ import { useFreshBuild } from '@/hooks/useFreshBuild'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import { ScreenTransition } from '../motion-effects'
 import { BottomDock } from './BottomDock'
+import { NewVersionPrompt } from './NewVersionPrompt'
 import type { H5Controller } from './useH5Controller'
 
 export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode }) {
   const { locale } = useI18n()
-  useFreshBuild()
+  const update = useFreshBuild()
   const shellCopy = rwaH5Copy[locale].shell
   const { screen, go, isOnline, theme, mode, showDock, isFloatingSheet, dockActiveScreen, navigationMotion } = h
   return (
@@ -21,6 +22,7 @@ export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode 
       <a className="skip-link" href="#main-content">{shellCopy.skipContent}</a>
       <main id="main-content" className="rwa-shell" tabIndex={-1}>
       {!isOnline && <div className="connection-banner" role="status"><AlertTriangle size={16} /><span><b>{shellCopy.offlineTitle}</b><small>{shellCopy.offlineBody}</small></span></div>}
+      {update.ready && <NewVersionPrompt onUpdate={update.apply} />}
       <div className="rwa-mobile" data-theme={theme} data-mode={mode} data-screen={screen} data-dock={showDock ? 'true' : 'false'} data-sheet={isFloatingSheet ? 'true' : 'false'}>
         <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen} motion={navigationMotion}>
         {children}
