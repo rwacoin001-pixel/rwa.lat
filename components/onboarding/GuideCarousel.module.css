@@ -157,7 +157,7 @@
 .guide { padding: 0; }
 .top { position: absolute; z-index: 10; top: calc(10px + env(safe-area-inset-top)); right: 16px; left: auto; height: auto; padding: 0; }
 .topRight { gap: 8px; padding: 4px 4px 4px 12px; border-radius: 999px; background: var(--glass);
-  box-shadow: inset 1px 1px 0 var(--rim), inset -1px -1px 0 var(--rim-lo); -webkit-backdrop-filter: blur(18px); backdrop-filter: blur(18px); }
+  box-shadow: inset 1px 1px 0 var(--rim), inset -1px -1px 0 var(--rim-lo); }
 .langBtn { background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; padding: 0 8px; }
 .viewport { position: absolute; inset: 0; margin: 0; overflow: hidden; }
 .page { position: absolute; inset: 0; will-change: transform, opacity; }
@@ -559,11 +559,9 @@
 .finishBtn::before { inset: 1px 8% auto 8%; height: 60%; border-radius: 999px; background: radial-gradient(70% 100% at 50% 0%, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0) 72%); }
 
 /* Round 41: printed pages look written on: a grain mask for uneven ink and the paper's tooth, and a breath of softness. */
-.print { filter: blur(.2px); -webkit-mask-image: url('/media/palette-a/ink-grain.png'); mask-image: url('/media/palette-a/ink-grain.png'); -webkit-mask-size: 160px; mask-size: 160px; }
+.print { -webkit-mask-image: url('/media/palette-a/ink-grain.png'); mask-image: url('/media/palette-a/ink-grain.png'); -webkit-mask-size: 160px; mask-size: 160px; }
 
-/* Round 43: guide scenes 1 and 2 redrawn. Ink sits in the paper (the scene's fibre filter); drawings are finer and move. */
-.inkDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
-.print, .pc { filter: var(--ink-filter, none); }
+/* Round 43: guide scenes 1 and 2 redrawn. The SVG ink filter was dropped: it re-rasterised every page on each frame. */
 .pRipple { fill: none; stroke: currentColor; stroke-width: 1; opacity: .4; stroke-dasharray: 14 9 4 9; animation: ripple 6s linear infinite; }
 @keyframes ripple { to { stroke-dashoffset: -72; } }
 /* The four actions are tapped in turn, gently, while the page is on. */

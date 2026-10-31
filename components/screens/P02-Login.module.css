@@ -449,23 +449,19 @@
   position: relative; z-index: 1; isolation: isolate; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
   width: min(460px, 100%); max-height: min(86dvh, 720px);
   padding: 10px 20px calc(20px + env(safe-area-inset-bottom));
-  border: .5px solid rgba(155, 119, 66, .3); border-radius: 28px;
-  background:
-    radial-gradient(90% 55% at 100% 0%, rgba(214, 178, 118, .2), transparent 62%),
-    linear-gradient(172deg, #fbf7ef, #f1e8d8 78%);
-  box-shadow: 0 40px 100px -36px rgba(20, 12, 4, .6), inset 0 2px 0 rgba(255, 255, 255, .6), inset 0 0 0 1px rgba(255, 255, 255, .35);
+  border: .5px solid rgba(20, 26, 34, .1); border-radius: 28px;
+  /* Solid card fill, no gradient or texture (design spec §7.9). */
+  background: #fbf8f2;
+  box-shadow: 0 40px 100px -36px rgba(20, 12, 4, .6), inset 0 0 0 1px rgba(255, 255, 255, .5);
   animation: legalSheetIn .42s var(--ease) both; scrollbar-width: none;
 }
 .legalSheet::-webkit-scrollbar { display: none; }
 .legalOverlay[data-auth-theme='cool'] .legalSheet {
-  border-color: rgba(227, 187, 122, .22);
-  background:
-    radial-gradient(90% 55% at 100% 0%, rgba(227, 187, 122, .13), transparent 62%),
-    linear-gradient(172deg, #1b2538, #0d1424 80%);
-  box-shadow: 0 40px 100px -36px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(235, 243, 255, .1);
+  border-color: rgba(238, 241, 246, .12);
+  background: #141a22;
+  box-shadow: 0 40px 100px -36px rgba(0, 0, 0, .8);
 }
-.legalSheet .grain { z-index: -1; border-radius: inherit; opacity: .22; }
-.legalOverlay[data-auth-theme='cool'] .legalSheet .grain { opacity: .12; }
+.legalSheet .grain { display: none; }
 .legalHandle { display: block; width: 34px; height: 4px; margin: 0 auto 16px; border-radius: 999px; background: currentColor; opacity: .14; }
 
 .legalBar { display: flex; align-items: center; gap: 12px; }
@@ -479,23 +475,21 @@
 
 .legalBody { padding-top: 24px; animation: legalBodyIn .34s var(--ease) both; }
 .legalHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.legalSeal { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; color: var(--lg-gold); background: radial-gradient(circle at 32% 26%, rgba(255, 255, 255, .7), transparent 58%), linear-gradient(150deg, rgba(214, 178, 118, .28), rgba(155, 119, 66, .1)); box-shadow: inset 0 0 0 .5px rgba(155, 119, 66, .45), 0 0 0 4px rgba(155, 119, 66, .06); }
-.legalOverlay[data-auth-theme='cool'] .legalSeal { background: radial-gradient(circle at 32% 26%, rgba(255, 236, 200, .16), transparent 58%), linear-gradient(150deg, rgba(227, 187, 122, .2), rgba(227, 187, 122, .05)); box-shadow: inset 0 0 0 .5px rgba(227, 187, 122, .42), 0 0 0 4px rgba(227, 187, 122, .05); }
-.legalEyebrow { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--lg-faint); font: 500 11px/1 var(--mono); letter-spacing: .14em; }
-.legalChip { padding: 4px 8px; border-radius: 999px; color: var(--lg-gold); background: color-mix(in srgb, var(--lg-gold) 10%, transparent); box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--lg-gold) 34%, transparent); letter-spacing: .06em; }
-.legalTitle { margin: 0; color: var(--lg-ink); font: 400 27px/1.18 var(--display); letter-spacing: -.02em; text-wrap: balance; }
+.legalSeal { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; color: #0a8a73; background: rgba(10, 138, 115, .1); }
+.legalOverlay[data-auth-theme='cool'] .legalSeal { color: #3fd3b8; background: rgba(63, 211, 184, .12); }
+.legalEyebrow { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--lg-faint); font: 500 12px/1 var(--mono); letter-spacing: .08em; }
+.legalChip { padding: 4px 8px; border-radius: 999px; color: #0a8a73; background: rgba(10, 138, 115, .1); letter-spacing: .04em; }
+.legalTitle { margin: 0; color: var(--lg-ink); font: 400 24px/1.2 var(--display); letter-spacing: -.02em; text-wrap: balance; }
 .legalLede { margin: 8px 0 0; color: var(--lg-muted); font: 400 13px/1.55 var(--sans); }
 
 .legalList { margin: 20px 0 0; padding: 4px 16px; border-radius: 22px; list-style: none; background: var(--lg-panel); box-shadow: inset 0 0 0 .5px var(--lg-panel-edge), 0 1px 0 rgba(255, 255, 255, .5); }
 .legalOverlay[data-auth-theme='cool'] .legalList { box-shadow: inset 0 0 0 .5px var(--lg-panel-edge); }
-.legalList li { display: grid; grid-template-columns: 26px 1fr; gap: 12px; padding: 16px 0; }
+.legalList li { padding: 16px 0; }
 .legalList li + li { border-top: .5px solid var(--lg-line); }
-.legalList li span { padding-top: 2px; color: var(--lg-gold); font: 500 11px/1.4 var(--mono); letter-spacing: .04em; }
-.legalList li p { margin: 0; color: color-mix(in srgb, var(--lg-ink) 86%, transparent); font: 400 13px/1.6 var(--sans); }
+.legalList li p { margin: 0; color: color-mix(in srgb, var(--lg-ink) 86%, transparent); font: 400 14px/1.6 var(--sans); }
 
 .legalCert { position: relative; overflow: hidden; margin-top: 20px; padding: 20px 16px 4px; border-radius: 22px; background: var(--lg-panel); box-shadow: inset 0 0 0 .5px var(--lg-panel-edge); }
-.legalCert::before { position: absolute; top: -60px; inset-inline-end: -60px; width: 170px; height: 170px; border-radius: 50%; background: repeating-radial-gradient(circle, transparent 0 7px, color-mix(in srgb, var(--lg-gold) 13%, transparent) 7px 7.6px); content: ''; pointer-events: none; -webkit-mask-image: radial-gradient(circle, #000 30%, transparent 70%); mask-image: radial-gradient(circle, #000 30%, transparent 70%); }
-.legalCert small { display: block; color: var(--lg-faint); font: 500 11px/1.4 var(--sans); letter-spacing: .08em; text-transform: uppercase; }
+.legalCert small { display: block; color: var(--lg-faint); font: 500 12px/1.4 var(--sans); letter-spacing: .04em; }
 .legalCert strong { display: block; margin: 6px 0 16px; color: var(--lg-ink); font: 400 17px/1.3 var(--display); letter-spacing: -.01em; overflow-wrap: anywhere; }
 .legalDetails { margin: 0; }
 .legalDetails div { display: flex; align-items: baseline; justify-content: space-between; gap: 20px; padding: 12px 0; border-top: .5px solid var(--lg-line); }
@@ -503,7 +497,7 @@
 .legalDetails dd { margin: 0; color: var(--lg-ink); text-align: end; font: 500 13px/1.4 var(--sans); overflow-wrap: anywhere; }
 .legalDetails .legalNumber { color: var(--lg-gold); font: 500 12px/1.4 var(--mono); letter-spacing: .04em; }
 
-.legalMeta { margin: 16px 2px 16px; color: var(--lg-faint); font: 400 11px/1.5 var(--sans); letter-spacing: .02em; }
+.legalMeta { margin: 16px 2px 16px; color: var(--lg-faint); font: 400 12px/1.5 var(--sans); letter-spacing: .02em; }
 .legalAction {
   position: relative; display: flex; min-height: 52px; align-items: center; justify-content: space-between; gap: 16px;
   padding-block: 6px; padding-inline: 24px 6px; overflow: hidden; border-radius: 999px;
@@ -710,8 +704,10 @@
    the cabinet stands on the floor at about 92 %. The form sits below, on the floor; on short screens the photo
    rises (up to a little under the status bar) so the cabinet stays clear of the form. Sizes inside are in cqw. */
 :global(html) .root.root[data-auth-cabinet] { --cab-sky: #bec3cc; --cab-ground: #dadbdd; --auth-bg: var(--cab-sky);
-  --sw: min(100vw, var(--app-max, 480px)); min-height: 100svh;
-  background: linear-gradient(180deg, var(--cab-sky) 0%, var(--cab-sky) 30%, var(--cab-ground) 70%, var(--cab-ground) 100%); }
+  --sw: min(84vw, calc(var(--app-max, 480px) * .84)); min-height: 100svh;
+  /* A faint dot grid over the studio colour: the tech detail on the paper scene. */
+  background: radial-gradient(circle, rgba(20, 26, 34, .07) 1px, transparent 1.3px) 0 0 / 18px 18px,
+    linear-gradient(180deg, var(--cab-sky) 0%, var(--cab-sky) 30%, var(--cab-ground) 70%, var(--cab-ground) 100%); }
 :global(html) .root.root[data-auth-cabinet][data-auth-theme='cool'] { --cab-sky: #262b33; --cab-ground: #4e4b4e; }
 /* iOS home-screen apps measure 100svh a Home-indicator short, which left a white line and a grey band under the floor.
    Installed, the window has no toolbar, so 100lvh is the whole screen; and whatever shows below the page is the floor. */
@@ -723,7 +719,9 @@
 .cabStage::before, .cabStage::after { content: ''; position: absolute; z-index: 4; left: 0; right: 0; height: 8%; pointer-events: none; }
 .cabStage::before { top: 0; background: linear-gradient(180deg, var(--cab-sky), transparent); }
 .cabStage::after { bottom: 0; background: linear-gradient(0deg, var(--cab-ground), transparent); }
-.cabPhoto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; -webkit-user-drag: none; }
+/* Narrower than the screen (about 84 %), so the photo's sides fade into the studio colour and the background still fills the screen. */
+.cabPhoto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; -webkit-user-drag: none;
+  -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); mask-image: linear-gradient(90deg, transparent 0, #000 14%, #000 86%, transparent 100%); }
 .cabTag { position: absolute; z-index: 3; left: 49.32%; top: 5.47%; width: 8.3%; height: 14.45%; max-width: none; }
 .root.root[data-auth-cabinet] > .sceneWash, .root.root[data-auth-cabinet] > .scene { display: none; }
 .root.root[data-auth-cabinet] .topbar { position: relative; z-index: 3; padding-top: calc(6px + env(safe-area-inset-top)); }
@@ -835,8 +833,11 @@
 .cabBody { display: flex; flex-direction: column; }
 :global(html) .root.root.root[data-auth-cabinet] .stage .cardHead .cardTitle { margin: 0 0 12px; font-size: 22px; font-weight: 700; }
 .cabFoot { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
-:global(html) .root.root.root[data-auth-cabinet] .cabFoot :is(button, span) { padding: 6px 2px; border: 0; background: none; font: inherit; font-size: 11px; color: rgba(20, 26, 34, .55); cursor: pointer; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot :is(button, span) { color: rgba(238, 241, 246, .5); }
+/* Links: 12px, at least 44px tall, solid colours with 4.5:1 contrast on the studio floor (design spec §3.1, §4). */
+:global(html) .root.root.root[data-auth-cabinet] .cabFoot button { min-height: 44px; padding: 0 10px; border: 0; background: none; font: inherit; font-size: 12px; color: #444d5a; cursor: pointer; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot button { color: #d6dbe3; }
+:global(html) .root.root.root[data-auth-cabinet] .cabFoot > span { font-size: 12px; color: #444d5a; }
+:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot > span { color: #d6dbe3; }
 
 .cabDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
 /* Ink, not pixels: a warm, slightly dry tone rather than flat grey. */

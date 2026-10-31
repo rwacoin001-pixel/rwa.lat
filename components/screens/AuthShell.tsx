@@ -48,7 +48,8 @@ export function AuthShell({ children, hero, footer, attrs }: {
   const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>A<i>-</i>REIT</span>}</>
   return <section className={`screen ${styles.root}`} data-auth-cabinet={cabinet || undefined} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     <div className={styles.scene} aria-hidden="true">
-      {mediaReady && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
+      {/* The cabinet sign-in hides this scene (CSS), so its video is not fetched there. */}
+      {mediaReady && !cabinet && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
         <source src={`/auth/auth-${media}-loop-h264.mp4`} type="video/mp4" />
       </video>}
     </div>

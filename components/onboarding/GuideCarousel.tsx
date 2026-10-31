@@ -1,6 +1,6 @@
 'use client'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useSpring, useTransform, type MotionValue } from 'motion/react'
+import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform, type MotionValue } from 'motion/react'
 import { Wifi, Mic, Plus, Pencil, ArrowLeft, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
 import { localeOptions, useI18n, type AppLocale } from '@/lib/i18n'
 import { paletteAOnboarding } from '@/lib/palette-a-copy'
@@ -208,7 +208,7 @@ function PaperCard({ k, locale, active }: { k: 'a' | 'b' | 'c' | 'd'; locale: Ap
 /** The printed cards over the photo of page 2. */
 function PaperCards({ box, locale, active }: { box: { w: number; h: number }; locale: AppLocale; active: boolean }) {
   return <>{PORT_CARDS.map(card => <div key={card.k} className={styles.faceClip} style={{ clipPath: `polygon(${card.clip})`, zIndex: 3 }}>
-    <div className={styles.face} style={{ width: card.w, height: card.h, transform: quadMatrix(card.quad.map(([x, y]) => [x / 100 * box.w, y / 100 * box.h]), card.w, card.h), '--ink-filter': 'url(#ink-port)' } as React.CSSProperties}>
+    <div className={styles.face} style={{ width: card.w, height: card.h, transform: quadMatrix(card.quad.map(([x, y]) => [x / 100 * box.w, y / 100 * box.h]), card.w, card.h) } as React.CSSProperties}>
       <PaperCard k={card.k} locale={locale} active={active} />
     </div>
   </div>)}</>
@@ -382,18 +382,9 @@ function PaperScene({ scene, active, locale }: { scene: string; active: boolean;
   const reduced = useReducedMotion()
   const step = useScript(active && !!sc.script, AI_TIMES)
   return <div className={styles.paperStage} ref={stage}>
-    {/* Ink on paper (as on the sign-in cabinet): edges nudged by the paper's fibres, softened to the photo, a faint bleed. */}
-    <svg className={styles.inkDefs} aria-hidden="true"><filter id={`ink-${scene}`} x="-3%" y="-3%" width="106%" height="106%" colorInterpolationFilters="sRGB">
-      <feTurbulence type="fractalNoise" baseFrequency=".7" numOctaves="2" seed="7" result="fibre" />
-      <feDisplacementMap in="SourceGraphic" in2="fibre" scale="1.6" xChannelSelector="R" yChannelSelector="G" result="pushed" />
-      <feGaussianBlur in="pushed" stdDeviation=".4" result="ink" />
-      <feGaussianBlur in="pushed" stdDeviation="1.4" result="spread" />
-      <feComponentTransfer in="spread" result="bleed"><feFuncA type="linear" slope=".2" /></feComponentTransfer>
-      <feMerge><feMergeNode in="bleed" /><feMergeNode in="ink" /></feMerge>
-    </filter></svg>
     <img className={styles.paperPhoto} src={`${ART}/${sc.photo}.webp`} alt="" draggable={false} />
     {box.w > 0 && <div className={styles.faceClip} style={{ clipPath: `polygon(${sc.flat})` }}>
-      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q), '--ink-filter': `url(#ink-${scene})` } as React.CSSProperties}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
+      <div className={styles.face} style={{ width: FACE_W, height: FACE_H, transform: quadMatrix(q) } as React.CSSProperties}><Print locale={locale} active={active} step={sc.script ? step : undefined} /></div>
     </div>}
     {scene === 'port' && box.w > 0 && <PaperCards box={box} locale={locale} active={active} />}
     {sc.person && <img className={styles.paperPerson} src={`${ART}/${sc.person}.webp`} alt="" draggable={false} />}
@@ -457,9 +448,7 @@ function LangSwitch({ label }: { label: string }) {
   </div>
 }
 
-function Card({ i, active, rel, tiltX, tiltY, locale }: {
-  i: number; active: boolean; rel: MotionValue<number>; tiltX: MotionValue<number>; tiltY: MotionValue<number>; locale: AppLocale
-}) {
+function Card({ i, active, locale }: { i: number; active: boolean; locale: AppLocale }) {
   const card = CARDS[i]
   return <article className={`${styles.card} ${styles.sceneCard}`} aria-hidden={!active} style={{ '--sky': card.sky, '--ground': card.ground } as React.CSSProperties}>
     <PaperScene scene={card.scene} active={active} locale={locale} />
@@ -474,12 +463,12 @@ const WALK_IN = ['64% 37%', '73% 31%', '72% 41%', '50% 50%']
  * Every change is a walk-through: the page you leave zooms into its point of interest and fades, the next one grows in
  * from just behind; going back plays the same in reverse. The finger drives it while dragging.
  */
-function Page({ i, pos, children }: { i: number; pos: MotionValue<number>; children: React.ReactNode }) {
-  const scale = useTransform(pos, p => { const r = i - p; if (r < 0) return 1 + Math.min(1, -r) * 2.6; if (r < 1) return 1 + r * .14; return 1.14 })
+/** Only the current page and its neighbours are mounted; the rest stay empty so their scenes and loops do not run. */
+function Page({ i, pos, live, children }: { i: number; pos: MotionValue<number>; live: boolean; children: React.ReactNode }) {
+  const scale = useTransform(pos, p => { const r = i - p; if (r < 0) return 1 + Math.min(1, -r) * .2; if (r < 1) return 1 + r * .04; return 1.04 })
   const opacity = useTransform(pos, p => { const r = i - p; if (r <= -1 || r >= 1) return 0; if (r < 0) return Math.max(0, 1 - -r * 1.35); return 1 - r })
   const z = useTransform(pos, p => (i - p > 0 ? 2 : 1))
-  const blur = useTransform(pos, p => { const r = i - p; return r < 0 ? `blur(${Math.min(6, -r * 8)}px)` : 'none' })
-  return <motion.div className={styles.page} style={{ scale, opacity, zIndex: z, filter: blur, transformOrigin: WALK_IN[i] }}>{children}</motion.div>
+  return <motion.div className={styles.page} style={{ scale, opacity, zIndex: z, transformOrigin: WALK_IN[i] }}>{live ? children : null}</motion.div>
 }
 
 /** The caption stays put; only its number counts and its words roll, in step with the page change. */
@@ -562,19 +551,6 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
     touched.current = Date.now()
   }
 
-  // Tilt (or the pointer) leans the heroes and lines a little, through springs.
-  const lx = useMotionValue(0), ly = useMotionValue(0)
-  const tiltX = useSpring(lx, { stiffness: 70, damping: 18 }), tiltY = useSpring(ly, { stiffness: 70, damping: 18 })
-  useEffect(() => {
-    const p = (e: PointerEvent) => { if (!drag.current) { lx.set((e.clientX / innerWidth) * 2 - 1); ly.set((e.clientY / innerHeight) * 2 - 1) } }
-    const o = (e: DeviceOrientationEvent) => { if (e.gamma != null && e.beta != null) { lx.set(Math.max(-1, Math.min(1, e.gamma / 25))); ly.set(Math.max(-1, Math.min(1, (e.beta - 45) / 25))) } }
-    addEventListener('pointermove', p, { passive: true }); addEventListener('deviceorientation', o, { passive: true })
-    return () => { removeEventListener('pointermove', p); removeEventListener('deviceorientation', o) }
-  }, [lx, ly])
-
-  const r0 = useTransform(pos, p => 0 - p), r1 = useTransform(pos, p => 1 - p), r2 = useTransform(pos, p => 2 - p), r3 = useTransform(pos, p => 3 - p)
-  const rels = [r0, r1, r2, r3]
-
   // The status bar (Android theme-color) and the page behind it (iOS) take the colour at the top of the current photo.
   // The guide is day-only, so its controls stay in the light set even when the app is in black mode.
   return <section className={styles.guide} data-ctl="light" data-scene={'scene' in CARDS[index] || undefined} data-guide-chrome={CARDS[index].sky}>
@@ -587,8 +563,8 @@ export default function GuideCarousel({ locale, invite, onDone }: { locale: AppL
 
     <div className={styles.viewport} ref={viewport} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up}
       role="region" aria-roledescription="carousel" aria-label={all.s0.swipe}>
-      {CARDS.map((_, i) => <Page key={i} i={i} pos={pos}>
-        <Card i={i} active={i === index} rel={rels[i]} tiltX={tiltX} tiltY={tiltY} locale={locale} />
+      {CARDS.map((_, i) => <Page key={i} i={i} pos={pos} live={Math.abs(i - index) <= 1}>
+        <Card i={i} active={i === index} locale={locale} />
       </Page>)}
     </div>
     <Caption index={index} locale={locale} />

@@ -104,7 +104,6 @@ function AuthLegalDialog({
   const docHref = kind === 'terms' ? termsHref : privacyHref
   const summary = kind === 'terms' ? copy.terms : kind === 'privacy' ? copy.privacy : undefined
   const Seal = kind === 'terms' ? ScrollText : kind === 'privacy' ? ShieldCheck : BadgeCheck
-  const index = `${String(kinds.indexOf(kind) + 1).padStart(2, '0')} / ${String(kinds.length).padStart(2, '0')}`
   const action = (href: string, text: string, ariaLabel?: string) => <a className={styles.legalAction} href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel}>
     <span>{text}</span><span className={styles.legalActionIcon} aria-hidden="true"><ArrowUpRight size={18} strokeWidth={1.7} /></span>
   </a>
@@ -137,15 +136,15 @@ function AuthLegalDialog({
         <div className={styles.legalBody} key={kind}>
           <header className={styles.legalHeader}>
             <span className={styles.legalSeal} aria-hidden="true"><Seal size={20} strokeWidth={1.5} /></span>
-            <p className={styles.legalEyebrow} dir="ltr"><span>{index}</span>{version && <span className={styles.legalChip}>v{version}</span>}</p>
+            {version && <p className={styles.legalEyebrow} dir="ltr"><span className={styles.legalChip}>v{version}</span></p>}
           </header>
           <h2 id={`${id}-title`} className={styles.legalTitle}>{label(kind)}</h2>
           <p id={`${id}-lede`} className={styles.legalLede}>{summary?.lede ?? copy.licenceSheet.lede}</p>
 
           {summary && <>
-            <ol className={styles.legalList}>
-              {summary.points.map((point, at) => <li key={point}><span dir="ltr">{String(at + 1).padStart(2, '0')}</span><p>{point}</p></li>)}
-            </ol>
+            <ul className={styles.legalList}>
+              {summary.points.map(point => <li key={point}><p>{point}</p></li>)}
+            </ul>
             <p className={styles.legalMeta}>{copy.updated} {copy.updatedDate}</p>
             {action(docHref, copy.readFull)}
           </>}

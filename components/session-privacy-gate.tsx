@@ -169,7 +169,11 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
       <main className={styles.screen} dir={locale === 'ar' ? 'rtl' : 'ltr'} aria-labelledby={titleId}>
         <div className={styles.top}><RwaLogoMark className={styles.logo} width={40} height={22} label="A-REIT" /></div>
         <div className={styles.mid}>
-          <div className={styles.mark} aria-hidden="true"><Fingerprint size={32} strokeWidth={1.5} /></div>
+          <div className={styles.mark} aria-hidden="true" data-busy={busy || undefined}>
+            {/* A hairline track; a teal arc turns around it while the device checks the passkey. */}
+            <svg className={styles.ring} viewBox="0 0 64 64"><circle className={styles.track} cx="32" cy="32" r="31" /><circle className={styles.arc} cx="32" cy="32" r="31" /></svg>
+            <Fingerprint size={32} strokeWidth={1.5} />
+          </div>
           <h1 id={titleId} className={styles.title}>{text.title}</h1>
           <p className={styles.description}>{account && maskEmail(account) ? maskEmail(account) : text.description}</p>
         </div>

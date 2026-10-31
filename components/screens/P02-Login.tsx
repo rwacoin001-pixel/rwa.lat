@@ -65,13 +65,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 }) {
   const { locale, t } = useI18n()
   const copy = authRouteCopy[locale]
-  // First-run guide (replay with ?guide=1).
-  const [guide, setGuide] = useState(false)
-  useEffect(() => {
+  // First-run guide (replay with ?guide=1). Decided on the first render, so the full login never mounts underneath it.
+  const [guide, setGuide] = useState(() => {
+    if (typeof window === 'undefined') return false
     let seen = false
     try { seen = localStorage.getItem('rwa.onboarded.v2') === '1' } catch { /* Show it again. */ }
-    if (!seen || new URLSearchParams(location.search).has('guide')) setGuide(true)
-  }, [])
+    return !seen || new URLSearchParams(location.search).has('guide')
+  })
   const visual = authVisualCopy[locale]
   const sheet = authSheetCopy[locale]
   const emailCopy = authEmailCopy[locale]
