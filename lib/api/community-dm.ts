@@ -8,6 +8,8 @@ export type DmAttachment={mediaId:string;kind:'image'|'file';url:string;name:str
 export type DmMessage={id:string;threadId:string;senderProfileId:string;body:string;createdAt:string;deletedAt:string|null;attachment?:DmAttachment|null}
 export type DmProfileSettings={displayName:string;handle:string;dmPolicy:DmPolicy;bio?:string;location?:{city:string;countryCode:string;source:'device'}}
 const base='/v1/community/dm'
+/** Features whose API is not live yet. The screens hide their entry points until the matching server release; flip each to true then. */
+export const DM_SERVER_FEATURES={attachments:false,unsend:false}
 export const dmThreads=(cursor?:string)=>request<{items:DmThread[];nextCursor:string|null}>(`${base}/threads${cursor?`?cursor=${encodeURIComponent(cursor)}`:''}`)
 export const dmOpenThread=(handle:string)=>request<{id:string}>(`${base}/threads`,{method:'POST',body:JSON.stringify({handle})})
 export const dmMessages=(id:string,before?:string,limit=30)=>request<{items:DmMessage[];nextBefore:string|null}>(`${base}/threads/${encodeURIComponent(id)}/messages?limit=${limit}${before?`&before=${encodeURIComponent(before)}`:''}`)

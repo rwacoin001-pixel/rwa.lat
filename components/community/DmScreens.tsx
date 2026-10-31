@@ -13,7 +13,7 @@ import RwaTopbar from '@/components/rwa-topbar'
 import { CommunityAvatar, mediaSrc } from '@/components/community-avatar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import type { ApiError } from '@/lib/api/_http'
-import { dmBlock, dmDeleteMessage, dmMessages, dmRead, dmReport, dmSend, dmThreadSettings, dmThreads, dmUnblock, dmUploadAttachment, type DmMessage, type DmProfile, type DmThread } from '@/lib/api/community-dm'
+import { DM_SERVER_FEATURES, dmBlock, dmDeleteMessage, dmMessages, dmRead, dmReport, dmSend, dmThreadSettings, dmThreads, dmUnblock, dmUploadAttachment, type DmMessage, type DmProfile, type DmThread } from '@/lib/api/community-dm'
 import { getCommunityProfile } from '@/lib/community-data'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, Skeleton, StateBlock } from '@/components/maison/primitives'
@@ -402,7 +402,7 @@ export function DmThreadScreen({ id }: { id: string | null }) {
         {c.quick.map(text => <button key={text} type="button" className={d.quickPill} onClick={() => send(text)}>{text}</button>)}
       </div>}
       <div className={d.field}>
-        <button type="button" className={d.plus} aria-label={c.attach} aria-haspopup="dialog" onClick={() => setAttachOpen(true)}><Plus size={20} strokeWidth={2} aria-hidden="true" /></button>
+        {DM_SERVER_FEATURES.attachments && <button type="button" className={d.plus} aria-label={c.attach} aria-haspopup="dialog" onClick={() => setAttachOpen(true)}><Plus size={20} strokeWidth={2} aria-hidden="true" /></button>}
         <textarea ref={composer} value={draft} rows={1} maxLength={2000} placeholder={c.placeholder} aria-label={c.placeholder} dir="auto"
           onChange={(e) => { setDraft(e.target.value); e.target.style.height = 'auto'; e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px` }} />
         <button type="button" className={d.mic} aria-label={c.voice} title={c.voice} disabled><Mic size={18} strokeWidth={1.9} aria-hidden="true" /></button>
@@ -426,7 +426,7 @@ export function DmThreadScreen({ id }: { id: string | null }) {
       {acting && <div className={d.options}>
         {acting.body && actingSettled && <button type="button" onClick={() => void copyText(acting)}><Copy size={17} strokeWidth={1.9} aria-hidden="true" /> {c.copy}</button>}
         {actingSettled && <button type="button" onClick={() => replyTo(acting)}><Reply size={17} strokeWidth={1.9} aria-hidden="true" /> {c.reply}</button>}
-        {actingMine && actingSettled && <button type="button" data-danger="" onClick={() => { setConfirming(acting); setActing(null) }}><Trash2 size={17} strokeWidth={1.9} aria-hidden="true" /> {c.del}</button>}
+        {DM_SERVER_FEATURES.unsend && actingMine && actingSettled && <button type="button" data-danger="" onClick={() => { setConfirming(acting); setActing(null) }}><Trash2 size={17} strokeWidth={1.9} aria-hidden="true" /> {c.del}</button>}
         {!actingMine && actingSettled && <button type="button" data-danger="" onClick={() => { setReporting(acting); setActing(null) }}><Flag size={17} strokeWidth={1.9} aria-hidden="true" /> {c.report}</button>}
       </div>}
     </Sheet>
