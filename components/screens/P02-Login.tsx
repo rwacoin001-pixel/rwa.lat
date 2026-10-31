@@ -26,10 +26,21 @@ import { authPasswordCopy } from '@/lib/auth-password-copy'
 import { AuthShell } from './AuthShell'
 import Onboarding from '@/components/onboarding/Onboarding'
 import { CodePad } from '@/components/maison/flow-kit'
-import { paletteASlogan } from '@/lib/palette-a-copy'
 import { InviteCodeField, useInviteCode } from './InviteCodeField'
 import { AuthLegalFooter } from './AuthLegalFooter'
 import controls from '../ui/controls.module.css'
+import focusStyles from './auth-focus.module.css'
+
+/** The welcome's brand line (2026-11-01, approved slogan "Bring Assets Into Focus / 让资产清晰起来"). */
+const focusCopy: Record<string, { lines: [string, string]; sub: string }> = {
+  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '考拉量化与预测，一个账户看清。' },
+  en: { lines: ['Bring assets', 'into focus'], sub: 'Koala Quant and predictions, in one clear account.' },
+  hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'कोआला क्वांट और प्रेडिक्शन, एक ही खाते में।' },
+  es: { lines: ['Tus activos,', 'en foco'], sub: 'Koala Quant y predicciones, en una sola cuenta.' },
+  ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'كوالا كوانت والتوقعات في حساب واحد.' },
+  fr: { lines: ['Vos actifs,', 'au point'], sub: 'Koala Quant et prédictions, dans un seul compte.' },
+  pt: { lines: ['Seus ativos,', 'em foco'], sub: 'Koala Quant e previsões, em uma só conta.' },
+}
 import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
 import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
 
@@ -480,7 +491,6 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const ui = { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: controls.icon }
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
-  const poster = paletteASlogan(locale).lines
   const showWelcome = view === 'welcome' && step === 'email' && !walletChallenge
   const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? (showWelcome ? null : intent === 'register' ? visual.createAccount : visual.signIn) : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
@@ -515,9 +525,10 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     privacyVersion={requirements?.required.find(item => item.documentType === 'privacy')?.version}
   />
 
-  const posterHero = !heading && <>
-    <h1 className={styles.cardTitle}>{poster[0]} <em>{poster[1]}</em></h1>
-    <p className={styles.cardLede}>{paletteASlogan(locale).sub}</p>
+  const welcomeCopy = focusCopy[locale] ?? focusCopy.en
+  const posterHero = showWelcome && <>
+    <h1 className={focusStyles.title}>{welcomeCopy.lines[0]}<em>{welcomeCopy.lines[1]}</em></h1>
+    <p className={focusStyles.lede}>{welcomeCopy.sub}</p>
   </>
 
   if (guide) return <Onboarding locale={locale} invite={invite} onDone={() => {
@@ -526,11 +537,11 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     requestAnimationFrame(() => input.current?.focus())
   }} />
 
-  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-poster': 'true' }} hero={posterHero} footer={footer} onBack={!showWelcome && step === 'email' && !walletChallenge && !pending ? () => { setView('welcome'); setError('') } : undefined}>
+  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer} onBack={!showWelcome && step === 'email' && !walletChallenge && !pending ? () => { setView('welcome'); setError('') } : undefined}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
-    {showWelcome && <div className={styles.welcomeRow}>
-      <button type="button" className={`${controls.primary} ${styles.welcomeBtn}`} onClick={() => { setIntent('login'); setView('form') }}>{visual.signIn}</button>
-      <button type="button" className={`${controls.glass} ${styles.welcomeBtn}`} onClick={() => { setIntent('register'); setView('form') }}>{visual.createAccount}</button>
+    {showWelcome && <div className={focusStyles.welcomeRow}>
+      <button type="button" className={controls.glass} onClick={() => { setIntent('login'); setView('form') }}>{visual.signIn}</button>
+      <button type="button" className={controls.primary} onClick={() => { setIntent('register'); setView('form') }}>{visual.createAccount}</button>
     </div>}
     {!showWelcome && heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>

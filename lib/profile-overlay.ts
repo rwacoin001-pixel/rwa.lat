@@ -31,6 +31,33 @@ export function syncProfileWithHistory() {
   if (open && !window.history.state?.rwaProfile) emit(false)
 }
 
+/**
+ * Pulling the layer in with the finger (2026-11-01, user: it must follow the hand). The page swipe reports how far the
+ * panel has come in; the panel follows once mounted (until then the distance waits here), and on release it settles
+ * open or slides back out.
+ */
+type PanelPull = { follow: (px: number) => void; finish: (keep: boolean) => void }
+let panel: PanelPull | null = null
+let pending: number | null = null
+export function pullProfile(px: number) {
+  if (!open) { pending = px; openProfile() }
+  if (panel) panel.follow(px)
+  else pending = px
+}
+export function releaseProfile(keep: boolean) {
+  const waiting = pending !== null && !panel
+  pending = null
+  if (panel) panel.finish(keep)
+  else if (waiting && !keep) closeProfile()
+}
+/** The panel registers while mounted; it gets the distance the finger already covered, if any. */
+export function bindProfilePanel(next: PanelPull | null): number | null {
+  panel = next
+  const px = pending
+  pending = null
+  return px
+}
+
 export function useProfileOverlay(): boolean {
   return useSyncExternalStore((listener) => { listeners.add(listener); return () => { listeners.delete(listener) } }, () => open, () => false)
 }

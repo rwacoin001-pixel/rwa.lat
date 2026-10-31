@@ -6,10 +6,11 @@
  * finger on a mostly horizontal drag; past a third of the width (or a quick flick) it slides out and calls `onClose`,
  * otherwise it springs back. Vertical scrolling is untouched. RTL mirrors the direction.
  */
-import { useEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type TouchEvent } from 'react'
+import { bindProfilePanel } from '@/lib/profile-overlay'
 import p from './swipe-panel.module.css'
 
-export function SwipePanel({ onClose, children }: { onClose: () => void; children: ReactNode }) {
+export function SwipePanel({ onClose, pull = false, children }: { onClose: () => void; pull?: boolean; children: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null)
   const drag = useRef<{ x: number; y: number; t: number; dx: number; on: boolean | null } | null>(null)
   const [leaving, setLeaving] = useState(false)
@@ -27,6 +28,20 @@ export function SwipePanel({ onClose, children }: { onClose: () => void; childre
     window.setTimeout(onClose, 260)
   }
   useEffect(() => () => { drag.current = null }, [])
+  // pull: the page swipe can draw this panel in, following the finger from the trailing edge (the personal centre).
+  useLayoutEffect(() => {
+    if (!pull) return
+    const node = ref.current
+    const follow = (px: number) => {
+      if (!node) return
+      node.style.animation = 'none'
+      set(sign() * Math.max(0, node.offsetWidth - px), false)
+    }
+    const first = bindProfilePanel({ follow, finish: (keep) => { if (keep) set(0, true); else leave() } })
+    if (first !== null) follow(first)
+    return () => { bindProfilePanel(null) }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pull])
 
   const start = (event: TouchEvent) => {
     if (event.touches.length !== 1 || leaving) return

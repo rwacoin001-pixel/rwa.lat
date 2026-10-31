@@ -6,7 +6,7 @@
  *   1. How much do I have — one large figure (cash + Koala Quant principal, waiting lots included + predictions in play + anything else held),
  *      today's and the running result under it, the value line, and three capsules (deposit, withdraw, transfer).
  *   2. Where is it — one composition bar with a legend; each part opens its product.
- *   3. Each product as one card — Koala Quant and predictions, a real photo, three figures; a tap opens the product.
+ *   3. Each product as one card — Koala Quant and predictions, type only (no photo since 2026-11-01), three figures; a tap opens the product.
  *   4. Anything else held (baskets, older holdings) quietly below, then the tools.
  * Every figure is the server's own; sums are BigInt.
  */
@@ -108,13 +108,13 @@ export function AssetsOverview({ cash, extraValue, basketValue, masked, onMask, 
 
     {/* 3 · Each product */}
     <section className={o.products}>
-      <ProductCard photo="/media/home/cards/quant-720.webp" title={c.quant} sub={c.quantSub} path={position && quantValue > ZERO ? '/quant?tab=account' : '/quant'}
+      <ProductCard title={c.quant} sub={c.quantSub} path={position && quantValue > ZERO ? '/quant?tab=account' : '/quant'}
         figures={position && quantValue > ZERO ? [
           [c.principal, money(quantValue), undefined],
           [c.earnedShort, money(big(position.totalNetAtomic), true), masked ? undefined : tone(big(position.totalNetAtomic))],
           [c.lastDay, position.lastDay ? money(big(position.lastDay.netAtomic), true) : '—', masked || !position.lastDay ? undefined : tone(big(position.lastDay.netAtomic))],
         ] : null} empty={c.startQuant} />
-      <ProductCard photo="/media/home/cards/predict-720.webp" title={c.predictions} sub={c.predictionsSub} path={betRows.length ? '/assets/predictions' : '/markets?tab=predictions'}
+      <ProductCard title={c.predictions} sub={c.predictionsSub} path={betRows.length ? '/assets/predictions' : '/markets?tab=predictions'}
         figures={betRows.length ? [
           [c.inPlay, money(betsValue), undefined],
           [c.paid, money(betsPaid), masked || betsPaid === ZERO ? undefined : 'up'],
@@ -128,10 +128,9 @@ export function AssetsOverview({ cash, extraValue, basketValue, masked, onMask, 
   </div>
 }
 
-function ProductCard({ photo, title, sub, path, figures, empty }: { photo: string; title: string; sub: string; path: string; figures: Array<[string, string, 'up' | 'down' | undefined]> | null; empty: string }) {
+function ProductCard({ title, sub, path, figures, empty }: { title: string; sub: string; path: string; figures: Array<[string, string, 'up' | 'down' | undefined]> | null; empty: string }) {
   return <button type="button" className={o.card} onClick={() => openPath(path)}>
     <span className={o.cardHead}>
-      <img src={photo} alt="" width={56} height={56} loading="lazy" decoding="async" />
       <span><b>{title}</b><small>{sub}</small></span>
       <ChevronRight size={18} aria-hidden="true" />
     </span>

@@ -99,7 +99,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     <p className={s.lede}>{p.lede}</p>
   </header>
 
-  if (guest) return <SwipePanel onClose={onClose}><MaisonPage page="profile">
+  if (guest) return <SwipePanel onClose={onClose} pull><MaisonPage page="profile">
     {hero}
     <StateBlock tone="unavailable" title={p.signIn} body={p.guestBody}
       action={<button type="button" className={s.ghost} onClick={() => signInThenReturn('/profile')}>{p.signIn}<ChevronRight size={15} className={s.chev} /></button>} />
@@ -146,7 +146,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const help = (['support', 'channels', 'scam', 'trust'] as const).map((key) => ({ key, path: { support: '/profile/support', channels: '/trust/official-channels', scam: '/trust/report-scam', trust: '/trust' }[key] }))
 
   // No top bar (2026-10-29): the personal centre slides in from the right and a swipe back toward it returns.
-  return <SwipePanel onClose={onClose}><MaisonPage page="profile">
+  return <SwipePanel onClose={onClose} pull><MaisonPage page="profile">
     {/* Name card (2026-10-28, after the user's profile-card reference): a living colour band on top, the photo half over
         its edge on the left and the membership chip on the right; name and @handle with a round edit key; three counts;
         one ink key to the public page. The account checks follow under the card. */}

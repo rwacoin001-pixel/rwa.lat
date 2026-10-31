@@ -434,7 +434,8 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const timeAgo = useTimeAgo()
   // Match the home module's public feed so the community route does not
   // render an empty latest-only view while the hot feed already has content.
-  const [sort, setSort] = useState<'latest' | 'hot' | 'circle'>('hot')
+  // Signed-in readers open on their circle (2026-11-01).
+  const [sort, setSort] = useState<'latest' | 'hot' | 'circle'>(isGuest || embedded ? 'hot' : 'circle')
   const [topic, setTopic] = useState<string | null>(null)
   const [topics, setTopics] = useState<CommunityTopic[]>([])
   const [items, setItems] = useState<CommunityPost[]>([])
@@ -453,7 +454,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const circleText = circleCopy[locale] ?? circleCopy.en
   // My circle (2026-10-28): who I invited / who invited me, for the tag on their posts and the circle timeline.
   const [circle, setCircle] = useState<{ members: CircleMember[]; showToInviter: boolean } | null>(null)
-  useEffect(() => { if (isGuest) { setCircle(null); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => undefined) }, [isGuest])
+  useEffect(() => { if (isGuest) { setCircle(null); setSort((current) => current === 'circle' ? 'hot' : current); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => setSort((current) => current === 'circle' ? 'hot' : current)) }, [isGuest])
   // The feather (2026-10-31): it composes from whichever feed is on screen. On the page itself it rises above the AI orb
   // while the reader scrolls down the feed, and pales when they pull back up. The embedded feed on home leaves the
   // visibility to the home page's pinned tabs.

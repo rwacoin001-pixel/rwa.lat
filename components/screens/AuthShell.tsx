@@ -9,6 +9,8 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import RwaLogoMark from '../rwa-logo'
 import { CabinetScene } from './CabinetFace'
+import { FocusLens } from './FocusLens'
+import f from './auth-focus.module.css'
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -47,15 +49,18 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
   const media = cool ? 'cool' : 'warm'
   const poster = attrs?.['data-auth-poster'] === 'true'
   const cabinet = poster
+  // The "Into Focus" sign-in (2026-11-01): paper, the lens, two keys; the form steps on solid paper.
+  const focus = attrs?.['data-auth-focus'] === 'true'
+  const welcome = focus && attrs?.['data-auth-view'] === 'welcome'
   const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>A<i>-</i>REIT</span>}</>
-  return <section className={`screen ${styles.root}`} data-auth-cabinet={cabinet || undefined} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
-    <div className={styles.scene} aria-hidden="true">
+  return <section className={`screen ${styles.root}${focus ? ` ${f.root}` : ''}`} data-auth-cabinet={cabinet || undefined} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
+    {!focus && <><div className={styles.scene} aria-hidden="true">
       {/* The cabinet sign-in hides this scene (CSS), so its video is not fetched there. */}
       {mediaReady && !cabinet && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
         <source src={`/auth/auth-${media}-loop-h264.mp4`} type="video/mp4" />
       </video>}
     </div>
-    <div className={styles.sceneWash} aria-hidden="true" />
+    <div className={styles.sceneWash} aria-hidden="true" /></>}
 
     <header className={styles.topbar}>
       {onBack ? <button type="button" className={styles.iconButton} onClick={onBack} aria-label={t('common.back')}><ArrowLeft size={19} strokeWidth={1.7} /></button>
@@ -74,7 +79,12 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
     </header>
 
     {/* No Android banner on sign-in (2026-10-29, user: it covered the page; the round download key stays). */}
-    {cabinet ? <>
+    {focus ? <>
+      {welcome && <div className={f.hero}><FocusLens night={cool} /></div>}
+      {welcome && hero && <div className={f.copy}>{hero}</div>}
+      <div className={welcome ? f.actions : f.form}>{children}</div>
+      {footer && <div className={f.legal}>{footer}</div>}
+    </> : cabinet ? <>
       {/* Palette A: the scene is a rounded paper cabinet (day / night with the theme) whose face shows the Koala
           Quant page; the real form sits below it, on the floor. */}
       <CabinetScene locale={locale} night={cool} />
