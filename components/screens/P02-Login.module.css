@@ -707,7 +707,7 @@
    the cabinet stands on the floor at about 92 %. The form sits below, on the floor; on short screens the photo
    rises (up to a little under the status bar) so the cabinet stays clear of the form. Sizes inside are in cqw. */
 :global(html) .root.root[data-auth-cabinet] { --cab-sky: #bec3cc; --cab-ground: #dadbdd; --auth-bg: var(--cab-sky);
-  --sw: max(220px, min(calc(100vw - 48px), calc(var(--app-max, 480px) - 48px), calc((100svh - 54px - 340px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 1.5))); min-height: 100svh;
+  --sw: max(240px, min(calc(100vw - 32px), calc(var(--app-max, 480px) - 32px), calc((100svh - 54px - 216px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 1.5))); min-height: 100svh;
   /* A faint dot grid over the studio colour: the tech detail on the paper scene. */
   background: radial-gradient(circle, rgba(20, 26, 34, .07) 1px, transparent 1.3px) 0 0 / 18px 18px,
     linear-gradient(180deg, var(--cab-sky) 0%, var(--cab-sky) 30%, var(--cab-ground) 70%, var(--cab-ground) 100%); }
@@ -900,10 +900,15 @@
 .v2 .primary:disabled { background: var(--pa-fill-strong, rgba(11, 18, 32, .08)); color: var(--auth-muted); opacity: 1; }
 .slotInput { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; border: 0; opacity: 0; color: transparent; background: none; caret-color: transparent; font-size: 17px; }
 
-/* Sign-in: Google leads as the one solid pill (its mark sits in the end disc); the other ways in are an even row of three glass pills. */
-.googleBlock { display: flex; flex-direction: column; gap: 16px; margin-bottom: 16px; }
-.googleBlock .wide { margin-top: 0; }
-.googleBlock .divider { font-size: 12px; }
-.googleBlock .arrow img, .googleBlock i img { width: 22px; height: 22px; }
-.methodPill { width: 100%; min-width: 0; padding: 0; min-height: 52px; }
-:global(html) .root.root.root[data-auth-cabinet] .methodsA { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); justify-content: stretch; gap: 10px; }
+/* Sign-in: two rows. The email field, then one glass bar: Google has the widest segment, then GitHub, wallet, passkey. */
+:global(html) .root.root.root[data-auth-cabinet] .otherMethods { margin-top: 12px; }
+.methodDock { display: flex; align-items: stretch; width: 100%; min-height: 56px; padding: 0; gap: 0; overflow: hidden; }
+.methodDock button { flex: 1 1 0; min-width: 0; display: grid; place-items: center; min-height: 56px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
+  -webkit-tap-highlight-color: transparent; transition: background .2s ease, opacity .2s ease; }
+.methodDock button + button { border-inline-start: .5px solid color-mix(in srgb, currentColor 16%, transparent); }
+.methodDock button:not(:disabled):active { background: color-mix(in srgb, currentColor 7%, transparent); }
+.methodDock button:disabled { opacity: .42; cursor: default; }
+.methodDock button:focus-visible { outline: 2px solid rgba(10, 138, 115, .6); outline-offset: -3px; border-radius: 999px; }
+.methodDock .dockGoogle { flex: 1.9 1 0; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.methodDock img { flex: none; width: 22px; height: 22px; display: block; object-fit: contain; }
+.root[data-auth-theme='cool'] .methodDock img[data-mono] { filter: invert(1); }

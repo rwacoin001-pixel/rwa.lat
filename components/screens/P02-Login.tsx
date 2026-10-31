@@ -474,7 +474,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const cta = (label: string) => <><span>{label}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} strokeWidth={1.7} /></i></>
   // The shared controls (components/ui/controls.module.css).
-  const ui = { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: `${controls.glass} ${styles.methodPill}` }
+  const ui = { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: controls.icon }
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
   const poster = paletteASlogan(locale).lines
@@ -527,15 +527,6 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     {heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>
     </header>}
-
-    {/* Google leads: the one solid pill, its mark in the end disc where other primary buttons carry the arrow. */}
-    {!walletChallenge && step === 'email' && <div className={styles.googleBlock}>
-      <button type="button" className={`${controls.primary} ${styles.wide}`} disabled={pending} onClick={() => void startProvider('google')}>
-        <span>{visual.google}</span>
-        <i className={controls.arrow}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /></i>
-      </button>
-      <div className={styles.divider}><span>{visual.otherMethods}</span></div>
-    </div>}
 
     {walletChallenge ? <>
       {inviteField}
@@ -595,12 +586,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
-    {/* Each icon reuses the existing sign-in handler; email autofill remains available. */}
+    {/* Two rows in all: the email field, then one glass bar. Google has the widest segment; the other ways in are icon segments. */}
     {!walletChallenge && step === 'email' && <div className={styles.otherMethods}>
-      <div className={styles.methodsA}>
-        <button type="button" className={ui.method} disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
-        <button type="button" className={ui.method} disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
-        <button type="button" className={ui.method} disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
+      <div className={`${controls.glass} ${styles.methodDock}`}>
+        <button type="button" className={styles.dockGoogle} disabled={pending} onClick={() => void startProvider('google')} aria-label={visual.google} title={visual.google}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>Google</span></button>
+        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
+        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
+        <button type="button" disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
       </div>
     </div>}
     {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}
