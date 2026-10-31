@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent as ReactKeyboardEvent } from 'react'
 import { createPortal } from 'react-dom'
-import { ArrowUpRight, BadgeCheck, ScrollText, ShieldCheck, X } from 'lucide-react'
+import { ArrowUpRight, X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { authLegalCopy, type AuthLegalKind } from '@/lib/auth-legal-copy'
@@ -103,7 +103,6 @@ function AuthLegalDialog({
   const version = kind === 'terms' ? termsVersion : kind === 'privacy' ? privacyVersion : undefined
   const docHref = kind === 'terms' ? termsHref : privacyHref
   const summary = kind === 'terms' ? copy.terms : kind === 'privacy' ? copy.privacy : undefined
-  const Seal = kind === 'terms' ? ScrollText : kind === 'privacy' ? ShieldCheck : BadgeCheck
   const action = (href: string, text: string, ariaLabel?: string) => <a className={styles.legalAction} href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel}>
     <span>{text}</span><span className={styles.legalActionIcon} aria-hidden="true"><ArrowUpRight size={18} strokeWidth={1.7} /></span>
   </a>
@@ -133,32 +132,33 @@ function AuthLegalDialog({
           </button>
         </div>
 
+        {/* The frame, tabs and the foot stay put when you switch; only the text between them changes and scrolls. */}
         <div className={styles.legalBody} key={kind}>
-          <header className={styles.legalHeader}>
-            <span className={styles.legalSeal} aria-hidden="true"><Seal size={20} strokeWidth={1.5} /></span>
-            {version && <p className={styles.legalEyebrow} dir="ltr"><span className={styles.legalChip}>v{version}</span></p>}
-          </header>
+          {version && <p className={styles.legalEyebrow} dir="ltr"><span className={styles.legalChip}>v{version}</span></p>}
           <h2 id={`${id}-title`} className={styles.legalTitle}>{label(kind)}</h2>
           <p id={`${id}-lede`} className={styles.legalLede}>{summary?.lede ?? copy.licenceSheet.lede}</p>
 
+          {summary && <ul className={styles.legalList}>
+            {summary.points.map(point => <li key={point}><p>{point}</p></li>)}
+          </ul>}
+
+          {kind === 'licence' && licence && <div className={styles.legalCert}>
+            <small>{copy.licenceSheet.entity}</small>
+            <strong>{licence.entity}</strong>
+            <dl className={styles.legalDetails}>
+              <div><dt>{copy.licenceSheet.regulator}</dt><dd>{licence.regulator}</dd></div>
+              <div><dt>{copy.licenceSheet.type}</dt><dd>{licence.type}</dd></div>
+              <div><dt>{copy.licenceSheet.number}</dt><dd className={styles.legalNumber} dir="ltr">{licence.number}</dd></div>
+            </dl>
+          </div>}
+        </div>
+
+        <div className={styles.legalFoot}>
           {summary && <>
-            <ul className={styles.legalList}>
-              {summary.points.map(point => <li key={point}><p>{point}</p></li>)}
-            </ul>
             <p className={styles.legalMeta}>{copy.updated} {copy.updatedDate}</p>
             {action(docHref, copy.readFull)}
           </>}
-
           {kind === 'licence' && licence && <>
-            <div className={styles.legalCert}>
-              <small>{copy.licenceSheet.entity}</small>
-              <strong>{licence.entity}</strong>
-              <dl className={styles.legalDetails}>
-                <div><dt>{copy.licenceSheet.regulator}</dt><dd>{licence.regulator}</dd></div>
-                <div><dt>{copy.licenceSheet.type}</dt><dd>{licence.type}</dd></div>
-                <div><dt>{copy.licenceSheet.number}</dt><dd className={styles.legalNumber} dir="ltr">{licence.number}</dd></div>
-              </dl>
-            </div>
             <p className={styles.legalMeta}>{copy.opensIn} · <span dir="ltr">{new URL(licence.url).hostname}</span></p>
             {action(licence.url, copy.verify, `${copy.verify}. ${copy.opensIn}`)}
           </>}
