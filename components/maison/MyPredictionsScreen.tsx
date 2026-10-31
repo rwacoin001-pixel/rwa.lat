@@ -10,9 +10,11 @@ import { fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
 import { myPredictionsCopy, myPredictionsScreenCopy, type MyPredictionsCopy, type MyPredictionsScreenCopy } from '@/lib/maison-my-predictions-copy'
 import { backOr, openPath } from '@/lib/maison-nav'
+import { useContentTranslation } from '@/lib/use-content-translation'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { fmtAtomic, fmtDateTime } from './format'
 import { settle } from './settle'
+import { PredictionTranslationButton } from './PredictionTranslationButton'
 import { MY_BETS_PAGE, useMyBets } from './MyPredictionsCard'
 import mp from './my-predictions.module.css'
 import { ShareWinLine, type WinMoment } from './ShareWin'
@@ -21,7 +23,7 @@ const PAGE = MY_BETS_PAGE
 const FILTERS = ['all', 'open', 'won', 'lost', 'void'] as const
 type Filter = (typeof FILTERS)[number]
 const FILTER_STATUS: Record<Exclude<Filter, 'all'>, BetStatus> = { open: 'placed', won: 'won', lost: 'lost', void: 'void' }
-function BetCard({ bet, locale, t, sc }: { bet: PredictionBet; locale: string; t: MyPredictionsCopy; sc: MyPredictionsScreenCopy }) {
+function BetCard({ bet, locale, t, sc, content }: { bet: PredictionBet; locale: string; t: MyPredictionsCopy; sc: MyPredictionsScreenCopy; content: (text: string) => string }) {
   const id = useId()
   const [open, setOpen] = useState(false)
   const [why, setWhy] = useState(false)
@@ -30,9 +32,9 @@ function BetCard({ bet, locale, t, sc }: { bet: PredictionBet; locale: string; t
   const money = (value: bigint | null) => value === null ? '—' : fmtUsdt(value.toString(), { locale })
   const side = bet.side.toLowerCase()
   const outcome = bet.tokenOutcome?.trim()
-  const sideLabel = outcome ? fill(t.backed, { outcome }) : side === 'yes' ? t.sides.yes : side === 'no' ? t.sides.no : bet.side
+  const sideLabel = outcome ? fill(t.backed, { outcome: content(outcome) }) : side === 'yes' ? t.sides.yes : side === 'no' ? t.sides.no : bet.side
   const question = bet.marketQuestion?.trim()
-  const name = question || `${t.market} · #${bet.marketMappingId.slice(0, 6)}`
+  const name = question ? content(question) : `${t.market} · #${bet.marketMappingId.slice(0, 6)}`
   const price = Number(bet.price)
   const priceText = Number.isFinite(price) ? price.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 3 }) : '—'
   // Same screens as the markets page: the event page when the market belongs to one, else the single market.
@@ -140,6 +142,11 @@ export function MyPredictionsScreen() {
     const target = bet.marketEventId ? `/prediction/event-${encodeURIComponent(String(bet.marketEventId))}` : bet.marketId ? `/prediction/${encodeURIComponent(String(bet.marketId))}` : '/markets?tab=predictions'
     return { id: `prediction-${bet.id}`, kind: 'prediction', date: settled.slice(0, 10), pct, title: String(bet.marketQuestion ?? '').trim() || t.title, path: target, proof: { kind: 'prediction_win', bet: bet.id } }
   }, [bets, t.title])
+  // Same switch as the prediction feed: the questions and the backed outcomes are translated in one batch, shown or hidden together.
+  const translationSources = useMemo(() => bets.flatMap((bet) => [bet.marketQuestion?.trim(), bet.tokenOutcome?.trim()]).filter((text): text is string => Boolean(text)), [bets])
+  const translation = useContentTranslation(translationSources)
+  const [original, setOriginal] = useState(false)
+  const content = (text: string) => original ? text : translation(text)
   const shown = filter === 'all' ? bets : bets.filter((bet) => betStatus(bet.status) === FILTER_STATUS[filter])
 
   const loadMore = async () => {
@@ -184,8 +191,10 @@ export function MyPredictionsScreen() {
           {FILTERS.map((key) => <button key={key} type="button" className={mp.filter} aria-pressed={filter === key} onClick={() => setFilter(key)}>{t.filters[key]}<small>{counts[key]}</small></button>)}
         </div>
 
+        {bets.length > 0 && translationSources.length > 0 && <div className={s.predFeedTranslate}><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={translationSources} /></div>}
+
         {shown.length === 0 ? <p className={mp.foot} role="status">{t.filterEmpty}</p>
-          : <ul className={mp.list}>{shown.map((bet) => <BetCard key={bet.id} bet={bet} locale={locale} t={t} sc={sc} />)}</ul>}
+          : <ul className={mp.list}>{shown.map((bet) => <BetCard key={bet.id} bet={bet} locale={locale} t={t} sc={sc} content={content} />)}</ul>}
 
         {bets.length < total && <div className={mp.more}>
           <button type="button" className={s.ghost} onClick={() => void loadMore()} disabled={loadingMore} aria-busy={loadingMore}>

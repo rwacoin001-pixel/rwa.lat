@@ -1,9 +1,9 @@
-/* Home invite card (2026-10-28, after the user's wallet-card reference; docs/design-system.md §4.2). A white shell
-   holding a soft grey panel (pill label, the reward large), five round faces across the panel's lower edge — grey seats
+/* Home invite card (2026-10-28, after the user's wallet-card reference; docs/design-system.md §4.2). A solid light-grey
+   shell holding a solid grey panel (pill label, the reward large), five round faces across the panel's lower edge — grey seats
    until friends join — the latest reward as one inner row, and a button row: porcelain claim, ink invite.
    Every size is on the §3.1 scale. */
 .card { position: relative; display: grid; gap: 12px; padding: 8px 8px 12px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .06), 0 24px 48px -28px rgba(15, 23, 42, .35); }
-.panel { display: grid; justify-items: center; gap: 8px; padding: 12px 12px 48px; border-radius: 22px; background: linear-gradient(180deg, #f5f6f8, #e9ecf0); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(11, 18, 32, .04); }
+.panel { display: grid; justify-items: center; gap: 8px; padding: 12px 12px 48px; border-radius: 22px; background: #f6f7f9; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(11, 18, 32, .04); }
 .top { display: flex; align-items: center; justify-content: space-between; justify-self: stretch; }
 .who { display: inline-flex; align-items: center; gap: 8px; min-width: 0; color: var(--m-ink); font-size: 13px; font-weight: 500; line-height: 18px; }
 .who > :first-child { flex: none; border-radius: 50%; box-shadow: 0 0 0 2px #fff, 0 2px 6px rgba(15, 23, 42, .18); }
@@ -28,9 +28,9 @@
 .faces img[data-tone='0'] { background: #cfeedd; } .faces img[data-tone='1'] { background: #e6defa; } .faces img[data-tone='2'] { background: #f8d6dc; }
 .faces img[data-tone='3'] { background: #f1e3d3; } .faces img[data-tone='4'] { background: #d3e9fb; }
 /* An empty seat: a grey person, waiting for a friend; tap to invite. */
-.seat.seat { padding: 0; border: 0; overflow: hidden; background: #e4e7eb; cursor: pointer; }
+.seat.seat { padding: 0; border: 0; overflow: hidden; background: #eef0f3; cursor: pointer; }
 .seat img { width: 100%; height: 100%; filter: grayscale(1) contrast(.9); opacity: .55; background: transparent; }
-.more { display: grid; place-items: center; background: #eef0f3; color: var(--m-ink); font-size: 15px; font-weight: 600; }
+.more { display: grid; place-items: center; background: #f3f4f6; color: var(--m-ink); font-size: 15px; font-weight: 600; }
 
 /* Latest reward: one inner card. */
 .last { margin: 0 4px; padding: 12px 12px; border-radius: 22px; background: #f6f7f9; }
@@ -60,7 +60,7 @@
 .info:focus-visible, .seat:focus-visible, .lastHead button:focus-visible, .claim:focus-visible, .invite:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 
 /* Dark: the same build in low light. */
-:global(.rwa-mobile[data-theme='dark']) .panel { background: linear-gradient(180deg, #1d222b, #161a21); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
+:global(.rwa-mobile[data-theme='dark']) .panel { background: #1d222b; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05); }
 :global(.rwa-mobile[data-theme='dark']) .pill, :global(.rwa-mobile[data-theme='dark']) .info { background: rgba(255, 255, 255, .08); }
 :global(.rwa-mobile[data-theme='dark']) .last { background: #1a1e25; }
 :global(.rwa-mobile[data-theme='dark']) .seat { background: #2a2f37; }
@@ -130,7 +130,7 @@
    top panel raised (lighter at its top, a white rim, a soft shadow under it), the reward row the lightest. Faces 36px,
    half inside the panel. Lighter type: name 13/400, label 11 on a pale pill, figure 28/500, the empty line 15/400. */
 .card { gap: 12px; padding: 8px 8px 8px; background: #f3f3f5; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), 0 0 0 .5px rgba(11, 18, 32, .06), 0 24px 48px -30px rgba(15, 23, 42, .35); }
-.panel { padding: 12px 12px 32px; background: linear-gradient(180deg, #fbfbfc 0%, #ececef 100%); box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(11, 18, 32, .04), 0 1px 2px rgba(15, 23, 42, .06), 0 12px 24px -16px rgba(15, 23, 42, .28); }
+.panel { padding: 12px 12px 32px; background: #f7f7f9; box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgba(11, 18, 32, .04), 0 1px 2px rgba(15, 23, 42, .06), 0 12px 24px -16px rgba(15, 23, 42, .28); }
 .who { font-size: 13px; font-weight: 400; }
 .who b { font-weight: 400; }
 .pill { background: rgba(11, 18, 32, .05); color: var(--m-faint, #8a9099); font-size: 11px; font-weight: 500; letter-spacing: .06em; }
@@ -153,7 +153,7 @@
 :global(.rwa-mobile) .card.card .pill, :global(.rwa-mobile) .card.card .lastHead span, :global(.rwa-mobile) .card.card .none { color: var(--m-faint, #8a9099); }
 /* Dark: the same three tones in low light. */
 :global(.rwa-mobile[data-theme='dark']) .card { background: #14171c; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04), 0 0 0 .5px rgba(255, 255, 255, .06); }
-:global(.rwa-mobile[data-theme='dark']) .panel { background: linear-gradient(180deg, #252a32, #1b1f26); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 12px 24px -16px rgba(0, 0, 0, .7); }
+:global(.rwa-mobile[data-theme='dark']) .panel { background: #22262e; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07), 0 12px 24px -16px rgba(0, 0, 0, .7); }
 :global(.rwa-mobile[data-theme='dark']) .faces > * { box-shadow: 0 0 0 2px #252a32; }
 :global(.rwa-mobile[data-theme='dark']) .last { background: #1e2229; box-shadow: none; }
 :global(.rwa-mobile[data-theme='dark']) .round.round, :global(.rwa-mobile[data-theme='dark']) .claim.claim { background: linear-gradient(180deg, #2a2f37, #20242b); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06); color: #f2f4f7; }
