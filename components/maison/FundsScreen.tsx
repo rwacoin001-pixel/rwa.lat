@@ -253,7 +253,7 @@ export function WithdrawScreen({ query }: { query: string }) {
   const pasteAddress = async () => {
     try { const text = (await navigator.clipboard.readText()).trim().replace(/\s/g, ''); if (text) { setModePick('manual'); setEntryId(null); setDestination(text); setServerError(null) } } catch { /* paste blocked: typing still works */ }
   }
-  return <MaisonPage page="withdraw" className={fs.page} topbar={topbar}>
+  return <MaisonPage page="withdraw" className={`${fs.page} ${fs.oneScreen}`} topbar={topbar}>
     {scanning && network && <TransferScanner onClose={() => setScanning(false)} onCode={(code) => { const value = code.trim().replace(/^[a-z]+:/i, '').split('?')[0]; if (!isValidAddress(network.id, value)) return false; setModePick('manual'); setEntryId(null); setDestination(value); setServerError(null); return true }} />}
     {pinManager && <TransactionPinManager open mode="setup" onClose={() => setPinManager(false)} onDone={() => { setPinManager(false); void pinStatus.refetch() }} />}
     {pinPrompt && <TransactionPinPrompt open busy={pending} onClose={() => setPinPrompt(false)} onConfirm={confirmPin} summary={[
@@ -329,7 +329,7 @@ export function ReceiveScreen() {
   const tone = eligibility.error ? 'error' : eligibility.data?.receivable ? 'ready' : 'muted'
   // 2026-10-28 (docs/design-system.md §4.1, §6, §7): one paper pass — who you are, the code on a white tile with the
   // mark in its centre, your id with a copy key — then one line of status, one line of scope, and two buttons.
-  return <MaisonPage page="receive" className={`${fs.page} ${rc.page}`} topbar={topbar} cta={typeof userId === 'string'}>
+  return <MaisonPage page="receive" className={`${fs.page} ${fs.oneScreen} ${rc.page}`} topbar={topbar} cta={typeof userId === 'string'}>
     <h1 className={fp.srTitle}>{r.title}</h1>
     {userId === undefined ? <Skeleton rows={4} />
       : userId === null ? <StateBlock tone="unavailable" title={r.unavailable}
@@ -518,7 +518,7 @@ export function TransferScreen({ query }: { query: string }) {
         : eligibility ?? (pending ? f.common.submitting : kit.transferN(exact(atomic))))
   const canReview = Boolean(id && !recipientError && recipientStatus.data?.receivable && !recipientStatus.error && atomic && !fieldError && wallet.data && !pending)
   const amountShown = atomic && !fieldError ? exact(atomic).replace(` ${unit}`, '') : '0'
-  return <MaisonPage page="transfer" className={`${fs.page} ${tf.form}`} topbar={topbar}>
+  return <MaisonPage page="transfer" className={`${fs.page} ${fs.oneScreen} ${tf.form}`} topbar={topbar}>
     {scanning && <TransferScanner onClose={() => setScanning(false)} onCode={code => { if (inflight.current) return false; const value = transferRecipientFromCode(code, window.location.origin); if (!value) return false; setRecipient(value); setServerError(null); setConsent(false); return true }} />}
     <h1 className={fp.srTitle}>{t.title}</h1>
     {wallet.error && !wallet.data ? <StateBlock tone="error" title={common.errorGeneric} body={wallet.error.message} retry={wallet.refetch} retryLabel={common.retry} />

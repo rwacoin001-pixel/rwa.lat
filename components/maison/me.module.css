@@ -120,10 +120,10 @@
 .eye:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 
 /* Name card, third pass (2026-10-28, after the user's profile-card reference). White card, 12px inset; a 120px colour
-   band (live iridescence) with 22px corners; the 80px photo half over the band's lower edge on the left, the membership
+   band (CSS colour drift, see ColourBand) with 22px corners; the 80px photo half over the band's lower edge on the left, the membership
    chip over it on the right; name 22 / handle 13 with a 48px round edit key; three counts with small icons; one ink key. */
 .pcard { --face: 80px; margin-top: 8px; padding: 12px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
-.pband { position: relative; height: 120px; overflow: hidden; border-radius: 22px; background: linear-gradient(135deg, #bfe3f5, #f3c9b8 55%, #d9c8f2); }
+.pband { position: relative; height: 120px; overflow: hidden; border-radius: 22px; }
 .pcanvas { position: absolute; inset: 0; display: block; width: 100%; height: 100%; }
 .pmid { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; height: var(--face); margin: calc(var(--face) / -2) 4px 0 12px; position: relative; z-index: 1; }
 .pavatar { display: block; flex: none; border-radius: 50%; box-shadow: 0 0 0 4px var(--pa-card, #fff), 0 10px 24px -14px rgba(15, 23, 42, .6); }
@@ -144,7 +144,8 @@
 .chipsOut { margin: 12px 4px 0; }
 .pedit:focus-visible, .pcta:focus-visible, .pstats button:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
 :global(.rwa-mobile[data-theme='dark']) .pchip { background: #f2f4f7; color: #0b1220; }
-:global(.rwa-mobile[data-theme='dark']) .pband { filter: brightness(.72) saturate(1.1); }
+/* Dark theme dims the band with a flat veil: a filter would re-process the animated layers every frame. */
+:global(.rwa-mobile[data-theme='dark']) .pband::after { content: ''; position: absolute; inset: 0; background: rgba(8, 12, 22, .28); pointer-events: none; }
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
 :global(.rwa-mobile) .pcard.pcard .handle, :global(.rwa-mobile) .pcard.pcard .pstats dt, :global(.rwa-mobile) .chipsOut.chipsOut > span:not([data-ok]) { color: var(--m-muted); }
 :global(.rwa-mobile) .pcard.pcard .pchip { color: #fff; }

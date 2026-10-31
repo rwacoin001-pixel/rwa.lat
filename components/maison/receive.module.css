@@ -49,3 +49,10 @@
 .pass { overflow: hidden; }
 .id.id::after { content: ''; position: absolute; top: -10px; left: -26px; right: -26px; height: 20px; pointer-events: none;
   background: radial-gradient(circle at 10px 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px), radial-gradient(circle at calc(100% - 10px) 50%, var(--ticket-hole, var(--m-bg)) 9.5px, transparent 10px); }
+
+/* One screen (2026-10-31): the pass is a little shorter, so the expanded 更多信息 body has room to scroll inside its own
+   box (fs.moreBody). While the details are open the QR steps down; it is still a clean, scannable square. */
+.page .pass { gap: 12px; padding: 16px 16px 14px; }
+.page .tile svg { width: clamp(152px, 21dvh, 200px); height: clamp(152px, 21dvh, 200px); transition: width .25s var(--pa-ease-spring, ease), height .25s var(--pa-ease-spring, ease); }
+.page:has(details[open]) .tile svg { width: clamp(120px, 15dvh, 136px); height: clamp(120px, 15dvh, 136px); }
+@media (prefers-reduced-motion: reduce) { .page .tile svg { transition: none; } }
