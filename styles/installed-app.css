@@ -6,7 +6,8 @@
   .rwa-mobile[data-theme][data-screen] { --topbar-h: 46px; }
   .rwa-mobile[data-theme][data-screen] .rwa-topbar.rwa-topbar--s1[data-template] { top: 0; }
   .rwa-mobile[data-screen='home'] [data-home-s2='true'] { --feed-sticky-top: calc(46px + env(safe-area-inset-top)); }
-  .rwa-mobile[data-screen='home'] [data-home-s2='true'][data-topbar-hidden='true'] { --feed-sticky-top: 0px; }
+  /* Hidden top bar: the pinned tabs sit under the status-bar strip (P04 `::before`, z 53), not at 0 beneath it. */
+  .rwa-mobile[data-screen='home'] [data-home-s2='true'][data-topbar-hidden='true'] { --feed-sticky-top: env(safe-area-inset-top); }
 }
 /* Native WebView fits the system bars itself: its CSS safe-area values are zero.
    Do not add hard-coded iPhone status-bar heights to either environment. */
