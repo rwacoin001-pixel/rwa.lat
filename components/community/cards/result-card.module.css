@@ -76,3 +76,4 @@
 :global(.rwa-mobile[data-theme='dark']) .dots i { background: #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px #f2f4f7; }
 @media (prefers-reduced-motion: reduce) { .head { animation: none; } }
+.holdings li small { color: var(--m-muted, #5b6472); font-size: 12px; }

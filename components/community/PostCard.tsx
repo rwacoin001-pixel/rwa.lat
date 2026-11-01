@@ -16,6 +16,7 @@ import { CommunityLike } from '../community-actions'
 import { CommunityText } from '../community-text'
 import { CommunityProofCard } from '../community-proof'
 import { ResultCard } from './cards/ResultCard'
+import { CardShareSheet } from './cards/CardShare'
 import { CommunityAvatar, mediaSrc } from '../community-avatar'
 import { PhotoViewer } from '../community-photo-viewer'
 import { CommunityCompose, useCommunityMe, type ComposeTarget } from '../community-compose'
@@ -228,9 +229,13 @@ export function usePostActions(isGuest: boolean, go: (screen: RwaScreen) => void
     if (result === 'copied') setNotice({ text: p.copied })
     else if (result === 'failed') setNotice({ text: p.shareFailed, error: true })
   })
-  const onShare = (post: CommunityPost) => share('/community/post/' + encodeURIComponent(post.id))
+  // A result card the viewer posted publicly shares as a poster + link (2026-11-01); everything else shares the post link.
+  const [cardShare, setCardShare] = useState<CommunityPost | null>(null)
+  const myHandle = useCommunityMe(isGuest)?.handle ?? null
+  const onShare = (post: CommunityPost) => { if (post.card && !isGuest && post.author?.handle && post.author.handle === myHandle) { setCardShare(post); return } share('/community/post/' + encodeURIComponent(post.id)) }
   const onMore = (post: CommunityPost) => more.open({ type: 'post', id: post.id, title: p.more }, () => onShare(post), 'menu', postMenuAction?.(post))
   const overlays = (me: ReturnType<typeof useCommunityMe>) => <>
+    {cardShare && <CardShareSheet post={cardShare} open onClose={() => setCardShare(null)} />}
     {!isGuest && reply && <CommunityCompose open={reply.open} onClose={() => setReply(current => current && { ...current, open: false })} target={{ kind: 'reply', postId: reply.post.id, handle: reply.post.author?.handle } satisfies ComposeTarget} me={me} onPublished={() => { onReplied?.(reply.post.id); setReply(current => current && { ...current, open: false }); setNotice({ text: communityCopy[locale].replied }) }} />}
     {more.sheet}
     {notice && <p className={c.toast} data-error={notice.error || undefined} role={notice.error ? 'alert' : 'status'}>{notice.text}</p>}

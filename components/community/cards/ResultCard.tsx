@@ -10,7 +10,7 @@
 import { EyeOff } from 'lucide-react'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
-import { CARD_FIELDS, cardGroup, money, pct, tone, units, type CardKind, type CardSnapshot, type PostCard } from '@/lib/community-cards'
+import { CARD_FIELDS, asNumber, cardGroup, money, pct, tone, units, type CardKind, type CardSnapshot, type PostCard } from '@/lib/community-cards'
 import s from './result-card.module.css'
 
 type Copy = {
@@ -37,21 +37,29 @@ const copy: Partial<Record<AppLocale, Copy>> = {
 }
 export const useResultCardCopy = () => { const { locale } = useI18n(); return copy[locale] ?? copy.en! }
 
-type Author = { displayName: string; handle: string; avatarUrl?: string | null; avatarSeed?: string | null }
+export type Author = { displayName: string; handle: string; avatarUrl?: string | null; avatarSeed?: string | null }
 
-export function ResultCard({ card, author, compact = false }: { card: PostCard; author?: Author; compact?: boolean }) {
-  const { locale } = useI18n()
-  const k = useResultCardCopy()
+export type Tone = 'up' | 'down' | 'flat'
+export type HoldingRow = { product: string; share: number; lastDayReturnPct: number | null }
+/** What a card says, independent of how it is drawn (the in-app card and the share image both use it). */
+export type CardModel = {
+  group: 'quant' | 'prediction' | 'funds'; head: string; title: string | null
+  hero: { text: string; unit?: string; tone: Tone; kicker?: string; sub?: string; subTone?: Tone } | null
+  holdings: HoldingRow[] | null; dots: string[]; open: boolean
+  grid: Array<{ key: string; label: string; value: string; tone?: Tone; hidden?: boolean }>
+  provenance: string; funds: string | null; risk: string
+}
+export function describeCard(card: PostCard, k: Copy, locale: string): CardModel {
   const { kind, snapshot: v } = card
   const group = cardGroup(kind)
   const visible = new Set(card.visibleFields)
-  const hidden = CARD_FIELDS[kind].filter((key) => !visible.has(key))
   const has = (key: string) => visible.has(key) && v[key] !== undefined
   const dec = typeof v.decimals === 'number' ? v.decimals : 6
   const asset = typeof v.asset === 'string' ? v.asset : 'USDT'
   const amount = (key: string, signed = false) => money(units(v[key], dec), locale, signed)
   const when = (iso: unknown) => typeof iso === 'string' ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso)) : '—'
   const day = (iso: unknown) => typeof iso === 'string' ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(iso.length === 10 ? `${iso}T00:00:00Z` : iso)) : '—'
+  const num = (key: string) => asNumber(v[key])
   const text = (key: string) => {
     const value = v[key]
     if (key === 'date') return day(value)
@@ -66,63 +74,73 @@ export function ResultCard({ card, author, compact = false }: { card: PostCard; 
     if (key === 'bestMonth' && value && typeof value === 'object') { const m = value as { month?: string; pnl?: string }; return `${m.month ?? '—'} · ${money(units(m.pnl, dec), locale, true)}` }
     return String(value ?? '—')
   }
-
-  // The hero: the first visible figure of the kind; the rest go to the grid.
-  const pnlValue = units(v.pnl, dec)
-  let hero: React.ReactNode = null
-  let used: string[] = []
+  let hero: CardModel['hero'] = null, holdings: HoldingRow[] | null = null, dots: string[] = [], used: string[] = []
   if (kind === 'holdings') {
-    const products = has('products') && Array.isArray(v.products) ? v.products as Array<{ product: string; weight: number; lastDayReturnPct?: number | null }> : null
-    if (products) { used = ['products']; hero = <Holdings products={products} /> }
+    if (has('products') && Array.isArray(v.products)) {
+      used = ['products']
+      holdings = (v.products as Array<{ product: string; weight: number | string; lastDayReturnPct?: number | string | null }>).map((item) => { const w = asNumber(item.weight) ?? 0; return { product: item.product, share: w <= 1 ? w * 100 : w, lastDayReturnPct: asNumber(item.lastDayReturnPct) } })
+    }
   } else if (kind === 'prediction_record') {
     if (has('winRate')) {
       used = ['winRate', 'last10']
-      const last = has('last10') && Array.isArray(v.last10) ? v.last10 as string[] : []
-      hero = <><span className={s.kicker}>{k.f.winRate}</span><b className={s.figure} data-tone="flat">{pct(typeof v.winRate === 'number' ? v.winRate * (v.winRate <= 1 ? 100 : 1) : null, false)}</b>
-        {typeof v.won === 'number' && typeof v.lost === 'number' && <span className={s.sub}>{k.won} {v.won} / {k.lost} {v.lost}</span>}
-        {last.length > 0 && <span className={s.dots} aria-label={k.f.last10}>{last.map((item, index) => <i key={index} data-r={item} />)}</span>}</>
+      const rate = num('winRate')
+      hero = { kicker: k.f.winRate, text: pct(rate === null ? null : rate <= 1 ? rate * 100 : rate, false), tone: 'flat', sub: asNumber(v.won) !== null && asNumber(v.lost) !== null ? `${k.won} ${asNumber(v.won)} / ${k.lost} ${asNumber(v.lost)}` : undefined }
+      dots = has('last10') && Array.isArray(v.last10) ? v.last10 as string[] : []
     }
   } else if (group === 'funds') {
-    if (has('amount')) { used = ['amount']; hero = <b className={s.figure} data-tone="flat">{amount('amount')} <small>{asset}</small></b> }
-    else if (has('status')) { used = ['status', 'asset']; hero = <b className={s.figure} data-tone="flat">{text('status')} <small>{asset}</small></b> }
+    if (has('amount')) { used = ['amount']; hero = { text: amount('amount'), unit: asset, tone: 'flat' } }
+    else if (has('status')) { used = ['status', 'asset']; hero = { text: text('status'), unit: asset, tone: 'flat' } }
   } else if (has('pnl')) {
     used = ['pnl', 'returnPct']
-    hero = <><b className={s.figure} data-tone={tone(pnlValue)}>{amount('pnl', true)} <small>{asset}</small></b>{has('returnPct') && <span className={s.sub} data-tone={tone(typeof v.returnPct === 'number' ? v.returnPct : null)}>{pct(v.returnPct)}</span>}</>
+    hero = { text: amount('pnl', true), unit: asset, tone: tone(units(v.pnl, dec)), ...(has('returnPct') ? { sub: pct(v.returnPct), subTone: tone(num('returnPct')) } : {}) }
   } else if (has('returnPct')) {
     used = ['returnPct']
-    hero = <b className={s.figure} data-tone={tone(typeof v.returnPct === 'number' ? v.returnPct : null)}>{pct(v.returnPct)}</b>
+    hero = { text: pct(v.returnPct), tone: tone(num('returnPct')) }
   }
-  const title = kind === 'prediction_bet' ? 'question' : kind === 'quant_day' || kind === 'quant_product' ? 'product' : null
-  const showTitle = title && has(title)
-  const grid = CARD_FIELDS[kind].filter((key) => !used.includes(key) && key !== title && has(key) && !(kind === 'prediction_record' && key === 'last10'))
-  const isOpen = kind === 'prediction_bet' && v.result === 'open'
+  const titleKey = kind === 'prediction_bet' ? 'question' : kind === 'quant_day' || kind === 'quant_product' ? 'product' : null
+  const grid: CardModel['grid'] = CARD_FIELDS[kind].filter((key) => !used.includes(key) && key !== titleKey && has(key) && !(kind === 'prediction_record' && key === 'last10'))
+    .map((key) => ({ key, label: k.f[key] ?? key, value: text(key), tone: key === 'closedPnl' ? tone(units(v[key], dec)) : undefined }))
+  for (const key of CARD_FIELDS[kind]) if (!visible.has(key)) grid.push({ key, label: k.f[key] ?? key, value: '', hidden: true })
+  return {
+    group, head: `${k.group[group]} · ${k.kinds[kind]}`, title: titleKey && has(titleKey) ? text(titleKey) : null, hero, holdings, dots, grid,
+    open: kind === 'prediction_bet' && v.result === 'open', provenance: `${k.provenance} · ${when(card.capturedAt)}`, funds: group === 'funds' ? k.funds : null, risk: k.risk,
+  }
+}
 
-  return <article className={s.card} data-group={group} data-compact={compact || undefined} aria-label={`${k.group[group]} · ${k.kinds[kind]}`}>
-    <header className={s.head}><span>{k.group[group]} · {k.kinds[kind]}</span><em>{k.snapshot}</em></header>
+export function ResultCard({ card, author, compact = false }: { card: PostCard; author?: Author; compact?: boolean }) {
+  const { locale } = useI18n()
+  const k = useResultCardCopy()
+  const m = describeCard(card, k, locale)
+  return <article className={s.card} data-group={m.group} data-compact={compact || undefined} aria-label={m.head}>
+    <header className={s.head}><span>{m.head}</span><em>{k.snapshot}</em></header>
     <div className={s.perf} aria-hidden="true" />
     <div className={s.well}>
-      {showTitle && <b className={s.title} dir="auto">{text(title)}</b>}
-      {hero}
-      {isOpen && <span className={s.note}>{k.open}</span>}
-      {(grid.length > 0 || hidden.length > 0) && <dl className={s.grid}>
-        {grid.map((key) => <div key={key}><dt>{k.f[key] ?? key}</dt><dd dir="auto" data-tone={key === 'closedPnl' ? tone(units(v[key], dec)) : undefined}>{text(key)}</dd></div>)}
-        {hidden.map((key) => <div key={key} data-hidden=""><dt>{k.f[key] ?? key}</dt><dd><i className={s.veil} /><EyeOff size={14} strokeWidth={1.8} aria-hidden="true" /></dd></div>)}
+      {m.title && <b className={s.title} dir="auto">{m.title}</b>}
+      {m.hero && <>{m.hero.kicker && <span className={s.kicker}>{m.hero.kicker}</span>}
+        <b className={s.figure} data-tone={m.hero.tone}>{m.hero.text}{m.hero.unit && <> <small>{m.hero.unit}</small></>}</b>
+        {m.hero.sub && <span className={s.sub} data-tone={m.hero.subTone}>{m.hero.sub}</span>}</>}
+      {m.dots.length > 0 && <span className={s.dots} aria-label={k.f.last10}>{m.dots.map((item, index) => <i key={index} data-r={item} />)}</span>}
+      {m.holdings && <Holdings rows={m.holdings} />}
+      {m.open && <span className={s.note}>{k.open}</span>}
+      {m.grid.length > 0 && <dl className={s.grid}>
+        {m.grid.map((cell) => cell.hidden
+          ? <div key={cell.key} data-hidden=""><dt>{cell.label}</dt><dd><i className={s.veil} /><EyeOff size={14} strokeWidth={1.8} aria-hidden="true" /></dd></div>
+          : <div key={cell.key}><dt>{cell.label}</dt><dd dir="auto" data-tone={cell.tone}>{cell.value}</dd></div>)}
       </dl>}
     </div>
     <footer className={s.foot}>
       {author && <span className={s.who}><CommunityAvatar avatarUrl={author.avatarUrl ?? null} seed={author.avatarSeed ?? author.handle} handle={author.handle} size={32} /><span><b dir="auto">{author.displayName}</b><small>@{author.handle}</small></span></span>}
-      <span className={s.prov}>{k.provenance} · {when(card.capturedAt)}</span>
-      {group === 'funds' && <small className={s.risk}>{k.funds}</small>}
-      <small className={s.risk}>{k.risk}</small>
+      <span className={s.prov}>{m.provenance}</span>
+      {m.funds && <small className={s.risk}>{m.funds}</small>}
+      <small className={s.risk}>{m.risk}</small>
     </footer>
   </article>
 }
 
-function Holdings({ products }: { products: Array<{ product: string; weight: number; lastDayReturnPct?: number | null }> }) {
-  const shares = products.map((item) => ({ ...item, share: item.weight <= 1 ? item.weight * 100 : item.weight }))
+function Holdings({ rows }: { rows: HoldingRow[] }) {
   return <div className={s.holdings}>
-    <span className={s.bar}>{shares.map((item, index) => <i key={index} style={{ flexGrow: Math.max(item.share, 1) }} data-i={index % 4}>{item.share >= 14 ? `${Math.round(item.share)}%` : ''}</i>)}</span>
-    <ul>{shares.map((item, index) => <li key={index}><i data-i={index % 4} /><span dir="auto">{item.product}</span><b data-tone={tone(item.lastDayReturnPct ?? null)}>{item.lastDayReturnPct === null || item.lastDayReturnPct === undefined ? `${Math.round(item.share)}%` : pct(item.lastDayReturnPct)}</b></li>)}</ul>
+    <span className={s.bar}>{rows.map((item, index) => <i key={index} style={{ flexGrow: Math.max(item.share, 1) }} data-i={index % 4}>{item.share >= 14 ? `${Math.round(item.share)}%` : ''}</i>)}</span>
+    <ul>{rows.map((item, index) => <li key={index}><i data-i={index % 4} /><span dir="auto">{item.product}</span>{item.lastDayReturnPct !== null && <small data-tone={tone(item.lastDayReturnPct)}>{pct(item.lastDayReturnPct)}</small>}<b>{Math.round(item.share)}%</b></li>)}</ul>
   </div>
 }
 

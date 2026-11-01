@@ -1,0 +1,9 @@
+/* Shared card landing (2026-11-01): cool white page, the card, one primary key and a quiet app link. */
+.page { display: grid; gap: 16px; width: min(100%, 480px); box-sizing: border-box; margin: 0 auto; padding: calc(env(safe-area-inset-top) + 32px) 16px calc(env(safe-area-inset-bottom) + 32px); }
+.head { display: grid; gap: 4px; padding: 0 4px; }
+.head p { margin: 0; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.head h1 { margin: 0; color: var(--m-ink, #0b1220); font-size: 22px; font-weight: 700; line-height: 28px; }
+.note { margin: 0; padding: 0 4px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.keys { display: grid; justify-items: center; gap: 8px; margin-top: 8px; }
+.join.join { width: auto; min-width: 200px; text-decoration: none; }
+.app { display: inline-flex; align-items: center; min-height: 44px; padding: 0 12px; color: var(--m-ink, #0b1220); font-size: 15px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }

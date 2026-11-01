@@ -18,6 +18,7 @@ import { Avatar, Images, Like, PostRow, SkeletonRows, Tags, XState, circleCopy, 
 import { openPath } from '@/lib/maison-nav'
 import { CircleJoinSheet } from './community/CircleJoinSheet'
 import { ResultCard } from './community/cards/ResultCard'
+import { cardsLive } from '@/lib/community-cards'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
 import { useQuery } from '@/lib/api/_query'
@@ -150,6 +151,8 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   // 晒单 tab (2026-11-01): result-card posts, newest first, filtered by family; never ranked by profit.
   const [cardFilter, setCardFilter] = useState<'all' | 'quant' | 'prediction' | 'funds'>('all')
   const cardsText = cardsTabCopy[locale] ?? cardsTabCopy.en!
+  const [cardsOn, setCardsOn] = useState(false)
+  useEffect(() => { void cardsLive().then(setCardsOn) }, [])
   const [topic, setTopic] = useState<string | null>(null)
   const [topics, setTopics] = useState<CommunityTopic[]>([])
   const [items, setItems] = useState<CommunityPost[]>([])
@@ -215,7 +218,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   }, [embedded])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
   // My circle leads when there is one (2026-10-28): the people you invited come first.
-  const tabs = [...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }]), ...(embedded ? [] : [{ key: 'cards' as const, label: cardsText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
+  const tabs = [...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }]), ...(embedded || !cardsOn ? [] : [{ key: 'cards' as const, label: cardsText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
   const actions = usePostActions(isGuest, go, locale, (postId) => setItems((previous) => previous.map((item) => item.id === postId ? { ...item, commentCount: item.commentCount + 1 } : item)))
   const rowActions: RowActions = { guest: isGuest, onLogin: actions.login, onReply: actions.onReply, onShare: actions.onShare, onMore: actions.onMore }
 

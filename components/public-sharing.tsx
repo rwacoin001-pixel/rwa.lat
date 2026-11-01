@@ -7,6 +7,9 @@ import { useI18n } from '@/lib/i18n'
 import { openPath } from '@/lib/maison-nav'
 import { shareCopy, type ShareCopy } from '@/lib/maison-trust-copy'
 import { MaisonPage, Skeleton, StateBlock, maison as s } from './maison/primitives'
+import { CardLanding } from './community/cards/CardLanding'
+import type { Author } from './community/cards/ResultCard'
+import type { PostCard } from '@/lib/community-cards'
 
 const shareError = (error: ApiError, c: ShareCopy) => error.status === 0 ? c.network : error.status === 401 ? c.signIn : c.failed
 // Only same-origin app paths; a shared record must never navigate off-site.
@@ -45,7 +48,7 @@ export function PublicShareButton({ kind, resourceId }: { kind: 'product'|'commu
   </div>
 }
 
-type SharedResource={kind:'product'|'community_post';title:string;summary:string;path:string}
+type SharedResource={kind:'product'|'community_post';title:string;summary:string;path:string}|{kind:'community_card';author:Author;card:PostCard;referralCode:string|null;path:string}
 export function PublicShareLanding({token}:{token:string|null}) {
   const {locale}=useI18n(),c=shareCopy[locale]
   const shared=useQuery(token?`shares:${token}`:null,()=>request<SharedResource>(`/v1/shares/${encodeURIComponent(token??'')}`),{staleTime:0})
@@ -53,6 +56,8 @@ export function PublicShareLanding({token}:{token:string|null}) {
   // 404/400/410 mean the token itself is dead: no retry. Network and server errors can be retried.
   const dead=!token||status===404||status===400||status===410
   const path=shared.data?safePath(shared.data.path):null
+  // A shared result card (2026-11-01): the card as posted, then a way in (with the author's invite code when there is one).
+  if(shared.data?.kind==='community_card'){const d=shared.data;return <MaisonPage page="share"><CardLanding card={d.card} author={d.author} referralCode={d.referralCode}/></MaisonPage>}
   return <MaisonPage page="share"><header className={s.hero}><p className={s.kicker}>a-reit.com</p><h1 className={s.titleL}>{c.title}</h1></header>
     {dead?<StateBlock tone="error" title={c.invalid} body={c.invalidBody}/>
     :shared.error?<StateBlock tone="error" title={c.unavailable} body={status===0?c.network:c.failed} retry={shared.refetch} retryLabel={c.retry}/>

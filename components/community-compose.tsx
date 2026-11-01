@@ -8,7 +8,7 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Users, Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Ticket, Trash2, X } from 'lucide-react'
 import { CardPicker } from './community/cards/CardPicker'
 import { ResultCard } from './community/cards/ResultCard'
-import { CARD_FIELDS, type CardDraft } from '@/lib/community-cards'
+import { CARD_FIELDS, cardsLive, type CardDraft } from '@/lib/community-cards'
 import { getPostLocation, locationCopy, type PostLocation } from '@/lib/community-location'
 import { request, readSession, SESSION_CHANGED, type ApiError } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
@@ -139,6 +139,8 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const [card, setCard] = useState<CardDraft | null>(null)
   const [cardPicking, setCardPicking] = useState(false)
   const openCard = target.kind === 'post' && Boolean(target.openCard)
+  const [cardsOn, setCardsOn] = useState(false)
+  useEffect(() => { if (open) void cardsLive().then(setCardsOn) }, [open])
   useEffect(() => { if (!open) return; setCard(null); setCardPicking(openCard) }, [open, openCard])
   const [syncCircleId, setSyncCircleId] = useState<string | null>(null)
   const syncCircle = choices.find(item => item.id === syncCircleId)?.id ?? choices[0]?.id ?? null
@@ -359,7 +361,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
             <div className={x.toolRow}>
               <button type="button" className={x.toolBtn} aria-label={k.addImage} disabled={shots.length >= MAX_IMAGES || busy} onClick={() => picker.current?.click()}><ImagePlus size={21} strokeWidth={1.8} /></button>
               <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={onPick} />
-              {!reply && !proof && <button type="button" className={x.toolBtn} aria-label={k.addCard ?? 'Add a result card'} data-set={Boolean(card) || undefined} disabled={busy} onClick={() => setCardPicking(true)}><Ticket size={21} strokeWidth={1.8} /></button>}
+              {!reply && !proof && cardsOn && <button type="button" className={x.toolBtn} aria-label={k.addCard ?? 'Add a result card'} data-set={Boolean(card) || undefined} disabled={busy} onClick={() => setCardPicking(true)}><Ticket size={21} strokeWidth={1.8} /></button>}
               {!reply && <button type="button" className={x.toolChip} aria-expanded={panel === 'topics'} data-set={topic !== null} onClick={() => setPanel(panel === 'topics' ? null : 'topics')}><Hash size={16} strokeWidth={2} aria-hidden="true" /><span>{topicLabel}</span></button>}
               <span className={x.grow} />
               {body.length > 0 && <CharRing used={body.length} max={max} label={k.remaining} />}

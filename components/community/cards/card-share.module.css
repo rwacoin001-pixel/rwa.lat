@@ -1,0 +1,18 @@
+/* Card share sheet (2026-11-01): the poster preview, two keys, the public link row. */
+.wrap { display: grid; gap: 16px; padding-bottom: 12px; }
+.poster { display: grid; place-items: center; overflow: hidden; aspect-ratio: 9 / 16; max-height: 52dvh; margin: 0 auto; border-radius: 22px; background: #f6f7f9; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); }
+.poster img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.drawing { color: var(--m-muted, #5b6472); font-size: 13px; }
+.keys { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.key { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 52px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .06)); color: var(--m-ink, #0b1220); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.solid { background: var(--m-ink, #0b1220); color: var(--pa-card, #fff); }
+.key:disabled { opacity: .45; cursor: default; }
+.linkRow { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 0 4px 0 16px; border-radius: 22px; background: var(--pa-fill, rgba(11, 18, 32, .04)); }
+.linkRow > span { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.linkRow b { font-size: 15px; font-weight: 600; line-height: 22px; }
+.linkRow small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.textKey { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.note { min-height: 18px; margin: 0; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; text-align: center; }
+.qrSource { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
+:global(.rwa-mobile[data-theme='dark']) .solid { background: #f2f4f7; color: #0b1220; }
+:global(.rwa-mobile[data-theme='dark']) .poster { background: #1b1f26; }

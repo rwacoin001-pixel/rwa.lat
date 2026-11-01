@@ -32,6 +32,14 @@ export const CARD_FIELDS: Record<CardKind, string[]> = {
 
 const fail = (message: string) => { throw new Error(message) }
 
+/** Whether the card API is live (asked once per app run). Until it is, no 晒单 tab and no card key are shown. An unknown route
+ * answers 404/405; anything else (200, or 401 for a guest) means the API is there. */
+let live: Promise<boolean> | null = null
+export function cardsLive(): Promise<boolean> {
+  live ??= request('/v1/community/me/cards/kinds', { loading: 'silent' }).then((result) => result.ok || (result.error.status !== 404 && result.error.status !== 405 && result.error.status !== 0)).catch(() => false)
+  return live
+}
+
 export async function getCardKinds() {
   const result = await request<{ items: CardKindInfo[] }>('/v1/community/me/cards/kinds', { loading: 'silent' })
   if (!result.ok) { if (result.error.status === 404 || result.error.status === 405) return null; return fail(result.error.message) }
@@ -58,8 +66,11 @@ export function money(value: number | null, locale: string, signed = false) {
   const text = new Intl.NumberFormat(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(value))
   return `${value < 0 ? '−' : signed && value > 0 ? '+' : ''}${text}`
 }
-export function pct(value: unknown, signed = true) {
-  if (typeof value !== 'number' || !Number.isFinite(value)) return '—'
+/** Percentages and ratios may arrive as numbers or decimal strings. */
+export const asNumber = (value: unknown): number | null => { const n = typeof value === 'number' ? value : typeof value === 'string' && value.trim() !== '' ? Number(value) : NaN; return Number.isFinite(n) ? n : null }
+export function pct(input: unknown, signed = true) {
+  const value = asNumber(input)
+  if (value === null) return '—'
   return `${value < 0 ? '−' : signed && value > 0 ? '+' : ''}${Math.abs(value).toFixed(value !== 0 && Math.abs(value) < 10 ? 2 : 1)}%`
 }
 export const tone = (value: number | null | undefined) => value === null || value === undefined || value === 0 ? 'flat' : value > 0 ? 'up' : 'down'
