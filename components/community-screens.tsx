@@ -464,7 +464,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     getMyCircles().then((data) => {
       setCircles(data)
       if (!data) return
-      const all = [...(data.owned ? [data.owned] : []), ...data.joined]
+      const all = [...(data.owned ? [data.owned] : []), ...data.joined, ...data.left]
       setCircleId((current) => {
         const wanted = select === undefined ? current : select
         return all.some((item) => item.id === wanted) ? wanted : all[0]?.id ?? null
@@ -514,7 +514,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       try {
         if (sort === 'circle') {
           if (circles === undefined) return
-          if (circles && !circleId) { pageSort.current = 'circle'; setItems([]); setNextCursor(null); return }
+          if (circles && (!circleId || circles.left.some((item) => item.id === circleId))) { pageSort.current = 'circle'; setItems([]); setNextCursor(null); return }
           const circlePage = circles && circleId ? await getCirclePosts(circleId, { limit: 20 }) : await getCircleFeed({ limit: 20 })
           if (version !== requestVersion.current) return
           pageSort.current = 'circle'; setItems(circlePage.items ?? []); setNextCursor(circlePage.nextCursor ?? null)
@@ -632,7 +632,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         : <InviteCentre embedded />)
       : loading ? <SkeletonRows />
         : failed ? <XState title={communityCopy[locale].feedFailed} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => void load()}>{t('common.refresh')}</button>} />
-        : items.length === 0 && sort === 'circle' && circles && !circleId ? null
+        : items.length === 0 && sort === 'circle' && circles && (!circleId || circles.left.some((item) => item.id === circleId)) ? null
         : items.length === 0 ? (sort === 'circle'
           ? <XState title={circleText.emptyTitle} body={circleText.emptyBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => pick('invite')}>{circleText.invite}</button>} />
           : <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />)

@@ -8,7 +8,7 @@ import { request } from '@/lib/api/_http'
 import type { CommunityAuthor, CommunityPost } from '@/lib/community-data'
 
 export type Circle = { id: string; name: string; owner: CommunityAuthor; memberCount: number; createdAt: string; isOwner: boolean }
-export type CircleMembership = { owned: Circle | null; joined: Circle[] }
+export type CircleMembership = { owned: Circle | null; joined: Circle[]; left: Circle[] }
 export type CircleMemberRow = { profile: CommunityAuthor; depth: number }
 
 export const CIRCLE_NAME_MIN = 2
@@ -20,7 +20,7 @@ const fail = (message: string) => { throw new Error(message) }
 export async function getMyCircles(): Promise<CircleMembership | null> {
   const result = await request<CircleMembership>('/v1/community/circles/mine', { loading: 'silent' })
   if (!result.ok) { if (result.error.status === 404 || result.error.status === 405) return null; return fail(result.error.message) }
-  return { owned: result.data.owned ?? null, joined: result.data.joined ?? [] }
+  return { owned: result.data.owned ?? null, joined: result.data.joined ?? [], left: result.data.left ?? [] }
 }
 export async function createCircle(name: string) {
   const result = await request<Circle>('/v1/community/circles', { method: 'POST', body: JSON.stringify({ name }) })
@@ -46,6 +46,10 @@ export async function getCircleMembers(id: string, cursor?: string | null) {
 }
 export async function leaveCircle(id: string) {
   const result = await request(`/v1/community/circles/${encodeURIComponent(id)}/leave`, { method: 'POST' })
+  if (!result.ok) fail(result.error.message)
+}
+export async function rejoinCircle(id: string) {
+  const result = await request(`/v1/community/circles/${encodeURIComponent(id)}/rejoin`, { method: 'POST' })
   if (!result.ok) fail(result.error.message)
 }
 export async function removeCircleMember(id: string, profileId: string) {

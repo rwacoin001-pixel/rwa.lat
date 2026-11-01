@@ -39,3 +39,6 @@
 .memberList b { overflow: hidden; color: var(--m-ink); font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
 .memberList small { color: var(--m-muted); font-size: 12px; line-height: 16px; }
 .loadMore { justify-self: center; margin: 4px auto 12px; display: flex; }
+
+/* A circle I left: faded in the row; its head offers to rejoin. */
+.names > button[data-left] { opacity: .55; }

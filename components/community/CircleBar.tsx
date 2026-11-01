@@ -11,7 +11,7 @@ import { useEffect, useState } from 'react'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { Sheet } from '@/components/maison/Sheet'
 import { useI18n, type AppLocale } from '@/lib/i18n'
-import { CIRCLE_NAME_MAX, createCircle, deleteCircle, getCircleMembers, leaveCircle, removeCircleMember, renameCircle, validCircleName, type Circle, type CircleMemberRow, type CircleMembership } from '@/lib/community-circles'
+import { CIRCLE_NAME_MAX, createCircle, deleteCircle, getCircleMembers, leaveCircle, rejoinCircle, removeCircleMember, renameCircle, validCircleName, type Circle, type CircleMemberRow, type CircleMembership } from '@/lib/community-circles'
 import c from '../community-x.module.css'
 import s from './circles.module.css'
 
@@ -19,7 +19,7 @@ type Copy = {
   mine: string; found: string; introTitle: string; introBody: string; owner: string; members: (n: number) => string; name: string
   namePlaceholder: string; nameHint: string; save: string; rename: string; viewMembers: string; remove: string; leave: string
   delete: string; leaveTitle: string; leaveBody: string; deleteTitle: string; deleteBody: string; cancel: string; depth: (n: number) => string
-  you: string; foundTitle: string; failed: string; more: string; empty: string
+  you: string; foundTitle: string; failed: string; more: string; empty: string; rejoin: string; leftNote: string
 }
 const copy: Partial<Record<AppLocale, Copy>> = {
   'zh-CN': {
@@ -28,7 +28,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     rename: '修改名字', viewMembers: '圈子成员', remove: '移出', leave: '退出圈子', delete: '删除圈子', leaveTitle: '退出这个圈子？',
     leaveBody: '退出后你看不到这里的帖子，也不能在这里发帖。以后可以重新加入。', deleteTitle: '删除你的圈子？',
     deleteBody: '圈子里的帖子会一起隐藏，成员也看不到了。', cancel: '取消', depth: (n) => n <= 1 ? '你邀请的' : `第 ${n} 层`, you: '你',
-    foundTitle: '建立圈子', failed: '没有成功，请稍后再试。', more: '更多', empty: '还没有成员。邀请朋友，他们会自动加入。',
+    foundTitle: '建立圈子', failed: '没有成功，请稍后再试。', more: '更多', empty: '还没有成员。邀请朋友，他们会自动加入。', rejoin: '重新加入', leftNote: '你已退出这个圈子',
   },
   en: {
     mine: 'Mine', found: 'Start a circle', introTitle: 'Start your circle', introBody: 'Everyone you invite joins it automatically, however far down the invites go. Posts in a circle are seen only by its members.',
@@ -36,7 +36,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     rename: 'Rename', viewMembers: 'Members', remove: 'Remove', leave: 'Leave circle', delete: 'Delete circle', leaveTitle: 'Leave this circle?',
     leaveBody: 'You will no longer see or post here. You can join again later.', deleteTitle: 'Delete your circle?',
     deleteBody: 'Its posts are hidden too, and members can no longer see them.', cancel: 'Cancel', depth: (n) => n <= 1 ? 'You invited' : `${n} invites away`, you: 'You',
-    foundTitle: 'Start a circle', failed: 'That did not work. Please try again.', more: 'More', empty: 'No members yet. Invite friends and they join automatically.',
+    foundTitle: 'Start a circle', failed: 'That did not work. Please try again.', more: 'More', empty: 'No members yet. Invite friends and they join automatically.', rejoin: 'Rejoin', leftNote: 'You left this circle',
   },
 }
 
@@ -54,7 +54,8 @@ export function CircleBar({ membership, selected, onSelect, onChanged, onNotify 
   onNotify: (text: string) => void
 }) {
   const k = useCircleCopy()
-  const circles = [...(membership.owned ? [membership.owned] : []), ...membership.joined]
+  const circles = [...(membership.owned ? [membership.owned] : []), ...membership.joined, ...membership.left]
+  const leftIds = new Set(membership.left.map((circle) => circle.id))
   const current = circles.find((circle) => circle.id === selected) ?? circles[0] ?? null
   const [naming, setNaming] = useState<null | 'found' | 'rename'>(null)
   const [menu, setMenu] = useState(false)
@@ -70,7 +71,7 @@ export function CircleBar({ membership, selected, onSelect, onChanged, onNotify 
 
   return <section className={s.bar} aria-label={k.viewMembers}>
     {circles.length > 0 && <div className={s.names} role="group">
-      {circles.map((circle) => <button key={circle.id} type="button" className={c.chip} aria-pressed={circle.id === current?.id} onClick={() => onSelect(circle.id)}>
+      {circles.map((circle) => <button key={circle.id} type="button" className={c.chip} data-left={leftIds.has(circle.id) || undefined} aria-pressed={circle.id === current?.id} onClick={() => onSelect(circle.id)}>
         {circle.name}{circle.isOwner && <small className={s.mine}>{k.mine}</small>}
       </button>)}
       {!membership.owned && <button type="button" className={`${c.chip} ${s.found}`} onClick={() => setNaming('found')}>+ {k.found}</button>}
@@ -79,9 +80,11 @@ export function CircleBar({ membership, selected, onSelect, onChanged, onNotify 
     {current ? <div className={s.head}>
       <div className={s.headText}>
         <b dir="auto">{current.name}</b>
-        <small>{current.isOwner ? k.you : current.owner.displayName} · {k.owner} · {k.members(current.memberCount)}</small>
+        <small>{leftIds.has(current.id) ? k.leftNote : <>{k.owner} <span dir="auto">{current.isOwner ? k.you : current.owner.displayName}</span> · {k.members(current.memberCount)}</>}</small>
       </div>
-      <button type="button" className={s.more} aria-label={k.more} aria-haspopup="dialog" onClick={() => setMenu(true)}><MoreHorizontal size={18} strokeWidth={1.9} aria-hidden="true" /></button>
+      {leftIds.has(current.id)
+        ? <button type="button" className={`${c.pill} ${c.pillSolid}`} disabled={busy} onClick={() => void act(async () => { await rejoinCircle(current.id); onChanged(current.id) })}>{k.rejoin}</button>
+        : <button type="button" className={s.more} aria-label={k.more} aria-haspopup="dialog" onClick={() => setMenu(true)}><MoreHorizontal size={18} strokeWidth={1.9} aria-hidden="true" /></button>}
     </div> : <div className={s.intro}>
       <b>{k.introTitle}</b>
       <p>{k.introBody}</p>
@@ -110,7 +113,7 @@ export function CircleBar({ membership, selected, onSelect, onChanged, onNotify 
         <p className={s.confirmBody}>{confirm === 'delete' ? k.deleteBody : k.leaveBody}</p>
         <button type="button" data-danger="" disabled={busy} onClick={() => current && void act(async () => {
           if (confirm === 'delete') await deleteCircle(current.id); else await leaveCircle(current.id)
-          setConfirm(null); onChanged(null)
+          setConfirm(null); onChanged(confirm === 'leave' ? current.id : null)
         })}>{confirm === 'delete' ? k.delete : k.leave}</button>
         <button type="button" onClick={() => setConfirm(null)}>{k.cancel}</button>
       </div>
