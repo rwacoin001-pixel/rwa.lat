@@ -21,6 +21,7 @@ import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
 import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
 import { recordReferralRewards } from '../referral/referral-rewards'
 import { enqueueReferralPurchase } from '../referral/referral-purchase'
+import { couponDiscount, redeemCoupon } from '../rewards/reward-coupons'
 
 // 18 位定标换算已抽到 prediction-hedge-math（纯函数模块，可独立测试）；此处 re-export 保持既有引用不变。
 export { formatDecimal18, parseDecimal18 }
@@ -90,18 +91,18 @@ export class PredictionService {
   async placeBet(
     userId: string,
     requestId: string,
-    input: { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string },
+    input: { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string },
   ) {
-    await this.capability.assertEnabled(PREDICTION_SWITCH_KEY, 'Prediction betting is disabled.')
-
     const stake = BigInt(input.stakeAtomic)
     if (stake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
+    // A completed receipt remains replayable after market closure, quote expiry or coupon use.
+    const [replay] = await this.dataSource.query('SELECT * FROM app.prediction_bets WHERE user_id=$1 AND idempotency_key=$2', [userId, input.idempotencyKey])
+    if (replay) return this.toBetView(replay, true)
+    await this.capability.assertEnabled(PREDICTION_SWITCH_KEY, 'Prediction betting is disabled.')
 
     // A 段收费：下注时先抽下注费，只有净额进入风险池（费收即时确认，不承担赔付风险）
     const feeConfig = predictionFeeConfig()
-    const placeFee = feeOn(stake, feeConfig.placeFeeBps)
-    const riskStake = stake - placeFee
-    if (riskStake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
+    const feeBefore = feeOn(stake, feeConfig.placeFeeBps)
 
     // 市场与代币校验（要求市场 active 且 token 未结算）
     let tokenRow = await this.tokenMapping(input.tokenId)
@@ -127,22 +128,6 @@ export class PredictionService {
       this.polymarket.getOrderBook(input.tokenId),
       this.polymarket.getOutcomeProbability(input.tokenId),
     ])
-    const price18 = validatedPredictionPrice(book, input.tokenId, riskStake, probability)
-    if (price18 === null) throw predictionPriceUnavailable(input.tokenId)
-
-    // 滑点保护
-    if (input.expectedPrice) {
-      const expected = parseDecimal18(input.expectedPrice)
-      const delta = price18 > expected ? price18 - expected : expected - price18
-      if (expected > 0n && delta * 10000n > expected * PREDICTION_LIMITS.slippageBps) {
-        throw predictionSlippageExceeded(input.expectedPrice, formatDecimal18(price18))
-      }
-    }
-
-    // 份额（18 位定标）= 净本金(riskStake, 6位原子) × 1e36 / (价格(18位) × 1e6)
-    const shares18 = (riskStake * SHARES_SCALE * SHARES_SCALE) / (price18 * ATOMIC_PER_UNIT)
-    if (shares18 <= 0n) throw predictionPriceUnavailable(input.tokenId)
-
     const runner = this.dataSource.createQueryRunner()
     await runner.connect()
     await runner.startTransaction()
@@ -158,6 +143,23 @@ export class PredictionService {
         await runner.commitTransaction()
         return this.toBetView(existing, true)
       }
+
+      const discount = input.couponId ? await couponDiscount(runner, userId, input.couponId, 'prediction_place_fee', feeBefore) : 0n
+      const placeFee = feeBefore - discount
+      const riskStake = stake - placeFee
+      if (riskStake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
+      // A coupon increases risk stake and shares; validate depth against that actual amount.
+      const price18 = validatedPredictionPrice(book, input.tokenId, riskStake, probability)
+      if (price18 === null) throw predictionPriceUnavailable(input.tokenId)
+      if (input.expectedPrice) {
+        const expected = parseDecimal18(input.expectedPrice)
+        const delta = price18 > expected ? price18 - expected : expected - price18
+        if (expected > 0n && delta * 10000n > expected * PREDICTION_LIMITS.slippageBps) {
+          throw predictionSlippageExceeded(input.expectedPrice, formatDecimal18(price18))
+        }
+      }
+      const shares18 = (riskStake * SHARES_SCALE * SHARES_SCALE) / (price18 * ATOMIC_PER_UNIT)
+      if (shares18 <= 0n) throw predictionPriceUnavailable(input.tokenId)
 
       // Serialize all users on the same market with result sync/settlement.
       // Quotes were fetched outside this transaction; they may already be obsolete.
@@ -207,13 +209,14 @@ export class PredictionService {
       const betId = randomUUID()
       const [bet] = await runner.query(
         `INSERT INTO app.prediction_bets
-          (id, user_id, market_mapping_id, token_id, side, stake_atomic, fee_atomic, payout_fee_atomic, shares, price, status, idempotency_key)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, 'placed', $10)
+          (id, user_id, market_mapping_id, token_id, side, stake_atomic, fee_atomic, payout_fee_atomic, shares, price, status, idempotency_key,fee_discount_atomic,coupon_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, 'placed', $10,$11,$12)
          ON CONFLICT (user_id, idempotency_key) DO NOTHING
          RETURNING *`,
         [
           betId, userId, tokenRow.market_mapping_id, tokenRow.token_id, String(tokenRow.outcome ?? 'YES').toUpperCase(),
           stake.toString(), placeFee.toString(), formatDecimal18(shares18), formatDecimal18(price18), input.idempotencyKey,
+          discount.toString(), input.couponId ?? null,
         ],
       )
       if (!bet) {
@@ -224,6 +227,7 @@ export class PredictionService {
         await runner.commitTransaction()
         return this.toBetView(raced, true)
       }
+      if (input.couponId) await redeemCoupon(runner, userId, input.couponId, 'prediction_bet', betId, feeBefore, discount)
 
       // 记账：user.available --(debit stake)--> pool(credit riskStake) + fee_revenue(credit placeFee)
       // 三笔分录同属一笔交易，借贷净额为 0（账本平衡触发器要求）。
@@ -251,6 +255,9 @@ export class PredictionService {
         tokenId: tokenRow.token_id,
         stakeAtomic: stake.toString(),
         placeFeeAtomic: placeFee.toString(),
+        feeBeforeAtomic: feeBefore.toString(),
+        feeDiscountAtomic: discount.toString(),
+        couponId: input.couponId ?? null,
         riskStakeAtomic: riskStake.toString(),
         placeFeeBps: feeConfig.placeFeeBps,
         price: formatDecimal18(price18),
@@ -489,6 +496,8 @@ export class PredictionService {
       side: row.side,
       stakeAtomic: String(row.stake_atomic),
       feeAtomic: String(row.fee_atomic ?? '0'),
+      feeDiscountAtomic: String(row.fee_discount_atomic ?? '0'),
+      couponId: row.coupon_id ?? null,
       payoutFeeAtomic: String(row.payout_fee_atomic ?? '0'),
       /** 实际进入风险池的本金 = stake − 下注费 */
       riskStakeAtomic: (BigInt(String(row.stake_atomic ?? '0')) - BigInt(String(row.fee_atomic ?? '0'))).toString(),

@@ -191,6 +191,12 @@ export class Withdrawal {
   @Column({ name: 'fee_atomic_amount', type: 'numeric' })
   feeAtomicAmount!: string
 
+  @Column({ name: 'fee_discount_atomic', type: 'numeric', nullable: true })
+  feeDiscountAtomic!: string | null
+
+  @Column({ name: 'coupon_id', type: 'uuid', nullable: true })
+  couponId!: string | null
+
   @Column({ name: 'destination_hash', type: 'bytea' })
   destinationHash!: Buffer
 

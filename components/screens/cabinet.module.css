@@ -108,3 +108,12 @@
    centre a little above the card's (like object-position 50% 42%), so the print stays on the face at any height. */
 .cabStage { top: 42%; left: 0; width: 100%; translate: 0 -42%; border-radius: 0; box-shadow: none; background: #e9edf2; }
 :global([data-auth-theme='cool']) .cabStage { background: #15181e; }
+
+/* Pulled back (2026-11-01, user: the subject was too large): the cabinet sits at 78% inside the card. Its own edges melt
+   into a blurred, enlarged copy of the same studio photo behind it, so no seam shows. */
+.cabBackdrop { position: absolute; inset: -12%; width: 124%; height: 124%; max-width: none; object-fit: cover; filter: blur(22px) saturate(.9); -webkit-user-drag: none; pointer-events: none; }
+.cabStage { scale: .78; overflow: visible; background: transparent;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent);
+  -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 9%, #000 91%, transparent), linear-gradient(to bottom, transparent, #000 7%, #000 93%, transparent); mask-composite: intersect; }
+:global([data-auth-theme='cool']) .cabStage { background: transparent; }
+.cabBackdropWrap { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }

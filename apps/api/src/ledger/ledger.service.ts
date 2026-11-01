@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { DataSource, QueryRunner } from 'typeorm'
 import type { WalletNetwork } from '../wallet/wallet.entities'
 import { LEDGER_ERROR_CODES } from './ledger.errors'
+import { finishWithdrawalCoupon } from '../rewards/reward-coupons'
 
 interface ReconcileCustodyInput {
   provider: string
@@ -172,6 +173,7 @@ export class LedgerService {
          WHERE id = $1`,
         [withdrawalId, chainTransactionId],
       )
+      if (transactionId) await finishWithdrawalCoupon(runner, withdrawal, true)
       await this.audit(runner, withdrawal.user_id as string, requestId, 'ledger.withdrawal.settled', withdrawalId, { chainTransactionId })
       return { withdrawalId, state: 'completed', duplicate: transactionId === null, ledgerTransactionId: transactionId }
     })
@@ -205,6 +207,7 @@ export class LedgerService {
          WHERE id = $1`,
         [withdrawalId, reasonCode],
       )
+      if (transactionId) await finishWithdrawalCoupon(runner, withdrawal, false)
       await this.audit(runner, withdrawal.user_id as string, requestId, 'ledger.withdrawal.refunded', withdrawalId, { reasonCode })
       return { withdrawalId, state: 'failed', refunded: true, duplicate: transactionId === null, ledgerTransactionId: transactionId }
     })

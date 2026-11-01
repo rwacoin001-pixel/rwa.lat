@@ -1,8 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { IsInt, IsNotEmpty, IsOptional, IsString, Matches, Max, MaxLength, Min } from 'class-validator'
+import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator'
 import { Type } from 'class-transformer'
 
 export class PlacePredictionBetDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  couponId?: string
+
   @ApiProperty({ description: 'Polymarket outcome token id', example: '21742633143463906290569050155826241533067272736897614950488156847949938836455' })
   @IsString()
   @IsNotEmpty()

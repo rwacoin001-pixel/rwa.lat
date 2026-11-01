@@ -18,8 +18,8 @@ describe('prediction single-bet cap removal',()=>{
   })
   it('allows amounts above 100 through to market validation without making a transaction',async()=>{
     await expect(service.placeBet('user','request',{tokenId:'missing',stakeAtomic:'101000000',idempotencyKey:'isolated-test'})).rejects.toMatchObject({response:{code:'PREDICTION_MARKET_NOT_TRADEABLE'}})
-    // 映射查询 → 按需入库尝试 → 复查询：共 2 次，且都没有开事务
-    expect(query).toHaveBeenCalledTimes(2)
+    // Receipt replay lookup, mapping lookup, and mapping re-read; no transaction is opened.
+    expect(query).toHaveBeenCalledTimes(3)
     expect(polymarket.ensureTokenMapped).toHaveBeenCalledWith('missing')
   })
   it('still rejects non-positive stakes before touching the database',async()=>{

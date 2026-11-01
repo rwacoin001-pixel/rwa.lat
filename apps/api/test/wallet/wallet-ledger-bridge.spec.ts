@@ -90,9 +90,11 @@ describe('WalletLedgerBridge financial decisions', () => {
         return [{
           id: 'withdrawal-1', user_id: 'user-1', state: 'risk_review',
           atomic_amount: '1000', fee_atomic_amount: '10',
+          coupon_id: 'coupon-1', fee_discount_atomic: '5',
         }]
       }
       if (sql.includes('INSERT INTO app.withdrawal_approval_decisions')) return [{ id: 'decision-1' }]
+      if (sql.includes('SELECT id FROM app.user_coupons')) return [{ id: 'coupon-1' }]
       if (sql.includes('SELECT id FROM app.ledger_accounts')) {
         return [{ id: params?.[1] === 'locked' ? 'locked-account' : 'available-account' }]
       }
@@ -112,6 +114,7 @@ describe('WalletLedgerBridge financial decisions', () => {
     const entries = query.mock.calls.find(([sql]) => String(sql).includes('INSERT INTO app.ledger_entries'))
     expect(entries?.[1]).toEqual(['refund-transaction', 'locked-account', 'available-account', '1010'])
     expect(query.mock.calls.some(([sql]) => String(sql).includes("SET state = 'rejected'"))).toBe(true)
+    expect(query.mock.calls.some(([sql]) => String(sql).includes("SET state='available',locked_ref=NULL"))).toBe(true)
     expect(runner.commitTransaction).toHaveBeenCalled()
   })
 })

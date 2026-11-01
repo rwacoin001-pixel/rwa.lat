@@ -43,6 +43,7 @@ export class PredictionUserController {
       tokenId: dto.tokenId,
       stakeAtomic: dto.stakeAtomic,
       expectedPrice: dto.expectedPrice,
+      couponId: dto.couponId,
       idempotencyKey: dto.idempotencyKey,
     })
   }

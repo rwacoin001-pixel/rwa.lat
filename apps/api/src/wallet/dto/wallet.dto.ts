@@ -5,6 +5,11 @@ import type { WalletNetwork } from '../wallet.entities'
 const networks: WalletNetwork[] = ['tron', 'ethereum', 'arbitrum']
 
 export class WithdrawalQuoteDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsUUID()
+  couponId?: string
+
   @ApiProperty()
   @IsIn(networks)
   network!: WalletNetwork
