@@ -192,6 +192,8 @@ describe('notifications', () => {
     expect(note[0].sql).toContain("'community.circle.joined'")
     expect(note[0].sql).toContain("'你已加入 ' || c.name || ' 的圈子'")
     expect(note[0].sql).toContain("'You joined ' || c.name")
+    expect(note[0].sql).toContain("'route', '/community?circle=' || c.id")
+    expect(note[0].sql).toContain("'zh-CN', jsonb_build_object")
   })
   it('a new account is told once per live circle owned by an ancestor, inside the caller\'s transaction', async () => {
     const calls: string[] = []

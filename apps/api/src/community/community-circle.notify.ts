@@ -4,18 +4,20 @@ import { CIRCLE_MAX_DEPTH } from './community-circle.access'
 type Queryable = Pick<EntityManager, 'query'>
 export type CircleNoticeKind = 'community.circle.joined' | 'community.circle.request' | 'community.circle.rejected'
 
-/** Title in Chinese, body in English, both languages again in payload.i18n (the same shape the notification feed uses). */
+/** Top-level title and body are zh-CN; both languages are in payload.i18n (zh-CN and zh keys, plus en) so the app shows the reader's language. */
 const TEXT: Record<CircleNoticeKind, { zhTitle: string; zhBody: string; enTitle: string; enBody: string }> = {
   'community.circle.joined': { zhTitle: "'你已加入 ' || c.name || ' 的圈子'", zhBody: "'你已加入圈子「' || c.name || '」'", enTitle: "'You joined ' || c.name", enBody: "'You joined ' || c.name" },
   'community.circle.request': { zhTitle: "c.name || ' 有新的加入申请'", zhBody: "'有人申请加入圈子「' || c.name || '」'", enTitle: "'New request to join ' || c.name", enBody: "'Someone asked to join ' || c.name" },
   'community.circle.rejected': { zhTitle: "'你加入 ' || c.name || ' 的申请未通过'", zhBody: "'圈主没有通过你加入「' || c.name || '」的申请'", enTitle: "'Your request to join ' || c.name || ' was not approved'", enBody: "'Your request to join ' || c.name || ' was not approved'" },
 }
 
-/** SELECT list (title, body, payload) for a notification about circle `c`; $extra is merged into the payload. */
+/** SELECT list (title, body, payload) for a notification about circle `c`; $extra is merged into the payload. Top-level text is zh-CN. */
 function columns(kind: CircleNoticeKind, extra: string) {
   const t = TEXT[kind]
-  return `${t.zhTitle}, ${t.enBody}, jsonb_build_object('circleId', c.id, 'circleName', c.name,
-      'i18n', jsonb_build_object('zh', jsonb_build_object('title', ${t.zhTitle}, 'body', ${t.zhBody}),
+  const route = kind === 'community.circle.rejected' ? "'/community'" : "'/community?circle=' || c.id"
+  const zh = `jsonb_build_object('title', ${t.zhTitle}, 'body', ${t.zhBody})`
+  return `${t.zhTitle}, ${t.zhBody}, jsonb_build_object('circleId', c.id, 'circleName', c.name, 'route', ${route},
+      'i18n', jsonb_build_object('zh-CN', ${zh}, 'zh', ${zh},
                                  'en', jsonb_build_object('title', ${t.enTitle}, 'body', ${t.enBody}))) ${extra}`
 }
 
