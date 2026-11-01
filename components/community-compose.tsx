@@ -306,7 +306,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const topicLabel = topic ? topics.find(t => t.slug === topic)?.title ?? topic : k.topic
 
   return <><span ref={anchor} hidden />
-    <Dialog.Root open={open && hostReady} onOpenChange={next => { if (!next) requestClose() }}>
+    <Dialog.Root open={open && hostReady} onOpenChange={(next: boolean) => { if (!next) requestClose() }}>
       <Dialog.Portal container={container}>
         <Dialog.Popup ref={popup} className={x.compose} initialFocus={field} aria-busy={busy}>
           <div className={x.composeHead}>
