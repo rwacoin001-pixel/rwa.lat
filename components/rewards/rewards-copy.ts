@@ -22,7 +22,7 @@ const zh = {
   history: '积分记录', noHistory: '还没有积分记录', more: '加载更多',
   reasonsRow: { draw: '每日奖励', exchange: '兑换减免券', admin: '系统调整' },
   rules: '券只能抵扣手续费，不能提现，不能转给别人。一笔订单只能用一张券。奖品和你晒单的盈亏无关。',
-  useCoupon: '使用减免券', useWithdrawCoupon: '使用提现手续费券', discount: (v: string) => `−${v}`,
+  couponInvalid: '这张券现在不能用，已经帮你关掉了。', useCoupon: '使用减免券', useWithdrawCoupon: '使用提现手续费券', discount: (v: string) => `−${v}`,
 }
 type Copy = typeof zh
 const en: Copy = {
@@ -43,7 +43,7 @@ const en: Copy = {
   history: 'Points history', noHistory: 'No points yet', more: 'Load more',
   reasonsRow: { draw: 'Daily reward', exchange: 'Coupon exchange', admin: 'Adjustment' },
   rules: 'Coupons only reduce fees. They cannot be withdrawn or transferred. One coupon per order. Prizes do not depend on your results.',
-  useCoupon: 'Use fee coupon', useWithdrawCoupon: 'Use withdrawal fee coupon', discount: (v: string) => `−${v}`,
+  couponInvalid: 'This coupon cannot be used now, so it was turned off.', useCoupon: 'Use fee coupon', useWithdrawCoupon: 'Use withdrawal fee coupon', discount: (v: string) => `−${v}`,
 }
 export function useRewardsCopy(): Copy {
   const { locale } = useI18n()

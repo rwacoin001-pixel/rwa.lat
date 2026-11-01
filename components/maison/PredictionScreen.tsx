@@ -256,6 +256,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     setServerError(null)
     const result = await placePredictionBet({ ...intent, idempotencyKey })
     setPending(false)
+    if (!result.ok && result.error.code === 'REWARD_COUPON_INVALID') { setUseCoupon(false); invalidate(['rewards:']); setServerError(rk.couponInvalid); return }
     if (!result.ok) { setServerError(t.server[result.error.code] ?? result.error.message ?? copy.common.errorGeneric); return }
     keys.current.clear()
     invalidate(['wallet:', 'portfolio:', 'home:', 'prediction:bets', 'rewards:'])

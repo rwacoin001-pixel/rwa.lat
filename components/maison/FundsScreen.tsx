@@ -147,6 +147,8 @@ export function WithdrawScreen({ query }: { query: string }) {
     const timer = window.setTimeout(async () => {
       const result = await quoteWithdrawal(network.id, atomic, couponId)
       if (!live) return
+      // A coupon that stopped being usable (expired, used elsewhere) is switched off rather than blocking the withdrawal.
+      if (!result.ok && result.error.code === 'REWARD_COUPON_INVALID') { setUseCoupon(false); invalidate(['rewards:']); return }
       setQuote(result.ok ? { key: quoteKey, data: result.data } : { key: quoteKey, error: errorText(f, result.error, w.quoteError) })
     }, 400)
     return () => { live = false; window.clearTimeout(timer) }
