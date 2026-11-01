@@ -32,14 +32,14 @@ import controls from '../ui/controls.module.css'
 import focusStyles from './auth-focus.module.css'
 
 /** The welcome's brand line (2026-11-01, approved slogan "Bring Assets Into Focus / 让资产清晰起来"). */
-const focusCopy: Record<string, { lines: [string, string]; sub: string }> = {
-  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '考拉量化与预测，一个账户看清。' },
-  en: { lines: ['Bring assets', 'into focus'], sub: 'Koala Quant and predictions, in one clear account.' },
-  hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'कोआला क्वांट और प्रेडिक्शन, एक ही खाते में।' },
-  es: { lines: ['Tus activos,', 'en foco'], sub: 'Koala Quant y predicciones, en una sola cuenta.' },
-  ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'كوالا كوانت والتوقعات في حساب واحد.' },
-  fr: { lines: ['Vos actifs,', 'au point'], sub: 'Koala Quant et prédictions, dans un seul compte.' },
-  pt: { lines: ['Seus ativos,', 'em foco'], sub: 'Koala Quant e previsões, em uma só conta.' },
+const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string }> = {
+  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '欢迎来到 A-REIT', or: '或使用以下方式继续' },
+  en: { lines: ['Bring assets', 'into focus'], sub: 'Welcome to A-REIT', or: 'Or continue with' },
+  hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'A-REIT में आपका स्वागत है', or: 'या इससे जारी रखें' },
+  es: { lines: ['Tus activos,', 'en foco'], sub: 'Bienvenido a A-REIT', or: 'O continúa con' },
+  ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'مرحبًا بك في A-REIT', or: 'أو تابع باستخدام' },
+  fr: { lines: ['Vos actifs,', 'au point'], sub: 'Bienvenue sur A-REIT', or: 'Ou continuer avec' },
+  pt: { lines: ['Seus ativos,', 'em foco'], sub: 'Bem-vindo à A-REIT', or: 'Ou continue com' },
 }
 import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
 import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
@@ -89,8 +89,6 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const passwordCopy = authPasswordCopy[locale]
   const [step, setStep] = useState<Step>('email')
   // Two views: the welcome (the lens, sign in / create) and the solid form page that follows.
-  const [view, setView] = useState<'welcome' | 'form'>('welcome')
-  const [intent, setIntent] = useState<'login' | 'register'>(mode)
   // The address the later steps act on, fixed when the lookup answers; editing it restarts at the email step.
   const [account, setAccount] = useState<{ email: string; isNew: boolean; password: boolean; passkey: boolean } | null>(null)
   const [password, setPassword] = useState('')
@@ -491,8 +489,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const ui = { field: controls.field, submit: controls.action, primary: `${controls.primary} ${styles.wide}`, method: controls.icon }
   // The email step shows the poster title; every later step names where the lookup sent the user.
   // No ledes: the title, the address chip and the one action say enough.
-  const showWelcome = view === 'welcome' && step === 'email' && !walletChallenge
-  const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? (showWelcome ? null : intent === 'register' ? visual.createAccount : visual.signIn) : step === 'code' ? sheet.codeTitle : sheet.loginTitle
+  // The email step is the welcome (photo card, the brand line, the field, the other ways in); later steps are solid pages.
+  const showWelcome = step === 'email' && !walletChallenge
+  const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
     <span>{visual.consentStart} <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span>
@@ -527,7 +526,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const welcomeCopy = focusCopy[locale] ?? focusCopy.en
   const posterHero = showWelcome && <>
-    <h1 className={focusStyles.title}>{welcomeCopy.lines[0]}<em>{welcomeCopy.lines[1]}</em></h1>
+    <h1 className={focusStyles.title}>{welcomeCopy.lines[0]}<br />{welcomeCopy.lines[1]}<i className={focusStyles.dot} aria-hidden="true" /></h1>
     <p className={focusStyles.lede}>{welcomeCopy.sub}</p>
   </>
 
@@ -537,17 +536,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     requestAnimationFrame(() => input.current?.focus())
   }} />
 
-  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer} onBack={!showWelcome && step === 'email' && !walletChallenge && !pending ? () => { setView('welcome'); setError('') } : undefined}>
+  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer} onPasskey={showWelcome && passkeySupported && !pending ? () => void usePasskey() : undefined} passkeyLabel={passwordCopy.passkey}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
-    {showWelcome && <div className={focusStyles.welcomeRow}>
-      <button type="button" className={controls.glass} onClick={() => { setIntent('login'); setView('form') }}>{visual.signIn}</button>
-      <button type="button" className={controls.primary} onClick={() => { setIntent('register'); setView('form') }}>{visual.createAccount}</button>
-    </div>}
     {!showWelcome && heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>
     </header>}
 
-    {showWelcome ? null : walletChallenge ? <>
+    {walletChallenge ? <>
       {inviteField}
       <div className={styles.walletIdentity}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} style={{ width: 22, height: 22 }} /><span>{walletChallenge.address.slice(0, 6)}…{walletChallenge.address.slice(-4)}</span></div>
       {agreement}
@@ -556,8 +551,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       <button className={styles.textLink} type="button" onClick={() => { setWalletChallenge(null); setAgreed(false); setError('') }}>{sheet.signIn}</button>
     </> : <form onSubmit={submit} noValidate aria-busy={pending}>
       {/* The poster's lead: one field, its confirm inside on the end edge. The lookup decides sign-in or registration. */}
-      {step === 'email' ? <label className={ui.field}>
+      {step === 'email' ? <label className={`${ui.field} ${focusStyles.email}`}>
         <span className={styles.srOnly}>{visual.emailAddress}</span>
+        <Mail className={focusStyles.mailIcon} size={22} strokeWidth={1.6} aria-hidden="true" />
         <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
         <button type="submit" className={ui.submit} disabled={pending || retryAfter > 0} aria-label={pending ? pendingLabel : retryAfter > 0 ? cooldownLabel : sheet.continue} title={sheet.continue}>
           {pending ? <LoaderCircle className={styles.spinner} size={18} aria-hidden="true" />
@@ -605,14 +601,14 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
-    {/* Form page: the email field above; below it Google (the strong way in), then three quiet keys. */}
-    {!walletChallenge && step === 'email' && !showWelcome && <div className={styles.otherMethods}>
-      <p className={styles.orLine} aria-hidden="true"><span>{visual.otherMethods}</span></p>
-      <button type="button" className={`${controls.glass} ${styles.googleBtn}`} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>{visual.google}</span></button>
-      <div className={styles.altRow}>
-        <button type="button" className={controls.glass} disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
-        <button type="button" className={controls.glass} disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
-        <button type="button" className={controls.glass} disabled={pending || !passkeySupported} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passkeySupported ? passwordCopy.passkey : passwordCopy.unsupported}><Fingerprint size={23} strokeWidth={1.6} aria-hidden="true" /></button>
+    {/* The other ways in: Google as a wide key, then X, GitHub and a wallet as round ones (passkey is the round key on the photo). */}
+    {showWelcome && <div className={focusStyles.others}>
+      <p className={focusStyles.orLine} aria-hidden="true"><span>{welcomeCopy.or}</span></p>
+      <div className={focusStyles.methods}>
+        <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>Google</span></button>
+        <button type="button" disabled={pending} onClick={() => void startProvider('x')} aria-label="X" title="X"><Image data-mono="" src="/auth/icon-x.svg" alt="" width={20} height={20} /></button>
+        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
+        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
       </div>
     </div>}
     {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}

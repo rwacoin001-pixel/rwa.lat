@@ -122,3 +122,6 @@
 .bubble[data-kind='voice'] { padding: 6px 8px; }
 .audio { display: block; width: min(220px, 56vw); height: 36px; }
 .thread { padding-bottom: calc(190px + env(safe-area-inset-bottom)); }
+/* 2026-11-01 (user: the avatar covered the name). The name pill sits under the face, 6px apart, not over its lower edge. */
+.who { gap: 6px; padding-bottom: 0; }
+.whoName { position: static; height: 28px; line-height: 28px; padding: 0 12px; font-size: 14px; }

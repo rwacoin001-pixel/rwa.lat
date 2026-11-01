@@ -1,0 +1,110 @@
+/* The sign-in cabinet (restored 2026-11-01 for the photo card): the studio photo, the Koala Quant print on its face
+   drawn in the face's perspective, and the hanging tag. Moved out of P02-Login.module.css. */
+
+.cabStage { position: absolute; z-index: 0; left: 50%; width: var(--sw); translate: -50% 0; aspect-ratio: 2 / 3; container-type: inline-size; pointer-events: none;
+  top: calc(54px + env(safe-area-inset-top)); overflow: hidden; border-radius: 28px; background: var(--cab-sky);
+  box-shadow: 0 0 0 .5px rgba(20, 26, 34, .14), 0 22px 44px -26px rgba(20, 26, 34, .45); }
+.cabPhoto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; -webkit-user-drag: none; }
+.cabTag { position: absolute; z-index: 3; left: 49.32%; top: 5.47%; width: 8.3%; height: 14.45%; max-width: none; }
+.cabSide { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; overflow: visible; mix-blend-mode: multiply; }
+.cabSide text { fill: #3f4249; font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+.cabSideTitle { font-size: 40px; font-weight: 700; letter-spacing: .04em; }
+.cabSideLine { font-size: 17px; opacity: .72; letter-spacing: .02em; }
+.cabSideRule { stroke: #0a8a73; stroke-width: 3; stroke-linecap: round; opacity: .85; }
+:global([data-auth-theme='cool']) .cabSide { mix-blend-mode: normal; }
+:global([data-auth-theme='cool']) .cabSide text { fill: #d7d9dd; }
+:global([data-auth-theme='cool']) .cabSideRule { stroke: #3ce0b1; }
+.cabFace { position: absolute; z-index: 2; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; border-radius: 28px; --ink: #4a4741; }
+:global([data-auth-theme='cool']) .cabFace { --ink: #c4c7cd; }
+.kPrint { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 16px 24px 0; color: var(--ink);
+  font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 12px; line-height: 1.3; }
+.kInk { mix-blend-mode: multiply; filter: url(#cab-ink);
+  -webkit-mask-image: url('/media/palette-a/ink-grain.png'); mask-image: url('/media/palette-a/ink-grain.png'); -webkit-mask-size: 180px; mask-size: 180px; }
+:global([data-auth-theme='cool']) .kInk { mix-blend-mode: screen; }
+.kPrint svg { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
+.kStatus { display: flex; flex: none; align-items: center; justify-content: space-between; height: 24px; padding: 0 6px; font-size: 13px; }
+.kStatus b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.kStatus > span { display: flex; align-items: center; gap: 6px; }
+.kStatus svg { width: 14px; height: 14px; stroke-width: 2.2; }
+.kSig { display: flex; align-items: flex-end; gap: 2px; height: 10px; }
+.kSig i { width: 2.6px; border-radius: 1px; background: currentColor; }
+.kSig i:nth-child(1) { height: 30%; } .kSig i:nth-child(2) { height: 55%; } .kSig i:nth-child(3) { height: 80%; } .kSig i:nth-child(4) { height: 100%; }
+.kBatt { position: relative; width: 21px; height: 10.5px; border-radius: 3px; box-shadow: inset 0 0 0 1.1px currentColor; }
+.kBatt i { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 62%; border-radius: 1px; background: currentColor; }
+.kHead { display: flex; flex: none; align-items: center; gap: 8px; margin-top: 8px; }
+.kHead b { font-size: 15px; font-weight: 700; letter-spacing: .1em; }
+.kHead svg { mix-blend-mode: normal; }
+
+.kDial { display: block; width: 212px; height: auto; margin: 4px auto 0; }
+.kDial text { fill: var(--ink); stroke: none; }
+.kMono { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 15px; font-weight: 600; letter-spacing: .02em; }
+.kMonoS { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
+.kTiny { font-size: 11px; letter-spacing: .08em; opacity: .85; }
+.kName { font-size: 11px; font-weight: 600; letter-spacing: .14em; }
+.kFill { fill: var(--ink); stroke: none; }
+.kSeg { position: relative; display: grid; flex: none; grid-template-columns: 1fr 1fr; margin-top: 12px; padding: 4px; border-radius: 999px; isolation: isolate;
+  background: linear-gradient(180deg, rgba(20, 26, 34, .08), rgba(20, 26, 34, .02)); box-shadow: inset 0 1.5px 3px rgba(20, 26, 34, .2), inset 0 -1px 0 rgba(255, 255, 255, .8); }
+.kSeg b { position: relative; z-index: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600; }
+.kKey { position: absolute; z-index: 0; left: 3px; top: 3px; bottom: 3px; width: calc(50% - 3px); border-radius: 999px;
+  background: linear-gradient(180deg, #ffffff, #eceef2); box-shadow: inset 0 1px 0 #ffffff, inset 0 -1.5px 1px rgba(20, 26, 34, .1), 0 1px 1px rgba(20, 26, 34, .16), 0 6px 9px -2px rgba(20, 26, 34, .28);
+  transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
+.kPrint[data-tab='1'] .kKey { transform: translateX(100%); }
+:global([data-auth-theme='cool']) .kSeg { background: linear-gradient(180deg, rgba(0, 0, 0, .34), rgba(0, 0, 0, .14)); box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .6), inset 0 -1px 0 rgba(255, 255, 255, .08); }
+:global([data-auth-theme='cool']) .kKey { background: linear-gradient(180deg, #4d525c, #343840); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 9px -2px rgba(0, 0, 0, .65); }
+.kPanels { position: relative; flex: none; height: 262px; margin-top: 12px; }
+.kPanel { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
+.kPanel[data-on] { opacity: 1; }
+.kStats { display: grid; grid-template-columns: 1.1fr 1.25fr .7fr; border-top: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); }
+.kStats span { display: flex; flex-direction: column; gap: 4px; padding: 8px 6px; }
+.kStats span + span { border-left: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); }
+.kStats small { font-size: 11px; opacity: .85; }
+.kStats b { font-size: 13px; font-weight: 700; }
+.kNavHead { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 8px; }
+.kNavHead > b { font-size: 15px; font-weight: 700; }
+.kNavHead span { display: flex; flex-direction: column; align-items: flex-end; }
+.kNavHead small { font-size: 11px; opacity: .75; }
+.kNavHead strong { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 22px; font-weight: 600; line-height: 1.1; }
+.kDays { display: inline-flex; margin-top: 2px; padding: 2px; border-radius: 999px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 45%, transparent); font-size: 11px; }
+.kDays > * { padding: 4px 8px; border-radius: 999px; }
+.kDays b { box-shadow: inset 0 0 0 1.2px var(--ink); font-weight: 700; }
+.kChart { display: block; width: 100%; height: auto; margin-top: 6px; overflow: visible; }
+.kChart text { fill: var(--ink); stroke: none; font-size: 11px; opacity: .85; }
+.kArea { fill: color-mix(in srgb, var(--ink) 10%, transparent); stroke: none !important; }
+.kLine { stroke-width: 1.7; stroke-dasharray: 1; stroke-dashoffset: 1; animation: kDraw 7s cubic-bezier(.45, 0, .2, 1) .6s infinite; }
+.kCal { display: flex; flex-direction: column; }
+.kCalHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 6px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
+.kCalHead b { font-size: 17px; font-weight: 600; letter-spacing: .02em; }
+.kCalHead b i { font-style: normal; font-size: 11px; opacity: .6; margin: 0 2px; }
+.kCalHead svg { width: 13px; height: 13px; }
+.kCalWeek { display: grid; grid-template-columns: repeat(7, 1fr); padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); font-size: 11px; text-align: center; opacity: .8; }
+.kCalDays { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; margin-top: 4px; text-align: center; }
+.kCalDays span { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 32px; }
+.kCalDays b { font-size: 11px; font-weight: 600; line-height: 1.2; }
+.kCalDays small { font-size: 11px; letter-spacing: -.02em; opacity: .85; }
+.kCalDays span[data-off] { opacity: .4; }
+.kDue { border-radius: 8px; box-shadow: inset 0 0 0 1.2px var(--ink); }
+
+.kDock { display: flex; flex: none; align-items: center; gap: 6px; margin-top: auto; margin-bottom: 20px; padding: 0 4px; }
+.kDock > span { display: flex; flex: 1; align-items: center; justify-content: space-around; height: 38px; padding: 0 4px; border-radius: 999px; box-shadow: inset 0 0 0 1.1px var(--ink); }
+.kDock svg { width: 15px; height: 15px; stroke-width: 1.6; }
+.kDock b { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px; box-shadow: inset 0 0 0 1.2px var(--ink); font-size: 11px; font-weight: 700; }
+.kDock b svg { width: 16px; height: auto; }
+.kDock > i { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 0 0 1.1px var(--ink); }
+@media (prefers-reduced-motion: reduce) { .kLine { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .kLine { stroke-dashoffset: 0; } }
+
+.cabDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
+.cabFace { --ink: #45413b; }
+.kCrown[data-press] { animation: kPress .58s cubic-bezier(.22, .75, .2, 1); }
+.kFlutes[data-press] { animation: kFlute 1.35s cubic-bezier(.45, 0, .18, 1); }
+.kWind { transform-origin: 100px 104px; }
+.kWind[data-press] { animation: kWind 1.55s cubic-bezier(.45, 0, .18, 1) .12s; }
+@keyframes kDraw { 0% { stroke-dashoffset: 1; } 35%, 88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes kPress { 0% { transform: translateY(0); } 22%, 42% { transform: translateY(3.5px); } 80% { transform: translateY(-.45px); } 100% { transform: translateY(0); } }
+@keyframes kFlute { to { transform: translateX(9px); } }
+@keyframes kWind { 0% { transform: rotate(0); } 80% { transform: rotate(-357.5deg); } 93% { transform: rotate(-360.6deg); } 100% { transform: rotate(-360deg); } }
+
+/* In the sign-in photo card (2026-11-01): the 2:3 stage fills the card's width and is cropped top and bottom, its
+   centre a little above the card's (like object-position 50% 42%), so the print stays on the face at any height. */
+.cabStage { top: 42%; left: 0; width: 100%; translate: 0 -42%; border-radius: 0; box-shadow: none; background: #e9edf2; }
+:global([data-auth-theme='cool']) .cabStage { background: #15181e; }

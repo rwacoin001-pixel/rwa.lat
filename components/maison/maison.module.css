@@ -1511,7 +1511,7 @@ span.compareName { padding-top: 32px; cursor: default; }
   --m-cta-quiet: rgba(25, 199, 170, .12);
   --m-cta-quiet-ink: #19c7aa;
 }
-:global(html[data-palette='a']) .root::before { background: none; }
+:global(html[data-palette='a']) .root::before, :global(html[data-palette='a'] .rwa-mobile[data-theme='dark']) .root::before { background: none; }
 /* Cards: no brushed grain or gold ruling — a soft highlight and a hairline green rim. */
 :global(html[data-palette='a']) .lacquer::before, :global(html[data-palette='a']) .lacquer::after { background: none; }
 :global(html[data-palette='a']) .lacquer::after { opacity: .35; }

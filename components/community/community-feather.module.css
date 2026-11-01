@@ -7,3 +7,7 @@
 .feather:active { transform: translate(-50%, 0) scale(.92); }
 .feather:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 @media (prefers-reduced-motion: reduce) { .feather { transition: none; } }
+/* Dark (2026-11-01, user: the feather vanished). The dock sits outside the page root, so the ink token fell back to dark
+   ink on a dark disc. Dark mode inverts it: a light disc with ink, like the other primary keys at night. */
+:global(.rwa-mobile[data-theme='dark']) .feather { background: #f2f4f7; color: #0b1220; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .2), 0 8px 20px -8px rgba(0, 0, 0, .8); }
+:global(.rwa-mobile[data-theme='dark']) .feather[data-faded] { color: #5b6472; }
