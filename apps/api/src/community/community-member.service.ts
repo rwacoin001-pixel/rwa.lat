@@ -9,7 +9,7 @@ import { normalizeCommunityLang, sanitizeTopics } from './community.util'
 import { MEMBER_MEDIA_MAX, MemberCommentDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
 import { ObjectStorageService, communityMediaPath, type CommunityImagePurpose } from '../object-storage/object-storage.service'
 import { communityMediaId } from './community.util'
-import { circleRole } from './community-circle.access'
+import { circleRole, isSilenced } from './community-circle.access'
 
 @Injectable()
 export class CommunityMemberService {
@@ -139,13 +139,16 @@ export class CommunityMemberService {
     const location = { city: input.location.city.trim(), countryCode: input.location.countryCode, source: 'device' as const }
     const images = await this.media(userId, imageIds, 'post')
     const proof = input.proof ? parseProofRequest(input.proof) : null
-    return this.write(userId, key, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}), ...(proof ? { proof } : {}), ...(input.circleId ? { circleId: input.circleId } : {}) }, 'post', async (m, p) => {
-      if (input.circleId && !await circleRole(m, input.circleId, userId)) throw new NotFoundException('CIRCLE_NOT_FOUND')
+    return this.write(userId, key, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}), ...(proof ? { proof } : {}), ...(input.circleId ? { circleId: input.circleId, alsoPublic: input.alsoPublic === true } : {}) }, 'post', async (m, p) => {
+      if (input.circleId) {
+        if (!await circleRole(m, input.circleId, userId)) throw new NotFoundException('CIRCLE_NOT_FOUND')
+        if (await isSilenced(m, input.circleId, userId)) throw new ForbiddenException({ code: 'CIRCLE_SILENCED', message: 'The circle owner has muted you in this circle.' })
+      }
       // The figure is resolved here, inside the same transaction, from the author's own ledger row.
       const resolved = proof ? await resolveProof(m, userId, proof) : null
       if (resolved && (await m.query('SELECT 1 FROM app.community_post_proofs WHERE kind=$1 AND ref_id=$2', [resolved.kind, resolved.refId])).length) throw new ConflictException('PROOF_ALREADY_SHARED')
       const topics = await m.getRepository(CommunityTopic).find()
-      const saved = await m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, location, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date(), circle_id: input.circleId ?? null }))
+      const saved = await m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, location, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date(), circle_id: input.circleId ?? null, circle_only: input.circleId ? input.alsoPublic !== true : true }))
       if (resolved) await m.query('INSERT INTO app.community_post_proofs(post_id,user_id,kind,ref_id,title,pct,trade_date) VALUES($1,$2,$3,$4,$5,$6,$7)',
         [saved.id, userId, resolved.kind, resolved.refId, resolved.title, resolved.pct, resolved.tradeDate])
         .catch((error: { code?: string }) => { throw error?.code === '23505' ? new ConflictException('PROOF_ALREADY_SHARED') : error })
@@ -181,7 +184,7 @@ export class CommunityMemberService {
       const p=await this.member(m,userId)
       const c=await m.getRepository(CommunityComment).findOne({where:{id:targetId},lock:{mode:'pessimistic_write'}})
       const parent=c?await m.getRepository(CommunityPost).findOneBy({id:c.post_id,state:'published'}):null
-      if(c?.state!=='published'||!parent||(parent.circle_id&&!await circleRole(m,parent.circle_id,userId))) throw new NotFoundException('Reply is not public')
+      if(c?.state!=='published'||!parent||(parent.circle_id&&parent.circle_only&&!await circleRole(m,parent.circle_id,userId))) throw new NotFoundException('Reply is not public')
       const repo=m.getRepository(CommunityLike), where={profile_id:p.id,target_type:'comment' as const,target_id:targetId},exists=await repo.existsBy(where)
       const delta=desired&&!exists?1:!desired&&exists?-1:0
       if(delta===1)await repo.insert(where)
@@ -206,7 +209,10 @@ export class CommunityMemberService {
     return this.write(userId, key, { postId, body, lang, parentId: input.parentId ?? null, ...(images.length ? { images } : {}) }, 'comment', async (m, p) => {
       const post = await m.getRepository(CommunityPost).findOne({ where: { id: postId }, lock: { mode: 'pessimistic_write' } })
       if (post?.state !== 'published') throw new NotFoundException('Post is not public')
-      if (post.circle_id && !await circleRole(m, post.circle_id, userId)) throw new NotFoundException('Post is not public')
+      if (post.circle_id && post.circle_only) {
+        if (!await circleRole(m, post.circle_id, userId)) throw new NotFoundException('Post is not public')
+        if (await isSilenced(m, post.circle_id, userId)) throw new ForbiddenException({ code: 'CIRCLE_SILENCED', message: 'The circle owner has muted you in this circle.' })
+      }
       if (input.parentId && !await m.getRepository(CommunityComment).existsBy({ id: input.parentId, post_id: postId, state: 'published' })) throw new BadRequestException('Invalid parent reply')
       const comment = await m.save(m.create(CommunityComment, { post_id: postId, profile_id: p.id, parent_id: input.parentId, body, images, lang, state: 'published' }))
       await m.increment(CommunityPost, { id: postId }, 'comment_count', 1)
@@ -218,7 +224,7 @@ export class CommunityMemberService {
       const p = await this.member(m, userId)
       const post = await m.getRepository(CommunityPost).findOne({ where: { id: targetId }, lock: { mode: 'pessimistic_write' } })
       if (post?.state !== 'published') throw new NotFoundException('Post is not public')
-      if (post.circle_id && !await circleRole(m, post.circle_id, userId)) throw new NotFoundException('Post is not public')
+      if (post.circle_id && post.circle_only && !await circleRole(m, post.circle_id, userId)) throw new NotFoundException('Post is not public')
       const repo = m.getRepository(CommunityLike); const where = { profile_id: p.id, target_type: 'post' as const, target_id: targetId }
       const exists = await repo.existsBy(where)
       if (desired && !exists) { await repo.insert(where); await m.increment(CommunityPost, { id: targetId }, 'like_count', 1) }

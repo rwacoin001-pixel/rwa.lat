@@ -1,18 +1,18 @@
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomInt } from 'node:crypto'
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common'
 import { DataSource, EntityManager } from 'typeorm'
 import { CIRCLE_MAX_DEPTH, circleRole, type CircleRole } from './community-circle.access'
 import { noticeDownlineJoined, noticeUser } from './community-circle.notify'
 import { CommunityService } from './community.service'
-import { CirclePageQueryDto } from './community-circle.dto'
+import { CirclePageQueryDto, CircleUpdateDto } from './community-circle.dto'
 import { CommunityFeedQueryDto } from './dto/community.dto'
 
-type CircleRow = { id: string; name: string; owner_user_id: string; owner_profile_id: string; created_at: Date; invite_code: string }
+type CircleRow = { id: string; name: string; owner_user_id: string; owner_profile_id: string; created_at: Date; invite_code: string; public_no: number; searchable: boolean; pinned_post_id: string | null }
 type Profiles = Awaited<ReturnType<CommunityService['profileViews']>>
 type Q = Pick<EntityManager, 'query'>
 export type InviteStatus = 'none' | 'pending' | 'member' | 'owner' | 'removed' | 'rejected'
 
-const COLUMNS = 'id,name,owner_user_id,owner_profile_id,created_at,invite_code'
+const COLUMNS = 'id,name,owner_user_id,owner_profile_id,created_at,invite_code,public_no,searchable,pinned_post_id'
 /** Upward walk: every ancestor of $1 in the referral tree (inviter chain), nearest first. Cycle-safe and depth-capped. */
 const UP = `WITH RECURSIVE up(uid,depth,path) AS (
     SELECT e.inviter_user_id,1,ARRAY[e.inviter_user_id] FROM app.referral_edges e WHERE e.invitee_user_id=$1
@@ -31,6 +31,9 @@ const MEMBERS = `${DOWN}, members(uid,depth,via,at) AS (
 const VISIBLE_PROFILE = `p.kind='member' AND p.identity_configured AND p.is_active`
 const NOT_OPTED_OUT = (uid: string) => `NOT EXISTS (SELECT 1 FROM app.community_circle_optouts o WHERE o.circle_id=$2 AND o.user_id=${uid})`
 const newInviteCode = () => randomBytes(9).toString('base64url').slice(0, 10)
+/** Pattern for ILIKE ... ESCAPE '\': the user's text with %, _ and \ made literal. */
+const likeContains = (text: string) => `%${text.replace(/[\\%_]/g, m => '\\' + m)}%`
+const likePrefix = (text: string) => `${text.replace(/[\\%_]/g, m => '\\' + m)}%`
 
 @Injectable()
 export class CommunityCircleService {
@@ -48,11 +51,27 @@ export class CommunityCircleService {
       WHERE ${NOT_OPTED_OUT('m.uid')}`, [circle.owner_user_id, circle.id])
     return n + 1
   }
-  private async shape(q: Q, rows: CircleRow[], viewerId: string) {
+  /**
+   * The circle object for its members (and owner): public number, the viewer's own mute / silence, the latest visible post
+   * time, and, when asked, the pinned post. `searchable` is the owner's setting and is only shown to the owner.
+   */
+  private async shape(q: Q, rows: CircleRow[], viewerId: string, opts: { pinned?: boolean } = {}) {
+    if (!rows.length) return []
+    const ids = rows.map(r => r.id)
     const profiles: Profiles = await this.community.profileViews(rows.map(r => r.owner_profile_id))
+    const [settings, latest, pinned] = await Promise.all([
+      q.query('SELECT circle_id,muted,silenced FROM app.community_circle_member_settings WHERE user_id=$1 AND circle_id=ANY($2::uuid[])', [viewerId, ids]) as Promise<Array<{ circle_id: string; muted: boolean; silenced: boolean }>>,
+      q.query("SELECT circle_id,max(published_at) AS at FROM app.community_posts WHERE circle_id=ANY($1::uuid[]) AND state='published' GROUP BY circle_id", [ids]) as Promise<Array<{ circle_id: string; at: Date | null }>>,
+      opts.pinned ? this.community.postViews(rows.map(r => r.pinned_post_id).filter((id): id is string => !!id), viewerId) : Promise.resolve(new Map<string, Record<string, unknown>>()),
+    ])
+    const mine = new Map(settings.map(s => [s.circle_id, s]))
+    const last = new Map(latest.map(l => [l.circle_id, l.at]))
     return Promise.all(rows.map(async r => ({
-      id: r.id, name: r.name, owner: profiles.get(r.owner_profile_id) ?? null,
+      id: r.id, name: r.name, owner: profiles.get(r.owner_profile_id) ?? null, publicNo: r.public_no,
       memberCount: await this.memberCount(q, r), createdAt: r.created_at, isOwner: r.owner_user_id === viewerId,
+      ...(r.owner_user_id === viewerId ? { searchable: r.searchable } : {}),
+      muted: mine.get(r.id)?.muted ?? false, silenced: mine.get(r.id)?.silenced ?? false, lastPostAt: last.get(r.id) ?? null,
+      ...(opts.pinned ? { pinnedPost: r.pinned_post_id ? pinned.get(r.pinned_post_id) ?? null : null } : {}),
     })))
   }
   /** Members and the owner see the circle; everyone else gets 404, as does a deleted circle. */
@@ -84,7 +103,7 @@ export class CommunityCircleService {
   async mine(userId: string) {
     const { owned, joined, left, pending } = await this.db.transaction(async m => {
       const [owned]: CircleRow[] = await m.query(`SELECT ${COLUMNS} FROM app.community_circles WHERE owner_user_id=$1 AND deleted_at IS NULL`, [userId])
-      const columns = 'c.id,c.name,c.owner_user_id,c.owner_profile_id,c.created_at,c.invite_code'
+      const columns = COLUMNS.split(',').map(c => `c.${c}`).join(',')
       const ancestors = (reason: 'none' | 'left'): Promise<CircleRow[]> => m.query(`${UP}
         SELECT ${columns},up.depth AS depth FROM up JOIN app.community_circles c ON c.owner_user_id=up.uid AND c.deleted_at IS NULL
         WHERE ${reason === 'none'
@@ -97,7 +116,7 @@ export class CommunityCircleService {
       const pending = owned ? (await m.query("SELECT count(*)::int AS n FROM app.community_circle_guests WHERE circle_id=$1 AND status='pending'", [owned.id]))[0].n as number : 0
       return { owned: owned ?? null, joined, left, pending }
     })
-    const shaped = await this.shape(this.db, [...(owned ? [owned] : []), ...joined, ...left], userId)
+    const shaped = await this.shape(this.db, [...(owned ? [owned] : []), ...joined, ...left], userId, { pinned: true })
     const byId = new Map(shaped.map(c => [c.id, c]))
     return {
       owned: owned ? { ...byId.get(owned.id)!, inviteCode: owned.invite_code, pendingCount: pending } : null,
@@ -105,25 +124,38 @@ export class CommunityCircleService {
     }
   }
 
+  /** A free 6-digit public number; the lock keeps two simultaneous creations from picking the same one. */
+  private async freePublicNo(m: EntityManager): Promise<number> {
+    await m.query('SELECT pg_advisory_xact_lock(hashtextextended($1,0))', ['community-circle-public-no'])
+    for (let attempt = 0; attempt < 50; attempt++) {
+      const candidate = randomInt(100000, 1000000)
+      if (!(await m.query('SELECT 1 FROM app.community_circles WHERE public_no=$1', [candidate])).length) return candidate
+    }
+    throw new ConflictException({ code: 'CIRCLE_NUMBER_UNAVAILABLE', message: 'Please try again.' })
+  }
+
   create(userId: string, name: string) {
     return this.db.transaction(async m => {
       const p = await this.myProfile(m, userId)
       const [existing] = await m.query('SELECT 1 FROM app.community_circles WHERE owner_user_id=$1 AND deleted_at IS NULL', [userId])
       if (existing) throw new ConflictException({ code: 'CIRCLE_ALREADY_OWNED', message: 'You already have a circle.' })
-      const [row]: CircleRow[] = await m.query(`INSERT INTO app.community_circles(owner_user_id,owner_profile_id,name,invite_code) VALUES($1,$2,$3,$4)
-        RETURNING ${COLUMNS}`, [userId, p.id, name, newInviteCode()])
+      const publicNo = await this.freePublicNo(m)
+      const [row]: CircleRow[] = await m.query(`INSERT INTO app.community_circles(owner_user_id,owner_profile_id,name,invite_code,public_no) VALUES($1,$2,$3,$4,$5)
+        RETURNING ${COLUMNS}`, [userId, p.id, name, newInviteCode(), publicNo])
       await noticeDownlineJoined(m, row.id)
-      return { ...(await this.shape(m, [row], userId))[0], inviteCode: row.invite_code, pendingCount: 0 }
+      return { ...(await this.shape(m, [row], userId, { pinned: true }))[0], inviteCode: row.invite_code, pendingCount: 0 }
     })
   }
 
-  rename(userId: string, circleId: string, name: string) {
+  /** Owner edits: the name and/or whether the circle can be found by name search. */
+  async update(userId: string, circleId: string, input: CircleUpdateDto) {
+    if (input.name === undefined && input.searchable === undefined) throw new BadRequestException('Nothing to change')
     return this.db.transaction(async m => {
       await this.myProfile(m, userId)
       await this.requireOwner(m, circleId, userId)
-      const [row]: CircleRow[] = await m.query(`UPDATE app.community_circles SET name=$2,updated_at=now() WHERE id=$1 AND deleted_at IS NULL
-        RETURNING ${COLUMNS}`, [circleId, name])
-      return (await this.shape(m, [row], userId))[0]
+      const [row]: CircleRow[] = await m.query(`UPDATE app.community_circles SET name=COALESCE($2,name),searchable=COALESCE($3,searchable),updated_at=now()
+        WHERE id=$1 AND deleted_at IS NULL RETURNING ${COLUMNS}`, [circleId, input.name ?? null, input.searchable ?? null])
+      return (await this.shape(m, [row], userId, { pinned: true }))[0]
     })
   }
 
@@ -137,27 +169,44 @@ export class CommunityCircleService {
     })
   }
 
+  /** The circle's posts (circle-only and synced), newest first; the first page also carries the pinned post (it stays in items too). */
   async feed(userId: string, circleId: string, query: CommunityFeedQueryDto) {
     await this.require(this.db, circleId, userId)
-    return this.community.getFeed({ ...query, sort: 'latest', topic: undefined }, undefined, circleId)
+    const page = await this.community.getFeed({ ...query, sort: 'latest', topic: undefined }, undefined, circleId, { viewerId: userId })
+    let pinnedPost: Record<string, unknown> | null = null
+    if (!query.cursor) {
+      const circle = await this.load(this.db, circleId)
+      if (circle.pinned_post_id) pinnedPost = (await this.community.postViews([circle.pinned_post_id], userId)).get(circle.pinned_post_id) ?? null
+    }
+    return { ...page, pinnedPost }
   }
 
-  async members(userId: string, circleId: string, query: CirclePageQueryDto) {
+  async members(userId: string, circleId: string, query: CirclePageQueryDto, search?: string) {
     await this.require(this.db, circleId, userId)
     const circle = await this.load(this.db, circleId)
     const limit = Math.min(Math.max(query.limit ?? 30, 1), 50)
     const offset = query.cursor ? /^o:(\d{1,7})$/.exec(query.cursor)?.[1] : '0'
     if (offset === undefined) throw new BadRequestException('COMMUNITY_CURSOR_INVALID')
-    const rows: Array<{ profile_id: string; depth: number; via: 'tree' | 'link' }> = await this.db.query(`${MEMBERS}
-      SELECT p.id AS profile_id,m.depth,m.via FROM members m JOIN app.community_profiles p ON p.user_id=m.uid AND ${VISIBLE_PROFILE}
-      WHERE ${NOT_OPTED_OUT('m.uid')}
-      ORDER BY (m.via='link'),m.depth,m.at,p.id OFFSET $3 LIMIT $4`, [circle.owner_user_id, circleId, Number(offset), limit + 1])
+    const params: unknown[] = [circle.owner_user_id, circleId, Number(offset), limit + 1]
+    if (search) params.push(likeContains(search))
+    const rows: Array<{ profile_id: string; depth: number; via: 'tree' | 'link'; silenced: boolean }> = await this.db.query(`${MEMBERS}
+      SELECT p.id AS profile_id,m.depth,m.via,COALESCE(s.silenced,false) AS silenced FROM members m JOIN app.community_profiles p ON p.user_id=m.uid AND ${VISIBLE_PROFILE}
+      LEFT JOIN app.community_circle_member_settings s ON s.circle_id=$2 AND s.user_id=m.uid
+      WHERE ${NOT_OPTED_OUT('m.uid')}${search ? " AND (p.display_name ILIKE $5 ESCAPE '\\' OR p.handle ILIKE $5 ESCAPE '\\')" : ''}
+      ORDER BY (m.via='link'),m.depth,m.at,p.id OFFSET $3 LIMIT $4`, params)
     const page = rows.slice(0, limit)
     const profiles = await this.community.profileViews(page.map(r => r.profile_id))
     return {
-      items: page.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, depth: r.depth, via: r.via })),
+      items: page.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, depth: r.depth, via: r.via, silenced: r.silenced })),
       nextCursor: rows.length > limit ? `o:${Number(offset) + limit}` : null,
     }
+  }
+
+  /** Search inside one circle (members only): its own posts, or its members by name / handle. Never reaches other circles. */
+  async innerSearch(userId: string, circleId: string, q: string, type: 'posts' | 'members', cursor?: string) {
+    await this.require(this.db, circleId, userId)
+    if (type === 'members') return this.members(userId, circleId, { cursor, limit: 20 }, q)
+    return this.community.getFeed({ cursor, limit: 20, sort: 'latest' }, undefined, circleId, { viewerId: userId, search: q })
   }
 
   /** A tree member opts out (and may rejoin themself); a link guest is simply removed from the guest list and must apply again. */
@@ -222,7 +271,58 @@ export class CommunityCircleService {
     })
   }
 
-  // ---- invite link ----
+  // ---- member settings and moderation ----
+
+  /** Stores the viewer's mute only (there is no new-post push yet). */
+  mute(userId: string, circleId: string, muted: boolean) {
+    return this.db.transaction(async m => {
+      await this.myProfile(m, userId)
+      await this.require(m, circleId, userId)
+      await m.query(`INSERT INTO app.community_circle_member_settings(circle_id,user_id,muted) VALUES($1,$2,$3)
+        ON CONFLICT (circle_id,user_id) DO UPDATE SET muted=EXCLUDED.muted`, [circleId, userId, muted])
+      return { id: circleId, muted }
+    })
+  }
+
+  /** Owner silences a member: they still read the circle but cannot post or comment in it. */
+  silence(userId: string, circleId: string, profileId: string, silenced: boolean) {
+    return this.db.transaction(async m => {
+      await this.myProfile(m, userId)
+      await this.requireOwner(m, circleId, userId)
+      const target = await this.profileUser(m, profileId)
+      if (silenced) {
+        if (await circleRole(m, circleId, target) !== 'member') throw new NotFoundException('CIRCLE_MEMBER_NOT_FOUND')
+        await m.query(`INSERT INTO app.community_circle_member_settings(circle_id,user_id,silenced,silenced_at) VALUES($1,$2,true,now())
+          ON CONFLICT (circle_id,user_id) DO UPDATE SET silenced=true,silenced_at=now()`, [circleId, target])
+      } else {
+        await m.query('UPDATE app.community_circle_member_settings SET silenced=false,silenced_at=NULL WHERE circle_id=$1 AND user_id=$2', [circleId, target])
+      }
+      return { id: circleId, profileId, silenced }
+    })
+  }
+
+  // ---- pin ----
+
+  pin(userId: string, circleId: string, postId: string) {
+    return this.db.transaction(async m => {
+      await this.myProfile(m, userId)
+      await this.requireOwner(m, circleId, userId)
+      const post = await m.query("SELECT 1 FROM app.community_posts WHERE id=$1 AND circle_id=$2 AND state='published'", [postId, circleId])
+      if (!post.length) throw new NotFoundException({ code: 'CIRCLE_POST_NOT_FOUND', message: 'That post is not in this circle.' })
+      await m.query('UPDATE app.community_circles SET pinned_post_id=$2,updated_at=now() WHERE id=$1', [circleId, postId])
+      return { id: circleId, pinned: true, postId }
+    })
+  }
+  unpin(userId: string, circleId: string) {
+    return this.db.transaction(async m => {
+      await this.myProfile(m, userId)
+      await this.requireOwner(m, circleId, userId)
+      await m.query('UPDATE app.community_circles SET pinned_post_id=NULL,updated_at=now() WHERE id=$1', [circleId])
+      return { id: circleId, pinned: false }
+    })
+  }
+
+  // ---- finding circles and invite link ----
 
   private async byCode(q: Q, code: string): Promise<CircleRow> {
     const [row] = /^[A-Za-z0-9_-]{10}$/.test(code)
@@ -239,36 +339,61 @@ export class CommunityCircleService {
     const [guest] = await q.query('SELECT status FROM app.community_circle_guests WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
     return guest?.status === 'pending' ? 'pending' : guest?.status === 'rejected' ? 'rejected' : 'none'
   }
+  /** The public face of a circle (what search results and the invite page show). */
+  private async face(q: Q, circle: CircleRow, profiles: Profiles) {
+    return { id: circle.id, name: circle.name, owner: profiles.get(circle.owner_profile_id) ?? null, memberCount: await this.memberCount(q, circle), publicNo: circle.public_no }
+  }
 
   /** What the invite page shows: the circle's public face and where the viewer stands. Anonymous viewers are 'none'. */
   async inviteInfo(userId: string | undefined, code: string) {
     const circle = await this.byCode(this.db, code)
     const profiles = await this.community.profileViews([circle.owner_profile_id])
-    return {
-      circle: { id: circle.id, name: circle.name, owner: profiles.get(circle.owner_profile_id) ?? null, memberCount: await this.memberCount(this.db, circle) },
-      status: await this.standing(this.db, circle, userId),
-    }
+    return { circle: await this.face(this.db, circle, profiles), status: await this.standing(this.db, circle, userId) }
   }
 
-  /** Apply through the link. Tree members just come back in; everyone else waits for the owner (a rejected person may ask again). */
+  /**
+   * Find circles to ask to join. Exactly six digits is a public number: it finds that circle even when it is not listed.
+   * Anything else is a name search over circles whose owner allows it. Deleted circles never match.
+   */
+  async search(userId: string, text: string) {
+    const q = text.trim()
+    if (!q) return { items: [] }
+    const rows: CircleRow[] = /^\d{6}$/.test(q)
+      ? await this.db.query(`SELECT ${COLUMNS} FROM app.community_circles WHERE public_no=$1 AND deleted_at IS NULL`, [Number(q)])
+      : await this.db.query(`SELECT ${COLUMNS} FROM app.community_circles WHERE deleted_at IS NULL AND searchable AND name ILIKE $1 ESCAPE '\\'
+          ORDER BY (lower(name)=lower($2)) DESC,(name ILIKE $3 ESCAPE '\\') DESC,created_at DESC LIMIT 20`, [likeContains(q), q, likePrefix(q)])
+    const profiles = await this.community.profileViews(rows.map(r => r.owner_profile_id))
+    const items = await Promise.all(rows.map(async r => ({ circle: await this.face(this.db, r, profiles), status: await this.standing(this.db, r, userId) })))
+    return { items }
+  }
+
+  /** Apply through the link or by id. Tree members just come back in; everyone else waits for the owner (a rejected person may ask again). */
+  private async applyTo(m: EntityManager, circle: CircleRow, userId: string, me: { id: string }) {
+    if (circle.owner_user_id === userId) return { status: 'owner' as const }
+    const [optout] = await m.query('SELECT reason FROM app.community_circle_optouts WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
+    if (optout?.reason === 'removed') throw new ForbiddenException({ code: 'CIRCLE_REMOVED', message: 'The owner removed you from this circle.' })
+    if (await this.inDownline(m, circle.owner_user_id, userId)) {
+      if (optout) await m.query('DELETE FROM app.community_circle_optouts WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
+      return { status: 'member' as const }
+    }
+    const [guest] = await m.query('SELECT status FROM app.community_circle_guests WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
+    if (guest?.status === 'member') return { status: 'member' as const }
+    if (guest?.status === 'pending') return { status: 'pending' as const }
+    await m.query(`INSERT INTO app.community_circle_guests(circle_id,user_id,status) VALUES($1,$2,'pending')
+      ON CONFLICT (circle_id,user_id) DO UPDATE SET status='pending',created_at=now(),decided_at=NULL`, [circle.id, userId])
+    await noticeUser(m, 'community.circle.request', circle.owner_user_id, circle.id, { profileId: me.id })
+    return { status: 'pending' as const }
+  }
   apply(userId: string, code: string) {
     return this.db.transaction(async m => {
       const me = await this.myProfile(m, userId)
-      const circle = await this.byCode(m, code)
-      if (circle.owner_user_id === userId) return { status: 'owner' as const }
-      const [optout] = await m.query('SELECT reason FROM app.community_circle_optouts WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
-      if (optout?.reason === 'removed') throw new ForbiddenException({ code: 'CIRCLE_REMOVED', message: 'The owner removed you from this circle.' })
-      if (await this.inDownline(m, circle.owner_user_id, userId)) {
-        if (optout) await m.query('DELETE FROM app.community_circle_optouts WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
-        return { status: 'member' as const }
-      }
-      const [guest] = await m.query('SELECT status FROM app.community_circle_guests WHERE circle_id=$1 AND user_id=$2', [circle.id, userId])
-      if (guest?.status === 'member') return { status: 'member' as const }
-      if (guest?.status === 'pending') return { status: 'pending' as const }
-      await m.query(`INSERT INTO app.community_circle_guests(circle_id,user_id,status) VALUES($1,$2,'pending')
-        ON CONFLICT (circle_id,user_id) DO UPDATE SET status='pending',created_at=now(),decided_at=NULL`, [circle.id, userId])
-      await noticeUser(m, 'community.circle.request', circle.owner_user_id, circle.id, { profileId: me.id })
-      return { status: 'pending' as const }
+      return this.applyTo(m, await this.byCode(m, code), userId, me)
+    })
+  }
+  applyById(userId: string, circleId: string) {
+    return this.db.transaction(async m => {
+      const me = await this.myProfile(m, userId)
+      return this.applyTo(m, await this.load(m, circleId), userId, me)
     })
   }
 

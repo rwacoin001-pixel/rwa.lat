@@ -19,6 +19,8 @@ export class MemberPostDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(16) lang?: string
   /** Post into one of my circles (members only). Omit for an ordinary public post. */
   @ApiPropertyOptional() @IsOptional() @IsUUID() circleId?: string
+  /** With circleId: also show this post in the public feeds (one post, one comment thread). Default false. */
+  @ApiPropertyOptional() @IsOptional() @IsBoolean() alsoPublic?: boolean
   /** A ledger-verified result to attach: { kind: 'quant_day', product, date } or { kind: 'prediction_win', bet }. */
   @ApiPropertyOptional() @IsOptional() @IsObject() proof?: Record<string, unknown>
 }

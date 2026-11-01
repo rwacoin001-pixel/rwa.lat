@@ -132,6 +132,10 @@ export class CommunityPost {
   @Column({ type: 'uuid', nullable: true })
   circle_id?: string | null
 
+  /** false = a circle post the author also made public (one post, one like count, one comment thread). */
+  @Column({ type: 'boolean', default: true })
+  circle_only!: boolean
+
   @Column({ type: 'timestamptz', nullable: true })
   scheduled_for?: Date | null
 

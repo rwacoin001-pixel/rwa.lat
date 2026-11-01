@@ -11,9 +11,11 @@ import { proofsFor, type ProofView } from './community-proof'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
 import { createHash, randomUUID } from 'node:crypto'
 import { requireDmIdentity } from './community-dm.service'
-import { circleRole } from './community-circle.access'
+import { circleRole, visibleCircles } from './community-circle.access'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, In, IsNull, QueryFailedError, Repository } from 'typeorm'
+
+type CircleBadge = { id: string; name: string } | null
 import { COMMUNITY_ERROR_CODES } from './community.errors'
 import {
   CommunityComment,
@@ -141,14 +143,35 @@ export class CommunityService {
     return new Map(profiles.map(profile => [profile.id, this.shapeProfile(profile, false, gate)]))
   }
 
-  /** A members-only (circle) post is visible to the circle's current members only; to everyone else it does not exist. */
-  private async assertCircleVisible(post: { circle_id?: string | null }, viewerId?: string) {
-    if (!post.circle_id) return
+  /**
+   * A circle-only post is visible to the circle's current members only; to everyone else it does not exist.
+   * A post the author also made public (circle_only = false) is an ordinary public post.
+   */
+  private async assertCircleVisible(post: { circle_id?: string | null; circle_only?: boolean }, viewerId?: string) {
+    if (!post.circle_id || post.circle_only === false) return
     if (!await circleRole(this.dataSource, post.circle_id, viewerId)) throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
   }
 
-  /** Public feeds never include circle posts; a circle's own feed passes its id (membership is checked by the caller). */
-  async getFeed(query: CommunityFeedQueryDto, profileIds?: string[], circleId?: string) {
+  /** For display only: the circle a post belongs to, when this viewer can see that circle; otherwise null. */
+  private async circleBadges(posts: Array<{ id: string; circle_id?: string | null }>, viewerId?: string): Promise<Map<string, CircleBadge>> {
+    const ids = posts.map(post => post.circle_id).filter((id): id is string => !!id)
+    const visible = ids.length && viewerId ? await visibleCircles(this.dataSource, ids, viewerId) : new Map<string, { id: string; name: string }>()
+    return new Map(posts.map(post => [post.id, post.circle_id ? visible.get(post.circle_id) ?? null : null]))
+  }
+
+  /** Full post views for the given ids (published only), in the order asked, for the viewer. Used for pinned posts. */
+  async postViews(ids: string[], viewerId?: string): Promise<Map<string, Record<string, unknown>>> {
+    if (!ids.length) return new Map()
+    const rows = await this.posts.find({ where: { id: In(ids), state: 'published' }, relations: { author: true } })
+    const [gate, proofs, badges] = await Promise.all([this.mediaGate(rows), proofsFor(this.posts.manager.connection, rows.map(post => post.id)), this.circleBadges(rows, viewerId)])
+    return new Map(rows.map(post => [post.id, this.shapePost(post, gate, proofs.get(post.id), badges.get(post.id) ?? null)]))
+  }
+
+  /**
+   * Public feeds show only ordinary posts and circle posts the author also made public; a circle's own feed passes its id
+   * (membership is checked by the caller). `viewerId` only decides whether a post's circle name is shown; `search` filters bodies.
+   */
+  async getFeed(query: CommunityFeedQueryDto, profileIds?: string[], circleId?: string, opts: { viewerId?: string; search?: string } = {}) {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 50)
     const sort = query.sort ?? 'latest'
     const qb = this.posts
@@ -158,7 +181,8 @@ export class CommunityService {
       .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
       .andWhere('post.published_at IS NOT NULL')
     if (circleId) qb.andWhere('post.circle_id = :circleId', { circleId })
-    else qb.andWhere('post.circle_id IS NULL')
+    else qb.andWhere('(post.circle_id IS NULL OR post.circle_only = false)')
+    if (opts.search) qb.andWhere("post.body ILIKE :search ESCAPE '\\'", { search: `%${opts.search.replace(/[\\%_]/g, m => '\\' + m)}%` })
     if (profileIds) qb.andWhere('post.profile_id IN (:...circleIds)', { circleIds: profileIds })
     if (query.topic) {
       const requestedTopic = query.topic.trim().toLowerCase()
@@ -204,7 +228,8 @@ export class CommunityService {
       nextCursor = encodeCursor(last.published_at as Date, last.id)
     }
     const [gate, proofs] = await Promise.all([this.mediaGate(items), proofsFor(this.posts.manager.connection, items.map((post) => post.id))])
-    return { items: items.map((post) => this.shapePost(post, gate, proofs.get(post.id))), nextCursor }
+    const badges = await this.circleBadges(items, opts.viewerId)
+    return { items: items.map((post) => this.shapePost(post, gate, proofs.get(post.id), badges.get(post.id) ?? null)), nextCursor }
   }
 
   async getPost(id: string, viewerId?: string) {
@@ -222,7 +247,8 @@ export class CommunityService {
       this.comments.count({ where: { post_id: id, state: 'published' } }),
     ])
     const [gate, proofs] = await Promise.all([this.mediaGate([post, ...comments]), proofsFor(this.posts.manager.connection, [post.id])])
-    return { post: this.shapePost(post, gate, proofs.get(post.id)), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
+    const badge = (await this.circleBadges([post], viewerId)).get(post.id) ?? null
+    return { post: this.shapePost(post, gate, proofs.get(post.id), badge), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
   }
 
   async listComments(postId: string, query: CommunityCommentsQueryDto, viewerId?: string) {
@@ -252,7 +278,7 @@ export class CommunityService {
     return { items: page.reverse().map((comment) => this.shapeComment(comment, gate)), nextBefore }
   }
 
-  async getProfile(handle: string) {
+  async getProfile(handle: string, viewerId?: string) {
     const key = normalizeHandle(handle)
     let profile = await this.profiles.findOne({ where: /^[0-9a-f-]{36}$/i.test(key) ? { id: key } : { handle: key } })
     if (!profile) {
@@ -261,20 +287,21 @@ export class CommunityService {
     }
     if (!profile || !profile.is_active) throw new NotFoundException(COMMUNITY_ERROR_CODES.PROFILE_NOT_FOUND)
     const [postCount, followerCount, followingCount, recent] = await Promise.all([
-      this.posts.count({ where: { profile_id: profile.id, state: 'published', circle_id: IsNull() } }),
+      this.posts.count({ where: [{ profile_id: profile.id, state: 'published', circle_id: IsNull() }, { profile_id: profile.id, state: 'published', circle_only: false }] }),
       this.follows.count({ where: { followee_id: profile.id } }),
       this.follows.count({ where: { follower_id: profile.id } }),
       this.posts.find({
-        where: { profile_id: profile.id, state: 'published', circle_id: IsNull() },
+        where: [{ profile_id: profile.id, state: 'published', circle_id: IsNull() }, { profile_id: profile.id, state: 'published', circle_only: false }],
         order: { published_at: 'DESC' },
         take: 20,
       }),
     ])
     const [gate, proofs] = await Promise.all([this.mediaGate(recent, [profile.avatar_url]), proofsFor(this.posts.manager.connection, recent.map((post) => post.id))])
+    const badges = await this.circleBadges(recent, viewerId)
     return {
       profile: this.shapeProfile(profile, true, gate),
       stats: { postCount, followerCount, followingCount },
-      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate, proofs.get(post.id))),
+      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate, proofs.get(post.id), badges.get(post.id) ?? null)),
     }
   }
 
@@ -339,7 +366,7 @@ export class CommunityService {
     } else {
       const comment = await this.comments.findOne({ where: { id: dto.targetId } })
       if (!comment || comment.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.COMMENT_NOT_FOUND)
-      const parent = await this.posts.findOne({ where: { id: comment.post_id }, select: { id: true, circle_id: true } })
+      const parent = await this.posts.findOne({ where: { id: comment.post_id }, select: { id: true, circle_id: true, circle_only: true } })
       if (parent) await this.assertCircleVisible(parent, viewerId)
       text = comment.body
       sourceLang = normalizeCommunityLang(comment.lang)
@@ -602,14 +629,14 @@ export class CommunityService {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000)
     const [profiles, posts, comments, queuePending, postsLast24h] = await Promise.all([
       this.profiles.count({ where: { is_active: true } }),
-      this.posts.count({ where: { state: 'published', circle_id: IsNull() } }),
+      this.posts.count({ where: [{ state: 'published', circle_id: IsNull() }, { state: 'published', circle_only: false }] }),
       this.comments.count({ where: { state: 'published' } }),
       this.queue.count({ where: { state: 'draft' } }),
       this.posts
         .createQueryBuilder('post')
         .where("post.state = 'published'")
       .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
-        .andWhere('post.circle_id IS NULL')
+        .andWhere('(post.circle_id IS NULL OR post.circle_only = false)')
         .andWhere('post.published_at >= :dayAgo', { dayAgo })
         .getCount(),
     ])
@@ -760,7 +787,7 @@ export class CommunityService {
     }
   }
 
-  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE, proof?: ProofView) {
+  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE, proof?: ProofView, circle: CircleBadge = null) {
     return {
       id: post.id,
       body: post.body,
@@ -774,6 +801,7 @@ export class CommunityService {
       location: post.location ?? null,
       author: post.author ? this.shapeProfile(post.author, false, gate) : null,
       proof: proof ?? null,
+      circle,
     }
   }
 

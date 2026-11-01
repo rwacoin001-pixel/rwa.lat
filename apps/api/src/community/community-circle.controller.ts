@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import { AuthenticatedRequest, SessionAuthGuard } from '../security/session-auth.guard'
-import { CircleNameDto, CirclePageQueryDto } from './community-circle.dto'
+import { CircleInnerSearchQueryDto, CircleMuteDto, CircleNameDto, CirclePageQueryDto, CirclePinDto, CircleSearchQueryDto, CircleUpdateDto } from './community-circle.dto'
 import { CommunityCircleService } from './community-circle.service'
 import { CommunityOptionalAuthGuard } from './community-optional-auth.guard'
 import { CommunityFeedQueryDto } from './dto/community.dto'
@@ -12,7 +12,18 @@ export class CommunityCircleController {
   constructor(private readonly circles: CommunityCircleService) {}
   @Get('mine') mine(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.circles.mine(a.userId) }
   @Post() create(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: CircleNameDto) { return this.circles.create(a.userId, dto.name) }
-  @Patch(':id') rename(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Body() dto: CircleNameDto) { return this.circles.rename(a.userId, id, dto.name) }
+  /** Find circles to join: a 6-digit public number, or part of a name (only circles whose owner allows it). */
+  @Get('search') search(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: CircleSearchQueryDto) { return this.circles.search(a.userId, q.q) }
+  @Patch(':id') update(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Body() dto: CircleUpdateDto) { return this.circles.update(a.userId, id, dto) }
+  @Post(':id/apply') @HttpCode(200) applyById(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.circles.applyById(a.userId, id) }
+  @Get(':id/search') innerSearch(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Query() q: CircleInnerSearchQueryDto) { return this.circles.innerSearch(a.userId, id, q.q, q.type, q.cursor) }
+  @Post(':id/pin') @HttpCode(200) pin(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Body() dto: CirclePinDto) { return this.circles.pin(a.userId, id, dto.postId) }
+  @Delete(':id/pin') unpin(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.circles.unpin(a.userId, id) }
+  @Post(':id/mute') @HttpCode(200) mute(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Body() dto: CircleMuteDto) { return this.circles.mute(a.userId, id, dto.muted) }
+  @Post(':id/members/:profileId/silence') @HttpCode(200)
+  silence(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Param('profileId', ParseUUIDPipe) profileId: string) { return this.circles.silence(a.userId, id, profileId, true) }
+  @Post(':id/members/:profileId/unsilence') @HttpCode(200)
+  unsilence(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Param('profileId', ParseUUIDPipe) profileId: string) { return this.circles.silence(a.userId, id, profileId, false) }
   @Delete(':id') remove(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.circles.remove(a.userId, id) }
   @Get(':id/feed') feed(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Query() q: CommunityFeedQueryDto) { return this.circles.feed(a.userId, id, q) }
   @Get(':id/members') members(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Query() q: CirclePageQueryDto) { return this.circles.members(a.userId, id, q) }

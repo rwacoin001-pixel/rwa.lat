@@ -15,7 +15,7 @@ export class PublicShareService {
       if (!row) throw new NotFoundException('分享内容不存在或已停止公开')
       return { kind, title: row.display_name, summary: row.summary ?? '', path: `/asset/${id}` }
     }
-    const [row] = await query.query(`SELECT p.body FROM app.community_posts p JOIN app.community_profiles author ON author.id=p.profile_id WHERE p.id=$1 AND p.state='published' AND p.circle_id IS NULL AND author.is_active=true${lock ? ' FOR SHARE OF p,author' : ''}`, [id])
+    const [row] = await query.query(`SELECT p.body FROM app.community_posts p JOIN app.community_profiles author ON author.id=p.profile_id WHERE p.id=$1 AND p.state='published' AND (p.circle_id IS NULL OR p.circle_only=false) AND author.is_active=true${lock ? ' FOR SHARE OF p,author' : ''}`, [id])
     if (!row) throw new NotFoundException('分享内容不存在或已停止公开')
     return { kind, title: '社区公开帖子', summary: row.body, path: `/community/post/${id}` }
   }

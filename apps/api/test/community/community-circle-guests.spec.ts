@@ -24,7 +24,7 @@ function make(answer: Answer) {
     return rows
   })
   const db = { query, transaction: (work: (m: EntityManager) => unknown) => work({ query } as unknown as EntityManager) } as unknown as DataSource
-  const community = { profileViews: async (ids: string[]) => new Map(ids.map(id => [id, { id }])) } as unknown as CommunityService
+  const community = { profileViews: async (ids: string[]) => new Map(ids.map(id => [id, { id }])), postViews: async () => new Map() } as unknown as CommunityService
   return { svc: new CommunityCircleService(db, community), calls, db }
 }
 const byCode = (sql: string) => sql.includes('WHERE invite_code=$1')
@@ -34,8 +34,10 @@ const notices = (calls: Array<{ sql: string; args: unknown[] }>) => calls.filter
 const first = (...fns: Answer[]): Answer => (sql, args) => { for (const f of fns) { const r = f(sql, args); if (r !== undefined) return r } return undefined }
 const base: Answer = (sql, args) =>
   byCode(sql) ? (args[0] === CODE ? [circleRow] : [])
+  : sql.includes('SELECT 1 FROM app.community_circles WHERE public_no') ? []
   : sql.includes('count(*)::int AS n') ? [{ n: 1 }]
-  : sql.includes('INSERT INTO app.notifications') ? [] : undefined
+  : sql.includes('INSERT INTO app.notifications') ? []
+  : sql.includes('FROM app.community_circle_member_settings') || sql.includes('max(published_at)') ? [] : undefined
 
 describe('circle access with link guests', () => {
   it('counts an approved guest as a member unless opted out, and never walks the guest\'s own invitees', async () => {
