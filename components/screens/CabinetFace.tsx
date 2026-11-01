@@ -243,7 +243,7 @@ export function CabinetScene({ locale, night }: { locale: AppLocale; night: bool
     observer.observe(element)
     return () => observer.disconnect()
   }, [])
-  return <div className={styles.cabStage} ref={stage} aria-hidden="true">
+  return <><div className={styles.cabBackdropWrap} aria-hidden="true"><img className={styles.cabBackdrop} src={`${art}.webp`} alt="" draggable={false} /></div><div className={styles.cabStage} ref={stage} aria-hidden="true">
     {/* Ink on paper: edges pushed about by the paper's fibres (a noise displacement), softened to the photo's own
         sharpness, with a faint bleed into the paper around each stroke, so the writing sits in the surface. */}
     <svg className={styles.cabDefs} aria-hidden="true"><filter id="cab-ink" x="-3%" y="-3%" width="106%" height="106%" colorInterpolationFilters="sRGB">
@@ -257,5 +257,5 @@ export function CabinetScene({ locale, night }: { locale: AppLocale; night: bool
     <img className={styles.cabPhoto} src={`${art}.webp`} alt="" draggable={false} />
     <div className={styles.cabFace} style={{ width: SHEET_W, height: SHEET_H, transform: matrix, visibility: matrix ? undefined : 'hidden' }}><KoalaPrint locale={locale} /></div>
     <img className={styles.cabTag} src={`${art}-tag.webp`} alt="" draggable={false} />
-  </div>
+  </div></>
 }
