@@ -343,7 +343,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
             </div>}
             {!reply && (circleId || choices.length > 0) && <>
               <label className={`${mp.switchRow} ${circlesStyle.syncRow}`}><input type="checkbox" role="switch" checked={alsoPublic} disabled={busy} onChange={event => setAlsoPublic(event.target.checked)} /><span>{circleId ? circleLabels.publicSync : circleLabels.circleSync}</span></label>
-              {!circleId && alsoPublic && <label className={circlesStyle.syncPicker}><span>{circleLabels.pickCircle}</span><select value={syncCircle ?? ''} disabled={busy} onChange={event => setSyncCircleId(event.target.value)}>{choices.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+              {!circleId && alsoPublic && choices.length > 1 && <div className={x.topicPick} role="group" aria-label={circleLabels.pickCircle}>{choices.map(item => <button key={item.id} type="button" disabled={busy} aria-pressed={syncCircle === item.id} onClick={() => setSyncCircleId(item.id)}>{item.name}</button>)}</div>}
             </>}
             {silencedToast && <p className={feedStyle.toast} role="status">{circleLabels.silencedNote}</p>}
             <div className={x.toolRow}>

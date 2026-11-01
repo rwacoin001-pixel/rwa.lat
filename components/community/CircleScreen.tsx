@@ -1,6 +1,7 @@
 'use client'
 
 import { ArrowLeft, Copy, Feather, MoreHorizontal, Search, X } from 'lucide-react'
+import { CommunityAvatar } from '@/components/community-avatar'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet } from '@/components/maison/Sheet'
 import { MaisonPage, maison as mp } from '@/components/maison/primitives'
@@ -94,13 +95,14 @@ export function CircleScreen({ circleId, go, openPost, openProfile, isGuest = tr
     {isGuest ? <XState title={labels.unavailable} action={<button type="button" className={c.pill} onClick={() => go('login')}>{labels.enter}</button>} /> : loading ? <SkeletonRows rows={3} /> : <>
       {current && <CircleHeader current={current} left={left} onChanged={changed} onNotify={text => actions.notify({ text })} onSearch={() => setSearch(true)} />}
       {failed ? <XState title={labels.failed} action={<button type="button" className={c.pill} onClick={() => void load(true)}>{labels.retry}</button>} /> : !current ? <XState title={labels.unavailable} /> : !left && <>
-        {pinned && <><p className={s.announcement}>{labels.announcement}</p><ul className={c.feed}>{postRow(pinned)}</ul></>}
+        {pinned && <><p className={s.announcement}><span>{labels.announcement}</span></p><ul className={c.feed}>{postRow(pinned)}</ul></>}
         {rows.length ? <ul className={c.feed}>{rows.map((post, index) => postRow(post, index))}</ul> : !pinned && <XState title={labels.emptyFeed} />}
         {cursor && !moreFailed && <div className={c.sentinel} ref={sentinel} aria-hidden="true" />}{moreLoading && <span className={c.spinner} role="status" aria-label={labels.more} />}
         {moreFailed && <button type="button" className={c.more} onClick={() => void more()}>{labels.failed} · {labels.retry}</button>}
       </>}
     </>}
-    {current && !left && <><button type="button" className={s.compose} aria-label={labels.compose} aria-disabled={current.silenced} onClick={compose}><Feather size={22} aria-hidden="true" /></button><CircleSearchSheet open={search} circle={current} onClose={() => setSearch(false)} openPost={openPost} />
+    {/* The circle page has no dock, so it carries the feather itself: the same paper disc, bottom right. */}
+    {current && !left && <><button type="button" className={s.feather} aria-label={labels.compose} data-muted={current.silenced || undefined} onClick={compose}><Feather size={22} strokeWidth={1.9} aria-hidden="true" /></button><CircleSearchSheet open={search} circle={current} onClose={() => setSearch(false)} openPost={openPost} />
       <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', circleId: current.id }} me={me} topics={topics} circles={circles.filter(circle => !membership?.left.some(item => item.id === circle.id))} onPublished={() => { setComposing(false); void load(true) }} />
     </>}
     {actions.overlays(me)}
@@ -125,12 +127,18 @@ function CircleHeader({ current, left, onChanged, onNotify, onSearch }: { curren
     try { await work() } catch { onNotify(k.failed) } finally { setBusy(false) }
   }
 
-  return <section className={s.circleHeader}>
-    <div className={s.titleRow}><h1 dir="auto">{current.name}</h1><div className={s.headerKeys}>
+  // The circle's head (2026-11-01, Claude's pass over the first cut): one paper card — owner face, name, owner and size,
+  // the two round keys, and the 6-digit ID as a pill that copies itself.
+  const copyId = () => void navigator.clipboard.writeText(String(current.publicNo)).then(() => onNotify(labels.copied)).catch(() => onNotify(k.failed))
+  return <section className={s.circleHeader}><div className={s.heroCard}>
+    <div className={s.titleRow}><CommunityAvatar avatarUrl={current.owner.avatarUrl} seed={current.owner.avatarSeed} handle={current.owner.handle} size={48} />
+      <div className={s.titleText}><h1 dir="auto">{current.name}</h1><small>{k.owner} <span dir="auto">{current.isOwner ? k.you : current.owner.displayName}</span> · {k.members(current.memberCount)}</small></div>
+      <div className={s.headerKeys}>
       {!left && <button type="button" className={s.more} aria-label={labels.searchInside} onClick={onSearch}><Search size={20} aria-hidden="true" /></button>}
       {!left && <button type="button" className={s.more} aria-label={pending ? `${k.more} · ${k.requests(pending)}` : k.more} aria-haspopup="dialog" onClick={() => setMenu(true)}><MoreHorizontal size={20} aria-hidden="true" />{pending > 0 && <span className={s.badge}>{pending > 99 ? '99+' : pending}</span>}</button>}
     </div></div>
-    <div className={s.circleMeta}><span>ID {current.publicNo}</span><button type="button" className={s.copyKey} aria-label={labels.copyId} onClick={() => void navigator.clipboard.writeText(String(current.publicNo)).then(() => onNotify(labels.copied)).catch(() => onNotify(k.failed))}><Copy size={16} aria-hidden="true" /></button><span>{k.owner} <span dir="auto">{current.owner.displayName}</span> · {k.members(current.memberCount)}</span></div>
+    <button type="button" className={s.idPill} aria-label={`${labels.copyId} ${current.publicNo}`} onClick={copyId}><span>ID</span><b>{current.publicNo}</b><Copy size={14} strokeWidth={1.9} aria-hidden="true" /></button>
+  </div>
     {left && <div className={s.leftState}><p>{k.leftNote}</p><button type="button" className={`${c.pill} ${c.pillSolid}`} disabled={busy} onClick={() => void act(async () => { await rejoinCircle(current.id); onChanged(current.id) })}>{k.rejoin}</button></div>}
     {fresh && <p className={s.note} role="status"><span dir="auto">{k.joinedNote(current.owner.displayName)}</span>
       <button type="button" aria-label={k.dismiss} onClick={() => seen.add(current.id)}><X size={16} strokeWidth={2} aria-hidden="true" /></button></p>}
