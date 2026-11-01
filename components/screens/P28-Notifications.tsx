@@ -88,12 +88,14 @@ export function NotificationsScreen({ go, notify, enabled = true, guest = false,
     setOpeningId(null)
     const route = item.payload?.route
     if (route?.startsWith('/') && !route.startsWith('//') && !route.includes('\\')) {
-      openPath(route)
+      const circle = new URL(route, window.location.origin)
+      const id = circle.pathname === '/community' ? circle.searchParams.get('circle') : null
+      openPath(id ? `/community/circle/${encodeURIComponent(id)}` : route)
       return
     }
     // Circle notices (2026-11-01): joined, request, approved, declined open that circle on Community.
     const circleId = item.payload?.circleId
-    if (item.kind.startsWith('community.circle') && typeof circleId === 'string' && /^[0-9a-f-]{36}$/i.test(circleId)) { openPath(item.kind === 'community.circle.rejected' ? '/community' : `/community?circle=${circleId}`); return }
+    if (item.kind.startsWith('community.circle') && typeof circleId === 'string' && circleId.length > 0) { openPath(item.kind === 'community.circle.rejected' ? '/community' : `/community/circle/${encodeURIComponent(circleId)}`); return }
     go(destinationFor(item.kind))
   }
   const markAll = async () => {

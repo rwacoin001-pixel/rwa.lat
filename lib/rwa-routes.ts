@@ -7,7 +7,7 @@ export type RwaScreen =
   | 'deposit' | 'withdraw' | 'transfer' | 'receive' | 'wallet-success' | 'activity' | 'asset-detail' | 'position-detail' | 'address-book'
   | 'ai-plan' | 'notifications' | 'kyc' | 'eligibility' | 'risk-profile' | 'security' | 'referral' | 'records' | 'support' | 'support-new' | 'support-ticket' | 'fees' | 'settings' | 'marketing' | 'official-channels' | 'scam-report' | 'close-account'
   | 'trust-center' | 'access-regions' | 'product-disclosures' | 'legal-center' | 'status' | 'disclosures' | 'secondary' | 'trade'
-  | 'community' | 'community-post' | 'community-profile' | 'community-messages' | 'community-thread' | 'learn' | 'learn-article'
+  | 'community' | 'community-circle' | 'community-post' | 'community-profile' | 'community-messages' | 'community-thread' | 'learn' | 'learn-article'
   | 'share-landing' | 'invite-landing'
   | 'onboarding-overview' | 'valuation' | 'issuer-profile' | 'issuers' | 'search' | 'yield-calendar' | 'rebalance' | 'statements' | 'recurring' | 'my-predictions'
 
@@ -79,6 +79,7 @@ const screenPaths: Record<RwaScreen, string> = {
   community: '/community',
   learn: '/learn',
   'learn-article': '/learn/article',
+  'community-circle': '/community/circle',
   'community-post': '/community/post',
   'community-profile': '/community/member',
   'community-messages': '/community/messages',

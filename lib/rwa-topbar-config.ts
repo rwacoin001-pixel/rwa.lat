@@ -28,7 +28,7 @@ const screenPages: Partial<Record<RwaScreen, string>> = {
   'rwa-detail': 'P10', 'compute-detail': 'P10', 'stock-detail': 'P10', 'prediction-detail': 'P34', portfolio: 'P19', wallet: 'P22',
   'issuer-profile': 'P08-detail', 'order-review': 'P11', 'order-processing': 'P11', 'order-success': 'P11', 'order-partial': 'P11', 'order-failed': 'P11', 'order-receipt': 'P11', 'order-detail': 'P12', records: 'P12',
   deposit: 'P23', withdraw: 'P24', transfer: 'P26', 'address-book': 'P25', activity: 'P27', notifications: 'P28',
-  community: 'P29', 'community-post': 'P30', 'community-profile': 'P31', kyc: 'P32', settings: 'P33', 'risk-profile': 'P17', 'yield-calendar': 'P21',
+  community: 'P29', 'community-circle': 'P31', 'community-post': 'P30', 'community-profile': 'P31', kyc: 'P32', settings: 'P33', 'risk-profile': 'P17', 'yield-calendar': 'P21',
 }
 export function slotsForScreen(screen?: RwaScreen, kind?: TopbarKind): SlotConfig {
   let resolved: SlotConfig
@@ -86,7 +86,7 @@ export const rwaScreenTopbarKinds: Record<RwaScreen, TopbarKind> = {
   deposit: 'flow', withdraw: 'flow', transfer: 'flow', receive: 'tool', 'wallet-success': 'flow', activity: 'list', 'asset-detail': 'detail', 'position-detail': 'detail', 'address-book': 'tool',
   'ai-plan': 'detail', notifications: 'tool', kyc: 'tool', eligibility: 'tool', 'risk-profile': 'tool', security: 'tool', referral: 'tool', records: 'list', support: 'tool', 'support-new': 'detail', 'support-ticket': 'detail', fees: 'tool', settings: 'tool', marketing: 'tool', 'official-channels': 'trust', 'scam-report': 'tool', 'close-account': 'flow',
   'trust-center': 'trust', 'access-regions': 'trust', 'product-disclosures': 'trust', 'legal-center': 'trust', status: 'tool', disclosures: 'trust', secondary: 'list', trade: 'tool',
-  community: 'list', 'community-post': 'detail', 'community-profile': 'detail', 'community-messages': 'list', 'community-thread': 'detail',
+  community: 'list', 'community-circle': 'detail', 'community-post': 'detail', 'community-profile': 'detail', 'community-messages': 'list', 'community-thread': 'detail',
   learn: 'list', 'learn-article': 'detail',
   'share-landing': 'immersive',
   'invite-landing': 'immersive',

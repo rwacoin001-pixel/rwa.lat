@@ -28,6 +28,7 @@ export type CommunityProof = { kind: 'quant_day' | 'prediction_win'; title: stri
 export type CommunityProofRequest = { kind: 'quant_day'; product: string; date: string } | { kind: 'prediction_win'; bet: string }
 
 export type CommunityPost = {
+  circle?: { id: string; name: string } | null
   proof?: CommunityProof | null
   lang?: string
   location?: { city: string; countryCode: string } | null
@@ -88,7 +89,7 @@ export async function getCommunityFeed(params: { sort?: 'latest' | 'hot'; topic?
   if (params.cursor) query.set('cursor', params.cursor)
   if (params.limit) query.set('limit', String(params.limit))
   const suffix = query.toString()
-  return apiGet<{ items: CommunityPost[]; nextCursor: string | null }>(`/v1/community/feed${suffix ? `?${suffix}` : ''}`)
+  return apiGet<{ items: CommunityPost[]; nextCursor: string | null }>(`/v1/community/feed${suffix ? `?${suffix}` : ''}`, true)
 }
 
 export async function getCommunityTopics() {

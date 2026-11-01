@@ -24,6 +24,7 @@ const InviteLanding = dynamic(() => import('../maison/InviteLanding').then((m) =
 const CommunityFeedScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityFeedScreen })), { ssr: false, loading: AppLoading })
 const DmInboxScreen = dynamic(() => import('../community/DmScreens').then((m) => ({ default: m.DmInboxScreen })), { ssr: false, loading: AppLoading })
 const DmThreadScreen = dynamic(() => import('../community/DmScreens').then((m) => ({ default: m.DmThreadScreen })), { ssr: false, loading: AppLoading })
+const CircleScreen = dynamic(() => import('../community/CircleScreen').then((m) => ({ default: m.CircleScreen })), { ssr: false, loading: AppLoading })
 const CommunityPostScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityPostScreen })), { ssr: false, loading: AppLoading })
 const CommunityProfileScreen = dynamic(() => import('../community-screens').then((m) => ({ default: m.CommunityProfileScreen })), { ssr: false, loading: AppLoading })
 
@@ -103,6 +104,7 @@ export function H5Screens({ h }: { h: H5Controller }) {
         {screen === 'wallet' && <MaisonCashScreen />}
         {screen === 'community' && <CommunityFeedScreen go={go} openPost={openCommunityPost} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
         {(screen === 'learn' || screen === 'learn-article') && <LearnScreen key={`${locale}:${routeParams.slug ?? ''}`} slug={screen === 'learn-article' ? routeParams.slug : undefined} />}
+        {screen === 'community-circle' && <CircleScreen key={routeParams.id} circleId={routeParams.id ?? null} go={go} openPost={openCommunityPost} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
         {screen === 'community-post' && <CommunityPostScreen key={communityPostId} postId={communityPostId} go={go} openProfile={openCommunityProfile} isGuest={sessionMode === 'guest'} />}
         {screen === 'community-messages' && <DmInboxScreen />}
         {screen === 'community-thread' && <DmThreadScreen key={routeParams.id} id={routeParams.id ?? null} />}

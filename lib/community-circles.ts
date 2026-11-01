@@ -10,10 +10,11 @@ import { request } from '@/lib/api/_http'
 import type { CommunityAuthor, CommunityPost } from '@/lib/community-data'
 
 export type Circle = { id: string; name: string; owner: CommunityAuthor; memberCount: number; createdAt: string; isOwner: boolean
+  publicNo: number; searchable?: boolean; muted: boolean; silenced: boolean; pinnedPost: CommunityPost | null; lastPostAt: string | null
   /** Owner only. */
   inviteCode?: string | null; pendingCount?: number }
 export type CircleMembership = { owned: Circle | null; joined: Circle[]; left: Circle[] }
-export type CircleMemberRow = { profile: CommunityAuthor; depth: number; via?: 'tree' | 'link' }
+export type CircleMemberRow = { profile: CommunityAuthor; depth: number; via?: 'tree' | 'link'; silenced: boolean }
 export type CircleInviteStatus = 'none' | 'pending' | 'member' | 'owner' | 'removed' | 'rejected'
 export type CircleInvite = { circle: { id: string; name: string; owner: CommunityAuthor; memberCount: number }; status: CircleInviteStatus }
 export type CirclePersonRow = { profile: CommunityAuthor; createdAt?: string; removedAt?: string }
@@ -101,4 +102,36 @@ export const validCircleName = (name: string) => {
   const trimmed = name.trim()
   // eslint-disable-next-line no-control-regex
   return trimmed.length >= CIRCLE_NAME_MIN && trimmed.length <= CIRCLE_NAME_MAX && !/[\u0000-\u001f\u007f]/.test(trimmed)
+}
+
+/** Discovery and circle controls (2026-11-01). */
+export type CircleSearchResult = { circle: Pick<Circle, 'id' | 'name' | 'owner' | 'memberCount' | 'publicNo'>; status: CircleInviteStatus }
+export async function searchCircles(q: string) {
+  const result = await request<{ items: CircleSearchResult[] }>(`/v1/community/circles/search?${new URLSearchParams({ q })}`, { loading: 'silent' })
+  return result.ok ? result.data.items : fail(result.error.message)
+}
+export async function applyToCircleById(id: string) {
+  const result = await request<{ status: CircleInviteStatus }>(path(id, '/apply'), { method: 'POST' })
+  return result.ok ? result.data.status : fail(result.error.status === 403 ? 'CIRCLE_REMOVED' : result.error.message)
+}
+export async function updateCircle(id: string, changes: { name?: string; searchable?: boolean }) {
+  const result = await request<Circle>(path(id), { method: 'PATCH', body: JSON.stringify(changes) })
+  return result.ok ? result.data : fail(result.error.message)
+}
+export async function pinCirclePost(id: string, postId: string | null) {
+  const result = await request(path(id, '/pin'), { method: postId ? 'POST' : 'DELETE', ...(postId ? { body: JSON.stringify({ postId }) } : {}) })
+  if (!result.ok) fail(result.error.message)
+}
+export async function muteCircle(id: string, muted: boolean) {
+  const result = await request(path(id, '/mute'), { method: 'POST', body: JSON.stringify({ muted }) })
+  if (!result.ok) fail(result.error.message)
+}
+export async function silenceCircleMember(id: string, profileId: string, silenced: boolean) {
+  const result = await request(path(id, `/members/${encodeURIComponent(profileId)}/${silenced ? 'silence' : 'unsilence'}`), { method: 'POST' })
+  if (!result.ok) fail(result.error.message)
+}
+export async function searchCircle<T extends 'posts' | 'members'>(id: string, q: string, type: T, cursor?: string | null) {
+  const query = new URLSearchParams({ q, type, ...(cursor ? { cursor } : {}) })
+  const result = await request<{ items: (T extends 'posts' ? CommunityPost : CircleMemberRow)[]; nextCursor: string | null }>(path(id, `/search?${query}`), { loading: 'silent' })
+  return result.ok ? result.data : fail(result.error.message)
 }

@@ -65,6 +65,7 @@ export const ROUTES = {
   search: R('/search', { domain: 'home', dock: 'home', showDock: false, auth: 'optional' }),
   notifications: R('/notifications', { domain: 'home', dock: 'home', showDock: true, auth: 'required' }),
   community: R('/community', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
+  communityCircle: R('/community/circle/:id', { domain: 'community', dock: 'community', showDock: false, auth: 'required' }),
   communityPost: R('/community/post/:id', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
   communityMember: R('/community/member/:handle', { domain: 'community', dock: 'community', showDock: true, auth: 'optional' }),
   communityMessages: R('/community/messages', { domain: 'community', dock: 'community', showDock: false, auth: 'required' }),

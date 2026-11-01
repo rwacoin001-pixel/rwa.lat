@@ -8,15 +8,17 @@
  * Joining and leaving (2026-11-01, user): the owner shares an invite link (copy, share, QR, reset) and approves requests;
  * a removal can be undone from the removed list; a circle I joined through my inviter shows a one-time note.
  */
-import { MoreHorizontal, X } from 'lucide-react'
+import { ArrowRight } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useEffect, useState } from 'react'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { Sheet } from '@/components/maison/Sheet'
 import { useI18n, type AppLocale } from '@/lib/i18n'
-import { CIRCLE_NAME_MAX, circleInviteUrl, createCircle, decideCircleRequest, deleteCircle, getCircleMembers, getCircleRequests, getRemovedCircleMembers, leaveCircle, rejoinCircle, removeCircleMember, renameCircle, resetCircleInvite, restoreCircleMember, validCircleName, type Circle, type CircleMemberRow, type CircleMembership, type CirclePersonRow } from '@/lib/community-circles'
+import { CIRCLE_NAME_MAX, circleInviteUrl, createCircle, decideCircleRequest, deleteCircle, getCircleMembers, getCircleRequests, getRemovedCircleMembers, leaveCircle, rejoinCircle, removeCircleMember, renameCircle, resetCircleInvite, restoreCircleMember, silenceCircleMember, validCircleName, type Circle, type CircleMemberRow, type CircleMembership, type CirclePersonRow } from '@/lib/community-circles'
+import controls from '@/components/ui/controls.module.css'
 import c from '../community-x.module.css'
 import s from './circles.module.css'
+import { useCircleStageCopy } from './circle-copy'
 
 type Copy = {
   mine: string; found: string; introTitle: string; introBody: string; owner: string; members: (n: number) => string; name: string
@@ -59,115 +61,29 @@ export function useCircleCopy() {
   return copy[locale] ?? copy.en!
 }
 
-export function CircleBar({ membership, selected, onSelect, onChanged, onNotify }: {
-  membership: CircleMembership
-  selected: string | null
-  onSelect: (id: string) => void
-  /** Reload membership; `select` picks a circle afterwards (a new one), null when the chosen one is gone. */
-  onChanged: (select?: string | null) => void
-  onNotify: (text: string) => void
-}) {
-  const k = useCircleCopy()
-  const circles = [...(membership.owned ? [membership.owned] : []), ...membership.joined, ...membership.left]
-  const leftIds = new Set(membership.left.map((circle) => circle.id))
-  const current = circles.find((circle) => circle.id === selected) ?? circles[0] ?? null
-  const [naming, setNaming] = useState<null | 'found' | 'rename'>(null)
-  const [menu, setMenu] = useState(false)
-  const [members, setMembers] = useState(false)
-  const [confirm, setConfirm] = useState<null | 'leave' | 'delete'>(null)
-  const [sheet, setSheet] = useState<null | 'invite' | 'requests' | 'removed'>(null)
-  const seen = useSeenCircles()
-  const fresh = current && !current.isOwner && !leftIds.has(current.id) && seen.ready && !seen.ids.has(current.id)
-  const pending = current?.isOwner ? current.pendingCount ?? 0 : 0
-  const [busy, setBusy] = useState(false)
 
-  const act = async (work: () => Promise<void>) => {
-    if (busy) return
-    setBusy(true)
-    try { await work() } catch { onNotify(k.failed) } finally { setBusy(false) }
-  }
-
-  return <section className={s.bar} aria-label={k.viewMembers}>
-    {circles.length > 0 && <div className={s.names} role="group">
-      {circles.map((circle) => <button key={circle.id} type="button" className={c.chip} data-left={leftIds.has(circle.id) || undefined} aria-pressed={circle.id === current?.id} onClick={() => onSelect(circle.id)}>
-        {circle.name}{circle.isOwner && <small className={s.mine}>{k.mine}</small>}
-      </button>)}
-      {!membership.owned && <button type="button" className={`${c.chip} ${s.found}`} onClick={() => setNaming('found')}>+ {k.found}</button>}
-    </div>}
-
-    {current ? <div className={s.head}>
-      <div className={s.headText}>
-        <b dir="auto">{current.name}</b>
-        <small>{leftIds.has(current.id) ? k.leftNote : <>{k.owner} <span dir="auto">{current.isOwner ? k.you : current.owner.displayName}</span> · {k.members(current.memberCount)}</>}</small>
-      </div>
-      {leftIds.has(current.id)
-        ? <button type="button" className={`${c.pill} ${c.pillSolid}`} disabled={busy} onClick={() => void act(async () => { await rejoinCircle(current.id); onChanged(current.id) })}>{k.rejoin}</button>
-        : <button type="button" className={s.more} aria-label={pending ? `${k.more} · ${k.requests(pending)}` : k.more} aria-haspopup="dialog" onClick={() => setMenu(true)}><MoreHorizontal size={18} strokeWidth={1.9} aria-hidden="true" />{pending > 0 && <span className={s.badge} aria-hidden="true">{pending > 99 ? '99+' : pending}</span>}</button>}
-    </div> : <div className={s.intro}>
-      <b>{k.introTitle}</b>
-      <p>{k.introBody}</p>
-      <button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => setNaming('found')}>{k.found}</button>
-    </div>}
-    {fresh && <p className={s.note} role="status"><span dir="auto">{k.joinedNote(current.owner.displayName)}</span>
-      <button type="button" aria-label={k.dismiss} onClick={() => seen.add(current.id)}><X size={16} strokeWidth={2} aria-hidden="true" /></button></p>}
-
-    <NameSheet open={naming !== null} title={naming === 'rename' ? k.rename : k.foundTitle} initial={naming === 'rename' ? current?.name ?? '' : ''} busy={busy} onClose={() => setNaming(null)}
-      onSave={(name) => void act(async () => {
-        if (naming === 'rename' && current) { await renameCircle(current.id, name); onChanged(current.id) }
-        else { const made = await createCircle(name); onChanged(made.id) }
-        setNaming(null)
-      })} />
-
-    <Sheet open={menu && current !== null} onClose={() => setMenu(false)} title={current?.name ?? ''}>
-      {current && <div className={s.options}>
-        {current.isOwner && current.inviteCode && <button type="button" onClick={() => { setMenu(false); setSheet('invite') }}>{k.invite}</button>}
-        {current.isOwner && <button type="button" onClick={() => { setMenu(false); setSheet('requests') }}>{k.requests(pending)}</button>}
-        <button type="button" onClick={() => { setMenu(false); setMembers(true) }}>{k.viewMembers}</button>
-        {current.isOwner && <button type="button" onClick={() => { setMenu(false); setSheet('removed') }}>{k.removed}</button>}
-        {current.isOwner && <button type="button" onClick={() => { setMenu(false); setNaming('rename') }}>{k.rename}</button>}
-        {current.isOwner
-          ? <button type="button" data-danger="" onClick={() => { setMenu(false); setConfirm('delete') }}>{k.delete}</button>
-          : <button type="button" data-danger="" onClick={() => { setMenu(false); setConfirm('leave') }}>{k.leave}</button>}
-      </div>}
-    </Sheet>
-
-    <Sheet open={confirm !== null} onClose={() => setConfirm(null)} title={confirm === 'delete' ? k.deleteTitle : k.leaveTitle}>
-      <div className={s.options}>
-        <p className={s.confirmBody}>{confirm === 'delete' ? k.deleteBody : k.leaveBody}</p>
-        <button type="button" data-danger="" disabled={busy} onClick={() => current && void act(async () => {
-          if (confirm === 'delete') await deleteCircle(current.id); else await leaveCircle(current.id)
-          setConfirm(null); onChanged(confirm === 'leave' ? current.id : null)
-        })}>{confirm === 'delete' ? k.delete : k.leave}</button>
-        <button type="button" onClick={() => setConfirm(null)}>{k.cancel}</button>
-      </div>
-    </Sheet>
-
-    {current && <MembersSheet open={members} circle={current} onClose={() => setMembers(false)} onRemoved={() => onChanged(current.id)} onNotify={onNotify} />}
-    {current?.isOwner && <InviteSheet open={sheet === 'invite'} circle={current} onClose={() => setSheet(null)} onChanged={() => onChanged(current.id)} onNotify={onNotify} />}
-    {current?.isOwner && <PeopleSheet open={sheet === 'requests' || sheet === 'removed'} kind={sheet === 'removed' ? 'removed' : 'requests'} circle={current} onClose={() => setSheet(null)} onChanged={() => onChanged(current.id)} onNotify={onNotify} />}
-  </section>
-}
-
-function NameSheet({ open, title, initial, busy, onClose, onSave }: { open: boolean; title: string; initial: string; busy: boolean; onClose: () => void; onSave: (name: string) => void }) {
+export function NameSheet({ open, title, initial, busy, onClose, onSave }: { open: boolean; title: string; initial: string; busy: boolean; onClose: () => void; onSave: (name: string) => void }) {
   const k = useCircleCopy()
   const [name, setName] = useState(initial)
   useEffect(() => { if (open) setName(initial) }, [open, initial])
   const ok = validCircleName(name)
   return <Sheet open={open} onClose={onClose} title={title} busy={busy}>
-    <form className={s.nameForm} onSubmit={(event) => { event.preventDefault(); if (ok) onSave(name.trim()) }}>
+    <form className={s.nameForm} onSubmit={(event) => { event.preventDefault(); if (ok && !busy) onSave(name.trim()) }}>
       <label className={s.field}>
         <span className={s.srOnly}>{k.name}</span>
         <input value={name} maxLength={CIRCLE_NAME_MAX} placeholder={k.namePlaceholder} dir="auto" autoFocus enterKeyHint="done" onChange={(event) => setName(event.target.value)} />
         <small aria-hidden="true">{name.trim().length}/{CIRCLE_NAME_MAX}</small>
       </label>
       <p className={s.hint}>{k.nameHint}</p>
-      <button type="submit" className={`${c.pill} ${c.pillSolid} ${s.save}`} disabled={!ok || busy}>{k.save}</button>
+      <button type="submit" className={controls.primary} disabled={!ok || busy}><span>{k.save}</span>{ok && !busy && <i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} /></i>}</button>
     </form>
   </Sheet>
 }
 
-function MembersSheet({ open, circle, onClose, onRemoved, onNotify }: { open: boolean; circle: Circle; onClose: () => void; onRemoved: () => void; onNotify: (text: string) => void }) {
+export function MembersSheet({ open, circle, onClose, onRemoved, onNotify }: { open: boolean; circle: Circle; onClose: () => void; onRemoved: () => void; onNotify: (text: string) => void }) {
   const k = useCircleCopy()
+  const labels = useCircleStageCopy()
+  const [working, setWorking] = useState<string | null>(null)
   const [rows, setRows] = useState<CircleMemberRow[] | null>(null)
   const [cursor, setCursor] = useState<string | null>(null)
   useEffect(() => {
@@ -184,8 +100,14 @@ function MembersSheet({ open, circle, onClose, onRemoved, onNotify }: { open: bo
     {rows === null ? <p className={s.confirmBody}>…</p> : rows.length === 0 ? <p className={s.confirmBody}>{k.empty}</p> : <ul className={s.memberList}>
       {rows.map((row) => <li key={row.profile.id}>
         <CommunityAvatar avatarUrl={row.profile.avatarUrl} seed={row.profile.avatarSeed} handle={row.profile.handle} size={40} />
-        <span><b dir="auto">{row.profile.displayName}</b><small>{row.via === 'link' ? k.viaLink : k.depth(row.depth)}</small></span>
-        {circle.isOwner && <button type="button" className={c.pill} onClick={() => remove(row)}>{k.remove}</button>}
+        <span><b dir="auto">{row.profile.displayName}</b><small>{row.via === 'link' ? k.viaLink : k.depth(row.depth)}{row.silenced ? ` · ${labels.silenced}` : ''}</small></span>
+        {circle.isOwner && row.profile.id !== circle.owner.id && <div className={s.memberKeys}>
+          <button type="button" className={c.pill} disabled={working !== null} onClick={() => {
+            setWorking(row.profile.id)
+            void silenceCircleMember(circle.id, row.profile.id, !row.silenced).then(() => { setRows(previous => previous?.map(item => item.profile.id === row.profile.id ? { ...item, silenced: !row.silenced } : item) ?? null); onRemoved() }).catch(() => onNotify(k.failed)).finally(() => setWorking(null))
+          }}>{row.silenced ? labels.unsilence : labels.silence}</button>
+          <button type="button" className={c.pill} disabled={working !== null} onClick={() => remove(row)}>{k.remove}</button>
+        </div>}
       </li>)}
     </ul>}
     {cursor && <button type="button" className={`${c.pill} ${s.loadMore}`} onClick={more}>{k.more}</button>}
@@ -194,7 +116,7 @@ function MembersSheet({ open, circle, onClose, onRemoved, onNotify }: { open: bo
 
 /** Circles whose "you joined automatically" note was put away (this device). */
 const SEEN_KEY = 'rwa.circles.seen'
-function useSeenCircles() {
+export function useSeenCircles() {
   const [ids, setIds] = useState<Set<string> | null>(null)
   useEffect(() => { try { setIds(new Set(JSON.parse(localStorage.getItem(SEEN_KEY) ?? '[]') as string[])) } catch { setIds(new Set()) } }, [])
   const add = (id: string) => setIds((previous) => {
@@ -205,7 +127,7 @@ function useSeenCircles() {
   return { ready: ids !== null, ids: ids ?? new Set<string>(), add }
 }
 
-function InviteSheet({ open, circle, onClose, onChanged, onNotify }: { open: boolean; circle: Circle; onClose: () => void; onChanged: () => void; onNotify: (text: string) => void }) {
+export function InviteSheet({ open, circle, onClose, onChanged, onNotify }: { open: boolean; circle: Circle; onClose: () => void; onChanged: () => void; onNotify: (text: string) => void }) {
   const k = useCircleCopy()
   const [busy, setBusy] = useState(false)
   const link = circle.inviteCode ? circleInviteUrl(circle.inviteCode) : ''
@@ -234,7 +156,7 @@ function InviteSheet({ open, circle, onClose, onChanged, onNotify }: { open: boo
 }
 
 /** The owner's two people lists: pending requests (approve / decline) and removed members (undo). */
-function PeopleSheet({ open, kind, circle, onClose, onChanged, onNotify }: { open: boolean; kind: 'requests' | 'removed'; circle: Circle; onClose: () => void; onChanged: () => void; onNotify: (text: string) => void }) {
+export function PeopleSheet({ open, kind, circle, onClose, onChanged, onNotify }: { open: boolean; kind: 'requests' | 'removed'; circle: Circle; onClose: () => void; onChanged: () => void; onNotify: (text: string) => void }) {
   const k = useCircleCopy()
   const [rows, setRows] = useState<CirclePersonRow[] | null>(null)
   const [busy, setBusy] = useState<string | null>(null)

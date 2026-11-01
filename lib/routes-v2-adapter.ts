@@ -17,6 +17,7 @@ const KEY_TO_SCREEN: Partial<Record<RouteKey, RwaScreen>> = {
   search: 'search',
   notifications: 'notifications',
   community: 'community',
+  communityCircle: 'community-circle',
   communityPost: 'community-post',
   communityMember: 'community-profile',
   communityMessages: 'community-messages',

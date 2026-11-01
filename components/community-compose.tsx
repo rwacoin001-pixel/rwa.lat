@@ -15,6 +15,11 @@ import type { CommunityTopic } from '@/lib/community-data'
 import { communityError } from './community-actions'
 import { CommunityAvatar } from './community-avatar'
 import x from './maison/community.module.css'
+import { maison as mp } from './maison/primitives'
+import circlesStyle from './community/circles.module.css'
+import feedStyle from './community-x.module.css'
+import { useCircleStageCopy } from './community/circle-copy'
+import { getMyCircles } from '@/lib/community-circles'
 import { communityExperienceCopy } from '@/lib/community-experience-copy'
 import { useCommunityMe, publishCommunityMe, type CommunityMe } from '@/lib/use-community-me'
 export { useCommunityMe, publishCommunityMe, type CommunityMe } from '@/lib/use-community-me'
@@ -123,6 +128,20 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const { anchor, container, ready: hostReady } = useMaisonContainer()
   const reply = target.kind === 'reply'
   const audience = audienceCopy[locale] ?? audienceCopy.en!
+  const circleLabels = useCircleStageCopy()
+  const [loadedCircles, setLoadedCircles] = useState<Array<{ id: string; name: string }>>([])
+  const choices = circles.length ? circles : loadedCircles
+  const [alsoPublic, setAlsoPublic] = useState(false)
+  const [syncCircleId, setSyncCircleId] = useState<string | null>(null)
+  const syncCircle = choices.find(item => item.id === syncCircleId)?.id ?? choices[0]?.id ?? null
+  const [silencedToast, setSilencedToast] = useState(false)
+  useEffect(() => {
+    if (!open || reply || circles.length) return
+    let active = true
+    void getMyCircles().then(data => { if (active) setLoadedCircles(data ? [...(data.owned ? [data.owned] : []), ...data.joined] : []) }).catch(() => undefined)
+    return () => { active = false }
+  }, [open, reply, circles.length])
+  useEffect(() => { if (!silencedToast) return; const timer = setTimeout(() => setSilencedToast(false), 2800); return () => clearTimeout(timer) }, [silencedToast])
   // While writing, the dock and the AI ball step aside (2026-10-28): they sat over the composer's own bottom bar.
   useEffect(() => {
     if (!open) return
@@ -190,7 +209,8 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
     if (!open) return
     setPanel(null); setError(''); setBusy(false); setDraftId(null); intent.current = null
     setTopic(target.kind === 'post' ? target.topic ?? null : null)
-    setCircleId(target.kind === 'post' && target.circleId && circles.some((item) => item.id === target.circleId) ? target.circleId : null)
+    setCircleId(target.kind === 'post' ? target.circleId ?? null : null)
+    setAlsoPublic(false); setSyncCircleId(null); setSilencedToast(false)
     let restored = ''
     if (target.kind === 'reply') { try { restored = window.localStorage.getItem(replyKey(target.postId)) ?? '' } catch { /* ignore */ } }
     setBody(restored)
@@ -256,13 +276,14 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
     if (riskyPost(trimmed)) { setError(riskyPostMessage[locale] ?? riskyPostMessage.en); return }
     if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
-    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(circleId ? { circleId } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
+    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(circleId ? { circleId, ...(alsoPublic ? { alsoPublic: true } : {}) } : alsoPublic && syncCircle ? { circleId: syncCircle, alsoPublic: true } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
     if (intent.current?.text !== payload) intent.current = { text: payload, key: crypto.randomUUID() }
     setBusy(true); setError('')
     const path = target.kind === 'reply' ? `/v1/community/me/posts/${encodeURIComponent(target.postId)}/comments` : '/v1/community/me/posts'
     const result = await request<{ id: string }>(path, { method: 'POST', body: payload, idempotencyKey: intent.current.key, loading: 'silent' })
     setBusy(false)
+    if (!result.ok && result.error.status === 403 && (result.error.code === 'CIRCLE_SILENCED' || /CIRCLE_SILENCED/.test(result.error.message))) { setError(circleLabels.silencedNote); setSilencedToast(true); return }
     if (!result.ok) { if (/COMMUNITY_IDENTITY_REQUIRED/.test(result.error.message)) setIdentityOpen(true); else setError(communityError(result.error, c)); return }
     intent.current = null
     if (target.kind === 'reply') { try { window.localStorage.removeItem(replyKey(target.postId)) } catch { /* ignore */ } }
@@ -313,13 +334,18 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
               <p className={x.composeNote}>{locationCopy[locale][3]}</p>
             </>}
             {error && <p className={x.composeError} role="alert">{error}</p>}
-            {!reply && circles.length > 0
-              ? <button type="button" className={x.audience} aria-expanded={panel === 'audience'} onClick={() => setPanel(panel === 'audience' ? null : 'audience')}>{circleId ? <Users size={15} strokeWidth={2} aria-hidden="true" /> : <Globe2 size={15} strokeWidth={2} aria-hidden="true" />}{circleId ? `${circles.find((item) => item.id === circleId)?.name ?? ''} · ${audience.circleOnly}` : audience.everyone}</button>
+            {!reply && (choices.length > 0 || circleId)
+              ? <button type="button" className={x.audience} aria-expanded={panel === 'audience'} onClick={() => setPanel(panel === 'audience' ? null : 'audience')}>{circleId ? <Users size={15} strokeWidth={2} aria-hidden="true" /> : <Globe2 size={15} strokeWidth={2} aria-hidden="true" />}{circleId ? `${choices.find((item) => item.id === circleId)?.name ?? ''} · ${audience.circleOnly}` : audience.everyone}</button>
               : <p className={x.audience}><Globe2 size={15} strokeWidth={2} aria-hidden="true" />{k.everyone}</p>}
             {panel === 'audience' && !reply && <div className={x.topicPick} role="group" aria-label={audience.pick}>
-              <button type="button" aria-pressed={circleId === null} onClick={() => { setCircleId(null); setPanel(null) }}>{audience.everyone}</button>
-              {circles.map((item) => <button key={item.id} type="button" aria-pressed={circleId === item.id} onClick={() => { setCircleId(item.id); setPanel(null) }}>{item.name}</button>)}
+              <button type="button" aria-pressed={circleId === null} onClick={() => { setCircleId(null); setAlsoPublic(false); setPanel(null) }}>{audience.everyone}</button>
+              {choices.map((item) => <button key={item.id} type="button" aria-pressed={circleId === item.id} onClick={() => { setCircleId(item.id); setAlsoPublic(false); setPanel(null) }}>{item.name}</button>)}
             </div>}
+            {!reply && (circleId || choices.length > 0) && <>
+              <label className={`${mp.switchRow} ${circlesStyle.syncRow}`}><input type="checkbox" role="switch" checked={alsoPublic} disabled={busy} onChange={event => setAlsoPublic(event.target.checked)} /><span>{circleId ? circleLabels.publicSync : circleLabels.circleSync}</span></label>
+              {!circleId && alsoPublic && <label className={circlesStyle.syncPicker}><span>{circleLabels.pickCircle}</span><select value={syncCircle ?? ''} disabled={busy} onChange={event => setSyncCircleId(event.target.value)}>{choices.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>}
+            </>}
+            {silencedToast && <p className={feedStyle.toast} role="status">{circleLabels.silencedNote}</p>}
             <div className={x.toolRow}>
               <button type="button" className={x.toolBtn} aria-label={k.addImage} disabled={shots.length >= MAX_IMAGES || busy} onClick={() => picker.current?.click()}><ImagePlus size={21} strokeWidth={1.8} /></button>
               <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={onPick} />
