@@ -27,7 +27,7 @@ import { CommunityDmController } from './community-dm.controller'
 import { CommunityDmService } from './community-dm.service'
 import { CommunityReportAuthGuard } from './community-report-auth.guard'
 import { CommunityOptionalAuthGuard } from './community-optional-auth.guard'
-import { CommunityCircleController } from './community-circle.controller'
+import { CommunityCircleController, CommunityCircleInviteController } from './community-circle.controller'
 import { CommunityCircleService } from './community-circle.service'
 
 @Module({
@@ -45,7 +45,7 @@ import { CommunityCircleService } from './community-circle.service'
       CommunityTranslation,
     ]),
   ],
-  controllers: [PredictionDiscussionController, CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController, CommunityDmController, CommunityCircleController],
+  controllers: [PredictionDiscussionController, CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController, CommunityDmController, CommunityCircleController, CommunityCircleInviteController],
   providers: [CommunityService, InternalServiceGuard, CommunityTranslationProvider, CommunityMemberService, CommunityDmService, CommunityReportAuthGuard, CommunityOptionalAuthGuard, CommunityCircleService],
   exports: [CommunityService],
 })
