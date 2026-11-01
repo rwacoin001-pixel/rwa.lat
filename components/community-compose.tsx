@@ -8,7 +8,7 @@ import { Dialog } from '@base-ui/react/dialog'
 import { Users, Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Ticket, Trash2, X } from 'lucide-react'
 import { CardPicker } from './community/cards/CardPicker'
 import { ResultCard } from './community/cards/ResultCard'
-import { CARD_FIELDS, cardsLive, type CardDraft } from '@/lib/community-cards'
+import { CARD_FIELDS, cardsLive, sentFields, type CardDraft } from '@/lib/community-cards'
 import { getPostLocation, locationCopy, type PostLocation } from '@/lib/community-location'
 import { request, readSession, SESSION_CHANGED, type ApiError } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
@@ -286,7 +286,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
     if (riskyPost(trimmed)) { setError(riskyPostMessage[locale] ?? riskyPostMessage.en); return }
     if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
-    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(card ? { card: { kind: card.kind, ...(card.sourceId ? { sourceId: card.sourceId } : {}), visibleFields: card.visibleFields } } : {}), ...(circleId ? { circleId, ...(alsoPublic ? { alsoPublic: true } : {}) } : alsoPublic && syncCircle ? { circleId: syncCircle, alsoPublic: true } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
+    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(card ? { card: { kind: card.kind, ...(card.sourceId ? { sourceId: card.sourceId } : {}), visibleFields: sentFields(card.kind, card.visibleFields) } } : {}), ...(circleId ? { circleId, ...(alsoPublic ? { alsoPublic: true } : {}) } : alsoPublic && syncCircle ? { circleId: syncCircle, alsoPublic: true } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
     if (intent.current?.text !== payload) intent.current = { text: payload, key: crypto.randomUUID() }
     setBusy(true); setError('')

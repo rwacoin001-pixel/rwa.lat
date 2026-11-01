@@ -26,11 +26,17 @@ export const CARD_FIELDS: Record<CardKind, string[]> = {
   holdings: ['products', 'totalPrincipal', 'pending'],
   prediction_bet: ['pnl', 'returnPct', 'question', 'side', 'stake', 'result', 'payout'],
   prediction_record: ['winRate', 'total', 'closedPnl', 'last10'],
-  deposit: ['amount', 'status', 'asset', 'time'],
-  withdrawal: ['amount', 'status', 'asset', 'time'],
+  // The asset is fixed (always shown by the server), so it has no switch.
+  deposit: ['amount', 'status', 'time'],
+  withdrawal: ['amount', 'status', 'time'],
 }
 
 const fail = (message: string) => { throw new Error(message) }
+
+/** What the server must keep visible for the shown fields to read right: the win rate carries its "won X / lost Y" counts. */
+export function sentFields(kind: CardKind, visible: string[]) {
+  return kind === 'prediction_record' && visible.includes('winRate') ? [...visible, 'won', 'lost'] : visible
+}
 
 /** Whether the card API is live (asked once per app run). Until it is, no 晒单 tab and no card key are shown. An unknown route
  * answers 404/405; anything else (200, or 401 for a guest) means the API is there. */
