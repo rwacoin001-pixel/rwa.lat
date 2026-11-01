@@ -74,8 +74,9 @@ export type CommunityProfileResponse = {
   posts: CommunityPost[]
 }
 
-async function apiGet<T>(path: string): Promise<T> {
-  const result = await request<T>(path, { token: null })
+/** Public reads go out without a session; circle posts (2026-11-01) need it, so post detail and comments send it when there is one. */
+async function apiGet<T>(path: string, signedIn = false): Promise<T> {
+  const result = await request<T>(path, signedIn ? {} : { token: null })
   if (!result.ok) throw new Error(result.error.message)
   return result.data
 }
@@ -95,7 +96,7 @@ export async function getCommunityTopics() {
 }
 
 export async function getCommunityPost(id: string) {
-  return apiGet<CommunityPostResponse>(`/v1/community/posts/${encodeURIComponent(id)}`)
+  return apiGet<CommunityPostResponse>(`/v1/community/posts/${encodeURIComponent(id)}`, true)
 }
 
 export async function getCommunityComments(postId: string, params: { before?: string; limit?: number } = {}) {
@@ -105,6 +106,7 @@ export async function getCommunityComments(postId: string, params: { before?: st
   const suffix = query.toString()
   return apiGet<{ items: CommunityComment[]; nextBefore: string | null }>(
     `/v1/community/posts/${encodeURIComponent(postId)}/comments${suffix ? `?${suffix}` : ''}`,
+    true,
   )
 }
 

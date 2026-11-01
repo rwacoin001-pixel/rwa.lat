@@ -9,7 +9,7 @@ export type DmMessage={id:string;threadId:string;senderProfileId:string;body:str
 export type DmProfileSettings={displayName:string;handle:string;dmPolicy:DmPolicy;bio?:string;location?:{city:string;countryCode:string;source:'device'}}
 const base='/v1/community/dm'
 /** Features whose API is not live yet. The screens hide their entry points until the matching server release; flip each to true then. */
-export const DM_SERVER_FEATURES={attachments:false,unsend:false,voice:false}
+export const DM_SERVER_FEATURES={attachments:true,unsend:true,voice:true}
 export const dmThreads=(cursor?:string)=>request<{items:DmThread[];nextCursor:string|null}>(`${base}/threads${cursor?`?cursor=${encodeURIComponent(cursor)}`:''}`)
 export const dmOpenThread=(handle:string)=>request<{id:string}>(`${base}/threads`,{method:'POST',body:JSON.stringify({handle})})
 export const dmMessages=(id:string,before?:string,limit=30)=>request<{items:DmMessage[];nextBefore:string|null}>(`${base}/threads/${encodeURIComponent(id)}/messages?limit=${limit}${before?`&before=${encodeURIComponent(before)}`:''}`)
@@ -17,6 +17,17 @@ export const dmMessages=(id:string,before?:string,limit=30)=>request<{items:DmMe
  *  goes with `attachment` (uploaded first by dmUploadAttachment); its body may be empty then. */
 export const dmSend=(id:string,body:string,clientId:string,attachment?:{mediaId:string;kind:'image'|'file'|'voice'})=>request<DmMessage&{duplicate:boolean}>(`${base}/threads/${encodeURIComponent(id)}/messages`,{method:'POST',body:JSON.stringify(attachment?{body,clientId,attachment}:{body,clientId})})
 /** Upload a photo or a file for a message. The server checks the type and size, and the malware scan, before it can be sent. */
+/** A private attachment's signed link (2026-11-01): the read route needs the session, which <img>/<audio> cannot send,
+ *  so the app asks for the link as JSON with its token and shows that. Links live ~10 minutes; they are cached for 8. */
+const signed=new Map<string,{url:string;until:number}>()
+export async function dmAttachmentLink(path:string):Promise<string|null>{
+  const hit=signed.get(path)
+  if(hit&&hit.until>Date.now())return hit.url
+  const result=await request<{url:string;expiresIn?:number}>(`${path}?format=json`,{loading:'silent'})
+  if(!result.ok||typeof result.data?.url!=='string')return null
+  signed.set(path,{url:result.data.url,until:Date.now()+Math.min(480,Math.max(30,(result.data.expiresIn??600)-60))*1000})
+  return result.data.url
+}
 export const dmUploadAttachment=(file:File)=>{
   const form=new FormData()
   form.append('file',file,file.name)

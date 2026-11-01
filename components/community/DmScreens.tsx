@@ -8,12 +8,12 @@
  * scan); this screen only shows its answers in plain words. New messages arrive by polling while the screen is open.
  */
 import { ArrowUp, BellOff, ChevronLeft, Copy, FileText, Mic, MoreHorizontal, Plus, Reply, Flag, Trash2 } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type MouseEvent as ReactMouseEvent, type PointerEvent as ReactPointerEvent } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { CommunityAvatar, mediaSrc } from '@/components/community-avatar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import type { ApiError } from '@/lib/api/_http'
-import { DM_SERVER_FEATURES, dmBlock, dmDeleteMessage, dmMessages, dmRead, dmReport, dmSend, dmThreadSettings, dmThreads, dmUnblock, dmUploadAttachment, type DmMessage, type DmProfile, type DmThread } from '@/lib/api/community-dm'
+import { DM_SERVER_FEATURES, dmAttachmentLink, dmBlock, dmDeleteMessage, dmMessages, dmRead, dmReport, dmSend, dmThreadSettings, dmThreads, dmUnblock, dmUploadAttachment, type DmMessage, type DmProfile, type DmThread } from '@/lib/api/community-dm'
 import { getCommunityProfile } from '@/lib/community-data'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, Skeleton, StateBlock } from '@/components/maison/primitives'
@@ -493,14 +493,29 @@ export function DmThreadScreen({ id }: { id: string | null }) {
   </MaisonPage>
 }
 
+/** A private attachment as a usable link: local previews pass through; server ones are signed on demand. */
+function useAttachmentLink(url: string | null | undefined) {
+  const isPrivate = Boolean(url && url.startsWith('/v1/community/dm/attachments/'))
+  const [link, setLink] = useState<string | null>(isPrivate ? null : url ?? null)
+  useEffect(() => {
+    if (!url) { setLink(null); return }
+    if (!isPrivate) { setLink(url); return }
+    let live = true
+    void dmAttachmentLink(url).then((next) => { if (live) setLink(next) })
+    return () => { live = false }
+  }, [url, isPrivate])
+  return link
+}
+
 /** One message. A photo shows as a picture, a file as a link with its name; the bubble keeps its long-press. */
 function Bubble({ m, mine, tail, locale, c, onHoldStart, onHoldEnd, onMenu, onRetry }: {
   m: Local; mine: boolean; tail: boolean; locale: string; c: Copy
   onHoldStart: (m: Local) => (e: ReactPointerEvent) => void; onHoldEnd: () => void; onMenu: (m: Local) => void; onRetry: (m: Local) => void
 }) {
-  const photo = m.attachment?.kind === 'image' ? mediaSrc(m.attachment.url) : m.preview ?? null
+  const photo = useAttachmentLink(m.attachment?.kind === 'image' ? m.attachment.url : m.attachKind === 'voice' ? null : m.preview ?? null)
   const file = m.attachment?.kind === 'file' ? m.attachment : null
-  const voice = m.attachment?.kind === 'voice' ? mediaSrc(m.attachment.url) : m.attachKind === 'voice' ? m.preview ?? null : null
+  const voice = useAttachmentLink(m.attachment?.kind === 'voice' ? m.attachment.url : m.attachKind === 'voice' ? m.preview ?? null : null)
+  const openFile = (e: ReactMouseEvent) => { e.preventDefault(); e.stopPropagation(); if (!file) return; const tab = window.open('', '_blank'); void dmAttachmentLink(file.url).then((url) => { if (url && tab) tab.location.href = url; else tab?.close() }) }
   const fileName = file ? (file.name || c.fileLabel) : m.attachKind === 'file' ? (m.file?.name || c.fileLabel) : null
   return <div className={d.line} data-mine={mine || undefined} data-tail={tail || undefined}>
     <div className={d.bubble} dir="auto" data-state={m.state} data-kind={photo ? 'image' : voice ? 'voice' : fileName ? 'file' : undefined}
@@ -510,7 +525,7 @@ function Bubble({ m, mine, tail, locale, c, onHoldStart, onHoldEnd, onMenu, onRe
       {m.deletedAt ? '—' : <>
         {photo && <img className={d.photo} src={photo} alt={c.imageLabel} loading="lazy" decoding="async" draggable={false} />}
         {fileName && (file && mediaSrc(file.url)
-          ? <a className={d.file} href={mediaSrc(file.url) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></a>
+          ? <a className={d.file} href={mediaSrc(file.url) ?? undefined} target="_blank" rel="noopener noreferrer" onClick={openFile}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></a>
           : <span className={d.file}><FileText size={18} strokeWidth={1.9} aria-hidden="true" /><span dir="auto">{fileName}</span></span>)}
         {voice && <audio className={d.audio} controls preload="metadata" src={voice} onPointerDown={(e) => e.stopPropagation()} />}
         {m.body && <span className={d.text}>{m.body}</span>}
