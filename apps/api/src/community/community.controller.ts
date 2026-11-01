@@ -5,6 +5,7 @@ import { CommunityCommentsQueryDto, CommunityFeedQueryDto, CreateCommunityReport
 import { CurrentAuth } from '../security/current-auth.decorator'
 import { AuthenticatedRequest } from '../security/session-auth.guard'
 import { CommunityReportAuthGuard } from './community-report-auth.guard'
+import { CommunityOptionalAuthGuard } from './community-optional-auth.guard'
 
 /**
  * Public community reads. Anonymous access by design: the feed, posts,
@@ -29,14 +30,16 @@ export class CommunityController {
 
   @Get('posts/:id')
   @ApiOperation({ summary: 'Get one published post with its latest comments' })
-  post(@Param('id', new ParseUUIDPipe()) id: string) {
-    return this.community.getPost(id)
+  @UseGuards(CommunityOptionalAuthGuard)
+  post(@Param('id', new ParseUUIDPipe()) id: string, @CurrentAuth() a?: AuthenticatedRequest['auth']) {
+    return this.community.getPost(id, a?.userId)
   }
 
   @Get('posts/:id/comments')
   @ApiOperation({ summary: 'Page through a post comment thread' })
-  comments(@Param('id', new ParseUUIDPipe()) id: string, @Query() query: CommunityCommentsQueryDto) {
-    return this.community.listComments(id, query)
+  @UseGuards(CommunityOptionalAuthGuard)
+  comments(@Param('id', new ParseUUIDPipe()) id: string, @Query() query: CommunityCommentsQueryDto, @CurrentAuth() a?: AuthenticatedRequest['auth']) {
+    return this.community.listComments(id, query, a?.userId)
   }
 
   @Get('profiles/:handle')
@@ -54,7 +57,8 @@ export class CommunityController {
 
   @Post('translate')
   @ApiOperation({ summary: 'Translate a community post or comment (cached, public)' })
-  translate(@Body() dto: TranslateCommunityTargetDto) {
-    return this.community.translateTarget(dto)
+  @UseGuards(CommunityOptionalAuthGuard)
+  translate(@Body() dto: TranslateCommunityTargetDto, @CurrentAuth() a?: AuthenticatedRequest['auth']) {
+    return this.community.translateTarget(dto, a?.userId)
   }
 }

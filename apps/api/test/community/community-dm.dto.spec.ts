@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { plainToInstance } from 'class-transformer'
 import { validateSync } from 'class-validator'
-import { DmHandleDto, DmMessagesQueryDto, DmReadDto, DmSendDto, DmSettingsDto } from '../../src/community/community-dm.dto'
+import { DmAttachmentDto, DmHandleDto, DmMessagesQueryDto, DmReadDto, DmSendDto, DmSettingsDto } from '../../src/community/community-dm.dto'
 import { MemberProfileDto } from '../../src/community/community-member.dto'
 import { riskyDm } from '../../src/community/community-dm.policy'
 
@@ -10,7 +10,7 @@ describe('DM validation and post moderation parity', () => {
   it('trims message bodies and rejects blank, oversized, invalid id and client-supplied sender', () => {
     const input = { body: ' Hello ', clientId: '00000000-0000-4000-8000-000000000001' }
     expect(plainToInstance(DmSendDto, input).body).toBe('Hello')
-    for (const change of [{ body: ' ' }, { body: 'x'.repeat(2001) }, { clientId: 'bad' }, { senderProfileId: 'forged' }, { userId: 'forged' }]) {
+    for (const change of [{ body: 'x'.repeat(2001) }, { clientId: 'bad' }, { senderProfileId: 'forged' }, { userId: 'forged' }]) {
       expect(validateSync(plainToInstance(DmSendDto, { ...input, ...change }), { whitelist: true, forbidNonWhitelisted: true }).length).toBeGreaterThan(0)
     }
   })

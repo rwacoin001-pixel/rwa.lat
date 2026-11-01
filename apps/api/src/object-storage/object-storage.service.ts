@@ -54,6 +54,52 @@ export function sniffImageType(bytes: Buffer): CommunityImageType | null {
   return null
 }
 
+export type DmAttachmentKind = 'image' | 'file' | 'voice'
+/** Photos 10 MB, files 20 MB, voice notes 20 MB (the 120 s cap is enforced by the recorder). */
+export const DM_ATTACHMENT_MAX_BYTES: Record<DmAttachmentKind, number> = { image: 10 * 1024 * 1024, file: 20 * 1024 * 1024, voice: 20 * 1024 * 1024 }
+const OOXML = {
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'docx',
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'xlsx',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'pptx',
+} as const
+
+/** Real-format detection for DM attachments; the declared MIME must agree with the bytes. */
+export function detectDmAttachment(bytes: Buffer, declared?: string): { kind: DmAttachmentKind; contentType: string; ext: string } | null {
+  const type = (declared ?? '').split(';')[0].trim().toLowerCase()
+  const image = sniffImageType(bytes)
+  if (image) {
+    if (type && type !== image && !(type === 'image/jpg' && image === 'image/jpeg')) return null
+    return { kind: 'image', contentType: image, ext: COMMUNITY_IMAGE_EXT[image] }
+  }
+  if (bytes.length < 12) return null
+  if (type.startsWith('audio/') || type === 'video/webm' || type === 'video/mp4') {
+    const webm = bytes.readUInt32BE(0) === 0x1a45dfa3
+    const ogg = bytes.subarray(0, 4).toString('latin1') === 'OggS'
+    const mp4 = bytes.subarray(4, 8).toString('latin1') === 'ftyp'
+    if (webm && (type === 'audio/webm' || type === 'video/webm')) return { kind: 'voice', contentType: 'audio/webm', ext: 'webm' }
+    if (ogg && type === 'audio/ogg') return { kind: 'voice', contentType: 'audio/ogg', ext: 'ogg' }
+    if (mp4 && (type === 'audio/mp4' || type === 'video/mp4' || type === 'audio/x-m4a')) return { kind: 'voice', contentType: 'audio/mp4', ext: 'm4a' }
+    return null
+  }
+  if (type === 'application/pdf') return bytes.subarray(0, 5).toString('latin1') === '%PDF-' ? { kind: 'file', contentType: type, ext: 'pdf' } : null
+  const zip = bytes[0] === 0x50 && bytes[1] === 0x4b && bytes[2] === 0x03 && bytes[3] === 0x04
+  if (type in OOXML) return zip ? { kind: 'file', contentType: type, ext: OOXML[type as keyof typeof OOXML] } : null
+  if (type === 'application/zip' || type === 'application/x-zip-compressed') return zip ? { kind: 'file', contentType: 'application/zip', ext: 'zip' } : null
+  if (type === 'text/plain' || type === 'text/csv') {
+    if (bytes.subarray(0, 8192).includes(0)) return null
+    return { kind: 'file', contentType: type, ext: type === 'text/csv' ? 'csv' : 'txt' }
+  }
+  return null
+}
+
+/** Display name only (never a storage key): no path parts or control characters, at most 255 characters. */
+export function sanitizeDmFileName(raw: string | undefined, ext: string): string {
+  const base = (raw ?? '').split(/[\\/]/).pop() ?? ''
+  // eslint-disable-next-line no-control-regex
+  const clean = Array.from(base.replace(/[\u0000-\u001f\u007f"<>:*?|]/g, '').trim()).slice(0, 255).join('')
+  return clean && clean !== '.' && clean !== '..' ? clean : `file.${ext}`
+}
+
 @Injectable()
 export class ObjectStorageService {
   private readonly enabled: boolean
@@ -166,6 +212,53 @@ export class ObjectStorageService {
     const object = await this.objects.findOne({ where: { id: objectId, bucket: 'rwa-assets' } })
     if (!object || object.tags?.source !== 'community-image') throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Image not found', 404)
     return this.createPublishedAssetUrl(`rwa-assets/${object.key}`, true)
+  }
+
+  /**
+   * Direct-message attachment (photo, file or voice note). Private: the bytes go to the attachment bucket as a
+   * pending object tagged `community-dm-attachment`, and are served only by the DM route after membership and scan checks.
+   */
+  async storeDmAttachment(userId: string, bytes: Buffer, declaredType: string | undefined, fileName: string | undefined) {
+    const detected = detectDmAttachment(bytes, declaredType)
+    if (!detected) throw new ObjectStorageError('DM_ATTACHMENT_TYPE' as never, 'This file type is not supported in messages', 415)
+    if (bytes.length < 1 || bytes.length > DM_ATTACHMENT_MAX_BYTES[detected.kind]) {
+      throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.INVALID_OBJECT, 'Attachment size is outside the allowed range', 413)
+    }
+    const name = sanitizeDmFileName(fileName, detected.ext)
+    const checksumSha256 = createHash('sha256').update(bytes).digest('hex')
+    const key = `community-dm/${userId}/${randomUUID()}.${detected.ext}`
+    const client = this.requireClient()
+    await client.send(new PutObjectCommand({ Bucket: this.physicalBucket('rwa-attachments'), Key: key,
+      Body: bytes, ContentType: detected.contentType, ContentLength: bytes.length,
+      ChecksumSHA256: Buffer.from(checksumSha256, 'hex').toString('base64'),
+      ...(this.kmsKeyId ? { ServerSideEncryption: 'aws:kms' as const, SSEKMSKeyId: this.kmsKeyId } : {}),
+    }), { abortSignal: AbortSignal.timeout(30_000) })
+    const object = await this.objects.save(this.objects.create({ bucket: 'rwa-attachments', key, contentType: detected.contentType,
+      sizeBytes: String(bytes.length), expectedSizeBytes: String(bytes.length), checksumSha256, scanStatus: 'pending',
+      uploadedBy: userId, tags: { source: 'community-dm-attachment', kind: detected.kind, name } }))
+    return { objectId: object.id, kind: detected.kind, name, contentType: detected.contentType, sizeBytes: bytes.length, scanStatus: object.scanStatus }
+  }
+
+  /** The caller's own DM attachment upload, still pending or clean. */
+  async ownedDmAttachment(userId: string, objectId: string) {
+    this.requireClient()
+    const row = await this.objects.findOne({ where: { id: objectId, bucket: 'rwa-attachments', uploadedBy: userId } })
+    if (!row || row.tags?.source !== 'community-dm-attachment' || BigInt(row.sizeBytes) <= 0n || !(row.scanStatus === 'pending' || row.scanStatus === 'clean')) return null
+    return { contentType: row.contentType, sizeBytes: Number(row.sizeBytes), name: String(row.tags?.name ?? ''), kind: String(row.tags?.kind ?? '') }
+  }
+
+  /** Short-lived URL for a cleared DM attachment. The caller must already have authorised the reader. */
+  async createDmAttachmentUrl(objectId: string, name: string, kind: string): Promise<string> {
+    const object = await this.objects.findOne({ where: { id: objectId, bucket: 'rwa-attachments' } })
+    if (!object || object.tags?.source !== 'community-dm-attachment' || !this.readableScanStatus(object.scanStatus) || BigInt(object.sizeBytes) <= 0n) {
+      throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Attachment not found', 404)
+    }
+    const inline = kind === 'image' || kind === 'voice'
+    return getSignedUrl(this.requireClient(), new GetObjectCommand({
+      Bucket: this.physicalBucket('rwa-attachments'), Key: object.key,
+      ResponseContentType: object.contentType,
+      ResponseContentDisposition: `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(name || 'file')}`,
+    }), { expiresIn: 60 })
   }
 
   async createUploadPresignedUrl(input: {

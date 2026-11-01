@@ -17,6 +17,8 @@ export class MemberPostDto {
   @ApiPropertyOptional() @IsOptional() @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(32, { each: true }) topics?: string[]
   @ApiPropertyOptional({ description: 'Object ids from POST /community/me/media?purpose=post' }) @IsOptional() @IsArray() @ArrayMaxSize(MEMBER_MEDIA_MAX) @IsUUID('all', { each: true }) imageIds?: string[]
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(16) lang?: string
+  /** Post into one of my circles (members only). Omit for an ordinary public post. */
+  @ApiPropertyOptional() @IsOptional() @IsUUID() circleId?: string
   /** A ledger-verified result to attach: { kind: 'quant_day', product, date } or { kind: 'prediction_win', bet }. */
   @ApiPropertyOptional() @IsOptional() @IsObject() proof?: Record<string, unknown>
 }

@@ -10,7 +10,7 @@ import { communityMediaId, decodeCursor, encodeCursor, isValidHandle, normalizeH
 
 type Profile = { id: string; user_id: string | null; handle: string; display_name: string; avatar_url: string | null; kind: CommunityProfileKind; dm_policy: 'everyone' | 'following'; identity_configured: boolean; is_active: boolean; status?: string; muted?: boolean }
 type Thread = { id: string; a_profile_id: string; b_profile_id: string; muted: boolean; archived: boolean }
-type Message = { id: string; thread_id: string; sender_profile_id: string; client_id: string; body: string; created_at: Date; deleted_at: Date | null; sequence: string }
+type Message = { id: string; thread_id: string; sender_profile_id: string; client_id: string; body: string; created_at: Date; deleted_at: Date | null; sequence: string; attachment_media_id?: string | null; attachment_kind?: 'image' | 'file' | 'voice' | null; attachment_name?: string | null; attachment_content_type?: string | null; attachment_size_bytes?: string | null }
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
 
 /** DMs never create a community identity implicitly. Also shared by the private report path. */
@@ -64,7 +64,9 @@ export class CommunityDmService {
       VALUES($1,'user',$2,$3,'community_dm',$4,$5,$6::jsonb)`, [randomUUID(), userId, action, objectId, randomUUID(), JSON.stringify(metadata)])
   }
   private shapeMessage(row: Message) {
-    return { id: row.id, threadId: row.thread_id, senderProfileId: row.sender_profile_id, body: row.deleted_at ? '' : row.body, createdAt: row.created_at, deletedAt: row.deleted_at ?? null }
+    const attachment = !row.deleted_at && row.attachment_media_id && row.attachment_kind
+      ? { mediaId: row.attachment_media_id, kind: row.attachment_kind, url: `/v1/community/dm/attachments/${row.attachment_media_id}`, name: row.attachment_name ?? null } : null
+    return { id: row.id, threadId: row.thread_id, senderProfileId: row.sender_profile_id, body: row.deleted_at ? '' : row.body, createdAt: row.created_at, deletedAt: row.deleted_at ?? null, attachment }
   }
 
   open(userId: string, handle: string) {
@@ -104,7 +106,7 @@ export class CommunityDmService {
         FROM app.community_dm_members member JOIN app.community_dm_threads t ON t.id=member.thread_id
         JOIN app.community_profiles other ON other.id=CASE WHEN t.a_profile_id=$1 THEN t.b_profile_id ELSE t.a_profile_id END
         LEFT JOIN app.community_dm_messages read ON read.id=member.last_read_message_id
-        LEFT JOIN LATERAL (SELECT id,sender_profile_id,left(body,80) AS body FROM app.community_dm_messages
+        LEFT JOIN LATERAL (SELECT id,sender_profile_id,left(CASE WHEN btrim(body)<>'' THEN body WHEN attachment_kind='image' THEN '照片' WHEN attachment_kind='voice' THEN '语音' ELSE '文件' END,80) AS body FROM app.community_dm_messages
           WHERE thread_id=t.id AND deleted_at IS NULL ORDER BY sequence DESC LIMIT 1) preview ON true
         WHERE member.profile_id=$1 AND member.archived=false
           AND ($2::timestamptz IS NULL OR (member.last_message_at,t.id)<($2::timestamptz,$3::uuid))
@@ -157,24 +159,68 @@ export class CommunityDmService {
       if (!other) throw new NotFoundException('DM_THREAD_NOT_FOUND')
       await this.allowed(m, p.id, other)
       const body = typeof input.body === 'string' ? input.body.trim() : ''
-      if (!body || Array.from(body).length > 2000 || !UUID.test(input.clientId ?? '')) throw new BadRequestException('Invalid message')
+      const att = input.attachment
+      if ((!body && !att) || Array.from(body).length > 2000 || !UUID.test(input.clientId ?? '')) throw new BadRequestException('Invalid message')
       const [existing]: Message[] = await m.query('SELECT * FROM app.community_dm_messages WHERE sender_profile_id=$1 AND client_id=$2', [p.id, input.clientId])
       if (existing) {
-        if (existing.thread_id !== threadId || existing.body !== body) throw new ConflictException({ code: 'DM_CLIENT_ID_REUSED', message: 'This client ID belongs to another message.' })
+        if (existing.thread_id !== threadId || existing.body !== body || (existing.attachment_media_id ?? null) !== (att?.mediaId ?? null)) throw new ConflictException({ code: 'DM_CLIENT_ID_REUSED', message: 'This client ID belongs to another message.' })
         return { ...this.shapeMessage(existing), duplicate: true }
       }
       if (riskyDm(body)) throw new BadRequestException({ code: 'COMMUNITY_CONTENT_NOT_ALLOWED', message: 'Messages cannot include private contact details or promise returns. Please edit and try again.' })
       const [{ count }] = await m.query(`SELECT count(*) FROM app.community_dm_messages
         WHERE sender_profile_id=$1 AND created_at>clock_timestamp()-interval '1 minute'`, [p.id])
       if (Number(count) >= 20) throw new HttpException({ code: 'DM_MESSAGE_RATE_LIMIT', message: 'You can send up to 20 messages a minute. Please try again shortly.' }, HttpStatus.TOO_MANY_REQUESTS)
-      const [message]: Message[] = await m.query(`INSERT INTO app.community_dm_messages(thread_id,sender_profile_id,body,client_id)
-        VALUES($1,$2,$3,$4) RETURNING *`, [threadId, p.id, body, input.clientId])
+      let stored: { contentType: string; sizeBytes: number; name: string; kind: string } | null = null
+      if (att) {
+        stored = this.storage ? await this.storage.ownedDmAttachment(userId, att.mediaId).catch(() => null) : null
+        if (!stored || stored.kind !== att.kind) throw new BadRequestException({ code: 'DM_ATTACHMENT_INVALID', message: 'The attachment is missing or was not uploaded by you.' })
+      }
+      const [message]: Message[] = await m.query(`INSERT INTO app.community_dm_messages(thread_id,sender_profile_id,body,client_id,
+          attachment_media_id,attachment_kind,attachment_name,attachment_content_type,attachment_size_bytes)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`, [threadId, p.id, body, input.clientId,
+        att?.mediaId ?? null, att?.kind ?? null, stored?.name ?? null, stored?.contentType ?? null, stored?.sizeBytes ?? null])
       await m.query('UPDATE app.community_dm_threads SET last_message_at=$2 WHERE id=$1', [threadId, message.created_at])
       await m.query('UPDATE app.community_dm_members SET last_message_at=$2,archived=false WHERE thread_id=$1', [threadId, message.created_at])
       if (other.user_id && !other.muted) await this.notifications.coalesceCommunityDm(m, other.user_id, threadId, p.handle)
-      await this.audit(m, userId, 'community.dm.send', message.id, { threadId })
+      await this.audit(m, userId, 'community.dm.send', message.id, { threadId, ...(att ? { attachmentKind: att.kind } : {}) })
       return { ...this.shapeMessage(message), duplicate: false }
     })
+  }
+
+  /** Two-way unsend: only the sender; soft delete so both sides stop seeing it. Idempotent. */
+  unsend(userId: string, threadId: string, messageId: string) {
+    return this.db.transaction(async m => {
+      const p = await requireDmIdentity(m, userId)
+      await this.member(m, p.id, threadId, true)
+      const [row]: Pick<Message, 'id' | 'sender_profile_id' | 'deleted_at'>[] = await m.query(
+        'SELECT id,sender_profile_id,deleted_at FROM app.community_dm_messages WHERE thread_id=$1 AND id=$2', [threadId, messageId])
+      if (!row || row.sender_profile_id !== p.id) throw new NotFoundException('DM_MESSAGE_NOT_FOUND')
+      if (row.deleted_at) return { id: row.id, deletedAt: row.deleted_at }
+      const [done] = await m.query(`UPDATE app.community_dm_messages SET deleted_at=clock_timestamp()
+        WHERE id=$1 AND deleted_at IS NULL RETURNING deleted_at`, [messageId])
+      await this.audit(m, userId, 'community.dm.unsend', messageId, { threadId })
+      return { id: messageId, deletedAt: done.deleted_at as Date }
+    })
+  }
+
+  async uploadAttachment(userId: string, file: { buffer: Buffer; mimetype?: string; originalname?: string } | undefined) {
+    if (!file?.buffer?.length) throw new BadRequestException('File required')
+    if (!this.storage) throw new ConflictException('Attachments are unavailable')
+    await this.db.transaction(async m => { await requireDmIdentity(m, userId) })
+    const s = await this.storage.storeDmAttachment(userId, file.buffer, file.mimetype, file.originalname)
+    return { mediaId: s.objectId, kind: s.kind, url: `/v1/community/dm/attachments/${s.objectId}`, name: s.name, contentType: s.contentType, sizeBytes: s.sizeBytes, scanStatus: s.scanStatus }
+  }
+
+  /** Signed redirect target. Readable only by a member of a thread holding a live (not unsent) message with this attachment. */
+  async attachmentUrl(userId: string, mediaId: string): Promise<string> {
+    const [row] = await this.db.transaction(async m => {
+      const p = await requireDmIdentity(m, userId)
+      return m.query(`SELECT msg.attachment_kind AS kind,msg.attachment_name AS name FROM app.community_dm_messages msg
+        JOIN app.community_dm_members member ON member.thread_id=msg.thread_id
+        WHERE msg.attachment_media_id=$1 AND msg.deleted_at IS NULL AND member.profile_id=$2 LIMIT 1`, [mediaId, p.id])
+    })
+    if (!row || !this.storage) throw new NotFoundException('DM_ATTACHMENT_NOT_FOUND')
+    return this.storage.createDmAttachmentUrl(mediaId, row.name ?? '', row.kind)
   }
 
   private async unread(m: EntityManager, profileId: string, threadId?: string): Promise<number> {
