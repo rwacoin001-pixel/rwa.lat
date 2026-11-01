@@ -33,9 +33,9 @@ import focusStyles from './auth-focus.module.css'
 import { FocusTitle } from './FocusTitle'
 
 /** The welcome's brand line (2026-11-01, approved slogan "Bring Assets Into Focus / 让资产清晰起来"). */
-const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string }> = {
-  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '用邮箱登录或注册', or: '或者' },
-  en: { lines: ['Bring assets', 'into focus'], sub: 'Sign in or sign up with your email', or: 'or' },
+const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string; google?: string; more?: string }> = {
+  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '用邮箱登录或注册', or: '或者', google: '使用 Google 继续', more: '其他方式' },
+  en: { lines: ['Bring assets', 'into focus'], sub: 'Sign in or sign up with your email', or: 'or', google: 'Continue with Google', more: 'Other ways' },
   hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'ईमेल से साइन इन या साइन अप करें', or: 'या' },
   es: { lines: ['Tus activos,', 'en foco'], sub: 'Inicia sesión o regístrate con tu correo', or: 'o' },
   ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'سجّل الدخول أو أنشئ حسابًا ببريدك', or: 'أو' },
@@ -556,12 +556,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         <span className={styles.srOnly}>{visual.emailAddress}</span>
         <Mail className={focusStyles.mailIcon} size={22} strokeWidth={1.6} aria-hidden="true" />
         <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
-        <button type="submit" className={ui.submit} disabled={pending || retryAfter > 0} aria-label={pending ? pendingLabel : retryAfter > 0 ? cooldownLabel : sheet.continue} title={sheet.continue}>
-          {pending ? <LoaderCircle className={styles.spinner} size={18} aria-hidden="true" />
-            : <span className={styles.inlineArrow} data-ready={EMAIL.test(email.trim())} aria-hidden="true"><ArrowRight size={19} strokeWidth={1.7} /></span>}
-        </button>
       </label> : identity}
-      {step === 'email' && retryAfter > 0 && <p className={styles.hint} role="status">{cooldownLabel}</p>}
+      {/* One clear Continue under the field instead of an arrow inside it (2026-11-02, user). */}
+      {step === 'email' && <button type="submit" className={`${ui.primary} ${focusStyles.continue}`} disabled={pending || retryAfter > 0}>
+        {pending ? <><LoaderCircle className={styles.spinner} size={20} aria-hidden="true" /><span className={styles.srOnly}>{pendingLabel}</span></> : cta(retryAfter > 0 ? cooldownLabel : sheet.continue)}
+      </button>}
+
 
       {step === 'password' && account && <div className={styles.field}>
         {/* Lets password managers pair the saved password with this address. */}
@@ -606,10 +606,11 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         passkeys come up in the email field's autofill and on this device's remembered account, as in other apps. */}
     {showWelcome && <div className={focusStyles.others}>
       <p className={focusStyles.orLine} aria-hidden="true"><span>{welcomeCopy.or}</span></p>
-      <div className={focusStyles.methods}>
-        <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>Google</span></button>
-        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
-        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
+      <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={20} height={20} /><span>{welcomeCopy.google ?? 'Google'}</span></button>
+      <div className={focusStyles.quiet}>
+        {welcomeCopy.more && <span>{welcomeCopy.more}</span>}
+        <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={18} height={18} /></button>
+        <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={18} height={18} /></button>
       </div>
     </div>}
     {walletPhase && <p className={styles.hint} role="status" aria-live="polite">{walletProgress[['connecting', 'checking', 'signing', 'verifying'].indexOf(walletPhase)]}</p>}

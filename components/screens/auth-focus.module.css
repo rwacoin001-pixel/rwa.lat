@@ -117,3 +117,21 @@
 .root[data-auth-view='welcome']:not([data-auth-theme='cool']) .legal, .root[data-auth-view='welcome']:not([data-auth-theme='cool']) .legal button { color: rgba(11, 18, 32, .72); }
 /* No full stop after the brand line in the card (2026-11-02, user). */
 .root .copy h1 i[class*='dot'] { display: none; }
+
+/* Card rhythm (2026-11-02, user: no arrow in the field; the card felt flat): field → one ink Continue → a thin or-line →
+   Google as a full-width pill → a quiet row of the other ways. */
+.root[data-auth-view='welcome'] .email.email { padding: 0 20px; }
+.continue.continue { width: 100%; margin-top: 12px; }
+.root[data-auth-view='welcome'] .others { margin-top: 20px; }
+.root[data-auth-view='welcome'] .orLine { margin-bottom: 12px; }
+.google.google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; height: 52px; padding: 0 20px; border: 0; border-radius: 999px; background: var(--f-bg); color: var(--f-ink); font: 600 15px/1 var(--pa-sans, var(--sans)); box-shadow: inset 0 0 0 1px rgba(11, 18, 32, .12), 0 2px 8px -4px rgba(11, 18, 32, .22); cursor: pointer; transition: transform .15s ease; }
+.root[data-auth-theme='cool'] .google.google { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), 0 2px 8px -4px rgba(0, 0, 0, .6); }
+.google.google:active { transform: scale(.98); }
+.quiet { display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px; color: var(--f-muted); font: 500 13px/18px var(--pa-sans, var(--sans)); }
+.quiet span { margin-inline-end: 4px; }
+.quiet button { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: transparent; box-shadow: inset 0 0 0 1px rgba(11, 18, 32, .12); cursor: pointer; }
+.root[data-auth-theme='cool'] .quiet button { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16); }
+.root[data-auth-theme='cool'] .quiet img[data-mono] { filter: invert(1); }
+.quiet button:disabled, .google.google:disabled { opacity: .45; cursor: default; }
+.google.google:focus-visible, .quiet button:focus-visible { outline: 2px solid var(--f-accent); outline-offset: 2px; }
+.root[data-auth-theme='cool'] .continue.continue { --btn-solid-fill: #f2f4f7; --btn-solid-ink: #0b1220; --btn-arrow-fill: #0b1220; --btn-arrow-ink: #f2f4f7; }
