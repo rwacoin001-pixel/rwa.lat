@@ -2,7 +2,7 @@
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
-import { Fingerprint } from 'lucide-react'
+import { ArrowRight, Fingerprint } from 'lucide-react'
 import AppLoading from './app-loading'
 import RwaLogoMark from './rwa-logo'
 import { clearSession, readSession, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
@@ -15,6 +15,7 @@ import { useRwaTheme } from '@/lib/rwa-theme'
 import { sessionUnlockCopy } from '@/lib/session-unlock-copy'
 import { MaisonPage } from './maison/primitives'
 import { useStepUp } from './maison/StepUp'
+import controls from './ui/controls.module.css'
 import styles from './session-privacy-gate.module.css'
 
 /** Installed (home-screen PWA or the Android client) with a passkey used on this device: lock like a banking app. */
@@ -178,7 +179,8 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
           <p className={styles.description}>{account && maskEmail(account) ? maskEmail(account) : text.description}</p>
         </div>
         <div className={styles.actions}>
-          <button type="button" className={styles.cta} onClick={() => void verify()} disabled={busy}>{busy ? text.verifying : text.unlock}</button>
+          {/* The shared main key (design-system §3.1): a short ink pill with a round arrow, centred. */}
+          <button type="button" className={`${controls.primary} ${styles.cta}`} onClick={() => void verify()} disabled={busy}><span>{busy ? text.verifying : text.unlock}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} strokeWidth={1.7} /></i></button>
           <button type="button" className={styles.alt} onClick={() => void signIn()} disabled={busy}>{text.signInAgain}</button>
         </div>
         <p className={styles.live} role="status" aria-live="polite">{busy ? text.verifying : ''}</p>

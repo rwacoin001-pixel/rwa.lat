@@ -168,3 +168,10 @@
   .cta, .alt { transition: none; }
   .cta:active:not(:disabled), .alt:active:not(:disabled) { transform: none; }
 }
+
+/* 2026-11-01 (user: this page did not follow the design system). Plain white ground, no dot grid (§2, §7.6); the main
+   key is the shared short pill with a round arrow, centred, width from its text (§3.1); "Sign in again" stays a text key. */
+.mid::before { content: none; display: none; }
+.actions { align-items: center; gap: 12px; }
+.cta.cta { width: auto; min-width: 180px; max-width: 100%; min-height: 56px; border-radius: 999px; font-size: 17px; font-weight: 600; }
+.alt { width: auto; border-radius: 999px; }
