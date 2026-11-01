@@ -1,0 +1,47 @@
+/* The welcome line comes into focus (2026-11-01). Timeline, from load:
+     0.12s  letters start to sharpen along the line, 24ms apart (each: 1s, large and soft → sharp → a small hunt → set)
+     0.05s  corner marks appear wide and close on the line
+     ~1.5s  the marks snap to the accent (focus lock), the dot lights with one ring, the marks fade
+   Transforms, opacity and a small filter only; nothing loops. Reduced motion: the line is simply there. */
+
+.title { margin: 0; color: var(--f-ink); font: 900 clamp(44px, 15vw, 68px)/.98 var(--pa-sans, var(--sans)); letter-spacing: -.05em; cursor: default; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+:global([data-auth-script='wide']) .title { font-weight: 800; font-size: clamp(44px, 14.4vw, 62px); line-height: 1.14; letter-spacing: -.01em; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.inner { position: relative; display: inline-block; }
+.line { display: block; }
+.word { display: inline-block; white-space: nowrap; }
+.glyph { display: inline-block; animation: pull 1s cubic-bezier(.16, 1, .3, 1) calc(.12s + var(--i) * 24ms) both; }
+@keyframes pull {
+  0% { opacity: 0; filter: blur(14px); transform: scale(1.22); }
+  50% { opacity: 1; filter: blur(0); transform: scale(.992); }
+  66% { filter: blur(1.6px); }
+  100% { opacity: 1; filter: blur(0); transform: none; }
+}
+
+/* Four corner marks: one hairline frame masked down to its corners. */
+.frame { --c: 14px; position: absolute; inset: -10px -14px -6px; border: 1.5px solid; border-radius: 5px; color: var(--f-ink); opacity: 0; pointer-events: none;
+  -webkit-mask: linear-gradient(#000 0 0) 0 0 / var(--c) var(--c) no-repeat, linear-gradient(#000 0 0) 100% 0 / var(--c) var(--c) no-repeat, linear-gradient(#000 0 0) 0 100% / var(--c) var(--c) no-repeat, linear-gradient(#000 0 0) 100% 100% / var(--c) var(--c) no-repeat;
+  mask: linear-gradient(#000 0 0) 0 0 / var(--c) var(--c) no-repeat, linear-gradient(#000 0 0) 100% 0 / var(--c) var(--c) no-repeat, linear-gradient(#000 0 0) 0 100% / var(--c) var(--c) no-repeat, linear-gradient(#000 0 0) 100% 100% / var(--c) var(--c) no-repeat;
+  animation: lock 2.3s cubic-bezier(.22, 1, .36, 1) .05s both; }
+@keyframes lock {
+  0% { opacity: 0; transform: scale(1.12); }
+  14% { opacity: .4; }
+  60% { opacity: .4; transform: scale(1); color: var(--f-ink); }
+  65% { opacity: 1; transform: scale(.985); color: var(--f-accent); }
+  72% { transform: scale(1); }
+  86% { opacity: 1; color: var(--f-accent); }
+  100% { opacity: 0; transform: scale(1); color: var(--f-accent); }
+}
+
+.dot { position: relative; display: inline-block; width: .2em; height: .2em; margin-inline-start: .06em; border-radius: 50%; background: var(--f-accent); animation: light .6s cubic-bezier(.34, 1.56, .64, 1) 1.5s both; }
+.dot::after { content: ''; position: absolute; inset: 0; border-radius: inherit; animation: ring .9s cubic-bezier(.22, 1, .36, 1) 1.56s both; }
+@keyframes light { from { transform: scale(0); } }
+@keyframes ring {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--f-accent) 60%, transparent); }
+  to { box-shadow: 0 0 0 .34em color-mix(in srgb, var(--f-accent) 0%, transparent); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .glyph, .dot, .dot::after { animation: none; }
+  .frame { display: none; }
+}
