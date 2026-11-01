@@ -1,7 +1,7 @@
 /* Sign-in (2026-11-01, after the user's reference). docs/design-system.md: cool white ground (pure white in light mode),
    Satoshi / system Chinese sans only, ink type on the §3.1 scale, one teal accent, solid fills, 44px+ targets.
-   Welcome = the email step: a rounded photo card (theme and language keys on it, the round passkey key on its lower edge),
-   the brand line with a teal dot, "Welcome to A-REIT", the email field, the other ways in, the legal line.
+   Welcome = the email step: the top bar, the brand line pulling into focus over a field of soft light, "Welcome to
+   A-REIT", the email field, the other ways in (passkey among the round keys), the legal line.
    Later steps: the same white page with a top bar, a large title and the fields. */
 
 .root.root.root {
@@ -30,28 +30,29 @@
 :global(html):has(.root[data-auth-theme='cool']), :global(body):has(.root[data-auth-theme='cool']) { background: #0b0d12 !important; }
 
 /* ── Welcome ─────────────────────────────────────────────── */
-/* The photo takes what the content below leaves (about 400px), within 240–520px. */
-.photoCard { position: relative; flex: none; height: clamp(240px, calc(100svh - 428px - env(safe-area-inset-top) - env(safe-area-inset-bottom)), 520px); margin: calc(20px + env(safe-area-inset-top)) 16px 0; border-radius: 32px; background: #e9edf2; animation: rise .6s cubic-bezier(.22, 1, .36, 1) both; }
-.photo { position: absolute; inset: 0; overflow: hidden; border-radius: inherit; user-select: none; }
-.root[data-auth-theme='cool'] .photoCard { background: #15181e; }
-/* Glass keys on the photo: a round theme key and a pill language key. */
-.photoKeys { position: absolute; top: 12px; inset-inline-end: 12px; z-index: 2; }
-.photoKeys > div { gap: 8px; }
-.photoKeys button[aria-haspopup], .photoKeys > div > button { height: 44px; border-radius: 999px; background: rgba(255, 255, 255, .55); color: #0b1220; -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .7), 0 4px 12px -6px rgba(15, 23, 42, .25); }
-.photoKeys button[aria-haspopup] { display: inline-flex; gap: 6px; width: auto; padding: 0 14px; }
-.root[data-auth-theme='cool'] .photoKeys button[aria-haspopup], .root[data-auth-theme='cool'] .photoKeys > div > button { background: rgba(15, 18, 24, .5); color: #f2f4f7; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14); }
-/* The passkey key: ink, round, half over the photo's lower edge on the trailing side. */
-.passkey { position: absolute; bottom: -32px; inset-inline-end: 16px; z-index: 2; display: grid; place-items: center; width: 64px; height: 64px; padding: 0; border: 0; border-radius: 50%; background: #0b1220; color: #fff; box-shadow: 0 0 0 4px var(--f-bg), 0 12px 24px -10px rgba(11, 18, 32, .55); cursor: pointer; transition: transform .15s ease; }
-.passkey:active { transform: scale(.94); }
-.root[data-auth-theme='cool'] .passkey { background: #f2f4f7; color: #0b1220; }
+/* A rack focus (2026-11-01, user: type instead of the photo card, aiming for Apple Design Award craft). Behind the type
+   three discs of light start crisp and fall out of focus while the brand line (FocusTitle) pulls into focus in front:
+   the eye is handed from the background to the words. The discs then drift very slowly; nothing else moves. */
+@property --core { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
+.root.root.root { --f-glow-a: rgba(20, 184, 166, .16); --f-glow-b: rgba(110, 150, 230, .13); --f-glow-c: rgba(20, 184, 166, .09); position: relative; isolation: isolate; }
+.root.root.root[data-auth-theme='cool'] { --f-glow-a: rgba(60, 224, 177, .2); --f-glow-b: rgba(120, 148, 210, .16); --f-glow-c: rgba(255, 255, 255, .06); }
+.root header { position: relative; z-index: 2; }
+.root header button[aria-haspopup] { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 0 12px; border-radius: 999px; }
+.field { position: absolute; z-index: -1; inset: 0 0 auto; height: min(74svh, 640px); overflow: hidden; pointer-events: none; }
+.field i { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, var(--glow) var(--core), transparent);
+  animation: defocus 1.7s cubic-bezier(.22, 1, .36, 1) both, drift 24s ease-in-out 1.7s infinite alternate; }
+.field i:nth-child(1) { --glow: var(--f-glow-a); width: 360px; height: 360px; top: 3%; inset-inline-end: -130px; }
+.field i:nth-child(2) { --glow: var(--f-glow-b); width: 280px; height: 280px; top: 30%; inset-inline-start: -120px; animation-delay: .06s, 1.7s; animation-direction: normal, alternate-reverse; }
+.field i:nth-child(3) { --glow: var(--f-glow-c); width: 132px; height: 132px; top: 15%; inset-inline-start: 44%; animation-delay: .12s, 1.7s; }
+@keyframes defocus { from { --core: 94%; opacity: .55; transform: scale(.86); } }
+@keyframes drift { to { translate: 22px -16px; } }
 
-.copy { padding: 24px 24px 0; animation: rise .6s .1s cubic-bezier(.22, 1, .36, 1) both; }
-.title { margin: 0; padding-inline-end: 64px; color: var(--f-ink); font: 900 40px/44px var(--pa-sans, var(--sans)); letter-spacing: -.035em; }
-.root[data-auth-script='wide'] .title { font-weight: 800; font-size: 36px; line-height: 44px; letter-spacing: -.01em; }
-.dot { display: inline-block; width: 9px; height: 9px; margin-inline-start: 4px; border-radius: 50%; background: var(--f-accent); vertical-align: baseline; }
-.lede { margin: 6px 0 0; color: var(--f-muted); font: 500 17px/24px var(--pa-sans, var(--sans)); }
+/* The brand line sits low in the space above the field, near the thumb; the space above it is the field's. */
+.copy { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; padding: 24px 24px 0; }
+.lede { margin: 14px 0 0; color: var(--f-muted); font: 500 17px/24px var(--pa-sans, var(--sans)); animation: settle .9s cubic-bezier(.22, 1, .36, 1) 1.2s both; }
+@keyframes settle { from { opacity: 0; filter: blur(6px); transform: translateY(4px); } }
 
-.actions { padding: 20px 16px 0; animation: rise .6s .18s cubic-bezier(.22, 1, .36, 1) both; }
+.actions { padding: 28px 16px 0; animation: rise .7s .35s cubic-bezier(.22, 1, .36, 1) both; }
 .actions form { margin: 0; }
 /* The email field: a white pill on a hairline, a mail mark, the ink arrow key inside. */
 .email.email { --ctl-h: 60px; padding: 0 8px 0 18px; gap: 12px; background: var(--f-bg); box-shadow: inset 0 0 0 1px var(--f-line), 0 6px 16px -12px rgba(15, 23, 42, .25); color: var(--f-ink); }
@@ -63,14 +64,14 @@
 .others { margin-top: 16px; }
 .orLine { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; color: var(--f-muted); font: 500 13px/18px var(--pa-sans, var(--sans)); }
 .orLine::before, .orLine::after { content: ''; flex: 1; height: .5px; background: var(--f-line); }
-.methods { display: grid; grid-template-columns: minmax(0, 1fr) 52px 52px 52px; gap: 8px; }
+.methods { display: grid; grid-auto-flow: column; grid-template-columns: minmax(0, 1fr); grid-auto-columns: 52px; gap: 8px; }
 .methods button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 52px; padding: 0; border: 0; border-radius: 999px; background: var(--f-bg); box-shadow: inset 0 0 0 1px var(--f-line); color: var(--f-ink); font: 700 16px/1 var(--pa-sans, var(--sans)); cursor: pointer; transition: transform .15s ease; }
 .methods button:active { transform: scale(.96); }
 .methods button:disabled { opacity: .45; cursor: default; }
 .root[data-auth-theme='cool'] .methods img[data-mono] { filter: invert(1); }
 
 /* Legal line: 13px, 44px tap rows (design-system §3.1, §4). */
-.legal { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; margin-top: auto; padding: 8px 16px calc(4px + env(safe-area-inset-bottom)); color: var(--f-faint); font: 400 13px/18px var(--pa-sans, var(--sans)); }
+.legal { animation: rise .7s .5s cubic-bezier(.22, 1, .36, 1) both; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; margin-top: auto; padding: 8px 16px calc(4px + env(safe-area-inset-bottom)); color: var(--f-faint); font: 400 13px/18px var(--pa-sans, var(--sans)); }
 .legal button { min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--f-muted); font: inherit; cursor: pointer; }
 
 /* ── Later steps ─────────────────────────────────────────── */
@@ -80,5 +81,5 @@
 
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) {
-  .photoCard, .copy, .actions, :global(html) .root.root.root.root .form h1 { animation: none; }
+  .field i, .lede, .actions, .legal, :global(html) .root.root.root.root .form h1 { animation: none; }
 }

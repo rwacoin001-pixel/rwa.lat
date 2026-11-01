@@ -30,6 +30,7 @@ import { InviteCodeField, useInviteCode } from './InviteCodeField'
 import { AuthLegalFooter } from './AuthLegalFooter'
 import controls from '../ui/controls.module.css'
 import focusStyles from './auth-focus.module.css'
+import { FocusTitle } from './FocusTitle'
 
 /** The welcome's brand line (2026-11-01, approved slogan "Bring Assets Into Focus / 让资产清晰起来"). */
 const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string }> = {
@@ -526,7 +527,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const welcomeCopy = focusCopy[locale] ?? focusCopy.en
   const posterHero = showWelcome && <>
-    <h1 className={focusStyles.title}>{welcomeCopy.lines[0]}<br />{welcomeCopy.lines[1]}<i className={focusStyles.dot} aria-hidden="true" /></h1>
+    <FocusTitle lines={welcomeCopy.lines} joined={locale === 'hi' || locale === 'ar'} />
     <p className={focusStyles.lede}>{welcomeCopy.sub}</p>
   </>
 
@@ -536,7 +537,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     requestAnimationFrame(() => input.current?.focus())
   }} />
 
-  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer} onPasskey={showWelcome && passkeySupported && !pending ? () => void usePasskey() : undefined} passkeyLabel={passwordCopy.passkey}>
+  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
     {!showWelcome && heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>
@@ -601,11 +602,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
-    {/* The other ways in: Google as a wide key, then X, GitHub and a wallet as round ones (passkey is the round key on the photo). */}
+    {/* The other ways in: Google as a wide key, then round keys — passkey (where the device has one), X, GitHub, a wallet. */}
     {showWelcome && <div className={focusStyles.others}>
       <p className={focusStyles.orLine} aria-hidden="true"><span>{welcomeCopy.or}</span></p>
       <div className={focusStyles.methods}>
         <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>Google</span></button>
+        {passkeySupported && <button type="button" disabled={pending} onClick={() => void usePasskey()} aria-label={passwordCopy.passkey} title={passwordCopy.passkey}><Fingerprint size={22} strokeWidth={1.6} aria-hidden="true" /></button>}
         <button type="button" disabled={pending} onClick={() => void startProvider('x')} aria-label="X" title="X"><Image data-mono="" src="/auth/icon-x.svg" alt="" width={20} height={20} /></button>
         <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
         <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
