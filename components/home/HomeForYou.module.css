@@ -28,3 +28,7 @@
 .dots button[data-i='1']::after { width: calc(4px + 12px * var(--p)); opacity: calc(.25 + .55 * var(--p)); }
 .dots button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; border-radius: 8px; }
 :global(.rwa-mobile[data-theme='dark']) .dots button::after { background: #f2f4f7; }
+/* Day photo in light mode, the night version in dark (2026-11-02). */
+.night { display: none; }
+:global(.rwa-mobile[data-theme='dark']) .day { display: none; }
+:global(.rwa-mobile[data-theme='dark']) .night { display: block; }

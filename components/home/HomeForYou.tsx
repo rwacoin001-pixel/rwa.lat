@@ -46,7 +46,9 @@ export function HomeForYou() {
   // in a glass chip, the name and one line at the bottom over a soft scrim, a glass arrow in the corner.
   return <><div ref={row} className={styles.root} onScroll={onScroll}>
     {cards.map(card => <motion.button key={card.key} type="button" className={styles.card} onClick={card.open} whileTap={reduced ? undefined : { scale: .98 }} transition={{ type: 'spring', stiffness: 380, damping: 26 }}>
-      <img className={styles.photo} src={card.photo} alt="" width={720} height={450} decoding="async" />
+      {/* Night versions in dark mode (2026-11-02, user), the same scenes after dark. */}
+      <img className={`${styles.photo} ${styles.day}`} src={card.photo} alt="" width={720} height={450} decoding="async" />
+      <img className={`${styles.photo} ${styles.night}`} src={`/media/login/${card.key}-night.webp`} alt="" width={720} height={450} decoding="async" loading="lazy" />
       {card.value && <span className={`${styles.chip} ${card.tone}`} dir="ltr">{card.line} · {card.value}</span>}
       <span className={styles.text}>
         <strong>{card.title}</strong>

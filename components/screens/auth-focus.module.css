@@ -51,15 +51,16 @@
 
 /* Restrained glass on paper (2026-11-02, user: more Apple restraint, more paper): mostly opaque, a soft blur, a one-pixel
    top light, a faint paper grain; nothing glossy. */
-.sheet { position: relative; margin: auto 16px 0; padding: 24px 20px 20px; border-radius: 28px; overflow: hidden; background: rgba(250, 251, 252, .84); -webkit-backdrop-filter: blur(30px) saturate(1.2); backdrop-filter: blur(30px) saturate(1.2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 0 0 .5px rgba(11, 18, 32, .06), 0 28px 56px -32px rgba(11, 18, 32, .45); animation: rise .8s .3s cubic-bezier(.22, 1, .36, 1) both; }
-.sheet::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .5; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
-.root[data-auth-theme='cool'] .sheet { background: rgba(18, 21, 27, .8); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 0 0 0 .5px rgba(255, 255, 255, .06), 0 28px 56px -32px rgba(0, 0, 0, .8); }
-.sheet { padding-top: 8px; }
+.sheet { position: relative; margin: auto 16px 0; padding: 24px 20px 20px; border-radius: 28px; overflow: hidden; background: linear-gradient(180deg, rgba(255, 255, 255, .9), rgba(244, 246, 249, .84)); -webkit-backdrop-filter: blur(30px) saturate(1.2); backdrop-filter: blur(30px) saturate(1.2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 0 0 .5px rgba(11, 18, 32, .06), 0 28px 56px -32px rgba(11, 18, 32, .45); animation: rise .8s .3s cubic-bezier(.22, 1, .36, 1) both; }
+.sheet::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .9; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
+.root[data-auth-theme='cool'] .sheet { background: linear-gradient(180deg, rgba(28, 32, 40, .86), rgba(16, 19, 25, .8)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 0 0 0 .5px rgba(255, 255, 255, .06), 0 28px 56px -32px rgba(0, 0, 0, .8); }
+.sheet { padding-top: 14px; }
 /* Photo window: the app's three photos crossfading, a glass tag, three dots (LoginWindow). */
-.window { position: relative; height: 132px; margin: 0 -12px 20px; overflow: hidden; border-radius: 22px; background: #dfe4ea; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .3); }
+.window { position: relative; height: 132px; margin: 0 -6px 20px; overflow: hidden; border-radius: 22px; background: #dfe4ea; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08), 0 2px 4px rgba(11, 18, 32, .08), 0 16px 28px -14px rgba(11, 18, 32, .45); transform: translateY(-1px); }
+.window::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 0 0 .5px rgba(255, 255, 255, .25); pointer-events: none; }
 .window img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; opacity: 0; transform: scale(1.02); transition: opacity 1.2s ease, transform 6s ease-out; }
 .window img[data-on] { opacity: 1; transform: scale(1.08); }
-.root[data-auth-theme='cool'] .window { background: #11151c; }
+.root[data-auth-theme='cool'] .window { background: #11151c; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 2px 4px rgba(0, 0, 0, .4), 0 18px 30px -14px rgba(0, 0, 0, .85); }
 .windowTag { position: absolute; bottom: 12px; left: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .26); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .5); color: #fff; font: 600 12px/28px var(--pa-sans, var(--sans)); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); animation: rise .6s cubic-bezier(.22, 1, .36, 1) both; }
 .windowDots { position: absolute; right: 12px; bottom: 22px; display: flex; gap: 6px; }
 .windowDots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .5); transition: width .4s ease, background-color .4s ease; }
@@ -114,3 +115,5 @@
 .root .copy h1 span[class*='line'] { display: inline; }
 .root[data-auth-script='latin'] .copy h1 span[class*='line']:not(:last-child)::after { content: ' '; }
 .root[data-auth-view='welcome']:not([data-auth-theme='cool']) .legal, .root[data-auth-view='welcome']:not([data-auth-theme='cool']) .legal button { color: rgba(11, 18, 32, .72); }
+/* No full stop after the brand line in the card (2026-11-02, user). */
+.root .copy h1 i[class*='dot'] { display: none; }

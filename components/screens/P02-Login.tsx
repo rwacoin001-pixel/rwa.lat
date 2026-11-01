@@ -602,13 +602,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </>}
     </form>}
 
-    {/* The other ways in: Google as a wide key, then round keys — X, GitHub, a wallet. No passkey key (2026-11-02, user): saved
+    {/* The other ways in: Google as a wide key, then round keys — GitHub, a wallet (X dropped 2026-11-02, user). No passkey key (2026-11-02, user): saved
         passkeys come up in the email field's autofill and on this device's remembered account, as in other apps. */}
     {showWelcome && <div className={focusStyles.others}>
       <p className={focusStyles.orLine} aria-hidden="true"><span>{welcomeCopy.or}</span></p>
       <div className={focusStyles.methods}>
         <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={22} height={22} /><span>Google</span></button>
-        <button type="button" disabled={pending} onClick={() => void startProvider('x')} aria-label="X" title="X"><Image data-mono="" src="/auth/icon-x.svg" alt="" width={20} height={20} /></button>
         <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={22} height={22} /></button>
         <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={22} height={22} /></button>
       </div>
