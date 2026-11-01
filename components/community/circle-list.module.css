@@ -1,0 +1,86 @@
+/* Circle list (2026-11-01 v2). docs/design-system.md §3.1 sizes only: type 12/13/15/17/22, space 4–24, radius 12/22/999.
+   One search capsule, my circle as a paper card with a three-figure strip, joined circles as a paper list.
+   Type-only rows, no icon tiles; the only colour is the teal focus ring and the pending count. */
+.page { display: grid; gap: 24px; padding: 12px 16px 32px; }
+
+.search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 4px 0 16px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted, #5b6472); transition: box-shadow .2s; }
+.search:focus-within { box-shadow: inset 0 0 0 1.5px var(--m-accent, #087a67); }
+.search > svg { flex: none; }
+.search input { flex: 1; min-width: 0; height: 44px; padding: 0; border: 0; outline: none; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 17px; -webkit-appearance: none; appearance: none; }
+.search input:focus, .search input:focus-visible { outline: none; box-shadow: none; }
+.search input::placeholder { color: var(--m-muted, #5b6472); font-size: 15px; opacity: 1; }
+.search input::-webkit-search-cancel-button { display: none; }
+.clear { display: grid; flex: none; place-items: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted, #5b6472); cursor: pointer; }
+
+.section { display: grid; gap: 8px; min-width: 0; }
+.label { display: flex; align-items: baseline; justify-content: space-between; margin: 0; padding: 0 4px; color: var(--m-muted, #5b6472); font-size: 13px; font-weight: 500; line-height: 18px; }
+.label span { font-variant-numeric: tabular-nums; }
+
+.paper { margin: 0; padding: 0; overflow: hidden; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); list-style: none; }
+.paper > li + li { box-shadow: inset 0 .5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+
+/* My circle. */
+.mine { display: grid; width: 100%; padding: 0; border: 0; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); color: inherit; font: inherit; text-align: start; cursor: pointer; transition: transform .15s; }
+.mine:active { transform: scale(.99); }
+.mineHead { display: flex; align-items: center; gap: 12px; padding: 16px; }
+.mineHead > svg { flex: none; color: var(--m-faint, #8a9099); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); padding: 12px 0 16px; box-shadow: inset 0 .5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+.stats > span { display: grid; gap: 2px; padding: 0 16px; }
+.stats > span + span { box-shadow: inset .5px 0 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+.stats b { overflow: hidden; color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 600; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.stats b[data-hot] { color: var(--m-accent, #087a67); }
+.stats small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+
+/* No circle yet: one compact card, the key on the right, three facts under a hairline. */
+.create { display: grid; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.createHead { display: flex; align-items: center; gap: 12px; padding: 16px; }
+.createHead > span { display: grid; flex: 1; gap: 4px; min-width: 0; }
+.createHead b { color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 600; line-height: 24px; }
+.createHead p { margin: 0; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.createKey { display: inline-flex; flex: none; align-items: center; gap: 6px; height: 40px; padding: 0 12px 0 16px; border: 0; border-radius: 999px; background: var(--btn-solid-fill, #0b0d11); color: var(--btn-solid-ink, #fff); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; transition: transform .15s; }
+.createKey:active { transform: scale(.97); }
+.createKey:disabled { opacity: .45; }
+.facts { display: grid; grid-template-columns: repeat(3, 1fr); margin: 0; padding: 12px 0 16px; box-shadow: inset 0 .5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); list-style: none; }
+.facts li { display: grid; gap: 2px; padding: 0 16px; }
+.facts li + li { box-shadow: inset .5px 0 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+.facts b { color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 600; line-height: 18px; }
+.facts small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+
+/* Rows: joined circles and search results. */
+.row { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 68px; box-sizing: border-box; padding: 12px 16px; border: 0; background: none; color: var(--m-muted, #5b6472); font: inherit; text-align: start; }
+button.row { cursor: pointer; }
+button.row:active { background: var(--pa-fill, rgba(11, 18, 32, .04)); }
+.row[data-left] > :not(.tag) { opacity: .55; }
+.row > svg { flex: none; color: var(--m-faint, #8a9099); }
+.text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.text b { overflow: hidden; color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 600; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+.text small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.text small i { font-style: normal; font-variant-numeric: tabular-nums; }
+.tag { flex: none; padding: 2px 8px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.key { display: inline-flex; flex: none; align-items: center; height: 32px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink, #0b1220); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.key[data-solid] { background: var(--btn-solid-fill, #0b0d11); color: var(--btn-solid-ink, #fff); }
+.key:disabled { opacity: .45; cursor: default; }
+
+/* Empty joined list and quiet states. */
+.empty { display: grid; justify-items: start; gap: 4px; padding: 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); }
+.empty b { color: var(--m-ink, #0b1220); font-size: 15px; font-weight: 600; line-height: 22px; }
+.empty p { margin: 0; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.textKey { min-height: 44px; margin: 0 -12px -12px; padding: 0 12px; border: 0; background: none; color: var(--m-accent, #087a67); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.note { margin: 0; padding: 0 4px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.note button { margin-inline-start: 4px; padding: 0; border: 0; background: none; color: var(--m-accent, #087a67); font: inherit; font-weight: 600; cursor: pointer; }
+
+/* Loading: two paper rows with grey bars instead of "…". */
+.ghost { display: flex; align-items: center; gap: 12px; height: 68px; padding: 0 16px; }
+.ghost i { flex: none; width: 40px; height: 40px; border-radius: 50%; background: var(--pa-fill, rgba(11, 18, 32, .06)); }
+.ghost span { display: grid; flex: 1; gap: 8px; }
+.ghost span::before, .ghost span::after { content: ''; height: 12px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .06)); }
+.ghost span::before { width: 48%; }
+.ghost span::after { width: 72%; }
+
+.mine:focus-visible, button.row:focus-visible, .createKey:focus-visible, .key:focus-visible, .clear:focus-visible, .textKey:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+button.row:focus-visible { outline-offset: -2px; }
+
+:global(.rwa-mobile[data-theme='dark']) :is(.paper, .mine, .create, .empty) { background: var(--pa-card, #15181e); }
+:global(.rwa-mobile[data-theme='dark']) :is(.search, .tag, .key:not([data-solid])) { background: var(--pa-fill, rgba(242, 244, 247, .08)); }
+:global(.rwa-mobile[data-theme='dark']) :is(.createKey, .key[data-solid]) { background: #f2f4f7; color: #0b1220; }
+@media (prefers-reduced-motion: reduce) { .mine, .createKey, .search { transition: none; } }

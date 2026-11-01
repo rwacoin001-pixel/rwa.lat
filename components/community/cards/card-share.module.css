@@ -11,7 +11,7 @@
 .linkRow > span { display: grid; flex: 1; gap: 2px; min-width: 0; }
 .linkRow b { font-size: 15px; font-weight: 600; line-height: 22px; }
 .linkRow small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
-.textKey { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.textKey { display: inline-flex; flex: none; align-items: center; gap: 6px; min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .note { min-height: 18px; margin: 0; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; text-align: center; }
 .qrSource { position: absolute; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 :global(.rwa-mobile[data-theme='dark']) .solid { background: #f2f4f7; color: #0b1220; }

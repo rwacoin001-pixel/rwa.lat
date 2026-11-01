@@ -75,7 +75,7 @@ export function NameSheet({ open, title, initial, busy, onClose, onSave }: { ope
         <small aria-hidden="true">{name.trim().length}/{CIRCLE_NAME_MAX}</small>
       </label>
       <p className={s.hint}>{k.nameHint}</p>
-      <button type="submit" className={controls.primary} disabled={!ok || busy}><span>{k.save}</span>{ok && !busy && <i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} /></i>}</button>
+      <button type="submit" className={`${controls.primary} ${s.save}`} disabled={!ok || busy}><span>{k.save}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} /></i></button>
     </form>
   </Sheet>
 }

@@ -1,20 +1,19 @@
 'use client'
 
-import { ArrowRight, ChevronRight, Moon } from 'lucide-react'
+import { ArrowRight, ChevronRight, Moon, Search, X } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { CommunityAvatar } from '@/components/community-avatar'
-import controls from '@/components/ui/controls.module.css'
 import { applyToCircleById, createCircle, getMyCircles, searchCircles, type Circle, type CircleMembership, type CircleSearchResult } from '@/lib/community-circles'
 import { openPath } from '@/lib/maison-nav'
 import { NameSheet, useCircleCopy } from './CircleSheets'
 import { useCircleStageCopy } from './circle-copy'
 import { useTimeAgo } from './PostCard'
-import c from '../community-x.module.css'
 import s from './circles.module.css'
+import l from './circle-list.module.css'
 
 export const openCircle = (id: string) => openPath(`/community/circle/${encodeURIComponent(id)}`)
 
-/** One paper group per membership section (2026-11-01). */
+/** Circle list v2 (2026-11-01): search capsule, my circle with three figures (or a compact start card), joined circles. */
 export function CircleList({ onNotify }: { onNotify: (text: string) => void }) {
   const k = useCircleCopy(), labels = useCircleStageCopy(), timeAgo = useTimeAgo()
   const [membership, setMembership] = useState<CircleMembership | null | undefined>(undefined)
@@ -29,6 +28,7 @@ export function CircleList({ onNotify }: { onNotify: (text: string) => void }) {
   const [busy, setBusy] = useState<string | null>(null)
   const version = useRef(0)
   const searchVersion = useRef(0)
+  const field = useRef<HTMLInputElement>(null)
   const load = useCallback(() => {
     const request = ++version.current
     setFailed(false)
@@ -56,22 +56,58 @@ export function CircleList({ onNotify }: { onNotify: (text: string) => void }) {
       else onNotify(k.failed)
     } finally { setBusy(null) }
   }
-  const row = (circle: Circle, left = false) => <li key={circle.id}><button type="button" className={s.circleRow} data-left={left || undefined} onClick={() => openCircle(circle.id)}>
-    <CommunityAvatar avatarUrl={circle.owner.avatarUrl} seed={circle.owner.avatarSeed} handle={circle.owner.handle} size={44} />
-    <span className={s.rowText}><b dir="auto">{circle.name}</b><small>{k.owner} <span dir="auto">{circle.owner.displayName}</span> · {k.members(circle.memberCount)}{left ? ` · ${labels.left}` : circle.lastPostAt ? ` · ${labels.latest} ${timeAgo(circle.lastPostAt)}` : ''}</small></span>
-    {circle.muted && <Moon size={14} aria-label={labels.muted} />}{circle.isOwner && (circle.pendingCount ?? 0) > 0 && <span className={`${s.badge} ${s.rowBadge}`}>{circle.pendingCount! > 99 ? '99+' : circle.pendingCount}</span>}<ChevronRight size={16} aria-hidden="true" />
+  const meta = (circle: Circle) => <>{k.owner} <span dir="auto">{circle.owner.displayName}</span> · {k.members(circle.memberCount)}{circle.lastPostAt ? <> · <i>{timeAgo(circle.lastPostAt)}</i></> : null}</>
+  const row = (circle: Circle, left = false) => <li key={circle.id}><button type="button" className={l.row} data-left={left || undefined} onClick={() => openCircle(circle.id)}>
+    <CommunityAvatar avatarUrl={circle.owner.avatarUrl} seed={circle.owner.avatarSeed} handle={circle.owner.handle} size={40} />
+    <span className={l.text}><b dir="auto">{circle.name}</b><small>{meta(circle)}</small></span>
+    {left ? <span className={l.tag}>{labels.left}</span> : circle.muted ? <Moon size={16} aria-label={labels.muted} /> : null}<ChevronRight size={18} aria-hidden="true" />
   </button></li>
-  return <section className={s.list} aria-label={labels.circles}>
-    <label className={s.field}><span className={s.srOnly}>{labels.search}</span><input type="search" value={q} placeholder={labels.search} onChange={event => setQ(event.target.value)} /></label>
-    {query ? searching ? <p className={s.hint} role="status">…</p> : searchFailed ? <p className={s.hint} role="alert">{labels.failed} <button type="button" className={s.textKey} onClick={() => setRetry(value => value + 1)}>{labels.retry}</button></p> : results.length === 0 ? <p className={s.hint}>{labels.noCircles}</p> : <ul className={s.paperList}>
-      {results.map(result => <li key={result.circle.id} className={s.searchRow}>
-        <CommunityAvatar avatarUrl={result.circle.owner.avatarUrl} seed={result.circle.owner.avatarSeed} handle={result.circle.owner.handle} size={40} />
-        <span className={s.rowText}><b dir="auto">{result.circle.name}</b><small>{k.owner} <span dir="auto">{result.circle.owner.displayName}</span> · {k.members(result.circle.memberCount)} · ID {result.circle.publicNo}</small></span>
-        {result.status === 'removed' ? <small className={s.hint}>{labels.removed}</small> : result.status === 'member' || result.status === 'owner' ? <button type="button" className={c.pill} onClick={() => openCircle(result.circle.id)}>{labels.enter}</button> : <button type="button" className={`${c.pill} ${result.status === 'pending' ? '' : c.pillSolid}`} disabled={busy !== null || result.status === 'pending'} onClick={() => void apply(result)}>{result.status === 'pending' ? labels.pending : labels.apply}</button>}
-      </li>)}
-    </ul> : failed ? <p className={s.hint} role="alert">{labels.failed} <button type="button" className={s.textKey} onClick={load}>{labels.retry}</button></p> : membership === undefined ? <p className={s.hint} role="status">…</p> : membership === null ? <p className={s.hint}>{labels.notLive}</p> : <>
-      <section className={s.listSection}><h2>{labels.mine}</h2>{membership.owned ? <ul className={s.paperList}>{row(membership.owned)}</ul> : <div className={s.intro}><b>{k.introTitle}</b><p>{k.introBody}</p><button type="button" className={controls.primary} onClick={() => setNaming(true)}><span>{k.found}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} /></i></button></div>}</section>
-      <section className={s.listSection}><h2>{labels.joined}</h2>{membership.joined.length + membership.left.length > 0 ? <ul className={s.paperList}>{membership.joined.map(item => row(item))}{membership.left.map(item => row(item, true))}</ul> : <p className={s.hint}>{labels.noJoined}</p>}</section>
+  const ghost = <ul className={l.paper} aria-hidden="true"><li className={l.ghost}><i /><span /></li><li className={l.ghost}><i /><span /></li></ul>
+  const owned = membership?.owned
+  const joinedCount = membership ? membership.joined.length + membership.left.length : 0
+  return <section className={l.page} aria-label={labels.circles}>
+    <label className={l.search}><Search size={18} aria-hidden="true" /><span className={s.srOnly}>{labels.search}</span>
+      <input ref={field} type="search" inputMode="search" enterKeyHint="search" value={q} placeholder={labels.search} onChange={event => setQ(event.target.value)} />
+      {q && <button type="button" className={l.clear} aria-label={labels.clear} onClick={() => { setQ(''); field.current?.focus() }}><X size={18} aria-hidden="true" /></button>}
+    </label>
+    {query ? <section className={l.section} aria-live="polite">
+      {searching ? ghost : searchFailed ? <p className={l.note} role="alert">{labels.failed}<button type="button" onClick={() => setRetry(value => value + 1)}>{labels.retry}</button></p> : results.length === 0 ? <div className={l.empty}><b>{labels.noCircles}</b><p>{labels.joinHint}</p></div> : <>
+        <h2 className={l.label}>{labels.resultsCount(results.length)}</h2>
+        <ul className={l.paper}>{results.map(result => <li key={result.circle.id} className={l.row}>
+          <CommunityAvatar avatarUrl={result.circle.owner.avatarUrl} seed={result.circle.owner.avatarSeed} handle={result.circle.owner.handle} size={40} />
+          <span className={l.text}><b dir="auto">{result.circle.name}</b><small>{k.owner} <span dir="auto">{result.circle.owner.displayName}</span> · {k.members(result.circle.memberCount)} · ID <i>{result.circle.publicNo}</i></small></span>
+          {result.status === 'removed' ? <span className={l.tag}>{labels.removed}</span> : result.status === 'member' || result.status === 'owner' ? <button type="button" className={l.key} onClick={() => openCircle(result.circle.id)}>{labels.enter}</button> : <button type="button" className={l.key} data-solid={result.status === 'pending' ? undefined : ''} disabled={busy !== null || result.status === 'pending'} onClick={() => void apply(result)}>{result.status === 'pending' ? labels.pending : labels.apply}</button>}
+        </li>)}</ul>
+      </>}
+    </section> : failed ? <p className={l.note} role="alert">{labels.failed}<button type="button" onClick={load}>{labels.retry}</button></p> : membership === undefined ? <section className={l.section}><h2 className={l.label}>{labels.mine}</h2>{ghost}</section> : membership === null ? <p className={l.note}>{labels.notLive}</p> : <>
+      <section className={l.section}>
+        <h2 className={l.label}>{labels.mine}</h2>
+        {owned ? <button type="button" className={l.mine} onClick={() => openCircle(owned.id)}>
+          <span className={l.mineHead}>
+            <CommunityAvatar avatarUrl={owned.owner.avatarUrl} seed={owned.owner.avatarSeed} handle={owned.owner.handle} size={44} />
+            <span className={l.text}><b dir="auto">{owned.name}</b><small>{labels.statLatest} {owned.lastPostAt ? <i>{timeAgo(owned.lastPostAt)}</i> : labels.none}</small></span>
+            {owned.muted && <Moon size={16} aria-label={labels.muted} />}<ChevronRight size={18} aria-hidden="true" />
+          </span>
+          <span className={l.stats}>
+            <span><b>{owned.memberCount}</b><small>{labels.statMembers}</small></span>
+            <span><b data-hot={(owned.pendingCount ?? 0) > 0 || undefined}>{(owned.pendingCount ?? 0) > 99 ? '99+' : owned.pendingCount ?? 0}</b><small>{labels.statPending}</small></span>
+            <span><b>{owned.publicNo}</b><small>{labels.statId}</small></span>
+          </span>
+        </button> : <div className={l.create}>
+          <div className={l.createHead}>
+            <span><b>{k.introTitle}</b><p>{labels.createBody}</p></span>
+            <button type="button" className={l.createKey} onClick={() => setNaming(true)}>{labels.createKey}<ArrowRight size={16} aria-hidden="true" /></button>
+          </div>
+          <ul className={l.facts}>{labels.facts.map(([title, sub]) => <li key={title}><b>{title}</b><small>{sub}</small></li>)}</ul>
+        </div>}
+      </section>
+      <section className={l.section}>
+        <h2 className={l.label}>{labels.joined}{joinedCount > 0 && <span>{joinedCount}</span>}</h2>
+        {joinedCount > 0 ? <ul className={l.paper}>{membership.joined.map(item => row(item))}{membership.left.map(item => row(item, true))}</ul> : <div className={l.empty}>
+          <b>{labels.noJoined}</b><p>{labels.joinHint}</p>
+          <button type="button" className={l.textKey} onClick={() => field.current?.focus()}>{labels.searchById}</button>
+        </div>}
+      </section>
     </>}
     <NameSheet open={naming} title={k.foundTitle} initial="" busy={busy === 'create'} onClose={() => setNaming(false)} onSave={name => {
       if (busy) return

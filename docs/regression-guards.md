@@ -19,6 +19,9 @@ check that line first. Add a line for every new fix the user reports.
 | 11 | 11-01 | Asset cards have no photos | `components/maison/AssetsOverview.tsx` | Assets tab |
 | 12 | 11-01 | The circle page has exactly one compose key (bottom right) | `components/community/CircleScreen.tsx` | Open a circle |
 | 13 | 11-01 | Markets: the gap between the top tabs and the cover card stays small in the Android app (the status-bar inset is added once, by the tabs) | `components/maison/hero-card.module.css`, `TopTabs.module.css` | Grep: only TopTabs adds `safe-area-inset-top` above the card; on a phone the gap is about 12px |
+| 14 | 11-01 | Text fields are one capsule with ONE 1.5px teal ring on focus; the input inside never draws its own outline | `components/community/circle-list.module.css` (`.search`), `circles.module.css` (`.field`) | Focus the circle search and the 建立圈子 name field: `input` outline is none, the capsule has the inset ring |
+| 15 | 11-01 | Sheet title and the first field have a 24px gap; the save key is a short ink pill with its arrow, also when disabled | `circles.module.css` (`.nameForm`, `.save`) | Open 建立圈子; field top minus title bottom = 24 |
+| 16 | 11-01 | Circle list: my circle card has the three-figure strip (成员 · 待审核 · ID), or the compact start card with three facts; no tall empty card | `components/community/CircleList.tsx`, `circle-list.module.css` | 社区 → 圈子, with and without an own circle |
 
 ## Why fixes come back, and the rules that stop it
 
