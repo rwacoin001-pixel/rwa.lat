@@ -4,7 +4,9 @@
 .hero {
   --h-down: var(--m-lacquer-down);
   position: relative;
-  margin: calc(env(safe-area-inset-top) + var(--app-chrome-air, 10px)) 0 0;
+  /* Only ever under the Markets top tabs, which already include the status-bar inset (2026-11-01: adding it again
+     doubled the gap in the Android app, where the WebView reports a real inset). */
+  margin: var(--app-chrome-air, 10px) 0 0;
   border-radius: 28px;
   color: var(--m-lacquer-ink);
   background: var(--m-lacquer);

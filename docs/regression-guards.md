@@ -18,6 +18,7 @@ check that line first. Add a line for every new fix the user reports.
 | 10 | 11-01 | Profile swipe follows the finger (drag left opens, mirrored in RTL) | `components/h5/H5Shell.tsx` (`useProfileSwipe`) | Drag on home |
 | 11 | 11-01 | Asset cards have no photos | `components/maison/AssetsOverview.tsx` | Assets tab |
 | 12 | 11-01 | The circle page has exactly one compose key (bottom right) | `components/community/CircleScreen.tsx` | Open a circle |
+| 13 | 11-01 | Markets: the gap between the top tabs and the cover card stays small in the Android app (the status-bar inset is added once, by the tabs) | `components/maison/hero-card.module.css`, `TopTabs.module.css` | Grep: only TopTabs adds `safe-area-inset-top` above the card; on a phone the gap is about 12px |
 
 ## Why fixes come back, and the rules that stop it
 
