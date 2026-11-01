@@ -78,12 +78,11 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
     {/* No Android banner on sign-in (2026-10-29, user: it covered the page; the round download key stays). */}
     {focus ? <>
       {/* Welcome (2026-11-02, after the user's glass-card reference, recoloured cool): a full-bleed coastal photo that racks
-          into focus behind one frosted card — a photo window with two tags, the brand line, the email field, the other ways in. */}
-      {welcome && <div className={f.scene} aria-hidden="true"><img src={cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'} alt="" decoding="async" fetchPriority="high" /></div>}
+          into focus behind one restrained paper-glass card — a kicker, the brand line, what to do, the email field, the other ways in. The lower
+          half of the photo goes soft under a slow sea mist so the card reads first. */}
+      {welcome && <div className={f.scene} aria-hidden="true"><img src={cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'} alt="" decoding="async" fetchPriority="high" /><i className={f.soften} /><i className={f.fog} /></div>}
       {welcome ? <div className={f.sheet}>
-        <div className={f.window} style={{ backgroundImage: `url(${cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'})` }} aria-hidden="true">
-          {(locale === 'zh-CN' ? ['考拉量化', '预测市场'] : ['Koala Quant', 'Predictions']).map(tag => <span key={tag}>{tag}</span>)}
-        </div>
+        <p className={f.kicker}>{locale === 'zh-CN' ? '考拉量化 · 预测市场' : 'Koala Quant · Predictions'}</p>
         {hero && <div className={f.copy}>{hero}</div>}
         <div className={f.actions}>{children}</div>
       </div> : <div className={f.form}>{children}</div>}

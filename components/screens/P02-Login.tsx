@@ -34,13 +34,13 @@ import { FocusTitle } from './FocusTitle'
 
 /** The welcome's brand line (2026-11-01, approved slogan "Bring Assets Into Focus / 让资产清晰起来"). */
 const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string }> = {
-  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '欢迎来到 A-REIT', or: '或使用以下方式继续' },
-  en: { lines: ['Bring assets', 'into focus'], sub: 'Welcome to A-REIT', or: 'Or continue with' },
-  hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'A-REIT में आपका स्वागत है', or: 'या इससे जारी रखें' },
-  es: { lines: ['Tus activos,', 'en foco'], sub: 'Bienvenido a A-REIT', or: 'O continúa con' },
-  ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'مرحبًا بك في A-REIT', or: 'أو تابع باستخدام' },
-  fr: { lines: ['Vos actifs,', 'au point'], sub: 'Bienvenue sur A-REIT', or: 'Ou continuer avec' },
-  pt: { lines: ['Seus ativos,', 'em foco'], sub: 'Bem-vindo à A-REIT', or: 'Ou continue com' },
+  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '用邮箱登录或注册', or: '或者' },
+  en: { lines: ['Bring assets', 'into focus'], sub: 'Sign in or sign up with your email', or: 'or' },
+  hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'ईमेल से साइन इन या साइन अप करें', or: 'या' },
+  es: { lines: ['Tus activos,', 'en foco'], sub: 'Inicia sesión o regístrate con tu correo', or: 'o' },
+  ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'سجّل الدخول أو أنشئ حسابًا ببريدك', or: 'أو' },
+  fr: { lines: ['Vos actifs,', 'au point'], sub: 'Connectez-vous ou inscrivez-vous avec votre e-mail', or: 'ou' },
+  pt: { lines: ['Seus ativos,', 'em foco'], sub: 'Entre ou cadastre-se com seu e-mail', or: 'ou' },
 }
 import { connectLoginWallet, connectedWalletLink, openConnectedWallet } from '@/lib/api/wallet-connection'
 import { APP_BROWSER_SIGN_IN_PATH, isAndroidApp } from '@/lib/android-app'
