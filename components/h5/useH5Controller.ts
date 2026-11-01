@@ -154,11 +154,24 @@ export function useH5Controller({ initialScreen = 'home', initialParams = {}, in
     if (sessionReady && sessionMode === 'authenticated') void acceptPendingInvite()
   }, [sessionMode, sessionReady])
   useEffect(() => {
-    const updateConnection = () => setIsOnline(window.navigator.onLine)
-    updateConnection()
-    window.addEventListener('online', updateConnection)
-    window.addEventListener('offline', updateConnection)
-    return () => { window.removeEventListener('online', updateConnection); window.removeEventListener('offline', updateConnection) }
+    // navigator.onLine alone sticks in Android WebViews (the 'online' event may never come; 2026-11-01, user: the offline
+    // notice stayed until a restart). While it says offline, probe our own origin every few seconds and on focus.
+    let timer = 0, alive = true
+    const probe = async () => {
+      if (window.navigator.onLine) { setIsOnline(true); return true }
+      try { const r = await fetch(`/favicon.ico?online=${Date.now()}`, { method: 'HEAD', cache: 'no-store' }); if (r.ok) { setIsOnline(true); return true } } catch { /* still offline */ }
+      setIsOnline(false); return false
+    }
+    const watch = () => { window.clearTimeout(timer); void probe().then((up) => { if (!up && alive) timer = window.setTimeout(watch, 4000) }) }
+    const goneOffline = () => { setIsOnline(false); window.clearTimeout(timer); timer = window.setTimeout(watch, 2000) }
+    const cameBack = () => { window.clearTimeout(timer); setIsOnline(true) }
+    const onVisible = () => { if (document.visibilityState === 'visible') watch() }
+    if (!window.navigator.onLine) watch()
+    window.addEventListener('online', cameBack)
+    window.addEventListener('offline', goneOffline)
+    window.addEventListener('focus', watch)
+    document.addEventListener('visibilitychange', onVisible)
+    return () => { alive = false; window.clearTimeout(timer); window.removeEventListener('online', cameBack); window.removeEventListener('offline', goneOffline); window.removeEventListener('focus', watch); document.removeEventListener('visibilitychange', onVisible) }
   }, [])
   // 丝滑切换：URL 同步用 pushState（不触发 Next 路由重挂载）
   const syncUrl = (path: string) => {

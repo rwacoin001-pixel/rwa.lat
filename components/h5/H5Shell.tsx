@@ -2,15 +2,14 @@
 import { AiOverlay } from './AiOverlay'
 import { ProfileOverlay } from './ProfileOverlay'
 import { pullProfile, releaseProfile } from '@/lib/profile-overlay'
-import { useEffect, type ReactNode } from 'react'
-import { AlertTriangle } from 'lucide-react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ToastHost } from '@/components/ui/ToastHost'
 import { useI18n } from '@/lib/i18n'
 import { useFreshBuild } from '@/hooks/useFreshBuild'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import { ScreenTransition } from '../motion-effects'
 import { BottomDock } from './BottomDock'
-import { NewVersionPrompt } from './NewVersionPrompt'
+import { ConnectionBanner, NewVersionPrompt } from './NewVersionPrompt'
 import type { H5Controller } from './useH5Controller'
 
 /** A horizontally scrollable ancestor owns the swipe (carousels, chip rows, charts). */
@@ -77,16 +76,20 @@ export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode 
   const shellCopy = rwaH5Copy[locale].shell
   const { screen, go, isOnline, theme, mode, showDock, isFloatingSheet, dockActiveScreen, navigationMotion, sessionMode } = h
   useProfileSwipe(showDock && !isFloatingSheet && screen !== 'community' && sessionMode !== 'guest')
+  // Both notices can be put away (2026-11-01); a new offline spell shows the offline one again.
+  const [offlineClosed, setOfflineClosed] = useState(false)
+  const [updateLater, setUpdateLater] = useState(false)
+  useEffect(() => { if (isOnline) setOfflineClosed(false) }, [isOnline])
   return (
     <>
       <a className="skip-link" href="#main-content">{shellCopy.skipContent}</a>
       <main id="main-content" className="rwa-shell" tabIndex={-1}>
-      {!isOnline && <div className="connection-banner" role="status"><AlertTriangle size={16} /><span><b>{shellCopy.offlineTitle}</b><small>{shellCopy.offlineBody}</small></span></div>}
-      {update.ready && <NewVersionPrompt onUpdate={update.apply} />}
       <div className="rwa-mobile" data-theme={theme} data-mode={mode} data-screen={screen} data-dock={showDock ? 'true' : 'false'} data-sheet={isFloatingSheet ? 'true' : 'false'}>
         <ScreenTransition screenKey={screen === 'login' || screen === 'register' ? 'auth-entry' : screen} motion={navigationMotion}>
         {children}
         </ScreenTransition>
+        {!isOnline && !offlineClosed ? <ConnectionBanner onClose={() => setOfflineClosed(true)} />
+          : update.ready && !updateLater && <NewVersionPrompt onUpdate={update.apply} onLater={() => setUpdateLater(true)} />}
         <AiOverlay />
         <ProfileOverlay />
         {showDock && <BottomDock screen={screen} activeScreen={dockActiveScreen} setScreen={go} showQuickActions={!isFloatingSheet && screen !== 'home' && screen !== 'invest' && screen !== 'quant' && screen !== 'community'} />}

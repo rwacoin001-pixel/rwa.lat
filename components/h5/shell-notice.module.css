@@ -1,0 +1,18 @@
+/* Shell notices (2026-11-01): one paper card under the status bar — update available, offline. docs/design-system.md:
+   paper card (radius 22, card shadow), §3.1 type, ink primary pill, 44px keys, no icon tiles. Lives inside .rwa-mobile,
+   so the palette's light/dark tokens apply. */
+.notice { position: fixed; z-index: 90; top: calc(env(safe-area-inset-top) + 8px); left: 50%; display: flex; align-items: center; gap: 8px; width: min(calc(100% - 24px), 456px); box-sizing: border-box; padding: 10px 10px 10px 16px; border-radius: var(--pa-card-radius, 22px); background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .1), 0 16px 36px -16px rgba(15, 23, 42, .45); color: var(--m-ink, #0b1220); transform: translateX(-50%); animation: drop .32s cubic-bezier(.22, 1, .36, 1) both; }
+.text { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.text b { font-size: 15px; font-weight: 600; line-height: 20px; }
+.text small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; text-overflow: ellipsis; }
+.action, .ghost { flex: none; min-height: 40px; padding: 0 16px; border: 0; border-radius: 999px; font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.action { background: var(--m-ink, #0b1220); color: var(--pa-card, #fff); }
+.ghost { padding: 0 10px; background: none; color: var(--m-muted, #5b6472); font-weight: 500; }
+.close { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted, #5b6472); cursor: pointer; }
+.dot { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #e08a1e; }
+.action:focus-visible, .ghost:focus-visible, .close:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+:global(.rwa-mobile[data-theme='dark']) .notice { background: #1b1f26; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 16px 36px -16px rgba(0, 0, 0, .8); color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .text small, :global(.rwa-mobile[data-theme='dark']) .ghost, :global(.rwa-mobile[data-theme='dark']) .close { color: #a3acb9; }
+:global(.rwa-mobile[data-theme='dark']) .action { background: #f2f4f7; color: #0b1220; }
+@keyframes drop { from { opacity: 0; transform: translate(-50%, -12px); } }
+@media (prefers-reduced-motion: reduce) { .notice { animation: none; } }
