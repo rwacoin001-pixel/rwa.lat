@@ -109,7 +109,7 @@ describe('DM attachment reads', () => {
     const url = jest.fn(async () => 'https://signed.example/x')
     const ok = setup({ 'msg.attachment_media_id=$1': [{ kind: 'image', name: 'a.png' }] }, { createDmAttachmentUrl: url })
     await expect(ok.service.attachmentUrl(USER, MEDIA)).resolves.toBe('https://signed.example/x')
-    expect(url).toHaveBeenCalledWith(MEDIA, 'a.png', 'image')
+    expect(url).toHaveBeenCalledWith(MEDIA, 'a.png', 'image', 60)
     const sql = ok.query.mock.calls.find(([s]) => s.includes('msg.attachment_media_id=$1'))![0]
     expect(sql).toContain('msg.deleted_at IS NULL')
     expect(sql).toContain('member.profile_id=$2')
@@ -141,5 +141,37 @@ describe('DM attachment format detection', () => {
     expect(sanitizeDmFileName('..\\..\\evil\u0000/report<1>.pdf', 'pdf')).toBe('report1.pdf')
     expect(sanitizeDmFileName('', 'pdf')).toBe('file.pdf')
     expect(Array.from(sanitizeDmFileName('x'.repeat(400) + '.pdf', 'pdf')).length).toBe(255)
+  })
+})
+
+describe('DM attachment JSON mode', () => {
+  const { CommunityDmController } = jest.requireActual('../../src/community/community-dm.controller') as typeof import('../../src/community/community-dm.controller')
+  const auth = { userId: USER, sessionId: 's', deviceId: null }
+  function run(query: { format?: string }, accept?: string) {
+    const attachmentUrl = jest.fn(async () => 'https://signed.example/x')
+    const controller = new CommunityDmController({ attachmentUrl } as never)
+    const res = { setHeader: jest.fn(), redirect: jest.fn(), status: jest.fn().mockReturnThis(), json: jest.fn() }
+    return controller.attachment(auth, MEDIA, query.format, { headers: { accept } } as never, res as never).then(() => ({ attachmentUrl, res }))
+  }
+  it('returns the signed URL as JSON with a 600 s lifetime', async () => {
+    for (const [q, accept] of [[{ format: 'json' }, undefined], [{}, 'application/json']] as const) {
+      const { attachmentUrl, res } = await run(q, accept)
+      expect(attachmentUrl).toHaveBeenCalledWith(USER, MEDIA, 600)
+      expect(res.json).toHaveBeenCalledWith({ url: 'https://signed.example/x', expiresIn: 600 })
+      expect(res.redirect).not.toHaveBeenCalled()
+    }
+  })
+  it('still redirects with the short lifetime otherwise', async () => {
+    const { attachmentUrl, res } = await run({})
+    expect(attachmentUrl).toHaveBeenCalledWith(USER, MEDIA)
+    expect(res.redirect).toHaveBeenCalledWith(302, 'https://signed.example/x')
+  })
+  it('keeps the membership checks: no row means 404 in either mode', async () => {
+    const gone = setup({ 'msg.attachment_media_id=$1': [] }, { createDmAttachmentUrl: jest.fn() })
+    await expect(gone.service.attachmentUrl(USER, MEDIA, 600)).rejects.toMatchObject({ status: 404 })
+    const ok = jest.fn(async () => 'u')
+    const live = setup({ 'msg.attachment_media_id=$1': [{ kind: 'voice', name: 'v.webm' }] }, { createDmAttachmentUrl: ok })
+    await live.service.attachmentUrl(USER, MEDIA, 600)
+    expect(ok).toHaveBeenCalledWith(MEDIA, 'v.webm', 'voice', 600)
   })
 })

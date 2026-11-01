@@ -248,7 +248,7 @@ export class ObjectStorageService {
   }
 
   /** Short-lived URL for a cleared DM attachment. The caller must already have authorised the reader. */
-  async createDmAttachmentUrl(objectId: string, name: string, kind: string): Promise<string> {
+  async createDmAttachmentUrl(objectId: string, name: string, kind: string, expiresIn = 60): Promise<string> {
     const object = await this.objects.findOne({ where: { id: objectId, bucket: 'rwa-attachments' } })
     if (!object || object.tags?.source !== 'community-dm-attachment' || !this.readableScanStatus(object.scanStatus) || BigInt(object.sizeBytes) <= 0n) {
       throw new ObjectStorageError(OBJECT_STORAGE_ERROR_CODES.OBJECT_NOT_FOUND, 'Attachment not found', 404)
@@ -258,7 +258,7 @@ export class ObjectStorageService {
       Bucket: this.physicalBucket('rwa-attachments'), Key: object.key,
       ResponseContentType: object.contentType,
       ResponseContentDisposition: `${inline ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(name || 'file')}`,
-    }), { expiresIn: 60 })
+    }), { expiresIn })
   }
 
   async createUploadPresignedUrl(input: {
