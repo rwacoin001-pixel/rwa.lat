@@ -126,3 +126,12 @@ button.face:not(:disabled):active { transform: scale(.99); }
 .voucherChips button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
 :global(.rwa-mobile[data-theme='dark']) .voucherChips button { background: rgba(242, 244, 247, .08); color: #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .voucherChips button[aria-checked='true'] { background: #f2f4f7; color: #0b1220; }
+/* Today's ticket strip on the 晒单 tab (2026-11-02). */
+.banner { display: flex; align-items: center; gap: 12px; margin: 12px 16px 4px; padding: 12px 12px 12px 16px; border-radius: 22px; background: linear-gradient(180deg, #30353e, #15181d); color: #f2f4f7; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 14px 24px -18px rgba(11, 18, 32, .6); }
+.banner > span { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.banner small { color: rgba(242, 244, 247, .6); font-size: 12px; line-height: 16px; }
+.banner b { overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.bannerLed { flex: none; width: 8px; height: 8px; border-radius: 50%; background: #3a4048; }
+.banner[data-ready] .bannerLed { background: #2fd3b4; box-shadow: 0 0 10px #2fd3b4; animation: ledPulse 1.6s ease-in-out infinite; }
+@keyframes ledPulse { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .banner[data-ready] .bannerLed { animation: none; } }

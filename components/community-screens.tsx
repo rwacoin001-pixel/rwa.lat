@@ -14,7 +14,8 @@ import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, type CircleMember } from '@/lib/community-data'
 import { getMyCircles, type CircleMembership } from '@/lib/community-circles'
 import { CircleList, openCircle } from './community/CircleList'
-import { RewardDrawHost } from './rewards/RewardDrawHost'
+import { TicketBanner } from './rewards/TicketBanner'
+import { PRINT_PATH } from './rewards/TicketPrinter'
 import { Avatar, Images, Like, PostRow, SkeletonRows, Tags, XState, circleCopy, communityTopicTitle, compact, profileCopy, useInfinite, usePostActions, useTimeAgo, type RowActions } from './community/PostCard'
 import { openPath } from '@/lib/maison-nav'
 import { CircleJoinSheet } from './community/CircleJoinSheet'
@@ -22,7 +23,7 @@ import { ResultCard } from './community/cards/ResultCard'
 import { cardsLive } from '@/lib/community-cards'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
-import { useQuery } from '@/lib/api/_query'
+import { invalidate, useQuery } from '@/lib/api/_query'
 import { referralMe } from '@/lib/api/referral'
 import { inviteLinkFor } from '@/lib/referral-invite'
 import RwaLogoMark from './rwa-logo'
@@ -205,6 +206,17 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   // while the reader scrolls down the feed, and pales when they pull back up. The embedded feed on home leaves the
   // visibility to the home page's pinned tabs.
   useEffect(() => claimFeatherCompose(() => { if (isGuest) go('login'); else setComposing(true) }), [isGuest, go])
+  // From the ticket printer (2026-11-02): ?compose=card opens the composer on the card picker; &then=print returns there.
+  const thenPrint = useRef(false)
+  useEffect(() => {
+    if (isGuest || embedded) return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('compose') !== 'card') return
+    thenPrint.current = params.get('then') === 'print'
+    params.delete('compose'); params.delete('then')
+    window.history.replaceState({ ...window.history.state }, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`)
+    setComposing(true)
+  }, [isGuest, embedded])
   useEffect(() => {
     if (embedded) return
     let last = window.scrollY
@@ -350,6 +362,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           </>}
         </div>}
       </header>
+      {view === 'feed' && sort === 'cards' && !isGuest && <TicketBanner onPost={() => setComposing(true)} />}
       {view === 'invite' ? (isGuest
         ? <XState title={invite.guest} body={invite.guestBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => go('login')}>{p.signIn}</button>} />
         : <InviteCentre embedded />)
@@ -369,8 +382,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           {moreFailed && <button type="button" className={c.more} onClick={() => { setMoreFailed(false); void loadMore() }}>{communityCopy[locale].moreFailed} · {t('common.refresh')}</button>}
         </>}
       {!embedded && <CircleJoinSheet code={joinCode} isGuest={isGuest} onClose={() => { setJoinCode(null); dropParam('join') }} onOpen={openJoined} onNotify={(text) => actions.notify({ text })} />}
-      {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: null, openCard: sort === 'cards' }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={openPost} />}
-      {!isGuest && <RewardDrawHost />}
+      {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: null, openCard: sort === 'cards' }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={(id) => { invalidate(['rewards:']); if (thenPrint.current) { thenPrint.current = false; openPath(PRINT_PATH) } else if (sort === 'cards') { void load(); window.scrollTo({ top: 0, behavior: 'smooth' }) } else openPost(id) }} />}
       {actions.overlays(me)}
     </div>
   )

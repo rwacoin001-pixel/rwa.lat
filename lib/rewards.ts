@@ -79,6 +79,5 @@ export const serialOf = (draw: Draw) => draw.serial ?? `AR-${draw.id.replace(/-/
 /** Display-only estimate; the server computes the real discount. */
 export const discountOn = (coupon: Coupon | null, feeAtomic: bigint) => coupon ? (BigInt(coupon.maxDiscountAtomic) < feeAtomic ? BigInt(coupon.maxDiscountAtomic) : feeAtomic) : BigInt(0)
 
-/** Opens the draw sheet from anywhere (the composer posts, the host in the shell listens). */
-export const REWARD_DRAW_EVENT = 'rwa:reward-draw'
-export const offerDraw = () => window.dispatchEvent(new CustomEvent(REWARD_DRAW_EVENT))
+/** For useQuery: today's print state; a 404 (not live) lands in `.error`. */
+export const rewardTodayQuery = () => request<RewardToday>('/v1/rewards/today', { loading: 'silent' })

@@ -16,7 +16,7 @@ import { useQuery } from '@/lib/api/_query'
 import { exchangePoints, getPointsHistory, getRewardWallet, rewardOddsQuery, type PointsRow, type RewardWallet } from '@/lib/rewards'
 import { MiniTicket } from './MiniTicket'
 import { PrintedTicket } from './PrintedTicket'
-import { TicketPrinter } from './TicketPrinter'
+import { PRINT_PATH, POST_CARD_PATH } from './TicketPrinter'
 import { useRewardsCopy } from './rewards-copy'
 import s from './rewards.module.css'
 
@@ -26,7 +26,6 @@ export function RewardsScreen() {
   const [wallet, setWallet] = useState<RewardWallet | null | undefined>(undefined)
   const [failed, setFailed] = useState(false)
   const [busy, setBusy] = useState<'exchange' | null>(null)
-  const [printing, setPrinting] = useState(false)
   const [oddsOpen, setOddsOpen] = useState(false)
   const odds = useQuery(oddsOpen ? 'rewards:odds' : null, rewardOddsQuery, { staleTime: 300_000, loading: 'silent' })
   const [flash, setFlash] = useState<string | null>(null)
@@ -63,8 +62,8 @@ export function RewardsScreen() {
             {today?.draw ? <PrintedTicket draw={today.draw} />
               : <div className={s.printCard}>
                 <span><b>{k.reasons[today?.reason ?? 'no_card_today']}</b><small>{k.front}</small></span>
-                {today?.eligible ? <button type="button" className={s.lightKey} onClick={() => setPrinting(true)}>{k.print}<ArrowRight size={16} aria-hidden="true" /></button>
-                  : today?.reason === 'no_card_today' && <button type="button" className={s.lightKey} onClick={() => openPath('/community?sort=cards')}>{k.goPost}<ArrowRight size={16} aria-hidden="true" /></button>}
+                {today?.eligible ? <button type="button" className={s.lightKey} onClick={() => openPath(PRINT_PATH)}>{k.print}<ArrowRight size={16} aria-hidden="true" /></button>
+                  : today?.reason === 'no_card_today' && <button type="button" className={s.lightKey} onClick={() => openPath(POST_CARD_PATH)}>{k.goPost}<ArrowRight size={16} aria-hidden="true" /></button>}
               </div>}
             <button type="button" className={s.oddsRow} onClick={() => setOddsOpen(true)}><span>{k.odds}</span><ChevronRight size={16} aria-hidden="true" /></button>
           </section>
@@ -98,7 +97,6 @@ export function RewardsScreen() {
           <p className={s.rules}>{k.rules}</p>
         </>}
     </div>
-    <TicketPrinter open={printing} onClose={() => { setPrinting(false); load() }} onDrawn={(draw) => setWallet(w => w ? { ...w, today: { ...w.today, eligible: false, reason: 'drawn', draw } } : w)} />
     <Sheet open={oddsOpen} onClose={() => setOddsOpen(false)} title={k.odds}>
       <div className={s.odds}>
         <p>{k.oddsNote}</p>

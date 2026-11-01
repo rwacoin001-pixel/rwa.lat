@@ -15,7 +15,7 @@ const privateLegacyScreens = new Set([
   'order-partial', 'order-failed', 'order-receipt', 'order-detail', 'deposit', 'withdraw',
   'transfer', 'receive', 'wallet-success', 'activity', 'asset-detail', 'position-detail',
   'address-book', 'ai-plan', 'notifications', 'kyc', 'eligibility', 'risk-profile',
-  'security', 'referral', 'rewards', 'records', 'support', 'support-new', 'support-ticket', 'settings',
+  'security', 'referral', 'rewards', 'reward-print', 'records', 'support', 'support-new', 'support-ticket', 'settings',
   'marketing', 'close-account', 'secondary', 'yield-calendar', 'rebalance', 'statements',
   'recurring', 'my-predictions', 'basket-subscribe', 'basket-redeem',
 ])
