@@ -39,6 +39,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     )
 
     if (code === 'AUTH_FLOW_REQUIRED' && payload.authFlow) details.authFlow = payload.authFlow
+    if (code === 'REWARD_NOT_ELIGIBLE' && ['no_card_today', 'too_new', 'drawn', 'frozen'].includes(String(payload.reason))) details.reason = payload.reason
 
     if (!isHttpException) {
       const error = exception instanceof Error ? exception : new Error(String(exception))

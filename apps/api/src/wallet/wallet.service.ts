@@ -30,6 +30,7 @@ import { WalletLedgerBridge } from './wallet-ledger.bridge'
 import { TransactionPinService } from './transaction-pin.service'
 import { hasQualifyingDeposit } from './transfer-eligibility'
 import { LedgerService } from '../ledger/ledger.service'
+import { couponDiscount } from '../rewards/reward-coupons'
 import { WalletNetworkRegistry } from './wallet-network.registry'
 import { FundsOperationalSwitchService } from './funds-operational-switch.service'
 import { WithdrawalWhitelistService } from './manual/withdrawal-whitelist.service'
@@ -352,13 +353,18 @@ export class WalletService {
     const account = await this.ledgerAccounts.findOne({ where: { userId, purpose: 'available', assetCode: 'USDT', state: 'active' } })
     const balance = account ? await this.balances.findOne({ where: { accountId: account.id } }) : null
     const available = BigInt(balance?.currentAtomicBalance ?? '0')
-    const total = BigInt(dto.atomicAmount) + BigInt(config.withdrawalFeeAtomic)
+    const feeBefore = BigInt(config.withdrawalFeeAtomic)
+    const discount = dto.couponId ? await couponDiscount(this.db, userId, dto.couponId, 'withdrawal_fee', feeBefore, false) : 0n
+    const fee = feeBefore - discount
+    const total = BigInt(dto.atomicAmount) + fee
     return {
       network: dto.network,
       assetCode: 'USDT',
       assetDecimals: 6,
       atomicAmount: dto.atomicAmount,
-      feeAtomicAmount: config.withdrawalFeeAtomic,
+      feeAtomicAmount: fee.toString(),
+      feeDiscountAtomic: discount.toString(),
+      couponId: dto.couponId ?? null,
       totalDebitAtomic: total.toString(),
       availableAtomic: available.toString(),
       sufficientBalance: available >= total,
@@ -534,7 +540,9 @@ export class WalletService {
     }
     const result = await this.ledger.createWithdrawalWithLock({
       id, userId: actor.userId, walletId: wallet.id, network: dto.network,
-      atomicAmount: dto.atomicAmount, feeAtomicAmount: quote.feeAtomicAmount,
+      // Bridge recomputes the discount under the coupon row lock. The quote cannot authorize a discount.
+      atomicAmount: dto.atomicAmount, feeAtomicAmount: this.networkRegistry.get(dto.network).withdrawalFeeAtomic,
+      couponId: dto.couponId,
       destinationHash: this.crypto.hmac(this.normalizeAddress(dto.network, destination)), destinationCiphertext: encrypted.ciphertext,
       encryptionKeyVersion: encrypted.keyVersion, idempotencyKey, state,
       addressBookEntryId: addressBookEntry?.id ?? null,
@@ -566,6 +574,8 @@ export class WalletService {
       assetDecimals: withdrawal.assetDecimals,
       atomicAmount: withdrawal.atomicAmount,
       feeAtomicAmount: withdrawal.feeAtomicAmount,
+      feeDiscountAtomic: withdrawal.feeDiscountAtomic ?? '0',
+      couponId: withdrawal.couponId ?? null,
       reasonCode: withdrawal.reasonCode,
       requestedAt: withdrawal.requestedAt,
       approvedAt: withdrawal.approvedAt,
@@ -1220,6 +1230,7 @@ export class WalletService {
     return {
       id: withdrawal.id, state: withdrawal.state, network: withdrawal.network,
       atomicAmount: withdrawal.atomicAmount, feeAtomicAmount: withdrawal.feeAtomicAmount,
+      feeDiscountAtomic: withdrawal.feeDiscountAtomic ?? '0', couponId: withdrawal.couponId ?? null,
       reasonCode: withdrawal.reasonCode, created, integration: this.integrationState(),
     }
   }

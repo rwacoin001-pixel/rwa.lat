@@ -1,4 +1,5 @@
 import { ActivityModule } from './analytics/activity.module'
+import { RewardsModule } from './rewards/rewards.module'
 import { MailModule } from './mail/mail.module'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
@@ -75,6 +76,7 @@ import { RobotsController } from './common/robots.controller'
     MediaModule,
     SummaryModule,
     CommunityModule,
+    RewardsModule,
     RwaMarketModule,
     MarketContextModule,
     RwaAnalysisModule,

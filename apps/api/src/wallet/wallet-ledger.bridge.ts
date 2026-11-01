@@ -5,6 +5,7 @@ import type { WalletNetwork, WithdrawalState } from './wallet.entities'
 import { WALLET_ERROR_CODES } from './wallet.errors'
 import { hasQualifyingDeposit } from './transfer-eligibility'
 import { pinWithdrawalGate } from './transaction-pin-policy'
+import { couponDiscount, finishWithdrawalCoupon } from '../rewards/reward-coupons'
 
 interface CreateWithdrawalInput {
   id: string
@@ -13,6 +14,7 @@ interface CreateWithdrawalInput {
   network: WalletNetwork
   atomicAmount: string
   feeAtomicAmount: string
+  couponId?: string
   destinationHash: Buffer
   destinationCiphertext: Buffer
   encryptionKeyVersion: number
@@ -138,18 +140,22 @@ export class WalletLedgerBridge {
         }
       }
 
+      const feeBefore = BigInt(input.feeAtomicAmount)
+      const discount = input.couponId ? await couponDiscount(runner, input.userId, input.couponId, 'withdrawal_fee', feeBefore) : 0n
+      const chargedFee = feeBefore - discount
       const inserted = await runner.query(
         `INSERT INTO app.withdrawals
           (id, user_id, wallet_id, network, asset_code, asset_decimals, atomic_amount,
            fee_atomic_amount, destination_hash, destination_ciphertext, encryption_key_version,
-           address_book_entry_id, policy_snapshot, state, idempotency_key, reason_code)
-         VALUES ($1, $2, $3, $4, 'USDT', 6, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+           address_book_entry_id, policy_snapshot, state, idempotency_key, reason_code,fee_discount_atomic,coupon_id)
+         VALUES ($1, $2, $3, $4, 'USDT', 6, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14,$15,$16)
          ON CONFLICT (user_id, idempotency_key) DO NOTHING
          RETURNING id`,
         [
-          input.id, input.userId, input.walletId, input.network, input.atomicAmount, input.feeAtomicAmount,
+          input.id, input.userId, input.walletId, input.network, input.atomicAmount, chargedFee.toString(),
           input.destinationHash, input.destinationCiphertext, input.encryptionKeyVersion,
           input.addressBookEntryId, JSON.stringify(input.policySnapshot), input.state, input.idempotencyKey, input.reasonCode,
+          discount.toString(), input.couponId ?? null,
         ],
       )
       if (!inserted.length) {
@@ -163,6 +169,7 @@ export class WalletLedgerBridge {
         return { id: existing.id as string, created: false }
       }
 
+      if (input.couponId) await runner.query(`UPDATE app.user_coupons SET state='locked',locked_ref=$2 WHERE id=$1`, [input.couponId, input.id])
       const available = await this.ensureUserAccount(runner, input.userId, 'available')
       const locked = await this.ensureUserAccount(runner, input.userId, 'locked')
       const transactionId = await this.createLedgerTransaction(
@@ -175,7 +182,7 @@ export class WalletLedgerBridge {
         'user',
         input.userId,
       )
-      const total = (BigInt(input.atomicAmount) + BigInt(input.feeAtomicAmount)).toString()
+      const total = (BigInt(input.atomicAmount) + chargedFee).toString()
       if (!transactionId) throw new Error('new withdrawal lock unexpectedly collided')
       await runner.query(
         `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
@@ -185,6 +192,7 @@ export class WalletLedgerBridge {
       await this.audit(runner, input.userId, input.requestId, 'wallet.withdrawal.requested', 'withdrawal', input.id, {
         network: input.network,
         state: input.state,
+        feeBeforeAtomic: feeBefore.toString(), feeDiscountAtomic: discount.toString(), couponId: input.couponId ?? null,
       })
       if (input.enqueueExecution && input.state === 'approved') {
         await runner.query(
@@ -469,6 +477,7 @@ export class WalletLedgerBridge {
          WHERE id = $1`,
         [input.withdrawalId, input.reasonCode],
       )
+      if (transactionId) await finishWithdrawalCoupon(runner, withdrawal, false)
       await runner.query(
         `INSERT INTO app.audit_logs
           (id, actor_type, actor_id, user_id, action, object_type, object_id, request_id, reason_code, metadata)

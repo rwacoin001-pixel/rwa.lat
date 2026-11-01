@@ -70,6 +70,7 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
   const whitelist = { isActive: jest.fn().mockResolvedValue(false) }
   const operations = { isEnabled: jest.fn().mockResolvedValue(true), assertEnabled: jest.fn() }
   const pin = { verifyWithdrawal: jest.fn().mockResolvedValue(1) }
+  const db = { query: jest.fn().mockResolvedValue([]) }
   const service = new WalletService(
     wallets as never,
     addresses as never,
@@ -93,17 +94,29 @@ function buildService(options: { execution?: boolean; demoCredit?: boolean; adap
     fundsSwitch as never,
     whitelist as never,
     operations as never,
-    { query: jest.fn().mockResolvedValue([]) } as never,
+    db as never,
     config as unknown as ConfigService,
     pin as never,
   )
   return {
     service, wallets, addresses, chains, deposits, withdrawals, transfers, accounts, balances,
-    withdrawalAddresses, withdrawalApprovals, devices, auditLogs, ledger, security, fundsSwitch, whitelist, operations, secret, pin,
+    withdrawalAddresses, withdrawalApprovals, devices, auditLogs, ledger, security, fundsSwitch, whitelist, operations, secret, pin, db,
   }
 }
 
 describe('WalletService', () => {
+  it('quotes a coupon discount capped to the fee, without reserving the coupon or trusting client amounts', async () => {
+    const { service, db, accounts, balances } = buildService()
+    accounts.findOne.mockResolvedValue({ id: 'available' })
+    balances.findOne.mockResolvedValue({ currentAtomicBalance: '10000000' })
+    db.query.mockResolvedValue([{ id: 'coupon', state: 'available', valid: true, kind: 'withdrawal_fee', max_discount_atomic: '12000000' }])
+    expect(await service.quoteWithdrawal('user', { network: 'tron', atomicAmount: '10000000', couponId: 'coupon' })).toMatchObject({
+      feeAtomicAmount: '0', feeDiscountAtomic: '1000000', totalDebitAtomic: '10000000', sufficientBalance: true, couponId: 'coupon',
+    })
+    expect(db.query.mock.calls[0][0]).not.toContain('FOR UPDATE')
+    expect(db.query.mock.calls.some(([sql]) => String(sql).includes('UPDATE'))).toBe(false)
+  })
+
   it('reports the current single-approval requirement for a pending withdrawal with an old policy snapshot', async () => {
     const liveAdapter = { name: 'test-live-custody', mode: 'live' } as CustodyAdapter
     const { service, withdrawals } = buildService({ financial: true, adapter: liveAdapter })
@@ -243,7 +256,7 @@ describe('WalletService', () => {
 
     await expect(service.getWithdrawalStatus('user-1', 'withdrawal-1')).resolves.toEqual({
       id: 'withdrawal-1', state: 'completed', network: 'arbitrum', assetCode: 'USDT', assetDecimals: 6,
-      atomicAmount: '1000000', feeAtomicAmount: '50000', reasonCode: null,
+      atomicAmount: '1000000', feeAtomicAmount: '50000', feeDiscountAtomic: '0', couponId: null, reasonCode: null,
       requestedAt, approvedAt: requestedAt, completedAt,
     })
     expect(withdrawals.findOne).toHaveBeenCalledWith({ where: { id: 'withdrawal-1', userId: 'user-1' } })
