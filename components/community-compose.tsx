@@ -5,7 +5,7 @@ import type { CommunityProof, CommunityProofRequest } from '@/lib/community-data
 import { riskyPost, riskyPostMessage } from '@/lib/community-guard'
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Trash2, X } from 'lucide-react'
+import { Users, Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Trash2, X } from 'lucide-react'
 import { getPostLocation, locationCopy, type PostLocation } from '@/lib/community-location'
 import { request, readSession, SESSION_CHANGED, type ApiError } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
@@ -105,17 +105,24 @@ function CharRing({ used, max, label }: { used: number; max: number; label: stri
 
 /* ── Full-screen composer ── */
 
-export type ComposeTarget = { kind: 'post'; topic?: string | null; proof?: { request: CommunityProofRequest; view: CommunityProof } } | { kind: 'reply'; postId: string; handle?: string | null }
+export type ComposeTarget = { kind: 'post'; topic?: string | null; circleId?: string | null; proof?: { request: CommunityProofRequest; view: CommunityProof } } | { kind: 'reply'; postId: string; handle?: string | null }
 type Shot = { key: string; preview: string; status: 'uploading' | 'done' | 'error'; id?: string; pending?: boolean }
 
-export function CommunityCompose({ open, onClose, target, me, topics = [], initialFiles, onPublished }: {
-  open: boolean; onClose: () => void; target: ComposeTarget; me: CommunityMe | null; topics?: CommunityTopic[]
+/** Who sees a new post (2026-11-01, own circles): everyone, or only the members of one circle. */
+const audienceCopy: Partial<Record<string, { everyone: string; circleOnly: string; pick: string }>> = {
+  'zh-CN': { everyone: '公开 · 所有人可见', circleOnly: '仅圈子成员可见', pick: '谁可以看到' },
+  en: { everyone: 'Public · everyone can see', circleOnly: 'Circle members only', pick: 'Who can see this' },
+}
+
+export function CommunityCompose({ open, onClose, target, me, topics = [], circles = [], initialFiles, onPublished }: {
+  open: boolean; onClose: () => void; target: ComposeTarget; me: CommunityMe | null; topics?: CommunityTopic[]; circles?: Array<{ id: string; name: string }>
   initialFiles?: File[] | null; onPublished: (id: string) => void
 }) {
   const { locale } = useI18n()
   const k = communityComposeCopy[locale]; const c = communityCopy[locale]
   const { anchor, container, ready: hostReady } = useMaisonContainer()
   const reply = target.kind === 'reply'
+  const audience = audienceCopy[locale] ?? audienceCopy.en!
   // While writing, the dock and the AI ball step aside (2026-10-28): they sat over the composer's own bottom bar.
   useEffect(() => {
     if (!open) return
@@ -128,7 +135,8 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
   const [topic, setTopic] = useState<string | null>(null)
   const [shots, setShots] = useState<Shot[]>([])
   const [draftId, setDraftId] = useState<string | null>(null)
-  const [panel, setPanel] = useState<null | 'confirm' | 'drafts' | 'topics'>(null)
+  const [panel, setPanel] = useState<null | 'confirm' | 'drafts' | 'topics' | 'audience'>(null)
+  const [circleId, setCircleId] = useState<string | null>(null)
   const [drafts, setDrafts] = useState<Draft[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
@@ -182,6 +190,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
     if (!open) return
     setPanel(null); setError(''); setBusy(false); setDraftId(null); intent.current = null
     setTopic(target.kind === 'post' ? target.topic ?? null : null)
+    setCircleId(target.kind === 'post' && target.circleId && circles.some((item) => item.id === target.circleId) ? target.circleId : null)
     let restored = ''
     if (target.kind === 'reply') { try { restored = window.localStorage.getItem(replyKey(target.postId)) ?? '' } catch { /* ignore */ } }
     setBody(restored)
@@ -247,7 +256,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
     if (riskyPost(trimmed)) { setError(riskyPostMessage[locale] ?? riskyPostMessage.en); return }
     if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
-    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
+    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(circleId ? { circleId } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
     if (intent.current?.text !== payload) intent.current = { text: payload, key: crypto.randomUUID() }
     setBusy(true); setError('')
@@ -304,7 +313,13 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], initi
               <p className={x.composeNote}>{locationCopy[locale][3]}</p>
             </>}
             {error && <p className={x.composeError} role="alert">{error}</p>}
-            <p className={x.audience}><Globe2 size={15} strokeWidth={2} aria-hidden="true" />{k.everyone}</p>
+            {!reply && circles.length > 0
+              ? <button type="button" className={x.audience} aria-expanded={panel === 'audience'} onClick={() => setPanel(panel === 'audience' ? null : 'audience')}>{circleId ? <Users size={15} strokeWidth={2} aria-hidden="true" /> : <Globe2 size={15} strokeWidth={2} aria-hidden="true" />}{circleId ? `${circles.find((item) => item.id === circleId)?.name ?? ''} · ${audience.circleOnly}` : audience.everyone}</button>
+              : <p className={x.audience}><Globe2 size={15} strokeWidth={2} aria-hidden="true" />{k.everyone}</p>}
+            {panel === 'audience' && !reply && <div className={x.topicPick} role="group" aria-label={audience.pick}>
+              <button type="button" aria-pressed={circleId === null} onClick={() => { setCircleId(null); setPanel(null) }}>{audience.everyone}</button>
+              {circles.map((item) => <button key={item.id} type="button" aria-pressed={circleId === item.id} onClick={() => { setCircleId(item.id); setPanel(null) }}>{item.name}</button>)}
+            </div>}
             <div className={x.toolRow}>
               <button type="button" className={x.toolBtn} aria-label={k.addImage} disabled={shots.length >= MAX_IMAGES || busy} onClick={() => picker.current?.click()}><ImagePlus size={21} strokeWidth={1.8} /></button>
               <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={onPick} />

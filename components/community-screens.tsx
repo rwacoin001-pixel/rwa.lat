@@ -12,6 +12,8 @@ import { claimFeatherCompose, setFeather } from '@/lib/community-feather'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, getCircleFeed, setCircleVisibility, type CircleMember } from '@/lib/community-data'
+import { getCirclePosts, getMyCircles, type CircleMembership } from '@/lib/community-circles'
+import { CircleBar } from './community/CircleBar'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
 import { useQuery } from '@/lib/api/_query'
@@ -454,6 +456,23 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const circleText = circleCopy[locale] ?? circleCopy.en
   // My circle (2026-10-28): who I invited / who invited me, for the tag on their posts and the circle timeline.
   const [circle, setCircle] = useState<{ members: CircleMember[]; showToInviter: boolean } | null>(null)
+  // Own circles (2026-11-01): undefined while asking, null when the API is not live (the older timeline stays).
+  const [circles, setCircles] = useState<CircleMembership | null | undefined>(undefined)
+  const [circleId, setCircleId] = useState<string | null>(null)
+  const loadCircles = useCallback((select?: string | null) => {
+    if (isGuest || embedded) { setCircles(null); return }
+    getMyCircles().then((data) => {
+      setCircles(data)
+      if (!data) return
+      const all = [...(data.owned ? [data.owned] : []), ...data.joined]
+      setCircleId((current) => {
+        const wanted = select === undefined ? current : select
+        return all.some((item) => item.id === wanted) ? wanted : all[0]?.id ?? null
+      })
+    }).catch(() => setCircles(null))
+  }, [isGuest, embedded])
+  useEffect(() => { loadCircles() }, [loadCircles])
+  const circlesLive = Boolean(circles)
   useEffect(() => { if (isGuest) { setCircle(null); setSort((current) => current === 'circle' ? 'hot' : current); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => setSort((current) => current === 'circle' ? 'hot' : current)) }, [isGuest])
   // The feather (2026-10-31): it composes from whichever feed is on screen. On the page itself it rises above the AI orb
   // while the reader scrolls down the feed, and pales when they pull back up. The embedded feed on home leaves the
@@ -473,7 +492,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   }, [embedded])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
   // My circle leads when there is one (2026-10-28): the people you invited come first.
-  const tabs = [...(isGuest || embedded || !circle ? [] : [{ key: 'circle' as const, label: circleText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
+  const tabs = [...(isGuest || embedded || (!circle && !circlesLive) ? [] : [{ key: 'circle' as const, label: circleText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
   const actions = usePostActions(isGuest, go, locale, (postId) => setItems((previous) => previous.map((item) => item.id === postId ? { ...item, commentCount: item.commentCount + 1 } : item)))
   const rowActions: RowActions = { guest: isGuest, onLogin: actions.login, onReply: actions.onReply, onShare: actions.onShare, onMore: actions.onMore }
 
@@ -494,7 +513,9 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       let effectiveSort = sort
       try {
         if (sort === 'circle') {
-          const circlePage = await getCircleFeed({ limit: 20 })
+          if (circles === undefined) return
+          if (circles && !circleId) { pageSort.current = 'circle'; setItems([]); setNextCursor(null); return }
+          const circlePage = circles && circleId ? await getCirclePosts(circleId, { limit: 20 }) : await getCircleFeed({ limit: 20 })
           if (version !== requestVersion.current) return
           pageSort.current = 'circle'; setItems(circlePage.items ?? []); setNextCursor(circlePage.nextCursor ?? null)
           return
@@ -518,7 +539,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     } finally {
       if (version === requestVersion.current) setLoading(false)
     }
-  }, [sort, topic])
+  }, [sort, topic, circles, circleId])
 
   useEffect(() => {
     void load()
@@ -531,7 +552,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     setMoreFailed(false)
     const version = requestVersion.current
     try {
-      const page = pageSort.current === 'circle' ? await getCircleFeed({ cursor: nextCursor, limit: 20 }) : await getCommunityFeed({ sort: pageSort.current, topic: topic ?? undefined, cursor: nextCursor, limit: 20 })
+      const page = pageSort.current === 'circle' ? (circles && circleId ? await getCirclePosts(circleId, { cursor: nextCursor, limit: 20 }) : await getCircleFeed({ cursor: nextCursor, limit: 20 })) : await getCommunityFeed({ sort: pageSort.current, topic: topic ?? undefined, cursor: nextCursor, limit: 20 })
       if (version !== requestVersion.current) return
       setItems((previous) => [...previous, ...(page.items ?? []).filter(item => !previous.some(row => row.id === item.id))])
       setNextCursor(page.nextCursor)
@@ -605,11 +626,13 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           </>}
         </div>}
       </header>
+      {view === 'feed' && sort === 'circle' && circles && <CircleBar membership={circles} selected={circleId} onSelect={setCircleId} onChanged={loadCircles} onNotify={(text) => actions.notify({ text })} />}
       {view === 'invite' ? (isGuest
         ? <XState title={invite.guest} body={invite.guestBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => go('login')}>{p.signIn}</button>} />
         : <InviteCentre embedded />)
       : loading ? <SkeletonRows />
         : failed ? <XState title={communityCopy[locale].feedFailed} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => void load()}>{t('common.refresh')}</button>} />
+        : items.length === 0 && sort === 'circle' && circles && !circleId ? null
         : items.length === 0 ? (sort === 'circle'
           ? <XState title={circleText.emptyTitle} body={circleText.emptyBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => pick('invite')}>{circleText.invite}</button>} />
           : <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />)
@@ -621,9 +644,9 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           {loadingMore && <span className={c.spinner} role="status" aria-label={t('community.loadMore')} />}
           {moreFailed && <button type="button" className={c.more} onClick={() => { setMoreFailed(false); void loadMore() }}>{communityCopy[locale].moreFailed} · {t('common.refresh')}</button>}
         </>}
-      {view === 'feed' && sort === 'circle' && circle && !loading && <CircleVisibility value={circle.showToInviter} label={circleText.visible} note={circleText.visibleNote}
+      {view === 'feed' && sort === 'circle' && circle && !circlesLive && !loading && <CircleVisibility value={circle.showToInviter} label={circleText.visible} note={circleText.visibleNote}
         onChange={(visible) => { setCircle({ ...circle, showToInviter: visible }); setCircleVisibility(visible).catch(() => setCircle({ ...circle, showToInviter: !visible })) }} />}
-      {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic }} me={me} topics={topics} onPublished={openPost} />}
+      {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: sort === 'circle' ? circleId : null }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={openPost} />}
       {actions.overlays(me)}
     </div>
   )

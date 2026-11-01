@@ -368,3 +368,5 @@ b.name { cursor: default; }
 /* No tinted boxes (2026-10-29): notes sit on the neutral sunk surface. */
 .editNote { background: rgba(17, 23, 34, .04); color: var(--m-ink); }
 :global(.rwa-mobile[data-theme='dark']) .editNote { background: rgba(255, 255, 255, .06); }
+/* The audience line as a key when the writer has circles (2026-11-01): public or one circle. */
+button.audience { width: 100%; border-width: 0 0 .5px; background: none; text-align: start; cursor: pointer; }
