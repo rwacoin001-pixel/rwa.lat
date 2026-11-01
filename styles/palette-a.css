@@ -325,8 +325,8 @@ html[data-palette='a'] .account-flow-hero > span:first-child { display: none; }
 
 /* The buddy ball (2026-10-28) is pinned to the trailing edge in one size: it never rides along while the dock plate
    grows or shrinks (scroll, pull-to-refresh). */
-/* Since 2026-10-31 the ball sits inside the community feather's anchor, so pin that wrapper too (2026-11-01: the old
-   direct-child rule stopped matching and the ball slid left with the collapsing dock again). */
+/* 2026-11-02: the feather wrapper is gone and the ball is a direct child of the dock again (on Community the same button
+   morphs into the compose key). The wrapper selector stays so a future wrapper cannot silently unpin it (2026-11-01). */
 html[data-palette='a'] .liquid-dock > .ai-orb, html[data-palette='a'] .liquid-dock > :has(> .ai-orb) { margin-inline-start: auto; transition: none; }
 html[data-palette='a'] .liquid-dock :has(> .ai-orb) > .ai-orb { transition: none; }
 

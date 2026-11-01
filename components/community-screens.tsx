@@ -5,10 +5,11 @@
  * Data, auth gating, optimistic like/follow, compose, reply and report behaviour are unchanged from the previous
  * Maison timeline; this file only changes structure and presentation (community-x.module.css).
  */
-import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
 import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Share, Share2 } from 'lucide-react'
-import { claimFeatherCompose, setFeather } from '@/lib/community-feather'
+import { claimComposeKey } from '@/lib/compose-key'
+import { rewardTodayQuery } from '@/lib/rewards'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, type CircleMember } from '@/lib/community-data'
@@ -129,9 +130,24 @@ const inviteLabel: Record<AppLocale, { tab: string; guest: string; guestBody: st
 type CommunityView = 'feed' | 'invite'
 const viewFromUrl = (): CommunityView => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'invite' ? 'invite' : 'feed'
 
-const cardsTabCopy: Partial<Record<string, { tab: string; filters: Record<'all' | 'quant' | 'prediction' | 'funds', string>; empty: string; emptyBody: string; make: string }>> = {
-  'zh-CN': { tab: '晒单', filters: { all: '全部', quant: '量化', prediction: '预测', funds: '资金记录' }, empty: '还没有人晒单', emptyBody: '晒单卡片的数据来自账户，亏损也可以发。', make: '发一张卡片' },
-  en: { tab: 'Results', filters: { all: 'All', quant: 'Quant', prediction: 'Predictions', funds: 'Funds' }, empty: 'No results shared yet', emptyBody: 'Card figures come from the account. Losses can be shared too.', make: 'Share a card' },
+const cardsTabCopy: Partial<Record<string, { tab: string; filters: Record<'all' | 'quant' | 'prediction' | 'funds', string>; empty: string; emptyBody: string; make: string; ready: string; picks: string; all: string }>> = {
+  'zh-CN': { tab: '晒单', filters: { all: '全部', quant: '量化', prediction: '预测', funds: '资金记录' }, empty: '还没有人晒单', emptyBody: '晒单卡片的数据来自账户，亏损也可以发。', make: '发一张卡片', ready: '今天的奖券可以打印', picks: '晒单精选', all: '全部晒单' },
+  en: { tab: 'Results', filters: { all: 'All', quant: 'Quant', prediction: 'Predictions', funds: 'Funds' }, empty: 'No results shared yet', emptyBody: 'Card figures come from the account. Losses can be shared too.', make: 'Share a card', ready: "Today's ticket is ready to print", picks: 'Shared results', all: 'All results' },
+}
+/** 晒单精选 (2026-11-02): one sideways row of the latest result cards after every this many posts in 热门 / 最新. */
+const PICKS_EVERY = 10
+
+/** 晒单精选 (2026-11-02): a sideways strip of the latest result cards inside 热门 / 最新. Every card opens the 晒单 tab. */
+function CardPicks({ posts, title, all, onOpen }: { posts: CommunityPost[]; title: string; all: string; onOpen: () => void }) {
+  const open = (event: React.MouseEvent) => { event.preventDefault(); navigator.vibrate?.(4); onOpen() }
+  return <li className={c.picks} aria-label={title}>
+    <div className={c.picksHead}><b>{title}</b><a href="/community?sort=cards" onClick={open}>{all}</a></div>
+    <div className={c.picksStrip}>
+      {posts.map(post => post.card && <a key={post.id} href="/community?sort=cards" className={c.pick} onClick={open}>
+        <ResultCard card={post.card} mini author={post.author ? { displayName: post.author.displayName, handle: post.author.handle, avatarUrl: post.author.avatarUrl, avatarSeed: post.author.avatarSeed } : undefined} />
+      </a>)}
+    </div>
+  </li>
 }
 
 export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true, embedded = false }: { go: (screen: RwaScreen) => void; openPost: (id: string) => void; openProfile: (handle: string) => void; isGuest?: boolean; embedded?: boolean }) {
@@ -155,6 +171,17 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const cardsText = cardsTabCopy[locale] ?? cardsTabCopy.en!
   const [cardsOn, setCardsOn] = useState(false)
   useEffect(() => { void cardsLive().then(setCardsOn) }, [])
+  // A green dot on the 晒单 chip while today's ticket can be printed; a 404 (rewards not live) leaves `.data` empty.
+  const printable = useQuery(cardsOn && !isGuest && !embedded ? 'rewards:today' : null, rewardTodayQuery, { staleTime: 15_000, loading: 'silent' }).data?.eligible === true
+  // 晒单精选: the latest 3–5 result cards, shown between posts in 热门 / 最新; tapping one opens the 晒单 tab.
+  const [picks, setPicks] = useState<CommunityPost[]>([])
+  const wantPicks = cardsOn && !embedded && (sort === 'hot' || sort === 'latest')
+  useEffect(() => {
+    if (!wantPicks) return
+    let active = true
+    void getCommunityFeed({ cards: 'all', limit: 5 }).then(page => { if (active) setPicks(page.items.filter(post => post.card).slice(0, 5)) }).catch(() => undefined)
+    return () => { active = false }
+  }, [wantPicks])
   const [topic, setTopic] = useState<string | null>(null)
   const [topics, setTopics] = useState<CommunityTopic[]>([])
   const [items, setItems] = useState<CommunityPost[]>([])
@@ -202,10 +229,14 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   useEffect(() => { if (isGuest) { setCircle(null); setSort((current) => { if (current !== 'circle') return current; guestHot.current = true; return 'hot' }); return }
     if (guestHot.current && !embedded) { guestHot.current = false; setSort((current) => current === 'hot' ? 'circle' : current) }
     getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => undefined) }, [isGuest])
-  // The feather (2026-10-31): it composes from whichever feed is on screen. On the page itself it rises above the AI orb
-  // while the reader scrolls down the feed, and pales when they pull back up. The embedded feed on home leaves the
-  // visibility to the home page's pinned tabs.
-  useEffect(() => claimFeatherCompose(() => { if (isGuest) go('login'); else setComposing(true) }), [isGuest, go])
+  // The compose key (2026-11-02): on the page itself the dock's orb morphs into the compose key while the feed is shown;
+  // on the 晒单 tab it is a 晒单 key that opens the composer on the card picker. The embedded feed on home leaves the orb alone.
+  const keyKind = sort === 'cards' ? 'cards' : 'post'
+  const [view, setView] = useState<CommunityView>(viewFromUrl)
+  useEffect(() => {
+    if (embedded || view !== 'feed') return
+    return claimComposeKey({ kind: keyKind, open: () => { if (isGuest) go('login'); else setComposing(true) } })
+  }, [embedded, view, keyKind, isGuest, go])
   // From the ticket printer (2026-11-02): ?compose=card opens the composer on the card picker; &then=print returns there.
   const thenPrint = useRef(false)
   useEffect(() => {
@@ -217,18 +248,6 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     window.history.replaceState({ ...window.history.state }, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`)
     setComposing(true)
   }, [isGuest, embedded])
-  useEffect(() => {
-    if (embedded) return
-    let last = window.scrollY
-    const onScroll = () => {
-      const y = window.scrollY, dy = y - last
-      last = y
-      if (y < 160) setFeather({ visible: false, faded: false })
-      else if (Math.abs(dy) > 2) setFeather({ visible: true, faded: dy < 0 })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => { window.removeEventListener('scroll', onScroll); setFeather({ visible: false, faded: false }) }
-  }, [embedded])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
   // My circle leads when there is one (2026-10-28): the people you invited come first.
   const tabs = [...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }]), ...(embedded || !cardsOn ? [] : [{ key: 'cards' as const, label: cardsText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
@@ -297,7 +316,6 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const sentinel = useInfinite(() => void loadMore(), Boolean(nextCursor) && !loading && !failed, nextCursor)
 
   // First-level tab (2026-10-28): 社区 · 邀请 at the top instead of a back arrow; ?tab=invite opens the invite centre.
-  const [view, setView] = useState<CommunityView>(viewFromUrl)
   useEffect(() => {
     if (embedded) return
     const params = new URLSearchParams(window.location.search)
@@ -331,6 +349,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     },
   }
 
+  const openCards = () => { guestHot.current = false; setCardFilter('all'); setSort('cards'); window.scrollTo({ top: 0 }) }
   const pickSort = (next: 'latest' | 'hot' | 'circle' | 'cards') => { guestHot.current = false; if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
@@ -341,7 +360,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           <div className={c.pageTabs} role="tablist" aria-label={t('nav.community')}>
             {([['feed', t('nav.community')], ['invite', invite.tab]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={view === key} onClick={() => pick(key)}>{label}</button>)}
           </div>
-          {/* No compose button in the header (2026-10-31): posting is the feather above the AI orb. */}
+          {/* No compose button in the header (2026-10-31): posting is the compose key the AI orb morphs into (2026-11-02). */}
           {!isGuest && <button type="button" className={c.inboxBtn} aria-label={p.dm} data-view={view} onClick={() => go('community-messages')}><Mail size={20} strokeWidth={1.9} aria-hidden="true" />{dmUnread > 0 && <i aria-hidden="true" />}</button>}
           {isGuest
             ? <button type="button" className={c.signIn} onClick={() => go('login')}>{p.signIn}</button>
@@ -351,7 +370,10 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         </div>}
         {/* One chip row (2026-10-28): how to sort (hot, latest, my circle), then the topics; tap a topic again to clear it. */}
         {view === 'feed' && <div className={c.topics} role="group" aria-label={ui.feed}>
-          {tabs.map((option) => <button key={option.key} type="button" className={c.chip} aria-pressed={sort === option.key} onClick={() => pickSort(option.key)}>{option.label}</button>)}
+          {tabs.map((option) => {
+            const ready = option.key === 'cards' && printable
+            return <button key={option.key} type="button" className={c.chip} aria-pressed={sort === option.key} aria-label={ready ? `${option.label} · ${cardsText.ready}` : undefined} onClick={() => pickSort(option.key)}>{option.label}{ready && <i className={c.chipDot} aria-hidden="true" />}</button>
+          })}
           {sort === 'cards' && <>
             <i className={c.chipRule} aria-hidden="true" />
             {(['all', 'quant', 'prediction', 'funds'] as const).map((key) => <button key={key} type="button" className={`${c.chip} ${c.topicChip}`} aria-pressed={cardFilter === key} onClick={() => setCardFilter(key)}>{cardsText.filters[key]}</button>)}
@@ -375,7 +397,10 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           : <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />)
         : <>
           <ul className={c.feed} aria-label={ui.feed}>
-            {items.map((post, index) => <PostRow key={post.id} index={index} post={post} timeAgo={timeAgo} openPost={openPost} openProfile={openProfile} topics={topics} locale={locale} actions={rowActions} relation={post.author?.id ? relations.get(post.author.id) : undefined} />)}
+            {items.map((post, index) => <Fragment key={post.id}>
+              <PostRow index={index} post={post} timeAgo={timeAgo} openPost={openPost} openProfile={openProfile} topics={topics} locale={locale} actions={rowActions} relation={post.author?.id ? relations.get(post.author.id) : undefined} />
+              {wantPicks && picks.length >= 3 && (index + 1) % PICKS_EVERY === 0 && <CardPicks posts={picks} title={cardsText.picks} all={cardsText.all} onOpen={openCards} />}
+            </Fragment>)}
           </ul>
           {nextCursor && !moreFailed && <div ref={sentinel} className={c.sentinel} aria-hidden="true" />}
           {loadingMore && <span className={c.spinner} role="status" aria-label={t('community.loadMore')} />}

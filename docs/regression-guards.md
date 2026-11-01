@@ -6,10 +6,10 @@ check that line first. Add a line for every new fix the user reports.
 
 | # | Since | What must stay true | Where it lives | How to check |
 |---|---|---|---|---|
-| 1 | 10-28, again 11-01 | The AI ball stays pinned bottom-right while scrolling; it never slides with the shrinking dock | `styles/palette-a.css` (pin rule), `components/h5/BottomDock.tsx`, `components/community/CommunityFeather.tsx` (wraps the ball) | Scroll home down and up; the ball's `getBoundingClientRect().right` never changes. If the ball's parent changes, update the pin selector |
+| 1 | 10-28, again 11-01, 11-02 | The AI ball stays pinned bottom-right while scrolling; it never slides with the shrinking dock. On Community it is the compose key in the same box | `styles/palette-a.css` (pin rule), `components/h5/BottomDock.tsx`, `components/buddy/BuddyOrb.tsx` (morphs into the compose key) | Scroll home and Community down and up; the ball's (or key's) `getBoundingClientRect().right` never changes, also across the morph. If the ball's parent changes, update the pin selector |
 | 2 | 11-01 | Community opens on 圈子 for signed-in users, also on a cold start | `components/community-screens.tsx` (`guestHot`) | Reload `/community` signed in; the pressed chip is 圈子 |
 | 3 | 11-01 | Dark mode pages have no yellow glow in the top-right corner | `components/maison/maison.module.css` (`.root::before`), `styles/palette-a.css` | Dark theme, open Markets and Assets; the corner is plain #0a0c10 |
-| 4 | 11-01 | The compose feather is visible in dark mode | `components/community/community-feather.module.css` | Dark theme, scroll the community feed; the feather is a light disc |
+| 4 | 11-01, 11-02 | The compose key is visible in dark mode | `components/buddy/Buddy.module.css` (`.key`) | Dark theme, open Community; the key is a light disc with an ink pen |
 | 5 | 11-01 | DM header: the name sits under the face, never overlapping | `components/community/dm.module.css` | Open a DM thread |
 | 6 | 11-01 | Login and register are cool white (never warm paper) | `components/screens/auth-focus.module.css` | `/login` background is #fff |
 | 7 | 11-01 | Welcome-back lock screen: plain white, centred short ink pill with a round arrow | `components/session-privacy-gate*` | Force the lock (see the memory note on local testing) |
