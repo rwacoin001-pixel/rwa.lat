@@ -9,12 +9,38 @@ const CAMPAIGN = 'daily_card_draw'
 const SG_DAY = "(now() AT TIME ZONE 'Asia/Singapore')::date"
 type Db = Pick<EntityManager, 'query'>
 export type Prize = {
-  code: string; kind: 'points' | 'coupon'; points: number | null; weight: number; active: boolean
+  code: string; kind: 'points' | 'coupon' | 'voucher'; pool?: 'single' | 'points' | 'voucher'; points: number | null; weight: number; active: boolean
   coupon_kind: Coupon['kind'] | null; coupon_max_atomic: string | null; daily_cap: number | null
 }
-type Campaign = { daily_coupon_budget_atomic: string; exchange_coupon_max_atomic: string; points_per_coupon: number; coupon_ttl_days: number; prize_version: number }
+type Campaign = { daily_coupon_budget_atomic: string; exchange_coupon_max_atomic: string; exchange_coupon_kind?: Coupon['kind']; points_per_coupon: number; coupon_ttl_days: number; prize_version: number }
 type Row = Record<string, any>
 const iso = (v: string | Date) => new Date(v).toISOString()
+
+export function drawSerial(id: string): string {
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567'
+  let value = BigInt('0x' + id.replace(/-/g, '').slice(0, 10)), code = ''
+  for (let i = 0; i < 8; i++) { code = alphabet[Number(value & 31n)] + code; value >>= 5n }
+  return 'AR-' + code
+}
+export function voucherTier(face: bigint): Draw['tier'] {
+  return face >= 100000000n ? 'legend' : face >= 20000000n ? 'epic' : face >= 5000000n ? 'rare' : 'common'
+}
+export function pickPools(prizes: Prize[], issued: Record<string, number>, faceIssued: bigint, budget: bigint,
+  random: (max: number) => number = randomInt): { points: Prize; voucher: Prize } {
+  const pick = (pool: string) => {
+    const rows = prizes.filter(p => p.active && p.pool === pool)
+    const total = rows.reduce((n, p) => n + p.weight, 0)
+    if (!rows.length || !Number.isSafeInteger(total) || total <= 0 || total >= 2 ** 48) throw new Error('Invalid reward pool')
+    let ticket = random(total)
+    return rows.find(p => (ticket -= p.weight) < 0)!
+  }
+  const points = pick('points'), picked = pick('voucher')
+  const fallback = prizes.find(p => p.active && p.pool === 'voucher' && p.kind === 'voucher' && p.coupon_max_atomic === '1000000')
+  if (!fallback) throw new Error('Missing guaranteed voucher')
+  const face = BigInt(picked.coupon_max_atomic!)
+  const capped = picked.daily_cap !== null && (issued[picked.code] ?? 0) >= picked.daily_cap
+  return { points, voucher: capped || (face >= 5000000n && faceIssued + face > budget) ? fallback : picked }
+}
 
 /** Draw first using the published weights. An unavailable coupon falls back, without reweighting other prizes. */
 export function pickPrize(prizes: Prize[], issued: Record<string, number>, faceIssued: bigint, budget: bigint, withdrawalFace: bigint,
@@ -65,6 +91,12 @@ export class RewardsService {
       WHERE (created_at AT TIME ZONE 'Asia/Singapore')::date=${SG_DAY}`)
     return BigInt(r.face)
   }
+  private async voucherFace(db: Db): Promise<bigint> {
+    const [r] = await db.query(`SELECT COALESCE(sum(c.max_discount_atomic),0)::text AS face
+      FROM app.reward_draws d JOIN app.user_coupons c ON c.id=d.coupon_id
+      WHERE d.campaign_id=$1 AND d.sg_date=${SG_DAY} AND c.kind='prediction_stake' AND c.max_discount_atomic>=5000000`, [CAMPAIGN])
+    return BigInt(r.face)
+  }
   private coupon(row: Row): Coupon {
     return { id: row.id, kind: row.kind, maxDiscountAtomic: String(row.max_discount_atomic), assetCode: 'USDT', assetDecimals: 6,
       state: row.expired && row.state === 'available' ? 'expired' : row.state, source: row.source,
@@ -75,8 +107,12 @@ export class RewardsService {
     return this.coupon(row)
   }
   private async drawView(db: Db, row: Row): Promise<Draw> {
+    const coupon = row.coupon_id ? await this.couponById(db, row.coupon_id) : null
+    const v2 = row.prize_version >= 2
     return { id: row.id, sgDate: row.sg_date, state: row.state, createdAt: iso(row.created_at),
-      prize: row.coupon_id ? { kind: 'coupon', coupon: await this.couponById(db, row.coupon_id) } : { kind: 'points', points: row.points } }
+      serial: drawSerial(row.id), tier: voucherTier(v2 && coupon ? BigInt(coupon.maxDiscountAtomic) : 0n),
+      prize: v2 ? { points: row.points, voucher: coupon, coupon: null }
+        : coupon ? { kind: 'coupon', coupon, points: 0, voucher: null } : { kind: 'points', points: row.points, voucher: null, coupon: null } }
   }
   private async todayIn(db: Db, userId: string, lock = false): Promise<Today & { postId: string | null }> {
     const [r] = await db.query(`SELECT ${SG_DAY}::text AS day,created_at<=now()-interval '24 hours' AS old_enough FROM app.users WHERE id=$1`, [userId])
@@ -110,25 +146,27 @@ export class RewardsService {
       const prizes: Prize[] = await db.query('SELECT * FROM app.reward_prizes WHERE campaign_id=$1 AND version=$2 ORDER BY code', [CAMPAIGN, c.prize_version])
       const counts: Array<{ prize_code: string; count: number }> = await db.query(`SELECT prize_code,count(*)::int AS count FROM app.reward_draws
         WHERE campaign_id=$1 AND sg_date=$2 GROUP BY prize_code`, [CAMPAIGN, today.sgDate])
-      const faceIssued = await this.issuedFace(db)
       // The draw has no network input: snapshot the default TRON withdrawal fee, then cap any later network's discount by its actual fee.
-      const { prize, face } = pickPrize(prizes, Object.fromEntries(counts.map(r => [r.prize_code, r.count])),
-        faceIssued, BigInt(c.daily_coupon_budget_atomic), BigInt(this.networks.get('tron').withdrawalFeeAtomic))
+      const issued = Object.fromEntries(counts.map(r => [r.prize_code, r.count]))
+      const pools = c.prize_version >= 2 ? pickPools(prizes, issued, await this.voucherFace(db), BigInt(c.daily_coupon_budget_atomic)) : null
+      const { prize, face } = pools ? { prize: pools.voucher, face: BigInt(pools.voucher.coupon_max_atomic!) }
+        : pickPrize(prizes, issued, await this.issuedFace(db), BigInt(c.daily_coupon_budget_atomic), BigInt(this.networks.get('tron').withdrawalFeeAtomic))
+      const points = pools ? pools.points.points : prize.points
       const [shared] = await db.query(`SELECT count(DISTINCT user_id)::int AS users FROM app.reward_draws WHERE sg_date=$1 AND ip=$2::inet`, [today.sgDate, ip])
       const frozen = ip !== null && shared.users >= 2
-      const couponId = prize.kind === 'coupon' ? randomUUID() : null
-      if (couponId) await this.issueCoupon(db, userId, couponId, prize.coupon_kind!, face.toString(), 'draw', c.coupon_ttl_days, frozen)
+      const couponId = prize.kind === 'coupon' || prize.kind === 'voucher' ? randomUUID() : null
+      if (couponId) await this.issueCoupon(db, userId, couponId, prize.coupon_kind!, face.toString(), 'draw', pools ? 14 : c.coupon_ttl_days, frozen)
       const id = randomUUID()
-      const [row] = await db.query(`INSERT INTO app.reward_draws(id,campaign_id,user_id,sg_date,post_id,prize_code,prize_version,points,coupon_id,state,frozen_reason,ip,idempotency_key)
-        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13) ON CONFLICT DO NOTHING RETURNING *,sg_date::text AS sg_date`,
-        [id, CAMPAIGN, userId, today.sgDate, today.postId, prize.code, c.prize_version, prize.points, couponId, frozen ? 'frozen' : 'granted', frozen ? 'shared_ip' : null, ip, key])
+      const [row] = await db.query(`INSERT INTO app.reward_draws(id,campaign_id,user_id,sg_date,post_id,prize_code,prize_version,points,coupon_id,state,frozen_reason,ip,idempotency_key,points_code)
+        VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14) ON CONFLICT DO NOTHING RETURNING *,sg_date::text AS sg_date`,
+        [id, CAMPAIGN, userId, today.sgDate, today.postId, prize.code, c.prize_version, points, couponId, frozen ? 'frozen' : 'granted', frozen ? 'shared_ip' : null, ip, key, pools?.points.code ?? null])
       if (!row) {
         if (couponId) await db.query('DELETE FROM app.user_coupons WHERE id=$1', [couponId])
         const [existing] = await db.query(`SELECT *,sg_date::text AS sg_date FROM app.reward_draws WHERE campaign_id=$1 AND user_id=$2
           AND (sg_date=$3 OR idempotency_key=$4)`, [CAMPAIGN, userId, today.sgDate, key])
         return this.drawView(db, existing)
       }
-      if (prize.kind === 'points' && !frozen) await db.query(`INSERT INTO app.user_points_ledger(user_id,delta,reason,ref_id) VALUES($1,$2,'draw',$3)`, [userId, prize.points, id])
+      if (points && !frozen) await db.query(`INSERT INTO app.user_points_ledger(user_id,delta,reason,ref_id) VALUES($1,$2,'draw',$3)`, [userId, points, id])
       return this.drawView(db, row)
     })
   }
@@ -148,8 +186,8 @@ export class RewardsService {
         AND (created_at AT TIME ZONE 'Asia/Singapore')::date=${SG_DAY}) AS exchanged`, [userId])
       const { postId: _, ...today } = await this.todayIn(db, userId)
       return { points, coupons: rows.map(r => this.coupon(r)), exchange: { pointsPerCoupon: c.points_per_coupon,
-        couponKind: 'prediction_place_fee' as const, maxDiscountAtomic: String(c.exchange_coupon_max_atomic), canExchange: points >= c.points_per_coupon && !spent.exchanged
-          && await this.issuedFace(db) + BigInt(c.exchange_coupon_max_atomic) <= BigInt(c.daily_coupon_budget_atomic) }, today }
+        couponKind: c.exchange_coupon_kind ?? 'prediction_place_fee', maxDiscountAtomic: String(c.exchange_coupon_max_atomic), canExchange: points >= c.points_per_coupon && !spent.exchanged
+          && (c.exchange_coupon_kind === 'prediction_stake' || await this.issuedFace(db) + BigInt(c.exchange_coupon_max_atomic) <= BigInt(c.daily_coupon_budget_atomic)) }, today }
     })
   }
   async points(userId: string, cursor?: string) {
@@ -183,13 +221,22 @@ export class RewardsService {
       if (spent) throw rewardConflict(REWARD_ERROR_CODES.EXCHANGE_LIMIT)
       const points = await this.balance(db, userId)
       if (points < c.points_per_coupon) throw rewardConflict(REWARD_ERROR_CODES.POINTS_LOW)
-      // Exchanges issue face value too. Share the campaign lock and budget; never debit points when no coupon can be issued.
-      if (await this.issuedFace(db) + BigInt(c.exchange_coupon_max_atomic) > BigInt(c.daily_coupon_budget_atomic)) throw rewardConflict(REWARD_ERROR_CODES.BUDGET_EXHAUSTED)
+      // v1 fee exchanges shared the issuance budget. v2 stake vouchers are bought with points and exempt.
+      if (c.exchange_coupon_kind !== 'prediction_stake' && await this.issuedFace(db) + BigInt(c.exchange_coupon_max_atomic) > BigInt(c.daily_coupon_budget_atomic)) throw rewardConflict(REWARD_ERROR_CODES.BUDGET_EXHAUSTED)
       const id = randomUUID(), remaining = points - c.points_per_coupon
-      await this.issueCoupon(db, userId, id, 'prediction_place_fee', c.exchange_coupon_max_atomic, 'exchange', c.coupon_ttl_days)
+      await this.issueCoupon(db, userId, id, c.exchange_coupon_kind ?? 'prediction_place_fee', c.exchange_coupon_max_atomic, 'exchange', c.exchange_coupon_kind === 'prediction_stake' ? 14 : c.coupon_ttl_days)
       await db.query(`INSERT INTO app.user_points_ledger(user_id,delta,reason,ref_id,idempotency_key,balance_after)
         VALUES($1,$2,'exchange',$3,$4,$5)`, [userId, -c.points_per_coupon, id, key, remaining])
       return { points: remaining, coupon: await this.couponById(db, id) }
+    })
+  }
+  async odds(userId: string) {
+    return this.db.transaction(async db => {
+      const c = await this.live(db, userId)
+      const prizes: Prize[] = await db.query('SELECT * FROM app.reward_prizes WHERE campaign_id=$1 AND version=$2 AND active ORDER BY points NULLS LAST,coupon_max_atomic NULLS LAST,code', [CAMPAIGN, c.prize_version])
+      return { version: c.prize_version,
+        points: prizes.filter(p => p.kind === 'points').map(p => ({ points: p.points!, weight: p.weight })),
+        vouchers: prizes.filter(p => p.kind === 'voucher').map(p => ({ faceAtomic: String(p.coupon_max_atomic), weight: p.weight, dailyCap: p.daily_cap })) }
     })
   }
 }

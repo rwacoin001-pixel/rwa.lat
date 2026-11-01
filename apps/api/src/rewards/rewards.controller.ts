@@ -15,6 +15,8 @@ import { RewardsLiveGuard } from './rewards-live.guard'
 @Controller('rewards')
 export class RewardsController {
   constructor(private readonly rewards: RewardsService) {}
+  @Get('odds')
+  odds(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.rewards.odds(a.userId) }
   @Get('today')
   today(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.rewards.today(a.userId) }
   @Post('draw')

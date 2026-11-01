@@ -7,6 +7,12 @@ import { HttpExceptionFilter } from '../../src/common/http-exception.filter'
 import { rewardConflict } from '../../src/rewards/rewards.errors'
 
 describe('rewards HTTP contract', () => {
+  it('routes odds through the same authenticated/live-gated controller', async () => {
+    const odds=jest.fn().mockResolvedValue({ version:2,points:[],vouchers:[] })
+    const controller=new RewardsController({ odds } as never)
+    expect(await controller.odds({ userId:'user' } as never)).toEqual({ version:2,points:[],vouchers:[] })
+    expect(odds).toHaveBeenCalledWith('user')
+  })
   it('authenticates every route before checking rollout visibility', async () => {
     expect(Reflect.getMetadata(GUARDS_METADATA, RewardsController)).toEqual([SessionAuthGuard, RewardsLiveGuard])
     const response = { setHeader: jest.fn() }
