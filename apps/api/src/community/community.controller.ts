@@ -18,8 +18,9 @@ export class CommunityController {
 
   @Get('feed')
   @ApiOperation({ summary: 'List published community posts (latest or hot)' })
-  feed(@Query() query: CommunityFeedQueryDto) {
-    return this.community.getFeed(query)
+  @UseGuards(CommunityOptionalAuthGuard)
+  feed(@Query() query: CommunityFeedQueryDto, @CurrentAuth() a?: AuthenticatedRequest['auth']) {
+    return this.community.getFeed(query, undefined, undefined, { viewerId: a?.userId })
   }
 
   @Get('topics')
@@ -44,8 +45,9 @@ export class CommunityController {
 
   @Get('profiles/:handle')
   @ApiOperation({ summary: 'Get a community profile with stats and recent posts' })
-  profile(@Param('handle') handle: string) {
-    return this.community.getProfile(handle)
+  @UseGuards(CommunityOptionalAuthGuard)
+  profile(@Param('handle') handle: string, @CurrentAuth() a?: AuthenticatedRequest['auth']) {
+    return this.community.getProfile(handle, a?.userId)
   }
 
   @Post('reports')

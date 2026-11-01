@@ -70,7 +70,7 @@ describe('circle name validation', () => {
 
 describe('public reads never expose circle posts', () => {
   function publicService(post: Record<string, unknown> | null, roleRows: unknown[]) {
-    const { db } = fakeDb(sql => roleSql(sql) ? roleRows : undefined)
+    const { db } = fakeDb(sql => roleSql(sql) ? roleRows : sql.includes('SELECT c.id,c.name FROM app.community_circles c') ? [{ id: CIRCLE, name: 'Koala' }] : undefined)
     const svc = Object.create(CommunityService.prototype) as CommunityService
     Object.assign(svc, {
       dataSource: db,
@@ -80,7 +80,7 @@ describe('public reads never expose circle posts', () => {
     })
     return svc
   }
-  const circlePost = { id: POST, state: 'published', circle_id: CIRCLE, body: 'members only', author: null }
+  const circlePost = { id: POST, state: 'published', circle_id: CIRCLE, circle_only: true, body: 'members only', author: null }
 
   it('answers 404 to anonymous viewers, outsiders and ex-members, for the post and its comments', async () => {
     for (const viewer of [undefined, OUTSIDER]) {
@@ -115,29 +115,30 @@ describe('public reads never expose circle posts', () => {
     })
     await svc.getFeed({ sort: 'latest' })
     await svc.getFeed({ sort: 'hot' })
-    expect(where.filter(c => c === 'post.circle_id IS NULL')).toHaveLength(2)
+    expect(where.filter(c => c === '(post.circle_id IS NULL OR post.circle_only = false)')).toHaveLength(2)
     await svc.getProfile('someone')
     expect(profileFinds).toHaveLength(2)
-    for (const w of profileFinds) expect(w).toHaveProperty('circle_id')
+    for (const w of profileFinds) expect(JSON.stringify(w)).toContain('circle_only')
     await svc.stats()
-    expect(where).toContain('post.circle_id IS NULL')
+    expect(where).toContain('(post.circle_id IS NULL OR post.circle_only = false)')
     // a circle's own feed filters by its id instead
     where.length = 0
     await svc.getFeed({ sort: 'latest' }, undefined, CIRCLE)
     expect(where).toContain('post.circle_id = :circleId')
-    expect(where).not.toContain('post.circle_id IS NULL')
+    expect(where).not.toContain('(post.circle_id IS NULL OR post.circle_only = false)')
   })
 })
 
 describe('only members post, reply and like inside a circle', () => {
   function memberService(role: 'owner' | 'member' | null) {
     const saved: unknown[] = []
-    const post = { id: POST, state: 'published', circle_id: CIRCLE, like_count: 0 }
+    const post = { id: POST, state: 'published', circle_id: CIRCLE, circle_only: true, like_count: 0 }
     const profile = { id: MEMBER_PROFILE, user_id: MEMBER, identity_configured: true, is_active: true }
     const { query, calls } = fakeDb(sql => {
       if (roleSql(sql)) return roleFor(role)
       if (sql.includes('SELECT status FROM app.users')) return [{ status: 'active' }]
       if (sql.includes('community_user_intents')) return []
+      if (sql.includes('FROM app.community_circle_member_settings')) return []
       return undefined
     })
     const repo = (entity: unknown) => ({
@@ -198,11 +199,14 @@ describe('circle service', () => {
       if (sql.includes('FROM app.community_profiles p JOIN app.users u')) return [profileRow]
       if (sql.includes('count(*)::int AS n')) return [{ n: 2 }]
       if (sql.includes('INSERT INTO app.notifications')) return []
+      if (sql.includes('FROM app.community_circle_member_settings')) return []
+      if (sql.includes('max(published_at)')) return []
+      if (sql.includes('SELECT 1 FROM app.community_circles WHERE public_no')) return []
       if (sql.includes('DELETE FROM app.community_circle_guests')) return []
       if (sql.includes('FROM app.community_circle_guests')) return []
       return undefined
     })
-    const community = { profileViews: async () => views, getFeed: jest.fn(async () => ({ items: [], nextCursor: null })) } as unknown as CommunityService
+    const community = { profileViews: async () => views, postViews: async () => new Map(), getFeed: jest.fn(async () => ({ items: [], nextCursor: null })) } as unknown as CommunityService
     return { svc: new CommunityCircleService(fake.db, community), ...fake, community }
   }
 
@@ -217,7 +221,7 @@ describe('circle service', () => {
   it('lets only the owner rename or delete; members get 403 and outsiders 404', async () => {
     for (const [role, status] of [['member', 403], [null, 404]] as const) {
       const { svc } = circles(sql => roleSql(sql) ? roleFor(role) : undefined)
-      await expect(svc.rename(MEMBER, CIRCLE, 'New name')).rejects.toMatchObject({ status })
+      await expect(svc.update(MEMBER, CIRCLE, { name: 'New name' })).rejects.toMatchObject({ status })
       await expect(svc.remove(MEMBER, CIRCLE)).rejects.toMatchObject({ status })
     }
     const { svc, calls } = circles(sql => roleSql(sql) ? roleFor('owner') : sql.includes('UPDATE app.community_circles SET deleted_at') ? [] : undefined)
@@ -229,9 +233,9 @@ describe('circle service', () => {
     const outsider = circles(sql => roleSql(sql) ? roleFor(null) : undefined)
     await expect(outsider.svc.feed(OUTSIDER, CIRCLE, {})).rejects.toMatchObject({ status: 404 })
     await expect(outsider.svc.members(OUTSIDER, CIRCLE, {})).rejects.toMatchObject({ status: 404 })
-    const member = circles(sql => roleSql(sql) ? roleFor('member') : undefined)
+    const member = circles(sql => roleSql(sql) ? roleFor('member') : sql.includes('FROM app.community_circles WHERE id=$1') ? [circleRow] : undefined)
     await member.svc.feed(MEMBER, CIRCLE, { limit: 5 })
-    expect(member.community.getFeed).toHaveBeenCalledWith({ limit: 5, sort: 'latest', topic: undefined }, undefined, CIRCLE)
+    expect(member.community.getFeed).toHaveBeenCalledWith({ limit: 5, sort: 'latest', topic: undefined }, undefined, CIRCLE, { viewerId: MEMBER })
   })
   it('lists downline members at any depth with their depth, paged', async () => {
     const rows = [1, 2, 3].map(depth => ({ profile_id: `p${depth}`, depth, via: 'tree' }))
