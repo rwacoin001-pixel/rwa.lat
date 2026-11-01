@@ -107,11 +107,12 @@ export function describeCard(card: PostCard, k: Copy, locale: string): CardModel
   }
 }
 
-export function ResultCard({ card, author, compact = false }: { card: PostCard; author?: Author; compact?: boolean }) {
+/** `mini` (2026-11-02, the 晒单精选 strip): compact, and only the head, the main figure, the author and the risk line. */
+export function ResultCard({ card, author, compact = false, mini = false }: { card: PostCard; author?: Author; compact?: boolean; mini?: boolean }) {
   const { locale } = useI18n()
   const k = useResultCardCopy()
   const m = describeCard(card, k, locale)
-  return <article className={s.card} data-group={m.group} data-compact={compact || undefined} aria-label={m.head}>
+  return <article className={s.card} data-group={m.group} data-compact={compact || mini || undefined} data-mini={mini || undefined} aria-label={m.head}>
     <header className={s.head}><span>{m.head}</span><em>{k.snapshot}</em></header>
     <div className={s.perf} aria-hidden="true" />
     <div className={s.well}>

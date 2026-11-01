@@ -1,5 +1,7 @@
 'use client'
-import { useCallback, useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, type PointerEvent } from 'react'
+import { PenLine, Ticket } from 'lucide-react'
+import type { ComposeKind } from '@/lib/compose-key'
 import { PaperBuddy, type BuddyMood } from '@/lib/paper-buddy'
 import { onBuddySignal } from '@/lib/buddy-signals'
 import { subscribeToast, getToast } from '@/lib/toast-store'
@@ -19,8 +21,13 @@ const QUIET_MS = 60_000
  * - the app: a success toast makes it celebrate, an error toast makes it droop;
  * - quiet: after a minute without input it drifts off; late at night it sleeps until tapped.
  * Tap: opens the AI chat; unread notifications wait above its composer
+ * On Community (2026-11-02, `compose`) the ball morphs in place into an ink compose key (a pen; a ticket on the 晒单 tab):
+ * tap composes, a long press still opens the AI. Same button, same box, so the pin rule and its position never change.
  */
-export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: boolean; onOpenAi: () => void }) {
+export type OrbCompose = { kind: ComposeKind; label: string; longPress: string; hint: boolean; onCompose: () => void }
+const LONG_PRESS_MS = 480
+
+export function BuddyOrb({ label, active, onOpenAi, compose = null }: { label: string; active: boolean; onOpenAi: () => void; compose?: OrbCompose | null }) {
   const host = useRef<HTMLSpanElement>(null)
   const buddy = useRef<PaperBuddy | null>(null)
   const signedIn = useSignedIn()
@@ -135,6 +142,26 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
     opening.current = true
     window.setTimeout(() => { opening.current = false; onOpenAi() }, reduced ? 0 : 140)
   }
+  // Long press on the compose key = the AI (with its own buzz); the click that ends the press is swallowed.
+  const press = useRef<{ timer: number; x: number; y: number } | null>(null)
+  const pressed = useRef(false)
+  const release = () => { if (press.current) { clearTimeout(press.current.timer); press.current = null } }
+  useEffect(() => release, [])
+  const onPointerDown = (event: PointerEvent) => {
+    if (!compose || event.button !== 0) return
+    release(); pressed.current = false
+    press.current = { x: event.clientX, y: event.clientY, timer: window.setTimeout(() => { press.current = null; pressed.current = true; navigator.vibrate?.([10, 30, 14]); tap() }, LONG_PRESS_MS) }
+  }
+  const onPointerMove = (event: PointerEvent) => {
+    const start = press.current
+    if (start && Math.hypot(event.clientX - start.x, event.clientY - start.y) > 10) release()
+  }
+  const onClick = () => {
+    if (pressed.current) { pressed.current = false; return }
+    if (!compose) { tap(); return }
+    navigator.vibrate?.(6)
+    compose.onCompose()
+  }
   const { open } = useAiOverlay()
   const wasOpen = useRef(open)
   useEffect(() => {
@@ -147,8 +174,16 @@ export function BuddyOrb({ label, active, onOpenAi }: { label: string; active: b
   }, [open])
 
   return <>
-    <button ref={button} type="button" className={`ai-orb ${styles.orb}`} data-active={active || undefined} aria-label={unread > 0 ? `${label} · ${unread}` : label} title={label} onClick={tap}>
+    <button ref={button} type="button" className={`ai-orb ${styles.orb}`} data-active={active || undefined} data-compose={compose?.kind}
+      aria-label={compose ? `${compose.label} · ${compose.longPress}` : unread > 0 ? `${label} · ${unread}` : label} title={compose ? undefined : label} onClick={onClick}
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={release} onPointerLeave={release} onPointerCancel={release}
+      onContextMenu={compose ? (event) => event.preventDefault() : undefined}>
       <span ref={host} className={styles.host} aria-hidden="true" />
+      <span className={styles.key} aria-hidden="true">
+        <PenLine className={styles.glyph} data-glyph="post" size={22} strokeWidth={1.9} />
+        <Ticket className={styles.glyph} data-glyph="cards" size={22} strokeWidth={1.9} />
+      </span>
+      {compose && <span className={styles.hint} data-on={compose.hint || undefined} aria-hidden="true">{compose.longPress}</span>}
     </button>
   </>
 }

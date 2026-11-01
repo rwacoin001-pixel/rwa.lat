@@ -424,3 +424,19 @@ span.act { cursor: default; }
 
 /* Share-a-result card inside a post (2026-11-01). */
 .cardSlot { margin: 8px 0 4px; }
+
+/* 晒单 chip (2026-11-02): a small green light, like the ticket printer's, while today's ticket can be printed. */
+.chipDot { display: inline-block; width: 6px; height: 6px; margin-inline-start: 6px; border-radius: 50%; background: #19c7aa; box-shadow: 0 0 6px rgba(25, 199, 170, .7); vertical-align: middle; }
+
+/* 晒单精选 (2026-11-02): one sideways strip of the latest result cards after every ten posts in 热门 / 最新; the cards are
+   the mini ResultCard at 248 wide. A hairline above and below keeps it part of the timeline. */
+.picks { padding: 16px 0 8px; border-bottom: .5px solid var(--x-line); }
+.picksHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; padding: 0 16px; }
+.picksHead b { color: var(--x-ink); font-size: 15px; font-weight: 600; line-height: 22px; }
+.picksHead a { color: var(--x-muted); font-size: 13px; line-height: 18px; text-decoration: none; }
+.picksStrip { display: flex; gap: 12px; padding: 12px 16px 24px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 16px; scrollbar-width: none; overscroll-behavior-x: contain; }
+.picksStrip::-webkit-scrollbar { display: none; }
+.pick { display: grid; flex: none; width: 248px; color: inherit; text-decoration: none; scroll-snap-align: start; transition: transform .12s; }
+.pick:active { transform: scale(.97); }
+.pick:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; border-radius: 28px; }
+@media (prefers-reduced-motion: reduce) { .pick { transition: none; } }

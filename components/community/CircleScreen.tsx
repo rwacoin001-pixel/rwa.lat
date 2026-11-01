@@ -6,7 +6,6 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet } from '@/components/maison/Sheet'
 import { MaisonPage, maison as mp } from '@/components/maison/primitives'
 import { CommunityCompose, useCommunityMe } from '@/components/community-compose'
-import { claimFeatherCompose } from '@/lib/community-feather'
 import { deleteCircle, getCirclePosts, getMyCircles, leaveCircle, muteCircle, pinCirclePost, rejoinCircle, renameCircle, updateCircle, type Circle, type CircleMembership } from '@/lib/community-circles'
 import { getCommunityTopics, type CommunityPost, type CommunityTopic } from '@/lib/community-data'
 import { useI18n } from '@/lib/i18n'
@@ -73,7 +72,6 @@ export function CircleScreen({ circleId, go, openPost, openProfile, isGuest = tr
     if (current.silenced) { actions.notify({ text: labels.silencedNote }); return }
     setComposing(true)
   }, [isGuest, go, current, left, labels.silencedNote, actions.notify])
-  useEffect(() => claimFeatherCompose(compose), [compose])
   const more = async () => {
     if (!circleId || !cursor || paging.current || left) return
     paging.current = true; setMoreLoading(true); setMoreFailed(false)

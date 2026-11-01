@@ -7,14 +7,28 @@ import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChartNoAxesColumnIncr
 import { expandChrome, useScrollChrome } from '@/hooks/useScrollChrome'
 import { openPath } from '@/lib/maison-nav'
 import { fundsCopy } from '@/lib/maison-funds-copy'
-import { useI18n } from '@/lib/i18n'
+import { useI18n, type AppLocale } from '@/lib/i18n'
 import { rwaH5Copy } from '@/lib/rwa-h5-copy'
 import type { PrimaryScreen } from './shared'
 import { BuddyOrb } from '@/components/buddy/BuddyOrb'
-import { CommunityFeather } from '@/components/community/CommunityFeather'
+import { communityUiCopy } from '@/lib/maison-community-ui-copy'
+import { countComposeHintVisit, useComposeKey } from '@/lib/compose-key'
 import d from './dock-v2.module.css'
 
 type Screen = RwaScreen
+
+/** The compose key's own words (2026-11-02): the 晒单 key's label and the long-press hint. */
+const keyCopy: Record<AppLocale, { cards: string; longPress: string }> = {
+  en: { cards: 'Share a result', longPress: 'Hold for AI' },
+  'zh-CN': { cards: '晒单', longPress: '长按问 AI' },
+  hi: { cards: 'नतीजा साझा करें', longPress: 'AI के लिए दबाए रखें' },
+  es: { cards: 'Compartir resultado', longPress: 'Mantén pulsado para la IA' },
+  ar: { cards: 'شارك نتيجة', longPress: 'اضغط مطولًا للذكاء الاصطناعي' },
+  fr: { cards: 'Partager un résultat', longPress: 'Appui long pour l’IA' },
+  pt: { cards: 'Compartilhar resultado', longPress: 'Segure para a IA' },
+}
+const HINT_DELAY_MS = 600
+const HINT_SHOW_MS = 4200
 
 export function BottomDock({ screen, setScreen, activeScreen, showQuickActions = false }: { screen: Screen; setScreen: (screen: Screen) => void; activeScreen?: PrimaryScreen; showQuickActions?: boolean }) {
   const { locale, t } = useI18n()
@@ -48,6 +62,23 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
     return () => { document.removeEventListener('pointerdown', closeOnOutside); window.removeEventListener('keydown', closeOnEscape) }
   }, [quickOpen])
   useEffect(() => { if (isCompact) setQuickOpen(false) }, [isCompact])
+  // On Community the orb is the compose key (the feed claims it); everywhere else it is the AI.
+  const claim = useComposeKey()
+  const compose = screen === 'community' ? claim : null
+  const [hint, setHint] = useState(false)
+  // The hint waits until the key has morphed (the feed claimed it), then shows once per visit.
+  const hintVisit = useRef<boolean | null>(null)
+  const morphed = Boolean(compose)
+  useEffect(() => {
+    if (screen !== 'community') { hintVisit.current = null; setHint(false); return }
+    if (!morphed) return
+    hintVisit.current ??= countComposeHintVisit()
+    if (!hintVisit.current) return
+    const show = window.setTimeout(() => setHint(true), HINT_DELAY_MS)
+    const hide = window.setTimeout(() => { hintVisit.current = false; setHint(false) }, HINT_DELAY_MS + HINT_SHOW_MS)
+    return () => { clearTimeout(show); clearTimeout(hide); setHint(false) }
+  }, [screen, morphed])
+  const keyText = keyCopy[locale] ?? keyCopy.en
   const active = items.find((item) => item.id === (activeScreen ?? screen)) ?? items[0]
   const ActiveIcon = active.icon
   // Same rule on every tab (iOS tab bar): minimise on scroll down, restore on scroll up; tapping the current tab returns to top.
@@ -82,10 +113,9 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
           <Plus size={17} strokeWidth={1.9} />
         </button>
       </>}
-      {/* The paper buddy: AI, notifications, how things stand. */}
-      <CommunityFeather>
-        <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => openAi()} />
-      </CommunityFeather>
+      {/* The paper buddy: AI, notifications, how things stand. On Community it is the compose key (long press = AI). */}
+      <BuddyOrb label={t('nav.ai')} active={screen === 'ai'} onOpenAi={() => openAi()}
+        compose={compose ? { kind: compose.kind, label: compose.kind === 'cards' ? keyText.cards : communityUiCopy[locale].compose, longPress: keyText.longPress, hint: hint && !isCompact, onCompose: compose.open } : null} />
     </nav>
   )
 }
