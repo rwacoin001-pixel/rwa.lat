@@ -1,0 +1,78 @@
+/* Share-a-result card (2026-11-01). docs/design-system.md: white shell radius 28 with the card shadow, inner well radius 22,
+   §3.1 type and spacing, Satoshi numerals. The ticket head's soft band is the only colour on the card (no gradient shell). */
+.card { --band-a: #c9efe0; --band-b: #d6e6f7; --band-ink: #0b3b33; position: relative; display: grid; padding: 8px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .07), 0 24px 48px -28px rgba(15, 23, 42, .35); color: var(--m-ink, #0b1220); font-variant-numeric: tabular-nums; }
+.card[data-group='prediction'] { --band-a: #e2dcf8; --band-b: #f4d9e2; --band-ink: #2e2448; }
+.card[data-group='funds'] { --band-a: #eceef1; --band-b: #e3e6ea; --band-ink: #2b3340; }
+
+/* Ticket head: two soft lights drift slowly across the band. */
+.head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding: 0 12px 0 16px; overflow: hidden; border-radius: 22px 22px 8px 8px; background: radial-gradient(120% 160% at 0% 0%, var(--band-a), transparent 60%), radial-gradient(120% 160% at 100% 100%, var(--band-b), transparent 60%), linear-gradient(90deg, var(--band-a), var(--band-b)); background-size: 160% 160%, 160% 160%, 100% 100%; color: var(--band-ink); animation: drift 14s ease-in-out infinite alternate; }
+.head span { overflow: hidden; font-size: 14px; font-weight: 600; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.head em { flex: none; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .72); color: var(--band-ink); font-size: 12px; font-style: normal; font-weight: 600; line-height: 28px; letter-spacing: .02em; }
+@keyframes drift { from { background-position: 0% 0%, 100% 100%, 0 0; } to { background-position: 40% 30%, 60% 70%, 0 0; } }
+
+/* Perforation: notches on both edges and a dotted tear line. */
+.perf { position: relative; height: 16px; margin: 0 -8px; }
+.perf::before { content: ''; position: absolute; top: 50%; right: 20px; left: 20px; border-top: 1.5px dashed rgba(11, 18, 32, .12); }
+.perf::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 0 50%, var(--rc-page, #fff) 7px, transparent 7.5px), radial-gradient(circle at 100% 50%, var(--rc-page, #fff) 7px, transparent 7.5px); }
+
+.well { display: grid; gap: 4px; padding: 16px; border-radius: 8px 8px 22px 22px; background: #f6f7f9; }
+.title { margin-bottom: 4px; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.kicker { color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.figure { font-size: 36px; font-weight: 600; line-height: 44px; letter-spacing: -.02em; white-space: nowrap; }
+.figure small { margin-inline-start: 2px; color: var(--m-muted, #5b6472); font-size: 15px; font-weight: 500; letter-spacing: 0; }
+.sub { font-size: 17px; font-weight: 600; line-height: 24px; }
+.card [data-tone='up'] { color: var(--m-up, #0f8f5f); }
+.card [data-tone='down'] { color: var(--m-down, #c23a3a); }
+.note { color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; margin: 12px 0 0; padding-top: 4px; border-top: .5px solid rgba(11, 18, 32, .08); }
+.grid > div { display: grid; gap: 2px; min-width: 0; padding: 10px 0; }
+.grid > div:nth-child(even) { padding-inline-start: 16px; border-inline-start: .5px solid rgba(11, 18, 32, .08); }
+.grid > div:nth-child(n + 3) { border-top: .5px solid rgba(11, 18, 32, .08); }
+.grid dt { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.grid dd { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.grid [data-hidden] dd { color: var(--m-muted, #5b6472); }
+.veil { display: block; width: 72px; height: 12px; border-radius: 999px; background: linear-gradient(90deg, rgba(11, 18, 32, .1), rgba(11, 18, 32, .05)); filter: blur(1.5px); }
+
+/* Prediction record: last ten as dots (ink = won, ring = lost, dash = void). */
+.dots { display: flex; gap: 8px; margin-top: 8px; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--m-ink, #0b1220); }
+.dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px var(--m-ink, #0b1220); }
+.dots i[data-r='void'] { height: 2px; margin-top: 5px; border-radius: 1px; background: var(--m-muted, #5b6472); }
+
+/* Holdings: one slim stacked bar and the list. */
+.holdings { display: grid; gap: 12px; }
+.bar { display: flex; gap: 2px; height: 28px; overflow: hidden; border-radius: 999px; }
+.bar i { display: grid; place-items: center; min-width: 6px; color: #fff; font-size: 12px; font-style: normal; font-weight: 600; }
+.card [data-i='0'] { background: #0f5c52; } .card [data-i='1'] { background: #2fae93; } .card [data-i='2'] { background: #9aa3ae; } .card [data-i='3'] { background: #c8ced6; }
+.holdings ul { display: grid; margin: 0; padding: 0; list-style: none; }
+.holdings li { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 14px; line-height: 20px; }
+.holdings li + li { border-top: .5px solid rgba(11, 18, 32, .08); }
+.holdings li > i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
+.holdings li span { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.holdings li b { font-weight: 600; }
+
+.foot { display: grid; gap: 4px; padding: 12px 8px 4px; }
+.who { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.who > span { display: grid; min-width: 0; }
+.who b { overflow: hidden; font-size: 14px; font-weight: 600; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.who small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.prov { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.risk { color: var(--m-faint, #8a9099); font-size: 11px; line-height: 16px; }
+
+.card[data-compact] .figure { font-size: 28px; line-height: 36px; }
+.card[data-compact] .head { height: 48px; }
+
+:global(.rwa-mobile[data-theme='dark']) .card { --rc-page: #0a0c10; background: #12151b; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08), 0 24px 48px -28px rgba(0, 0, 0, .8); color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .card { --band-a: #1d4a42; --band-b: #1f3550; --band-ink: #e3f4ef; }
+:global(.rwa-mobile[data-theme='dark']) .card[data-group='prediction'] { --band-a: #362f5a; --band-b: #4a2d3d; --band-ink: #efe9ff; }
+:global(.rwa-mobile[data-theme='dark']) .card[data-group='funds'] { --band-a: #262b33; --band-b: #20252c; --band-ink: #e6e9ee; }
+:global(.rwa-mobile[data-theme='dark']) .head em { background: rgba(255, 255, 255, .12); }
+:global(.rwa-mobile[data-theme='dark']) .well { background: #1b1f26; }
+:global(.rwa-mobile[data-theme='dark']) .perf::before { border-top-color: rgba(255, 255, 255, .14); }
+:global(.rwa-mobile[data-theme='dark']) .grid, :global(.rwa-mobile[data-theme='dark']) .grid > div, :global(.rwa-mobile[data-theme='dark']) .holdings li + li { border-color: rgba(255, 255, 255, .08); }
+:global(.rwa-mobile[data-theme='dark']) .figure small, :global(.rwa-mobile[data-theme='dark']) .kicker, :global(.rwa-mobile[data-theme='dark']) .grid dt, :global(.rwa-mobile[data-theme='dark']) .prov, :global(.rwa-mobile[data-theme='dark']) .note, :global(.rwa-mobile[data-theme='dark']) .who small { color: #a3acb9; }
+:global(.rwa-mobile[data-theme='dark']) .veil { background: linear-gradient(90deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)); }
+:global(.rwa-mobile[data-theme='dark']) .dots i { background: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px #f2f4f7; }
+@media (prefers-reduced-motion: reduce) { .head { animation: none; } }

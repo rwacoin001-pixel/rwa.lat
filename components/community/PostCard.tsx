@@ -15,6 +15,7 @@ import { inviteLinkFor } from '@/lib/referral-invite'
 import { CommunityLike } from '../community-actions'
 import { CommunityText } from '../community-text'
 import { CommunityProofCard } from '../community-proof'
+import { ResultCard } from './cards/ResultCard'
 import { CommunityAvatar, mediaSrc } from '../community-avatar'
 import { PhotoViewer } from '../community-photo-viewer'
 import { CommunityCompose, useCommunityMe, type ComposeTarget } from '../community-compose'
@@ -272,7 +273,7 @@ export function PostRow({ post, timeAgo, openPost, openProfile, topics = [], loc
         </div>
         {post.circle && <button type="button" className={c.circleSource} onClick={() => openPath(`/community/circle/${encodeURIComponent(post.circle!.id)}`)}>{locale === 'zh-CN' ? '来自圈子' : 'From circle'} · <span dir="auto">{post.circle.name}</span></button>}
         <CommunityText body={post.body} targetId={post.id} className={c.text} compact onOpen={open} lang={post.lang} />
-        {post.proof && <CommunityProofCard proof={post.proof} locale={locale} />}
+        {post.card ? <div className={c.cardSlot}><ResultCard card={post.card} compact /></div> : post.proof && <CommunityProofCard proof={post.proof} locale={locale} />}
         <Images images={post.images} onOpen={open} />
         <Tags list={post.topics} topics={topics} locale={locale} />
         <div className={c.bar}>

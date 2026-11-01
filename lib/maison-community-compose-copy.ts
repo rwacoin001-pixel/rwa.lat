@@ -10,11 +10,13 @@ export type CommunityComposeCopy = {
   uploading: string; imageType: string; imageSize: string; imageFailed: string; imageLimit: string; imagesPending: string
   editProfile: string; changeAvatar: string; pickAvatar: string; removeAvatar: string; displayName: string; bio: string; save: string; saving: string
   avatarPending: string; saved: string; saveFailed: string
+  /** Share-a-result card (2026-11-01); other locales fall back to English. */
+  addCard?: string; cardRemove?: string
 }
 
 const en: CommunityComposeCopy = {
   drafts: 'Drafts', post: 'Post', reply: 'Reply', placeholder: 'What is happening?', replyPlaceholder: 'Post your reply',
-  replyingTo: 'Replying to', replyBar: 'Post your reply', everyone: 'Everyone can reply', addImage: 'Add photos', removeImage: 'Remove photo',
+  replyingTo: 'Replying to', replyBar: 'Post your reply', everyone: 'Everyone can reply', addImage: 'Add photos', removeImage: 'Remove photo', addCard: 'Add a result card', cardRemove: 'Remove card',
   topic: 'Topic', noTopic: 'No topic', expand: 'Open full composer', close: 'Close', remaining: '{n} characters left',
   saveTitle: 'Save this post as a draft?', saveDraft: 'Save draft', discard: 'Discard', cancel: 'Cancel',
   draftsTitle: 'Drafts', draftsEmpty: 'No drafts yet', draftUse: 'Edit draft', draftDelete: 'Delete draft',
@@ -24,7 +26,7 @@ const en: CommunityComposeCopy = {
 }
 const zh: CommunityComposeCopy = {
   drafts: '草稿', post: '发帖', reply: '回复', placeholder: '有什么新鲜事？', replyPlaceholder: '发布你的回复',
-  replyingTo: '回复', replyBar: '发布你的回复', everyone: '所有人可以回复', addImage: '添加图片', removeImage: '移除图片',
+  replyingTo: '回复', replyBar: '发布你的回复', everyone: '所有人可以回复', addImage: '添加图片', removeImage: '移除图片', addCard: '添加晒单卡片', cardRemove: '移除卡片',
   topic: '话题', noTopic: '不选话题', expand: '展开完整编辑器', close: '关闭', remaining: '还可输入 {n} 字',
   saveTitle: '要将这条帖子保存为草稿吗？', saveDraft: '保存草稿', discard: '不保存', cancel: '取消',
   draftsTitle: '草稿', draftsEmpty: '暂无草稿', draftUse: '编辑草稿', draftDelete: '删除草稿',

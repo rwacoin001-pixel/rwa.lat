@@ -17,6 +17,7 @@ import { CircleList, openCircle } from './community/CircleList'
 import { Avatar, Images, Like, PostRow, SkeletonRows, Tags, XState, circleCopy, communityTopicTitle, compact, profileCopy, useInfinite, usePostActions, useTimeAgo, type RowActions } from './community/PostCard'
 import { openPath } from '@/lib/maison-nav'
 import { CircleJoinSheet } from './community/CircleJoinSheet'
+import { ResultCard } from './community/cards/ResultCard'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
 import { useQuery } from '@/lib/api/_query'
@@ -125,6 +126,11 @@ const inviteLabel: Record<AppLocale, { tab: string; guest: string; guestBody: st
 type CommunityView = 'feed' | 'invite'
 const viewFromUrl = (): CommunityView => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'invite' ? 'invite' : 'feed'
 
+const cardsTabCopy: Partial<Record<string, { tab: string; filters: Record<'all' | 'quant' | 'prediction' | 'funds', string>; empty: string; emptyBody: string; make: string }>> = {
+  'zh-CN': { tab: '晒单', filters: { all: '全部', quant: '量化', prediction: '预测', funds: '资金记录' }, empty: '还没有人晒单', emptyBody: '晒单卡片的数据来自账户，亏损也可以发。', make: '发一张卡片' },
+  en: { tab: 'Results', filters: { all: 'All', quant: 'Quant', prediction: 'Predictions', funds: 'Funds' }, empty: 'No results shared yet', emptyBody: 'Card figures come from the account. Losses can be shared too.', make: 'Share a card' },
+}
+
 export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true, embedded = false }: { go: (screen: RwaScreen) => void; openPost: (id: string) => void; openProfile: (handle: string) => void; isGuest?: boolean; embedded?: boolean }) {
   // Unread direct messages: a dot on the envelope, refreshed while the feed is open.
   const [dmUnread, setDmUnread] = useState(0)
@@ -140,7 +146,10 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   // Match the home module's public feed so the community route does not
   // render an empty latest-only view while the hot feed already has content.
   // Signed-in readers open on their circle (2026-11-01).
-  const [sort, setSort] = useState<'latest' | 'hot' | 'circle'>(isGuest || embedded ? 'hot' : 'circle')
+  const [sort, setSort] = useState<'latest' | 'hot' | 'circle' | 'cards'>(isGuest || embedded ? 'hot' : 'circle')
+  // 晒单 tab (2026-11-01): result-card posts, newest first, filtered by family; never ranked by profit.
+  const [cardFilter, setCardFilter] = useState<'all' | 'quant' | 'prediction' | 'funds'>('all')
+  const cardsText = cardsTabCopy[locale] ?? cardsTabCopy.en!
   const [topic, setTopic] = useState<string | null>(null)
   const [topics, setTopics] = useState<CommunityTopic[]>([])
   const [items, setItems] = useState<CommunityPost[]>([])
@@ -150,7 +159,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const [failed, setFailed] = useState(false)
   const [moreFailed, setMoreFailed] = useState(false)
   const requestVersion = useRef(0)
-  const pageSort = useRef<'latest' | 'hot'>('hot')
+  const pageSort = useRef<'latest' | 'hot' | 'cards'>('hot')
   const [composing, setComposing] = useState(false)
   const me = useCommunityMe(isGuest)
   const chromeHidden = useScrollChrome()
@@ -206,7 +215,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   }, [embedded])
   const relations = new Map((circle?.members ?? []).map((member) => [member.profile.id, member.relation]))
   // My circle leads when there is one (2026-10-28): the people you invited come first.
-  const tabs = [...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
+  const tabs = [...(isGuest || embedded ? [] : [{ key: 'circle' as const, label: circleText.tab }]), ...(embedded ? [] : [{ key: 'cards' as const, label: cardsText.tab }]), { key: 'hot' as const, label: t('community.sortHot') }, { key: 'latest' as const, label: t('community.sortLatest') }]
   const actions = usePostActions(isGuest, go, locale, (postId) => setItems((previous) => previous.map((item) => item.id === postId ? { ...item, commentCount: item.commentCount + 1 } : item)))
   const rowActions: RowActions = { guest: isGuest, onLogin: actions.login, onReply: actions.onReply, onShare: actions.onShare, onMore: actions.onMore }
 
@@ -227,7 +236,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       let effectiveSort = sort
       try {
         if (sort === 'circle') { setItems([]); setNextCursor(null); return }
-        page = await getCommunityFeed({ sort, topic: topic ?? undefined, limit: 20 })
+        page = sort === 'cards' ? await getCommunityFeed({ cards: cardFilter, limit: 20 }) : await getCommunityFeed({ sort, topic: topic ?? undefined, limit: 20 })
         if (sort === 'hot' && page.items.length === 0) {
           const latest = await getCommunityFeed({ sort: 'latest', topic: topic ?? undefined, limit: 20 })
           if (latest.items.length > 0) { page = latest; effectiveSort = 'latest' }
@@ -259,7 +268,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     setMoreFailed(false)
     const version = requestVersion.current
     try {
-      const page = await getCommunityFeed({ sort: pageSort.current, topic: topic ?? undefined, cursor: nextCursor, limit: 20 })
+      const page = pageSort.current === 'cards' ? await getCommunityFeed({ cards: cardFilter, cursor: nextCursor, limit: 20 }) : await getCommunityFeed({ sort: pageSort.current, topic: topic ?? undefined, cursor: nextCursor, limit: 20 })
       if (version !== requestVersion.current) return
       setItems((previous) => [...previous, ...(page.items ?? []).filter(item => !previous.some(row => row.id === item.id))])
       setNextCursor(page.nextCursor)
@@ -306,7 +315,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     },
   }
 
-  const pickSort = (next: 'latest' | 'hot' | 'circle') => { guestHot.current = false; if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
+  const pickSort = (next: 'latest' | 'hot' | 'circle' | 'cards') => { guestHot.current = false; if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
     <div className={c.x} data-embedded={embedded || undefined} data-view={view} {...swipeHandlers}>
@@ -326,9 +335,12 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         </div>}
         {/* One chip row (2026-10-28): how to sort (hot, latest, my circle), then the topics; tap a topic again to clear it. */}
         {view === 'feed' && <div className={c.topics} role="group" aria-label={ui.feed}>
-          {/* 晒单 / Proof tab comes later (2026-11-01). */}
           {tabs.map((option) => <button key={option.key} type="button" className={c.chip} aria-pressed={sort === option.key} onClick={() => pickSort(option.key)}>{option.label}</button>)}
-          {sort !== 'circle' && topics.length > 0 && <>
+          {sort === 'cards' && <>
+            <i className={c.chipRule} aria-hidden="true" />
+            {(['all', 'quant', 'prediction', 'funds'] as const).map((key) => <button key={key} type="button" className={`${c.chip} ${c.topicChip}`} aria-pressed={cardFilter === key} onClick={() => setCardFilter(key)}>{cardsText.filters[key]}</button>)}
+          </>}
+          {sort !== 'circle' && sort !== 'cards' && topics.length > 0 && <>
             <i className={c.chipRule} aria-hidden="true" />
             {topics.map((entry) => <button key={entry.slug} type="button" className={`${c.chip} ${c.topicChip}`} aria-pressed={topic === entry.slug} onClick={() => setTopic(topic === entry.slug ? null : entry.slug)}>#{communityTopicTitle(entry.slug, topics, locale)}</button>)}
           </>}
@@ -340,6 +352,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       : sort === 'circle' && !isGuest ? <CircleList onNotify={text => actions.notify({ text })} />
       : loading ? <SkeletonRows />
         : failed ? <XState title={communityCopy[locale].feedFailed} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => void load()}>{t('common.refresh')}</button>} />
+        : items.length === 0 && sort === 'cards' ? <XState title={cardsText.empty} body={cardsText.emptyBody} action={isGuest ? undefined : <button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => setComposing(true)}>{cardsText.make}</button>} />
         : items.length === 0 ? (sort === 'circle'
           ? <XState title={circleText.emptyTitle} body={circleText.emptyBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => pick('invite')}>{circleText.invite}</button>} />
           : <XState title={t('community.emptyTitle')} body={t('community.emptyBody')} />)
@@ -352,7 +365,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
           {moreFailed && <button type="button" className={c.more} onClick={() => { setMoreFailed(false); void loadMore() }}>{communityCopy[locale].moreFailed} · {t('common.refresh')}</button>}
         </>}
       {!embedded && <CircleJoinSheet code={joinCode} isGuest={isGuest} onClose={() => { setJoinCode(null); dropParam('join') }} onOpen={openJoined} onNotify={(text) => actions.notify({ text })} />}
-      {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: null }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={openPost} />}
+      {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: null, openCard: sort === 'cards' }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={openPost} />}
       {actions.overlays(me)}
     </div>
   )
@@ -437,7 +450,7 @@ export function CommunityPostScreen({ postId, go, openProfile, isGuest = true }:
                 {author?.handle && !own && <CommunityFollowButton className={c.follow} handle={author.handle} guest={isGuest} onLogin={() => go('login')} />}
               </div>
               <CommunityText body={data.post.body} targetId={data.post.id} className={c.focusText} lang={data.post.lang} />
-              {data.post.proof && <CommunityProofCard proof={data.post.proof} locale={locale} />}
+              {data.post.card ? <div className={c.cardSlot}><ResultCard card={data.post.card} /></div> : data.post.proof && <CommunityProofCard proof={data.post.proof} locale={locale} />}
               <Images images={data.post.images} />
               <Tags list={data.post.topics} topics={topics} locale={locale} />
               <p className={c.stamp}>

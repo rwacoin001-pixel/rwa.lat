@@ -370,3 +370,8 @@ b.name { cursor: default; }
 :global(.rwa-mobile[data-theme='dark']) .editNote { background: rgba(255, 255, 255, .06); }
 /* The audience line as a key when the writer has circles (2026-11-01): public or one circle. */
 button.audience { width: 100%; border-width: 0 0 .5px; background: none; text-align: start; cursor: pointer; }
+
+/* Share-a-result card in the composer (2026-11-01). */
+.cardAttached { position: relative; margin: 8px 0; }
+.cardRemove { position: absolute; top: 14px; right: 14px; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .85); color: var(--m-ink); cursor: pointer; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .1); }
+.toolBtn[data-set] { color: var(--m-accent); }

@@ -30,6 +30,8 @@ export type CommunityProofRequest = { kind: 'quant_day'; product: string; date: 
 export type CommunityPost = {
   circle?: { id: string; name: string } | null
   proof?: CommunityProof | null
+  /** A share-a-result card (2026-11-01): server snapshot, hidden fields absent. */
+  card?: import('./community-cards').PostCard | null
   lang?: string
   location?: { city: string; countryCode: string } | null
   id: string
@@ -82,9 +84,11 @@ async function apiGet<T>(path: string, signedIn = false): Promise<T> {
   return result.data
 }
 
-export async function getCommunityFeed(params: { sort?: 'latest' | 'hot'; topic?: string; cursor?: string; limit?: number } = {}) {
+export async function getCommunityFeed(params: { sort?: 'latest' | 'hot'; topic?: string; cursor?: string; limit?: number; cards?: 'all' | 'quant' | 'prediction' | 'funds' } = {}) {
   const query = new URLSearchParams()
   if (params.sort) query.set('sort', params.sort)
+  // 晒单 (2026-11-01): only posts with a result card, optionally one family of kinds.
+  if (params.cards) { query.set('hasCard', 'true'); if (params.cards !== 'all') query.set('cardKind', params.cards) }
   if (params.topic) query.set('topic', params.topic)
   if (params.cursor) query.set('cursor', params.cursor)
   if (params.limit) query.set('limit', String(params.limit))

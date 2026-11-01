@@ -5,7 +5,10 @@ import type { CommunityProof, CommunityProofRequest } from '@/lib/community-data
 import { riskyPost, riskyPostMessage } from '@/lib/community-guard'
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Dialog } from '@base-ui/react/dialog'
-import { Users, Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Trash2, X } from 'lucide-react'
+import { Users, Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Ticket, Trash2, X } from 'lucide-react'
+import { CardPicker } from './community/cards/CardPicker'
+import { ResultCard } from './community/cards/ResultCard'
+import { CARD_FIELDS, type CardDraft } from '@/lib/community-cards'
 import { getPostLocation, locationCopy, type PostLocation } from '@/lib/community-location'
 import { request, readSession, SESSION_CHANGED, type ApiError } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
@@ -110,7 +113,7 @@ function CharRing({ used, max, label }: { used: number; max: number; label: stri
 
 /* ── Full-screen composer ── */
 
-export type ComposeTarget = { kind: 'post'; topic?: string | null; circleId?: string | null; proof?: { request: CommunityProofRequest; view: CommunityProof } } | { kind: 'reply'; postId: string; handle?: string | null }
+export type ComposeTarget = { kind: 'post'; topic?: string | null; circleId?: string | null; proof?: { request: CommunityProofRequest; view: CommunityProof }; /** Open the card picker at once (the 晒单 tab). */ openCard?: boolean } | { kind: 'reply'; postId: string; handle?: string | null }
 type Shot = { key: string; preview: string; status: 'uploading' | 'done' | 'error'; id?: string; pending?: boolean }
 
 /** Who sees a new post (2026-11-01, own circles): everyone, or only the members of one circle. */
@@ -132,6 +135,11 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const [loadedCircles, setLoadedCircles] = useState<Array<{ id: string; name: string }>>([])
   const choices = circles.length ? circles : loadedCircles
   const [alsoPublic, setAlsoPublic] = useState(false)
+  // Share-a-result card (2026-11-01): picked in its own sheet; a card post needs no location.
+  const [card, setCard] = useState<CardDraft | null>(null)
+  const [cardPicking, setCardPicking] = useState(false)
+  const openCard = target.kind === 'post' && Boolean(target.openCard)
+  useEffect(() => { if (!open) return; setCard(null); setCardPicking(openCard) }, [open, openCard])
   const [syncCircleId, setSyncCircleId] = useState<string | null>(null)
   const syncCircle = choices.find(item => item.id === syncCircleId)?.id ?? choices[0]?.id ?? null
   const [silencedToast, setSilencedToast] = useState(false)
@@ -240,9 +248,9 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const hasContent = trimmed.length > 0 || shots.length > 0
   // A post carrying a verified result may go without text (2026-10-28).
   const proof = target.kind === 'post' ? target.proof ?? null : null
-  const canSend = (trimmed.length > 0 || ready.length > 0 || Boolean(proof)) && !uploading && body.length <= max && !busy && (reply || Boolean(location))
+  const canSend = (trimmed.length > 0 || ready.length > 0 || Boolean(proof) || Boolean(card)) && !uploading && body.length <= max && !busy && (reply || Boolean(location) || Boolean(card))
 
-  const finish = () => { clearShots(); setBody(''); onClose() }
+  const finish = () => { clearShots(); setBody(''); setCard(null); onClose() }
   const requestClose = () => {
     if (busy) return
     if (panel) { setPanel(null); return }
@@ -276,7 +284,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
     if (riskyPost(trimmed)) { setError(riskyPostMessage[locale] ?? riskyPostMessage.en); return }
     if (!currentMe?.identityConfigured) { setIdentityOpen(true); return }
     const imageIds = ready.map(s => s.id!)
-    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(circleId ? { circleId, ...(alsoPublic ? { alsoPublic: true } : {}) } : alsoPublic && syncCircle ? { circleId: syncCircle, alsoPublic: true } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
+    const payload = JSON.stringify({ body: trimmed, lang: locale, ...(reply ? {} : { topics: topic ? [topic] : [], location, ...(proof ? { proof: proof.request } : {}), ...(card ? { card: { kind: card.kind, ...(card.sourceId ? { sourceId: card.sourceId } : {}), visibleFields: card.visibleFields } } : {}), ...(circleId ? { circleId, ...(alsoPublic ? { alsoPublic: true } : {}) } : alsoPublic && syncCircle ? { circleId: syncCircle, alsoPublic: true } : {}) }), ...(imageIds.length ? { imageIds } : {}) })
     // Same payload keeps the same key, so a retry after a lost response cannot publish twice.
     if (intent.current?.text !== payload) intent.current = { text: payload, key: crypto.randomUUID() }
     setBusy(true); setError('')
@@ -321,6 +329,8 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
                 </li>)}
               </ul>}
               {proof && <CommunityProofCard proof={proof.view} locale={locale} />}
+              {card && <div className={x.cardAttached}><ResultCard compact card={{ kind: card.kind, snapshot: Object.fromEntries(Object.entries(card.preview.snapshot).filter(([key]) => !CARD_FIELDS[card.kind].includes(key) || card.visibleFields.includes(key))), visibleFields: card.visibleFields, capturedAt: new Date().toISOString() }} />
+                <button type="button" className={x.cardRemove} aria-label={k.cardRemove ?? 'Remove card'} onClick={() => setCard(null)}><X size={16} strokeWidth={2} aria-hidden="true" /></button></div>}
               {ready.some(s => s.pending) && <p className={x.composeNote}>{k.imagesPending}</p>}
             </div>
           </div>
@@ -349,6 +359,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
             <div className={x.toolRow}>
               <button type="button" className={x.toolBtn} aria-label={k.addImage} disabled={shots.length >= MAX_IMAGES || busy} onClick={() => picker.current?.click()}><ImagePlus size={21} strokeWidth={1.8} /></button>
               <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} multiple hidden onChange={onPick} />
+              {!reply && !proof && <button type="button" className={x.toolBtn} aria-label={k.addCard ?? 'Add a result card'} data-set={Boolean(card) || undefined} disabled={busy} onClick={() => setCardPicking(true)}><Ticket size={21} strokeWidth={1.8} /></button>}
               {!reply && <button type="button" className={x.toolChip} aria-expanded={panel === 'topics'} data-set={topic !== null} onClick={() => setPanel(panel === 'topics' ? null : 'topics')}><Hash size={16} strokeWidth={2} aria-hidden="true" /><span>{topicLabel}</span></button>}
               <span className={x.grow} />
               {body.length > 0 && <CharRing used={body.length} max={max} label={k.remaining} />}
@@ -377,6 +388,8 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
               </li>)}
             </ul>}
           </div>}
+          {/* Nested inside the composer's popup so the modal composer does not mark it inert. */}
+          {!reply && <CardPicker panel open={open && cardPicking} onClose={() => { setCardPicking(false); if (openCard && !card && !trimmed) onClose() }} onPick={(draft) => { setCard(draft); setCardPicking(false) }} />}
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>

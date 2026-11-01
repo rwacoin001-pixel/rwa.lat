@@ -421,3 +421,6 @@ span.act { cursor: default; }
 /* Synced circle attribution (2026-11-01). */
 .circleSource { position: relative; z-index: 2; display: block; max-width: 100%; margin: 2px 0 4px; padding: 0; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 12px; line-height: 16px; text-align: start; cursor: pointer; }
 .circleSource:focus-visible { outline: 2px solid var(--m-accent); outline-offset: 2px; }
+
+/* Share-a-result card inside a post (2026-11-01). */
+.cardSlot { margin: 8px 0 4px; }
