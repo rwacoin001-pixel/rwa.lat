@@ -3,13 +3,20 @@
  * automatically; members may leave (and rejoin), the owner may remove someone. Circle posts are seen only by members.
  * A user is in their own circle and in every ancestor's circle. Until the API ships, `getMyCircles` returns null and the
  * community keeps the older "my circle" timeline.
+ * Joining (2026-11-01, user): the owner's invite tree joins on its own (with a notice); anyone else opens the circle's
+ * invite link (/c/<code>) and asks to join, and the owner approves. Leaving keeps old posts; the owner can undo a removal.
  */
 import { request } from '@/lib/api/_http'
 import type { CommunityAuthor, CommunityPost } from '@/lib/community-data'
 
-export type Circle = { id: string; name: string; owner: CommunityAuthor; memberCount: number; createdAt: string; isOwner: boolean }
+export type Circle = { id: string; name: string; owner: CommunityAuthor; memberCount: number; createdAt: string; isOwner: boolean
+  /** Owner only. */
+  inviteCode?: string | null; pendingCount?: number }
 export type CircleMembership = { owned: Circle | null; joined: Circle[]; left: Circle[] }
-export type CircleMemberRow = { profile: CommunityAuthor; depth: number }
+export type CircleMemberRow = { profile: CommunityAuthor; depth: number; via?: 'tree' | 'link' }
+export type CircleInviteStatus = 'none' | 'pending' | 'member' | 'owner' | 'removed' | 'rejected'
+export type CircleInvite = { circle: { id: string; name: string; owner: CommunityAuthor; memberCount: number }; status: CircleInviteStatus }
+export type CirclePersonRow = { profile: CommunityAuthor; createdAt?: string; removedAt?: string }
 
 export const CIRCLE_NAME_MIN = 2
 export const CIRCLE_NAME_MAX = 20
@@ -56,6 +63,39 @@ export async function removeCircleMember(id: string, profileId: string) {
   const result = await request(`/v1/community/circles/${encodeURIComponent(id)}/members/${encodeURIComponent(profileId)}/remove`, { method: 'POST' })
   if (!result.ok) fail(result.error.message)
 }
+
+const path = (id: string, rest = '') => `/v1/community/circles/${encodeURIComponent(id)}${rest}`
+/** The public invite card. null when the link is unknown, reset or the circle is gone. */
+export async function getCircleInvite(code: string): Promise<CircleInvite | null> {
+  const result = await request<CircleInvite>(`/v1/community/circles/invite/${encodeURIComponent(code)}`, { loading: 'silent' })
+  if (!result.ok) { if (result.error.status === 404) return null; return fail(result.error.message) }
+  return result.data
+}
+export async function applyToCircle(code: string) {
+  const result = await request<{ status: CircleInviteStatus }>(`/v1/community/circles/invite/${encodeURIComponent(code)}/apply`, { method: 'POST' })
+  return result.ok ? result.data.status : fail(result.error.status === 403 ? 'CIRCLE_REMOVED' : result.error.message)
+}
+export async function getCircleRequests(id: string) {
+  const result = await request<{ items: CirclePersonRow[] }>(path(id, '/requests'), { loading: 'silent' })
+  return result.ok ? result.data.items : fail(result.error.message)
+}
+export async function decideCircleRequest(id: string, profileId: string, approve: boolean) {
+  const result = await request(path(id, `/requests/${encodeURIComponent(profileId)}/${approve ? 'approve' : 'reject'}`), { method: 'POST' })
+  if (!result.ok) fail(result.error.message)
+}
+export async function resetCircleInvite(id: string) {
+  const result = await request<{ inviteCode: string }>(path(id, '/invite/reset'), { method: 'POST' })
+  return result.ok ? result.data.inviteCode : fail(result.error.message)
+}
+export async function getRemovedCircleMembers(id: string) {
+  const result = await request<{ items: CirclePersonRow[] }>(path(id, '/removed'), { loading: 'silent' })
+  return result.ok ? result.data.items : fail(result.error.message)
+}
+export async function restoreCircleMember(id: string, profileId: string) {
+  const result = await request(path(id, `/members/${encodeURIComponent(profileId)}/restore`), { method: 'POST' })
+  if (!result.ok) fail(result.error.message)
+}
+export const circleInviteUrl = (code: string) => `${typeof window === 'undefined' ? 'https://a-reit.com' : window.location.origin}/c/${encodeURIComponent(code)}`
 
 export const validCircleName = (name: string) => {
   const trimmed = name.trim()

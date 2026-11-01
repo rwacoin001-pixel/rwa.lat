@@ -14,6 +14,7 @@ import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, getCircleFeed, setCircleVisibility, type CircleMember } from '@/lib/community-data'
 import { getCirclePosts, getMyCircles, type CircleMembership } from '@/lib/community-circles'
 import { CircleBar } from './community/CircleBar'
+import { CircleJoinSheet } from './community/CircleJoinSheet'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import { sharePage } from '@/lib/share-page'
 import { useQuery } from '@/lib/api/_query'
@@ -471,9 +472,30 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       })
     }).catch(() => setCircles(null))
   }, [isGuest, embedded])
-  useEffect(() => { loadCircles() }, [loadCircles])
+  // Links into a circle (2026-11-01): ?join=<code> (an invite link, via /c/<code>) opens the join sheet; ?circle=<id>
+  // (a circle notification) opens that circle. Both are read once and dropped from the address when done.
+  const [joinCode, setJoinCode] = useState<string | null>(null)
+  const dropParam = (name: string) => {
+    const params = new URLSearchParams(window.location.search); params.delete(name)
+    window.history.replaceState({ ...window.history.state }, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`)
+  }
+  useEffect(() => {
+    if (embedded) return
+    const params = new URLSearchParams(window.location.search)
+    const join = params.get('join'), wanted = params.get('circle')
+    if (join && /^[A-Za-z0-9_-]{6,32}$/.test(join)) setJoinCode(join)
+    if (wanted && !isGuest) { setSort('circle'); loadCircles(wanted); dropParam('circle'); return }
+    loadCircles()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loadCircles])
+  const openJoined = (id: string) => { setJoinCode(null); dropParam('join'); setView('feed'); setSort('circle'); loadCircles(id) }
   const circlesLive = Boolean(circles)
-  useEffect(() => { if (isGuest) { setCircle(null); setSort((current) => current === 'circle' ? 'hot' : current); return } getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => setSort((current) => current === 'circle' ? 'hot' : current)) }, [isGuest])
+  // The session can resolve a moment after the first paint (isGuest true → false): go back to the circle tab then,
+  // unless the reader already picked another tab (2026-11-01: a cold start on /community stayed on 热门).
+  const guestHot = useRef(isGuest && !embedded)
+  useEffect(() => { if (isGuest) { setCircle(null); setSort((current) => { if (current !== 'circle') return current; guestHot.current = true; return 'hot' }); return }
+    if (guestHot.current && !embedded) { guestHot.current = false; setSort((current) => current === 'hot' ? 'circle' : current) }
+    getCircle().then((data) => setCircle({ members: data?.members ?? [], showToInviter: data?.showToInviter !== false })).catch(() => setSort((current) => current === 'circle' ? 'hot' : current)) }, [isGuest])
   // The feather (2026-10-31): it composes from whichever feed is on screen. On the page itself it rises above the AI orb
   // while the reader scrolls down the feed, and pales when they pull back up. The embedded feed on home leaves the
   // visibility to the home page's pinned tabs.
@@ -599,7 +621,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
     },
   }
 
-  const pickSort = (next: 'latest' | 'hot' | 'circle') => { if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
+  const pickSort = (next: 'latest' | 'hot' | 'circle') => { guestHot.current = false; if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
     <div className={c.x} data-embedded={embedded || undefined} data-view={view} {...swipeHandlers}>
@@ -646,6 +668,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         </>}
       {view === 'feed' && sort === 'circle' && circle && !circlesLive && !loading && <CircleVisibility value={circle.showToInviter} label={circleText.visible} note={circleText.visibleNote}
         onChange={(visible) => { setCircle({ ...circle, showToInviter: visible }); setCircleVisibility(visible).catch(() => setCircle({ ...circle, showToInviter: !visible })) }} />}
+      {!embedded && <CircleJoinSheet code={joinCode} isGuest={isGuest} onClose={() => { setJoinCode(null); dropParam('join') }} onOpen={openJoined} onNotify={(text) => actions.notify({ text })} />}
       {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: sort === 'circle' ? circleId : null }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={openPost} />}
       {actions.overlays(me)}
     </div>

@@ -42,3 +42,23 @@
 
 /* A circle I left: faded in the row; its head offers to rejoin. */
 .names > button[data-left] { opacity: .55; }
+
+/* Joining (2026-11-01): pending-count badge on "…", the one-time joined note, the invite sheet. */
+.more { position: relative; }
+.badge { position: absolute; top: 2px; inset-inline-end: 2px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 999px; background: var(--m-ink, #0b1220); color: var(--pa-card, #fff); font-size: 11px; font-weight: 600; line-height: 18px; font-variant-numeric: tabular-nums; }
+.note { display: flex; align-items: center; gap: 8px; margin: 0; padding: 4px 4px 4px 16px; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.note span { flex: 1; }
+.note button { display: grid; flex: none; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted); cursor: pointer; }
+.invite { display: grid; justify-items: center; gap: 12px; padding-bottom: 12px; }
+.invite .confirmBody { justify-self: stretch; padding: 0; }
+.qr { padding: 8px; border-radius: 12px; background: #fff; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .12); line-height: 0; }
+.link { max-width: 100%; margin: 0; overflow: hidden; color: var(--m-muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.inviteKeys { display: flex; gap: 8px; }
+.inviteKeys > button { min-width: 120px; justify-content: center; }
+.textKey { min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--m-muted); font: inherit; font-size: 14px; cursor: pointer; }
+/* The invite-link sheet (CircleJoinSheet). */
+.join { display: grid; justify-items: center; gap: 8px; padding: 4px 16px 16px; text-align: center; }
+.joinName { margin-top: 8px; color: var(--m-ink); font-size: 22px; font-weight: 700; line-height: 28px; }
+.joinMeta { color: var(--m-muted); font-size: 13px; line-height: 18px; }
+.joinNote { max-width: 320px; margin: 4px 0 8px; color: var(--m-muted); font-size: 14px; line-height: 20px; }
+.joinKey.joinKey { width: auto; min-width: 180px; }

@@ -91,6 +91,9 @@ export function NotificationsScreen({ go, notify, enabled = true, guest = false,
       openPath(route)
       return
     }
+    // Circle notices (2026-11-01): joined, request, approved, declined open that circle on Community.
+    const circleId = item.payload?.circleId
+    if (item.kind.startsWith('community.circle') && typeof circleId === 'string' && /^[0-9a-f-]{36}$/i.test(circleId)) { openPath(item.kind === 'community.circle.rejected' ? '/community' : `/community?circle=${circleId}`); return }
     go(destinationFor(item.kind))
   }
   const markAll = async () => {
