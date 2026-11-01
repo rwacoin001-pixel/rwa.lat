@@ -30,20 +30,32 @@
 :global(html):has(.root[data-auth-theme='cool']), :global(body):has(.root[data-auth-theme='cool']) { background: #0b0d12 !important; }
 
 /* ── Welcome ─────────────────────────────────────────────── */
-/* The field of light (2026-11-02, user: the soft discs were too faint): light rays from the top edge (LightRays, a small
-   WebGL shader with a static CSS glow first). The brand line still pulls into focus in front of it. */
+/* The welcome (2026-11-02, after the user's glass-card reference, kept cool white): a coastal photo racks into focus
+   (blur → sharp, the same move as the brand line), then drifts very slowly. One frosted card at the thumb holds a photo
+   window with two glass tags, the brand line, the email field and the other ways in. Type on the glass is ink (white in
+   dark), never thin white on grey. Pure CSS, one photo per theme. */
 .root.root.root { position: relative; isolation: isolate; }
 .root header { position: relative; z-index: 2; }
 .root header button[aria-haspopup] { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 0 12px; border-radius: 999px; }
-.field { position: absolute; z-index: -1; inset: 0 0 auto; height: min(78svh, 680px); overflow: hidden; pointer-events: none; animation: rise 1.6s cubic-bezier(.22, 1, .36, 1) both; }
-@keyframes rise { from { opacity: 0; } }
+.scene { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: #0b0d12; pointer-events: none; }
+.scene img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; animation: focusIn 1.8s cubic-bezier(.22, 1, .36, 1) both, drift 40s ease-in-out 1.8s infinite alternate; }
+.scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .55) 0%, transparent 18%, transparent 52%, rgba(11, 18, 32, .28) 100%); }
+.root[data-auth-theme='cool'] .scene::after { background: linear-gradient(180deg, rgba(5, 8, 14, .55) 0%, transparent 20%, transparent 50%, rgba(5, 8, 14, .55) 100%); }
+@keyframes focusIn { from { filter: blur(18px); transform: scale(1.1); } to { filter: blur(0); transform: scale(1.03); } }
+@keyframes drift { from { transform: scale(1.03); } to { transform: scale(1.09) translate(-1.5%, -1%); } }
 
-/* The brand line sits low in the space above the field, near the thumb; the space above it is the field's. */
-.copy { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; padding: 24px 24px 0; }
-.lede { margin: 14px 0 0; color: var(--f-muted); font: 500 17px/24px var(--pa-sans, var(--sans)); animation: settle .9s cubic-bezier(.22, 1, .36, 1) 1.2s both; }
+.sheet { position: relative; margin: auto 16px 0; padding: 8px 8px 20px; border-radius: 28px; background: color-mix(in srgb, var(--f-bg) 74%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 32px 64px -32px rgba(11, 18, 32, .55); animation: rise .8s .3s cubic-bezier(.22, 1, .36, 1) both; }
+.root[data-auth-theme='cool'] .sheet { background: color-mix(in srgb, #10141b 66%, transparent); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .14), 0 32px 64px -32px rgba(0, 0, 0, .8); }
+.window { position: relative; display: flex; align-items: flex-end; gap: 8px; height: 132px; padding: 12px; border-radius: 22px; background-size: cover; background-position: 78% 58%; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .25); }
+.window span { height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45); color: #fff; font: 600 12px/28px var(--pa-sans, var(--sans)); text-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
+
+/* The brand line inside the card: one step down so two lines fit the glass. */
+.copy { padding: 20px 12px 0; }
+.root .copy h1 { font-size: 40px; line-height: 44px; }
+.lede { margin: 8px 0 0; color: var(--f-muted); font: 500 15px/22px var(--pa-sans, var(--sans)); animation: settle .9s cubic-bezier(.22, 1, .36, 1) 1.2s both; }
 @keyframes settle { from { opacity: 0; filter: blur(6px); transform: translateY(4px); } }
 
-.actions { padding: 28px 16px 0; animation: rise .7s .35s cubic-bezier(.22, 1, .36, 1) both; }
+.actions { padding: 20px 12px 0; animation: rise .7s .45s cubic-bezier(.22, 1, .36, 1) both; }
 .actions form { margin: 0; }
 /* The email field: a white pill on a hairline, a mail mark, the ink arrow key inside. */
 .email.email { --ctl-h: 60px; padding: 0 8px 0 18px; gap: 12px; background: var(--f-bg); box-shadow: inset 0 0 0 1px var(--f-line), 0 6px 16px -12px rgba(15, 23, 42, .25); color: var(--f-ink); }
@@ -63,6 +75,8 @@
 
 /* Legal line: 13px, 44px tap rows (design-system §3.1, §4). */
 .legal { animation: rise .7s .5s cubic-bezier(.22, 1, .36, 1) both; display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 2px; margin-top: auto; padding: 8px 16px calc(4px + env(safe-area-inset-bottom)); color: var(--f-faint); font: 400 13px/18px var(--pa-sans, var(--sans)); }
+.root[data-auth-view='welcome'] .legal { margin-top: 0; color: rgba(255, 255, 255, .72); }
+.root[data-auth-view='welcome'] .legal button { color: rgba(255, 255, 255, .9); text-shadow: 0 1px 2px rgba(0, 0, 0, .35); }
 .legal button { min-height: 44px; padding: 0 6px; border: 0; background: none; color: var(--f-muted); font: inherit; cursor: pointer; }
 
 /* ── Later steps ─────────────────────────────────────────── */
@@ -72,5 +86,5 @@
 
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) {
-  .field, .lede, .actions, .legal, :global(html) .root.root.root.root .form h1 { animation: none; }
+  .scene img, .sheet, .lede, .actions, .legal, :global(html) .root.root.root.root .form h1 { animation: none; }
 }
