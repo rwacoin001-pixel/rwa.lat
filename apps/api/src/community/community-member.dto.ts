@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ArrayMaxSize, IsArray, IsDefined, IsBoolean, IsIn, IsObject, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator'
 import { Type } from 'class-transformer'
+import { CARD_FIELDS, type CardAttachment, type CardKind } from './community-card'
 
 /** X-style media limit shared by posts and replies. */
 export const MEMBER_MEDIA_MAX = 4
@@ -11,7 +12,8 @@ export class MemberPostLocationDto {
   @IsIn(['device']) source!: 'device'
 }
 export class MemberPostDto {
-  @ApiProperty() @IsDefined() @ValidateNested() @Type(() => MemberPostLocationDto) location!: MemberPostLocationDto
+  /** Required by the service for ordinary posts; optional only with a valid card. */
+  @ApiPropertyOptional() @IsOptional() @ValidateNested() @Type(() => MemberPostLocationDto) location?: MemberPostLocationDto
   /** May be empty when at least one image is attached. */
   @ApiProperty() @IsString() @MaxLength(4000) body!: string
   @ApiPropertyOptional() @IsOptional() @IsArray() @ArrayMaxSize(8) @IsString({ each: true }) @MaxLength(32, { each: true }) topics?: string[]
@@ -23,6 +25,16 @@ export class MemberPostDto {
   @ApiPropertyOptional() @IsOptional() @IsBoolean() alsoPublic?: boolean
   /** A ledger-verified result to attach: { kind: 'quant_day', product, date } or { kind: 'prediction_win', bet }. */
   @ApiPropertyOptional() @IsOptional() @IsObject() proof?: Record<string, unknown>
+  @ApiPropertyOptional() @IsOptional() @IsObject() card?: CardAttachment
+  @ApiPropertyOptional() @IsOptional() @IsUUID('4') clientRequestId?: string
+}
+export class CardPreviewDto {
+  @IsIn(Object.keys(CARD_FIELDS)) kind!: CardKind
+  @IsOptional() @IsUUID() sourceId?: string
+}
+export class CardSourcesQueryDto {
+  @IsIn(Object.keys(CARD_FIELDS)) kind!: CardKind
+  @IsOptional() @IsString() @MaxLength(512) cursor?: string
 }
 export class MemberCommentDto {
   @ApiProperty() @IsString() @MaxLength(2000) body!: string

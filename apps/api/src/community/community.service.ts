@@ -8,6 +8,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common'
 import { proofsFor, type ProofView } from './community-proof'
+import { cardsFor, CARD_GROUPS, type CardView } from './community-card'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
 import { createHash, randomUUID } from 'node:crypto'
 import { requireDmIdentity } from './community-dm.service'
@@ -163,8 +164,12 @@ export class CommunityService {
   async postViews(ids: string[], viewerId?: string): Promise<Map<string, Record<string, unknown>>> {
     if (!ids.length) return new Map()
     const rows = await this.posts.find({ where: { id: In(ids), state: 'published' }, relations: { author: true } })
-    const [gate, proofs, badges] = await Promise.all([this.mediaGate(rows), proofsFor(this.posts.manager.connection, rows.map(post => post.id)), this.circleBadges(rows, viewerId)])
-    return new Map(rows.map(post => [post.id, this.shapePost(post, gate, proofs.get(post.id), badges.get(post.id) ?? null)]))
+    const visible = []
+    for (const post of rows) {
+      if (!post.circle_id || post.circle_only === false || await circleRole(this.dataSource, post.circle_id, viewerId)) visible.push(post)
+    }
+    const [gate, proofs, badges, cards] = await Promise.all([this.mediaGate(visible), proofsFor(this.posts.manager.connection, visible.map(post => post.id)), this.circleBadges(visible, viewerId), cardsFor(this.dataSource, visible.map(post => post.id))])
+    return new Map(visible.map(post => [post.id, this.shapePost(post, gate, proofs.get(post.id), badges.get(post.id) ?? null, cards.get(post.id))]))
   }
 
   /**
@@ -173,7 +178,8 @@ export class CommunityService {
    */
   async getFeed(query: CommunityFeedQueryDto, profileIds?: string[], circleId?: string, opts: { viewerId?: string; search?: string } = {}) {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 50)
-    const sort = query.sort ?? 'latest'
+    const onlyCards = query.hasCard === 'true' || query.cardKind !== undefined
+    const sort = onlyCards ? 'latest' : query.sort ?? 'latest'
     const qb = this.posts
       .createQueryBuilder('post')
       .leftJoinAndSelect('post.author', 'author')
@@ -182,6 +188,7 @@ export class CommunityService {
       .andWhere('post.published_at IS NOT NULL')
     if (circleId) qb.andWhere('post.circle_id = :circleId', { circleId })
     else qb.andWhere('(post.circle_id IS NULL OR post.circle_only = false)')
+    if (onlyCards) qb.andWhere(`EXISTS(SELECT 1 FROM app.community_post_cards card WHERE card.post_id=post.id AND card.revoked_at IS NULL${query.cardKind ? ' AND card.kind IN (:...cardKinds)' : ''})`, query.cardKind ? { cardKinds: CARD_GROUPS[query.cardKind] } : {})
     if (opts.search) qb.andWhere("post.body ILIKE :search ESCAPE '\\'", { search: `%${opts.search.replace(/[\\%_]/g, m => '\\' + m)}%` })
     if (profileIds) qb.andWhere('post.profile_id IN (:...circleIds)', { circleIds: profileIds })
     if (query.topic) {
@@ -227,9 +234,9 @@ export class CommunityService {
       const last = items[items.length - 1]
       nextCursor = encodeCursor(last.published_at as Date, last.id)
     }
-    const [gate, proofs] = await Promise.all([this.mediaGate(items), proofsFor(this.posts.manager.connection, items.map((post) => post.id))])
+    const [gate, proofs, cards] = await Promise.all([this.mediaGate(items), proofsFor(this.posts.manager.connection, items.map((post) => post.id)), cardsFor(this.dataSource, items.map(post => post.id))])
     const badges = await this.circleBadges(items, opts.viewerId)
-    return { items: items.map((post) => this.shapePost(post, gate, proofs.get(post.id), badges.get(post.id) ?? null)), nextCursor }
+    return { items: items.map((post) => this.shapePost(post, gate, proofs.get(post.id), badges.get(post.id) ?? null, cards.get(post.id))), nextCursor }
   }
 
   async getPost(id: string, viewerId?: string) {
@@ -246,9 +253,9 @@ export class CommunityService {
       }),
       this.comments.count({ where: { post_id: id, state: 'published' } }),
     ])
-    const [gate, proofs] = await Promise.all([this.mediaGate([post, ...comments]), proofsFor(this.posts.manager.connection, [post.id])])
+    const [gate, proofs, cards] = await Promise.all([this.mediaGate([post, ...comments]), proofsFor(this.posts.manager.connection, [post.id]), cardsFor(this.dataSource, [post.id])])
     const badge = (await this.circleBadges([post], viewerId)).get(post.id) ?? null
-    return { post: this.shapePost(post, gate, proofs.get(post.id), badge), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
+    return { post: this.shapePost(post, gate, proofs.get(post.id), badge, cards.get(post.id)), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
   }
 
   async listComments(postId: string, query: CommunityCommentsQueryDto, viewerId?: string) {
@@ -296,12 +303,12 @@ export class CommunityService {
         take: 20,
       }),
     ])
-    const [gate, proofs] = await Promise.all([this.mediaGate(recent, [profile.avatar_url]), proofsFor(this.posts.manager.connection, recent.map((post) => post.id))])
+    const [gate, proofs, cards] = await Promise.all([this.mediaGate(recent, [profile.avatar_url]), proofsFor(this.posts.manager.connection, recent.map((post) => post.id)), cardsFor(this.dataSource, recent.map(post => post.id))])
     const badges = await this.circleBadges(recent, viewerId)
     return {
       profile: this.shapeProfile(profile, true, gate),
       stats: { postCount, followerCount, followingCount },
-      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate, proofs.get(post.id), badges.get(post.id) ?? null)),
+      posts: recent.map((post) => this.shapePost({ ...post, author: profile } as CommunityPost, gate, proofs.get(post.id), badges.get(post.id) ?? null, cards.get(post.id))),
     }
   }
 
@@ -787,7 +794,7 @@ export class CommunityService {
     }
   }
 
-  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE, proof?: ProofView, circle: CircleBadge = null) {
+  private shapePost(post: CommunityPost, gate: MediaGate = OPEN_GATE, proof?: ProofView, circle: CircleBadge = null, card?: CardView) {
     return {
       id: post.id,
       body: post.body,
@@ -801,6 +808,7 @@ export class CommunityService {
       location: post.location ?? null,
       author: post.author ? this.shapeProfile(post.author, false, gate) : null,
       proof: proof ?? null,
+      card: card ?? null,
       circle,
     }
   }

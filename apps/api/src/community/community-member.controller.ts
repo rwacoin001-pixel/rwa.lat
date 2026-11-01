@@ -10,7 +10,7 @@ import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.servic
 import { CommunityMemberService } from './community-member.service'
 import { CommunityService } from './community.service'
 import { CommunityFeedQueryDto } from './dto/community.dto'
-import { CircleVisibilityDto, MemberAvatarDto, MemberCommentDto, MemberMediaQueryDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
+import { CardPreviewDto, CardSourcesQueryDto, CircleVisibilityDto, MemberAvatarDto, MemberCommentDto, MemberMediaQueryDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
 import { ObjectStorageService, COMMUNITY_IMAGE_MAX_BYTES } from '../object-storage/object-storage.service'
 
 type UploadedImage = { buffer: Buffer; mimetype?: string; size: number }
@@ -32,6 +32,9 @@ export class CommunityMemberController {
   @Put('circle/visibility') circleVisibility(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: CircleVisibilityDto) { return this.member.setCircleVisibility(a.userId, dto.visible) }
   /** The verified figure the share card and a proof post will show (2026-10-28); 404 when there is no qualifying gain. */
   @Get('proofs/preview') proofPreview(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: Record<string, string>) { return this.member.proofPreview(a.userId, q) }
+  @Get('cards/kinds') cardKinds(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.member.cardKinds(a.userId) }
+  @Get('cards/sources') cardSources(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: CardSourcesQueryDto) { return this.member.cardSources(a.userId, q.kind, q.cursor) }
+  @Post('cards/preview') cardPreview(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: CardPreviewDto) { return this.member.cardPreview(a.userId, dto) }
   @Post('posts') post(@CurrentAuth() a: AuthenticatedRequest['auth'], @Headers('idempotency-key') key: string, @Body() dto: MemberPostDto) { return this.member.post(a.userId, key, dto) }
   @Post('posts/:id/comments') comment(@CurrentAuth() a: AuthenticatedRequest['auth'], @Headers('idempotency-key') key: string, @Param('id', ParseUUIDPipe) id: string, @Body() dto: MemberCommentDto) { return this.member.comment(a.userId, key, id, dto) }
   @Put('comments/:id/like') commentLike(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string) { return this.member.commentLike(a.userId,id,true) }

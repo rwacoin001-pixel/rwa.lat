@@ -1,5 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
 import { parseProofRequest, resolveProof } from './community-proof'
+import { cardKinds, cardPreview, cardSources, parseCardRequest, publicCardSnapshot, resolveCard } from './community-card'
 import { createHash, randomUUID } from 'node:crypto'
 import { predictionThreadId } from './prediction-discussion'
 import { communityCityCode } from './community-identity'
@@ -131,24 +132,36 @@ export class CommunityMemberService {
     const shared = table?.ready ? (await this.db.query('SELECT 1 FROM app.community_post_proofs WHERE kind=$1 AND ref_id=$2', [kind, refId])).length > 0 : false
     return { kind, title, pct, tradeDate, shared }
   }
+  cardKinds(userId: string) { return cardKinds(this.db, userId) }
+  cardSources(userId: string, kind: unknown, cursor?: string) { return cardSources(this.db, userId, kind, cursor) }
+  cardPreview(userId: string, input: unknown) {
+    const request = parseCardRequest(input)
+    return this.db.transaction(m => cardPreview(m, userId, request))
+  }
   async post(userId: string, key: string | undefined, input: MemberPostDto) {
     const body = (input.body ?? '').trim(); const lang = normalizeCommunityLang(input.lang)
     const imageIds = input.imageIds ?? []
-    if ((!body && !imageIds.length && !input.proof) || body.length > 4000) throw new BadRequestException('Invalid post body')
-    if (!input.location?.city?.trim() || input.location.city.trim().length > 80 || !/^[A-Z]{2}$/.test(input.location.countryCode ?? '') || input.location.source !== 'device') throw new BadRequestException('Device location required to publish')
-    const location = { city: input.location.city.trim(), countryCode: input.location.countryCode, source: 'device' as const }
+    const card = input.card === undefined ? null : parseCardRequest(input.card, true)
+    if (card && input.proof) throw new BadRequestException('CARD_PROOF_EXCLUSIVE')
+    if ((!body && !imageIds.length && !input.proof && !card) || body.length > 4000) throw new BadRequestException('Invalid post body')
+    if ((!card || input.location !== undefined) && (!input.location?.city?.trim() || input.location.city.trim().length > 80 || !/^[A-Z]{2}$/.test(input.location.countryCode ?? '') || input.location.source !== 'device')) throw new BadRequestException('Device location required to publish')
+    const location = input.location ? { city: input.location.city.trim(), countryCode: input.location.countryCode, source: 'device' as const } : null
     const images = await this.media(userId, imageIds, 'post')
     const proof = input.proof ? parseProofRequest(input.proof) : null
-    return this.write(userId, key, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}), ...(proof ? { proof } : {}), ...(input.circleId ? { circleId: input.circleId, alsoPublic: input.alsoPublic === true } : {}) }, 'post', async (m, p) => {
+    if (key && input.clientRequestId && key !== input.clientRequestId) throw new BadRequestException('Conflicting idempotency keys')
+    return this.write(userId, key ?? input.clientRequestId, { body, lang, location, topics: input.topics ?? [], ...(images.length ? { images } : {}), ...(proof ? { proof } : {}), ...(card ? { card } : {}), ...(input.circleId ? { circleId: input.circleId, alsoPublic: input.alsoPublic === true } : {}) }, 'post', async (m, p) => {
       if (input.circleId) {
         if (!await circleRole(m, input.circleId, userId)) throw new NotFoundException('CIRCLE_NOT_FOUND')
         if (await isSilenced(m, input.circleId, userId)) throw new ForbiddenException({ code: 'CIRCLE_SILENCED', message: 'The circle owner has muted you in this circle.' })
       }
       // The figure is resolved here, inside the same transaction, from the author's own ledger row.
       const resolved = proof ? await resolveProof(m, userId, proof) : null
+      const snapshot = card ? publicCardSnapshot(card.kind, await resolveCard(m, userId, card), card.visibleFields) : null
       if (resolved && (await m.query('SELECT 1 FROM app.community_post_proofs WHERE kind=$1 AND ref_id=$2', [resolved.kind, resolved.refId])).length) throw new ConflictException('PROOF_ALREADY_SHARED')
       const topics = await m.getRepository(CommunityTopic).find()
       const saved = await m.save(m.create(CommunityPost, { profile_id: p.id, body, lang, location, topics: sanitizeTopics(input.topics, new Set(topics.map(t => t.slug))), images, source: 'user', state: 'published', published_at: new Date(), circle_id: input.circleId ?? null, circle_only: input.circleId ? input.alsoPublic !== true : true }))
+      if (card && snapshot) await m.query(`INSERT INTO app.community_post_cards(post_id,user_id,kind,source_refs,snapshot,visible_fields,calc_version)
+        VALUES($1,$2,$3,$4::jsonb,$5::jsonb,$6,1)`, [saved.id,userId,card.kind,JSON.stringify(card.sourceId ? { sourceId: card.sourceId } : {}),JSON.stringify(snapshot),card.visibleFields])
       if (resolved) await m.query('INSERT INTO app.community_post_proofs(post_id,user_id,kind,ref_id,title,pct,trade_date) VALUES($1,$2,$3,$4,$5,$6,$7)',
         [saved.id, userId, resolved.kind, resolved.refId, resolved.title, resolved.pct, resolved.tradeDate])
         .catch((error: { code?: string }) => { throw error?.code === '23505' ? new ConflictException('PROOF_ALREADY_SHARED') : error })

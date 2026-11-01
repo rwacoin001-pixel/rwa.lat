@@ -7,7 +7,7 @@ import type { SecurityActor } from '../security/security.service'
 import { PublicShareService, PublicShareKind } from './public-share.service'
 
 export class CreatePublicShareDto {
-  @ApiProperty({enum:['product','community_post']}) @IsIn(['product','community_post']) kind!: PublicShareKind
+  @ApiProperty({enum:['product','community_post','community_card']}) @IsIn(['product','community_post','community_card']) kind!: PublicShareKind
   @ApiProperty({format:'uuid'}) @IsUUID() resourceId!: string
 }
 @Controller('shares')
