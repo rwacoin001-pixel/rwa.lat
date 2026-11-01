@@ -9,6 +9,7 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import RwaLogoMark from '../rwa-logo'
 import f from './auth-focus.module.css'
+import { LoginWindow } from './LoginWindow'
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -82,7 +83,7 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
           half of the photo goes soft under a slow sea mist so the card reads first. */}
       {welcome && <div className={f.scene} aria-hidden="true"><img src={cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'} alt="" decoding="async" fetchPriority="high" /><i className={f.soften} /><i className={f.fog} /></div>}
       {welcome ? <div className={f.sheet}>
-        <p className={f.kicker}>{locale === 'zh-CN' ? '考拉量化 · 预测市场' : 'Koala Quant · Predictions'}</p>
+        <LoginWindow night={cool} zh={locale === 'zh-CN'} />
         {hero && <div className={f.copy}>{hero}</div>}
         <div className={f.actions}>{children}</div>
       </div> : <div className={f.form}>{children}</div>}

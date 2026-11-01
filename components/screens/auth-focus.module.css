@@ -38,14 +38,14 @@
 .root header { position: relative; z-index: 2; }
 .root header button[aria-haspopup] { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 0 12px; border-radius: 999px; }
 .scene { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: #0b0d12; pointer-events: none; }
-.scene img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; animation: focusIn 1.8s cubic-bezier(.22, 1, .36, 1) both, drift 40s ease-in-out 1.8s infinite alternate; }
+.scene img { width: 100%; height: 100%; object-fit: cover; object-position: 62% 50%; filter: blur(3px); animation: focusIn 1.8s cubic-bezier(.22, 1, .36, 1) both, drift 40s ease-in-out 1.8s infinite alternate; }
 .scene::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(255, 255, 255, .55) 0%, transparent 18%, transparent 52%, rgba(11, 18, 32, .28) 100%); }
 .root[data-auth-theme='cool'] .scene::after { background: linear-gradient(180deg, rgba(5, 8, 14, .55) 0%, transparent 20%, transparent 50%, rgba(5, 8, 14, .55) 100%); }
-@keyframes focusIn { from { filter: blur(18px); transform: scale(1.1); } to { filter: blur(0); transform: scale(1.03); } }
+@keyframes focusIn { from { filter: blur(18px); transform: scale(1.1); } to { filter: blur(3px); transform: scale(1.03); } }
 @keyframes drift { from { transform: scale(1.03); } to { transform: scale(1.09) translate(-1.5%, -1%); } }
 
-.soften { position: absolute; inset: 38% 0 0; -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); -webkit-mask: linear-gradient(transparent, #000 45%); mask: linear-gradient(transparent, #000 45%); }
-.fog { position: absolute; inset: 30% -30% 0; background: radial-gradient(60% 40% at 30% 60%, rgba(236, 241, 246, .55), transparent 70%), radial-gradient(50% 35% at 75% 75%, rgba(236, 241, 246, .45), transparent 70%), linear-gradient(transparent, rgba(240, 244, 248, .5)); animation: mist 36s ease-in-out infinite alternate; }
+.soften { position: absolute; inset: 38% 0 0; -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); -webkit-mask: linear-gradient(transparent, #000 45%); mask: linear-gradient(transparent, #000 45%); }
+.fog { position: absolute; inset: 30% -30% 0; background: radial-gradient(60% 40% at 30% 60%, rgba(236, 241, 246, .65), transparent 70%), radial-gradient(50% 35% at 75% 75%, rgba(236, 241, 246, .55), transparent 70%), linear-gradient(transparent, rgba(240, 244, 248, .62)); animation: mist 36s ease-in-out infinite alternate; }
 .root[data-auth-theme='cool'] .fog { background: radial-gradient(60% 40% at 30% 60%, rgba(120, 140, 170, .16), transparent 70%), radial-gradient(50% 35% at 75% 75%, rgba(120, 140, 170, .12), transparent 70%), linear-gradient(transparent, rgba(8, 11, 17, .55)); }
 @keyframes mist { to { transform: translateX(12%); } }
 
@@ -54,11 +54,20 @@
 .sheet { position: relative; margin: auto 16px 0; padding: 24px 20px 20px; border-radius: 28px; overflow: hidden; background: rgba(250, 251, 252, .84); -webkit-backdrop-filter: blur(30px) saturate(1.2); backdrop-filter: blur(30px) saturate(1.2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .95), inset 0 0 0 .5px rgba(11, 18, 32, .06), 0 28px 56px -32px rgba(11, 18, 32, .45); animation: rise .8s .3s cubic-bezier(.22, 1, .36, 1) both; }
 .sheet::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .5; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
 .root[data-auth-theme='cool'] .sheet { background: rgba(18, 21, 27, .8); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 0 0 0 .5px rgba(255, 255, 255, .06), 0 28px 56px -32px rgba(0, 0, 0, .8); }
-.kicker { margin: 0 0 12px; color: var(--f-muted); font: 600 12px/16px var(--pa-sans, var(--sans)); letter-spacing: .04em; }
+.sheet { padding-top: 8px; }
+/* Photo window: the app's three photos crossfading, a glass tag, three dots (LoginWindow). */
+.window { position: relative; height: 132px; margin: 0 -12px 20px; overflow: hidden; border-radius: 22px; background: #dfe4ea; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .3); }
+.window img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; opacity: 0; transform: scale(1.02); transition: opacity 1.2s ease, transform 6s ease-out; }
+.window img[data-on] { opacity: 1; transform: scale(1.08); }
+.root[data-auth-theme='cool'] .window { background: #11151c; }
+.windowTag { position: absolute; bottom: 12px; left: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .26); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .5); color: #fff; font: 600 12px/28px var(--pa-sans, var(--sans)); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); animation: rise .6s cubic-bezier(.22, 1, .36, 1) both; }
+.windowDots { position: absolute; right: 12px; bottom: 22px; display: flex; gap: 6px; }
+.windowDots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .5); transition: width .4s ease, background-color .4s ease; }
+.windowDots i[data-on] { width: 16px; border-radius: 999px; background: #fff; }
 
 /* The brand line inside the card: one step down so two lines fit the glass. */
 .copy { padding: 0; }
-.root .copy h1 { font-size: 40px; line-height: 44px; }
+.root .copy h1 { font-size: 28px; line-height: 34px; letter-spacing: -.02em; }
 .lede { margin: 8px 0 0; color: var(--f-muted); font: 500 15px/22px var(--pa-sans, var(--sans)); animation: settle .9s cubic-bezier(.22, 1, .36, 1) 1.2s both; }
 @keyframes settle { from { opacity: 0; filter: blur(6px); transform: translateY(4px); } }
 
@@ -77,6 +86,10 @@
 .methods { display: grid; grid-auto-flow: column; grid-template-columns: minmax(0, 1fr); grid-auto-columns: 52px; gap: 8px; }
 .methods button { display: inline-flex; align-items: center; justify-content: center; gap: 10px; height: 52px; padding: 0; border: 0; border-radius: 999px; background: var(--f-bg); box-shadow: inset 0 0 0 1px var(--f-line); color: var(--f-ink); font: 700 16px/1 var(--pa-sans, var(--sans)); cursor: pointer; transition: transform .15s ease; }
 .methods button:active { transform: scale(.96); }
+/* Keys on the glass get a visible hairline and a little lift (2026-11-02, user: add borders). */
+.root[data-auth-view='welcome'] .email.email, .root[data-auth-view='welcome'] .methods button { box-shadow: inset 0 0 0 1px rgba(11, 18, 32, .12), 0 2px 8px -4px rgba(11, 18, 32, .22); }
+.root[data-auth-view='welcome'][data-auth-theme='cool'] .email.email, .root[data-auth-view='welcome'][data-auth-theme='cool'] .methods button { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .16), 0 2px 8px -4px rgba(0, 0, 0, .6); }
+.root[data-auth-view='welcome'] .email.email:focus-within { box-shadow: inset 0 0 0 1.5px var(--f-accent), 0 2px 8px -4px rgba(11, 18, 32, .22); }
 .methods button:disabled { opacity: .45; cursor: default; }
 .root[data-auth-theme='cool'] .methods img[data-mono] { filter: invert(1); }
 
@@ -97,3 +110,7 @@
 @media (prefers-reduced-motion: reduce) {
   .scene img, .fog, .sheet, .lede, .actions, .legal, :global(html) .root.root.root.root .form h1 { animation: none; }
 }
+/* The brand line runs as one line in the card (two only when it does not fit); Latin keeps a space between the halves. */
+.root .copy h1 span[class*='line'] { display: inline; }
+.root[data-auth-script='latin'] .copy h1 span[class*='line']:not(:last-child)::after { content: ' '; }
+.root[data-auth-view='welcome']:not([data-auth-theme='cool']) .legal, .root[data-auth-view='welcome']:not([data-auth-theme='cool']) .legal button { color: rgba(11, 18, 32, .72); }

@@ -385,3 +385,9 @@
 - Composer: glass bar fixed above the home indicator; pill field, 17px text (no iOS zoom), 36px ink send key, faded when empty. Errors are one plain grey line above the field.
 - Long-press (or right-click) a received bubble to report it. The ⋯ menu: view profile, mute, block (red text).
 - A missing backend reads as "coming soon", never as an error.
+
+
+### 7.15 Sign-in, the one full-bleed photo (2026-11-02)
+- 登录欢迎页是唯一用整屏照片做背景的页面（App 的大门）：冷色海边别墅，白天 / 夜晚各一张，打开时从模糊对到轻微模糊（3px），下半部分更模糊并有慢雾。
+- 前面只有一张纸感玻璃卡片：照片窗口（首页三张照片轮换，深色用夜晚版）→ 28px 一行口号 → 「用邮箱登录或注册」→ 邮箱 → 其他方式。按钮在玻璃上有 1px 细边框。
+- App 里面仍然是冷白纸面，不用整屏照片。
