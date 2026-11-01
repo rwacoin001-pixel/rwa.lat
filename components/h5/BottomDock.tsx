@@ -64,7 +64,8 @@ export function BottomDock({ screen, setScreen, activeScreen, showQuickActions =
   useEffect(() => { if (isCompact) setQuickOpen(false) }, [isCompact])
   // On Community the orb is the compose key (the feed claims it); everywhere else it is the AI.
   const claim = useComposeKey()
-  const compose = screen === 'community' ? claim : null
+  // Community, and home while its community tabs are pinned (home claims only then).
+  const compose = screen === 'community' || screen === 'home' ? claim : null
   const [hint, setHint] = useState(false)
   // The hint waits until the key has morphed (the feed claimed it), then shows once per visit.
   const hintVisit = useRef<boolean | null>(null)

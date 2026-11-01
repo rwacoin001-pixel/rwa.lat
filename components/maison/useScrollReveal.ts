@@ -21,7 +21,9 @@ export function useScrollReveal(root: RefObject<HTMLElement | null>, selector = 
         el.dataset.reveal = 'in'
         io.unobserve(el)
       }
-    }, { rootMargin: '0px 0px -8% 0px', threshold: .08 })
+    // Any visible pixel reveals (2026-11-02): with a bottom inset, the last rows of a page that cannot scroll further
+    // (the profile's sign-out key) never counted as visible and stayed invisible though tappable.
+    }, { rootMargin: '0px', threshold: 0 })
     const seen = new WeakSet<Element>()
     const scan = () => {
       for (const el of host.querySelectorAll<HTMLElement>(selector)) {
@@ -36,12 +38,23 @@ export function useScrollReveal(root: RefObject<HTMLElement | null>, selector = 
         io.observe(el)
       }
     }
+    // Belt and braces: some containers (the profile slides in as a panel) never get an intersection callback for their
+    // last rows, so any scroll — in any scroller — and a late check also reveal what is on screen.
+    const sweep = () => {
+      for (const el of host.querySelectorAll<HTMLElement>('[data-reveal="pending"]')) {
+        const box = el.getBoundingClientRect()
+        if (box.top < innerHeight && box.bottom > 0 && box.width > 0) { el.dataset.reveal = 'in'; io.unobserve(el) }
+      }
+    }
+    document.addEventListener('scroll', sweep, { capture: true, passive: true })
+    window.addEventListener('resize', sweep)
+    const late = window.setTimeout(sweep, 900)
     let frame = 0
     const later = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(scan) }
     // Let the first paint settle (data, fonts) before deciding what is below the fold.
     const start = window.setTimeout(scan, 120)
     const mo = new MutationObserver(later)
     mo.observe(host, { childList: true, subtree: true })
-    return () => { window.clearTimeout(start); cancelAnimationFrame(frame); mo.disconnect(); io.disconnect() }
+    return () => { window.clearTimeout(start); window.clearTimeout(late); cancelAnimationFrame(frame); mo.disconnect(); io.disconnect(); document.removeEventListener('scroll', sweep, { capture: true }); window.removeEventListener('resize', sweep) }
   }, [root, selector])
 }

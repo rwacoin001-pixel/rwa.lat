@@ -25,6 +25,9 @@ check that line first. Add a line for every new fix the user reports.
 | 17 | 11-02 | The ticket leaves the printer's slot: paper in front of the body, its top under the slot's upper lip; never from under the printer | `components/rewards/ticket.module.css` (`.window`, `.lip`), `TicketPrinter.tsx` | `/rewards/print`, slide to print; the paper's top edge sits at the slot line while feeding |
 | 18 | 11-02 | Sign-in brand line: two lines, no letters touching between lines, at 360 / 390 / 430 in English | `components/screens/focus-title.module.css` (line-height 1.04, tracking -.035em) | `/login` in EN; the two `.line` boxes do not overlap |
 | 19 | 11-02 | Sign-in light rays draw (WebGL context kept across effect re-runs; no `loseContext` in cleanup) and stay subtle above the title | `components/screens/LightRays.tsx`, `AuthShell.tsx` | `/login` dark: canvas has `data-ready`; beam fades out before the title |
+| 21 | 11-02 | Home: while the community tabs are pinned, the AI orb is the compose key (opens Community's composer); it turns back when unpinned | `components/screens/P04-HomeMaison.tsx` (`claimComposeKey` on `feedPinned`), `components/h5/BottomDock.tsx` | Scroll home until the community tabs stick; the dock's last key reads 发帖 · 长按问 AI |
+| 22 | 11-02 | Home feed shows 晒单 cards in posts (ResultCard compact) | `components/home/HomeSocialFeed.tsx`, `lib/api/community.ts` (`card`) | Home feed with a card post shows the ticket card |
+| 23 | 11-02 | Below-the-fold blocks always reveal (no bottom inset; scroll/resize sweep fallback), e.g. the profile's sign-out key | `components/maison/useScrollReveal.ts` | Profile, scroll to the end: no `[data-reveal=pending]` left on screen |
 
 ## Why fixes come back, and the rules that stop it
 

@@ -242,7 +242,8 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   useEffect(() => {
     if (isGuest || embedded) return
     const params = new URLSearchParams(window.location.search)
-    if (params.get('compose') !== 'card') return
+    const compose = params.get('compose')
+    if (compose !== 'card' && compose !== 'post') return
     thenPrint.current = params.get('then') === 'print'
     params.delete('compose'); params.delete('then')
     window.history.replaceState({ ...window.history.state }, '', `${window.location.pathname}${params.size ? `?${params}` : ''}`)

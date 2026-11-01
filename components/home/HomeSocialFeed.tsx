@@ -9,6 +9,7 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import styles from './HomeSocialFeed.module.css'
 import {CommunityAvatar,mediaSrc} from '../community-avatar'
 import {CommunityText} from '../community-text'
+import { ResultCard } from '../community/cards/ResultCard'
 
 type Labels = { all: string; loading: string; retry: string; end: string; emptyTitle: string; emptyBody: string }
 type Props = { onOpen: (post: CommunityPost) => void; onAuthor?: (post: CommunityPost) => void; onPinnedChange?: (pinned: boolean) => void; labels: Labels }
@@ -132,7 +133,9 @@ export function HomeSocialFeed({ onOpen, onAuthor, onPinnedChange, labels }: Pro
           <span className={styles.postContext}>{(post.location?.city || post.author?.city) && <span>{post.location?.city || post.author?.city}</span>}<time dateTime={post.publishedAt}>{Number.isNaN(Date.parse(post.publishedAt)) ? '—' : dateFormatter.format(new Date(post.publishedAt))}</time></span>
         </div>
         <CommunityText body={post.body} targetId={post.id} className={styles.body} compact onOpen={() => onOpen(post)} />
-        {post.images?.[0] ? <span className={styles.image}><img src={mediaSrc(post.images[0]) ?? undefined} alt="" loading="lazy" /></span> : (() => {
+        {/* Result cards (晒单) show on home too (2026-11-02, user: the home feed showed no card preview). */}
+        {post.card ? <button type="button" className={styles.card} onClick={() => onOpen(post)} aria-label={copy.post}><ResultCard card={post.card} compact /></button>
+        : post.images?.[0] ? <span className={styles.image}><img src={mediaSrc(post.images[0]) ?? undefined} alt="" loading="lazy" /></span> : (() => {
           const illustration = conceptArt.find(item => post.body.includes(item.match))
           return illustration && <span className={styles.image}><Image src={illustration.src} alt="" width={900} height={560} sizes="(max-width: 430px) calc(100vw - 94px), 336px" /><span className={styles.imageCaption}>{locale === 'zh-CN' ? '概念配图' : 'Concept illustration'}</span></span>
         })()}
