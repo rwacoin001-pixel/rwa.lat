@@ -26,6 +26,9 @@ import { NotificationModule } from '../notification/notification.module'
 import { CommunityDmController } from './community-dm.controller'
 import { CommunityDmService } from './community-dm.service'
 import { CommunityReportAuthGuard } from './community-report-auth.guard'
+import { CommunityOptionalAuthGuard } from './community-optional-auth.guard'
+import { CommunityCircleController } from './community-circle.controller'
+import { CommunityCircleService } from './community-circle.service'
 
 @Module({
   imports: [
@@ -42,8 +45,8 @@ import { CommunityReportAuthGuard } from './community-report-auth.guard'
       CommunityTranslation,
     ]),
   ],
-  controllers: [PredictionDiscussionController, CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController, CommunityDmController],
-  providers: [CommunityService, InternalServiceGuard, CommunityTranslationProvider, CommunityMemberService, CommunityDmService, CommunityReportAuthGuard],
+  controllers: [PredictionDiscussionController, CommunityController, InternalCommunityController, CommunityMemberController, AdminCommunityMemberController, CommunityMediaController, CommunityDmController, CommunityCircleController],
+  providers: [CommunityService, InternalServiceGuard, CommunityTranslationProvider, CommunityMemberService, CommunityDmService, CommunityReportAuthGuard, CommunityOptionalAuthGuard, CommunityCircleService],
   exports: [CommunityService],
 })
 export class CommunityModule {}

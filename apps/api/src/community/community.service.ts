@@ -11,8 +11,9 @@ import { proofsFor, type ProofView } from './community-proof'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
 import { createHash, randomUUID } from 'node:crypto'
 import { requireDmIdentity } from './community-dm.service'
+import { circleRole } from './community-circle.access'
 import { InjectRepository } from '@nestjs/typeorm'
-import { DataSource, EntityManager, In, QueryFailedError, Repository } from 'typeorm'
+import { DataSource, EntityManager, In, IsNull, QueryFailedError, Repository } from 'typeorm'
 import { COMMUNITY_ERROR_CODES } from './community.errors'
 import {
   CommunityComment,
@@ -132,7 +133,22 @@ export class CommunityService {
     return this.getFeed({ ...query, sort: 'latest', topic: undefined }, members.map((member) => member.profile.id))
   }
 
-  async getFeed(query: CommunityFeedQueryDto, profileIds?: string[]) {
+  /** Public profile views (nickname, avatar, city) keyed by community profile id; avatars still in scan are withheld. */
+  async profileViews(ids: string[]) {
+    const unique = [...new Set(ids)]
+    const profiles = unique.length ? await this.profiles.findBy({ id: In(unique) }) : []
+    const gate = await this.mediaGate([], profiles.map(profile => profile.avatar_url))
+    return new Map(profiles.map(profile => [profile.id, this.shapeProfile(profile, false, gate)]))
+  }
+
+  /** A members-only (circle) post is visible to the circle's current members only; to everyone else it does not exist. */
+  private async assertCircleVisible(post: { circle_id?: string | null }, viewerId?: string) {
+    if (!post.circle_id) return
+    if (!await circleRole(this.dataSource, post.circle_id, viewerId)) throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
+  }
+
+  /** Public feeds never include circle posts; a circle's own feed passes its id (membership is checked by the caller). */
+  async getFeed(query: CommunityFeedQueryDto, profileIds?: string[], circleId?: string) {
     const limit = Math.min(Math.max(query.limit ?? 20, 1), 50)
     const sort = query.sort ?? 'latest'
     const qb = this.posts
@@ -141,6 +157,8 @@ export class CommunityService {
       .where("post.state = 'published'")
       .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
       .andWhere('post.published_at IS NOT NULL')
+    if (circleId) qb.andWhere('post.circle_id = :circleId', { circleId })
+    else qb.andWhere('post.circle_id IS NULL')
     if (profileIds) qb.andWhere('post.profile_id IN (:...circleIds)', { circleIds: profileIds })
     if (query.topic) {
       const requestedTopic = query.topic.trim().toLowerCase()
@@ -189,9 +207,10 @@ export class CommunityService {
     return { items: items.map((post) => this.shapePost(post, gate, proofs.get(post.id))), nextCursor }
   }
 
-  async getPost(id: string) {
+  async getPost(id: string, viewerId?: string) {
     const post = await this.posts.findOne({ where: { id }, relations: { author: true } })
     if (!post || post.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
+    await this.assertCircleVisible(post, viewerId)
     void this.posts.increment({ id: post.id }, 'view_count', 1).catch(() => undefined)
     const [comments, commentTotal] = await Promise.all([
       this.comments.find({
@@ -206,9 +225,10 @@ export class CommunityService {
     return { post: this.shapePost(post, gate, proofs.get(post.id)), comments: comments.map((comment) => this.shapeComment(comment, gate)), commentTotal }
   }
 
-  async listComments(postId: string, query: CommunityCommentsQueryDto) {
+  async listComments(postId: string, query: CommunityCommentsQueryDto, viewerId?: string) {
     const post = await this.posts.findOne({ where: { id: postId } })
     if (!post || post.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
+    await this.assertCircleVisible(post, viewerId)
     const limit = Math.min(Math.max(query.limit ?? 30, 1), 50)
     const qb = this.comments
       .createQueryBuilder('comment')
@@ -241,11 +261,11 @@ export class CommunityService {
     }
     if (!profile || !profile.is_active) throw new NotFoundException(COMMUNITY_ERROR_CODES.PROFILE_NOT_FOUND)
     const [postCount, followerCount, followingCount, recent] = await Promise.all([
-      this.posts.count({ where: { profile_id: profile.id, state: 'published' } }),
+      this.posts.count({ where: { profile_id: profile.id, state: 'published', circle_id: IsNull() } }),
       this.follows.count({ where: { followee_id: profile.id } }),
       this.follows.count({ where: { follower_id: profile.id } }),
       this.posts.find({
-        where: { profile_id: profile.id, state: 'published' },
+        where: { profile_id: profile.id, state: 'published', circle_id: IsNull() },
         order: { published_at: 'DESC' },
         take: 20,
       }),
@@ -306,18 +326,21 @@ export class CommunityService {
 
   // ---- translations ----
 
-  async translateTarget(dto: TranslateCommunityTargetDto) {
+  async translateTarget(dto: TranslateCommunityTargetDto, viewerId?: string) {
     const targetLang = normalizeCommunityLang(dto.targetLang)
     let text: string
     let sourceLang: string
     if (dto.targetType === 'post') {
       const post = await this.posts.findOne({ where: { id: dto.targetId } })
       if (!post || post.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.POST_NOT_FOUND)
+      await this.assertCircleVisible(post, viewerId)
       text = post.body
       sourceLang = normalizeCommunityLang(post.lang)
     } else {
       const comment = await this.comments.findOne({ where: { id: dto.targetId } })
       if (!comment || comment.state !== 'published') throw new NotFoundException(COMMUNITY_ERROR_CODES.COMMENT_NOT_FOUND)
+      const parent = await this.posts.findOne({ where: { id: comment.post_id }, select: { id: true, circle_id: true } })
+      if (parent) await this.assertCircleVisible(parent, viewerId)
       text = comment.body
       sourceLang = normalizeCommunityLang(comment.lang)
     }
@@ -579,13 +602,14 @@ export class CommunityService {
     const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1_000)
     const [profiles, posts, comments, queuePending, postsLast24h] = await Promise.all([
       this.profiles.count({ where: { is_active: true } }),
-      this.posts.count({ where: { state: 'published' } }),
+      this.posts.count({ where: { state: 'published', circle_id: IsNull() } }),
       this.comments.count({ where: { state: 'published' } }),
       this.queue.count({ where: { state: 'draft' } }),
       this.posts
         .createQueryBuilder('post')
         .where("post.state = 'published'")
       .andWhere("post.profile_id NOT IN (SELECT id FROM app.community_profiles WHERE handle = 'rwalat-predictions')")
+        .andWhere('post.circle_id IS NULL')
         .andWhere('post.published_at >= :dayAgo', { dayAgo })
         .getCount(),
     ])

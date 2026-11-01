@@ -128,6 +128,10 @@ export class CommunityPost {
   @Column({ type: 'varchar', default: 'published' })
   state!: CommunityPostState
 
+  /** Members-only circle this post belongs to; null for ordinary public posts. */
+  @Column({ type: 'uuid', nullable: true })
+  circle_id?: string | null
+
   @Column({ type: 'timestamptz', nullable: true })
   scheduled_for?: Date | null
 
