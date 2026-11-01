@@ -17,6 +17,7 @@ import { useCircleStageCopy } from './circle-copy'
 import { PostRow, SkeletonRows, XState, useInfinite, usePostActions, useTimeAgo, type RowActions } from './PostCard'
 import c from '../community-x.module.css'
 import s from './circles.module.css'
+import { RewardDrawHost } from '@/components/rewards/RewardDrawHost'
 
 /** A circle owns its feed and composer (2026-11-01). */
 export function CircleScreen({ circleId, go, openPost, openProfile, isGuest = true }: { circleId: string | null; go: (screen: RwaScreen) => void; openPost: (id: string) => void; openProfile: (handle: string) => void; isGuest?: boolean }) {
@@ -104,6 +105,7 @@ export function CircleScreen({ circleId, go, openPost, openProfile, isGuest = tr
     {/* The circle page has no dock, so it carries the feather itself: the same paper disc, bottom right. */}
     {current && !left && <><button type="button" className={s.feather} aria-label={labels.compose} data-muted={current.silenced || undefined} onClick={compose}><Feather size={22} strokeWidth={1.9} aria-hidden="true" /></button><CircleSearchSheet open={search} circle={current} onClose={() => setSearch(false)} openPost={openPost} />
       <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', circleId: current.id }} me={me} topics={topics} circles={circles.filter(circle => !membership?.left.some(item => item.id === circle.id))} onPublished={() => { setComposing(false); void load(true) }} />
+      <RewardDrawHost />
     </>}
     {actions.overlays(me)}
   </div></MaisonPage>

@@ -69,10 +69,12 @@ export function ledgerHeadline(tx: LedgerTransaction): { purpose: string; amount
 
 export type WithdrawalQuote = {
   network: string; assetCode: string; assetDecimals: number; atomicAmount: string; feeAtomicAmount: string; totalDebitAtomic: string
+  /** Stage 3: set when a coupon was applied. */
+  feeDiscountAtomic?: string | null
   availableAtomic: string; sufficientBalance: boolean; requiresStepUp: boolean; requiresAddressScreening: boolean; expiresAt: string; integration: WalletIntegration
 }
 /** The intent only: idempotency fingerprints it, so the PIN and step-up token are passed separately and never land in it. */
-export type WithdrawalBody = { network: string; atomicAmount: string; addressBookId?: string; destination?: string }
+export type WithdrawalBody = { network: string; atomicAmount: string; addressBookId?: string; destination?: string; couponId?: string }
 export type WithdrawalSecrets = { transactionPin: string; reauthentication?: string }
 export type WithdrawalReceipt = { id: string; state: string; network: string; atomicAmount: string; feeAtomicAmount: string; reasonCode: string | null; created: boolean; integration: WalletIntegration }
 export type WithdrawalStatus = {
@@ -88,7 +90,7 @@ export type AddressBookEntry = {
 export type AddressBook = { entries: AddressBookEntry[]; policy: { cooldownSeconds: number; financialMode: boolean } }
 
 /** Read-only: nothing is locked. The server rejects amounts under the network minimum. */
-export const quoteWithdrawal = (network: string, atomicAmount: string) => request<WithdrawalQuote>('/v1/wallet/withdrawals/quote', { method: 'POST', body: JSON.stringify({ network, atomicAmount }) })
+export const quoteWithdrawal = (network: string, atomicAmount: string, couponId?: string | null) => request<WithdrawalQuote>('/v1/wallet/withdrawals/quote', { method: 'POST', body: JSON.stringify({ network, atomicAmount, ...(couponId ? { couponId } : {}) }) })
 /** Every new request carries this attempt's PIN; it is serialised straight into the request and kept nowhere else. */
 export const createWithdrawal = (body: WithdrawalBody, secrets: WithdrawalSecrets, idempotencyKey: string) => request<WithdrawalReceipt>('/v1/wallet/withdrawals', {
   method: 'POST', idempotencyKey,

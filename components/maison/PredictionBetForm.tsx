@@ -9,6 +9,7 @@ import { predictionTicketCopy } from '@/lib/prediction-ticket-copy'
 import type { PredictionWalletAction } from '@/lib/prediction-ticket-state'
 import { maison as s } from './primitives'
 import ui from './prediction-experience.module.css'
+import rw from '@/components/rewards/rewards.module.css'
 
 export type PredictionBetFormProps = {
   stake: string; onStake: (value: string) => void; onAdd: (amount: number) => void
@@ -22,6 +23,8 @@ export type PredictionBetFormProps = {
   refreshing: boolean; pending: boolean; risk: boolean; ready: boolean
   onRisk: (value: boolean) => void; onRefresh: () => void; onLower: () => void
   onReload: () => void; onDeposit: () => void; onSubmit: () => void
+  /** Stage 3: a fee coupon the user owns (label, validity line, the estimated discount when on). */
+  coupon?: { label: string; sub: string; discount: string | null; on: boolean; onToggle: (on: boolean) => void }
 }
 
 /** Pure view shared by the real ticket and the explicitly isolated design preview. */
@@ -42,6 +45,7 @@ export function PredictionBetForm(props: PredictionBetFormProps) {
     <div className={ui.ticketOutcomes} role="group" aria-label={copy.review.outcome}>{props.outcomes.map((outcome,index)=><button key={index} type="button" data-side={index?'no':'yes'} aria-pressed={props.outcome===index} disabled={outcome.disabled || props.pending} onClick={()=>props.onOutcome(index)}><span>{outcome.label}</span><small>{outcome.probability}</small></button>)}</div>
     <div className={ui.netWin} aria-live="polite"><span>{labels.netPayout}</span><b className={s.num}>{props.netPayout}</b></div>
     <p className={ui.netCost}>{t.feeEstimate} <bdi dir="ltr">{props.fees}</bdi> · {t.price} <bdi dir="ltr">{props.price}</bdi> · {t.shares} <bdi dir="ltr">{props.shares}</bdi></p>
+    {props.coupon && <label className={rw.useRow}><span>{props.coupon.label}<small>{props.coupon.sub}</small></span>{props.coupon.discount && <b dir="ltr">{props.coupon.discount}</b>}<input type="checkbox" role="switch" className={rw.switch} checked={props.coupon.on} disabled={props.pending} onChange={event => props.coupon!.onToggle(event.target.checked)} /></label>}
     <div className={ui.quickAmounts}>{[1,5,10,100].map(amount=><button key={amount} type="button" className={s.chip} disabled={props.pending} onClick={()=>props.onAdd(amount)}>+{amount}</button>)}</div>
     {props.fieldError && props.walletAction !== 'deposit' && <p className={ui.ticketIssue} role="alert">{props.fieldError}</p>}
     <details className={ui.ticketDetails}><summary><span>{labels.details} · {labels.market}</span><ChevronDown size={14}/></summary><dl>

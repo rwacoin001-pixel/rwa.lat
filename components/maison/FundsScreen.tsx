@@ -34,6 +34,9 @@ import { useCommunityMe } from '@/lib/use-community-me'
 import tf from './transfer-feedback.module.css'
 import { AmountPad, FlowConfirm, FlowSuccess, RecipientField, share, useRecentRecipients } from './flow-kit'
 import { flowKitCopy } from '@/lib/flow-kit-copy'
+import { bestCoupon, rewardWalletQuery } from '@/lib/rewards'
+import { useRewardsCopy } from '@/components/rewards/rewards-copy'
+import rw from '@/components/rewards/rewards.module.css'
 
 const WITHDRAW_PATH = '/v1/wallet/withdrawals'
 const TRANSFER_PATH = '/v1/wallet/transfers'
@@ -86,6 +89,12 @@ export function WithdrawScreen({ query }: { query: string }) {
   const wallet = useQuery('wallet:detail', getWalletDetail, { staleTime: 15_000 })
   const networks = useQuery('wallet:networks', listNetworks, { staleTime: 300_000 })
   const book = useQuery('wallet:address-book', listAddressBook, { staleTime: 30_000 })
+  // Stage 3 (2026-11-01): a withdrawal fee coupon, when the user has one; the server applies it.
+  const rewards = useQuery('rewards:wallet', rewardWalletQuery, { staleTime: 30_000, loading: 'silent' })
+  const coupon = bestCoupon(rewards.data, 'withdrawal_fee')
+  const [useCoupon, setUseCoupon] = useState(true)
+  const couponId = coupon && useCoupon ? coupon.id : null
+  const rk = useRewardsCopy()
   const { run, sheet } = useStepUp()
   const [picked, setPicked] = useState<string | null>(() => queryParam(query, 'network'))
   const list = networks.data?.networks ?? []
@@ -130,13 +139,13 @@ export function WithdrawScreen({ query }: { query: string }) {
 
   // Debounced server quote; a newer input discards older answers.
   const [quote, setQuote] = useState<{ key: string; data?: WithdrawalQuote; error?: string } | null>(null)
-  const quoteKey = network && atomic && atomic !== '0' && !fieldError ? `${network.id}:${atomic}` : null
+  const quoteKey = network && atomic && atomic !== '0' && !fieldError ? `${network.id}:${atomic}:${couponId ?? ''}` : null
   const [quoteNonce, setQuoteNonce] = useState(0)
   useEffect(() => {
     if (!quoteKey || !network || !atomic) { setQuote(null); return }
     let live = true
     const timer = window.setTimeout(async () => {
-      const result = await quoteWithdrawal(network.id, atomic)
+      const result = await quoteWithdrawal(network.id, atomic, couponId)
       if (!live) return
       setQuote(result.ok ? { key: quoteKey, data: result.data } : { key: quoteKey, error: errorText(f, result.error, w.quoteError) })
     }, 400)
@@ -177,7 +186,7 @@ export function WithdrawScreen({ query }: { query: string }) {
     setTouched(true)
     if (!ready || !network || !atomic || inflight.current) return
     const epoch = generation.current
-    const body: WithdrawalBody = { network: network.id, atomicAmount: atomic, ...(mode === 'saved' && entry ? { addressBookId: entry.id } : { destination: destination.trim() }) }
+    const body: WithdrawalBody = { network: network.id, atomicAmount: atomic, ...(mode === 'saved' && entry ? { addressBookId: entry.id } : { destination: destination.trim() }), ...(couponId ? { couponId } : {}) }
     // Keyed on the body without the step-up token, so a retry after re-authentication replays the same request.
     const key = idempotencyKeyForIntent(keys.current, 'POST', WITHDRAW_PATH, body)
     inflight.current = true
@@ -205,7 +214,7 @@ export function WithdrawScreen({ query }: { query: string }) {
       if (['WALLET_INSUFFICIENT_BALANCE', 'WALLET_AMOUNT_BELOW_MINIMUM'].includes(result.error.code)) setQuoteNonce((n) => n + 1)
       return
     }
-    invalidate(['wallet:', 'portfolio:', 'home:'])
+    invalidate(['wallet:', 'portfolio:', 'home:', 'rewards:'])
     setReceipt({ ...result.data, to: mode === 'saved' && entry ? `${entry.label} · ${mask(entry.destination)}` : mask(destination.trim()) })
     } catch { if (epoch === generation.current) { setPinPrompt(false); setServerError(common.errorGeneric) } }
     finally { if (epoch === generation.current) { inflight.current = false; setPending(false) } }
@@ -285,7 +294,10 @@ export function WithdrawScreen({ query }: { query: string }) {
       rows={[
         { label: w.to, value: destinationLine },
         { label: f.common.network, value: network.displayName },
-        { label: f.common.fee, value: fmtAtomic(current?.data?.feeAtomicAmount ?? network.withdrawalFeeAtomic, decimals, unit) },
+        { label: f.common.fee, value: current?.data?.feeDiscountAtomic && current.data.feeDiscountAtomic !== '0'
+          ? <><s className={s.muted}>{fmtAtomic((BigInt(current.data.feeAtomicAmount) + BigInt(current.data.feeDiscountAtomic)).toString(), decimals, '').trim()}</s> {fmtAtomic(current.data.feeAtomicAmount, decimals, unit)}</>
+          : fmtAtomic(current?.data?.feeAtomicAmount ?? network.withdrawalFeeAtomic, decimals, unit) },
+        ...(coupon ? [{ label: rk.useWithdrawCoupon, value: <label className={rw.useRow}><span />{couponId && current?.data?.feeDiscountAtomic && current.data.feeDiscountAtomic !== '0' && <b dir="ltr">{rk.discount(fmtAtomic(current.data.feeDiscountAtomic, decimals, unit))}</b>}<input type="checkbox" role="switch" className={rw.switch} aria-label={rk.useWithdrawCoupon} checked={useCoupon} disabled={pending} onChange={(event) => setUseCoupon(event.target.checked)} /></label> }] : []),
         { label: kit.arrival, value: arrival },
         { label: w.total, value: current?.data ? fmtAtomic(current.data.totalDebitAtomic, decimals, unit) : '—', strong: true },
       ]}

@@ -9,6 +9,7 @@ import { Users, Camera, Globe2, Hash, ImagePlus, MapPin, Maximize2, Ticket, Tras
 import { CardPicker } from './community/cards/CardPicker'
 import { ResultCard } from './community/cards/ResultCard'
 import { CARD_FIELDS, cardsLive, sentFields, type CardDraft } from '@/lib/community-cards'
+import { offerDraw } from '@/lib/rewards'
 import { getPostLocation, locationCopy, type PostLocation } from '@/lib/community-location'
 import { request, readSession, SESSION_CHANGED, type ApiError } from '@/lib/api/_http'
 import { useI18n } from '@/lib/i18n'
@@ -298,8 +299,11 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
     intent.current = null
     if (target.kind === 'reply') { try { window.localStorage.removeItem(replyKey(target.postId)) } catch { /* ignore */ } }
     else if (draftId) writeDrafts(readDrafts().filter(d => d.id !== draftId))
+    const sentCard = Boolean(card)
     finish()
     onPublished(result.data.id)
+    // Stage 3: the first card of the day may unlock today's draw; the host checks with the server and stays quiet otherwise.
+    if (sentCard) offerDraw()
   }
 
   const onPick = (event: ChangeEvent<HTMLInputElement>) => { addFiles([...(event.target.files ?? [])]); event.target.value = '' }

@@ -53,6 +53,7 @@ const MaisonActivityScreen = dynamic(() => import('../maison/CashScreen').then((
 const MaisonCashScreen = dynamic(() => import('../maison/CashScreen').then((m) => ({ default: m.CashScreen })), { ssr: false, loading: AppLoading })
 const MaisonDepositScreen = dynamic(() => import('../maison/CashScreen').then((m) => ({ default: m.DepositScreen })), { ssr: false, loading: AppLoading })
 const MaisonAddressBookScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.AddressBookScreen })), { ssr: false, loading: AppLoading })
+const RewardsScreen = dynamic(() => import('../rewards/RewardsScreen').then((m) => ({ default: m.RewardsScreen })), { ssr: false, loading: AppLoading })
 const MaisonTransferScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.TransferScreen })), { ssr: false, loading: AppLoading })
 const MaisonReceiveScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.ReceiveScreen })), { ssr: false, loading: AppLoading })
 const MaisonWithdrawScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.WithdrawScreen })), { ssr: false, loading: AppLoading })
@@ -153,6 +154,7 @@ export function H5Screens({ h }: { h: H5Controller }) {
         {screen === 'support-ticket' && <MaisonSupportTicketScreen key={routeParams.id ?? supportTicketId ?? 'none'} id={routeParams.id ?? supportTicketId} />}
         {screen === 'fees' && <MaisonFeesScreen />}
         {screen === 'address-book' && <MaisonAddressBookScreen />}
+        {screen === 'rewards' && <RewardsScreen />}
         {screen === 'status' && <MaisonBridge page="status"><StatusScreen go={go} /></MaisonBridge>}
         {screen === 'disclosures' && <MaisonBridge page="trust"><TrustCenterScreen kind="product-disclosures" go={go} notify={notify} /></MaisonBridge>}
         {screen === 'order-detail' && <MaisonOrderStatusScreen variant="detail" orderId={routeParams.id ?? queryParam(routeQuery, 'id') ?? orderDetailId} />}

@@ -36,6 +36,8 @@ import { useHideUnavailablePrediction } from '@/lib/use-prediction-directions'
 import { predictionAvailabilityText } from '@/lib/prediction-availability-copy'
 import {hasPredictionEnded,isPredictionDiscoverable} from '@/lib/prediction-lifecycle'
 import {usePredictionExpiryClock} from '@/lib/use-prediction-expiry-clock'
+import { bestCoupon, discountOn, rewardWalletQuery } from '@/lib/rewards'
+import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
 const BET_PATH = '/v1/predictions/bets'
@@ -168,6 +170,11 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const signedIn = useSignedIn()
   const status = useQuery('prediction:status', getPredictionStatus, { staleTime: 60_000, pollInterval: POLL.list })
   const wallet = useQuery(signedIn ? 'wallet:summary:prediction' : null, getWallet, { staleTime: 15_000 })
+  // Stage 3 (2026-11-01): a bet fee coupon, when the user has one; the server works out the real discount.
+  const rewards = useQuery(signedIn ? 'rewards:wallet' : null, rewardWalletQuery, { staleTime: 30_000, loading: 'silent' })
+  const coupon = bestCoupon(rewards.data, 'prediction_place_fee')
+  const [useCoupon, setUseCoupon] = useState(true)
+  const rk = useRewardsCopy()
   // 默认选中第一个方向。若初始为 null，price 恒为 null，
   // 「预计份数 / 派彩费 / 中奖净到账」会全部显示「—」——用户填了金额却看不到任何结果。
   const [outcome, setOutcome] = useState<number | null>(initialOutcome)
@@ -213,6 +220,9 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     payoutFeeRate,
   })
   const { shares, payoutFee, netPayout, placeFeeAtomic } = estimate
+  const couponOn = Boolean(coupon && useCoupon)
+  const discount = couponOn ? discountOn(coupon, BigInt(placeFeeAtomic.toString())) : BigInt(0)
+  const chargedFee = BigInt(placeFeeAtomic.toString()) - discount
 
   if (!status.data && !status.error) return <Skeleton rows={2} />
   if (status.error && !status.data) return <StateBlock tone="error" title={copy.common.errorGeneric} body={status.error.message} retry={status.refetch} retryLabel={copy.common.retry} />
@@ -227,6 +237,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     <dl className={s.summary} style={{ marginTop: 16 }}>
       <div data-strong="true"><dt>{t.stake}</dt><dd className={s.num}>{fmtAtomic(done.stakeAtomic, decimals, 'USDT')}</dd></div>
       {done.feeAtomic && <div><dt>{fill(t.feePlace, { r: pct(placeFeeRate) })}</dt><dd className={s.num}>{fmtAtomic(done.feeAtomic, decimals, 'USDT')}</dd></div>}
+      {done.feeDiscountAtomic && done.feeDiscountAtomic !== '0' && <div><dt>{rk.useCoupon}</dt><dd className={s.num}>{rk.discount(fmtAtomic(done.feeDiscountAtomic, decimals, 'USDT'))}</dd></div>}
       <div><dt>{marketCopy[locale].status.orderId}</dt><dd className={s.num}>{done.id.slice(0, 8)}…</dd></div>
     </dl>
     <div className={s.actions2} style={{ marginTop: 16 }}>
@@ -238,16 +249,16 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const ready = Boolean(walletAction==='bet' && tokenId && atomic && atomic!=='0' && quote.available && !fieldError && risk && !pending && !quoteRefreshing && !quoteError)
   const submit = async () => {
     if (!ready || !tokenId || !atomic) return
-    const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}) }
+    const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}), ...(couponOn && coupon ? { couponId: coupon.id } : {}) }
     // Keyed on token + stake only, so a retry at a refreshed price still maps to the same bet.
-    const idempotencyKey = idempotencyKeyForIntent(keys.current, 'POST', BET_PATH, { tokenId: intent.tokenId, stakeAtomic: intent.stakeAtomic })
+    const idempotencyKey = idempotencyKeyForIntent(keys.current, 'POST', BET_PATH, { tokenId: intent.tokenId, stakeAtomic: intent.stakeAtomic, couponId: intent.couponId ?? '' })
     setPending(true)
     setServerError(null)
     const result = await placePredictionBet({ ...intent, idempotencyKey })
     setPending(false)
     if (!result.ok) { setServerError(t.server[result.error.code] ?? result.error.message ?? copy.common.errorGeneric); return }
     keys.current.clear()
-    invalidate(['wallet:', 'portfolio:', 'home:', 'prediction:bets'])
+    invalidate(['wallet:', 'portfolio:', 'home:', 'prediction:bets', 'rewards:'])
     setDone(result.data)
   }
 
@@ -259,9 +270,10 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     outcomes={m.outcomes.slice(0,2).map((label,index)=>({label:translation?.outcomes[index]??outcomeLabel(label,copy),probability:pct(m.prices[index]),disabled:!m.tokenIds[index] || directions[index].state==='unavailable'}))}
     outcome={outcome} onOutcome={index=>{setOutcome(index);setServerError(null)}} walletAction={walletAction} balance={fmtAtomic(available,decimals,'USDT')}
     price={price ? `${(price*100).toLocaleString(locale,{maximumFractionDigits:2})}¢` : '—'} shares={shares ? `≈ ${shares.toLocaleString(locale,{maximumFractionDigits:2})}` : '—'}
-    fees={atomic ? `${fmtAtomic(placeFeeAtomic.toString(),decimals,'USDT')} + ${payoutFee!==null?payoutFee.toLocaleString(locale,{maximumFractionDigits:2}):'—'} USDT` : '—'}
+    fees={atomic ? `${fmtAtomic(chargedFee.toString(),decimals,'USDT')} + ${payoutFee!==null?payoutFee.toLocaleString(locale,{maximumFractionDigits:2}):'—'} USDT` : '—'}
     netPayout={netPayout!==null?`≈ ${netPayout.toLocaleString(locale,{maximumFractionDigits:2})} USDT`:'—'} updatedAt={fmtDateTime(data.fetchedAt,locale)} limit={limits?.maxStakeAtomic?fill(t.limit,{v:fmtAtomic(limits.maxStakeAtomic,decimals,'USDT',0)}):undefined}
     fieldError={fieldError} serverError={serverError} quoteReason={quote.reason} quoteError={Boolean(quoteError)} amountTooLarge={amountTooLarge} smallerStake={smallerStake}
+    coupon={coupon ? { label: rk.useCoupon, sub: `${rk.upTo} ${fmtAtomic(coupon.maxDiscountAtomic, coupon.assetDecimals, coupon.assetCode)} · ${rk.validUntil(fmtDate(coupon.expiresAt, locale))}`, discount: couponOn && discount > BigInt(0) ? rk.discount(fmtAtomic(discount.toString(), decimals, 'USDT')) : null, on: useCoupon, onToggle: setUseCoupon } : undefined}
     refreshing={quoteRefreshing} pending={pending} risk={risk} ready={ready} onRisk={value=>{setRisk(value);setServerError(null)}}
     onRefresh={()=>{setServerError(null);void onRefreshQuote()}} onLower={()=>{if(smallerStake){setStake(smallerStake);setServerError(null)}}} onReload={()=>void wallet.refetch()} onDeposit={()=>openPath('/wallet/deposit')} onSubmit={()=>void submit()}
   />

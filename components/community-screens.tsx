@@ -14,6 +14,7 @@ import { communityTopicCopy } from '@/lib/route-copy'
 import { getCircle, type CircleMember } from '@/lib/community-data'
 import { getMyCircles, type CircleMembership } from '@/lib/community-circles'
 import { CircleList, openCircle } from './community/CircleList'
+import { RewardDrawHost } from './rewards/RewardDrawHost'
 import { Avatar, Images, Like, PostRow, SkeletonRows, Tags, XState, circleCopy, communityTopicTitle, compact, profileCopy, useInfinite, usePostActions, useTimeAgo, type RowActions } from './community/PostCard'
 import { openPath } from '@/lib/maison-nav'
 import { CircleJoinSheet } from './community/CircleJoinSheet'
@@ -147,7 +148,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   // Match the home module's public feed so the community route does not
   // render an empty latest-only view while the hot feed already has content.
   // Signed-in readers open on their circle (2026-11-01).
-  const [sort, setSort] = useState<'latest' | 'hot' | 'circle' | 'cards'>(isGuest || embedded ? 'hot' : 'circle')
+  const [sort, setSort] = useState<'latest' | 'hot' | 'circle' | 'cards'>(() => !embedded && typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('sort') === 'cards' ? 'cards' : isGuest || embedded ? 'hot' : 'circle')
   // 晒单 tab (2026-11-01): result-card posts, newest first, filtered by family; never ranked by profit.
   const [cardFilter, setCardFilter] = useState<'all' | 'quant' | 'prediction' | 'funds'>('all')
   const cardsText = cardsTabCopy[locale] ?? cardsTabCopy.en!
@@ -369,6 +370,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
         </>}
       {!embedded && <CircleJoinSheet code={joinCode} isGuest={isGuest} onClose={() => { setJoinCode(null); dropParam('join') }} onOpen={openJoined} onNotify={(text) => actions.notify({ text })} />}
       {!isGuest && <CommunityCompose open={composing} onClose={() => setComposing(false)} target={{ kind: 'post', topic, circleId: null, openCard: sort === 'cards' }} me={me} topics={topics} circles={circles ? [...(circles.owned ? [circles.owned] : []), ...circles.joined] : []} onPublished={openPost} />}
+      {!isGuest && <RewardDrawHost />}
       {actions.overlays(me)}
     </div>
   )

@@ -35,8 +35,8 @@ export type PlaceTradingOrderBody = { symbol: string; side: 'buy' | 'sell'; type
 /** A+C 混合收费：下注费（place）+ 派彩费（payout）。以服务端 /v1/predictions/status 为权威。 */
 export type PredictionFees = { placeFeeBps: number; payoutFeeBps: number; placeFeeRate: number; payoutFeeRate: number; assetDecimals: number }
 export type PredictionStatus = { enabled: boolean; mode: string; limits: { maxStakeAtomic: string | null; maxDailyStakeAtomic: string; maxMarketExposureAtomic: string; slippageBps: string; assetDecimals: number }; fees?: PredictionFees }
-export type PredictionBet = { id: string; status: string; stakeAtomic: string; shares: string; price: string; feeAtomic?: string; payoutFeeAtomic?: string; riskStakeAtomic?: string; [key: string]: unknown }
-export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string }
+export type PredictionBet = { id: string; status: string; stakeAtomic: string; shares: string; price: string; feeAtomic?: string; feeDiscountAtomic?: string | null; couponId?: string | null; payoutFeeAtomic?: string; riskStakeAtomic?: string; [key: string]: unknown }
+export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string }
 /** Shape of the same-origin `/api/polymarket/market/:id` proxy (Gamma + CLOB). */
 export type PolymarketMarket = {
   source: string; fetchedAt: string

@@ -32,6 +32,8 @@ import { ColourBand } from '@/components/backgrounds/ColourBand'
 import { useUnread } from '@/hooks/useUnread'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { referralMe, referralSummary } from '@/lib/api/referral'
+import { rewardWalletQuery } from '@/lib/rewards'
+import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 import { fromAtomic } from '@/lib/money'
 import { MASK, setBalancesHidden, useBalancesHidden } from '@/lib/hide-balance'
 
@@ -63,6 +65,9 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const portfolio = useQuery(guest ? null : 'portfolio:summary', getPortfolioSummary, { staleTime: 30_000 })
   const referral = useQuery(guest ? null : 'referral:summary', referralSummary, { staleTime: 60_000 })
   const inviteCode = useQuery(guest ? null : 'referral:v2:me', referralMe, { staleTime: 300_000 }).data?.code?.toUpperCase()
+  // Stage 3 (2026-11-01): the coupons row shows only when /v1/rewards is live for this user (null otherwise).
+  const rewards = useQuery(guest ? null : 'rewards:wallet', rewardWalletQuery, { staleTime: 60_000, loading: 'silent' }).data
+  const rk = useRewardsCopy()
   const invited = referral.data ? referral.data.levels.find((level) => level.level === 1)?.count ?? 0 : undefined
   const statsQuery = useQuery(community?.identityConfigured && community.handle ? `community:profile:${community.handle}` : null, () => request<CommunityProfileResponse>(`/v1/community/profiles/${encodeURIComponent(community!.handle)}`, { token: null, loading: 'silent' }), { staleTime: 60_000 })
   const stats = statsQuery.data?.stats ?? null
@@ -138,6 +143,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     ],
     [
       { key: 'referral', title: p.rows.referral.title, path: '/community?tab=invite', value: inviteCode ? <bdi className={m.code} dir="ltr">{inviteCode}</bdi> : undefined },
+      ...(rewards ? [{ key: 'rewards', title: rk.row, path: '/profile/rewards', value: <span className={m.value}>{rk.rowValue(rewards.points.toLocaleString(locale), rewards.coupons.filter((c) => c.state === 'available').length)}</span> }] : []),
       { key: 'documents', title: p.rows.documents.title, path: '/profile/documents' },
       { key: 'statements', title: p.rows.statements.title, path: '/assets/statements' },
       { key: 'fees', title: p.rows.fees.title, path: '/fees-and-limits' },
