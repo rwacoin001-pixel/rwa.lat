@@ -5,6 +5,9 @@ export const REWARD_ERROR_CODES = {
   EXCHANGE_LIMIT: 'REWARD_EXCHANGE_LIMIT', COUPON_INVALID: 'REWARD_COUPON_INVALID',
   KEY_INVALID: 'REWARD_IDEMPOTENCY_KEY_INVALID', CURSOR_INVALID: 'REWARD_CURSOR_INVALID',
   BUDGET_EXHAUSTED: 'REWARD_COUPON_BUDGET_EXHAUSTED',
+  VOUCHER_CONFLICT: 'REWARD_VOUCHER_CONFLICT', VOUCHER_STAKE: 'REWARD_VOUCHER_STAKE',
+  VOUCHER_DEPOSIT_REQUIRED: 'REWARD_VOUCHER_DEPOSIT_REQUIRED', VOUCHER_PRICE: 'REWARD_VOUCHER_PRICE',
+  VOUCHER_HEDGE: 'REWARD_VOUCHER_HEDGE',
 } as const
 export const rewardNotLive = () => new NotFoundException({ code: REWARD_ERROR_CODES.NOT_LIVE, message: 'Rewards are not available.' })
 export const rewardConflict = (code: string, reason?: string) => new ConflictException({ code, message: code, ...(reason ? { reason } : {}) })

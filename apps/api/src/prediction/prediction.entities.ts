@@ -7,6 +7,9 @@ import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, Unique, Updat
 @Entity({ schema: 'app', name: 'prediction_bets' })
 @Unique('prediction_bets_user_idempotency_key', ['userId', 'idempotencyKey'])
 export class PredictionBet {
+  @Column({ name: 'voucher_id', type: 'uuid', nullable: true })
+  voucherId!: string | null
+
   @PrimaryGeneratedColumn('uuid')
   id!: string
 

@@ -21,7 +21,7 @@ import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
 import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
 import { recordReferralRewards } from '../referral/referral-rewards'
 import { enqueueReferralPurchase } from '../referral/referral-purchase'
-import { couponDiscount, redeemCoupon } from '../rewards/reward-coupons'
+import { assertRewardFunding, assertVoucherOutcome, assertVoucherPrice, couponDiscount, lockBetVoucher, redeemCoupon, restoreBetVoucher } from '../rewards/reward-coupons'
 
 // 18 位定标换算已抽到 prediction-hedge-math（纯函数模块，可独立测试）；此处 re-export 保持既有引用不变。
 export { formatDecimal18, parseDecimal18 }
@@ -91,8 +91,9 @@ export class PredictionService {
   async placeBet(
     userId: string,
     requestId: string,
-    input: { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string },
+    input: { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string; voucherId?: string },
   ) {
+    assertRewardFunding(input.couponId, input.voucherId)
     const stake = BigInt(input.stakeAtomic)
     if (stake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
     // A completed receipt remains replayable after market closure, quote expiry or coupon use.
@@ -144,13 +145,15 @@ export class PredictionService {
         return this.toBetView(existing, true)
       }
 
+      if (input.voucherId) await lockBetVoucher(runner, userId, input.voucherId, stake)
       const discount = input.couponId ? await couponDiscount(runner, userId, input.couponId, 'prediction_place_fee', feeBefore) : 0n
-      const placeFee = feeBefore - discount
+      const placeFee = input.voucherId ? 0n : feeBefore - discount
       const riskStake = stake - placeFee
       if (riskStake <= 0n) throw predictionStakeLimitExceeded(PREDICTION_LIMITS.maxStakeAtomic)
       // A coupon increases risk stake and shares; validate depth against that actual amount.
       const price18 = validatedPredictionPrice(book, input.tokenId, riskStake, probability)
       if (price18 === null) throw predictionPriceUnavailable(input.tokenId)
+      if (input.voucherId) assertVoucherPrice(price18)
       if (input.expectedPrice) {
         const expected = parseDecimal18(input.expectedPrice)
         const delta = price18 > expected ? price18 - expected : expected - price18
@@ -172,6 +175,7 @@ export class PredictionService {
         throw predictionMarketNotTradeable(tokenRow.market_mapping_id)
       }
       tokenRow = current
+      if (input.voucherId) await assertVoucherOutcome(runner, userId, tokenRow.market_mapping_id, tokenRow.token_id)
 
       await this.compliance.requireInvestmentEligibility(userId, 'prediction')
 
@@ -196,27 +200,27 @@ export class PredictionService {
       }
 
       // 用户可用余额账户 + 平台池账户 + 平台手续费收入账户
-      const available = await this.ensureUserAccount(runner, userId)
+      const available = input.voucherId ? await this.promoAccount(runner) : await this.ensureUserAccount(runner, userId)
       const pool = await this.poolAccount(runner)
       const feeAccount = await this.feeAccount(runner)
       const [balance] = await runner.query(
         `SELECT COALESCE(current_atomic_balance, 0)::text AS amount FROM app.ledger_account_balances WHERE account_id = $1`,
         [available],
       )
-      if (BigInt(balance?.amount ?? '0') < stake) throw predictionInsufficientBalance()
+      if (!input.voucherId && BigInt(balance?.amount ?? '0') < stake) throw predictionInsufficientBalance()
 
       // 投注单
       const betId = randomUUID()
       const [bet] = await runner.query(
         `INSERT INTO app.prediction_bets
-          (id, user_id, market_mapping_id, token_id, side, stake_atomic, fee_atomic, payout_fee_atomic, shares, price, status, idempotency_key,fee_discount_atomic,coupon_id)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, 'placed', $10,$11,$12)
+          (id, user_id, market_mapping_id, token_id, side, stake_atomic, fee_atomic, payout_fee_atomic, shares, price, status, idempotency_key,fee_discount_atomic,coupon_id,voucher_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 0, $8, $9, 'placed', $10,$11,$12,$13)
          ON CONFLICT (user_id, idempotency_key) DO NOTHING
          RETURNING *`,
         [
           betId, userId, tokenRow.market_mapping_id, tokenRow.token_id, String(tokenRow.outcome ?? 'YES').toUpperCase(),
           stake.toString(), placeFee.toString(), formatDecimal18(shares18), formatDecimal18(price18), input.idempotencyKey,
-          discount.toString(), input.couponId ?? null,
+          discount.toString(), input.couponId ?? null, input.voucherId ?? null,
         ],
       )
       if (!bet) {
@@ -228,6 +232,7 @@ export class PredictionService {
         return this.toBetView(raced, true)
       }
       if (input.couponId) await redeemCoupon(runner, userId, input.couponId, 'prediction_bet', betId, feeBefore, discount)
+      if (input.voucherId) await redeemCoupon(runner, userId, input.voucherId, 'prediction_bet', betId, 0n, stake)
 
       // 记账：user.available --(debit stake)--> pool(credit riskStake) + fee_revenue(credit placeFee)
       // 三笔分录同属一笔交易，借贷净额为 0（账本平衡触发器要求）。
@@ -258,6 +263,8 @@ export class PredictionService {
         feeBeforeAtomic: feeBefore.toString(),
         feeDiscountAtomic: discount.toString(),
         couponId: input.couponId ?? null,
+        voucherId: input.voucherId ?? null,
+        funding: input.voucherId ? 'voucher' : 'cash',
         riskStakeAtomic: riskStake.toString(),
         placeFeeBps: feeConfig.placeFeeBps,
         price: formatDecimal18(price18),
@@ -404,11 +411,12 @@ export class PredictionService {
               await runner.query(
                 `INSERT INTO app.ledger_entries (transaction_id, account_id, side, atomic_amount)
                  VALUES ($1, $2, 'debit', $3), ($1, $4, 'credit', $3)`,
-                [txId, pool, refund.toString(), available],
+                [txId, pool, refund.toString(), bet.voucher_id ? await this.promoAccount(runner) : available],
               )
               totalPaid += refund
             }
           }
+          if (bet.voucher_id) await restoreBetVoucher(runner, userId, String(bet.voucher_id))
           await runner.query(
             `UPDATE app.prediction_bets SET status = 'void', settled_at = now() WHERE id = $1 AND status = 'placed'`,
             [betId],
@@ -498,6 +506,8 @@ export class PredictionService {
       feeAtomic: String(row.fee_atomic ?? '0'),
       feeDiscountAtomic: String(row.fee_discount_atomic ?? '0'),
       couponId: row.coupon_id ?? null,
+      voucherId: row.voucher_id ?? null,
+      funding: row.voucher_id ? 'voucher' as const : 'cash' as const,
       payoutFeeAtomic: String(row.payout_fee_atomic ?? '0'),
       /** 实际进入风险池的本金 = stake − 下注费 */
       riskStakeAtomic: (BigInt(String(row.stake_atomic ?? '0')) - BigInt(String(row.fee_atomic ?? '0'))).toString(),
@@ -542,6 +552,16 @@ export class PredictionService {
        WHERE owner_type = 'platform' AND owner_reference = 'prediction_pool' AND purpose = 'settlement' AND asset_code = 'USDT'`,
     )
     if (!account) throw new Error('Failed to resolve prediction pool account')
+    return account.id as string
+  }
+
+  private async promoAccount(runner: ReturnType<DataSource['createQueryRunner']>) {
+    // Debit-normal expense grows on issue; it does not draw on the user's available funds.
+    await runner.query(`INSERT INTO app.ledger_accounts(owner_type,owner_reference,purpose,asset_code,asset_decimals,normal_side)
+      VALUES('platform','prediction_promo','promo_expense','USDT',6,'debit') ON CONFLICT DO NOTHING`)
+    const [account] = await runner.query(`SELECT id FROM app.ledger_accounts WHERE owner_type='platform'
+      AND owner_reference='prediction_promo' AND purpose='promo_expense' AND asset_code='USDT'`)
+    if (!account) throw new Error('Failed to resolve prediction promo expense account')
     return account.id as string
   }
 
@@ -668,6 +688,7 @@ export class PredictionService {
     const offset = (input.page - 1) * input.limit
     const items = await this.dataSource.query(
       `SELECT b.id::text, b.user_id::text AS "userId", b.status, b.side,
+              b.voucher_id::text AS "voucherId", CASE WHEN b.voucher_id IS NULL THEN 'cash' ELSE 'voucher' END AS funding,
               b.stake_atomic::text AS "stakeAtomic", b.fee_atomic::text AS "feeAtomic",
               b.payout_fee_atomic::text AS "payoutFeeAtomic",
               b.shares::text, b.price::text,
