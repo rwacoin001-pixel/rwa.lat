@@ -25,6 +25,9 @@ export type PredictionBetFormProps = {
   onReload: () => void; onDeposit: () => void; onSubmit: () => void
   /** Stage 3: a fee coupon the user owns (label, validity line, the estimated discount when on). */
   coupon?: { label: string; sub: string; discount: string | null; on: boolean; onToggle: (on: boolean) => void }
+  /** v2: bet vouchers as chips; picking one sets and locks the stake to its face. */
+  voucher?: { label: string; hint: string; off: string; options: { id: string; label: string }[]; selected: string | null; onSelect: (id: string | null) => void }
+  stakeLocked?: boolean
 }
 
 /** Pure view shared by the real ticket and the explicitly isolated design preview. */
@@ -39,14 +42,19 @@ export function PredictionBetForm(props: PredictionBetFormProps) {
   return <div className={ui.compactTicket}>
     <div className={ui.ticketAmount}>
       <label htmlFor="bet-stake" className={ui.amountLabel}>{t.stake}</label>
-      <div className={ui.centerAmount}><input id="bet-stake" inputMode="decimal" autoComplete="off" placeholder="0" value={props.stake} disabled={props.pending} aria-invalid={Boolean(props.fieldError)} aria-describedby="bet-stake-meta" onChange={event => props.onStake(event.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}/><span>USDT</span></div>
+      <div className={ui.centerAmount}><input id="bet-stake" inputMode="decimal" autoComplete="off" placeholder="0" value={props.stake} disabled={props.pending || props.stakeLocked} aria-invalid={Boolean(props.fieldError)} aria-describedby="bet-stake-meta" onChange={event => props.onStake(event.target.value.replace(',', '.').replace(/[^\d.]/g, ''))}/><span>USDT</span></div>
       <p id="bet-stake-meta" className={ui.balance}>{walletReady ? `${labels.cash} ${props.balance}` : props.walletAction === 'reload' ? copy.common.unavailable : labels.checking}</p>
     </div>
     <div className={ui.ticketOutcomes} role="group" aria-label={copy.review.outcome}>{props.outcomes.map((outcome,index)=><button key={index} type="button" data-side={index?'no':'yes'} aria-pressed={props.outcome===index} disabled={outcome.disabled || props.pending} onClick={()=>props.onOutcome(index)}><span>{outcome.label}</span><small>{outcome.probability}</small></button>)}</div>
     <div className={ui.netWin} aria-live="polite"><span>{labels.netPayout}</span><b className={s.num}>{props.netPayout}</b></div>
     <p className={ui.netCost}>{t.feeEstimate} <bdi dir="ltr">{props.fees}</bdi> · {t.price} <bdi dir="ltr">{props.price}</bdi> · {t.shares} <bdi dir="ltr">{props.shares}</bdi></p>
+    {props.voucher && <div className={rw.voucherRow}><span>{props.voucher.label}<small>{props.voucher.hint}</small></span>
+      <div className={rw.voucherChips} role="radiogroup" aria-label={props.voucher.label}>
+        <button type="button" role="radio" aria-checked={props.voucher.selected === null} disabled={props.pending} onClick={() => props.voucher!.onSelect(null)}>{props.voucher.off}</button>
+        {props.voucher.options.map(o => <button key={o.id} type="button" role="radio" aria-checked={props.voucher!.selected === o.id} disabled={props.pending} onClick={() => props.voucher!.onSelect(o.id)}>{o.label}</button>)}
+      </div></div>}
     {props.coupon && <label className={rw.useRow}><span>{props.coupon.label}<small>{props.coupon.sub}</small></span>{props.coupon.discount && <b dir="ltr">{props.coupon.discount}</b>}<input type="checkbox" role="switch" className={rw.switch} checked={props.coupon.on} disabled={props.pending} onChange={event => props.coupon!.onToggle(event.target.checked)} /></label>}
-    <div className={ui.quickAmounts}>{[1,5,10,100].map(amount=><button key={amount} type="button" className={s.chip} disabled={props.pending} onClick={()=>props.onAdd(amount)}>+{amount}</button>)}</div>
+    {!props.stakeLocked && <div className={ui.quickAmounts}>{[1,5,10,100].map(amount=><button key={amount} type="button" className={s.chip} disabled={props.pending} onClick={()=>props.onAdd(amount)}>+{amount}</button>)}</div>}
     {props.fieldError && props.walletAction !== 'deposit' && <p className={ui.ticketIssue} role="alert">{props.fieldError}</p>}
     <details className={ui.ticketDetails}><summary><span>{labels.details} · {labels.market}</span><ChevronDown size={14}/></summary><dl>
       {props.limit && <div><dt>{t.stake}</dt><dd>{props.limit}</dd></div>}

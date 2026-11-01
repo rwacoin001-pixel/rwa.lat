@@ -20,6 +20,7 @@ export default function PredictionOrderPreview() {
   const blocked=mode==='expired'||mode==='capacity'
   const estimate=estimatePredictionBet({stakeAtomic:toAtomic(stake,6),decimals:6,price:blocked?null:side===1?.65:.35,placeFeeRate:.03,payoutFeeRate:.01})
   const labels=predictionTicketCopy[locale]
+  const [voucher,setVoucher]=useState<string|null>(null)
   return <main className="rwa-shell"><div className="rwa-mobile" data-theme={theme} data-screen="prediction-detail">
     <MaisonPage page="prediction-preview">
       <h1 className={s.titleL}>下单卡片预览</h1><p className={s.foot}>隔离示例 · 不会下单或修改余额</p>
@@ -34,7 +35,8 @@ export default function PredictionOrderPreview() {
           quoteReason={mode==='expired'?'expired':mode==='capacity'?'no_liquidity':null} amountTooLarge={mode==='capacity'} smallerStake={mode==='capacity'?'5':null}
           refreshing={false} pending={false} risk={risk} onRisk={setRisk} ready={risk&&!blocked&&Boolean(toAtomic(stake,6)&&Number(stake)>0)}
           onRefresh={()=>{setMode('bet');setFeedback('示例报价已刷新')}} onLower={()=>{setStake('5');setMode('bet')}} onReload={()=>setMode('bet')}
-          onDeposit={()=>setFeedback('示例：真实卡片会打开充值页面，保留金额')} onSubmit={()=>setFeedback('隔离预览：未提交真实投注')} serverError={feedback}/>
+          onDeposit={()=>setFeedback('示例：真实卡片会打开充值页面，保留金额')} onSubmit={()=>setFeedback('隔离预览：未提交真实投注')} serverError={feedback}
+          voucher={{label:'用下注券',hint:'本金由券支付 · 免下注费 · 赢了全额给你',off:'不用',options:[{id:'v1',label:'1 USDT'},{id:'v5',label:'5 USDT'}],selected:voucher,onSelect:id=>{setVoucher(id);setStake(id==='v5'?'5':id==='v1'?'1':'')}}} stakeLocked={voucher!==null}/>
       </PredictionSheet>
     </MaisonPage>
   </div></main>

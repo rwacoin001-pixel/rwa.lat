@@ -36,7 +36,7 @@ export type PlaceTradingOrderBody = { symbol: string; side: 'buy' | 'sell'; type
 export type PredictionFees = { placeFeeBps: number; payoutFeeBps: number; placeFeeRate: number; payoutFeeRate: number; assetDecimals: number }
 export type PredictionStatus = { enabled: boolean; mode: string; limits: { maxStakeAtomic: string | null; maxDailyStakeAtomic: string; maxMarketExposureAtomic: string; slippageBps: string; assetDecimals: number }; fees?: PredictionFees }
 export type PredictionBet = { id: string; status: string; stakeAtomic: string; shares: string; price: string; feeAtomic?: string; feeDiscountAtomic?: string | null; couponId?: string | null; payoutFeeAtomic?: string; riskStakeAtomic?: string; [key: string]: unknown }
-export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string }
+export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string; voucherId?: string }
 /** Shape of the same-origin `/api/polymarket/market/:id` proxy (Gamma + CLOB). */
 export type PolymarketMarket = {
   source: string; fetchedAt: string

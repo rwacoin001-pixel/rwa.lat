@@ -36,7 +36,9 @@ import { useHideUnavailablePrediction } from '@/lib/use-prediction-directions'
 import { predictionAvailabilityText } from '@/lib/prediction-availability-copy'
 import {hasPredictionEnded,isPredictionDiscoverable} from '@/lib/prediction-lifecycle'
 import {usePredictionExpiryClock} from '@/lib/use-prediction-expiry-clock'
-import { bestCoupon, discountOn, rewardWalletQuery } from '@/lib/rewards'
+import { bestCoupon, discountOn, rewardWalletQuery, vouchers } from '@/lib/rewards'
+
+const fromAtomicStr = (atomic: string, decimals: number) => { const v = BigInt(atomic), d = BigInt('1' + '0'.repeat(decimals)); const frac = (v % d).toString().padStart(decimals, '0').replace(/0+$/, ''); return frac ? `${v / d}.${frac}` : `${v / d}` }
 import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
@@ -174,6 +176,10 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const rewards = useQuery(signedIn ? 'rewards:wallet' : null, rewardWalletQuery, { staleTime: 30_000, loading: 'silent' })
   const coupon = bestCoupon(rewards.data, 'prediction_place_fee')
   const [useCoupon, setUseCoupon] = useState(true)
+  // v2 (2026-11-02): a 下注券 pays the whole stake (stake = its face, no place fee, a win is paid in full).
+  const myVouchers = vouchers(rewards.data)
+  const [voucherId, setVoucherId] = useState<string | null>(null)
+  const voucher = myVouchers.find(v => v.id === voucherId) ?? null
   const rk = useRewardsCopy()
   // 默认选中第一个方向。若初始为 null，price 恒为 null，
   // 「预计份数 / 派彩费 / 中奖净到账」会全部显示「—」——用户填了金额却看不到任何结果。
@@ -194,7 +200,8 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const decimals = limits?.assetDecimals ?? 6
   const atomic = stake && DEC_6.test(stake) ? toAtomic(stake, decimals) : null
   const available = wallet.data?.balances.availableAtomic ?? null
-  const walletAction = predictionWalletAction({availableAtomic: available, walletDecimals: wallet.data?.asset.decimals, walletAsset: wallet.data?.asset.code, expectedDecimals: decimals, loading: wallet.loading && !wallet.data, error: Boolean(wallet.error)})
+  const cashAction = predictionWalletAction({availableAtomic: available, walletDecimals: wallet.data?.asset.decimals, walletAsset: wallet.data?.asset.code, expectedDecimals: decimals, loading: wallet.loading && !wallet.data, error: Boolean(wallet.error)})
+  const walletAction = voucher && cashAction === 'deposit' ? 'bet' : cashAction
   const quote = predictionQuote(outcome === null ? null : data.outcomeBooks?.[outcome], outcome === null ? undefined : m.prices[outcome], atomic ? Number(atomic)/(10**decimals)*(1-(status.data?.fees?.placeFeeRate??0)) : 0, now)
   const directions = evaluatePredictionDirections(m, data.outcomeBooks, now)
   const price = quote.available ? quote.price : null
@@ -204,9 +211,9 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     if (!stake) return null
     if (!atomic || atomic === '0') return t.errors.format
     if (limits?.maxStakeAtomic && BigInt(atomic) > BigInt(limits.maxStakeAtomic)) return fill(t.errors.max, { v: fmtAtomic(limits.maxStakeAtomic, decimals, 'USDT', 0) })
-    if (available !== null && /^\d+$/.test(available) && (wallet.data?.asset.decimals ?? 6) === decimals && BigInt(atomic) > BigInt(available)) return tradeCopy[locale].basketOrder.errors.balance
+    if (!voucher && available !== null && /^\d+$/.test(available) && (wallet.data?.asset.decimals ?? 6) === decimals && BigInt(atomic) > BigInt(available)) return tradeCopy[locale].basketOrder.errors.balance
     return null
-  }, [atomic, available, decimals, limits, locale, stake, t.errors, wallet.data?.asset.decimals])
+  }, [atomic, available, decimals, limits, locale, stake, t.errors, wallet.data?.asset.decimals, voucher])
 
   // A+C 混合收费：下注先抽「下注费」，只有净额进池并折算份额；赢家派彩再抽「派彩费」。
   // 费率以服务端 /v1/predictions/status 为权威（下方 status.data.fees），前端不硬编码。
@@ -216,11 +223,11 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     stakeAtomic: atomic,
     decimals,
     price,
-    placeFeeRate,
+    placeFeeRate: voucher ? 0 : placeFeeRate,
     payoutFeeRate,
   })
   const { shares, payoutFee, netPayout, placeFeeAtomic } = estimate
-  const couponOn = Boolean(coupon && useCoupon)
+  const couponOn = Boolean(coupon && useCoupon && !voucher)
   const discount = couponOn ? discountOn(coupon, BigInt(placeFeeAtomic.toString())) : BigInt(0)
   const chargedFee = BigInt(placeFeeAtomic.toString()) - discount
 
@@ -249,13 +256,15 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const ready = Boolean(walletAction==='bet' && tokenId && atomic && atomic!=='0' && quote.available && !fieldError && risk && !pending && !quoteRefreshing && !quoteError)
   const submit = async () => {
     if (!ready || !tokenId || !atomic) return
-    const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}), ...(couponOn && coupon ? { couponId: coupon.id } : {}) }
+    const intent: Omit<PlaceBetBody, 'idempotencyKey'> = { tokenId, stakeAtomic: BigInt(atomic).toString(), ...(price ? { expectedPrice: price.toFixed(6) } : {}), ...(voucher ? { voucherId: voucher.id } : couponOn && coupon ? { couponId: coupon.id } : {}) }
     // Keyed on token + stake only, so a retry at a refreshed price still maps to the same bet.
-    const idempotencyKey = idempotencyKeyForIntent(keys.current, 'POST', BET_PATH, { tokenId: intent.tokenId, stakeAtomic: intent.stakeAtomic, couponId: intent.couponId ?? '' })
+    const idempotencyKey = idempotencyKeyForIntent(keys.current, 'POST', BET_PATH, { tokenId: intent.tokenId, stakeAtomic: intent.stakeAtomic, couponId: intent.couponId ?? '', voucherId: intent.voucherId ?? '' })
     setPending(true)
     setServerError(null)
     const result = await placePredictionBet({ ...intent, idempotencyKey })
     setPending(false)
+    if (!result.ok && rk.voucherErrors[result.error.code]) { setServerError(rk.voucherErrors[result.error.code]); return }
+    if (!result.ok && result.error.code === 'REWARD_COUPON_INVALID' && voucher) { setVoucherId(null); invalidate(['rewards:']); setServerError(rk.couponInvalid); return }
     if (!result.ok && result.error.code === 'REWARD_COUPON_INVALID') { setUseCoupon(false); invalidate(['rewards:']); setServerError(rk.couponInvalid); return }
     if (!result.ok) { setServerError(t.server[result.error.code] ?? result.error.message ?? copy.common.errorGeneric); return }
     keys.current.clear()
@@ -274,7 +283,9 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     fees={atomic ? `${fmtAtomic(chargedFee.toString(),decimals,'USDT')} + ${payoutFee!==null?payoutFee.toLocaleString(locale,{maximumFractionDigits:2}):'—'} USDT` : '—'}
     netPayout={netPayout!==null?`≈ ${netPayout.toLocaleString(locale,{maximumFractionDigits:2})} USDT`:'—'} updatedAt={fmtDateTime(data.fetchedAt,locale)} limit={limits?.maxStakeAtomic?fill(t.limit,{v:fmtAtomic(limits.maxStakeAtomic,decimals,'USDT',0)}):undefined}
     fieldError={fieldError} serverError={serverError} quoteReason={quote.reason} quoteError={Boolean(quoteError)} amountTooLarge={amountTooLarge} smallerStake={smallerStake}
-    coupon={coupon ? { label: rk.useCoupon, sub: `${rk.upTo} ${fmtAtomic(coupon.maxDiscountAtomic, coupon.assetDecimals, coupon.assetCode)} · ${rk.validUntil(fmtDate(coupon.expiresAt, locale))}`, discount: couponOn && discount > BigInt(0) ? rk.discount(fmtAtomic(discount.toString(), decimals, 'USDT')) : null, on: useCoupon, onToggle: setUseCoupon } : undefined}
+    voucher={myVouchers.length ? { label: rk.useVoucher, hint: rk.voucherHint, off: rk.voucherNone, options: myVouchers.map(v => ({ id: v.id, label: fmtAtomic(v.maxDiscountAtomic, v.assetDecimals, v.assetCode, 0) })), selected: voucherId, onSelect: (id) => { setVoucherId(id); setServerError(null); const v = myVouchers.find(x => x.id === id); setStake(v ? fromAtomicStr(v.maxDiscountAtomic, v.assetDecimals) : '') } } : undefined}
+    stakeLocked={Boolean(voucher)}
+    coupon={!voucher && coupon ? { label: rk.useCoupon, sub: `${rk.upTo} ${fmtAtomic(coupon.maxDiscountAtomic, coupon.assetDecimals, coupon.assetCode)} · ${rk.validUntil(fmtDate(coupon.expiresAt, locale))}`, discount: couponOn && discount > BigInt(0) ? rk.discount(fmtAtomic(discount.toString(), decimals, 'USDT')) : null, on: useCoupon, onToggle: setUseCoupon } : undefined}
     refreshing={quoteRefreshing} pending={pending} risk={risk} ready={ready} onRisk={value=>{setRisk(value);setServerError(null)}}
     onRefresh={()=>{setServerError(null);void onRefreshQuote()}} onLower={()=>{if(smallerStake){setStake(smallerStake);setServerError(null)}}} onReload={()=>void wallet.refetch()} onDeposit={()=>openPath('/wallet/deposit')} onSubmit={()=>void submit()}
   />

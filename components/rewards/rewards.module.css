@@ -98,3 +98,31 @@ button.face:not(:disabled):active { transform: scale(.99); }
   .back { transform: none; }
   .ticket:not([data-flipped]) .back, .ticket[data-flipped] .front { visibility: hidden; }
 }
+
+/* v2 (2026-11-02): the print card (printer colours), the odds row and sheet, the coupon tickets list. */
+.printCard { display: flex; align-items: center; gap: 12px; padding: 16px; border-radius: 22px; background: linear-gradient(180deg, #30353e, #15181d); color: #f2f4f7; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 18px 30px -20px rgba(11, 18, 32, .6); }
+.printCard > span { display: grid; flex: 1; gap: 4px; min-width: 0; }
+.printCard b { font-size: 17px; font-weight: 600; line-height: 24px; }
+.printCard small { color: rgba(242, 244, 247, .64); font-size: 13px; line-height: 18px; }
+.lightKey { display: inline-flex; flex: none; align-items: center; gap: 6px; height: 40px; padding: 0 16px; border: 0; border-radius: 999px; background: #fff; color: #0b1220; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.lightKey:focus-visible, .oddsRow:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+.oddsRow { display: flex; align-items: center; justify-content: space-between; min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--m-muted, #5b6472); font: inherit; font-size: 13px; cursor: pointer; }
+.tickets { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.odds { display: grid; gap: 8px; padding: 16px 0 12px; }
+.odds > p { margin: 0 0 8px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.odds h3 { margin: 8px 0 0; color: var(--m-muted, #5b6472); font-size: 13px; font-weight: 500; line-height: 18px; }
+.odds ul { margin: 0; padding: 0; list-style: none; }
+.odds li { display: flex; align-items: center; gap: 12px; min-height: 44px; font-size: 15px; line-height: 22px; font-variant-numeric: tabular-nums; }
+.odds li + li { box-shadow: inset 0 .5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+.odds li span { flex: 1; font-weight: 600; }
+.odds li small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.odds li b { min-width: 64px; font-weight: 600; text-align: end; }
+/* Bet voucher chips in the bet form (v2). */
+.voucherRow { display: grid; gap: 8px; color: var(--m-ink, #0b1220); font-size: 15px; line-height: 22px; }
+.voucherRow > span small { display: block; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.voucherChips { display: flex; flex-wrap: wrap; gap: 8px; }
+.voucherChips button { height: 32px; padding: 0 12px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .06)); color: var(--m-ink, #0b1220); font: inherit; font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; cursor: pointer; }
+.voucherChips button[aria-checked='true'] { background: var(--pa-sel, #0b1220); color: var(--pa-sel-ink, #fff); }
+.voucherChips button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
+:global(.rwa-mobile[data-theme='dark']) .voucherChips button { background: rgba(242, 244, 247, .08); color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .voucherChips button[aria-checked='true'] { background: #f2f4f7; color: #0b1220; }
