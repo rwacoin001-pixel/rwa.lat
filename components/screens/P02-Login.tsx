@@ -88,7 +88,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const emailCopy = authEmailCopy[locale]
   const passwordCopy = authPasswordCopy[locale]
   const [step, setStep] = useState<Step>('email')
-  // Two views on the cabinet page: the welcome (big card, sign in / create) and the solid form page that follows.
+  // Two views: the welcome (the lens, sign in / create) and the solid form page that follows.
   const [view, setView] = useState<'welcome' | 'form'>('welcome')
   const [intent, setIntent] = useState<'login' | 'register'>(mode)
   // The address the later steps act on, fixed when the lookup answers; editing it restarts at the email step.

@@ -8,7 +8,6 @@ import { authVisualCopy } from '@/lib/auth-visual-copy'
 import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import RwaLogoMark from '../rwa-logo'
-import { CabinetScene } from './CabinetFace'
 import { FocusLens } from './FocusLens'
 import f from './auth-focus.module.css'
 
@@ -47,16 +46,13 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
   }, [localeOpen])
   const cool = theme === 'dark'
   const media = cool ? 'cool' : 'warm'
-  const poster = attrs?.['data-auth-poster'] === 'true'
-  const cabinet = poster
   // The "Into Focus" sign-in (2026-11-01): paper, the lens, two keys; the form steps on solid paper.
   const focus = attrs?.['data-auth-focus'] === 'true'
   const welcome = focus && attrs?.['data-auth-view'] === 'welcome'
-  const brand = <><BrandMark size={poster ? 18 : 22} />{!poster && <span>A<i>-</i>REIT</span>}</>
-  return <section className={`screen ${styles.root}${focus ? ` ${f.root}` : ''}`} data-auth-cabinet={cabinet || undefined} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
+  const brand = <><BrandMark size={22} /><span>A<i>-</i>REIT</span></>
+  return <section className={`screen ${styles.root}${focus ? ` ${f.root}` : ''}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     {!focus && <><div className={styles.scene} aria-hidden="true">
-      {/* The cabinet sign-in hides this scene (CSS), so its video is not fetched there. */}
-      {mediaReady && !cabinet && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
+      {mediaReady && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>
         <source src={`/auth/auth-${media}-loop-h264.mp4`} type="video/mp4" />
       </video>}
     </div>
@@ -84,14 +80,6 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
       {welcome && hero && <div className={f.copy}>{hero}</div>}
       <div className={welcome ? f.actions : f.form}>{children}</div>
       {footer && <div className={f.legal}>{footer}</div>}
-    </> : cabinet ? <>
-      {/* Palette A: the scene is a rounded paper cabinet (day / night with the theme) whose face shows the Koala
-          Quant page; the real form sits below it, on the floor. */}
-      <CabinetScene locale={locale} night={cool} />
-      <div className={styles.stage}>
-        <div className={styles.cabBody}>{children}</div>
-        {footer && <div className={styles.cabFoot}>{footer}</div>}
-      </div>
     </> : <>
       {hero && <div className={styles.heroCopy}>{hero}</div>}
       <div className={styles.stage}>
@@ -100,12 +88,4 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
       </div>
     </>}
   </section>
-}
-
-/** The serif kicker + two-line plaque used above the card. */
-export function AuthHero({ kicker, lines }: { kicker?: string; lines: [string, string] }) {
-  return <>
-    {kicker && <p className={styles.kicker}><span aria-hidden="true" />{kicker}<span aria-hidden="true" /></p>}
-    <h1>{lines[0]} <em>{lines[1]}</em></h1>
-  </>
 }

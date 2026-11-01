@@ -96,9 +96,6 @@
 
 /* Plaque: a ruled kicker and a two-line serif, centred like an engraved title. */
 .heroCopy { position: relative; display: flex; flex-direction: column; align-items: center; margin: clamp(20px, 6svh, 56px) 24px 24px; color: var(--hero-ink); text-align: center; }
-.kicker { display: flex; align-items: center; gap: 12px; margin: 0 0 16px; font: 500 12px/1.2 var(--sans); letter-spacing: .12em; opacity: .8; animation: rise .6s var(--ease) both; }
-.root[data-auth-script='latin'] .kicker { font-size: 11px; letter-spacing: .2em; text-transform: uppercase; }
-.kicker span { width: 22px; height: 1px; background: currentColor; opacity: .55; }
 .heroCopy h1 { margin: 0; color: inherit; font: 400 clamp(36px, 10vw, 46px)/1.12 var(--display); letter-spacing: .02em; text-wrap: balance; text-shadow: 0 1px 20px color-mix(in srgb, var(--auth-bg) 55%, transparent); animation: rise .7s .06s var(--ease) both; }
 .root[data-auth-script='latin'] .heroCopy h1 { line-height: 1.04; letter-spacing: -.03em; }
 .heroCopy em { display: block; color: var(--hero-gold); font-style: normal; }
@@ -132,17 +129,10 @@
 .field input::placeholder { color: var(--auth-faint); opacity: .7; font-weight: 400; }
 .reveal { grid-column: 2; display: grid; place-items: center; width: 36px; height: 36px; margin: -8px -12px -8px 0; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--auth-faint); cursor: pointer; }
 .reveal:hover { color: var(--ink); }
-.codeBox { padding-block: 16px; }
-.codeBox input { grid-column: 1 / -1; height: 32px; text-align: center; font: 550 22px/1 var(--font-geist-mono), ui-monospace, monospace; letter-spacing: .3em; }
-.codeBox input::placeholder { opacity: .35; }
-.root .field.codeBox[data-state='error'], .root[data-auth-poster] .field.codeBox[data-state='error'] { border-color: #c4574a; box-shadow: 0 0 0 3px color-mix(in srgb, #c4574a 14%, transparent); animation: codeShake .32s ease-in-out; }
-.root .field.codeBox[data-state='ok'], .root[data-auth-poster] .field.codeBox[data-state='ok'] { border-color: var(--auth-accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--auth-accent) 16%, transparent); }
-.codeBox[data-state='ok'] input { opacity: .35; }
-@keyframes codeShake { 0%, 100% { transform: none; } 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 .codeStatus { display: flex; align-items: center; justify-content: center; gap: 8px; min-height: 22px; margin: 12px 0 0; color: var(--auth-muted); font: 500 13px/1.3 var(--sans); animation: authNoticeIn .2s ease-out both; }
 .codeStatus[data-tone='ok'] { color: var(--auth-accent); }
 .codeStatus .spinner { margin: 0; }
-@media (prefers-reduced-motion: reduce) { .codeBox[data-state='error'], .error, .codeStatus { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .error, .codeStatus { animation: none; } }
 .codeDelivery { display: flex; align-items: center; gap: 12px; margin: 0 0 12px; padding: 12px 6px 12px 16px; border-radius: 12px; background: color-mix(in srgb, var(--auth-accent) 9%, transparent); }
 .codeDelivery > svg { flex: none; color: var(--auth-accent); }
 .codeDelivery > span { display: grid; flex: 1; min-width: 0; gap: 2px; }
@@ -164,9 +154,7 @@
 /* The dark card (cool theme) gets light text on a deep red wash; the light card keeps dark red on a pale one, compact or not. */
 .root[data-auth-theme='cool'] .error { color: #ffb3a3; border-color: rgba(239, 143, 125, .38); background: rgba(74, 30, 27, .62); }
 .root[data-auth-theme='warm'][data-auth-compact='true'] .error { color: #9f3f33; }
-@keyframes authNoticeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
 .error button { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: pointer; }
-.success { margin: 0; color: var(--ink); font-size: 15px; line-height: 1.6; }
 
 /* One lacquered primary action: ink in warm, gold in cool. */
 .primary { position: relative; display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; min-height: 52px; margin-top: 20px; padding: 0 20px; border: 0; border-radius: 12px; background: var(--cta); color: var(--cta-ink); font: 600 15px/1.1 var(--sans); letter-spacing: .04em; text-align: center; box-shadow: inset 0 1px rgba(255, 255, 255, .16), 0 10px 22px -14px color-mix(in srgb, var(--cta) 80%, transparent); cursor: pointer; transition: transform .16s var(--ease), opacity .2s var(--ease); }
@@ -184,37 +172,20 @@
 
 /* Other methods: a labelled hairline and a row of round tokens. */
 .otherMethods { margin-top: 24px; }
-.divider { display: flex; align-items: center; gap: 16px; margin: 0; color: var(--auth-faint); font: 400 11px/1 var(--sans); letter-spacing: .06em; white-space: nowrap; }
-.divider::before, .divider::after { content: ''; flex: 1; height: .5px; background: var(--line); }
-.methods { display: flex; justify-content: center; gap: 12px; margin-top: 16px; }
-.methods button { display: inline-flex; align-items: center; justify-content: center; width: 46px; height: 46px; padding: 0; border: .5px solid var(--field-edge); border-radius: 50%; background: transparent; color: var(--ink); cursor: pointer; transition: transform .16s var(--ease), background .2s var(--ease); }
-.methods button:not(:disabled):hover { background: var(--field); }
-.methods button:not(:disabled):active { transform: scale(.94); }
-.methods img { flex: none; display: block; object-fit: contain; }
 .root[data-auth-theme='cool'] img[data-mono] { filter: invert(1); }
 
 /* Bottom line: one quiet switch between sign-in and registration. */
-.cardFoot { margin: 20px 0 4px; color: var(--auth-muted); font: 400 13px/1.4 var(--sans); text-align: center; }
-.cardFoot button { min-height: 40px; padding: 0 2px; border: 0; background: none; color: var(--ink); font: 600 13px/1.4 var(--sans); cursor: pointer; }
-.cardFoot button:hover { color: var(--auth-accent); }
 
-.fieldAction:disabled, .cardFoot button:disabled, .textLink:disabled, .codeDelivery button:disabled, .outerFooter button:disabled { cursor: default; opacity: .5; }
-.methods button:disabled { opacity: .42; cursor: default; }
-.iconButton:focus-visible, .brand:focus-visible, .primary:focus-visible, .methods button:focus-visible, .fieldAction:focus-visible, .cardFoot button:focus-visible, .textLink:focus-visible, .reveal:focus-visible, .codeDelivery button:focus-visible, .localeMenu button:focus-visible, .outerFooter a:focus-visible, .outerFooter button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 2px; }
-
-@keyframes sheetIn { from { opacity: 0; transform: translateY(24px); } }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
-@keyframes spin { to { transform: rotate(360deg); } }
+.fieldAction:disabled, .textLink:disabled, .codeDelivery button:disabled, .outerFooter button:disabled { cursor: default; opacity: .5; }
+.iconButton:focus-visible, .brand:focus-visible, .primary:focus-visible, .fieldAction:focus-visible, .textLink:focus-visible, .reveal:focus-visible, .codeDelivery button:focus-visible, .localeMenu button:focus-visible, .outerFooter a:focus-visible, .outerFooter button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 2px; }
 
 @media (max-width: 360px) {
   .sheetInner { padding-inline: 16px; }
   .heroCopy { margin-inline: 16px; }
-  .methods { gap: 12px; }
 }
 @media (max-height: 720px) {
   .heroCopy { margin-block: 16px 20px; }
   .heroCopy h1 { font-size: clamp(30px, 8.6vw, 38px); }
-  .kicker { margin-bottom: 12px; }
   .sheetInner { padding-top: 20px; }
   .cardHead { margin-bottom: 16px; }
 }
@@ -231,15 +202,14 @@
     linear-gradient(90deg, transparent 50%, var(--wash-end) 100%); }
   .topbar { grid-column: 1 / -1; padding-inline: 0; }
   .heroCopy { align-self: center; align-items: flex-start; margin: 0 0 60px; text-align: start; }
-  .kicker span:last-child { display: none; }
   .heroCopy h1 { font-size: clamp(52px, 5vw, 76px); }
   .stage { width: 100%; align-self: center; margin: 24px 0 48px; padding: 0; }
   .sheetInner { padding: 32px 32px 24px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sceneVideo { display: none; }
-  .authSheet, .heroCopy h1, .kicker, .localeMenu { animation: none; }
-  .primary, .ctaIcon, .methods button, .iconButton, .field, .rules li { transition: none; }
+  .authSheet, .heroCopy h1, .localeMenu { animation: none; }
+  .primary, .ctaIcon, .iconButton, .field, .rules li { transition: none; }
   .spinner { animation: none; }
 }
 
@@ -280,7 +250,6 @@
 .root[data-auth-compact='true'] .cardTitle { font: 400 22px/1.3 var(--display); letter-spacing: -.025em; }
 :global(.rwa-mobile) .root.root[data-auth-compact='true'] .cardLede { margin-top: 8px; color: var(--auth-muted); font-size: 12px; }
 :global(.rwa-mobile) .root.root[data-auth-compact='true'] .fieldLabel { color: var(--auth-muted); }
-.root[data-auth-compact='true'] .methods img[data-mono] { filter: invert(1); }
 .root[data-auth-compact='true'] .error { color: #ffb3a3; }
 .cardContent { animation: contentIn .32s var(--ease) both; }
 .root[data-auth-compact='true'] .grain { opacity: .14; }
@@ -304,129 +273,41 @@
   background: linear-gradient(105deg, transparent 30%, rgba(255,255,255,.18) 50%, transparent 70%);
   transform: translateX(-120%); transition: transform .65s var(--ease);
 }
-.root[data-auth-compact='true'] .methods button { transition: transform .25s var(--ease), background .25s var(--ease), border-color .25s var(--ease); }
 @media (hover: hover) and (pointer: fine) {
   .root[data-auth-compact='true'] .primary:not(:disabled):hover::after { transform: translateX(120%); }
-  .root[data-auth-compact='true'] .methods button:not(:disabled):hover { transform: translateY(-3px); border-color: var(--auth-accent); }
 }
-@keyframes compactIn { from { opacity: 0; transform: translateY(16px) scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes contentIn { from { opacity: .35; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (max-width: 360px) {
   .root[data-auth-compact='true'] .sheetInner { padding: 24px 20px; }
 }
 /* Poster: no card. The film is the frame; one lacquer fall-off at the foot carries the type,
    the email field is the lead, the legal line is the billing block. */
-.root[data-auth-poster='true'] .sceneWash { background:
-  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
-  linear-gradient(180deg, transparent 30%, rgba(27, 21, 15, .5) 52%, rgba(22, 17, 12, .88) 74%, #16110c 100%); }
-.root[data-auth-poster='true'][data-auth-theme='cool'] .sceneWash { background:
-  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
-  linear-gradient(180deg, transparent 30%, rgba(7, 12, 22, .5) 52%, rgba(7, 12, 22, .9) 74%, #070c16 100%); }
-.root[data-auth-poster='true'] .stage { width: min(380px, calc(100% - 48px)); padding-top: 32px; padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
-.root[data-auth-poster='true'] .topbar { padding-inline: 24px 16px; }
-.root[data-auth-poster='true'] .heroCopy { display: block; width: min(380px, calc(100% - 48px)); margin: clamp(32px, 7svh, 64px) auto 24px; text-align: start; }
-.root[data-auth-poster='true'] .heroCopy .cardTitle { font-size: clamp(34px, 9.7vw, 42px); line-height: 1.18; text-wrap: initial; }
-.root[data-auth-poster='true'] .heroCopy .cardLede { margin: 16px 0 0; max-width: none; color: var(--auth-muted); font-size: 13px; }
-.root[data-auth-poster='true'] .authSheet { overflow: visible; border: 0; border-radius: 0; background: none; box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; animation: none; }
 /* The compact cool sheet carries one more attribute, so the poster has to clear its panel there too. */
-.root[data-auth-poster='true'][data-auth-theme='cool'] .authSheet { background: none; }
-.root[data-auth-poster='true'] .grain { display: none; }
-.root[data-auth-poster='true'] .sheetInner { padding: 0; }
-
-.root[data-auth-poster='true'] .cardHead { margin-bottom: 32px; text-align: start; }
-.root[data-auth-poster='true']:not([data-auth-step='email']) .cardHead { margin-bottom: 32px; }
-.root[data-auth-poster='true'] .kicker { justify-content: center; margin-bottom: 20px; color: var(--auth-accent); opacity: 1; }
-.root[data-auth-poster='true'] .cardTitle { color: var(--ink); font: 400 clamp(36px, 10.4vw, 44px)/1.1 var(--display); letter-spacing: .01em; animation: rise .8s .08s var(--ease) both; }
-.root[data-auth-poster='true'][data-auth-script='latin'] .cardTitle { line-height: 1.02; letter-spacing: -.03em; }
-.root[data-auth-poster='true']:not([data-auth-step='email']) .cardTitle { font-size: clamp(30px, 8.4vw, 34px); }
-.root[data-auth-poster='true'] .cardTitle em { display: block; color: var(--auth-accent); font-style: normal; }
-.root[data-auth-poster='true'][data-auth-script='latin'] .cardTitle em { font-style: italic; }
-:global(.rwa-mobile) .root.root[data-auth-poster='true'] .cardLede, .root[data-auth-poster='true'] .cardLede { max-width: 28em; margin: 16px auto 0; color: var(--auth-muted); font-size: 13px; line-height: 1.6; text-wrap: pretty; }
 
 /* The lead: label and address on the start edge, a gold confirm seated inside the end edge. */
-.root[data-auth-poster='true'] .field { border-color: rgba(232, 205, 158, .3); border-radius: 22px; background: rgba(14, 11, 8, .32); }
-.root[data-auth-poster='true'][data-auth-theme='cool'] .field { background: rgba(5, 9, 18, .36); }
-.root[data-auth-poster='true'] .field:focus-within { border-color: rgba(232, 205, 158, .7); box-shadow: 0 0 0 3px rgba(227, 187, 122, .12); }
-.root[data-auth-poster='true'] .fieldLabel { font-size: 11px; letter-spacing: .14em; }
-.emailField { min-height: 58px; padding-block: 8px; padding-inline-end: 8px; }
-.emailField .inlineSubmit { grid-column: 2; grid-row: 1; width: 40px; height: 40px; }
-.inlineSubmit { display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: linear-gradient(145deg, #f2deb0, #d5b27c); color: #1b1813; box-shadow: inset 0 1px rgba(255, 251, 232, .7); cursor: pointer; transition: transform .16s var(--ease), opacity .2s var(--ease); }
-.inlineSubmit:not(:disabled):active { transform: scale(.94); }
-.inlineSubmit:disabled { opacity: .5; cursor: default; }
-.inlineSubmit .spinner { color: #1b1813; }
 .inlineArrow { display: grid; place-items: center; }
 .inlineArrow svg { transform: rotate(-45deg); transition: transform .45s var(--ease); }
 .inlineArrow[data-ready='true'] svg { transform: none; }
 [dir='rtl'] .inlineArrow svg { transform: rotate(-45deg) scaleX(-1); }
 [dir='rtl'] .inlineArrow[data-ready='true'] svg { transform: scaleX(-1); }
-.inlineSubmit:focus-visible, .altMethods button:focus-visible { outline: 2px solid var(--auth-accent); outline-offset: 2px; }
 .hint { margin: 12px 2px 0; color: var(--auth-muted); font-size: 13px; line-height: 1.45; text-align: center; }
 .walletOpen { display: block; margin: 12px auto 0; min-height: 40px; padding: 0 20px; border: 1px solid color-mix(in srgb, currentColor 24%, transparent); border-radius: 999px; background: transparent; color: inherit; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 
 /* Four icon-only entry points, with full accessible names on the buttons. */
-.root[data-auth-poster='true'] .otherMethods { margin-top: 20px; }
-.altMethods { display: flex; align-items: center; justify-content: space-around; gap: 12px; }
-.altMethods button { display: inline-flex; align-items: center; justify-content: center; flex: none; width: 50px; height: 50px; padding: 0; border: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); border-radius: 50%; background: none; color: var(--ink); cursor: pointer; transition: border-color .16s var(--ease), background .16s var(--ease), transform .12s var(--ease); }
-.altMethods img { flex: none; display: block; object-fit: contain; }
-.root[data-auth-theme='cool'] .altMethods img[data-mono] { filter: invert(1); }
-.altMethods button:not(:disabled):active { transform: scale(.94); border-color: var(--auth-accent); }
-.altMethods button:disabled { opacity: .42; cursor: default; }
-@media (hover: hover) and (pointer: fine) {
-  .altMethods button:not(:disabled):hover { border-color: var(--auth-accent); background: color-mix(in srgb, var(--ink) 5%, transparent); }
-}
 
 /* Billing block: the legal line in small, even type under the lead. */
-.root[data-auth-poster='true'] .outerFooter { padding-top: 32px; color: var(--auth-muted); font-size: 11px; letter-spacing: .04em; }
-.root[data-auth-poster='true'] .outerFooter a:hover { color: var(--hero-ink); }
 
 /* The existing warm film stays in place; its controls use the light-theme ink. */
-.root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet {
-  --ink: #1b1813; --auth-muted: #6b6257; --auth-faint: #6b6257;
-  --auth-accent: #8a6a3b; --field-edge: rgba(27, 24, 19, .25);
-}
-.root[data-auth-poster='true'][data-auth-theme='warm'] .sceneWash { background:
-  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
-  linear-gradient(180deg, transparent 40%, rgba(239, 228, 212, .65) 100%); }
-.root[data-auth-poster='true'][data-auth-theme='warm'] .field { border-color: var(--field-edge); background: rgba(251, 247, 240, .34); }
-.root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardTitle em { color: #795225; }
-.root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardLede { color: #514338; text-shadow: 0 1px 8px rgba(255, 251, 244, .6); }
-.root[data-auth-poster='true'] .emailField input::placeholder { color: var(--auth-muted); opacity: 1; }
 
 /* One entrance, in reading order, then still. */
-.root[data-auth-poster='true'] .kicker { animation: rise .7s var(--ease) both; }
-.root[data-auth-poster='true'][data-auth-step='email'] .cardLede, .root[data-auth-poster='true'][data-auth-step='email'] form, .root[data-auth-poster='true'] .otherMethods, .root[data-auth-poster='true'] .outerFooter { animation: rise .7s var(--ease) both; }
-.root[data-auth-poster='true'][data-auth-step='email'] .cardLede { animation-delay: .4s; }
-.root[data-auth-poster='true'][data-auth-step='email'] form { animation-delay: .38s; }
-.root[data-auth-poster='true'] .otherMethods { animation-delay: .5s; }
-.root[data-auth-poster='true'] .outerFooter { animation-delay: .6s; }
-
-@media (min-width: 960px) {
-  .root[data-auth-poster='true'] .stage { width: 400px; margin: auto auto 6svh; }
-}
-@media (max-height: 640px) {
-  .root[data-auth-poster='true'] .heroCopy { margin-block: 24px 16px; }
-  .root[data-auth-poster='true'] .heroCopy .cardTitle { font-size: 32px; }
-  .root[data-auth-poster='true'] .stage { padding-top: 20px; padding-bottom: calc(8px + env(safe-area-inset-bottom)); }
-  .root[data-auth-poster='true'] .outerFooter { padding-top: 20px; }
-}
-@media (pointer: coarse) {
-  .root[data-auth-poster='true']:has(.emailField input:focus) .heroCopy { margin-block: 16px; }
-  .root[data-auth-poster='true']:has(.emailField input:focus) .heroCopy .cardTitle { font-size: 28px; }
-}
 @media (prefers-reduced-motion: reduce) {
-  .root[data-auth-poster='true'] .kicker, .root[data-auth-poster='true'] .cardTitle,
-  .root[data-auth-poster='true'][data-auth-step='email'] .cardLede, .root[data-auth-poster='true'][data-auth-step='email'] form, .root[data-auth-poster='true'] .otherMethods, .root[data-auth-poster='true'] .outerFooter { animation: none; }
-  .inlineSubmit, .inlineArrow svg, .altMethods button { transition: none; }
+  .inlineArrow svg { transition: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .root[data-auth-compact='true'] .authSheet, .cardContent { animation: none; }
   .root[data-auth-compact='true'] .primary::after { display: none; }
-  .root[data-auth-compact='true'] .methods button { transition: none; }
   .root[data-auth-compact='true'] .ctaIcon svg { transition: none; }
 }
-
-.root[data-auth-poster='true'] .outerFooter button:hover { color: var(--hero-ink); }
 /* Legal sheet: ivory + lacquer in warm, navy + gold in cool; one document at a time behind a segmented switch. */
 .legalOverlay {
   --lg-ink: #221d16; --lg-muted: #6f6253; --lg-faint: #9a8b78; --lg-gold: #9b7742; --lg-gold-hi: #c9a368;
@@ -477,9 +358,6 @@
 .legalBody::-webkit-scrollbar { display: none; }
 .legalFoot { flex: none; padding-top: 4px; }
 .legalFoot .legalMeta { margin-block: 12px; }
-.legalHeader { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.legalSeal { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; color: #0a8a73; background: rgba(10, 138, 115, .1); }
-.legalOverlay[data-auth-theme='cool'] .legalSeal { color: #3fd3b8; background: rgba(63, 211, 184, .12); }
 .legalEyebrow { display: flex; align-items: center; gap: 8px; margin: 0; color: var(--lg-faint); font: 500 12px/1 var(--mono); letter-spacing: .08em; }
 .legalChip { padding: 4px 8px; border-radius: 999px; color: #0a8a73; background: rgba(10, 138, 115, .1); letter-spacing: .04em; }
 .legalTitle { margin: 0; color: var(--lg-ink); font: 400 24px/1.2 var(--display); letter-spacing: -.02em; text-wrap: balance; }
@@ -520,16 +398,11 @@
   .legalAction:hover .legalActionIcon { transform: rotate(45deg); }
 }
 .legalClose:focus-visible, .legalAction:focus-visible, .legalTabs button:focus-visible { outline: 2px solid var(--lg-gold); outline-offset: 2px; }
-@keyframes legalFade { from { opacity: 0; } to { opacity: 1; } }
-@keyframes legalSheetIn { from { opacity: 0; transform: translateY(28px) scale(.985); } to { opacity: 1; transform: none; } }
-@keyframes legalBodyIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (min-width: 640px) { .legalOverlay { align-items: center; } .legalHandle { visibility: hidden; height: 0; margin-bottom: 6px; } }
 @media (max-width: 380px) { .legalSheet { padding-inline: 16px; } .legalTitle { font-size: 22px; } .legalTabs button { padding: 0 6px; font-size: 12px; } }
 @media (prefers-reduced-motion: reduce) { .legalBackdrop, .legalSheet, .legalBody { animation: none; } .legalAction, .legalAction::after, .legalActionIcon { transition: none; } }
 
 /* The invitation field matches the email field's glass over the film. */
-.root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot { --field: rgba(251, 247, 240, .34); }
-.root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot p { text-shadow: 0 1px 8px rgba(255, 251, 244, .75); }
 
 /* ── Palette A preview (html[data-palette='a'], styles/palette-a.css): the films stay; the chrome turns cool white /
    graphite with the brand green, and titles move to the sans. Absent the attribute nothing here applies. ── */
@@ -569,47 +442,17 @@
 }
 :global(html[data-palette='a']) :is(.heroCopy h1, .cardTitle) { font-weight: 600; letter-spacing: -.025em; }
 :global(html[data-palette='a']) .root[data-auth-compact='true'] .cardTitle { font-weight: 600; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .cardTitle { font-weight: 600; letter-spacing: -.03em; }
 :global(html[data-palette='a']) .root .grain { display: none; }
 /* Compact sheet: graphite glass instead of brushed bronze. */
-:global(html[data-palette='a']) .root[data-auth-compact='true']:not([data-auth-poster='true']) .authSheet {
-  --ink: #f2f4f7; --auth-muted: #b4bccb; --auth-faint: #8a93a3; --auth-accent: #19c7aa;
-  --line: rgba(255, 255, 255, .12); --field: rgba(10, 12, 16, .3); --field-edge: rgba(255, 255, 255, .16); --cta-ink: #03211c;
-  border-color: rgba(255, 255, 255, .16);
-  background: linear-gradient(160deg, rgba(30, 34, 42, .62), rgba(12, 14, 18, .74) 70%);
-  box-shadow: 0 24px 64px -32px rgba(0, 0, 0, .5), inset 0 1px rgba(255, 255, 255, .08);
-}
-:global(html[data-palette='a']) .root[data-auth-compact='true'] .primary,
-:global(html[data-palette='a']) .inlineSubmit {
+:global(html[data-palette='a']) .root[data-auth-compact='true'] .primary {
   background: #19c7aa; color: #03211c;
   box-shadow: inset 0 1px rgba(255, 255, 255, .35), 0 8px 20px -12px rgba(25, 199, 170, .5);
 }
-:global(html[data-palette='a']) .inlineSubmit .spinner { color: #03211c; }
 :global(html[data-palette='a'] .rwa-mobile) .root.root[data-auth-compact='true'] .ctaIcon { background: #03211c; color: #19c7aa; }
 /* Poster: the film falls off into graphite (cool) or cool white (warm). */
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .sceneWash { background:
-  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
-  linear-gradient(180deg, transparent 30%, rgba(10, 12, 16, .5) 52%, rgba(10, 12, 16, .88) 74%, #0a0c10 100%); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .field { border-color: rgba(255, 255, 255, .22); background: rgba(10, 12, 16, .32); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .field:focus-within { border-color: rgba(25, 199, 170, .7); box-shadow: 0 0 0 3px rgba(25, 199, 170, .14); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet {
-  --ink: #0b1220; --auth-muted: #4b5563; --auth-faint: #4b5563; --auth-accent: #087a67; --field-edge: rgba(11, 18, 32, .22);
-}
 /* Dark poster: the compact sheet's bronze tokens (gold accent, gold hairlines) turn graphite + brand green. */
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .authSheet {
-  --ink: #f2f4f7; --auth-muted: #a3acbb; --auth-faint: #8a93a3; --auth-accent: #19c7aa;
-  --line: rgba(255, 255, 255, .1); --field-edge: rgba(255, 255, 255, .14); --cta-ink: #03211c;
-  border-color: rgba(255, 255, 255, .1);
-}
 :global(html[data-palette='a']) .root { --auth-accent: #087a67; }
 :global(html[data-palette='a']) .root[data-auth-theme='cool'] { --auth-accent: #19c7aa; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .sceneWash { background:
-  linear-gradient(180deg, var(--auth-bg) 0, color-mix(in srgb, var(--auth-bg) 55%, transparent) calc(env(safe-area-inset-top) + 28px), transparent calc(env(safe-area-inset-top) + 88px)),
-  linear-gradient(180deg, transparent 40%, rgba(238, 240, 243, .7) 100%); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .field { background: rgba(255, 255, 255, .5); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardTitle em { color: #087a67; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .heroCopy .cardLede { color: #2b3443; text-shadow: 0 1px 8px rgba(255, 255, 255, .6); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .inviteSlot { --field: rgba(255, 255, 255, .5); }
 /* Legal sheet. */
 :global(html[data-palette='a']) .legalOverlay {
   --lg-ink: #0b1220; --lg-muted: #5b6472; --lg-faint: #8f97a5; --lg-gold: #087a67; --lg-gold-hi: #19c7aa;
@@ -630,15 +473,10 @@
 :global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalAction { background: #19c7aa; color: #03211c; box-shadow: 0 10px 24px -14px rgba(25, 199, 170, .5); }
 :global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalActionIcon { background: #03211c; color: #19c7aa; }
 :global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalTabs button[aria-pressed='true'] { box-shadow: 0 0 0 .5px rgba(25, 199, 170, .35); }
-:global(html[data-palette='a']) .legalSeal, :global(html[data-palette='a']) .legalOverlay[data-auth-theme='cool'] .legalSeal { background: color-mix(in srgb, var(--lg-gold) 12%, transparent); box-shadow: inset 0 0 0 .5px color-mix(in srgb, var(--lg-gold) 34%, transparent); }
 
 /* Round 2: light = ink buttons with a green glyph (as on Home), dark = green buttons; sign-in methods sit on a solid chip. */
-:global(html[data-palette='a']) .root[data-auth-theme='warm'] .inlineSubmit,
 :global(html[data-palette='a']) .root[data-auth-theme='warm'][data-auth-compact='true'] .primary { background: #0b1220; color: #19c7aa; box-shadow: 0 8px 20px -12px rgba(15, 23, 42, .5); }
-:global(html[data-palette='a']) .root[data-auth-theme='warm'] .inlineSubmit .spinner { color: #19c7aa; }
 :global(html[data-palette='a'] .rwa-mobile) .root.root[data-auth-theme='warm'][data-auth-compact='true'] .ctaIcon { background: #19c7aa; color: #03211c; }
-:global(html[data-palette='a']) .root[data-auth-theme='warm'] .methods button { background: rgba(255, 255, 255, .78); border-color: rgba(11, 18, 32, .12); color: #0b1220; }
-:global(html[data-palette='a']) .root[data-auth-theme='cool'] .methods button { background: rgba(20, 23, 29, .72); border-color: rgba(255, 255, 255, .14); color: #f2f4f7; }
 /* Palette A: an error is a plain line of text under the field (no tinted box, no icon), set like the field's own text. */
 :global(html[data-palette='a']) .root .error { display: block; margin: 12px 0 0; padding: 0 24px; border: 0; border-radius: 0; background: none; color: #c0392b; font-size: 13px; font-weight: 500; line-height: 1.45; }
 :global(html[data-palette='a']) .root .error > svg { display: none; }
@@ -648,240 +486,61 @@
 :global(html[data-palette='a']) .sceneVideo { display: none; }
 :global(html[data-palette='a']) .scene { background-image: url('/media/palette-a/login-light.webp'); animation: paletteDrift 24s ease-in-out infinite alternate; }
 :global(html[data-palette='a']) .root[data-auth-theme='cool'] .scene { background-image: url('/media/palette-a/login-dark.webp'); }
-@keyframes paletteDrift { from { transform: translateX(-50%) scale(1.03); } to { transform: translateX(calc(-50% + .5%)) scale(1.06); } }
 @media (prefers-reduced-motion: reduce) { :global(html[data-palette='a']) .scene { animation: none; transform: translateX(-50%) scale(1.03); } }
 
 /* Palette A round 3 · option 甲: no film, no photo. Plain solid page. */
-:global(html[data-palette='a']) .root[data-auth-poster='true'] :is(.scene, .sceneWash) { display: none; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] { background: var(--auth-bg); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy .cardTitle { font-size: clamp(34px, 10vw, 42px); line-height: 1.12; text-shadow: none; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy .cardLede { color: var(--auth-muted); font-size: 15px; text-shadow: none; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .field { border-color: rgba(11, 18, 32, .12); background: #ffffff; box-shadow: 0 1px 2px rgba(15, 23, 42, .04); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .field:focus-within { border-color: #19c7aa; box-shadow: 0 0 0 4px rgba(25, 199, 170, .14); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='cool'] .field { border-color: rgba(255, 255, 255, .12); background: #14171d; box-shadow: none; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-theme='warm'] .authSheet { --ink: #0b1220; --auth-muted: #5b6472; --auth-faint: #8f97a5; }
 
 /* Palette A v3: the avatar flock (AvatarFlock.tsx) fills the top; the brand line and the form sit at the bottom, in thumb reach. */
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { position: relative; z-index: 1; margin: auto auto 24px; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'][data-auth-compact='true'] .stage { position: relative; z-index: 1; margin: 0 auto; padding-top: 0; }
 /* Steps with their own heading carry no brand line: the form alone goes to the bottom. */
-:global(html[data-palette='a']) .root[data-auth-poster='true']:not(:has(> .heroCopy))[data-auth-compact='true'] .stage { margin-top: auto; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { margin-top: 12px; }
 
 /* Palette A sign-in poster, round 5: a satin backdrop (React Bits Silk, brand teal) fills the top of the screen and
    fades out; the headline sits on its tail and the whole sign-in form is a glass sheet pinned to the bottom. */
-.silk { position: fixed; z-index: 0; top: 0; left: 50%; width: min(100%, var(--app-max, 100%)); height: 68lvh; transform: translateX(-50%); pointer-events: none;
-  -webkit-mask-image: linear-gradient(180deg, #000 52%, transparent 100%); mask-image: linear-gradient(180deg, #000 52%, transparent 100%); }
-.silk > div { pointer-events: auto; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] { min-height: 100svh; display: flex; flex-direction: column; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .topbar,
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { position: relative; z-index: 2; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .heroCopy { margin: auto auto 20px; width: min(400px, calc(100% - 48px)); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .stage { position: relative; z-index: 2; width: 100%; margin: 0; padding: 4px 24px calc(16px + env(safe-area-inset-bottom)); }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .stage > * { width: min(400px, 100%); margin-inline: auto; }
-:global(html[data-palette='a']) .root[data-auth-poster='true'] .outerFooter { padding-top: 16px; }
 
 /* Liquid glass, as on the guide's last page: the email pill is light glass with a dark disc; primary actions are dark glass. */
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .field { min-height: 58px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, .66);
-  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 -1px .5px rgba(255, 255, 255, .3), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 14px 30px -20px rgba(15, 23, 42, .5);
-  -webkit-backdrop-filter: blur(22px) saturate(180%); backdrop-filter: blur(22px) saturate(180%); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .field:focus-within { box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 0 0 1.5px rgba(10, 138, 115, .55), 0 14px 30px -20px rgba(15, 23, 42, .5); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .field { background: rgba(32, 34, 40, .62);
-  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .2), inset 0 0 0 .5px rgba(255, 255, 255, .12), 0 14px 30px -20px rgba(0, 0, 0, .8); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .field.codeBox { border-radius: 22px; }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .inlineSubmit { width: 44px; height: 44px; color: #ffffff; background: rgba(12, 16, 24, .86);
-  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .3), 0 6px 14px -8px rgba(11, 18, 32, .7); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .inlineSubmit { color: #0b1220; background: rgba(242, 244, 247, .92); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .primary { min-height: 58px; border: 0; border-radius: 999px; color: #ffffff; background: rgba(12, 16, 24, .8);
-  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .35), inset 0 0 0 .5px rgba(255, 255, 255, .14), 0 20px 34px -20px rgba(11, 18, 32, .8); -webkit-backdrop-filter: blur(24px) saturate(180%); backdrop-filter: blur(24px) saturate(180%); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .primary { color: #0b1220; background: rgba(242, 244, 247, .88); }
 /* Other ways in: one quiet row of small glass discs under a hairline. */
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .otherMethods { margin-top: 16px; }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .outerFooter { padding-top: 12px; font-size: 11px; color: color-mix(in srgb, #141a22 60%, transparent); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .outerFooter { color: rgba(242, 244, 247, .55); }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'] .cardHead .cardTitle { color: #141a22; }
-:global(html[data-palette='a']) .root.root[data-auth-poster='true'][data-auth-theme='cool'] .cardHead .cardTitle { color: #f2f4f7; }
 
 /* Round 40: palette A sign-in, framed like the guide's scenes: a rounded paper cabinet in the studio fills the photo
    (2:3, full width, day / night). In the photo the front face (the phone) is 8.2-57.4 % across and 7.4-90.4 % down;
    the cabinet stands on the floor at about 92 %. The form sits below, on the floor; on short screens the photo
    rises (up to a little under the status bar) so the cabinet stays clear of the form. Sizes inside are in cqw. */
-:global(html) .root.root[data-auth-cabinet] { --cab-sky: #bec3cc; --cab-ground: #dadbdd; --auth-bg: var(--cab-sky);
-  --sw: max(240px, min(calc(100vw - 32px), calc(var(--app-max, 480px) - 32px), calc((100svh - 54px - 216px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) / 1.5))); min-height: 100svh;
-  /* A faint dot grid over the studio colour: the tech detail on the paper scene. */
-  background: radial-gradient(circle, rgba(20, 26, 34, .07) 1px, transparent 1.3px) 0 0 / 18px 18px,
-    linear-gradient(180deg, var(--cab-sky) 0%, var(--cab-sky) 30%, var(--cab-ground) 70%, var(--cab-ground) 100%); }
-:global(html) .root.root[data-auth-cabinet][data-auth-theme='cool'] { --cab-sky: #262b33; --cab-ground: #4e4b4e; }
 /* iOS home-screen apps measure 100svh a Home-indicator short, which left a white line and a grey band under the floor.
    Installed, the window has no toolbar, so 100lvh is the whole screen; and whatever shows below the page is the floor. */
-@media (display-mode: standalone) { :global(html) .root.root[data-auth-cabinet] { min-height: 100lvh; } }
-:global(html):has(.root[data-auth-cabinet]), :global(html):has(.root[data-auth-cabinet]) :global(body), :global(html):has(.root[data-auth-cabinet]) :global(.rwa-mobile) { background: #dadbdd !important; }
-:global(html):has(.root[data-auth-cabinet][data-auth-theme='cool']), :global(html):has(.root[data-auth-cabinet][data-auth-theme='cool']) :global(body), :global(html):has(.root[data-auth-cabinet][data-auth-theme='cool']) :global(.rwa-mobile) { background: #4e4b4e !important; }
-.cabStage { position: absolute; z-index: 0; left: 50%; width: var(--sw); translate: -50% 0; aspect-ratio: 2 / 3; container-type: inline-size; pointer-events: none;
-  top: calc(54px + env(safe-area-inset-top)); overflow: hidden; border-radius: 28px; background: var(--cab-sky);
-  box-shadow: 0 0 0 .5px rgba(20, 26, 34, .14), 0 22px 44px -26px rgba(20, 26, 34, .45); }
-.cabPhoto { position: absolute; inset: 0; width: 100%; height: 100%; max-width: none; -webkit-user-drag: none; }
-.cabTag { position: absolute; z-index: 3; left: 49.32%; top: 5.47%; width: 8.3%; height: 14.45%; max-width: none; }
-.root.root[data-auth-cabinet] > .sceneWash, .root.root[data-auth-cabinet] > .scene { display: none; }
-.root.root[data-auth-cabinet] .topbar { position: relative; z-index: 3; padding-top: calc(6px + env(safe-area-inset-top)); }
-.root.root[data-auth-cabinet] .brand { visibility: hidden; }
-.root.root[data-auth-cabinet] .iconButton { width: 34px; height: 34px; margin-left: 6px; color: #141a22; background: rgba(255, 255, 255, .55);
-  box-shadow: inset 0 1px .5px rgba(255, 255, 255, .95), inset 0 0 0 .5px rgba(255, 255, 255, .6), 0 6px 14px -8px rgba(15, 23, 42, .45); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); }
-.root.root[data-auth-cabinet][data-auth-theme='cool'] .iconButton { color: #eef1f6; background: rgba(46, 50, 58, .55); box-shadow: inset 0 1px .5px rgba(255, 255, 255, .18), inset 0 0 0 .5px rgba(255, 255, 255, .1); }
 
 /* Written on the side's header, sheared onto its slope. */
-.cabSide { position: absolute; z-index: 1; inset: 0; width: 100%; height: 100%; overflow: visible; mix-blend-mode: multiply; }
-.cabSide text { fill: #3f4249; font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; }
-.cabSideTitle { font-size: 40px; font-weight: 700; letter-spacing: .04em; }
-.cabSideLine { font-size: 17px; opacity: .72; letter-spacing: .02em; }
-.cabSideRule { stroke: #0a8a73; stroke-width: 3; stroke-linecap: round; opacity: .85; }
-.root[data-auth-theme='cool'] .cabSide { mix-blend-mode: normal; }
-.root[data-auth-theme='cool'] .cabSide text { fill: #d7d9dd; }
-.root[data-auth-theme='cool'] .cabSideRule { stroke: #3ce0b1; }
 
 /* Round 41: the face is a flat 300 x 755 sheet mapped onto the face's measured corners (matrix3d, set in JS), so
    the page leans with the cabinet. Ink looks written on: it multiplies into the paper (chalk-light at night), with a
    grain mask for uneven pressure and the paper's tooth, and a breath of softness. The raised tab key is not ink. */
-.cabFace { position: absolute; z-index: 2; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; border-radius: 28px; --ink: #4a4741; }
-.root[data-auth-theme='cool'] .cabFace { --ink: #c4c7cd; }
-.kPrint { position: absolute; inset: 0; display: flex; flex-direction: column; padding: 16px 24px 0; color: var(--ink);
-  font-family: var(--font-geist-sans, system-ui), 'PingFang SC', 'Microsoft YaHei', sans-serif; font-size: 12px; line-height: 1.3; }
-.kInk { mix-blend-mode: multiply; filter: url(#cab-ink);
-  -webkit-mask-image: url('/media/palette-a/ink-grain.png'); mask-image: url('/media/palette-a/ink-grain.png'); -webkit-mask-size: 180px; mask-size: 180px; }
-.root[data-auth-theme='cool'] .kInk { mix-blend-mode: screen; }
-.kPrint svg { fill: none; stroke: var(--ink); stroke-width: 1.1; stroke-linecap: round; stroke-linejoin: round; }
-.kStatus { display: flex; flex: none; align-items: center; justify-content: space-between; height: 24px; padding: 0 6px; font-size: 13px; }
-.kStatus b { font-weight: 600; font-variant-numeric: tabular-nums; }
-.kStatus > span { display: flex; align-items: center; gap: 6px; }
-.kStatus svg { width: 14px; height: 14px; stroke-width: 2.2; }
-.kSig { display: flex; align-items: flex-end; gap: 2px; height: 10px; }
-.kSig i { width: 2.6px; border-radius: 1px; background: currentColor; }
-.kSig i:nth-child(1) { height: 30%; } .kSig i:nth-child(2) { height: 55%; } .kSig i:nth-child(3) { height: 80%; } .kSig i:nth-child(4) { height: 100%; }
-.kBatt { position: relative; width: 21px; height: 10.5px; border-radius: 3px; box-shadow: inset 0 0 0 1.1px currentColor; }
-.kBatt i { position: absolute; left: 2px; top: 2px; bottom: 2px; width: 62%; border-radius: 1px; background: currentColor; }
-.kHead { display: flex; flex: none; align-items: center; gap: 8px; margin-top: 8px; }
-.kHead b { font-size: 15px; font-weight: 700; letter-spacing: .1em; }
-.kHead svg { mix-blend-mode: normal; }
-
-.kDial { display: block; width: 212px; height: auto; margin: 4px auto 0; }
-.kDial text { fill: var(--ink); stroke: none; }
-.kMono { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 15px; font-weight: 600; letter-spacing: .02em; }
-.kMonoS { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 11px; font-weight: 600; letter-spacing: .02em; }
-.kTiny { font-size: 11px; letter-spacing: .08em; opacity: .85; }
-.kName { font-size: 11px; font-weight: 600; letter-spacing: .14em; }
-.kFill { fill: var(--ink); stroke: none; }
 
 /* Overview / Mine: the well is pressed into the face; the key stands out of it and slides with the tab. */
-.kSeg { position: relative; display: grid; flex: none; grid-template-columns: 1fr 1fr; margin-top: 12px; padding: 4px; border-radius: 999px; isolation: isolate;
-  background: linear-gradient(180deg, rgba(20, 26, 34, .08), rgba(20, 26, 34, .02)); box-shadow: inset 0 1.5px 3px rgba(20, 26, 34, .2), inset 0 -1px 0 rgba(255, 255, 255, .8); }
-.kSeg b { position: relative; z-index: 1; padding: 8px 0; text-align: center; font-size: 13px; font-weight: 600; }
-.kKey { position: absolute; z-index: 0; left: 3px; top: 3px; bottom: 3px; width: calc(50% - 3px); border-radius: 999px;
-  background: linear-gradient(180deg, #ffffff, #eceef2); box-shadow: inset 0 1px 0 #ffffff, inset 0 -1.5px 1px rgba(20, 26, 34, .1), 0 1px 1px rgba(20, 26, 34, .16), 0 6px 9px -2px rgba(20, 26, 34, .28);
-  transition: transform .7s cubic-bezier(.65, 0, .35, 1); }
-.kPrint[data-tab='1'] .kKey { transform: translateX(100%); }
-.root[data-auth-theme='cool'] .kSeg { background: linear-gradient(180deg, rgba(0, 0, 0, .34), rgba(0, 0, 0, .14)); box-shadow: inset 0 1.5px 3px rgba(0, 0, 0, .6), inset 0 -1px 0 rgba(255, 255, 255, .08); }
-.root[data-auth-theme='cool'] .kKey { background: linear-gradient(180deg, #4d525c, #343840); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 6px 9px -2px rgba(0, 0, 0, .65); }
 
 /* The two panels share one place and cross-fade. */
-.kPanels { position: relative; flex: none; height: 262px; margin-top: 12px; }
-.kPanel { position: absolute; inset: 0; opacity: 0; transition: opacity .6s ease; }
-.kPanel[data-on] { opacity: 1; }
-.kStats { display: grid; grid-template-columns: 1.1fr 1.25fr .7fr; border-top: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); }
-.kStats span { display: flex; flex-direction: column; gap: 4px; padding: 8px 6px; }
-.kStats span + span { border-left: 1px solid color-mix(in srgb, var(--ink) 28%, transparent); }
-.kStats small { font-size: 11px; opacity: .85; }
-.kStats b { font-size: 13px; font-weight: 700; }
-.kNavHead { display: flex; align-items: flex-end; justify-content: space-between; margin-top: 8px; }
-.kNavHead > b { font-size: 15px; font-weight: 700; }
-.kNavHead span { display: flex; flex-direction: column; align-items: flex-end; }
-.kNavHead small { font-size: 11px; opacity: .75; }
-.kNavHead strong { font-family: var(--font-geist-mono, ui-monospace), monospace; font-size: 22px; font-weight: 600; line-height: 1.1; }
-.kDays { display: inline-flex; margin-top: 2px; padding: 2px; border-radius: 999px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 45%, transparent); font-size: 11px; }
-.kDays > * { padding: 4px 8px; border-radius: 999px; }
-.kDays b { box-shadow: inset 0 0 0 1.2px var(--ink); font-weight: 700; }
-.kChart { display: block; width: 100%; height: auto; margin-top: 6px; overflow: visible; }
-.kChart text { fill: var(--ink); stroke: none; font-size: 11px; opacity: .85; }
-.kArea { fill: color-mix(in srgb, var(--ink) 10%, transparent); stroke: none !important; }
-.kLine { stroke-width: 1.7; stroke-dasharray: 1; stroke-dashoffset: 1; animation: kDraw 7s cubic-bezier(.45, 0, .2, 1) .6s infinite; }
-@keyframes kDraw { 0% { stroke-dashoffset: 1; } 35%, 88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
 
 /* Mine: the earnings calendar, as in the app. */
-.kCal { display: flex; flex-direction: column; }
-.kCalHead { display: flex; align-items: center; justify-content: space-between; padding: 2px 4px 6px; border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); }
-.kCalHead b { font-size: 17px; font-weight: 600; letter-spacing: .02em; }
-.kCalHead b i { font-style: normal; font-size: 11px; opacity: .6; margin: 0 2px; }
-.kCalHead svg { width: 13px; height: 13px; }
-.kCalWeek { display: grid; grid-template-columns: repeat(7, 1fr); padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); font-size: 11px; text-align: center; opacity: .8; }
-.kCalDays { display: grid; grid-template-columns: repeat(7, 1fr); row-gap: 4px; margin-top: 4px; text-align: center; }
-.kCalDays span { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 32px; }
-.kCalDays b { font-size: 11px; font-weight: 600; line-height: 1.2; }
-.kCalDays small { font-size: 11px; letter-spacing: -.02em; opacity: .85; }
-.kCalDays span[data-off] { opacity: .4; }
-.kDue { border-radius: 8px; box-shadow: inset 0 0 0 1.2px var(--ink); }
-
-.kDock { display: flex; flex: none; align-items: center; gap: 6px; margin-top: auto; margin-bottom: 20px; padding: 0 4px; }
-.kDock > span { display: flex; flex: 1; align-items: center; justify-content: space-around; height: 38px; padding: 0 4px; border-radius: 999px; box-shadow: inset 0 0 0 1.1px var(--ink); }
-.kDock svg { width: 15px; height: 15px; stroke-width: 1.6; }
-.kDock b { display: flex; align-items: center; gap: 4px; padding: 6px 12px; border-radius: 999px; box-shadow: inset 0 0 0 1.2px var(--ink); font-size: 11px; font-weight: 700; }
-.kDock b svg { width: 16px; height: auto; }
-.kDock > i { width: 34px; height: 34px; border-radius: 50%; box-shadow: inset 0 0 0 1.1px var(--ink); }
-@media (prefers-reduced-motion: reduce) { .kLine { animation: none; } .kLine { stroke-dashoffset: 0; } }
 
 /* The form below the scene, on the floor (round 36's liquid glass), then the legal line. */
-:global(html) .root.root.root[data-auth-cabinet] .stage { position: relative; z-index: 2; margin-top: auto; padding: 0 20px calc(6px + env(safe-area-inset-bottom)); }
-.cabBody { display: flex; flex-direction: column; }
-:global(html) .root.root.root[data-auth-cabinet] .stage .cardHead .cardTitle { margin: 0 0 12px; font-size: 22px; font-weight: 700; }
-.cabFoot { display: flex; justify-content: center; align-items: center; gap: 6px; margin-top: 6px; }
 /* Links: 12px, at least 44px tall, solid colours with 4.5:1 contrast on the studio floor (design spec §3.1, §4). */
-:global(html) .root.root.root[data-auth-cabinet] .cabFoot button { min-height: 44px; padding: 0 10px; border: 0; background: none; font: inherit; font-size: 12px; color: #444d5a; cursor: pointer; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot button { color: #d6dbe3; }
-:global(html) .root.root.root[data-auth-cabinet] .cabFoot > span { font-size: 12px; color: #444d5a; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-theme='cool'] .cabFoot > span { color: #d6dbe3; }
-
-.cabDefs { position: absolute; width: 0; height: 0; overflow: hidden; }
 /* Ink, not pixels: a warm, slightly dry tone rather than flat grey. */
-.cabFace { --ink: #45413b; }
 
 /* Round 43: the crown press, as on the real dial (every 5 s): cap and knurl sink 3.5 px and spring back, the flutes
    roll, the settlement ring winds one full turn back with a small overshoot. */
-.kCrown[data-press] { animation: kPress .58s cubic-bezier(.22, .75, .2, 1); }
-.kFlutes[data-press] { animation: kFlute 1.35s cubic-bezier(.45, 0, .18, 1); }
-.kWind { transform-origin: 100px 104px; }
-.kWind[data-press] { animation: kWind 1.55s cubic-bezier(.45, 0, .18, 1) .12s; }
-@keyframes kPress { 0% { transform: translateY(0); } 22%, 42% { transform: translateY(3.5px); } 80% { transform: translateY(-.45px); } 100% { transform: translateY(0); } }
-@keyframes kFlute { to { transform: translateX(9px); } }
-@keyframes kWind { 0% { transform: rotate(0); } 80% { transform: rotate(-357.5deg); } 93% { transform: rotate(-360.6deg); } 100% { transform: rotate(-360deg); } }
 
 /* Round 44: the cabinet sign-in uses the shared controls (components/ui/controls.module.css); only their placement
    is set here. The step headings and the password / code fields keep this page's own styles. */
 .wide { width: 100%; margin-top: 16px; }
 
 /* Palette A: the other ways in are shared glass icon keys in a centred row. */
-.methodsA { display: flex; justify-content: center; gap: 20px; }
-.methodsA img { width: 21px; height: 21px; }
-.root[data-auth-theme='cool'] .methodsA img[data-mono] { filter: invert(1); }
 /* One content column with a 24 px side margin (the page gutter for palette A): the email field fills it, and the four
    sign-in keys spread across the same width, so the first and last key meet the field's ends. */
-:global(html) .root.root.root[data-auth-cabinet] .stage { padding-inline: var(--page-gutter, 24px); }
-:global(html) .root.root.root[data-auth-cabinet] .cabBody { width: 100%; }
-.methodsA { justify-content: space-between; gap: 0; }
 
 /* Palette A code keypad on the sign-in page: the kit reads Maison tokens, so give it the sign-in colours. */
 .kitCode { --m-ink: #0b1220; --m-muted: #5b6472; --m-faint: #8f97a5; --m-accent: #0a8a73; --m-down: #d6453d; --m-up: #078a6a; --m-gutter: var(--page-gutter, 24px); width: 100%; color: var(--m-ink); }
 .root[data-auth-theme='cool'] .kitCode { --m-ink: #f2f4f7; --m-muted: #a3a9b3; --m-faint: #6b7280; --m-accent: #19c7aa; --m-down: #ff6b5e; --m-up: #2fd4a3; }
 /* While the code is typed on the keypad, the cabinet steps back and the form takes the page (no overlap). */
-.root.root[data-auth-cabinet] .cabStage { transition: opacity .35s ease, transform .45s cubic-bezier(.22, 1, .36, 1); }
-.root.root[data-auth-cabinet]:has(.kitCode) .cabStage { opacity: 0; transform: translateY(-24px) scale(.96); }
-:global(html) .root.root.root[data-auth-cabinet]:has(.kitCode) .stage { margin-top: 8px; animation: kitRise .4s cubic-bezier(.22, 1, .36, 1) both; }
-@keyframes kitRise { from { opacity: 0; transform: translateY(16px); } }
-@media (prefers-reduced-motion: reduce) { .root.root[data-auth-cabinet] .cabStage, :global(html) .root.root.root[data-auth-cabinet]:has(.kitCode) .stage { transition: none; animation: none; } }
 /* Keypad in the thumb zone: slots near the top, keys at the bottom. */
-:global(html) .root.root.root[data-auth-cabinet]:has(.kitCode) .stage { display: flex; flex: 1 1 auto; flex-direction: column; }
-.root.root[data-auth-cabinet]:has(.kitCode) .cabBody { flex: 1 1 auto; }
 .kitCode { display: flex; flex: 1 1 auto; flex-direction: column; }
 .kitCode > div { display: flex; flex: 1 1 auto; flex-direction: column; }
 .kitCode [role='group'] { margin-top: auto; }
-.root.root[data-auth-cabinet]:has(.kitCode) .cabBody, .root.root[data-auth-cabinet]:has(.kitCode) .cabBody > *:has(.kitCode), .root.root[data-auth-cabinet]:has(.kitCode) .cabBody *:has(> .kitCode) { display: flex; flex: 1 1 auto; flex-direction: column; }
 
 /* Delivery line as plain text (2026-10-29): no tint, no icon; a muted label, the address in ink, a text link. */
 .codeDelivery { gap: 16px; margin: 0 0 16px; padding: 0; border-radius: 0; background: none; }
@@ -895,47 +554,15 @@
 .v2 .field:focus-within { box-shadow: inset 0 0 0 1.5px var(--ink); }
 .v2 .fieldLabel { padding-top: 8px; font-size: 12px; line-height: 16px; }
 .v2 .field + .field { margin-top: 12px; }
-.v2 .codeBox { padding-block: 0; }
 .v2 .primary { min-height: 56px; border-radius: 999px; letter-spacing: 0; box-shadow: none; }
 .v2 .primary:disabled { background: var(--pa-fill-strong, rgba(11, 18, 32, .08)); color: var(--auth-muted); opacity: 1; }
 .slotInput { position: absolute; inset: 0; z-index: 3; width: 100%; height: 100%; border: 0; opacity: 0; color: transparent; background: none; caret-color: transparent; font-size: 17px; }
 
 /* Sign-in: two rows. The email field, then one glass bar: Google has the widest segment, then GitHub, wallet, passkey. */
-:global(html) .root.root.root[data-auth-cabinet] .otherMethods { margin-top: 12px; }
-.methodDock { display: flex; align-items: stretch; width: 100%; min-height: 56px; padding: 0; gap: 0; overflow: hidden; }
-.methodDock button { flex: 1 1 0; min-width: 0; display: grid; place-items: center; min-height: 56px; padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer;
-  -webkit-tap-highlight-color: transparent; transition: background .2s ease, opacity .2s ease; }
-.methodDock button + button { border-inline-start: .5px solid color-mix(in srgb, currentColor 16%, transparent); }
-.methodDock button:not(:disabled):active { background: color-mix(in srgb, currentColor 7%, transparent); }
-.methodDock button:disabled { opacity: .42; cursor: default; }
-.methodDock button:focus-visible { outline: 2px solid rgba(10, 138, 115, .6); outline-offset: -3px; border-radius: 999px; }
-.methodDock .dockGoogle { flex: 1.9 1 0; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
-.methodDock img { flex: none; width: 22px; height: 22px; display: block; object-fit: contain; }
-.root[data-auth-theme='cool'] .methodDock img[data-mono] { filter: invert(1); }
 
 /* Round 45 (2026-11-01): sign-in is two views. Welcome: one very large card under the top keys (fixed size: full width less
    12 px, capped by the height left for one row and the legal line), one row below it (sign in / create), the legal line at
    the foot. Form: a solid page, no card; the email field, then Google, then three quiet keys. */
-:global(html) .root.root[data-auth-cabinet] {
-  --card-top: calc(54px + env(safe-area-inset-top));
-  --sw: max(240px, min(calc(100vw - 24px), calc(var(--app-max, 480px) - 24px), calc((100svh - var(--card-top) - 12px - 56px - 56px - env(safe-area-inset-bottom)) / 1.5))); }
-:global(html) .root.root[data-auth-cabinet][data-auth-view='welcome'] .cabStage { top: var(--card-top); border-radius: 32px; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='welcome'] .stage { position: absolute; inset: 0; display: flex; flex-direction: column; margin-top: 0; padding: calc(var(--card-top) + var(--sw) * 1.5 + 12px) 12px calc(6px + env(safe-area-inset-bottom)); pointer-events: none; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='welcome'] .stage > * { pointer-events: auto; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='welcome'] .cabFoot { margin-top: auto; }
-.welcomeRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: min(100%, calc(var(--sw))); margin-inline: auto; }
-.welcomeBtn { width: 100%; justify-content: center; font: 600 16px/1 var(--sans); letter-spacing: -.01em; cursor: pointer; }
-
-:global(html) .root.root[data-auth-cabinet][data-auth-view='form'] { --form-bg: #fbf8f2; --cab-sky: var(--form-bg); --cab-ground: var(--form-bg); background: var(--form-bg); }
-:global(html) .root.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool'] { --form-bg: #141a22; }
-:global(html):has(.root[data-auth-cabinet][data-auth-view='form']), :global(html):has(.root[data-auth-cabinet][data-auth-view='form']) :global(body), :global(html):has(.root[data-auth-cabinet][data-auth-view='form']) :global(.rwa-mobile) { background: #fbf8f2 !important; }
-:global(html):has(.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool']), :global(html):has(.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool']) :global(body), :global(html):has(.root[data-auth-cabinet][data-auth-view='form'][data-auth-theme='cool']) :global(.rwa-mobile) { background: #141a22 !important; }
-:global(html) .root.root[data-auth-cabinet][data-auth-view='form'] .cabStage { display: none; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .stage { display: flex; flex: 1 1 auto; flex-direction: column; margin-top: 0; padding-top: 32px; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .cabBody { flex: 1 1 auto; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .cabFoot { margin-top: auto; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .stage .cardHead { margin-bottom: 28px; }
-:global(html) .root.root.root[data-auth-cabinet][data-auth-view='form'] .stage .cardHead .cardTitle { margin: 0; font-size: 32px; line-height: 1.1; font-weight: 700; letter-spacing: -.03em; }
 .orLine { display: flex; align-items: center; gap: 14px; margin: 28px 0 20px; color: var(--auth-muted, #5b6472); font: 500 12px/1 var(--sans); }
 .orLine::before, .orLine::after { content: ''; flex: 1; height: .5px; background: color-mix(in srgb, currentColor 35%, transparent); }
 .googleBtn { width: 100%; gap: 12px; font: 600 16px/1 var(--sans); letter-spacing: -.01em; cursor: pointer; }
