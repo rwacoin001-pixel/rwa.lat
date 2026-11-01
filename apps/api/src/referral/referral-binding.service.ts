@@ -1,3 +1,4 @@
+import { noticeAncestorCircles } from '../community/community-circle.notify'
 import { BadRequestException, ConflictException, Injectable, ServiceUnavailableException } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { createHmac, timingSafeEqual } from 'node:crypto'
@@ -139,6 +140,8 @@ export class ReferralBindingService {
       await m.query(`INSERT INTO app.referral_edges(invitee_user_id,inviter_user_id,code) VALUES($1,$2,$3)`, [userId,source.inviter_user_id,source.code])
       await m.query(`INSERT INTO app.referral_audit(request_key,action,object_id,metadata) VALUES($1,'referral.bound',$2,$3)`,
         [`binding:${userId}`,userId,JSON.stringify({ inviterUserId: source.inviter_user_id, code: source.code })])
+      // Circles owned by any ancestor now include this account: one notification per circle, in the same transaction.
+      await noticeAncestorCircles(m, userId)
     }
   }
 

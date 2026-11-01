@@ -197,6 +197,9 @@ describe('circle service', () => {
       if (own !== undefined) return own
       if (sql.includes('FROM app.community_profiles p JOIN app.users u')) return [profileRow]
       if (sql.includes('count(*)::int AS n')) return [{ n: 2 }]
+      if (sql.includes('INSERT INTO app.notifications')) return []
+      if (sql.includes('DELETE FROM app.community_circle_guests')) return []
+      if (sql.includes('FROM app.community_circle_guests')) return []
       return undefined
     })
     const community = { profileViews: async () => views, getFeed: jest.fn(async () => ({ items: [], nextCursor: null })) } as unknown as CommunityService
@@ -231,13 +234,13 @@ describe('circle service', () => {
     expect(member.community.getFeed).toHaveBeenCalledWith({ limit: 5, sort: 'latest', topic: undefined }, undefined, CIRCLE)
   })
   it('lists downline members at any depth with their depth, paged', async () => {
-    const rows = [1, 2, 3].map(depth => ({ profile_id: `p${depth}`, depth }))
-    const { svc, calls } = circles(sql => roleSql(sql) ? roleFor('member') : sql.includes('SELECT id,name,owner_user_id') ? [circleRow] : sql.includes('ORDER BY d.depth') ? rows : undefined)
+    const rows = [1, 2, 3].map(depth => ({ profile_id: `p${depth}`, depth, via: 'tree' }))
+    const { svc, calls } = circles(sql => roleSql(sql) ? roleFor('member') : sql.includes('SELECT id,name,owner_user_id') ? [circleRow] : sql.includes('ORDER BY (m.via') ? rows : undefined)
     ;(svc as unknown as { community: { profileViews: () => Promise<Map<string, unknown>> } }).community.profileViews = async () => new Map(rows.map(r => [r.profile_id, { id: r.profile_id }]))
     const page = await svc.members(MEMBER, CIRCLE, { limit: 2 })
-    expect(page.items.map(i => i.depth)).toEqual([1, 2])
+    expect(page.items.map(i => [i.depth, i.via])).toEqual([[1, 'tree'], [2, 'tree']])
     expect(page.nextCursor).toBe('o:2')
-    const sql = calls.find(c => c.sql.includes('ORDER BY d.depth'))!.sql
+    const sql = calls.find(c => c.sql.includes('ORDER BY (m.via'))!.sql
     expect(sql).toContain('WITH RECURSIVE down')
     expect(sql).toContain('d.depth<64')
     expect(sql).toContain('community_circle_optouts')
