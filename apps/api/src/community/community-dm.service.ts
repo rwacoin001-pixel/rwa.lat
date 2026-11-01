@@ -212,7 +212,7 @@ export class CommunityDmService {
   }
 
   /** Signed redirect target. Readable only by a member of a thread holding a live (not unsent) message with this attachment. */
-  async attachmentUrl(userId: string, mediaId: string): Promise<string> {
+  async attachmentUrl(userId: string, mediaId: string, expiresIn = 60): Promise<string> {
     const [row] = await this.db.transaction(async m => {
       const p = await requireDmIdentity(m, userId)
       return m.query(`SELECT msg.attachment_kind AS kind,msg.attachment_name AS name FROM app.community_dm_messages msg
@@ -220,7 +220,7 @@ export class CommunityDmService {
         WHERE msg.attachment_media_id=$1 AND msg.deleted_at IS NULL AND member.profile_id=$2 LIMIT 1`, [mediaId, p.id])
     })
     if (!row || !this.storage) throw new NotFoundException('DM_ATTACHMENT_NOT_FOUND')
-    return this.storage.createDmAttachmentUrl(mediaId, row.name ?? '', row.kind)
+    return this.storage.createDmAttachmentUrl(mediaId, row.name ?? '', row.kind, expiresIn)
   }
 
   private async unread(m: EntityManager, profileId: string, threadId?: string): Promise<number> {
