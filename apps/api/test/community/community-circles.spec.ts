@@ -70,7 +70,7 @@ describe('circle name validation', () => {
 
 describe('public reads never expose circle posts', () => {
   function publicService(post: Record<string, unknown> | null, roleRows: unknown[]) {
-    const { db } = fakeDb(sql => roleSql(sql) ? roleRows : sql.includes('SELECT c.id,c.name FROM app.community_circles c') ? [{ id: CIRCLE, name: 'Koala' }] : undefined)
+    const { db } = fakeDb(sql => roleSql(sql) ? roleRows : sql.includes('SELECT c.id,c.name FROM app.community_circles c') ? [{ id: CIRCLE, name: 'Koala' }] : sql.includes('community_post_cards') ? [{ ready: false }] : undefined)
     const svc = Object.create(CommunityService.prototype) as CommunityService
     Object.assign(svc, {
       dataSource: db,

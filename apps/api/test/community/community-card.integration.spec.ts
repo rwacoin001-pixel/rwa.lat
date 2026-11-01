@@ -32,6 +32,8 @@ suite('Result cards with isolated PostgreSQL', () => {
     circles = new CommunityCircleService(scoped, community)
     shares = new PublicShareService(scoped)
     owner = randomUUID(); other = randomUUID(); product = randomUUID(); payout = randomUUID(); bet = randomUUID(); deposit = randomUUID()
+    // Fixtures bypass the production-only ledger/lot triggers on settled orders; the DDL is rolled back with the transaction.
+    await runner.query('ALTER TABLE app.quant_orders DISABLE TRIGGER USER')
     await runner.query('INSERT INTO app.users(id) VALUES($1),($2)', [owner, other])
     await member.updateProfile(owner, { displayName: 'Card owner', handle: 'card_owner', location })
     await member.updateProfile(other, { displayName: 'Other owner', handle: 'other_owner', location })
@@ -218,7 +220,8 @@ suite('Result cards with isolated PostgreSQL', () => {
     expect(await resolveCard(scoped, owner, { kind: 'quant_total' })).toMatchObject({ pnl: '-8128000', settledDays: 1 })
   })
   it('keeps old proofs and share kinds through a migration rollback and reapply', async () => {
-    const [{ date }] = await runner.query('UPDATE app.quant_payouts SET net_atomic=1000000,paid_atomic=1000000,trade_date=current_date WHERE id=$1 RETURNING trade_date::text AS date', [payout])
+    // TypeORM returns [rows, affectedCount] for UPDATE ... RETURNING.
+    const [[{ date }]] = await runner.query('UPDATE app.quant_payouts SET net_atomic=1000000,paid_atomic=1000000,trade_date=current_date WHERE id=$1 RETURNING trade_date::text AS date', [payout])
     const proof = await member.post(owner, randomUUID(), { body: '', location, proof: { kind: 'quant_day', product: `card-${product}`, date } })
     const legacyLink = await shares.create(owner, { kind: 'community_post', resourceId: proof.id })
     const post = await member.post(owner, randomUUID(), { body: '', card: { kind: 'quant_total', visibleFields: ['pnl'] } })
@@ -232,6 +235,8 @@ suite('Result cards with isolated PostgreSQL', () => {
       expect(await shares.resolve(legacyLink.token)).toMatchObject({ kind: 'community_post' })
       await expect(shares.resolve(cardLink.token)).rejects.toMatchObject({ status: 404 })
       expect((await runner.query('SELECT id FROM app.community_posts WHERE id=$1', [post.id]))).toHaveLength(1)
+      // A card-only post would be blank without its card: the rollback hides it but keeps the row.
+      expect((await runner.query('SELECT state FROM app.community_posts WHERE id=$1', [post.id]))[0].state).toBe('hidden')
       await runner.query('SAVEPOINT restored_body_check')
       await expect(runner.query("INSERT INTO app.community_posts(profile_id,body,topics,source,state,published_at) SELECT profile_id,'','[]','user','published',now() FROM app.community_posts WHERE id=$1", [post.id])).rejects.toMatchObject({ code: '23514' })
       await runner.query('ROLLBACK TO SAVEPOINT restored_body_check')

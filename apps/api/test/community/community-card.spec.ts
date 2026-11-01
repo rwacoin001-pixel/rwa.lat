@@ -113,3 +113,20 @@ describe('result card requests and privacy', () => {
     expect(query).toHaveBeenCalledTimes(1)
   })
 })
+
+describe('hidden dates stay hidden', () => {
+  const snap = (extra: object) => ({ capturedAt: '2026-11-01T00:00:00.000Z', period: { from: '2026-10-31', to: '2026-10-31' }, asset: 'USDT', decimals: 6, provenance: 'ledger_verified' as const, disclaimer: 'v1' as const, ...extra })
+  it('a single-day card without its date field does not leak the day through the period', () => {
+    const full = snap({ pnl: '-1', returnPct: '-1', date: '2026-10-31', product: { slug: 'k', name: 'K' } })
+    expect(publicCardSnapshot('quant_day', full, ['returnPct']).period).toEqual({ from: null, to: null })
+    expect(publicCardSnapshot('quant_day', full, ['returnPct', 'date']).period).toEqual({ from: '2026-10-31', to: '2026-10-31' })
+    const dep = snap({ amount: '5', time: '2026-10-31T01:00:00.000Z', status: 'credited', fundsRecord: true })
+    expect(publicCardSnapshot('deposit', dep, ['status']).period).toEqual({ from: null, to: null })
+    expect(publicCardSnapshot('deposit', dep, ['status', 'time']).period.from).toBe('2026-10-31')
+    expect(publicCardSnapshot('withdrawal', dep, ['status']).fundsRecord).toBe(true)
+  })
+  it('multi-day cards keep their period (it is the stated window, not a hideable field)', () => {
+    const total = snap({ period: { from: '2026-09-01', to: '2026-10-31' }, pnl: '1', settledDays: 3 })
+    expect(publicCardSnapshot('quant_total', total, ['pnl']).period).toEqual({ from: '2026-09-01', to: '2026-10-31' })
+  })
+})

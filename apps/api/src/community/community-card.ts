@@ -167,6 +167,9 @@ export function publicCardSnapshot(kind: CardKind, snapshot: CardSnapshot, visib
   if (!visibleFields.some(f => f !== 'asset' && snapshot[f] !== null && snapshot[f] !== undefined)) throw new BadRequestException('CARD_NOTHING_VISIBLE')
   const out: CardSnapshot = { capturedAt: snapshot.capturedAt, period: snapshot.period, asset: snapshot.asset, decimals: snapshot.decimals, provenance: snapshot.provenance, disclaimer: 'v1' }
   if (snapshot.fundsRecord) out.fundsRecord = true
+  // The period is fixed metadata, but for a single-day or single-record card it IS that day. Hiding the date must hide it here too.
+  const dateField = kind === 'quant_day' ? 'date' : kind === 'deposit' || kind === 'withdrawal' ? 'time' : null
+  if (dateField && !visibleFields.includes(dateField)) out.period = { from: null, to: null }
   // Asset is mandatory even on funds cards; listing it as a hideable field never removes the fixed denomination.
   for (const key of visibleFields) out[key] = snapshot[key]
   return out

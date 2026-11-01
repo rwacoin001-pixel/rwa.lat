@@ -19,6 +19,9 @@ export class CommunityPostCards1793700000000 implements MigrationInterface {
     ALTER TABLE app.public_resource_shares ADD CONSTRAINT public_resource_shares_kind_check CHECK(kind IN ('product','community_post','community_card'));`)
   }
   async down(q: QueryRunner): Promise<void> {
+    // Card-only posts have an empty body and would show as blank once their card table is gone: hide them (rows are kept for moderation).
+    await q.query(`UPDATE app.community_posts SET state='hidden' WHERE state='published' AND char_length(body)=0 AND jsonb_array_length(images)=0
+      AND id IN (SELECT post_id FROM app.community_post_cards)`)
     await q.query(`DELETE FROM app.public_resource_shares WHERE kind='community_card';
       ALTER TABLE app.public_resource_shares DROP CONSTRAINT public_resource_shares_kind_check;
       ALTER TABLE app.public_resource_shares ADD CONSTRAINT public_resource_shares_kind_check CHECK(kind IN ('product','community_post'));
