@@ -83,6 +83,7 @@ export function PrintedTicket({ draw, reveal = false }: { draw: Draw; reveal?: b
     {draw.state === 'frozen' && <span className={t.stamp}>{k.states.frozen}</span>}
     <i className={t.tear} aria-hidden="true" />
     <div className={t.body}>
+      <p className={`${t.kickerLine} ${t.mono}`}>A-REIT DAILY TICKET · NO. {serial.replace(/^AR-/, '')}</p>
       <div className={t.titleRow}><h3>{k.ticketTitle}</h3><span className={t.tier}>{k.tiers[tier]}</span></div>
       <dl className={t.grid}>
         <div><dt>{k.date}</dt><dd>{fmtDate(draw.createdAt, locale)}</dd></div>

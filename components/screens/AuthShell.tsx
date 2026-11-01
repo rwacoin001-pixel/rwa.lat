@@ -9,6 +9,7 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import RwaLogoMark from '../rwa-logo'
 import f from './auth-focus.module.css'
+import { LightRays } from './LightRays'
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -77,7 +78,7 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
 
     {/* No Android banner on sign-in (2026-10-29, user: it covered the page; the round download key stays). */}
     {focus ? <>
-      {welcome && <div className={f.field} aria-hidden="true"><i /><i /><i /></div>}
+      {welcome && <div className={f.field} aria-hidden="true"><LightRays color={cool ? [0.6, 0.96, 0.86] : [0.05, 0.62, 0.56]} intensity={cool ? 0.75 : 0.5} /></div>}
       {welcome && hero && <div className={f.copy}>{hero}</div>}
       <div className={welcome ? f.actions : f.form}>{children}</div>
       {footer && <div className={f.legal}>{footer}</div>}

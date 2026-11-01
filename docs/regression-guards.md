@@ -22,6 +22,9 @@ check that line first. Add a line for every new fix the user reports.
 | 14 | 11-01 | Text fields are one capsule with ONE 1.5px teal ring on focus; the input inside never draws its own outline | `components/community/circle-list.module.css` (`.search`), `circles.module.css` (`.field`) | Focus the circle search and the 建立圈子 name field: `input` outline is none, the capsule has the inset ring |
 | 15 | 11-01 | Sheet title and the first field have a 24px gap; the save key is a short ink pill with its arrow, also when disabled | `circles.module.css` (`.nameForm`, `.save`) | Open 建立圈子; field top minus title bottom = 24 |
 | 16 | 11-01 | Circle list: my circle card has the three-figure strip (成员 · 待审核 · ID), or the compact start card with three facts; no tall empty card | `components/community/CircleList.tsx`, `circle-list.module.css` | 社区 → 圈子, with and without an own circle |
+| 17 | 11-02 | The ticket leaves the printer's slot: paper in front of the body, its top under the slot's upper lip; never from under the printer | `components/rewards/ticket.module.css` (`.window`, `.lip`), `TicketPrinter.tsx` | `/rewards/print`, slide to print; the paper's top edge sits at the slot line while feeding |
+| 18 | 11-02 | Sign-in brand line: two lines, no letters touching between lines, at 360 / 390 / 430 in English | `components/screens/focus-title.module.css` (line-height 1.04, tracking -.035em) | `/login` in EN; the two `.line` boxes do not overlap |
+| 19 | 11-02 | Sign-in light rays draw (WebGL context kept across effect re-runs; no `loseContext` in cleanup) and stay subtle above the title | `components/screens/LightRays.tsx`, `AuthShell.tsx` | `/login` dark: canvas has `data-ready`; beam fades out before the title |
 
 ## Why fixes come back, and the rules that stop it
 

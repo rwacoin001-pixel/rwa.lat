@@ -4,7 +4,7 @@
      ~1.5s  the marks snap to the accent (focus lock), the dot lights with one ring, the marks fade
    Transforms, opacity and a small filter only; nothing loops. Reduced motion: the line is simply there. */
 
-.title { margin: 0; color: var(--f-ink); font: 900 clamp(44px, 15vw, 68px)/.98 var(--pa-sans, var(--sans)); letter-spacing: -.05em; cursor: default; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
+.title { margin: 0; color: var(--f-ink); font: 900 clamp(44px, 15vw, 68px)/1.04 var(--pa-sans, var(--sans)); letter-spacing: -.035em; cursor: default; user-select: none; -webkit-user-select: none; -webkit-tap-highlight-color: transparent; }
 :global([data-auth-script='wide']) .title { font-weight: 800; font-size: clamp(44px, 14.4vw, 62px); line-height: 1.14; letter-spacing: -.01em; }
 .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .inner { position: relative; display: inline-block; }

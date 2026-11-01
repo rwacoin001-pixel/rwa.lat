@@ -16,6 +16,7 @@ import { drawToday, getRewardToday, type Draw, type RewardToday } from '@/lib/re
 import { MiniTicket } from './MiniTicket'
 import { PrintedTicket } from './PrintedTicket'
 import { SlideKey } from './SlideKey'
+import { LightRays } from '@/components/screens/LightRays'
 import { useRewardsCopy } from './rewards-copy'
 import t from './ticket.module.css'
 
@@ -75,22 +76,26 @@ export function PrintScreen() {
   const stagePhase = phase === 'shown' ? 'done' : phase === 'idle' || phase === 'loading' ? 'ready' : phase
 
   return <section className={t.stage} data-phase={stagePhase} aria-busy={busy || undefined} aria-labelledby="print-title">
+    <LightRays className={t.rays} color={[0.74, 0.97, 0.9]} intensity={0.85} />
     <header className={t.bar}>
       <button type="button" className={t.round} disabled={busy} aria-label={k.close} onClick={leave}><ArrowLeft size={20} aria-hidden="true" /></button>
       <h2 id="print-title">{k.today}</h2>
       <span />
     </header>
-    <div className={t.printer} aria-hidden="true"><span className={t.mono}>{k.printer}</span><i className={t.led} /><i className={t.slot} /></div>
-    <div className={t.window} style={stagePhase === 'done' ? { overflowY: 'auto' } : undefined}>
-      <div className={t.paper}>
-        {draw ? <PrintedTicket draw={draw} reveal={phase === 'feeding' || phase === 'done'} />
-          : <div className={t.ticket} style={{ minHeight: 200 }}><p className={`${t.receipt} ${t.mono}`}>A-REIT DAILY · {new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })}</p></div>}
+    <div className={t.machine}>
+      <div className={t.printer} aria-hidden="true"><span className={t.mono}>{k.printer}<b className={t.state}>{busy ? 'PRINTING' : phase === 'done' || phase === 'claiming' || phase === 'claimed' || phase === 'shown' ? 'DONE' : 'READY'}</b></span><i className={t.led} /><i className={t.slot} /></div>
+      <i className={t.lip} aria-hidden="true" />
+      <div className={t.window}>
+        <div className={t.paper}>
+          {draw ? <PrintedTicket draw={draw} reveal={phase === 'feeding' || phase === 'done'} />
+            : <div className={t.ticket} style={{ minHeight: 200 }}><p className={`${t.receipt} ${t.mono}`}>A-REIT DAILY · {new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })}</p></div>}
+        </div>
+        {phase === 'claimed' && draw && <div className={t.done} role="status">
+          <b>{k.claimed}</b>
+          {draw.prize.points > 0 && <span>{k.points} +{draw.prize.points}</span>}
+          {(draw.prize.voucher ?? draw.prize.coupon) && <ul className={t.claimList}><MiniTicket coupon={(draw.prize.voucher ?? draw.prize.coupon)!} /></ul>}
+        </div>}
       </div>
-      {phase === 'claimed' && draw && <div className={t.done} role="status">
-        <b>{k.claimed}</b>
-        {draw.prize.points > 0 && <span>{k.points} +{draw.prize.points}</span>}
-        {(draw.prize.voucher ?? draw.prize.coupon) && <ul className={t.claimList}><MiniTicket coupon={(draw.prize.voucher ?? draw.prize.coupon)!} /></ul>}
-      </div>}
     </div>
     <footer className={t.foot}>
       <p className={t.status} role="status">{status}</p>

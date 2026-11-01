@@ -1,0 +1,11 @@
+/* Light rays (2026-11-02). The container paints a static fan of light first (also the fallback); the WebGL canvas fades in
+   over it once it has drawn a frame. */
+.rays { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.rays::before { content: ''; position: absolute; inset: 0; transition: opacity 1.2s ease;
+  background:
+    radial-gradient(60% 46% at 50% -6%, color-mix(in srgb, var(--ray) 34%, transparent), transparent 70%),
+    conic-gradient(from 180deg at 50% -18%, transparent 160deg, color-mix(in srgb, var(--ray) 10%, transparent) 172deg, transparent 180deg, color-mix(in srgb, var(--ray) 8%, transparent) 188deg, transparent 200deg); }
+.rays:has(.canvas[data-ready])::before { opacity: 0; }
+.canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.2s ease; }
+.canvas[data-ready] { opacity: 1; }
+@media (prefers-reduced-motion: reduce) { .canvas { transition: none; } }

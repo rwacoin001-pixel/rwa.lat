@@ -30,22 +30,13 @@
 :global(html):has(.root[data-auth-theme='cool']), :global(body):has(.root[data-auth-theme='cool']) { background: #0b0d12 !important; }
 
 /* ── Welcome ─────────────────────────────────────────────── */
-/* A rack focus (2026-11-01, user: type instead of the photo card, aiming for Apple Design Award craft). Behind the type
-   three discs of light start crisp and fall out of focus while the brand line (FocusTitle) pulls into focus in front:
-   the eye is handed from the background to the words. The discs then drift very slowly; nothing else moves. */
-@property --core { syntax: '<percentage>'; inherits: false; initial-value: 0%; }
-.root.root.root { --f-glow-a: rgba(20, 184, 166, .16); --f-glow-b: rgba(110, 150, 230, .13); --f-glow-c: rgba(20, 184, 166, .09); position: relative; isolation: isolate; }
-.root.root.root[data-auth-theme='cool'] { --f-glow-a: rgba(60, 224, 177, .2); --f-glow-b: rgba(120, 148, 210, .16); --f-glow-c: rgba(255, 255, 255, .06); }
+/* The field of light (2026-11-02, user: the soft discs were too faint): light rays from the top edge (LightRays, a small
+   WebGL shader with a static CSS glow first). The brand line still pulls into focus in front of it. */
+.root.root.root { position: relative; isolation: isolate; }
 .root header { position: relative; z-index: 2; }
 .root header button[aria-haspopup] { display: inline-flex; align-items: center; gap: 6px; width: auto; padding: 0 12px; border-radius: 999px; }
-.field { position: absolute; z-index: -1; inset: 0 0 auto; height: min(74svh, 640px); overflow: hidden; pointer-events: none; }
-.field i { position: absolute; border-radius: 50%; background: radial-gradient(closest-side, var(--glow) var(--core), transparent);
-  animation: defocus 1.7s cubic-bezier(.22, 1, .36, 1) both, drift 24s ease-in-out 1.7s infinite alternate; }
-.field i:nth-child(1) { --glow: var(--f-glow-a); width: 360px; height: 360px; top: 3%; inset-inline-end: -130px; }
-.field i:nth-child(2) { --glow: var(--f-glow-b); width: 280px; height: 280px; top: 30%; inset-inline-start: -120px; animation-delay: .06s, 1.7s; animation-direction: normal, alternate-reverse; }
-.field i:nth-child(3) { --glow: var(--f-glow-c); width: 132px; height: 132px; top: 15%; inset-inline-start: 44%; animation-delay: .12s, 1.7s; }
-@keyframes defocus { from { --core: 94%; opacity: .55; transform: scale(.86); } }
-@keyframes drift { to { translate: 22px -16px; } }
+.field { position: absolute; z-index: -1; inset: 0 0 auto; height: min(78svh, 680px); overflow: hidden; pointer-events: none; animation: rise 1.6s cubic-bezier(.22, 1, .36, 1) both; }
+@keyframes rise { from { opacity: 0; } }
 
 /* The brand line sits low in the space above the field, near the thumb; the space above it is the field's. */
 .copy { flex: 1 0 auto; display: flex; flex-direction: column; justify-content: flex-end; min-height: 220px; padding: 24px 24px 0; }
@@ -81,5 +72,5 @@
 
 @keyframes rise { from { opacity: 0; transform: translateY(10px); } }
 @media (prefers-reduced-motion: reduce) {
-  .field i, .lede, .actions, .legal, :global(html) .root.root.root.root .form h1 { animation: none; }
+  .field, .lede, .actions, .legal, :global(html) .root.root.root.root .form h1 { animation: none; }
 }
