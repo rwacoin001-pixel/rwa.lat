@@ -1,0 +1,30 @@
+# Regression guards
+
+Fixes the user asked for and confirmed. Before every front-end deploy, check each line in the browser pane at phone
+width (390×844, light and dark) and do not ship if one fails. When a change touches the file or DOM named in a line,
+check that line first. Add a line for every new fix the user reports.
+
+| # | Since | What must stay true | Where it lives | How to check |
+|---|---|---|---|---|
+| 1 | 10-28, again 11-01 | The AI ball stays pinned bottom-right while scrolling; it never slides with the shrinking dock | `styles/palette-a.css` (pin rule), `components/h5/BottomDock.tsx`, `components/community/CommunityFeather.tsx` (wraps the ball) | Scroll home down and up; the ball's `getBoundingClientRect().right` never changes. If the ball's parent changes, update the pin selector |
+| 2 | 11-01 | Community opens on 圈子 for signed-in users, also on a cold start | `components/community-screens.tsx` (`guestHot`) | Reload `/community` signed in; the pressed chip is 圈子 |
+| 3 | 11-01 | Dark mode pages have no yellow glow in the top-right corner | `components/maison/maison.module.css` (`.root::before`), `styles/palette-a.css` | Dark theme, open Markets and Assets; the corner is plain #0a0c10 |
+| 4 | 11-01 | The compose feather is visible in dark mode | `components/community/community-feather.module.css` | Dark theme, scroll the community feed; the feather is a light disc |
+| 5 | 11-01 | DM header: the name sits under the face, never overlapping | `components/community/dm.module.css` | Open a DM thread |
+| 6 | 11-01 | Login and register are cool white (never warm paper) | `components/screens/auth-focus.module.css` | `/login` background is #fff |
+| 7 | 11-01 | Welcome-back lock screen: plain white, centred short ink pill with a round arrow | `components/session-privacy-gate*` | Force the lock (see the memory note on local testing) |
+| 8 | 11-01 | The offline notice can be closed and clears itself when back online; the update notice has 稍后 | `components/h5/NewVersionPrompt.tsx`, `useH5Controller.ts` | Toggle offline in devtools |
+| 9 | 11-01 | Home invite card keeps the wallet-card look | `components/home/home-invite.module.css` | Home, signed in |
+| 10 | 11-01 | Profile swipe follows the finger (drag left opens, mirrored in RTL) | `components/h5/H5Shell.tsx` (`useProfileSwipe`) | Drag on home |
+| 11 | 11-01 | Asset cards have no photos | `components/maison/AssetsOverview.tsx` | Assets tab |
+| 12 | 11-01 | The circle page has exactly one compose key (bottom right) | `components/community/CircleScreen.tsx` | Open a circle |
+
+## Why fixes come back, and the rules that stop it
+
+1. **A later change breaks an older fix's assumption** (line 1: the pin rule targeted the ball as a direct child of the dock; wrapping
+   the ball for the feather silently stopped the rule from matching). Rule: before changing a shared layout piece, grep for selectors
+   that depend on its DOM shape, and run the guard lines that name the file.
+2. **An old branch or build overwrites newer work.** Rule: every deploy is built from `origin/main` (or the live commit plus a
+   cherry-picked fix), never from a side branch; side sessions merge into main first. Check `git log origin/main..HEAD` before building.
+3. **Backend:** each API release is an image built on top of the live image; the release tool refuses to switch when the live image
+   is not the expected base, keeps the previous image for one-step rollback, and migrations only add tables and columns.
