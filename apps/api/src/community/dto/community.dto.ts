@@ -29,6 +29,8 @@ const HANDLE_PATTERN = /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}$/
 const POST_SOURCES = ['original', 'rewrite', 'data', 'event', 'user', 'import'] as const
 
 export class CommunityFeedQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsIn(['true', 'false']) hasCard?: 'true' | 'false'
+  @ApiPropertyOptional() @IsOptional() @IsIn(['quant', 'prediction', 'funds']) cardKind?: 'quant' | 'prediction' | 'funds'
   @ApiPropertyOptional()
   @IsOptional()
   @IsIn(['latest', 'hot'])
