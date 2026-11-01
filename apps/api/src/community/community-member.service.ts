@@ -1,6 +1,6 @@
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
 import { parseProofRequest, resolveProof } from './community-proof'
-import { cardKinds, cardPreview, cardSources, parseCardRequest, publicCardSnapshot, resolveCard, type CardAttachment, type CardRequest } from './community-card'
+import { cardKinds, cardPreview, cardSources, parseCardRequest, publicCardSnapshot, resolveCard } from './community-card'
 import { createHash, randomUUID } from 'node:crypto'
 import { predictionThreadId } from './prediction-discussion'
 import { communityCityCode } from './community-identity'
@@ -135,16 +135,16 @@ export class CommunityMemberService {
   cardKinds(userId: string) { return cardKinds(this.db, userId) }
   cardSources(userId: string, kind: unknown, cursor?: string) { return cardSources(this.db, userId, kind, cursor) }
   cardPreview(userId: string, input: unknown) {
-    const request = parseCardRequest(input) as CardRequest
+    const request = parseCardRequest(input)
     return this.db.transaction(m => cardPreview(m, userId, request))
   }
   async post(userId: string, key: string | undefined, input: MemberPostDto) {
     const body = (input.body ?? '').trim(); const lang = normalizeCommunityLang(input.lang)
     const imageIds = input.imageIds ?? []
-    const card = input.card === undefined ? null : parseCardRequest(input.card, true) as CardAttachment
+    const card = input.card === undefined ? null : parseCardRequest(input.card, true)
     if (card && input.proof) throw new BadRequestException('CARD_PROOF_EXCLUSIVE')
     if ((!body && !imageIds.length && !input.proof && !card) || body.length > 4000) throw new BadRequestException('Invalid post body')
-    if ((!card || input.location) && (!input.location?.city?.trim() || input.location.city.trim().length > 80 || !/^[A-Z]{2}$/.test(input.location.countryCode ?? '') || input.location.source !== 'device')) throw new BadRequestException('Device location required to publish')
+    if ((!card || input.location !== undefined) && (!input.location?.city?.trim() || input.location.city.trim().length > 80 || !/^[A-Z]{2}$/.test(input.location.countryCode ?? '') || input.location.source !== 'device')) throw new BadRequestException('Device location required to publish')
     const location = input.location ? { city: input.location.city.trim(), countryCode: input.location.countryCode, source: 'device' as const } : null
     const images = await this.media(userId, imageIds, 'post')
     const proof = input.proof ? parseProofRequest(input.proof) : null

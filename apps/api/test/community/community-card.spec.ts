@@ -10,7 +10,8 @@ function fakeDb(answer: (sql: string, args: unknown[]) => unknown[]) {
 describe('result card requests and privacy', () => {
   it('rejects client numbers, unknown fields, missing/extra sources and unknown kinds', () => {
     for (const value of [null, {}, { kind: 'other' }, { kind: 'quant_day' }, { kind: 'quant_total', sourceId: ID },
-      { kind: 'deposit', sourceId: ID, amount: '123' }]) expect(() => parseCardRequest(value)).toThrow(BadRequestException)
+      { kind: 'deposit', sourceId: ID, amount: '123' },
+      { kind: 'deposit', sourceId: Buffer.from(JSON.stringify({ id: ID })).toString('base64url') }]) expect(() => parseCardRequest(value)).toThrow(BadRequestException)
     expect(() => parseCardRequest({ kind: 'deposit', sourceId: ID, visibleFields: ['bad'] }, true)).toThrow('CARD_FIELD_INVALID')
     expect(() => parseCardRequest({ kind: 'deposit', sourceId: ID }, true)).toThrow('CARD_FIELD_INVALID')
   })
@@ -29,19 +30,40 @@ describe('result card requests and privacy', () => {
     expect(cardRatio(-123456789012345678901234567890n, 1000000000000000000000000000000n)).toBe('-12.3456789')
     expect(cardRatio(1n, 3n)).toBe('33.33333333')
     expect(cardRatio(1n, 0n)).toBeNull()
+    expect(cardRatio(124n, 1000n)).toBe('12.4')
+    expect(cardRatio(1n, 4n, 1n)).toBe('0.25')
   })
   it.each(['quant_day', 'quant_product', 'prediction_bet', 'deposit', 'withdrawal'] as const)('requires authenticated ownership for %s', async kind => {
-    const { db, query } = fakeDb(sql => sql.includes('WITH orders') ? [{ c: null }] : [])
+    const { db, query } = fakeDb(sql => sql.includes('WITH orders') ? [{ subscriptions: 0, product: null }] : [])
     await expect(resolveCard(db, 'stranger', { kind, sourceId: ID })).rejects.toThrow(NotFoundException)
     expect(query.mock.calls[0][1]).toEqual(['stranger', ID])
     expect(query.mock.calls[0][0]).toMatch(/user_id=\$1/)
   })
   it('does not issue a ledger query when reading a frozen card', async () => {
-    const snapshot = { capturedAt: '2026-11-01T00:00:00.000Z', pnl: '-100', disclaimer: 'v1' }
+    const snapshot = { capturedAt: '2026-11-01T00:00:00.000Z', period: { from: null, to: null }, asset: 'USDT', decimals: 6,
+      provenance: 'ledger_verified', pnl: '-100', disclaimer: 'v1' }
     const { db, query } = fakeDb(sql => sql.includes('to_regclass') ? [{ ready: true }] : [{ post_id: ID, kind: 'quant_total', snapshot, visible_fields: ['pnl'], source_refs: { secret: 'private' } }])
     expect((await cardsFor(db, [ID])).get(ID)).toEqual({ kind: 'quant_total', snapshot, visibleFields: ['pnl'], capturedAt: snapshot.capturedAt })
     expect(query.mock.calls.every(([sql]) => !sql.includes('quant_payouts'))).toBe(true)
     expect(query.mock.calls.at(-1)![0]).not.toContain('source_refs')
+  })
+  it('redacts unselected and private keys even when they exist in the stored snapshot', async () => {
+    const snapshot = { capturedAt: '2026-11-01T00:00:00.000Z', period: { from: null, to: null }, asset: 'USDT', decimals: 6,
+      provenance: 'ledger_verified', disclaimer: 'v1', returnPct: '-12.4', pnl: '-12400000', settledDays: 17,
+      source_refs: { sourceId: ID }, sourceId: ID }
+    const { db } = fakeDb(sql => sql.includes('to_regclass') ? [{ ready: true }] : [{ post_id: ID, kind: 'quant_total', snapshot, visible_fields: ['returnPct'] }])
+    const card = (await cardsFor(db, [ID])).get(ID)!
+    expect(card.snapshot).toEqual({ capturedAt: snapshot.capturedAt, period: snapshot.period, asset: 'USDT', decimals: 6,
+      provenance: 'ledger_verified', disclaimer: 'v1', returnPct: '-12.4' })
+    expect(snapshot).toHaveProperty('pnl') // reading never mutates the frozen data
+  })
+  it('keeps funds metadata fixed and requires an actual hideable value', async () => {
+    const { db } = fakeDb(() => [{ amount: '9007199254740993123456789', asset: 'USDT', decimals: 6, status: 'credited', time: '2026-11-01T00:00:00Z' }])
+    const full = await resolveCard(db, 'owner', { kind: 'deposit', sourceId: ID })
+    expect(full.amount).toBe('9007199254740993123456789')
+    expect(publicCardSnapshot('deposit', full, ['status'])).toMatchObject({ asset: 'USDT', decimals: 6, fundsRecord: true, status: 'credited' })
+    expect(publicCardSnapshot('deposit', full, ['status'])).not.toHaveProperty('amount')
+    expect(() => publicCardSnapshot('deposit', full, ['asset'])).toThrow('CARD_NOTHING_VISIBLE')
   })
   it('marks open prediction monetary results null in owner preview', async () => {
     const { db } = fakeDb(() => [{ question: 'Question?', side: 'YES', status: 'placed', stake: '1000000', payout: null, first: '2026-11-01', last: null }])
@@ -57,6 +79,20 @@ describe('result card requests and privacy', () => {
     expect(items.find(i => i.kind === 'prediction_record')).toMatchObject({ reason: 'NO_SETTLED_PREDICTION' })
     expect(items.find(i => i.kind === 'deposit')).toMatchObject({ reason: null, defaultHidden: ['amount'] })
   })
+  it('returns all eight unavailable kinds for an account with no source rows', async () => {
+    const { db, query } = fakeDb(() => [{ quant: false, holdings: false, day: false, prediction: false, settled: false, deposit: false, withdrawal: false }])
+    expect((await cardKinds(db, 'new-user')).items.map(({ kind, available, reason }) => ({ kind, available, reason }))).toEqual([
+      { kind: 'quant_day', available: false, reason: 'NO_QUANT' },
+      { kind: 'quant_product', available: false, reason: 'NO_QUANT' },
+      { kind: 'quant_total', available: false, reason: 'NO_QUANT' },
+      { kind: 'holdings', available: false, reason: 'NO_QUANT' },
+      { kind: 'prediction_bet', available: false, reason: 'NO_PREDICTION' },
+      { kind: 'prediction_record', available: false, reason: 'NO_PREDICTION' },
+      { kind: 'deposit', available: false, reason: 'NO_DEPOSIT' },
+      { kind: 'withdrawal', available: false, reason: 'NO_WITHDRAWAL' },
+    ])
+    expect(query).toHaveBeenCalledWith(expect.any(String), ['new-user'])
+  })
   it('pages sources using timestamp precision and a stable id tie-breaker', async () => {
     const rows = Array.from({ length: 51 }, () => ({ id: ID, label: 'Koala', sublabel: 'settled', at: '2026-10-31 00:00:00.123456+00' }))
     const { db, query } = fakeDb(() => rows)
@@ -65,6 +101,15 @@ describe('result card requests and privacy', () => {
     await cardSources(db, 'owner', 'quant_day', first.nextCursor!)
     expect(query.mock.calls[1][1]).toEqual(['owner', rows[0].at, ID])
     await expect(cardSources(db, 'owner', 'quant_day', 'bad')).rejects.toThrow('CARD_CURSOR_INVALID')
+    const wrongIdType = Buffer.from(JSON.stringify({ id: 123, at: rows[0].at })).toString('base64url')
+    await expect(cardSources(db, 'owner', 'quant_day', wrongIdType)).rejects.toThrow('CARD_CURSOR_INVALID')
     expect(await cardSources(db, 'owner', 'quant_total')).toEqual({ items: [], nextCursor: null })
+  })
+  it('returns no cards without ids or before the additive migration', async () => {
+    const { db, query } = fakeDb(() => [{ ready: false }])
+    expect(await cardsFor(db, [])).toEqual(new Map())
+    expect(query).not.toHaveBeenCalled()
+    expect(await cardsFor(db, [ID])).toEqual(new Map())
+    expect(query).toHaveBeenCalledTimes(1)
   })
 })

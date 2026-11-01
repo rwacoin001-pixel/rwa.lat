@@ -27,6 +27,8 @@ export const CARD_GROUPS = {
   funds: ['deposit', 'withdrawal'],
 }
 const sourceKinds = new Set<CardKind>(['quant_day', 'quant_product', 'prediction_bet', 'deposit', 'withdrawal'])
+export function parseCardRequest(input: unknown, attachment: true): CardAttachment
+export function parseCardRequest(input: unknown, attachment?: false): CardRequest
 export function parseCardRequest(input: unknown, attachment = false): CardRequest | CardAttachment {
   const v = input as Record<string, unknown> | null
   if (!v || typeof v !== 'object' || typeof v.kind !== 'string' || !Object.hasOwn(CARD_FIELDS, v.kind)) throw new BadRequestException('CARD_KIND_INVALID')
@@ -50,6 +52,16 @@ export function cardRatio(numerator: bigint, denominator: bigint, multiplier = 1
 }
 const atomic = (value: string | null | undefined) => value == null ? null : BigInt(value).toString()
 const product = (r: { slug: string; name: string }) => ({ slug: r.slug, name: r.name })
+type QuantSummary = {
+  subscriptions: number; c: string; v: string; d: string; r: string | null
+  missing_redemption: boolean; missing_subscription: boolean; missing_fee: boolean
+  days: number; first: string | null; last: string | null
+  best: { month: string; pnl: string } | null; redeeming: boolean
+  product: { slug: string; name: string } | null
+}
+type HoldingProduct = { slug: string; name: string; principal: string; net: string | null; before: string | null; date: string | null }
+type PredictionResult = 'won' | 'lost' | 'void'
+type SourceRow = { id: string; label: string; sublabel: string; at: string }
 const base = (from: string | null, to: string | null, asset = 'USDT', decimals = 6): CardSnapshot => ({
   capturedAt: new Date().toISOString(), period: { from, to }, asset, decimals, provenance: 'ledger_verified', disclaimer: 'v1',
 })
@@ -66,14 +78,14 @@ const QUANT_CTES = `orders AS (SELECT * FROM app.quant_orders WHERE user_id=$1 A
 export async function resolveCard(db: Db, userId: string, request: CardRequest): Promise<CardSnapshot> {
   const { kind, sourceId } = request
   if (kind === 'quant_day') {
-    const [r] = await db.query(`SELECT p.net_atomic::text AS net, p.principal_before_atomic::text AS principal,
+    const [r]: Array<{ net: string; principal: string; date: string; slug: string; name: string }> = await db.query(`SELECT p.net_atomic::text AS net, p.principal_before_atomic::text AS principal,
       p.trade_date::text AS date,q.slug,q.name FROM app.quant_payouts p JOIN app.quant_products q ON q.id=p.product_id
       WHERE p.user_id=$1 AND p.id=$2`, [userId, sourceId])
     if (!r) throw new NotFoundException('CARD_SOURCE_NOT_FOUND')
     return { ...base(r.date, r.date), product: product(r), pnl: atomic(r.net), returnPct: cardRatio(BigInt(r.net), BigInt(r.principal)), date: r.date }
   }
   if (kind === 'quant_product' || kind === 'quant_total') {
-    const [r] = await db.query(`WITH ${QUANT_CTES}
+    const [r]: QuantSummary[] = await db.query(`WITH ${QUANT_CTES}
       SELECT (SELECT count(*)::int FROM orders WHERE kind='subscription' AND status='settled') AS subscriptions,
         COALESCE((SELECT sum(principal_atomic) FROM orders WHERE kind='subscription' AND status='settled'),0)::text AS c,
         COALESCE((SELECT sum(principal_atomic) FROM lots),0)::text AS v,
@@ -87,15 +99,16 @@ export async function resolveCard(db: Db, userId: string, request: CardRequest):
         (SELECT max(day)::text FROM (SELECT trade_date AS day FROM payouts UNION ALL SELECT effective_date FROM orders WHERE status='settled') dates) AS last,
         (SELECT jsonb_build_object('month',month,'pnl',net::text) FROM monthly ORDER BY net DESC,month DESC LIMIT 1) AS best,
         EXISTS(SELECT 1 FROM orders WHERE kind='redemption' AND status IN ('pending','accepted')) AS redeeming,
-        (SELECT jsonb_build_object('slug',slug,'name',name) FROM app.quant_products WHERE id=$2) AS product`, [userId, sourceId ?? null])
-    if (!r.subscriptions) throw new NotFoundException('CARD_SOURCE_NOT_FOUND')
+        (SELECT jsonb_build_object('slug',q.slug,'name',q.name) FROM app.quant_products q WHERE q.id=$2
+          AND EXISTS(SELECT 1 FROM orders WHERE product_id=q.id AND kind='subscription' AND status='settled')) AS product`, [userId, sourceId ?? null])
+    if (!r?.subscriptions || (kind === 'quant_product' && !r.product)) throw new NotFoundException('CARD_SOURCE_NOT_FOUND')
     const pnl = r.missing_redemption || r.missing_subscription ? null : BigInt(r.v) + BigInt(r.d) + BigInt(r.r ?? '0') - BigInt(r.c)
     return { ...base(r.first, r.last), pnl: pnl?.toString() ?? null, returnPct: pnl === null ? null : cardRatio(pnl, BigInt(r.c)), settledDays: r.days,
       ...(kind === 'quant_product' ? { product: r.product, status: r.redeeming ? 'redeeming' : BigInt(r.v) > 0n ? 'holding' : 'closed' }
         : { bestMonth: r.best && !r.missing_fee ? { month: r.best.month, pnl: atomic(r.best.pnl) } : null }) }
   }
   if (kind === 'holdings') {
-    const [r] = await db.query(`WITH held AS (
+    const [r]: Array<{ total: string; pending: string; available: boolean; products: HoldingProduct[] }> = await db.query(`WITH held AS (
         SELECT product_id,sum(principal_atomic) AS principal FROM app.quant_lots WHERE user_id=$1 AND principal_atomic>0 GROUP BY product_id
       ), pending AS (
         SELECT COALESCE(sum(l.principal_atomic),0) AS amount FROM app.quant_lots l JOIN app.quant_products q ON q.id=l.product_id
@@ -111,13 +124,13 @@ export async function resolveCard(db: Db, userId: string, request: CardRequest):
           (SELECT * FROM app.quant_payouts WHERE user_id=$1 AND product_id=h.product_id ORDER BY trade_date DESC,id DESC LIMIT 1) p ON true),'[]') AS products`, [userId])
     if (!r.available) throw new NotFoundException('CARD_SOURCE_NOT_FOUND')
     return { ...base(null, null), totalPrincipal: atomic(r.total), pending: atomic(r.pending),
-      products: r.products.map((p: { slug: string; name: string; principal: string; net: string | null; before: string | null; date: string | null }) => ({
+      products: r.products.map(p => ({
         product: product(p), weight: cardRatio(BigInt(p.principal), BigInt(r.total), 1n),
         lastDayReturnPct: p.net === null || p.before === null ? null : cardRatio(BigInt(p.net), BigInt(p.before)), date: p.date,
       })) }
   }
   if (kind === 'prediction_bet') {
-    const [r] = await db.query(`SELECT m.question,b.side,b.status,b.stake_atomic::text AS stake,
+    const [r]: Array<{ question: string; side: string; status: PredictionResult | 'placed'; stake: string; payout: string | null; first: string; last: string | null }> = await db.query(`SELECT m.question,b.side,b.status,b.stake_atomic::text AS stake,
       CASE b.status WHEN 'won' THEN floor(b.shares*1000000)-b.payout_fee_atomic WHEN 'lost' THEN 0
         WHEN 'void' THEN b.stake_atomic-b.fee_atomic ELSE NULL END::text AS payout,
       (b.created_at AT TIME ZONE 'UTC')::date::text AS first,(b.settled_at AT TIME ZONE 'UTC')::date::text AS last
@@ -128,7 +141,7 @@ export async function resolveCard(db: Db, userId: string, request: CardRequest):
       payout: atomic(r.payout), pnl: pnl?.toString() ?? null, returnPct: pnl === null ? null : cardRatio(pnl, BigInt(r.stake)) }
   }
   if (kind === 'prediction_record') {
-    const [r] = await db.query(`WITH bets AS (SELECT * FROM app.prediction_bets WHERE user_id=$1)
+    const [r]: Array<{ total: number; won: number; lost: number; void: number; open: number; pnl: string | null; first: string | null; last: string | null; recent: PredictionResult[] }> = await db.query(`WITH bets AS (SELECT * FROM app.prediction_bets WHERE user_id=$1)
       SELECT count(*)::int AS total,count(*) FILTER(WHERE status='won')::int AS won,count(*) FILTER(WHERE status='lost')::int AS lost,
         count(*) FILTER(WHERE status='void')::int AS void,count(*) FILTER(WHERE status='placed')::int AS open,
         sum(CASE status WHEN 'won' THEN floor(shares*1000000)-payout_fee_atomic-stake_atomic WHEN 'lost' THEN -stake_atomic
@@ -141,7 +154,7 @@ export async function resolveCard(db: Db, userId: string, request: CardRequest):
       winRate: cardRatio(BigInt(r.won), BigInt(r.won + r.lost), 1n), closedPnl: atomic(r.pnl), last10: r.recent }
   }
   const deposit = kind === 'deposit'
-  const [r] = await db.query(`SELECT atomic_amount::text AS amount,asset_code AS asset,asset_decimals AS decimals,state AS status,
+  const [r]: Array<{ amount: string; asset: string; decimals: number; status: string; time: Date }> = await db.query(`SELECT atomic_amount::text AS amount,asset_code AS asset,asset_decimals AS decimals,state AS status,
     COALESCE(${deposit ? 'credited_at,detected_at' : 'completed_at,requested_at'}) AS time
     FROM app.${deposit ? 'deposits' : 'withdrawals'} WHERE user_id=$1 AND id=$2`, [userId, sourceId])
   if (!r) throw new NotFoundException('CARD_SOURCE_NOT_FOUND')
@@ -168,13 +181,14 @@ export async function cardsFor(db: Db, ids: string[]): Promise<Map<string, CardV
   if (!ids.length) return new Map()
   const [ready] = await db.query("SELECT to_regclass('app.community_post_cards') IS NOT NULL AS ready")
   if (!ready?.ready) return new Map()
-  const rows = await db.query(`SELECT post_id,kind,snapshot,visible_fields,created_at FROM app.community_post_cards WHERE post_id=ANY($1::uuid[]) AND revoked_at IS NULL`, [ids])
-  return new Map(rows.map((r: { post_id: string; kind: CardKind; snapshot: CardSnapshot; visible_fields: string[]; created_at: Date }) =>
-    [r.post_id, { kind: r.kind, snapshot: r.snapshot, visibleFields: r.visible_fields, capturedAt: r.snapshot.capturedAt }]))
+  const rows: Array<{ post_id: string; kind: CardKind; snapshot: CardSnapshot; visible_fields: string[] }> = await db.query(`SELECT post_id,kind,snapshot,visible_fields FROM app.community_post_cards WHERE post_id=ANY($1::uuid[]) AND revoked_at IS NULL`, [ids])
+  // Reapply the public allowlist on every read, even if a stored snapshot contains extra private keys.
+  return new Map(rows.map((r): [string, CardView] =>
+    [r.post_id, { kind: r.kind, snapshot: publicCardSnapshot(r.kind, r.snapshot, r.visible_fields), visibleFields: r.visible_fields, capturedAt: r.snapshot.capturedAt }]))
 }
 
 export async function cardKinds(db: Db, userId: string) {
-  const [r] = await db.query(`SELECT
+  const [r]: Array<{ quant: boolean; holdings: boolean; day: boolean; prediction: boolean; settled: boolean; deposit: boolean; withdrawal: boolean }> = await db.query(`SELECT
     EXISTS(SELECT 1 FROM app.quant_orders WHERE user_id=$1 AND kind='subscription' AND status='settled') AS quant,
     EXISTS(SELECT 1 FROM app.quant_orders WHERE user_id=$1 AND kind='subscription' AND status<>'rejected') AS holdings,
     EXISTS(SELECT 1 FROM app.quant_payouts WHERE user_id=$1) AS day,
@@ -193,7 +207,12 @@ export async function cardSources(db: Db, userId: string, kindInput: unknown, cu
   const kind = kindInput as CardKind
   let after: { id: string; at: string } | null = null
   if (cursor) {
-    try { after = JSON.parse(Buffer.from(cursor, 'base64url').toString()); if (!after || !UUID.test(after.id) || typeof after.at !== 'string' || !Number.isFinite(Date.parse(after.at))) throw new Error() }
+    try {
+      const value: unknown = JSON.parse(Buffer.from(cursor, 'base64url').toString())
+      if (!value || typeof value !== 'object' || !('id' in value) || typeof value.id !== 'string' || !UUID.test(value.id)
+        || !('at' in value) || typeof value.at !== 'string' || !Number.isFinite(Date.parse(value.at))) throw new Error()
+      after = { id: value.id, at: value.at }
+    }
     catch { throw new BadRequestException('CARD_CURSOR_INVALID') }
   }
   if (!sourceKinds.has(kind)) return { items: [], nextCursor: null }
@@ -204,9 +223,9 @@ export async function cardSources(db: Db, userId: string, kindInput: unknown, cu
     deposit: `SELECT id,'充值 '||asset_code AS label,state AS sublabel,COALESCE(credited_at,detected_at) AS at FROM app.deposits WHERE user_id=$1`,
     withdrawal: `SELECT id,'提现 '||asset_code AS label,state AS sublabel,COALESCE(completed_at,requested_at) AS at FROM app.withdrawals WHERE user_id=$1`,
   }
-  const rows = await db.query(`WITH sources AS (${selects[kind]}) SELECT id,label,sublabel,at::text AS at FROM sources
+  const rows: SourceRow[] = await db.query(`WITH sources AS (${selects[kind]}) SELECT id,label,sublabel,at::text AS at FROM sources
     WHERE ($2::timestamptz IS NULL OR (at,id)<($2::timestamptz,$3::uuid)) ORDER BY at DESC,id DESC LIMIT 51`, [userId, after?.at ?? null, after?.id ?? null])
   const items = rows.slice(0, 50)
   const last = items.at(-1)
-  return { items, nextCursor: rows.length > 50 ? Buffer.from(JSON.stringify({ id: last.id, at: last.at })).toString('base64url') : null }
+  return { items, nextCursor: rows.length > 50 && last ? Buffer.from(JSON.stringify({ id: last.id, at: last.at })).toString('base64url') : null }
 }

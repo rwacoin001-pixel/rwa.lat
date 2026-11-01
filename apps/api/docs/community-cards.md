@@ -4,6 +4,14 @@ Backend only. Migration: `1793700000000-community-post-cards.ts`.
 Existing positive-only `community_post_proofs` and its API remain unchanged. New cards
 use a separate table without the old `pct > 0` constraint. A post cannot attach both.
 
+The migration also relaxes the parent post's body CHECK to the existing 4000-character
+limit, so an attachment-only post can be inserted before its card/proof in the same
+transaction. The publication service still rejects ordinary empty posts and still
+requires location for every non-card post. Existing image constraints stay in place.
+Rollback removes only card shares and the new card table, preserving posts and old
+proofs. It restores the previous body-or-images CHECK as `NOT VALID`: PostgreSQL
+enforces it for subsequent writes while retaining existing attachment-only posts.
+
 All amounts below are signed integer strings in atomic units. Their denomination is
 the snapshot's mandatory `asset` and `decimals`. Percentages are decimal strings,
 truncated toward zero at 8 fractional places; a zero denominator returns null.
@@ -154,6 +162,8 @@ the author active, and the card unrevoked. Circle-only posts fail; synced circle
 qualify. Every resolve rechecks publication state. Removed/deleted posts and revoked
 cards/shares resolve to 404. Hidden metric keys and `source_refs` are never returned,
 including to the author through ordinary public post/share endpoints.
+The shared card reader reapplies the visible-field allowlist to the stored snapshot,
+so an unexpected extra stored key cannot leak through feeds, search, detail or shares.
 
 ## Validation
 
@@ -163,6 +173,13 @@ existing local `TEST_DATABASE_URL` safety gate, apply migrations, and roll back 
 fixture. They cover ownership, field selection, loss/partial-redemption/void math,
 uncapped aggregates, frozen snapshots, public-view redaction, idempotency, circle
 sharing, deletion/revocation, sources pagination, holdings and feed groups.
+They also cover empty-account availability, ownership checks in both preview and
+publication (including forged source cursors), re-resolution after preview, multiple
+product weights, circle search redaction, and migration down/up with legacy proofs.
+
+The current follow-up review is static only: no packages were installed, and neither
+the API typecheck nor Jest/PostgreSQL tests were run. The commands below remain the
+required executable validation when dependencies and the isolated test DB are ready.
 
 ```sh
 cd apps/api
