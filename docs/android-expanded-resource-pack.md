@@ -29,7 +29,7 @@ Video is excluded: native interception currently returns full 200 responses and 
 - Android `testReleaseUnitTest lintRelease`: path/traversal policy and MIME tests plus native compilation/lint.
 - A source asset audit generated the full 403-file list and checked every entry against the native allowlist and bundled hashes.
 
-This is a tested source change, not a published APK. Release requires a fresh production website build, regenerated manifest, incremented Android version/code, bundling that exact build, signing with the existing certificate, and phone validation before replacing the offered download. Do not use the source-only audit manifest as a release bundle. Phone launch/navigation timing, PDF worker behavior, install/upgrade, sign-in handoff, video network fallback and incremental update still require acceptance on the release APK.
+Release requires a production website snapshot, regenerated manifest, incremented Android version/code, signing with the existing certificate, and verification before replacing the offered download. Do not use the source-only audit manifest as a release bundle. Phone launch/navigation timing, PDF worker behavior, install/upgrade, sign-in handoff, video network fallback and incremental update still require acceptance on the release APK.
 
 ## Authorized 1.1.5 release
 
