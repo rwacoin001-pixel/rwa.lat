@@ -63,12 +63,15 @@
    A dark room with one beam of light (LightRays, same as sign-in) on a brushed-metal printer. The paper sits IN FRONT of
    the printer body and starts at the slot's centre line; a thin upper lip is drawn over the paper's top edge, so the
    ticket is seen leaving the slot, curling back a few degrees while it feeds and settling flat. */
-.stage { --notch: #0b0d11; --btn-solid-fill: #f2f4f7; --btn-solid-ink: #0b1220; --btn-arrow-fill: #0b1220; --btn-arrow-ink: #f2f4f7;
-  grid-template-rows: auto 1fr auto; background: #0b0d11; color: #f2f4f7; overflow: hidden; }
-:global(html):has(.stage), :global(body):has(.stage) { background: #0b0d11 !important; }
-.stage .rays { inset: 0 0 auto; height: 70%; z-index: 0; }
+.stage { --print-bg: var(--m-bg, #fff); --print-ink: var(--m-ink, #0b1220); --print-muted: var(--m-muted, #5b6472);
+  --print-fill: rgba(11, 18, 32, .05); --print-edge: rgba(11, 18, 32, .1); --print-rays-opacity: .22; --notch: var(--print-bg);
+  grid-template-rows: auto 1fr auto; background: var(--print-bg); color: var(--print-ink); overflow: hidden; isolation: isolate; }
+/* Cover the complete viewport, then fade the light itself; clipping it at 70% left a hard horizontal seam. */
+.stage .rays { inset: 0; height: 100%; z-index: 0; opacity: var(--print-rays-opacity);
+  -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 38%, transparent 90%);
+  mask-image: linear-gradient(to bottom, #000 0%, #000 38%, transparent 90%); }
 .bar, .machine, .foot { position: relative; z-index: 1; }
-.stage .round { background: rgba(242, 244, 247, .08); color: #f2f4f7; box-shadow: inset 0 0 0 .5px rgba(242, 244, 247, .14); }
+.stage .round { background: var(--print-fill); color: var(--print-ink); box-shadow: inset 0 0 0 .5px var(--print-edge); }
 
 .machine { --slot-x: 22px; --slot-centre: 17px; display: flex; flex-direction: column; min-height: 0; padding: 8px 16px 0; }
 .printer { position: relative; z-index: 1; flex: none; height: 64px; border-radius: 22px;
@@ -110,26 +113,28 @@
 .receipt { margin: 0; padding: 12px 8px 4px; color: #5b6472; font-size: 12px; line-height: 16px; text-align: center; }
 .receipt::before, .receipt::after { content: ''; display: block; margin: 4px 0; border-top: 1.5px dashed rgba(11, 18, 32, .18); }
 
-/* Thermal paper inside the studio: warm white, a faint grain, a torn bottom edge. */
-.stage .ticket { background-color: #fbfaf6; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); color: #0b1220; border-radius: 8px 8px 0 0; box-shadow: 0 30px 40px -24px rgba(0, 0, 0, .9); }
-.stage .ticket::after { content: ''; position: absolute; right: 0; bottom: -6px; left: 0; height: 6px; background: linear-gradient(135deg, #fbfaf6 50%, transparent 50%) 0 0 / 12px 6px repeat-x, linear-gradient(225deg, #fbfaf6 50%, transparent 50%) 6px 0 / 12px 6px repeat-x; }
+/* Thermal paper inside the studio: cool white, a faint grain, a torn bottom edge. */
+.stage .ticket { --m-ink: #0b1220; --m-muted: #5b6472; --pa-fill: rgba(11, 18, 32, .06); --notch: var(--print-bg); background-color: #fff; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .05 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"); color: #0b1220; border-radius: 8px 8px 0 0; box-shadow: 0 30px 40px -24px rgba(0, 0, 0, .9); }
+.stage .ticket::after { content: ''; position: absolute; right: 0; bottom: -6px; left: 0; height: 6px; background: linear-gradient(135deg, #fff 50%, transparent 50%) 0 0 / 12px 6px repeat-x, linear-gradient(225deg, #fff 50%, transparent 50%) 6px 0 / 12px 6px repeat-x; }
 .stage .hero { background: rgba(11, 18, 32, .045); }
 .stage .note, .stage .grid dt, .stage .serial, .stage .hero small { color: #5b6472; }
 
 .foot { display: grid; gap: 12px; padding: 12px 16px calc(16px + env(safe-area-inset-bottom)); }
-.status { min-height: 18px; margin: 0; color: rgba(242, 244, 247, .62); font-size: 13px; line-height: 18px; text-align: center; }
+.status { min-height: 18px; margin: 0; color: var(--print-muted); font-size: 13px; line-height: 18px; text-align: center; }
 .keys { display: flex; gap: 8px; }
 .keys > * { flex: 1; }
 .soft { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 24px; border: 0; border-radius: 999px; background: rgba(242, 244, 247, .08); color: #f2f4f7; font: inherit; font-size: 15px; font-weight: 600; box-shadow: inset 0 0 0 .5px rgba(242, 244, 247, .14); cursor: pointer; }
 .done { display: grid; justify-items: center; gap: 4px; padding: 32px 0 0; text-align: center; animation: rise .5s cubic-bezier(.2, .8, .2, 1) both; }
 .done b { font-size: 22px; font-weight: 600; line-height: 28px; }
-.done span { color: rgba(242, 244, 247, .62); font-size: 15px; line-height: 22px; }
+.done span { color: var(--print-muted); font-size: 15px; line-height: 22px; }
 @keyframes rise { from { transform: translateY(12px); opacity: 0; } }
 
 /* ── Slide key: drag the round knob to the end ── */
 .slide { position: relative; height: 56px; border-radius: 999px; background: radial-gradient(140% 160% at 30% 0%, #3f4550 0%, #171b22 48%, #0b0d11 100%); color: #fff; touch-action: none; user-select: none; overflow: hidden; }
 .slide[data-disabled] { opacity: .45; }
-.stage .slide { background: rgba(242, 244, 247, .08); box-shadow: inset 0 0 0 .5px rgba(242, 244, 247, .16); }
+.stage .slide { background: var(--print-fill); color: var(--print-ink); box-shadow: inset 0 0 0 .5px var(--print-edge); }
+.stage .chev { color: var(--print-muted); }
+.stage .soft { background: var(--print-fill); color: var(--print-ink); box-shadow: inset 0 0 0 .5px var(--print-edge); }
 .slideLabel { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 8px; padding-left: 48px; font-size: 15px; font-weight: 600; line-height: 22px; transition: opacity .2s; }
 .chev { display: inline-flex; color: rgba(255, 255, 255, .5); }
 .chev svg { animation: chev 1.4s ease-in-out infinite; }
@@ -164,8 +169,8 @@
 :global(.rwa-mobile[data-theme='dark']) .bars i { background: #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .tear::before, :global(.rwa-mobile[data-theme='dark']) .miniCut { border-color: rgba(242, 244, 247, .16); }
 :global(.rwa-mobile[data-theme='dark']) .miniCut::before, :global(.rwa-mobile[data-theme='dark']) .miniCut::after { background: var(--m-bg, #0a0c10); }
-:global(.rwa-mobile[data-theme='dark']) .round, :global(.rwa-mobile[data-theme='dark']) .soft { background: #1b1f26; color: #f2f4f7; }
-:global(.rwa-mobile[data-theme='dark']) .stage { background: var(--m-bg, #0a0c10); color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .stage { --print-bg: var(--m-bg, #0a0c10); --print-ink: #f2f4f7; --print-muted: #8a93a3;
+  --print-fill: rgba(242, 244, 247, .08); --print-edge: rgba(242, 244, 247, .14); --print-rays-opacity: .75; }
 
 @media (prefers-reduced-motion: reduce) {
   .pill, .orb, .chev svg, .led { animation: none !important; }
@@ -175,14 +180,13 @@
   .ticket[data-reveal] .shine { animation: none; }
 }
 .stage[data-phase='claimed'] .paper { display: none; }
-.stage .mini { --notch: #0b0d11; }
-.stage .miniCut::before, .stage .miniCut::after { background: #0b0d11; }
+.stage .mini { --notch: var(--print-bg); }
+.stage .miniCut::before, .stage .miniCut::after { background: var(--print-bg); }
 .claimList { width: 100%; margin: 16px 0 0; padding: 0; list-style: none; text-align: start; animation: drop .6s .15s cubic-bezier(.2, .8, .2, 1) both; }
 @keyframes drop { from { transform: translateY(-32px) scale(.96); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .claimList, .done { animation: none; } }
 /* The studio paper stays light in dark mode too. */
-:global(.rwa-mobile[data-theme='dark']) .stage .ticket { --notch: #0b0d11; background-color: #fbfaf6; color: #0b1220; }
+:global(.rwa-mobile[data-theme='dark']) .stage .ticket { --notch: var(--print-bg); background-color: #fff; color: #0b1220; }
 :global(.rwa-mobile[data-theme='dark']) .stage .hero { background: rgba(11, 18, 32, .045); }
 :global(.rwa-mobile[data-theme='dark']) .stage .bars i { background: #0b1220; }
 :global(.rwa-mobile[data-theme='dark']) .stage .tear::before { border-color: rgba(11, 18, 32, .14); }
-:global(.rwa-mobile[data-theme='dark']) .stage { background: #0b0d11; }

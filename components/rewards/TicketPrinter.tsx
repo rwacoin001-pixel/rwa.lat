@@ -75,7 +75,7 @@ export function PrintScreen() {
   // The stage CSS keys off these phases; a ticket printed earlier today sits fully out, like 'done'.
   const stagePhase = phase === 'shown' ? 'done' : phase === 'idle' || phase === 'loading' ? 'ready' : phase
 
-  return <section className={t.stage} data-phase={stagePhase} aria-busy={busy || undefined} aria-labelledby="print-title">
+  return <section className={t.stage} data-maison-page="reward-print" data-phase={stagePhase} aria-busy={busy || undefined} aria-labelledby="print-title">
     <LightRays className={t.rays} color={[0.74, 0.97, 0.9]} intensity={0.85} />
     <header className={t.bar}>
       <button type="button" className={t.round} disabled={busy} aria-label={k.close} onClick={leave}><ArrowLeft size={20} aria-hidden="true" /></button>
