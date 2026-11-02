@@ -170,6 +170,12 @@ const decodeBase64Url = (value: string): ArrayBuffer => {
 }
 const encodeBase64Url = (value: ArrayBuffer): string => btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 
+/** This device has used a passkey for A-REIT (2026-11-02): a tap on the sign-in email field then opens the passkey sheet
+ *  at once, as in other apps; devices without one keep the quiet autofill suggestion. */
+const PASSKEY_DEVICE_KEY = 'areit.passkey.device'
+export function markPasskeyDevice() { try { window.localStorage.setItem(PASSKEY_DEVICE_KEY, '1') } catch { /* private mode */ } }
+export function hasPasskeyDevice() { try { return window.localStorage.getItem(PASSKEY_DEVICE_KEY) === '1' } catch { return false } }
+
 // mediation 'conditional' offers saved passkeys in the email field's autofill; an email scopes the prompt to that account.
 export async function loginWithPasskey(options: { mediation?: CredentialMediationRequirement; signal?: AbortSignal; email?: string } = {}): Promise<ApiResult<AuthSession>> {
   if (!window.isSecureContext || !window.PublicKeyCredential || !navigator.credentials) return { ok: false, error: { status: 0, code: 'PASSKEY_UNSUPPORTED', message: '当前设备不支持 Passkey' } }
@@ -190,7 +196,7 @@ export async function loginWithPasskey(options: { mediation?: CredentialMediatio
     if (options.signal?.aborted) return { ok: false, error: { status: 0, code: 'PASSKEY_CANCELLED', message: 'Passkey 验证未完成' } }
     if (!verified.ok) return verified
     const mapped = mapLogin(verified.data)
-    if (mapped.ok) saveSession(mapped.data.token, { sessionId: mapped.data.sessionId, userId: mapped.data.userId })
+    if (mapped.ok) { saveSession(mapped.data.token, { sessionId: mapped.data.sessionId, userId: mapped.data.userId }); markPasskeyDevice() }
     return mapped
   } catch (error) {
     const name = error instanceof Error ? error.name : ''

@@ -1,5 +1,6 @@
 import { request, type ApiResult } from '@/lib/api/_http'
 import type { AppLocale } from '@/lib/app-locales'
+import { markPasskeyDevice } from './auth'
 
 type PasskeyCreationOptionsJSON = Omit<
   PublicKeyCredentialCreationOptions,
@@ -115,10 +116,12 @@ export async function registerPasskey(): Promise<ApiResult<PasskeyRegistrationRe
       : {}),
   }
 
-  return request<PasskeyRegistrationResult>('/v1/security/passkeys/registration/finish', {
+  const finished = await request<PasskeyRegistrationResult>('/v1/security/passkeys/registration/finish', {
     method: 'POST',
     body: JSON.stringify({ challengeId: start.data.challengeId, response }),
   })
+  if (finished.ok) markPasskeyDevice()
+  return finished
 }
 
 export type SecurityFactors = {

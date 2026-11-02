@@ -7,7 +7,7 @@ import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Fingerprint, LoaderCircle,
 import Image from 'next/image'
 import type { RwaScreen } from '@/lib/rwa-routes'
 import {
-  beginWalletLogin, completeWalletLogin, getAuthConsentRequirements, loginPassword, loginWithPasskey,
+  beginWalletLogin, completeWalletLogin, getAuthConsentRequirements, hasPasskeyDevice, loginPassword, loginWithPasskey,
   startOAuth, type AuthConsent, type AuthConsentRequirements, type WalletLoginChallenge,
   confirmEmailCode, lookupEmail, requestEmailCode, type EmailCodeChallenge,
 } from '@/lib/api/auth'
@@ -457,6 +457,15 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     })
   }
 
+  // A device that has used a passkey here opens the sheet on the first tap in the email field (2026-11-02, user).
+  const tapPrompted = useRef(false)
+  const promptOnTap = () => {
+    if (tapPrompted.current || step !== 'email' || !passkeySupported || pending || email.trim() || !hasPasskeyDevice()) return
+    tapPrompted.current = true
+    // Let the quiet autofill request abort first; a second get() while one is pending is refused.
+    autofillController.current?.abort()
+    window.setTimeout(() => void usePasskey(), 60)
+  }
   const usePasskey = async (scope?: string) => {
     if (pending || busy.current) return
     stopPasskey()
@@ -555,7 +564,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       {step === 'email' ? <label className={`${ui.field} ${focusStyles.email}`}>
         <span className={styles.srOnly}>{visual.emailAddress}</span>
         <Mail className={focusStyles.mailIcon} size={22} strokeWidth={1.6} aria-hidden="true" />
-        <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
+        <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} onPointerDown={promptOnTap} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
       </label> : identity}
       {/* One clear Continue under the field instead of an arrow inside it (2026-11-02, user). */}
       {step === 'email' && <button type="submit" className={`${ui.primary} ${focusStyles.continue}`} disabled={pending || retryAfter > 0}>
