@@ -54,7 +54,7 @@ const RETURN_TO = 'rwa.return-to'
 //   existing + password → password (email code on request)
 //   existing, no password → email code
 //   new → terms, register code, then the set-password flow step
-type Step = 'email' | 'passkey' | 'password' | 'new' | 'code'
+type Step = 'email' | 'edit-email' | 'passkey' | 'password' | 'new' | 'code'
 // Conditional requests hold a server challenge that expires after five minutes; renew it before then.
 const AUTOFILL_RENEW_MS = 270_000
 
@@ -89,8 +89,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const emailCopy = authEmailCopy[locale]
   const passwordCopy = authPasswordCopy[locale]
   const [step, setStep] = useState<Step>('email')
+  const enteringEmail = step === 'email' || step === 'edit-email'
   // Two views: the welcome (the lens, sign in / create) and the solid form page that follows.
-  // The address the later steps act on, fixed when the lookup answers; editing it restarts at the email step.
+  // The address later steps act on is fixed by lookup; editing a new account keeps the registration context.
   const [account, setAccount] = useState<{ email: string; isNew: boolean; password: boolean; passkey: boolean } | null>(null)
   const [password, setPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -349,7 +350,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault()
-    if (step === 'email') {
+    if (enteringEmail) {
       // An empty field just takes the cursor; only a typed address that isn't one gets the error.
       if (!EMAIL.test(email.trim())) { if (email.trim()) setError(copy.invalidEmail); input.current?.focus(); return }
       if (retryAfter <= 0) await identify()
@@ -404,9 +405,12 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   const sendAgain = () => { if (account && retryAfter <= 0) void run(() => sendCode(account)) }
   const usePasswordInstead = () => { stopPasskey(); setStep('password'); setCodeChallenge(null); setCode(''); setError('') }
   const changeEmail = () => {
+    const registering = account?.isNew === true
     dismissed.current = (account?.email ?? email).trim().toLowerCase()
     try { localStorage.removeItem(LAST_ACCOUNT) } catch { /* Nothing to forget. */ }
     restart()
+    // Editing is not a sign-in decision. Recheck the address on Continue before choosing either flow.
+    if (registering) setStep('edit-email')
     requestAnimationFrame(() => input.current?.focus())
   }
 
@@ -501,7 +505,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
   // No ledes: the title, the address chip and the one action say enough.
   // The email step is the welcome (photo card, the brand line, the field, the other ways in); later steps are solid pages.
   const showWelcome = step === 'email' && !walletChallenge
-  const heading = walletChallenge || step === 'new' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
+  const heading = walletChallenge || step === 'new' || step === 'edit-email' ? sheet.registerTitle : step === 'email' ? null : step === 'code' ? sheet.codeTitle : sheet.loginTitle
   const agreement = <label className={styles.agreement}>
     <input type="checkbox" checked={agreed} onChange={event => { setAgreed(event.target.checked); setError('') }} />
     <span>{visual.consentStart} <a href={termsHref} target="_blank" rel="noopener noreferrer">{visual.terms}</a> {visual.consentMiddle} <a href={privacyHref} target="_blank" rel="noopener noreferrer">{visual.privacy}</a> {visual.consentEnd}</span>
@@ -521,8 +525,8 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     <button type="button" disabled={pending} onClick={changeEmail}>{emailCopy.changeEmail}</button>
   </div>
 
-  const primaryLabel = step === 'email' ? sheet.continue : step === 'passkey' ? passwordCopy.passkey : step === 'password' ? passwordCopy.signIn : step === 'new' ? emailCopy.sendCode : emailCopy.verify
-  const pendingLabel = step === 'email' ? sheet.checking : step === 'passkey' ? passwordCopy.passkey : step === 'code' ? emailCopy.verifying : copy.sending
+  const primaryLabel = enteringEmail ? sheet.continue : step === 'passkey' ? passwordCopy.passkey : step === 'password' ? passwordCopy.signIn : step === 'new' ? emailCopy.sendCode : emailCopy.verify
+  const pendingLabel = enteringEmail ? sheet.checking : step === 'passkey' ? passwordCopy.passkey : step === 'code' ? emailCopy.verifying : copy.sending
   const primaryDisabled = pending
     || (step === 'code' ? code.length !== 6 : step !== 'passkey' && retryAfter > 0)
     || (step === 'new' && (!agreed || !requirements))
@@ -561,13 +565,13 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       <button className={styles.textLink} type="button" onClick={() => { setWalletChallenge(null); setAgreed(false); setError('') }}>{sheet.signIn}</button>
     </> : <form onSubmit={submit} noValidate aria-busy={pending}>
       {/* The poster's lead: one field, its confirm inside on the end edge. The lookup decides sign-in or registration. */}
-      {step === 'email' ? <label className={`${ui.field} ${focusStyles.email}`}>
+      {enteringEmail ? <label className={`${ui.field} ${focusStyles.email}`}>
         <span className={styles.srOnly}>{visual.emailAddress}</span>
         <Mail className={focusStyles.mailIcon} size={22} strokeWidth={1.6} aria-hidden="true" />
         <input ref={input} type="email" inputMode="email" placeholder={visual.emailAddress} autoComplete={autofill ? 'username webauthn' : 'username'} onPointerDown={promptOnTap} aria-invalid={Boolean(error)} value={email} onChange={event => { setEmail(event.target.value); setError('') }} disabled={pending} maxLength={254} autoCapitalize="none" spellCheck={false} enterKeyHint="go" dir="ltr" />
       </label> : identity}
       {/* One clear Continue under the field instead of an arrow inside it (2026-11-02, user). */}
-      {step === 'email' && <button type="submit" className={`${ui.primary} ${focusStyles.continue}`} disabled={pending || retryAfter > 0}>
+      {enteringEmail && <button type="submit" className={`${ui.primary} ${focusStyles.continue}`} disabled={pending || retryAfter > 0}>
         {pending ? <><LoaderCircle className={styles.spinner} size={20} aria-hidden="true" /><span className={styles.srOnly}>{pendingLabel}</span></> : cta(retryAfter > 0 ? cooldownLabel : sheet.continue)}
       </button>}
 
@@ -593,7 +597,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       </div>}
 
       {errors}
-      {step !== 'email' && step !== 'code' && <button className={ui.primary} type="submit" disabled={primaryDisabled}>
+      {!enteringEmail && step !== 'code' && <button className={ui.primary} type="submit" disabled={primaryDisabled}>
         {pending ? <><LoaderCircle className={styles.spinner} size={20} aria-hidden="true" /><span className={styles.srOnly}>{pendingLabel}</span></>
           : step === 'passkey' ? <><span>{primaryLabel}</span><span className={styles.ctaIcon} aria-hidden="true"><Fingerprint size={18} strokeWidth={1.8} /></span></>
           : cta(retryAfter > 0 ? cooldownLabel : primaryLabel)}
