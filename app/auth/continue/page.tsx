@@ -75,7 +75,7 @@ export default function ContinueAuthPage() {
     event.preventDefault()
     if (!flow || locked.current) return
     if (needsEmail) { await sendEmail(); return }
-    if (password && (value.length < 12 || value.length > 128)) { setError(t.policy); return }
+    if (password && (value.length < 8 || value.length > 128)) { setError(t.policy); return }
     if (password && value !== repeat) { setError(t.mismatch); return }
     locked.current = true; setBusy(true); setError('')
     try {
@@ -112,7 +112,7 @@ export default function ContinueAuthPage() {
     try { const result = await resendAuthFlow(flow); if (result.ok) setRetry(result.data.retryAfter); else setError(authErrorMessage(result.error, locale)) }
     finally { locked.current = false; setBusy(false) }
   }
-  const lengthOk = value.length >= 12 && value.length <= 128
+  const lengthOk = value.length >= 8 && value.length <= 128
   const matchOk = Boolean(repeat) && value === repeat
   const reveal = <button type="button" className={styles.reveal} aria-label={show ? sheet.hidePassword : sheet.showPassword} aria-pressed={show} onClick={() => setShow(v => !v)}>{show ? <EyeOff size={17} aria-hidden="true" /> : <Eye size={17} aria-hidden="true" />}</button>
   return <AuthShell>

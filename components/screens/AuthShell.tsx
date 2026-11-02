@@ -48,7 +48,8 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
   const media = cool ? 'cool' : 'warm'
   // The sign-in (2026-11-01): the welcome is type on a quiet field of light — the brand line pulls into focus while the
   // soft discs behind it fall out of focus — then the email field and the other ways in; later steps on a plain page.
-  const focus = attrs?.['data-auth-focus'] === 'true'
+  // Every sign-in surface uses it since 2026-11-02 (the code, password and passkey steps too); 'false' keeps the old film.
+  const focus = attrs?.['data-auth-focus'] !== 'false'
   const welcome = focus && attrs?.['data-auth-view'] === 'welcome'
   const brand = <><BrandMark size={22} /><span>A<i>-</i>REIT</span></>
   const keys = <div className={styles.topActions}>
@@ -81,12 +82,12 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
       {/* Welcome (2026-11-02, after the user's glass-card reference, recoloured cool): a full-bleed coastal photo that racks
           into focus behind one restrained paper-glass card — a kicker, the brand line, what to do, the email field, the other ways in. The lower
           half of the photo goes soft under a slow sea mist so the card reads first. */}
-      {welcome && <div className={f.scene} aria-hidden="true"><img src={cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'} alt="" decoding="async" fetchPriority="high" /><i className={f.soften} /><i className={f.fog} /></div>}
+      <div className={f.scene} data-step={welcome ? undefined : ''} aria-hidden="true"><img src={cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'} alt="" decoding="async" fetchPriority="high" /><i className={f.soften} /><i className={f.fog} /></div>
       {welcome ? <div className={f.sheet}>
         <LoginWindow night={cool} zh={locale === 'zh-CN'} />
         {hero && <div className={f.copy}>{hero}</div>}
         <div className={f.actions}>{children}</div>
-      </div> : <div className={f.form}>{children}</div>}
+      </div> : <div className={`${f.sheet} ${f.step}`}>{children}</div>}
       {footer && <div className={f.legal}>{footer}</div>}
     </> : <>
       {hero && <div className={styles.heroCopy}>{hero}</div>}

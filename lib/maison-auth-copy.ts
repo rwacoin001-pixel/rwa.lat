@@ -50,7 +50,7 @@ export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = {
     codeTitle: 'Check your email', sentTo: 'We sent a 6-digit code to', or: 'or continue with', browse: 'Look around first',
     newHere: 'New to A-REIT?', createAccount: 'Create account', haveAccount: 'Already have an account?', signIn: 'Sign in',
     showPassword: 'Show password', hidePassword: 'Hide password', passkey: 'Passkey', useCode: 'Use an email code', usePassword: 'Use password',
-    setupTitle: 'Set a password', setupLede: 'You will use it with your email to sign in.', ruleLength: '12 to 128 characters', ruleMatch: 'Both entries match', help: 'Help', passwordRequired: 'Enter your password.',
+    setupTitle: 'Set a password', setupLede: 'You will use it with your email to sign in.', ruleLength: '8 to 128 characters', ruleMatch: 'Both entries match', help: 'Help', passwordRequired: 'Enter your password.',
     continue: 'Continue', checking: 'Checking…', emailLede: 'Enter your email. We’ll sign you in or help you create an account.', account: 'Signing in as', newLede: 'No account uses this email yet. Verify it, then set a password to finish.', unavailable: 'This account can’t sign in right now. Contact support for help.',
   },
   'zh-CN': {
@@ -59,7 +59,7 @@ export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = {
     codeTitle: '查收验证码', sentTo: '6 位验证码已发送至', or: '或使用以下方式', browse: '暂不注册，先看看',
     newHere: '还没有账户？', createAccount: '创建账户', haveAccount: '已有账户？', signIn: '登录',
     showPassword: '显示密码', hidePassword: '隐藏密码', passkey: '通行密钥', useCode: '改用邮箱验证码', usePassword: '改用密码登录',
-    setupTitle: '设置登录密码', setupLede: '之后可用邮箱和此密码登录', ruleLength: '12–128 位字符', ruleMatch: '两次输入一致', help: '帮助', passwordRequired: '请输入密码',
+    setupTitle: '设置登录密码', setupLede: '之后可用邮箱和此密码登录', ruleLength: '8–128 位字符', ruleMatch: '两次输入一致', help: '帮助', passwordRequired: '请输入密码',
     continue: '继续', checking: '正在确认…', emailLede: '输入邮箱，已有账户直接登录，新邮箱将引导注册', account: '登录账户', newLede: '这个邮箱还没有账户。验证邮箱后设置密码即可完成注册', unavailable: '该账户暂时无法登录，请联系客服处理',
   },
   hi: {

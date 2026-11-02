@@ -52,14 +52,15 @@ const templates: PosterTemplate[] = POSTER_PLATFORMS.flatMap(platform => {
   return styles.map((style, index) => ({ ...style, id: `${platform.id}-${index < 3 ? style.kind : style.style}`, platform: platform.id }))
 })
 export function posterTemplates(platform: string): PosterTemplate[] { return templates.filter(template => template.platform === platform) }
-export function invitationUrl(code: string): string {
+/** With the poster's language, so the page behind the QR code reads the same language as the poster. */
+export function invitationUrl(code: string, locale?: AppLocale): string {
   if (!/^[a-zA-Z0-9]{6,16}$/.test(code)) throw new Error('Invalid invitation code')
-  return `https://a-reit.com/r/${code}`
+  return `https://a-reit.com/r/${code}${locale ? `?lang=${encodeURIComponent(locale)}` : ''}`
 }
 type Rules = { version: number; holdingRatesBps: number[]; feeRatesBps: number[] }
 export type PosterInput = { code: string; locale: AppLocale; template: PosterTemplate; rules: Rules | null; purchaseRewardsEnabled?: boolean; feeRewardsEnabled?: boolean }
 export function buildPosterModel(input: PosterInput) {
-  const link = invitationUrl(input.code)
+  const link = invitationUrl(input.code, input.locale)
   const template = templates.find(item => item.id === input.template.id)
   const copy = posterCopy[input.locale]
   if (!template || !copy || !input.rules || !Number.isSafeInteger(input.rules.version) || input.rules.version < 1) throw new Error('Poster rules unavailable')

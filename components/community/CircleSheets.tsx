@@ -27,7 +27,7 @@ type Copy = {
   you: string; foundTitle: string; failed: string; more: string; empty: string; rejoin: string; leftNote: string
   invite: string; inviteBody: string; copy: string; copied: string; share: string; reset: string; resetDone: string; qr: string
   requests: (n: number) => string; requestsEmpty: string; approve: string; reject: string; removed: string; removedEmpty: string
-  restore: string; viaLink: string; joinedNote: (owner: string) => string; dismiss: string
+  restore: string; viaLink: string; noProfile: string; joinedNote: (owner: string) => string; dismiss: string
 }
 const copy: Partial<Record<AppLocale, Copy>> = {
   'zh-CN': {
@@ -39,7 +39,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     foundTitle: '建立圈子', failed: '没有成功，请稍后再试。', more: '更多', empty: '还没有成员。邀请朋友，他们会自动加入。', rejoin: '重新加入', leftNote: '你已退出这个圈子',
     invite: '邀请朋友', inviteBody: '朋友打开链接后申请加入，你同意后他就能进圈。你邀请注册的人会自动进圈，不用这个链接。', copy: '复制链接', copied: '链接已复制',
     share: '分享', reset: '重置链接', resetDone: '旧链接已失效', qr: '圈子邀请二维码', requests: (n) => n > 0 ? `待审核（${n}）` : '待审核', requestsEmpty: '没有新的申请。',
-    approve: '同意', reject: '拒绝', removed: '已移出', removedEmpty: '没有被移出的人。', restore: '撤回', viaLink: '链接加入',
+    approve: '同意', reject: '拒绝', removed: '已移出', removedEmpty: '没有被移出的人。', restore: '撤回', viaLink: '链接加入', noProfile: '还没设置资料',
     joinedNote: (owner) => `${owner} 在你的邀请链上，所以你自动加入了这个圈子。`, dismiss: '知道了',
   },
   en: {
@@ -51,7 +51,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     foundTitle: 'Start a circle', failed: 'That did not work. Please try again.', more: 'More', empty: 'No members yet. Invite friends and they join automatically.', rejoin: 'Rejoin', leftNote: 'You left this circle',
     invite: 'Invite friends', inviteBody: 'Friends open the link and ask to join; they are in once you approve. People you invited to A-REIT join on their own.', copy: 'Copy link', copied: 'Link copied',
     share: 'Share', reset: 'Reset link', resetDone: 'The old link no longer works', qr: 'Circle invite QR code', requests: (n) => n > 0 ? `Requests (${n})` : 'Requests', requestsEmpty: 'No new requests.',
-    approve: 'Approve', reject: 'Decline', removed: 'Removed', removedEmpty: 'Nobody has been removed.', restore: 'Undo', viaLink: 'Joined by link',
+    approve: 'Approve', reject: 'Decline', removed: 'Removed', removedEmpty: 'Nobody has been removed.', restore: 'Undo', viaLink: 'Joined by link', noProfile: 'No profile yet',
     joinedNote: (owner) => `${owner} is in your invite chain, so you joined this circle automatically.`, dismiss: 'Got it',
   },
 }
@@ -100,7 +100,7 @@ export function MembersSheet({ open, circle, onClose, onRemoved, onNotify }: { o
     {rows === null ? <p className={s.confirmBody}>…</p> : rows.length === 0 ? <p className={s.confirmBody}>{k.empty}</p> : <ul className={s.memberList}>
       {rows.map((row) => <li key={row.profile.id}>
         <CommunityAvatar avatarUrl={row.profile.avatarUrl} seed={row.profile.avatarSeed} handle={row.profile.handle} size={40} />
-        <span><b dir="auto">{row.profile.displayName}</b><small>{row.via === 'link' ? k.viaLink : k.depth(row.depth)}{row.silenced ? ` · ${labels.silenced}` : ''}</small></span>
+        <span><b dir="auto">{row.profile.displayName}</b><small>{row.via === 'link' ? k.viaLink : k.depth(row.depth)}{row.identityConfigured === false ? ` · ${k.noProfile}` : ''}{row.silenced ? ` · ${labels.silenced}` : ''}</small></span>
         {circle.isOwner && row.profile.id !== circle.owner.id && <div className={s.memberKeys}>
           <button type="button" className={c.pill} disabled={working !== null} onClick={() => {
             setWorking(row.profile.id)

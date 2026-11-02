@@ -17,7 +17,7 @@ import { InvitePlate } from './InvitePlate'
 import { CodeSlots } from './CodeSlots'
 import { MemberSheet } from './ReferralMemberSheet'
 import type { ReferralMember } from '@/lib/api/referral'
-import { displayInviteCode } from '@/lib/referral-invite'
+import { displayInviteCode, invitationLink } from '@/lib/referral-invite'
 import { porcelainAvatar } from '@/components/community-avatar'
 import { nativeCan, nativeShare } from '@/lib/native-app'
 import x from './referral.module.css'
@@ -120,7 +120,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   }, [])
 
   const code = me.data?.code
-  const link = code && typeof window !== 'undefined' ? `${window.location.origin}/r/${code.toUpperCase()}` : ''
+  const link = code && typeof window !== 'undefined' ? invitationLink(code) : ''
   const sum = summary.data
   const unit = sum?.currency || 'USDT'
   const money = (atomic?: string) => fmtAtomic(atomic, sum?.decimals ?? 6, '', 2).trim()

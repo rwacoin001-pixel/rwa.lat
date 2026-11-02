@@ -17,7 +17,7 @@ export class AuthFlowEmailDto extends AuthFlowTokenDto {
 }
 export class AuthFlowCompleteDto extends AuthFlowTokenDto {
   @ApiPropertyOptional() @IsOptional() @IsString() @Matches(/^\d{6}$/) code?: string
-  @ApiPropertyOptional({ minLength: 12, maxLength: 128 }) @IsOptional() @IsString() @Length(12, 128) password?: string
+  @ApiPropertyOptional({ minLength: 8, maxLength: 128 }) @IsOptional() @IsString() @Length(8, 128) password?: string
   @ApiPropertyOptional({ type: [ConsentAcceptanceDto] }) @IsOptional() @IsArray() @ArrayMaxSize(2) @ValidateNested({ each: true }) @Type(() => ConsentAcceptanceDto) consents?: ConsentAcceptanceDto[]
 }
 export class PasswordManageDto {

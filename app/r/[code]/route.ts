@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isAppLocale, LANGUAGE_COOKIE } from '@/lib/locale-detection'
 export async function GET(req:NextRequest,{params}:{params:Promise<{code:string}>}) {
   const {code}=await params
   if (!/^[a-zA-Z0-9]{6,16}$/.test(code)) return NextResponse.json({message:'Invalid invitation code'},{status:400})
@@ -15,6 +16,9 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{code:string}
     const response=NextResponse.redirect(new URL(target,req.url),303)
     response.headers.set('Cache-Control','no-store')
     response.cookies.set('rwa_referral',data.attributionToken,{httpOnly:true,secure:req.nextUrl.protocol==='https:',sameSite:'lax',path:'/',expires:new Date(data.expiresAt)})
+    // The sharer's language (2026-11-02, `?lang=`): the page opens in it unless this browser already chose a language.
+    const lang=req.nextUrl.searchParams.get('lang')
+    if(isAppLocale(lang)&&!isAppLocale(req.cookies.get(LANGUAGE_COOKIE)?.value)) response.cookies.set(LANGUAGE_COOKIE,lang,{secure:req.nextUrl.protocol==='https:',sameSite:'lax',path:'/',maxAge:31536000})
     return response
   } catch {return NextResponse.json({message:'Invitation service is temporarily unavailable'},{status:503,headers:{'Cache-Control':'no-store'}})}
 }

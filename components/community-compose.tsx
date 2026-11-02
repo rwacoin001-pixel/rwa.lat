@@ -170,6 +170,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [identityOpen, setIdentityOpen] = useState(false)
+  const identitySaved = useRef(false)
   const liveMe = useCommunityMe(false)
   const currentMe = liveMe ?? me
   useEffect(() => { if (open && currentMe && !currentMe.identityConfigured) setIdentityOpen(true) }, [open, currentMe?.id, currentMe?.identityConfigured])
@@ -306,7 +307,8 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
   const topicLabel = topic ? topics.find(t => t.slug === topic)?.title ?? topic : k.topic
 
   return <><span ref={anchor} hidden />
-    <Dialog.Root open={open && hostReady} onOpenChange={(next: boolean) => { if (!next) requestClose() }}>
+    {/* One modal at a time: two sibling Base UI dialogs mark each other inert (display:none), which left a blank screen. */}
+    <Dialog.Root open={open && hostReady && !identityOpen} onOpenChange={(next: boolean) => { if (!next) requestClose() }}>
       <Dialog.Portal container={container}>
         <Dialog.Popup ref={popup} className={x.compose} initialFocus={field} aria-busy={busy}>
           <div className={x.composeHead}>
@@ -395,7 +397,7 @@ export function CommunityCompose({ open, onClose, target, me, topics = [], circl
         </Dialog.Popup>
       </Dialog.Portal>
     </Dialog.Root>
-    {currentMe && <CommunityProfileEditor open={identityOpen} onOpenChange={setIdentityOpen} me={currentMe} onSaved={() => undefined} />}
+    {currentMe && <CommunityProfileEditor open={open && identityOpen} onOpenChange={next => { setIdentityOpen(next); if (!next && !identitySaved.current && !hasContent) finish() }} me={currentMe} onSaved={() => { identitySaved.current = true }} />}
     </>
 }
 
@@ -503,7 +505,7 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
     <Dialog.Root open={open && hostReady} onOpenChange={onOpenChange}>
       <Dialog.Portal container={container}>
         <Dialog.Backdrop className={x.backdrop} />
-        <Dialog.Popup className={`${x.sheet} ${x.editSheet}`}>
+        <Dialog.Popup className={x.sheet}>
           <div className={x.sheetHead}>
             <Dialog.Close className={x.iconBtn} aria-label={k.close}><X size={22} strokeWidth={1.85} /></Dialog.Close>
             <Dialog.Title className={x.sheetTitle}>{me.identityConfigured ? k.editProfile : experience.setup}</Dialog.Title>

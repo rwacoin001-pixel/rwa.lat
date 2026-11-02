@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { useQuery } from '@/lib/api/_query'
 import { Check, Copy, ImagePlus } from 'lucide-react'
 import { claimReferralRewards, referralAwards, referralInvitees, referralMe, referralSummary } from '@/lib/api/referral'
-import { inviteLinkFor } from '@/lib/referral-invite'
+import { invitationLink } from '@/lib/referral-invite'
 import { MASK, useBalancesHidden } from '@/lib/hide-balance'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { useCommunityMe } from '@/components/community-compose'
@@ -49,7 +49,7 @@ export function HomeReferral() {
   const [receipt, setReceipt] = useState<string | null>(null)
   const copyLink = async () => {
     if (!code) return
-    try { await navigator.clipboard.writeText(inviteLinkFor('/invite', code).replace(/\?next=.*$/, '')); setCopied(true); navigator.vibrate?.(8); window.setTimeout(() => setCopied(false), 1200) }
+    try { await navigator.clipboard.writeText(invitationLink(code)); setCopied(true); navigator.vibrate?.(8); window.setTimeout(() => setCopied(false), 1200) }
     catch { showToast(c.copyFailed, 'error') }
   }
   if (!data || !data.payoutsEnabled) return null

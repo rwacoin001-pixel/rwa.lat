@@ -28,7 +28,8 @@ const MEMBERS = `${DOWN}, members(uid,depth,via,at) AS (
     SELECT d.uid,d.depth,'tree'::text,d.bound_at FROM down d
     UNION ALL SELECT g.user_id,0,'link'::text,g.decided_at FROM app.community_circle_guests g
       WHERE g.circle_id=$2 AND g.status='member' AND g.user_id NOT IN (SELECT uid FROM down))`
-const VISIBLE_PROFILE = `p.kind='member' AND p.identity_configured AND p.is_active`
+/** Circle rosters include active invitees before they set up their community identity. */
+const MEMBER_PROFILE = `p.kind='member' AND p.is_active`
 const NOT_OPTED_OUT = (uid: string) => `NOT EXISTS (SELECT 1 FROM app.community_circle_optouts o WHERE o.circle_id=$2 AND o.user_id=${uid})`
 const newInviteCode = () => randomBytes(9).toString('base64url').slice(0, 10)
 /** Pattern for ILIKE ... ESCAPE '\': the user's text with %, _ and \ made literal. */
@@ -47,7 +48,7 @@ export class CommunityCircleService {
     return p as { id: string; user_id: string }
   }
   private async memberCount(q: Q, circle: CircleRow): Promise<number> {
-    const [{ n }] = await q.query(`${MEMBERS} SELECT count(*)::int AS n FROM members m JOIN app.community_profiles p ON p.user_id=m.uid AND ${VISIBLE_PROFILE}
+    const [{ n }] = await q.query(`${MEMBERS} SELECT count(*)::int AS n FROM members m JOIN app.community_profiles p ON p.user_id=m.uid AND ${MEMBER_PROFILE}
       WHERE ${NOT_OPTED_OUT('m.uid')}`, [circle.owner_user_id, circle.id])
     return n + 1
   }
@@ -189,15 +190,15 @@ export class CommunityCircleService {
     if (offset === undefined) throw new BadRequestException('COMMUNITY_CURSOR_INVALID')
     const params: unknown[] = [circle.owner_user_id, circleId, Number(offset), limit + 1]
     if (search) params.push(likeContains(search))
-    const rows: Array<{ profile_id: string; depth: number; via: 'tree' | 'link'; silenced: boolean }> = await this.db.query(`${MEMBERS}
-      SELECT p.id AS profile_id,m.depth,m.via,COALESCE(s.silenced,false) AS silenced FROM members m JOIN app.community_profiles p ON p.user_id=m.uid AND ${VISIBLE_PROFILE}
+    const rows: Array<{ profile_id: string; identity_configured: boolean; depth: number; via: 'tree' | 'link'; silenced: boolean }> = await this.db.query(`${MEMBERS}
+      SELECT p.id AS profile_id,p.identity_configured,m.depth,m.via,COALESCE(s.silenced,false) AS silenced FROM members m JOIN app.community_profiles p ON p.user_id=m.uid AND ${MEMBER_PROFILE}
       LEFT JOIN app.community_circle_member_settings s ON s.circle_id=$2 AND s.user_id=m.uid
       WHERE ${NOT_OPTED_OUT('m.uid')}${search ? " AND (p.display_name ILIKE $5 ESCAPE '\\' OR p.handle ILIKE $5 ESCAPE '\\')" : ''}
       ORDER BY (m.via='link'),m.depth,m.at,p.id OFFSET $3 LIMIT $4`, params)
     const page = rows.slice(0, limit)
     const profiles = await this.community.profileViews(page.map(r => r.profile_id))
     return {
-      items: page.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, depth: r.depth, via: r.via, silenced: r.silenced })),
+      items: page.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, identityConfigured: r.identity_configured, depth: r.depth, via: r.via, silenced: r.silenced })),
       nextCursor: rows.length > limit ? `o:${Number(offset) + limit}` : null,
     }
   }
@@ -253,10 +254,10 @@ export class CommunityCircleService {
   /** People the owner removed (not those who left themselves), newest first. */
   async removed(userId: string, circleId: string) {
     await this.requireOwner(this.db, circleId, userId)
-    const rows: Array<{ profile_id: string; at: Date }> = await this.db.query(`SELECT p.id AS profile_id,o.created_at AS at FROM app.community_circle_optouts o
-      JOIN app.community_profiles p ON p.user_id=o.user_id AND ${VISIBLE_PROFILE} WHERE o.circle_id=$1 AND o.reason='removed' ORDER BY o.created_at DESC LIMIT 200`, [circleId])
+    const rows: Array<{ profile_id: string; identity_configured: boolean; at: Date }> = await this.db.query(`SELECT p.id AS profile_id,p.identity_configured,o.created_at AS at FROM app.community_circle_optouts o
+      JOIN app.community_profiles p ON p.user_id=o.user_id AND ${MEMBER_PROFILE} WHERE o.circle_id=$1 AND o.reason='removed' ORDER BY o.created_at DESC LIMIT 200`, [circleId])
     const profiles = await this.community.profileViews(rows.map(r => r.profile_id))
-    return { items: rows.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, removedAt: r.at })) }
+    return { items: rows.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, identityConfigured: r.identity_configured, removedAt: r.at })) }
   }
 
   /** Undo a removal. A tree member is back in via the tree, a link guest via the guest row that was kept. */
@@ -400,10 +401,10 @@ export class CommunityCircleService {
   /** Pending applicants, oldest first. */
   async requests(userId: string, circleId: string) {
     await this.requireOwner(this.db, circleId, userId)
-    const rows: Array<{ profile_id: string; at: Date }> = await this.db.query(`SELECT p.id AS profile_id,g.created_at AS at FROM app.community_circle_guests g
-      JOIN app.community_profiles p ON p.user_id=g.user_id AND ${VISIBLE_PROFILE} WHERE g.circle_id=$1 AND g.status='pending' ORDER BY g.created_at,p.id LIMIT 100`, [circleId])
+    const rows: Array<{ profile_id: string; identity_configured: boolean; at: Date }> = await this.db.query(`SELECT p.id AS profile_id,p.identity_configured,g.created_at AS at FROM app.community_circle_guests g
+      JOIN app.community_profiles p ON p.user_id=g.user_id AND ${MEMBER_PROFILE} WHERE g.circle_id=$1 AND g.status='pending' ORDER BY g.created_at,p.id LIMIT 100`, [circleId])
     const profiles = await this.community.profileViews(rows.map(r => r.profile_id))
-    return { items: rows.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, createdAt: r.at })) }
+    return { items: rows.filter(r => profiles.has(r.profile_id)).map(r => ({ profile: profiles.get(r.profile_id)!, identityConfigured: r.identity_configured, createdAt: r.at })) }
   }
 
   private decide(userId: string, circleId: string, profileId: string, status: 'member' | 'rejected') {

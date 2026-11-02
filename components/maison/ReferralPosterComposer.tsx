@@ -114,7 +114,7 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
     if (!ready || sharing || !output) return
     if (nativeCan('share')) {
       setSharing(true); setStatus('')
-      void nativeShare({ title: 'A-REIT', url: invitationUrl(code), image: output.file, name: output.file.name }).then(result => {
+      void nativeShare({ title: 'A-REIT', url: invitationUrl(code, posterLocale), image: output.file, name: output.file.name }).then(result => {
         if (current()) { setSharing(false); if (!result.ok && result.reason === 'failed') setStatus(ui.shareHint) }
       })
       return
@@ -132,7 +132,7 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
   const poster = ready ? <img className={x.posterImg} src={output!.url} alt={`${ui.preview} · ${posterPlatformName(platform, locale)} · ${selected!.styleName}`} width={platform.width} height={platform.height} /> : <div className={x.placeholder} role="status">{error || (!selected ? ui.unavailable : ui.preparing)}</div>
   return <ReferralSheet tall fullScreen title={expanded && selected ? selected.styleName : ui.title} closeLabel={ui.close} theme={expanded && selected ? selected.template.dark ? 'dark' : 'light' : theme} inertRef={inertRef} onClose={onClose}>
     <div className={`${x.composer} ${expanded ? x.fullscreenComposer : ''}`} dir={locale === 'ar' ? 'rtl' : 'ltr'}>
-      <div ref={qrRef} className={x.qrSource} aria-hidden="true"><QRCodeCanvas value={invitationUrl(code)} size={512} marginSize={4} level="H" bgColor="#ffffff" fgColor="#000000" /></div>
+      <div ref={qrRef} className={x.qrSource} aria-hidden="true"><QRCodeCanvas value={invitationUrl(code, posterLocale)} size={512} marginSize={4} level="H" bgColor="#ffffff" fgColor="#000000" /></div>
       <canvas ref={canvasRef} className={x.outputCanvas} hidden aria-hidden="true" />
       {expanded ? <div className={x.fullscreenPreview} style={ready ? { '--poster-background': `url("${output!.url}")` } as CSSProperties : undefined}>{poster}</div> : <>
       {/* Poster studio (2026-10-29): four sizes instead of ten platform chips, the language as a quiet pill, and the

@@ -225,7 +225,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
       if (continueAuth(result.error)) return
       // Stop listening and fall back to the button; only a failed assertion is worth telling the user about.
       setAutofill(false)
-      if (result.error.code === 'PASSKEY_VERIFICATION_FAILED' || (result.error.status >= 400 && result.error.status < 500 && result.error.status !== 429)) setError(passwordCopy.failed)
+      if (result.error.code === 'PASSKEY_VERIFICATION_FAILED') setError(passwordCopy.failed)
     })
     return () => { clearTimeout(renew); controller.abort() }
   }, [autofill, step, walletChallenge, pending, autofillRound])

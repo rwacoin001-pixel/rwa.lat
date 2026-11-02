@@ -1,4 +1,5 @@
 import { request, resetAuthAttribution } from './api/_http'
+import { isAppLocale } from './locale-detection'
 
 /** Same rules as the API: any case, spaces or dashes allowed; 6–16 letters or digits once cleaned. */
 export function normalizeInviteCode(input: string): string {
@@ -16,7 +17,20 @@ export type InviteAttribution = { code: string; expiresAt: string }
  */
 export function inviteLinkFor(path: string, code?: string | null): string {
   const origin = typeof window === 'undefined' ? '' : window.location.origin
-  return code ? `${origin}/r/${encodeURIComponent(code.toUpperCase())}?next=${encodeURIComponent(path)}` : origin + path
+  const lang = sharerLang()
+  if (code) return `${origin}/r/${encodeURIComponent(code.toUpperCase())}?${lang ? `lang=${encodeURIComponent(lang)}&` : ''}next=${encodeURIComponent(path)}`
+  return origin + path
+}
+/** The sharer's app language (2026-11-02): carried on every invite link so whoever opens it first reads the same language. */
+export function sharerLang(): string | null {
+  if (typeof document === 'undefined') return null
+  const lang = document.documentElement.lang
+  return isAppLocale(lang) ? lang : null
+}
+/** The bare invitation link, /r/<code>, with the sharer's language. */
+export function invitationLink(code: string, lang: string | null = sharerLang()): string {
+  const origin = typeof window === 'undefined' ? 'https://a-reit.com' : window.location.origin
+  return `${origin}/r/${encodeURIComponent(code.toUpperCase())}${lang && isAppLocale(lang) ? `?lang=${encodeURIComponent(lang)}` : ''}`
 }
 
 export const lookupInviteCode = (code: string) =>

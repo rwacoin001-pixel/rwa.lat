@@ -5,8 +5,8 @@ const derive = (password: string, salt: string) => new Promise<Buffer>((resolve,
   scrypt(password, salt, 32, { N: 32768, r: 8, p: 1, maxmem: 64 * 1024 * 1024 }, (error, key) => error ? reject(error) : resolve(key))
 })
 export function assertPassword(password: string): void {
-  if (typeof password !== 'string' || password.length < 12 || password.length > 128) {
-    throw new BadRequestException({ code: 'AUTH_PASSWORD_POLICY', message: 'Use 12–128 characters.' })
+  if (typeof password !== 'string' || password.length < 8 || password.length > 128) {
+    throw new BadRequestException({ code: 'AUTH_PASSWORD_POLICY', message: 'Use 8–128 characters.' })
   }
 }
 export async function hashPassword(password: string): Promise<string> {

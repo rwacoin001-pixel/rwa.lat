@@ -14,7 +14,7 @@ export type Circle = { id: string; name: string; owner: CommunityAuthor; memberC
   /** Owner only. */
   inviteCode?: string | null; pendingCount?: number }
 export type CircleMembership = { owned: Circle | null; joined: Circle[]; left: Circle[] }
-export type CircleMemberRow = { profile: CommunityAuthor; depth: number; via?: 'tree' | 'link'; silenced: boolean }
+export type CircleMemberRow = { profile: CommunityAuthor; identityConfigured?: boolean; depth: number; via?: 'tree' | 'link'; silenced: boolean }
 export type CircleInviteStatus = 'none' | 'pending' | 'member' | 'owner' | 'removed' | 'rejected'
 export type CircleInvite = { circle: { id: string; name: string; owner: CommunityAuthor; memberCount: number }; status: CircleInviteStatus }
 export type CirclePersonRow = { profile: CommunityAuthor; createdAt?: string; removedAt?: string }
