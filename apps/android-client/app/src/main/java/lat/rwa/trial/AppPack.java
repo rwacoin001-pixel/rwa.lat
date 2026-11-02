@@ -32,9 +32,9 @@ import java.util.regex.Pattern;
 final class AppPack {
     private static final String ORIGIN = UrlPolicy.ORIGIN;
     // Must cover every folder scripts/app-pack-manifest.mjs packs: a file outside these ships in the APK but is never served.
-    private static final Pattern PATH = Pattern.compile("^/(?:_next/static|icons|brand/a-reit|media/(?:home|palette-a|porcelain|quant|referral)|auth|fonts|avatars)/[A-Za-z0-9._~@+\\-/\\[\\]()]+$");
+    private static final Pattern PATH = Pattern.compile("^/(?:_next/static|icons|brand/a-reit|media/(?:home|palette-a|porcelain|quant|referral|products|generated|login|brand)|auth|fonts|avatars|baskets|asset-icons|ai-ocr|vendor/jsqr)/[A-Za-z0-9._~@+\\-/\\[\\]()]+$");
     private static final Pattern HASH = Pattern.compile("^[0-9a-f]{64}$");
-    private static final long MAX_FILE = 8L * 1024 * 1024, MAX_UPDATE = 80L * 1024 * 1024;
+    private static final long MAX_FILE = 8L * 1024 * 1024, MAX_UPDATE = 128L * 1024 * 1024;
 
     private final Context context;
     private final File store, active;
@@ -103,9 +103,9 @@ final class AppPack {
         } catch (IOException error) { return null; }
     }
 
-    private static String mime(String path) {
+    static String mime(String path) {
         String lower = path.toLowerCase(Locale.ROOT);
-        if (lower.endsWith(".js")) return "text/javascript";
+        if (lower.endsWith(".js") || lower.endsWith(".mjs")) return "text/javascript";
         if (lower.endsWith(".css")) return "text/css";
         if (lower.endsWith(".woff2")) return "font/woff2";
         if (lower.endsWith(".woff")) return "font/woff";

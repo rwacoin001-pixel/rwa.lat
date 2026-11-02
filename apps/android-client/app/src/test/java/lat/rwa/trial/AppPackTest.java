@@ -1,6 +1,7 @@
 package lat.rwa.trial;
 
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -19,6 +20,10 @@ public class AppPackTest {
             "/media/porcelain/vase.webp", "/media/quant/cover-light.webp", "/media/referral/posters/poster-1.webp",
             "/fonts/satoshi/Satoshi-Variable.woff2", "/fonts/noto-sans-sc-app/app.woff2", "/fonts/noto-sans-sc/slice-12.woff2",
             "/avatars/professions/doctor.webp",
+            "/media/products/hengxu-v2/derived/liujin-gold-720.webp",
+            "/baskets/hengxu-liujin_cover.webp", "/baskets/hengxu-liujin.png", "/asset-icons/compute.png",
+            "/media/generated/project-assets/solar-income-ops-v1.png", "/media/login/welcome.webp",
+            "/media/brand/mark.svg", "/ai-ocr/pdf.worker.min.mjs", "/vendor/jsqr/jsQR.js",
         }) assertTrue(path, AppPack.servable(path));
     }
 
@@ -34,5 +39,11 @@ public class AppPackTest {
         assertTrue(AppPack.traversal("/_next/static/../../secret"));
         assertTrue(AppPack.traversal("/icons/./a.png"));
         assertTrue(AppPack.traversal("/icons/.."));
+    }
+
+    @Test public void pdfWorkerIsJavaScriptModule() {
+        assertEquals("text/javascript", AppPack.mime("/ai-ocr/pdf.worker.min.mjs"));
+        assertEquals("text/javascript", AppPack.mime("/vendor/jsqr/jsQR.js"));
+        assertEquals("font/woff2", AppPack.mime("/fonts/noto-sans-sc/slice-12.woff2"));
     }
 }

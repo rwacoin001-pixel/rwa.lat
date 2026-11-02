@@ -18,21 +18,30 @@ const INCLUDE = [
   /^\/media\/home\/derived\/[^/]+\.webp$/,
   /^\/auth\/[^/]+\.(?:png|svg|webp)$/,
   // Paper & Glass: its images (home, guide, sign-in cabinet, avatars; ~1.8 MB) and the Latin font (Satoshi, ~110 KB).
-  // The Chinese font cut to the app's own copy (~400 KB) ships too; the full slices (for names, news) stay on the network.
+  // Both the app-specific Chinese font and full slices for names/news ship below.
   /^\/media\/palette-a\/.+\.(?:webp|png|jpe?g|svg)$/,
   /^\/fonts\/satoshi\/[^/]+\.woff2$/,
   /^\/fonts\/noto-sans-sc-app\/[^/]+\.woff2$/,
   /^\/avatars\/(?:porcelain|professions)\/[^/]+\.webp$/,
   /^\/media\/porcelain\/[^/]+\.webp$/,
-  // 2026-10-30: everything the phone pages show, so the app does not wait on the network for any picture or glyph:
-  // Koala Quant covers, invitation posters, and the full Chinese font slices (names, news).
-  // Desktop-only media, retired product photos and videos stay on the network.
+  // Quant covers, invitation posters and full Chinese font slices.
+  // Desktop-only media, retired product originals and videos stay on the network.
   // Every folder here must also be in AppPack.PATH (apps/android-client), or it ships but is never served.
   /^\/media\/quant\/.+\.(?:webp|png|jpe?g|svg)$/,
   /^\/media\/referral\/.+\.(?:webp|png|jpe?g|svg)$/,
   /^\/fonts\/noto-sans-sc\/[^/]+\.woff2$/,
+  // Mobile product variants, basket thumbnails/covers and their original fallbacks.
+  /^\/media\/products\/[^/]+\/derived\/[^/]+\.(?:webp|avif|png|jpe?g)$/,
+  /^\/baskets\/[^/]+\.(?:webp|avif|png|jpe?g|svg)$/,
+  /^\/asset-icons\/[^/]+\.(?:webp|avif|png|jpe?g|svg)$/,
+  /^\/media\/(?:generated|login|brand)\/.+\.(?:webp|avif|png|jpe?g|svg)$/,
+  // PDF reading and QR decoding: executable support files, not user documents or OCR language archives.
+  /^\/ai-ocr\/pdf\.worker\.min\.mjs$/,
+  /^\/vendor\/jsqr\/[^/]+\.js$/,
 ]
 const MAX_FILE = 8 * 1024 * 1024
+// Match the native client's per-launch update budget. Fail visibly instead of silently producing an oversized pack.
+const MAX_PACK = 128 * 1024 * 1024
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir, { withFileTypes: true })) {
@@ -43,17 +52,22 @@ function walk(dir, out = []) {
   return out
 }
 
-const files = walk(assets)
+const candidates = walk(assets)
   .map(full => ({ full, path: '/' + relative(assets, full).split(sep).join('/') }))
-  .filter(({ path, full }) => INCLUDE.some(pattern => pattern.test(path)) && statSync(full).size <= MAX_FILE)
+  .filter(({ path }) => INCLUDE.some(pattern => pattern.test(path)))
+for (const { path, full } of candidates) {
+  if (statSync(full).size > MAX_FILE) throw new Error(`app-pack: selected file exceeds 8 MiB: ${path}`)
+}
+const files = candidates
   .map(({ full, path }) => {
     const body = readFileSync(full)
     return { p: path, h: createHash('sha256').update(body).digest('hex'), s: body.length }
   })
   .sort((a, b) => a.p.localeCompare(b.p))
 
+const total = files.reduce((sum, file) => sum + file.s, 0)
+if (total > MAX_PACK) throw new Error(`app-pack: ${(total / 1048576).toFixed(1)} MiB exceeds the 128 MiB native update budget`)
 const manifest = { v: 1, build, generatedAt: new Date().toISOString(), files }
 mkdirSync(join(assets, 'app-pack'), { recursive: true })
 writeFileSync(join(assets, 'app-pack', 'manifest.json'), JSON.stringify(manifest))
-const total = files.reduce((sum, file) => sum + file.s, 0)
 console.log(`app-pack: build ${build}, ${files.length} files, ${(total / 1048576).toFixed(1)} MB`)
