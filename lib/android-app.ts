@@ -7,7 +7,7 @@ import type { AppLocale } from './i18n'
  * to public/download/; while `url` is null the install sheet offers only "Open in Chrome".
  */
 export const ANDROID_APP: { url: string | null; version: string; sha256: string } = {
-  url: 'https://help.a-reit.com/downloads/a-reit-android-1.1.5.apk',
+  url: 'https://dl.a-reit.com/android/a-reit-android-1.1.5.apk',
   version: '1.1.5',
   sha256: '974aea7a1dc69d31afd56875c08dc57e4efa756f9d683d2485182ac15cf0c8a9',
 }
