@@ -30,3 +30,11 @@ Video is excluded: native interception currently returns full 200 responses and 
 - A source asset audit generated the full 403-file list and checked every entry against the native allowlist and bundled hashes.
 
 This is a tested source change, not a published APK. Release requires a fresh production website build, regenerated manifest, incremented Android version/code, bundling that exact build, signing with the existing certificate, and phone validation before replacing the offered download. Do not use the source-only audit manifest as a release bundle. Phone launch/navigation timing, PDF worker behavior, install/upgrade, sign-in handoff, video network fallback and incremental update still require acceptance on the release APK.
+
+## Authorized 1.1.5 release
+
+The user authorized push and production release. APK 1.1.5 / code 8 bundles the then-live website build `ctXivtQzAkjmz3qcsjhYB`, with all 617 previously listed file hashes checked against the saved production assets. Its expanded pack contains 711 files / 83.7 MiB. The APK is 78,339,603 bytes; SHA-256 `974aea7a1dc69d31afd56875c08dc57e4efa756f9d683d2485182ac15cf0c8a9`. The signing certificate matches the existing `com.areit.app` release certificate. Subsequent website builds update its on-device resources using the existing verified update mechanism.
+
+The APK exceeds the frontend static-file size limit. It is hosted on the existing `https://dl.a-reit.com/android/a-reit-android-1.1.5.apk` download origin, under `/opt/rwa-lat/media/android/`. Caddy's versioned APK route was added after backing up and validating its configuration; existing routes are retained. Do not add this large APK to Cloudflare assets. The frontend receives a fresh production build to update the offered download and resource manifest.
+
+Public download/hash checks and Android API 34 emulator installation and launch passed. An emulator screenshot showed the current A-REIT welcome experience. No physical-phone timing or authenticated financial action was tested. Real-phone navigation, PDF execution and upgrade acceptance remain user checks.
