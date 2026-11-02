@@ -18,7 +18,14 @@ test('"Open in Chrome" hands the same page to Chrome and falls back when Chrome 
 
 test('the offered APK is the published file, byte for byte', async () => {
   const { createHash } = await import('node:crypto')
-  const file = readFileSync(new URL('../public' + ANDROID_APP.url, import.meta.url))
+  let file
+  if (ANDROID_APP.url.startsWith('https://')) {
+    const response = await fetch(ANDROID_APP.url, { signal: AbortSignal.timeout(180000) })
+    assert.equal(response.status, 200)
+    file = Buffer.from(await response.arrayBuffer())
+  } else {
+    file = readFileSync(new URL('../public' + ANDROID_APP.url, import.meta.url))
+  }
   assert.equal(createHash('sha256').update(file).digest('hex'), ANDROID_APP.sha256)
   assert.ok(ANDROID_APP.url.endsWith(`-${ANDROID_APP.version}.apk`))
 })
