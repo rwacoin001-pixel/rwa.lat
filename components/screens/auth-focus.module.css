@@ -135,3 +135,11 @@
 .quiet button:disabled, .google.google:disabled { opacity: .45; cursor: default; }
 .google.google:focus-visible, .quiet button:focus-visible { outline: 2px solid var(--f-accent); outline-offset: 2px; }
 .root[data-auth-theme='cool'] .continue.continue { --btn-solid-fill: #f2f4f7; --btn-solid-ink: #0b1220; --btn-arrow-fill: #0b1220; --btn-arrow-ink: #f2f4f7; }
+/* The sign-in page has its own light / dark (data-auth-theme), which can differ from the app's theme. Components borrowed
+   from the app (the code slots, flow kit) read --m-* / --pa-* tokens, so pin them to the page's own colours here; otherwise
+   a dark app theme on a light sign-in page painted light code boxes on white and the confirm wash vanished (2026-11-02). */
+.root.root.root { --m-ink: var(--f-ink); --m-bg: var(--f-bg); --m-muted: var(--f-muted); --m-down: #c2413a; --pa-fill: rgba(11, 18, 32, .06); }
+.root.root.root[data-auth-theme='cool'] { --pa-fill: rgba(255, 255, 255, .08); --m-down: #f07a72; }
+/* Code boxes read clearly on both grounds: a hairline around each empty box (code-slots reads --slot-line). */
+.root.root.root { --slot-line: rgba(11, 18, 32, .14); }
+.root.root.root[data-auth-theme='cool'] { --slot-line: rgba(255, 255, 255, .18); }

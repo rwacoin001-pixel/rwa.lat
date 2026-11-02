@@ -28,6 +28,7 @@ check that line first. Add a line for every new fix the user reports.
 | 20 | 11-02 | Home: while the community tabs are pinned, the AI orb is the compose key (opens Community's composer); it turns back when unpinned | `components/screens/P04-HomeMaison.tsx` (`claimComposeKey` on `feedPinned`), `components/h5/BottomDock.tsx` | Scroll home until the community tabs stick; the dock's last key reads 发帖 · 长按问 AI |
 | 21 | 11-02 | Home feed shows 晒单 cards in posts (ResultCard compact) | `components/home/HomeSocialFeed.tsx`, `lib/api/community.ts` (`card`) | Home feed with a card post shows the ticket card |
 | 22 | 11-02 | Below-the-fold blocks always reveal (no bottom inset; scroll/resize sweep fallback), e.g. the profile's sign-out key | `components/maison/useScrollReveal.ts` | Profile, scroll to the end: no `[data-reveal=pending]` left on screen |
+| 23 | 11-02 | Sign-in code boxes and their confirm wash are visible in light and dark: the auth root pins `--m-ink/--m-bg/--pa-fill/--slot-line` to its own theme, and the code character beats the global `.screen b` colour | `components/screens/auth-focus.module.css`, `components/maison/code-slots.module.css` | `/login` → email → code step, type two digits: filled box ink with white digit (light) / light box with dark digit (dark); empty boxes outlined |
 
 ## Why fixes come back, and the rules that stop it
 
