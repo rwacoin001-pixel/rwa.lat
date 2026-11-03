@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { faceFor, money, moneyFull, sameEntry, sgDateLabel, waitBucket, waited } from '../src/components/ops/format.ts'
-import { topPriority } from '../src/components/ops/queues.ts'
+import { alertText, topPriority } from '../src/components/ops/queues.ts'
 
 test('money rounds to two decimals half up, groups thousands and keeps the sign', () => {
   assert.equal(money('1234567890'), '1,234.57')
@@ -45,22 +45,30 @@ test('typed confirmation accepts the same amount in any common form, nothing els
 const queue = (count, oldestMin, extra = {}) => ({ count, oldestAt: oldestMin === null ? null : new Date(NOW - oldestMin * 60000).toISOString(), status: 'ok', ...extra })
 const NOW = Date.parse('2026-11-03T05:00:00Z') // 13:00 in Singapore
 const KEYS = ['withdrawalReview', 'withdrawalExecute', 'kyc', 'quantSettlement', 'communityQueue', 'communityReports', 'supportTickets', 'mail', 'accountClosures', 'ledgerAdjustments', 'approvals', 'teamBatches', 'predictionSettlements', 'deadJobs']
+const CUTOFF = '2026-11-03T07:00:00.000Z' // 15:00 Singapore
 function today(overrides = {}, alerts = []) {
   const queues = Object.fromEntries(KEYS.map((k) => [k, queue(0, null)]))
-  queues.quantSettlement = queue(0, null, { state: 'posted', cutoffAt: '2026-11-03T15:00:00+08:00' })
-  return { asOf: '', queues: { ...queues, ...overrides }, today: {}, alerts }
+  queues.quantSettlement = queue(0, null, { state: 'posted', tradeDate: '2026-11-01', cutoffAt: CUTOFF, overdue: false })
+  return { generatedAt: '', queues: { ...queues, ...overrides }, today: {}, alerts }
 }
+const due = (state, extra = {}) => queue(1, 13 * 60, { state, tradeDate: '2026-11-02', cutoffAt: CUTOFF, overdue: false, ...extra })
 
 test('the first thing to do: paused withdrawals, then the quant cutoff, then late withdrawals, then the hot wallet', () => {
   assert.equal(topPriority(null), null)
   assert.equal(topPriority(today(), NOW), null)
-  assert.equal(topPriority(today({ withdrawalReview: queue(2, 45) }, [{ code: 'withdrawal_execution_paused', level: 'high', message: '已暂停' }]), NOW).title, '提现执行已暂停')
-  const quant = today({ withdrawalReview: queue(2, 45), quantSettlement: queue(1, null, { state: 'none', cutoffAt: '2026-11-03T15:00:00+08:00' }) })
-  assert.equal(topPriority(quant, NOW).title, '量化今日结算还没录入')
-  assert.equal(topPriority(quant, NOW).detail, '离 15:00 截止还有 120 分钟')
-  const later = today({ withdrawalReview: queue(2, 45), quantSettlement: queue(1, null, { state: 'none', cutoffAt: '2026-11-03T17:30:00+08:00' }) })
-  assert.equal(topPriority(later, NOW).title, '2 笔提现待审', 'far from the cutoff, a late withdrawal comes first')
-  assert.equal(topPriority(today({ withdrawalReview: queue(2, 10) }, [{ code: 'hot_wallet_low', level: 'warn', message: '余额低' }]), NOW).title, '热钱包需要补充')
+  assert.equal(topPriority(today({ withdrawalReview: queue(2, 45) }, [{ kind: 'withdrawalExecutionPaused', severity: 'critical', at: null, detail: { reason: '维护' } }]), NOW).title, '提现执行已暂停')
+  const quant = today({ withdrawalReview: queue(2, 45), quantSettlement: due('none') })
+  assert.equal(topPriority(quant, NOW).title, '量化 2026-11-02 结算还没录入')
+  assert.equal(topPriority(quant, NOW).detail, '离截止还有 120 分钟')
+  assert.equal(topPriority(today({ quantSettlement: due('draft', { overdue: true }) }), NOW + 3 * 3600000).detail, '已过截止时间')
+  assert.equal(topPriority(today({ withdrawalReview: queue(2, 45), quantSettlement: due('none') }), NOW - 3 * 3600000 + 0).title.includes('结算'), false, 'far from the cutoff, a late withdrawal comes first')
+  assert.equal(topPriority(today({ withdrawalReview: queue(2, 10) }, [{ kind: 'hotWalletLow', severity: 'warning', at: null, detail: { usdtAtomic: '6120000000', queuedWithdrawalsAtomic: '7000000000', shortUsdt: true } }]), NOW).title, '热钱包需要处理')
   assert.equal(topPriority(today({ kyc: queue(3, 20), mail: queue(5, 5) }), NOW).title, '未读邮件 5 件', 'otherwise the largest queue')
   assert.equal(topPriority(today({ kyc: queue(3, 20, { status: 'error' }) }), NOW), null, 'a failed queue is not shown as work')
+})
+
+test('alerts read as one plain line from their detail', () => {
+  assert.equal(alertText({ kind: 'hotWalletLow', severity: 'critical', at: null, detail: { usdtAtomic: '6120000000', queuedWithdrawalsAtomic: '7000000000', shortUsdt: true, shortTrx: true } }), '热钱包不足：USDT 余额 6,120.00，少于待执行提现 7,000.00；TRX 不够支付链上手续费')
+  assert.equal(alertText({ kind: 'deadJobs', severity: 'warning', at: null, detail: { count: 3 } }), '3 个后台任务失败，需要重试')
+  assert.equal(alertText({ kind: 'withdrawalExecutionPaused', severity: 'critical', at: null, detail: { reason: null } }), '提现执行已暂停')
 })

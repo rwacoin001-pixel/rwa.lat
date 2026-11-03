@@ -22,17 +22,30 @@ type Settlement = {
 type Preview = {
   tradeDate: string; grossReturnPct: string; netReturnPct: string; indexBefore: string; indexAfter: string; holders: number; principalAtomic: string
   payoutAtomic: string; lossAtomic: string; feesAtomic: string; redemptions: { count: number; principalAtomic: string; feeAtomic: string }
-  history: { values: string[]; mean: string; min: string; max: string; outsideRange: boolean; largeMove: boolean }
+  history: { days: Array<{ tradeDate: string; netReturnPct: string }>; mean: string | null; min: string | null; max: string | null; outsideRange: boolean; largeMove: boolean }
   checks: Array<{ code: string; ok: boolean; message: string }>
 }
 
 const pct = (v: string | number | null | undefined, digits = 2) => v === null || v === undefined || v === '' ? '—' : `${Number(v) > 0 ? '+' : ''}${Number(v).toFixed(digits)}%`
 const STEPS = ['录入收益率', '自动检查', '预览影响', '确认并过账'] as const
 
+/** A trade day is settled on the following day, by the cutoff (Singapore time). */
 function cutoffLeft(tradeDate: string | null | undefined, cutoff = '15:00', now = Date.now()) {
   if (!tradeDate) return null
-  return Math.round((Date.parse(`${tradeDate}T${cutoff}:00+08:00`) - now) / 60000)
+  const next = new Date(Date.parse(`${tradeDate}T00:00:00Z`) + 86400000).toISOString().slice(0, 10)
+  return Math.round((Date.parse(`${next}T${cutoff.slice(0, 5)}:00+08:00`) - now) / 60000)
 }
+const sgToday = (now = Date.now()) => new Date(now + 8 * 3600000).toISOString().slice(0, 10)
+
+/** The console's own words for the core's preview checks; `blocks` = posting must wait until it is fixed. */
+const CHECKS: Record<string, { ok: string; bad: string; blocks: boolean }> = {
+  already_settled: { ok: '这一天还没有结算过', bad: '这一天已经结算过了', blocks: true },
+  trade_date_order: { ok: '是下一个该结算的交易日', bad: '前面还有没结算的交易日，要按顺序结算', blocks: true },
+  cutoff: { ok: '在截止时间前', bad: '已过截止时间（仍可结算，用户会晚收到结果）', blocks: false },
+  large_move: { ok: '涨跌在日常范围内', bad: '涨跌超出日常范围，需要勾选确认', blocks: false },
+  ledger_funded: { ok: '资金池和准备金够用', bad: '资金池与持仓对不上，或不够支付亏损和赎回', blocks: true },
+}
+const checkText = (c: { code: string; ok: boolean; message: string }) => (CHECKS[c.code] ? (c.ok ? CHECKS[c.code].ok : CHECKS[c.code].bad) : c.message)
 
 /** Last days' net returns as small bars around a zero line (up lime, down red). */
 function ReturnRuler({ values, highlight }: { values: number[]; highlight?: number }) {
@@ -66,7 +79,8 @@ function Daily() {
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(t) }, [])
 
-  const tradeDate = product?.nextTradeDate ?? null
+  // A trade date can be settled once it has ended in Singapore, like /console/today counts it.
+  const tradeDate = product?.nextTradeDate && product.nextTradeDate < sgToday(now) ? product.nextTradeDate : null
   const todayRow = settlements.data?.find((s) => s.tradeDate === tradeDate && s.status !== 'voided') ?? null
   const preview = usePolled<Preview>(todayRow && todayRow.status !== 'posted' ? `/api/admin/quant/settlements/${todayRow.id}/preview` : null, 0)
   const posted = (settlements.data ?? []).filter((s) => s.status === 'posted')
@@ -81,7 +95,9 @@ function Daily() {
   const [notice, setNotice] = useState<{ kind: 'ok' | 'error'; text: string } | null>(null)
   useEffect(() => { setLargeOk(false) }, [todayRow?.id])
 
-  const step = !todayRow ? 0 : todayRow.status === 'draft' ? (preview.data ? 2 : 1) : todayRow.status === 'approved' ? 3 : 4
+  const nothingDue = Boolean(product) && !tradeDate
+  const lastPosted = posted[0] ?? null
+  const step = nothingDue ? 4 : !todayRow ? 0 : todayRow.status === 'draft' ? (preview.data ? 2 : 1) : todayRow.status === 'approved' ? 3 : 4
   const grossNumber = Number(gross)
   const grossValid = /^-?\d+(\.\d{1,4})?$/.test(gross.trim())
   const maxMove = Number(product?.max_daily_move_pct ?? 3)
@@ -111,7 +127,7 @@ function Daily() {
   }
 
   const p = preview.data
-  const blocking = p?.checks.filter((c) => !c.ok && c.code !== 'large_move' && c.code !== 'before_cutoff') ?? []
+  const blocking = p?.checks.filter((c) => !c.ok && CHECKS[c.code]?.blocks !== false) ?? []
   const needLarge = Boolean(p?.history.largeMove)
   const canPost = Boolean(p) && !blocking.length && (!needLarge || largeOk)
 
@@ -134,11 +150,11 @@ function Daily() {
         </BigStatCard>
 
         <SideCard
-          label={tradeDate ? `${tradeDate} 的结算` : '今日结算'}
-          value={<span className={cn('text-[26px]', step < 4 && left !== null && left < 120 && 'text-ops-warn', step < 4 && left !== null && left <= 0 && 'text-ops-down')}>{step === 4 ? '已结算' : left === null ? '—' : left <= 0 ? '已过截止' : left >= 60 ? `还有 ${Math.floor(left / 60)} 小时 ${left % 60} 分` : `还有 ${left} 分钟`}</span>}
+          label={tradeDate ? `${tradeDate} 的结算` : '待结算的交易日'}
+          value={<span className={cn('text-[26px]', step < 4 && left !== null && left < 120 && 'text-ops-warn', step < 4 && left !== null && left <= 0 && 'text-ops-down')}>{nothingDue ? '没有' : step === 4 ? '已结算' : left === null ? '—' : left <= 0 ? '已过截止' : left >= 60 ? `还有 ${Math.floor(left / 60)} 小时 ${left % 60} 分` : `还有 ${left} 分钟`}</span>}
           chips={STEPS.map((s, i) => ({ key: s, label: String(i + 1), sub: s, active: i === Math.min(step, 3) && step < 4 }))}
         >
-          <p className="mt-3 text-[13px] text-ops-muted">{step === 4 ? `${todayRow?.usersCount ?? ''} 位用户的结果已入账（${sgTime(todayRow?.postedAt)}）。` : `${sgDateLabel(now)} · 现在是第 ${Math.min(step, 3) + 1} 步：${STEPS[Math.min(step, 3)]}`}</p>
+          <p className="mt-3 text-[13px] text-ops-muted">{nothingDue ? `下一个交易日 ${product?.nextTradeDate ?? '—'} 结束后，第二天 ${product?.cutoff_time?.slice(0, 5) ?? '15:00'} 前结算。` : step === 4 ? `${todayRow?.usersCount ?? ''} 位用户的结果已入账（${sgTime(todayRow?.postedAt)}）。` : `${sgDateLabel(now)} · 现在是第 ${Math.min(step, 3) + 1} 步：${STEPS[Math.min(step, 3)]}`}</p>
         </SideCard>
       </div>
 
@@ -146,7 +162,7 @@ function Daily() {
       {notice && <Notice kind={notice.kind} onClose={() => setNotice(null)}>{notice.text}</Notice>}
       {(products.error || settlements.error) && <Notice kind="error">{products.error || settlements.error}</Notice>}
 
-      <Board title={view === 'history' ? '结算记录' : `${tradeDate ?? ''} · ${step === 4 ? '已完成' : STEPS[Math.min(step, 3)]}`}
+      <Board title={view === 'history' ? '结算记录' : nothingDue ? '没有待结算的交易日' : `${tradeDate ?? ''} · ${step === 4 ? '已完成' : STEPS[Math.min(step, 3)]}`}
         tabs={[{ key: 'today', label: '今日' }, { key: 'history', label: '历史', count: posted.length }]} active={view}
         onTab={(k) => router.replace(`/quant/daily?view=${k}`)}>
         {view === 'history' ? (
@@ -213,14 +229,14 @@ function Daily() {
                       <Tile label="同时完成的赎回" value={`${p.redemptions.count} 笔`}><div className="mt-1 text-[12px] text-ops-muted">本金 {money(p.redemptions.principalAtomic)} · 费 {money(p.redemptions.feeAtomic)}</div></Tile>
                     </div>
                     <div className="mt-4 rounded-[18px] border border-ops-line p-4">
-                      <div className="flex flex-wrap justify-between gap-2 text-[12px] text-ops-muted"><span>和近 30 天比（白色是今天）</span><span>均值 {pct(p.history.mean)} · 范围 {pct(p.history.min)} 到 {pct(p.history.max)}</span></div>
-                      <ReturnRuler values={p.history.values.slice(0, 14).map(Number).reverse()} highlight={Number(p.netReturnPct)} />
+                      <div className="flex flex-wrap justify-between gap-2 text-[12px] text-ops-muted"><span>和近 30 天比（白色是今天）</span><span>{p.history.mean === null ? '还没有历史' : `均值 ${pct(p.history.mean)} · 范围 ${pct(p.history.min)} 到 ${pct(p.history.max)}`}</span></div>
+                      <ReturnRuler values={p.history.days.slice(0, 14).map((d) => Number(d.netReturnPct)).reverse()} highlight={Number(p.netReturnPct)} />
                       <div className="text-[12px] text-ops-muted">净值 {p.indexBefore} → <span className="text-ops-text">{p.indexAfter}</span></div>
                     </div>
                     <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                       {p.checks.map((c) => (
-                        <li key={c.code} className={cn('flex items-center gap-2 text-[13px]', c.ok ? 'text-ops-text' : c.code === 'before_cutoff' ? 'text-ops-warn' : 'text-ops-down')}>
-                          {c.ok ? <Check className="h-4 w-4 text-ops-lime" /> : <X className="h-4 w-4" />}{c.message}
+                        <li key={c.code} className={cn('flex items-center gap-2 text-[13px]', c.ok ? 'text-ops-text' : CHECKS[c.code]?.blocks === false ? 'text-ops-warn' : 'text-ops-down')}>
+                          {c.ok ? <Check className="h-4 w-4 text-ops-lime" /> : <X className="h-4 w-4" />}{checkText(c)}
                         </li>
                       ))}
                     </ul>
@@ -238,7 +254,16 @@ function Daily() {
                 </div>
               )}
 
-              {step === 4 && todayRow && (
+              {nothingDue && (
+                <div className="flex flex-1 flex-col items-start justify-center gap-3">
+                  <Chip tone="lime">都结算完了</Chip>
+                  <div className="text-[30px] tabular-nums">{lastPosted ? pct(lastPosted.netReturnPct, 4) : '—'}</div>
+                  <p className="text-[14px] text-ops-muted">{lastPosted ? `最近一次：${lastPosted.tradeDate} · ${lastPosted.usersCount ?? '—'} 位用户 · ${lastPosted.principalLossAtomic && lastPosted.principalLossAtomic !== '0' ? `亏损 ${money(lastPosted.principalLossAtomic)}` : `发放 ${money(lastPosted.paidAtomic)}`} USDT · 净值 ${lastPosted.indexAfter ?? '—'}` : '还没有结算记录。'}</p>
+                  <WhiteButton href="/today">回到今日</WhiteButton>
+                </div>
+              )}
+
+              {!nothingDue && step === 4 && todayRow && (
                 <div className="flex flex-1 flex-col items-start justify-center gap-3">
                   <Chip tone="lime">已结算</Chip>
                   <div className="text-[30px] tabular-nums">{pct(todayRow.netReturnPct, 4)}</div>

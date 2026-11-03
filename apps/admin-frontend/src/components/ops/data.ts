@@ -4,23 +4,37 @@ import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from '
 import { adminErrorMessage } from '@/lib/admin-errors'
 import type { QueueKey } from './nav'
 
+// GET /admin/console/today (apps/admin/src/admin-today.service.ts).
 export type QueueState = {
   count: number
   oldestAt: string | null
-  amountAtomic?: string
-  assetCode?: string
+  amountAtomic?: string | null
+  assetCode?: string | null
   status: 'ok' | 'forbidden' | 'error'
-  /** quantSettlement only */
+  /** quantSettlement only: the day due (null when nothing is due), its step, and today's cutoff in the product's zone. */
   state?: 'none' | 'draft' | 'approved' | 'posted'
-  tradeDate?: string
-  cutoffAt?: string
+  tradeDate?: string | null
+  cutoffAt?: string | null
+  overdue?: boolean
+  productSlug?: string | null
+  timezone?: string
 }
-export type TodayDay = { date: string; depositsAtomic: string; withdrawalsAtomic: string }
-export type TodayAlert = { code: string; level: 'info' | 'warn' | 'high'; message: string }
+export type TodayDay = { day: string; depositsAtomic: string; withdrawalsAtomic: string; netAtomic: string }
+export type TodayAlertKind = 'withdrawalExecutionPaused' | 'hotWalletError' | 'hotWalletLow' | 'reconciliationMismatch' | 'deadJobs'
+export type TodayAlert = { kind: TodayAlertKind; severity: 'critical' | 'warning'; at: string | null; detail: Record<string, unknown> }
 export type Today = {
-  asOf: string
+  generatedAt: string
   queues: Record<QueueKey, QueueState>
-  today: { depositsAtomic: string; withdrawalsAtomic: string; netAtomic: string; activeUsers: number; registrations: number; quantPrincipalAtomic: string; series: TodayDay[] }
+  today: {
+    assetCode: string
+    deposits: { count: number; amountAtomic: string } | null
+    withdrawals: { count: number; amountAtomic: string } | null
+    netAtomic: string | null
+    activeUsers: number | null
+    registrations: number | null
+    quantPrincipalAtomic: string | null
+    series: TodayDay[]
+  }
   alerts: TodayAlert[]
 }
 

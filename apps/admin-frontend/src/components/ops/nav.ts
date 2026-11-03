@@ -20,8 +20,9 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: '地址池', href: '/wallets' },
       { label: '对账与调账', href: '/ledger', queues: ['ledgerAdjustments'] },
       { label: '资金概览', href: '/funds' },
-      { label: '白名单与开关', href: '/withdrawal-whitelist' },
-    ], paths: ['/withdrawals', '/reconciliation'],
+      { label: '白名单', href: '/withdrawal-whitelist' },
+      { label: '执行开关', href: '/withdrawals' },
+    ], paths: ['/reconciliation'],
   },
   {
     id: 'quant', label: '量化', icon: LineChart, tabs: [

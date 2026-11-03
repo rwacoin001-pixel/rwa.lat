@@ -6,7 +6,7 @@ import { ArrowRight, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
 import { openWork, usePolled, useToday } from '@/components/ops/data'
-import { AREA_LABEL, QUEUES, topPriority, type QueueArea } from '@/components/ops/queues'
+import { AREA_LABEL, QUEUES, alertText, topPriority, type QueueArea } from '@/components/ops/queues'
 import { WAIT_BUCKETS, money, sgDateLabel, waitBucket, waited } from '@/components/ops/format'
 import { TrendCard } from '@/components/ops/TrendCard'
 import { BigStatCard, Board, Chip, LimeButton, Money, Notice, OutlineButton, PageTitle, SegmentTimeline, SideCard, Updated, WhiteButton } from '@/components/ops/ui'
@@ -21,6 +21,8 @@ function countdown(cutoffAt: string | undefined, now: number) {
 }
 
 const QUANT_STEP: Record<string, string> = { none: '未录入', draft: '待确认', approved: '待过账', posted: '已结算' }
+/** Nothing due (count 0) or posted: the quant day is done. */
+const quantDone = (q: { count: number; state?: string } | undefined) => !q || q.count === 0 || q.state === 'posted'
 
 export default function TodayPage() {
   const { data: today, error, updatedAt, reload } = useToday()
@@ -52,7 +54,7 @@ export default function TodayPage() {
       <PageTitle
         title="今日"
         meta={<span className="flex flex-wrap gap-x-3">{sgDateLabel(now)}<Updated at={updatedAt} loading={!today} /></span>}
-        actions={quant?.state === 'posted'
+        actions={quantDone(quant)
           ? <OutlineButton href="/quant/daily">查看今日结算</OutlineButton>
           : <LimeButton href="/quant/daily">录入今日结算</LimeButton>}
       />
@@ -62,7 +64,7 @@ export default function TodayPage() {
         <BigStatCard stats={[
           { label: '待办', value: today ? work : '—', hint: work ? `${open.length} 类事情等你处理` : '都处理完了' },
           { label: '待审提现', value: <Money atomic={today?.queues.withdrawalReview.amountAtomic} unit="USDT" />, hint: today ? `${today.queues.withdrawalReview.count} 笔 · 最早已等 ${waited(today.queues.withdrawalReview.oldestAt, now)}` : undefined },
-          { label: '量化结算截止', value: quant?.state === 'posted' ? '已结算' : countdown(quant?.cutoffAt, now), tone: quant && quant.state !== 'posted' && quant.cutoffAt && Date.parse(quant.cutoffAt) - now < 7200000 ? 'warn' : undefined, hint: quant ? `${quant.tradeDate ?? ''} · ${QUANT_STEP[quant.state ?? 'none']}` : undefined },
+          { label: '量化结算截止', value: !quant ? '—' : quantDone(quant) ? '已结算' : quant.overdue ? '已过截止' : countdown(quant.cutoffAt ?? undefined, now), tone: quant && !quantDone(quant) && (quant.overdue ? 'down' : quant.cutoffAt && Date.parse(quant.cutoffAt) - now < 7200000 ? 'warn' : undefined) || undefined, hint: quant ? (quantDone(quant) ? `最近结算 ${quant.tradeDate ?? '—'}` : `${quant.tradeDate ?? ''} · ${QUANT_STEP[quant.state ?? 'none']}${quant.count > 1 ? ` · 落后 ${quant.count} 天` : ''}`) : undefined },
         ]}>
           <div className="mb-3 text-[12px] text-ops-muted">待审提现 · 按已等待时间</div>
           <SegmentTimeline segments={segments} />
@@ -132,7 +134,7 @@ export default function TodayPage() {
                 <div className="mt-2 text-[12px] text-ops-muted">最早一件已等待</div>
               </div>
               <div className="rounded-[18px] border border-ops-line bg-ops-raised/60 p-4">
-                <div className="text-[20px] tabular-nums">{currentState?.amountAtomic ? `${money(currentState.amountAtomic)} USDT` : current.key === 'quantSettlement' ? countdown(currentState?.cutoffAt, now) : '—'}</div>
+                <div className="text-[20px] tabular-nums">{currentState?.amountAtomic && currentState.amountAtomic !== '0' ? `${money(currentState.amountAtomic)} USDT` : current.key === 'quantSettlement' ? (quantDone(currentState) ? '已结算' : countdown(currentState?.cutoffAt ?? undefined, now)) : '—'}</div>
                 <div className="mt-2 text-[12px] text-ops-muted">{current.key === 'quantSettlement' ? '离截止' : '涉及金额'}</div>
               </div>
             </div>
@@ -156,13 +158,13 @@ export default function TodayPage() {
       </Board>
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
-        {today && <TrendCard title="近 7 天充值与提现" aLabel="充值" bLabel="提现" points={today.today.series.map((d) => ({ date: d.date, a: d.depositsAtomic, b: d.withdrawalsAtomic }))} />}
+        {today && today.today.series.length > 1 && <TrendCard title="近 7 天充值与提现" aLabel="充值" bLabel="提现" points={today.today.series.map((d) => ({ date: d.day, a: d.depositsAtomic, b: d.withdrawalsAtomic }))} />}
         <section className="min-w-0 rounded-[28px] border border-ops-line bg-ops-card p-5 sm:p-6">
           <h2 className="text-[15px] font-medium">今天的数字</h2>
           <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-5">
             {([
-              ['充值', <Money key="d" atomic={today?.today.depositsAtomic} />],
-              ['提现', <Money key="w" atomic={today?.today.withdrawalsAtomic} />],
+              ['充值', <Money key="d" atomic={today?.today.deposits?.amountAtomic} />],
+              ['提现', <Money key="w" atomic={today?.today.withdrawals?.amountAtomic} />],
               ['净流入', <Money key="n" atomic={today?.today.netAtomic} />],
               ['量化在投', <Money key="q" atomic={today?.today.quantPrincipalAtomic} places={0} />],
               ['活跃用户', today?.today.activeUsers ?? '—'],
@@ -175,7 +177,7 @@ export default function TodayPage() {
             <div className="mt-6 border-t border-ops-line pt-4">
               <div className="text-[12px] text-ops-muted">需要注意</div>
               <ul className="mt-2 space-y-2">
-                {today!.alerts.map((a) => <li key={a.code} className={cn('text-[13px]', a.level === 'high' ? 'text-ops-down' : 'text-ops-warn')}>{a.message}</li>)}
+                {today!.alerts.map((a) => <li key={a.kind} className={cn('text-[13px]', a.severity === 'critical' ? 'text-ops-down' : 'text-ops-warn')}>{alertText(a)}</li>)}
               </ul>
             </div>
           )}

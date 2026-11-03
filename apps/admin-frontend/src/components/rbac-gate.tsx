@@ -126,7 +126,7 @@ export function NoAccess({ permissions }: { permissions: string[] }) {
             <span key={permission} className="pill bg-ink/[0.06] font-mono text-text-secondary">{permission}</span>
           ))}
         </p>
-        <Link href="/dashboard" className="mt-5 rounded-xl bg-mint px-4 py-2 text-sm font-medium text-white shadow-pill transition-all hover:brightness-110">
+        <Link href="/today" className="mt-5 rounded-xl bg-mint px-4 py-2 text-sm font-medium text-white shadow-pill transition-all hover:brightness-110">
           返回工作台
         </Link>
       </div>

@@ -13,7 +13,7 @@ export default function LoginPage() {
   const [mfaCode, setMfaCode] = useState('');
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [nextPath, setNextPath] = useState('/dashboard');
+  const [nextPath, setNextPath] = useState('/today');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
