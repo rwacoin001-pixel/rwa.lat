@@ -38,3 +38,9 @@ The user authorized push and production release. APK 1.1.5 / code 8 bundles the 
 The APK exceeds the frontend static-file size limit. It is hosted on the existing `https://dl.a-reit.com/android/a-reit-android-1.1.5.apk` download origin, under `/opt/rwa-lat/media/android/`. Caddy's versioned APK route was added after backing up and validating its configuration; existing routes are retained. Do not add this large APK to Cloudflare assets. The frontend receives a fresh production build to update the offered download and resource manifest.
 
 Public download/hash checks and Android API 34 emulator installation and launch passed. An emulator screenshot showed the current A-REIT welcome experience. No physical-phone timing or authenticated financial action was tested. Real-phone navigation, PDF execution and upgrade acceptance remain user checks.
+
+## 1.1.6 — 2026-11-03
+
+APK 1.1.6 / code 9 bundles website build `PSsfgyDr_W8H47ugw_lJn` (main `a9f3f140`, 711 files / 83.7 MiB). 78,339,715 bytes; SHA-256 `c2ec88990faab957d6e0ceb3a8bdfde074a106824798e4fe60d07eebbced4511`; signing certificate `7ef88406…` (unchanged). Served from `https://dl.a-reit.com/android/a-reit-android-1.1.6.apk`; 1.1.5 stays on the server.
+
+Changes: the launch splash follows the theme the app opens in (Android 13+ via `setSplashScreenTheme`; colours #F5F6F8 / #0A0C10), and "follow the phone" is dark on a dark phone (`android:isLightTheme`). With the website's instant launch shell, a signed-in cold start on the API 34 emulator went from 2.3–3.0 s to 1.4–1.8 s. Not yet checked on a physical phone.
