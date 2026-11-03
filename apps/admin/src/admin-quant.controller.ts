@@ -49,6 +49,12 @@ export class AdminQuantController {
     return this.quant.enter(adminId(request), slug, body)
   }
 
+  @Get('settlements/:id/preview')
+  @ApiOperation({ summary: 'Preview the impact of approving an entry (read-only)' })
+  preview(@Req() request: AdminRequest, @Param('id') id: string) {
+    return this.quant.preview(adminId(request), id)
+  }
+
   @Post('settlements/:id/approve')
   @ApiOperation({ summary: 'Step 2: confirm the entry; the day is posted right after' })
   approve(@Req() request: AdminRequest, @Param('id') id: string, @Body() body: Record<string, unknown>) {

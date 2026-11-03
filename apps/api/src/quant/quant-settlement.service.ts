@@ -5,9 +5,10 @@ import { format18, parse18 } from '../basket/basket.decimals'
 import { LedgerService } from '../ledger/ledger.service'
 import { NotificationService } from '../notification/notification.service'
 import { dailyNotice, redemptionNotice, redemptionRejectedNotice, type QuantNotice } from './quant-notices'
-import { addDays, localDateAndMinutes } from './quant.dates'
-import { aggregateByUser, applyDay, dailyManagementRate, dayDeltas, planRedemptions, stepIndex, type LotDay, type QuantLot } from './quant.math'
-import { parseUsdt, QuantService } from './quant.service'
+import { addDays, cutoffMinutes, localDateAndMinutes } from './quant.dates'
+import { dayDeltas, type QuantLot } from './quant.math'
+import { planSettlementDay, roundDecimal, trimDecimal } from './quant-settlement.plan'
+import { parseUsdt, QuantService, type QuantProductRow } from './quant.service'
 import type { QuantUpdateProductDto } from './quant.dto'
 
 type SettlementRow = {
@@ -172,27 +173,9 @@ export class QuantSettlementService {
     const expected = product.last_settled_date ? addDays(product.last_settled_date, 1) : product.first_trade_date
     if (settlement.trade_date !== expected) throw new ConflictException({ code: 'QUANT_TRADE_DATE_OUT_OF_ORDER', message: `The next trade date to settle is ${expected}.` })
 
-    const lotRows = (await this.ds.query(
-      `SELECT id, user_id::text AS "userId", principal_atomic::text AS principal, effective_date::text AS "effectiveDate"
-       FROM app.quant_lots WHERE product_id = $1 AND principal_atomic > 0 AND effective_date <= $2 ORDER BY effective_date, id`,
-      [product.id, settlement.trade_date],
-    )) as Array<{ id: string; userId: string; principal: string; effectiveDate: string }>
-    const lots: QuantLot[] = lotRows.map((row) => ({ id: row.id, userId: row.userId, principal: BigInt(row.principal), effectiveDate: row.effectiveDate }))
-    const requests = (await this.ds.query(
-      `SELECT id, user_id::text AS "userId", amount_atomic::text AS amount FROM app.quant_orders
-       WHERE product_id = $1 AND kind = 'redemption' AND status = 'pending' AND effective_date <= $2 ORDER BY created_at, id`,
-      [product.id, settlement.trade_date],
-    )) as Array<{ id: string; userId: string; amount: string | null }>
-
-    // ---- plan (pure) ----
-    const grossReturn = parse18(settlement.gross_return_pct) / 100n
-    const mgmtDaily = dailyManagementRate(product.mgmt_fee_bps)
-    const indexBefore = parse18(product.index_value)
-    const step = stepIndex({ grossReturn, mgmtDaily, perfFeeBps: product.perf_fee_bps, index: indexBefore, hwm: parse18(product.hwm_index) })
-    const lotDays: LotDay[] = lots.map((lot) => applyDay(lot, grossReturn, mgmtDaily, step.perfFeeRate))
-    const users = aggregateByUser(lotDays)
-    const afterDay = lots.map((lot, i) => ({ ...lot, principal: lotDays[i].principalAfter }))
-    const redemption = planRedemptions(afterDay, requests.map((r) => ({ orderId: r.id, userId: r.userId, amount: r.amount === null ? null : BigInt(r.amount) })), settlement.trade_date, product.redemption_fee_tiers)
+    // ---- plan (pure; the preview shows this same plan) ----
+    const { lots, plan } = await this.planDay(product, settlement)
+    const { step, users, redemption } = plan
 
     // ---- ledger (idempotent) ----
     const poolSide = { pool: 0n, fee: 0n, treasury: 0n }
@@ -222,15 +205,15 @@ export class QuantSettlementService {
     }
 
     // ---- database (one transaction) ----
-    const sum = (pick: (u: (typeof users)[number]) => bigint) => users.reduce((total, u) => total + pick(u), 0n)
+    const totals = plan.totals
     let postedNow = false
     const rejected: string[] = []
     await this.ds.transaction(async (manager) => {
       const [locked] = (await manager.query(`SELECT status FROM app.quant_daily_settlements WHERE id = $1 FOR UPDATE`, [settlement.id])) as Array<{ status: string }>
       if (locked.status === 'posted') return
       if (locked.status !== 'approved') throw new ConflictException({ code: 'QUANT_STATE_CHANGED', message: 'The entry changed while posting.' })
-      for (const [i, lot] of lots.entries()) {
-        const principalAfter = redemption.lotsAfter.get(lot.id) ?? lotDays[i].principalAfter
+      for (const lot of lots) {
+        const principalAfter = plan.principalAfter.get(lot.id) ?? lot.principal
         if (principalAfter !== lot.principal) await manager.query(`UPDATE app.quant_lots SET principal_atomic = $2, updated_at = now() WHERE id = $1`, [lot.id, principalAfter.toString()])
       }
       for (const user of users) {
@@ -264,9 +247,9 @@ export class QuantSettlementService {
                 principal_atomic = $7, gross_atomic = $8, mgmt_fee_atomic = $9, perf_fee_atomic = $10, paid_atomic = $11, principal_loss_atomic = $12,
                 redemption_principal_atomic = $13, redemption_fee_atomic = $14 WHERE id = $1`,
         [
-          settlement.id, format18(indexBefore), format18(step.indexAfter), format18(step.hwmAfter), format18(step.netReturn * 100n), users.length,
-          sum((u) => u.principalBefore).toString(), sum((u) => u.gross).toString(), sum((u) => u.mgmtFee).toString(), sum((u) => u.perfFee).toString(), sum((u) => u.paid).toString(),
-          sum((u) => u.principalLoss).toString(), redemption.results.reduce((t, r) => t + r.principal, 0n).toString(), redemption.results.reduce((t, r) => t + r.fee, 0n).toString(),
+          settlement.id, format18(plan.indexBefore), format18(step.indexAfter), format18(step.hwmAfter), plan.netReturnPct, totals.usersCount,
+          totals.principal.toString(), totals.gross.toString(), totals.mgmtFee.toString(), totals.perfFee.toString(), totals.paid.toString(),
+          totals.principalLoss.toString(), totals.redemptionPrincipal.toString(), totals.redemptionFee.toString(),
         ],
       )
       await manager.query(
@@ -291,6 +274,131 @@ export class QuantSettlementService {
     }
     this.log.log(`quant settlement ${settlement.id} posted for ${settlement.trade_date}: ${users.length} users, ${redemption.results.length} redemptions`)
     return { ...(await this.getSettlement(settlement.id)), duplicate: false }
+  }
+
+  /**
+   * Read-only preview of what approving a draft (or posting an approved entry) would do: the same plan `post` books,
+   * the last 30 posted days for comparison, and the checks the console shows before the irreversible step. Writes nothing.
+   */
+  async preview(settlementId: string, now: Date = new Date()) {
+    const settlement = await this.getSettlement(settlementId)
+    if (settlement.status !== 'draft' && settlement.status !== 'approved') {
+      throw new ConflictException({ code: 'QUANT_NOT_PREVIEWABLE', message: `An entry in status ${settlement.status} has nothing to preview.` })
+    }
+    const product = await this.quant.getProductRow(settlement.product_id)
+    const { plan } = await this.planDay(product, settlement)
+    const { totals } = plan
+    const completed = plan.redemption.results.filter((result) => result.principal > 0n)
+
+    const historyRows = (await this.ds.query(
+      `SELECT trade_date::text AS "tradeDate", trim_scale(net_return_pct)::text AS "netReturnPct" FROM app.quant_daily_settlements
+       WHERE product_id = $1 AND status = 'posted' AND trade_date < $2 ORDER BY trade_date DESC LIMIT 30`,
+      [product.id, settlement.trade_date],
+    )) as Array<{ tradeDate: string; netReturnPct: string }>
+    const net = parse18(plan.netReturnPct)
+    const past = historyRows.map((row) => parse18(row.netReturnPct))
+    const min = past.length ? past.reduce((a, b) => (b < a ? b : a)) : null
+    const max = past.length ? past.reduce((a, b) => (b > a ? b : a)) : null
+    // Same rule as `approve`'s largeMoveConfirmed.
+    const largeMove = Math.abs(Number(settlement.gross_return_pct)) > Number(product.max_daily_move_pct)
+
+    // Ledger: losses and redemptions leave the pool (which may not go negative); gains are paid from the treasury (which may).
+    const balances = (await this.ds.query(
+      `SELECT a.owner_reference AS ref, COALESCE(b.current_atomic_balance, 0)::text AS balance
+       FROM app.ledger_accounts a LEFT JOIN app.ledger_account_balances b ON b.account_id = a.id
+       WHERE a.owner_type = 'platform' AND a.owner_reference IN ($1, $2)`,
+      [`quant:${product.id}`, `quant:${product.id}:treasury`],
+    )) as Array<{ ref: string; balance: string }>
+    const balance = (ref: string) => BigInt(balances.find((row) => row.ref === ref)?.balance ?? '0')
+    const [lotTotal] = (await this.ds.query(
+      `SELECT COALESCE(SUM(principal_atomic), 0)::text AS principal FROM app.quant_lots WHERE product_id = $1 AND principal_atomic > 0`,
+      [product.id],
+    )) as Array<{ principal: string }>
+    const poolBefore = balance(`quant:${product.id}`)
+    const deltas = plan.users.map((user) => dayDeltas(user))
+    const poolAfter = poolBefore + deltas.reduce((t, d) => t + d.pool, 0n) - totals.redemptionPrincipal
+    const treasuryAfter = balance(`quant:${product.id}:treasury`) + deltas.reduce((t, d) => t + d.treasury, 0n)
+    const poolMatchesLots = poolBefore === BigInt(lotTotal.principal)
+
+    const expected = product.last_settled_date ? addDays(product.last_settled_date, 1) : product.first_trade_date
+    const alreadySettled = !!product.last_settled_date && settlement.trade_date <= product.last_settled_date
+    // A trade date is due by the cutoff on the following day, in the product's timezone.
+    const local = localDateAndMinutes(now, product.timezone)
+    const deadlineDate = addDays(settlement.trade_date, 1)
+    const beforeCutoff = local.date < deadlineDate || (local.date === deadlineDate && local.minutes < cutoffMinutes(product.cutoff_time))
+    const cutoffLabel = `${product.cutoff_time} ${product.timezone}`
+    const limit = product.max_daily_move_pct
+
+    const checks: Array<{ code: string; ok: boolean; message: string }> = [
+      { code: 'already_settled', ok: !alreadySettled, message: alreadySettled ? `${settlement.trade_date} has already been settled.` : `${settlement.trade_date} has not been settled yet.` },
+      { code: 'trade_date_order', ok: settlement.trade_date === expected, message: settlement.trade_date === expected ? `${settlement.trade_date} is the next day to settle.` : `The next trade date to settle is ${expected}.` },
+      { code: 'cutoff', ok: beforeCutoff, message: `${beforeCutoff ? 'Before' : 'Past'} the ${cutoffLabel} cutoff on ${deadlineDate}.` },
+      {
+        code: 'large_move',
+        ok: !largeMove || settlement.large_move_confirmed,
+        message: !largeMove ? `Within the ${limit}% daily limit.`
+          : settlement.large_move_confirmed ? `Beyond the ${limit}% daily limit; confirmed.`
+          : `Beyond the ${limit}% daily limit; confirm it explicitly when approving.`,
+      },
+      {
+        code: 'ledger_funded',
+        ok: poolAfter >= 0n && poolMatchesLots,
+        message: !poolMatchesLots ? 'The quant pool does not match the sum of lot principals.'
+          : poolAfter < 0n ? 'The quant pool cannot cover the losses and redemptions.'
+          : treasuryAfter < 0n ? 'The pool covers losses and redemptions; gains beyond the treasury balance are paid from platform funds.'
+          : 'The pool and treasury cover the day.',
+      },
+    ]
+
+    return {
+      settlementId: settlement.id,
+      status: settlement.status,
+      tradeDate: settlement.trade_date,
+      grossReturnPct: settlement.gross_return_pct,
+      netReturnPct: plan.netReturnPct,
+      indexBefore: trimDecimal(format18(plan.indexBefore)),
+      indexAfter: trimDecimal(format18(plan.step.indexAfter)),
+      holders: totals.usersCount,
+      principalAtomic: totals.principal.toString(),
+      payoutAtomic: totals.paid.toString(),
+      lossAtomic: totals.principalLoss.toString(),
+      feesAtomic: (totals.mgmtFee + totals.perfFee).toString(),
+      mgmtFeeAtomic: totals.mgmtFee.toString(),
+      perfFeeAtomic: totals.perfFee.toString(),
+      redemptions: { count: completed.length, principalAtomic: totals.redemptionPrincipal.toString(), feeAtomic: totals.redemptionFee.toString() },
+      history: {
+        days: historyRows,
+        mean: past.length ? roundDecimal(past.reduce((a, b) => a + b, 0n) / BigInt(past.length), 8) : null,
+        min: min === null ? null : trimDecimal(format18(min)),
+        max: max === null ? null : trimDecimal(format18(max)),
+        outsideRange: min !== null && max !== null && (net < min || net > max),
+        largeMove,
+      },
+      checks,
+    }
+  }
+
+  /** Loads what a trade date settles (earning lots, due redemptions) and plans it. Read-only; shared by `post` and `preview`. */
+  private async planDay(product: QuantProductRow, settlement: SettlementRow) {
+    const lotRows = (await this.ds.query(
+      `SELECT id, user_id::text AS "userId", principal_atomic::text AS principal, effective_date::text AS "effectiveDate"
+       FROM app.quant_lots WHERE product_id = $1 AND principal_atomic > 0 AND effective_date <= $2 ORDER BY effective_date, id`,
+      [product.id, settlement.trade_date],
+    )) as Array<{ id: string; userId: string; principal: string; effectiveDate: string }>
+    const lots: QuantLot[] = lotRows.map((row) => ({ id: row.id, userId: row.userId, principal: BigInt(row.principal), effectiveDate: row.effectiveDate }))
+    const requests = (await this.ds.query(
+      `SELECT id, user_id::text AS "userId", amount_atomic::text AS amount FROM app.quant_orders
+       WHERE product_id = $1 AND kind = 'redemption' AND status = 'pending' AND effective_date <= $2 ORDER BY created_at, id`,
+      [product.id, settlement.trade_date],
+    )) as Array<{ id: string; userId: string; amount: string | null }>
+    const plan = planSettlementDay({
+      tradeDate: settlement.trade_date,
+      grossReturnPct: settlement.gross_return_pct,
+      product: { mgmtFeeBps: product.mgmt_fee_bps, perfFeeBps: product.perf_fee_bps, indexValue: product.index_value, hwmIndex: product.hwm_index, redemptionFeeTiers: product.redemption_fee_tiers },
+      lots,
+      requests: requests.map((r) => ({ orderId: r.id, userId: r.userId, amount: r.amount === null ? null : BigInt(r.amount) })),
+    })
+    return { lots, plan }
   }
 
   /** Delivery never undoes a posted day: a failed notice is logged and skipped. */

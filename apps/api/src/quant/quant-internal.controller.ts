@@ -41,6 +41,12 @@ export class QuantInternalController {
     return this.settlements.enter(slug, dto, request.internalActorAdminId as string)
   }
 
+  @Get('settlements/:id/preview')
+  @ApiOperation({ summary: 'Read-only: what approving and posting this entry would do, with history and checks' })
+  preview(@Param('id') id: string) {
+    return this.settlements.preview(id)
+  }
+
   @Post('settlements/:id/approve')
   @ApiOperation({ summary: 'Step 2: confirm the entry; posting follows immediately' })
   approve(@Param('id') id: string, @Body() dto: QuantApproveDto, @Req() request: InternalRequestLike) {
