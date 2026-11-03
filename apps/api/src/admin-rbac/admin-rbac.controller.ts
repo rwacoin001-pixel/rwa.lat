@@ -68,6 +68,8 @@ export class AdminRbacController {
       actorType: q.actorType,
       userId: q.userId,
       action: q.action,
+      objectId: q.objectId,
+      objectType: q.objectType,
       from: q.from ? new Date(q.from) : undefined,
       to: q.to ? new Date(q.to) : undefined,
       limit: q.limit ? Number(q.limit) : 100,

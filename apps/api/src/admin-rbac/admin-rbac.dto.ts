@@ -1,6 +1,6 @@
 import { Type } from 'class-transformer'
 import { ApiPropertyOptional } from '@nestjs/swagger'
-import { IsInt, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator'
+import { IsInt, IsOptional, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator'
 
 export class ListApprovalsQueryDto {
   @ApiPropertyOptional()
@@ -26,6 +26,9 @@ export class AuditExportQueryDto {
   @IsOptional() @IsString() actorType?: string
   @IsOptional() @IsUUID() userId?: string
   @IsOptional() @IsString() action?: string
+  /** One record's history, e.g. a withdrawal's timeline in the console. */
+  @IsOptional() @IsString() @MaxLength(128) objectId?: string
+  @IsOptional() @IsString() @MaxLength(64) objectType?: string
   @IsOptional() @IsString() from?: string
   @IsOptional() @IsString() to?: string
   @IsOptional() @Type(() => Number) @IsInt() @Min(1) @Max(500) limit?: number

@@ -135,6 +135,8 @@ export class AdminRbacService {
     actorType?: string
     userId?: string
     action?: string
+    objectId?: string
+    objectType?: string
     from?: Date
     to?: Date
     limit?: number
@@ -143,6 +145,8 @@ export class AdminRbacService {
     if (opts.actorType) qb.andWhere('a.actor_type = :actorType', { actorType: opts.actorType })
     if (opts.userId) qb.andWhere('a.user_id = :userId', { userId: opts.userId })
     if (opts.action) qb.andWhere('a.action = :action', { action: opts.action })
+    if (opts.objectId) qb.andWhere('a.object_id = :objectId', { objectId: opts.objectId })
+    if (opts.objectType) qb.andWhere('a.object_type = :objectType', { objectType: opts.objectType })
     if (opts.from) qb.andWhere('a.occurred_at >= :from', { from: opts.from })
     if (opts.to) qb.andWhere('a.occurred_at <= :to', { to: opts.to })
     qb.orderBy('a.occurred_at', 'DESC').take(Math.min(Math.max(opts.limit ?? 100, 1), 500))
