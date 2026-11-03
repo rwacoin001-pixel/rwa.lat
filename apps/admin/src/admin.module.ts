@@ -39,6 +39,8 @@ import { AdminLegalController } from './admin-legal.controller'
 import { AdminLegalService } from './admin-legal.service'
 import { AdminAiKnowledgeController } from './admin-ai-knowledge.controller'
 import { AdminAiInvestmentController } from './admin-ai-investment.controller'
+import { AdminTodayController } from './admin-today.controller'
+import { AdminTodayService } from './admin-today.service'
 
 const controllers = [
   AdminAiQueryController,
@@ -46,12 +48,13 @@ const controllers = [
   AdminController, AdminAuthController, AdminTotpController, AdminControlController, AdminStorageController,
   AdminWalletOpsController, AdminFundsOpsController, AdminBasketController, AdminQuantController,
   AdminCommunityController, AdminPredictionController, AdminCoreOpsController, AdminPlatformController, AdminLegalController, AdminAiKnowledgeController, AdminAiInvestmentController,
+  AdminTodayController,
 ]
 const providers = [
   AdminAiQueryService, AdminAiModelClient, AdminAiMfaGuard,
   AdminService, AdminAuthService, AdminTotpService, AdminSessionGuard, AdminCorePrincipalService, AdminPermissionGuard, AdminControlService,
   AdminStorageService, AdminWalletOpsService, AdminBasketService, AdminQuantService, AdminCommunityOpsService,
-  AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService,
+  AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService, AdminTodayService,
 ]
 
 @Module({})
