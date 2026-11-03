@@ -41,6 +41,10 @@ export class AdminQuantService {
     return this.request('POST', `/internal/quant/products/${encodeURIComponent(slug)}/settlements`, actorId, body)
   }
 
+  preview(actorId: string, id: string) {
+    return this.request('GET', `/internal/quant/settlements/${encodeURIComponent(id)}/preview`, actorId)
+  }
+
   approve(actorId: string, id: string, body: Record<string, unknown>) {
     return this.request('POST', `/internal/quant/settlements/${encodeURIComponent(id)}/approve`, actorId, body)
   }
