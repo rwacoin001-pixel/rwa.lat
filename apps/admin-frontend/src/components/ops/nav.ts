@@ -21,8 +21,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { label: '对账与调账', href: '/ledger', queues: ['ledgerAdjustments'] },
       { label: '资金概览', href: '/funds' },
       { label: '白名单', href: '/withdrawal-whitelist' },
-      { label: '执行开关', href: '/withdrawals' },
-    ], paths: ['/reconciliation'],
+    ], paths: ['/reconciliation', '/withdrawals'],
   },
   {
     id: 'quant', label: '量化', icon: LineChart, tabs: [

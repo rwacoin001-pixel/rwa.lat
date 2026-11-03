@@ -117,10 +117,18 @@ function subscribe(fn: () => void) {
   listeners.add(fn)
   if (listeners.size === 1) {
     void refreshToday()
-    const tick = () => { if (document.visibilityState === 'visible') void refreshToday() }
+    // Every 30 s while visible. In a background tab it keeps going every 60 s only when notifications are on,
+    // so new work can still pop a notification; otherwise it waits until the tab is back.
+    let beat = 0
+    const tick = () => {
+      beat += 1
+      const notifying = typeof Notification !== 'undefined' && Notification.permission === 'granted'
+      if (document.visibilityState === 'visible' || (notifying && beat % 2 === 0)) void refreshToday()
+    }
+    const onVisible = () => { if (document.visibilityState === 'visible') void refreshToday() }
     todayTimer = window.setInterval(tick, 30_000)
-    document.addEventListener('visibilitychange', tick)
-    ;(subscribe as unknown as { stop?: () => void }).stop = () => { if (todayTimer) window.clearInterval(todayTimer); document.removeEventListener('visibilitychange', tick) }
+    document.addEventListener('visibilitychange', onVisible)
+    ;(subscribe as unknown as { stop?: () => void }).stop = () => { if (todayTimer) window.clearInterval(todayTimer); document.removeEventListener('visibilitychange', onVisible) }
   }
   return () => {
     listeners.delete(fn)

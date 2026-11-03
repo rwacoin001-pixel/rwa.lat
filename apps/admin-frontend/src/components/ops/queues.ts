@@ -56,7 +56,7 @@ export function topPriority(today: Today | null, now = Date.now()): Priority | n
   if (!today) return null
   const q = today.queues
   const paused = today.alerts.find((a) => a.kind === 'withdrawalExecutionPaused')
-  if (paused) return { title: '提现执行已暂停', detail: alertText(paused), href: '/withdrawals', action: '查看开关', tone: 'down' }
+  if (paused) return { title: '提现执行已暂停', detail: alertText(paused), href: '/funds/withdrawals', action: '查看开关', tone: 'down' }
 
   const quant = q.quantSettlement
   if (quant?.status === 'ok' && quant.count > 0 && quant.state !== 'posted' && quant.cutoffAt) {
@@ -84,4 +84,17 @@ export function topPriority(today: Today | null, now = Date.now()): Priority | n
     return { title: `${m.label} ${s.count} 件`, detail: s.oldestAt ? `最早一件已等 ${Math.floor(minutesSince(s.oldestAt, now))} 分钟` : '待处理', href: m.href, action: '去处理', tone: 'ok' }
   }
   return null
+}
+
+// Queues worth a browser notification when they grow while the console is in a background tab.
+export const NOTIFY_QUEUES: QueueKey[] = ['withdrawalReview', 'withdrawalExecute', 'kyc', 'accountClosures', 'communityReports']
+
+/** What grew between two polls of the Today endpoint, in queue order. No previous poll means nothing is new. */
+export function newArrivals(prev: Today | null, next: Today | null, keys: QueueKey[] = NOTIFY_QUEUES): Array<{ key: QueueKey; label: string; href: string; added: number }> {
+  if (!prev || !next) return []
+  return QUEUES.filter((m) => keys.includes(m.key)).flatMap((m) => {
+    const a = prev.queues[m.key]; const b = next.queues[m.key]
+    if (!a || !b || a.status !== 'ok' || b.status !== 'ok' || b.count <= a.count) return []
+    return [{ key: m.key, label: m.label, href: m.href, added: b.count - a.count }]
+  })
 }

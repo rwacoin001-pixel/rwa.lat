@@ -10,10 +10,8 @@ const TITLES: Record<string, string> = {
   '/ai-ops': 'AI 分析记录',
   '/regions': '地区与语言',
   '/networks': '网络目录',
-  '/withdrawals': '提现执行开关',
   '/reconciliation': '托管对账',
   '/dashboard': '概览（旧版）',
-  '/pricing': '定价',
   '/quant/settlement': '每日结算（旧版）',
 }
 

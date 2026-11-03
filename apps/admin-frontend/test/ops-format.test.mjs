@@ -72,3 +72,13 @@ test('alerts read as one plain line from their detail', () => {
   assert.equal(alertText({ kind: 'deadJobs', severity: 'warning', at: null, detail: { count: 3 } }), '3 个后台任务失败，需要重试')
   assert.equal(alertText({ kind: 'withdrawalExecutionPaused', severity: 'critical', at: null, detail: { reason: null } }), '提现执行已暂停')
 })
+
+test('newArrivals reports only watched queues that grew, and nothing on the first poll', async () => {
+  const { newArrivals } = await import('../src/components/ops/queues.ts')
+  const day = (q) => ({ queues: Object.fromEntries(Object.entries(q).map(([k, count]) => [k, { count, oldestAt: null, status: count < 0 ? 'error' : 'ok' }])) })
+  const a = day({ withdrawalReview: 1, kyc: 2, mail: 0, accountClosures: -1 })
+  const b = day({ withdrawalReview: 3, kyc: 2, mail: 5, accountClosures: 4 })
+  assert.deepEqual(newArrivals(null, b), [])
+  assert.deepEqual(newArrivals(a, b).map((x) => [x.key, x.added]), [['withdrawalReview', 2]])
+  assert.deepEqual(newArrivals(b, a), [])
+})

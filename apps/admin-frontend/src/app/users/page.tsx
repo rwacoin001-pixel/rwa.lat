@@ -1,51 +1,83 @@
 'use client'
 
-import { useState } from 'react'
-import { AdminLayout } from '@/components/layout/AdminLayout'
-import { type Col, DataTable, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
-import { UserDetailDialog, emailStateName, loginMethodName, type ManagedUser } from '@/components/user-detail'
-import { formatUsdt } from '@/lib/user-balances'
+import Link from 'next/link'
+import { Suspense, useCallback, useEffect, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { cn } from '@/lib/utils'
+import { AppShell } from '@/components/ops/AppShell'
+import { usePolled } from '@/components/ops/data'
+import { ago, sgTime } from '@/components/ops/format'
+import { Board, Chip, Face, FilterBar, Money, Notice, OutlineButton, PageTitle, SearchPill, SelectPill, Updated } from '@/components/ops/ui'
+import { loginMethodName, type ManagedUser } from '@/components/user-detail'
 
-const pageSize = 50
-export default function UsersPage() {
-  const [input, setInput] = useState('')
-  const [query, setQuery] = useState('')
-  const [status, setStatus] = useState('')
-  const [offset, setOffset] = useState(0)
-  const [selected, setSelected] = useState<string | null>(null)
-  const params = new URLSearchParams({ limit: String(pageSize), offset: String(offset) })
-  if (query) params.set('q', query)
-  if (status) params.set('status', status)
-  const list = useApi<{ total: number; count: number; users: ManagedUser[] }>(`/api/admin/users?${params}`)
-  const profile = useApi<{ id: string; permissions: string[] }>('/api/admin/auth/me')
-  const canAdjust = ['users.read', 'ledger.adjustments.manage', 'ledger.adjustments.post'].every((p) => profile.data?.permissions.includes(p))
-  const columns: Col<ManagedUser>[] = [
-    { key: 'email', label: '用户', render: (u) => <div className="min-w-[180px]"><button type="button" className="break-all text-left font-medium hover:underline" onClick={() => setSelected(u.id)}>{u.email ?? (u.emailState === 'unavailable' ? '邮箱读取失败' : '未绑定邮箱')}</button><p className="mt-1 text-xs text-text-faint">{u.displayName || '未设置昵称'}{u.handle ? ` · @${u.handle}` : ''}</p><span className="font-mono text-[10px] text-text-faint" title={u.id}>{shortId(u.id, 18)}</span></div> },
-    { key: 'status', label: '状态', render: (u) => <StatusPill value={u.status} /> },
-    { key: 'emailState', label: '邮箱验证', render: (u) => <span className="text-xs">{emailStateName(u.emailState)}</span> },
-    { key: 'loginMethods', label: '登录方式', render: (u) => <span className="text-xs">{u.loginMethods.map(loginMethodName).join(' / ') || '—'}</span> },
-    { key: 'availableAtomic', label: '可用 USDT', className: 'text-right', render: (u) => <span className="font-mono text-xs tabular-nums">{formatUsdt(u.availableAtomic)}</span> },
-    { key: 'lockedAtomic', label: '锁定 USDT', className: 'text-right', render: (u) => <span className="font-mono text-xs tabular-nums">{formatUsdt(u.lockedAtomic)}</span> },
-    { key: 'created_at', label: '注册时间', render: (u) => <span className="whitespace-nowrap text-xs text-text-faint">{formatDateTime(u.created_at)}</span> },
-    { key: 'lastSeenAt', label: '最近活跃', render: (u) => <span className="whitespace-nowrap text-xs text-text-faint">{u.lastSeenAt ? formatDateTime(u.lastSeenAt) : '—'}</span> },
-    { key: 'details', label: '操作', render: (u) => <button className="rounded-lg border border-ink/15 px-3 py-2 text-xs hover:bg-ink/5" onClick={() => setSelected(u.id)}>详情{canAdjust ? ' / 调账' : ''}</button> },
-  ]
+const PAGE = 50
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const USER_STATUS: Record<string, string> = { active: '正常', restricted: '受限', suspended: '暂停', closed: '已关闭' }
+
+function List() {
+  const params = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const set = useCallback((patch: Record<string, string | null>) => {
+    const next = new URLSearchParams(params.toString())
+    for (const [k, v] of Object.entries(patch)) { if (v) next.set(k, v); else next.delete(k) }
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+  }, [params, router, pathname])
+  const q = params.get('q') ?? ''
+  const status = params.get('status') ?? ''
+  const offset = Math.max(0, Number(params.get('offset') ?? 0) || 0)
+  const [input, setInput] = useState(q)
+  useEffect(() => setInput(q), [q])
+
+  // A full user id goes straight to that user (search, links from other pages, Ctrl K).
+  useEffect(() => { if (UUID.test(q.trim())) router.replace(`/users/${q.trim()}`) }, [q, router])
+
+  const query = new URLSearchParams({ limit: String(PAGE), offset: String(offset) })
+  if (q) query.set('q', q)
+  if (status) query.set('status', status)
+  const list = usePolled<{ total: number; count: number; users: ManagedUser[] }>(UUID.test(q.trim()) ? null : `/api/admin/users?${query}`, 0)
+  const users = list.data?.users ?? []
   const total = list.data?.total ?? 0
-  return <AdminLayout><div className="space-y-5">
-    <Panel title="用户管理" actions={<RefreshButton loading={list.loading} onClick={list.reload} />}>
-      <form className="flex flex-wrap gap-2" onSubmit={(e) => { e.preventDefault(); setOffset(0); setQuery(input.trim()); list.reload() }}>
-        <input className="h-11 min-w-[220px] flex-1 rounded-xl border border-ink/15 bg-white px-3 text-sm outline-none focus:border-ink/50" aria-label="搜索用户" placeholder="完整邮箱、用户 ID、昵称或用户名" maxLength={200} value={input} onChange={(e) => setInput(e.target.value)} />
-        <select className="h-11 rounded-xl border border-ink/15 bg-white px-3 text-sm" aria-label="用户状态" value={status} onChange={(e) => { setStatus(e.target.value); setOffset(0) }}><option value="">所有状态</option><option value="active">正常</option><option value="restricted">受限</option><option value="suspended">暂停</option><option value="closed">已关闭</option></select>
-        <button className="rounded-xl bg-ink px-5 py-2 text-sm text-white" type="submit">搜索</button>{(query || status) && <button type="button" className="px-3 text-sm" onClick={() => { setQuery(''); setInput(''); setStatus(''); setOffset(0) }}>清除</button>}
+
+  return (
+    <>
+      <PageTitle title="用户" meta={<span className="flex flex-wrap gap-x-3"><span>{list.data ? `共 ${total} 位` : '读取中'}</span><Updated at={list.updatedAt} loading={list.loading} /></span>} />
+      <form onSubmit={(e) => { e.preventDefault(); set({ q: input.trim() || null, offset: null }) }}>
+        <FilterBar active={(q ? 1 : 0) + (status ? 1 : 0)} onClear={() => { setInput(''); set({ q: null, status: null, offset: null }) }}>
+          <SearchPill value={input} onChange={setInput} placeholder="完整邮箱、用户 ID、昵称或用户名，回车搜索" />
+          <SelectPill value={status} onChange={(v) => set({ status: v || null, offset: null })} placeholder="全部状态" options={Object.entries(USER_STATUS).map(([value, label]) => ({ value, label }))} />
+        </FilterBar>
       </form>
-    </Panel>
-    <Panel title={`用户列表 · ${list.data ? total : '…'}`} pad={false}>
-      <div className="px-5 pb-5"><DataTable columns={columns} rows={list.data?.users ?? []} loading={list.loading} error={list.error} onReload={list.reload} emptyHint={query ? '未找到匹配用户，请确认完整邮箱。' : '暂无用户'} compact />
-        <div className="mt-4 flex items-center justify-between text-xs text-text-faint"><span>{total > 0 ? `${offset + 1}–${Math.min(offset + pageSize, total)} / ${total}` : '0 条'}</span><div className="flex gap-2"><button type="button" className="rounded-lg border border-ink/15 px-3 py-2 disabled:opacity-40" disabled={list.loading || offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>上一页</button><button type="button" className="rounded-lg border border-ink/15 px-3 py-2 disabled:opacity-40" disabled={list.loading || offset + pageSize >= total} onClick={() => setOffset(offset + pageSize)}>下一页</button></div></div>
-      </div>
-    </Panel>
-    {selected && profile.loading && <p role="status" className="text-sm text-text-faint">正在获取管理员权限…</p>}
-    {selected && profile.error && <p role="alert" className="text-sm text-red-700">管理员权限读取失败。<button className="ml-2 underline" onClick={profile.reload}>重试</button></p>}
-    {selected && profile.data && <UserDetailDialog key={selected} id={selected} actorId={profile.data.id} canAdjust={canAdjust} onClose={() => setSelected(null)} onChanged={list.reload} />}
-  </div></AdminLayout>
+      {list.error && <Notice kind="error">{list.error}</Notice>}
+      <div className="h-2" />
+      <Board title={q ? `「${q}」的结果` : '用户列表'}
+        tools={<div className="flex items-center gap-2 text-[12px] text-ops-sub">
+          <span>{total ? `${offset + 1}–${Math.min(offset + PAGE, total)} / ${total}` : '0 位'}</span>
+          <OutlineButton className="!h-9 !border-ops-rule !px-4 !text-ops-ink hover:!bg-[#F4F5F7]" disabled={offset === 0} onClick={() => set({ offset: String(Math.max(0, offset - PAGE)) })}>上一页</OutlineButton>
+          <OutlineButton className="!h-9 !border-ops-rule !px-4 !text-ops-ink hover:!bg-[#F4F5F7]" disabled={offset + PAGE >= total} onClick={() => set({ offset: String(offset + PAGE) })}>下一页</OutlineButton>
+        </div>}>
+        <ul className="flex flex-col">
+          {users.map((u) => (
+            <li key={u.id} className="border-b border-ops-rule last:border-0">
+              <Link href={`/users/${u.id}`} className="flex items-center gap-3 rounded-[20px] px-3 py-3 hover:bg-[#F4F5F7]">
+                <Face id={u.id} size={40} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-[14px] font-medium">{u.email ?? (u.emailState === 'unavailable' ? '邮箱读取失败' : '未绑定邮箱')}</span>
+                  <span className="block truncate text-[12px] text-ops-sub">{u.displayName || '未设置昵称'}{u.handle ? ` · @${u.handle}` : ''} · {u.loginMethods.map(loginMethodName).join(' / ') || '—'}</span>
+                </span>
+                <span className="hidden w-[150px] text-right text-[12px] text-ops-sub md:block" title={sgTime(u.lastSeenAt)}>{u.lastSeenAt ? `活跃 ${ago(u.lastSeenAt)}` : '没有活跃记录'}</span>
+                <Money atomic={u.availableAtomic} className="w-[120px] text-right text-[15px]" />
+                <span className="w-[72px] text-right"><Chip tone={u.status === 'active' ? 'plain' : u.status === 'closed' ? 'down' : 'warn'}>{USER_STATUS[u.status] ?? u.status}</Chip></span>
+              </Link>
+            </li>
+          ))}
+          {!users.length && !list.loading && <li className={cn('px-4 py-12 text-center text-[14px] text-ops-sub')}>{q ? '没有找到。邮箱要输入完整。' : '还没有用户。'}</li>}
+        </ul>
+      </Board>
+    </>
+  )
+}
+
+export default function UsersPage() {
+  return <AppShell><Suspense fallback={null}><List /></Suspense></AppShell>
 }

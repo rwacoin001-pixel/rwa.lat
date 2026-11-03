@@ -23,6 +23,14 @@ type Context = {
 }
 type AuditRow = { id: string; occurredAt: string; actorType: string; action: string; reasonCode?: string | null }
 type Funds = { hotWallet: { usdtAtomic: string | null; error: string | null; checkedAt: string | null } }
+type Switch = {
+  current: { enabled: boolean; reason: string | null; updatedAt: string | null } | null
+  pending: Array<{ id: string; changeId: string; requestedAt: string; reason: string }>
+  environmentAllowsExecution: boolean
+}
+type SwitchDialog = 'pause' | 'resume' | { approve: string } | { reject: string } | null
+const SWITCH_URL = '/api/admin/operations/funds/withdrawal-execution'
+const CHANGE_ID = /^[A-Za-z0-9][A-Za-z0-9._:-]{2,119}$/
 
 const VIEWS = { review: ['risk_review'], approved: ['approved'], all: [] as string[] } as const
 type View = keyof typeof VIEWS
@@ -54,6 +62,10 @@ function Workspace() {
   const selectedId = params.get('id')
   const list = usePolled<Raw[]>('/api/admin/wallet/withdrawals?limit=200')
   const funds = usePolled<Funds>('/api/admin/console/funds?days=1', 60_000)
+  const execution = usePolled<Switch>(SWITCH_URL, 60_000)
+  const [switchDialog, setSwitchDialog] = useState<SwitchDialog>(null)
+  const [switchReason, setSwitchReason] = useState('')
+  const [changeId, setChangeId] = useState('')
   const { reload: reloadToday } = useToday()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(t) }, [])
@@ -121,7 +133,7 @@ function Workspace() {
   // Keyboard: J/K move, A approve, R reject, E execute. Ignored while typing or with a dialog open.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (dialog || e.metaKey || e.ctrlKey || e.altKey) return
+      if (dialog || switchDialog || e.metaKey || e.ctrlKey || e.altKey) return
       const t = e.target as HTMLElement
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT')) return
       const index = selected ? rows.findIndex((w) => w.id === selected.id) : -1
@@ -133,8 +145,32 @@ function Workspace() {
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
-  }, [dialog, rows, selected, set])
+  }, [dialog, switchDialog, rows, selected, set])
 
+  const paused = execution.data?.current ? !execution.data.current.enabled : false
+  const runSwitch = async () => {
+    const d = switchDialog
+    if (d === 'pause') {
+      if (switchReason.trim().length < 3) throw new Error('请写明暂停原因（至少 3 个字）。')
+      await sendJson(`${SWITCH_URL}/pause`, 'POST', { reason: switchReason.trim() })
+      setNotice({ kind: 'ok', text: '提现执行已暂停。审核照常，广播会被拦住。' })
+    } else if (d === 'resume') {
+      if (!CHANGE_ID.test(changeId.trim())) throw new Error('变更单号格式不对：字母或数字开头，3 到 120 位。')
+      if (switchReason.trim().length < 3) throw new Error('请写明恢复原因（至少 3 个字）。')
+      await sendJson(`${SWITCH_URL}/resume-requests`, 'POST', { changeId: changeId.trim(), reason: switchReason.trim() })
+      setNotice({ kind: 'ok', text: '已提交恢复申请，批准后才恢复执行。' })
+    } else if (d && 'approve' in d) {
+      await sendJson(`${SWITCH_URL}/resume-requests/${d.approve}/approve`, 'PUT')
+      setNotice({ kind: 'ok', text: '已批准，提现执行恢复。' })
+    } else if (d && 'reject' in d) {
+      await sendJson(`${SWITCH_URL}/resume-requests/${d.reject}/reject`, 'PUT')
+      setNotice({ kind: 'ok', text: '已拒绝这份恢复申请。' })
+    }
+    setSwitchReason('')
+    setChangeId('')
+    await execution.reload()
+    void reloadToday()
+  }
   const filters = (network ? 1 : 0) + (q ? 1 : 0)
   const signals = ctx.data?.signals ?? []
   const high = signals.filter((s) => s.level === 'high').length
@@ -147,8 +183,28 @@ function Workspace() {
       <PageTitle
         title="提现"
         meta={<span className="flex flex-wrap gap-x-3"><span>审核后进入待执行，执行即链上广播</span><Updated at={list.updatedAt} loading={list.loading} /></span>}
-        actions={<OutlineButton href="/withdrawal-whitelist">白名单与暂停开关</OutlineButton>}
+        actions={<>
+          <OutlineButton href="/withdrawal-whitelist">白名单</OutlineButton>
+          {execution.data && (paused
+            ? <OutlineButton onClick={() => setSwitchDialog('resume')}>申请恢复执行</OutlineButton>
+            : <DangerButton onClick={() => setSwitchDialog('pause')}>暂停执行</DangerButton>)}
+        </>}
       />
+      {paused && <Notice kind="error">提现执行已暂停{execution.data?.current?.reason ? `：${execution.data.current.reason}` : ''}。审核照常，广播会被拦住。</Notice>}
+      {execution.data && !execution.data.environmentAllowsExecution && <Notice kind="error">当前环境不允许执行提现广播，只能审核。</Notice>}
+      {(execution.data?.pending.length ?? 0) > 0 && (
+        <div className="mb-4 rounded-[22px] border border-ops-line bg-ops-card p-4">
+          <div className="text-[13px] text-ops-muted">待批准的恢复申请</div>
+          {execution.data!.pending.map((r) => (
+            <div key={r.id} className="mt-3 flex flex-wrap items-center gap-3 text-[14px]">
+              <span className="font-mono text-[13px]">{r.changeId}</span>
+              <span className="min-w-0 flex-1 text-ops-muted" title={sgTime(r.requestedAt)}>{r.reason} · {ago(r.requestedAt)}</span>
+              <DangerButton onClick={() => setSwitchDialog({ reject: r.id })}>拒绝</DangerButton>
+              <LimeButton onClick={() => setSwitchDialog({ approve: r.id })}>批准恢复</LimeButton>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.85fr)_minmax(0,1fr)]">
         <BigStatCard stats={[
@@ -166,7 +222,8 @@ function Workspace() {
           chips={networks.map((n) => ({ key: n, label: networkLabel(n), sub: `${pendingExecute.filter((w) => w.network === n).length} 笔待执行`, active: network === n, onClick: () => set({ network: network === n ? null : n, id: null }) }))}
           action={<WhiteButton onClick={() => set({ view: 'approved', id: null })}>去执行</WhiteButton>}
         >
-          {hotShort && <p className="mt-3 text-[13px] text-ops-warn">余额少于待执行的总额，执行前请先补充热钱包。</p>}
+          {paused && <p className="mt-3 text-[13px] text-ops-down">执行已暂停，广播会被拦住。</p>}
+          {hotShort &&<p className="mt-3 text-[13px] text-ops-warn">余额少于待执行的总额，执行前请先补充热钱包。</p>}
         </SideCard>
       </div>
 
@@ -307,6 +364,19 @@ function Workspace() {
           typeToConfirm={large ? money(selected.atomicAmount) : undefined} typeLabel={large ? `金额较大，请输入 ${money(selected.atomicAmount)} 确认` : undefined}
           onConfirm={() => act('execute')} />
       </>}
+
+      <Confirm open={switchDialog === 'pause'} onClose={() => setSwitchDialog(null)} title="暂停提现执行？" danger confirmLabel="暂停执行" disabled={switchReason.trim().length < 3}
+        note="暂停后，已通过的提现不会再广播，审核不受影响。恢复要先提交申请，再批准。" onConfirm={runSwitch}>
+        <textarea value={switchReason} onChange={(e) => setSwitchReason(e.target.value)} rows={2} placeholder="暂停原因，例如：热钱包补充中" className="mt-4 w-full rounded-[18px] border border-ops-line bg-ops-card px-4 py-3 text-[14px] outline-none focus:border-ops-lime" />
+      </Confirm>
+      <Confirm open={switchDialog === 'resume'} onClose={() => setSwitchDialog(null)} title="申请恢复提现执行" confirmLabel="提交申请" disabled={switchReason.trim().length < 3 || !changeId.trim()}
+        note="提交后还要批准一次，才会恢复广播。" onConfirm={runSwitch}>
+        <input value={changeId} onChange={(e) => setChangeId(e.target.value)} placeholder="变更单号，例如 CHG-20261104-01" autoComplete="off" className="mt-4 h-11 w-full rounded-full border border-ops-line bg-ops-card px-4 font-mono text-[14px] outline-none focus:border-ops-lime" />
+        <textarea value={switchReason} onChange={(e) => setSwitchReason(e.target.value)} rows={2} placeholder="恢复原因" className="mt-3 w-full rounded-[18px] border border-ops-line bg-ops-card px-4 py-3 text-[14px] outline-none focus:border-ops-lime" />
+      </Confirm>
+      <Confirm open={typeof switchDialog === 'object' && switchDialog !== null && 'approve' in switchDialog} onClose={() => setSwitchDialog(null)} title="批准恢复提现执行？" confirmLabel="批准恢复"
+        note="批准后，已通过的提现可以再次广播。" onConfirm={runSwitch} />
+      <Confirm open={typeof switchDialog === 'object' && switchDialog !== null && 'reject' in switchDialog} onClose={() => setSwitchDialog(null)} title="拒绝这份恢复申请？" danger confirmLabel="拒绝申请" onConfirm={runSwitch} />
     </>
   )
 }

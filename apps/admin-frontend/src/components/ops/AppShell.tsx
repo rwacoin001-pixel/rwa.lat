@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { RbacGate, allows, routePermissions, useAdminProfile } from '@/components/rbac-gate'
 import { NAV_GROUPS, locate, type NavGroup, type NavTab } from './nav'
 import { openWork, useToday, type Today } from './data'
+import { newArrivals } from './queues'
 import { CircleButton, Face } from './ui'
 
 function tabCount(tab: NavTab, today: Today | null): number {
@@ -58,6 +59,25 @@ export function AppShell({ children }: { children: ReactNode }) {
     return () => observer.disconnect()
   }, [])
   useEffect(() => { document.title = titleRef.current }, [work])
+
+  // New withdrawals, KYC and the like pop a browser notification while this tab is in the background.
+  // Permission is asked once, on the first click anywhere (browsers only allow asking from a click).
+  const lastToday = useRef<Today | null>(null)
+  useEffect(() => {
+    const prev = lastToday.current
+    lastToday.current = today
+    if (typeof Notification === 'undefined' || Notification.permission !== 'granted' || !document.hidden) return
+    for (const n of newArrivals(prev, today)) {
+      const note = new Notification(`${n.label} +${n.added}`, { body: '点这里去处理', tag: `ops-${n.key}` })
+      note.onclick = () => { window.focus(); window.location.assign(n.href); note.close() }
+    }
+  }, [today])
+  useEffect(() => {
+    if (typeof Notification === 'undefined' || Notification.permission !== 'default') return
+    const ask = () => { void Notification.requestPermission() }
+    window.addEventListener('pointerdown', ask, { once: true })
+    return () => window.removeEventListener('pointerdown', ask)
+  }, [])
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); setPaletteOpen((v) => !v) } }
