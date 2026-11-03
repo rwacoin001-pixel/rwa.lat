@@ -90,6 +90,13 @@ public final class MainActivity extends Activity {
     // the browser, in app-private storage so a process the system killed meanwhile can still finish the sign-in.
     private static final String HANDOFF_PREFS = "browser-sign-in";
     private static final long HANDOFF_MAX_AGE_MS = 10 * 60 * 1000;
+    // The theme the user picked in the app ("light" / "dark"; empty = follow the phone). The system splash is drawn
+    // before any app code runs, so the next launch has to know it in advance or a light-theme user on a dark phone
+    // sees a black splash turn white.
+    private static final String THEME_PREFS = "page-theme";
+    // The website's launch screen colours (paletteAColors in lib/document-preferences-bootstrap.ts; res/values/colors.xml).
+    private static final int LIGHT_PAGE = Color.rgb(245, 246, 248), DARK_PAGE = Color.rgb(10, 12, 16);
+    private String launchTheme = "";
     private String retryUrl = HOME;
     private PermissionRequest pendingMedia;
     private GeolocationPermissions.Callback pendingGeo;
@@ -109,6 +116,9 @@ public final class MainActivity extends Activity {
 
     @SuppressLint("SetJavaScriptEnabled")
     @Override public void onCreate(Bundle savedInstanceState) {
+        launchTheme = getSharedPreferences(THEME_PREFS, MODE_PRIVATE).getString("theme", "");
+        if ("dark".equals(launchTheme)) setTheme(R.style.AppTheme_Dark);
+        else if ("light".equals(launchTheme)) setTheme(R.style.AppTheme_Light);
         super.onCreate(savedInstanceState);
         // Edge to edge: the page draws under transparent status and navigation bars and lays itself out with the
         // bar sizes we hand it (--native-inset-*), like the installed web app does with safe-area insets.
@@ -123,8 +133,9 @@ public final class MainActivity extends Activity {
         }
         if (Build.VERSION.SDK_INT >= 30) window.setDecorFitsSystemWindows(false);
         else window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
-        boolean night = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        pageColor = night ? Color.rgb(10, 11, 13) : Color.rgb(244, 241, 234);
+        boolean systemNight = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
+        boolean night = launchTheme.isEmpty() ? systemNight : "dark".equals(launchTheme);
+        pageColor = night ? DARK_PAGE : LIGHT_PAGE;
         setBarIcons(!night);
         pageContainer = new FrameLayout(this);
         pageContainer.setBackgroundColor(pageColor);
@@ -267,7 +278,9 @@ public final class MainActivity extends Activity {
                 if ("haptic".equals(payload.optString("type"))) { webView.performHapticFeedback(HapticFeedbackConstants.KEYBOARD_TAP); return; }
                 if ("share".equals(payload.optString("type")) || "save-image".equals(payload.optString("type"))) { handleNativeRequest(payload, reply); return; }
                 if (!"chrome".equals(payload.optString("type"))) return;
-                applyPageTheme("dark".equals(payload.optString("theme")));
+                boolean dark = "dark".equals(payload.optString("theme"));
+                applyPageTheme(dark);
+                rememberLaunchTheme(payload.optBoolean("pinned") ? (dark ? "dark" : "light") : "");
                 if (payload.optBoolean("ready")) markPageReady();
             } catch (Exception ignored) { /* Malformed page message: keep the current bars. */ }
         });
@@ -275,17 +288,29 @@ public final class MainActivity extends Activity {
     }
     // Watches <html> for the theme and the website's launch screen state (lib/launch-splash.ts) and reports changes.
     private static final String APP_SCRIPT = "(()=>{const ch=window.RwaNativeAppChannel;if(!ch)return;window.__rwaNativeCaps=['share','save-image'];const r=document.documentElement;let loaded=false,last='';"
+        // pinned: the user picked the theme (same keys as the theme bootstrap); otherwise the page follows the phone.
         + "const send=()=>{const t=r.dataset.theme==='dark'?'dark':'light',st=r.dataset.launchState||'';"
-        + "const ready=loaded&&(r.dataset.launch!=='app'||st==='leaving'||st==='gone');const m=t+'|'+ready;if(m===last)return;last=m;"
-        + "ch.postMessage(JSON.stringify({type:'chrome',theme:t,ready}));};"
+        + "let p=null;try{p=localStorage.getItem('rwa.theme');if(p===null)p=localStorage.getItem('rwa-app-theme');}catch(e){}const pinned=p==='light'||p==='dark';"
+        + "const ready=loaded&&(r.dataset.launch!=='app'||st==='leaving'||st==='gone');const m=t+'|'+ready+'|'+pinned;if(m===last)return;last=m;"
+        + "ch.postMessage(JSON.stringify({type:'chrome',theme:t,ready,pinned}));};"
         + "new MutationObserver(send).observe(r,{attributes:true,attributeFilter:['data-theme','data-launch','data-launch-state']});"
         + "document.addEventListener('DOMContentLoaded',()=>{loaded=true;send();});send();"
         + "document.addEventListener('pointerdown',e=>{const t=e.target;if(e.isPrimary&&t instanceof Element&&t.closest('.liquid-dock button,.liquid-dock a'))ch.postMessage(JSON.stringify({type:'haptic'}));},{capture:true,passive:true});})();";
     private void applyPageTheme(boolean dark) {
-        pageColor = dark ? Color.rgb(10, 11, 13) : Color.rgb(244, 241, 234);
+        pageColor = dark ? DARK_PAGE : LIGHT_PAGE;
         setBarIcons(!dark);
         pageContainer.setBackgroundColor(pageColor);
         if (webView != null) webView.setBackgroundColor(pageColor);
+    }
+    /** Saves the user's theme choice for the next launch's window and, on Android 13+, its system splash. */
+    private void rememberLaunchTheme(String theme) {
+        if (theme.equals(launchTheme)) return;
+        launchTheme = theme;
+        getSharedPreferences(THEME_PREFS, MODE_PRIVATE).edit().putString("theme", theme).apply();
+        if (Build.VERSION.SDK_INT >= 33) {
+            int splash = "dark".equals(theme) ? R.style.AppTheme_Dark : "light".equals(theme) ? R.style.AppTheme_Light : android.content.res.Resources.ID_NULL;
+            try { getSplashScreen().setSplashScreenTheme(splash); } catch (RuntimeException ignored) { /* The next splash then follows the phone, as before. */ }
+        }
     }
     /** Without the message bridge (old WebView): read the theme once the page is up, and release the splash. */
     private void syncPageFallback() {

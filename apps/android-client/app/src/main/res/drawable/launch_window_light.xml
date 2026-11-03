@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- launch_window with the light page colour: used when the user picked the light theme in the app. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/launch_bg_light" />
+    <item android:width="112dp" android:height="112dp" android:gravity="center" android:drawable="@drawable/rwa_icon" />
+</layer-list>

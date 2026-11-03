@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Same as the website's light page colour, so the window, the system splash and the page are one surface. -->
-    <color name="launch_bg">#F4F1EA</color>
+    <!-- The website's launch screen colours (paletteAColors in lib/document-preferences-bootstrap.ts), so the system
+         splash, the window and the page's own launch screen are one surface. -->
+    <color name="launch_bg_light">#F5F6F8</color>
+    <color name="launch_bg_dark">#0A0C10</color>
+    <!-- Before the app knows the user's own theme choice it follows the phone. -->
+    <color name="launch_bg">@color/launch_bg_light</color>
 </resources>

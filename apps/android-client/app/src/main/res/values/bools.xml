@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- android:isLightTheme for AppTheme: Android 13+ WebView answers prefers-color-scheme from it, so a page left on
+         "follow the phone" really follows the phone (it was always light, under a dark system splash). -->
+    <bool name="light_theme">true</bool>
+</resources>
