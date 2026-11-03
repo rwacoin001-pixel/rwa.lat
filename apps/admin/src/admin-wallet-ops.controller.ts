@@ -110,6 +110,13 @@ export class AdminWalletOpsController {
     return this.ops.withdrawalReviews(adminId(request), limit ? numeric(limit, 50) : undefined)
   }
 
+  @Get('withdrawals/:id/context')
+  @RequireAdminPermissions('wallet.withdrawals.manage')
+  @ApiOperation({ summary: 'Read-only risk background for one withdrawal' })
+  withdrawalContext(@Req() request: AdminRequest, @Param('id') id: string) {
+    return this.ops.withdrawalContext(adminId(request), id)
+  }
+
   @Put('withdrawals/:id/approve')
   @RequireAdminPermissions('wallet.withdrawals.manage')
   @ApiOperation({ summary: 'Record one administrator approval for a withdrawal' })

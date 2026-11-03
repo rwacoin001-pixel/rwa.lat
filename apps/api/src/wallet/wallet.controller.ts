@@ -25,6 +25,7 @@ import {
 } from './dto/wallet.dto'
 import { WalletService } from './wallet.service'
 import { FundsOperationalSwitchService } from './funds-operational-switch.service'
+import { WithdrawalContextService } from './withdrawal-context.service'
 import type { WalletNetwork } from './wallet.entities'
 
 @ApiTags('wallet')
@@ -198,6 +199,7 @@ export class AdminWalletController {
   constructor(
     private readonly wallet: WalletService,
     private readonly rbac: AdminRbacService,
+    private readonly withdrawalContext: WithdrawalContextService,
   ) {}
 
   @Get('withdrawals/reviews')
@@ -205,6 +207,14 @@ export class AdminWalletController {
   async reviews(@CurrentAdmin() admin: AuthenticatedAdmin, @Query('limit') limit?: string) {
     await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.manage')
     return this.wallet.listWithdrawalReviews(limit ? Number(limit) : 50)
+  }
+
+  @Get('withdrawals/:id/context')
+  @Header('Cache-Control', 'no-store')
+  @ApiOperation({ summary: 'Read-only risk background for one withdrawal: account, address history, recent security changes and signals' })
+  async context(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', new ParseUUIDPipe()) id: string) {
+    await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.manage')
+    return this.withdrawalContext.context(id)
   }
 
   @Put('withdrawals/:id/approve')
