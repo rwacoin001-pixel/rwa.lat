@@ -42,6 +42,21 @@ suite('Account closure with isolated PostgreSQL',()=>{
     await expect(svc.review(req.requests[0].id,'close','Attempt',randomUUID())).rejects.toThrow('Resolve balances')
     expect((await runner.query('SELECT status FROM app.users WHERE id=$1',[userId]))[0].status).toBe('active')
   })
+  it('blocks closure while Koala Quant principal or a quant order is still open',async()=>{
+    // Quant principal sits in quant_lots, not in the user's own ledger accounts, so it needs its own blocker.
+    await runner.query('ALTER TABLE app.quant_orders DISABLE TRIGGER USER')
+    const product=randomUUID(),order=randomUUID()
+    await runner.query(`INSERT INTO app.quant_products(id,slug,name,first_trade_date) VALUES($1,$2,'Closure quant','2026-10-01')`,[product,`closure-${product}`])
+    await runner.query(`INSERT INTO app.quant_orders(id,product_id,user_id,kind,amount_atomic,principal_atomic,status,effective_date,idempotency_key,settled_at)
+      VALUES($1::uuid,$2,$3,'subscription',100000000,100000000,'settled','2026-10-01',$1::text,now())`,[order,product,userId])
+    await runner.query(`INSERT INTO app.quant_lots(product_id,user_id,order_id,original_atomic,principal_atomic,effective_date) VALUES($1,$2,$3,100000000,100000000,'2026-10-01')`,[product,userId,order])
+    await runner.query(`INSERT INTO app.quant_orders(product_id,user_id,kind,amount_atomic,status,effective_date,idempotency_key) VALUES($1,$2,'redemption',10000000,'pending','2026-11-01',$3)`,[product,userId,randomUUID()])
+    const req=await svc.request(userId,'Close account')
+    const blockers=(await svc.inspect(req.requests[0].id)).blockers
+    expect(blockers).toContainEqual({code:'quantlots',count:1})
+    expect(blockers).toContainEqual({code:'quantorders',count:1})
+    await expect(svc.review(req.requests[0].id,'close','Attempt',randomUUID())).rejects.toThrow('Resolve balances')
+  })
   it('rejects new financial writes and active sessions after closure at the database boundary',async()=>{
     const req=await svc.request(userId,'Close account');await svc.review(req.requests[0].id,'close','Verified',randomUUID())
     await runner.query('SAVEPOINT closed_session')

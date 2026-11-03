@@ -14,7 +14,7 @@ export const QUEUES: QueueMeta[] = [
   { key: 'kyc', label: 'KYC 待审', area: 'care', href: '/kyc', lateAfter: 12 * 60 },
   { key: 'supportTickets', label: '工单未回复', area: 'care', href: '/support', lateAfter: 4 * 60 },
   { key: 'mail', label: '未读邮件', area: 'care', href: '/inbox', lateAfter: 4 * 60 },
-  { key: 'accountClosures', label: '账户注销', area: 'care', href: '/users?tab=closures', lateAfter: 24 * 60 },
+  { key: 'accountClosures', label: '账户注销', area: 'care', href: '/users/closures', lateAfter: 24 * 60 },
   { key: 'communityQueue', label: '社区待审', area: 'community', href: '/community', lateAfter: 2 * 60 },
   { key: 'communityReports', label: '举报', area: 'community', href: '/community?tab=reports', lateAfter: 4 * 60 },
   { key: 'teamBatches', label: '团队月结', area: 'community', href: '/referral?tab=team', lateAfter: 3 * 24 * 60 },

@@ -45,6 +45,7 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
   '/ledger': ['ledger.adjustments.manage', 'ledger.reconciliation.manage'],
   '/reconciliation': ['ledger.reconciliation.manage'],
   '/users': ['users.read'],
+  '/users/closures': ['users.account_closure.manage'],
   '/activity': ['users.read'],
   '/community': ['community.content.review'],
   '/support': ['support.tickets.manage'],

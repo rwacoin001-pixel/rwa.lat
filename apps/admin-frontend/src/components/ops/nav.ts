@@ -34,6 +34,7 @@ export const NAV_GROUPS: NavGroup[] = [
     id: 'users', label: '用户', icon: Users, tabs: [
       { label: '用户', href: '/users' },
       { label: 'KYC 审核', href: '/kyc', queues: ['kyc'] },
+      { label: '账户注销', href: '/users/closures', queues: ['accountClosures'] },
       { label: '活跃数据', href: '/activity' },
     ],
   },

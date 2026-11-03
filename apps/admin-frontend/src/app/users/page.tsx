@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { AccountClosures } from '@/components/account-closures'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, Panel, RefreshButton, StatusPill, formatDateTime, shortId, useApi } from '@/components/console/framework'
 import { UserDetailDialog, emailStateName, loginMethodName, type ManagedUser } from '@/components/user-detail'
@@ -45,7 +44,6 @@ export default function UsersPage() {
         <div className="mt-4 flex items-center justify-between text-xs text-text-faint"><span>{total > 0 ? `${offset + 1}–${Math.min(offset + pageSize, total)} / ${total}` : '0 条'}</span><div className="flex gap-2"><button type="button" className="rounded-lg border border-ink/15 px-3 py-2 disabled:opacity-40" disabled={list.loading || offset === 0} onClick={() => setOffset(Math.max(0, offset - pageSize))}>上一页</button><button type="button" className="rounded-lg border border-ink/15 px-3 py-2 disabled:opacity-40" disabled={list.loading || offset + pageSize >= total} onClick={() => setOffset(offset + pageSize)}>下一页</button></div></div>
       </div>
     </Panel>
-    <AccountClosures />
     {selected && profile.loading && <p role="status" className="text-sm text-text-faint">正在获取管理员权限…</p>}
     {selected && profile.error && <p role="alert" className="text-sm text-red-700">管理员权限读取失败。<button className="ml-2 underline" onClick={profile.reload}>重试</button></p>}
     {selected && profile.data && <UserDetailDialog key={selected} id={selected} actorId={profile.data.id} canAdjust={canAdjust} onClose={() => setSelected(null)} onChanged={list.reload} />}

@@ -19,6 +19,9 @@ export class AccountClosureService {
       (SELECT count(*)::int FROM app.trading_orders WHERE user_id=$1 AND state NOT IN ('filled','cancelled','rejected')) AS trading,
       (SELECT count(*)::int FROM app.subscriptions WHERE user_id=$1 AND state NOT IN ('canceled','expired')) AS subscriptions,
       (SELECT count(*)::int FROM app.yield_allocations WHERE user_id=$1 AND state='pending') AS yields,
+      -- Koala Quant principal lives in quant_lots (the pool account is the platform's), so it needs its own check.
+      (SELECT count(*)::int FROM app.quant_lots WHERE user_id=$1 AND principal_atomic>0) AS quantlots,
+      (SELECT count(*)::int FROM app.quant_orders WHERE user_id=$1 AND status='pending') AS quantorders,
       (SELECT count(*)::int FROM app.basket_subscriptions WHERE user_id=$1 AND status NOT IN ('settled','failed','cancelled'))+
       (SELECT count(*)::int FROM app.basket_redemptions WHERE user_id=$1 AND status NOT IN ('settled','failed','cancelled')) AS basketPending,
       (SELECT count(*)::int FROM (SELECT portfolio_id,SUM(units) AS units FROM (
