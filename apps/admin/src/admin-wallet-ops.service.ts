@@ -63,6 +63,10 @@ export class AdminWalletOpsService {
     return this.request('GET', withQuery('/internal/wallet/withdrawals/reviews', { limit }), actorId)
   }
 
+  withdrawalContext(actorId: string, id: string) {
+    return this.request('GET', `/internal/wallet/withdrawals/${encodeURIComponent(id)}/context`, actorId)
+  }
+
   approveWithdrawal(actorId: string, id: string, body: Record<string, unknown>) {
     return this.request('PUT', `/internal/wallet/withdrawals/${encodeURIComponent(id)}/approve`, actorId, body)
   }

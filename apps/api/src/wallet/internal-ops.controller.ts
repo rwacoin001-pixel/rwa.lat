@@ -32,6 +32,7 @@ import { FundsOperationalSwitchService } from './funds-operational-switch.servic
 import { DepositPoolService } from './manual/deposit-pool.service'
 import { WithdrawalWhitelistService } from './manual/withdrawal-whitelist.service'
 import { WalletService } from './wallet.service'
+import { WithdrawalContextService } from './withdrawal-context.service'
 
 export const INTERNAL_ACTOR_HEADER = 'x-actor-admin-id'
 const INTERNAL_TOKEN_MIN_LENGTH = 32
@@ -90,6 +91,7 @@ export class InternalWalletController {
     private readonly pools: DepositPoolService,
     private readonly whitelist: WithdrawalWhitelistService,
     private readonly fundsSwitch: FundsOperationalSwitchService,
+    private readonly withdrawalContext: WithdrawalContextService,
   ) {}
 
   @Get('deposit-pool')
@@ -154,6 +156,12 @@ export class InternalWalletController {
   @ApiOperation({ summary: 'List withdrawals awaiting administrator decisions' })
   withdrawalReviews(@Query('limit') limit?: string) {
     return this.wallet.listWithdrawalReviews(limit ? Number(limit) : 50)
+  }
+
+  @Get('withdrawals/:id/context')
+  @ApiOperation({ summary: 'Read-only risk background for one withdrawal (service-to-service)' })
+  withdrawalRiskContext(@Param('id') id: string) {
+    return this.withdrawalContext.context(id)
   }
 
   @Put('withdrawals/:id/approve')

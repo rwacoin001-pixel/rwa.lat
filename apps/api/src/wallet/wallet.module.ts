@@ -1,5 +1,6 @@
 import { FundsSummaryController } from './funds-summary.controller'
 import { FundsSummaryService } from './funds-summary.service'
+import { WithdrawalContextService } from './withdrawal-context.service'
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -81,6 +82,7 @@ import {
   ],
   providers: [
     FundsSummaryService,
+    WithdrawalContextService,
     TransactionPinService,
     WalletService,
     WalletNetworkRegistry,
