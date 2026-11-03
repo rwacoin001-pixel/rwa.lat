@@ -22,9 +22,10 @@ export class ReferralTeamService {
   private async plan(m: EntityManager, month: string) {
     let window: { start: string; end: string }
     try { window = monthlyWindow(month) } catch (e) { throw new BadRequestException(e instanceof Error ? e.message : 'Invalid month') }
-    const [activation] = await m.query('SELECT activated_at,settings_version FROM app.referral_team_activation')
+    // The start is computed in Postgres: activated_at has microseconds, a JS Date keeps only milliseconds, and the batch guard needs an exact match.
+    const [activation] = await m.query(`SELECT activated_at,settings_version,to_char(greatest($1::timestamptz,activated_at) AT TIME ZONE 'UTC','YYYY-MM-DD"T"HH24:MI:SS.US"Z"') AS start FROM app.referral_team_activation`,[window.start])
     if (!activation || new Date(activation.activated_at) >= new Date(window.end)) throw new ConflictException({ code: 'REFERRAL_TEAM_BEFORE_ACTIVATION', message: 'No historical team reward backfill.' })
-    const start = new Date(Math.max(new Date(window.start).getTime(), new Date(activation.activated_at).getTime())).toISOString()
+    const start: string = activation.start
     const [s] = await m.query(`SELECT version,config FROM app.referral_settings WHERE team_effective_at<=$1 OR version=$2
       ORDER BY CASE WHEN version=$2 THEN $3::timestamptz ELSE team_effective_at END DESC,version DESC LIMIT 1`,[start,activation.settings_version,activation.activated_at])
     if (!s) throw new ConflictException('No effective team policy')

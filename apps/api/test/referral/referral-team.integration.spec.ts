@@ -12,7 +12,8 @@ database('prospective team settlement (PostgreSQL)', () => {
     const [s] = await db.query(`INSERT INTO app.referral_settings(config,fee_effective_at,holding_effective_at,team_effective_at) VALUES($1,'2026-09-01','2026-09-01','2026-09-01') RETURNING version`,[JSON.stringify(REFERRAL_DEFAULT_SETTINGS)])
     // Isolated test deployment simulation only: production activation is immutable and starts at migration time.
     await db.query('ALTER TABLE app.referral_team_activation DISABLE TRIGGER USER')
-    await db.query(`UPDATE app.referral_team_activation SET activated_at='2026-09-15T00:00:00Z',settings_version=$1`,[s.version])
+    // Microseconds on purpose: production activation came from now(), and a millisecond-rounded start used to fail the batch guard.
+    await db.query(`UPDATE app.referral_team_activation SET activated_at='2026-09-15T00:00:00.123456Z',settings_version=$1`,[s.version])
     await db.query('ALTER TABLE app.referral_team_activation ENABLE TRIGGER USER')
     for(const key of ['a','b','c']) {
       const [u]=await db.query(`INSERT INTO app.users(status) VALUES('active') RETURNING id`)
