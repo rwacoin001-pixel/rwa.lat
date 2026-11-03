@@ -69,10 +69,8 @@ export function AppShell({ children }: { children: ReactNode }) {
     <div className="ops-root min-h-screen font-ops antialiased">
       <div className="mx-auto max-w-[1480px] px-4 pb-28 sm:px-6 lg:px-8 lg:pb-12">
         <header className="flex h-[76px] items-center gap-3">
-          <Link href="/today" className="mr-2 flex shrink-0 items-center gap-2.5" aria-label="A-REIT 后台首页">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/brand/mark-dark.svg" alt="" width={24} height={26} />
-            <span className="hidden text-[17px] font-medium tracking-[-0.01em] text-ops-text xl:inline">A-REIT</span>
+          <Link href="/today" className="mr-2 shrink-0 text-[19px] font-medium tracking-[-0.02em] text-ops-text" aria-label="A-REIT 后台首页">
+            A-REIT
           </Link>
 
           <nav aria-label="主导航" className="ops-scroll hidden min-w-0 flex-1 items-center gap-2 overflow-x-auto lg:flex">
