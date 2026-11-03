@@ -2,6 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Satoshi: Latin and digits of the redesigned console (the app's brand font, copied from the website). */
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-400.woff2') format('woff2'); font-weight: 400; font-display: swap; }
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-500.woff2') format('woff2'); font-weight: 500; font-display: swap; }
+@font-face { font-family: 'Satoshi'; src: url('/fonts/satoshi/Satoshi-700.woff2') format('woff2'); font-weight: 700; font-display: swap; }
+
+/* The redesigned console paints its own dark page; old pages keep the light glass body until they move over. */
+.ops-root { background: #14161B; color: #F2F4F7; font-variant-numeric: tabular-nums; overflow-x: clip; }
+.ops-root ::selection { background: #C5F23B; color: #0E1116; }
+.ops-scroll { scrollbar-width: none; }
+.ops-scroll::-webkit-scrollbar { display: none; }
+.ops-stripes { background-image: repeating-linear-gradient(135deg, rgba(14, 17, 22, 0.18) 0 3px, transparent 3px 7px); }
+
 @layer base {
   :root {
     --background: 228 60% 96%;
