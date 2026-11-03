@@ -71,6 +71,8 @@ export const documentPreferencesBootstrap = `(() => {
   } catch {}
   if (installed) {
     root.dataset.launch = 'app';
+    // Lets the service worker show the last page at once on the next launch (public/sw.js, instantLaunchShell).
+    try { navigator.serviceWorker && navigator.serviceWorker.ready.then(r => r.active && r.active.postMessage({ type: 'INSTALLED_APP' })).catch(() => {}); } catch {}
     // The Android client's WebView: lighter compositing (globals.css) keeps scrolling smooth on mid-range phones.
     try { if (navigator.userAgent.includes('RwaLatAndroidTrial/')) root.dataset.shell = 'android'; } catch {}
     if (location.pathname === '/' || location.pathname === '/home' || location.pathname === '/home/') {

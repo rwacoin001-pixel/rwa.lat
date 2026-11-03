@@ -1,6 +1,11 @@
 // Bump this release cache when shipping app changes so installed PWAs cannot replay an old page shell with mismatched assets.
 const CACHE_NAME = 'a-reit-offline-v4'
 const SHELL_WAIT_MS = 1500
+// Installed app (Home Screen web app, Android client): the page says so once (lib/document-preferences-bootstrap.ts)
+// and the worker keeps the answer here, because the launch navigation arrives before any page code can run.
+const INSTALLED_KEY = '/__rwa/installed-app'
+// A launch shell older than this is not shown instantly; it waits for the network like any other navigation.
+const LAUNCH_SHELL_MAX_AGE_MS = 3 * 24 * 3600 * 1000
 const OFFLINE_ASSETS = [
   '/offline',
   '/brand/a-reit/app-icon.svg',
@@ -39,6 +44,21 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+self.addEventListener('message', (event) => {
+  if (!event.data || event.data.type !== 'INSTALLED_APP') return
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(INSTALLED_KEY, new Response('1'))))
+})
+
+// The installed app's launch: no window of this site is open yet, so nothing on screen can mix an older page with
+// newer code. Later full navigations inside a running app stay network-first.
+async function instantLaunchShell(request) {
+  const [installed, windows] = await Promise.all([caches.match(INSTALLED_KEY), self.clients.matchAll({ type: 'window', includeUncontrolled: true })])
+  if (!installed || windows.length) return null
+  const cached = await caches.match(request)
+  const date = cached && Date.parse(cached.headers.get('date') || '')
+  return cached && date && Date.now() - date < LAUNCH_SHELL_MAX_AGE_MS ? cached : null
+}
+
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return
   const url = new URL(event.request.url)
@@ -66,10 +86,12 @@ self.addEventListener('fetch', (event) => {
     }
     // Network first, as before, but a launch never waits on a slow network for longer than SHELL_WAIT_MS when
     // the last shell is cached: that one shows, and the network answer still refreshes the cache for next time.
+    // The installed app's launch shows the last shell at once (instantLaunchShell) and refreshes it the same way.
     // A shell from an older build is safe: app/error.tsx reloads once on a missing chunk.
     const network = fetch(event.request)
       .then(async (response) => {
-        if (response.ok) {
+        // A redirected answer is another page (signed-out /home ends on /login): never keep it under this URL.
+        if (response.ok && !response.redirected) {
           const copy = response.clone()
           event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy)))
         }
@@ -80,10 +102,10 @@ self.addEventListener('fetch', (event) => {
       })
       .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline'))
     event.waitUntil(network.catch(() => null))
-    event.respondWith(Promise.race([
+    event.respondWith(instantLaunchShell(event.request).catch(() => null).then((shell) => shell || Promise.race([
       network,
       new Promise((resolve) => setTimeout(resolve, SHELL_WAIT_MS)).then(async () => (await caches.match(event.request)) || network),
-    ]))
+    ])))
     return
   }
 
