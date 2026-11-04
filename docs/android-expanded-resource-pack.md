@@ -53,6 +53,10 @@ Still outside the pack on purpose: desktop media (~72 MB), original product PNGs
 
 The iPhone Home Screen app gets the same idea from the website side: `public/sw.js` `WARM_PACK` keeps all code plus images/fonts ≤ 400 KB from the same manifest (~25 MB) once the app is launched.
 
+## 1.1.9 — 2026-11-05
+
+APK 1.1.9 / code 12 bundles website build `j3ZBkdUgsV6mDk-QF4Mrg` (main `58946fa0`, 746 files / 33.3 MiB): compact prediction ticket with the PIN step inside it, polished sheets and PIN pads, L1–L7 medallions, level and team pages v2, back to the personal centre, and the swipe-freeze guards on the personal-centre layer. 26,161,155 bytes; SHA-256 `98cf752aa49820be2468c8ee189f481bbda52eae9ccd2e2c688b78a284543751`; certificate `7ef88406…` unchanged. Emulator: upgrade 1.1.8 → 1.1.9 OK, cold start 5.0 s, no crash.
+
 ## 1.1.8 — 2026-11-04
 
 APK 1.1.8 / code 11 bundles website build `6KOh3_-OCBkRW6nMCR4GE` (main `4f8fce92`, 741 files / 33.3 MiB): the pack leaves out `/media/generated` (retired product art) and PNG originals over 500 KB (WebP copies are in the pack), for faster downloads from China. 26,152,323 bytes (1.1.7 was 85,410,307); SHA-256 `6606e074f3c6648a8dc4f07afe33c319da34afc733de49c7406182a2bdcc68f0`; certificate `7ef88406…` unchanged. Ships the real tab pager and the instant product slide. `dl.a-reit.com` is the Singapore server directly (Caddy, no CDN); a Hong Kong object store would be the next step for mainland speed.
