@@ -67,7 +67,7 @@
 :global(html[data-palette='a']) .bigValue { font-size: clamp(22px, 7vw, 28px); letter-spacing: -.01em; }
 :global(html[data-palette='a']) .sparkWide { margin: 4px 0 0; }
 /* Spotlight: a soft teal light under the finger while it rests on a lead card. */
-:global(html[data-palette='a']) .featuredQuote { position: relative; overflow: hidden; isolation: isolate; touch-action: pan-y; }
+:global(html[data-palette='a']) .featuredQuote { position: relative; overflow: hidden; isolation: isolate; touch-action: pan-x pan-y; }
 .featuredQuote::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0; pointer-events: none; background: radial-gradient(160px circle at var(--mx, 50%) var(--my, 50%), color-mix(in srgb, var(--home-accent, #0a8a73) 16%, transparent), transparent 70%); transition: opacity .3s; }
 .featuredQuote[data-lit='true']::before { opacity: 1; }
 /* A new tab's cards come in one after the other. */
