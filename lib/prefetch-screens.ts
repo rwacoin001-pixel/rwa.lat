@@ -33,4 +33,10 @@ export function prefetchScreens() {
     void load().catch(() => { /* a failed warm-up is retried by the real navigation */ }).finally(() => idle(step))
   }
   window.setTimeout(() => idle(step), 1500)
+  // The iPhone Home Screen app keeps the build's pack on the phone (public/sw.js WARM_PACK); the Android client
+  // already ships it in the APK, and a browser tab is not worth 25 MB.
+  const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || window.matchMedia('(display-mode: standalone)').matches
+  if (standalone && !navigator.userAgent.includes('RwaLatAndroidTrial/') && 'serviceWorker' in navigator) {
+    window.setTimeout(() => idle(() => { void navigator.serviceWorker.ready.then((registration) => registration.active?.postMessage({ type: 'WARM_PACK' })).catch(() => {}) }), 6000)
+  }
 }

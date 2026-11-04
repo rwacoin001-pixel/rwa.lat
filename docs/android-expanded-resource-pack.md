@@ -44,3 +44,11 @@ Public download/hash checks and Android API 34 emulator installation and launch 
 APK 1.1.6 / code 9 bundles website build `PSsfgyDr_W8H47ugw_lJn` (main `a9f3f140`, 711 files / 83.7 MiB). 78,339,715 bytes; SHA-256 `c2ec88990faab957d6e0ceb3a8bdfde074a106824798e4fe60d07eebbced4511`; signing certificate `7ef88406…` (unchanged). Served from `https://dl.a-reit.com/android/a-reit-android-1.1.6.apk`; 1.1.5 stays on the server.
 
 Changes: the launch splash follows the theme the app opens in (Android 13+ via `setSplashScreenTheme`; colours #F5F6F8 / #0A0C10), and "follow the phone" is dark on a dark phone (`android:isLightTheme`). With the website's instant launch shell, a signed-in cold start on the API 34 emulator went from 2.3–3.0 s to 1.4–1.8 s. Not yet checked on a physical phone.
+
+## 1.1.7 — 2026-11-04
+
+APK 1.1.7 / code 10 bundles website build `0-USMpefAPoW3hLJ5C68E` (main `250ac74c`, 782 files / 90.4 MiB, now incl. the home 为你精选 card photos `/media/home/cards`). 85,410,307 bytes; SHA-256 `cd2b8b92653592258fdb72738a2d62f5d1a93b459d5561cccb6e5bdbfe744264`; signing certificate `7ef88406…` (unchanged). Served from `https://dl.a-reit.com/android/a-reit-android-1.1.7.apk`; 1.1.5 and 1.1.6 stay on the server. Ships the native stack page transitions, edge swipe back, folder 晒单 cards and the blocklist buying rule's front end.
+
+Still outside the pack on purpose: desktop media (~72 MB), original product PNGs (the phone uses the derived WebP), OCR language data (~23 MB) and videos.
+
+The iPhone Home Screen app gets the same idea from the website side: `public/sw.js` `WARM_PACK` keeps all code plus images/fonts ≤ 400 KB from the same manifest (~25 MB) once the app is launched.

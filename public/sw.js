@@ -44,8 +44,43 @@ self.addEventListener('activate', (event) => {
   self.clients.claim()
 })
 
+// The iPhone Home Screen app's own pack (2026-11-04, user: keep more of the app on the phone, like the Android
+// client). After launch the page asks once; the worker reads the build's /app-pack/manifest.json (the list the Android
+// APK ships) and, one file at a time, keeps all code plus every image and font up to 400 KB (about 25 MB; big
+// originals, invite posters and OCR data stay on the network). Files a newer build no longer lists are dropped.
+// The cache-first branch below serves them (caches.match searches every cache). Safe to stop and resume.
+const PACK_CACHE = 'a-reit-pack'
+const PACK_MAX_BYTES = 400 * 1024
+let packRun = null
+function packWanted(file) {
+  return file.p.startsWith('/_next/static/') || (file.s <= PACK_MAX_BYTES && !/^\/(?:ai-ocr|vendor|media\/referral)\//.test(file.p))
+}
+async function warmPack() {
+  const response = await fetch('/app-pack/manifest.json', { cache: 'no-cache' })
+  if (!response.ok) return
+  const manifest = await response.json()
+  const want = (manifest.files || []).filter(packWanted)
+  const wanted = new Set(want.map((file) => file.p))
+  const cache = await caches.open(PACK_CACHE)
+  const have = new Set((await cache.keys()).map((request) => new URL(request.url).pathname))
+  await Promise.all([...have].filter((path) => !wanted.has(path)).map((path) => cache.delete(path)))
+  for (const file of want) {
+    if (have.has(file.p)) continue
+    try {
+      const body = await fetch(file.p, { cache: 'no-cache' })
+      if (body.ok && !(body.headers.get('content-type') || '').includes('text/html')) await cache.put(file.p, body)
+    } catch { /* offline or evicted: the next launch resumes */ }
+  }
+}
+
 self.addEventListener('message', (event) => {
-  if (!event.data || event.data.type !== 'INSTALLED_APP') return
+  if (!event.data) return
+  if (event.data.type === 'WARM_PACK') {
+    packRun ??= warmPack().catch(() => null).finally(() => { packRun = null })
+    event.waitUntil(packRun)
+    return
+  }
+  if (event.data.type !== 'INSTALLED_APP') return
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.put(INSTALLED_KEY, new Response('1'))))
 })
 
