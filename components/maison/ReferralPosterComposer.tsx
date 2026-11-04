@@ -38,19 +38,37 @@ function PosterThumbnail({ model, qr, width = 240 }: { model: PosterModel; qr: R
   return <canvas ref={ref} className={x.thumbnail} aria-hidden="true" />
 }
 
-export function ReferralPosterComposer({ code, summary, locale, theme, inertRef, onClose, sourceReady = true, initialPlatform = 'wechat', initialCategory = 'minimal', initialIndex = 0, initialFullscreen = false }: {
+export function ReferralPosterComposer({ code, summary, locale, theme, inertRef, onClose, sourceReady = true, initialPlatform = 'douyin', initialCategory = 'random', initialIndex = 0, initialFullscreen = false }: {
   code: string; summary: ReferralSummary; locale: AppLocale; theme: SheetTheme
   inertRef: RefObject<HTMLElement | null>; onClose: () => void; sourceReady?: boolean
-  initialPlatform?: PosterPlatform['id']; initialCategory?: PosterCategory; initialIndex?: number; initialFullscreen?: boolean
+  initialPlatform?: PosterPlatform['id']; initialCategory?: PosterCategory | 'random'; initialIndex?: number; initialFullscreen?: boolean
 }) {
   const ui = posterCopy[locale]
   const [platformId, setPlatform] = useState<string>(initialPlatform), [index, setIndex] = useState(initialIndex)
-  const [category, setCategory] = useState<PosterCategory>(initialCategory)
+  // Opens on 全屏 and 随机 (2026-11-04, user).
+  const [category, setCategory] = useState<PosterCategory>(initialCategory === 'random' ? 'minimal' : initialCategory)
   // 随机 (2026-11-04): one poster drawn from every style that can always be made; tapping again draws another.
-  const [randomStyle, setRandomStyle] = useState<string | null>(null)
+  const pickRandom = (exclude: string | null) => {
+    const pool = posterTemplates(platformId).filter(t => t.kind === 'brand' || t.kind === 'guide').map(t => t.style as string).filter(style => style !== exclude)
+    return pool[Math.floor(Math.random() * pool.length)]
+  }
+  const [randomStyle, setRandomStyle] = useState<string | null>(() => initialCategory === 'random' ? pickRandom(null) : null)
+  // The next draw is chosen ahead and its artwork fetched, so the card can flip straight onto a finished poster.
+  const nextRandom = useRef<string | null>(null)
+  useEffect(() => {
+    if (!randomStyle) return
+    const next = pickRandom(randomStyle), template = posterTemplates(platformId).find(t => t.style === next)
+    nextRandom.current = next
+    if (template) new Image().src = `/media/referral/posters/${template.art}.webp`
+  }, [randomStyle, platformId]) // eslint-disable-line react-hooks/exhaustive-deps
+  // 换一张 flips the card (2026-11-04, user): it turns away to its edge, the next poster is set, and it turns back in.
+  const [flip, setFlip] = useState<'out' | 'in' | null>(null)
   const drawRandom = () => {
-    const pool = posterTemplates(platformId).filter(t => t.kind === 'brand' || t.kind === 'guide').map(t => t.style as string).filter(style => style !== randomStyle)
-    setRandomStyle(pool[Math.floor(Math.random() * pool.length)]); setIndex(0); stageRef.current?.scrollTo({ left: 0 })
+    if (flip === 'out') return
+    const next = nextRandom.current && nextRandom.current !== randomStyle ? nextRandom.current : pickRandom(randomStyle)
+    const show = () => { setRandomStyle(next); setIndex(0); stageRef.current?.scrollTo({ left: 0 }); setFlip('in'); window.setTimeout(() => setFlip(current => current === 'in' ? null : current), 650) }
+    if (!randomStyle || window.matchMedia('(prefers-reduced-motion: reduce)').matches) { show(); return }
+    setFlip('out'); window.setTimeout(show, 230)
   }
   const [posterLocale, setPosterLocale] = useState<AppLocale>(locale)
   const [retry, setRetry] = useState(0), [status, setStatus] = useState(''), [error, setError] = useState('')
@@ -157,11 +175,12 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
       {/* Style families (2026-11-04): text-only chips; 随机 first, switching a family shows its first poster. */}
       <div className={x.categories} role="group" aria-label={ui.templates}>
         <button type="button" aria-pressed={!!randomStyle} onClick={drawRandom}>{posterCategoryNames[locale].random}</button>
-        {POSTER_CATEGORIES.map(id =>
+        {POSTER_CATEGORIES.filter(id => posterTemplates(platformId, id).length > 0).map(id =>
         <button key={id} type="button" aria-pressed={!randomStyle && category === id} onClick={() => { if (!randomStyle && id === category) return; setRandomStyle(null); setCategory(id); setIndex(0); stageRef.current?.scrollTo({ left: 0 }) }}>{posterCategoryNames[locale][id]}</button>)}
       </div>
       <div ref={stageRef} className={`${x.stage} ${randomStyle ? x.stageRandom : ''}`} style={{ '--poster-ratio': platform.width / platform.height } as CSSProperties} onScroll={pickFromScroll} aria-busy={!!selected && !ready && !error}>
         {variants.map((model, i) => <button key={templates[i].id} type="button" className={x.slide} data-on={index === i || undefined} disabled={!model}
+          data-flip={randomStyle && flip ? flip : undefined} onAnimationEnd={event => { if (event.animationName.includes('posterFlipIn')) setFlip(null) }}
           aria-label={model ? `${model.styleName} · ${ui[model.template.kind]}` : ui.unavailable} aria-pressed={index === i}
           onClick={() => { if (index === i && ready) setExpanded(true); else scrollToSlide(i) }}>
           {index === i && ready ? poster : model ? <PosterThumbnail model={model} qr={qrRef} width={480} /> : <span className={x.placeholder}>{ui.unavailable}</span>}

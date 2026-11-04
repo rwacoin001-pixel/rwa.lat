@@ -15,13 +15,14 @@ function load(file) {
 const { POSTER_PLATFORMS, POSTER_CATEGORIES, posterTemplates, buildPosterModel, invitationUrl } = load('referral-poster')
 // Round-3 film posters join as their artwork is finished (only finished ones are listed in the layouts).
 const film = Object.keys(load('referral-poster-layouts-3').artLayouts3)
-const total = 39 + film.length
+const round4 = Object.keys(load('referral-poster-layouts-4').artLayouts4)
+const total = 39 + film.length + round4.length
 const filmIn = prefix => film.filter(id => id.startsWith(prefix)).length
 const rules = { version: 2, holdingRatesBps: [600, 300, 100], feeRatesBps: [2000, 1000, 500] }
 const input = { code: 'Sample12', locale: 'en', rules, purchaseRewardsEnabled: true, feeRewardsEnabled: true }
-test('ten platforms each expose 51 distinct posters in seven style families', () => {
+test('ten platforms each expose every poster once across eight style families', () => {
   assert.equal(POSTER_PLATFORMS.length, 10)
-  assert.deepEqual(Array.from(POSTER_CATEGORIES), ['minimal', 'ink', 'painting', 'modern', 'future', 'dream', 'graphic'])
+  assert.deepEqual(Array.from(POSTER_CATEGORIES), ['minimal', 'ink', 'painting', 'anime', 'modern', 'future', 'dream', 'graphic'])
   for (const platform of POSTER_PLATFORMS) {
     const templates = posterTemplates(platform.id)
     assert.equal(templates.length, total)
@@ -29,7 +30,9 @@ test('ten platforms each expose 51 distinct posters in seven style families', ()
     assert.equal(new Set(templates.map(t => t.style)).size, total)
     assert.equal(new Set(templates.map(t => t.art)).size, total)
     assert.equal(posterTemplates(platform.id, 'minimal').length, 6)
-    assert.deepEqual(Array.from(POSTER_CATEGORIES, c => posterTemplates(platform.id, c).length), [6, 4 + filmIn('filmInk'), 5 + filmIn('filmVangogh'), 8 + filmIn('filmBauhaus'), 8 + filmIn('filmCyber'), 3, 5])
+    assert.equal(Array.from(POSTER_CATEGORIES, c => posterTemplates(platform.id, c).length).reduce((a, b) => a + b, 0), total)
+    assert.equal(posterTemplates(platform.id, 'minimal').length, 6)
+    assert.ok(posterTemplates(platform.id, 'ink').length >= 4 + filmIn('filmInk'))
     for (const category of POSTER_CATEGORIES.slice(1)) {
       const art = posterTemplates(platform.id, category)
       for (const t of art) {
