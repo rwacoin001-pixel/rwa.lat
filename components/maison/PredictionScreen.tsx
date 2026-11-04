@@ -31,7 +31,7 @@ import { evaluatePredictionDirections } from '@/lib/prediction-availability'
 import { PredictionCountdown } from './PredictionCountdown'
 import { PredictionBetForm } from './PredictionBetForm'
 import { predictionTicketCopy } from '@/lib/prediction-ticket-copy'
-import { addPredictionStake, predictionCapacityStake, predictionWalletAction } from '@/lib/prediction-ticket-state'
+import { predictionCapacityStake, predictionWalletAction } from '@/lib/prediction-ticket-state'
 import { useHideUnavailablePrediction } from '@/lib/use-prediction-directions'
 import { predictionAvailabilityText } from '@/lib/prediction-availability-copy'
 import {hasPredictionEnded,isPredictionDiscoverable} from '@/lib/prediction-lifecycle'
@@ -41,6 +41,7 @@ import { bestCoupon, discountOn, rewardWalletQuery, vouchers } from '@/lib/rewar
 const fromAtomicStr = (atomic: string, decimals: number) => { const v = BigInt(atomic), d = BigInt('1' + '0'.repeat(decimals)); const frac = (v % d).toString().padStart(decimals, '0').replace(/0+$/, ''); return frac ? `${v / d}.${frac}` : `${v / d}` }
 import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 import { usePurchasePin } from './usePurchasePin'
+import { share } from './flow-kit'
 import { PURCHASE_DONE_PATH, savePurchaseDone } from '@/lib/purchase-done'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
@@ -103,7 +104,7 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
 
   const m = data.market
   const ended=!isPredictionDiscoverable(m,now)
-  const localized = locale !== 'en' ? translation.data?.items.find((item) => item.id === m.id) : undefined
+  const localized = locale !== 'en' ? translation.data?.items?.find((item) => item.id === m.id) : undefined
   const translated = showOriginal ? undefined : localized
   const translationLabels = polymarketTranslationCopy[locale]
   const history = data.pricing.history.filter((point) => Number.isFinite(point.price) && Number.isFinite(point.time) && point.time > 0)
@@ -162,6 +163,11 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
   </MaisonPage>
 }
 
+/** A side's price as Polymarket shows it: 52¢ (under 1¢ reads <1¢). */
+function cents(price: unknown) {
+  const value = Number(price) * 100
+  return !Number.isFinite(value) ? '—' : value > 0 && value < 1 ? '<1¢' : `${Math.round(value)}¢`
+}
 function outcomeLabel(label: string, copy: (typeof marketCopy)[keyof typeof marketCopy]) {
   const key = label.trim().toLowerCase()
   return key === 'yes' ? copy.review.yes : key === 'no' ? copy.review.no : label
@@ -294,11 +300,18 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   }
 
   const amountTooLarge = Boolean(atomic && atomic !== '0' && quote.reason==='no_liquidity' && outcome!==null && directions[outcome]?.state==='available')
+  // The quick keys' 最大 (2026-11-05): all the cash, or the per-bet cap when that is lower; cut, never rounded up.
+  const capAtomic = available && /^\d+$/.test(available) && (wallet.data?.asset.decimals ?? 6) === decimals
+    ? (limits?.maxStakeAtomic && BigInt(limits.maxStakeAtomic) < BigInt(available) ? limits.maxStakeAtomic : available) : null
+  const maxStake = capAtomic ? share(capAtomic, 100, decimals) : null
+  const stakeNum = atomic ? Number(atomic) / 10 ** decimals : 0
+  const gain = netPayout !== null && stakeNum > 0 ? (() => { const r = Math.round((netPayout / stakeNum - 1) * 100); return `${r > 0 ? '+' : r < 0 ? '−' : ''}${Math.abs(r).toLocaleString(locale)}%` })() : null
+  const loss = stakeNum > 0 && !voucher ? fmtAtomic(atomic, decimals, 'USDT') : null
   let smallerStake = amountTooLarge ? predictionCapacityStake(quote.depth, placeFeeRate, decimals) : null
   if (smallerStake && available && /^\d+$/.test(available) && BigInt(toAtomic(smallerStake,decimals)??'0')>BigInt(available)) smallerStake = null
   return <>{pin.ui}<PredictionBetForm
-    stake={stake} onStake={value=>{setStake(value);setServerError(null)}} onAdd={amount=>{setStake(addPredictionStake(stake,amount,decimals));setServerError(null)}}
-    outcomes={m.outcomes.slice(0,2).map((label,index)=>({label:translation?.outcomes[index]??outcomeLabel(label,copy),probability:pct(m.prices[index]),disabled:!m.tokenIds[index] || directions[index].state==='unavailable'}))}
+    stake={stake} onStake={value=>{setStake(value);setServerError(null)}} maxStake={maxStake} decimals={decimals} gain={gain} loss={loss}
+    outcomes={m.outcomes.slice(0,2).map((label,index)=>({label:translation?.outcomes[index]??outcomeLabel(label,copy),probability:cents(m.prices[index]),disabled:!m.tokenIds[index] || directions[index].state==='unavailable'}))}
     outcome={outcome} onOutcome={index=>{setOutcome(index);setServerError(null)}} walletAction={walletAction} balance={fmtAtomic(available,decimals,'USDT')}
     price={price ? `${(price*100).toLocaleString(locale,{maximumFractionDigits:2})}¢` : '—'} shares={shares ? `≈ ${shares.toLocaleString(locale,{maximumFractionDigits:2})}` : '—'}
     fees={atomic ? `${fmtAtomic(chargedFee.toString(),decimals,'USDT')} + ${payoutFee!==null?payoutFee.toLocaleString(locale,{maximumFractionDigits:2}):'—'} USDT` : '—'}

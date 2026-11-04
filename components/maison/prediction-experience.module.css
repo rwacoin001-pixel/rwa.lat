@@ -197,3 +197,27 @@ dl.eventFigures[data-count='3'] { grid-template-columns:repeat(3,minmax(0,1fr));
 
 /* Palette A preview (styles/palette-a.css): the sans display needs weight where the serif had contrast. */
 :global(html[data-palette='a']) .eventFigures dd.eventFigureLead { font-weight: 600; }
+
+/* Ticket v3 (2026-11-05, buy-page plan items 1-3): side keys first with the price in cents, the amount on our own keypad,
+   one big result line. Solid grounds, ink type; the chosen side carries its colour only in its text and edge. */
+.compactTicket .ticketOutcomes { gap:8px; padding:0; border:0; background:none; }
+.compactTicket .ticketOutcomes button { flex-direction:column; flex-wrap:nowrap; gap:2px; min-height:64px; border:1px solid var(--m-line); border-radius:16px; background:var(--pa-card, var(--m-glass)); color:var(--m-ink); font:600 14px var(--m-sans); transition:transform .2s cubic-bezier(.34,1.56,.64,1), border-color .2s, box-shadow .2s; }
+.compactTicket .ticketOutcomes button b { font-size:22px; font-weight:650; letter-spacing:-.02em; font-variant-numeric:tabular-nums; }
+.compactTicket .ticketOutcomes button[aria-pressed='true'][data-side='yes'] { border-color:var(--m-up); box-shadow:inset 0 0 0 1px var(--m-up); background:var(--pa-card, var(--m-glass)); }
+.compactTicket .ticketOutcomes button[aria-pressed='true'][data-side='no'] { border-color:var(--m-down); box-shadow:inset 0 0 0 1px var(--m-down); background:var(--pa-card, var(--m-glass)); }
+.compactTicket .ticketAmount { padding:0; }
+.centerFigure { display:flex; justify-content:center; align-items:baseline; gap:8px; margin:2px 0 0; color:var(--m-ink); font:400 clamp(36px,11vw,46px)/1.1 var(--m-sans); letter-spacing:-.03em; font-variant-numeric:tabular-nums; }
+.centerFigure span { color:var(--m-muted); font-size:13px; font-weight:650; letter-spacing:0; }
+.centerFigure[data-empty] bdi { color:var(--m-faint); }
+.centerFigure[data-invalid='true'] bdi { color:var(--m-down); }
+.compactTicket .balance { margin-top:2px; }
+.winLine { display:grid; gap:4px; padding:12px 16px; border-radius:16px; background:var(--pa-card, var(--m-glass)); box-shadow:var(--pa-card-shadow, 0 0 0 1px var(--m-line)); }
+.winLine > div { display:flex; align-items:baseline; gap:8px; min-width:0; }
+.winLine > div span { flex:1; color:var(--m-muted); font-size:12px; }
+.winLine > div b { color:var(--m-ink); font-size:20px; font-weight:650; letter-spacing:-.02em; white-space:nowrap; }
+.winLine > div em[data-tone='flat'] { color:var(--m-muted); }
+.winLine > div em { color:var(--m-up); font-size:13px; font-style:normal; font-weight:650; font-variant-numeric:tabular-nums; }
+.winLine p { margin:0; color:var(--m-muted); font-size:12px; line-height:1.4; font-variant-numeric:tabular-nums; }
+.ticketPad > div > div:last-child { grid-auto-rows:48px; }
+.ticketPad > div > div:last-child > button { font-size:24px; }
+@media(max-height:760px) { .ticketPad > div > div:last-child { grid-auto-rows:42px; } .compactTicket .ticketOutcomes button { min-height:56px; } .centerFigure { font-size:36px; } }
