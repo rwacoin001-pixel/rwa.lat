@@ -113,13 +113,14 @@ export function describeCard(card: PostCard, k: Copy, locale: string): CardModel
 }
 
 const PHOTO: Record<CardModel['group'], string | null> = { quant: '/media/home/cards/quant-720.webp', prediction: '/media/home/cards/predict-720.webp', funds: null }
-const flipCopy: Partial<Record<AppLocale, { more: string; back: string }>> = { 'zh-CN': { more: '点按查看明细', back: '点按翻回' }, en: { more: 'Tap for details', back: 'Tap to flip back' } }
+const flipCopy: Partial<Record<AppLocale, { more: string; back: string; paper: string }>> = { 'zh-CN': { more: '点按打开', back: '点按收起', paper: '明细' }, en: { more: 'Tap to open', back: 'Tap to close', paper: 'Details' } }
 
 /**
  * The card (2026-11-04, after the user's reference): a dark folder card. A soft, blurred photo fills the top with the
  * product line in its corner; a dark sheet with a tab rises over it — the kind on the tab, the main figure at the foot.
- * It is a thing you can hold: it tilts under the finger and a tap turns it over to the details. The provenance and the
- * risk line sit under it and never turn away. `mini` (晒单精选) and `still` (inside another button) are not interactive.
+ * It is a folder you can hold (2026-11-04, user: tapping it should open like a folder, not flip): it tilts under the
+ * finger, and a tap drops the front flap and slides the paper with the details up out of it. The provenance and the
+ * risk line sit under it and never hide. `mini` (晒单精选) and `still` (inside another button) are not interactive.
  */
 export function ResultCard({ card, author, compact = false, mini = false, still = false }: { card: PostCard; author?: Author; compact?: boolean; mini?: boolean; still?: boolean }) {
   const { locale } = useI18n()
@@ -129,7 +130,15 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
   const live = !mini && !still
   const [flipped, setFlipped] = useState(false)
   const frame = useRef<HTMLDivElement>(null)
+  const paper = useRef<HTMLDivElement>(null)
+  // The flap drops as far as the paper needs to show all of it above the flap.
+  const toggle = () => setFlipped((open) => {
+    const el = frame.current, sheet = el?.querySelector<HTMLElement>('[data-sheet]')
+    if (!open && el && paper.current && sheet) el.style.setProperty('--drop', `${Math.max(0, paper.current.scrollHeight + 18 - sheet.offsetTop)}px`)
+    return !open
+  })
   const press = useRef<{ x: number; y: number; moved: boolean } | null>(null)
+  const dragged = useRef(false)
   const tilt = (event: React.PointerEvent<HTMLDivElement>) => {
     const el = frame.current
     if (!el || !press.current) return
@@ -139,7 +148,7 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
     el.style.setProperty('--ry', `${(px * 10).toFixed(2)}deg`); el.style.setProperty('--rx', `${(-py * 8).toFixed(2)}deg`)
     el.style.setProperty('--gx', `${((px + .5) * 100).toFixed(1)}%`); el.style.setProperty('--gy', `${((py + .5) * 100).toFixed(1)}%`)
   }
-  const rest = () => { const el = frame.current; press.current = null; if (!el) return; delete el.dataset.held; el.style.removeProperty('--rx'); el.style.removeProperty('--ry') }
+  const rest = () => { const el = frame.current; if (press.current) dragged.current = press.current.moved; press.current = null; if (!el) return; delete el.dataset.held; el.style.removeProperty('--rx'); el.style.removeProperty('--ry') }
   const side = m.hero?.sub ? { value: m.hero.sub, label: card.kind === 'prediction_record' ? k.f.total : k.f.returnPct, tone: m.hero.subTone } : (() => { const cell = m.grid.find((item) => !item.hidden); return cell ? { value: cell.value, label: cell.label, tone: cell.tone } : null })()
   const photo = PHOTO[m.group]
   const kindName = m.head.split(' · ').pop() ?? m.head
@@ -149,7 +158,16 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
   const front = <div className={s.face} data-face="front">
     <div className={s.photo} aria-hidden="true">{photo && <img src={photo} alt="" width={720} height={450} decoding="async" loading="lazy" />}</div>
     <span className={s.label}><b>{k.group[m.group]}</b><small>{k.snapshot}</small></span>
-    <div className={s.sheet}>
+    {live && <div ref={paper} className={s.paper} aria-hidden={!flipped}>
+      <span className={s.paperHead}><b>{f.paper}</b><small dir="auto">{kindName} · {subline}</small></span>
+      {m.holdings && <Holdings rows={m.holdings} />}
+      {m.grid.length > 0 && <dl className={s.grid}>
+        {m.grid.map((cell) => cell.hidden
+          ? <div key={cell.key} data-hidden=""><dt>{cell.label}</dt><dd><i className={s.veil} /><EyeOff size={13} strokeWidth={1.8} aria-hidden="true" /></dd></div>
+          : <div key={cell.key}><dt>{cell.label}</dt><dd dir="auto" data-tone={cell.tone}>{cell.value}</dd></div>)}
+      </dl>}
+    </div>}
+    <div className={s.sheet} data-sheet="">
       <span className={s.tab}><b>{kindName}</b></span>
       <small className={s.subline} dir="auto">{subline}</small>
       <div className={s.mid}>
@@ -162,34 +180,21 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
         {m.hero ? <span className={s.hero}>{m.hero.kicker && <small>{m.hero.kicker}</small>}<b className={s.figure} data-tone={m.hero.tone} dir="ltr">{m.hero.text}{m.hero.unit && <em>{m.hero.unit}</em>}</b></span> : <span />}
         {side && <span className={s.side}><b data-tone={side.tone} dir="auto">{side.value}</b><small>{side.label}</small></span>}
       </div>
-      {live && <span className={s.hint} aria-hidden="true">{f.more}</span>}
+      {live && <span className={s.hint} aria-hidden="true">{flipped ? f.back : f.more}</span>}
     </div>
-  </div>
-
-  const back = live && <div className={s.face} data-face="back" aria-hidden={!flipped}>
-    <div className={s.backSheet}>
-      <span className={s.backHead}><b>{kindName}</b><small dir="auto">{subline}</small></span>
-      {question && <b className={s.question} dir="auto">{question}</b>}
-      {m.holdings && <Holdings rows={m.holdings} />}
-      {m.grid.length > 0 && <dl className={s.grid}>
-        {m.grid.map((cell) => cell.hidden
-          ? <div key={cell.key} data-hidden=""><dt>{cell.label}</dt><dd><i className={s.veil} /><EyeOff size={13} strokeWidth={1.8} aria-hidden="true" /></dd></div>
-          : <div key={cell.key}><dt>{cell.label}</dt><dd dir="auto" data-tone={cell.tone}>{cell.value}</dd></div>)}
-      </dl>}
-      <span className={s.hint}>{f.back}</span>
-    </div>
+    {live && <span className={s.room} aria-hidden="true" />}
   </div>
 
   return <article className={s.card} data-group={m.group} data-compact={compact || mini || undefined} data-mini={mini || undefined} aria-label={m.head}>
-    <div ref={frame} className={s.frame} data-live={live || undefined} data-flipped={flipped || undefined}
+    <div ref={frame} className={s.frame} data-live={live || undefined} data-open={flipped || undefined}
       {...(live ? {
-        role: 'button', tabIndex: 0, 'aria-pressed': flipped,
+        role: 'button', tabIndex: 0, 'aria-expanded': flipped,
         onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => { press.current = { x: event.clientX, y: event.clientY, moved: false }; frame.current!.dataset.held = ''; tilt(event) },
         onPointerMove: tilt, onPointerUp: rest, onPointerLeave: rest, onPointerCancel: rest,
-        onClick: (event: React.MouseEvent) => { event.stopPropagation(); if (press.current?.moved) return; navigator.vibrate?.(4); setFlipped((value) => !value) },
-        onKeyDown: (event: React.KeyboardEvent) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); setFlipped((value) => !value) } },
+        onClick: (event: React.MouseEvent) => { event.stopPropagation(); if (dragged.current) { dragged.current = false; return } navigator.vibrate?.(4); toggle() },
+        onKeyDown: (event: React.KeyboardEvent) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle() } },
       } : {})}>
-      <div className={s.turn}>{front}{back}</div>
+      <div className={s.turn}>{front}</div>
       {live && <i className={s.glare} aria-hidden="true" />}
     </div>
     <footer className={s.below}>

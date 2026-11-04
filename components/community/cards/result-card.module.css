@@ -12,11 +12,9 @@
 .frame { position: relative; perspective: 900px; border-radius: 30px; outline: none; -webkit-tap-highlight-color: transparent; }
 .frame[data-live] { cursor: pointer; touch-action: pan-y; }
 .frame:focus-visible { box-shadow: 0 0 0 2px var(--m-accent, #087a67); }
-.turn { position: relative; display: grid; transform: rotateX(var(--rx, 0deg)) rotateY(calc(var(--ry, 0deg) + var(--flip, 0deg))); transform-style: preserve-3d; transition: transform .6s var(--pa-ease-spring, cubic-bezier(.34, 1.4, .64, 1)); }
+.turn { position: relative; display: grid; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transform-style: preserve-3d; transition: transform .5s var(--pa-ease-spring, cubic-bezier(.34, 1.4, .64, 1)); }
 .frame[data-held] .turn { transition: transform .12s ease-out; }
-.frame[data-flipped] { --flip: 180deg; }
-.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 22px 40px -24px rgba(10, 12, 16, .7); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
-.face[data-face='back'] { transform: rotateY(180deg); }
+.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 22px 40px -24px rgba(10, 12, 16, .7); perspective: 700px; }
 
 /* Photo: blurred into a colour field, so any picture reads like the reference's soft light. */
 .photo { position: absolute; inset: 6px 6px auto; height: var(--photo-h); overflow: hidden; border-radius: 24px 24px 0 0; background: radial-gradient(120% 140% at 80% 0%, #3a3f48, #1c1f25 70%); }
@@ -27,7 +25,27 @@
 .label small { font-size: 12px; font-weight: 500; line-height: 16px; opacity: .82; }
 
 /* Sheet with a tab: the tab's top right curves down into the sheet (convex, then concave — an S like a folder tab). */
-.sheet { position: relative; z-index: 1; display: grid; grid-template-rows: auto auto 1fr auto; min-height: 196px; margin-top: var(--lift); padding: 0 18px 16px; border-radius: 0 22px 24px 24px; background: var(--sheet); }
+.sheet { position: relative; z-index: 2; display: grid; grid-template-rows: auto auto 1fr auto; min-height: 196px; margin-top: var(--lift); padding: 0 18px 16px; border-radius: 0 22px 24px 24px; background: var(--sheet);
+  transform-origin: 50% 100%; transition: transform .55s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)), box-shadow .55s; }
+/* Open (2026-11-04): the front flap drops by --drop and tips toward you; the paper rises out of the folder. */
+.frame[data-open] .sheet { transform: translateY(var(--drop, 120px)) rotateX(-14deg); box-shadow: 0 -18px 30px -18px rgba(0, 0, 0, .55); }
+.room { display: block; height: 0; transition: height .55s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)); }
+.frame[data-open] .room { height: calc(var(--drop, 120px) - 8px); }
+.paper { position: absolute; z-index: 1; top: 18px; right: 18px; left: 18px; display: grid; align-content: start; gap: 10px; padding: 16px 16px 40px; border-radius: 14px; background: #f7f6f2; color: #14161a; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .55);
+  opacity: 0; transform: translateY(calc(var(--lift) + 40px)) rotate(0deg); transition: transform .6s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)) .04s, opacity .2s .3s; }
+.paper::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(20, 22, 26, .045) 27px 28px); pointer-events: none; }
+.frame[data-open] .paper { opacity: 1; transform: translateY(0) rotate(-1.2deg); transition: transform .6s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)) .04s, opacity .1s; }
+.paperHead { display: grid; gap: 2px; }
+.paperHead b { font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: .02em; }
+.paperHead small { overflow: hidden; color: rgba(20, 22, 26, .56); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.paperQuestion { font-size: 14px; font-weight: 500; line-height: 20px; }
+.paper .grid { --line: rgba(20, 22, 26, .1); }
+.paper .grid dt { color: rgba(20, 22, 26, .56); }
+.paper [data-tone='up'] { color: #0f8f5f; }
+.paper [data-tone='down'] { color: #c23a3a; }
+.paper .veil { background: linear-gradient(90deg, rgba(20, 22, 26, .16), rgba(20, 22, 26, .05)); }
+.paper .holdings li + li { border-color: rgba(20, 22, 26, .1); }
+.paper .holdings li small { color: rgba(20, 22, 26, .56); }
 .tab { position: relative; display: flex; align-items: center; width: var(--tab-w); height: 30px; margin: -30px 0 0 -18px; padding: 2px 18px 0; border-radius: 22px 14px 0 0; background: var(--sheet); }
 .tab::after { content: ''; position: absolute; bottom: 0; left: 100%; width: 14px; height: 14px; background: radial-gradient(circle at 100% 0, transparent 13.5px, var(--sheet) 14px); }
 .tab b { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; letter-spacing: -.01em; }
@@ -60,11 +78,6 @@
 .bar i { min-width: 6px; }
 .card [data-i='0'] { background: #46d39a; } .card [data-i='1'] { background: #8fb8ff; } .card [data-i='2'] { background: #d9dde3; } .card [data-i='3'] { background: #6b717b; }
 
-/* Back: the same frame, one sheet with every field. */
-.backSheet { display: grid; align-content: start; gap: 12px; min-height: 100%; padding: 18px 18px 16px; border-radius: 24px; background: var(--sheet); }
-.backHead { display: grid; gap: 2px; }
-.backHead b { font-size: 17px; font-weight: 600; line-height: 22px; }
-.backHead small { overflow: hidden; color: var(--muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
 .grid { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: .5px solid var(--line); }
 .grid > div { display: grid; gap: 2px; min-width: 0; padding: 10px 0; }
 .grid > div:nth-child(even) { padding-inline-start: 14px; border-inline-start: .5px solid var(--line); }
@@ -113,7 +126,7 @@
 .card[data-mini] .risk { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
 
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
-:global(.rwa-mobile) .card.card .subline, :global(.rwa-mobile) .card.card .hero small, :global(.rwa-mobile) .card.card .side small, :global(.rwa-mobile) .card.card .hint, :global(.rwa-mobile) .card.card .note, :global(.rwa-mobile) .card.card .backHead small, :global(.rwa-mobile) .card.card .holdings li small { color: var(--muted); }
+:global(.rwa-mobile) .card.card .subline, :global(.rwa-mobile) .card.card .hero small, :global(.rwa-mobile) .card.card .side small, :global(.rwa-mobile) .card.card .hint, :global(.rwa-mobile) .card.card .note, :global(.rwa-mobile) .card.card .holdings li small { color: var(--muted); }
 :global(.rwa-mobile) .card.card .label small, :global(.rwa-mobile) .card.card .label b { color: #fff; }
 :global(.rwa-mobile) .card.card .prov, :global(.rwa-mobile) .card.card .who small { color: var(--m-muted, #5b6472); }
 :global(.rwa-mobile) .card.card .risk { color: var(--m-faint, #8a9099); }
@@ -121,4 +134,6 @@
 :global(.rwa-mobile[data-theme='dark']) .face { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 22px 40px -24px rgba(0, 0, 0, .9); }
 :global(.rwa-mobile[data-theme='dark']) .below { color: #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .card.card .prov, :global(.rwa-mobile[data-theme='dark']) .card.card .who small { color: #a3acb9; }
-@media (prefers-reduced-motion: reduce) { .turn { transition: none; } .glare { display: none; } }
+@media (prefers-reduced-motion: reduce) { .turn, .sheet, .paper, .room { transition: none; } .glare { display: none; } }
+:global(.rwa-mobile) .card.card .paperHead small, :global(.rwa-mobile) .card.card .paper .grid dt, :global(.rwa-mobile) .card.card .paper .holdings li small { color: rgba(20, 22, 26, .56); }
+:global(.rwa-mobile) .card.card .paper { color: #14161a; }

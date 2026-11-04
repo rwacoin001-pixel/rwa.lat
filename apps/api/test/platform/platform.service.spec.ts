@@ -31,6 +31,11 @@ describe('Published platform information and access', () => {
     db.query.mockResolvedValue([{ published: null, revision: null }])
     expect((await service.evaluateAccess('u')).allowed).toBe(false)
   })
+  it('lets an account with no recorded region invest (no KYC, no allowlist)', async () => {
+    const { db, service } = setup()
+    db.query.mockResolvedValueOnce([{ published: content, revision: 2 }]).mockResolvedValueOnce([])
+    expect(await service.evaluateAccess('u')).toMatchObject({ allowed: true, reason: null })
+  })
   it('requires both verified country and investor type to match', async () => {
     const { db, service } = setup()
     db.query.mockResolvedValueOnce([{ published: content, revision: 2 }]).mockResolvedValueOnce([{ region: 'SG', investor_type: 'retail' }])

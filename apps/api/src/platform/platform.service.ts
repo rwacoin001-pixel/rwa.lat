@@ -46,7 +46,9 @@ export class PlatformService {
     const row = await this.published()
     if (!row?.published) return { allowed: this.config.get('APP_ENV') !== 'production', reason: 'platform_policy_unpublished', region: null, revision: null }
     const [verified] = await this.db.query(`SELECT region, investor_type FROM app.user_verified_access WHERE user_id = $1`, [userId])
-    if (!verified) return { allowed: false, reason: 'verified_region_required', region: null, revision: row.revision }
+    // No KYC and no allowlist (2026-11-04, user: any account with a balance may buy any product). Only a region an
+    // operator recorded for this user is checked against the published policy.
+    if (!verified) return { allowed: true, reason: null, region: null, revision: row.revision }
     const allowed = row.published.allowedRegions.includes(verified.region) && row.published.investorTypes.includes(verified.investor_type)
     return { allowed, reason: allowed ? null : 'region_or_investor_type_restricted', region: verified.region, revision: row.revision }
   }
