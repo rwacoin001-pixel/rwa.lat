@@ -1,7 +1,7 @@
 'use client'
 
 import { motion, useMotionValue, useReducedMotion, useSpring, useTransform } from 'motion/react'
-import { useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
+import { Component, useEffect, useLayoutEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from 'react'
 
 import { DUR, EASE, reduced } from '@/lib/motion'
 
@@ -76,19 +76,145 @@ export function SplitFlapText({ value, className = '', label }: SplitFlapTextPro
 type ScreenTransitionProps = { screenKey: string; children: ReactNode; motion?: 'enter' | 'return' | 'tab' }
 
 /**
- * A compositing-only screen transition. It deliberately animates opacity and
- * blur instead of transform so fixed order/wallet actions keep their viewport
- * anchor while a route changes.
+ * Screen changes move like a native stack (2026-11-04, user: switching pages felt like a website). Only one screen is
+ * mounted, so just before React swaps it the outgoing page is copied (a static snapshot, sticky and fixed parts kept
+ * where they were on screen). Forward: the new page slides in from the trailing edge over the copy, which eases back
+ * and dims. Back: the copy slides away to the trailing edge and the page underneath comes forward. Dock tabs keep their
+ * short cross-fade. The first load and reduced motion keep the CSS entrance. Transforms are cleared afterwards so
+ * fixed actions inside a page keep their viewport anchor.
  */
-export function ScreenTransition({ screenKey, children, motion = 'enter' }: ScreenTransitionProps) {
-  // CSS-driven fade: identical markup on server and client (no hydration mismatch).
-  // prefers-reduced-motion is handled in CSS (.rwa-screen-fade media query).
-  return (
-    <div key={`${screenKey}:${motion}`} className={`rwa-screen-transition rwa-${motion}`}>
-      {motion === 'tab' && <SettleEntrances />}
-      {children}
-    </div>
-  )
+export class ScreenTransition extends Component<ScreenTransitionProps> {
+  private node: HTMLDivElement | null = null
+  private setNode = (el: HTMLDivElement | null) => { this.node = el }
+
+  getSnapshotBeforeUpdate(prev: ScreenTransitionProps): Snapshot | null {
+    const motion = this.props.motion ?? 'enter'
+    if (`${prev.screenKey}:${prev.motion}` === `${this.props.screenKey}:${motion}` || prev.screenKey === this.props.screenKey) return null
+    if (skipNext) { skipNext = false; return null }
+    if (motion !== 'enter') forgetPrevious()
+    if (motion === 'tab' || !this.node || typeof window === 'undefined' || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return null
+    return takeSnapshot(this.node)
+  }
+
+  componentDidUpdate(_prev: ScreenTransitionProps, _state: unknown, snapshot: Snapshot | null) {
+    if (!snapshot || !this.node) return
+    // Floating sheet screens have their own rise; the stack slide is for full pages.
+    if (snapshot.sheet || snapshot.host.dataset.sheet === 'true') { snapshot.clone.remove(); return }
+    playStack(snapshot, this.node, this.props.motion === 'return' ? 'pop' : 'push')
+  }
+
+  render() {
+    const motion = this.props.motion ?? 'enter'
+    return (
+      <div ref={this.setNode} key={`${this.props.screenKey}:${motion}`} className={`rwa-screen-transition rwa-${motion}`}>
+        {motion === 'tab' && <SettleEntrances />}
+        {this.props.children}
+      </div>
+    )
+  }
+}
+
+type Snapshot = { clone: HTMLElement; host: HTMLElement; rect: DOMRect; sheet: boolean }
+let running: { finish: () => void } | null = null
+/** The frozen page under the current one (kept after a push), for the edge swipe back; and a one-shot skip. */
+let previous: HTMLElement | null = null
+let skipNext = false
+export const stackPrevious = () => previous
+export function forgetPrevious() { previous?.remove(); previous = null }
+/** The edge swipe already moved the page; the pop it triggers must not animate a second time. */
+export function skipNextTransition() { skipNext = true }
+
+/** A static copy of the outgoing page at its on-screen position; sticky/fixed parts stay where they were seen. */
+function takeSnapshot(el: HTMLElement): Snapshot | null {
+  const host = el.parentElement
+  if (!host) return null
+  running?.finish()
+  const rect = el.getBoundingClientRect()
+  const pinned: Array<{ index: number; top: number; left: number; position: string }> = []
+  const all = el.querySelectorAll<HTMLElement>('*')
+  for (let index = 0; index < all.length; index++) {
+    const position = getComputedStyle(all[index]).position
+    if (position === 'sticky' || position === 'fixed') { const r = all[index].getBoundingClientRect(); pinned.push({ index, top: r.top, left: r.left, position }) }
+  }
+  const clone = el.cloneNode(true) as HTMLElement
+  clone.classList.add('rwa-snap')
+  clone.setAttribute('aria-hidden', 'true')
+  clone.setAttribute('inert', '')
+  clone.querySelectorAll('[id]').forEach((node) => node.removeAttribute('id'))
+  // Canvases are copied empty; paint what the original showed (WebGL may refuse, which is fine).
+  const fromCanvas = el.querySelectorAll('canvas'), toCanvas = clone.querySelectorAll('canvas')
+  toCanvas.forEach((canvas, index) => { try { canvas.getContext('2d')?.drawImage(fromCanvas[index], 0, 0) } catch { /* leave it blank */ } })
+  Object.assign(clone.style, { position: 'fixed', top: `${rect.top}px`, left: `${rect.left}px`, width: `${rect.width}px`, margin: '0', zIndex: '0', pointerEvents: 'none', animation: 'none', transform: 'translateZ(0)' })
+  host.insertBefore(clone, el)
+  const copies = clone.querySelectorAll<HTMLElement>('*')
+  for (const pin of pinned) {
+    const copy = copies[pin.index]
+    if (!copy) continue
+    copy.style.position = pin.position === 'fixed' ? 'absolute' : 'relative'
+    copy.style.top = '0px'
+    const r = copy.getBoundingClientRect()
+    copy.style.transform = `translate(${pin.left - r.left}px, ${pin.top - r.top}px)`
+  }
+  return { clone, host, rect, sheet: host.dataset.sheet === 'true' }
+}
+
+const EASE_STACK = 'cubic-bezier(.32, .72, 0, 1)'
+const STACK_MS = 420
+
+function pageBackground(el: HTMLElement) {
+  for (const node of [el.firstElementChild as HTMLElement | null, el.parentElement, document.body]) {
+    const colour = node ? getComputedStyle(node).backgroundColor : ''
+    if (colour && colour !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(colour)) return colour
+  }
+  return '#f5f6f8'
+}
+
+/** iOS push/pop: the top page moves the full width, the one under it a third, with a shade at the seam. */
+function playStack({ clone }: Snapshot, live: HTMLElement, kind: 'push' | 'pop') {
+  const rtl = document.documentElement.dir === 'rtl' ? -1 : 1
+  const full = `${100 * rtl}%`, part = `${-28 * rtl}%`
+  const prior = { animation: live.style.animation, position: live.style.position, zIndex: live.style.zIndex, background: live.style.background, boxShadow: live.style.boxShadow, transform: live.style.transform }
+  live.style.animation = 'none'
+  live.style.position = 'relative'
+  live.style.background = pageBackground(live)
+  const timing: KeyframeAnimationOptions = { duration: STACK_MS, easing: EASE_STACK, fill: 'both' }
+  const seam = '0 0 40px rgba(10, 12, 16, .18)'
+  let animations: Animation[]
+  if (kind === 'push') {
+    live.style.zIndex = '1'
+    live.style.boxShadow = seam
+    animations = [
+      live.animate([{ transform: `translate3d(${full}, 0, 0)` }, { transform: 'translate3d(0, 0, 0)' }], timing),
+      clone.animate([{ transform: 'translate3d(0, 0, 0)', opacity: 1 }, { transform: `translate3d(${part}, 0, 0)`, opacity: .72 }], timing),
+    ]
+  } else {
+    live.style.zIndex = '0'
+    clone.style.zIndex = '2'
+    clone.style.boxShadow = seam
+    clone.style.background = pageBackground(clone)
+    animations = [
+      clone.animate([{ transform: 'translate3d(0, 0, 0)' }, { transform: `translate3d(${full}, 0, 0)` }], timing),
+      live.animate([{ transform: `translate3d(${part}, 0, 0)`, opacity: .72 }, { transform: 'translate3d(0, 0, 0)', opacity: 1 }], timing),
+    ]
+  }
+  let done = false
+  const finish = () => {
+    if (done) return
+    done = true
+    for (const animation of animations) animation.cancel()
+    clone.remove()
+    // After a push the copy is kept (detached) as the page under this one, for the edge swipe back.
+    forgetPrevious()
+    if (kind === 'push') { clone.style.transform = 'translateZ(0)'; clone.style.opacity = ''; previous = clone }
+    Object.assign(live.style, prior)
+    if (running === handle) running = null
+  }
+  const handle = { finish }
+  running = handle
+  void Promise.all(animations.map((animation) => animation.finished)).then(finish, finish)
+  // Hidden tabs and some WebViews pause animations; never leave the new page off-screen or the copy on top.
+  window.setTimeout(finish, STACK_MS + 250)
+  if (document.visibilityState === 'hidden') finish()
 }
 
 /**
