@@ -13,6 +13,8 @@ import { loginMethodName, type ManagedUser } from '@/components/user-detail'
 const PAGE = 50
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const USER_STATUS: Record<string, string> = { active: '正常', restricted: '受限', suspended: '暂停', closed: '已关闭' }
+/** Email never verified and no other way to sign in. The list hides these; a search can still find them. */
+const unfinished = (u: ManagedUser) => u.status !== 'closed' && u.emailState === 'pending' && u.loginMethods.every((m) => m === 'email')
 
 function List() {
   const params = useSearchParams()
@@ -67,7 +69,9 @@ function List() {
                 </span>
                 <span className="hidden w-[150px] text-right text-[12px] text-ops-sub md:block" title={sgTime(u.lastSeenAt)}>{u.lastSeenAt ? `活跃 ${ago(u.lastSeenAt)}` : '没有活跃记录'}</span>
                 <Money atomic={u.availableAtomic} className="w-[120px] text-right text-[15px]" />
-                <span className="w-[72px] text-right"><Chip tone={u.status === 'active' ? 'plain' : u.status === 'closed' ? 'down' : 'warn'}>{USER_STATUS[u.status] ?? u.status}</Chip></span>
+                <span className="w-[88px] text-right">{unfinished(u)
+                  ? <Chip tone="warn">未完成注册</Chip>
+                  : <Chip tone={u.status === 'active' ? 'plain' : u.status === 'closed' ? 'down' : 'warn'}>{USER_STATUS[u.status] ?? u.status}</Chip>}</span>
               </Link>
             </li>
           ))}

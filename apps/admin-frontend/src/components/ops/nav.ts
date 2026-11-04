@@ -56,7 +56,6 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     id: 'system', label: '系统', icon: Settings2, tabs: [
-      { label: '审批', href: '/approvals', queues: ['approvals'] },
       { label: '失败任务', href: '/job-queue', queues: ['deadJobs'] },
       { label: 'AI 数据', href: '/ai' },
       { label: 'AI 知识库', href: '/ai-knowledge' },

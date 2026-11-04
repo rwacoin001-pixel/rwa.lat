@@ -6,7 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigat
 import { Check, Copy } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
-import { usePolled } from '@/components/ops/data'
+import { usePolled, usePolledList } from '@/components/ops/data'
 import { ago, money, networkLabel, sgTime, shortAddress } from '@/components/ops/format'
 import { BigStatCard, Board, Chip, CircleButton, Face, Money, Notice, PageTitle, SideCard, Updated, WhiteButton } from '@/components/ops/ui'
 import { useAdminProfile } from '@/components/rbac-gate'
@@ -35,9 +35,9 @@ function Profile() {
   const pathname = usePathname()
   const tab = (TABS as readonly string[]).includes(params.get('tab') ?? '') ? params.get('tab')! : 'ledger'
   const detail = usePolled<Detail>(`/api/admin/users/${encodeURIComponent(id)}`, 0)
-  const withdrawals = usePolled<Withdrawal[]>(tab === 'withdrawals' ? '/api/admin/wallet/withdrawals?limit=200' : null, 0)
-  const kyc = usePolled<Kyc[]>(tab === 'kyc' ? '/api/admin/console/kyc?limit=200' : null, 0)
-  const audit = usePolled<Audit[]>(tab === 'audit' ? `/api/admin/audit?userId=${encodeURIComponent(id)}&limit=100` : null, 0)
+  const withdrawals = usePolledList<Withdrawal>(tab === 'withdrawals' ? '/api/admin/wallet/withdrawals?limit=200' : null, 0)
+  const kyc = usePolledList<Kyc>(tab === 'kyc' ? '/api/admin/console/kyc?limit=200' : null, 0)
+  const audit = usePolledList<Audit>(tab === 'audit' ? `/api/admin/audit?userId=${encodeURIComponent(id)}&limit=100` : null, 0)
   const access = useAdminProfile()
   const canAdjust = ['users.read', 'ledger.adjustments.manage', 'ledger.adjustments.post'].every((p) => access.profile?.permissions.includes(p))
   const [adjusting, setAdjusting] = useState(false)

@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowRight, ChevronDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
-import { openWork, usePolled, useToday } from '@/components/ops/data'
+import { openWork, usePolled, usePolledList, useToday } from '@/components/ops/data'
 import { AREA_LABEL, QUEUES, alertText, topPriority, type QueueArea } from '@/components/ops/queues'
 import { WAIT_BUCKETS, money, sgDateLabel, waitBucket, waited } from '@/components/ops/format'
 import { TrendCard } from '@/components/ops/TrendCard'
@@ -26,7 +26,7 @@ const quantDone = (q: { count: number; state?: string } | undefined) => !q || q.
 
 export default function TodayPage() {
   const { data: today, error, updatedAt, reload } = useToday()
-  const pending = usePolled<RawWithdrawal[]>('/api/admin/wallet/withdrawals?state=risk_review&limit=200')
+  const pending = usePolledList<RawWithdrawal>('/api/admin/wallet/withdrawals?state=risk_review&limit=200')
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(t) }, [])
   const [area, setArea] = useState<'all' | QueueArea>('all')

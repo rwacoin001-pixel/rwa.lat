@@ -6,7 +6,7 @@ import { ArrowUpRight, Check, Copy, History } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
 import { Confirm } from '@/components/ops/Confirm'
-import { sendJson, usePolled, useToday } from '@/components/ops/data'
+import { sendJson, usePolled, usePolledList, useToday } from '@/components/ops/data'
 import { WAIT_BUCKETS, ago, money, networkLabel, sgTime, shortAddress, waitBucket, waited } from '@/components/ops/format'
 import { BigStatCard, Board, Chip, CircleButton, DangerButton, Face, FilterBar, LimeButton, Money, Notice, OutlineButton, PageTitle, SearchPill, SegmentTimeline, SelectPill, SideCard, Tile, Updated, WhiteButton } from '@/components/ops/ui'
 
@@ -60,7 +60,7 @@ function Workspace() {
   const q = params.get('q') ?? ''
   const network = params.get('network') ?? ''
   const selectedId = params.get('id')
-  const list = usePolled<Raw[]>('/api/admin/wallet/withdrawals?limit=200')
+  const list = usePolledList<Raw>('/api/admin/wallet/withdrawals?limit=200')
   const funds = usePolled<Funds>('/api/admin/console/funds?days=1', 60_000)
   const execution = usePolled<Switch>(SWITCH_URL, 60_000)
   const [switchDialog, setSwitchDialog] = useState<SwitchDialog>(null)
@@ -91,7 +91,7 @@ function Workspace() {
 
   const selected = rows.find((w) => w.id === selectedId) ?? rows[0] ?? null
   const ctx = usePolled<Context>(selected ? `/api/admin/wallet/withdrawals/${selected.id}/context` : null, 0)
-  const audit = usePolled<AuditRow[]>(selected && timelineOpen ? `/api/admin/audit?objectId=${encodeURIComponent(selected.id)}&limit=30` : null, 0)
+  const audit = usePolledList<AuditRow>(selected && timelineOpen ? `/api/admin/audit?objectId=${encodeURIComponent(selected.id)}&limit=30` : null, 0)
   useEffect(() => { setTimelineOpen(false); setCopied(false) }, [selected?.id])
 
   const pendingReview = (list.data ?? []).filter((w) => w.state === 'risk_review')

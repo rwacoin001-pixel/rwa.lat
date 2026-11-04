@@ -7,6 +7,7 @@ import { CurrentAdmin } from '../admin-rbac/current-admin.decorator'
 import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.service'
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import { AccountClosureService } from './account-closure.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 class RequestDto { @IsString() @MinLength(1) @MaxLength(1000) reason!:string }
 class ReviewDto { @IsIn(['close','reject']) decision!:'close'|'reject'; @IsString() @MinLength(1) @MaxLength(1000) note!:string }
 @Controller('account-closure')
@@ -21,7 +22,7 @@ export class AccountClosureController {
 @UseGuards(AdminSessionGuard)
 export class AdminAccountClosureController {
   constructor(private readonly svc:AccountClosureService,private readonly rbac:AdminRbacService){}
-  private allow(a:AuthenticatedAdmin){return this.rbac.assertPermission(a.id,'users.account_closure.manage')}
+  private allow(a:AuthenticatedAdmin){return assertAdminPermission(a, this.rbac, 'users.account_closure.manage')}
   @Get() async list(@CurrentAdmin() a:AuthenticatedAdmin){await this.allow(a);return this.svc.list()}
   @Get(':id') async inspect(@CurrentAdmin() a:AuthenticatedAdmin,@Param('id',ParseUUIDPipe) id:string){await this.allow(a);return this.svc.inspect(id)}
   @Post(':id/review') async review(@CurrentAdmin() a:AuthenticatedAdmin,@Param('id',ParseUUIDPipe) id:string,@Body() b:ReviewDto){await this.allow(a);return this.svc.review(id,b.decision,b.note,a.id)}

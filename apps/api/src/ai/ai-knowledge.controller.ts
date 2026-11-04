@@ -8,6 +8,7 @@ import { OptionalSessionAuthGuard } from '../security/optional-session-auth.guar
 import { AiKnowledgeService } from './ai-knowledge.service'
 import { KnowledgeRevisionDto, RestoreKnowledgeDto, SaveKnowledgeDto, KnowledgePreviewDto } from './ai-knowledge.dto'
 import { CatalogService } from '../catalog/catalog.service'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 
 @Controller('admin/ai-knowledge')
 @UseGuards(AdminSessionGuard)
@@ -24,7 +25,7 @@ export class AdminAiKnowledgeController {
   @Post(':id/publish') async publish(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', ParseUUIDPipe) id: string, @Body() input: KnowledgeRevisionDto) { await this.permission(admin); return this.knowledge.publish(id, input.expectedRevision, admin.id) }
   @Post(':id/archive') async archive(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', ParseUUIDPipe) id: string, @Body() input: KnowledgeRevisionDto) { await this.permission(admin); return this.knowledge.archive(id, input.expectedRevision, admin.id) }
   @Post(':id/restore') async restore(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', ParseUUIDPipe) id: string, @Body() input: RestoreKnowledgeDto) { await this.permission(admin); return this.knowledge.restore(id, input.sourceRevision, input.expectedRevision, admin.id) }
-  private permission(admin: AuthenticatedAdmin) { return this.rbac.assertPermission(admin.id, 'platform.manage') }
+  private permission(admin: AuthenticatedAdmin) { return assertAdminPermission(admin, this.rbac, 'platform.manage') }
 }
 
 @Controller('ai/knowledge')

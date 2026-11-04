@@ -166,7 +166,7 @@ export class ComplianceController {
   @ApiBearerAuth()
   @UseGuards(AdminSessionGuard)
   async openRiskFlag(@CurrentAdmin() admin: AuthenticatedAdmin, @Body() dto: OpenRiskFlagDto) {
-    await this.rbac.assertPermission(admin.id, 'compliance.manage')
+    await assertAdminPermission(admin, this.rbac, 'compliance.manage')
     return this.service.openRiskFlag(dto.userId, dto.category, dto.severity, dto.source, dto.reasonCode)
   }
 
@@ -174,7 +174,7 @@ export class ComplianceController {
   @ApiBearerAuth()
   @UseGuards(AdminSessionGuard)
   async resolveRiskFlag(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id') id: string, @Body() dto: ResolveRiskFlagDto) {
-    await this.rbac.assertPermission(admin.id, 'compliance.manage')
+    await assertAdminPermission(admin, this.rbac, 'compliance.manage')
     return this.service.resolveRiskFlag(id, dto.state)
   }
 }

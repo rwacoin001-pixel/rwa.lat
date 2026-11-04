@@ -6,7 +6,7 @@ import { Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
 import { Confirm } from '@/components/ops/Confirm'
-import { sendJson, usePolled, useToday } from '@/components/ops/data'
+import { sendJson, usePolled, usePolledList, useToday } from '@/components/ops/data'
 import { money, sgDateLabel, sgTime } from '@/components/ops/format'
 import { BigStatCard, Board, Chip, DangerButton, LimeButton, Money, Notice, OutlineButton, PageTitle, SideCard, Tile, Updated, WhiteButton } from '@/components/ops/ui'
 
@@ -72,9 +72,9 @@ function Daily() {
   const params = useSearchParams()
   const router = useRouter()
   const view = params.get('view') === 'history' ? 'history' : 'today'
-  const products = usePolled<Product[]>('/api/admin/quant/products', 60_000)
+  const products = usePolledList<Product>('/api/admin/quant/products', 60_000)
   const product = products.data?.[0]
-  const settlements = usePolled<Settlement[]>(product ? `/api/admin/quant/products/${product.slug}/settlements?limit=60` : null, 60_000)
+  const settlements = usePolledList<Settlement>(product ? `/api/admin/quant/products/${product.slug}/settlements?limit=60` : null, 60_000)
   const { reload: reloadToday } = useToday()
   const [now, setNow] = useState(() => Date.now())
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 30_000); return () => window.clearInterval(t) }, [])

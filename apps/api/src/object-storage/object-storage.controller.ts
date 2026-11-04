@@ -10,6 +10,7 @@ import { CurrentAuth } from '../security/current-auth.decorator'
 import type { SecurityActor } from '../security/security.service'
 import { SessionAuthGuard } from '../security/session-auth.guard'
 import { CreateUserAttachmentUploadDto, UserObjectReferenceDto } from './object-storage.dto'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 
 @Controller('storage/callbacks')
 export class ObjectStorageCallbackController {
@@ -104,6 +105,6 @@ export class ObjectStorageController {
   }
 
   private assertStoragePermission(admin: AuthenticatedAdmin) {
-    return this.rbac.assertPermission(admin.id, 'storage.manage')
+    return assertAdminPermission(admin, this.rbac, 'storage.manage')
   }
 }

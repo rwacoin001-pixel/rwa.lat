@@ -5,6 +5,7 @@ import type { AuthenticatedAdmin } from '../admin-rbac/admin-session-auth.servic
 import { AdminRbacService } from '../admin-rbac/admin-rbac.service'
 import { DataGovernanceService } from './data-governance.service'
 import { StartDrillDto, FinishDrillDto, RequestDeletionDto, DecideDeletionDto } from './data-governance.dto'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 
 // 数据治理管理端点：受 ADMIN_API_KEY 守卫保护（fail-closed）。
 // Authenticated admin session supplies the actor identity.
@@ -67,6 +68,6 @@ export class DataGovernanceController {
   }
 
   private assertGovernancePermission(admin: AuthenticatedAdmin) {
-    return this.rbac.assertPermission(admin.id, 'data-governance.manage')
+    return assertAdminPermission(admin, this.rbac, 'data-governance.manage')
   }
 }

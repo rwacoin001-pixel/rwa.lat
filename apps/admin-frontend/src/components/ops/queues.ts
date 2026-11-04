@@ -19,7 +19,6 @@ export const QUEUES: QueueMeta[] = [
   { key: 'communityReports', label: '举报', area: 'community', href: '/community?tab=reports', lateAfter: 4 * 60 },
   { key: 'teamBatches', label: '团队月结', area: 'community', href: '/referral?tab=team', lateAfter: 3 * 24 * 60 },
   { key: 'predictionSettlements', label: '预测市场待结算', area: 'community', href: '/polymarket', lateAfter: 2 * 60 },
-  { key: 'approvals', label: '审批', area: 'system', href: '/approvals', lateAfter: 24 * 60 },
   { key: 'deadJobs', label: '失败任务', area: 'system', href: '/job-queue', lateAfter: 0 },
 ]
 

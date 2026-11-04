@@ -5,7 +5,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
 import { Confirm } from '@/components/ops/Confirm'
-import { sendJson, usePolled, useToday } from '@/components/ops/data'
+import { sendJson, usePolled, usePolledList, useToday } from '@/components/ops/data'
 import { ago, sgTime, waited } from '@/components/ops/format'
 import { BigStatCard, Board, Chip, DangerButton, Face, LimeButton, Notice, OutlineButton, PageTitle, SideCard, Tile, Updated, WhiteButton } from '@/components/ops/ui'
 import { CommunityPublications } from '@/components/community-publications'
@@ -42,9 +42,9 @@ function Workspace() {
   }, [params, router, pathname])
   const view: View = (VIEWS as readonly string[]).includes(params.get('tab') ?? '') ? (params.get('tab') as View) : 'queue'
   const stats = usePolled<Stats>('/api/admin/community/stats')
-  const drafts = usePolled<QueueItem[]>('/api/admin/community/queue?state=draft&limit=200')
-  const approved = usePolled<QueueItem[]>(view === 'approved' ? '/api/admin/community/queue?state=approved&limit=200' : null)
-  const reports = usePolled<ReportItem[]>('/api/admin/community/reports?state=open&limit=200')
+  const drafts = usePolledList<QueueItem>('/api/admin/community/queue?state=draft&limit=200')
+  const approved = usePolledList<QueueItem>(view === 'approved' ? '/api/admin/community/queue?state=approved&limit=200' : null)
+  const reports = usePolledList<ReportItem>('/api/admin/community/reports?state=open&limit=200')
   const { reload: reloadToday } = useToday()
   const [now] = useState(() => Date.now())
   const [dialog, setDialog] = useState<'approve' | 'reject' | 'approveAll' | 'reviewed' | 'dismissed' | 'publishDue' | null>(null)

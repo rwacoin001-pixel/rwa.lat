@@ -9,6 +9,7 @@ import { AiMandateService } from './ai-mandate.service'
 import { AiAutomaticService } from './ai-automatic.service'
 import { AiMandateDto, AiMandateStateDto, AiEvaluateDto, AiExecutionRuleDto } from './ai-mandate.dto'
 import { IsString, Length } from 'class-validator'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 class AiRunReviewDto { @IsString() @Length(1,2000) note!: string }
 
 @Controller('ai/investment') @UseGuards(SessionAuthGuard)
@@ -34,5 +35,5 @@ export class AdminAiInvestmentController {
   @Put('rules/:id') async save(@CurrentAdmin() admin: AuthenticatedAdmin,@Param('id',ParseUUIDPipe) id: string,@Body() body: AiExecutionRuleDto) { await this.permission(admin); return this.mandates.saveRule(id,body,admin.id) }
   @Get('runs') async runs(@CurrentAdmin() admin: AuthenticatedAdmin) { await this.permission(admin); return this.automatic.adminRuns() }
   @Post('runs/:id/review') async review(@CurrentAdmin() admin: AuthenticatedAdmin,@Param('id',ParseUUIDPipe) id: string,@Body() body: AiRunReviewDto) { await this.permission(admin); return this.automatic.review(id,admin.id,body.note) }
-  private permission(admin: AuthenticatedAdmin) { return this.rbac.assertPermission(admin.id,'platform.manage') }
+  private permission(admin: AuthenticatedAdmin) { return assertAdminPermission(admin, this.rbac, 'platform.manage') }
 }

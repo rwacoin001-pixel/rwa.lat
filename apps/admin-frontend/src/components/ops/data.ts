@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { adminErrorMessage } from '@/lib/admin-errors'
 import type { QueueKey } from './nav'
 
@@ -145,4 +145,18 @@ export function useToday() {
 export function openWork(today: Today | null): number {
   if (!today) return 0
   return Object.values(today.queues).reduce((sum, q) => sum + (q.status === 'ok' ? q.count : 0), 0)
+}
+
+/** Lists come back either bare or wrapped as { items } (the community endpoints); always hand pages an array. */
+export function asList<T>(body: unknown): T[] {
+  if (Array.isArray(body)) return body as T[]
+  const items = body && typeof body === 'object' ? (body as { items?: unknown }).items : undefined
+  return Array.isArray(items) ? (items as T[]) : []
+}
+
+/** usePolled for list endpoints: `data` is always an array (or null before the first load). */
+export function usePolledList<T>(url: string | null, intervalMs = 30_000) {
+  const polled = usePolled<unknown>(url, intervalMs)
+  const data = useMemo(() => (polled.data === null ? null : asList<T>(polled.data)), [polled.data])
+  return { ...polled, data }
 }

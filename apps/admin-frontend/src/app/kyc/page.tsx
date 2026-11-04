@@ -6,7 +6,7 @@ import { ArrowUpRight, Check, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
 import { Confirm } from '@/components/ops/Confirm'
-import { sendJson, usePolled, useToday } from '@/components/ops/data'
+import { sendJson, usePolled, usePolledList, useToday } from '@/components/ops/data'
 import { ago, shortAddress, sgTime, waited } from '@/components/ops/format'
 import { BigStatCard, Board, Chip, DangerButton, Face, FilterBar, LimeButton, Notice, PageTitle, SearchPill, SideCard, Tile, Updated } from '@/components/ops/ui'
 
@@ -31,7 +31,7 @@ function Workspace() {
   }, [params, router, pathname])
   const view = (params.get('view') as View) in VIEWS ? (params.get('view') as View) : 'review'
   const q = params.get('q') ?? ''
-  const all = usePolled<KycCase[]>('/api/admin/console/kyc?limit=200')
+  const all = usePolledList<KycCase>('/api/admin/console/kyc?limit=200')
   const { reload: reloadToday } = useToday()
   const [now] = useState(() => Date.now())
   const [dialog, setDialog] = useState<'approve' | 'reject' | null>(null)

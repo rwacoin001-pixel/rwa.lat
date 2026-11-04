@@ -11,6 +11,7 @@ import { AgreementConsentDto, CompanyDto, RevisionDto, StatementDocumentDto, Tax
 import { GeneratedDocumentsService } from './generated-documents.service'
 import { DocumentKind } from './document-model'
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 
 const kinds={trade_confirmation:'trade_confirmation',statement:'statement',agreement:'agreement',tax_document:'tax_document'}
 class RestoreDto extends RevisionDto { @ApiProperty({minimum:1}) @IsInt() @Min(1) sourceRevision!:number }
@@ -33,7 +34,7 @@ export class GeneratedDocumentsController {
 @UseGuards(AdminSessionGuard)
 export class AdminDocumentTemplatesController {
   constructor(private readonly docs:GeneratedDocumentsService,private readonly rbac:AdminRbacService){}
-  private allow(admin:AuthenticatedAdmin){return this.rbac.assertPermission(admin.id,'platform.manage')}
+  private allow(admin:AuthenticatedAdmin){return assertAdminPermission(admin, this.rbac, 'platform.manage')}
   @Get() async configuration(@CurrentAdmin() admin:AuthenticatedAdmin){await this.allow(admin);return this.docs.configuration()}
   @Post('company') async company(@CurrentAdmin() admin:AuthenticatedAdmin,@Body() input:CompanyDto){await this.allow(admin);return this.docs.saveCompany(input,admin.id)}
   @Get('issued') async issued(@CurrentAdmin() admin:AuthenticatedAdmin,@Query() query:DocumentUserQuery){await this.allow(admin);return this.docs.listAdmin(query.userId)}

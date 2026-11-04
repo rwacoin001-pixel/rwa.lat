@@ -6,7 +6,7 @@ import { ArrowUpRight, Check } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { AppShell } from '@/components/ops/AppShell'
 import { Confirm } from '@/components/ops/Confirm'
-import { getJson, sendJson, usePolled, useToday } from '@/components/ops/data'
+import { getJson, sendJson, usePolled, usePolledList, useToday } from '@/components/ops/data'
 import { ago, shortAddress, sgTime, waited } from '@/components/ops/format'
 import { Board, Chip, DangerButton, Face, LimeButton, Notice, PageTitle, Tile, Updated } from '@/components/ops/ui'
 
@@ -33,7 +33,7 @@ function Workspace() {
     router.replace(`${pathname}?${next.toString()}`, { scroll: false })
   }, [params, router, pathname])
   const view = params.get('view') === 'all' ? 'all' : 'open'
-  const list = usePolled<Row[]>('/api/admin/account-closures')
+  const list = usePolledList<Row>('/api/admin/account-closures')
   const { reload: reloadToday } = useToday()
   const [now] = useState(() => Date.now())
   const rows = useMemo(() => (list.data ?? []).filter((r) => view === 'all' || r.state === 'requested').sort((a, b) => a.createdAt.localeCompare(b.createdAt)), [list.data, view])

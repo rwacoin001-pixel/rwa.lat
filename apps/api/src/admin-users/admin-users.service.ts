@@ -4,11 +4,14 @@ import { IdentityCrypto } from '../identity/identity-crypto.service'
 import { LedgerService } from '../ledger/ledger.service'
 import { AdminUserListDto } from './admin-users.dto'
 
+// Browsing hides sign-ups that never finished (no verified login yet); a search by id, email or name still finds them.
 const fromUsers = `FROM app.users u LEFT JOIN app.community_profiles p ON p.user_id = u.id`
 const whereUsers = `WHERE ($1::text IS NULL OR u.status::text = $1)
   AND ($2::text IS NULL OR u.id::text = $2 OR p.display_name ILIKE $3 ESCAPE '\\' OR p.handle ILIKE $3 ESCAPE '\\'
     OR EXISTS (SELECT 1 FROM app.login_identities i WHERE i.user_id = u.id AND i.kind = 'email'
-      AND i.revoked_at IS NULL AND i.state <> 'revoked' AND i.identifier_hash = $4::bytea))`
+      AND i.revoked_at IS NULL AND i.state <> 'revoked' AND i.identifier_hash = $4::bytea))
+  AND ($2::text IS NOT NULL OR u.status::text = 'closed' OR EXISTS (SELECT 1 FROM app.login_identities v WHERE v.user_id = u.id
+    AND v.verified_at IS NOT NULL AND v.revoked_at IS NULL AND v.state <> 'revoked'))`
 const selectUsers = `SELECT u.id, u.status, u.locale, u.created_at, u.updated_at,
   p.display_name AS "displayName", p.handle,
   (SELECT max(s.last_seen_at) FROM app.sessions s WHERE s.user_id = u.id) AS "lastSeenAt",

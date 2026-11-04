@@ -27,6 +27,7 @@ import { WalletService } from './wallet.service'
 import { FundsOperationalSwitchService } from './funds-operational-switch.service'
 import { WithdrawalContextService } from './withdrawal-context.service'
 import type { WalletNetwork } from './wallet.entities'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 
 @ApiTags('wallet')
 @Controller('wallet')
@@ -205,7 +206,7 @@ export class AdminWalletController {
   @Get('withdrawals/reviews')
   @ApiOperation({ summary: 'List withdrawals awaiting independent administrator decisions' })
   async reviews(@CurrentAdmin() admin: AuthenticatedAdmin, @Query('limit') limit?: string) {
-    await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.manage')
+    await assertAdminPermission(admin, this.rbac, 'wallet.withdrawals.manage')
     return this.wallet.listWithdrawalReviews(limit ? Number(limit) : 50)
   }
 
@@ -213,7 +214,7 @@ export class AdminWalletController {
   @Header('Cache-Control', 'no-store')
   @ApiOperation({ summary: 'Read-only risk background for one withdrawal: account, address history, recent security changes and signals' })
   async context(@CurrentAdmin() admin: AuthenticatedAdmin, @Param('id', new ParseUUIDPipe()) id: string) {
-    await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.manage')
+    await assertAdminPermission(admin, this.rbac, 'wallet.withdrawals.manage')
     return this.withdrawalContext.context(id)
   }
 
@@ -225,7 +226,7 @@ export class AdminWalletController {
     @Body() dto: AdminWithdrawalDecisionDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.manage')
+    await assertAdminPermission(admin, this.rbac, 'wallet.withdrawals.manage')
     return this.wallet.decideWithdrawal(id, admin.id, true, dto.reasonCode, request.requestId ?? 'admin-withdrawal-approval')
   }
 
@@ -237,7 +238,7 @@ export class AdminWalletController {
     @Body() dto: AdminWithdrawalDecisionDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.manage')
+    await assertAdminPermission(admin, this.rbac, 'wallet.withdrawals.manage')
     return this.wallet.decideWithdrawal(id, admin.id, false, dto.reasonCode, request.requestId ?? 'admin-withdrawal-rejection')
   }
 
@@ -248,7 +249,7 @@ export class AdminWalletController {
     @Param('id') id: string,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'wallet.withdrawals.execute')
+    await assertAdminPermission(admin, this.rbac, 'wallet.withdrawals.execute')
     return this.wallet.executeApprovedWithdrawal(id, admin.id, request.requestId ?? 'admin-withdrawal-execution')
   }
 }
@@ -265,7 +266,7 @@ export class AdminFundsOperationsController {
 
   @Get('withdrawal-execution')
   async status(@CurrentAdmin() admin: AuthenticatedAdmin) {
-    await this.rbac.assertPermission(admin.id, 'operations.funds.switch.manage')
+    await assertAdminPermission(admin, this.rbac, 'operations.funds.switch.manage')
     return this.fundsSwitch.status()
   }
 
@@ -275,7 +276,7 @@ export class AdminFundsOperationsController {
     @Body() dto: PauseFundsExecutionDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'operations.funds.pause')
+    await assertAdminPermission(admin, this.rbac, 'operations.funds.pause')
     return this.fundsSwitch.pause(admin.id, dto.reason, request.requestId ?? 'admin-funds-pause')
   }
 
@@ -285,7 +286,7 @@ export class AdminFundsOperationsController {
     @Body() dto: RequestFundsResumeDto,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'operations.funds.switch.manage')
+    await assertAdminPermission(admin, this.rbac, 'operations.funds.switch.manage')
     return this.fundsSwitch.requestResume(
       admin.id, dto.changeId, dto.reason, request.requestId ?? 'admin-funds-resume-request',
     )
@@ -297,7 +298,7 @@ export class AdminFundsOperationsController {
     @Param('id') id: string,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'operations.funds.switch.manage')
+    await assertAdminPermission(admin, this.rbac, 'operations.funds.switch.manage')
     return this.fundsSwitch.decideResume(id, admin.id, true, request.requestId ?? 'admin-funds-resume-approval')
   }
 
@@ -307,7 +308,7 @@ export class AdminFundsOperationsController {
     @Param('id') id: string,
     @Req() request: RequestWithContext,
   ) {
-    await this.rbac.assertPermission(admin.id, 'operations.funds.switch.manage')
+    await assertAdminPermission(admin, this.rbac, 'operations.funds.switch.manage')
     return this.fundsSwitch.decideResume(id, admin.id, false, request.requestId ?? 'admin-funds-resume-rejection')
   }
 }

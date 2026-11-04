@@ -23,6 +23,7 @@ import {
   polymarketTokenNotFound,
   polymarketTradingDisabled,
 } from './polymarket.errors'
+import { assertAdminPermission } from '../admin-rbac/admin-authorization'
 
 const PROVIDER = 'polymarket'
 const MARKET_STREAM = 'gamma_markets' as const
@@ -342,7 +343,7 @@ export class PolymarketService {
     limit = 50,
     now: Date = new Date(),
   ) {
-    await this.rbac.assertPermission(admin.id, 'catalog.manage')
+    await assertAdminPermission(admin, this.rbac, 'catalog.manage')
     const leaseOwner = `${admin.id}:${randomUUID()}`
     const watermark = await this.acquireSyncLease(leaseOwner, now)
     const cursor = requestedCursor ?? watermark.cursor ?? undefined
