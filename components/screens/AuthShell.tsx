@@ -51,6 +51,7 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
   // Every sign-in surface uses it since 2026-11-02 (the code, password and passkey steps too); 'false' keeps the old film.
   const focus = attrs?.['data-auth-focus'] !== 'false'
   const welcome = focus && attrs?.['data-auth-view'] === 'welcome'
+  const scenePhoto = cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'
   const brand = <><BrandMark size={22} /><span>A<i>-</i>REIT</span></>
   const keys = <div className={styles.topActions}>
     <button type="button" className={styles.iconButton} onClick={(event) => revealTheme(toggleTheme, cool ? 'light' : 'dark', event)} aria-label={visual.switchTheme} title={visual.switchTheme}>{cool ? <Sun size={19} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}</button>
@@ -82,9 +83,9 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
       {/* Welcome (2026-11-02, after the user's glass-card reference, recoloured cool): a full-bleed coastal photo that racks
           into focus behind one restrained paper-glass card — a kicker, the brand line, what to do, the email field, the other ways in. The lower
           half of the photo goes soft under a slow sea mist so the card reads first. */}
-      <div className={f.scene} data-step={welcome ? undefined : ''} aria-hidden="true"><img src={cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'} alt="" decoding="async" fetchPriority="high" /><i className={f.soften} /><i className={f.fog} /></div>
+      <div className={f.scene} data-step={welcome ? undefined : ''} aria-hidden="true"><img src={scenePhoto} alt="" decoding="async" fetchPriority="high" /><i className={f.soften} /><i className={f.fog} /></div>
       {welcome ? <div className={f.sheet}>
-        <LoginWindow night={cool} zh={locale === 'zh-CN'} />
+        <LoginWindow src={scenePhoto} />
         {hero && <div className={f.copy}>{hero}</div>}
         <div className={f.actions}>{children}</div>
       </div> : <div className={`${f.sheet} ${f.step}`}>{children}</div>}

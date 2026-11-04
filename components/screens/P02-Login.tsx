@@ -33,9 +33,9 @@ import focusStyles from './auth-focus.module.css'
 import { FocusTitle } from './FocusTitle'
 
 /** The welcome's brand line (2026-11-01, approved slogan "Bring Assets Into Focus / 让资产清晰起来"). */
-const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string; google?: string; more?: string }> = {
-  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '用邮箱登录或注册', or: '或者', google: '使用 Google 继续', more: '其他方式' },
-  en: { lines: ['Bring assets', 'into focus'], sub: 'Sign in or sign up with your email', or: 'or', google: 'Continue with Google', more: 'Other ways' },
+const focusCopy: Record<string, { lines: [string, string]; sub: string; or: string; google?: string }> = {
+  'zh-CN': { lines: ['让资产', '清晰起来'], sub: '用邮箱登录或注册', or: '或者', google: '使用 Google 继续' },
+  en: { lines: ['Bring assets', 'into focus'], sub: 'Sign in or sign up with your email', or: 'or', google: 'Continue with Google' },
   hi: { lines: ['अपनी संपत्ति', 'साफ़ देखें'], sub: 'ईमेल से साइन इन या साइन अप करें', or: 'या' },
   es: { lines: ['Tus activos,', 'en foco'], sub: 'Inicia sesión o regístrate con tu correo', or: 'o' },
   ar: { lines: ['أصولك', 'بوضوح تام'], sub: 'سجّل الدخول أو أنشئ حسابًا ببريدك', or: 'أو' },
@@ -619,9 +619,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
         passkeys come up in the email field's autofill and on this device's remembered account, as in other apps. */}
     {showWelcome && <div className={focusStyles.others}>
       <p className={focusStyles.orLine} aria-hidden="true"><span>{welcomeCopy.or}</span></p>
-      <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={20} height={20} /><span>{welcomeCopy.google ?? 'Google'}</span></button>
-      <div className={focusStyles.quiet}>
-        {welcomeCopy.more && <span>{welcomeCopy.more}</span>}
+      {/* One row of equal glass keys (2026-11-04): Google wide, GitHub and a wallet round; nothing else competes with Continue. */}
+      <div className={focusStyles.ways}>
+        <button type="button" className={focusStyles.google} disabled={pending} onClick={() => void startProvider('google')}><Image src="/auth/icon-google-color.png" alt="" width={18} height={18} /><span className={focusStyles.long}>{welcomeCopy.google ?? 'Google'}</span><span className={focusStyles.short}>Google</span></button>
         <button type="button" disabled={pending} onClick={() => void startProvider('github')} aria-label="GitHub" title="GitHub"><Image data-mono="" src="/auth/icon-github.svg" alt="" width={18} height={18} /></button>
         <button type="button" disabled={pending} onClick={useWallet} aria-label={visual.wallet} title={visual.wallet}><Image data-mono="" src="/auth/icon-wallet.svg" alt="" width={18} height={18} /></button>
       </div>
