@@ -12,6 +12,9 @@ import { useRwaTheme } from '@/lib/rwa-theme'
 import { displayInviteCode } from '@/lib/referral-invite'
 import { useCommunityMe } from '@/lib/use-community-me'
 import p from './invite-plate.module.css'
+import { useQuery } from '@/lib/api/_query'
+import { membershipQuery } from '@/lib/api/membership'
+import { GalaxyBadge } from '@/components/membership/GalaxyBadge'
 
 type Translate = (cn: string, en: string) => string
 const MAX_TILT = 9
@@ -64,6 +67,8 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
   }
 
   const me = useCommunityMe(false)
+  // The inviter's galaxy level on the card (2026-11-04, user).
+  const galaxy = useQuery('membership:me', membershipQuery, { staleTime: 60_000, loading: 'silent' }).data
   const name = me?.displayName?.trim() || t('A-REIT 会员', 'A-REIT member')
   return <div className={p.stage}>
     <div ref={ref} className={p.plate} data-theme={shot} data-touched={touched || undefined}
@@ -84,6 +89,7 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
           <span className={p.footText}>
             {/* After the ID-card reference (2026-10-29): a name in large, one line under it, then the code. */}
             <b className={p.name} dir="auto">{name}</b>
+            {galaxy && <GalaxyBadge level={galaxy.level.index} className={p.level} />}
             <span className={p.role}>{t('邀请你加入 A-REIT', 'invites you to A-REIT')}</span>
             <small>{t('邀请码', 'INVITATION CODE')}</small>
             <button type="button" className={p.code} onClick={onCopy} aria-label={t(`邀请码 ${code.toUpperCase()}，点按复制邀请链接`, `Invitation code ${code.toUpperCase()}, tap to copy the link`)}>

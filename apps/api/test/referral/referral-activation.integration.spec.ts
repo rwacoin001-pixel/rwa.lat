@@ -27,7 +27,7 @@ suite('referral deployment preserves existing subscriptions and scheduled rules'
       const [t]=await m.query(`INSERT INTO app.ledger_transactions(transaction_type,idempotency_key,request_id,reference_type,reference_id,actor_type,effective_at) VALUES('deposit',$1,'migration-test','test',gen_random_uuid(),'service',now()) RETURNING id`,[randomUUID()])
       await m.query(`INSERT INTO app.ledger_entries(transaction_id,account_id,side,atomic_amount) VALUES($1,$2,'debit',1000000000),($1,$3,'credit',1000000000)`,[t.id,fund.id,available.id])
     })
-    quant=new QuantService(db,new LedgerService(db),{assertEnabled:async()=>{}} as never,{requireInvestmentEligibility:async()=>{}} as never)
+    quant=new QuantService(db,new LedgerService(db),{assertEnabled:async()=>{}} as never,{requireInvestmentEligibility:async()=>{}} as never, { verifyPurchase: async () => {} } as never)
     const first=await quant.subscribe(user,slug,'100','before-deployment','test');firstId=String(first.order!.id)
     await db.runMigrations({transaction:'all'});team=new ReferralTeamService(db)
   },120000)

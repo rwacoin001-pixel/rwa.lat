@@ -5,7 +5,7 @@ export type RwaScreen =
   | 'rwa-detail' | 'compute-detail' | 'stock-detail' | 'prediction-detail'
   | 'order-review' | 'order-processing' | 'order-success' | 'order-partial' | 'order-failed' | 'order-receipt' | 'order-detail'
   | 'deposit' | 'withdraw' | 'transfer' | 'receive' | 'wallet-success' | 'activity' | 'asset-detail' | 'position-detail' | 'address-book'
-  | 'ai-plan' | 'notifications' | 'kyc' | 'eligibility' | 'risk-profile' | 'security' | 'referral' | 'rewards' | 'reward-print' | 'records' | 'support' | 'support-new' | 'support-ticket' | 'fees' | 'settings' | 'marketing' | 'official-channels' | 'scam-report' | 'close-account'
+  | 'ai-plan' | 'notifications' | 'kyc' | 'eligibility' | 'risk-profile' | 'security' | 'referral' | 'rewards' | 'reward-print' | 'galaxy' | 'rank' | 'purchase-done' | 'records' | 'support' | 'support-new' | 'support-ticket' | 'fees' | 'settings' | 'marketing' | 'official-channels' | 'scam-report' | 'close-account'
   | 'trust-center' | 'access-regions' | 'product-disclosures' | 'legal-center' | 'status' | 'disclosures' | 'secondary' | 'trade'
   | 'community' | 'community-circle' | 'community-post' | 'community-profile' | 'community-messages' | 'community-thread' | 'learn' | 'learn-article'
   | 'share-landing' | 'invite-landing'
@@ -59,6 +59,9 @@ const screenPaths: Record<RwaScreen, string> = {
   security: '/profile/security',
   referral: '/profile/referral',
   rewards: '/profile/rewards',
+  galaxy: '/profile/galaxy',
+  rank: '/rank',
+  'purchase-done': '/purchase/done',
   'reward-print': '/rewards/print',
   records: '/profile/records',
   support: '/profile/support',

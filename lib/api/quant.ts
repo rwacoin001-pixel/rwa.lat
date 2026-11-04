@@ -40,8 +40,9 @@ export const getQuantRedemptionPreview = (slug: string, input: { amountUsd?: str
 export type QuantMyOrder = { id: string; slug: string; kind: 'subscription' | 'redemption'; status: string; amountAtomic: string | null; principalAtomic: string | null; feeAtomic: string | null; payoutAtomic: string | null; effectiveDate: string; rejectReason: string | null; createdAt: string; settledAt: string | null }
 export const listQuantOrders = (limit = 30) => DEMO ? Promise.resolve(ok([] as QuantMyOrder[])) : request<QuantMyOrder[]>(`/v1/quant/me/orders?limit=${limit}`)
 export const listQuantPayouts = (slug: string, limit = 30) => DEMO ? demo().then((m) => ok(m.demoPayouts())) : request<QuantPayout[]>(`/v1/quant/me/products/${encodeURIComponent(slug)}/payouts?limit=${limit}`)
-export const subscribeQuant = (slug: string, amountUsd: string, idempotencyKey: string) =>
-  request<{ duplicate?: boolean; order: QuantOrder }>(`/v1/quant/products/${encodeURIComponent(slug)}/subscriptions`, { method: 'POST', body: JSON.stringify({ amountUsd }), idempotencyKey })
+/** `transactionPin`: the payment PIN (2026-11-05); the server checks it before any money moves. */
+export const subscribeQuant = (slug: string, amountUsd: string, idempotencyKey: string, transactionPin?: string) =>
+  request<{ duplicate?: boolean; order: QuantOrder }>(`/v1/quant/products/${encodeURIComponent(slug)}/subscriptions`, { method: 'POST', body: JSON.stringify({ amountUsd, ...(transactionPin ? { transactionPin } : {}) }), idempotencyKey })
 export const redeemQuant = (slug: string, input: { amountUsd?: string; all?: boolean }, idempotencyKey: string) =>
   request<{ duplicate?: boolean; order: QuantOrder }>(`/v1/quant/products/${encodeURIComponent(slug)}/redemptions`, { method: 'POST', body: JSON.stringify(input), idempotencyKey })
 

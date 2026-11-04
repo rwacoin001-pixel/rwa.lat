@@ -3,6 +3,11 @@ import { IsInt, IsNotEmpty, IsOptional, IsString, IsUUID, Matches, Max, MaxLengt
 import { Type } from 'class-transformer'
 
 export class PlacePredictionBetDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9]{6}$/)
+  transactionPin?: string
+
   @ApiPropertyOptional({ description: 'Bet voucher; mutually exclusive with couponId' })
   @IsOptional()
   @IsUUID()

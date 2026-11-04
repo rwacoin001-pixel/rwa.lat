@@ -1,0 +1,80 @@
+/* Galaxy membership + rankings (2026-11-04). docs/design-system.md: paper cards on the page ground, type-only rows, one
+   ink card per page (the deep-space card), solid grounds — no gradient backgrounds, no tinted icon tiles. */
+.page { display: grid; gap: 20px; padding: 4px 0 calc(120px + env(safe-area-inset-bottom)); }
+
+/* The deep-space card: solid night, the body on the right, the level and star power on the left. */
+.space { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; min-height: 236px; padding: 22px 20px 18px; overflow: hidden; border-radius: 28px; background: #070a12; color: #f4f6fa; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(11, 18, 32, .2), 0 24px 44px -26px rgba(7, 10, 18, .7); }
+.body { grid-column: 2; grid-row: 1; justify-self: end; margin: -12px -8px -4px 0; }
+.spaceText { grid-column: 1; grid-row: 1; display: grid; align-content: center; gap: 4px; min-width: 0; }
+.spaceText small { color: rgba(244, 246, 250, .6); font-size: 13px; line-height: 18px; }
+.levelName { font-size: 34px; font-weight: 700; line-height: 40px; letter-spacing: -.01em; }
+.scoreLine { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; color: rgba(244, 246, 250, .6); font-size: 13px; line-height: 18px; }
+.scoreLine b { color: #f4f6fa; font-size: 22px; font-weight: 600; line-height: 28px; font-variant-numeric: tabular-nums; }
+.track { grid-column: 1 / -1; height: 6px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .12); }
+.track i { display: block; height: 100%; border-radius: inherit; background: #2ac4a8; transition: width .8s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.trackNote { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; margin: 0; color: rgba(244, 246, 250, .72); font-size: 13px; line-height: 18px; }
+.trackNote span { color: rgba(244, 246, 250, .45); font-size: 12px; }
+.ghost { height: 180px; }
+
+/* Grouped paper lists. */
+.group { display: grid; gap: 8px; }
+.groupHead { margin: 0; padding: 0 4px; color: var(--m-muted, #5b6472); font-size: 13px; font-weight: 500; line-height: 18px; }
+.list { display: grid; margin: 0; padding: 0; overflow: hidden; border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); list-style: none; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 10px 16px; color: var(--m-ink, #0b1220); font-size: 15px; line-height: 22px; }
+.row + .row, .rankRow + .rankRow { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.row > span { display: grid; gap: 2px; min-width: 0; }
+.row small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.row b { flex: none; font-weight: 600; font-variant-numeric: tabular-nums; }
+.body2 { margin: 0; padding: 0 4px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 20px; }
+.note { margin: 0; padding: 0 4px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.foot { margin: 0; padding: 0 4px; color: var(--m-faint, #8f97a5); font-size: 12px; line-height: 16px; }
+.textKey { padding: 0; border: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.textKey:disabled { opacity: .5; }
+
+/* The ladder: all seven bodies in one sideways row; reached ones bright, the current one ringed. */
+.ladder { display: flex; gap: 10px; margin: 0 calc(-1 * var(--m-gutter, 20px)); padding: 2px var(--m-gutter, 20px) 6px; overflow-x: auto; scrollbar-width: none; }
+.ladder::-webkit-scrollbar { display: none; }
+.rung { display: grid; flex: none; justify-items: center; gap: 4px; width: 84px; padding: 10px 6px; border-radius: 18px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); color: var(--m-ink, #0b1220); text-align: center; }
+.rung b { font-size: 13px; font-weight: 600; line-height: 18px; }
+.rung small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.rungBody { display: grid; place-items: center; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: #070a12; opacity: .45; }
+.rung[data-reached] .rungBody { opacity: 1; }
+.rung[data-now] { box-shadow: 0 0 0 1.5px var(--m-ink, #0b1220); }
+
+.linkRow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 10px 14px 10px 16px; border: 0; border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); color: var(--m-ink, #0b1220); font: inherit; font-size: 15px; font-weight: 600; text-align: start; cursor: pointer; }
+.linkRow > span:first-child { flex: 1; }
+.linkRow svg:last-child { color: var(--m-faint, #8f97a5); }
+
+/* Badge: glyph + name, ink on paper, light on dark grounds. */
+.badge { display: inline-flex; align-items: center; gap: 4px; color: var(--m-ink, #0b1220); font-size: 12px; font-weight: 600; line-height: 16px; white-space: nowrap; }
+.badge[data-tone='light'] { color: #fff; }
+
+/* Rankings. */
+.periods { display: flex; align-items: center; gap: 8px; }
+.periods button { height: 32px; padding: 0 14px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted, #5b6472); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; }
+.periods button[aria-pressed='true'] { background: var(--m-ink, #0b1220); color: var(--m-bg, #fff); }
+.periods small { margin-inline-start: auto; color: var(--m-faint, #8f97a5); font-size: 12px; line-height: 16px; }
+.ranks { counter-reset: none; }
+.rankRow { display: grid; grid-template-columns: 28px 36px minmax(0, 1fr) auto; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; color: var(--m-ink, #0b1220); }
+.place { font-size: 15px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; color: var(--m-muted, #5b6472); }
+.rankRow[data-top] .place { color: var(--m-ink, #0b1220); font-size: 17px; }
+.who { display: grid; gap: 2px; min-width: 0; }
+.who b { overflow: hidden; font-size: 15px; font-weight: 600; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.who .badge { color: var(--m-muted, #5b6472); font-weight: 500; }
+.band { color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 600; line-height: 18px; font-variant-numeric: tabular-nums; }
+.ghostLine { display: block; width: 60%; height: 14px; border-radius: 7px; background: var(--pa-fill, rgba(11, 18, 32, .06)); }
+.mine { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 3; display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 0 18px; border-radius: 999px; background: var(--m-ink, #0b1220); color: var(--m-bg, #fff); box-shadow: 0 14px 30px -16px rgba(11, 18, 32, .55); }
+.mine span { flex: 1; font-size: 13px; opacity: .72; }
+.mine b { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mine small { font-size: 12px; opacity: .72; }
+.hideRow { display: grid; gap: 4px; padding: 0 4px; }
+.hideRow small { color: var(--m-faint, #8f97a5); font-size: 12px; line-height: 16px; }
+
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .page.page .spaceText small, :global(.rwa-mobile) .page.page .scoreLine { color: rgba(244, 246, 250, .6); }
+:global(.rwa-mobile) .page.page .row small, :global(.rwa-mobile) .page.page .groupHead, :global(.rwa-mobile) .page.page .note, :global(.rwa-mobile) .page.page .body2 { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile[data-theme='dark']) .list, :global(.rwa-mobile[data-theme='dark']) .rung, :global(.rwa-mobile[data-theme='dark']) .linkRow { background: #15181e; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08); }
+:global(.rwa-mobile[data-theme='dark']) .space { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(255, 255, 255, .1); }
+:global(.rwa-mobile[data-theme='dark']) .rung[data-now] { box-shadow: 0 0 0 1.5px #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .mine { background: #f2f4f7; color: #0b1220; }
+@media (prefers-reduced-motion: reduce) { .track i { transition: none; } }

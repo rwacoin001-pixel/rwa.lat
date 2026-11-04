@@ -232,6 +232,11 @@ export class CreateDisclosureDto {
 }
 
 export class BasketSubscribeDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9]{6}$/)
+  transactionPin?: string
+
   @ApiProperty()
   @Matches(DECIMAL_6)
   amountUsd!: string

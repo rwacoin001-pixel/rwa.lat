@@ -21,7 +21,7 @@ import { FundsOperationalSwitchService } from './funds-operational-switch.servic
 import { WalletLedgerBridge } from './wallet-ledger.bridge'
 import { WalletNetworkRegistry } from './wallet-network.registry'
 import { WalletService } from './wallet.service'
-import { TransactionPinService } from './transaction-pin.service'
+import { TransactionPinModule } from './transaction-pin.module'
 import { TransactionPinController } from './transaction-pin.controller'
 import { WithdrawalExecutionWorker } from './withdrawal-execution.worker'
 import { ChainWatcherService } from './manual/chain-watcher.service'
@@ -45,6 +45,7 @@ import {
 
 @Module({
   imports: [
+    TransactionPinModule,
     IdentityModule,
     SecurityModule,
     LedgerModule,
@@ -83,7 +84,6 @@ import {
   providers: [
     FundsSummaryService,
     WithdrawalContextService,
-    TransactionPinService,
     WalletService,
     WalletNetworkRegistry,
     WalletLedgerBridge,

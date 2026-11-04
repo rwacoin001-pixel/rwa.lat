@@ -1,3 +1,4 @@
+import { TransactionPinService } from '../wallet/transaction-pin.service'
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
@@ -10,6 +11,7 @@ import { BasketPortfolioService } from './portfolio.service'
 import { BasketRiskService } from './risk.service'
 import { ComplianceService } from '../compliance/compliance.service'
 import { recordReferralRewards } from '../referral/referral-rewards'
+import { enqueueMembershipChange } from '../membership/membership-events'
 
 const AMOUNT_PATTERN = /^\d+(\.\d{1,6})?$/
 const UNITS_PATTERN = /^\d+(\.\d{1,8})?$/
@@ -33,12 +35,13 @@ export class BasketSubscriptionService {
     private readonly nav: BasketNavService,
     private readonly risk: BasketRiskService,
     private readonly compliance: ComplianceService,
+    private readonly transactionPin: TransactionPinService,
   ) {}
 
   async subscribe(
     userId: string,
     portfolioId: string,
-    input: { amountUsd: string },
+    input: { amountUsd: string; transactionPin?: string },
     idempotencyKey: string,
     requestId: string,
   ) {
@@ -46,10 +49,10 @@ export class BasketSubscriptionService {
     if (!amount || !AMOUNT_PATTERN.test(amount) || parse18(amount) <= 0n) {
       throw new BadRequestException({ code: BASKET_ERROR_CODES.AMOUNT_INVALID, message: 'Subscription amount must be a positive decimal with up to 6 places.' })
     }
-    await this.operations.assertEnabled(OPERATIONAL_SWITCH_KEYS.basketSubscriptions, 'Basket subscriptions are currently disabled.')
-
     const existing = await this.findByIdempotency('basket_subscriptions', idempotencyKey, userId)
     if (existing) return { duplicate: true, subscription: existing }
+    await this.operations.assertEnabled(OPERATIONAL_SWITCH_KEYS.basketSubscriptions, 'Basket subscriptions are currently disabled.')
+    await this.transactionPin.verifyPurchase(userId, input.transactionPin)
 
     await this.compliance.requireInvestmentEligibility(userId, 'basket')
 
@@ -152,6 +155,7 @@ export class BasketSubscriptionService {
     } catch (error) {
       this.log.warn(`Post-subscription NAV refresh failed: ${(error as Error).message}`)
     }
+    enqueueMembershipChange(this.ds,'basket',subscriptionId)
     return { duplicate: false, subscription: settled }
   }
 

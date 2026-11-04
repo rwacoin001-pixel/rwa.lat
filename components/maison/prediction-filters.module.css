@@ -1,0 +1,23 @@
+/* Prediction filters (2026-11-05, after the user's Polymarket recording): ink type, paper pills, a plain bottom sheet. */
+.root { display: grid; gap: 12px; margin-bottom: 12px; }
+.head { display: flex; align-items: center; gap: 4px; }
+.head h2 { flex: 1; margin: 0; color: var(--m-ink, #0b1220); font-size: 22px; font-weight: 700; line-height: 28px; }
+.icon { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-ink, #0b1220); cursor: pointer; }
+.icon[aria-pressed='true'], .icon[aria-expanded='false'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted, #5b6472); }
+.search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 15px; }
+.pills { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+.pills::-webkit-scrollbar { display: none; }
+.pill { display: inline-flex; flex: none; align-items: center; gap: 6px; height: 36px; padding: 0 12px 0 14px; border: 0; border-radius: 12px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .12); color: var(--m-ink, #0b1220); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.pill:disabled { opacity: .45; cursor: default; }
+.pill svg { color: var(--m-muted, #5b6472); }
+.hides { display: flex; flex-wrap: wrap; gap: 6px 16px; }
+.box { display: inline-flex; align-items: center; gap: 6px; color: var(--m-ink, #0b1220); font-size: 13px; line-height: 18px; cursor: pointer; }
+.box input { width: 16px; height: 16px; margin: 0; accent-color: var(--m-ink, #0b1220); }
+.clear { justify-self: start; padding: 0; border: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 13px; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.options { display: grid; margin: 0; padding: 0 0 12px; list-style: none; }
+.options li + li { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.options button { display: flex; align-items: center; justify-content: space-between; width: 100%; min-height: 52px; padding: 0 4px; border: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 15px; text-align: start; cursor: pointer; }
+.options button[aria-pressed='true'] { font-weight: 600; }
+:global(.rwa-mobile[data-theme='dark']) .pill { background: #15181e; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .12); }
+:global(.rwa-mobile) .root.root .search { color: var(--m-muted, #5b6472); }

@@ -1,12 +1,11 @@
 'use client'
 
-import {Search, SlidersHorizontal, Check} from 'lucide-react'
 import {predictionControlText} from '@/lib/prediction-controls-copy'
 import { useEffect, useRef, useState } from 'react'
 import { usePageState } from '@/lib/app-navigation'
 import { mergeDisplayPage } from '@/lib/navigation-memory'
 import { useI18n } from '@/lib/i18n'
-import { getPolymarketFeed, POLYMARKET_CATEGORIES, POLYMARKET_SORTS, type PolymarketSort, type PolymarketCategory, type PolymarketFeedMarket } from '@/lib/api/polymarket-feed'
+import { getPolymarketFeed, POLYMARKET_CATEGORIES, type PolymarketSort, type PolymarketCategory, type PolymarketFeedMarket } from '@/lib/api/polymarket-feed'
 import {useContentTranslation} from '@/lib/use-content-translation'
 import { fmtUsd } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
@@ -17,6 +16,7 @@ import { Figure } from './motion'
 import { fmtDate, fmtDateTime } from './format'
 import { Skeleton, StateBlock, maison as s } from './primitives'
 import {PredictionTranslationButton} from './PredictionTranslationButton'
+import { DEFAULT_FILTERS, PredictionFilters, type FilterState } from './PredictionFilters'
 import { PredictionPulse, pulseTitle } from './PredictionPulse'
 import {openPredictionItems} from '@/lib/prediction-lifecycle'
 import {usePredictionExpiryClock} from '@/lib/use-prediction-expiry-clock'
@@ -27,11 +27,13 @@ export function PredictionFeed() {
   const m = copy.markets
   const labels = polymarketFeedCopy[locale]
   const [category, setCategory] = usePageState<PolymarketCategory>('prediction:category', 'all')
-  const [sort,setSort]=usePageState<PolymarketSort>('prediction:sort','volume24hr')
+  // Polymarket-style filters (2026-11-05): sort, ending window, status and topics to hide, kept per visit.
+  const [filters,setFilters]=usePageState<FilterState>('prediction:filters',DEFAULT_FILTERS)
+  const sort=filters.sort as PolymarketSort
+  const feedFilters={status:filters.status,window:filters.window,hide:filters.hide}
+  const filterKey=`${filters.status}|${filters.window}|${filters.hide.join(',')}`
   const [search,setSearch]=usePageState('prediction:search','')
   const [draftSearch,setDraftSearch]=useState(search)
-  const [sortOpen,setSortOpen]=useState(false)
-  const toolbar=useRef<HTMLDivElement>(null)
   const text=(key:Parameters<typeof predictionControlText>[1])=>predictionControlText(locale,key)
   const [offset, setOffset] = usePageState('prediction:offset', 0)
   const [items, setItems] = usePageState<PolymarketFeedMarket[]>('prediction:items', [])
@@ -54,7 +56,7 @@ export function PredictionFeed() {
     const controller = new AbortController()
     setLoading(true)
     setError(false)
-    void getPolymarketFeed(category, offset, controller.signal,sort,search)
+    void getPolymarketFeed(category, offset, controller.signal,sort,search,feedFilters)
       .then((page) => {
         if (controller.signal.aborted) return
         setItems((previous) => openPredictionItems(mergeDisplayPage(previous, page.items, offset)))
@@ -67,13 +69,13 @@ export function PredictionFeed() {
       })
       .finally(() => { if (!controller.signal.aborted) setLoading(false) })
     return () => controller.abort()
-  }, [category, offset, retry,sort,search])
+  }, [category, offset, retry,sort,search,filterKey])
 
   useEffect(()=>{
     const controller=new AbortController()
     const timer=setInterval(()=>{
       if(document.visibilityState!=='visible')return
-      void getPolymarketFeed(category,0,controller.signal,sort,search).then(page=>{
+      void getPolymarketFeed(category,0,controller.signal,sort,search,feedFilters).then(page=>{
         if(controller.signal.aborted)return
         setItems(previous=>{
           const refreshed=new Map(page.items.map(item=>[item.id,item]))
@@ -85,7 +87,7 @@ export function PredictionFeed() {
       }).catch(()=>{})
     },30000)
     return()=>{controller.abort();clearInterval(timer)}
-  },[category,sort,search])
+  },[category,sort,search,filterKey])
 
   useEffect(() => {
     if (!nextOffset || loading || error || !sentinel.current || typeof IntersectionObserver === 'undefined') return
@@ -97,7 +99,10 @@ export function PredictionFeed() {
   }, [nextOffset, loading, error])
 
   useEffect(()=>{const timer=setTimeout(()=>{const value=draftSearch.trim();if(value!==search){setSearch(value);setOffset(0);setItems([]);setNextOffset(null);setLoadedOnce(false)}},350);return()=>clearTimeout(timer)},[draftSearch,search])
-  useEffect(()=>{if(!sortOpen)return;const outside=(e:PointerEvent)=>{if(!toolbar.current?.contains(e.target as Node))setSortOpen(false)};const escape=(e:KeyboardEvent)=>{if(e.key==='Escape')setSortOpen(false)};document.addEventListener('pointerdown',outside);document.addEventListener('keydown',escape);return()=>{document.removeEventListener('pointerdown',outside);document.removeEventListener('keydown',escape)}},[sortOpen])
+  const changeFilters = (next: FilterState) => {
+    setFilters(next)
+    setOffset(0); setItems([]); setNextOffset(null); setFetchedAt(null); setLoadedOnce(false); setLoading(true); setError(false)
+  }
   const selectCategory = (next: PolymarketCategory) => {
     if (next === category) return
     setCategory(next)
@@ -111,15 +116,9 @@ export function PredictionFeed() {
   }
 
   return <>
-    <div className={s.predSearchToolbar} ref={toolbar}>
-      <label className={s.predSearch}><Search size={18}/><input type="search" aria-label={text('search')} placeholder={text('search')} maxLength={120} value={draftSearch} onChange={e=>setDraftSearch(e.target.value)}/></label>
-      <button type="button" className={s.predSortButton} aria-label={text('sort')} aria-expanded={sortOpen} aria-controls="prediction-sort" onClick={()=>setSortOpen(v=>!v)}><SlidersHorizontal size={20}/></button>
-      {/* The menu opens from the current choice (2026-10-28): the selected row lands over the button, the list unfolds from it. */}
-      {sortOpen&&<div className={s.predSortMenu} id="prediction-sort" role="group" aria-label={text('sort')} data-anchored="" style={{top:-6-Math.max(0,POLYMARKET_SORTS.indexOf(sort))*46,transformOrigin:`100% ${6+Math.max(0,POLYMARKET_SORTS.indexOf(sort))*46+23}px`}}>{POLYMARKET_SORTS.map(key=><button key={key} type="button" aria-pressed={sort===key} onClick={()=>{setSort(key);setSortOpen(false);if(key!==sort){setOffset(0);setItems([]);setNextOffset(null);setLoadedOnce(false)}}}><span>{text(key)}</span>{sort===key&&<Check size={16}/>}</button>)}</div>}
-    </div>
-    <div className={s.chips} role="group" aria-label={m.discovery}>
+    <PredictionFilters value={filters} onChange={changeFilters} search={draftSearch} onSearch={setDraftSearch} chips={<div className={s.chips} role="group" aria-label={m.discovery}>
       {POLYMARKET_CATEGORIES.map((key) => <button key={key} type="button" className={s.chip} aria-pressed={category === key} onClick={() => selectCategory(key)}>{labels.categories[key]}</button>)}
-    </div>
+    </div>} />
     {/* One switch for the whole feed: it is translated in one batch, shown or hidden together, retried together. */}
     {visibleItems.length > 0 && sources.length > 0 && <div className={s.predFeedTranslate}><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={sources}/></div>}
     {!loadedOnce && loading ? <Skeleton rows={3} /> : null}

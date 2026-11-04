@@ -163,3 +163,7 @@
 .faces img { background: #eef1f4; }
 .who { font-size: 12px; line-height: 16px; gap: 6px; }
 .lead { display: -webkit-box; overflow: hidden; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+
+/* Galaxy level beside the name (2026-11-04). */
+.level { margin-inline-start: 6px; color: var(--m-muted, #5b6472); font-weight: 500; }
+:global(.rwa-mobile) .level.level { color: var(--m-muted, #5b6472); }

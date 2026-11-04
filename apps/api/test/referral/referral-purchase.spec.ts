@@ -83,7 +83,7 @@ describe('referral purchase notifications',()=>{
     const db={query:jest.fn(()=>{throw new Error('offline')})}
     expect(enqueueReferralPurchase(db as never,'rwa','source')).toBeUndefined()
     await new Promise(resolve=>setImmediate(resolve))
-    expect(db.query).toHaveBeenCalledTimes(1)
+    expect(db.query).toHaveBeenCalledTimes(2) // membership refresh and referral notice fail independently.
   })
   it('retries partial failures without sending successful recipients twice',async()=>{
     const {worker,saved,tx,jobs}=setup()

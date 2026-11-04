@@ -1,3 +1,4 @@
+import { TransactionPinModule } from '../wallet/transaction-pin.module'
 import { Module } from '@nestjs/common'
 import { ComplianceModule } from '../compliance/compliance.module'
 import { IdentityModule } from '../identity/identity.module'
@@ -12,7 +13,7 @@ import { QuantController } from './quant.controller'
 import { QuantService } from './quant.service'
 
 @Module({
-  imports: [LedgerModule, NotificationModule, OperationsModule, IdentityModule, SecurityModule, ComplianceModule],
+  imports: [TransactionPinModule, LedgerModule, NotificationModule, OperationsModule, IdentityModule, SecurityModule, ComplianceModule],
   controllers: [QuantController, QuantInternalController],
   providers: [QuantService, QuantSettlementService, InternalServiceGuard],
   exports: [QuantService, QuantSettlementService],

@@ -19,6 +19,7 @@ import { basketCover, sharedKeys } from '@/lib/product-media'
 import { fmtAtomic, fmtDate, fmtDateTime } from './format'
 import { AmountPad, FlowConfirm, FlowSuccess, share } from './flow-kit'
 import { flowKitCopy } from '@/lib/flow-kit-copy'
+import { usePurchasePin } from './usePurchasePin'
 
 const OPEN = new Set(['pilot', 'active'])
 const DEC_6 = /^\d+(\.\d{1,6})?$/
@@ -148,6 +149,8 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
   const [value, setValue] = useState('')
   const [ack, setAck] = useState(false)
   const [pending, setPending] = useState(false)
+  // The payment PIN confirms a subscription (2026-11-05); redemptions need none.
+  const pin = usePurchasePin<Awaited<ReturnType<typeof subscribeBasket>> extends infer R ? R extends { ok: true; data: infer D } ? D : never : never>()
   const [serverError, setServerError] = useState<string | null>(null)
   const [done, setDone] = useState<Done | null>(null)
   const [reviewOpen, setReviewOpen] = useState(false)
@@ -201,8 +204,11 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
     const body = side === 'subscribe' ? { amountUsd: value } : { units: value }
     // Same body → same key: a retry after a timeout returns the original settlement instead of a second one.
     const key = idempotencyKeyForIntent(keys.current, 'POST', path, body)
-    const result = side === 'subscribe' ? await subscribeBasket(basket.id, value, key) : await redeemBasket(basket.id, value, key)
+    // One step at a time (guard 24): the review sheet leaves before the PIN sheet comes up.
+    if (side === 'subscribe') setReviewOpen(false)
+    const result = side === 'subscribe' ? await pin.ask([{ label: t.amount ?? 'Amount', value: `${value} USDT` }], (code) => subscribeBasket(basket.id, value, key, code)) : await redeemBasket(basket.id, value, key)
     setPending(false)
+    if (result === null) return
     if (!result.ok) {
       // The API keeps a refused attempt as a `pending` row under its key, so a replay would return that row as a
       // "duplicate" (e.g. retrying the same amount after topping up). A definitive refusal starts a new intent.
@@ -251,6 +257,7 @@ export function BasketOrderScreen({ id, side }: { id: string | null; side: 'subs
         <p className={s.muted} style={{ margin: '4px 0 0', fontSize: 13 }}>{t.navAt} <b className={s.num}>{fmtUsd(basket.navPerUnit, { digits: 4, locale })}</b></p>
       </div>}
       cta={{ label: talk, disabled: !canReview, busy: pending, onClick: () => { setServerError(null); setReviewOpen(true) } }} />
+    {pin.ui}
     <FlowConfirm open={reviewOpen} onClose={() => { if (!pending) setReviewOpen(false) }} busy={pending}
       title={subscribe ? kit.reviewBuy : t.redeem} amount={value || '0'} unit={unit}
       rows={[

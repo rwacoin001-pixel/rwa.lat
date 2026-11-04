@@ -3,6 +3,11 @@ import { IsBoolean, IsIn, IsInt, IsNumberString, IsOptional, IsString, Matches, 
 const USDT_AMOUNT = /^\d{1,30}(\.\d{1,6})?$/
 
 export class QuantSubscribeDto {
+  @IsOptional()
+  @IsString()
+  @Matches(/^[0-9]{6}$/)
+  transactionPin?: string
+
   @Matches(USDT_AMOUNT, { message: 'amountUsd must be a positive decimal with up to 6 places' })
   amountUsd!: string
 }

@@ -1,3 +1,4 @@
+import { TransactionPinService } from '../wallet/transaction-pin.service'
 import { BadRequestException, ConflictException, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import { randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
@@ -56,6 +57,7 @@ export class QuantService {
     private readonly ledger: LedgerService,
     private readonly operations: OperationalCapabilityService,
     private readonly compliance: ComplianceService,
+    private readonly transactionPin: TransactionPinService,
   ) {}
 
   async getProductRow(slugOrId: string): Promise<QuantProductRow> {
@@ -278,11 +280,12 @@ export class QuantService {
     return row ?? null
   }
 
-  async subscribe(userId: string, slug: string, amountUsd: string, idempotencyKey: string, requestId: string) {
+  async subscribe(userId: string, slug: string, amountUsd: string, idempotencyKey: string, requestId: string, transactionPin?: string) {
     const amount = parseUsdt(amountUsd)
-    await this.operations.assertEnabled(OPERATIONAL_SWITCH_KEYS.quantSubscriptions, 'Koala Quant subscriptions are currently closed.')
     const existing = await this.findOrderByKey(userId, idempotencyKey)
     if (existing) return { duplicate: true, order: existing }
+    await this.operations.assertEnabled(OPERATIONAL_SWITCH_KEYS.quantSubscriptions, 'Koala Quant subscriptions are currently closed.')
+    await this.transactionPin.verifyPurchase(userId, transactionPin)
 
     const product = await this.getProductRow(slug)
     if (!OPEN_STATUSES.includes(product.status)) throw new ConflictException({ code: QUANT_ERROR_CODES.PRODUCT_NOT_OPEN, message: 'This product is not open for subscriptions.' })

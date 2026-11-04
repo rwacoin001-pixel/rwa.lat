@@ -27,6 +27,8 @@ const professionAvatar = (seed: string, seat?: number) => {
 }
 import { sparkBurst } from './Tilt3D'
 import r from './home-invite.module.css'
+import { membershipQuery } from '@/lib/api/membership'
+import { GalaxyBadge } from '@/components/membership/GalaxyBadge'
 
 type Copy = { inviteShort: string; copy: string; copied: string; copyFailed: string; poster: string; rules: string; latest: string; all: string; kindFee: string; kindPurchase: string; member: string; noneYet: string; label: string; claimable: string; earned: string; startTitle: string; startBody: string; invited: string; invitedEarned: string; allClaimed: string; invite: string; claim: string; claiming: string; claimed: string; failed: string; nothing: string }
 const COPY: Partial<Record<AppLocale, Copy>> & { en: Copy } = {
@@ -39,6 +41,8 @@ export function HomeReferral() {
   const { locale } = useI18n()
   const c = COPY[locale] ?? COPY.en
   const summary = useQuery('referral:summary', referralSummary, { staleTime: 60_000 })
+  // The member's galaxy level beside their name on the invite card (2026-11-04, user).
+  const galaxy = useQuery('membership:me', membershipQuery, { staleTime: 60_000, loading: 'silent' }).data
   const data = summary.data
   const direct = data?.levels.find(level => level.level === 1)?.count ?? 0
   const invitees = useQuery(direct > 0 ? 'referral:invitees:1' : null, () => referralInvitees(1, '1'), { staleTime: 300_000 })
@@ -99,7 +103,7 @@ export function HomeReferral() {
   return <section ref={cardRef} className={r.card} aria-label={c.label}>
     <div className={r.panel}>
       <div className={r.top}>
-        <span className={r.who}>{me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle || 'me'} size={20} /> : null}<b dir="auto">{me?.displayName || c.label}</b></span>
+        <span className={r.who}>{me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle || 'me'} size={20} /> : null}<b dir="auto">{me?.displayName || c.label}</b>{galaxy && <GalaxyBadge level={galaxy.level.index} className={r.level} />}</span>
         <button type="button" className={r.info} aria-label={c.rules} onClick={() => openPath('/community?tab=invite')}>i</button>
       </div>
       {/* With nothing earned yet (2026-10-29): one short line, no pill, never more than two lines. */}

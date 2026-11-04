@@ -42,5 +42,10 @@ export type PolymarketFeedPage = {
   nextOffset: number | null
 }
 
-export const POLYMARKET_SORTS = ['volume24hr','volume','createdAt','endDate','liquidity'] as const
+export const POLYMARKET_SORTS = ['volume24hr','volume','createdAt','endDate','liquidity','competitive'] as const
 export type PolymarketSort = typeof POLYMARKET_SORTS[number]
+
+export const POLYMARKET_STATUSES = ['active', 'resolved'] as const
+export type PolymarketStatus = typeof POLYMARKET_STATUSES[number]
+export const POLYMARKET_WINDOWS = ['all', 'day', 'week', 'month'] as const
+export type PolymarketWindow = typeof POLYMARKET_WINDOWS[number]

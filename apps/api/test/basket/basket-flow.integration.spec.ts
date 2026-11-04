@@ -83,7 +83,7 @@ describeDatabase('basket full flow (phase 8-15 acceptance)', () => {
     portfolios = new BasketPortfolioService(ds, strategies)
     nav = new BasketNavService(ds)
     risk = new BasketRiskService(ds)
-    subscriptions = new BasketSubscriptionService(ds, ledger, allowAll, portfolios, nav, risk, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService)
+    subscriptions = new BasketSubscriptionService(ds, ledger, allowAll, portfolios, nav, risk, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService, { verifyPurchase: async () => {} } as never)
     rebalance = new BasketRebalanceService(ds, nav, risk, allowAll, ledger, new PaperExecutionAdapter())
     reconciliation = new BasketReconciliationService(ds)
     scoring = new ScoringService(ds)
@@ -300,7 +300,7 @@ describeDatabase('basket full flow (phase 8-15 acceptance)', () => {
       },
       isEnabled: async () => false,
     } as unknown as OperationalCapabilityService
-    const service = new BasketSubscriptionService(ds, ledger, blockedOps, portfolios, nav, risk, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService)
+    const service = new BasketSubscriptionService(ds, ledger, blockedOps, portfolios, nav, risk, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService, { verifyPurchase: async () => {} } as never)
     await expect(service.subscribe(userId, portfolioId, { amountUsd: '100' }, 't5-switch-1', 't5-req-switch')).rejects.toMatchObject({
       response: { code: 'OPERATIONAL_SWITCH_DISABLED' },
     })

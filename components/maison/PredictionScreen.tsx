@@ -40,6 +40,8 @@ import { bestCoupon, discountOn, rewardWalletQuery, vouchers } from '@/lib/rewar
 
 const fromAtomicStr = (atomic: string, decimals: number) => { const v = BigInt(atomic), d = BigInt('1' + '0'.repeat(decimals)); const frac = (v % d).toString().padStart(decimals, '0').replace(/0+$/, ''); return frac ? `${v / d}.${frac}` : `${v / d}` }
 import { useRewardsCopy } from '@/components/rewards/rewards-copy'
+import { usePurchasePin } from './usePurchasePin'
+import { PURCHASE_DONE_PATH, savePurchaseDone } from '@/lib/purchase-done'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
 const BET_PATH = '/v1/predictions/bets'
@@ -189,6 +191,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const [pending, setPending] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [done, setDone] = useState<PredictionBet | null>(null)
+  const pin = usePurchasePin<PredictionBet & { duplicate?: boolean }>()
   const keys = useRef(new Map<string, string>())
   useEffect(()=>{onBusyChange?.(pending)},[pending,onBusyChange])
   useEffect(()=>{setOutcome(initialOutcome)},[initialOutcome])
@@ -261,8 +264,10 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     const idempotencyKey = idempotencyKeyForIntent(keys.current, 'POST', BET_PATH, { tokenId: intent.tokenId, stakeAtomic: intent.stakeAtomic, couponId: intent.couponId ?? '', voucherId: intent.voucherId ?? '' })
     setPending(true)
     setServerError(null)
-    const result = await placePredictionBet({ ...intent, idempotencyKey })
+    // The payment PIN confirms the bet (2026-11-05).
+    const result = await pin.ask([{ label: t.stake, value: fmtAtomic(intent.stakeAtomic, decimals, 'USDT') }], (code) => placePredictionBet({ ...intent, idempotencyKey, transactionPin: code }))
     setPending(false)
+    if (result === null) return
     if (!result.ok && rk.voucherErrors[result.error.code]) { setServerError(rk.voucherErrors[result.error.code]); return }
     if (!result.ok && result.error.code === 'REWARD_COUPON_INVALID' && voucher) { setVoucherId(null); invalidate(['rewards:']); setServerError(rk.couponInvalid); return }
     if (!result.ok && result.error.code === 'REWARD_COUPON_INVALID') { setUseCoupon(false); invalidate(['rewards:']); setServerError(rk.couponInvalid); return }
@@ -270,12 +275,28 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     keys.current.clear()
     invalidate(['wallet:', 'portfolio:', 'home:', 'prediction:bets', 'rewards:'])
     setDone(result.data)
+    // Then the success page (2026-11-05): the event, the side and price, shares, what it pays if right, the order number.
+    const bet = result.data
+    const side = outcome !== null ? (translation?.outcomes[outcome] ?? outcomeLabel(m.outcomes[outcome] ?? '', copy)) : '—'
+    savePurchaseDone({
+      kind: 'prediction', title: locale === 'zh-CN' ? '下单成功' : 'Prediction placed', amount: fmtAtomic(bet.stakeAtomic, decimals, ''), unit: 'USDT',
+      rows: [
+        { label: locale === 'zh-CN' ? '事件' : 'Event', value: translation?.question ?? m.question },
+        { label: locale === 'zh-CN' ? '方向' : 'Side', value: `${side} · ${pct(Number(bet.price))}` },
+        { label: t.shares, value: Number(bet.shares).toLocaleString(locale, { maximumFractionDigits: 4 }) },
+        ...(netPayout !== null ? [{ label: t.payout, value: `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` }] : []),
+        { label: marketCopy[locale].status.orderId, value: `${bet.id.slice(0, 8).toUpperCase()}` },
+      ],
+      note: fill(t.doneBody, { s: Number(bet.shares).toLocaleString(locale, { maximumFractionDigits: 4 }), p: pct(Number(bet.price)) }),
+      donePath: '/assets', againPath: `${window.location.pathname}${window.location.search}`, recordsPath: '/my-predictions',
+    })
+    openPath(PURCHASE_DONE_PATH)
   }
 
   const amountTooLarge = Boolean(atomic && atomic !== '0' && quote.reason==='no_liquidity' && outcome!==null && directions[outcome]?.state==='available')
   let smallerStake = amountTooLarge ? predictionCapacityStake(quote.depth, placeFeeRate, decimals) : null
   if (smallerStake && available && /^\d+$/.test(available) && BigInt(toAtomic(smallerStake,decimals)??'0')>BigInt(available)) smallerStake = null
-  return <PredictionBetForm
+  return <>{pin.ui}<PredictionBetForm
     stake={stake} onStake={value=>{setStake(value);setServerError(null)}} onAdd={amount=>{setStake(addPredictionStake(stake,amount,decimals));setServerError(null)}}
     outcomes={m.outcomes.slice(0,2).map((label,index)=>({label:translation?.outcomes[index]??outcomeLabel(label,copy),probability:pct(m.prices[index]),disabled:!m.tokenIds[index] || directions[index].state==='unavailable'}))}
     outcome={outcome} onOutcome={index=>{setOutcome(index);setServerError(null)}} walletAction={walletAction} balance={fmtAtomic(available,decimals,'USDT')}
@@ -288,5 +309,5 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     coupon={!voucher && coupon ? { label: rk.useCoupon, sub: `${rk.upTo} ${fmtAtomic(coupon.maxDiscountAtomic, coupon.assetDecimals, coupon.assetCode)} · ${rk.validUntil(fmtDate(coupon.expiresAt, locale))}`, discount: couponOn && discount > BigInt(0) ? rk.discount(fmtAtomic(discount.toString(), decimals, 'USDT')) : null, on: useCoupon, onToggle: setUseCoupon } : undefined}
     refreshing={quoteRefreshing} pending={pending} risk={risk} ready={ready} onRisk={value=>{setRisk(value);setServerError(null)}}
     onRefresh={()=>{setServerError(null);void onRefreshQuote()}} onLower={()=>{if(smallerStake){setStake(smallerStake);setServerError(null)}}} onReload={()=>void wallet.refetch()} onDeposit={()=>openPath('/wallet/deposit')} onSubmit={()=>void submit()}
-  />
+  /></>
 }

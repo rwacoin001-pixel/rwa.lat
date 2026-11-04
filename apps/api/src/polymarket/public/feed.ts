@@ -1,6 +1,6 @@
 import {publicFetch} from './public-fetch'
 import { activeEventMarkets, type GammaEventData } from './polymarket-data'
-import { POLYMARKET_CATEGORIES, POLYMARKET_CATEGORY_TAGS, POLYMARKET_SORTS, type PolymarketCategory } from './feed-types'
+import { POLYMARKET_CATEGORIES, POLYMARKET_CATEGORY_TAGS, POLYMARKET_SORTS, POLYMARKET_STATUSES, POLYMARKET_WINDOWS, type PolymarketCategory } from './feed-types'
 import {polymarketDiscoveryItems,nextPolymarketDiscoveryOffset} from './polymarket-feed-discovery'
 
 export const revalidate = 10
@@ -17,10 +17,16 @@ export async function GET(request: Request) {
   const url = new URL(request.url)
   const rawCategory = url.searchParams.get('category') ?? 'all'
   const sort=url.searchParams.get('sort')??'volume24hr'
+  const status = url.searchParams.get('status') ?? 'active'
+  const window = url.searchParams.get('window') ?? 'all'
+  const hiddenTags = [...new Set((url.searchParams.get('hide') ?? '').split(',').map(value => value.trim()))]
+    .filter((value): value is 'sports' | 'crypto' | 'earnings' => ['sports', 'crypto', 'earnings'].includes(value))
   const search=(url.searchParams.get('q')??'').trim()
   const rawOffset = Number(url.searchParams.get('offset') ?? '0')
   if (!(POLYMARKET_CATEGORIES as readonly string[]).includes(rawCategory)
     || !(POLYMARKET_SORTS as readonly string[]).includes(sort) || search.length>120
+    || !(POLYMARKET_STATUSES as readonly string[]).includes(status)
+    || !(POLYMARKET_WINDOWS as readonly string[]).includes(window)
     || !Number.isInteger(rawOffset) || rawOffset < 0 || rawOffset > MAX_OFFSET || rawOffset % PAGE_SIZE !== 0) {
     return Response.json({ error: 'Invalid feed parameters' }, { status: 400 })
   }
@@ -28,13 +34,21 @@ export async function GET(request: Request) {
   const category = rawCategory as PolymarketCategory
   // Latest fetches more records to screen out short crypto intervals. The cursor
   // advances by records consumed; emit every remaining valid record from that page.
-  const filterMicro = sort === 'createdAt' && !search
+  const filterMicro = (sort === 'createdAt' || sort === 'competitive') && !search
   const upstreamLimit = filterMicro ? PAGE_SIZE * 3 : PAGE_SIZE
   const upstreamOffset = rawOffset
-  const query = new URLSearchParams({ active: 'true', closed: 'false', limit: String(upstreamLimit), offset: String(upstreamOffset), order: sort, ascending: String(sort==='endDate') })
+  const query = new URLSearchParams({ closed: String(status === 'resolved'), limit: String(upstreamLimit), offset: String(upstreamOffset), order: sort, ascending: String(sort==='endDate') })
+  if (status === 'active') query.set('active', 'true')
   if (category !== 'all') query.set('tag_id', String(POLYMARKET_CATEGORY_TAGS[category]))
+  for (const tag of hiddenTags) query.append('exclude_tag_id', String(POLYMARKET_CATEGORY_TAGS[tag]))
 
-  if(sort==='endDate')query.set('end_date_min',new Date().toISOString())
+  const now = Date.now()
+  if (status === 'active') {
+    if (sort === 'endDate' || window !== 'all') query.set('end_date_min', new Date(now).toISOString())
+    const days = window === 'day' ? 1 : window === 'week' ? 7 : window === 'month' ? 30 : null
+    if (days) query.set('end_date_max', new Date(now + days * 86_400_000).toISOString())
+  }
+  const includeSlots = !search && sort === 'volume24hr' && status === 'active' && window === 'all' && !hiddenTags.length && rawOffset === 0
   if(search)query.set('title_search',search)
   try {
     const upstream = await publicFetch(`https://gamma-api.polymarket.com/events?${query}`, { headers: {accept:'application/json','user-agent':'A-REIT/0.1 market-data'}, next: { revalidate }, signal: AbortSignal.timeout(8_000) })
@@ -46,19 +60,19 @@ export async function GET(request: Request) {
     // 首页顶部因此永远不变（用户反馈"刷新一直是一样的盘口"）。改成从「24h 成交量前 8 的
     // 非微盘」里按小时轮换取 2 个：保证非空、保证质量，而且每小时都会换。
     const featured: GammaEventData[] = []
-    if (!search && sort==='volume24hr' && rawOffset===0 && (category==='all'||category==='politics')) {
+    if (includeSlots && (category==='all'||category==='politics')) {
       const clean=(rows as GammaEventData[]).filter(event=>activeEventMarkets(event,now).length>0&&!isMicro(event)).slice(0,8)
       if(clean.length){const slot=Math.floor(now/3_600_000)%clean.length;featured.push(clean[slot]);if(clean.length>1)featured.push(clean[(slot+1)%clean.length])}
     }
     let pulse:GammaEventData|null=null
     const pulseStart=Math.floor(Date.now()/300000)*300
-    if(!search&&sort==='volume24hr'&&rawOffset===0&&(category==='all'||category==='crypto')) {
+    if(includeSlots&&(category==='all'||category==='crypto')) {
       try {const slug=`btc-updown-5m-${pulseStart}`;const response=await publicFetch(`https://gamma-api.polymarket.com/events/slug/${slug}`,{next:{revalidate:8},signal:AbortSignal.timeout(5000)});if(response.ok)pulse=await response.json() as GammaEventData}catch{}
     }
     const upstreamRows = (rows as GammaEventData[]).filter(event => !filterMicro || !isMicro(event))
     const candidates=[featured[0],pulse,...featured.slice(1),...upstreamRows].filter((event):event is GammaEventData=>Boolean(event))
     const round={start:new Date(pulseStart*1000).toISOString(),end:new Date((pulseStart+300)*1000).toISOString()}
-    const items=polymarketDiscoveryItems(candidates,category,featured[0]?.id,Date.now())
+    const items=polymarketDiscoveryItems(candidates,category,featured[0]?.id,Date.now(),status as 'active' | 'resolved')
       // The feed hides items whose endAt has passed, so the round card disappears when its 5 minutes are up.
       .map(item=>pulse&&item.id===`event-${pulse.id}`?{...item,window:round,endAt:round.end}:item)
     return Response.json({

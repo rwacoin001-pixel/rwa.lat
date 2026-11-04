@@ -7,13 +7,16 @@ import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { acknowledgeDisclosure, getWallet } from '@/lib/api/markets'
 import { idempotencyKeyForIntent, isFinalRejection, retireIntentKey } from '@/lib/api/idempotency'
-import { getQuantDisclosure, getQuantRedemptionPreview, getQuantSubscriptionPreview, redeemQuant, subscribeQuant, type QuantProduct } from '@/lib/api/quant'
+import { getQuantDisclosure, getQuantRedemptionPreview, getQuantSubscriptionPreview, redeemQuant, subscribeQuant, type QuantOrder, type QuantProduct } from '@/lib/api/quant'
 import { quantCopyFor, quantErrorMessage } from '@/lib/maison-quant-copy'
 import { subscriptionTimeline } from '@/lib/quant-view-model'
 import { toAtomic } from '@/lib/money'
 import { maison as s } from './primitives'
 import { useHideDock, usdtNumber } from './QuantParts'
 import styles from './quant.module.css'
+import { usePurchasePin } from './usePurchasePin'
+import { PURCHASE_DONE_PATH, savePurchaseDone } from '@/lib/purchase-done'
+import { openPath } from '@/lib/maison-nav'
 
 const DECIMAL = /^\d{1,30}(\.\d{1,6})?$/
 const refreshAll = () => invalidate(['quant:', 'wallet:', 'portfolio:', 'home:'])
@@ -47,6 +50,7 @@ export function QuantSubscribeSheet({ open, onClose, product, page = false, onVi
   const [error, setError] = useState<string | null>(null)
   const [doneDate, setDoneDate] = useState<string | null>(null)
   const [orderId, setOrderId] = useState<string | null>(null)
+  const pin = usePurchasePin<{ duplicate?: boolean; order: QuantOrder }>()
   // Steps (2026-10-28): amount → review → receipt; an error shows after leaving the field or tapping Next, with one shake.
   const [step, setStep] = useState<'amount' | 'review'>('amount')
   const [touched, setTouched] = useState(false)
@@ -83,8 +87,10 @@ export function QuantSubscribeSheet({ open, onClose, product, page = false, onVi
     const text = amount.trim()
     // Same amount → same key: a retry after a timeout returns the original order instead of a second one.
     const key = idempotencyKeyForIntent(keys.current, 'POST', path, { amountUsd: text })
-    const result = await subscribeQuant(product.slug, text, key)
+    // The payment PIN confirms the order (2026-11-05); backing out of the PIN leaves the review as it was.
+    const result = await pin.ask([{ label: c.sheet.amount, value: `${usdtNumber(value.toString(), locale)} USDT` }], (code) => subscribeQuant(product.slug, text, key, code))
     setPending(false)
+    if (result === null) return
     if (!result.ok) {
       // A refused order is stored as `rejected` under its key; the next tap must be a new order, not a replay of that one.
       if (isFinalRejection(result.error)) retireIntentKey(keys.current, 'POST', path, { amountUsd: text })
@@ -100,6 +106,22 @@ export function QuantSubscribeSheet({ open, onClose, product, page = false, onVi
     retireIntentKey(keys.current, 'POST', path, { amountUsd: text }) // a confirmed order is done; other unresolved retries keep their keys
     setOrderId(result.data.order.id)
     setDoneDate(result.data.order.effectiveDate)
+    // Then the success page (2026-11-05): what was bought, when it starts earning and settles, the order number.
+    const day = (iso: string | null | undefined) => iso ? new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${iso.slice(0, 10)}T00:00:00Z`)) : '—'
+    savePurchaseDone({
+      kind: 'quant', title: locale === 'zh-CN' ? '申购成功' : 'Subscription placed', amount: usdtNumber(value.toString(), locale), unit: 'USDT',
+      rows: [
+        { label: locale === 'zh-CN' ? '产品' : 'Product', value: product.name },
+        { label: c.sheet.stepStart, value: day(result.data.order.effectiveDate) },
+        ...(preview.data?.firstSettlementDate ? [{ label: c.sheet.stepSettle, value: day(preview.data.firstSettlementDate) }] : []),
+        { label: c.sheet.orderId, value: result.data.order.id.slice(0, 8).toUpperCase() },
+      ],
+      note: c.sheet.doneSubscribe(result.data.order.effectiveDate),
+      donePath: '/assets', againPath: `${window.location.pathname}${window.location.search}`, recordsPath: '/assets?tab=records',
+    })
+    // A page flow replaces itself with the success page (its onClose would step back and undo the jump); a sheet closes.
+    if (page) openPath(PURCHASE_DONE_PATH, { replace: true })
+    else { onClose(); openPath(PURCHASE_DONE_PATH) }
   }
 
   const p = preview.data
@@ -128,6 +150,7 @@ export function QuantSubscribeSheet({ open, onClose, product, page = false, onVi
     : <Sheet open={open} onClose={onClose} busy={pending} kicker={c.kicker} title={doneDate ? c.sheet.done : c.sheet.subscribeTitle}>{children}</Sheet>
 
   return frame(<AutoHeight>
+    {pin.ui}
     {doneDate
       ? <div className={styles.stepPane} key="done">
         <span className={styles.doneMark} aria-hidden="true"><Check size={28} strokeWidth={2.4} /></span>

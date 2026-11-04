@@ -1,3 +1,4 @@
+import { TransactionPinModule } from '../wallet/transaction-pin.module'
 import { Module } from '@nestjs/common'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { IdentityModule } from '../identity/identity.module'
@@ -18,6 +19,7 @@ import { PredictionHedgeWorker } from './prediction-hedge.worker'
 
 @Module({
   imports: [
+    TransactionPinModule,
     TypeOrmModule.forFeature([PredictionBet, PredictionSettlementRun, PredictionHedgeDecision, PredictionFavorite]),
     IdentityModule,
     OperationsModule,

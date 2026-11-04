@@ -20,7 +20,7 @@ describeDatabase('Koala first successful referral subscription (PostgreSQL)', ()
     db = new DataSource(buildDatabaseOptions({ ...process.env, NODE_ENV: 'test' }))
     await db.initialize(); await db.runMigrations({ transaction: 'all' })
     quant = new QuantService(db, new LedgerService(db), { assertEnabled: async () => {} } as unknown as OperationalCapabilityService,
-      { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService)
+      { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService, { verifyPurchase: async () => {} } as never)
     const [p] = await db.query(`INSERT INTO app.quant_products(slug,name,status,min_subscription_atomic) VALUES($1,'Test','active',1000000) RETURNING slug`, [`ref-${randomUUID().slice(0,8)}`])
     slug=p.slug
     await db.query(`INSERT INTO app.referral_settings(config,fee_effective_at,holding_effective_at,team_effective_at) VALUES($1,now(),now(),now())`,[JSON.stringify({...REFERRAL_DEFAULT_SETTINGS,holdingRatesBps:[600,300,100]})])

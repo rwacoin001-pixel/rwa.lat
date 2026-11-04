@@ -36,7 +36,7 @@ export type PlaceTradingOrderBody = { symbol: string; side: 'buy' | 'sell'; type
 export type PredictionFees = { placeFeeBps: number; payoutFeeBps: number; placeFeeRate: number; payoutFeeRate: number; assetDecimals: number }
 export type PredictionStatus = { enabled: boolean; mode: string; limits: { maxStakeAtomic: string | null; maxDailyStakeAtomic: string; maxMarketExposureAtomic: string; slippageBps: string; assetDecimals: number }; fees?: PredictionFees }
 export type PredictionBet = { id: string; status: string; stakeAtomic: string; shares: string; price: string; feeAtomic?: string; feeDiscountAtomic?: string | null; couponId?: string | null; payoutFeeAtomic?: string; riskStakeAtomic?: string; [key: string]: unknown }
-export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string; voucherId?: string }
+export type PlaceBetBody = { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string; voucherId?: string; transactionPin?: string }
 /** Shape of the same-origin `/api/polymarket/market/:id` proxy (Gamma + CLOB). */
 export type PolymarketMarket = {
   source: string; fetchedAt: string
@@ -114,8 +114,8 @@ export function productForSlug(products: CatalogProduct[] | undefined, slug: str
 export const getBasket = (id: string) => request<BasketDetail>(`/v1/basket/portfolios/${encodeURIComponent(id)}`)
 export const listBasketDisclosures = () => request<BasketDisclosure[]>('/v1/basket/disclosures')
 export const acknowledgeDisclosure = (id: string) => request<{ acknowledged: boolean }>(`/v1/basket/disclosures/${encodeURIComponent(id)}/acknowledge`, { method: 'POST', body: '{}' })
-export const subscribeBasket = (id: string, amountUsd: string, idempotencyKey: string) =>
-  request<{ duplicate?: boolean; subscription: BasketSubscription }>(`/v1/basket/portfolios/${encodeURIComponent(id)}/subscriptions`, { method: 'POST', body: JSON.stringify({ amountUsd }), idempotencyKey })
+export const subscribeBasket = (id: string, amountUsd: string, idempotencyKey: string, transactionPin?: string) =>
+  request<{ duplicate?: boolean; subscription: BasketSubscription }>(`/v1/basket/portfolios/${encodeURIComponent(id)}/subscriptions`, { method: 'POST', body: JSON.stringify({ amountUsd, ...(transactionPin ? { transactionPin } : {}) }), idempotencyKey })
 export const redeemBasket = (id: string, units: string, idempotencyKey: string) =>
   request<{ duplicate?: boolean; redemption: BasketRedemption }>(`/v1/basket/portfolios/${encodeURIComponent(id)}/redemptions`, { method: 'POST', body: JSON.stringify({ units }), idempotencyKey })
 /** Same rule as the server (subscription.service assertDisclosureAcknowledged): latest strategy disclosure, else latest global basket one. */

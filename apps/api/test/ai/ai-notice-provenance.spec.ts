@@ -50,7 +50,7 @@ describe('Notice provenance in chat', () => {
     expect(repo.findOne).toHaveBeenCalledWith({where:{id:RECORD,recipient_user_id:OWNER,channel:'in_app'}})
   })
   it('binds exact quant payout, order and ledger source queries to the session user', async()=>{
-    const db = {query:jest.fn(async(..._args:any[])=>[])}, service = new QuantService(db as any,{} as any,{} as any,{} as any)
+    const db = {query:jest.fn(async(..._args:any[])=>[])}, service = new QuantService(db as any,{} as any,{} as any,{} as any, { verifyPurchase: async () => {} } as never)
     jest.spyOn(service,'getProductRow').mockResolvedValue({id:RECORD} as any)
     await service.getMyPayout(OWNER,'koala','2026-10-28')
     expect(db.query.mock.calls[0][1]).toEqual([OWNER,RECORD,'2026-10-28'])

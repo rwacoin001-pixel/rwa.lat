@@ -17,8 +17,10 @@ const selectCredential = `SELECT pin_hash AS "pinHash", credential_version AS "c
 @Injectable()
 export class TransactionPinService {
   private readonly pepper: string
+  private readonly purchasePinRequired: boolean
   constructor(private readonly db: DataSource, config: ConfigService, private readonly security: SecurityService) {
     this.pepper = config.get<string>('TRANSACTION_PIN_PEPPER') ?? ''
+    this.purchasePinRequired = config.get<string>('PURCHASE_PIN_REQUIRED') !== 'false'
   }
   private get available() { return Buffer.byteLength(this.pepper) >= 32 }
 
@@ -40,13 +42,21 @@ export class TransactionPinService {
 
   // This separate transaction commits failed attempts even if the funds transaction subsequently rolls back.
   async verifyWithdrawal(userId: string, pin?: string): Promise<number> {
+    return this.verify(userId, pin, true)
+  }
+
+  async verifyPurchase(userId: string, pin?: string): Promise<void> {
+    if (this.purchasePinRequired) await this.verify(userId, pin, false)
+  }
+
+  private async verify(userId: string, pin: string | undefined, withdrawal: boolean): Promise<number> {
     this.assertAvailable()
     if (pin === undefined || pin === '') throw this.error('TRANSACTION_PIN_REQUIRED')
     assertTransactionPin(pin)
     const result = await this.transact(async (runner) => {
       const row = await this.lock(runner, userId)
-      if (!row) return { error: this.error('TRANSACTION_PIN_REQUIRED') }
-      const gate = pinWithdrawalGate(row, row.credentialVersion, row.serverTime)
+      if (!row) return { error: this.error(withdrawal ? 'TRANSACTION_PIN_REQUIRED' : 'TRANSACTION_PIN_UNSET') }
+      const gate = pinWithdrawalGate(withdrawal ? row : { ...row, withdrawalBlockedUntil: null }, row.credentialVersion, row.serverTime)
       if (gate) return { error: this.error(gate, row) }
       const attempt = pinAttempt(row, await verifyTransactionPin(pin, userId, this.pepper, row.pinHash), row.serverTime)
       await this.saveAttempt(runner, userId, attempt)
@@ -112,6 +122,7 @@ export class TransactionPinService {
   }
   private error(code: string, row?: Credential) {
     const messages: Record<string, string> = { TRANSACTION_PIN_REQUIRED: 'Set and enter your transaction password.', TRANSACTION_PIN_INVALID: 'Incorrect transaction password.',
+      TRANSACTION_PIN_UNSET: 'Set your transaction password before purchasing.',
       TRANSACTION_PIN_LOCKED: 'Transaction password is temporarily locked.', TRANSACTION_PIN_COOLDOWN: 'Withdrawals are paused after transaction password recovery.',
       TRANSACTION_PIN_CONFLICT: 'Transaction password changed. Confirm the operation again.' }
     return new ConflictException({ code, message: messages[code] ?? 'Transaction password verification failed.',

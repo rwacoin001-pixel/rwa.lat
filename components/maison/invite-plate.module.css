@@ -150,3 +150,6 @@
 .footText > small { font-size: 12px; }
 .code span { font-size: 22px; line-height: 28px; }
 .meta { font-size: 13px; line-height: 18px; }
+
+/* Galaxy level under the name (2026-11-04): the plate's own ink, never a tinted chip. */
+.level.level { color: inherit; opacity: .8; margin-top: 2px; }

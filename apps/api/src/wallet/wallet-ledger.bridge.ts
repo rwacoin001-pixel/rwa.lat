@@ -6,6 +6,7 @@ import { WALLET_ERROR_CODES } from './wallet.errors'
 import { hasQualifyingDeposit } from './transfer-eligibility'
 import { pinWithdrawalGate } from './transaction-pin-policy'
 import { couponDiscount, finishWithdrawalCoupon } from '../rewards/reward-coupons'
+import { enqueueMembershipChange } from '../membership/membership-events'
 
 interface CreateWithdrawalInput {
   id: string
@@ -83,6 +84,7 @@ export class WalletLedgerBridge {
         [depositId],
       )
       await runner.commitTransaction()
+      enqueueMembershipChange(this.dataSource,'deposit',depositId)
       return { credited: true, duplicate: transactionId === null }
     } catch (error) {
       await runner.rollbackTransaction()
@@ -579,6 +581,7 @@ export class WalletLedgerBridge {
         recipientUserId: input.recipientUserId,
       })
       await runner.commitTransaction()
+      enqueueMembershipChange(this.dataSource,'transfer',input.id)
       return { id: input.id, created: true }
     } catch (error) {
       await runner.rollbackTransaction()

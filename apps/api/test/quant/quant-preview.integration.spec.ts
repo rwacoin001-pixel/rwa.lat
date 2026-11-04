@@ -110,7 +110,7 @@ describeDatabase('koala quant settlement preview', () => {
     await ds.initialize()
     await ds.runMigrations({ transaction: 'all' })
     const ledger = new LedgerService(ds)
-    quant = new QuantService(ds, ledger, allowAll, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService)
+    quant = new QuantService(ds, ledger, allowAll, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService, { verifyPurchase: async () => {} } as never)
     settlements = new QuantSettlementService(ds, ledger, quant, { create: async () => ({}) } as never)
 
     slug = `koala-preview-${randomUUID().slice(0, 8)}`

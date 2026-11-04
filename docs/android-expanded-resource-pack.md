@@ -52,3 +52,7 @@ APK 1.1.7 / code 10 bundles website build `0-USMpefAPoW3hLJ5C68E` (main `250ac74
 Still outside the pack on purpose: desktop media (~72 MB), original product PNGs (the phone uses the derived WebP), OCR language data (~23 MB) and videos.
 
 The iPhone Home Screen app gets the same idea from the website side: `public/sw.js` `WARM_PACK` keeps all code plus images/fonts ≤ 400 KB from the same manifest (~25 MB) once the app is launched.
+
+## 1.1.8 — 2026-11-04
+
+APK 1.1.8 / code 11 bundles website build `6KOh3_-OCBkRW6nMCR4GE` (main `4f8fce92`, 741 files / 33.3 MiB): the pack leaves out `/media/generated` (retired product art) and PNG originals over 500 KB (WebP copies are in the pack), for faster downloads from China. 26,152,323 bytes (1.1.7 was 85,410,307); SHA-256 `6606e074f3c6648a8dc4f07afe33c319da34afc733de49c7406182a2bdcc68f0`; certificate `7ef88406…` unchanged. Ships the real tab pager and the instant product slide. `dl.a-reit.com` is the Singapore server directly (Caddy, no CDN); a Hong Kong object store would be the next step for mainland speed.

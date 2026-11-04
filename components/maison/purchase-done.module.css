@@ -1,0 +1,4 @@
+/* Purchase done page (2026-11-05): the flow-kit success view, centred on the page ground, a close key at the top. */
+.page { position: relative; display: grid; align-content: center; min-height: calc(100dvh - 120px); padding: calc(env(safe-area-inset-top) + 56px) 0 24px; }
+.close { position: absolute; top: calc(env(safe-area-inset-top) + 8px); inset-inline-start: 0; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink, #0b1220); cursor: pointer; }
+.blank { min-height: 60vh; }

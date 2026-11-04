@@ -114,7 +114,7 @@ describeDatabase('prediction internal market (route A) — betting + settlement'
   beforeAll(async () => {
     ds = new DataSource(buildDatabaseOptions({ ...process.env, NODE_ENV: 'test' }))
     await ds.initialize()
-    prediction = new PredictionService(ds, allowAll, polymarket, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService)
+    prediction = new PredictionService(ds, allowAll, polymarket, { requireInvestmentEligibility: async () => {} } as unknown as ComplianceService, { verifyPurchase: async () => {} } as never)
 
     // 水龙头账户（测试注资用）
     const [faucet] = await ds.query(

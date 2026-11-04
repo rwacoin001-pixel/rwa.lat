@@ -87,7 +87,7 @@ suite('daily rewards and coupon accounting with isolated PostgreSQL', () => {
     const service = new PredictionService(db, { assertEnabled: async () => undefined } as never, {
       getOrderBook: async (tokenId: string) => ({ tokenId, stale: false, fetchedAt: new Date(), asks: [{ price, size: '10000' }] }),
       getOutcomeProbability: async () => Number(price),
-    } as never, { requireInvestmentEligibility: async () => undefined } as never)
+    } as never, { requireInvestmentEligibility: async () => undefined } as never, { verifyPurchase: async () => {} } as never)
     return { service, token, market: m.id as string }
   }
   async function withdrawal(uid: string, cid: string, amount = '10000000') {

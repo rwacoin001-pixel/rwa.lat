@@ -76,7 +76,7 @@ dbDescribe('final-result sync → atomic prediction settlement', () => {
   beforeAll(async () => {
     ds = new DataSource(buildDatabaseOptions({ ...process.env, NODE_ENV:'test' }))
     await ds.initialize()
-    prediction = new PredictionService(ds, { assertEnabled: async()=>{} } as never, trading, { requireInvestmentEligibility:async()=>{} } as never)
+    prediction = new PredictionService(ds, { assertEnabled: async()=>{} } as never, trading, { requireInvestmentEligibility:async()=>{} } as never, { verifyPurchase: async () => {} } as never)
   })
   afterAll(async()=> { if(ds?.isInitialized) await ds.destroy() })
 

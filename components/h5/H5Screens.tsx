@@ -54,6 +54,9 @@ const MaisonCashScreen = dynamic(() => import('../maison/CashScreen').then((m) =
 const MaisonDepositScreen = dynamic(() => import('../maison/CashScreen').then((m) => ({ default: m.DepositScreen })), { ssr: false, loading: AppLoading })
 const MaisonAddressBookScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.AddressBookScreen })), { ssr: false, loading: AppLoading })
 const PrintScreen = dynamic(() => import('../rewards/TicketPrinter').then((m) => ({ default: m.PrintScreen })), { ssr: false, loading: AppLoading })
+const GalaxyScreen = dynamic(() => import('../membership/GalaxyScreen').then((m) => ({ default: m.GalaxyScreen })), { ssr: false, loading: AppLoading })
+const PurchaseDoneScreen = dynamic(() => import('../maison/PurchaseDoneScreen').then((m) => ({ default: m.PurchaseDoneScreen })), { ssr: false, loading: AppLoading })
+const RankScreen = dynamic(() => import('../membership/RankScreen').then((m) => ({ default: m.RankScreen })), { ssr: false, loading: AppLoading })
 const RewardsScreen = dynamic(() => import('../rewards/RewardsScreen').then((m) => ({ default: m.RewardsScreen })), { ssr: false, loading: AppLoading })
 const MaisonTransferScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.TransferScreen })), { ssr: false, loading: AppLoading })
 const MaisonReceiveScreen = dynamic(() => import('../maison/FundsScreen').then((m) => ({ default: m.ReceiveScreen })), { ssr: false, loading: AppLoading })
@@ -156,6 +159,9 @@ export function H5Screens({ h }: { h: H5Controller }) {
         {screen === 'fees' && <MaisonFeesScreen />}
         {screen === 'address-book' && <MaisonAddressBookScreen />}
         {screen === 'rewards' && <RewardsScreen />}
+        {screen === 'galaxy' && <GalaxyScreen />}
+        {screen === 'rank' && <RankScreen />}
+        {screen === 'purchase-done' && <PurchaseDoneScreen />}
         {screen === 'reward-print' && <PrintScreen />}
         {screen === 'status' && <MaisonBridge page="status"><StatusScreen go={go} /></MaisonBridge>}
         {screen === 'disclosures' && <MaisonBridge page="trust"><TrustCenterScreen kind="product-disclosures" go={go} notify={notify} /></MaisonBridge>}

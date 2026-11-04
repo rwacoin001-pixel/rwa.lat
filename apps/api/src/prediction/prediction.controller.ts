@@ -40,6 +40,7 @@ export class PredictionUserController {
     @Body() dto: PlacePredictionBetDto,
   ) {
     return this.prediction.placeBet(actor.userId, req.requestId ?? 'prediction-bet', {
+      transactionPin: dto.transactionPin,
       tokenId: dto.tokenId,
       stakeAtomic: dto.stakeAtomic,
       expectedPrice: dto.expectedPrice,

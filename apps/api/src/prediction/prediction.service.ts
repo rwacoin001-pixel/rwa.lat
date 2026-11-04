@@ -1,3 +1,4 @@
+import { TransactionPinService } from '../wallet/transaction-pin.service'
 import { Injectable, Logger } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 import { randomUUID } from 'node:crypto'
@@ -21,6 +22,7 @@ import { bpsToRate, feeOn, predictionFeeConfig } from './prediction-fees'
 import { ATOMIC_PER_UNIT, SHARES_SCALE, formatDecimal18, parseDecimal18 } from './prediction-hedge-math'
 import { recordReferralRewards } from '../referral/referral-rewards'
 import { enqueueReferralPurchase } from '../referral/referral-purchase'
+import { enqueueMembershipChange } from '../membership/membership-events'
 import { assertRewardFunding, assertVoucherOutcome, assertVoucherPrice, couponDiscount, lockBetVoucher, redeemCoupon, restoreBetVoucher } from '../rewards/reward-coupons'
 
 // 18 位定标换算已抽到 prediction-hedge-math（纯函数模块，可独立测试）；此处 re-export 保持既有引用不变。
@@ -60,6 +62,7 @@ export class PredictionService {
     private readonly capability: OperationalCapabilityService,
     private readonly polymarket: PolymarketService,
     private readonly compliance: ComplianceService,
+    private readonly transactionPin: TransactionPinService,
   ) {}
 
   // ---------------------------------------------------------------- 用户侧
@@ -91,7 +94,7 @@ export class PredictionService {
   async placeBet(
     userId: string,
     requestId: string,
-    input: { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string; voucherId?: string },
+    input: { tokenId: string; stakeAtomic: string; expectedPrice?: string; idempotencyKey: string; couponId?: string; voucherId?: string; transactionPin?: string },
   ) {
     assertRewardFunding(input.couponId, input.voucherId)
     const stake = BigInt(input.stakeAtomic)
@@ -144,6 +147,8 @@ export class PredictionService {
         await runner.commitTransaction()
         return this.toBetView(existing, true)
       }
+
+      await this.transactionPin.verifyPurchase(userId, input.transactionPin)
 
       if (input.voucherId) await lockBetVoucher(runner, userId, input.voucherId, stake)
       const discount = input.couponId ? await couponDiscount(runner, userId, input.couponId, 'prediction_place_fee', feeBefore) : 0n
@@ -472,6 +477,7 @@ export class PredictionService {
 
       await runner.commitTransaction()
       this.log.log(`prediction settle market=${marketMappingId} outcome=${voided ? 'void' : 'resolved'} bets=${betsSettled} paid=${totalPaid.toString()} fee=${totalFee.toString()}`)
+      if(voided)for(const id of new Map((bets as Array<{user_id:string;id:string}>).map(b=>[b.user_id,b.id])).values())enqueueMembershipChange(this.dataSource,'prediction',id)
       return { settled: true, outcome: voided ? 'void' : 'resolved', betsSettled, totalPaidAtomic: totalPaid.toString(), totalFeeAtomic: totalFee.toString() }
     } catch (error) {
       await runner.rollbackTransaction()

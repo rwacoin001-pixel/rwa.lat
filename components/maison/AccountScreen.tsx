@@ -33,6 +33,9 @@ import { useUnread } from '@/hooks/useUnread'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { referralMe, referralSummary } from '@/lib/api/referral'
 import { rewardWalletQuery } from '@/lib/rewards'
+import { membershipQuery } from '@/lib/api/membership'
+import { LEVEL_NAMES, membershipCopy } from '@/lib/membership-copy'
+import { GalaxyBadge } from '@/components/membership/GalaxyBadge'
 import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 import { fromAtomic } from '@/lib/money'
 import { MASK, setBalancesHidden, useBalancesHidden } from '@/lib/hide-balance'
@@ -68,6 +71,8 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   // Stage 3 (2026-11-01): the coupons row shows only when /v1/rewards is live for this user (null otherwise).
   const rewards = useQuery(guest ? null : 'rewards:wallet', rewardWalletQuery, { staleTime: 60_000, loading: 'silent' }).data
   const rk = useRewardsCopy()
+  // Galaxy level (2026-11-04): the chip under the avatar shows it and opens 我的星系; until the API answers, the old label.
+  const galaxy = useQuery(guest ? null : 'membership:me', membershipQuery, { staleTime: 60_000, loading: 'silent' }).data
   const invited = referral.data ? referral.data.levels.find((level) => level.level === 1)?.count ?? 0 : undefined
   const statsQuery = useQuery(community?.identityConfigured && community.handle ? `community:profile:${community.handle}` : null, () => request<CommunityProfileResponse>(`/v1/community/profiles/${encodeURIComponent(community!.handle)}`, { token: null, loading: 'silent' }), { staleTime: 60_000 })
   const stats = statsQuery.data?.stats ?? null
@@ -142,6 +147,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       { key: 'communication', title: p.rows.communication.title, path: '/profile/settings?section=marketing' },
     ],
     [
+      ...(galaxy ? [{ key: 'galaxy', title: membershipCopy(locale).title, path: '/profile/galaxy', value: <span className={m.value}>{(LEVEL_NAMES[locale] ?? LEVEL_NAMES.en)[galaxy.level.key]}</span> }] : []),
       { key: 'referral', title: p.rows.referral.title, path: '/community?tab=invite', value: inviteCode ? <bdi className={m.code} dir="ltr">{inviteCode}</bdi> : undefined },
       ...(rewards ? [{ key: 'rewards', title: rk.row, path: '/profile/rewards', value: <span className={m.value}>{rk.rowValue(rewards.points.toLocaleString(locale), rewards.coupons.filter((c) => c.state === 'available').length)}</span> }] : []),
       { key: 'documents', title: p.rows.documents.title, path: '/profile/documents' },
@@ -162,7 +168,8 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
       </div>
       <div className={m.pmid}>
         <span className={m.pavatar}>{community ? <CommunityAvatar avatarUrl={community.avatarUrl} seed={community.avatarSeed} handle={community.handle || 'me'} size={80} /> : <span className={m.avatarEmpty} />}</span>
-        <span className={m.pchip}>{kycState === 'approved' ? <><Check size={14} strokeWidth={2.4} aria-hidden="true" />{me.verified}</> : me.member}</span>
+        {galaxy ? <button type="button" className={m.pchip} onClick={() => openPath('/profile/galaxy')}><GalaxyBadge level={galaxy.level.index} /></button>
+          : <span className={m.pchip}>{kycState === 'approved' ? <><Check size={14} strokeWidth={2.4} aria-hidden="true" />{me.verified}</> : me.member}</span>}
       </div>
       <div className={m.prow}>
         <span className={m.names}>

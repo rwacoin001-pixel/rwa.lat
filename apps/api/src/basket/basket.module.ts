@@ -1,3 +1,4 @@
+import { TransactionPinModule } from '../wallet/transaction-pin.module'
 import { Module } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
@@ -43,6 +44,7 @@ import { BasketSubscriptionService } from './subscription.service'
 
 @Module({
   imports: [
+    TransactionPinModule,
     TypeOrmModule.forFeature([
       BasketStrategy,
       BasketStrategyVersion,

@@ -8,7 +8,7 @@ describe('prediction single-bet cap removal',()=>{
   // On-demand market ingest: when the token is not mapped yet, placeBet asks the
   // polymarket service to ingest it and then re-reads the mapping.
   const polymarket={ensureTokenMapped:jest.fn(async()=>false)} as unknown as PolymarketService
-  const service=new PredictionService({query} as unknown as DataSource,{assertEnabled:async()=>{},isEnabled:async()=>true} as unknown as OperationalCapabilityService,polymarket,{} as ComplianceService)
+  const service=new PredictionService({query} as unknown as DataSource,{assertEnabled:async()=>{},isEnabled:async()=>true} as unknown as OperationalCapabilityService,polymarket,{} as ComplianceService, { verifyPurchase: async () => {} } as never)
   beforeEach(()=>{query.mockClear();(polymarket.ensureTokenMapped as jest.Mock).mockClear()})
   it('publishes no single-bet cap while keeping daily and exposure limits',async()=>{
     const status=await service.status()

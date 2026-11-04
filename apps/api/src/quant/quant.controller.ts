@@ -78,7 +78,7 @@ export class QuantController {
   @UseGuards(SessionAuthGuard, VerifiedEmailGuard)
   @ApiOperation({ summary: 'Subscribe USDT (idempotent; needs the quant.subscriptions switch). Starts earning the day after its trade date.' })
   subscribe(@CurrentAuth() actor: SecurityActor, @Param('slug') slug: string, @Body() dto: QuantSubscribeDto, @Headers('idempotency-key') key: string, @Req() request: AuthenticatedRequest) {
-    return this.quant.subscribe(actor.userId, slug, dto.amountUsd, requireIdempotencyKey(key), request.requestId ?? 'quant-subscribe')
+    return this.quant.subscribe(actor.userId, slug, dto.amountUsd, requireIdempotencyKey(key), request.requestId ?? 'quant-subscribe', dto.transactionPin)
   }
 
   @Post('products/:slug/redemptions')
