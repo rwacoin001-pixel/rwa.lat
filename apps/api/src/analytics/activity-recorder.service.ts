@@ -22,6 +22,8 @@ export interface ActivityHit {
   /** Visit log only: raw user agent (truncated) and the app page the request came from. */
   userAgent?: string | null
   page?: string | null
+  region?: string | null
+  city?: string | null
 }
 
 interface Aggregate {

@@ -6,6 +6,7 @@ import { useEffect, useRef, useState, type PointerEvent } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useQuery } from '@/lib/api/_query'
 import { getMarketContextView } from '@/lib/api/market-context'
+import { fmtUsdCompact } from '@/lib/money'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import type { MarketQuote } from '@/lib/p0a-data'
 import { HomeSectionHeading } from './HomeSectionHeading'
@@ -25,28 +26,30 @@ const copy: Record<AppLocale, { eyebrow: string; title: string; macro: string; c
 }
 
 const symbolLabels: Record<string, string> = { '^TNX': 'US 10Y', 'DX-Y.NYB': 'DXY', 'GC=F': 'GOLD', '^GSPC': 'S&P 500', '^IXIC': 'NASDAQ', '^VIX': 'VIX', BTC: 'BTC', ETH: 'ETH' }
-const commodityLabels: Record<string, [string, string]> = { 'GC=F': ['黄金期货', 'Gold futures'], 'CL=F': ['WTI 原油', 'WTI crude'], 'SI=F': ['白银期货', 'Silver futures'] }
+const commodityLabels: Record<string, [string, string]> = { 'GC=F': ['黄金期货', 'Gold futures'], 'CL=F': ['WTI 原油', 'WTI crude'], 'SI=F': ['白银期货', 'Silver futures'], DEFI_TVL: ['DeFi 总锁仓', 'DeFi TVL'], STABLE_SUPPLY: ['稳定币供应', 'Stablecoin supply'] }
 const nameOf = (quote: MarketQuote, locale: AppLocale) => commodityLabels[quote.symbol]?.[locale === 'zh-CN' ? 0 : 1] ?? symbolLabels[quote.symbol] ?? quote.name
 
 type Tab = 'macro' | 'commodities' | 'crypto'
-// Each tab: two lead quotes as cards, the rest as rows.
+// Each tab: every quote as a card in one sideways row (2026-11-04, user: more cards, five on Macro). Commodities and
+// crypto show only the quotes our feed has (3 and 4); nothing is padded.
 const TABS: Record<Tab, { lead: string[]; rows: string[] }> = {
-  macro: { lead: ['^TNX', 'DX-Y.NYB'], rows: ['^GSPC', '^IXIC', '^VIX'] },
-  commodities: { lead: ['GC=F', 'CL=F'], rows: ['SI=F'] },
-  crypto: { lead: ['BTC', 'ETH'], rows: [] },
+  macro: { lead: ['^TNX', 'DX-Y.NYB', '^GSPC', '^IXIC', '^VIX'], rows: [] },
+  commodities: { lead: ['GC=F', 'CL=F', 'SI=F'], rows: [] },
+  crypto: { lead: ['BTC', 'ETH', 'DEFI_TVL', 'STABLE_SUPPLY'], rows: [] },
 }
 
 function formatQuote(quote: MarketQuote, value: number, locale: AppLocale) {
+  if (quote.unit === 'USD' && Math.abs(value) >= 1e7) return fmtUsdCompact(value, { locale, digits: 1 })
   return new Intl.NumberFormat(locale, { minimumFractionDigits: quote.unit === 'yield%' ? 3 : 2, maximumFractionDigits: quote.unit === 'yield%' ? 3 : 2 }).format(value) + (quote.unit === 'yield%' ? '%' : '')
 }
 
 function formatChange(quote: MarketQuote) {
-  if (quote.changePct === null) return '—'
+  if (quote.changePct == null) return '—'
   return `${quote.changePct > 0 ? '+' : ''}${quote.changePct.toFixed(2)}%`
 }
 
 function tone(quote: MarketQuote) {
-  return quote.changePct === null || quote.changePct === 0 ? styles.flat : quote.changePct < 0 ? styles.down : styles.up
+  return quote.changePct == null || quote.changePct === 0 ? styles.flat : quote.changePct < 0 ? styles.down : styles.up
 }
 
 // Spotlight (after React Bits' Spotlight Card): a soft light follows the finger across a lead quote card.
@@ -83,7 +86,7 @@ export function HomeMarkets() {
   }, [])
   const result = useQuery('market-context:home', getMarketContextView, { staleTime: 45_000 })
   const data = result.data
-  const all = [...(data?.anchors ?? []), ...(data?.secondary ?? []), ...(data?.sections?.tradfi ?? []), ...(data?.sections?.crypto ?? [])]
+  const all = [...(data?.anchors ?? []), ...(data?.secondary ?? []), ...(data?.sections?.tradfi ?? []), ...(data?.sections?.crypto ?? []), ...(data?.sections?.onchain ?? []).map((raw) => { const quote = raw as Partial<MarketQuote>; return { ...quote, changePct: quote.changePct ?? null, spark: quote.spark ?? [], stale: Boolean(quote.stale) } as MarketQuote })]
   const pick = (symbols: string[]) => symbols.map(symbol => all.find(quote => quote.symbol === symbol)).filter((quote): quote is MarketQuote => Boolean(quote))
   const featured = pick(TABS[tab].lead)
   const rest = pick(TABS[tab].rows)

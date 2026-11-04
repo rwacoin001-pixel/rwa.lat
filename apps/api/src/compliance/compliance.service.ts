@@ -322,9 +322,10 @@ export class ComplianceService {
     // 3) 未关闭的风险标记
     const openFlags = await this.riskRepo.find({ where: { userId } })
     const blocking = openFlags.filter((f) => f.state === 'open' || f.state === 'under_review')
-    if (blocking.some((f) => f.severity === 'critical' || f.severity === 'high')) {
+    const highFlags = blocking.filter((f) => f.severity === 'critical' || f.severity === 'high')
+    if (highFlags.length) {
       decision = 'manual_review'
-      reasons.push('risk_flag_open')
+      reasons.push(highFlags.some((f) => f.category === 'investment_block') ? 'admin_blocked' : 'risk_flag_open')
     }
 
     const existing = await this.eligibilityRepo.findOne({

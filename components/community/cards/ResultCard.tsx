@@ -8,6 +8,7 @@
  * Loss and profit cards are the same size and weight; only the figure's colour changes.
  */
 import { EyeOff } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { CARD_FIELDS, asNumber, cardGroup, money, pct, tone, units, type CardKind, type CardSnapshot, type PostCard } from '@/lib/community-cards'
@@ -49,6 +50,9 @@ export type CardModel = {
   grid: Array<{ key: string; label: string; value: string; tone?: Tone; hidden?: boolean }>
   provenance: string; funds: string | null; risk: string
 }
+/** Products arrive as `{ slug, name }` (2026-11-04: they printed as "[object Object]" and crashed the holdings card). */
+export const nameOf = (value: unknown): string => typeof value === 'string' ? value : value && typeof value === 'object' && 'name' in value ? String((value as { name: unknown }).name ?? '—') : value === null || value === undefined ? '—' : String(value)
+
 export function describeCard(card: PostCard, k: Copy, locale: string): CardModel {
   const { kind, snapshot: v } = card
   const group = cardGroup(kind)
@@ -72,13 +76,14 @@ export function describeCard(card: PostCard, k: Copy, locale: string): CardModel
     if (key === 'stake' || key === 'payout' || key === 'amount' || key === 'totalPrincipal' || key === 'pending') return `${amount(key)} ${asset}`
     if (key === 'pnl' || key === 'closedPnl') return `${amount(key, true)} ${asset}`
     if (key === 'bestMonth' && value && typeof value === 'object') { const m = value as { month?: string; pnl?: string }; return `${m.month ?? '—'} · ${money(units(m.pnl, dec), locale, true)}` }
-    return String(value ?? '—')
+    return nameOf(value)
   }
   let hero: CardModel['hero'] = null, holdings: HoldingRow[] | null = null, dots: string[] = [], used: string[] = []
   if (kind === 'holdings') {
+    if (has('totalPrincipal')) { used.push('totalPrincipal'); hero = { kicker: k.f.totalPrincipal, text: amount('totalPrincipal'), unit: asset, tone: 'flat' } }
     if (has('products') && Array.isArray(v.products)) {
-      used = ['products']
-      holdings = (v.products as Array<{ product: string; weight: number | string; lastDayReturnPct?: number | string | null }>).map((item) => { const w = asNumber(item.weight) ?? 0; return { product: item.product, share: w <= 1 ? w * 100 : w, lastDayReturnPct: asNumber(item.lastDayReturnPct) } })
+      used.push('products')
+      holdings = (v.products as Array<{ product: unknown; weight: number | string; lastDayReturnPct?: number | string | null }>).map((item) => { const w = asNumber(item.weight) ?? 0; return { product: nameOf(item.product), share: w <= 1 ? w * 100 : w, lastDayReturnPct: asNumber(item.lastDayReturnPct) } })
     }
   } else if (kind === 'prediction_record') {
     if (has('winRate')) {
@@ -107,30 +112,92 @@ export function describeCard(card: PostCard, k: Copy, locale: string): CardModel
   }
 }
 
-/** `mini` (2026-11-02, the 晒单精选 strip): compact, and only the head, the main figure, the author and the risk line. */
-export function ResultCard({ card, author, compact = false, mini = false }: { card: PostCard; author?: Author; compact?: boolean; mini?: boolean }) {
+const flipCopy: Partial<Record<AppLocale, { more: string; back: string; paper: string }>> = { 'zh-CN': { more: '点按打开', back: '点按收起', paper: '明细' }, en: { more: 'Tap to open', back: 'Tap to close', paper: 'Details' } }
+
+/**
+ * The card (2026-11-04, after the user's reference): a dark folder card. A soft, blurred photo fills the top with the
+ * product line in its corner; a dark sheet with a tab rises over it — the kind on the tab, the main figure at the foot.
+ * It is a folder you can hold (2026-11-04, user: tapping it should open like a folder, not flip): it tilts under the
+ * finger, and a tap drops the front flap and slides the paper with the details up out of it. The provenance and the
+ * risk line sit under it and never hide. `mini` (晒单精选) and `still` (inside another button) are not interactive.
+ */
+export function ResultCard({ card, author, compact = false, mini = false, still = false }: { card: PostCard; author?: Author; compact?: boolean; mini?: boolean; still?: boolean }) {
   const { locale } = useI18n()
   const k = useResultCardCopy()
+  const f = flipCopy[locale] ?? flipCopy.en!
   const m = describeCard(card, k, locale)
-  return <article className={s.card} data-group={m.group} data-compact={compact || mini || undefined} data-mini={mini || undefined} aria-label={m.head}>
-    <header className={s.head}><span>{m.head}</span><em>{k.snapshot}</em></header>
-    <div className={s.perf} aria-hidden="true" />
-    <div className={s.well}>
-      {m.title && <b className={s.title} dir="auto">{m.title}</b>}
-      {m.hero && <>{m.hero.kicker && <span className={s.kicker}>{m.hero.kicker}</span>}
-        <b className={s.figure} data-tone={m.hero.tone}>{m.hero.text}{m.hero.unit && <> <small>{m.hero.unit}</small></>}</b>
-        {m.hero.sub && <span className={s.sub} data-tone={m.hero.subTone}>{m.hero.sub}</span>}</>}
-      {m.dots.length > 0 && <span className={s.dots} aria-label={k.f.last10}>{m.dots.map((item, index) => <i key={index} data-r={item} />)}</span>}
+  const live = !mini && !still
+  const [flipped, setFlipped] = useState(false)
+  const frame = useRef<HTMLDivElement>(null)
+  const paper = useRef<HTMLDivElement>(null)
+  // The flap drops as far as the paper needs to show all of it above the flap.
+  const toggle = () => setFlipped((open) => {
+    const el = frame.current, sheet = el?.querySelector<HTMLElement>('[data-sheet]')
+    if (!open && el && paper.current && sheet) el.style.setProperty('--drop', `${Math.max(0, paper.current.scrollHeight + 18 - sheet.offsetTop)}px`)
+    return !open
+  })
+  const press = useRef<{ x: number; y: number; moved: boolean } | null>(null)
+  const dragged = useRef(false)
+  const tilt = (event: React.PointerEvent<HTMLDivElement>) => {
+    const el = frame.current
+    if (!el || !press.current) return
+    const box = el.getBoundingClientRect()
+    const px = (event.clientX - box.left) / box.width - .5, py = (event.clientY - box.top) / box.height - .5
+    if (Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > 8) press.current.moved = true
+    el.style.setProperty('--ry', `${(px * 10).toFixed(2)}deg`); el.style.setProperty('--rx', `${(-py * 8).toFixed(2)}deg`)
+    el.style.setProperty('--gx', `${((px + .5) * 100).toFixed(1)}%`); el.style.setProperty('--gy', `${((py + .5) * 100).toFixed(1)}%`)
+    el.style.setProperty('--px', px.toFixed(3)); el.style.setProperty('--py', py.toFixed(3))
+  }
+  const rest = () => { const el = frame.current; if (press.current) dragged.current = press.current.moved; press.current = null; if (!el) return; delete el.dataset.held; for (const name of ['--rx', '--ry', '--px', '--py']) el.style.removeProperty(name) }
+  const side = m.hero?.sub ? { value: m.hero.sub, label: card.kind === 'prediction_record' ? k.f.total : k.f.returnPct, tone: m.hero.subTone } : (() => { const cell = m.grid.find((item) => !item.hidden); return cell ? { value: cell.value, label: cell.label, tone: cell.tone } : null })()
+  const kindName = m.head.split(' · ').pop() ?? m.head
+  const question = card.kind === 'prediction_bet' ? m.title : null
+  const subline = question ? k.group[m.group] : m.title ?? k.group[m.group]
+
+  const front = <div className={s.face} data-face="front">
+    <div className={s.photo} aria-hidden="true"><i /><i /><i /></div>
+    <span className={s.label}><b>{k.group[m.group]}</b><small>{k.snapshot}</small></span>
+    {live && <div ref={paper} className={s.paper} aria-hidden={!flipped}>
+      <span className={s.paperHead}><b>{f.paper}</b><small dir="auto">{kindName} · {subline}</small></span>
       {m.holdings && <Holdings rows={m.holdings} />}
-      {m.open && <span className={s.note}>{k.open}</span>}
       {m.grid.length > 0 && <dl className={s.grid}>
         {m.grid.map((cell) => cell.hidden
-          ? <div key={cell.key} data-hidden=""><dt>{cell.label}</dt><dd><i className={s.veil} /><EyeOff size={14} strokeWidth={1.8} aria-hidden="true" /></dd></div>
+          ? <div key={cell.key} data-hidden=""><dt>{cell.label}</dt><dd><i className={s.veil} /><EyeOff size={13} strokeWidth={1.8} aria-hidden="true" /></dd></div>
           : <div key={cell.key}><dt>{cell.label}</dt><dd dir="auto" data-tone={cell.tone}>{cell.value}</dd></div>)}
       </dl>}
+    </div>}
+    <div className={s.sheet} data-sheet="">
+      <span className={s.tab}><b>{kindName}</b></span>
+      <small className={s.subline} dir="auto">{subline}</small>
+      <div className={s.mid}>
+        {question && <b className={s.question} dir="auto">{question}</b>}
+        {m.dots.length > 0 && <span className={s.dots} aria-label={k.f.last10}>{m.dots.map((item, index) => <i key={index} data-r={item} />)}</span>}
+        {m.holdings && <HoldingBar rows={m.holdings} />}
+        {m.open && <span className={s.note}>{k.open}</span>}
+      </div>
+      <div className={s.foot}>
+        {m.hero ? <span className={s.hero}>{m.hero.kicker && <small>{m.hero.kicker}</small>}<b className={s.figure} data-tone={m.hero.tone} dir="ltr">{m.hero.text}{m.hero.unit && <em>{m.hero.unit}</em>}</b></span> : <span />}
+        {side && <span className={s.side}><b data-tone={side.tone} dir="auto">{side.value}</b><small>{side.label}</small></span>}
+      </div>
+      {live && <span className={s.hint} aria-hidden="true">{flipped ? f.back : f.more}</span>}
     </div>
-    <footer className={s.foot}>
-      {author && <span className={s.who}><CommunityAvatar avatarUrl={author.avatarUrl ?? null} seed={author.avatarSeed ?? author.handle} handle={author.handle} size={32} /><span><b dir="auto">{author.displayName}</b><small>@{author.handle}</small></span></span>}
+    {live && <span className={s.room} aria-hidden="true" />}
+  </div>
+
+  return <article className={s.card} data-group={m.group} data-compact={compact || mini || undefined} data-mini={mini || undefined} aria-label={m.head}>
+    <div ref={frame} className={s.frame} data-live={live || undefined} data-open={flipped || undefined}
+      {...(live ? {
+        role: 'button', tabIndex: 0, 'aria-expanded': flipped,
+        onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => { press.current = { x: event.clientX, y: event.clientY, moved: false }; frame.current!.dataset.held = ''; tilt(event) },
+        onPointerMove: tilt, onPointerUp: rest, onPointerLeave: rest, onPointerCancel: rest,
+        onClick: (event: React.MouseEvent) => { event.stopPropagation(); if (dragged.current) { dragged.current = false; return } navigator.vibrate?.(4); toggle() },
+        onKeyDown: (event: React.KeyboardEvent) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggle() } },
+      } : {})}>
+      <div className={s.turn}>{front}</div>
+      {live && <i className={s.glare} aria-hidden="true" />}
+    </div>
+    <footer className={s.below}>
+      {author && <span className={s.who}><CommunityAvatar avatarUrl={author.avatarUrl ?? null} seed={author.avatarSeed ?? author.handle} handle={author.handle} size={mini ? 24 : 32} /><span><b dir="auto">{author.displayName}</b><small>@{author.handle}</small></span></span>}
       <span className={s.prov}>{m.provenance}</span>
       {m.funds && <small className={s.risk}>{m.funds}</small>}
       <small className={s.risk}>{m.risk}</small>
@@ -138,9 +205,12 @@ export function ResultCard({ card, author, compact = false, mini = false }: { ca
   </article>
 }
 
+function HoldingBar({ rows }: { rows: HoldingRow[] }) {
+  return <span className={s.bar}>{rows.map((item, index) => <i key={index} style={{ flexGrow: Math.max(item.share, 1) }} data-i={index % 4} />)}</span>
+}
+
 function Holdings({ rows }: { rows: HoldingRow[] }) {
   return <div className={s.holdings}>
-    <span className={s.bar}>{rows.map((item, index) => <i key={index} style={{ flexGrow: Math.max(item.share, 1) }} data-i={index % 4}>{item.share >= 14 ? `${Math.round(item.share)}%` : ''}</i>)}</span>
     <ul>{rows.map((item, index) => <li key={index}><i data-i={index % 4} /><span dir="auto">{item.product}</span>{item.lastDayReturnPct !== null && <small data-tone={tone(item.lastDayReturnPct)}>{pct(item.lastDayReturnPct)}</small>}<b>{Math.round(item.share)}%</b></li>)}</ul>
   </div>
 }

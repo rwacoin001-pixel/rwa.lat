@@ -4,6 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { ChartNoAxesCombined, Coins, Landmark, Waves } from 'lucide-react'
 import { openPath } from '@/lib/maison-nav'
 import { useQuery } from '@/lib/api/_query'
+import { getPolymarketFeed } from '@/lib/api/polymarket-feed'
+import { useContentTranslation } from '@/lib/use-content-translation'
 import { POLL, request } from '@/lib/api/_http'
 import { translatePolymarketMarkets, type PolymarketTranslation } from '@/lib/api/polymarket-translations'
 import { useI18n, type AppLocale } from '@/lib/i18n'
@@ -23,6 +25,8 @@ type Market = {
   outcomes: Array<{ label: string; impliedProbability: number }>
   volume24hUsd: number | null
   providerUpdatedAt: string | null
+  /** From the finance feed (an event id, opened like the Prediction tab; its text is translated in one batch). */
+  feed?: boolean
 }
 type Preview = { source: 'polymarket-gamma'; fetchedAt: string; tradingEnabled: false; items: Market[] }
 
@@ -87,22 +91,35 @@ export function HomePolymarket() {
 
   useEffect(() => { void translate(result.data?.items ?? []) }, [translate, result.data])
 
+  // Five cards (2026-11-04, user): the curated preview first, then the busiest finance markets from the Prediction feed.
+  const [extra, setExtra] = useState<Market[]>([])
+  useEffect(() => {
+    const controller = new AbortController()
+    getPolymarketFeed('finance', 0, controller.signal).then((page) => setExtra(page.items.filter((item) => !item.window && !item.closed && item.outcomes.length >= 2).map((item) => ({
+      id: item.id, slug: '', eventSlug: null, eventKey: null, question: item.question, category: item.category === 'crypto' ? 'crypto' : 'macro',
+      outcomes: item.outcomes, volume24hUsd: item.volume24hUsd, providerUpdatedAt: null, feed: true,
+    })))).catch(() => { /* The preview alone still shows. */ })
+    return () => controller.abort()
+  }, [])
+  const markets = [...(result.data?.items ?? []), ...extra.filter((item) => !(result.data?.items ?? []).some((own) => own.question === item.question))].slice(0, 5)
+  const feedText = useContentTranslation(markets.filter((market) => market.feed).flatMap((market) => [market.question, ...market.outcomes.slice(0, 2).map((outcome) => outcome.label)]))
+
   return <section className={styles.root} aria-label={label.title}>
     <HomeSectionHeading index="05" title={label.title} more={allMarkets[locale]} onMore={() => openPath('/markets?tab=predictions')} />
-    {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : (result.error && !result.data) || !result.data?.items.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{result.data.items.map(market => {
+    {result.loading && !result.data ? <div className={styles.loading}><span /><span /><span /></div> : !markets.length ? <button type="button" className={styles.empty} onClick={() => void result.refetch()}>{label.empty} · {label.retry}</button> : <div className={styles.list}>{markets.map(market => {
       const Icon = categoryIcon[market.category]
       const key = translationKey(locale, market)
-      const cached = translations[key]
+      const cached = market.feed ? (feedText.hasTranslation(market.question) ? { id: market.id, question: feedText(market.question), outcomes: market.outcomes.map((outcome) => feedText(outcome.label)) } satisfies PolymarketTranslation : undefined) : translations[key]
       const translated = originals.has(key) ? undefined : cached
       return <div className={styles.card} data-cat={market.category} key={market.id}>
-      <button type="button" className={styles.cardLink} onClick={() => openPath(market.eventKey ? `/prediction/event-${encodeURIComponent(market.eventKey)}` : `/prediction/${encodeURIComponent(market.id)}`)}>
+      <button type="button" className={styles.cardLink} onClick={() => openPath(market.feed ? `/prediction/${encodeURIComponent(market.id)}` : market.eventKey ? `/prediction/event-${encodeURIComponent(market.eventKey)}` : `/prediction/${encodeURIComponent(market.id)}`)}>
         <span className={styles.top}><span className={styles.icon}><Icon size={18} strokeWidth={1.7} aria-hidden="true" /></span><span className={styles.category}>{label[market.category]}</span>{translated && <span className={styles.mt}>{translationLabel.translated}</span>}</span>
         <strong className={styles.question} lang={translated ? locale : 'en'}>{translated?.question ?? market.question}</strong>
         <span className={styles.outcomes}>{market.outcomes.slice(0, 2).map((outcome, index) => <span className={styles.outcome} key={`${market.id}-${index}`}><span lang={translated ? locale : 'en'}>{translated?.outcomes[index] ?? outcome.label}</span><b dir="ltr">{new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 1 }).format(outcome.impliedProbability)}</b></span>)}</span>
         <span className={styles.probabilityBar} aria-hidden="true"><span style={{ width: `${(market.outcomes[0]?.impliedProbability ?? 0) * 100}%` }} /></span>
         <span className={styles.foot}><span>{label.probability}</span><span>{label.volume} <b dir="ltr">{market.volume24hUsd === null ? '—' : fmtUsdCompact(market.volume24hUsd, { locale, digits: 1 })}</b></span></span>
       </button>
-      {locale !== 'en' && <button type="button" className={styles.translate} disabled={pending.has(key)} aria-live="polite" onClick={() => {
+      {locale !== 'en' && !market.feed && <button type="button" className={styles.translate} disabled={pending.has(key)} aria-live="polite" onClick={() => {
         if (cached) setOriginals(previous => { const next = new Set(previous); if (next.has(key)) next.delete(key); else next.add(key); return next })
         else void translate([market], true)
       }}>{pending.has(key) ? translationLabel.loading + '…' : translated ? translationLabel.original : translateAction[locale]}</button>}

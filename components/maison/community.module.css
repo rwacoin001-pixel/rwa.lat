@@ -240,7 +240,7 @@ b.name { cursor: default; }
 
 /* ── Full-screen composer ── */
 .compose { position: fixed; z-index: 90; inset: 0 0 var(--kb, 0px); display: flex; flex-direction: column; box-sizing: border-box; width: min(100%, var(--app-max)); margin-inline: auto; padding-top: env(safe-area-inset-top); background: var(--m-bg); color: var(--m-ink); outline: 0; transition: transform .42s var(--m-ease), opacity .3s var(--m-ease); }
-.compose::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(110% 40% at 100% 0%, color-mix(in srgb, var(--m-accent) 12%, transparent), transparent 62%); }
+/* The composer is one plain colour (2026-11-04, user: solid page grounds — the teal light in its top corner, here since 09-30, is gone). */
 .compose[data-starting-style], .compose[data-ending-style] { opacity: 0; transform: translateY(24px); }
 .composeHead { display: flex; align-items: center; gap: 4px; min-height: 56px; padding: 0 12px 0 6px; }
 .composeBody { display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; flex: 1 1 auto; align-content: start; min-height: 0; padding: 6px var(--m-gutter) 16px; overflow-y: auto; overscroll-behavior: contain; }

@@ -16,6 +16,7 @@ import { usePageState } from '@/lib/app-navigation'
 import { DeltaPill, Logo, MaisonPage, SectionHead, Skeleton, StateBlock, maison as s } from './primitives'
 import { Segmented, TickerTape, useAutoAnimate } from './motion'
 import { TopTabs } from './TopTabs'
+import { usePageTabs } from '@/lib/page-swipe'
 import { fmtDate, fmtDateTime } from './format'
 import { BasketShelf } from './HengxuScreen'
 import { sharedOpen } from '@/lib/market-shared-transition'
@@ -53,7 +54,10 @@ export function MarketsScreen({ query }: { query: string }) {
   const [search, setSearch] = usePageState('markets:search', () => new URLSearchParams(query).get('q') ?? '')
   const [klass, setKlass] = usePageState<ClassFilter>('markets:class', 'all')
   const [sort, setSort] = usePageState<RwaSort>('markets:sort', 'market_cap')
-  useEffect(() => { setTab(tabFrom(query)) }, [query])
+  // The URL is the truth: a back step out of the personal centre can hand a stale route query while the address bar
+  // still says ?tab=assets (2026-11-04), so read the live search instead of the prop.
+  useEffect(() => { setTab(tabFrom(new URLSearchParams(window.location.search).has('tab') ? window.location.search : query)) }, [query])
+  usePageTabs(TABS, tab, setTab)
   const term = useDebounced(search.trim().slice(0, 80))
 
   // Keep tab + search in the URL without adding history entries per keystroke.

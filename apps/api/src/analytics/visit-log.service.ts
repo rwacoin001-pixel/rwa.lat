@@ -18,6 +18,8 @@ interface PendingVisit {
   userId: string | null
   ip: string
   country: string | null
+  region: string | null
+  city: string | null
   device: ActivityDevice
   userAgent: string | null
   firstPage: string | null
@@ -88,10 +90,13 @@ export class VisitLogService implements OnModuleInit, OnModuleDestroy {
       row.requests += 1
       if (hit.at > row.last) { row.last = hit.at; row.lastPage = hit.page ?? row.lastPage }
       row.country ??= hit.country
+      row.region ??= hit.region ?? null
+      row.city ??= hit.city ?? null
       row.firstPage ??= hit.page ?? null
     } else {
       this.pending.set(visit.id, {
         id: visit.id, userId: hit.userId, ip: hit.ip, country: hit.country, device: hit.device, userAgent: hit.userAgent ?? null,
+        region: hit.region ?? null, city: hit.city ?? null,
         firstPage: hit.page ?? null, lastPage: hit.page ?? null, started: hit.at, last: hit.at, requests: 1,
       })
       if (this.pending.size >= FLUSH_BATCH_SIZE) void this.flush()
@@ -127,20 +132,23 @@ export class VisitLogService implements OnModuleInit, OnModuleDestroy {
   /** A row first written as a new visit; later batches only extend it (requests are added, never replaced). */
   private async write(batch: PendingVisit[]) {
     await this.db.query(
-      `INSERT INTO app.visit_log AS v (id, user_id, ip, country, device, user_agent, first_page, last_page, started_at, last_seen_at, requests)
+      `INSERT INTO app.visit_log AS v (id, user_id, ip, country, device, user_agent, first_page, last_page, started_at, last_seen_at, requests, region, city)
        SELECT * FROM unnest($1::uuid[], $2::uuid[], $3::inet[], $4::text[], $5::text[], $6::text[], $7::text[], $8::text[],
-         $9::timestamptz[], $10::timestamptz[], $11::int[])
+         $9::timestamptz[], $10::timestamptz[], $11::int[], $12::text[], $13::text[])
        ON CONFLICT (id) DO UPDATE SET
          last_seen_at = GREATEST(v.last_seen_at, EXCLUDED.last_seen_at),
          started_at = LEAST(v.started_at, EXCLUDED.started_at),
          requests = v.requests + EXCLUDED.requests,
          last_page = CASE WHEN EXCLUDED.last_seen_at >= v.last_seen_at THEN COALESCE(EXCLUDED.last_page, v.last_page) ELSE v.last_page END,
          first_page = COALESCE(v.first_page, EXCLUDED.first_page),
-         country = COALESCE(v.country, EXCLUDED.country)`,
+         country = COALESCE(v.country, EXCLUDED.country),
+         region = COALESCE(v.region, EXCLUDED.region),
+         city = COALESCE(v.city, EXCLUDED.city)`,
       [
         batch.map((row) => row.id), batch.map((row) => row.userId), batch.map((row) => row.ip), batch.map((row) => row.country),
         batch.map((row) => row.device), batch.map((row) => row.userAgent), batch.map((row) => row.firstPage), batch.map((row) => row.lastPage),
         batch.map((row) => row.started.toISOString()), batch.map((row) => row.last.toISOString()), batch.map((row) => row.requests),
+        batch.map((row) => row.region), batch.map((row) => row.city),
       ],
     )
   }

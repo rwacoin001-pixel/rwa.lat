@@ -2,7 +2,7 @@ import { ConflictException, Injectable, NotFoundException, OnModuleDestroy, Serv
 import { ConfigService } from '@nestjs/config'
 import { Pool, PoolClient } from 'pg'
 import { randomUUID } from 'node:crypto'
-import { PublishPlatformDto, SavePlatformDto, VerifiedAccessDto } from './admin-platform.dto'
+import { InvestmentBlockDto, PublishPlatformDto, SavePlatformDto, VerifiedAccessDto } from './admin-platform.dto'
 
 @Injectable()
 export class AdminPlatformService implements OnModuleDestroy {
@@ -64,6 +64,40 @@ export class AdminPlatformService implements OnModuleDestroy {
       return { userId, region: input.region, investorType: input.investorType }
     })
     return this.getVerifiedAccess(userId)
+  }
+  async listInvestmentBlocks() {
+    const { rows } = await this.database().query(`SELECT f.user_id AS "userId", p.display_name AS "displayName", p.handle,
+        NULL::text AS reason, f.opened_at AS "blockedAt", a.actor_id AS "blockedBy"
+      FROM app.risk_flags f LEFT JOIN app.community_profiles p ON p.user_id = f.user_id
+      LEFT JOIN LATERAL (SELECT actor_id FROM app.audit_logs
+        WHERE action = 'admin.platform.investment_blocked' AND metadata->>'flagId' = f.id::text
+        ORDER BY occurred_at LIMIT 1) a ON true
+      WHERE f.category = 'investment_block' AND f.state = 'open'
+      ORDER BY f.opened_at DESC, f.id DESC LIMIT 200`)
+    return { items: rows }
+  }
+  async blockInvestment(input: InvestmentBlockDto, adminId: string) {
+    await this.transaction(adminId, 'admin.platform.investment_blocked', async (db) => {
+      // Serialize block/unblock operations for this account, including concurrent first blocks.
+      if (!(await db.query(`SELECT id FROM app.users WHERE id = $1 FOR UPDATE`, [input.userId])).rowCount) throw new NotFoundException('User not found')
+      const { rows } = await db.query(`SELECT id FROM app.risk_flags WHERE user_id = $1 AND category = 'investment_block' AND state = 'open'`, [input.userId])
+      if (rows.length) return { userId: input.userId, replay: true }
+      const flagId = randomUUID()
+      // risk_flags has no free-text reason; the list intentionally returns reason: null.
+      await db.query(`INSERT INTO app.risk_flags (id, user_id, category, severity, state, source, reason_code)
+        VALUES ($1,$2,'investment_block','high','open','admin','admin_block')`, [flagId, input.userId])
+      return { userId: input.userId, flagId }
+    })
+    return { userId: input.userId, blocked: true }
+  }
+  async unblockInvestment(userId: string, adminId: string) {
+    await this.transaction(adminId, 'admin.platform.investment_unblocked', async (db) => {
+      await db.query(`SELECT id FROM app.users WHERE id = $1 FOR UPDATE`, [userId])
+      await db.query(`UPDATE app.risk_flags SET state = 'resolved', resolved_at = now()
+        WHERE user_id = $1 AND category = 'investment_block' AND state = 'open'`, [userId])
+      return { userId }
+    })
+    return { userId, blocked: false }
   }
   private async validateDocuments(db: PoolClient, documents: { storageRef: string; public: boolean; kind?: string; reportDate?: string; asOfDate?: string; issuer?: string }[]) {
     for (const doc of documents) {

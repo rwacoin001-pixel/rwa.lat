@@ -19,6 +19,20 @@ const rows = (query: jest.Mock, call = 0) => {
 }
 
 describe('VisitLogService', () => {
+  it('fills missing locations and preserves the first non-null values within and across flushes', async () => {
+    const { visits, query } = service()
+    visits.record(hit(0))
+    visits.record(hit(1, { region: '東京都', city: '新宿区' }))
+    visits.record(hit(2, { region: 'Osaka', city: 'Osaka' }))
+    await visits.flush()
+    expect(query.mock.calls[0][1][11]).toEqual(['東京都'])
+    expect(query.mock.calls[0][1][12]).toEqual(['新宿区'])
+    visits.record(hit(3, { region: 'Osaka', city: 'Osaka' }))
+    await visits.flush()
+    expect(rows(query, 1)[0].id).toBe(rows(query, 0)[0].id)
+    expect(query.mock.calls[1][0]).toContain('region = COALESCE(v.region, EXCLUDED.region)')
+    expect(query.mock.calls[1][0]).toContain('city = COALESCE(v.city, EXCLUDED.city)')
+  })
   it('groups requests within 30 minutes of inactivity into one visit and starts a new one after', async () => {
     const { visits, query } = service()
     visits.record(hit(0, { page: '/home' }))

@@ -1,93 +1,167 @@
-/* Share-a-result card (2026-11-01). docs/design-system.md: white shell radius 28 with the card shadow, inner well radius 22,
-   §3.1 type and spacing, Satoshi numerals. The ticket head's soft band is the only colour on the card (no gradient shell). */
-.card { --band-a: #c9efe0; --band-b: #d6e6f7; --band-ink: #0b3b33; position: relative; display: grid; padding: 8px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .07), 0 24px 48px -28px rgba(15, 23, 42, .35); color: var(--m-ink, #0b1220); font-variant-numeric: tabular-nums; }
-.card[data-group='prediction'] { --band-a: #e2dcf8; --band-b: #f4d9e2; --band-ink: #2e2448; }
-.card[data-group='funds'] { --band-a: #eceef1; --band-b: #e3e6ea; --band-ink: #2b3340; }
+/* Share-a-result card (2026-11-04, after the user's reference): a folder card. A flowing gradient in the app's own colours
+   fills the top (teal for Koala Quant, blue-violet for predictions, slate for funds); a sheet with a tab rises over it:
+   the kind on the tab, the main figure at the foot. Light theme: a white folder on a white frame; dark: graphite. Depth
+   comes from layered shadows, a lit top edge, a frosted solid sheet with fine grain and a little parallax while the card
+   is held; only the top band moves. A tap opens the folder. Provenance and the risk line sit under the card. */
+.card { --sheet: rgba(255, 255, 255, .86); --frame: #f4f6f9; --ink: #0b1220; --muted: rgba(11, 18, 32, .56); --line: rgba(11, 18, 32, .08); --up: #0f8f5f; --down: #c23a3a;
+  --edge: rgba(255, 255, 255, .95); --lift-shadow: rgba(15, 23, 42, .18); --rim: rgba(11, 18, 32, .06); --well: rgba(15, 23, 42, .08); --grain: .5;
+  --a: #0f9b84; --b: #74dcc2; --c: #9fd2ff; --d: #0b6f63;
+  --tab-w: 56%; --photo-h: 132px; --lift: 96px;
+  position: relative; display: grid; gap: 10px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.card[data-group='prediction'] { --a: #3d63d9; --b: #8fb7ff; --c: #b9a7ff; --d: #2a3f9e; }
+.card[data-group='funds'] { --a: #6f7b8b; --b: #aab6c4; --c: #d5dde7; --d: #4c5664; }
+.card[data-compact] { --photo-h: 118px; --lift: 84px; }
+.card[data-mini] { --photo-h: 84px; --lift: 58px; gap: 8px; height: 100%; grid-template-rows: auto 1fr; }
 
-/* Ticket head: two soft lights drift slowly across the band. */
-.head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding: 0 12px 0 16px; overflow: hidden; border-radius: 22px 22px 8px 8px; background: radial-gradient(120% 160% at 0% 0%, var(--band-a), transparent 60%), radial-gradient(120% 160% at 100% 100%, var(--band-b), transparent 60%), linear-gradient(90deg, var(--band-a), var(--band-b)); background-size: 160% 160%, 160% 160%, 100% 100%; color: var(--band-ink); animation: drift 14s ease-in-out infinite alternate; }
-.head span { overflow: hidden; font-size: 13px; font-weight: 600; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
-.head em { flex: none; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .72); color: var(--band-ink); font-size: 12px; font-style: normal; font-weight: 600; line-height: 28px; letter-spacing: .02em; }
-@keyframes drift { from { background-position: 0% 0%, 100% 100%, 0 0; } to { background-position: 40% 30%, 60% 70%, 0 0; } }
+/* The frame: thick and very round; contact, near and far shadows so it stands on the page. */
+.frame { position: relative; perspective: 900px; border-radius: 30px; outline: none; -webkit-tap-highlight-color: transparent; }
+.frame[data-live] { cursor: pointer; touch-action: pan-y; }
+.frame:focus-visible { box-shadow: 0 0 0 2px var(--m-accent, #087a67); }
+.turn { position: relative; display: grid; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transform-style: preserve-3d; transition: transform .5s var(--pa-ease-spring, cubic-bezier(.34, 1.4, .64, 1)); }
+.frame[data-held] .turn { transition: transform .12s ease-out; }
+.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); perspective: 700px;
+  box-shadow: inset 0 1px 0 var(--edge), 0 0 0 .5px rgba(11, 18, 32, .08), 0 2px 4px rgba(15, 23, 42, .06), 0 14px 24px -12px rgba(15, 23, 42, .18), 0 34px 60px -30px rgba(15, 23, 42, .36); }
 
-/* Perforation: notches on both edges and a dotted tear line. */
-.perf { position: relative; height: 16px; margin: 0 -8px; }
-.perf::before { content: ''; position: absolute; top: 50%; right: 20px; left: 20px; border-top: 1.5px dashed rgba(11, 18, 32, .12); }
-.perf::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 0 50%, var(--rc-page, #fff) 7px, transparent 7.5px), radial-gradient(circle at 100% 50%, var(--rc-page, #fff) 7px, transparent 7.5px); }
+/* Top: three soft lights in the product's colours drift slowly under a fine grain; they move against the finger. */
+.photo { position: absolute; inset: 6px 6px auto; height: calc(var(--lift) + 1px); overflow: hidden; border-radius: 24px 24px 0 0; background: linear-gradient(135deg, var(--d), var(--a) 55%, var(--b)); }
+.photo i { position: absolute; border-radius: 50%; filter: blur(22px); will-change: transform; }
+.photo i:nth-child(1) { top: -40%; left: -10%; width: 70%; height: 140%; background: var(--b); opacity: .9; animation: driftA 11s ease-in-out infinite alternate; }
+.photo i:nth-child(2) { top: -30%; right: -15%; width: 65%; height: 130%; background: var(--c); opacity: .8; animation: driftB 13s ease-in-out infinite alternate; }
+.photo i:nth-child(3) { bottom: -60%; left: 30%; width: 60%; height: 120%; background: var(--a); opacity: .85; animation: driftC 9s ease-in-out infinite alternate; }
+.photo::after { content: ''; position: absolute; inset: 0; background: radial-gradient(rgba(255, 255, 255, .16) .5px, transparent .6px) 0 0 / 3px 3px, linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 45%); mix-blend-mode: overlay; }
+@keyframes driftA { to { transform: translate(28%, 12%) scale(1.15); } }
+@keyframes driftB { to { transform: translate(-30%, 10%) scale(.9); } }
+@keyframes driftC { to { transform: translate(-25%, -20%) scale(1.2); } }
+.label { position: absolute; z-index: 1; top: 18px; right: 22px; display: grid; justify-items: end; color: #fff; text-align: end; text-shadow: 0 1px 10px rgba(0, 0, 0, .22);
+  transform: translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -6px)); transition: transform .5s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.frame[data-held] .label { transition: transform .12s ease-out; }
+.label b { font-size: 15px; font-weight: 600; line-height: 20px; }
+.label small { font-size: 12px; font-weight: 500; line-height: 16px; opacity: .85; }
 
-.well { display: grid; gap: 4px; padding: 16px; border-radius: 8px 8px 22px 22px; background: #f6f7f9; }
-.title { margin-bottom: 4px; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
-.kicker { color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
-.figure { font-size: 40px; font-weight: 600; line-height: 44px; letter-spacing: -.02em; white-space: nowrap; }
-.figure small { margin-inline-start: 2px; color: var(--m-muted, #5b6472); font-size: 15px; font-weight: 500; letter-spacing: 0; }
-.sub { font-size: 17px; font-weight: 600; line-height: 24px; }
-.card [data-tone='up'] { color: var(--m-up, #0f8f5f); }
-.card [data-tone='down'] { color: var(--m-down, #c23a3a); }
-.note { color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+/* Sheet with a tab: the tab's top right curves down into the sheet (convex, then concave — an S like a folder tab). */
+.sheet { position: relative; z-index: 2; display: grid; grid-template-rows: auto auto 1fr auto; min-height: 196px; margin-top: var(--lift); padding: 0 18px 16px; border-radius: 0 22px 24px 24px;
+  background: var(--sheet); -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5);
+  box-shadow: inset 0 1px 0 var(--edge), inset 0 0 0 .5px var(--rim), inset 0 -10px 18px -14px var(--well), 0 -14px 26px -16px var(--lift-shadow), 0 2px 6px -3px var(--lift-shadow);
+  transform-origin: 50% 100%; transition: transform .55s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)), box-shadow .55s; }
+/* Frosted (2026-11-04, user: no gradient below, more depth, a frosted feel): one solid, slightly translucent colour that
+   blurs the coloured top where it overlaps it, a fine grain, a lit top edge and a soft inner floor. */
+.sheet::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='140' height='140'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 0 0.5  0 0 0 .55 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>") 0 0 / 140px 140px; opacity: var(--grain); mix-blend-mode: overlay; pointer-events: none; }
+.sheet > * { position: relative; z-index: 1; }
+/* Open (2026-11-04): the front flap drops by --drop and tips toward you; the paper rises out of the folder. */
+.frame[data-open] .sheet { transform: translateY(var(--drop, 120px)) rotateX(-14deg); box-shadow: 0 -18px 30px -18px rgba(0, 0, 0, .55); }
+.room { display: block; height: 0; transition: height .45s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.frame[data-open] .room { height: calc(var(--drop, 120px) - 8px); }
+.paper { position: absolute; z-index: 1; top: 18px; right: 18px; left: 18px; display: grid; align-content: start; gap: 10px; padding: 16px 16px 40px; border-radius: 14px; background: #f7f6f2; color: #14161a; box-shadow: 0 10px 24px -12px rgba(0, 0, 0, .55);
+  opacity: 0; transform: translateY(calc(var(--lift) - 8px)) scale(.97); transition: transform .38s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)), opacity .16s ease-out; }
+/* Closing: the paper fades as it sinks, so it never shows below the flap while the folder shrinks. */
+.paper::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: repeating-linear-gradient(180deg, transparent 0 27px, rgba(20, 22, 26, .045) 27px 28px); pointer-events: none; }
+.frame[data-open] .paper { opacity: 1; transform: translateY(0) rotate(-1.2deg); transition: transform .6s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)) .04s, opacity .12s; }
+.paperHead { display: grid; gap: 2px; }
+.paperHead b { font-size: 15px; font-weight: 700; line-height: 20px; letter-spacing: .02em; }
+.paperHead small { overflow: hidden; color: rgba(20, 22, 26, .56); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.paperQuestion { font-size: 14px; font-weight: 500; line-height: 20px; }
+.paper .grid { --line: rgba(20, 22, 26, .1); }
+.paper .grid dt { color: rgba(20, 22, 26, .56); }
+.paper [data-tone='up'] { color: #0f8f5f; }
+.paper [data-tone='down'] { color: #c23a3a; }
+.paper .veil { background: linear-gradient(90deg, rgba(20, 22, 26, .16), rgba(20, 22, 26, .05)); }
+.paper .holdings li + li { border-color: rgba(20, 22, 26, .1); }
+.paper .holdings li small { color: rgba(20, 22, 26, .56); }
+.tab { position: relative; display: flex; align-items: center; width: var(--tab-w); height: 30px; margin: -30px 0 0 -18px; padding: 2px 18px 0; border-radius: 22px 14px 0 0; background: var(--sheet); -webkit-backdrop-filter: blur(22px) saturate(1.5); backdrop-filter: blur(22px) saturate(1.5); box-shadow: inset 0 1px 0 var(--edge), 0 -8px 16px -12px var(--lift-shadow); }
+.tab::after { content: ''; position: absolute; bottom: 0; left: 100%; width: 14px; height: 14px; background: radial-gradient(circle at 100% 0, transparent 13.5px, var(--sheet) 14px); }
+.tab b { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; letter-spacing: -.01em; }
+.subline { overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 15px; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.mid { display: grid; align-content: center; gap: 10px; min-width: 0; padding: 14px 0; }
+.question { display: -webkit-box; overflow: hidden; font-size: 15px; font-weight: 500; line-height: 21px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.note { color: var(--muted); font-size: 12px; line-height: 16px; }
+.foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 12px; min-width: 0; }
+.hero { display: grid; min-width: 0; }
+.hero small, .side small { color: var(--muted); font-size: 12px; line-height: 16px; }
+.figure { font-size: 38px; font-weight: 600; line-height: 44px; letter-spacing: -.03em; white-space: nowrap; text-shadow: 0 1px 0 var(--edge); }
+.figure em { margin-inline-start: 6px; color: var(--muted); font-size: 17px; font-style: normal; font-weight: 500; letter-spacing: 0; }
+.side { display: grid; flex: none; justify-items: end; margin-inline-start: auto; padding-bottom: 4px; text-align: end; }
+.side b { overflow: hidden; max-width: 100%; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.card [data-tone='up'] { color: var(--up); }
+.card [data-tone='down'] { color: var(--down); }
+.hint { justify-self: start; margin-top: 12px; color: var(--muted); font-size: 11px; line-height: 14px; letter-spacing: .02em; }
 
-.grid { display: grid; grid-template-columns: 1fr 1fr; margin: 12px 0 0; padding-top: 4px; border-top: .5px solid rgba(11, 18, 32, .08); }
-.grid > div { display: grid; gap: 2px; min-width: 0; padding: 12px 0; }
-.grid > div:nth-child(even) { padding-inline-start: 16px; border-inline-start: .5px solid rgba(11, 18, 32, .08); }
-.grid > div:nth-child(n + 3) { border-top: .5px solid rgba(11, 18, 32, .08); }
-.grid dt { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+/* A light that follows the finger while the card is held. */
+.glare { position: absolute; z-index: 2; inset: 0; border-radius: 30px; background: radial-gradient(240px circle at var(--gx, 50%) var(--gy, 30%), rgba(255, 255, 255, .16), transparent 60%); opacity: 0; pointer-events: none; transition: opacity .3s; mix-blend-mode: soft-light; }
+.frame[data-held] .glare { opacity: 1; }
+
+/* Last ten predictions as dots (filled = won, ring = lost, dash = void). */
+.dots { display: flex; flex-wrap: wrap; gap: 8px; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); }
+.dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.dots i[data-r='void'] { height: 2px; margin-top: 5px; border-radius: 1px; background: var(--muted); }
+/* Holdings: one slim stacked bar on the front, the list on the back. */
+.bar { display: flex; gap: 3px; height: 10px; overflow: hidden; border-radius: 999px; }
+.bar i { min-width: 6px; }
+.card [data-i='0'] { background: var(--a); } .card [data-i='1'] { background: var(--c); } .card [data-i='2'] { background: #c8ced6; } .card [data-i='3'] { background: #6b717b; }
+
+.grid { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: .5px solid var(--line); }
+.grid > div { display: grid; gap: 2px; min-width: 0; padding: 10px 0; }
+.grid > div:nth-child(even) { padding-inline-start: 14px; border-inline-start: .5px solid var(--line); }
+.grid > div:nth-child(n + 3) { border-top: .5px solid var(--line); }
+.grid dt { color: var(--muted); font-size: 12px; line-height: 16px; }
 .grid dd { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
-.grid [data-hidden] dd { color: var(--m-muted, #5b6472); }
-.veil { display: block; width: 72px; height: 12px; border-radius: 999px; background: linear-gradient(90deg, rgba(11, 18, 32, .1), rgba(11, 18, 32, .05)); filter: blur(1.5px); }
-
-/* Prediction record: last ten as dots (ink = won, ring = lost, dash = void). */
-.dots { display: flex; gap: 8px; margin-top: 8px; }
-.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--m-ink, #0b1220); }
-.dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px var(--m-ink, #0b1220); }
-.dots i[data-r='void'] { height: 2px; margin-top: 6px; border-radius: 1px; background: var(--m-muted, #5b6472); }
-
-/* Holdings: one slim stacked bar and the list. */
-.holdings { display: grid; gap: 12px; }
-.bar { display: flex; gap: 2px; height: 28px; overflow: hidden; border-radius: 999px; }
-.bar i { display: grid; place-items: center; min-width: 6px; color: #fff; font-size: 12px; font-style: normal; font-weight: 600; }
-.card [data-i='0'] { background: #0f5c52; } .card [data-i='1'] { background: #2fae93; } .card [data-i='2'] { background: #9aa3ae; } .card [data-i='3'] { background: #c8ced6; }
+.grid [data-hidden] dd { color: var(--muted); }
+.veil { display: block; width: 64px; height: 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .06)); filter: blur(1.5px); }
 .holdings ul { display: grid; margin: 0; padding: 0; list-style: none; }
-.holdings li { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 15px; line-height: 22px; }
-.holdings li + li { border-top: .5px solid rgba(11, 18, 32, .08); }
+.holdings li { display: flex; align-items: center; gap: 8px; min-height: 34px; font-size: 14px; line-height: 20px; }
+.holdings li + li { border-top: .5px solid var(--line); }
 .holdings li > i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
 .holdings li span { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.holdings li small { color: var(--muted); font-size: 12px; }
 .holdings li b { font-weight: 600; }
 
-.foot { display: grid; gap: 4px; padding: 12px 8px 4px; }
-.who { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+/* Under the card, on the page. */
+.below { display: grid; gap: 4px; padding: 0 8px; color: var(--m-ink, #0b1220); }
+.who { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .who > span { display: grid; min-width: 0; }
 .who b { overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
 .who small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
 .prov { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
 .risk { color: var(--m-faint, #8a9099); font-size: 11px; line-height: 16px; }
 
-.card[data-compact] .figure { font-size: 28px; line-height: 34px; }
-.card[data-compact] .head { height: 48px; }
+.card[data-compact] .figure { font-size: 32px; line-height: 38px; }
+.card[data-compact] .sheet { min-height: 176px; }
 
-:global(.rwa-mobile[data-theme='dark']) .card { --rc-page: #0a0c10; background: #12151b; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08), 0 24px 48px -28px rgba(0, 0, 0, .8); color: #f2f4f7; }
-:global(.rwa-mobile[data-theme='dark']) .card { --band-a: #1d4a42; --band-b: #1f3550; --band-ink: #e3f4ef; }
-:global(.rwa-mobile[data-theme='dark']) .card[data-group='prediction'] { --band-a: #362f5a; --band-b: #4a2d3d; --band-ink: #efe9ff; }
-:global(.rwa-mobile[data-theme='dark']) .card[data-group='funds'] { --band-a: #262b33; --band-b: #20252c; --band-ink: #e6e9ee; }
-:global(.rwa-mobile[data-theme='dark']) .head em { background: rgba(255, 255, 255, .12); }
-:global(.rwa-mobile[data-theme='dark']) .well { background: #1b1f26; }
-:global(.rwa-mobile[data-theme='dark']) .perf::before { border-top-color: rgba(255, 255, 255, .14); }
-:global(.rwa-mobile[data-theme='dark']) .grid, :global(.rwa-mobile[data-theme='dark']) .grid > div, :global(.rwa-mobile[data-theme='dark']) .holdings li + li { border-color: rgba(255, 255, 255, .08); }
-:global(.rwa-mobile[data-theme='dark']) .figure small, :global(.rwa-mobile[data-theme='dark']) .kicker, :global(.rwa-mobile[data-theme='dark']) .grid dt, :global(.rwa-mobile[data-theme='dark']) .prov, :global(.rwa-mobile[data-theme='dark']) .note, :global(.rwa-mobile[data-theme='dark']) .who small { color: #a3acb9; }
-:global(.rwa-mobile[data-theme='dark']) .veil { background: linear-gradient(90deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)); }
-:global(.rwa-mobile[data-theme='dark']) .dots i { background: #f2f4f7; }
-:global(.rwa-mobile[data-theme='dark']) .dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px #f2f4f7; }
-@media (prefers-reduced-motion: reduce) { .head { animation: none; } }
-.holdings li small { color: var(--m-muted, #5b6472); font-size: 12px; }
-
-/* Mini (2026-11-02): the 晒单精选 strip in 热门 / 最新. Head, main figure, author and the risk line; the details wait
-   behind a tap (the 晒单 tab). The card fills its slot so every card in the strip is the same height. */
-.card[data-mini] { grid-template-rows: auto auto 1fr auto; height: 100%; }
-.card[data-mini] .grid, .card[data-mini] .holdings ul, .card[data-mini] .dots, .card[data-mini] .note, .card[data-mini] .prov { display: none; }
-.card[data-mini] .title { font-size: 13px; line-height: 18px; }
-.card[data-mini] .figure { font-size: 22px; line-height: 28px; }
-.card[data-mini] .sub { font-size: 13px; line-height: 18px; }
-.card[data-mini] .well { align-content: start; gap: 2px; padding: 12px 16px; }
-.card[data-mini] .holdings { margin-top: 8px; }
-.card[data-mini] .bar { height: 12px; }
-.card[data-mini] .bar i { font-size: 0; }
+/* Mini (晒单精选 strip): front only, smaller; the details wait behind a tap on the 晒单 tab. */
+.card[data-mini] .frame { height: 100%; }
+.card[data-mini] .turn, .card[data-mini] .face { height: 100%; }
+.card[data-mini] .sheet { min-height: 0; padding: 0 14px 12px; }
+.card[data-mini] .tab { height: 24px; margin: -24px 0 0 -14px; padding: 2px 14px 0; }
+.card[data-mini] .tab b { font-size: 13px; line-height: 18px; }
+.card[data-mini] .subline { font-size: 12px; line-height: 16px; }
+.card[data-mini] .label { top: 12px; right: 16px; }
+.card[data-mini] .label b { font-size: 12px; line-height: 16px; }
+.card[data-mini] .label small { display: none; }
+.card[data-mini] .mid { padding: 8px 0; }
+.card[data-mini] .question { font-size: 12px; line-height: 16px; }
+.card[data-mini] .figure { font-size: 24px; line-height: 30px; }
+.card[data-mini] .figure em { font-size: 12px; }
+.card[data-mini] .side b { font-size: 13px; line-height: 18px; }
+.card[data-mini] .dots, .card[data-mini] .note, .card[data-mini] .prov, .card[data-mini] .hero small { display: none; }
 .card[data-mini] .who b { font-size: 13px; line-height: 18px; }
 .card[data-mini] .risk { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .card.card .subline, :global(.rwa-mobile) .card.card .hero small, :global(.rwa-mobile) .card.card .side small, :global(.rwa-mobile) .card.card .hint, :global(.rwa-mobile) .card.card .note, :global(.rwa-mobile) .card.card .holdings li small { color: var(--muted); }
+:global(.rwa-mobile) .card.card .label small, :global(.rwa-mobile) .card.card .label b { color: #fff; }
+:global(.rwa-mobile) .card.card .prov, :global(.rwa-mobile) .card.card .who small { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .card.card .risk { color: var(--m-faint, #8a9099); }
+:global(.rwa-mobile[data-theme='dark']) .card { --frame: #07080a; --sheet: rgba(30, 33, 39, .86); --ink: #f4f5f7; --muted: rgba(244, 245, 247, .56); --line: rgba(255, 255, 255, .1); --up: #46d39a; --down: #ff7d70;
+  --edge: rgba(255, 255, 255, .08); --lift-shadow: rgba(0, 0, 0, .6); --rim: rgba(255, 255, 255, .06); --well: rgba(0, 0, 0, .35); --grain: .35; --a: #0e7d6c; --b: #2fb89a; --c: #2c6f9e; --d: #06302b; }
+:global(.rwa-mobile[data-theme='dark']) .card[data-group='prediction'] { --a: #2a46a8; --b: #4f7de0; --c: #6a55c9; --d: #121b45; }
+:global(.rwa-mobile[data-theme='dark']) .card[data-group='funds'] { --a: #3a424e; --b: #5b6676; --c: #2c333d; --d: #15191f; }
+:global(.rwa-mobile[data-theme='dark']) .face { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(255, 255, 255, .1), 0 14px 24px -12px rgba(0, 0, 0, .6), 0 34px 60px -30px rgba(0, 0, 0, .9); }
+:global(.rwa-mobile[data-theme='dark']) .below { color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .card.card .prov, :global(.rwa-mobile[data-theme='dark']) .card.card .who small { color: #a3acb9; }
+@media (prefers-reduced-motion: reduce) { .turn, .sheet, .paper, .room, .label { transition: none; } .glare { display: none; } .photo i { animation: none; } }
+:global(.rwa-mobile) .card.card .paperHead small, :global(.rwa-mobile) .card.card .paper .grid dt, :global(.rwa-mobile) .card.card .paper .holdings li small { color: rgba(20, 22, 26, .56); }
+:global(.rwa-mobile) .card.card .paper { color: #14161a; }
+
+/* Android WebView: no backdrop blur (it janks there); the sheet is simply solid. */
+:global(html[data-shell='android']) .sheet, :global(html[data-shell='android']) .tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: #fff; }
+:global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .sheet, :global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .tab { background: #1e2127; }

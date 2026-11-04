@@ -36,6 +36,10 @@ export const adminApi = {
   platformVersions: () => request<Array<{ revision: number; publishedAt: string }>>('/platform/versions'),
   getVerifiedAccess: (id: string) => request<VerifiedAccess | null>(`/platform/users/${encodeURIComponent(id)}/access`),
   saveVerifiedAccess: (id: string, data: VerifiedAccess) => request<VerifiedAccess>(`/platform/users/${encodeURIComponent(id)}/access`, { method: 'PUT', body: JSON.stringify(data) }),
+  // Investment blocklist (2026-11-04): every account may invest unless it is listed here.
+  investmentBlocks: () => request<{ items: InvestmentBlock[] }>('/platform/investment-blocks'),
+  blockInvestment: (userId: string, reason?: string) => request<unknown>('/platform/investment-blocks', { method: 'POST', body: JSON.stringify({ userId, ...(reason ? { reason } : {}) }) }),
+  unblockInvestment: (userId: string) => request<unknown>(`/platform/investment-blocks/${encodeURIComponent(userId)}`, { method: 'DELETE' }),
   getProfile: () => request<{ id: string; email: string; roleName: string; permissions: string[] }>('/auth/me'),
   createApproval: (data: { action: string; objectType: string; objectId?: string; payload?: Record<string, unknown> }) =>
     request<unknown>('/approvals', { method: 'POST', body: JSON.stringify(data) }),
@@ -184,4 +188,5 @@ export type PlatformContent = {
   officialChannels: Array<{ kind: 'website' | 'x' | 'telegram' | 'linkedin' | 'discord' | 'other'; label: string; url: string; note: string }>;
 }
 export type PlatformConfiguration = { revision: number; draft: Partial<PlatformContent>; published: PlatformContent | null; publishedRevision: number | null; publishedAt: string | null }
+export type InvestmentBlock = { userId: string; displayName: string | null; handle: string | null; reason: string | null; blockedAt: string; blockedBy: string | null }
 export type VerifiedAccess = { region: string; investorType: string; evidenceRef: string; verifiedAt?: string }

@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Post, Put, Req, UseGuards } from '@nestjs/common'
 import { AdminPermissionGuard, RequireAdminPermissions } from './admin-permission.guard'
 import type { AdminRequest } from './admin-session.guard'
 import { AdminPlatformService } from './admin-platform.service'
-import { PublishPlatformDto, SavePlatformDto, VerifiedAccessDto } from './admin-platform.dto'
+import { InvestmentBlockDto, PublishPlatformDto, SavePlatformDto, VerifiedAccessDto } from './admin-platform.dto'
 
 @Controller('admin/platform')
 @UseGuards(AdminPermissionGuard)
@@ -28,5 +28,15 @@ export class AdminPlatformController {
 
   @Put('users/:id/access') verify(@Param('id', ParseUUIDPipe) id: string, @Body() dto: VerifiedAccessDto, @Req() req: AdminRequest) {
     return this.control.saveVerifiedAccess(id, dto, req.admin!.id)
+  }
+
+  @Get('investment-blocks') blocks() { return this.control.listInvestmentBlocks() }
+
+  @Post('investment-blocks') block(@Body() dto: InvestmentBlockDto, @Req() req: AdminRequest) {
+    return this.control.blockInvestment(dto, req.admin!.id)
+  }
+
+  @Delete('investment-blocks/:userId') unblock(@Param('userId', ParseUUIDPipe) userId: string, @Req() req: AdminRequest) {
+    return this.control.unblockInvestment(userId, req.admin!.id)
   }
 }

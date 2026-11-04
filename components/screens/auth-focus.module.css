@@ -55,16 +55,10 @@
 .sheet::before { content: ''; position: absolute; inset: 0; z-index: -1; opacity: .9; pointer-events: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .06 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E"); }
 .root[data-auth-theme='cool'] .sheet { background: linear-gradient(180deg, rgba(28, 32, 40, .86), rgba(16, 19, 25, .8)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), inset 0 0 0 .5px rgba(255, 255, 255, .06), 0 28px 56px -32px rgba(0, 0, 0, .8); }
 .sheet { padding-top: 14px; }
-/* Photo window: the app's three photos crossfading, a glass tag, three dots (LoginWindow). */
+/* Photo window (LoginWindow): a lens onto the page's own photo — see the lens card block below. */
 .window { position: relative; height: 132px; margin: 0 -6px 20px; overflow: hidden; border-radius: 22px; background: #dfe4ea; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08), 0 2px 4px rgba(11, 18, 32, .08), 0 16px 28px -14px rgba(11, 18, 32, .45); transform: translateY(-1px); }
 .window::after { content: ''; position: absolute; inset: 0; border-radius: inherit; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .45), inset 0 0 0 .5px rgba(255, 255, 255, .25); pointer-events: none; }
-.window img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 35%; opacity: 0; transform: scale(1.02); transition: opacity 1.2s ease, transform 6s ease-out; }
-.window img[data-on] { opacity: 1; transform: scale(1.08); }
 .root[data-auth-theme='cool'] .window { background: #11151c; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 2px 4px rgba(0, 0, 0, .4), 0 18px 30px -14px rgba(0, 0, 0, .85); }
-.windowTag { position: absolute; bottom: 12px; left: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .26); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .5); color: #fff; font: 600 12px/28px var(--pa-sans, var(--sans)); text-shadow: 0 1px 2px rgba(0, 0, 0, .3); animation: rise .6s cubic-bezier(.22, 1, .36, 1) both; }
-.windowDots { position: absolute; right: 12px; bottom: 22px; display: flex; gap: 6px; }
-.windowDots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, .5); transition: width .4s ease, background-color .4s ease; }
-.windowDots i[data-on] { width: 16px; border-radius: 999px; background: #fff; }
 
 /* The brand line inside the card: one step down so two lines fit the glass. */
 .copy { padding: 0; }
@@ -178,3 +172,62 @@
 :global(html) .root.root.root.root .step [class*='P02-Login_rules__'] { margin: 10px 4px 0; color: var(--f-muted); }
 .step [class*='flow-kit-footer'], .step footer { margin-top: 8px; }
 .step.step { margin-bottom: max(12px, env(safe-area-inset-bottom)); }
+
+/* ── Lens card (2026-11-04, after the user's reference) ─────────────────────────────────────────────
+   One world: the photo behind goes fully soft and the card's window shows the same photo, sharp and lined up — a lens
+   pulling the scene into focus. The card itself is real glass (the sky tints it), still cool white with ink type. Only
+   Continue is solid; the field and the other ways are quiet glass on a hairline, no drop shadows. Fewer blocks, more air. */
+.root[data-auth-view='welcome'] .scene img { filter: blur(7px) saturate(1.12); animation: focusSoft 1.6s cubic-bezier(.22, 1, .36, 1) both; transform: translateY(-9%) scale(1.22); }
+/* Lifted and enlarged so the coast and the house sit behind the lens, not behind the form. LoginWindow repeats these numbers. */
+@keyframes focusSoft { from { filter: blur(20px) saturate(1.12); transform: translateY(-9%) scale(1.28); } }
+.root[data-auth-view='welcome'] .scene::after { background: linear-gradient(180deg, rgba(255, 255, 255, .32) 0%, transparent 16%, transparent 60%, rgba(11, 18, 32, .18) 100%); }
+.root[data-auth-view='welcome'][data-auth-theme='cool'] .scene::after { background: linear-gradient(180deg, rgba(5, 8, 14, .5) 0%, transparent 18%, transparent 55%, rgba(5, 8, 14, .45) 100%); }
+.root[data-auth-view='welcome'] .soften { display: none; }
+.root[data-auth-view='welcome'] .fog { opacity: .45; }
+
+.root[data-auth-view='welcome'] .sheet { margin: auto 16px 0; padding: 12px 12px 22px; border-radius: 32px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .62), rgba(246, 248, 251, .56));
+  -webkit-backdrop-filter: blur(28px) saturate(1.6); backdrop-filter: blur(28px) saturate(1.6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 0 0 .5px rgba(255, 255, 255, .55), 0 30px 60px -36px rgba(11, 18, 32, .5); }
+.root[data-auth-view='welcome'][data-auth-theme='cool'] .sheet { background: linear-gradient(180deg, rgba(26, 30, 38, .62), rgba(14, 17, 23, .58));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .1), inset 0 0 0 .5px rgba(255, 255, 255, .08), 0 30px 60px -36px rgba(0, 0, 0, .8); }
+.root[data-auth-view='welcome'] .sheet > :not(.window) { padding-inline: 12px; }
+
+.window { height: 176px; margin: 0 0 22px; border-radius: 20px; background: #c9d3dd; transform: none;
+  box-shadow: 0 0 0 .5px rgba(11, 18, 32, .06), 0 12px 24px -16px rgba(11, 18, 32, .45); }
+.window::after { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .5), inset 0 0 0 .5px rgba(255, 255, 255, .3); }
+.lens { position: absolute; inset: 0; background-repeat: no-repeat; animation: lensIn 1.4s cubic-bezier(.22, 1, .36, 1) .5s both; }
+@keyframes lensIn { from { opacity: 0; filter: blur(12px); } }
+.root[data-auth-theme='cool'] .window { background: #11151c; }
+
+.root[data-auth-view='welcome'] .copy h1 { font-size: 24px; line-height: 30px; font-weight: 700; letter-spacing: -.02em; }
+.root[data-auth-view='welcome'] .lede { margin-top: 6px; font-size: 14px; line-height: 20px; }
+.root[data-auth-view='welcome'] .actions { padding-top: 22px; }
+
+/* The field: quiet glass on a hairline (no drop shadow); teal ring on focus. */
+.root[data-auth-view='welcome'] .email.email { --ctl-h: 54px; background: rgba(255, 255, 255, .7); box-shadow: inset 0 0 0 1px rgba(11, 18, 32, .1); }
+.root[data-auth-view='welcome'] .email.email:focus-within { box-shadow: inset 0 0 0 1.5px var(--f-accent); }
+.root[data-auth-view='welcome'][data-auth-theme='cool'] .email.email { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.root[data-auth-view='welcome'] .mailIcon { width: 20px; height: 20px; }
+
+/* Continue keeps the app's ink key, toned down: lighter gloss, a soft arrow disc instead of a white one. */
+.root[data-auth-view='welcome'] .continue.continue { --ctl-h: 54px; margin-top: 10px; --btn-gloss: rgba(255, 255, 255, .1); --btn-arrow-fill: rgba(255, 255, 255, .14); --btn-arrow-ink: #fff; --arrow-gloss: 0; }
+.root[data-auth-view='welcome'][data-auth-theme='cool'] .continue.continue { --btn-arrow-fill: rgba(11, 18, 32, .08); --btn-arrow-ink: #0b1220; }
+
+.root[data-auth-view='welcome'] .others { margin-top: 18px; }
+.root[data-auth-view='welcome'] .orLine { margin-bottom: 14px; color: var(--f-faint); font-size: 12px; }
+.ways { display: grid; grid-template-columns: minmax(0, 1fr) 48px 48px; gap: 8px; }
+.ways > button { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 48px; padding: 0; border: 0; border-radius: 999px; cursor: pointer;
+  background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px rgba(11, 18, 32, .1); color: var(--f-ink); font: 600 14px/1 var(--pa-sans, var(--sans)); transition: transform .15s ease, background-color .2s ease; }
+.ways > button.google.google { width: auto; min-width: 0; height: 48px; padding: 0 12px; white-space: nowrap; background: rgba(255, 255, 255, .5); box-shadow: inset 0 0 0 1px rgba(11, 18, 32, .1); font-size: 14px; }
+.ways > button:active { transform: scale(.97); }
+.ways > button:disabled { opacity: .45; cursor: default; }
+.ways > button:focus-visible { outline: 2px solid var(--f-accent); outline-offset: 2px; }
+.root[data-auth-theme='cool'] .ways > button, .root[data-auth-theme='cool'] .ways > button.google.google { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
+.root[data-auth-theme='cool'] .ways img[data-mono] { filter: invert(1); }
+@media (prefers-reduced-motion: reduce) { .root[data-auth-view='welcome'] .scene img, .lens { animation: none; } }
+.ways > button.google span { overflow: hidden; text-overflow: ellipsis; }
+/* A narrow row (small phones, long labels) says just "Google" rather than wrapping or cutting the label. */
+.ways { container-type: inline-size; }
+.short { display: none; }
+@container (max-width: 309px) { .long { display: none; } .short { display: inline; } }

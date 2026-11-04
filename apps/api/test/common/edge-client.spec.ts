@@ -42,19 +42,21 @@ describe('edge client verification', () => {
     expect(verifyEdgeClient({ 'x-client-ip': '203.0.113.7' }, SECRET, now)).toBeNull()
   })
 
-  it('strips unverified visitor headers so analytics falls back to the connection address', () => {
-    const { request, response } = exchange({ 'x-client-ip': '198.51.100.1', 'x-client-country': 'KP', 'x-client-sig': 'v1.1.forged' }, '/v1/catalog/products')
+  it.each([undefined, 'v1.1.forged'])('strips unverified visitor headers with signature %p', (signature) => {
+    const { request, response } = exchange({ 'x-client-ip': '198.51.100.1', 'x-client-country': 'KP', ...(signature ? { 'x-client-sig': signature } : {}), 'x-client-region': 'Tokyo', 'x-client-city': 'Tokyo' }, '/v1/catalog/products')
     createEdgeClientMiddleware(SECRET)(request, response, () => undefined)
     expect(request.headers['x-client-ip']).toBeUndefined()
     expect(request.headers['x-client-country']).toBeUndefined()
     expect(request.headers['x-client-sig']).toBeUndefined()
-    expect(activityFromRequest(request, 200)).toMatchObject({ ip: WORKER_IP, country: null })
+    expect(request.headers['x-client-region']).toBeUndefined()
+    expect(request.headers['x-client-city']).toBeUndefined()
+    expect(activityFromRequest(request, 200)).toMatchObject({ ip: WORKER_IP, country: null, region: null, city: null })
   })
 
   it('keeps signed visitor headers for analytics', () => {
-    const { request, response } = exchange(signedHeaders('203.0.113.7'), '/v1/catalog/products')
+    const { request, response } = exchange({ ...signedHeaders('203.0.113.7'), 'x-client-region': encodeURIComponent(' 東京都 '), 'x-client-city': encodeURIComponent('新宿区') }, '/v1/catalog/products')
     createEdgeClientMiddleware(SECRET)(request, response, () => undefined)
-    expect(activityFromRequest(request, 200)).toMatchObject({ ip: '203.0.113.7', country: 'JP' })
+    expect(activityFromRequest(request, 200)).toMatchObject({ ip: '203.0.113.7', country: 'JP', region: '東京都', city: '新宿区' })
     expect(request.headers['x-client-sig']).toBeUndefined()
   })
 })

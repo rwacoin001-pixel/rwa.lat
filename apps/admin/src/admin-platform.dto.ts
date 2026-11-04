@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDefined, IsEmail, IsIn, IsInt, IsOptional, IsString, IsUrl, Matches, MaxLength, Min, MinLength, ValidateNested } from 'class-validator'
+import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDefined, IsEmail, IsIn, IsInt, IsOptional, IsString, IsUrl, IsUUID, Matches, MaxLength, Min, MinLength, ValidateNested } from 'class-validator'
 
 export class PlatformDocumentDto {
   @IsString() @MinLength(1) @MaxLength(160) title!: string
@@ -44,4 +44,9 @@ export class VerifiedAccessDto {
   @IsString() @Matches(/^[A-Z]{2}$/) region!: string
   @IsIn(['retail', 'professional', 'institutional']) investorType!: string
   @IsString() @MinLength(3) @MaxLength(500) evidenceRef!: string
+}
+
+export class InvestmentBlockDto {
+  @IsUUID() userId!: string
+  @IsOptional() @IsString() @MaxLength(200) reason?: string
 }

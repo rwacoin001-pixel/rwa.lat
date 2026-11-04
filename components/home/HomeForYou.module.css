@@ -1,34 +1,52 @@
-/* For you (2026-10-28, photo cards after the user's reference): two wide cards side by side in a horizontal scroll.
-   A warm, real photograph fills each card; the number sits on it in a glass chip; the name and one line at the bottom
-   over a soft scrim; a glass arrow in the corner (docs/design-system.md §4.2). */
-.root { display: flex; gap: 12px; min-width: 0; margin: 0 calc(-1 * var(--home-gutter, 20px)); padding: 0 var(--home-gutter, 20px) 4px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--home-gutter, 20px); scrollbar-width: none; }
+/* For you (2026-11-04, after the user's reference): each product is a display case — a white card holding a photo
+   card (name + glass key on a dark foot), then one line of facts, three figures and a small ink drawing in a well.
+   Cases sit side by side in a horizontal scroll (docs/design-system.md §4.2). */
+.root { display: flex; gap: 12px; min-width: 0; margin: 0 calc(-1 * var(--home-gutter, 20px)); padding: 4px var(--home-gutter, 20px) 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--home-gutter, 20px); scrollbar-width: none; }
 .root::-webkit-scrollbar { display: none; }
-.card { position: relative; flex: 0 0 calc(100% - 32px); height: 216px; overflow: hidden; padding: 0; border: 0; border-radius: 22px; background: #d9d4cc; color: #fff; text-align: start; font: inherit; cursor: pointer; scroll-snap-align: start; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+.case { flex: 0 0 calc(100% - 28px); display: grid; gap: 0; padding: 8px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow, 0 0 0 .5px rgba(11, 18, 32, .1), 0 14px 30px -18px rgba(15, 23, 42, .24)); scroll-snap-align: start; }
+
+/* The photo card: the picture fills it, a deep foot carries the name and the glass key. */
+.card { position: relative; display: block; width: 100%; height: 188px; overflow: hidden; padding: 0; border: 0; border-radius: 20px; background: #d9d4cc; color: #fff; text-align: start; font: inherit; cursor: pointer; box-shadow: 0 10px 24px -14px rgba(15, 23, 42, .45); touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 .photo { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; animation: settle .7s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)) both; }
 @keyframes settle { from { opacity: 0; transform: scale(1.04); } }
-/* A soft scrim so white text always reads, whatever the photo. */
-.card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, .5) 100%); pointer-events: none; }
-.chip { position: absolute; z-index: 1; top: 12px; left: 12px; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(16px) saturate(1.4); backdrop-filter: blur(16px) saturate(1.4); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45); color: #fff; font-size: 13px; font-weight: 600; line-height: 28px; font-variant-numeric: tabular-nums; }
-.text { position: absolute; z-index: 1; left: 16px; right: 64px; bottom: 16px; display: grid; gap: 2px; }
-.text strong { overflow: hidden; font-size: 22px; font-weight: 600; line-height: 28px; white-space: nowrap; text-overflow: ellipsis; text-shadow: 0 1px 12px rgba(0, 0, 0, .25); }
-.text small { overflow: hidden; font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; opacity: .9; }
-.go { position: absolute; z-index: 1; right: 12px; bottom: 12px; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: rgba(255, 255, 255, .28); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .45); color: #fff; transition: rotate .25s var(--pa-ease-spring, cubic-bezier(.34, 1.56, .64, 1)); }
-.card:active .go { rotate: 45deg; }
+.card::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(10, 12, 16, 0) 38%, rgba(10, 12, 16, .55) 72%, rgba(10, 12, 16, .82) 100%); pointer-events: none; }
+.text { position: absolute; z-index: 1; left: 16px; right: 112px; bottom: 16px; display: grid; gap: 1px; }
+.text strong { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; letter-spacing: -.01em; }
+.text small { overflow: hidden; font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; opacity: .72; }
+.go { position: absolute; z-index: 1; right: 12px; bottom: 12px; display: grid; place-items: center; min-width: 88px; height: 40px; padding: 0 18px; border-radius: 14px; background: rgba(255, 255, 255, .18); -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .28); color: #fff; font-size: 14px; font-weight: 600; letter-spacing: .01em; }
+.card:active .go { background: rgba(255, 255, 255, .28); }
 .card:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; }
-.up, .down { color: #fff; }
+
+/* The facts under the photo. */
+.body { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 6px 6px 10px; border: 0; background: none; color: var(--m-ink, #0b1220); text-align: start; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.info { flex: 1; min-width: 0; display: grid; }
+.head { overflow: hidden; font-size: 15px; font-weight: 600; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.note { overflow: hidden; margin-top: 2px; padding-bottom: 12px; border-bottom: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.facts { display: grid; grid-template-columns: repeat(3, auto); justify-content: start; gap: 18px; padding-top: 12px; }
+.facts > span { display: grid; }
+.facts b { font-size: 15px; font-weight: 600; line-height: 20px; white-space: nowrap; font-variant-numeric: tabular-nums; letter-spacing: -.01em; }
+.facts b[data-tone='up'] { color: var(--q-gain, #067a5e); }
+.facts b[data-tone='down'] { color: var(--q-loss, #c23b33); }
+.facts small { overflow: hidden; color: var(--m-faint, #8f97a5); font-size: 11px; line-height: 14px; white-space: nowrap; text-overflow: ellipsis; }
+/* The well: a soft inset square holding one ink drawing. */
+.tile { flex: none; display: grid; place-items: center; width: 76px; height: 76px; border-radius: 22px; background: var(--pa-well-bg, var(--pa-fill, rgba(11, 18, 32, .05))); box-shadow: var(--pa-well-shadow, none); color: var(--m-ink, #0b1220); }
+.tile svg { width: 52px; height: 52px; overflow: visible; }
+
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
-:global(.rwa-mobile) .root.root .text strong, :global(.rwa-mobile) .root.root .text small, :global(.rwa-mobile) .root.root .chip { color: #fff; }
-:global(html[data-shell='android']) .chip, :global(html[data-shell='android']) .go { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .28); }
-@media (prefers-reduced-motion: reduce) { .photo { animation: none; } .go { transition: none; } }
-/* Position dots (2026-10-28): the first is wide at rest and hands its width to the second as the row scrolls. */
-.dots { display: flex; justify-content: center; gap: 4px; margin-top: 8px; }
-.dots button { position: relative; width: 24px; height: 16px; padding: 0; border: 0; background: none; cursor: pointer; }
-.dots button::after { content: ''; position: absolute; top: 6px; left: 50%; height: 4px; border-radius: 999px; background: var(--m-ink, #0b1220); translate: -50% 0; }
-.dots button[data-i='0']::after { width: calc(4px + 12px * (1 - var(--p))); opacity: calc(.25 + .55 * (1 - var(--p))); }
-.dots button[data-i='1']::after { width: calc(4px + 12px * var(--p)); opacity: calc(.25 + .55 * var(--p)); }
+:global(.rwa-mobile) .root.root .text strong, :global(.rwa-mobile) .root.root .text small, :global(.rwa-mobile) .root.root .go { color: #fff; }
+:global(.rwa-mobile) .root.root .note { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .root.root .facts small { color: var(--m-faint, #8f97a5); }
+:global(html[data-shell='android']) .go { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(0, 0, 0, .32); }
+@media (prefers-reduced-motion: reduce) { .photo { animation: none; } }
+
+/* Position dots: the wide pill flows from card to card as the row scrolls (widths set from the scroll). */
+.dots { display: flex; justify-content: center; gap: 2px; margin-top: 2px; }
+.dots button { position: relative; width: 20px; height: 16px; padding: 0; border: 0; background: none; cursor: pointer; }
+.dots button::after { content: ''; position: absolute; top: 6px; left: 50%; width: var(--w, 4px); height: 4px; border-radius: 999px; background: var(--m-ink, #0b1220); opacity: var(--o, .25); translate: -50% 0; }
 .dots button:focus-visible { outline: 2px solid var(--m-accent, #087a67); outline-offset: 2px; border-radius: 8px; }
 :global(.rwa-mobile[data-theme='dark']) .dots button::after { background: #f2f4f7; }
 /* Day photo in light mode, the night version in dark (2026-11-02). */
 .night { display: none; }
 :global(.rwa-mobile[data-theme='dark']) .day { display: none; }
 :global(.rwa-mobile[data-theme='dark']) .night { display: block; }
+:global(.rwa-mobile[data-theme='dark']) .case { box-shadow: var(--pa-card-shadow); }

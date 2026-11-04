@@ -37,6 +37,17 @@ describe('ComplianceService 核心逻辑', () => {
 
   const userId = randomUUID()
 
+  it('denies an admin-blocked investment with a specific reason and allows it after resolution', async () => {
+    const flag = { id: 'f1', category: 'investment_block', severity: 'high', state: 'open' }
+    riskRepo.find.mockResolvedValue([flag])
+    expect(await service.evaluateEligibility(userId, 'rwa-token')).toMatchObject({ decision: 'manual_review', reasonCodes: ['admin_blocked'] })
+    await expect(service.requireInvestmentEligibility(userId, 'rwa-token')).rejects.toMatchObject({
+      response: { code: 'INVESTMENT_NOT_ELIGIBLE', reasonCodes: ['admin_blocked'] },
+    })
+    flag.state = 'resolved'
+    await expect(service.requireInvestmentEligibility(userId, 'rwa-token')).resolves.toBeUndefined()
+  })
+
   beforeEach(async () => {
     kycRepo = repoMock() as never
     eligibilityRepo = repoMock() as never

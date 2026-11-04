@@ -9,12 +9,15 @@ import type { NextFunction, Request, RequestHandler, Response } from 'express'
  *
  *   x-client-sig: v1.<unix seconds>.<base64url HMAC-SHA256(secret, "v1|<seconds>|<ip>|<country>")>
  *
- * With EDGE_CLIENT_SIGNING_SECRET set, only a valid, fresh signature is trusted; otherwise all three headers
+ * Region/city are analytics metadata and are not part of the signature.
+ * With EDGE_CLIENT_SIGNING_SECRET set, only a valid, fresh signature is trusted; otherwise all visitor headers
  * are removed before any handler sees them, so a direct caller cannot pick its own rate-limit identity.
  * Without the secret the headers are left for analytics only (the behaviour before signing existed).
  */
 export const EDGE_CLIENT_IP_HEADER = 'x-client-ip'
 export const EDGE_CLIENT_COUNTRY_HEADER = 'x-client-country'
+export const EDGE_CLIENT_REGION_HEADER = 'x-client-region'
+export const EDGE_CLIENT_CITY_HEADER = 'x-client-city'
 export const EDGE_CLIENT_SIGNATURE_HEADER = 'x-client-sig'
 export const EDGE_SIGNATURE_MAX_SKEW_SECONDS = 120
 const SIGNATURE = /^v1\.(\d{9,11})\.([A-Za-z0-9_-]{43})$/
@@ -56,6 +59,8 @@ export function createEdgeClientMiddleware(secret = process.env.EDGE_CLIENT_SIGN
       } else {
         delete request.headers[EDGE_CLIENT_IP_HEADER]
         delete request.headers[EDGE_CLIENT_COUNTRY_HEADER]
+        delete request.headers[EDGE_CLIENT_REGION_HEADER]
+        delete request.headers[EDGE_CLIENT_CITY_HEADER]
       }
     }
     delete request.headers[EDGE_CLIENT_SIGNATURE_HEADER]

@@ -14,16 +14,20 @@ import { CARD_FIELDS, cardGroup, getCardKinds, getCardSources, previewCard, type
 import { ResultCard, useResultCardCopy } from './ResultCard'
 import s from './card-picker.module.css'
 
-type Copy = { title: string; pickKind: string; pickSource: string; preview: string; use: string; back: string; loading: string; failed: string; none: string; soon: string; hint: string; lastOne: string; reasons: Record<string, string> }
+type Copy = { title: string; pickKind: string; pickSource: string; preview: string; use: string; back: string; loading: string; failed: string; none: string; soon: string; hint: string; lastOne: string; reasons: Record<string, string>; about: Record<CardKind, string>; show: string; feel: string; step: (n: number) => string }
 const copy: Partial<Record<AppLocale, Copy>> = {
   'zh-CN': {
     title: '晒单卡片', pickKind: '选一种卡片', pickSource: '选一笔', preview: '预览和隐藏', use: '放进帖子', back: '返回', loading: '正在读取…', failed: '没有读取成功，请稍后再试。', none: '没有可以选的记录。', soon: '晒单卡片即将开放',
     hint: '金额和收益率同时显示时，别人可以算出你的本金。', lastOne: '至少要显示一项',
+    about: { quant_day: '某一天结算的收益', quant_product: '一个产品的盈亏和持有天数', quant_total: '量化账户的累计收益', holdings: '现在持有什么，各占多少', prediction_bet: '一笔预测和它的结果', prediction_record: '胜率和最近 10 次', deposit: '一笔充值记录', withdrawal: '一笔提现记录' },
+    show: '卡片上显示', feel: '按住卡片可以倾斜，点按翻到背面', step: (n) => `第 ${n} 步，共 3 步`,
     reasons: { NO_QUANT: '还没有量化持仓', NO_SETTLED_DAY: '还没有已结算的收益', NO_PREDICTION: '还没有预测记录', NO_SETTLED_PREDICTION: '还没有已结算的预测', NO_DEPOSIT: '还没有充值记录', NO_WITHDRAWAL: '还没有提现记录' },
   },
   en: {
     title: 'Result card', pickKind: 'Choose a card', pickSource: 'Choose one', preview: 'Preview and hide', use: 'Add to post', back: 'Back', loading: 'Loading…', failed: 'Could not load. Please try again.', none: 'Nothing to choose yet.', soon: 'Result cards are coming soon',
     hint: 'Showing both amount and return lets others work out your principal.', lastOne: 'Keep at least one visible',
+    about: { quant_day: 'One settled day', quant_product: "One product's P&L and days held", quant_total: 'All of Koala Quant so far', holdings: 'What you hold now, and how much', prediction_bet: 'One prediction and its result', prediction_record: 'Win rate and the last ten', deposit: 'One deposit', withdrawal: 'One withdrawal' },
+    show: 'On the card', feel: 'Hold the card to tilt it, tap to turn it over', step: (n) => `Step ${n} of 3`,
     reasons: { NO_QUANT: 'No Koala Quant holdings yet', NO_SETTLED_DAY: 'No settled day yet', NO_PREDICTION: 'No predictions yet', NO_SETTLED_PREDICTION: 'No settled predictions yet', NO_DEPOSIT: 'No deposits yet', NO_WITHDRAWAL: 'No withdrawals yet' },
   },
 }
@@ -79,20 +83,23 @@ export function CardPicker({ open, onClose, onPick, panel = false }: { open: boo
     {step !== 'kinds' && <button type="button" className={s.back} onClick={back}><ArrowLeft size={16} aria-hidden="true" />{k.back}</button>}
     {failed && <p className={s.muted}>{k.failed}</p>}
 
-    {step === 'kinds' && (kinds === undefined ? <p className={s.muted}>{k.loading}</p> : kinds === null ? <p className={s.muted}>{k.soon}</p> : <ul className={s.shelf}>
-      {kinds.map((info) => <li key={info.kind}><button type="button" className={s.ticket} data-group={cardGroup(info.kind)} disabled={!info.available} onClick={() => choose(info)}>
-        <span className={s.band}><b>{rc.group[cardGroup(info.kind)]}</b></span>
-        <span className={s.ticketText}><b>{rc.kinds[info.kind]}</b><small>{info.available ? (info.needsSource ? k.pickSource : k.preview) : k.reasons[info.reason ?? ''] ?? k.none}</small></span>
-        {info.available && <ChevronRight size={16} aria-hidden="true" />}
-      </button></li>)}
-    </ul>)}
+    {step === 'kinds' && (kinds === undefined ? <p className={s.muted}>{k.loading}</p> : kinds === null ? <p className={s.muted}>{k.soon}</p> : <div className={s.groups}>
+      {(['quant', 'prediction', 'funds'] as const).map((group) => { const items = kinds.filter((info) => cardGroup(info.kind) === group); return items.length > 0 && <section key={group}>
+        <h3 className={s.groupHead}>{rc.group[group]}</h3>
+        <ul className={s.list}>{items.map((info) => <li key={info.kind}><button type="button" className={s.row} disabled={!info.available} onClick={() => choose(info)}>
+          <span className={s.rowText}><b>{rc.kinds[info.kind]}</b><small>{info.available ? k.about[info.kind] : k.reasons[info.reason ?? ''] ?? k.none}</small></span>
+          {info.available && <ChevronRight size={18} strokeWidth={1.8} aria-hidden="true" />}
+        </button></li>)}</ul>
+      </section> })}
+    </div>)}
 
-    {step === 'source' && (sources === null ? <p className={s.muted}>{k.loading}</p> : sources.length === 0 ? <p className={s.muted}>{k.none}</p> : <ul className={s.sources}>
-      {sources.map((item) => <li key={item.id}><button type="button" onClick={() => loadPreview(kind!, item.id)}><span><b dir="auto">{item.label}</b>{item.sublabel && <small dir="auto">{item.sublabel}</small>}</span><ChevronRight size={16} aria-hidden="true" /></button></li>)}
+    {step === 'source' && (sources === null ? <p className={s.muted}>{k.loading}</p> : sources.length === 0 ? <p className={s.muted}>{k.none}</p> : <ul className={s.list}>
+      {sources.map((item) => <li key={item.id}><button type="button" className={s.row} onClick={() => loadPreview(kind!, item.id)}><span className={s.rowText}><b dir="auto">{item.label}</b>{item.sublabel && <small dir="auto">{item.sublabel}</small>}</span><ChevronRight size={18} strokeWidth={1.8} aria-hidden="true" /></button></li>)}
     </ul>)}
 
     {step === 'preview' && (!shown ? !failed && <p className={s.muted}>{k.loading}</p> : <div className={s.preview}>
-      <ResultCard card={shown} />
+      <div className={s.stage}><ResultCard card={shown} /><small className={s.muted}>{k.feel}</small></div>
+      <h3 className={s.groupHead}>{k.show}</h3>
       <ul className={s.switches}>
         {fields.map((key) => { const on = visible.includes(key); const locked = on && visible.length === 1
           return <li key={key}><label><span>{rc.f[key] ?? key}{locked && <small>{k.lastOne}</small>}</span><input type="checkbox" role="switch" checked={on} disabled={locked} onChange={() => toggle(key)} /></label></li> })}
@@ -102,7 +109,7 @@ export function CardPicker({ open, onClose, onPick, panel = false }: { open: boo
     </div>)}
   </>
   if (panel) return open ? <div className={s.panel} role="dialog" aria-modal="true" aria-label={heading}>
-    <header className={s.panelHead}><span><small>{k.title}</small><b>{heading}</b></span><button type="button" className={s.panelClose} aria-label={k.back} onClick={onClose}><X size={20} aria-hidden="true" /></button></header>
+    <header className={s.panelHead}><span><small>{k.title} · {k.step(step === 'kinds' ? 1 : step === 'source' ? 2 : 3)}</small><b>{heading}</b></span><button type="button" className={s.panelClose} aria-label={k.back} onClick={onClose}><X size={20} aria-hidden="true" /></button></header>
     <div className={s.panelBody}>{body}</div>
   </div> : null
   return <Sheet open={open} onClose={onClose} title={heading} kicker={k.title}>{body}</Sheet>

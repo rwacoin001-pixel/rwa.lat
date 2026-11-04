@@ -10,6 +10,9 @@ export interface VisitRow {
   email: string | null
   ip: string
   country: string | null
+  /** Cloudflare's region and city for the visit (2026-11-04); older visits have none. */
+  region?: string | null
+  city?: string | null
   device: string
   userAgent: string | null
   firstPage: string | null
@@ -54,7 +57,10 @@ export function VisitLog({ countryName }: { countryName: (code: string) => strin
     { key: 'startedAt', label: '访问时间', render: (v) => <span className="whitespace-nowrap tabular-nums">{time(v.startedAt)}</span> },
     { key: 'duration', label: '停留', render: (v) => <span className="whitespace-nowrap text-xs text-text-faint" title={`最后活动 ${time(v.lastSeenAt)}`}>{duration(v.durationSeconds)}</span> },
     { key: 'ip', label: 'IP', render: (v) => <button type="button" className="font-mono text-xs underline-offset-2 hover:underline" title="只看这个 IP" onClick={() => filterBy(v.ip)}>{v.ip}</button> },
-    { key: 'country', label: '地区', render: (v) => <span className="whitespace-nowrap text-xs">{v.country ? countryName(v.country) : '未知'}</span> },
+    { key: 'country', label: '地区', render: (v) => {
+      const place = [v.country ? countryName(v.country) : null, v.region, v.city].filter((part, index, all) => part && all.indexOf(part) === index)
+      return <span className="whitespace-nowrap text-xs" title={place.join(' · ')}>{place.length ? place.join(' · ') : '未知'}</span>
+    } },
     { key: 'device', label: '设备', render: (v) => <span className="whitespace-nowrap text-xs" title={v.userAgent ?? ''}>{DEVICE[v.device] ?? v.device}</span> },
     {
       key: 'account', label: '账户', render: (v) => v.userId

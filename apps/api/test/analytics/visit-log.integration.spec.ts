@@ -36,10 +36,10 @@ describeDatabase('visit log (PostgreSQL)', () => {
     const now = Date.now()
     const at = (minutes: number) => new Date(now - 60 * 60_000 + minutes * 60_000)
     visits.record({ at: at(0), ip: '203.0.113.7', userId: null, country: 'JP', device: 'mobile', userAgent: 'iPhone', page: '/home' })
-    visits.record({ at: at(5), ip: '203.0.113.7', userId: null, country: 'JP', device: 'mobile', userAgent: 'iPhone', page: '/markets' })
+    visits.record({ at: at(5), ip: '203.0.113.7', userId: null, country: 'JP', region: '東京都', city: '新宿区', device: 'mobile', userAgent: 'iPhone', page: '/markets' })
     visits.record({ at: at(1), ip: '2001:db8::5', userId, country: 'SG', device: 'desktop', userAgent: 'Windows', page: '/assets' })
     await visits.flush()
-    visits.record({ at: at(8), ip: '203.0.113.7', userId: null, country: 'JP', device: 'mobile', userAgent: 'iPhone', page: '/profile' })
+    visits.record({ at: at(8), ip: '203.0.113.7', userId: null, country: 'JP', region: 'Osaka', city: 'Osaka', device: 'mobile', userAgent: 'iPhone', page: '/profile' })
     await visits.flush()
 
     const all = await query.list({})
@@ -47,6 +47,8 @@ describeDatabase('visit log (PostgreSQL)', () => {
     const anonymous = all.items.find((row) => row.userId === null)!
     expect(anonymous).toMatchObject({ ip: '203.0.113.7', country: 'JP', requests: 3, firstPage: '/home', lastPage: '/profile', durationSeconds: 480, email: null })
     const signedIn = all.items.find((row) => row.userId === userId)!
+    expect(anonymous).toMatchObject({ region: '東京都', city: '新宿区' })
+    expect(signedIn).toMatchObject({ region: null, city: null })
     expect(signedIn).toMatchObject({ ip: '2001:db8::5', email: 'visitor@example.com', requests: 1 })
 
     expect((await query.list({ q: '203.0.113.7' })).total).toBe(1)
