@@ -35,7 +35,9 @@ export async function drawReferralPoster(canvas: HTMLCanvasElement, model: Poste
     const c = document.createElement('canvas'); c.width = c.height = 1
     const o = c.getContext('2d')!
     o.drawImage(art, 0, art.height * .9, art.width, art.height * .1, 0, 0, 1, 1)
-    return '#' + Array.from(o.getImageData(0, 0, 1, 1).data.slice(0, 3)).map(v => v.toString(16).padStart(2, '0')).join('')
+    // Pushed toward black (dark floor) or white (light floor) so the footer copy always keeps its contrast.
+    const dim = layout.footer === 'dark'
+    return '#' + Array.from(o.getImageData(0, 0, 1, 1).data.slice(0, 3)).map(v => Math.round(dim ? v * .42 : v + (255 - v) * .62).toString(16).padStart(2, '0')).join('')
   })() : null
   const bg = floorTone ?? (dark ? '#080A09' : '#FAFAF8')
   const ink = dark ? '#F3F5F1' : '#14211D', muted = dark ? '#BAC7C0' : '#56665F', accent = dark ? '#67E4C0' : '#157C61'
@@ -180,30 +182,39 @@ export async function drawReferralPoster(canvas: HTMLCanvasElement, model: Poste
     ctx.fillStyle = wash; ctx.fillRect(copyBox.x - 12, 0, copyBox.width + 40, H)
     copy(copyBox, model.template.style === 'statement')
   } else if (layout) {
-    // Art-style posters keep their designed composition, and the headline goes exactly where that artwork left
-    // room for it. The artwork is as wide as the poster when it fits; it shrinks only as far as needed for its text
-    // and subject to sit between the logo and the footer (square formats), the margins then continuing its edges.
-    const ratio = art.height / art.width, logoBottom = top + logoW * logo.height / logo.width + 32, floor = footerY - 24
-    const lowest = Math.max(layout.subject.y + layout.subject.h, layout.text.y + layout.text.h), highest = Math.min(layout.text.y, layout.subject.y)
-    const imgH = Math.min(W * ratio, (floor - logoBottom) / (lowest - highest))
-    // Bottom-anchored by default so the calm floor sits under the footer; raised if text or subject would meet the footer.
-    let imgY = H - reserve - imgH
-    if (imgY + lowest * imgH > floor) imgY = floor - lowest * imgH
-    if (imgY + highest * imgH < logoBottom) imgY = logoBottom - highest * imgH
-    const imgW = imgH / ratio, frame = media({ x: (W - imgW) / 2, y: imgY, width: imgW, height: imgH }, 0, 1, true)
+    // Movie-poster framing (2026-11-04): the artwork fills the poster edge to edge and the copy is typeset on the picture.
+    // It is scaled to cover the poster unless that would crop the subject or push the headline under the logo or the
+    // subject/headline into the footer; then it shrinks just enough and its feathered edges run into the extended margins.
+    const aw = art.width, ah = art.height
+    const logoBottom = top + logoW * logo.height / logo.width + 32, floor = footerY - 24
+    const t = layout.text, sub = layout.subject
+    const lowest = Math.max(sub.y + sub.h, t.y + t.h), left = Math.min(t.x, sub.x), right = Math.max(t.x + t.w, sub.x + sub.w)
+    const cover = Math.max(W / aw, H / ah)
+    const s = Math.min(cover, (floor - logoBottom) / ((lowest - t.y) * ah), floor / ((lowest - sub.y) * ah), W / ((right - left) * aw))
+    const imgW = aw * s, imgH = ah * s
+    // Prefer the artwork's own centre; then slide only as far as the constraints need.
+    const clamp = (value: number, lo: number, hi: number) => Math.min(Math.max(value, lo), hi)
+    let imgX = (W - imgW) / 2, imgY = (H - reserve - imgH) / 2
+    if (imgW > W) imgX = clamp(imgX, W - imgW, 0)
+    if (imgH > H) imgY = clamp(imgY, H - imgH, 0)
+    imgX = clamp(imgX, -left * imgW, W - right * imgW)
+    imgY = clamp(imgY, Math.max(logoBottom - t.y * imgH, -sub.y * imgH), floor - lowest * imgH)
+    const frame = media({ x: imgX, y: imgY, width: imgW, height: imgH }, 0, 1, true)
     const map = (b: { x: number; y: number; w: number; h: number }) => ({ x: frame.x + b.x * frame.width, y: frame.y + b.y * frame.height, width: b.w * frame.width, height: b.h * frame.height })
-    artwork.pop(); artwork.push(map(layout.subject))
-    const raw = map(layout.text)
+    artwork.pop(); artwork.push(map(sub))
+    const raw = map(t)
     const x0 = Math.max(m, raw.x), x1 = Math.min(W - m, raw.x + raw.width), y0 = Math.max(logoBottom, raw.y)
-    const box = { x: x0, y: y0, width: x1 - x0, height: Math.min(footerY - 24, raw.y + raw.height) - y0 }
+    const box = { x: x0, y: y0, width: x1 - x0, height: Math.min(floor, raw.y + raw.height) - y0 }
     const onDark = layout.ink !== 'ink'
     const palette = layout.ink === 'ink' ? { ink: '#14211D', muted: '#3F4E48', accent: '#0F7F67' }
       : layout.ink === 'paper' ? { ink: '#F5F7F3', muted: '#D7E0DB', accent: '#67E4C0' }
       : { ink: '#3CE0B1', muted: '#D7E0DB', accent: '#F5F7F3' }
-    if (layout.scrim === 'soft') {
-      ctx.save(); ctx.translate(box.x + box.width / 2, box.y + box.height / 2); ctx.scale(box.width * .7, box.height * .75)
+    if (layout.scrim !== 'none') {
+      // A soft pool of shade (or light) under the copy, like a poster's title vignette; never a box.
+      const alpha = layout.scrim === 'strong' ? .78 : .58
+      ctx.save(); ctx.translate(box.x + box.width / 2, box.y + box.height / 2); ctx.scale(box.width * .78, box.height * .85)
       const glow = ctx.createRadialGradient(0, 0, 0, 0, 0, 1)
-      glow.addColorStop(0, onDark ? 'rgba(8,10,9,.55)' : 'rgba(250,250,248,.62)'); glow.addColorStop(1, onDark ? 'rgba(8,10,9,0)' : 'rgba(250,250,248,0)')
+      glow.addColorStop(0, onDark ? `rgba(6,8,9,${alpha})` : `rgba(250,250,248,${alpha + .06})`); glow.addColorStop(.55, onDark ? `rgba(6,8,9,${alpha * .6})` : `rgba(250,250,248,${alpha * .6})`); glow.addColorStop(1, onDark ? 'rgba(6,8,9,0)' : 'rgba(250,250,248,0)')
       ctx.fillStyle = glow; ctx.fillRect(-1, -1, 2, 2); ctx.restore()
     }
     copy(box, true, layout.font === 'serif', layout.align, palette, layout.vertical && model.locale === 'zh-CN')
@@ -228,12 +239,28 @@ export async function drawReferralPoster(canvas: HTMLCanvasElement, model: Poste
     copy({ x: m, y: body.y - 8, width: body.width, height: textBottom - body.y + 8 }, true, false, !!model.template.centered)
   }
 
+  if (layout && !landscape) {
+    // The logo sits on the picture too: a faint pool of the artwork's top tone keeps it legible over busy art (e.g. Op art).
+    const lh = logoW * logo.height / logo.width, darkTop = layout.top === 'dark'
+    ctx.save(); ctx.translate(m + logoW / 2, top + lh / 2); ctx.scale(logoW * .75, lh * 1.6)
+    const pool = ctx.createRadialGradient(0, 0, 0, 0, 0, 1)
+    pool.addColorStop(0, darkTop ? 'rgba(6,8,9,.5)' : 'rgba(250,250,248,.6)'); pool.addColorStop(1, darkTop ? 'rgba(6,8,9,0)' : 'rgba(250,250,248,0)')
+    ctx.fillStyle = pool; ctx.fillRect(-1, -1, 2, 2); ctx.restore()
+  }
   ctx.drawImage(logo, m, top, logoW, logoW * logo.height / logo.width)
   // The invitation is overlaid directly on the photo's floor, without a footer card.
-  const footerWash = ctx.createLinearGradient(0, footerY - 18, 0, footerY + 35)
-  footerWash.addColorStop(0, `${fbg}00`); footerWash.addColorStop(1, `${fbg}F7`)
-  ctx.fillStyle = footerWash; ctx.fillRect(0, footerY - 18, W, 53)
-  ctx.fillStyle = `${fbg}F7`; ctx.fillRect(0, footerY + 35, W, H - footerY - 35)
+  if (layout && !landscape) {
+    // Full-bleed posters: the picture runs under the footer and fades into the art's own floor tone, like a billing block.
+    const fade = ctx.createLinearGradient(0, footerY - 150, 0, footerY + 40)
+    fade.addColorStop(0, `${fbg}00`); fade.addColorStop(.6, `${fbg}B8`); fade.addColorStop(1, `${fbg}EB`)
+    ctx.fillStyle = fade; ctx.fillRect(0, footerY - 150, W, 190)
+    ctx.fillStyle = `${fbg}EB`; ctx.fillRect(0, footerY + 40, W, H - footerY - 40)
+  } else {
+    const footerWash = ctx.createLinearGradient(0, footerY - 18, 0, footerY + 35)
+    footerWash.addColorStop(0, `${fbg}00`); footerWash.addColorStop(1, `${fbg}F7`)
+    ctx.fillStyle = footerWash; ctx.fillRect(0, footerY - 18, W, 53)
+    ctx.fillStyle = `${fbg}F7`; ctx.fillRect(0, footerY + 35, W, H - footerY - 35)
+  }
   const qrSize = landscape ? 90 : 120, qrX = rtl ? m : W - m - qrSize
   const footerX = rtl ? m + qrSize + 28 : m, footerW = W - m * 2 - qrSize - 28
   ctx.fillStyle = '#FFFFFF'; ctx.fillRect(qrX, footerY, qrSize, qrSize)

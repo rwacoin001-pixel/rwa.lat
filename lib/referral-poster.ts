@@ -1,7 +1,9 @@
 import type { AppLocale } from './app-locales'
 import { posterCopy } from './referral-poster-copy'
 import { ART_STYLES, artHeadlines, artStyleNames } from './referral-poster-art'
+import { ART_STYLES_2, artHeadlines2, artStyleNames2 } from './referral-poster-art-2'
 import { artLayouts } from './referral-poster-layouts'
+import { artLayouts2 } from './referral-poster-layouts-2'
 
 export const POSTER_PLATFORMS = [
   { id: 'wechat', label: '微信', width: 1440, height: 1440, format: '1:1', layout: 'community' },
@@ -21,22 +23,23 @@ export function posterPlatformName(platform: PosterPlatform, locale: AppLocale):
   return ({ wechat: 'WeChat', xiaohongshu: 'RedNote', douyin: 'Douyin' } as Record<string, string>)[platform.id] ?? platform.label
 }
 export type PosterKind = 'brand' | 'purchase' | 'fee' | 'guide'
-export type ArtStyle = 'inkAutumn' | 'inkCloud' | 'inkJade' | 'vangoghStarry' | 'vangoghWheat' | 'vangoghCypress' | 'bauhausArch' | 'bauhausSun' | 'bauhausNight' | 'cyberStreet' | 'cyberSkyline' | 'cyberGate'
+export type ArtStyle = typeof ART_STYLES[number] | typeof ART_STYLES_2[number]
 export type PosterStyle = 'portal' | 'statement' | 'connection' | 'skyline' | 'orbit' | 'terrace' | ArtStyle
-export type PosterCategory = 'minimal' | 'ink' | 'vangogh' | 'bauhaus' | 'cyber'
-export const POSTER_CATEGORIES: PosterCategory[] = ['minimal', 'ink', 'vangogh', 'bauhaus', 'cyber']
-export const posterCategoryNames: Record<AppLocale, Record<PosterCategory, string>> = {
-  'zh-CN': { minimal: '简约', ink: '东方意境', vangogh: '梵高', bauhaus: '包豪斯', cyber: '赛博朋克' },
-  en: { minimal: 'Minimal', ink: 'Ink & mist', vangogh: 'Van Gogh', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
-  hi: { minimal: 'सादगी', ink: 'स्याही और धुंध', vangogh: 'वैन गॉग', bauhaus: 'बाउहाउस', cyber: 'साइबरपंक' },
-  es: { minimal: 'Minimal', ink: 'Tinta y niebla', vangogh: 'Van Gogh', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
-  ar: { minimal: 'بسيط', ink: 'حبر وضباب', vangogh: 'فان غوخ', bauhaus: 'باوهاوس', cyber: 'سايبربانك' },
-  fr: { minimal: 'Épuré', ink: 'Encre et brume', vangogh: 'Van Gogh', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
-  pt: { minimal: 'Minimal', ink: 'Tinta e névoa', vangogh: 'Van Gogh', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
+// Style families (2026-11-04 round 2): the chips group 39 posters by family; 'random' is a UI mode, not a family.
+export type PosterCategory = 'minimal' | 'ink' | 'painting' | 'modern' | 'future' | 'dream' | 'graphic'
+export const POSTER_CATEGORIES: PosterCategory[] = ['minimal', 'ink', 'painting', 'modern', 'future', 'dream', 'graphic']
+export const posterCategoryNames: Record<AppLocale, Record<PosterCategory | 'random' | 'another', string>> = {
+  'zh-CN': { random: '随机', another: '换一张', minimal: '简约', ink: '东方', painting: '绘画', modern: '现代', future: '未来', dream: '梦境', graphic: '图形' },
+  en: { random: 'Random', another: 'Another', minimal: 'Minimal', ink: 'Eastern', painting: 'Painting', modern: 'Modern', future: 'Future', dream: 'Dream', graphic: 'Graphic' },
+  hi: { random: 'रैंडम', another: 'दूसरा', minimal: 'सादगी', ink: 'पूर्वी', painting: 'चित्रकला', modern: 'आधुनिक', future: 'भविष्य', dream: 'सपना', graphic: 'ग्राफ़िक' },
+  es: { random: 'Al azar', another: 'Otra', minimal: 'Minimal', ink: 'Oriental', painting: 'Pintura', modern: 'Moderno', future: 'Futuro', dream: 'Sueño', graphic: 'Gráfico' },
+  ar: { random: 'عشوائي', another: 'أخرى', minimal: 'بسيط', ink: 'شرقي', painting: 'رسم', modern: 'حداثة', future: 'مستقبل', dream: 'حلم', graphic: 'جرافيك' },
+  fr: { random: 'Au hasard', another: 'Une autre', minimal: 'Épuré', ink: 'Orient', painting: 'Peinture', modern: 'Moderne', future: 'Futur', dream: 'Rêve', graphic: 'Graphique' },
+  pt: { random: 'Aleatório', another: 'Outra', minimal: 'Minimal', ink: 'Oriental', painting: 'Pintura', modern: 'Moderno', future: 'Futuro', dream: 'Sonho', graphic: 'Gráfico' },
 }
 /** Where the headline sits on an art-style poster, designed per artwork (fractions of the 3:4 artwork). */
 export type PosterBox = { x: number; y: number; w: number; h: number }
-export type PosterLayout = { text: PosterBox; subject: PosterBox; align: 'start' | 'center' | 'end'; vertical: boolean; ink: 'ink' | 'paper' | 'teal'; font: 'serif' | 'sans'; scrim: 'none' | 'soft'; footer: 'light' | 'dark'; top: 'light' | 'dark' }
+export type PosterLayout = { text: PosterBox; subject: PosterBox; align: 'start' | 'center' | 'end'; vertical: boolean; ink: 'ink' | 'paper' | 'teal'; font: 'serif' | 'sans'; scrim: 'none' | 'soft' | 'strong'; footer: 'light' | 'dark'; top: 'light' | 'dark' }
 export type PosterTemplate = {
   id: string; platform: PosterPlatform['id']; kind: PosterKind; dark: boolean; art: string; style: PosterStyle; category: PosterCategory
   /** Minimal posters: share of the artwork kept empty above the sculpture for the copy. */
@@ -64,8 +67,10 @@ const minimalHeadlines: Record<AppLocale, Record<MinimalStyle, string>> = {
 }
 const merge = (minimal: Record<AppLocale, Record<MinimalStyle, string>>, art: Record<AppLocale, Record<ArtStyle, string>>) =>
   Object.fromEntries(Object.keys(minimal).map(locale => [locale, { ...minimal[locale as AppLocale], ...art[locale as AppLocale] }])) as Record<AppLocale, Record<PosterStyle, string>>
-export const posterStyleNames = merge(minimalStyleNames, artStyleNames)
-const posterHeadlines = merge(minimalHeadlines, artHeadlines)
+const both = (a: Record<AppLocale, Record<string, string>>, b: Record<AppLocale, Record<string, string>>) =>
+  Object.fromEntries(Object.keys(a).map(locale => [locale, { ...a[locale as AppLocale], ...b[locale as AppLocale] }])) as Record<AppLocale, Record<ArtStyle, string>>
+export const posterStyleNames = merge(minimalStyleNames, both(artStyleNames, artStyleNames2))
+const posterHeadlines = merge(minimalHeadlines, both(artHeadlines, artHeadlines2))
 const templates: PosterTemplate[] = POSTER_PLATFORMS.flatMap(platform => {
   const third: PosterKind = ['xiaohongshu', 'linkedin', 'tiktok'].includes(platform.id) ? 'guide' : 'fee'
   const styles: Array<Omit<PosterTemplate, 'id' | 'platform'>> = [
@@ -76,10 +81,17 @@ const templates: PosterTemplate[] = POSTER_PLATFORMS.flatMap(platform => {
     { style: 'orbit', kind: 'brand', dark: false, art: 'fold', category: 'minimal', empty: .32, centered: true },
     { style: 'terrace', kind: 'guide', dark: false, art: 'planes', category: 'minimal', empty: .36, reverse: true },
   ]
-  const minimal = styles.map((style, index) => ({ ...style, id: `${platform.id}-${index < 3 ? style.kind : style.style}`, platform: platform.id }))
+  // Full-bleed trial for the original six (user, 11-04): the copy sits on the photograph's own sky/wall above the sculpture.
+  const minimalLayout = (style: Omit<PosterTemplate, 'id' | 'platform'>): PosterLayout => {
+    // Reward posters carry a figure, a sentence and three levels: they get at least 40% of the height.
+    const empty = Math.max(style.empty ?? .38, style.kind === 'fee' || style.kind === 'purchase' ? .4 : 0)
+    return { text: { x: .07, y: .08, w: .86, h: empty - .1 }, subject: { x: .06, y: empty, w: .88, h: .9 - empty }, align: style.centered ? 'center' : 'start', vertical: false, ink: style.dark ? 'paper' : 'ink', font: 'sans', scrim: 'soft', footer: style.dark ? 'dark' : 'light', top: style.dark ? 'dark' : 'light' }
+  }
+  const minimal = styles.map((style, index) => ({ ...style, layout: minimalLayout(style), id: `${platform.id}-${index < 3 ? style.kind : style.style}`, platform: platform.id }))
   // Art styles are always the brand poster: no reward figures, so they never depend on a reward switch.
-  const art = ART_STYLES.map((style): PosterTemplate => {
-    const { file, category, layout } = artLayouts[style]
+  const layouts = { ...artLayouts, ...artLayouts2 } as Record<ArtStyle, typeof artLayouts[keyof typeof artLayouts]>
+  const art = [...ART_STYLES, ...ART_STYLES_2].map((style): PosterTemplate => {
+    const { file, category, layout } = layouts[style]
     return { id: `${platform.id}-${style}`, platform: platform.id, style, kind: 'brand', dark: layout.footer === 'dark', art: file, category, layout }
   })
   return [...minimal, ...art]

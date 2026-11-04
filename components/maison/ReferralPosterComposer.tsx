@@ -7,6 +7,7 @@ import { getSessionToken, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_ht
 import type { ReferralSummary } from '@/lib/api/referral'
 import { POSTER_CATEGORIES, POSTER_PLATFORMS, buildPosterModel, invitationUrl, posterCategoryNames, posterTemplates, posterPlatformName, type PosterCategory, type PosterModel, type PosterPlatform } from '@/lib/referral-poster'
 import { posterCopy } from '@/lib/referral-poster-copy'
+import { posterMovement } from '@/lib/referral-poster-art'
 import { drawReferralPoster } from '@/lib/referral-poster-renderer'
 import { ReferralSheet, type SheetTheme } from './ReferralSheet'
 import { nativeCan, nativeSaveImage, nativeShare } from '@/lib/native-app'
@@ -44,6 +45,12 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
   const ui = posterCopy[locale]
   const [platformId, setPlatform] = useState<string>(initialPlatform), [index, setIndex] = useState(initialIndex)
   const [category, setCategory] = useState<PosterCategory>(initialCategory)
+  // 随机 (2026-11-04): one poster drawn from every style that can always be made; tapping again draws another.
+  const [randomStyle, setRandomStyle] = useState<string | null>(null)
+  const drawRandom = () => {
+    const pool = posterTemplates(platformId).filter(t => t.kind === 'brand' || t.kind === 'guide').map(t => t.style as string).filter(style => style !== randomStyle)
+    setRandomStyle(pool[Math.floor(Math.random() * pool.length)]); setIndex(0); stageRef.current?.scrollTo({ left: 0 })
+  }
   const [posterLocale, setPosterLocale] = useState<AppLocale>(locale)
   const [retry, setRetry] = useState(0), [status, setStatus] = useState(''), [error, setError] = useState('')
   const [output, setOutput] = useState<{ key: string; url: string; file: File } | null>(null)
@@ -52,14 +59,14 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
   const qrRef = useRef<HTMLDivElement>(null), canvasRef = useRef<HTMLCanvasElement>(null), stageRef = useRef<HTMLDivElement>(null)
   const mounted = useRef(true), initialSession = useRef(getSessionToken()), run = useRef(0)
   const platform = POSTER_PLATFORMS.find(item => item.id === platformId)!
-  const templates = useMemo(() => posterTemplates(platformId, category), [platformId, category])
+  const templates = useMemo(() => randomStyle ? posterTemplates(platformId).filter(t => t.style === randomStyle) : posterTemplates(platformId, category), [platformId, category, randomStyle])
   const variants = useMemo(() => templates.map(template => {
     if (!sourceReady) return null
     try { return buildPosterModel({ code, locale: posterLocale, template, rules: summary.rules, purchaseRewardsEnabled: summary.purchaseRewardsEnabled, feeRewardsEnabled: summary.feeRewardsEnabled }) }
     catch { return null }
   }), [templates, code, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
   const selected = variants[index]
-  const selection = JSON.stringify([code, platformId, category, index, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
+  const selection = JSON.stringify([code, platformId, category, randomStyle, index, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
   const latest = useRef(selection); latest.current = selection
   const current = () => mounted.current && initialSession.current === getSessionToken()
   const closeRef = useRef(onClose); closeRef.current = onClose
@@ -146,11 +153,13 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
         })}</div>
         <label className={x.lang}><span className={x.srOnly}>{ui.language}</span><select value={posterLocale} onChange={e => setPosterLocale(e.target.value as AppLocale)}>{localeOptions.map(option => <option key={option.code} value={option.code}>{option.label}</option>)}</select></label>
       </div>
-      {/* Style categories (2026-11-04): text-only chips; switching shows that style's first poster. */}
-      <div className={x.categories} role="group" aria-label={ui.templates}>{POSTER_CATEGORIES.map(id =>
-        <button key={id} type="button" aria-pressed={category === id} onClick={() => { if (id === category) return; setCategory(id); setIndex(0); stageRef.current?.scrollTo({ left: 0 }) }}>{posterCategoryNames[locale][id]}</button>)}
+      {/* Style families (2026-11-04): text-only chips; 随机 first, switching a family shows its first poster. */}
+      <div className={x.categories} role="group" aria-label={ui.templates}>
+        <button type="button" aria-pressed={!!randomStyle} onClick={drawRandom}>{posterCategoryNames[locale].random}</button>
+        {POSTER_CATEGORIES.map(id =>
+        <button key={id} type="button" aria-pressed={!randomStyle && category === id} onClick={() => { if (!randomStyle && id === category) return; setRandomStyle(null); setCategory(id); setIndex(0); stageRef.current?.scrollTo({ left: 0 }) }}>{posterCategoryNames[locale][id]}</button>)}
       </div>
-      <div ref={stageRef} className={x.stage} style={{ '--poster-ratio': platform.width / platform.height } as CSSProperties} onScroll={pickFromScroll} aria-busy={!!selected && !ready && !error}>
+      <div ref={stageRef} className={`${x.stage} ${randomStyle ? x.stageRandom : ''}`} style={{ '--poster-ratio': platform.width / platform.height } as CSSProperties} onScroll={pickFromScroll} aria-busy={!!selected && !ready && !error}>
         {variants.map((model, i) => <button key={templates[i].id} type="button" className={x.slide} data-on={index === i || undefined} disabled={!model}
           aria-label={model ? `${model.styleName} · ${ui[model.template.kind]}` : ui.unavailable} aria-pressed={index === i}
           onClick={() => { if (index === i && ready) setExpanded(true); else scrollToSlide(i) }}>
@@ -159,8 +168,10 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
       </div>
       <div className={x.caption}>
         <b>{selected?.styleName ?? ''}</b>
-        <span className={x.dots} aria-hidden="true">{variants.map((_, i) => <i key={i} data-on={index === i || undefined} />)}</span>
-        <small>{selected ? ui[selected.template.kind] : ''}</small>
+        {randomStyle ? null : <span className={x.dots} aria-hidden="true">{variants.map((_, i) => <i key={i} data-on={index === i || undefined} />)}</span>}
+        {/* Under the poster: its style family (or, for the reward posters, what the poster offers). */}
+        <small>{selected ? selected.template.category === 'minimal' ? ui[selected.template.kind] : posterMovement(selected.template.style, locale) ?? posterCategoryNames[locale][selected.template.category] : ''}</small>
+        {randomStyle && <button type="button" className={x.another} onClick={drawRandom}>{posterCategoryNames[locale].another}</button>}
       </div>
       </>}
       {error && <button type="button" className={x.retry} onClick={() => setRetry(v => v + 1)}><RotateCw size={16} />{ui.retry}</button>}

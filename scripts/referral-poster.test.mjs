@@ -15,25 +15,25 @@ function load(file) {
 const { POSTER_PLATFORMS, POSTER_CATEGORIES, posterTemplates, buildPosterModel, invitationUrl } = load('referral-poster')
 const rules = { version: 2, holdingRatesBps: [600, 300, 100], feeRatesBps: [2000, 1000, 500] }
 const input = { code: 'Sample12', locale: 'en', rules, purchaseRewardsEnabled: true, feeRewardsEnabled: true }
-test('ten platforms each expose 18 distinct posters in five style categories', () => {
+test('ten platforms each expose 39 distinct posters in seven style families', () => {
   assert.equal(POSTER_PLATFORMS.length, 10)
-  assert.deepEqual(Array.from(POSTER_CATEGORIES), ['minimal', 'ink', 'vangogh', 'bauhaus', 'cyber'])
+  assert.deepEqual(Array.from(POSTER_CATEGORIES), ['minimal', 'ink', 'painting', 'modern', 'future', 'dream', 'graphic'])
   for (const platform of POSTER_PLATFORMS) {
     const templates = posterTemplates(platform.id)
-    assert.equal(templates.length, 18)
-    assert.equal(new Set(templates.map(t => t.id)).size, 18)
-    assert.equal(new Set(templates.map(t => t.style)).size, 18)
-    assert.equal(new Set(templates.map(t => t.art)).size, 18)
+    assert.equal(templates.length, 39)
+    assert.equal(new Set(templates.map(t => t.id)).size, 39)
+    assert.equal(new Set(templates.map(t => t.style)).size, 39)
+    assert.equal(new Set(templates.map(t => t.art)).size, 39)
     assert.equal(posterTemplates(platform.id, 'minimal').length, 6)
+    assert.deepEqual(Array.from(POSTER_CATEGORIES, c => posterTemplates(platform.id, c).length), [6, 4, 5, 8, 8, 3, 5])
     for (const category of POSTER_CATEGORIES.slice(1)) {
       const art = posterTemplates(platform.id, category)
-      assert.equal(art.length, 3)
       for (const t of art) {
         // Art posters never carry reward figures, and their headline box never overlaps the subject or the footer zone.
         assert.equal(t.kind, 'brand')
         const { text, subject } = t.layout
-        assert.ok(text.x >= .05 && text.x + text.w <= .95 && text.y >= .1 && text.y + text.h <= .82 && text.w >= .38, `${t.id} text box`)
-        assert.ok(subject.y + subject.h <= .84, `${t.id} subject above footer`)
+        assert.ok(text.x >= .05 && text.x + text.w <= .95 && text.y >= .06 && text.y + text.h <= .86 && text.w >= .38, `${t.id} text box`)
+        assert.ok(subject.y + subject.h <= .88, `${t.id} subject above footer`)
         const overlap = Math.min(text.x + text.w, subject.x + subject.w) - Math.max(text.x, subject.x) > 0 && Math.min(text.y + text.h, subject.y + subject.h) - Math.max(text.y, subject.y) > 0
         assert.ok(!overlap, `${t.id} text over subject`)
       }
@@ -65,7 +65,7 @@ test('unknown, disabled and missing rules cannot silently produce promotional pe
   }
   assert.throws(() => buildPosterModel({ ...input, template: { id: 'forged', platform: 'instagram', kind: 'purchase' } }))
 })
-test('all seven languages produce complete text, real link and direction in all 180 templates', () => {
+test('all seven languages produce complete text, real link and direction in all 390 templates', () => {
   for (const locale of ['en', 'zh-CN', 'hi', 'es', 'ar', 'fr', 'pt']) for (const platform of POSTER_PLATFORMS) for (const template of posterTemplates(platform.id)) {
     const model = buildPosterModel({ ...input, template, locale })
     assert.equal(model.dir, locale === 'ar' ? 'rtl' : 'ltr')

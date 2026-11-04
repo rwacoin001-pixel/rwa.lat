@@ -25,3 +25,19 @@ export const artHeadlines: Rows = {
   fr: { inkAutumn: 'Des montagnes dedans.\nDes amis dehors.', inkCloud: 'Là où naissent les nuages,\npartons ensemble.', inkJade: 'Une lumière\npour la route partagée.', vangoghStarry: 'Sous les étoiles,\nmarchons ensemble.', vangoghWheat: 'Ce qui se partage\npousse comme une moisson.', vangoghCypress: 'Si sombre soit la nuit,\nil y a la lumière.', bauhausArch: 'Forme simple.\nLien solide.', bauhausSun: 'Un nouveau jour\ncommence par une invitation.', bauhausNight: 'Moins, c’est plus.\nEnsemble, bien plus.', cyberStreet: 'Passez la porte.\nLe futur est là.', cyberSkyline: 'Une grande ville.\nEnsemble.', cyberGate: 'La porte est ouverte.\nEntrez.' },
   pt: { inkAutumn: 'Montanhas dentro.\nAmigos fora.', inkCloud: 'Onde nascem as nuvens,\npartimos juntos.', inkJade: 'Uma luz\npara o caminho compartilhado.', vangoghStarry: 'Sob as estrelas,\ncaminhe comigo.', vangoghWheat: 'O que é bom compartilhado\ncresce como a colheita.', vangoghCypress: 'Por mais escura que seja a noite,\nhá luz.', bauhausArch: 'Forma simples.\nConexão forte.', bauhausSun: 'Um novo dia\ncomeça com um convite.', bauhausNight: 'Menos é mais.\nJuntos, muito mais.', cyberStreet: 'Atravesse a porta.\nO futuro chegou.', cyberSkyline: 'Uma grande cidade.\nVamos juntos.', cyberGate: 'A porta está aberta.\nEntre.' },
 }
+
+/** The movement shown under round-1 art posters (their own names are poetic titles such as 秋山). */
+export const artMovementNames: Record<AppLocale, Record<'ink' | 'vangogh' | 'bauhaus' | 'cyber', string>> = {
+  'zh-CN': { ink: '东方意境', vangogh: '梵高 · 后印象派', bauhaus: '包豪斯', cyber: '赛博朋克' },
+  en: { ink: 'Ink & mist', vangogh: 'Van Gogh · Post-Impressionism', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
+  hi: { ink: 'स्याही और धुंध', vangogh: 'वैन गॉग', bauhaus: 'बाउहाउस', cyber: 'साइबरपंक' },
+  es: { ink: 'Tinta y niebla', vangogh: 'Van Gogh · Postimpresionismo', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
+  ar: { ink: 'حبر وضباب', vangogh: 'فان غوخ', bauhaus: 'باوهاوس', cyber: 'سايبربانك' },
+  fr: { ink: 'Encre et brume', vangogh: 'Van Gogh · Postimpressionnisme', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
+  pt: { ink: 'Tinta e névoa', vangogh: 'Van Gogh · Pós-impressionismo', bauhaus: 'Bauhaus', cyber: 'Cyberpunk' },
+}
+/** Line under a poster: the art movement (round 1), the family (round 2, whose name is the movement), or the reward. */
+export function posterMovement(style: string, locale: AppLocale): string | null {
+  const group = (['ink', 'vangogh', 'bauhaus', 'cyber'] as const).find(prefix => style.startsWith(prefix))
+  return group ? artMovementNames[locale][group] : null
+}

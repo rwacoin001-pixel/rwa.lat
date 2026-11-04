@@ -72,3 +72,6 @@
 .categories button { flex: none; min-height: 36px; padding: 0 14px; border: 1px solid var(--r-line); border-radius: 999px; background: transparent; color: var(--r-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; }
 .categories button[aria-pressed='true'] { background: var(--r-ink); border-color: var(--r-ink); color: var(--r-on-ink); }
 .stage { --stage-h: calc(100dvh - 348px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); margin-top: 16px; }
+/* 随机: a plain text key under the style name draws another poster. */
+.another { min-height: 36px; margin-top: 4px; padding: 0 18px; border: 1px solid var(--r-line-strong); border-radius: 999px; background: transparent; color: var(--r-ink); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.stage.stageRandom { --stage-h: calc(100dvh - 378px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); }
