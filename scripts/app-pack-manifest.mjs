@@ -16,6 +16,8 @@ const INCLUDE = [
   /^\/brand\/a-reit\/[^/]+\.(?:png|svg|webp)$/,
   /^\/media\/home\/[^/]+\.(?:webp|png|jpe?g|svg)$/,
   /^\/media\/home\/derived\/[^/]+\.webp$/,
+  // Home 为你精选 card photos (2026-11-04: they were missing, so the first home screen fetched them).
+  /^\/media\/home\/cards\/[^/]+\.webp$/,
   /^\/auth\/[^/]+\.(?:png|svg|webp)$/,
   // Paper & Glass: its images (home, guide, sign-in cabinet, avatars; ~1.8 MB) and the Latin font (Satoshi, ~110 KB).
   // Both the app-specific Chinese font and full slices for names/news ship below.
