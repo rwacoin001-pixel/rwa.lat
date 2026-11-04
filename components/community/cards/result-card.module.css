@@ -1,93 +1,124 @@
-/* Share-a-result card (2026-11-01). docs/design-system.md: white shell radius 28 with the card shadow, inner well radius 22,
-   §3.1 type and spacing, Satoshi numerals. The ticket head's soft band is the only colour on the card (no gradient shell). */
-.card { --band-a: #c9efe0; --band-b: #d6e6f7; --band-ink: #0b3b33; position: relative; display: grid; padding: 8px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .07), 0 24px 48px -28px rgba(15, 23, 42, .35); color: var(--m-ink, #0b1220); font-variant-numeric: tabular-nums; }
-.card[data-group='prediction'] { --band-a: #e2dcf8; --band-b: #f4d9e2; --band-ink: #2e2448; }
-.card[data-group='funds'] { --band-a: #eceef1; --band-b: #e3e6ea; --band-ink: #2b3340; }
+/* Share-a-result card (2026-11-04, after the user's reference): a dark folder card in a near-black frame. A soft blurred
+   photo fills the top (quant and prediction photos, funds a plain graphite); a dark sheet with a tab on its left rises
+   over it. The kind sits on the tab, the main figure at the foot. It tilts under the finger and turns over on a tap.
+   Provenance and the risk line sit under the card, on the page. Loss and profit look the same; only the colour moves. */
+.card { --sheet: #1c1d21; --frame: #0d0e10; --ink: #f4f5f7; --muted: rgba(244, 245, 247, .56); --line: rgba(255, 255, 255, .1); --up: #46d39a; --down: #ff7d70;
+  --tab-w: 56%; --photo-h: 132px; --lift: 96px;
+  position: relative; display: grid; gap: 10px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.card[data-compact] { --photo-h: 118px; --lift: 84px; }
+.card[data-mini] { --photo-h: 84px; --lift: 58px; gap: 8px; height: 100%; grid-template-rows: auto 1fr; }
 
-/* Ticket head: two soft lights drift slowly across the band. */
-.head { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 12px; height: 56px; padding: 0 12px 0 16px; overflow: hidden; border-radius: 22px 22px 8px 8px; background: radial-gradient(120% 160% at 0% 0%, var(--band-a), transparent 60%), radial-gradient(120% 160% at 100% 100%, var(--band-b), transparent 60%), linear-gradient(90deg, var(--band-a), var(--band-b)); background-size: 160% 160%, 160% 160%, 100% 100%; color: var(--band-ink); animation: drift 14s ease-in-out infinite alternate; }
-.head span { overflow: hidden; font-size: 13px; font-weight: 600; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
-.head em { flex: none; height: 28px; padding: 0 12px; border-radius: 999px; background: rgba(255, 255, 255, .72); color: var(--band-ink); font-size: 12px; font-style: normal; font-weight: 600; line-height: 28px; letter-spacing: .02em; }
-@keyframes drift { from { background-position: 0% 0%, 100% 100%, 0 0; } to { background-position: 40% 30%, 60% 70%, 0 0; } }
+/* The frame: thick, near-black, very round; the whole card tilts inside it. */
+.frame { position: relative; perspective: 900px; border-radius: 30px; outline: none; -webkit-tap-highlight-color: transparent; }
+.frame[data-live] { cursor: pointer; touch-action: pan-y; }
+.frame:focus-visible { box-shadow: 0 0 0 2px var(--m-accent, #087a67); }
+.turn { position: relative; display: grid; transform: rotateX(var(--rx, 0deg)) rotateY(calc(var(--ry, 0deg) + var(--flip, 0deg))); transform-style: preserve-3d; transition: transform .6s var(--pa-ease-spring, cubic-bezier(.34, 1.4, .64, 1)); }
+.frame[data-held] .turn { transition: transform .12s ease-out; }
+.frame[data-flipped] { --flip: 180deg; }
+.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 22px 40px -24px rgba(10, 12, 16, .7); -webkit-backface-visibility: hidden; backface-visibility: hidden; }
+.face[data-face='back'] { transform: rotateY(180deg); }
 
-/* Perforation: notches on both edges and a dotted tear line. */
-.perf { position: relative; height: 16px; margin: 0 -8px; }
-.perf::before { content: ''; position: absolute; top: 50%; right: 20px; left: 20px; border-top: 1.5px dashed rgba(11, 18, 32, .12); }
-.perf::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 0 50%, var(--rc-page, #fff) 7px, transparent 7.5px), radial-gradient(circle at 100% 50%, var(--rc-page, #fff) 7px, transparent 7.5px); }
+/* Photo: blurred into a colour field, so any picture reads like the reference's soft light. */
+.photo { position: absolute; inset: 6px 6px auto; height: var(--photo-h); overflow: hidden; border-radius: 24px 24px 0 0; background: radial-gradient(120% 140% at 80% 0%, #3a3f48, #1c1f25 70%); }
+.photo img { position: absolute; inset: -20%; width: 140%; height: 140%; object-fit: cover; filter: blur(16px) saturate(1.45) brightness(.92); transform: translateZ(0); }
+.card[data-group='prediction'] .photo img { filter: blur(16px) saturate(1.6) hue-rotate(-18deg) brightness(.9); }
+.label { position: absolute; z-index: 1; top: 18px; right: 22px; display: grid; justify-items: end; color: #fff; text-align: end; text-shadow: 0 1px 10px rgba(0, 0, 0, .25); }
+.label b { font-size: 15px; font-weight: 600; line-height: 20px; }
+.label small { font-size: 12px; font-weight: 500; line-height: 16px; opacity: .82; }
 
-.well { display: grid; gap: 4px; padding: 16px; border-radius: 8px 8px 22px 22px; background: #f6f7f9; }
-.title { margin-bottom: 4px; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
-.kicker { color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
-.figure { font-size: 40px; font-weight: 600; line-height: 44px; letter-spacing: -.02em; white-space: nowrap; }
-.figure small { margin-inline-start: 2px; color: var(--m-muted, #5b6472); font-size: 15px; font-weight: 500; letter-spacing: 0; }
-.sub { font-size: 17px; font-weight: 600; line-height: 24px; }
-.card [data-tone='up'] { color: var(--m-up, #0f8f5f); }
-.card [data-tone='down'] { color: var(--m-down, #c23a3a); }
-.note { color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+/* Sheet with a tab: the tab's top right curves down into the sheet (convex, then concave — an S like a folder tab). */
+.sheet { position: relative; z-index: 1; display: grid; grid-template-rows: auto auto 1fr auto; min-height: 196px; margin-top: var(--lift); padding: 0 18px 16px; border-radius: 0 22px 24px 24px; background: var(--sheet); }
+.tab { position: relative; display: flex; align-items: center; width: var(--tab-w); height: 30px; margin: -30px 0 0 -18px; padding: 2px 18px 0; border-radius: 22px 14px 0 0; background: var(--sheet); }
+.tab::after { content: ''; position: absolute; bottom: 0; left: 100%; width: 14px; height: 14px; background: radial-gradient(circle at 100% 0, transparent 13.5px, var(--sheet) 14px); }
+.tab b { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; letter-spacing: -.01em; }
+.subline { overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 15px; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
+.mid { display: grid; align-content: center; gap: 10px; min-width: 0; padding: 14px 0; }
+.question { display: -webkit-box; overflow: hidden; font-size: 15px; font-weight: 500; line-height: 21px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.note { color: var(--muted); font-size: 12px; line-height: 16px; }
+.foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 12px; min-width: 0; }
+.hero { display: grid; min-width: 0; }
+.hero small, .side small { color: var(--muted); font-size: 12px; line-height: 16px; }
+.figure { font-size: 38px; font-weight: 600; line-height: 44px; letter-spacing: -.03em; white-space: nowrap; }
+.figure em { margin-inline-start: 6px; color: var(--muted); font-size: 17px; font-style: normal; font-weight: 500; letter-spacing: 0; }
+.side { display: grid; flex: none; justify-items: end; margin-inline-start: auto; padding-bottom: 4px; text-align: end; }
+.side b { overflow: hidden; max-width: 100%; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
+.card [data-tone='up'] { color: var(--up); }
+.card [data-tone='down'] { color: var(--down); }
+.hint { justify-self: start; margin-top: 12px; color: var(--muted); font-size: 11px; line-height: 14px; letter-spacing: .02em; }
 
-.grid { display: grid; grid-template-columns: 1fr 1fr; margin: 12px 0 0; padding-top: 4px; border-top: .5px solid rgba(11, 18, 32, .08); }
-.grid > div { display: grid; gap: 2px; min-width: 0; padding: 12px 0; }
-.grid > div:nth-child(even) { padding-inline-start: 16px; border-inline-start: .5px solid rgba(11, 18, 32, .08); }
-.grid > div:nth-child(n + 3) { border-top: .5px solid rgba(11, 18, 32, .08); }
-.grid dt { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+/* A light that follows the finger while the card is held. */
+.glare { position: absolute; z-index: 2; inset: 0; border-radius: 30px; background: radial-gradient(240px circle at var(--gx, 50%) var(--gy, 30%), rgba(255, 255, 255, .16), transparent 60%); opacity: 0; pointer-events: none; transition: opacity .3s; mix-blend-mode: soft-light; }
+.frame[data-held] .glare { opacity: 1; }
+
+/* Last ten predictions as dots (filled = won, ring = lost, dash = void). */
+.dots { display: flex; flex-wrap: wrap; gap: 8px; }
+.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--ink); }
+.dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px var(--ink); }
+.dots i[data-r='void'] { height: 2px; margin-top: 5px; border-radius: 1px; background: var(--muted); }
+/* Holdings: one slim stacked bar on the front, the list on the back. */
+.bar { display: flex; gap: 3px; height: 10px; overflow: hidden; border-radius: 999px; }
+.bar i { min-width: 6px; }
+.card [data-i='0'] { background: #46d39a; } .card [data-i='1'] { background: #8fb8ff; } .card [data-i='2'] { background: #d9dde3; } .card [data-i='3'] { background: #6b717b; }
+
+/* Back: the same frame, one sheet with every field. */
+.backSheet { display: grid; align-content: start; gap: 12px; min-height: 100%; padding: 18px 18px 16px; border-radius: 24px; background: var(--sheet); }
+.backHead { display: grid; gap: 2px; }
+.backHead b { font-size: 17px; font-weight: 600; line-height: 22px; }
+.backHead small { overflow: hidden; color: var(--muted); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.grid { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: .5px solid var(--line); }
+.grid > div { display: grid; gap: 2px; min-width: 0; padding: 10px 0; }
+.grid > div:nth-child(even) { padding-inline-start: 14px; border-inline-start: .5px solid var(--line); }
+.grid > div:nth-child(n + 3) { border-top: .5px solid var(--line); }
+.grid dt { color: var(--muted); font-size: 12px; line-height: 16px; }
 .grid dd { display: flex; align-items: center; gap: 8px; min-width: 0; margin: 0; overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
-.grid [data-hidden] dd { color: var(--m-muted, #5b6472); }
-.veil { display: block; width: 72px; height: 12px; border-radius: 999px; background: linear-gradient(90deg, rgba(11, 18, 32, .1), rgba(11, 18, 32, .05)); filter: blur(1.5px); }
-
-/* Prediction record: last ten as dots (ink = won, ring = lost, dash = void). */
-.dots { display: flex; gap: 8px; margin-top: 8px; }
-.dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--m-ink, #0b1220); }
-.dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px var(--m-ink, #0b1220); }
-.dots i[data-r='void'] { height: 2px; margin-top: 6px; border-radius: 1px; background: var(--m-muted, #5b6472); }
-
-/* Holdings: one slim stacked bar and the list. */
-.holdings { display: grid; gap: 12px; }
-.bar { display: flex; gap: 2px; height: 28px; overflow: hidden; border-radius: 999px; }
-.bar i { display: grid; place-items: center; min-width: 6px; color: #fff; font-size: 12px; font-style: normal; font-weight: 600; }
-.card [data-i='0'] { background: #0f5c52; } .card [data-i='1'] { background: #2fae93; } .card [data-i='2'] { background: #9aa3ae; } .card [data-i='3'] { background: #c8ced6; }
+.grid [data-hidden] dd { color: var(--muted); }
+.veil { display: block; width: 64px; height: 10px; border-radius: 999px; background: linear-gradient(90deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .06)); filter: blur(1.5px); }
 .holdings ul { display: grid; margin: 0; padding: 0; list-style: none; }
-.holdings li { display: flex; align-items: center; gap: 8px; min-height: 36px; font-size: 15px; line-height: 22px; }
-.holdings li + li { border-top: .5px solid rgba(11, 18, 32, .08); }
+.holdings li { display: flex; align-items: center; gap: 8px; min-height: 34px; font-size: 14px; line-height: 20px; }
+.holdings li + li { border-top: .5px solid var(--line); }
 .holdings li > i { flex: none; width: 8px; height: 8px; border-radius: 50%; }
 .holdings li span { flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.holdings li small { color: var(--muted); font-size: 12px; }
 .holdings li b { font-weight: 600; }
 
-.foot { display: grid; gap: 4px; padding: 12px 8px 4px; }
-.who { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+/* Under the card, on the page. */
+.below { display: grid; gap: 4px; padding: 0 8px; color: var(--m-ink, #0b1220); }
+.who { display: flex; align-items: center; gap: 8px; margin-bottom: 2px; }
 .who > span { display: grid; min-width: 0; }
 .who b { overflow: hidden; font-size: 15px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
 .who small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
 .prov { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
 .risk { color: var(--m-faint, #8a9099); font-size: 11px; line-height: 16px; }
 
-.card[data-compact] .figure { font-size: 28px; line-height: 34px; }
-.card[data-compact] .head { height: 48px; }
+.card[data-compact] .figure { font-size: 32px; line-height: 38px; }
+.card[data-compact] .sheet { min-height: 176px; }
 
-:global(.rwa-mobile[data-theme='dark']) .card { --rc-page: #0a0c10; background: #12151b; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08), 0 24px 48px -28px rgba(0, 0, 0, .8); color: #f2f4f7; }
-:global(.rwa-mobile[data-theme='dark']) .card { --band-a: #1d4a42; --band-b: #1f3550; --band-ink: #e3f4ef; }
-:global(.rwa-mobile[data-theme='dark']) .card[data-group='prediction'] { --band-a: #362f5a; --band-b: #4a2d3d; --band-ink: #efe9ff; }
-:global(.rwa-mobile[data-theme='dark']) .card[data-group='funds'] { --band-a: #262b33; --band-b: #20252c; --band-ink: #e6e9ee; }
-:global(.rwa-mobile[data-theme='dark']) .head em { background: rgba(255, 255, 255, .12); }
-:global(.rwa-mobile[data-theme='dark']) .well { background: #1b1f26; }
-:global(.rwa-mobile[data-theme='dark']) .perf::before { border-top-color: rgba(255, 255, 255, .14); }
-:global(.rwa-mobile[data-theme='dark']) .grid, :global(.rwa-mobile[data-theme='dark']) .grid > div, :global(.rwa-mobile[data-theme='dark']) .holdings li + li { border-color: rgba(255, 255, 255, .08); }
-:global(.rwa-mobile[data-theme='dark']) .figure small, :global(.rwa-mobile[data-theme='dark']) .kicker, :global(.rwa-mobile[data-theme='dark']) .grid dt, :global(.rwa-mobile[data-theme='dark']) .prov, :global(.rwa-mobile[data-theme='dark']) .note, :global(.rwa-mobile[data-theme='dark']) .who small { color: #a3acb9; }
-:global(.rwa-mobile[data-theme='dark']) .veil { background: linear-gradient(90deg, rgba(255, 255, 255, .16), rgba(255, 255, 255, .06)); }
-:global(.rwa-mobile[data-theme='dark']) .dots i { background: #f2f4f7; }
-:global(.rwa-mobile[data-theme='dark']) .dots i[data-r='lost'] { background: none; box-shadow: inset 0 0 0 1.5px #f2f4f7; }
-@media (prefers-reduced-motion: reduce) { .head { animation: none; } }
-.holdings li small { color: var(--m-muted, #5b6472); font-size: 12px; }
-
-/* Mini (2026-11-02): the 晒单精选 strip in 热门 / 最新. Head, main figure, author and the risk line; the details wait
-   behind a tap (the 晒单 tab). The card fills its slot so every card in the strip is the same height. */
-.card[data-mini] { grid-template-rows: auto auto 1fr auto; height: 100%; }
-.card[data-mini] .grid, .card[data-mini] .holdings ul, .card[data-mini] .dots, .card[data-mini] .note, .card[data-mini] .prov { display: none; }
-.card[data-mini] .title { font-size: 13px; line-height: 18px; }
-.card[data-mini] .figure { font-size: 22px; line-height: 28px; }
-.card[data-mini] .sub { font-size: 13px; line-height: 18px; }
-.card[data-mini] .well { align-content: start; gap: 2px; padding: 12px 16px; }
-.card[data-mini] .holdings { margin-top: 8px; }
-.card[data-mini] .bar { height: 12px; }
-.card[data-mini] .bar i { font-size: 0; }
+/* Mini (晒单精选 strip): front only, smaller; the details wait behind a tap on the 晒单 tab. */
+.card[data-mini] .frame { height: 100%; }
+.card[data-mini] .turn, .card[data-mini] .face { height: 100%; }
+.card[data-mini] .sheet { min-height: 0; padding: 0 14px 12px; }
+.card[data-mini] .tab { height: 24px; margin: -24px 0 0 -14px; padding: 2px 14px 0; }
+.card[data-mini] .tab b { font-size: 13px; line-height: 18px; }
+.card[data-mini] .subline { font-size: 12px; line-height: 16px; }
+.card[data-mini] .label { top: 12px; right: 16px; }
+.card[data-mini] .label b { font-size: 12px; line-height: 16px; }
+.card[data-mini] .label small { display: none; }
+.card[data-mini] .mid { padding: 8px 0; }
+.card[data-mini] .question { font-size: 12px; line-height: 16px; }
+.card[data-mini] .figure { font-size: 24px; line-height: 30px; }
+.card[data-mini] .figure em { font-size: 12px; }
+.card[data-mini] .side b { font-size: 13px; line-height: 18px; }
+.card[data-mini] .dots, .card[data-mini] .note, .card[data-mini] .prov, .card[data-mini] .hero small { display: none; }
 .card[data-mini] .who b { font-size: 13px; line-height: 18px; }
 .card[data-mini] .risk { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+/* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
+:global(.rwa-mobile) .card.card .subline, :global(.rwa-mobile) .card.card .hero small, :global(.rwa-mobile) .card.card .side small, :global(.rwa-mobile) .card.card .hint, :global(.rwa-mobile) .card.card .note, :global(.rwa-mobile) .card.card .backHead small, :global(.rwa-mobile) .card.card .holdings li small { color: var(--muted); }
+:global(.rwa-mobile) .card.card .label small, :global(.rwa-mobile) .card.card .label b { color: #fff; }
+:global(.rwa-mobile) .card.card .prov, :global(.rwa-mobile) .card.card .who small { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .card.card .risk { color: var(--m-faint, #8a9099); }
+:global(.rwa-mobile[data-theme='dark']) .card { --frame: #050607; --sheet: #1a1c21; }
+:global(.rwa-mobile[data-theme='dark']) .face { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 22px 40px -24px rgba(0, 0, 0, .9); }
+:global(.rwa-mobile[data-theme='dark']) .below { color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .card.card .prov, :global(.rwa-mobile[data-theme='dark']) .card.card .who small { color: #a3acb9; }
+@media (prefers-reduced-motion: reduce) { .turn { transition: none; } .glare { display: none; } }

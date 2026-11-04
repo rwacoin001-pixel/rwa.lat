@@ -85,3 +85,10 @@
 :global(html[data-palette='a']) .rowName b, :global(html[data-palette='a']) .rowValue { font-size: 15px; line-height: 22px; }
 :global(html[data-palette='a']) .chip { font-size: 13px; }
 :global(html[data-palette='a']) .foot { margin-top: 12px; }
+
+/* Lead quotes as one sideways row of cards (2026-11-04): two in view and the edge of the next, snapping card by card. */
+.featured.featured { display: flex; gap: 12px; margin-inline: calc(-1 * var(--home-gutter, 20px)); padding: 4px var(--home-gutter, 20px) 12px; overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: var(--home-gutter, 20px); scrollbar-width: none; overscroll-behavior-x: contain; }
+.featured.featured::-webkit-scrollbar { display: none; }
+.featured.featured > * { flex: 0 0 calc((100% - 12px) / 2 - 14px); min-width: 0; scroll-snap-align: start; }
+.featured > :nth-child(n + 3) { animation: quote-in .5s var(--home-ease, cubic-bezier(.22, 1, .36, 1)) .12s both; }
+.root > * { min-width: 0; }
