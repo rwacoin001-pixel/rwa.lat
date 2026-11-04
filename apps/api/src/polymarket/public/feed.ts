@@ -37,7 +37,7 @@ export async function GET(request: Request) {
   const filterMicro = (sort === 'createdAt' || sort === 'competitive') && !search
   const upstreamLimit = filterMicro ? PAGE_SIZE * 3 : PAGE_SIZE
   const upstreamOffset = rawOffset
-  const query = new URLSearchParams({ closed: String(status === 'resolved'), limit: String(upstreamLimit), offset: String(upstreamOffset), order: sort, ascending: String(sort==='endDate') })
+  const query = new URLSearchParams({ closed: String(status === 'resolved'), limit: String(upstreamLimit), offset: String(upstreamOffset), order: sort === 'competitive' ? 'volume24hr' : sort, ascending: String(sort==='endDate') })
   if (status === 'active') query.set('active', 'true')
   if (category !== 'all') query.set('tag_id', String(POLYMARKET_CATEGORY_TAGS[category]))
   for (const tag of hiddenTags) query.append('exclude_tag_id', String(POLYMARKET_CATEGORY_TAGS[tag]))
@@ -70,6 +70,10 @@ export async function GET(request: Request) {
       try {const slug=`btc-updown-5m-${pulseStart}`;const response=await publicFetch(`https://gamma-api.polymarket.com/events/slug/${slug}`,{next:{revalidate:8},signal:AbortSignal.timeout(5000)});if(response.ok)pulse=await response.json() as GammaEventData}catch{}
     }
     const upstreamRows = (rows as GammaEventData[]).filter(event => !filterMicro || !isMicro(event))
+    // Gamma's own `order=competitive` is wall-to-wall 5-minute micro markets (11-05: 60 of 60), which the screen above
+    // drops, leaving an empty page. So 势均力敌 takes the most-traded markets and orders them by Gamma's `competitive`
+    // score (1 = an even split) here instead.
+    if (sort === 'competitive') upstreamRows.sort((a, b) => (Number((b as {competitive?: unknown}).competitive) || 0) - (Number((a as {competitive?: unknown}).competitive) || 0))
     const candidates=[featured[0],pulse,...featured.slice(1),...upstreamRows].filter((event):event is GammaEventData=>Boolean(event))
     const round={start:new Date(pulseStart*1000).toISOString(),end:new Date((pulseStart+300)*1000).toISOString()}
     const items=polymarketDiscoveryItems(candidates,category,featured[0]?.id,Date.now(),status as 'active' | 'resolved')

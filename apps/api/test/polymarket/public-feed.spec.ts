@@ -31,7 +31,7 @@ describe('public prediction feed filters', () => {
 
   it.each(POLYMARKET_SORTS)('passes sort %s with the existing direction rules', async sort => {
     expect((await get(`sort=${sort}&offset=20`)).status).toBe(200)
-    expect(query().get('order')).toBe(sort)
+    expect(query().get('order')).toBe(sort === 'competitive' ? 'volume24hr' : sort)
     expect(query().get('ascending')).toBe(String(sort === 'endDate'))
   })
 
@@ -43,6 +43,12 @@ describe('public prediction feed filters', () => {
     expect(body.items).toHaveLength(30)
     expect(body.nextOffset).toBe(60)
     expect(body.items.every((item: { question: string }) => !item.question.includes('Up or Down'))).toBe(true)
+  })
+
+  it('orders competitive by the Gamma competitive score over the most-traded markets', async () => {
+    fetchMock.mockResolvedValue(Response.json([event('1', { competitive: 0.2 }), event('2', { competitive: 0.95 }), event('3', { competitive: 0.6 })]))
+    const body = await (await get('sort=competitive')).json()
+    expect(body.items.map((item: { id: string }) => item.id)).toEqual(['event-2', 'event-3', 'event-1'])
   })
 
   it('keeps explicit search results even for competitive micro markets', async () => {
@@ -107,7 +113,7 @@ describe('public prediction feed filters', () => {
 
   it('combines existing category, search, offset with new filters', async () => {
     await get('category=politics&q=Senate&offset=20&sort=competitive&window=week&hide=sports')
-    expect(Object.fromEntries(query())).toMatchObject({ tag_id: '2', title_search: 'Senate', offset: '20', order: 'competitive', exclude_tag_id: '1' })
+    expect(Object.fromEntries(query())).toMatchObject({ tag_id: '2', title_search: 'Senate', offset: '20', order: 'volume24hr', exclude_tag_id: '1' })
     expect(fetchMock).toHaveBeenCalledTimes(1)
   })
 
