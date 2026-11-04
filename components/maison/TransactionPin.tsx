@@ -39,9 +39,11 @@ function KitPinPad({ value, onChange, disabled, invalid, onBack, backLabel }: { 
     <div className={x.slots} dir="ltr" role="img" aria-live="polite" aria-label={copy.filled(value.length, 6)}>
       {Array.from({ length: 6 }, (_, i) => <span key={i} data-filled={i < value.length} aria-hidden="true" />)}
     </div>
+    {/* 2026-11-05 polish (with Codex): the shuffle switch takes the empty bottom-left key, unless that key is "back". */}
     <NumPad onKey={key} decimal={false} disabled={disabled} order={order} label={copy.label}
-      left={onBack ? <button type="button" disabled={disabled} aria-label={backLabel} onClick={onBack}><ArrowLeft size={20} aria-hidden="true" /></button> : undefined} />
-    <button type="button" className={x.shuffle} aria-pressed={shuffle} onClick={toggle}><Shuffle size={14} aria-hidden="true" />{kit.shuffle}</button>
+      left={onBack ? <button type="button" disabled={disabled} aria-label={backLabel} onClick={onBack}><ArrowLeft size={20} aria-hidden="true" /></button>
+        : <button type="button" className={x.shuffleKey} aria-pressed={shuffle} aria-label={kit.shuffle} disabled={disabled || value.length > 0} onClick={toggle}><Shuffle size={18} aria-hidden="true" /></button>} />
+    {onBack && <button type="button" className={x.shuffle} aria-pressed={shuffle} onClick={toggle}><Shuffle size={14} aria-hidden="true" />{kit.shuffle}</button>}
   </div>
 }
 
@@ -49,8 +51,10 @@ export function TransactionPinPad({ value, onChange, disabled = false, invalid =
   return <KitPinPad value={value} onChange={onChange} disabled={disabled} invalid={invalid} onBack={onBack} backLabel={backLabel} />
 }
 
-export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy = false, error }: {
+export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy = false, error, inline = false }: {
   open: boolean; onClose: () => void; onConfirm: (pin: string) => Promise<void>; summary: StepUpLine[]; busy?: boolean; error?: string
+  /** Inside an open sheet (the prediction ticket): the PIN step takes the sheet's place instead of a second sheet. */
+  inline?: boolean
 }) {
   const { locale } = useI18n()
   const p = transactionPinCopy[locale]
@@ -74,12 +78,22 @@ export function TransactionPinPrompt({ open, onClose, onConfirm, summary, busy =
   const confirmRef = useRef(confirm)
   confirmRef.current = confirm
   useEffect(() => { if (open && isPin(value)) void confirmRef.current() }, [open, value])
-  return <Sheet open={open} busy={busy} onClose={() => { setValue(''); onClose() }} title={p.prompt.title} data-transaction-pin="confirm">
-    <dl className={`${s.summary} ${x.summary}`}>{summary.map(line => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl>
+  const body = <>
+    {/* What is being paid is the hero (2026-11-05): the first line large, the rest as quiet rows. */}
+    {summary[0] && <div className={x.payHero}><span>{summary[0].label}</span><b dir="ltr">{summary[0].value}</b></div>}
+    {summary.length > 1 && <dl className={`${s.summary} ${x.summary}`}>{summary.slice(1).map(line => <div key={line.label}><dt>{line.label}</dt><dd>{line.value}</dd></div>)}</dl>}
     <TransactionPinPad value={value} onChange={setValue} disabled={busy} invalid={Boolean(error)} />
-    {error && <p className={s.fieldError} role="alert">{error}</p>}
-    <p className={x.working} aria-live="polite">{busy ? p.working : null}</p>
-  </Sheet>
+    <p className={error ? x.pinError : x.working} role={error ? 'alert' : undefined} aria-live="polite">{error ?? (busy ? p.working : null)}</p>
+  </>
+  const close = () => { if (!busy) { setValue(''); onClose() } }
+  if (inline) return open ? <section className={x.inline} data-transaction-pin="confirm" aria-label={p.prompt.title}>
+    <header className={x.inlineHead}>
+      <button type="button" className={x.inlineBack} disabled={busy} aria-label={p.prompt.back} onClick={close}><ArrowLeft size={18} aria-hidden="true" /></button>
+      <h3>{p.prompt.title}</h3>
+    </header>
+    {body}
+  </section> : null
+  return <Sheet open={open} busy={busy} onClose={close} title={p.prompt.title} data-transaction-pin="confirm">{body}</Sheet>
 }
 
 export function TransactionPinManager({ open, mode, onClose, onDone }: {

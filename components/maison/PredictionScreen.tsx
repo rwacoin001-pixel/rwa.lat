@@ -97,7 +97,7 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
   const place = (body: ReactNode) => <section className={ui.place}><SectionHead index="02" title={t.place} action={howTo} />{body}</section>
 
   if (!validId) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}<div className={s.hero}><StateBlock title={copy.detail.notFound} action={toMarkets} /></div></MaisonPage>
-  if (!data && !market.error) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}{eventHeader}{eventHeader?<>{eventOptions&&place(eventOptions)}<PredictionSheet open={isTicketOpen} onClose={closeTicket} title={predictionTicketCopy[locale].buy} busy={busy} compact><div className={`${ui.identity} ${ui.ticketIdentity}`}><Logo src={ticketImage} name={ticketLabel??ticketEventTitle??''}/><div>{ticketEventTitle&&ticketEventTitle!==ticketLabel&&<small>{ticketEventTitle}</small>}<b>{ticketLabel}</b></div></div><Skeleton rows={3}/></PredictionSheet></>:<div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
+  if (!data && !market.error) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}{eventHeader}{eventHeader?<>{eventOptions&&place(eventOptions)}<PredictionSheet open={isTicketOpen} onClose={closeTicket} title={<TicketTitle image={ticketImage} label={ticketLabel??ticketEventTitle??''} event={ticketEventTitle}/>} busy={busy} compact><Skeleton rows={3}/></PredictionSheet></>:<div className={s.hero}><Skeleton rows={5} /></div>}</MaisonPage>
   if (!data) return <MaisonPage page="prediction" dock topbar={topbar}>{guide}{eventHeader}{eventOptions&&place(eventOptions)}<div className={s.hero}>
     <StateBlock tone="error" title={t.loadError} body={market.error?.status === 404 ? copy.detail.notFound : undefined} retry={market.refetch} retryLabel={copy.common.retry} action={toMarkets} />
   </div></MaisonPage>
@@ -148,8 +148,7 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
     {guide}
     {eventHeader ?? numericHeader}
     {place(eventOptions ?? numericOptions)}
-    <PredictionSheet open={isTicketOpen&&!ended} onClose={closeTicket} title={predictionTicketCopy[locale].buy} busy={busy} compact>
-      <div className={`${ui.identity} ${ui.ticketIdentity}`}><Logo src={ticketImage} name={ticketLabel??translated?.question??m.question}/><div>{ticketEventTitle&&ticketEventTitle!==ticketLabel&&<small>{ticketEventTitle}</small>}<b>{ticketLabel??translated?.question??m.question}</b></div></div>
+    <PredictionSheet open={isTicketOpen&&!ended} onClose={closeTicket} title={<TicketTitle image={ticketImage} label={ticketLabel??translated?.question??m.question} event={ticketEventTitle}/>} busy={busy} compact>
       {isTicketOpen&&<BetTicket key={m.id} data={data} translation={translated} initialOutcome={eventHeader?initialOutcome:ticketSide} onBusyChange={setBusy} onRefreshQuote={refreshQuote} quoteRefreshing={quoteRefreshing} quoteError={market.error?.message}/>}
     </PredictionSheet>
 
@@ -163,6 +162,10 @@ export function PredictionMarketScreen({ id, eventHeader, eventOptions, eventId,
   </MaisonPage>
 }
 
+/** The ticket's title row (2026-11-05): the market itself — a 32px picture, the event over the question (two lines). */
+function TicketTitle({ image, label, event }: { image?: string | null; label: string; event?: string }) {
+  return <span className={ui.ticketTitle}><Logo src={image} name={label}/><span>{event && event !== label && <small>{event}</small>}<b>{label}</b></span></span>
+}
 /** A side's price as Polymarket shows it: 52¢ (under 1¢ reads <1¢). */
 function cents(price: unknown) {
   const value = Number(price) * 100
@@ -197,7 +200,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const [pending, setPending] = useState(false)
   const [serverError, setServerError] = useState<string | null>(null)
   const [done, setDone] = useState<PredictionBet | null>(null)
-  const pin = usePurchasePin<PredictionBet & { duplicate?: boolean }>()
+  const pin = usePurchasePin<PredictionBet & { duplicate?: boolean }>({ inline: true })
   const keys = useRef(new Map<string, string>())
   useEffect(()=>{onBusyChange?.(pending)},[pending,onBusyChange])
   useEffect(()=>{setOutcome(initialOutcome)},[initialOutcome])
@@ -271,7 +274,12 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
     setPending(true)
     setServerError(null)
     // The payment PIN confirms the bet (2026-11-05).
-    const result = await pin.ask([{ label: t.stake, value: fmtAtomic(intent.stakeAtomic, decimals, 'USDT') }], (code) => placePredictionBet({ ...intent, idempotencyKey, transactionPin: code }))
+    const sideLabel = outcome !== null ? (translation?.outcomes[outcome] ?? outcomeLabel(m.outcomes[outcome] ?? '', copy)) : '—'
+    const result = await pin.ask([
+      { label: t.stake, value: fmtAtomic(intent.stakeAtomic, decimals, 'USDT') },
+      { label: locale === 'zh-CN' ? '方向' : 'Side', value: `${sideLabel} · ${outcome !== null ? cents(m.prices[outcome]) : '—'}` },
+      ...(netPayout !== null ? [{ label: t.payout, value: `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` }] : []),
+    ], (code) => placePredictionBet({ ...intent, idempotencyKey, transactionPin: code }))
     setPending(false)
     if (result === null) return
     if (!result.ok && rk.voucherErrors[result.error.code]) { setServerError(rk.voucherErrors[result.error.code]); return }
@@ -288,7 +296,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
       kind: 'prediction', title: locale === 'zh-CN' ? '下单成功' : 'Prediction placed', amount: fmtAtomic(bet.stakeAtomic, decimals, ''), unit: 'USDT',
       rows: [
         { label: locale === 'zh-CN' ? '事件' : 'Event', value: translation?.question ?? m.question },
-        { label: locale === 'zh-CN' ? '方向' : 'Side', value: `${side} · ${pct(Number(bet.price))}` },
+        { label: locale === 'zh-CN' ? '方向' : 'Side', value: `${side} · ${cents(bet.price)}` },
         { label: t.shares, value: Number(bet.shares).toLocaleString(locale, { maximumFractionDigits: 4 }) },
         ...(netPayout !== null ? [{ label: t.payout, value: `≈ ${netPayout.toLocaleString(locale, { maximumFractionDigits: 2 })} USDT` }] : []),
         { label: marketCopy[locale].status.orderId, value: `${bet.id.slice(0, 8).toUpperCase()}` },
@@ -309,6 +317,7 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
   const loss = stakeNum > 0 && !voucher ? fmtAtomic(atomic, decimals, 'USDT') : null
   let smallerStake = amountTooLarge ? predictionCapacityStake(quote.depth, placeFeeRate, decimals) : null
   if (smallerStake && available && /^\d+$/.test(available) && BigInt(toAtomic(smallerStake,decimals)??'0')>BigInt(available)) smallerStake = null
+  if (pin.active) return pin.ui
   return <>{pin.ui}<PredictionBetForm
     stake={stake} onStake={value=>{setStake(value);setServerError(null)}} maxStake={maxStake} decimals={decimals} gain={gain} loss={loss}
     outcomes={m.outcomes.slice(0,2).map((label,index)=>({label:translation?.outcomes[index]??outcomeLabel(label,copy),probability:cents(m.prices[index]),disabled:!m.tokenIds[index] || directions[index].state==='unavailable'}))}

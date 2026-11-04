@@ -17,7 +17,8 @@ import { TransactionPinManager, TransactionPinPrompt } from './TransactionPin'
 type Line = { label: string; value: ReactNode }
 type Pending<T> = { summary: Line[]; run: (pin: string) => Promise<ApiResult<T>>; resolve: (result: ApiResult<T> | null) => void }
 
-export function usePurchasePin<T>() {
+/** `inline`: the PIN step replaces the caller's sheet content (render `ui` in its place while `active`). */
+export function usePurchasePin<T>({ inline = false }: { inline?: boolean } = {}) {
   const { locale } = useI18n()
   const p = transactionPinCopy[locale]
   const [stage, setStage] = useState<'idle' | 'setup' | 'prompt'>('idle')
@@ -56,7 +57,7 @@ export function usePurchasePin<T>() {
 
   const ui = <>
     <TransactionPinManager open={stage === 'setup'} mode="setup" onClose={() => finish(null)} onDone={(state: TransactionPinStatus) => { void state; setStage('prompt') }} />
-    <TransactionPinPrompt open={stage === 'prompt'} onClose={() => { if (!busy) finish(null) }} onConfirm={confirm} summary={pending.current?.summary ?? []} busy={busy} error={error} />
+    <TransactionPinPrompt inline={inline} open={stage === 'prompt'} onClose={() => { if (!busy) finish(null) }} onConfirm={confirm} summary={pending.current?.summary ?? []} busy={busy} error={error} />
   </>
-  return { ask, ui }
+  return { ask, ui, active: stage === 'prompt' }
 }

@@ -56,11 +56,14 @@ export function Sheet({ open, onClose, title, kicker, description, busy = false,
         <Dialog.Backdrop className={s.sheetBackdrop} data-glass="" />
         <Dialog.Popup ref={popup} className={`${s.sheet}${className ? ` ${className}` : ''}`} data-sheet="" aria-busy={busy || undefined} {...data}>
           <div className={s.sheetGripArea} onTouchStart={grab} onTouchMove={drag} onTouchEnd={release} onTouchCancel={release}><i className={s.sheetGrip} aria-hidden="true" /></div>
-          <Dialog.Close className={s.sheetClose} disabled={busy} aria-label={marketCopy[locale].common.close}><X size={20} aria-hidden="true" /></Dialog.Close>
+          {/* One header row (2026-11-05 sheet polish): title left, a round close right, the line under it quiet. */}
           <header className={s.sheetHeader}>
-            {kicker && <p className={s.kicker}>{kicker}</p>}
-            <Dialog.Title className={s.sheetTitle}>{title}</Dialog.Title>
-            {description && <Dialog.Description className={s.muted} style={{ margin: '6px 0 0', fontSize: 13, lineHeight: 1.5 }}>{description}</Dialog.Description>}
+            <div className={s.sheetHeading}>
+              {kicker && <p className={s.kicker}>{kicker}</p>}
+              <Dialog.Title className={s.sheetTitle}>{title}</Dialog.Title>
+              {description && <Dialog.Description className={s.sheetLead}>{description}</Dialog.Description>}
+            </div>
+            <Dialog.Close className={s.sheetClose} disabled={busy} aria-label={marketCopy[locale].common.close}><X size={16} strokeWidth={2.2} aria-hidden="true" /></Dialog.Close>
           </header>
           {children}
         </Dialog.Popup>

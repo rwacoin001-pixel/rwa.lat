@@ -1,9 +1,28 @@
-import { Injectable, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common'
+import { Injectable, BadRequestException, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
 import { DataSource } from 'typeorm'
+import { MONEY_CTES } from '../membership/membership-sql'
+import { inviterProfiles } from '../community/inviter-profile'
+import { ObjectStorageService } from '../object-storage/object-storage.service'
+import type { ReferralInviteesResponse, ReferralInviteeRow, ReferralTeamOverview } from './referral-team.types'
+
+// Shared three-level viewer window. Paths also guard against malformed cyclic data.
+const TEAM_CTE = `team AS (
+  SELECT invitee_user_id,bound_at,1 AS level,ARRAY[$1::uuid,invitee_user_id] AS path
+    FROM app.referral_edges WHERE inviter_user_id=$1 AND invitee_user_id<>$1
+  UNION ALL SELECT e.invitee_user_id,e.bound_at,t.level+1,t.path||e.invitee_user_id
+    FROM app.referral_edges e JOIN team t ON e.inviter_user_id=t.invitee_user_id
+    WHERE t.level<3 AND NOT e.invitee_user_id=ANY(t.path)
+)`
+const TEAM_MONEY_CTES = `${TEAM_CTE},scope AS (SELECT DISTINCT invitee_user_id AS user_id FROM team),${MONEY_CTES},
+  active AS (
+    SELECT user_id FROM deposits WHERE credited AND at>=now()-interval '30 days' AND at<=now()
+    UNION SELECT user_id FROM purchases WHERE at>=now()-interval '30 days' AND at<=now()
+  )`
 
 @Injectable()
 export class ReferralReadService {
-  constructor(private readonly db: DataSource) {}
+  constructor(private readonly db: DataSource, @Optional() private readonly storage?: ObjectStorageService) {}
+  private readonly teamOverviewCache = new Map<string, { expiresAt: number; result: ReferralTeamOverview }>()
   private async requireInstalled() {
     const [row]=await this.db.query("SELECT to_regclass('app.referral_rewards') IS NOT NULL AS installed")
     if(!row.installed) throw new ServiceUnavailableException('Referral service is being prepared')
@@ -19,10 +38,7 @@ export class ReferralReadService {
       const [balances]=await m.query(`SELECT coalesce(sum(amount_atomic) FILTER(WHERE state='earned'),0)::text AS available,
         coalesce(sum(amount_atomic) FILTER(WHERE state='claimed'),0)::text AS claimed,
         coalesce(sum(amount_atomic),0)::text AS total FROM app.referral_rewards WHERE user_id=$1`,[userId])
-      const counts=await m.query(`WITH RECURSIVE team AS (
-        SELECT invitee_user_id,1 AS level FROM app.referral_edges WHERE inviter_user_id=$1
-        UNION ALL SELECT e.invitee_user_id,t.level+1 FROM app.referral_edges e JOIN team t ON e.inviter_user_id=t.invitee_user_id WHERE t.level<3
-      ) SELECT level,count(*)::int AS count FROM team GROUP BY level ORDER BY level`,[userId])
+      const counts=await m.query(`WITH RECURSIVE ${TEAM_CTE} SELECT level,count(*)::int AS count FROM team GROUP BY level ORDER BY level`,[userId])
       const [settings]=await m.query('SELECT * FROM app.referral_settings ORDER BY version DESC LIMIT 1')
       const [installed]=await m.query("SELECT to_regclass('app.referral_team_activation') IS NOT NULL AS ready")
       const [team]=installed.ready?await m.query(`SELECT a.activated_at,s.config FROM app.referral_team_activation a JOIN app.referral_settings s
@@ -35,18 +51,49 @@ export class ReferralReadService {
         firstQuantPurchaseOnly:true,teamSettlementEnabled:team?.config.teamEnabled===true,teamActivatedAt:team?.activated_at??null}
     })
   }
-  async invitees(userId: string,page?:string,pageSize?:string,level='all') {
-    await this.requireInstalled()
+  async invitees(userId: string,page?:string,pageSize?:string,level='all',sort='recent'): Promise<ReferralInviteesResponse> {
     const p=this.page(page,pageSize)
     if (!['all','1','2','3'].includes(level)) throw new BadRequestException('Invalid level')
-    const cte=`WITH RECURSIVE team AS (SELECT invitee_user_id,bound_at,1 AS level FROM app.referral_edges WHERE inviter_user_id=$1
-      UNION ALL SELECT e.invitee_user_id,e.bound_at,t.level+1 FROM app.referral_edges e JOIN team t ON e.inviter_user_id=t.invitee_user_id WHERE t.level<3)`
+    if (!['recent','active','level'].includes(sort)) throw new BadRequestException('Invalid sort')
+    await this.requireInstalled()
+    const order=sort==='active'?'"active30d" DESC,':sort==='level'?'"memberLevel" DESC,':''
     return this.db.transaction('REPEATABLE READ',async m=>{
-      const [count]=await m.query(`${cte} SELECT count(*)::int AS total FROM team WHERE ($2='all' OR level::text=$2)`,[userId,level])
-      const items=await m.query(`${cte} SELECT substr(invitee_user_id::text,1,8) AS "memberLabel",level,bound_at AS "boundAt" FROM team
-        WHERE ($2='all' OR level::text=$2) ORDER BY bound_at DESC,invitee_user_id LIMIT $3 OFFSET $4`,[userId,level,p.pageSize,p.offset])
+      const [count]=await m.query(`WITH RECURSIVE ${TEAM_CTE} SELECT count(*)::int AS total FROM team WHERE ($2='all' OR level::text=$2)`,[userId,level])
+      const rows: Array<Omit<ReferralInviteeRow,'boundAt'|'displayName'|'avatarUrl'> & { userId: string; boundAt: Date }> = await m.query(`WITH RECURSIVE ${TEAM_MONEY_CTES},
+        sizes AS (SELECT ancestor,count(*)::int AS count FROM team t
+          CROSS JOIN LATERAL unnest(t.path[2:t.level]) AS ancestor GROUP BY ancestor)
+        SELECT t.invitee_user_id AS "userId",substr(t.invitee_user_id::text,1,8) AS "memberLabel",t.level,t.bound_at AS "boundAt",
+          coalesce(ml.level,1)::int AS "memberLevel",a.user_id IS NOT NULL AS "active30d",coalesce(s.count,0)::int AS "teamSize"
+        FROM team t LEFT JOIN app.member_levels ml ON ml.user_id=t.invitee_user_id
+          LEFT JOIN active a ON a.user_id=t.invitee_user_id LEFT JOIN sizes s ON s.ancestor=t.invitee_user_id
+        WHERE ($2='all' OR t.level::text=$2) ORDER BY ${order}t.bound_at DESC,t.invitee_user_id LIMIT $3 OFFSET $4`,[userId,level,p.pageSize,p.offset])
+      const profiles=await inviterProfiles(m,rows.map(row=>row.userId),this.storage)
+      const items=rows.map(({userId:memberId,boundAt,...row})=>({ ...row,boundAt:boundAt.toISOString(),
+        ...(profiles.get(memberId)??{displayName:null,avatarUrl:null}) }))
       return {items,total:count.total,page:p.page,pageSize:p.pageSize}
     })
+  }
+  async teamOverview(userId: string): Promise<ReferralTeamOverview> {
+    const cached=this.teamOverviewCache.get(userId)
+    if (cached && cached.expiresAt>Date.now()) return cached.result
+    await this.requireInstalled()
+    const [row]=await this.db.query(`WITH RECURSIVE ${TEAM_MONEY_CTES},
+      clock AS (SELECT date_trunc('month',now() AT TIME ZONE 'Asia/Shanghai') AT TIME ZONE 'Asia/Shanghai' AS month_start),
+      counts AS (SELECT count(*)::int AS members,
+        count(*) FILTER(WHERE level=1)::int AS l1,count(*) FILTER(WHERE level=2)::int AS l2,count(*) FILTER(WHERE level=3)::int AS l3,
+        count(*) FILTER(WHERE EXISTS(SELECT 1 FROM active a WHERE a.user_id=t.invitee_user_id))::int AS "active30d",
+        count(*) FILTER(WHERE bound_at>=(SELECT month_start FROM clock) AND bound_at<=now())::int AS "joinedThisMonth" FROM team t)
+      SELECT counts.*,
+        trunc(coalesce((SELECT sum(amount) FROM purchases WHERE at>=(SELECT month_start FROM clock) AND at<=now()),0)*1000000)::text AS "teamPurchaseMonthAtomic",
+        trunc(coalesce((SELECT sum(amount) FROM purchases WHERE at<=now()),0)*1000000)::text AS "teamPurchaseTotalAtomic",now() AS "asOf" FROM counts`,[userId])
+    const result: ReferralTeamOverview={members:row.members,byLevel:([1,2,3] as const).map(level=>({level,count:row[`l${level}`]})),
+      active30d:row.active30d,joinedThisMonth:row.joinedThisMonth,teamPurchaseMonthAtomic:row.teamPurchaseMonthAtomic,
+      teamPurchaseTotalAtomic:row.teamPurchaseTotalAtomic,decimals:6,currency:'USDT',asOf:row.asOf.toISOString()}
+    // Bounded per-process cache. Only aggregate data is cached; profile visibility is always read afresh.
+    this.teamOverviewCache.delete(userId)
+    if(this.teamOverviewCache.size>=1000)this.teamOverviewCache.delete(this.teamOverviewCache.keys().next().value!)
+    this.teamOverviewCache.set(userId,{expiresAt:Date.now()+60_000,result})
+    return result
   }
   async invitee(userId:string,memberLabel:string) {
     if (!/^[a-f0-9]{8}$/.test(memberLabel)) throw new BadRequestException('Invalid member label')

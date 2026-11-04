@@ -69,3 +69,31 @@
 .shuffle { display: inline-flex; align-items: center; justify-self: center; gap: 6px; min-height: 40px; padding: 0 12px; border: 0; border-radius: 999px; background: none; color: var(--m-muted); font: inherit; font-size: 13px; cursor: pointer; }
 .shuffle[aria-pressed="true"] { color: var(--m-ink); background: var(--pa-fill); }
 .working { min-height: 20px; margin: 4px 0 0; color: var(--m-muted); font-size: 13px; text-align: center; }
+
+/* PIN polish (2026-11-05, user: the PIN keypads looked unrefined; reviewed with Codex). Apple Pay / Alipay cadence:
+   the amount as a large figure, six quiet 12px dots in a 44px band, keys as flat plates on one surface, the shuffle
+   switch in the bottom-left key. Solid fills only, no elevation. */
+.payHero { display: grid; justify-items: center; gap: 2px; margin: 0 0 4px; text-align: center; }
+.payHero span { color: var(--m-muted); font-size: 13px; line-height: 1.4; }
+.payHero b { color: var(--m-ink); font: 600 28px/1.2 var(--m-sans); letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.payHero + .summary { margin-top: 12px; }
+.kitPad { gap: 8px; margin: 12px 0 0; }
+.kitPad .slots { align-items: center; gap: 16px; height: 44px; margin: 0; }
+.kitPad .slots span { width: 12px; height: 12px; border: 1.5px solid color-mix(in srgb, var(--m-ink) 28%, transparent); transform: none; }
+.kitPad .slots span[data-filled="true"] { border-color: var(--m-ink); background: var(--m-ink); transform: scale(1.08); }
+.kitPad > [role="group"] > div:last-child { grid-auto-rows: 54px; gap: 8px; }
+.kitPad > [role="group"] > div:last-child > button { border-radius: 12px; background: var(--pa-fill, color-mix(in srgb, var(--m-ink) 6%, transparent)); font-size: 26px; }
+.kitPad > [role="group"] > div:last-child > button::before { inset: 0; border-radius: 12px; }
+.kitPad > [role="group"] > div:last-child > button:last-child, .kitPad > [role="group"] > div:last-child > span { background: none; }
+.shuffleKey { color: var(--m-muted) !important; background: none !important; }
+.shuffleKey[aria-pressed="true"] { color: var(--m-ink) !important; }
+.shuffleKey:disabled { opacity: .35; }
+.pinError, .working { min-height: 20px; margin: 4px 0 0; font-size: 13px; line-height: 1.5; text-align: center; }
+.pinError { color: var(--m-down); font-weight: 500; }
+/* Inline: the PIN step inside the open ticket sheet, with a back key instead of a second sheet. */
+.inline { animation: pinIn .24s var(--m-ease) both; }
+.inlineHead { display: flex; align-items: center; gap: 8px; min-height: 32px; margin: 0 0 12px; }
+.inlineHead h3 { margin: 0; color: var(--m-ink); font: 600 17px/1.35 var(--m-sans); }
+.inlineBack { display: grid; place-items: center; width: 32px; height: 32px; margin-inline-start: -4px; padding: 0; border: 0; border-radius: 50%; background: var(--pa-fill, color-mix(in srgb, var(--m-ink) 7%, transparent)); color: var(--m-ink); cursor: pointer; }
+.inlineBack:disabled { opacity: .4; }
+:global([dir="rtl"]) .inlineBack svg { transform: scaleX(-1); }

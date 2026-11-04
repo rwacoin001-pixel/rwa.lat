@@ -968,18 +968,26 @@ span.compareName { padding-top: 32px; cursor: default; }
 /* One sheet for the whole App (StepUp, Redeem, prediction, deposit help): radius 28, --m-scrim + blur 4, grip on top,
    44px ✕ top-right, drag down to dismiss, a single primary action — no stacked ghost "cancel". */
 .sheetBackdrop { position: fixed; z-index: 60; inset: 0; background: var(--m-scrim); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); transition: opacity var(--dur-long) var(--ease-out); }
+/* No live blur under sheets in the Android app (2026-11-05): it costs frames on mid phones; a plain dim reads the same. */
+:global(html[data-shell='android']) .sheetBackdrop { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .sheetBackdrop[data-ending-style] { transition-duration: calc(var(--dur-long) * .75); transition-timing-function: var(--ease-in); }
 .sheetBackdrop[data-starting-style], .sheetBackdrop[data-ending-style] { opacity: 0; }
-.sheet { position: fixed; z-index: 61; inset-inline: 0; bottom: 0; box-sizing: border-box; width: min(100%, var(--app-max)); max-height: calc(100dvh - 48px); margin-inline: auto; padding: 10px var(--m-gutter) calc(18px + env(safe-area-inset-bottom)); overflow-y: auto; border: 1px solid var(--m-line); border-bottom: 0; border-radius: 28px 28px 0 0; background: var(--m-bg); color: var(--m-ink); box-shadow: var(--m-shadow); outline: 0; overscroll-behavior: contain; transition: transform var(--dur-long) var(--ease-out); }
+.sheet { position: fixed; z-index: 61; inset-inline: 0; bottom: 0; box-sizing: border-box; width: min(100%, var(--app-max)); max-height: calc(100dvh - max(env(safe-area-inset-top), 12px) - 44px); margin-inline: auto; padding: 6px 20px calc(16px + env(safe-area-inset-bottom)); overflow-y: auto; border: 0; border-radius: 28px 28px 0 0; background: var(--m-bg); color: var(--m-ink); box-shadow: 0 -.5px 0 var(--m-line), 0 -18px 48px -20px rgba(0, 0, 0, .32); outline: 0; overscroll-behavior: contain; transition: transform var(--dur-long) var(--ease-out); }
 .sheet[data-ending-style] { transition-duration: calc(var(--dur-long) * .75); transition-timing-function: var(--ease-in); }
 .sheet[data-starting-style], .sheet[data-ending-style] { transform: translateY(100%); }
 .sheet[data-dragging] { transition: none; }
-.sheetGrip { display: block; width: 38px; height: 4px; margin: 0 auto 16px; border-radius: 4px; background: var(--m-line); }
+.sheetGrip { display: block; width: 36px; height: 4px; margin: 0 auto 10px; border-radius: 4px; background: color-mix(in srgb, var(--m-ink) 16%, transparent); }
 /* Tall enough to grab with a thumb; vertical drags belong to the sheet, not the page. */
-.sheetGripArea { margin: -12px 56px 0; padding: 12px 0 0; touch-action: none; cursor: grab; }
-.sheetHeader { padding-inline-end: 48px; }
-.sheetClose { position: absolute; z-index: 2; inset-block-start: 8px; inset-inline-end: 8px; display: grid; place-items: center; width: 44px; height: 44px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-muted); cursor: pointer; transition: opacity var(--dur-micro) var(--ease-out); }
-.sheetClose:active { opacity: .6; }
+.sheetGripArea { margin: -6px 64px 0; padding: 6px 0 0; touch-action: none; cursor: grab; }
+/* Header (2026-11-05): one row — title 17px left, a 32px round close right; kicker and lead line stack in the title column. */
+.sheetHeader { display: flex; align-items: flex-start; gap: 12px; min-height: 32px; margin-bottom: 16px; }
+.sheetHeading { flex: 1; min-width: 0; padding-top: 4px; }
+.sheetHeading .kicker { margin: 0 0 2px; }
+.sheetLead { margin: 4px 0 0; color: var(--m-muted); font-size: 13px; line-height: 1.5; }
+.sheetClose { position: relative; flex: none; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: var(--pa-fill, color-mix(in srgb, var(--m-ink) 7%, transparent)); color: var(--m-muted); cursor: pointer; transition: transform .2s cubic-bezier(.34, 1.56, .64, 1), opacity var(--dur-micro) var(--ease-out); }
+.sheetClose::after { content: ''; position: absolute; inset: -6px; }
+.sheetClose:disabled { opacity: .4; }
+.sheetClose:active:not(:disabled) { transform: scale(.9); }
 .sheetClose:focus-visible { outline: 2px solid var(--m-accent); outline-offset: -4px; }
 /* What the user is confirming, restated inside the sheet (amount, destination, fee). */
 .sheet .summary { margin-top: 16px; padding: 2px 16px; border-radius: 12px; background: var(--m-glass-deep); box-shadow: inset 0 0 0 .5px var(--m-line); }
@@ -993,7 +1001,7 @@ span.compareName { padding-top: 32px; cursor: default; }
   .sheet, .sheetBackdrop, .sheet[data-ending-style], .sheetBackdrop[data-ending-style] { transition: opacity 150ms linear; }
   .sheet[data-starting-style], .sheet[data-ending-style] { transform: none; opacity: 0; }
 }
-.sheetTitle { margin: 6px 0 0; font-family: var(--m-display); font-size: 28px; font-weight: 400; line-height: 1.05; }
+.sheetTitle { margin: 0; color: var(--m-ink); font: 600 17px/1.35 var(--m-sans); letter-spacing: -.01em; overflow-wrap: anywhere; }
 .sheet .state { margin-top: 16px; }
 .pickList { display: grid; gap: 8px; margin: 12px 0 0; padding: 0; list-style: none; }
 .pick { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 12px; align-items: start; width: 100%; padding: 12px 12px; border: 1px solid var(--m-line); border-radius: 12px; background: var(--m-glass); color: var(--m-ink); font: inherit; text-align: start; cursor: pointer; transition: border-color .2s var(--m-ease), box-shadow .2s var(--m-ease); }

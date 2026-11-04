@@ -41,7 +41,7 @@ export const filtersChanged = (f: FilterState) => f.sort !== DEFAULT_FILTERS.sor
 export function PredictionFilters({ value, onChange, chips, search, onSearch }: { value: FilterState; onChange: (next: FilterState) => void; chips: React.ReactNode; search: string; onSearch: (text: string) => void }) {
   const { locale } = useI18n()
   const k = COPY[locale] ?? en
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false) // folded until the filter key opens it (2026-11-05, user)
   const [sheet, setSheet] = useState<'sort' | 'window' | 'status' | null>(null)
   const [searching, setSearching] = useState(Boolean(search))
   const set = (patch: Partial<FilterState>) => { onChange({ ...value, ...patch }); setSheet(null); navigator.vibrate?.(4) }
@@ -53,7 +53,7 @@ export function PredictionFilters({ value, onChange, chips, search, onSearch }: 
     <div className={s.head}>
       <h2>{k.title}</h2>
       <button type="button" className={s.icon} aria-label={k.search} aria-pressed={searching} onClick={() => setSearching((v) => !v)}><Search size={20} strokeWidth={1.8} /></button>
-      <button type="button" className={s.icon} aria-label={k.filters} aria-expanded={open} onClick={() => setOpen((v) => !v)}><SlidersHorizontal size={20} strokeWidth={1.8} /></button>
+      <button type="button" className={s.icon} aria-label={k.filters} aria-expanded={open} data-changed={!open && filtersChanged(value) ? '' : undefined} onClick={() => setOpen((v) => !v)}><SlidersHorizontal size={20} strokeWidth={1.8} /></button>
     </div>
     {searching && <label className={s.search}><Search size={16} strokeWidth={1.8} aria-hidden="true" /><input type="search" autoFocus placeholder={k.search} aria-label={k.search} maxLength={120} value={search} onChange={(e) => onSearch(e.target.value)} /></label>}
     {chips}

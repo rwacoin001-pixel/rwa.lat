@@ -1,17 +1,18 @@
 /** Same money sources/units as ReferralReadService.invitee, plus settled baskets (already USDT).
- * `scope(user_id)` bounds scans to the batch and its three-level team. All windows are [start, now]. */
+ * `scope(user_id)` bounds scans to the batch and its three-level team. All windows are [start, now].
+ * Multiply by an exact decimal: numeric division can round atomic units at very large magnitudes. */
 export const MONEY_CTES=`deposits AS (
-  SELECT d.user_id,CASE WHEN d.asset_code='USDT' THEN trunc(d.atomic_amount*power(10::numeric,6-d.asset_decimals))/1000000 ELSE 0 END AS amount,
+  SELECT d.user_id,CASE WHEN d.asset_code='USDT' THEN trunc(d.atomic_amount*power(10::numeric,6-d.asset_decimals))*0.000001 ELSE 0 END AS amount,
     d.credited_at AS at,true AS credited FROM app.deposits d JOIN scope s ON s.user_id=d.user_id WHERE d.state='credited'
-  UNION ALL SELECT t.recipient_user_id,trunc(t.atomic_amount*power(10::numeric,6-t.asset_decimals))/1000000,t.posted_at,false
+  UNION ALL SELECT t.recipient_user_id,trunc(t.atomic_amount*power(10::numeric,6-t.asset_decimals))*0.000001,t.posted_at,false
     FROM app.internal_transfers t JOIN scope s ON s.user_id=t.recipient_user_id WHERE t.state='posted' AND t.asset_code='USDT'
 ), purchases AS (
-  SELECT q.user_id,q.amount_atomic/1000000::numeric AS amount,coalesce(q.settled_at,q.created_at) AS at
+  SELECT q.user_id,q.amount_atomic*0.000001 AS amount,coalesce(q.settled_at,q.created_at) AS at
     FROM app.quant_orders q JOIN scope s ON s.user_id=q.user_id WHERE q.kind='subscription' AND q.status IN ('accepted','settled')
-  UNION ALL SELECT o.user_id,o.filled_atomic_amount/1000000::numeric,coalesce(o.completed_at,o.processed_at,o.submitted_at)
+  UNION ALL SELECT o.user_id,o.filled_atomic_amount*0.000001,coalesce(o.completed_at,o.processed_at,o.submitted_at)
     FROM app.orders o JOIN scope s ON s.user_id=o.user_id WHERE o.side='buy' AND o.state IN ('filled','partially_filled') AND o.filled_atomic_amount>0
       AND o.settlement_asset_code='USDT' AND o.settlement_asset_decimals=6
-  UNION ALL SELECT b.user_id,b.stake_atomic/1000000::numeric,b.created_at FROM app.prediction_bets b JOIN scope s ON s.user_id=b.user_id
+  UNION ALL SELECT b.user_id,b.stake_atomic*0.000001,b.created_at FROM app.prediction_bets b JOIN scope s ON s.user_id=b.user_id
     WHERE b.status IN ('placed','won','lost')
   UNION ALL SELECT b.user_id,b.amount_usd,coalesce(b.settled_at,b.created_at) FROM app.basket_subscriptions b JOIN scope s ON s.user_id=b.user_id
     WHERE b.status='settled'

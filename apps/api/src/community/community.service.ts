@@ -13,6 +13,7 @@ import { ObjectStorageService } from '../object-storage/object-storage.service'
 import { createHash, randomUUID } from 'node:crypto'
 import { requireDmIdentity } from './community-dm.service'
 import { circleRole, visibleCircles } from './community-circle.access'
+import { inviterProfileVisible } from './inviter-profile'
 import { InjectRepository } from '@nestjs/typeorm'
 import { DataSource, EntityManager, In, IsNull, QueryFailedError, Repository } from 'typeorm'
 
@@ -114,7 +115,7 @@ export class CommunityService {
     if (!ready?.ready) return { members: [] as Array<{ relation: 'invited' | 'inviter'; profile: ReturnType<CommunityService['shapeProfile']> }>, showToInviter: true }
     const rows: Array<{ id: string; relation: 'invited' | 'inviter' }> = await this.posts.manager.query(`
       SELECT p.id, 'invited' AS relation FROM app.referral_edges e JOIN app.community_profiles p ON p.user_id = e.invitee_user_id
-        WHERE e.inviter_user_id = $1 AND p.kind = 'member' AND p.identity_configured AND p.is_active AND p.show_to_inviter
+        WHERE e.inviter_user_id = $1 AND ${inviterProfileVisible('p')}
       UNION ALL
       SELECT p.id, 'inviter' FROM app.referral_edges e JOIN app.community_profiles p ON p.user_id = e.inviter_user_id
         WHERE e.invitee_user_id = $1 AND p.kind = 'member' AND p.identity_configured AND p.is_active

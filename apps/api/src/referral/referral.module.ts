@@ -6,7 +6,8 @@ import { ReferralReadService } from './referral-read.service'
 import { ReferralClaimService } from './referral-claim.service'
 import { ReferralTeamService } from './referral-team.service'
 import { ReferralTeamRunner } from './referral-team.runner'
+import { ObjectStorageCoreModule } from '../object-storage/object-storage-core.module'
 
-@Module({ providers:[ReferralContext,ReferralBindingService,ReferralFoundationService,ReferralReadService,ReferralClaimService,ReferralTeamService,ReferralTeamRunner],
+@Module({ imports:[ObjectStorageCoreModule], providers:[ReferralContext,ReferralBindingService,ReferralFoundationService,ReferralReadService,ReferralClaimService,ReferralTeamService,ReferralTeamRunner],
   exports:[ReferralContext,ReferralBindingService,ReferralFoundationService,ReferralReadService,ReferralClaimService,ReferralTeamService] })
 export class ReferralModule {}

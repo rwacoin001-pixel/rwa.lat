@@ -66,7 +66,8 @@ export class ReferralUserFoundationController {
   constructor(private readonly binding: ReferralBindingService,private readonly read:ReferralReadService,private readonly claims:ReferralClaimService,private readonly team:ReferralTeamService) {}
   @Get('team') teamRewards(@Req() req:AuthenticatedRequest) { return this.team.records(req.auth.userId) }
   @Get('summary') summary(@Req() req:AuthenticatedRequest) { return this.read.summary(req.auth.userId) }
-  @Get('invitees') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string) { return this.read.invitees(req.auth.userId,page,size,level) }
+  @Get('team-overview') @Header('Cache-Control','no-store') teamOverview(@Req() req:AuthenticatedRequest) { return this.read.teamOverview(req.auth.userId) }
+  @Get('invitees') @Header('Cache-Control','no-store') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string,@Query('sort') sort?:string) { return this.read.invitees(req.auth.userId,page,size,level,sort) }
   @Get('invitees/:memberLabel') @Header('Cache-Control','no-store') invitee(@Req() req:AuthenticatedRequest,@Param('memberLabel') label:string) { return this.read.invitee(req.auth.userId,label) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }
   @Get('funnel') funnel(@Req() req:AuthenticatedRequest) { return this.read.funnel(req.auth.userId) }

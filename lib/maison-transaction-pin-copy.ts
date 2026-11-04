@@ -24,7 +24,7 @@ export type TransactionPinCopy = {
   next: string; submit: string; cancel: string; back: string; working: string
   done: Record<TransactionPinMode, string>
   mismatch: string; incomplete: string
-  prompt: { title: string; confirm: string }
+  prompt: { title: string; confirm: string; back: string }
   gate: { unavailable: string; unset: string; locked: string; cooldown: string }
   attempts: (n: number) => string
   errors: Record<string, string>
@@ -40,7 +40,7 @@ const en: BasicCopy = {
   next: 'Next', submit: 'Confirm', cancel: 'Cancel', back: 'Back', working: 'Verifying…',
   done: { setup: 'Transaction PIN set', change: 'Transaction PIN changed', reset: 'Transaction PIN reset' },
   mismatch: 'PINs do not match', incomplete: 'Enter all 6 digits',
-  prompt: { title: 'Confirm with transaction PIN', confirm: 'Confirm withdrawal' },
+  prompt: { title: 'Confirm with transaction PIN', confirm: 'Confirm withdrawal', back: 'Back' },
   gate: { unavailable: 'Transaction PIN is unavailable', unset: 'Set a transaction PIN first', locked: 'Too many attempts. PIN is locked for now', cooldown: 'Withdrawals paused after a PIN change' },
   attempts: (n) => `${n} attempts left`,
   errors: { TRANSACTION_PIN_INVALID: 'Incorrect PIN', TRANSACTION_PIN_LOCKED: 'PIN locked. Try again later', TRANSACTION_PIN_NOT_SET: 'Set a transaction PIN first', TRANSACTION_PIN_COOLDOWN: 'Withdrawals paused after a PIN change', TRANSACTION_PIN_WEAK: 'Choose a less predictable PIN', TRANSACTION_PIN_MISMATCH: 'PINs do not match', TRANSACTION_PIN_REUSED: 'Use a PIN different from the current one' },
@@ -55,7 +55,7 @@ const zh: BasicCopy = {
   next: '下一步', submit: '确认', cancel: '取消', back: '返回', working: '验证中…',
   done: { setup: '交易密码已设置', change: '交易密码已修改', reset: '交易密码已重设' },
   mismatch: '两次输入不一致', incomplete: '请输入完整 6 位',
-  prompt: { title: '输入交易密码确认', confirm: '确认提现' },
+  prompt: { title: '输入交易密码确认', confirm: '确认提现', back: '返回' },
   gate: { unavailable: '交易密码暂不可用', unset: '请先设置交易密码', locked: '尝试次数过多，暂时锁定', cooldown: '修改密码后提现暂停中' },
   attempts: (n) => `剩余 ${n} 次`,
   errors: { TRANSACTION_PIN_INVALID: '交易密码错误', TRANSACTION_PIN_LOCKED: '已锁定，请稍后再试', TRANSACTION_PIN_NOT_SET: '请先设置交易密码', TRANSACTION_PIN_COOLDOWN: '修改密码后提现暂停中', TRANSACTION_PIN_WEAK: '密码过于简单', TRANSACTION_PIN_MISMATCH: '两次输入不一致', TRANSACTION_PIN_REUSED: '新密码不能与当前相同' },
@@ -69,7 +69,7 @@ const hi: BasicCopy = {
   next: 'आगे', submit: 'पुष्टि करें', cancel: 'रद्द करें', back: 'वापस', working: 'सत्यापन हो रहा है…',
   done: { setup: 'लेनदेन PIN सेट हुआ', change: 'लेनदेन PIN बदला गया', reset: 'लेनदेन PIN रीसेट हुआ' },
   mismatch: 'PIN मेल नहीं खाते', incomplete: 'सभी 6 अंक दर्ज करें',
-  prompt: { title: 'लेनदेन PIN से पुष्टि करें', confirm: 'निकासी की पुष्टि करें' },
+  prompt: { title: 'लेनदेन PIN से पुष्टि करें', confirm: 'निकासी की पुष्टि करें', back: 'वापस' },
   gate: { unavailable: 'लेनदेन PIN उपलब्ध नहीं है', unset: 'पहले लेनदेन PIN सेट करें', locked: 'बहुत अधिक प्रयास। PIN अभी लॉक है', cooldown: 'PIN बदलने के बाद निकासी रुकी है' },
   attempts: (n) => `${n} प्रयास शेष`,
   errors: { TRANSACTION_PIN_INVALID: 'गलत PIN', TRANSACTION_PIN_LOCKED: 'PIN लॉक है। बाद में प्रयास करें', TRANSACTION_PIN_NOT_SET: 'पहले लेनदेन PIN सेट करें', TRANSACTION_PIN_COOLDOWN: 'PIN बदलने के बाद निकासी रुकी है', TRANSACTION_PIN_WEAK: 'कम अनुमानित PIN चुनें', TRANSACTION_PIN_MISMATCH: 'PIN मेल नहीं खाते', TRANSACTION_PIN_REUSED: 'मौजूदा PIN से अलग PIN चुनें' },
@@ -84,7 +84,7 @@ const es: BasicCopy = {
   next: 'Siguiente', submit: 'Confirmar', cancel: 'Cancelar', back: 'Atrás', working: 'Verificando…',
   done: { setup: 'PIN de transacción creado', change: 'PIN de transacción cambiado', reset: 'PIN de transacción restablecido' },
   mismatch: 'Los PIN no coinciden', incomplete: 'Introduce los 6 dígitos',
-  prompt: { title: 'Confirma con tu PIN de transacción', confirm: 'Confirmar retiro' },
+  prompt: { title: 'Confirma con tu PIN de transacción', confirm: 'Confirmar retiro', back: 'Volver' },
   gate: { unavailable: 'PIN de transacción no disponible', unset: 'Primero crea un PIN de transacción', locked: 'Demasiados intentos. PIN bloqueado por ahora', cooldown: 'Retiros en pausa tras cambiar el PIN' },
   attempts: (n) => `Quedan ${n} intentos`,
   errors: { TRANSACTION_PIN_INVALID: 'PIN incorrecto', TRANSACTION_PIN_LOCKED: 'PIN bloqueado. Inténtalo más tarde', TRANSACTION_PIN_NOT_SET: 'Primero crea un PIN de transacción', TRANSACTION_PIN_COOLDOWN: 'Retiros en pausa tras cambiar el PIN', TRANSACTION_PIN_WEAK: 'Elige un PIN menos predecible', TRANSACTION_PIN_MISMATCH: 'Los PIN no coinciden', TRANSACTION_PIN_REUSED: 'Usa un PIN distinto del actual' },
@@ -99,7 +99,7 @@ const ar: BasicCopy = {
   next: 'التالي', submit: 'تأكيد', cancel: 'إلغاء', back: 'رجوع', working: 'جارٍ التحقق…',
   done: { setup: 'تم تعيين رمز المعاملات', change: 'تم تغيير رمز المعاملات', reset: 'تمت إعادة تعيين رمز المعاملات' },
   mismatch: 'الرمزان غير متطابقين', incomplete: 'أدخل الأرقام الستة',
-  prompt: { title: 'التأكيد برمز المعاملات', confirm: 'تأكيد السحب' },
+  prompt: { title: 'التأكيد برمز المعاملات', confirm: 'تأكيد السحب', back: 'رجوع' },
   gate: { unavailable: 'رمز المعاملات غير متاح', unset: 'عيّن رمز المعاملات أولًا', locked: 'محاولات كثيرة. الرمز مقفل حاليًا', cooldown: 'السحب متوقف مؤقتًا بعد تغيير الرمز' },
   attempts: (n) => `متبقٍ ${n} محاولات`,
   errors: { TRANSACTION_PIN_INVALID: 'رمز غير صحيح', TRANSACTION_PIN_LOCKED: 'الرمز مقفل. حاول لاحقًا', TRANSACTION_PIN_NOT_SET: 'عيّن رمز المعاملات أولًا', TRANSACTION_PIN_COOLDOWN: 'السحب متوقف مؤقتًا بعد تغيير الرمز', TRANSACTION_PIN_WEAK: 'اختر رمزًا يصعب تخمينه', TRANSACTION_PIN_MISMATCH: 'الرمزان غير متطابقين', TRANSACTION_PIN_REUSED: 'استخدم رمزًا مختلفًا عن الحالي' },
@@ -113,7 +113,7 @@ const fr: BasicCopy = {
   next: 'Suivant', submit: 'Confirmer', cancel: 'Annuler', back: 'Retour', working: 'Vérification…',
   done: { setup: 'Code de transaction défini', change: 'Code de transaction modifié', reset: 'Code de transaction réinitialisé' },
   mismatch: 'Les codes ne correspondent pas', incomplete: 'Saisissez les 6 chiffres',
-  prompt: { title: 'Confirmer avec le code de transaction', confirm: 'Confirmer le retrait' },
+  prompt: { title: 'Confirmer avec le code de transaction', confirm: 'Confirmer le retrait', back: 'Retour' },
   gate: { unavailable: 'Code de transaction indisponible', unset: 'Définissez d’abord un code de transaction', locked: 'Trop de tentatives. Code verrouillé pour le moment', cooldown: 'Retraits suspendus après modification du code' },
   attempts: (n) => `${n} tentatives restantes`,
   errors: { TRANSACTION_PIN_INVALID: 'Code incorrect', TRANSACTION_PIN_LOCKED: 'Code verrouillé. Réessayez plus tard', TRANSACTION_PIN_NOT_SET: 'Définissez d’abord un code de transaction', TRANSACTION_PIN_COOLDOWN: 'Retraits suspendus après modification du code', TRANSACTION_PIN_WEAK: 'Choisissez un code moins prévisible', TRANSACTION_PIN_MISMATCH: 'Les codes ne correspondent pas', TRANSACTION_PIN_REUSED: 'Choisissez un code différent de l’actuel' },
@@ -128,7 +128,7 @@ const pt: BasicCopy = {
   next: 'Avançar', submit: 'Confirmar', cancel: 'Cancelar', back: 'Voltar', working: 'Verificando…',
   done: { setup: 'PIN de transação definido', change: 'PIN de transação alterado', reset: 'PIN de transação redefinido' },
   mismatch: 'Os PINs não coincidem', incomplete: 'Digite os 6 dígitos',
-  prompt: { title: 'Confirme com o PIN de transação', confirm: 'Confirmar saque' },
+  prompt: { title: 'Confirme com o PIN de transação', confirm: 'Confirmar saque', back: 'Voltar' },
   gate: { unavailable: 'PIN de transação indisponível', unset: 'Defina um PIN de transação primeiro', locked: 'Muitas tentativas. PIN bloqueado por enquanto', cooldown: 'Saques pausados após alterar o PIN' },
   attempts: (n) => `${n} tentativas restantes`,
   errors: { TRANSACTION_PIN_INVALID: 'PIN incorreto', TRANSACTION_PIN_LOCKED: 'PIN bloqueado. Tente mais tarde', TRANSACTION_PIN_NOT_SET: 'Defina um PIN de transação primeiro', TRANSACTION_PIN_COOLDOWN: 'Saques pausados após alterar o PIN', TRANSACTION_PIN_WEAK: 'Escolha um PIN menos previsível', TRANSACTION_PIN_MISMATCH: 'Os PINs não coincidem', TRANSACTION_PIN_REUSED: 'Use um PIN diferente do atual' },

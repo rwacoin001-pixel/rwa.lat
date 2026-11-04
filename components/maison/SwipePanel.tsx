@@ -24,6 +24,8 @@ export function SwipePanel({ onClose, pull = false, children }: { onClose: () =>
   const leave = () => {
     if (leaving) return
     setLeaving(true)
+    // Gone: the layer stops taking touches at once (2026-11-05, Android freeze), even before it is removed.
+    ref.current?.setAttribute('data-gone', '')
     set(sign() * window.innerWidth, true)
     window.setTimeout(onClose, 260)
   }
@@ -32,14 +34,21 @@ export function SwipePanel({ onClose, pull = false, children }: { onClose: () =>
   useLayoutEffect(() => {
     if (!pull) return
     const node = ref.current
+    // If the finger-up never reaches us (Android WebView can drop it), settle by itself instead of hanging half-pulled
+    // over the page (2026-11-05, user: the app froze while pulling the personal centre in).
+    let idle = 0, last = 0
+    const finish = (keep: boolean) => { window.clearTimeout(idle); if (keep) set(0, true); else leave() }
     const follow = (px: number) => {
       if (!node) return
       node.style.animation = 'none'
+      last = px
       set(sign() * Math.max(0, node.offsetWidth - px), false)
+      window.clearTimeout(idle)
+      idle = window.setTimeout(() => finish(last > node.offsetWidth / 3), 2500)
     }
-    const first = bindProfilePanel({ follow, finish: (keep) => { if (keep) set(0, true); else leave() } })
+    const first = bindProfilePanel({ follow, finish })
     if (first !== null) follow(first)
-    return () => { bindProfilePanel(null) }
+    return () => { window.clearTimeout(idle); bindProfilePanel(null) }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pull])
 

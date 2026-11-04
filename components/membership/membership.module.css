@@ -2,19 +2,55 @@
    ink card per page (the deep-space card), solid grounds — no gradient backgrounds, no tinted icon tiles. */
 .page { display: grid; gap: 20px; padding: 4px 0 calc(120px + env(safe-area-inset-bottom)); }
 
-/* The deep-space card: solid night, the body on the right, the level and star power on the left. */
-.space { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 8px 12px; min-height: 236px; padding: 22px 20px 18px; overflow: hidden; border-radius: 28px; background: #070a12; color: #f4f6fa; box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(11, 18, 32, .2), 0 24px 44px -26px rgba(7, 10, 18, .7); }
-.body { grid-column: 2; grid-row: 1; justify-self: end; margin: -12px -8px -4px 0; }
-.spaceText { grid-column: 1; grid-row: 1; display: grid; align-content: center; gap: 4px; min-width: 0; }
-.spaceText small { color: rgba(244, 246, 250, .6); font-size: 13px; line-height: 18px; }
-.levelName { font-size: 34px; font-weight: 700; line-height: 40px; letter-spacing: -.01em; }
-.scoreLine { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; color: rgba(244, 246, 250, .6); font-size: 13px; line-height: 18px; }
-.scoreLine b { color: #f4f6fa; font-size: 22px; font-weight: 600; line-height: 28px; font-variant-numeric: tabular-nums; }
-.track { grid-column: 1 / -1; height: 6px; margin-top: 12px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .12); }
-.track i { display: block; height: 100%; border-radius: inherit; background: #2ac4a8; transition: width .8s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
-.trackNote { grid-column: 1 / -1; display: flex; justify-content: space-between; gap: 12px; margin: 0; color: rgba(244, 246, 250, .72); font-size: 13px; line-height: 18px; }
-.trackNote span { color: rgba(244, 246, 250, .45); font-size: 12px; }
-.ghost { height: 180px; }
+/* Hero card v2 (2026-11-05): paper, the medallion left, L-rank + name + star power right, a 4px bar under. */
+.hero { display: grid; gap: 12px; padding: 18px 18px 16px; border-radius: 24px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow, 0 0 0 .5px rgba(11, 18, 32, .08), 0 12px 32px -20px rgba(11, 18, 32, .28)); color: var(--m-ink, #0b1220); }
+.heroTop { display: flex; align-items: center; gap: 16px; min-width: 0; }
+.heroCoin { flex: none; width: 96px; height: 96px; filter: drop-shadow(0 10px 14px rgba(11, 18, 32, .22)); }
+.heroText { display: grid; gap: 2px; min-width: 0; }
+.heroText small { color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 600; letter-spacing: .02em; line-height: 16px; }
+.levelName { font-size: 28px; font-weight: 700; line-height: 34px; letter-spacing: -.01em; }
+.scoreLine { display: flex; align-items: baseline; gap: 6px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
+.scoreLine b { color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.track { height: 4px; overflow: hidden; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .07)); }
+.track i { display: block; height: 100%; border-radius: inherit; background: var(--m-ink, #0b1220); transition: width .8s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.trackNote { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: -4px 0 0; color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 500; line-height: 18px; font-variant-numeric: tabular-nums; }
+.trackNote small { color: var(--m-faint, #8f97a5); font-size: 11px; font-weight: 400; white-space: nowrap; }
+.heroNote { margin: 0; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.ghost { height: 150px; }
+
+/* Upgrade checklist: a tick disc, the rule, where I stand. */
+.check { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; color: var(--m-ink, #0b1220); font-size: 14px; line-height: 20px; }
+.check + .check { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.check > i { display: grid; flex: none; place-items: center; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-ink, #0b1220) 25%, transparent); color: var(--m-bg, #fff); }
+.check[data-met] > i { background: var(--m-ink, #0b1220); box-shadow: none; }
+.check > span { flex: 1; min-width: 0; }
+.check > b { flex: none; color: var(--m-muted, #5b6472); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.check[data-met] > b { color: var(--m-ink, #0b1220); }
+
+/* Where star power comes from: 2×2 cells in one card. */
+.grid { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); }
+.grid > div { display: grid; align-content: start; gap: 2px; min-width: 0; padding: 12px 14px; }
+.grid > div:nth-child(odd) { border-inline-end: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.grid > div:nth-child(n + 3) { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.grid small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.grid b { color: var(--m-ink, #0b1220); font-size: 20px; font-weight: 600; line-height: 26px; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.grid b em { margin-inline-start: 4px; color: var(--m-muted, #5b6472); font-size: 11px; font-style: normal; font-weight: 500; }
+.grid span { color: var(--m-faint, #8f97a5); font-size: 11px; line-height: 14px; }
+
+/* Perks: this level against the next. */
+.table { width: 100%; overflow: hidden; border-collapse: separate; border-spacing: 0; border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); font-size: 13px; line-height: 18px; }
+.table th, .table td { padding: 11px 14px; text-align: start; }
+.table thead th { color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 500; }
+.table thead th:not(:first-child), .table td { width: 22%; text-align: center; font-variant-numeric: tabular-nums; }
+.table tbody th { color: var(--m-ink, #0b1220); font-weight: 500; }
+.table tbody tr > * { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.table td { color: var(--m-faint, #8f97a5); }
+.table td[data-on] { color: var(--m-ink, #0b1220); font-weight: 600; }
+.how { border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); }
+.how summary { display: flex; align-items: center; justify-content: space-between; min-height: 52px; padding: 0 16px; color: var(--m-ink, #0b1220); font-size: 15px; font-weight: 600; list-style: none; cursor: pointer; }
+.how summary::-webkit-details-marker { display: none; }
+.how[open] summary svg { rotate: 180deg; }
+.how p { margin: 0; padding: 0 16px 14px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 20px; }
 
 /* Grouped paper lists. */
 .group { display: grid; gap: 8px; }
@@ -34,11 +70,12 @@
 /* The ladder: all seven bodies in one sideways row; reached ones bright, the current one ringed. */
 .ladder { display: flex; gap: 10px; margin: 0 calc(-1 * var(--m-gutter, 20px)); padding: 2px var(--m-gutter, 20px) 6px; overflow-x: auto; scrollbar-width: none; }
 .ladder::-webkit-scrollbar { display: none; }
-.rung { display: grid; flex: none; justify-items: center; gap: 4px; width: 84px; padding: 10px 6px; border-radius: 18px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); color: var(--m-ink, #0b1220); text-align: center; }
+.rung { display: grid; flex: none; justify-items: center; gap: 2px; width: 84px; padding: 10px 6px; border-radius: 18px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); color: var(--m-ink, #0b1220); text-align: center; }
 .rung b { font-size: 13px; font-weight: 600; line-height: 18px; }
 .rung small { color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
-.rungBody { display: grid; place-items: center; width: 64px; height: 64px; overflow: hidden; border-radius: 50%; background: #070a12; opacity: .45; }
-.rung[data-reached] .rungBody { opacity: 1; }
+.rungCoin { width: 52px; height: 52px; margin-bottom: 4px; opacity: .4; filter: grayscale(.6); }
+.rung[data-reached] .rungCoin { opacity: 1; filter: none; }
+.rung .rungRank { color: var(--m-faint, #8f97a5); font-size: 10px; font-weight: 600; letter-spacing: .04em; line-height: 12px; }
 .rung[data-now] { box-shadow: 0 0 0 1.5px var(--m-ink, #0b1220); }
 
 .linkRow { display: flex; align-items: center; gap: 10px; width: 100%; min-height: 56px; padding: 10px 14px 10px 16px; border: 0; border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); color: var(--m-ink, #0b1220); font: inherit; font-size: 15px; font-weight: 600; text-align: start; cursor: pointer; }
@@ -46,6 +83,9 @@
 .linkRow svg:last-child { color: var(--m-faint, #8f97a5); }
 
 /* Badge: glyph + name, ink on paper, light on dark grounds. */
+.badgeCoin { flex: none; width: 16px; height: 16px; }
+.badgeRank { color: var(--m-muted, #5b6472); font-size: 10px; font-weight: 700; letter-spacing: .03em; }
+.badge[data-tone='light'] .badgeRank { color: rgba(255, 255, 255, .7); }
 .badge { display: inline-flex; align-items: center; gap: 4px; color: var(--m-ink, #0b1220); font-size: 12px; font-weight: 600; line-height: 16px; white-space: nowrap; }
 .badge[data-tone='light'] { color: #fff; }
 
@@ -71,10 +111,12 @@
 .hideRow small { color: var(--m-faint, #8f97a5); font-size: 12px; line-height: 16px; }
 
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
-:global(.rwa-mobile) .page.page .spaceText small, :global(.rwa-mobile) .page.page .scoreLine { color: rgba(244, 246, 250, .6); }
+:global(.rwa-mobile) .page.page .heroText small, :global(.rwa-mobile) .page.page .scoreLine, :global(.rwa-mobile) .page.page .grid small, :global(.rwa-mobile) .page.page .check > b { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .page.page .grid span, :global(.rwa-mobile) .page.page .trackNote small, :global(.rwa-mobile) .page.page .rung .rungRank { color: var(--m-faint, #8f97a5); }
 :global(.rwa-mobile) .page.page .row small, :global(.rwa-mobile) .page.page .groupHead, :global(.rwa-mobile) .page.page .note, :global(.rwa-mobile) .page.page .body2 { color: var(--m-muted, #5b6472); }
-:global(.rwa-mobile[data-theme='dark']) .list, :global(.rwa-mobile[data-theme='dark']) .rung, :global(.rwa-mobile[data-theme='dark']) .linkRow { background: #15181e; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08); }
-:global(.rwa-mobile[data-theme='dark']) .space { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(255, 255, 255, .1); }
+:global(.rwa-mobile[data-theme='dark']) .list, :global(.rwa-mobile[data-theme='dark']) .rung, :global(.rwa-mobile[data-theme='dark']) .linkRow, :global(.rwa-mobile[data-theme='dark']) .hero, :global(.rwa-mobile[data-theme='dark']) .grid, :global(.rwa-mobile[data-theme='dark']) .table, :global(.rwa-mobile[data-theme='dark']) .how { background: #15181e; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08); }
+:global(.rwa-mobile[data-theme='dark']) .track i, :global(.rwa-mobile[data-theme='dark']) .check[data-met] > i { background: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .check > i { color: #0b1220; }
 :global(.rwa-mobile[data-theme='dark']) .rung[data-now] { box-shadow: 0 0 0 1.5px #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .mine { background: #f2f4f7; color: #0b1220; }
 @media (prefers-reduced-motion: reduce) { .track i { transition: none; } }

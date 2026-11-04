@@ -1,12 +1,13 @@
 'use client'
 import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
-import { ArrowLeft, BookOpen, Check, ChevronRight, CircleHelp, Copy, Delete, Gift, ImagePlus, Share2, Users } from 'lucide-react'
+import { ArrowLeft, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Copy, Delete, Gift, ImagePlus, Share2, Users } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useI18n } from '@/lib/i18n'
 import { invalidate, useQuery } from '@/lib/api/_query'
 import { getSessionToken, SESSION_CHANGED } from '@/lib/api/_http'
-import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode, claimReferralRewards, referralFunnel } from '@/lib/api/referral'
+import { referralMe, referralSummary, referralInvitees, referralAwards, changeReferralCode, claimReferralRewards, referralFunnel, referralTeamOverview, type ReferralTeamSort } from '@/lib/api/referral'
+import { GalaxyBadge } from '@/components/membership/GalaxyBadge'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { MaisonPage, StateBlock, Skeleton } from './primitives'
 import { fmtAtomic, fmtDate } from './format'
@@ -87,7 +88,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   }, [embedded])
   const { locale } = useI18n(), zh = locale.startsWith('zh')
   const t: Translate = (cn, en) => zh ? cn : en
-  const [level, setLevel] = useState('all'), [page, setPage] = useState(1)
+  const [level, setLevel] = useState('all'), [page, setPage] = useState(1), [sort, setSort] = useState<ReferralTeamSort>('recent')
   const [sheet, setSheet] = useState<SheetKind>(null), [member, setMember] = useState<ReferralMember | null>(null)
   const [copied, setCopied] = useState(false), [copyError, setCopyError] = useState('')
   const [saving, setSaving] = useState(false), [editError, setEditError] = useState('')
@@ -105,7 +106,8 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const me = useQuery('referral:v2:me', referralMe, { staleTime: 30_000 })
   const summary = useQuery('referral:v2:summary', referralSummary, { staleTime: 30_000 })
   const funnel = useQuery('referral:v2:funnel', referralFunnel, { staleTime: 60_000 })
-  const members = useQuery(sheet === 'team' ? `referral:v2:members:${page}:${level}` : null, () => referralInvitees(page, level), { staleTime: 30_000 })
+  const members = useQuery(sheet === 'team' ? `referral:v2:members:${page}:${level}:${sort}` : null, () => referralInvitees(page, level, sort), { staleTime: 30_000 })
+  const overview = useQuery(sheet === 'team' ? 'referral:v2:team-overview' : null, referralTeamOverview, { staleTime: 60_000 })
   const awards = useQuery(sheet === 'awards' || sheet === 'rewards' ? `referral:v2:awards:${page}` : null, () => referralAwards(page), { staleTime: 30_000 })
   const editGen = useRef(0), mounted = useRef(true)
   useEffect(() => {
@@ -266,10 +268,27 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
         </li>)}</ul>}
     </ReferralSheet>}
     {(sheet === 'team' || sheet === 'awards') && <ReferralSheet tall title={sheet === 'team' ? t('我的团队', 'My team') : t('奖励记录', 'Reward records')} closeLabel={t('关闭', 'Close')} theme={theme} inertRef={rootRef} onClose={closeSheet}>
-      {sheet === 'team' && <div className={v.chips} role="group" aria-label={t('团队层级', 'Team level')}>
-        {([['all', t('全部', 'All'), totalCount], ['1', t('一级', 'Level 1'), levelCount(1)], ['2', t('二级', 'Level 2'), levelCount(2)], ['3', t('三级', 'Level 3'), levelCount(3)]] as const).map(([value, label, count]) =>
-          <button key={value} type="button" aria-pressed={level === value} onClick={() => { setLevel(value); setPage(1) }}>{label}<b>{count}</b></button>)}
-      </div>}
+      {/* Team v2 (2026-11-05, user: low density, unprofessional; agreed with Codex): four team figures (sums only — never a
+          member's own money), referral depth chips, a sort, then rows with name (if they allow it), level and activity. */}
+      {sheet === 'team' && <>
+        <div className={v.teamStats} aria-busy={!overview.data || undefined}>
+          <div><small>{t('团队成员', 'Team members')}</small><b>{overview.data ? overview.data.members.toLocaleString(locale) : totalCount}</b><span>{overview.data ? t(`本月新增 ${overview.data.joinedThisMonth}`, `${overview.data.joinedThisMonth} joined this month`) : '\u00a0'}</span></div>
+          <div><small>{t('近 30 天活跃', 'Active, 30 days')}</small><b>{overview.data ? overview.data.active30d.toLocaleString(locale) : '—'}</b><span>{overview.data && overview.data.members ? t(`占 ${Math.round(overview.data.active30d / overview.data.members * 100)}%`, `${Math.round(overview.data.active30d / overview.data.members * 100)}% of team`) : '\u00a0'}</span></div>
+          <div><small>{t('本月团队买入', 'Team bought this month')}</small><b dir="ltr">{overview.data ? fmtAtomic(overview.data.teamPurchaseMonthAtomic, 6, '', 0).trim() : '—'}<em>USDT</em></b></div>
+          <div><small>{t('累计团队买入', 'Team bought, all time')}</small><b dir="ltr">{overview.data ? fmtAtomic(overview.data.teamPurchaseTotalAtomic, 6, '', 0).trim() : '—'}<em>USDT</em></b></div>
+        </div>
+        <div className={v.teamBar}>
+          <div className={v.chips} role="group" aria-label={t('团队层级', 'Team level')}>
+            {([['all', t('全部', 'All'), totalCount], ['1', t('一级', 'L1'), levelCount(1)], ['2', t('二级', 'L2'), levelCount(2)], ['3', t('三级', 'L3'), levelCount(3)]] as const).map(([value, label, count]) =>
+              <button key={value} type="button" aria-pressed={level === value} onClick={() => { setLevel(value); setPage(1) }}>{label}<b>{count}</b></button>)}
+          </div>
+          <label className={v.sortPick}><span className="sr-only">{t('排序', 'Sort')}</span>
+            <select value={sort} onChange={(event) => { setSort(event.target.value as ReferralTeamSort); setPage(1) }}>
+              <option value="recent">{t('最新加入', 'Newest')}</option><option value="active">{t('最近活跃', 'Most active')}</option><option value="level">{t('等级最高', 'Highest level')}</option>
+            </select><ChevronDown size={14} aria-hidden="true" />
+          </label>
+        </div>
+      </>}
       {list.error
         ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={list.error.message} retry={list.refetch} retryLabel={retryLabel} />
         : !list.data ? <Skeleton rows={3} /> : <>
@@ -277,10 +296,15 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
             ? <p className={v.empty} role="status">{sheet === 'awards' ? t('还没有奖励记录', 'No rewards yet') : level === 'all' ? t('分享邀请，好友注册后会出现在这里。', 'Share your invite. Friends who sign up appear here.') : t('这一级还没有成员', 'No members at this level')}</p>
             : sheet === 'team'
               ? <ul className={v.sheetRows}>{members.data?.items.map((row, index) => <li key={`${row.memberLabel}:${index}`}>
-                <button type="button" className={v.memberRow} aria-haspopup="dialog" onClick={() => setMember(row)}>
-                  <img src={porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
-                  <div><b dir="ltr">{t('用户', 'Member')} {row.memberLabel.slice(0, 6).toUpperCase()}</b><small>{t(`第 ${row.level} 级`, `Level ${row.level}`)}</small></div>
-                  <time dateTime={row.boundAt}>{fmtDate(row.boundAt, locale)}</time>
+                <button type="button" className={`${v.memberRow} ${v.teamRow}`} aria-haspopup="dialog" onClick={() => setMember(row)}>
+                  <img src={row.avatarUrl || porcelainAvatar(row.memberLabel)} alt="" width={40} height={40} aria-hidden="true" />
+                  <div>
+                    <span className={v.teamName}><b dir="auto">{row.displayName || `${t('用户', 'Member')} ${row.memberLabel.slice(0, 6).toUpperCase()}`}</b>{row.memberLevel ? <GalaxyBadge level={row.memberLevel} /> : null}</span>
+                    <small><span className={v.depth}>{t(['', '一级', '二级', '三级'][row.level] ?? `第 ${row.level} 级`, `L${row.level} invite`)}</span>
+                      {row.teamSize ? ` · ${t(`团队 ${row.teamSize} 人`, `${row.teamSize} in their team`)}` : ''}
+                      {row.active30d === undefined ? '' : <> · <i className={v.activity} data-on={row.active30d || undefined}>{row.active30d ? t('近 30 天活跃', 'Active') : t('近 30 天未活跃', 'Quiet')}</i></>}</small>
+                  </div>
+                  <time dateTime={row.boundAt}>{new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(row.boundAt))}</time>
                   <ChevronRight size={16} aria-hidden="true" />
                 </button>
               </li>)}</ul>

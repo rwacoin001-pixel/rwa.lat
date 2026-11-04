@@ -3,7 +3,9 @@
 .head { display: flex; align-items: center; gap: 4px; }
 .head h2 { flex: 1; margin: 0; color: var(--m-ink, #0b1220); font-size: 22px; font-weight: 700; line-height: 28px; }
 .icon { display: grid; place-items: center; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: none; color: var(--m-ink, #0b1220); cursor: pointer; }
-.icon[aria-pressed='true'], .icon[aria-expanded='false'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
+.icon { position: relative; }
+.icon[data-changed]::after { content: ''; position: absolute; top: 9px; right: 9px; width: 6px; height: 6px; border-radius: 50%; background: var(--m-accent, #19c7aa); }
+.icon[aria-pressed='true'], .icon[aria-expanded='true'] { background: var(--pa-fill, rgba(11, 18, 32, .05)); }
 .search { display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 14px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted, #5b6472); }
 .search input { flex: 1; min-width: 0; border: 0; outline: 0; background: none; color: var(--m-ink, #0b1220); font: inherit; font-size: 15px; }
 .pills { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }

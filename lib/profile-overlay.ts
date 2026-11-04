@@ -11,24 +11,39 @@ let open = false
 const listeners = new Set<() => void>()
 const emit = (next: boolean) => { open = next; listeners.forEach((listener) => listener()) }
 
+let seq = 0
 export function openProfile() {
   if (open || typeof window === 'undefined') return
+  seq++
   window.history.pushState({ ...window.history.state, rwaProfile: true }, '')
   emit(true)
 }
 
-/** Close from inside (swipe, sign-out): step back over our own entry; popstate settles the state. */
+/**
+ * Close from inside (swipe, sign-out): step back over our own entry; popstate settles the state.
+ * Watchdog (2026-11-05, user: the Android app froze after a swipe): if that popstate never arrives, the transparent
+ * layer would stay over the page with its panel slid away — the screen looks normal but takes no touch. Close anyway.
+ */
 export function closeProfile() {
   if (!open) return
-  if (window.history.state?.rwaProfile) window.history.back()
-  else emit(false)
+  if (window.history.state?.rwaProfile) {
+    const mine = ++seq
+    window.history.back()
+    window.setTimeout(() => { if (open && seq === mine) emit(false) }, 700)
+  } else emit(false)
 }
 
-/** Navigation away from inside the layer: the new page replaces it, so just drop the layer. */
-export function dropProfile() { if (open) emit(false) }
+/** Navigation away from inside the layer: the new page goes on top; the layer's own history entry stays below it. */
+export function dropProfile() { if (open) { seq++; emit(false) } }
 
+/**
+ * Back/forward settles the layer on the entry it lands on (2026-11-05, user: settings opened from the personal centre
+ * went back to home). Opening a page from the layer keeps the layer's history entry under the new page, so going back
+ * lands on that entry again — show the personal centre there, not the page under it.
+ */
 export function syncProfileWithHistory() {
-  if (open && !window.history.state?.rwaProfile) emit(false)
+  const want = Boolean(window.history.state?.rwaProfile)
+  if (open !== want) { seq++; emit(want) }
 }
 
 /**

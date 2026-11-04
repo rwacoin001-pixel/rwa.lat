@@ -1,3 +1,5 @@
 /* The personal centre layer (2026-10-29): transparent itself, so the page below shows wherever the panel moves away. */
 .layer { position: fixed; z-index: 65; inset: 0; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; }
+/* A layer whose panel has slid away never blocks the page below (2026-11-05, Android freeze). */
+.layer:has(> [data-gone]) { pointer-events: none; }
 .layer > [data-maison-page='swipe-panel'] { max-width: var(--app-max, 480px); margin: 0 auto; }

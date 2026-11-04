@@ -3,14 +3,16 @@ import type { LevelKey, RankBoard } from './api/membership'
 
 /** Galaxy level names (2026-11-04): small to large, the way a member grows — dust, planet, star, cluster, nebula,
  * galaxy, Milky Way. Every locale has its own names; the rest of the copy is zh-CN and en (others fall back to en). */
+/** 2026-11-05 (user: names felt wrong; agreed with Codex): one story, smallest to largest — 星火 · 新星 · 恒星 · 星座
+ * (the team starts here) · 星团 · 星系 · 星穹 — always shown with L1–L7. Keys are internal and keep their old names. */
 export const LEVEL_NAMES: Record<AppLocale, Record<LevelKey, string>> = {
-  'zh-CN': { stardust: '星尘', planet: '行星', star: '恒星', cluster: '星团', nebula: '星云', galaxy: '星系', milkyway: '银河' },
-  en: { stardust: 'Stardust', planet: 'Planet', star: 'Star', cluster: 'Cluster', nebula: 'Nebula', galaxy: 'Galaxy', milkyway: 'Milky Way' },
-  hi: { stardust: 'तारा-धूल', planet: 'ग्रह', star: 'तारा', cluster: 'तारा-समूह', nebula: 'नीहारिका', galaxy: 'आकाशगंगा', milkyway: 'मिल्की वे' },
-  es: { stardust: 'Polvo estelar', planet: 'Planeta', star: 'Estrella', cluster: 'Cúmulo', nebula: 'Nebulosa', galaxy: 'Galaxia', milkyway: 'Vía Láctea' },
-  ar: { stardust: 'غبار النجوم', planet: 'كوكب', star: 'نجم', cluster: 'عنقود', nebula: 'سديم', galaxy: 'مجرة', milkyway: 'درب التبانة' },
-  fr: { stardust: 'Poussière d’étoiles', planet: 'Planète', star: 'Étoile', cluster: 'Amas', nebula: 'Nébuleuse', galaxy: 'Galaxie', milkyway: 'Voie lactée' },
-  pt: { stardust: 'Poeira estelar', planet: 'Planeta', star: 'Estrela', cluster: 'Aglomerado', nebula: 'Nebulosa', galaxy: 'Galáxia', milkyway: 'Via Láctea' },
+  'zh-CN': { stardust: '星火', planet: '新星', star: '恒星', cluster: '星座', nebula: '星团', galaxy: '星系', milkyway: '星穹' },
+  en: { stardust: 'Spark', planet: 'Nova', star: 'Star', cluster: 'Constellation', nebula: 'Cluster', galaxy: 'Galaxy', milkyway: 'Cosmos' },
+  hi: { stardust: 'चिंगारी', planet: 'नवतारा', star: 'तारा', cluster: 'नक्षत्र', nebula: 'तारा-समूह', galaxy: 'आकाशगंगा', milkyway: 'ब्रह्मांड' },
+  es: { stardust: 'Chispa', planet: 'Nova', star: 'Estrella', cluster: 'Constelación', nebula: 'Cúmulo', galaxy: 'Galaxia', milkyway: 'Cosmos' },
+  ar: { stardust: 'شرارة', planet: 'مستعر', star: 'نجم', cluster: 'كوكبة', nebula: 'عنقود', galaxy: 'مجرة', milkyway: 'الكون' },
+  fr: { stardust: 'Étincelle', planet: 'Nova', star: 'Étoile', cluster: 'Constellation', nebula: 'Amas', galaxy: 'Galaxie', milkyway: 'Cosmos' },
+  pt: { stardust: 'Centelha', planet: 'Nova', star: 'Estrela', cluster: 'Constelação', nebula: 'Aglomerado', galaxy: 'Galáxia', milkyway: 'Cosmos' },
 }
 
 export type MembershipCopy = {
@@ -22,10 +24,13 @@ export type MembershipCopy = {
   how: string; howBody: string; rank: string; loadFailed: string; retry: string; updated: (t: string) => string
   boards: Record<RankBoard, string>; week: string; month: string; mine: string; notRanked: string; hidden: string; hide: string; show: string
   hideNote: string; empty: string; bandUnit: string; invites: (n: string) => string; rankTitle: string; rankKicker: string; soon: string; from: string
+  reqTitle: (name: string) => string; reqScore: (v: string) => string; reqDirect: (n: number) => string; reqTeam: (n: number) => string; reqDeposit: string
+  perkCol: string; thisLevel: string; soonNote: string; members2: (d: number, t: number, a: number) => string; toGo: (name: string, v: string) => string
+  perkNames: { draws: string; prediction: string; quant: string }
 }
 
 const zh: MembershipCopy = {
-  title: '我的星系', kicker: '会员等级', score: '星能值', scoreNote: '近 12 个月 · 每天更新', toNext: (n) => `距离「${n}」`, top: '已是最高等级',
+  title: '会员等级', kicker: '会员等级', score: '星能值', scoreNote: '近 12 个月 · 每天更新', toNext: (n) => `距离「${n}」`, top: '已是最高等级',
   parts: { deposits: '充值', purchases: '买入', team: '团队买入', tasks: '任务' }, teamLevels: (a, b, c) => `一级 ${a} · 二级 ${b} · 三级 ${c}`,
   members: (d, t) => `直属 ${d} 人 · 团队 ${t} 人`, needs: '升级还需要', needScore: (v) => `再获得 ${v} 星能值`, needDirect: (n) => `再有 ${n} 位直属好友活跃`, needTeam: (n) => `团队再有 ${n} 人活跃`, needDeposit: '完成第一次充值',
   grace: (d) => `保级期到 ${d}，期间等级不变`, perks: '本级权益', perksNext: (n) => `升到「${n}」可得`, ladder: '全部等级', now: '当前',
@@ -35,9 +40,12 @@ const zh: MembershipCopy = {
   boards: { score: '星能榜', invest: '投资榜', team: '团队榜', invite: '邀请榜' }, week: '本周', month: '本月', mine: '我的名次', notRanked: '暂未上榜', hidden: '你已设为不上榜',
   hide: '不上排行榜', show: '重新上榜', hideNote: '榜上只显示昵称、头像、等级和金额区间，不显示具体金额。', empty: '这一期还没有人上榜。', bandUnit: 'U', invites: (n) => `${n} 人`,
   rankTitle: '排行榜', rankKicker: '每小时更新', soon: '即将开放', from: '星能值来自',
+  reqTitle: (n) => `升级到 ${n}`, reqScore: (v) => `星能值达到 ${v}`, reqDirect: (n) => `直属好友中 ${n} 人活跃`, reqTeam: (n) => `团队中 ${n} 人活跃`, reqDeposit: '完成第一次链上充值',
+  perkCol: '权益', thisLevel: '本级', soonNote: '除等级徽章外，其他权益即将开放，开放前不会生效。', members2: (d, t, a) => `直属 ${d} 人 · 团队 ${t} 人 · 近 90 天活跃 ${a} 人`, toGo: (n, v) => `距 ${n} 还差 ${v}`,
+  perkNames: { draws: '每天额外抽奖', prediction: '预测下注费减免', quant: '考拉量化管理费减免' },
 }
 const en: MembershipCopy = {
-  title: 'My galaxy', kicker: 'Membership', score: 'Star power', scoreNote: 'Last 12 months · updated daily', toNext: (n) => `To ${n}`, top: 'Highest level reached',
+  title: 'Membership', kicker: 'Membership', score: 'Star power', scoreNote: 'Last 12 months · updated daily', toNext: (n) => `To ${n}`, top: 'Highest level reached',
   parts: { deposits: 'Deposits', purchases: 'Purchases', team: 'Team purchases', tasks: 'Tasks' }, teamLevels: (a, b, c) => `Level 1 ${a} · Level 2 ${b} · Level 3 ${c}`,
   members: (d, t) => `${d} direct · ${t} in team`, needs: 'To level up', needScore: (v) => `${v} more star power`, needDirect: (n) => `${n} more active direct friends`, needTeam: (n) => `${n} more active team members`, needDeposit: 'Make your first deposit',
   grace: (d) => `Grace period until ${d}: your level stays`, perks: 'Your perks', perksNext: (n) => `At ${n} you get`, ladder: 'All levels', now: 'Now',
@@ -47,6 +55,9 @@ const en: MembershipCopy = {
   boards: { score: 'Star power', invest: 'Investing', team: 'Team', invite: 'Invites' }, week: 'This week', month: 'This month', mine: 'My rank', notRanked: 'Not ranked yet', hidden: 'You are hidden from rankings',
   hide: 'Hide me from rankings', show: 'Show me again', hideNote: 'Rankings show nickname, avatar, level and an amount range — never exact amounts.', empty: 'Nobody is ranked this period yet.', bandUnit: 'U', invites: (n) => `${n} people`,
   rankTitle: 'Rankings', rankKicker: 'Updated hourly', soon: 'Coming soon', from: 'Where it comes from',
+  reqTitle: (n) => `To reach ${n}`, reqScore: (v) => `Star power of ${v}`, reqDirect: (n) => `${n} active direct friends`, reqTeam: (n) => `${n} active team members`, reqDeposit: 'A first on-chain deposit',
+  perkCol: 'Perk', thisLevel: 'Now', soonNote: 'Apart from the badge, perks open soon and do not apply until then.', members2: (d, t, a) => `${d} direct · ${t} in team · ${a} active (90 days)`, toGo: (n, v) => `${v} to ${n}`,
+  perkNames: { draws: 'Extra daily draws', prediction: 'Prediction fee off', quant: 'Koala Quant fee off' },
 }
 export const MEMBERSHIP_COPY: Partial<Record<AppLocale, MembershipCopy>> = { 'zh-CN': zh, en }
 export const membershipCopy = (locale: AppLocale) => MEMBERSHIP_COPY[locale] ?? en
