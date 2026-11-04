@@ -8,6 +8,7 @@
  */
 
 const DURATION = 400
+const SLIDE_ONLY = true
 /** The picture travels further (thumbnail → full-bleed hero), so it gets a longer, softer-landing curve. */
 const IMAGE_DURATION = 560
 const HANDOFF = 160
@@ -411,14 +412,17 @@ function start(nodes: HTMLElement[], navigate: () => void, destination?: string,
  * `destination` (the openPath target) guards the expected navigation; any other one cancels.
  */
 export function sharedOpen(scope: Element | null, navigate: () => void, destination?: string) {
-  if (!scope) return navigate()
+  // 2026-11-04 (user: opening a product still felt like loading another page): the picture flight lifted the photo and
+  // waited up to 2.5 s for the detail data before navigating, and fought the stack slide. Navigate at once; the page
+  // slide (components/motion-effects.tsx) is the one transition. The flight code stays for a later, data-ready version.
+  if (SLIDE_ONLY || !scope) return navigate()
   // Every list → detail destination opens with a ProductHero, so the picture can head for its frame immediately.
   start(Array.from(scope.querySelectorAll<HTMLElement>('[data-shared]')), navigate, destination, true)
 }
 
 /** Detail → list: pairs this entity's elements on the current page with the restored list. */
 export function sharedBack(prefix: string, navigate: () => void, destination?: string) {
-  if (typeof document === 'undefined') return navigate()
+  if (SLIDE_ONLY || typeof document === 'undefined') return navigate()
   const page = document.querySelector('.rwa-mobile [data-maison-page]') ?? document
   start(Array.from(page.querySelectorAll<HTMLElement>(`[data-shared^="${CSS.escape(prefix)}"]`)), navigate, destination)
 }

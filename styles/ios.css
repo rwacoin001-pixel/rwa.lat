@@ -549,6 +549,8 @@
 /* Stack transition snapshot (components/motion-effects.tsx): a frozen copy of the outgoing page; nothing in it moves. */
 .rwa-snap, .rwa-snap * { animation: none !important; transition: none !important; caret-color: transparent; }
 .rwa-snap { overflow: hidden; contain: layout paint; }
+/* Tab pager (lib/page-swipe.ts beginTabDrag): the live tab's content sits beside the frozen copy and moves with it. */
+.rwa-screen-transition[data-tab-drag] [data-page-tabs] ~ * { transform: translate3d(var(--tab-x, 0px), 0, 0); transition: var(--tab-t, none); }
 
 /* ── Page enter · a short rise on the spring instead of a blur-in ─────────────────────── */
 .rwa-screen-transition.rwa-enter { animation: ios-enter .5s var(--spring) backwards; }

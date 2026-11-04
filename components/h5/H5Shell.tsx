@@ -3,7 +3,8 @@ import { AiOverlay } from './AiOverlay'
 import { ProfileOverlay } from './ProfileOverlay'
 import { pullProfile, releaseProfile } from '@/lib/profile-overlay'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { pageTabs, place, settle, slideTab, stage } from '@/lib/page-swipe'
+import { beginTabDrag, pageTabs, place, settle, stage, type TabDrag } from '@/lib/page-swipe'
+import { freezeScreen } from '../motion-effects'
 import { prefetchScreens } from '@/lib/prefetch-screens'
 import { useEdgeBack } from './useEdgeBack'
 import { markTabNavigation } from '@/lib/app-navigation'
@@ -42,11 +43,19 @@ function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | n
     // Warm the personal centre so the first pull has something to follow.
     if (profile) void import('../maison/AccountScreen')
     let sx = 0, sy = 0, st = 0, pulled = 0, armed = false, mode: null | 'profile' | 'tab' | 'back' = null, dir: 1 | -1 = 1
-    let moving: HTMLElement[] = [], busy = false
+    let moving: HTMLElement[] = [], busy = false, pager: TabDrag | null = null
     const rtl = () => document.documentElement.dir === 'rtl'
+    // Touch moves keep going to the element the finger landed on, even after React removes it (the tab pager swaps the
+    // content mid-drag); a removed element no longer bubbles to window, so listen on it as well, once per event.
+    const seen = new WeakSet<Event>()
+    let held: EventTarget | null = null
+    const once = (handler: (e: TouchEvent) => void) => (e: TouchEvent) => { if (seen.has(e)) return; seen.add(e); handler(e) }
+    const release = () => { held?.removeEventListener('touchmove', onMove as EventListener); held?.removeEventListener('touchend', onEnd as EventListener); held?.removeEventListener('touchcancel', onEnd as EventListener); held = null }
     const start = (e: TouchEvent) => {
       const t = e.touches[0]
       const target = e.target as HTMLElement | null
+      release()
+      if (target) { held = target; target.addEventListener('touchmove', onMove as EventListener, { passive: true }); target.addEventListener('touchend', onEnd as EventListener, { passive: true }); target.addEventListener('touchcancel', onEnd as EventListener, { passive: true }) }
       sx = t.clientX; sy = t.clientY; st = performance.now(); pulled = 0; mode = null
       // Keep the system's edge gestures, an open layer, fields and side-scrolling rows out of it.
       armed = !busy && e.touches.length === 1 && sx > 24 && sx < window.innerWidth - 24 && !document.documentElement.dataset.aiOpen
@@ -65,10 +74,13 @@ function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | n
         if (!mode) { armed = false; return }
         sx = t.clientX; st = performance.now()
         // The page follows the finger (2026-11-04): the tab content, or the whole page on a swipe back to the dock.
-        moving = mode === 'profile' ? [] : stage(mode === 'back')
+        moving = mode === 'back' ? stage(true) : []
+        // Tabs are a real pager: the next tab is rendered beside the current one at once (no gap between them).
+        if (mode === 'tab') { const tabs = pageTabs()!; pager = beginTabDrag(dir, (d) => tabs.step(d), freezeScreen); if (!pager) { armed = false; mode = null; return } }
       }
       pulled = Math.max(0, dir * (rtl() ? 1 : -1) * (t.clientX - sx))
       if (mode === 'profile') pullProfile(pulled)
+      else if (mode === 'tab') pager?.move(-dir * (rtl() ? -1 : 1) * pulled)
       else place(moving, -dir * (rtl() ? -1 : 1) * pulled)
     }
     const end = () => {
@@ -78,20 +90,30 @@ function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | n
       if (mode === 'profile') { releaseProfile(pulled > Math.min(window.innerWidth, 480) / 3 || (speed > .5 && pulled > 40)); return }
       const els = moving
       moving = []
-      if (!(pulled > Math.min(window.innerWidth, 480) / 4 || (speed > .4 && pulled > 32))) { settle(els); return }
+      const commit = pulled > Math.min(window.innerWidth, 480) / 4 || (speed > .4 && pulled > 32)
+      if (mode === 'tab') {
+        const drag = pager
+        pager = null
+        busy = true
+        window.setTimeout(() => { busy = false }, 560)
+        if (commit) drag?.commit(); else drag?.cancel()
+        return
+      }
+      if (!commit) { settle(els); return }
       const x = -dir * (rtl() ? -1 : 1) * pulled
       busy = true
       window.setTimeout(() => { busy = false }, 520)
-      if (mode === 'tab') { const tabs = pageTabs(); slideTab(els, x, () => tabs?.step(dir)) }
-      else { place(els, Math.sign(x) * window.innerWidth, 170); window.setTimeout(() => { backRef.current?.(); requestAnimationFrame(() => els.forEach((el) => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = '' })) }, 170) }
+      { place(els, Math.sign(x) * window.innerWidth, 170); window.setTimeout(() => { backRef.current?.(); requestAnimationFrame(() => els.forEach((el) => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = '' })) }, 170) }
     }
+    const onMove = once(move), onEnd = once((e) => { end(); release(); void e })
     window.addEventListener('touchstart', start, { passive: true })
-    window.addEventListener('touchmove', move, { passive: true })
-    window.addEventListener('touchend', end, { passive: true })
-    window.addEventListener('touchcancel', end, { passive: true })
+    window.addEventListener('touchmove', onMove, { passive: true })
+    window.addEventListener('touchend', onEnd, { passive: true })
+    window.addEventListener('touchcancel', onEnd, { passive: true })
     return () => {
-      window.removeEventListener('touchstart', start); window.removeEventListener('touchmove', move)
-      window.removeEventListener('touchend', end); window.removeEventListener('touchcancel', end)
+      release()
+      window.removeEventListener('touchstart', start); window.removeEventListener('touchmove', onMove)
+      window.removeEventListener('touchend', onEnd); window.removeEventListener('touchcancel', onEnd)
     }
   }, [enabled, profile])
 }

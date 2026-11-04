@@ -82,3 +82,59 @@ export function settle(els: HTMLElement[]) {
   place(els, 0, 220)
   window.setTimeout(() => clear(els), 240)
 }
+
+/**
+ * A real pager for the top tabs (2026-11-04, user: between two tabs there was a black gap). When the finger locks
+ * sideways the current tab is frozen into a copy (only its content, not the bar) and the next tab is rendered at once
+ * beside it; both follow the finger as one strip. Release past the threshold settles on the new tab; otherwise the
+ * strip springs back and the old tab is restored under the copy (scroll position included) before the copy goes.
+ * The live content's offset is a CSS variable, so content React mounts a frame later is placed too.
+ */
+export type TabDrag = { move: (x: number) => void; commit: () => void; cancel: () => void }
+export function beginTabDrag(dir: 1 | -1, step: (dir: 1 | -1) => void, freeze: (el: HTMLElement) => HTMLElement | null): TabDrag | null {
+  const live = document.querySelector<HTMLElement>('.rwa-mobile > .rwa-screen-transition:not(.rwa-snap)')
+  const bar = live?.querySelector<HTMLElement>('[data-page-tabs]')
+  if (!live || !bar) return null
+  const scroll = window.scrollY
+  const copy = freeze(live)
+  if (!copy) return null
+  // Walk the same path inside the copy; keep only what follows the bar, see-through everywhere else.
+  const path: number[] = []
+  for (let el: Element | null = bar; el && el !== live; el = el.parentElement) path.unshift(Array.prototype.indexOf.call(el.parentElement!.children, el))
+  let node: Element = copy
+  copy.style.background = 'transparent'
+  path.forEach((index, depth) => {
+    const children = Array.from(node.children) as HTMLElement[]
+    children.forEach((child, i) => { if (i < index || (i > index && depth < path.length - 1)) child.style.visibility = 'hidden' })
+    node = children[index]
+    if (depth < path.length - 1) { (node as HTMLElement).style.background = 'transparent'; (node as HTMLElement).style.backgroundImage = 'none' }
+  })
+  ;(node as HTMLElement).style.visibility = 'hidden'
+  copy.style.zIndex = '2'
+  const width = window.innerWidth
+  const sign = dir * (document.documentElement.dir === 'rtl' ? -1 : 1)
+  live.dataset.tabDrag = ''
+  step(dir)
+  let x = 0
+  const apply = (ms = 0) => {
+    const ease = ms ? `transform ${ms}ms ${EASE}` : 'none'
+    copy.style.transition = ease
+    copy.style.transform = `translate3d(${x}px, 0, 0)`
+    live.style.setProperty('--tab-t', ease)
+    live.style.setProperty('--tab-x', `${x + sign * width}px`)
+  }
+  const end = () => { copy.remove(); delete live.dataset.tabDrag; live.style.removeProperty('--tab-x'); live.style.removeProperty('--tab-t') }
+  apply()
+  return {
+    move: (next) => { x = next; apply() },
+    commit: () => { x = -sign * width; apply(280); window.setTimeout(end, 300) },
+    cancel: () => {
+      x = 0; apply(240)
+      window.setTimeout(() => {
+        step(-dir as 1 | -1)
+        requestAnimationFrame(() => requestAnimationFrame(() => { window.scrollTo(0, scroll); end() }))
+        window.setTimeout(end, 400)
+      }, 250)
+    },
+  }
+}

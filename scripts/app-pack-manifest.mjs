@@ -57,6 +57,10 @@ function walk(dir, out = []) {
 const candidates = walk(assets)
   .map(full => ({ full, path: '/' + relative(assets, full).split(sep).join('/') }))
   .filter(({ path }) => INCLUDE.some(pattern => pattern.test(path)))
+  // 2026-11-04 (user: the APK downloads slowly in China): leave out what the phone screens do not show — the retired
+  // product art in /media/generated (28 MB) and PNG originals over 500 KB that have WebP copies (basket covers, asset
+  // icons, old sign-in stills; ~28 MB). The pack drops from ~90 MB to ~33 MB; anything still used loads from the network.
+  .filter(({ path, full }) => !/^\/media\/generated\//.test(path) && !(/\.png$/.test(path) && statSync(full).size > 500 * 1024))
 for (const { path, full } of candidates) {
   if (statSync(full).size > MAX_FILE) throw new Error(`app-pack: selected file exceeds 8 MiB: ${path}`)
 }

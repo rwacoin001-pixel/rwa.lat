@@ -124,6 +124,9 @@ export function forgetPrevious() { previous?.remove(); previous = null }
 /** The edge swipe already moved the page; the pop it triggers must not animate a second time. */
 export function skipNextTransition() { skipNext = true }
 
+/** A frozen copy of a live screen, placed over it (used by the tab pager in lib/page-swipe.ts). */
+export function freezeScreen(el: HTMLElement): HTMLElement | null { return takeSnapshot(el)?.clone ?? null }
+
 /** A static copy of the outgoing page at its on-screen position; sticky/fixed parts stay where they were seen. */
 function takeSnapshot(el: HTMLElement): Snapshot | null {
   const host = el.parentElement
