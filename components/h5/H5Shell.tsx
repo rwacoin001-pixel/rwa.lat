@@ -2,7 +2,9 @@
 import { AiOverlay } from './AiOverlay'
 import { ProfileOverlay } from './ProfileOverlay'
 import { pullProfile, releaseProfile } from '@/lib/profile-overlay'
-import { useEffect, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { pageTabs } from '@/lib/page-swipe'
+import { markTabNavigation } from '@/lib/app-navigation'
 import { ToastHost } from '@/components/ui/ToastHost'
 import { useI18n } from '@/lib/i18n'
 import { useFreshBuild } from '@/hooks/useFreshBuild'
@@ -20,22 +22,29 @@ const scrollsSideways = (from: HTMLElement | null) => {
   return false
 }
 
+/** Dock order, for a back swipe past a page's first tab. */
+const DOCK_ORDER = ['home', 'invest', 'community', 'portfolio'] as const
+
 /**
  * On the main pages a swipe toward the leading side draws the personal centre in from the trailing edge, following the
  * finger (2026-11-01, user: the direction was reversed, and it must follow the hand). Past a third of the width, or a
  * quick flick, it stays open; otherwise it slides back out. RTL mirrors it.
+ * A page with its own top tabs (市场, 社区) takes the swipe first (2026-11-04): it steps tabs; only forward from the last
+ * tab pulls the personal centre, and back from the first tab goes to the previous dock page.
  */
-function useProfileSwipe(enabled: boolean) {
+function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | null) {
+  const backRef = useRef(back)
+  backRef.current = back
   useEffect(() => {
     if (!enabled) return
     // Warm the personal centre so the first pull has something to follow.
-    void import('../maison/AccountScreen')
-    let sx = 0, sy = 0, st = 0, pulled = 0, armed = false, on: boolean | null = null
+    if (profile) void import('../maison/AccountScreen')
+    let sx = 0, sy = 0, st = 0, pulled = 0, armed = false, mode: null | 'profile' | 'tab' | 'back' = null, dir: 1 | -1 = 1
     const rtl = () => document.documentElement.dir === 'rtl'
     const start = (e: TouchEvent) => {
       const t = e.touches[0]
       const target = e.target as HTMLElement | null
-      sx = t.clientX; sy = t.clientY; st = performance.now(); pulled = 0; on = null
+      sx = t.clientX; sy = t.clientY; st = performance.now(); pulled = 0; mode = null
       // Keep the system's edge gestures, an open layer, fields and side-scrolling rows out of it.
       armed = e.touches.length === 1 && sx > 16 && sx < window.innerWidth - 16 && !document.documentElement.dataset.aiOpen
         && !target?.closest('input,textarea,select,canvas,video,[role="dialog"],[data-no-swipe]') && !scrollsSideways(target)
@@ -44,20 +53,26 @@ function useProfileSwipe(enabled: boolean) {
       if (!armed) return
       const t = e.touches[0]
       const dx = (rtl() ? 1 : -1) * (t.clientX - sx), dy = t.clientY - sy
-      if (on === null) {
+      if (mode === null) {
         if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return
-        on = dx > 0 && Math.abs(dx) > Math.abs(dy) * 1.2
-        if (!on) { armed = false; return }
+        if (Math.abs(dx) <= Math.abs(dy) * 1.2) { armed = false; return }
+        dir = dx > 0 ? 1 : -1
+        const tabs = pageTabs()
+        mode = tabs?.can(dir) ? 'tab' : dir === 1 && profile ? 'profile' : dir === -1 && tabs && backRef.current ? 'back' : null
+        if (!mode) { armed = false; return }
         sx = t.clientX; st = performance.now()
       }
-      pulled = Math.max(0, (rtl() ? 1 : -1) * (t.clientX - sx))
-      pullProfile(pulled)
+      pulled = Math.max(0, dir * (rtl() ? 1 : -1) * (t.clientX - sx))
+      if (mode === 'profile') pullProfile(pulled)
     }
     const end = () => {
-      if (!armed || !on) { armed = false; return }
+      if (!armed || !mode) { armed = false; return }
       armed = false
       const speed = pulled / Math.max(1, performance.now() - st)
-      releaseProfile(pulled > Math.min(window.innerWidth, 480) / 3 || (speed > .5 && pulled > 40))
+      if (mode === 'profile') { releaseProfile(pulled > Math.min(window.innerWidth, 480) / 3 || (speed > .5 && pulled > 40)); return }
+      if (!(pulled > 56 || (speed > .4 && pulled > 32))) return
+      if (mode === 'tab') pageTabs()?.step(dir)
+      else backRef.current?.()
     }
     window.addEventListener('touchstart', start, { passive: true })
     window.addEventListener('touchmove', move, { passive: true })
@@ -67,7 +82,7 @@ function useProfileSwipe(enabled: boolean) {
       window.removeEventListener('touchstart', start); window.removeEventListener('touchmove', move)
       window.removeEventListener('touchend', end); window.removeEventListener('touchcancel', end)
     }
-  }, [enabled])
+  }, [enabled, profile])
 }
 
 export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode }) {
@@ -75,7 +90,9 @@ export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode 
   const update = useFreshBuild()
   const shellCopy = rwaH5Copy[locale].shell
   const { screen, go, isOnline, theme, mode, showDock, isFloatingSheet, dockActiveScreen, navigationMotion, sessionMode } = h
-  useProfileSwipe(showDock && !isFloatingSheet && screen !== 'community' && sessionMode !== 'guest')
+  const dockIndex = (DOCK_ORDER as readonly string[]).indexOf(screen)
+  const backScreen = dockIndex > 0 ? DOCK_ORDER[dockIndex - 1] : null
+  usePageSwipe(showDock && !isFloatingSheet, sessionMode !== 'guest', backScreen ? () => { navigator.vibrate?.(6); markTabNavigation(); go(backScreen) } : null)
   // Both notices can be put away (2026-11-01); a new offline spell shows the offline one again.
   const [offlineClosed, setOfflineClosed] = useState(false)
   const [updateLater, setUpdateLater] = useState(false)

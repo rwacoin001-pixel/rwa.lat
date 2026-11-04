@@ -9,6 +9,7 @@ import { Fragment, useCallback, useEffect, useRef, useState, type CSSProperties,
 import { LayoutGroup, motion, useReducedMotion } from 'motion/react'
 import { ArrowLeft, BadgeCheck, BarChart2, CalendarDays, Flag, Mail, MapPin, MessageCircle, MoreHorizontal, Share, Share2 } from 'lucide-react'
 import { claimComposeKey } from '@/lib/compose-key'
+import { usePageTabs } from '@/lib/page-swipe'
 import { rewardTodayQuery } from '@/lib/rewards'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
@@ -128,6 +129,7 @@ const inviteLabel: Record<AppLocale, { tab: string; guest: string; guestBody: st
   pt: { tab: 'Convidar', guest: 'Entre para convidar amigos', guestBody: 'Seu código, link e recompensas aparecem aqui.' },
 }
 type CommunityView = 'feed' | 'invite'
+const COMMUNITY_VIEWS: readonly CommunityView[] = ['feed', 'invite']
 const viewFromUrl = (): CommunityView => typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('tab') === 'invite' ? 'invite' : 'feed'
 
 const cardsTabCopy: Partial<Record<string, { tab: string; filters: Record<'all' | 'quant' | 'prediction' | 'funds', string>; empty: string; emptyBody: string; make: string; ready: string; picks: string; all: string }>> = {
@@ -326,35 +328,15 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   }, [view, embedded])
   const invite = inviteLabel[locale] ?? inviteLabel.en
   const pick = (next: CommunityView) => { if (next === view) { window.scrollTo({ top: 0 }); return } navigator.vibrate?.(4); setView(next); window.scrollTo({ top: 0 }) }
-  // Swipe between 社区 and 邀请 (2026-10-28): left goes to 邀请, right comes back. A swipe that starts on something that
-  // scrolls sideways itself (chips, image strips) belongs to that thing; mostly-vertical drags are scrolling.
-  const swipe = useRef<{ x: number; y: number; t: number } | null>(null)
-  const scrollsSideways = (target: EventTarget | null) => {
-    for (let el = target as HTMLElement | null; el && el !== document.body; el = el.parentElement) {
-      if (el.scrollWidth > el.clientWidth + 2 && /(auto|scroll)/.test(getComputedStyle(el).overflowX)) return true
-      if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.getAttribute('role') === 'dialog') return true
-    }
-    return false
-  }
-  const swipeHandlers = embedded ? {} : {
-    onTouchStart: (event: React.TouchEvent) => { const touch = event.touches[0]; swipe.current = event.touches.length === 1 && !scrollsSideways(event.target) ? { x: touch.clientX, y: touch.clientY, t: Date.now() } : null },
-    onTouchEnd: (event: React.TouchEvent) => {
-      const start = swipe.current; swipe.current = null
-      if (!start) return
-      const touch = event.changedTouches[0], dx = touch.clientX - start.x, dy = touch.clientY - start.y
-      if (Math.abs(dx) < 64 || Math.abs(dx) < Math.abs(dy) * 1.6 || Date.now() - start.t > 700) return
-      const rtl = document.documentElement.dir === 'rtl'
-      const forward = rtl ? dx > 0 : dx < 0
-      if (forward && view === 'feed') pick('invite')
-      else if (!forward && view === 'invite') pick('feed')
-    },
-  }
+  // Swipe between 社区 and 邀请 (2026-10-28): the shell's page swipe steps these tabs first (2026-11-04); back from 社区
+  // goes to 市场, forward from 邀请 pulls the personal centre. Rows that scroll sideways keep their own swipe.
+  usePageTabs(COMMUNITY_VIEWS, view, setView, !embedded)
 
   const openCards = () => { guestHot.current = false; setCardFilter('all'); setSort('cards'); window.scrollTo({ top: 0 }) }
   const pickSort = (next: 'latest' | 'hot' | 'circle' | 'cards') => { guestHot.current = false; if (next === sort) { window.scrollTo({ top: 0, behavior: 'smooth' }); return } setSort(next) }
 
   const feed = (
-    <div className={c.x} data-embedded={embedded || undefined} data-view={view} {...swipeHandlers}>
+    <div className={c.x} data-embedded={embedded || undefined} data-view={view}>
       {/* Reading down slides the top row away; the tabs stay pinned. A small upward scroll brings it back (X mobile). */}
       <header className={c.head} data-hidden={chromeHidden} data-glass-bar="">
         {!embedded && <div className={`${c.headRow} ${c.headRowTabs}`}>
