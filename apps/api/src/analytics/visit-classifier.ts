@@ -163,6 +163,17 @@ export function countryCode(value: HeaderValue): string | null {
   return raw && /^[A-Z][A-Z0-9]$/.test(raw) ? raw : null
 }
 
+/** Worker region/city metadata is URL-encoded UTF-8, bounded after decoding. */
+export function clientLocation(value: HeaderValue): string | null {
+  const raw = firstHeader(value)
+  if (!raw) return null
+  try {
+    return decodeURIComponent(raw).trim().slice(0, 120) || null
+  } catch {
+    return null
+  }
+}
+
 export function truncateUserAgent(value: HeaderValue): string | null {
   const raw = firstHeader(value)?.trim()
   return raw ? raw.slice(0, MAX_USER_AGENT_LENGTH) : null

@@ -53,7 +53,7 @@ export class VisitQueryService {
     return this.db.transaction('REPEATABLE READ', async (m) => {
       const [count] = await m.query(`SELECT count(*)::int AS total FROM app.visit_log v ${filter}`, params)
       const rows = await m.query(
-        `SELECT v.id, v.user_id AS "userId", host(v.ip) AS ip, v.country, v.device, v.user_agent AS "userAgent",
+        `SELECT v.id, v.user_id AS "userId", host(v.ip) AS ip, v.country, v.region, v.city, v.device, v.user_agent AS "userAgent",
                 v.first_page AS "firstPage", v.last_page AS "lastPage", v.started_at AS "startedAt", v.last_seen_at AS "lastSeenAt",
                 v.requests, extract(epoch FROM v.last_seen_at - v.started_at)::int AS "durationSeconds"
            FROM app.visit_log v ${filter}

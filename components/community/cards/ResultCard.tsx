@@ -112,7 +112,6 @@ export function describeCard(card: PostCard, k: Copy, locale: string): CardModel
   }
 }
 
-const PHOTO: Record<CardModel['group'], string | null> = { quant: '/media/home/cards/quant-720.webp', prediction: '/media/home/cards/predict-720.webp', funds: null }
 const flipCopy: Partial<Record<AppLocale, { more: string; back: string; paper: string }>> = { 'zh-CN': { more: '点按打开', back: '点按收起', paper: '明细' }, en: { more: 'Tap to open', back: 'Tap to close', paper: 'Details' } }
 
 /**
@@ -147,16 +146,16 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
     if (Math.hypot(event.clientX - press.current.x, event.clientY - press.current.y) > 8) press.current.moved = true
     el.style.setProperty('--ry', `${(px * 10).toFixed(2)}deg`); el.style.setProperty('--rx', `${(-py * 8).toFixed(2)}deg`)
     el.style.setProperty('--gx', `${((px + .5) * 100).toFixed(1)}%`); el.style.setProperty('--gy', `${((py + .5) * 100).toFixed(1)}%`)
+    el.style.setProperty('--px', px.toFixed(3)); el.style.setProperty('--py', py.toFixed(3))
   }
-  const rest = () => { const el = frame.current; if (press.current) dragged.current = press.current.moved; press.current = null; if (!el) return; delete el.dataset.held; el.style.removeProperty('--rx'); el.style.removeProperty('--ry') }
+  const rest = () => { const el = frame.current; if (press.current) dragged.current = press.current.moved; press.current = null; if (!el) return; delete el.dataset.held; for (const name of ['--rx', '--ry', '--px', '--py']) el.style.removeProperty(name) }
   const side = m.hero?.sub ? { value: m.hero.sub, label: card.kind === 'prediction_record' ? k.f.total : k.f.returnPct, tone: m.hero.subTone } : (() => { const cell = m.grid.find((item) => !item.hidden); return cell ? { value: cell.value, label: cell.label, tone: cell.tone } : null })()
-  const photo = PHOTO[m.group]
   const kindName = m.head.split(' · ').pop() ?? m.head
   const question = card.kind === 'prediction_bet' ? m.title : null
   const subline = question ? k.group[m.group] : m.title ?? k.group[m.group]
 
   const front = <div className={s.face} data-face="front">
-    <div className={s.photo} aria-hidden="true">{photo && <img src={photo} alt="" width={720} height={450} decoding="async" loading="lazy" />}</div>
+    <div className={s.photo} aria-hidden="true"><i /><i /><i /></div>
     <span className={s.label}><b>{k.group[m.group]}</b><small>{k.snapshot}</small></span>
     {live && <div ref={paper} className={s.paper} aria-hidden={!flipped}>
       <span className={s.paperHead}><b>{f.paper}</b><small dir="auto">{kindName} · {subline}</small></span>

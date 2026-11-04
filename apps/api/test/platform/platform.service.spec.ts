@@ -36,10 +36,10 @@ describe('Published platform information and access', () => {
     db.query.mockResolvedValueOnce([{ published: content, revision: 2 }]).mockResolvedValueOnce([])
     expect(await service.evaluateAccess('u')).toMatchObject({ allowed: true, reason: null })
   })
-  it('requires both verified country and investor type to match', async () => {
+  it('allows verified regions and investor types outside the published lists', async () => {
     const { db, service } = setup()
-    db.query.mockResolvedValueOnce([{ published: content, revision: 2 }]).mockResolvedValueOnce([{ region: 'SG', investor_type: 'retail' }])
-    expect((await service.evaluateAccess('u')).allowed).toBe(false)
+    db.query.mockResolvedValueOnce([{ published: content, revision: 2 }]).mockResolvedValueOnce([{ region: 'JP', investor_type: 'retail' }])
+    expect(await service.evaluateAccess('u')).toEqual({ allowed: true, reason: null, region: 'JP', revision: 2 })
     db.query.mockResolvedValueOnce([{ published: content, revision: 2 }]).mockResolvedValueOnce([{ region: 'SG', investor_type: 'professional' }])
     expect((await service.evaluateAccess('u')).allowed).toBe(true)
   })

@@ -9,9 +9,8 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { StoragePicker } from '@/components/storage-picker'
 import { StorageUpload } from '@/components/storage-upload'
-import { adminApi, type PlatformContent, type PlatformConfiguration, type VerifiedAccess } from '@/lib/admin-api'
+import { adminApi, type InvestmentBlock, type PlatformContent, type PlatformConfiguration } from '@/lib/admin-api'
 
-const EMPTY_ACCESS: VerifiedAccess = { region: '', investorType: 'retail', evidenceRef: '' }
 const EMPTY: PlatformContent = { legalName: '', registrationNumber: '', jurisdiction: '', address: '', supportEmail: '', description: '', allowedRegions: [], investorTypes: [], documents: [], officialChannels: [] }
 const TYPES = [{ value: 'retail', label: '零售客户' }, { value: 'professional', label: '专业投资者' }, { value: 'institutional', label: '机构客户' }]
 
@@ -26,7 +25,9 @@ export function PlatformEditor({ regions = false }: { regions?: boolean }) {
   const [dirty, setDirty] = useState(false)
   const [versions, setVersions] = useState<Array<{ revision: number; publishedAt: string }>>([])
   const [userId, setUserId] = useState('')
-  const [access, setAccess] = useState<VerifiedAccess>(EMPTY_ACCESS)
+  const [blocks, setBlocks] = useState<InvestmentBlock[] | null>(null)
+  async function loadBlocks() { try { setBlocks((await adminApi.investmentBlocks()).items) } catch { setBlocks([]) } }
+  useEffect(() => { if (regions) void loadBlocks() }, [regions])
   function apply(value: PlatformConfiguration) {
     const next = { ...EMPTY, ...value.draft }
     setConfiguration(value); setForm(next); setRegionText(next.allowedRegions.join(', ')); setDirty(false)
@@ -73,7 +74,7 @@ export function PlatformEditor({ regions = false }: { regions?: boolean }) {
       <Card><CardHeader><CardTitle>开放地区与客户类型</CardTitle></CardHeader><CardContent className="space-y-4">
         <div className="space-y-2"><Label htmlFor="platform-regions">开放国家或地区代码</Label><Input id="platform-regions" value={regionText} placeholder="SG, HK" onChange={e => { setRegionText(e.target.value); setDirty(true) }} /></div>
         <div className="flex flex-wrap gap-5">{TYPES.map(item => <label key={item.value} className="flex items-center gap-2"><input type="checkbox" checked={form.investorTypes.includes(item.value)} onChange={e => change({ investorTypes: e.target.checked ? [...form.investorTypes, item.value] : form.investorTypes.filter(x => x !== item.value) })} />{item.label}</label>)}</div>
-        <p className="text-sm text-text-secondary">投资准入使用后台核验过的用户地区与客户类型。用户自行修改资料不会改变已核验结论。</p>
+        <p className="text-sm text-text-secondary">地区与客户类型只作为公开资料展示，不再限制投资；要禁止某个账户，请在下方「禁止投资的用户」里添加。</p>
       </CardContent></Card>
       <Card><CardHeader><CardTitle>官方渠道</CardTitle></CardHeader><CardContent className="space-y-4">
         <p className="text-sm text-text-secondary">只填写已验证的 HTTPS 官方链接。客服邮箱沿用上方主体资料。</p>
@@ -108,12 +109,20 @@ export function PlatformEditor({ regions = false }: { regions?: boolean }) {
         </div>)}
       </CardContent></Card>
     </fieldset>
-    {regions && <Card><CardHeader><CardTitle>用户地区与客户类型核验</CardTitle></CardHeader><CardContent className="space-y-3">
-      <Input aria-label="用户编号" placeholder="用户 UUID" value={userId} disabled={busy} onChange={e => { setUserId(e.target.value); setAccess(EMPTY_ACCESS) }} />
-      <Input aria-label="核验地区" placeholder="经核验的两位地区代码" value={access.region} maxLength={2} onChange={e => setAccess({ ...access, region: e.target.value.toUpperCase() })} />
-      <select aria-label="客户类型" className="w-full rounded-xl border p-2" value={access.investorType} onChange={e => setAccess({ ...access, investorType: e.target.value })}>{TYPES.map(item => <option key={item.value} value={item.value}>{item.label}</option>)}</select>
-      <Input aria-label="核验依据" placeholder="核验记录或文件编号" value={access.evidenceRef} onChange={e => setAccess({ ...access, evidenceRef: e.target.value })} />
-      <div className="flex gap-3"><Button variant="outline" disabled={busy || !userId} onClick={() => void act(async () => { const value = await adminApi.getVerifiedAccess(userId); setAccess(value ?? EMPTY_ACCESS); setNotice(value ? '已读取核验记录' : '暂无核验记录') })}>查询</Button><Button disabled={busy || !userId} onClick={() => void act(async () => { const { region, investorType, evidenceRef } = access; setAccess(await adminApi.saveVerifiedAccess(userId, { region, investorType, evidenceRef })); setNotice('核验结果已保存并记录操作人') })}>保存核验结论</Button></div>
+    {regions && <Card><CardHeader><CardTitle>禁止投资的用户</CardTitle></CardHeader><CardContent className="space-y-3">
+      <p className="text-sm text-text-secondary">默认所有账户都可以投资，不需要实名认证。只有列在这里的账户不能申购或下单；解除后立即恢复。</p>
+      <div className="flex flex-wrap gap-3">
+        <Input aria-label="用户编号" className="min-w-64 flex-1" placeholder="用户 UUID" value={userId} disabled={busy} onChange={e => setUserId(e.target.value.trim())} />
+        <Button disabled={busy || !userId} onClick={() => void act(async () => { await adminApi.blockInvestment(userId); setUserId(''); await loadBlocks(); setNotice('已禁止该账户投资') })}>禁止投资</Button>
+      </div>
+      {blocks === null ? <p className="text-sm text-text-secondary">正在读取…</p> : blocks.length === 0 ? <p className="text-sm text-text-secondary">目前没有被禁止的账户。</p> : <ul className="divide-y rounded-xl border">
+        {blocks.map(item => <li key={item.userId} className="flex flex-wrap items-center gap-3 p-3">
+          <span className="min-w-0 flex-1"><b className="block truncate">{item.displayName ?? '未设置名称'}{item.handle ? <span className="ml-2 font-normal text-text-secondary">@{item.handle}</span> : null}</b>
+            <small className="block truncate font-mono text-xs text-text-secondary">{item.userId}</small>
+            <small className="block text-xs text-text-secondary">禁止于 {new Date(item.blockedAt).toLocaleString()}</small></span>
+          <Button variant="outline" disabled={busy} onClick={() => void act(async () => { await adminApi.unblockInvestment(item.userId); await loadBlocks(); setNotice('已解除，该账户可以投资') })}>解除</Button>
+        </li>)}
+      </ul>}
     </CardContent></Card>}
     <Card><CardHeader><CardTitle>发布历史</CardTitle></CardHeader><CardContent>{versions.length ? versions.map(v => <p key={v.revision} className="py-1 text-sm">版本 {v.revision} · {new Date(v.publishedAt).toLocaleString()}</p>) : <p className="text-sm text-text-secondary">暂无发布记录</p>}</CardContent></Card>
   </div></AdminLayout>

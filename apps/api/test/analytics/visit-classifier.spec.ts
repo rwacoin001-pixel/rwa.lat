@@ -1,6 +1,6 @@
 import {
   authenticatedUserId, classifyDevice, clientCountry, countryCode, extractClientIp, isBotUserAgent, isPrivateIp, isTrackedRequest, normalizeIp,
-  normalizeRoutePath, sourceHost, truncateUserAgent,
+  clientLocation, normalizeRoutePath, sourceHost, truncateUserAgent,
 } from '../../src/analytics/visit-classifier'
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1'
@@ -84,6 +84,13 @@ describe('API traffic: request filtering and field sanitising', () => {
 })
 
 describe('API traffic: frontend Worker headers', () => {
+  it('decodes and trims UTF-8 locations, bounds length and ignores malformed encoding', () => {
+    expect(clientLocation(encodeURIComponent('  上海市  '))).toBe('上海市')
+    expect(clientLocation('x'.repeat(121))).toHaveLength(120)
+    expect(clientLocation('%E0%A4%A')).toBeNull()
+    expect(clientLocation('%20%20')).toBeNull()
+    expect(clientLocation(undefined)).toBeNull()
+  })
   it('prefers the Worker-supplied client IP over Cloudflare and proxy addresses', () => {
     expect(extractClientIp({ ip: '172.18.0.4', headers: { 'x-client-ip': '203.0.113.7', 'cf-connecting-ip': '2a06:98c0:3600::103' } })).toBe('203.0.113.7')
   })

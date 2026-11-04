@@ -2,7 +2,8 @@ import { Injectable, Logger, NestMiddleware } from '@nestjs/common'
 import type { NextFunction, Request, Response } from 'express'
 import { ActivityRecorderService, type ActivityHit } from './activity-recorder.service'
 import { VisitLogService } from './visit-log.service'
-import { authenticatedUserId, classifyDevice, clientCountry, extractClientIp, isTrackedRequest, refererPage, requestPathname, truncateUserAgent } from './visit-classifier'
+import { authenticatedUserId, classifyDevice, clientCountry, clientLocation, extractClientIp, isTrackedRequest, refererPage, requestPathname, truncateUserAgent } from './visit-classifier'
+import { EDGE_CLIENT_CITY_HEADER, EDGE_CLIENT_REGION_HEADER } from '../common/edge-client'
 
 /** Pure: the hit to record for a finished request, or null when it is not end-user app usage. */
 export function activityFromRequest(request: Request, statusCode: number | null, now = new Date()): ActivityHit | null {
@@ -21,6 +22,8 @@ export function activityFromRequest(request: Request, statusCode: number | null,
     // Set by SessionAuthGuard / OptionalSessionAuthGuard during the request; read after it finished.
     userId: authenticatedUserId((request as Request & { auth?: { userId?: unknown } }).auth?.userId),
     country: clientCountry(request.headers),
+    region: clientLocation(request.headers[EDGE_CLIENT_REGION_HEADER]),
+    city: clientLocation(request.headers[EDGE_CLIENT_CITY_HEADER]),
     device,
     userAgent: truncateUserAgent(userAgent ?? undefined),
     page: refererPage(request.headers.referer),

@@ -1,32 +1,54 @@
-/* Share-a-result card (2026-11-04, after the user's reference): a dark folder card in a near-black frame. A soft blurred
-   photo fills the top (quant and prediction photos, funds a plain graphite); a dark sheet with a tab on its left rises
-   over it. The kind sits on the tab, the main figure at the foot. It tilts under the finger and turns over on a tap.
-   Provenance and the risk line sit under the card, on the page. Loss and profit look the same; only the colour moves. */
-.card { --sheet: #1c1d21; --frame: #0d0e10; --ink: #f4f5f7; --muted: rgba(244, 245, 247, .56); --line: rgba(255, 255, 255, .1); --up: #46d39a; --down: #ff7d70;
+/* Share-a-result card (2026-11-04, after the user's reference): a folder card. A flowing gradient in the app's own colours
+   fills the top (teal for Koala Quant, blue-violet for predictions, slate for funds); a sheet with a tab rises over it:
+   the kind on the tab, the main figure at the foot. Light theme: a white folder on a white frame; dark: graphite. Depth
+   comes from layered shadows, a lit top edge and a little parallax while the card is held; a slow sheen and a breathing
+   light move inside the sheet. A tap opens the folder. Provenance and the risk line sit under the card. */
+.card { --sheet: #ffffff; --sheet-2: #f2f4f7; --frame: #ffffff; --ink: #0b1220; --muted: rgba(11, 18, 32, .56); --line: rgba(11, 18, 32, .08); --up: #0f8f5f; --down: #c23a3a;
+  --edge: rgba(255, 255, 255, .95); --lift-shadow: rgba(15, 23, 42, .18); --glow: rgba(15, 155, 132, .14); --sheen: rgba(255, 255, 255, .6);
+  --a: #0f9b84; --b: #74dcc2; --c: #9fd2ff; --d: #0b6f63;
   --tab-w: 56%; --photo-h: 132px; --lift: 96px;
   position: relative; display: grid; gap: 10px; color: var(--ink); font-variant-numeric: tabular-nums; }
+.card[data-group='prediction'] { --a: #3d63d9; --b: #8fb7ff; --c: #b9a7ff; --d: #2a3f9e; --glow: rgba(61, 99, 217, .12); }
+.card[data-group='funds'] { --a: #6f7b8b; --b: #aab6c4; --c: #d5dde7; --d: #4c5664; --glow: rgba(76, 86, 100, .1); }
 .card[data-compact] { --photo-h: 118px; --lift: 84px; }
 .card[data-mini] { --photo-h: 84px; --lift: 58px; gap: 8px; height: 100%; grid-template-rows: auto 1fr; }
 
-/* The frame: thick, near-black, very round; the whole card tilts inside it. */
+/* The frame: thick and very round; contact, near and far shadows so it stands on the page. */
 .frame { position: relative; perspective: 900px; border-radius: 30px; outline: none; -webkit-tap-highlight-color: transparent; }
 .frame[data-live] { cursor: pointer; touch-action: pan-y; }
 .frame:focus-visible { box-shadow: 0 0 0 2px var(--m-accent, #087a67); }
 .turn { position: relative; display: grid; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transform-style: preserve-3d; transition: transform .5s var(--pa-ease-spring, cubic-bezier(.34, 1.4, .64, 1)); }
 .frame[data-held] .turn { transition: transform .12s ease-out; }
-.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 22px 40px -24px rgba(10, 12, 16, .7); perspective: 700px; }
+.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); perspective: 700px;
+  box-shadow: inset 0 1px 0 var(--edge), 0 0 0 .5px rgba(11, 18, 32, .08), 0 2px 4px rgba(15, 23, 42, .06), 0 14px 24px -12px rgba(15, 23, 42, .18), 0 34px 60px -30px rgba(15, 23, 42, .36); }
 
-/* Photo: blurred into a colour field, so any picture reads like the reference's soft light. */
-.photo { position: absolute; inset: 6px 6px auto; height: var(--photo-h); overflow: hidden; border-radius: 24px 24px 0 0; background: radial-gradient(120% 140% at 80% 0%, #3a3f48, #1c1f25 70%); }
-.photo img { position: absolute; inset: -20%; width: 140%; height: 140%; object-fit: cover; filter: blur(16px) saturate(1.45) brightness(.92); transform: translateZ(0); }
-.card[data-group='prediction'] .photo img { filter: blur(16px) saturate(1.6) hue-rotate(-18deg) brightness(.9); }
-.label { position: absolute; z-index: 1; top: 18px; right: 22px; display: grid; justify-items: end; color: #fff; text-align: end; text-shadow: 0 1px 10px rgba(0, 0, 0, .25); }
+/* Top: three soft lights in the product's colours drift slowly under a fine grain; they move against the finger. */
+.photo { position: absolute; inset: 6px 6px auto; height: var(--photo-h); overflow: hidden; border-radius: 24px 24px 0 0; background: linear-gradient(135deg, var(--d), var(--a) 55%, var(--b)); }
+.photo i { position: absolute; border-radius: 50%; filter: blur(22px); will-change: transform; }
+.photo i:nth-child(1) { top: -40%; left: -10%; width: 70%; height: 140%; background: var(--b); opacity: .9; animation: driftA 11s ease-in-out infinite alternate; }
+.photo i:nth-child(2) { top: -30%; right: -15%; width: 65%; height: 130%; background: var(--c); opacity: .8; animation: driftB 13s ease-in-out infinite alternate; }
+.photo i:nth-child(3) { bottom: -60%; left: 30%; width: 60%; height: 120%; background: var(--a); opacity: .85; animation: driftC 9s ease-in-out infinite alternate; }
+.photo::after { content: ''; position: absolute; inset: 0; background: radial-gradient(rgba(255, 255, 255, .16) .5px, transparent .6px) 0 0 / 3px 3px, linear-gradient(180deg, rgba(255, 255, 255, .14), transparent 45%); mix-blend-mode: overlay; }
+@keyframes driftA { to { transform: translate(28%, 12%) scale(1.15); } }
+@keyframes driftB { to { transform: translate(-30%, 10%) scale(.9); } }
+@keyframes driftC { to { transform: translate(-25%, -20%) scale(1.2); } }
+.label { position: absolute; z-index: 1; top: 18px; right: 22px; display: grid; justify-items: end; color: #fff; text-align: end; text-shadow: 0 1px 10px rgba(0, 0, 0, .22);
+  transform: translate(calc(var(--px, 0) * -10px), calc(var(--py, 0) * -6px)); transition: transform .5s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.frame[data-held] .label { transition: transform .12s ease-out; }
 .label b { font-size: 15px; font-weight: 600; line-height: 20px; }
-.label small { font-size: 12px; font-weight: 500; line-height: 16px; opacity: .82; }
+.label small { font-size: 12px; font-weight: 500; line-height: 16px; opacity: .85; }
 
 /* Sheet with a tab: the tab's top right curves down into the sheet (convex, then concave — an S like a folder tab). */
-.sheet { position: relative; z-index: 2; display: grid; grid-template-rows: auto auto 1fr auto; min-height: 196px; margin-top: var(--lift); padding: 0 18px 16px; border-radius: 0 22px 24px 24px; background: var(--sheet);
+.sheet { position: relative; z-index: 2; display: grid; grid-template-rows: auto auto 1fr auto; min-height: 196px; margin-top: var(--lift); padding: 0 18px 16px; border-radius: 0 22px 24px 24px;
+  background: radial-gradient(120% 90% at 100% 100%, var(--glow), transparent 60%), linear-gradient(180deg, var(--sheet), var(--sheet-2));
+  box-shadow: 0 -12px 24px -14px var(--lift-shadow);
   transform-origin: 50% 100%; transition: transform .55s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)), box-shadow .55s; }
+/* Flow inside the sheet: a slow sheen crosses it and the product's light breathes in its corner. */
+.sheet::after { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(110deg, transparent 35%, var(--sheen) 50%, transparent 65%) 0 0 / 260% 100% no-repeat; opacity: .7; pointer-events: none; animation: sheen 7s ease-in-out infinite; }
+@keyframes sheen { 0%, 20% { background-position: 140% 0; } 70%, 100% { background-position: -40% 0; } }
+.sheet::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: radial-gradient(55% 65% at 50% 50%, var(--b), transparent 70%) 100% 100% / 150% 150% no-repeat; opacity: .2; pointer-events: none; animation: breathe 8s ease-in-out infinite alternate; }
+@keyframes breathe { to { background-position: 40% 70%; opacity: .32; } }
+.sheet > * { position: relative; z-index: 1; }
 /* Open (2026-11-04): the front flap drops by --drop and tips toward you; the paper rises out of the folder. */
 .frame[data-open] .sheet { transform: translateY(var(--drop, 120px)) rotateX(-14deg); box-shadow: 0 -18px 30px -18px rgba(0, 0, 0, .55); }
 .room { display: block; height: 0; transition: height .55s var(--pa-ease-spring, cubic-bezier(.34, 1.3, .64, 1)); }
@@ -46,7 +68,7 @@
 .paper .veil { background: linear-gradient(90deg, rgba(20, 22, 26, .16), rgba(20, 22, 26, .05)); }
 .paper .holdings li + li { border-color: rgba(20, 22, 26, .1); }
 .paper .holdings li small { color: rgba(20, 22, 26, .56); }
-.tab { position: relative; display: flex; align-items: center; width: var(--tab-w); height: 30px; margin: -30px 0 0 -18px; padding: 2px 18px 0; border-radius: 22px 14px 0 0; background: var(--sheet); }
+.tab { position: relative; display: flex; align-items: center; width: var(--tab-w); height: 30px; margin: -30px 0 0 -18px; padding: 2px 18px 0; border-radius: 22px 14px 0 0; background: var(--sheet); box-shadow: inset 0 1px 0 var(--edge), 0 -8px 16px -12px var(--lift-shadow); }
 .tab::after { content: ''; position: absolute; bottom: 0; left: 100%; width: 14px; height: 14px; background: radial-gradient(circle at 100% 0, transparent 13.5px, var(--sheet) 14px); }
 .tab b { overflow: hidden; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; letter-spacing: -.01em; }
 .subline { overflow: hidden; margin-top: 2px; color: var(--muted); font-size: 15px; line-height: 20px; white-space: nowrap; text-overflow: ellipsis; }
@@ -56,7 +78,7 @@
 .foot { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 4px 12px; min-width: 0; }
 .hero { display: grid; min-width: 0; }
 .hero small, .side small { color: var(--muted); font-size: 12px; line-height: 16px; }
-.figure { font-size: 38px; font-weight: 600; line-height: 44px; letter-spacing: -.03em; white-space: nowrap; }
+.figure { font-size: 38px; font-weight: 600; line-height: 44px; letter-spacing: -.03em; white-space: nowrap; text-shadow: 0 1px 0 var(--edge); }
 .figure em { margin-inline-start: 6px; color: var(--muted); font-size: 17px; font-style: normal; font-weight: 500; letter-spacing: 0; }
 .side { display: grid; flex: none; justify-items: end; margin-inline-start: auto; padding-bottom: 4px; text-align: end; }
 .side b { overflow: hidden; max-width: 100%; font-size: 17px; font-weight: 600; line-height: 22px; white-space: nowrap; text-overflow: ellipsis; }
@@ -76,7 +98,7 @@
 /* Holdings: one slim stacked bar on the front, the list on the back. */
 .bar { display: flex; gap: 3px; height: 10px; overflow: hidden; border-radius: 999px; }
 .bar i { min-width: 6px; }
-.card [data-i='0'] { background: #46d39a; } .card [data-i='1'] { background: #8fb8ff; } .card [data-i='2'] { background: #d9dde3; } .card [data-i='3'] { background: #6b717b; }
+.card [data-i='0'] { background: var(--a); } .card [data-i='1'] { background: var(--c); } .card [data-i='2'] { background: #c8ced6; } .card [data-i='3'] { background: #6b717b; }
 
 .grid { display: grid; grid-template-columns: 1fr 1fr; margin: 0; border-top: .5px solid var(--line); }
 .grid > div { display: grid; gap: 2px; min-width: 0; padding: 10px 0; }
@@ -130,10 +152,13 @@
 :global(.rwa-mobile) .card.card .label small, :global(.rwa-mobile) .card.card .label b { color: #fff; }
 :global(.rwa-mobile) .card.card .prov, :global(.rwa-mobile) .card.card .who small { color: var(--m-muted, #5b6472); }
 :global(.rwa-mobile) .card.card .risk { color: var(--m-faint, #8a9099); }
-:global(.rwa-mobile[data-theme='dark']) .card { --frame: #050607; --sheet: #1a1c21; }
-:global(.rwa-mobile[data-theme='dark']) .face { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .1), 0 22px 40px -24px rgba(0, 0, 0, .9); }
+:global(.rwa-mobile[data-theme='dark']) .card { --frame: #07080a; --sheet: #1f2228; --sheet-2: #16181d; --ink: #f4f5f7; --muted: rgba(244, 245, 247, .56); --line: rgba(255, 255, 255, .1); --up: #46d39a; --down: #ff7d70;
+  --edge: rgba(255, 255, 255, .07); --lift-shadow: rgba(0, 0, 0, .55); --glow: rgba(40, 200, 170, .12); --sheen: rgba(255, 255, 255, .06); --a: #0e7d6c; --b: #2fb89a; --c: #2c6f9e; --d: #06302b; }
+:global(.rwa-mobile[data-theme='dark']) .card[data-group='prediction'] { --a: #2a46a8; --b: #4f7de0; --c: #6a55c9; --d: #121b45; --glow: rgba(90, 120, 230, .12); }
+:global(.rwa-mobile[data-theme='dark']) .card[data-group='funds'] { --a: #3a424e; --b: #5b6676; --c: #2c333d; --d: #15191f; --glow: rgba(160, 170, 185, .08); }
+:global(.rwa-mobile[data-theme='dark']) .face { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(255, 255, 255, .1), 0 14px 24px -12px rgba(0, 0, 0, .6), 0 34px 60px -30px rgba(0, 0, 0, .9); }
 :global(.rwa-mobile[data-theme='dark']) .below { color: #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .card.card .prov, :global(.rwa-mobile[data-theme='dark']) .card.card .who small { color: #a3acb9; }
-@media (prefers-reduced-motion: reduce) { .turn, .sheet, .paper, .room { transition: none; } .glare { display: none; } }
+@media (prefers-reduced-motion: reduce) { .turn, .sheet, .paper, .room, .label { transition: none; } .glare { display: none; } .photo i, .sheet::after, .sheet::before { animation: none; } }
 :global(.rwa-mobile) .card.card .paperHead small, :global(.rwa-mobile) .card.card .paper .grid dt, :global(.rwa-mobile) .card.card .paper .holdings li small { color: rgba(20, 22, 26, .56); }
 :global(.rwa-mobile) .card.card .paper { color: #14161a; }

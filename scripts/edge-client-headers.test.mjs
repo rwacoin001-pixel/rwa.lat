@@ -17,13 +17,13 @@ const { verifyEdgeClient } = api.exports
 const SECRET = 'k'.repeat(48)
 const NOW = Date.UTC(2026, 9, 13, 12, 0, 0)
 
-function visitor({ ip = '203.0.113.7', country = 'JP', extra = {} } = {}) {
+function visitor({ ip = '203.0.113.7', country = 'JP', extra = {}, cf = {} } = {}) {
   const request = new Request('https://a-reit.com/v1/auth/register/email', {
     method: 'POST',
     headers: { 'cf-connecting-ip': ip, 'content-type': 'application/json', ...extra },
     body: '{"email":"a@example.com"}',
   })
-  Object.defineProperty(request, 'cf', { value: { country } })
+  Object.defineProperty(request, 'cf', { value: { country, ...cf } })
   return request
 }
 
@@ -58,4 +58,14 @@ test('without a secret the Worker forwards the visitor unsigned; unknown countri
   assert.equal(unsigned.headers.get('x-client-sig'), null)
   const signed = await withClientHeaders(visitor({ country: 'T1x' }), SECRET, NOW)
   assert.deepEqual(verifyEdgeClient(headersOf(signed), SECRET, NOW), { ip: '203.0.113.7', country: null })
+})
+
+test('region and city are forwarded URL-encoded, replacing anything the client sent', async () => {
+  const out = await withClientHeaders(visitor({ cf: { region: 'Guangdong', city: 'Dongguan' }, extra: { 'x-client-city': 'Forged' } }), SECRET, NOW)
+  assert.equal(out.headers.get('x-client-region'), 'Guangdong')
+  assert.equal(out.headers.get('x-client-city'), 'Dongguan')
+  const accented = await withClientHeaders(visitor({ cf: { city: 'São Paulo' } }), SECRET, NOW)
+  assert.equal(decodeURIComponent(accented.headers.get('x-client-city')), 'São Paulo')
+  const none = await withClientHeaders(visitor({ extra: { 'x-client-city': 'Forged' } }), SECRET, NOW)
+  assert.equal(none.headers.get('x-client-city'), null)
 })
