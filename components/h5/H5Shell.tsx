@@ -4,6 +4,8 @@ import { ProfileOverlay } from './ProfileOverlay'
 import { pullProfile, releaseProfile } from '@/lib/profile-overlay'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { pageTabs, place, settle, slideTab, stage } from '@/lib/page-swipe'
+import { prefetchScreens } from '@/lib/prefetch-screens'
+import { useEdgeBack } from './useEdgeBack'
 import { markTabNavigation } from '@/lib/app-navigation'
 import { ToastHost } from '@/components/ui/ToastHost'
 import { useI18n } from '@/lib/i18n'
@@ -47,7 +49,7 @@ function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | n
       const target = e.target as HTMLElement | null
       sx = t.clientX; sy = t.clientY; st = performance.now(); pulled = 0; mode = null
       // Keep the system's edge gestures, an open layer, fields and side-scrolling rows out of it.
-      armed = !busy && e.touches.length === 1 && sx > 16 && sx < window.innerWidth - 16 && !document.documentElement.dataset.aiOpen
+      armed = !busy && e.touches.length === 1 && sx > 24 && sx < window.innerWidth - 24 && !document.documentElement.dataset.aiOpen
         && !target?.closest('input,textarea,select,canvas,video,[role="dialog"],[data-no-swipe]') && !scrollsSideways(target)
     }
     const move = (e: TouchEvent) => {
@@ -106,6 +108,8 @@ export function H5Shell({ h, children }: { h: H5Controller; children: ReactNode 
   const [offlineClosed, setOfflineClosed] = useState(false)
   const [updateLater, setUpdateLater] = useState(false)
   useEffect(() => { if (isOnline) setOfflineClosed(false) }, [isOnline])
+  useEffect(() => { prefetchScreens() }, [])
+  useEdgeBack(!isFloatingSheet)
   return (
     <>
       <a className="skip-link" href="#main-content">{shellCopy.skipContent}</a>

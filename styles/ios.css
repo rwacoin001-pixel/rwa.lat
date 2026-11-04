@@ -546,6 +546,10 @@
 .rwa-mobile[data-theme='light'][data-screen] .ios-dock.liquid-dock .ai-orb::after { content: none; }
 @keyframes ios-pop { from { scale: .78; } to { scale: 1; } }
 
+/* Stack transition snapshot (components/motion-effects.tsx): a frozen copy of the outgoing page; nothing in it moves. */
+.rwa-snap, .rwa-snap * { animation: none !important; transition: none !important; caret-color: transparent; }
+.rwa-snap { overflow: hidden; contain: layout paint; }
+
 /* ── Page enter · a short rise on the spring instead of a blur-in ─────────────────────── */
 .rwa-screen-transition.rwa-enter { animation: ios-enter .5s var(--spring) backwards; }
 .rwa-screen-transition.rwa-return { animation: ios-return .16s ease-out backwards; }
