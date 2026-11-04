@@ -41,6 +41,7 @@ import { AdminAiKnowledgeController } from './admin-ai-knowledge.controller'
 import { AdminAiInvestmentController } from './admin-ai-investment.controller'
 import { AdminTodayController } from './admin-today.controller'
 import { AdminTodayService } from './admin-today.service'
+import { AdminAlertsRunner } from './admin-alerts.runner'
 
 const controllers = [
   AdminAiQueryController,
@@ -54,7 +55,7 @@ const providers = [
   AdminAiQueryService, AdminAiModelClient, AdminAiMfaGuard,
   AdminService, AdminAuthService, AdminTotpService, AdminSessionGuard, AdminCorePrincipalService, AdminPermissionGuard, AdminControlService,
   AdminStorageService, AdminWalletOpsService, AdminBasketService, AdminQuantService, AdminCommunityOpsService,
-  AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService, AdminTodayService,
+  AdminPredictionService, AdminCoreOpsService, AdminPlatformService, AdminLegalService, AdminTodayService, AdminAlertsRunner,
 ]
 
 @Module({})
