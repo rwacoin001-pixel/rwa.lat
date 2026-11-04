@@ -16,7 +16,8 @@ const { POSTER_PLATFORMS, POSTER_CATEGORIES, posterTemplates, buildPosterModel, 
 // Round-3 film posters join as their artwork is finished (only finished ones are listed in the layouts).
 const film = Object.keys(load('referral-poster-layouts-3').artLayouts3)
 const round4 = Object.keys(load('referral-poster-layouts-4').artLayouts4)
-const total = 39 + film.length + round4.length
+const round5 = Object.keys(load('referral-poster-layouts-5').artLayouts5)
+const total = 39 + film.length + round4.length + round5.length
 const filmIn = prefix => film.filter(id => id.startsWith(prefix)).length
 const rules = { version: 2, holdingRatesBps: [600, 300, 100], feeRatesBps: [2000, 1000, 500] }
 const input = { code: 'Sample12', locale: 'en', rules, purchaseRewardsEnabled: true, feeRewardsEnabled: true }

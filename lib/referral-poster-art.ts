@@ -1,5 +1,6 @@
 import type { AppLocale } from './app-locales'
 import { artMovement4 } from './referral-poster-art-4'
+import { artMovement5 } from './referral-poster-art-5'
 
 /* Art-style invitation posters (2026-11-04): the A-REIT mark (folded arch + teal door) re-imagined in four art styles.
    Artwork and the position of the headline on each one were designed per image; see lib/referral-poster-layouts.ts. */
@@ -39,7 +40,7 @@ export const artMovementNames: Record<AppLocale, Record<'ink' | 'vangogh' | 'bau
 }
 /** Line under a poster: the art movement (round 1), the family (round 2, whose name is the movement), or the reward. */
 export function posterMovement(style: string, locale: AppLocale): string | null {
-  const later = artMovement4(style, locale)
+  const later = artMovement4(style, locale) ?? artMovement5(style, locale)
   if (later) return later
   const base = style.replace(/^film([A-Z])/, (_, c: string) => c.toLowerCase())
   const group = (['ink', 'vangogh', 'bauhaus', 'cyber'] as const).find(prefix => base.startsWith(prefix))

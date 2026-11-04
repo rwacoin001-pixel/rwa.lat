@@ -29,7 +29,7 @@ export const artHeadlines4: Rows = {
 
 type Movement = 'surreal' | 'surrealMin' | 'minimalArch' | 'sketch' | 'board' | 'dreamy' | 'anime'
 const MOVEMENT_OF: Record<Art, Movement> = { filmDesertGate: 'surreal', filmMirrorGate: 'surrealMin', filmGlassGate: 'minimalArch', filmSketchGate: 'sketch', filmBlueprintGate: 'board', filmCloudGate: 'dreamy', animeSkyGate: 'anime', animeTwilightGate: 'anime', animeStarGate: 'anime' }
-const movementNames: Record<AppLocale, Record<Movement, string>> = {
+export const movementNames: Record<AppLocale, Record<Movement, string>> = {
   'zh-CN': { surreal: '超现实主义', surrealMin: '超现实极简', minimalArch: '极简建筑', sketch: '建筑速写', board: '建筑图解', dreamy: '梦幻超现实', anime: '新海诚风' },
   en: { surreal: 'Surrealism', surrealMin: 'Surreal minimalism', minimalArch: 'Minimal architecture', sketch: 'Architectural sketch', board: 'Architectural board', dreamy: 'Dream surrealism', anime: 'Shinkai-style anime' },
   hi: { surreal: 'अतियथार्थवाद', surrealMin: 'अतियथार्थ न्यूनतमवाद', minimalArch: 'न्यूनतम वास्तुकला', sketch: 'वास्तु रेखाचित्र', board: 'वास्तु प्रस्तुति', dreamy: 'स्वप्निल अतियथार्थ', anime: 'शिंकाई-शैली एनीमे' },
