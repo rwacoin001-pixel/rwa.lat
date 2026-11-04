@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { QRCodeCanvas } from 'qrcode.react'
 import { ReferralPosterComposer } from '@/components/maison/ReferralPosterComposer'
 import type { ReferralSummary } from '@/lib/api/referral'
-import { POSTER_PLATFORMS, posterTemplates, buildPosterModel, invitationUrl, type PosterPlatform } from '@/lib/referral-poster'
+import { POSTER_CATEGORIES, POSTER_PLATFORMS, posterCategoryNames, posterTemplates, buildPosterModel, invitationUrl, type PosterCategory, type PosterPlatform } from '@/lib/referral-poster'
 import { drawReferralPoster } from '@/lib/referral-poster-renderer'
 import { localeOptions, type AppLocale } from '@/lib/app-locales'
 
@@ -19,6 +19,7 @@ export default function ReferralPosterPreview() {
   const [result, setResult] = useState<unknown>(null), [busy, setBusy] = useState(false)
   const [enabled, setEnabled] = useState(true)
   const [galleryPlatform, setGalleryPlatform] = useState<PosterPlatform['id']>('xiaohongshu')
+  const [category, setCategory] = useState<PosterCategory>(() => { const value = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('category'); return POSTER_CATEGORIES.includes(value as PosterCategory) ? value as PosterCategory : 'minimal' })
   const [initialIndex, setInitialIndex] = useState(0), [initialFullscreen, setInitialFullscreen] = useState(false)
   const [gallery, setGallery] = useState<Array<{ id: string; title: string; url: string; width: number; height: number }>>([])
   const [galleryError, setGalleryError] = useState('')
@@ -27,14 +28,14 @@ export default function ReferralPosterPreview() {
     setGallery([]); setGalleryError('')
     const qrCanvas = qr.current?.querySelector('canvas')
     if (!qrCanvas) return
-    void Promise.all(posterTemplates(galleryPlatform).map(async template => {
+    void Promise.all(posterTemplates(galleryPlatform, category).map(async template => {
       const model = buildPosterModel({ code: 'Preview26', locale, template, rules: summary.rules, purchaseRewardsEnabled: true, feeRewardsEnabled: true })
       const canvas = document.createElement('canvas')
       await drawReferralPoster(canvas, model, qrCanvas, 600)
       return { id: template.id, title: model.styleName, url: canvas.toDataURL('image/png'), width: canvas.width, height: canvas.height }
     })).then(rows => { if (active) setGallery(rows) }).catch(error => { if (active) setGalleryError(String(error)) })
     return () => { active = false }
-  }, [galleryPlatform, locale])
+  }, [galleryPlatform, category, locale])
   async function sweep() {
     const codeCanvas = qr.current?.querySelector('canvas')
     if (!codeCanvas) return
@@ -56,11 +57,12 @@ export default function ReferralPosterPreview() {
   return <>
     <div ref={root} style={{ maxWidth: 1240, margin: 'auto', padding: 24, color: '#e4ece8', background: '#111718', minHeight: '100dvh', fontFamily: 'system-ui' }}>
       <h1 style={{ fontSize: 24 }}>A-REIT · 推荐海报</h1>
-      <p style={{ color: '#aab8b0', fontSize: 12 }}>六款抽象建筑海报 · 示例邀请码 Preview26</p>
+      <p style={{ color: '#aab8b0', fontSize: 12 }}>按风格分类的推荐海报 · 示例邀请码 Preview26</p>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 16 }}>
         <label>界面语言 <select value={locale} onChange={e => setLocale(e.target.value as AppLocale)}>{localeOptions.map(row => <option key={row.code} value={row.code}>{row.label}</option>)}</select></label>
         <label>主题 <select value={theme} onChange={e => setTheme(e.target.value as 'light' | 'dark')}><option value="light">浅色</option><option value="dark">深色</option></select></label>
         <label>平台尺寸 <select value={galleryPlatform} onChange={e => setGalleryPlatform(e.target.value as PosterPlatform['id'])}>{POSTER_PLATFORMS.map(platform => <option key={platform.id} value={platform.id}>{platform.label} · {platform.format}</option>)}</select></label>
+        <label>风格 <select value={category} onChange={e => setCategory(e.target.value as PosterCategory)}>{POSTER_CATEGORIES.map(id => <option key={id} value={id}>{posterCategoryNames['zh-CN'][id]}</option>)}</select></label>
         <button type="button" disabled={!/^[a-zA-Z0-9]{6,16}$/.test(code)} onClick={() => { setInitialIndex(0); setInitialFullscreen(false); setOpen(true) }} style={{ minHeight: 48 }}>生成推荐海报</button>
       </div>
       <div ref={qr} hidden><QRCodeCanvas value={invitationUrl('Preview26')} size={512} marginSize={4} level="H" /></div>
@@ -74,10 +76,10 @@ export default function ReferralPosterPreview() {
         <label>示例邀请码 <input value={code} maxLength={16} onChange={e => setCode(e.target.value.replace(/[^a-zA-Z0-9]/g, ''))} /></label>
         <label><input type="checkbox" checked={sourceReady} onChange={e => setReady(e.target.checked)} />规则已加载</label>
         <label><input type="checkbox" checked={enabled} onChange={e => setEnabled(e.target.checked)} />买入和手续费奖励已开启</label>
-        <button type="button" disabled={busy} onClick={() => void sweep()} style={{ minHeight: 48, width: '100%', marginBottom: 72 }}>{busy ? '检查中' : '检查全部 420 个语言模板'}</button>
+        <button type="button" disabled={busy} onClick={() => void sweep()} style={{ minHeight: 48, width: '100%', marginBottom: 72 }}>{busy ? '检查中' : `检查全部 ${localeOptions.length * POSTER_PLATFORMS.reduce((sum, platform) => sum + posterTemplates(platform.id).length, 0)} 个语言模板`}</button>
         {result !== null && <pre data-testid="sweep-result" style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere', fontSize: 11 }}>{JSON.stringify(result, null, 2)}</pre>}
       </details>
     </div>
-    {open && <ReferralPosterComposer key={code} code={code} summary={{ ...summary, purchaseRewardsEnabled: enabled, feeRewardsEnabled: enabled }} locale={locale} theme={theme} inertRef={root} sourceReady={sourceReady} initialPlatform={galleryPlatform} initialIndex={initialIndex} initialFullscreen={initialFullscreen} onClose={() => setOpen(false)} />}
+    {open && <ReferralPosterComposer key={code} code={code} summary={{ ...summary, purchaseRewardsEnabled: enabled, feeRewardsEnabled: enabled }} locale={locale} theme={theme} inertRef={root} sourceReady={sourceReady} initialPlatform={galleryPlatform} initialCategory={category} initialIndex={initialIndex} initialFullscreen={initialFullscreen} onClose={() => setOpen(false)} />}
   </>
 }

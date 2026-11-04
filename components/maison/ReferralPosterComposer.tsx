@@ -5,7 +5,7 @@ import { QRCodeCanvas } from 'qrcode.react'
 import { localeOptions, type AppLocale } from '@/lib/app-locales'
 import { getSessionToken, SESSION_CHANGED, SESSION_EXPIRED } from '@/lib/api/_http'
 import type { ReferralSummary } from '@/lib/api/referral'
-import { POSTER_PLATFORMS, buildPosterModel, invitationUrl, posterTemplates, posterPlatformName, type PosterModel, type PosterPlatform } from '@/lib/referral-poster'
+import { POSTER_CATEGORIES, POSTER_PLATFORMS, buildPosterModel, invitationUrl, posterCategoryNames, posterTemplates, posterPlatformName, type PosterCategory, type PosterModel, type PosterPlatform } from '@/lib/referral-poster'
 import { posterCopy } from '@/lib/referral-poster-copy'
 import { drawReferralPoster } from '@/lib/referral-poster-renderer'
 import { ReferralSheet, type SheetTheme } from './ReferralSheet'
@@ -36,13 +36,14 @@ function PosterThumbnail({ model, qr, width = 240 }: { model: PosterModel; qr: R
   return <canvas ref={ref} className={x.thumbnail} aria-hidden="true" />
 }
 
-export function ReferralPosterComposer({ code, summary, locale, theme, inertRef, onClose, sourceReady = true, initialPlatform = 'wechat', initialIndex = 0, initialFullscreen = false }: {
+export function ReferralPosterComposer({ code, summary, locale, theme, inertRef, onClose, sourceReady = true, initialPlatform = 'wechat', initialCategory = 'minimal', initialIndex = 0, initialFullscreen = false }: {
   code: string; summary: ReferralSummary; locale: AppLocale; theme: SheetTheme
   inertRef: RefObject<HTMLElement | null>; onClose: () => void; sourceReady?: boolean
-  initialPlatform?: PosterPlatform['id']; initialIndex?: number; initialFullscreen?: boolean
+  initialPlatform?: PosterPlatform['id']; initialCategory?: PosterCategory; initialIndex?: number; initialFullscreen?: boolean
 }) {
   const ui = posterCopy[locale]
   const [platformId, setPlatform] = useState<string>(initialPlatform), [index, setIndex] = useState(initialIndex)
+  const [category, setCategory] = useState<PosterCategory>(initialCategory)
   const [posterLocale, setPosterLocale] = useState<AppLocale>(locale)
   const [retry, setRetry] = useState(0), [status, setStatus] = useState(''), [error, setError] = useState('')
   const [output, setOutput] = useState<{ key: string; url: string; file: File } | null>(null)
@@ -51,13 +52,14 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
   const qrRef = useRef<HTMLDivElement>(null), canvasRef = useRef<HTMLCanvasElement>(null), stageRef = useRef<HTMLDivElement>(null)
   const mounted = useRef(true), initialSession = useRef(getSessionToken()), run = useRef(0)
   const platform = POSTER_PLATFORMS.find(item => item.id === platformId)!
-  const variants = useMemo(() => posterTemplates(platformId).map(template => {
+  const templates = useMemo(() => posterTemplates(platformId, category), [platformId, category])
+  const variants = useMemo(() => templates.map(template => {
     if (!sourceReady) return null
     try { return buildPosterModel({ code, locale: posterLocale, template, rules: summary.rules, purchaseRewardsEnabled: summary.purchaseRewardsEnabled, feeRewardsEnabled: summary.feeRewardsEnabled }) }
     catch { return null }
-  }), [platformId, code, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
+  }), [templates, code, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
   const selected = variants[index]
-  const selection = JSON.stringify([code, platformId, index, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
+  const selection = JSON.stringify([code, platformId, category, index, posterLocale, summary.rules, summary.purchaseRewardsEnabled, summary.feeRewardsEnabled, sourceReady])
   const latest = useRef(selection); latest.current = selection
   const current = () => mounted.current && initialSession.current === getSessionToken()
   const closeRef = useRef(onClose); closeRef.current = onClose
@@ -144,8 +146,12 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
         })}</div>
         <label className={x.lang}><span className={x.srOnly}>{ui.language}</span><select value={posterLocale} onChange={e => setPosterLocale(e.target.value as AppLocale)}>{localeOptions.map(option => <option key={option.code} value={option.code}>{option.label}</option>)}</select></label>
       </div>
+      {/* Style categories (2026-11-04): text-only chips; switching shows that style's first poster. */}
+      <div className={x.categories} role="group" aria-label={ui.templates}>{POSTER_CATEGORIES.map(id =>
+        <button key={id} type="button" aria-pressed={category === id} onClick={() => { if (id === category) return; setCategory(id); setIndex(0); stageRef.current?.scrollTo({ left: 0 }) }}>{posterCategoryNames[locale][id]}</button>)}
+      </div>
       <div ref={stageRef} className={x.stage} style={{ '--poster-ratio': platform.width / platform.height } as CSSProperties} onScroll={pickFromScroll} aria-busy={!!selected && !ready && !error}>
-        {variants.map((model, i) => <button key={posterTemplates(platformId)[i].id} type="button" className={x.slide} data-on={index === i || undefined} disabled={!model}
+        {variants.map((model, i) => <button key={templates[i].id} type="button" className={x.slide} data-on={index === i || undefined} disabled={!model}
           aria-label={model ? `${model.styleName} · ${ui[model.template.kind]}` : ui.unavailable} aria-pressed={index === i}
           onClick={() => { if (index === i && ready) setExpanded(true); else scrollToSlide(i) }}>
           {index === i && ready ? poster : model ? <PosterThumbnail model={model} qr={qrRef} width={480} /> : <span className={x.placeholder}>{ui.unavailable}</span>}

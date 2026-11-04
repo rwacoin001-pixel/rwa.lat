@@ -65,3 +65,10 @@
 .save, .share { min-height: 52px; }
 .share { background: var(--r-surface); border-color: transparent; }
 @media (prefers-reduced-motion: reduce) { .slide.slide { transition: none; } }
+
+/* Style categories (2026-11-04): a second, lighter row of text chips under the sizes; scrolls sideways on narrow phones. */
+.categories { display: flex; gap: 6px; margin-top: 12px; padding: 0 16px; overflow-x: auto; scrollbar-width: none; overscroll-behavior-inline: contain; }
+.categories::-webkit-scrollbar { display: none; }
+.categories button { flex: none; min-height: 36px; padding: 0 14px; border: 1px solid var(--r-line); border-radius: 999px; background: transparent; color: var(--r-muted); font: inherit; font-size: 13px; font-weight: 500; cursor: pointer; transition: background-color .2s, color .2s, border-color .2s; }
+.categories button[aria-pressed='true'] { background: var(--r-ink); border-color: var(--r-ink); color: var(--r-on-ink); }
+.stage { --stage-h: calc(100dvh - 348px - env(safe-area-inset-top) - env(safe-area-inset-bottom)); margin-top: 16px; }
