@@ -33,3 +33,52 @@ export function usePageTabs<T>(tabs: readonly T[], value: T, onChange: (next: T)
     return () => { if (current === stepper) current = null }
   }, [enabled])
 }
+
+/**
+ * What moves with the finger (2026-11-04, user: like the personal centre, the page must not just pop — you should see
+ * it change). The page marks its tab bar with `data-page-tabs`; everything after it slides, the bar stays. A swipe to
+ * the previous dock page slides the bar too.
+ */
+export function stage(withTabs: boolean): HTMLElement[] {
+  const bar = document.querySelector<HTMLElement>('.rwa-mobile [data-page-tabs]')
+  if (!bar) return []
+  const out: HTMLElement[] = withTabs ? [bar] : []
+  for (let el = bar.nextElementSibling; el; el = el.nextElementSibling) if (el instanceof HTMLElement) out.push(el)
+  return out
+}
+
+const EASE = 'cubic-bezier(.22, 1, .36, 1)'
+export function place(els: HTMLElement[], x: number, ms = 0) {
+  const fade = Math.min(1, Math.abs(x) / Math.max(1, window.innerWidth))
+  for (const el of els) {
+    el.style.transition = ms ? `transform ${ms}ms ${EASE}, opacity ${ms}ms ${EASE}` : 'none'
+    el.style.transform = x ? `translate3d(${x}px, 0, 0)` : ''
+    el.style.opacity = x ? String(1 - fade * .35) : ''
+  }
+}
+export function clear(els: HTMLElement[]) {
+  for (const el of els) { el.style.transition = ''; el.style.transform = ''; el.style.opacity = '' }
+}
+
+/** Finish a tab swipe: the old tab leaves the way the finger went, the new one comes in from the other side. */
+export function slideTab(els: HTMLElement[], x: number, step: () => void) {
+  const width = window.innerWidth, out = Math.sign(x) * width
+  place(els, out, 170)
+  window.setTimeout(() => {
+    step()
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      clear(els)
+      const next = stage(false)
+      place(next, -out * .45)
+      void next[0]?.offsetWidth
+      place(next, 0, 300)
+      window.setTimeout(() => clear(next), 320)
+    }))
+  }, 170)
+}
+
+/** Settle back when the swipe was too short. */
+export function settle(els: HTMLElement[]) {
+  place(els, 0, 220)
+  window.setTimeout(() => clear(els), 240)
+}

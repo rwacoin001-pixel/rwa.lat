@@ -338,7 +338,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
   const feed = (
     <div className={c.x} data-embedded={embedded || undefined} data-view={view}>
       {/* Reading down slides the top row away; the tabs stay pinned. A small upward scroll brings it back (X mobile). */}
-      <header className={c.head} data-hidden={chromeHidden} data-glass-bar="">
+      <header className={c.head} data-hidden={chromeHidden} data-glass-bar="" data-page-tabs={embedded ? undefined : ""}>
         {!embedded && <div className={`${c.headRow} ${c.headRowTabs}`}>
           <div className={c.pageTabs} role="tablist" aria-label={t('nav.community')}>
             {([['feed', t('nav.community')], ['invite', invite.tab]] as const).map(([key, label]) => <button key={key} type="button" role="tab" aria-selected={view === key} onClick={() => pick(key)}>{label}</button>)}

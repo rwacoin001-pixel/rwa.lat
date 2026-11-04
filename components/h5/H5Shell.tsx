@@ -3,7 +3,7 @@ import { AiOverlay } from './AiOverlay'
 import { ProfileOverlay } from './ProfileOverlay'
 import { pullProfile, releaseProfile } from '@/lib/profile-overlay'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { pageTabs } from '@/lib/page-swipe'
+import { pageTabs, place, settle, slideTab, stage } from '@/lib/page-swipe'
 import { markTabNavigation } from '@/lib/app-navigation'
 import { ToastHost } from '@/components/ui/ToastHost'
 import { useI18n } from '@/lib/i18n'
@@ -40,13 +40,14 @@ function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | n
     // Warm the personal centre so the first pull has something to follow.
     if (profile) void import('../maison/AccountScreen')
     let sx = 0, sy = 0, st = 0, pulled = 0, armed = false, mode: null | 'profile' | 'tab' | 'back' = null, dir: 1 | -1 = 1
+    let moving: HTMLElement[] = [], busy = false
     const rtl = () => document.documentElement.dir === 'rtl'
     const start = (e: TouchEvent) => {
       const t = e.touches[0]
       const target = e.target as HTMLElement | null
       sx = t.clientX; sy = t.clientY; st = performance.now(); pulled = 0; mode = null
       // Keep the system's edge gestures, an open layer, fields and side-scrolling rows out of it.
-      armed = e.touches.length === 1 && sx > 16 && sx < window.innerWidth - 16 && !document.documentElement.dataset.aiOpen
+      armed = !busy && e.touches.length === 1 && sx > 16 && sx < window.innerWidth - 16 && !document.documentElement.dataset.aiOpen
         && !target?.closest('input,textarea,select,canvas,video,[role="dialog"],[data-no-swipe]') && !scrollsSideways(target)
     }
     const move = (e: TouchEvent) => {
@@ -61,18 +62,26 @@ function usePageSwipe(enabled: boolean, profile: boolean, back: (() => void) | n
         mode = tabs?.can(dir) ? 'tab' : dir === 1 && profile ? 'profile' : dir === -1 && tabs && backRef.current ? 'back' : null
         if (!mode) { armed = false; return }
         sx = t.clientX; st = performance.now()
+        // The page follows the finger (2026-11-04): the tab content, or the whole page on a swipe back to the dock.
+        moving = mode === 'profile' ? [] : stage(mode === 'back')
       }
       pulled = Math.max(0, dir * (rtl() ? 1 : -1) * (t.clientX - sx))
       if (mode === 'profile') pullProfile(pulled)
+      else place(moving, -dir * (rtl() ? -1 : 1) * pulled)
     }
     const end = () => {
       if (!armed || !mode) { armed = false; return }
       armed = false
       const speed = pulled / Math.max(1, performance.now() - st)
       if (mode === 'profile') { releaseProfile(pulled > Math.min(window.innerWidth, 480) / 3 || (speed > .5 && pulled > 40)); return }
-      if (!(pulled > 56 || (speed > .4 && pulled > 32))) return
-      if (mode === 'tab') pageTabs()?.step(dir)
-      else backRef.current?.()
+      const els = moving
+      moving = []
+      if (!(pulled > Math.min(window.innerWidth, 480) / 4 || (speed > .4 && pulled > 32))) { settle(els); return }
+      const x = -dir * (rtl() ? -1 : 1) * pulled
+      busy = true
+      window.setTimeout(() => { busy = false }, 520)
+      if (mode === 'tab') { const tabs = pageTabs(); slideTab(els, x, () => tabs?.step(dir)) }
+      else { place(els, Math.sign(x) * window.innerWidth, 170); window.setTimeout(() => { backRef.current?.(); requestAnimationFrame(() => els.forEach((el) => { el.style.transition = ''; el.style.transform = ''; el.style.opacity = '' })) }, 170) }
     }
     window.addEventListener('touchstart', start, { passive: true })
     window.addEventListener('touchmove', move, { passive: true })
