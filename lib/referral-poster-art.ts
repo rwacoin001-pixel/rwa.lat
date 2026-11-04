@@ -38,6 +38,7 @@ export const artMovementNames: Record<AppLocale, Record<'ink' | 'vangogh' | 'bau
 }
 /** Line under a poster: the art movement (round 1), the family (round 2, whose name is the movement), or the reward. */
 export function posterMovement(style: string, locale: AppLocale): string | null {
-  const group = (['ink', 'vangogh', 'bauhaus', 'cyber'] as const).find(prefix => style.startsWith(prefix))
+  const base = style.replace(/^film([A-Z])/, (_, c: string) => c.toLowerCase())
+  const group = (['ink', 'vangogh', 'bauhaus', 'cyber'] as const).find(prefix => base.startsWith(prefix))
   return group ? artMovementNames[locale][group] : null
 }

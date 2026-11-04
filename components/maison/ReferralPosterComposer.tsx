@@ -13,10 +13,11 @@ import { ReferralSheet, type SheetTheme } from './ReferralSheet'
 import { nativeCan, nativeSaveImage, nativeShare } from '@/lib/native-app'
 import x from './referral-poster.module.css'
 
-const FORMATS = ['wechat', 'xiaohongshu', 'douyin', 'x'] as const
+// No 16:9 (2026-11-04, user: the wide poster does not look good).
+const FORMATS = ['wechat', 'xiaohongshu', 'douyin'] as const
 const FORMAT_NAMES: Partial<Record<AppLocale, Record<typeof FORMATS[number], string>>> = {
-  'zh-CN': { wechat: '方图', xiaohongshu: '竖图', douyin: '全屏', x: '横图' },
-  en: { wechat: 'Square', xiaohongshu: 'Portrait', douyin: 'Story', x: 'Wide' },
+  'zh-CN': { wechat: '方图', xiaohongshu: '竖图', douyin: '全屏' },
+  en: { wechat: 'Square', xiaohongshu: 'Portrait', douyin: 'Story' },
 }
 
 function PosterThumbnail({ model, qr, width = 240 }: { model: PosterModel; qr: RefObject<HTMLDivElement | null>; width?: number }) {

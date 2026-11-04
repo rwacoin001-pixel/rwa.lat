@@ -13,19 +13,23 @@ function load(file) {
   return exports
 }
 const { POSTER_PLATFORMS, POSTER_CATEGORIES, posterTemplates, buildPosterModel, invitationUrl } = load('referral-poster')
+// Round-3 film posters join as their artwork is finished (only finished ones are listed in the layouts).
+const film = Object.keys(load('referral-poster-layouts-3').artLayouts3)
+const total = 39 + film.length
+const filmIn = prefix => film.filter(id => id.startsWith(prefix)).length
 const rules = { version: 2, holdingRatesBps: [600, 300, 100], feeRatesBps: [2000, 1000, 500] }
 const input = { code: 'Sample12', locale: 'en', rules, purchaseRewardsEnabled: true, feeRewardsEnabled: true }
-test('ten platforms each expose 39 distinct posters in seven style families', () => {
+test('ten platforms each expose 51 distinct posters in seven style families', () => {
   assert.equal(POSTER_PLATFORMS.length, 10)
   assert.deepEqual(Array.from(POSTER_CATEGORIES), ['minimal', 'ink', 'painting', 'modern', 'future', 'dream', 'graphic'])
   for (const platform of POSTER_PLATFORMS) {
     const templates = posterTemplates(platform.id)
-    assert.equal(templates.length, 39)
-    assert.equal(new Set(templates.map(t => t.id)).size, 39)
-    assert.equal(new Set(templates.map(t => t.style)).size, 39)
-    assert.equal(new Set(templates.map(t => t.art)).size, 39)
+    assert.equal(templates.length, total)
+    assert.equal(new Set(templates.map(t => t.id)).size, total)
+    assert.equal(new Set(templates.map(t => t.style)).size, total)
+    assert.equal(new Set(templates.map(t => t.art)).size, total)
     assert.equal(posterTemplates(platform.id, 'minimal').length, 6)
-    assert.deepEqual(Array.from(POSTER_CATEGORIES, c => posterTemplates(platform.id, c).length), [6, 4, 5, 8, 8, 3, 5])
+    assert.deepEqual(Array.from(POSTER_CATEGORIES, c => posterTemplates(platform.id, c).length), [6, 4 + filmIn('filmInk'), 5 + filmIn('filmVangogh'), 8 + filmIn('filmBauhaus'), 8 + filmIn('filmCyber'), 3, 5])
     for (const category of POSTER_CATEGORIES.slice(1)) {
       const art = posterTemplates(platform.id, category)
       for (const t of art) {
@@ -65,7 +69,7 @@ test('unknown, disabled and missing rules cannot silently produce promotional pe
   }
   assert.throws(() => buildPosterModel({ ...input, template: { id: 'forged', platform: 'instagram', kind: 'purchase' } }))
 })
-test('all seven languages produce complete text, real link and direction in all 390 templates', () => {
+test('all seven languages produce complete text, real link and direction in all 510 templates', () => {
   for (const locale of ['en', 'zh-CN', 'hi', 'es', 'ar', 'fr', 'pt']) for (const platform of POSTER_PLATFORMS) for (const template of posterTemplates(platform.id)) {
     const model = buildPosterModel({ ...input, template, locale })
     assert.equal(model.dir, locale === 'ar' ? 'rtl' : 'ltr')

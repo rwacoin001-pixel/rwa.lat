@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
+import dynamic from 'next/dynamic'
 import { useQuery } from '@/lib/api/_query'
 import { Check, Copy, ImagePlus } from 'lucide-react'
 import { claimReferralRewards, referralAwards, referralInvitees, referralMe, referralSummary } from '@/lib/api/referral'
@@ -12,6 +13,10 @@ import { useI18n, type AppLocale } from '@/lib/i18n'
 import { fromAtomic } from '@/lib/money'
 import { openPath } from '@/lib/maison-nav'
 import { showToast } from '@/lib/toast-store'
+import { nativeCan, nativeShare } from '@/lib/native-app'
+import { useHostTheme } from '@/components/maison/ReferralSheet'
+// The poster studio opens right here on home (2026-11-04, user): no detour through the invite page.
+const ReferralPosterComposer = dynamic(() => import('@/components/maison/ReferralPosterComposer').then(module => module.ReferralPosterComposer), { ssr: false })
 // Colour portraits of different professions (2026-10-29, user: every face in colour, many trades), one per member,
 // always the same one for a member; empty seats take a fixed spread so the row reads as a mix of people.
 const professionAvatar = (seed: string, seat?: number) => {
@@ -42,6 +47,9 @@ export function HomeReferral() {
   const me = useCommunityMe(false)
   const code = useQuery('referral:v2:me', referralMe, { staleTime: 300_000 }).data?.code
   const [copied, setCopied] = useState(false)
+  const [posterOpen, setPosterOpen] = useState(false)
+  const cardRef = useRef<HTMLElement>(null)
+  const theme = useHostTheme(cardRef)
   const hideMoney = useBalancesHidden() !== false
   // Claim (2026-10-28): one idempotency key per claim attempt, kept across retries; the key folds into a ring while the
   // server works, shows a check once it confirms, and the receipt names the amount the server actually moved.
@@ -51,6 +59,15 @@ export function HomeReferral() {
     if (!code) return
     try { await navigator.clipboard.writeText(invitationLink(code)); setCopied(true); navigator.vibrate?.(8); window.setTimeout(() => setCopied(false), 1200) }
     catch { showToast(c.copyFailed, 'error') }
+  }
+  // 邀请 opens the system share sheet at once (2026-11-04, user). Called inside the tap so iOS keeps the user gesture;
+  // the Android app's WebView has no Web Share, so the app shares natively. Without either, the link is copied.
+  const share = () => {
+    if (!code) return
+    const url = invitationLink(code)
+    if (nativeCan('share')) { void nativeShare({ title: 'A-REIT', url }).then(result => { if (!result.ok && result.reason === 'failed') void copyLink() }); return }
+    if (!navigator.share) { void copyLink(); return }
+    navigator.share({ title: 'A-REIT', url }).catch((error: unknown) => { if (!(error instanceof DOMException && error.name === 'AbortError')) void copyLink() })
   }
   if (!data || !data.payoutsEnabled) return null
   const units = (atomic: string, decimals = data.decimals) => { try { return Number(fromAtomic(atomic, decimals)) } catch { return 0 } }
@@ -79,7 +96,7 @@ export function HomeReferral() {
   // Invite card (2026-10-28, after the user's wallet reference): a soft grey panel with a pill label and the reward
   // large in the middle; five round faces sit across its lower edge (grey seats until friends join); the latest reward
   // as one row; round rules key, porcelain claim, ink invite.
-  return <section className={r.card} aria-label={c.label}>
+  return <section ref={cardRef} className={r.card} aria-label={c.label}>
     <div className={r.panel}>
       <div className={r.top}>
         <span className={r.who}>{me ? <CommunityAvatar avatarUrl={me.avatarUrl} seed={me.avatarSeed} handle={me.handle || 'me'} size={20} /> : null}<b dir="auto">{me?.displayName || c.label}</b></span>
@@ -107,11 +124,12 @@ export function HomeReferral() {
     </div>
     <div className={r.acts}>
       <button type="button" className={r.round} aria-label={copied ? c.copied : c.copy} data-done={copied || undefined} onClick={() => void copyLink()}>{copied ? <Check size={20} strokeWidth={2} aria-hidden="true" /> : <Copy size={20} strokeWidth={1.8} aria-hidden="true" />}</button>
-      <button type="button" className={r.round} aria-label={c.poster} onClick={open}><ImagePlus size={20} strokeWidth={1.8} aria-hidden="true" /></button>
+      <button type="button" className={r.round} aria-label={c.poster} aria-haspopup="dialog" onClick={() => { if (code) setPosterOpen(true); else open() }}><ImagePlus size={20} strokeWidth={1.8} aria-hidden="true" /></button>
       <button type="button" className={r.claim} onClick={() => { if (claimable > 0) void claim(); else showToast(c.nothing, 'info') }} disabled={busy} aria-busy={busy} aria-label={busy ? c.claiming : undefined} data-state={busy ? 'busy' : receipt ? 'done' : undefined} data-empty={claimable > 0 || receipt ? undefined : ''}>
         {busy ? <i className={r.ring} aria-hidden="true" /> : receipt ? <Check size={20} strokeWidth={2.4} aria-hidden="true" /> : <>{c.claim}<i aria-hidden="true">↓</i></>}</button>
-      <button type="button" className={r.invite} onClick={event => { sparkBurst(event); open() }}>{c.inviteShort}<i aria-hidden="true">↑</i></button>
+      <button type="button" className={r.invite} onClick={event => { sparkBurst(event); if (code) share(); else open() }}>{c.inviteShort}<i aria-hidden="true">↑</i></button>
     </div>
+    {posterOpen && code && <ReferralPosterComposer key={code} code={code.toUpperCase()} summary={data} locale={locale} theme={theme} inertRef={cardRef} onClose={() => setPosterOpen(false)} />}
     {receipt && <p className={r.receipt} role="status"><Check size={14} strokeWidth={2.4} aria-hidden="true" />{receipt}</p>}
   </section>
 }

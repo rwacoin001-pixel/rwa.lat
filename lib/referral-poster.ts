@@ -4,6 +4,8 @@ import { ART_STYLES, artHeadlines, artStyleNames } from './referral-poster-art'
 import { ART_STYLES_2, artHeadlines2, artStyleNames2 } from './referral-poster-art-2'
 import { artLayouts } from './referral-poster-layouts'
 import { artLayouts2 } from './referral-poster-layouts-2'
+import { ART_STYLES_3, artHeadlines3, artStyleNames3 } from './referral-poster-art-3'
+import { artLayouts3 } from './referral-poster-layouts-3'
 
 export const POSTER_PLATFORMS = [
   { id: 'wechat', label: '微信', width: 1440, height: 1440, format: '1:1', layout: 'community' },
@@ -23,7 +25,7 @@ export function posterPlatformName(platform: PosterPlatform, locale: AppLocale):
   return ({ wechat: 'WeChat', xiaohongshu: 'RedNote', douyin: 'Douyin' } as Record<string, string>)[platform.id] ?? platform.label
 }
 export type PosterKind = 'brand' | 'purchase' | 'fee' | 'guide'
-export type ArtStyle = typeof ART_STYLES[number] | typeof ART_STYLES_2[number]
+export type ArtStyle = typeof ART_STYLES[number] | typeof ART_STYLES_2[number] | typeof ART_STYLES_3[number]
 export type PosterStyle = 'portal' | 'statement' | 'connection' | 'skyline' | 'orbit' | 'terrace' | ArtStyle
 // Style families (2026-11-04 round 2): the chips group 39 posters by family; 'random' is a UI mode, not a family.
 export type PosterCategory = 'minimal' | 'ink' | 'painting' | 'modern' | 'future' | 'dream' | 'graphic'
@@ -69,8 +71,8 @@ const merge = (minimal: Record<AppLocale, Record<MinimalStyle, string>>, art: Re
   Object.fromEntries(Object.keys(minimal).map(locale => [locale, { ...minimal[locale as AppLocale], ...art[locale as AppLocale] }])) as Record<AppLocale, Record<PosterStyle, string>>
 const both = (a: Record<AppLocale, Record<string, string>>, b: Record<AppLocale, Record<string, string>>) =>
   Object.fromEntries(Object.keys(a).map(locale => [locale, { ...a[locale as AppLocale], ...b[locale as AppLocale] }])) as Record<AppLocale, Record<ArtStyle, string>>
-export const posterStyleNames = merge(minimalStyleNames, both(artStyleNames, artStyleNames2))
-const posterHeadlines = merge(minimalHeadlines, both(artHeadlines, artHeadlines2))
+export const posterStyleNames = merge(minimalStyleNames, both(both(artStyleNames, artStyleNames2), artStyleNames3))
+const posterHeadlines = merge(minimalHeadlines, both(both(artHeadlines, artHeadlines2), artHeadlines3))
 const templates: PosterTemplate[] = POSTER_PLATFORMS.flatMap(platform => {
   const third: PosterKind = ['xiaohongshu', 'linkedin', 'tiktok'].includes(platform.id) ? 'guide' : 'fee'
   const styles: Array<Omit<PosterTemplate, 'id' | 'platform'>> = [
@@ -89,8 +91,9 @@ const templates: PosterTemplate[] = POSTER_PLATFORMS.flatMap(platform => {
   }
   const minimal = styles.map((style, index) => ({ ...style, layout: minimalLayout(style), id: `${platform.id}-${index < 3 ? style.kind : style.style}`, platform: platform.id }))
   // Art styles are always the brand poster: no reward figures, so they never depend on a reward switch.
-  const layouts = { ...artLayouts, ...artLayouts2 } as Record<ArtStyle, typeof artLayouts[keyof typeof artLayouts]>
-  const art = [...ART_STYLES, ...ART_STYLES_2].map((style): PosterTemplate => {
+  const layouts = { ...artLayouts, ...artLayouts2, ...artLayouts3 } as Record<ArtStyle, typeof artLayouts[keyof typeof artLayouts]>
+  // Film one-sheets first; the round-1 originals stay at the end of their families.
+  const art = [...ART_STYLES_2, ...ART_STYLES_3.filter(style => artLayouts3[style]), ...ART_STYLES].map((style): PosterTemplate => {
     const { file, category, layout } = layouts[style]
     return { id: `${platform.id}-${style}`, platform: platform.id, style, kind: 'brand', dark: layout.footer === 'dark', art: file, category, layout }
   })

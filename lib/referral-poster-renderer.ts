@@ -13,6 +13,41 @@ function image(src: string): Promise<HTMLImageElement> {
   images.set(src, pending)
   return pending
 }
+/** Reads the module grid back from a plain QR canvas (quiet zone included), via the top-left finder pattern. */
+const grids = new WeakMap<HTMLCanvasElement, boolean[][]>()
+function qrGrid(qr: HTMLCanvasElement): boolean[][] {
+  const known = grids.get(qr)
+  if (known) return known
+  const size = qr.width, data = qr.getContext('2d')!.getImageData(0, 0, size, size).data
+  const dark = (x: number, y: number) => data[(Math.floor(y) * size + Math.floor(x)) * 4] < 128
+  // The finder's top row is 7 dark modules; its first dark pixel on the diagonal marks the quiet zone's end.
+  let start = 0
+  while (start < size && !dark(start, start)) start++
+  let end = start
+  while (end < size && dark(end, start)) end++
+  const module = (end - start) / 7, count = Math.round((size - 2 * start) / module)
+  const grid = Array.from({ length: count }, (_, row) => Array.from({ length: count }, (_, col) => dark(start + (col + .5) * module, start + (row + .5) * module)))
+  grids.set(qr, grid)
+  return grid
+}
+/** A rounded white plate with soft rounded modules and rounded finder eyes (2026-11-04, user: rounded QR). */
+function drawRoundedQr(ctx: CanvasRenderingContext2D, qr: HTMLCanvasElement, x: number, y: number, size: number) {
+  const grid = qrGrid(qr), n = grid.length, unit = size / (n + 6), pad = unit * 3
+  ctx.save()
+  ctx.fillStyle = '#FFFFFF'; ctx.beginPath(); ctx.roundRect(x, y, size, size, size * .12); ctx.fill()
+  ctx.fillStyle = '#0B1110'
+  const eye = (row: number, col: number) => (row < 7 && col < 7) || (row < 7 && col >= n - 7) || (row >= n - 7 && col < 7)
+  for (let row = 0; row < n; row++) for (let col = 0; col < n; col++) {
+    if (!grid[row][col] || eye(row, col)) continue
+    ctx.beginPath(); ctx.roundRect(x + pad + col * unit + unit * .04, y + pad + row * unit + unit * .04, unit * .92, unit * .92, unit * .38); ctx.fill()
+  }
+  for (const [row, col] of [[0, 0], [0, n - 7], [n - 7, 0]]) {
+    const ex = x + pad + col * unit, ey = y + pad + row * unit
+    ctx.beginPath(); ctx.roundRect(ex, ey, unit * 7, unit * 7, unit * 2); ctx.roundRect(ex + unit, ey + unit, unit * 5, unit * 5, unit * 1.3); ctx.fill('evenodd')
+    ctx.beginPath(); ctx.roundRect(ex + unit * 2, ey + unit * 2, unit * 3, unit * 3, unit * .9); ctx.fill()
+  }
+  ctx.restore()
+}
 const FONT = 'Arial,"Noto Sans","Nirmala UI","PingFang SC","Microsoft YaHei",sans-serif'
 type Rect = { x: number; y: number; width: number; height: number }
 type Bounds = Rect & { name: string; size: number }
@@ -261,15 +296,15 @@ export async function drawReferralPoster(canvas: HTMLCanvasElement, model: Poste
     ctx.fillStyle = footerWash; ctx.fillRect(0, footerY - 18, W, 53)
     ctx.fillStyle = `${fbg}F7`; ctx.fillRect(0, footerY + 35, W, H - footerY - 35)
   }
-  const qrSize = landscape ? 90 : 120, qrX = rtl ? m : W - m - qrSize
+  // Bigger on 9:16 (2026-11-04): those posters are only 1080 px wide and get scaled down again when forwarded in chats.
+  const qrSize = landscape ? 90 : story ? 150 : 130, qrX = rtl ? m : W - m - qrSize
   const footerX = rtl ? m + qrSize + 28 : m, footerW = W - m * 2 - qrSize - 28
-  ctx.fillStyle = '#FFFFFF'; ctx.fillRect(qrX, footerY, qrSize, qrSize)
-  ctx.imageSmoothingEnabled = false; ctx.drawImage(qr, qrX, footerY, qrSize, qrSize); ctx.imageSmoothingEnabled = true
+  drawRoundedQr(ctx, qr, qrX, footerY, qrSize)
   text('codeLabel', model.codeLabel, { x: footerX, y: footerY + 1, width: footerW, height: landscape ? 23 : 30 }, landscape ? 14 : 18, 400, fMuted)
   text('code', model.code, { x: footerX, y: footerY + (landscape ? 26 : 34), width: footerW, height: landscape ? 34 : 46 }, landscape ? 24 : 32, 650, fInk, true)
   text('link', `a-reit.com · V${model.version}`, { x: footerX, y: footerY + (landscape ? 65 : 88), width: footerW, height: 26 }, landscape ? 13 : 17, 400, fMuted, true)
-  text('scanLabel', model.scanLabel, { x: qrX - (landscape ? 22 : 7), y: footerY + qrSize + 5, width: qrSize + (landscape ? 44 : 14), height: landscape ? 44 : 36 }, landscape ? 12 : 13, 500, fInk)
-  text('disclaimer', model.disclaimer, { x: landscape ? footerX : m, y: footerY + (landscape ? 118 : 166), width: landscape ? footerW : W - m * 2, height: landscape ? 32 : 38 }, landscape ? 12 : 14, 400, fMuted)
+  text('scanLabel', model.scanLabel, { x: qrX - (landscape ? 22 : 7), y: footerY + qrSize + 5, width: qrSize + (landscape ? 44 : 14), height: landscape ? 44 : 36 }, landscape ? 12 : 13, 500, fInk, false, false, 'center')
+  text('disclaimer', model.disclaimer, { x: footerX, y: footerY + (landscape ? 118 : 166), width: footerW, height: landscape ? 32 : 38 }, landscape ? 12 : 14, 400, fMuted)
   const outside = bounds.find(box => box.x < 0 || box.y < 0 || box.x + box.width > W + 1 || box.y + box.height > H - reserve + 1)
   if (outside) throw new Error(`Poster text outside safe area: ${outside.name}`)
   const obscured = bounds.find(box => artwork.some(photo => Math.min(box.x + box.width, photo.x + photo.width) - Math.max(box.x, photo.x) > 1 && Math.min(box.y + box.height, photo.y + photo.height) - Math.max(box.y, photo.y) > 1))
