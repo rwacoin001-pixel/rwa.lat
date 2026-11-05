@@ -534,8 +534,8 @@
    sign-in keys spread across the same width, so the first and last key meet the field's ends. */
 
 /* Palette A code keypad on the sign-in page: the kit reads Maison tokens, so give it the sign-in colours. */
-.kitCode { --m-bg: #ffffff; --code-done: #0a8a73; --m-ink: #0b1220; --m-muted: #5b6472; --m-faint: #8f97a5; --m-accent: #0a8a73; --m-down: #d6453d; --m-up: #078a6a; --m-gutter: var(--page-gutter, 24px); width: 100%; color: var(--m-ink); }
-.root[data-auth-theme='cool'] .kitCode { --m-bg: #0b1220; --code-done: #12a88e; --m-ink: #f2f4f7; --m-muted: #a3a9b3; --m-faint: #6b7280; --m-accent: #19c7aa; --m-down: #ff6b5e; --m-up: #2fd4a3; }
+.kitCode { --m-bg: #ffffff; --code-done: #0b1220; --code-done-ink: #ffffff; --m-ink: #0b1220; --m-muted: #5b6472; --m-faint: #8f97a5; --m-accent: #0a8a73; --m-down: #d6453d; --m-up: #078a6a; --m-gutter: var(--page-gutter, 24px); width: 100%; color: var(--m-ink); }
+.root[data-auth-theme='cool'] .kitCode { --m-bg: #0b1220; --code-done: #f2f4f7; --code-done-ink: #0b1220; --m-ink: #f2f4f7; --m-muted: #a3a9b3; --m-faint: #6b7280; --m-accent: #19c7aa; --m-down: #ff6b5e; --m-up: #2fd4a3; }
 /* While the code is typed on the keypad, the cabinet steps back and the form takes the page (no overlap). */
 /* Keypad in the thumb zone: slots near the top, keys at the bottom. */
 .kitCode { display: flex; flex: 1 1 auto; flex-direction: column; }

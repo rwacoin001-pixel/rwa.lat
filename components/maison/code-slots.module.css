@@ -13,8 +13,8 @@
 
 /* Confirmed: the row washes into one ink bar from the left, the characters sink one after another, a check rises. */
 .row[data-done] .char { animation: sink .3s calc(.06s + var(--i) * .03s) cubic-bezier(.23, 1, .32, 1) both; }
-/* 2026-11-05 (user: the tick could not be seen, wrong colour): confirmed is the brand green with a white tick, in both themes. */
-.wash { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border-radius: 12px; background: var(--code-done, #0a8a73); color: #fff; animation: wash .3s cubic-bezier(.23, 1, .32, 1) both; pointer-events: none; }
+/* 2026-11-05 b (user: not green — black with a white tick, or white with a black tick): confirmed = ink ground, paper tick (light: black + white; dark: white + black). */
+.wash { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; border-radius: 12px; background: var(--code-done, var(--m-ink, #0b1220)); color: var(--code-done-ink, var(--m-bg, #fff)); animation: wash .3s cubic-bezier(.23, 1, .32, 1) both; pointer-events: none; }
 .check { animation: rise .32s .28s cubic-bezier(.34, 1.56, .64, 1) both; }
 
 @keyframes fillIn { from { transform: scale(.4); opacity: 0; } }
@@ -31,4 +31,4 @@
 /* The app's light theme colours every `.screen b` ink (0,3,1); the character is a <b> on an ink fill, so it must win. */
 .row .slot .char.char { color: var(--m-bg, #fff); }
 
-.row .wash .check { color: #fff; stroke: #fff; }
+.row .wash .check { color: var(--code-done-ink, var(--m-bg, #fff)); stroke: currentColor; }

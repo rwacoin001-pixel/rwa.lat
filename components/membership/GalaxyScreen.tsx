@@ -1,13 +1,11 @@
 'use client'
 
 /**
- * `/profile/galaxy` — my membership level. v3 (2026-11-05, user: "the badge still is not right; redesign the page and the
- * levels after this reference — the style and layout, not a copy — 3D, with motion, refined on every page"):
- * - the hero card: my gem on stage breaking out of the top-right corner (leans to the finger / phone tilt, floats, a light
- *   band crosses it, an orbit passes behind and in front), the level name large with its L-rank, star power counting
- *   up, a brand-green bar with where this level starts and what the next one needs;
- * - the next level's checklist, my perks with on / soon pills, all seven gems in a row — tap one to see its gate and
- *   perks — then where star power comes from, the rankings and how it is counted. 规则 in the top bar opens the rules.
+ * `/profile/galaxy` — my membership level. v4 (2026-11-05, user: "the badge and this page still are not good — think as an
+ * Apple or Google designer would"): one object and plain type. The hero is my badge (a vector medal with the level numeral)
+ * inside a progress ring that fills to the next level, as Activity does; under it the level name, "level 3 of 7", star
+ * power counting up and one line on what is left. Then the next level's checklist, my perks, every level as a card in a
+ * sideways row (mine centred), where star power comes from, the rankings and how it is counted. 规则 opens the rules.
  */
 import { useEffect, useRef, useState } from 'react'
 import { Check, ChevronDown, ChevronRight, ScrollText } from 'lucide-react'
@@ -18,9 +16,7 @@ import { useQuery } from '@/lib/api/_query'
 import { membershipQuery, levelKey, type LevelDef, type Membership } from '@/lib/api/membership'
 import { LEVEL_NAMES, membershipCopy, type MembershipCopy } from '@/lib/membership-copy'
 import { useI18n } from '@/lib/i18n'
-import { useRwaTheme } from '@/lib/rwa-theme'
 import { backOr, openPath } from '@/lib/maison-nav'
-import { GemStage } from './GemStage'
 import { Medallion } from './Medallion'
 import s from './membership.module.css'
 
@@ -81,18 +77,21 @@ function Body({ m }: { m: Membership }) {
   const k = membershipCopy(locale)
   const names = LEVEL_NAMES[locale] ?? LEVEL_NAMES.en
   const num = (v: string | number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Number(v) || 0)
-  const card = useRef<HTMLElement>(null)
-  const { theme } = useRwaTheme()
+  const row = useRef<HTMLDivElement>(null)
   const current = m.levels.find((level) => level.index === m.level.index) ?? m.levels[0]
   const next = m.next ? m.levels.find((level) => level.index === m.next!.index) ?? null : null
-  const [pick, setPick] = useState(next?.index ?? current?.index ?? 1)
-  const picked = m.levels.find((level) => level.index === pick) ?? current
   const score = Number(m.score) || 0
   const counted = useCountUp(score)
   const from = Number(current?.threshold ?? 0), to = Number(next?.threshold ?? from)
   const progress = next ? Math.max(0, Math.min(1, (score - from) / Math.max(1, to - from))) : 1
   const [grown, setGrown] = useState(0)
   useEffect(() => { const id = window.setTimeout(() => setGrown(progress), 120); return () => window.clearTimeout(id) }, [progress])
+  // Centre my own level card in the row once.
+  useEffect(() => {
+    const node = row.current?.querySelector<HTMLElement>('[data-now]')
+    if (node && row.current) row.current.scrollLeft = node.offsetLeft - (row.current.clientWidth - node.clientWidth) / 2
+  }, [])
+  const R = 76, C = 2 * Math.PI * R
   const date = (iso: string) => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(iso))
   const nameOf = (level: { index: number; key?: string }) => names[(level.key ?? levelKey(level.index)) as keyof typeof names] ?? names[levelKey(level.index)]
   const label = (level: { index: number; key?: string }) => `L${level.index} ${nameOf(level)}`
@@ -111,23 +110,16 @@ function Body({ m }: { m: Membership }) {
     ...(level.requires.teamActive ? [k.reqTeam(level.requires.teamActive)] : []),
   ]
   return <>
-    <section ref={card} className={s.hero} aria-label={k.title}>
-      <GemStage level={m.level.index} size={172} className={s.heroGem} track={card} />
-      <div className={s.heroText}>
-        <span className={s.heroKicker}><img src={`/brand/a-reit/mark-${theme === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={12} height={13} className={s.heroMark} />{k.member}</span>
-        <b className={s.levelName}>{nameOf(m.level)}</b>
-        <span className={s.levelRank} dir="ltr">L{m.level.index} · {(LEVEL_NAMES.en[m.level.key] ?? '').toUpperCase()}</span>
-        <small className={s.scoreLabel}>{k.score}</small>
-        <b className={s.scoreBig} dir="ltr">{num(Math.round(counted))}</b>
+    <section className={s.hero} aria-label={k.title}>
+      <div className={s.ring} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label={next ? k.toGo(label(next), num(Math.max(0, to - score))) : k.top}>
+        <svg viewBox="0 0 176 176" aria-hidden="true"><circle cx="88" cy="88" r={R} className={s.ringTrack} /><circle cx="88" cy="88" r={R} className={s.ringFill} strokeDasharray={C} strokeDashoffset={C * (1 - grown)} /></svg>
+        <Medallion level={m.level.index} size={120} className={s.heroBadge} />
       </div>
-      <div className={s.heroFoot}>
-        <div className={s.track} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)}><i style={{ width: `${grown * 100}%` }} /></div>
-        <p className={s.trackNote}>
-          <span>{k.levelStart(num(from))}{next ? ` · ${k.levelNeed(`L${next.index}`, num(to))}` : ` · ${k.top}`}</span>
-          <b dir="ltr">{(progress * 100).toFixed(1)}%</b>
-        </p>
-        <p className={s.heroNote}>{m.graceUntil ? k.grace(date(m.graceUntil)) : k.scoreNote}</p>
-      </div>
+      <small className={s.heroKicker}>{k.member} · {k.tierOf(m.level.index, m.levels.length || 7)}</small>
+      <b className={s.levelName}>{nameOf(m.level)}</b>
+      <span className={s.heroScore}><small>{k.score}</small><b dir="ltr">{num(Math.round(counted))}</b></span>
+      <p className={s.heroNext}>{next ? <>{k.toGo(label(next), num(Math.max(0, to - score)))} · <b dir="ltr">{(progress * 100).toFixed(0)}%</b></> : k.top}</p>
+      {m.graceUntil && <p className={s.heroNote}>{k.grace(date(m.graceUntil))}</p>}
     </section>
 
     {next && <section className={s.group}>
@@ -148,21 +140,14 @@ function Body({ m }: { m: Membership }) {
 
     <section className={s.group}>
       <h2 className={s.sectionHead}>{k.ladder}</h2>
-      <div className={s.ladderCard}>
-        <div className={s.gems} role="tablist" aria-label={k.ladder}>{m.levels.map((level) => <button key={level.key} type="button" role="tab" aria-selected={pick === level.index}
-          className={s.gemKey} data-reached={level.index <= m.level.index || undefined} data-now={level.index === m.level.index || undefined} onClick={() => setPick(level.index)}>
-          <Medallion level={level.index} size={44} className={s.gemImg} />
-          <small dir="ltr">L{level.index}</small>
-          <b>{nameOf(level)}</b>
-        </button>)}</div>
-        {picked && <div className={s.gemDetail} key={picked.index}>
-          <p className={s.gemDetailHead}><b>{label(picked)}</b><span>{picked.index <= m.level.index ? k.reached : picked.threshold > 0 ? `${k.score} ${num(picked.threshold)}` : k.gateFree}</span></p>
-          <dl>
-            <div><dt>{k.gate}</dt><dd>{gates(picked).length ? gates(picked).join(' · ') : k.gateFree}</dd></div>
-            <div><dt>{k.gifts}</dt><dd>{giftsOf(picked, k).map((gift) => gift.name).join(' · ') || k.noGifts}</dd></div>
-          </dl>
-        </div>}
-      </div>
+      <div ref={row} className={s.tiers}>{m.levels.map((level) => {
+        const gifts = giftsOf(level, k), gate = gates(level)
+        return <article key={level.key} className={s.tier} data-now={level.index === m.level.index || undefined} data-reached={level.index <= m.level.index || undefined}>
+          <header><Medallion level={level.index} size={48} /><span><b>{nameOf(level)}</b><small dir="ltr">L{level.index} · {level.threshold > 0 ? `${k.score} ${num(level.threshold)}` : k.gateFree}</small></span>{level.index === m.level.index && <em>{k.now}</em>}</header>
+          {gate.length > 1 && <p className={s.tierGate}>{gate.slice(1).join(' · ')}</p>}
+          <ul>{(gifts.length ? gifts : [{ name: k.noGifts, live: true }]).map((gift) => <li key={gift.name}>{gift.name}</li>)}</ul>
+        </article>
+      })}</div>
     </section>
 
     <section className={s.group}>

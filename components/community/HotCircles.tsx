@@ -16,15 +16,15 @@ import { openCircle } from './CircleList'
 import { useTimeAgo } from './PostCard'
 import l from './circle-list.module.css'
 
-type Copy = { title: string; members: (n: string) => string; week: (n: number) => string; end: string; failed: string; retry: string; sent: string; owner: string; waiting: string }
+type Copy = { title: string; members: (n: string) => string; week: (n: number) => string; end: string; failed: string; retry: string; sent: string; sentSub: string; owner: string; waiting: string }
 const COPY: Partial<Record<AppLocale, Copy>> = {
-  'zh-CN': { title: '热门圈子', members: (n) => `${n} 位成员`, week: (n) => `本周 ${n} 帖`, end: '已经到底了', failed: '没有加载出来。', retry: '重试', sent: '已发出申请，圈主同意后你就能进圈。', owner: '圈主', waiting: '等待同意' },
-  en: { title: 'Popular circles', members: (n) => `${n} members`, week: (n) => `${n} posts this week`, end: 'That is all for now', failed: 'Could not load.', retry: 'Retry', sent: 'Request sent. You are in once the owner approves.', owner: 'Owner', waiting: 'Requested' },
+  'zh-CN': { title: '热门圈子', members: (n) => `${n} 位成员`, week: (n) => `本周 ${n} 帖`, end: '已经到底了', failed: '没有加载出来。', retry: '重试', sent: '申请已发出', sentSub: '圈主同意后，你会收到通知', owner: '圈主', waiting: '等待同意' },
+  en: { title: 'Popular circles', members: (n) => `${n} members`, week: (n) => `${n} posts this week`, end: 'That is all for now', failed: 'Could not load.', retry: 'Retry', sent: 'Request sent', sentSub: 'We will let you know when the owner approves', owner: 'Owner', waiting: 'Requested' },
 }
 const TONES = 8
 const toneOf = (id: string) => [...id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % TONES
 
-export function HotCircles({ onNotify }: { onNotify: (text: string) => void }) {
+export function HotCircles({ onNotify }: { onNotify: (text: string, more?: { sub?: string; ok?: boolean }) => void }) {
   const { locale } = useI18n()
   const k = COPY[locale] ?? COPY.en!
   const labels = useCircleStageCopy(), timeAgo = useTimeAgo()
@@ -62,7 +62,7 @@ export function HotCircles({ onNotify }: { onNotify: (text: string) => void }) {
       const status = await applyToCircleById(row.circle.id)
       setItems((previous) => previous.map((item) => item.circle.id === row.circle.id ? { ...item, status } : item))
       if (status === 'member' || status === 'owner') openCircle(row.circle.id)
-      else if (status === 'pending') onNotify(k.sent)
+      else if (status === 'pending') onNotify(k.sent, { sub: k.sentSub, ok: true })
     } catch (error) {
       if (error instanceof Error && error.message === 'CIRCLE_REMOVED') setItems((previous) => previous.map((item) => item.circle.id === row.circle.id ? { ...item, status: 'removed' } : item))
       else onNotify(labels.failed)

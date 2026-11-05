@@ -2,7 +2,7 @@
 
 /** Shared community cards, actions and paging (2026-11-01). */
 import { useCallback, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
-import { BadgeCheck, BarChart2, Flag, MessageCircle, MoreHorizontal, Share, Share2 } from 'lucide-react'
+import { BadgeCheck, BarChart2, Check, CircleAlert, Flag, MessageCircle, MoreHorizontal, Share, Share2 } from 'lucide-react'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { communityTopicCopy } from '@/lib/route-copy'
 import { submitCommunityReport, type CircleMember, type CommunityAuthor, type CommunityPost, type CommunityTopic } from '@/lib/community-data'
@@ -210,7 +210,7 @@ function useMoreMenu(isGuest: boolean, go: (screen: RwaScreen) => void) {
   return { open, sheet }
 }
 
-type Notice = { text: string; error?: boolean }
+type Notice = { text: string; error?: boolean; ok?: boolean; sub?: string }
 /**
  * Row actions shared by the feed and the profile: reply opens the composer in place (guests go to sign-in),
  * share uses the system sheet or the clipboard, and both report through one transient notice.
@@ -238,7 +238,11 @@ export function usePostActions(isGuest: boolean, go: (screen: RwaScreen) => void
     {cardShare && <CardShareSheet post={cardShare} open onClose={() => setCardShare(null)} />}
     {!isGuest && reply && <CommunityCompose open={reply.open} onClose={() => setReply(current => current && { ...current, open: false })} target={{ kind: 'reply', postId: reply.post.id, handle: reply.post.author?.handle } satisfies ComposeTarget} me={me} onPublished={() => { onReplied?.(reply.post.id); setReply(current => current && { ...current, open: false }); setNotice({ text: communityCopy[locale].replied }) }} />}
     {more.sheet}
-    {notice && <p className={c.toast} data-error={notice.error || undefined} role={notice.error ? 'alert' : 'status'}>{notice.text}</p>}
+    {/* 2026-11-05 (user: the notice felt machine-made): one quiet capsule — ink on paper in light, paper on ink in dark; a tick disc only when something worked, a warning disc for errors; a title and at most one line under it. */}
+    {notice && <div className={c.toast} data-error={notice.error || undefined} data-ok={notice.ok || undefined} role={notice.error ? 'alert' : 'status'}>
+      {(notice.ok || notice.error) && <i className={c.toastMark} aria-hidden="true">{notice.error ? <CircleAlert size={16} strokeWidth={2} /> : <Check size={14} strokeWidth={2.6} />}</i>}
+      <span className={c.toastText}><b>{notice.text}</b>{notice.sub && <small>{notice.sub}</small>}</span>
+    </div>}
   </>
   return { login, onReply, onShare, onMore, share, notify: setNotice, openMenu: more.open, overlays }
 }

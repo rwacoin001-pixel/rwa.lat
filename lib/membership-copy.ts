@@ -28,7 +28,7 @@ export type MembershipCopy = {
   perkCol: string; thisLevel: string; soonNote: string; members2: (d: number, t: number, a: number) => string; toGo: (name: string, v: string) => string
   perkNames: { draws: string; prediction: string; quant: string }
   rules: string; member: string; live: string; soonPill: string; gifts: string; levelStart: (v: string) => string; levelNeed: (name: string, v: string) => string
-  gate: string; gateFree: string; giftsOf: (name: string) => string; noGifts: string; reached: string
+  gate: string; gateFree: string; giftsOf: (name: string) => string; noGifts: string; reached: string; tierOf: (n: number, total: number) => string
 }
 
 const zh: MembershipCopy = {
@@ -46,7 +46,7 @@ const zh: MembershipCopy = {
   perkCol: '权益', thisLevel: '本级', soonNote: '除等级徽章外，其他权益即将开放，开放前不会生效。', members2: (d, t, a) => `直属 ${d} 人 · 团队 ${t} 人 · 近 90 天活跃 ${a} 人`, toGo: (n, v) => `距 ${n} 还差 ${v}`,
   perkNames: { draws: '每天额外抽奖', prediction: '预测下注费减免', quant: '考拉量化管理费减免' },
   rules: '规则', member: 'A-REIT 会员', live: '已启用', soonPill: '待开放', gifts: '会员礼遇', levelStart: (v) => `本级起点 ${v}`, levelNeed: (n, v) => `升级至 ${n} 需 ${v}`,
-  gate: '升级条件', gateFree: '注册即可获得', giftsOf: (n) => `${n} 礼遇`, noGifts: '等级徽章', reached: '已达成',
+  gate: '升级条件', gateFree: '注册即可获得', giftsOf: (n) => `${n} 礼遇`, noGifts: '等级徽章', reached: '已达成', tierOf: (n, t) => `第 ${n} 级 · 共 ${t} 级`,
 }
 const en: MembershipCopy = {
   title: 'Membership', kicker: 'Membership', score: 'Star power', scoreNote: 'Last 12 months · updated daily', toNext: (n) => `To ${n}`, top: 'Highest level reached',
@@ -63,7 +63,7 @@ const en: MembershipCopy = {
   perkCol: 'Perk', thisLevel: 'Now', soonNote: 'Apart from the badge, perks open soon and do not apply until then.', members2: (d, t, a) => `${d} direct · ${t} in team · ${a} active (90 days)`, toGo: (n, v) => `${v} to ${n}`,
   perkNames: { draws: 'Extra daily draws', prediction: 'Prediction fee off', quant: 'Koala Quant fee off' },
   rules: 'Rules', member: 'A-REIT member', live: 'On', soonPill: 'Soon', gifts: 'Member perks', levelStart: (v) => `Level starts at ${v}`, levelNeed: (n, v) => `${n} at ${v}`,
-  gate: 'To reach it', gateFree: 'Yours on sign-up', giftsOf: (n) => `${n} perks`, noGifts: 'Level badge', reached: 'Reached',
+  gate: 'To reach it', gateFree: 'Yours on sign-up', giftsOf: (n) => `${n} perks`, noGifts: 'Level badge', reached: 'Reached', tierOf: (n, t) => `Level ${n} of ${t}`,
 }
 export const MEMBERSHIP_COPY: Partial<Record<AppLocale, MembershipCopy>> = { 'zh-CN': zh, en }
 export const membershipCopy = (locale: AppLocale) => MEMBERSHIP_COPY[locale] ?? en

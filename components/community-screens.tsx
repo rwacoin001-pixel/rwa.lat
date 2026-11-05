@@ -371,7 +371,7 @@ export function CommunityFeedScreen({ go, openPost, openProfile, isGuest = true,
       {view === 'invite' ? (isGuest
         ? <XState title={invite.guest} body={invite.guestBody} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => go('login')}>{p.signIn}</button>} />
         : <InviteCentre embedded />)
-      : sort === 'circle' && !isGuest ? <CircleList onNotify={text => actions.notify({ text })} />
+      : sort === 'circle' && !isGuest ? <CircleList onNotify={(text, more) => actions.notify({ text, ...more })} />
       : loading ? <SkeletonRows />
         : failed ? <XState title={communityCopy[locale].feedFailed} action={<button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => void load()}>{t('common.refresh')}</button>} />
         : items.length === 0 && sort === 'cards' ? <XState title={cardsText.empty} body={cardsText.emptyBody} action={isGuest ? undefined : <button type="button" className={`${c.pill} ${c.pillSolid}`} onClick={() => setComposing(true)}>{cardsText.make}</button>} />

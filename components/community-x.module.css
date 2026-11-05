@@ -307,8 +307,19 @@ span.act { cursor: default; }
 @keyframes xPulse { 50% { opacity: .45; } }
 
 /* ── Toast (X: blue bar, bottom centre) ── */
-.toast { position: fixed; z-index: 95; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); max-width: min(90vw, 420px); margin: 0; padding: 12px 16px; border-radius: 4px; background: var(--x-accent); color: #fff; font: 400 15px/20px var(--x-font); box-shadow: var(--x-shadow); transform: translateX(-50%); animation: xToast .3s cubic-bezier(.2, .8, .2, 1); }
-.toast[data-error] { background: var(--x-danger); }
+/* Notice capsule (2026-11-05): ink on paper (light) / paper on ink (dark), never an accent fill; a tick or warning disc. */
+.toast { position: fixed; z-index: 95; left: 50%; bottom: calc(96px + env(safe-area-inset-bottom)); display: flex; align-items: center; gap: 10px; width: max-content; max-width: min(88vw, 360px); margin: 0; padding: 12px 18px; border-radius: 22px; background: #0b1220; color: #fff; box-shadow: 0 18px 40px -18px rgba(11, 18, 32, .55), 0 0 0 .5px rgba(255, 255, 255, .06) inset; transform: translateX(-50%); animation: xToast .34s cubic-bezier(.2, .8, .2, 1); }
+.toast[data-ok], .toast[data-error] { padding-inline-start: 12px; }
+.toastMark { display: grid; flex: none; place-items: center; width: 24px; height: 24px; border-radius: 50%; background: #fff; color: #0b1220; }
+.toast[data-error] .toastMark { background: none; color: #ff8a80; }
+.toastText { display: grid; gap: 1px; min-width: 0; }
+.toastText b { font: 600 14px/20px var(--x-font); }
+.toastText small { color: rgba(255, 255, 255, .62); font: 400 12px/16px var(--x-font); }
+:global(.rwa-mobile[data-theme='dark']) .toast { background: #f2f4f7; color: #0b1220; box-shadow: 0 18px 40px -16px rgba(0, 0, 0, .8); }
+:global(.rwa-mobile[data-theme='dark']) .toastMark { background: #0b1220; color: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .toast[data-error] .toastMark { background: none; color: #c2413a; }
+:global(.rwa-mobile[data-theme='dark']) .toastText small { color: rgba(11, 18, 32, .58); }
+:global(.rwa-mobile) .toast.toast b, :global(.rwa-mobile) .toast.toast span { color: inherit; }
 @keyframes xToast { from { opacity: 0; transform: translate(-50%, 12px); } }
 
 /* ── Action sheet (row "more", report) ── */

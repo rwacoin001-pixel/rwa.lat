@@ -15,7 +15,7 @@ import l from './circle-list.module.css'
 export const openCircle = (id: string) => openPath(`/community/circle/${encodeURIComponent(id)}`)
 
 /** Circle list v2 (2026-11-01): search capsule, my circle with three figures (or a compact start card), joined circles. */
-export function CircleList({ onNotify }: { onNotify: (text: string) => void }) {
+export function CircleList({ onNotify }: { onNotify: (text: string, more?: { sub?: string; ok?: boolean }) => void }) {
   const k = useCircleCopy(), labels = useCircleStageCopy(), timeAgo = useTimeAgo()
   const [membership, setMembership] = useState<CircleMembership | null | undefined>(undefined)
   const [failed, setFailed] = useState(false)
