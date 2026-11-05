@@ -2,30 +2,63 @@
    ink card per page (the deep-space card), solid grounds — no gradient backgrounds, no tinted icon tiles. */
 .page { display: grid; gap: 20px; padding: 4px 0 calc(120px + env(safe-area-inset-bottom)); }
 
-/* Hero card v2 (2026-11-05): paper, the medallion left, L-rank + name + star power right, a 4px bar under. */
-.hero { display: grid; gap: 12px; padding: 18px 18px 16px; border-radius: 24px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow, 0 0 0 .5px rgba(11, 18, 32, .08), 0 12px 32px -20px rgba(11, 18, 32, .28)); color: var(--m-ink, #0b1220); }
-.heroTop { display: flex; align-items: center; gap: 16px; min-width: 0; }
-.heroCoin { flex: none; width: 96px; height: 96px; filter: drop-shadow(0 10px 14px rgba(11, 18, 32, .22)); }
-.heroText { display: grid; gap: 2px; min-width: 0; }
-.heroText small { color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 600; letter-spacing: .02em; line-height: 16px; }
-.levelName { font-size: 28px; font-weight: 700; line-height: 34px; letter-spacing: -.01em; }
-.scoreLine { display: flex; align-items: baseline; gap: 6px; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; }
-.scoreLine b { color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.track { height: 4px; overflow: hidden; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .07)); }
-.track i { display: block; height: 100%; border-radius: inherit; background: var(--m-ink, #0b1220); transition: width .8s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
-.trackNote { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: -4px 0 0; color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 500; line-height: 18px; font-variant-numeric: tabular-nums; }
-.trackNote small { color: var(--m-faint, #8f97a5); font-size: 11px; font-weight: 400; white-space: nowrap; }
-.heroNote { margin: 0; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
-.ghost { height: 150px; }
+/* Hero card v3 (2026-11-05): one solid paper card; the gem on stage breaks out of its top-right corner; the level name
+   large with its L-rank; star power counting up; a brand-green bar with where the level starts and what comes next. */
+.hero { position: relative; display: grid; gap: 16px; margin-top: 28px; padding: 22px 20px 18px; border-radius: 28px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow, 0 0 0 .5px rgba(11, 18, 32, .08), 0 18px 40px -24px rgba(11, 18, 32, .32)); color: var(--m-ink, #0b1220); touch-action: pan-y; }
+.hero .heroGem { position: absolute; top: -44px; inset-inline-end: -10px; z-index: 2; }
+.heroText { display: grid; justify-items: start; gap: 0; min-width: 0; padding-inline-end: 132px; }
+.heroKicker { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 12px; color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 600; letter-spacing: .04em; line-height: 16px; }
+.heroMark { display: block; width: 12px; height: 13px; }
+.levelName { font-size: 34px; font-weight: 700; line-height: 40px; letter-spacing: -.02em; }
+.levelRank { margin-top: 2px; color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 600; letter-spacing: .14em; line-height: 16px; }
+.scoreLabel { margin-top: 18px; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; }
+.scoreBig { font-size: 32px; font-weight: 700; line-height: 38px; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.heroFoot { display: grid; gap: 8px; }
+.track { height: 6px; overflow: hidden; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .07)); }
+.track i { display: block; height: 100%; border-radius: inherit; background: var(--m-accent, #0a8a73); transition: width 1.1s var(--pa-ease-out, cubic-bezier(.22, 1, .36, 1)); }
+.trackNote { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin: 0; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.trackNote b { flex: none; color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 600; }
+.heroNote { margin: 0; color: var(--m-faint, #8f97a5); font-size: 11px; line-height: 14px; }
+.ghost { height: 210px; }
+.sectionHead { margin: 0; padding: 0 4px; color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 650; line-height: 24px; letter-spacing: -.01em; }
+.rulesBody { margin: 0 0 12px; color: var(--m-muted, #5b6472); font-size: 14px; line-height: 22px; }
 
-/* Upgrade checklist: a tick disc, the rule, where I stand. */
-.check { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 8px 16px; color: var(--m-ink, #0b1220); font-size: 14px; line-height: 20px; }
-.check + .check { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
-.check > i { display: grid; flex: none; place-items: center; width: 20px; height: 20px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-ink, #0b1220) 25%, transparent); color: var(--m-bg, #fff); }
-.check[data-met] > i { background: var(--m-ink, #0b1220); box-shadow: none; }
-.check > span { flex: 1; min-width: 0; }
-.check > b { flex: none; color: var(--m-muted, #5b6472); font-size: 13px; font-weight: 500; font-variant-numeric: tabular-nums; }
-.check[data-met] > b { color: var(--m-ink, #0b1220); }
+/* Upgrade checklist: a ring (a filled tick once met), the rule with what is left under it, where I stand. */
+.check { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 10px 16px; color: var(--m-ink, #0b1220); font-size: 15px; font-weight: 500; line-height: 20px; }
+.check + .check, .gift + .gift { border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.check > i, .gift > i { display: grid; flex: none; place-items: center; width: 22px; height: 22px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--m-ink, #0b1220) 22%, transparent); color: #fff; }
+.check[data-met] > i, .gift[data-live] > i { background: var(--m-accent, #0a8a73); box-shadow: none; }
+.check > span { display: grid; flex: 1; gap: 2px; min-width: 0; }
+.check > span small { color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 400; line-height: 16px; }
+.check > b { flex: none; color: var(--m-muted, #5b6472); font-size: 14px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.check > b em { color: var(--m-ink, #0b1220); font-style: normal; font-weight: 700; }
+.gift { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 8px 16px; color: var(--m-ink, #0b1220); font-size: 15px; line-height: 20px; }
+.gift > span { flex: 1; min-width: 0; }
+.gift > em { flex: none; padding: 3px 10px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-muted, #5b6472); font-size: 12px; font-style: normal; font-weight: 500; line-height: 18px; }
+.gift[data-live] > em { color: var(--m-accent, #0a8a73); font-weight: 600; }
+
+/* All seven gems in one card: tap one to read its gate and perks; reached gems bright, the picked one underlined. */
+.ladderCard { overflow: hidden; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); }
+.gems { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 14px 6px 0; }
+.gemKey { position: relative; display: grid; justify-items: center; gap: 1px; min-width: 0; padding: 0 0 12px; border: 0; background: none; color: var(--m-muted, #5b6472); font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.gemKey small { margin-top: 4px; color: var(--m-faint, #8f97a5); font-size: 10px; font-weight: 600; letter-spacing: .04em; line-height: 12px; }
+.gemKey b { max-width: 100%; overflow: hidden; font-size: 12px; font-weight: 500; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.gemImg { width: 40px; height: 40px; opacity: .55; filter: saturate(.55); transition: transform .3s cubic-bezier(.34, 1.56, .64, 1), opacity .2s ease; }
+.gemKey[data-reached] .gemImg { opacity: 1; filter: none; }
+.gemKey[aria-selected='true'] { color: var(--m-ink, #0b1220); }
+.gemKey[aria-selected='true'] b { font-weight: 650; }
+.gemKey[aria-selected='true'] .gemImg { transform: translateY(-3px) scale(1.12); opacity: 1; }
+.gemKey[aria-selected='true']::after { content: ''; position: absolute; bottom: 0; left: 50%; width: 22px; height: 3px; margin-left: -11px; border-radius: 3px; background: var(--m-accent, #0a8a73); }
+.gemKey[data-now] small { color: var(--m-accent, #0a8a73); }
+.gemDetail { display: grid; gap: 10px; padding: 14px 16px 16px; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); animation: detailIn .28s cubic-bezier(.22, 1, .36, 1) both; }
+.gemDetailHead { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0; }
+.gemDetailHead b { font-size: 15px; font-weight: 650; }
+.gemDetailHead span { color: var(--m-muted, #5b6472); font-size: 12px; font-variant-numeric: tabular-nums; }
+.gemDetail dl { display: grid; gap: 6px; margin: 0; }
+.gemDetail dl > div { display: grid; grid-template-columns: 72px minmax(0, 1fr); gap: 8px; font-size: 13px; line-height: 19px; }
+.gemDetail dt { color: var(--m-faint, #8f97a5); }
+.gemDetail dd { margin: 0; color: var(--m-ink, #0b1220); }
+@keyframes detailIn { from { opacity: 0; transform: translateY(4px); } }
 
 /* Where star power comes from: 2×2 cells in one card. */
 .grid { display: grid; grid-template-columns: 1fr 1fr; overflow: hidden; border-radius: 20px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); }
@@ -111,13 +144,51 @@
 .hideRow small { color: var(--m-faint, #8f97a5); font-size: 12px; line-height: 16px; }
 
 /* globals.css resets light-theme span|small|p colour to inherit (0,3,1); restore at 0,4,0. */
-:global(.rwa-mobile) .page.page .heroText small, :global(.rwa-mobile) .page.page .scoreLine, :global(.rwa-mobile) .page.page .grid small, :global(.rwa-mobile) .page.page .check > b { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .page.page :global(.rwa-mobile) .page.page .grid small, :global(.rwa-mobile) .page.page .check > b { color: var(--m-muted, #5b6472); }
 :global(.rwa-mobile) .page.page .grid span, :global(.rwa-mobile) .page.page .trackNote small, :global(.rwa-mobile) .page.page .rung .rungRank { color: var(--m-faint, #8f97a5); }
+:global(.rwa-mobile) .page.page .heroKicker, :global(.rwa-mobile) .page.page .levelRank, :global(.rwa-mobile) .page.page .scoreLabel, :global(.rwa-mobile) .page.page .trackNote, :global(.rwa-mobile) .page.page .check > span small, :global(.rwa-mobile) .page.page .gift > em, :global(.rwa-mobile) .page.page .gemKey, :global(.rwa-mobile) .page.page .gemDetailHead span, :global(.rwa-mobile) .page.page .rulesBody { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .page.page .gemKey[aria-selected='true'] { color: var(--m-ink, #0b1220); }
+:global(.rwa-mobile) .page.page .gift[data-live] > em, :global(.rwa-mobile) .page.page .gemKey[data-now] small { color: var(--m-accent, #0a8a73); }
+:global(.rwa-mobile) .page.page .gemDetail dt, :global(.rwa-mobile) .page.page .heroNote, :global(.rwa-mobile) .page.page .gemKey small { color: var(--m-faint, #8f97a5); }
 :global(.rwa-mobile) .page.page .row small, :global(.rwa-mobile) .page.page .groupHead, :global(.rwa-mobile) .page.page .note, :global(.rwa-mobile) .page.page .body2 { color: var(--m-muted, #5b6472); }
 :global(.rwa-mobile[data-theme='dark']) .list, :global(.rwa-mobile[data-theme='dark']) .rung, :global(.rwa-mobile[data-theme='dark']) .linkRow, :global(.rwa-mobile[data-theme='dark']) .hero, :global(.rwa-mobile[data-theme='dark']) .grid, :global(.rwa-mobile[data-theme='dark']) .table, :global(.rwa-mobile[data-theme='dark']) .how { background: #15181e; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08); }
-:global(.rwa-mobile[data-theme='dark']) .track i, :global(.rwa-mobile[data-theme='dark']) .check[data-met] > i { background: #f2f4f7; }
-:global(.rwa-mobile[data-theme='dark']) .check > i { color: #0b1220; }
+:global(.rwa-mobile[data-theme='dark']) .page { --m-accent: #19c7aa; }
+:global(.rwa-mobile[data-theme='dark']) .check > i, :global(.rwa-mobile[data-theme='dark']) .gift > i { color: #0b1220; }
+:global(.rwa-mobile[data-theme='dark']) .ladderCard { background: #15181e; box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08); }
 :global(.rwa-mobile[data-theme='dark']) .rung[data-now] { box-shadow: 0 0 0 1.5px #f2f4f7; }
 :global(.rwa-mobile[data-theme='dark']) .mine { background: #f2f4f7; color: #0b1220; }
-@media (prefers-reduced-motion: reduce) { .track i { transition: none; } }
+@media (prefers-reduced-motion: reduce) { .track i, .gemImg { transition: none; } .gemDetail { animation: none; } }
 
+
+/* Podium (2026-11-05): the first three on solid blocks — a lighter top face seen from just above, the place engraved in
+   the front face, the winner's block tallest. Rings in gold / silver / bronze tones; the level gem sits on the ring.
+   The blocks rise 2 → 1 → 3, then the people settle on them. Solid faces only — depth from the two tones and a shadow. */
+.podium { display: grid; grid-template-columns: 1fr 1.12fr 1fr; align-items: end; gap: 6px; padding: 8px 2px 0; }
+.podCol { --ring: #c9ced6; --h: 92px; display: grid; justify-items: center; min-width: 0; }
+.podCol[data-place='1'] { --ring: #d8b679; --h: 128px; }
+.podCol[data-place='2'] { --ring: #b9c0ca; --h: 100px; }
+.podCol[data-place='3'] { --ring: #c99f7e; --h: 80px; }
+.podWho { display: grid; justify-items: center; gap: 4px; max-width: 100%; margin-bottom: 24px; animation: settle .5s cubic-bezier(.22, 1, .36, 1) both; }
+.podCol[data-place='2'] .podWho { animation-delay: .45s; }
+.podCol[data-place='1'] .podWho { animation-delay: .6s; }
+.podCol[data-place='3'] .podWho { animation-delay: .75s; }
+.podAvatar { position: relative; display: block; margin-bottom: 4px; border-radius: 50%; box-shadow: 0 0 0 2.5px var(--m-bg, #f4f5f7), 0 0 0 4.5px var(--ring), 0 12px 24px -12px rgba(11, 18, 32, .45); }
+.podAvatar > :first-child { display: block; }
+.podGem { position: absolute; right: -8px; bottom: -6px; width: 24px; height: 24px; filter: drop-shadow(0 2px 3px rgba(11, 18, 32, .35)); }
+.podWho b { max-width: 100%; overflow: hidden; color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 600; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; }
+.podBand { padding: 2px 8px; border-radius: 8px; background: var(--pa-fill, rgba(11, 18, 32, .05)); color: var(--m-ink, #0b1220); font-size: 12px; font-weight: 600; line-height: 16px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.block { --face: #e8ebf0; --top: #f7f8fa; position: relative; width: 100%; height: var(--h); border-radius: 4px 4px 0 0; background: var(--face); box-shadow: 0 18px 30px -22px rgba(11, 18, 32, .5); transform-origin: bottom; animation: rise .7s cubic-bezier(.22, 1, .36, 1) both; }
+.podCol[data-place='2'] .block { animation-delay: 0s; }
+.podCol[data-place='1'] .block { --face: #e2e6ec; animation-delay: .12s; }
+.podCol[data-place='3'] .block { animation-delay: .24s; }
+.blockTop { position: absolute; left: 0; right: 0; bottom: 100%; height: 14px; background: var(--top); clip-path: polygon(9% 0, 91% 0, 100% 100%, 0 100%); }
+.blockNum { position: absolute; inset: 14px 0 auto; color: rgba(11, 18, 32, .16); font-size: 46px; font-weight: 700; line-height: 1; text-align: center; text-shadow: 0 1px 0 rgba(255, 255, 255, .9); font-variant-numeric: tabular-nums; }
+.podCol[data-place='1'] .blockNum { font-size: 56px; }
+:global(.rwa-mobile[data-theme='dark']) .block { --face: #1b1e25; --top: #2a2e37; box-shadow: 0 18px 30px -20px rgba(0, 0, 0, .8); }
+:global(.rwa-mobile[data-theme='dark']) .podCol[data-place='1'] .block { --face: #20242c; }
+:global(.rwa-mobile[data-theme='dark']) .blockNum { color: rgba(255, 255, 255, .12); text-shadow: 0 -1px 0 rgba(0, 0, 0, .6); }
+:global(.rwa-mobile[data-theme='dark']) .podAvatar { box-shadow: 0 0 0 2.5px #0b0d12, 0 0 0 4.5px var(--ring), 0 12px 24px -12px rgba(0, 0, 0, .8); }
+:global(.rwa-mobile) .page.page .podWho b, :global(.rwa-mobile) .page.page .podBand { color: var(--m-ink, #0b1220); }
+@keyframes rise { from { transform: scaleY(0); } }
+@keyframes settle { from { opacity: 0; transform: translateY(-10px); } }
+@media (prefers-reduced-motion: reduce) { .block, .podWho { animation: none; } }

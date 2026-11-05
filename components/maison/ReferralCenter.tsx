@@ -17,6 +17,7 @@ import { ReferralSheet, useHostTheme } from './ReferralSheet'
 import { InvitePlate } from './InvitePlate'
 import { CodeSlots } from './CodeSlots'
 import { MemberSheet } from './ReferralMemberSheet'
+import { TeamTree } from './TeamTree'
 import type { ReferralMember } from '@/lib/api/referral'
 import { displayInviteCode, invitationLink } from '@/lib/referral-invite'
 import { porcelainAvatar } from '@/components/community-avatar'
@@ -88,7 +89,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   }, [embedded])
   const { locale } = useI18n(), zh = locale.startsWith('zh')
   const t: Translate = (cn, en) => zh ? cn : en
-  const [level, setLevel] = useState('all'), [page, setPage] = useState(1), [sort, setSort] = useState<ReferralTeamSort>('recent')
+  const [level, setLevel] = useState('all'), [page, setPage] = useState(1), [sort, setSort] = useState<ReferralTeamSort>('recent'), [teamView, setTeamView] = useState<'tree' | 'list'>('tree')
   const [sheet, setSheet] = useState<SheetKind>(null), [member, setMember] = useState<ReferralMember | null>(null)
   const [copied, setCopied] = useState(false), [copyError, setCopyError] = useState('')
   const [saving, setSaving] = useState(false), [editError, setEditError] = useState('')
@@ -106,7 +107,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const me = useQuery('referral:v2:me', referralMe, { staleTime: 30_000 })
   const summary = useQuery('referral:v2:summary', referralSummary, { staleTime: 30_000 })
   const funnel = useQuery('referral:v2:funnel', referralFunnel, { staleTime: 60_000 })
-  const members = useQuery(sheet === 'team' ? `referral:v2:members:${page}:${level}:${sort}` : null, () => referralInvitees(page, level, sort), { staleTime: 30_000 })
+  const members = useQuery(sheet === 'team' && teamView === 'list' ? `referral:v2:members:${page}:${level}:${sort}` : null, () => referralInvitees(page, level, sort), { staleTime: 30_000 })
   const overview = useQuery(sheet === 'team' ? 'referral:v2:team-overview' : null, referralTeamOverview, { staleTime: 60_000 })
   const awards = useQuery(sheet === 'awards' || sheet === 'rewards' ? `referral:v2:awards:${page}` : null, () => referralAwards(page), { staleTime: 30_000 })
   const editGen = useRef(0), mounted = useRef(true)
@@ -277,7 +278,13 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
           <div><small>{t('本月团队买入', 'Team bought this month')}</small><b dir="ltr">{overview.data ? fmtAtomic(overview.data.teamPurchaseMonthAtomic, 6, '', 0).trim() : '—'}<em>USDT</em></b></div>
           <div><small>{t('累计团队买入', 'Team bought, all time')}</small><b dir="ltr">{overview.data ? fmtAtomic(overview.data.teamPurchaseTotalAtomic, 6, '', 0).trim() : '—'}<em>USDT</em></b></div>
         </div>
-        <div className={v.teamBar}>
+        {/* Tree first (2026-11-05, user): the list with its filters stays one tap away. */}
+        <div className={v.viewSwitch} role="tablist" aria-label={t('显示方式', 'View')}>
+          <button type="button" role="tab" aria-selected={teamView === 'tree'} onClick={() => setTeamView('tree')}>{t('树状图', 'Tree')}</button>
+          <button type="button" role="tab" aria-selected={teamView === 'list'} onClick={() => setTeamView('list')}>{t('列表', 'List')}</button>
+        </div>
+        {teamView === 'tree' && <TeamTree t={t} directCount={levelCount(1)} onOpen={setMember} />}
+        {teamView === 'list' && <div className={v.teamBar}>
           <div className={v.chips} role="group" aria-label={t('团队层级', 'Team level')}>
             {([['all', t('全部', 'All'), totalCount], ['1', t('一级', 'L1'), levelCount(1)], ['2', t('二级', 'L2'), levelCount(2)], ['3', t('三级', 'L3'), levelCount(3)]] as const).map(([value, label, count]) =>
               <button key={value} type="button" aria-pressed={level === value} onClick={() => { setLevel(value); setPage(1) }}>{label}<b>{count}</b></button>)}
@@ -287,9 +294,9 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
               <option value="recent">{t('最新加入', 'Newest')}</option><option value="active">{t('最近活跃', 'Most active')}</option><option value="level">{t('等级最高', 'Highest level')}</option>
             </select><ChevronDown size={14} aria-hidden="true" />
           </label>
-        </div>
+        </div>}
       </>}
-      {list.error
+      {sheet === 'team' && teamView === 'tree' ? null : list.error
         ? <StateBlock tone="error" title={t('加载失败', 'Unable to load')} body={list.error.message} retry={list.refetch} retryLabel={retryLabel} />
         : !list.data ? <Skeleton rows={3} /> : <>
           {!list.data.items.length

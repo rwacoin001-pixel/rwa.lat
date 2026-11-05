@@ -155,3 +155,32 @@
 /* Photo and chip centred on the band's lower edge, as in the reference. */
 .pchip { --chip: 36px; margin-bottom: calc((var(--face) - var(--chip)) / 2); }
 .prow { margin-top: 8px; }
+
+/* Membership strip (2026-11-05): the top of the name card is my level — one solid ink ground (never a gradient), the gem
+   floating on the right, the name in white, star power and the distance to the next level along the bottom right
+   (the photo sits over the bottom left). */
+.strip.strip { position: relative; display: block; width: 100%; height: 132px; padding: 0; overflow: hidden; border: 0; border-radius: 22px; background: #11151c; color: #fff; font: inherit; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.strip:active { transform: scale(.99); }
+.stripText { position: absolute; top: 16px; inset-inline-start: 18px; display: grid; gap: 2px; }
+.stripText small { color: rgba(255, 255, 255, .55); font-size: 11px; font-weight: 600; letter-spacing: .06em; line-height: 14px; }
+.stripText b { display: inline-flex; align-items: baseline; gap: 6px; margin-top: 2px; font-size: 22px; font-weight: 700; line-height: 28px; letter-spacing: -.01em; }
+.stripText b em { color: rgba(255, 255, 255, .6); font-size: 12px; font-style: normal; font-weight: 700; letter-spacing: .08em; }
+.stripText > span { color: rgba(255, 255, 255, .7); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.stripGem { position: absolute; top: 10px; inset-inline-end: 14px; width: 84px; height: 84px; filter: drop-shadow(0 10px 14px rgba(0, 0, 0, .55)); animation: stripFloat 6s ease-in-out infinite; }
+.stripFoot { position: absolute; bottom: 14px; inset-inline-start: 112px; inset-inline-end: 18px; display: grid; gap: 6px; }
+.stripFoot > i { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: rgba(255, 255, 255, .14); }
+.stripFoot > i > i { display: block; height: 100%; border-radius: inherit; background: #19c7aa; }
+.stripFoot small { color: rgba(255, 255, 255, .6); font-size: 11px; line-height: 14px; font-variant-numeric: tabular-nums; }
+:global(.rwa-mobile[data-theme='dark']) .strip.strip { background: #1d212a; box-shadow: inset 0 0 0 .5px rgba(255, 255, 255, .08); }
+:global(.rwa-mobile) .pcard.pcard .stripText small, :global(.rwa-mobile) .pcard.pcard .stripFoot small { color: rgba(255, 255, 255, .6); }
+:global(.rwa-mobile) .pcard.pcard .stripText > span { color: rgba(255, 255, 255, .72); }
+:global(.rwa-mobile) .pcard.pcard .stripText b { color: #fff; }
+@keyframes stripFloat { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-3deg); } 50% { transform: translate3d(0, -4px, 0) rotate(3deg); } }
+@media (prefers-reduced-motion: reduce) { .stripGem { animation: none; } }
+/* Counts (2026-11-05): type only — the number large, the label under it, hairlines between; no icons. */
+.pstats { gap: 0; margin-top: 18px; }
+.pstats > div + div { padding-inline-start: 16px; border-inline-start: .5px solid var(--pa-hair, rgba(11, 18, 32, .1)); }
+.pstats dd svg { display: none; }
+.pstats dd { font-size: 20px; font-weight: 700; line-height: 26px; letter-spacing: -.01em; }
+.pstats dt { padding-inline-start: 0; }
+:global(.rwa-mobile[data-theme='dark']) .pstats > div + div { border-inline-start-color: rgba(255, 255, 255, .1); }

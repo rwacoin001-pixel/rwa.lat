@@ -4,6 +4,9 @@
  * `/rank` — rankings (2026-11-04). Top tabs 星能榜 · 投资榜 · 团队榜 · 邀请榜 (a swipe pages between them), a week /
  * month switch, then the list: place, avatar, nickname, level and an amount range — never an exact amount, id or
  * email. My place stays pinned at the bottom; under the list one switch hides me from every board.
+ * v2 (2026-11-05, user: "make the rankings like this reference"): the first three stand on a podium — solid blocks with
+ * a lit top face and the place engraved in the front, the winner's tallest; rings in gold, silver and bronze tones; the
+ * blocks rise one after another (2, 1, 3) and the people settle on them. From fourth place on, the list as before.
  */
 import { useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
@@ -11,13 +14,14 @@ import { CommunityAvatar } from '@/components/community-avatar'
 import { MaisonPage } from '@/components/maison/primitives'
 import { TopTabs } from '@/components/maison/TopTabs'
 import { useQuery, invalidate } from '@/lib/api/_query'
-import { rankQuery, setRankHidden, type RankBoard, type RankPeriod } from '@/lib/api/membership'
+import { rankQuery, setRankHidden, type RankBoard, type RankPeriod, type RankRow } from '@/lib/api/membership'
 import { bandLabel, membershipCopy } from '@/lib/membership-copy'
 import { usePageState } from '@/lib/app-navigation'
 import { usePageTabs } from '@/lib/page-swipe'
 import { useI18n } from '@/lib/i18n'
 import { backOr } from '@/lib/maison-nav'
 import { GalaxyBadge } from './GalaxyBadge'
+import { Medallion } from './Medallion'
 import s from './membership.module.css'
 
 const BOARDS: readonly RankBoard[] = ['score', 'invest', 'team', 'invite']
@@ -51,12 +55,13 @@ export function RankScreen() {
       {result.error && !page ? <p className={s.note} role="alert">{k.loadFailed} <button type="button" className={s.textKey} onClick={() => void result.refetch()}>{k.retry}</button></p>
         : !page ? <ul className={s.list} aria-busy="true">{[0, 1, 2, 3, 4].map((i) => <li key={i} className={s.row}><span className={s.ghostLine} /></li>)}</ul>
         : page.items.length === 0 ? <p className={s.note}>{k.empty}</p>
-        : <ol className={`${s.list} ${s.ranks}`}>{page.items.map((row) => <li key={`${row.rank}-${row.handle}`} className={s.rankRow} data-top={row.rank <= 3 || undefined}>
+        : <>{page.items.length >= 3 && <Podium rows={page.items.slice(0, 3)} band={band} key={key} />}
+          {page.items.length > (page.items.length >= 3 ? 3 : 0) && <ol className={`${s.list} ${s.ranks}`} start={page.items.length >= 3 ? 4 : 1}>{page.items.slice(page.items.length >= 3 ? 3 : 0).map((row) => <li key={`${row.rank}-${row.handle}`} className={s.rankRow} data-top={row.rank <= 3 || undefined}>
           <b className={s.place} dir="ltr">{row.rank}</b>
           <CommunityAvatar avatarUrl={row.avatarUrl} seed={row.avatarSeed ?? row.handle} handle={row.handle} size={36} />
           <span className={s.who}><b dir="auto">{row.displayName}</b><GalaxyBadge level={row.level} /></span>
           <span className={s.band} dir="ltr">{band(row.band)}</span>
-        </li>)}</ol>}
+        </li>)}</ol>}</>}
 
       {page?.me && <>
         <div className={s.mine}>
@@ -71,4 +76,20 @@ export function RankScreen() {
       </>}
     </div>
   </MaisonPage>
+}
+
+/** The first three on their blocks, in podium order 2 · 1 · 3. */
+function Podium({ rows, band }: { rows: RankRow[]; band: (value: string) => string }) {
+  const order = [rows[1], rows[0], rows[2]]
+  return <section className={s.podium} aria-label="Top 3">
+    {order.map((row) => <div key={row.rank} className={s.podCol} data-place={row.rank}>
+      <div className={s.podWho}>
+        <span className={s.podAvatar}><CommunityAvatar avatarUrl={row.avatarUrl} seed={row.avatarSeed ?? row.handle} handle={row.handle} size={row.rank === 1 ? 64 : 52} />
+          <Medallion level={row.level} size={22} className={s.podGem} /></span>
+        <b dir="auto">{row.displayName}</b>
+        <span className={s.podBand} dir="ltr">{band(row.band)}</span>
+      </div>
+      <div className={s.block}><i className={s.blockTop} /><b className={s.blockNum} dir="ltr">{row.rank}</b></div>
+    </div>)}
+  </section>
 }

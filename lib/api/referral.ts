@@ -13,6 +13,10 @@ export const referralSummary=()=>request<ReferralSummary>('/v1/referral/summary'
 export type ReferralTeamBatch={month:string;status:'pending'|'approved'|'paid';baseAtomic:string;amountAtomic:string;paidAt:string|null;ledgerTransactionId:string|null}
 export const referralTeamRewards=()=>request<{enabled:boolean;activatedAt:string|null;items:ReferralTeamBatch[]}>('/v1/referral/team')
 export const referralInvitees=(page:number,level:string,sort:ReferralTeamSort='recent')=>request<Page<ReferralMember>>(`/v1/referral/invitees?page=${page}&pageSize=20&level=${level}&sort=${sort}`)
+/** 2026-11-05 team tree: one node's direct invitees inside my three-level team (no parent = my own invitees). */
+export type ReferralTreeNode={memberLabel:string;depth:1|2|3;boundAt:string;displayName:string|null;avatarUrl:string|null;memberLevel:number;active30d:boolean;childCount:number;teamSize:number;rewardsToMeAtomic:string}
+export type ReferralTeamTree={parent:string|null;depth:1|2|3;items:ReferralTreeNode[];total:number;page:number;pageSize:number}
+export const referralTeamTree=(parent:string|null,page=1)=>request<ReferralTeamTree>(`/v1/referral/team-tree?${parent?`parent=${encodeURIComponent(parent)}&`:''}page=${page}&pageSize=50`,{loading:'silent'})
 export const referralTeamOverview=()=>request<ReferralTeamOverview>('/v1/referral/team-overview',{loading:'silent'})
 export const referralInvitee=(memberLabel:string)=>request<ReferralMemberDetail>(`/v1/referral/invitees/${encodeURIComponent(memberLabel)}`)
 export const referralAwards=(page:number)=>request<Page<ReferralAward>>(`/v1/referral/rewards?page=${page}&pageSize=20`)

@@ -247,3 +247,10 @@
 .activity[data-on] { color: var(--m-up, #16a34a); }
 .sheetRows .teamName img { width: 16px; height: 16px; border-radius: 0; }
 .teamRow time { font-size: 12px; font-variant-numeric: tabular-nums; }
+
+/* Tree / list switch in the team sheet (2026-11-05). */
+.viewSwitch { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; margin: 4px 0 12px; padding: 3px; border-radius: 12px; background: var(--pa-fill, rgba(11, 18, 32, .06)); }
+.viewSwitch button { min-height: 32px; border: 0; border-radius: 9px; background: none; color: var(--m-muted, #5b6472); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .2s ease, color .2s ease, box-shadow .2s ease; }
+.viewSwitch button[aria-selected='true'] { background: var(--m-bg, #fff); color: var(--m-ink, #0b1220); box-shadow: 0 1px 3px rgba(11, 18, 32, .12); }
+:global(.rwa-mobile[data-theme='dark']) .viewSwitch { background: rgba(242, 244, 247, .08); }
+:global(.rwa-mobile[data-theme='dark']) .viewSwitch button[aria-selected='true'] { background: #2a2e37; color: #f2f4f7; }

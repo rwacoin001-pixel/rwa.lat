@@ -35,7 +35,9 @@ import { referralMe, referralSummary } from '@/lib/api/referral'
 import { rewardWalletQuery } from '@/lib/rewards'
 import { membershipQuery } from '@/lib/api/membership'
 import { LEVEL_NAMES, membershipCopy } from '@/lib/membership-copy'
-import { GalaxyBadge } from '@/components/membership/GalaxyBadge'
+import { Medallion } from '@/components/membership/Medallion'
+import type { Membership } from '@/lib/api/membership'
+import type { AppLocale } from '@/lib/i18n'
 import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 import { fromAtomic } from '@/lib/money'
 import { MASK, setBalancesHidden, useBalancesHidden } from '@/lib/hide-balance'
@@ -163,12 +165,12 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         its edge on the left and the membership chip on the right; name and @handle with a round edit key; three counts;
         one ink key to the public page. The account checks follow under the card. */}
     <section className={m.pcard} aria-label={me.card}>
-      <div className={m.pband}>
-        <ColourBand className={m.pcanvas} />
-      </div>
+      {/* 2026-11-05 (user: more designed): the band is now my membership — one solid ink strip with my level gem floating
+          on the right, the level name, star power and how far the next level is. Tapping it opens the level page. */}
+      {galaxy ? <MemberStrip m={galaxy} locale={locale} /> : <div className={m.pband}><ColourBand className={m.pcanvas} /></div>}
       <div className={m.pmid}>
         <span className={m.pavatar}>{community ? <CommunityAvatar avatarUrl={community.avatarUrl} seed={community.avatarSeed} handle={community.handle || 'me'} size={80} /> : <span className={m.avatarEmpty} />}</span>
-        {galaxy ? <button type="button" className={m.pchip} onClick={() => openPath('/profile/galaxy')}><GalaxyBadge level={galaxy.level.index} /></button>
+        {galaxy ? null
           : <span className={m.pchip}>{kycState === 'approved' ? <><Check size={14} strokeWidth={2.4} aria-hidden="true" />{me.verified}</> : me.member}</span>}
       </div>
       <div className={m.prow}>
@@ -413,4 +415,26 @@ export function FeesScreen() {
     <ol className={s.notes}>{t.notes.map((note) => <li key={note}>{note}</li>)}</ol>
     <p className={s.foot}><span className={s.mono}>{scheduleTag}</span><span>{t.binding}</span></p>
   </MaisonPage>
+}
+
+/** The membership strip on the name card (2026-11-05): ink ground, the gem floating right, the level and how far the next one is. */
+function MemberStrip({ m: g, locale }: { m: Membership; locale: AppLocale }) {
+  const k = membershipCopy(locale)
+  const names = LEVEL_NAMES[locale] ?? LEVEL_NAMES.en
+  const num = (v: string | number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Number(v) || 0)
+  const current = g.levels.find((level) => level.index === g.level.index)
+  const from = Number(current?.threshold ?? 0), to = Number(g.next?.threshold ?? from), score = Number(g.score) || 0
+  const progress = g.next ? Math.max(0, Math.min(1, (score - from) / Math.max(1, to - from))) : 1
+  return <button type="button" className={m.strip} onClick={() => openPath('/profile/galaxy')} aria-label={`${k.title} L${g.level.index} ${names[g.level.key]}`}>
+    <span className={m.stripText}>
+      <small>A-REIT · {k.title}</small>
+      <b>{names[g.level.key]}<em dir="ltr">L{g.level.index}</em></b>
+      <span dir="ltr">{k.score} {num(score)}</span>
+    </span>
+    <Medallion level={g.level.index} size={84} className={m.stripGem} />
+    <span className={m.stripFoot}>
+      <i><i style={{ width: `${progress * 100}%` }} /></i>
+      <small>{g.next ? k.toGo(`L${g.next.index}`, num(Math.max(0, to - score))) : k.top}</small>
+    </span>
+  </button>
 }

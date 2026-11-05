@@ -2,8 +2,11 @@
 
 /**
  * The invitation plate (2026-10-29, docs/design-system.md §7.7). After React Bits' Reflective Card: a metal card that
- * catches the light as it tilts. No camera and no WebGL: the "reflection" is our own Marina Bay photo, blurred and
- * moving against the tilt, and the light is a CSS glare and one soft band. Tilt follows the finger on the card (and the
+ * catches the light as it tilts. No camera and no WebGL: the light is a CSS glare and one soft band.
+ * 2026-11-05 (user: the blurred photo behind looked like a person — removed; put the level gem on the card, engraved into
+ * the metal, with a restrained touch of its colour): the gem is pressed into the face — its silhouette sunk with a dark
+ * upper edge and a light lower edge, its facets showing faintly through, a whisper of the level's tint — and it shifts a
+ * little against the tilt so it reads as cut into the plate, not printed on it. Tilt follows the finger on the card (and the
  * phone's tilt where the browser gives it without a prompt); it rises once on entry and rests flat otherwise.
  */
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
@@ -15,6 +18,8 @@ import p from './invite-plate.module.css'
 import { useQuery } from '@/lib/api/_query'
 import { membershipQuery } from '@/lib/api/membership'
 import { GalaxyBadge } from '@/components/membership/GalaxyBadge'
+import { gemSrc } from '@/components/membership/Medallion'
+import { GEM_TINT, gemLevel } from '@/components/membership/gem-spec'
 
 type Translate = (cn: string, en: string) => string
 const MAX_TILT = 9
@@ -73,8 +78,10 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
   return <div className={p.stage}>
     <div ref={ref} className={p.plate} data-theme={shot} data-touched={touched || undefined}
       onPointerMove={onMove} onPointerLeave={rest} onPointerCancel={rest} onPointerUp={rest}
-      role="group" aria-label={t('我的邀请函', 'My invitation')} style={{ ['--photo' as string]: `url(/media/quant/cover-${shot}-ground.webp)` } as CSSProperties}>
-      <i className={p.reflection} aria-hidden="true" />
+      role="group" aria-label={t('我的邀请函', 'My invitation')}>
+      {galaxy && <span className={p.engrave} aria-hidden="true" style={{ ['--gem' as string]: `url(${gemSrc(galaxy.level.index)})`, ['--tint' as string]: GEM_TINT[gemLevel(galaxy.level.index)] } as CSSProperties}>
+        <i className={p.engraveDark} /><i className={p.engraveLight} /><i className={p.engraveFill} /><img src={gemSrc(galaxy.level.index)} alt="" className={p.engraveRelief} draggable={false} />
+      </span>}
       <i className={p.brush} aria-hidden="true" />
       <i className={p.band} aria-hidden="true" />
       <i className={p.glare} aria-hidden="true" />
