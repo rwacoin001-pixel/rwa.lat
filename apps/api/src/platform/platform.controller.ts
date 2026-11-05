@@ -6,6 +6,11 @@ import { PlatformService } from './platform.service'
 export class PlatformController {
   constructor(private readonly platform: PlatformService) {}
   @Get() profile() { return this.platform.publicProfile() }
+  @Get('brands/:brandId')
+  brandProfile(@Param('brandId') brandId: string, @Res({ passthrough: true }) res: Response) {
+    res.setHeader('Cache-Control', 'no-store')
+    return this.platform.publicBrandProfile(brandId)
+  }
   @Get('documents/:revision/:index')
   async document(@Param('revision', ParseIntPipe) revision: number, @Param('index', ParseIntPipe) index: number, @Res() res: Response) {
     res.setHeader('Cache-Control', 'no-store')

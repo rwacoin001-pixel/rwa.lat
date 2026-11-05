@@ -3,13 +3,14 @@ import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import vm from 'node:vm'
 import { test } from 'node:test'
+import {testBrandContext} from './brand-test-context.mjs'
 const require = createRequire(import.meta.url)
 const ts = require('typescript')
-function load(file) {
+function load(file, brand='areit') {
   const exports = {}
   const source = readFileSync(new URL(`../lib/${file}.ts`, import.meta.url), 'utf8')
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText
-  vm.runInNewContext(output, { exports, URL, require: name => name.startsWith('./referral-poster-') ? load(name.slice(2)) : require(name) })
+  vm.runInNewContext(output, { exports, URL, require: name => name.endsWith('brand/build-brand') ? testBrandContext(brand) : name.startsWith('./referral-poster-') ? load(name.slice(2),brand) : require(name) })
   return exports
 }
 const { POSTER_PLATFORMS, POSTER_CATEGORIES, posterTemplates, buildPosterModel, invitationUrl } = load('referral-poster')
@@ -21,6 +22,13 @@ const total = 39 + film.length + round4.length + round5.length
 const filmIn = prefix => film.filter(id => id.startsWith(prefix)).length
 const rules = { version: 2, holdingRatesBps: [600, 300, 100], feeRatesBps: [2000, 1000, 500] }
 const input = { code: 'Sample12', locale: 'en', rules, purchaseRewardsEnabled: true, feeRewardsEnabled: true }
+test('Kimeng invitations and generated poster identity remain on Kimeng',()=>{
+  const k=load('referral-poster','kimeng')
+  assert.equal(k.invitationUrl('Sample12','en'),'https://kimengresearch.com/r/Sample12?lang=en')
+  const model=k.buildPosterModel({...input,template:k.posterTemplates('wechat')[0]})
+  assert.ok(model.logo.startsWith('/brand/kimeng/'))
+  assert.ok(model.filename.startsWith('KIMENG-'))
+})
 test('ten platforms each expose every poster once across eight style families', () => {
   assert.equal(POSTER_PLATFORMS.length, 10)
   assert.deepEqual(Array.from(POSTER_CATEGORIES), ['minimal', 'ink', 'painting', 'anime', 'modern', 'future', 'dream', 'graphic'])

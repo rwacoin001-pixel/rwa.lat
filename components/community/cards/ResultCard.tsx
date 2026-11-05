@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 /**
  * A share-a-result card (晒单卡, 2026-11-01). One shell for all eight kinds: a ticket head (a slow pastel band whose colour
  * says the kind — quant mint→mist, prediction lavender→rose, funds porcelain), a perforation, then a grey well with the
@@ -21,7 +23,7 @@ type Copy = {
 const copy: Partial<Record<AppLocale, Copy>> = {
   'zh-CN': {
     kinds: { quant_day: '今日收益', quant_product: '产品盈亏', quant_total: '累计收益', holdings: '持仓状态', prediction_bet: '预测单', prediction_record: '预测战绩', deposit: '充值', withdrawal: '提现' },
-    group: { quant: '考拉量化', prediction: '预测', funds: '资金记录' }, snapshot: '账户快照', provenance: 'A-REIT 账户快照', funds: '资金记录，不是收益',
+    group: { quant: '考拉量化', prediction: '预测', funds: '资金记录' }, snapshot: '账户快照', provenance: brandText('A-REIT 账户快照'), funds: '资金记录，不是收益',
     risk: '历史账户快照，所选结果不代表整体表现。投资可能亏损，过去表现不代表未来。',
     f: { pnl: '盈亏', returnPct: '收益率', product: '产品', date: '日期', settledDays: '已结算', status: '状态', bestMonth: '最好的月份', products: '持仓', totalPrincipal: '剩余本金', pending: '等待生效', question: '事件', side: '方向', stake: '下注', result: '结果', payout: '到账', winRate: '胜率', total: '总次数', closedPnl: '已结算盈亏', last10: '最近 10 次', amount: '金额', asset: '币种', time: '时间' },
     status: { holding: '持有中', redeeming: '赎回中', closed: '已结束', credited: '已到账', confirmed: '已到账', completed: '已完成', pending: '处理中', processing: '处理中', failed: '失败', rejected: '已拒绝' },
@@ -29,7 +31,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
   },
   en: {
     kinds: { quant_day: 'Day result', quant_product: 'Product P&L', quant_total: 'Total return', holdings: 'Holdings', prediction_bet: 'Prediction', prediction_record: 'Track record', deposit: 'Deposit', withdrawal: 'Withdrawal' },
-    group: { quant: 'Koala Quant', prediction: 'Predictions', funds: 'Funds record' }, snapshot: 'Account snapshot', provenance: 'A-REIT account snapshot', funds: 'A funds record, not a return',
+    group: { quant: 'Koala Quant', prediction: 'Predictions', funds: 'Funds record' }, snapshot: 'Account snapshot', provenance: brandText('A-REIT account snapshot'), funds: 'A funds record, not a return',
     risk: 'Historical account snapshot; selected results may not represent overall performance. Losses are possible. Past performance does not predict future results.',
     f: { pnl: 'P&L', returnPct: 'Return', product: 'Product', date: 'Date', settledDays: 'Settled', status: 'Status', bestMonth: 'Best month', products: 'Holdings', totalPrincipal: 'Principal left', pending: 'Pending', question: 'Event', side: 'Side', stake: 'Stake', result: 'Result', payout: 'Payout', winRate: 'Win rate', total: 'Bets', closedPnl: 'Settled P&L', last10: 'Last 10', amount: 'Amount', asset: 'Asset', time: 'Time' },
     status: { holding: 'Holding', redeeming: 'Redeeming', closed: 'Closed', credited: 'Credited', confirmed: 'Credited', completed: 'Completed', pending: 'Pending', processing: 'Processing', failed: 'Failed', rejected: 'Rejected' },

@@ -1,3 +1,5 @@
+
+import { BRAND } from '@/lib/brand/build-brand'
 import type { AppLocale } from './app-locales'
 import { posterCopy } from './referral-poster-copy'
 import { ART_STYLES, artHeadlines, artStyleNames } from './referral-poster-art'
@@ -107,7 +109,7 @@ export function posterTemplates(platform: string, category?: PosterCategory): Po
 /** With the poster's language, so the page behind the QR code reads the same language as the poster. */
 export function invitationUrl(code: string, locale?: AppLocale): string {
   if (!/^[a-zA-Z0-9]{6,16}$/.test(code)) throw new Error('Invalid invitation code')
-  return `https://a-reit.com/r/${code}${locale ? `?lang=${encodeURIComponent(locale)}` : ''}`
+  return `${BRAND.origin}/r/${code}${locale ? `?lang=${encodeURIComponent(locale)}` : ''}`
 }
 type Rules = { version: number; holdingRatesBps: number[]; feeRatesBps: number[] }
 export type PosterInput = { code: string; locale: AppLocale; template: PosterTemplate; rules: Rules | null; purchaseRewardsEnabled?: boolean; feeRewardsEnabled?: boolean }
@@ -131,8 +133,8 @@ export function buildPosterModel(input: PosterInput) {
     rate, levels: numeric ? rates.map((value, index) => `${copy.level} ${index + 1}: ${pct(value)}`).join('   /   ') : '',
     disclaimer: copy.disclaimer, scanLabel: copy.scan, codeLabel: copy.code, steps: copy.steps,
     background: `/media/referral/posters/${template.art}.webp`,
-    logo: `/brand/a-reit/logo-${(template.layout ? template.layout.top === 'dark' : template.dark) ? 'dark' : 'light'}.svg`,
-    filename: `A-REIT-${platform.id}-${template.style}-${input.locale}-v${input.rules.version}.png`,
+    logo: `${BRAND.assets}/logo-${(template.layout ? template.layout.top === 'dark' : template.dark) ? 'dark' : 'light'}.svg`,
+    filename: `${BRAND.name}-${platform.id}-${template.style}-${input.locale}-v${input.rules.version}.png`,
   }
 }
 export type PosterModel = ReturnType<typeof buildPosterModel>

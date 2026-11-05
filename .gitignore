@@ -44,3 +44,5 @@ page_dump.html
 .tmp-shots/
 shots/
 .chrome-batch2-light/
+.brand-builds/
+.task-artifacts/kimeng-progress.md

@@ -3,6 +3,7 @@
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { DESKTOP_MEDIA_QUERY, DESKTOP_REDIRECT_URL } from '@/lib/desktop-redirect'
+import { BRAND } from '@/lib/brand/build-brand'
 
 export function phonePath(raw: string | null) {
   if (!raw?.startsWith('/') || raw.startsWith('//') || raw.includes('\\')) return '/home'
@@ -19,6 +20,7 @@ export default function TrustDesktopEntry() {
   useEffect(() => {
     const media = window.matchMedia(DESKTOP_MEDIA_QUERY)
     const update = () => {
+      if (BRAND.id === 'kimeng') { router.replace(phonePath(new URLSearchParams(window.location.search).get('from'))); return }
       if (!media.matches) {
         router.replace(phonePath(new URLSearchParams(window.location.search).get('from')))
       } else if (window.top === window.self) {

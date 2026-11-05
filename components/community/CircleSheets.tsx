@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 /**
  * Own circles on the community "Circle" tab (2026-11-01, user). One row of circle names (mine first, then the circles I
  * am in through whoever invited me), the chosen circle's head (name, owner, member count, one "…" key), and the sheets:
@@ -51,7 +53,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     leaveBody: 'You will no longer see or post here. Your past posts stay.', deleteTitle: 'Delete your circle?',
     deleteBody: 'Its posts are hidden too, and members can no longer see them.', cancel: 'Cancel', depth: (n) => n <= 1 ? 'You invited' : `${n} invites away`, you: 'You',
     foundTitle: 'Start a circle', failed: 'That did not work. Please try again.', more: 'More', empty: 'No members yet. Invite friends and they join automatically.', rejoin: 'Rejoin', leftNote: 'You left this circle',
-    invite: 'Invite friends', inviteBody: 'Friends open the link and ask to join; they are in once you approve. People you invited to A-REIT join on their own.', copy: 'Copy link', copied: 'Link copied',
+    invite: 'Invite friends', inviteBody: brandText('Friends open the link and ask to join; they are in once you approve. People you invited to A-REIT join on their own.'), copy: 'Copy link', copied: 'Link copied',
     share: 'Share', reset: 'Reset link', resetDone: 'The old link no longer works', qr: 'Circle invite QR code', requests: (n) => n > 0 ? `Requests (${n})` : 'Requests', requestsEmpty: 'No new requests.',
     approve: 'Approve', reject: 'Decline', removed: 'Removed', removedEmpty: 'Nobody has been removed.', restore: 'Undo', viaLink: 'Joined by link', noProfile: 'No profile yet',
     joinedNote: (owner) => `${owner} is in your invite chain, so you joined this circle automatically.`, dismiss: 'Got it',

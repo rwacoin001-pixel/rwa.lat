@@ -1,9 +1,10 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from './app-locales'
 import type { GateCopy } from '@/components/ios-install-gate-view'
 
 type AddedLocale = Exclude<AppLocale, 'en' | 'zh-CN'>
 
-export const localizedGateViewCopy: Record<AddedLocale, GateCopy> = {
+export const localizedGateViewCopy: Record<AddedLocale, GateCopy> = mapBrandCopy({
   hi: {
     dir: 'ltr',
     ui: { share: 'शेयर', addToHome: 'होम स्क्रीन पर जोड़ें', add: 'जोड़ें', cancel: 'रद्द करें', webApp: 'वेब ऐप के रूप में खोलें', openInSafari: 'Safari में खोलें', openInBrowser: 'ब्राउज़र में खोलें' },
@@ -194,4 +195,4 @@ export const localizedGateViewCopy: Record<AddedLocale, GateCopy> = {
     },
     copyLink: 'Copiar link da página', copied: 'Link copiado', exit: 'Tentou e ainda não conseguiu adicionar? Continue no navegador por enquanto',
   },
-}
+})

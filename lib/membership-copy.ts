@@ -1,11 +1,12 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from './i18n'
 import type { LevelDef, LevelKey, RankBoard } from './api/membership'
 
 /** 2026-11-05 c (user: no star names — just L1…L7): every locale shows the plain rank. Keys stay internal. */
 const PLAIN = { stardust: 'L1', planet: 'L2', star: 'L3', cluster: 'L4', nebula: 'L5', galaxy: 'L6', milkyway: 'L7' } as const
-export const LEVEL_NAMES: Record<AppLocale, Record<LevelKey, string>> = {
+export const LEVEL_NAMES: Record<AppLocale, Record<LevelKey, string>> = mapBrandCopy({
   'zh-CN': PLAIN, en: PLAIN, hi: PLAIN, es: PLAIN, ar: PLAIN, fr: PLAIN, pt: PLAIN,
-}
+})
 
 export type MembershipCopy = {
   title: string; kicker: string; score: string; scoreNote: string; toNext: (name: string) => string; top: string
@@ -58,7 +59,7 @@ const en: MembershipCopy = {
   rules: 'Rules', member: 'A-REIT member', live: 'On', soonPill: 'Soon', gifts: 'Member perks', levelStart: (v) => `Level starts at ${v}`, levelNeed: (n, v) => `${n} at ${v}`,
   gate: 'To reach it', gateFree: 'Yours on sign-up', giftsOf: (n) => `${n} perks`, noGifts: 'Level badge', reached: 'Reached', tierOf: (n, t) => `Level ${n} of ${t}`, statDirect: 'Direct active', statTeam: 'Team active', statPerks: 'Perks on',
 }
-export const MEMBERSHIP_COPY: Partial<Record<AppLocale, MembershipCopy>> = { 'zh-CN': zh, en }
+export const MEMBERSHIP_COPY: Partial<Record<AppLocale, MembershipCopy>> = mapBrandCopy({ 'zh-CN': zh, en })
 export const membershipCopy = (locale: AppLocale) => MEMBERSHIP_COPY[locale] ?? en
 
 /** Money band keys from the API → readable ranges ("1k-5k" → "1千–5千 U" / "1k–5k U"). */

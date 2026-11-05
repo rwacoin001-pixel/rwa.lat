@@ -1,4 +1,6 @@
 import type { SVGProps } from 'react'
+import { BRAND } from '@/lib/brand/build-brand'
+import { kimengMark } from '@/lib/brand/kimeng-mark'
 
 type RwaLogoMarkProps = SVGProps<SVGSVGElement> & {
   label?: string
@@ -7,7 +9,8 @@ type RwaLogoMarkProps = SVGProps<SVGSVGElement> & {
 }
 
 /** A-REIT folded portal mark. The compatibility name keeps existing imports stable. */
-export default function RwaLogoMark({ label = 'A-REIT', primaryColor = 'currentColor', accentColor = '#19C7AA', ...props }: RwaLogoMarkProps) {
+export default function RwaLogoMark({ label = BRAND.name, primaryColor = 'currentColor', accentColor = '#19C7AA', ...props }: RwaLogoMarkProps) {
+  if (BRAND.id === 'kimeng') return <svg {...props} viewBox="0 0 1254 1254" role={label ? 'img' : undefined} aria-label={label || undefined} aria-hidden={label ? undefined : true} focusable="false" style={{ ...props.style, color: primaryColor }}><g dangerouslySetInnerHTML={{ __html: kimengMark.replace('color:#000000', 'color:inherit') }} /></svg>
   const titleId = props.id ? `${props.id}-title` : undefined
   return (
     <svg {...props} viewBox="0 0 500 280" role={label ? 'img' : undefined} aria-hidden={label ? undefined : true} aria-label={titleId ? undefined : label || undefined} aria-labelledby={titleId} focusable="false">

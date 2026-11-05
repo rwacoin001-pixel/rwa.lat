@@ -1,3 +1,4 @@
+import { BRAND } from './brand/build-brand'
 export const DESKTOP_MEDIA_QUERY = '(min-width: 1024px)'
 export const DESKTOP_REDIRECT_URL = 'https://www.capitaland-ascendasreit.com/'
 
@@ -5,7 +6,7 @@ export const DESKTOP_REDIRECT_URL = 'https://www.capitaland-ascendasreit.com/'
 // application paths, query parameters and fragments are never forwarded there.
 // Narrow windows and embedded previews stay in the app. Legal pages, auth callbacks
 // and internal tools remain reachable at every width.
-export const desktopRedirectBootstrap = `(function(){try{
+export const desktopRedirectBootstrap = BRAND.desktopRedirect ? `(function(){try{
 var l=location,p=l.pathname;
 var excluded=['api','auth','privacy','terms','dev','design-preview','_next'];
 var seg=p.split('/')[1]||'';if(excluded.indexOf(seg)>-1)return;
@@ -18,4 +19,4 @@ redirected=true;l.replace(${JSON.stringify(DESKTOP_REDIRECT_URL)});
 update();
 if(media.addEventListener)media.addEventListener('change',update);
 else if(media.addListener)media.addListener(update);
-}catch(e){}})();`
+}catch(e){}})();` : ''

@@ -1,6 +1,6 @@
 'use client'
 
-import { Instrument_Serif } from 'next/font/google'
+import localFont from 'next/font/local'
 import { GeistSans } from 'geist/font/sans'
 import { GeistMono } from 'geist/font/mono'
 import { AlertTriangle, CircleSlash, Inbox, RotateCw } from 'lucide-react'
@@ -11,7 +11,7 @@ import styles from './maison.module.css'
 import { PullToRefresh } from './PullToRefresh'
 import { useScrollReveal } from './useScrollReveal'
 
-const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--home-display-latin', display: 'swap' })
+const display = localFont({ src: [{ path: '../../public/fonts/instrumentserif/InstrumentSerif-Regular.ttf', weight: '400', style: 'normal' }, { path: '../../public/fonts/instrumentserif/InstrumentSerif-Italic.ttf', weight: '400', style: 'italic' }], variable: '--home-display-latin', display: 'swap' })
 
 export { styles as maison }
 

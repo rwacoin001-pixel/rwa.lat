@@ -1,6 +1,8 @@
 import type { ReactNode } from 'react'
 import LegalHeader from './legal-header'
 import styles from './legal-page.module.css'
+import { BRAND } from '@/lib/brand/build-brand'
+import BrandOperatorDisclosure from './brand-operator-disclosure'
 
 type LegalPageProps = {
   kind: 'terms' | 'privacy'
@@ -47,8 +49,8 @@ export default function LegalPage({ kind, title, updated, effectiveDate, childre
       </main>
 
       <footer className={styles.footer}>
-        <p>© 2026 A-REIT</p>
-        <a href="mailto:support@a-reit.com">Contact support</a>
+        <p>© 2026 {BRAND.name}</p>
+        {BRAND.id === 'areit' ? <a href="mailto:support@a-reit.com">Contact support</a> : <BrandOperatorDisclosure />}
       </footer>
     </div>
   )

@@ -1,4 +1,5 @@
 import type { MetadataRoute } from 'next'
+import { BRAND } from '@/lib/brand/build-brand'
 
 const privatePaths = [
   '/home',
@@ -18,6 +19,7 @@ const privatePaths = [
 ]
 
 export default function robots(): MetadataRoute.Robots {
+  if (BRAND.noindex) return { rules: { userAgent: '*', allow: '/' } }
   return {
     rules: [
       // Googlebot must be able to fetch protected page shells and observe their noindex metadata.

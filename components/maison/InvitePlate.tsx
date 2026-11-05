@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText, BRAND } from '@/lib/brand/build-brand'
+
 /**
  * The invitation plate v2 (2026-11-05, user: no icon in the middle, a rounded QR, re-laid out, and the card turns over on
  * a tap with premium motion; the back explains my level and its perks. Reviewed with Codex).
@@ -96,7 +98,7 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
 
   const me = useCommunityMe(false)
   const galaxy = useQuery('membership:me', membershipQuery, { staleTime: 60_000, loading: 'silent' }).data
-  const name = me?.displayName?.trim() || t('A-REIT 会员', 'A-REIT member')
+  const name = me?.displayName?.trim() || t(brandText('A-REIT 会员'), brandText('A-REIT member'))
   const level = galaxy?.level.index ?? null
   const num = (v: string | number) => new Intl.NumberFormat(locale, { maximumFractionDigits: 0 }).format(Number(v) || 0)
   const current = galaxy?.levels.find((row) => row.index === galaxy.level.index)
@@ -113,7 +115,7 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
   const gifts = current ? giftsOf(current, k) : []
   const live = gifts.filter((g) => g.live).slice(0, 3), soon = gifts.filter((g) => !g.live)
   const metal = <><i className={p.brush} aria-hidden="true" /><i className={p.band} aria-hidden="true" /><i className={p.glare} aria-hidden="true" /><i className={p.sweep} aria-hidden="true" /><i className={p.rim} aria-hidden="true" /></>
-  const brand = <span className={p.brand}><img src={`/brand/a-reit/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={16} height={18} /><span>A-REIT</span></span>
+  const brand = <span className={p.brand}><img src={`${BRAND.assets}/mark-${shot === 'dark' ? 'dark' : 'light'}.svg`} alt="" width={16} height={18} /><span>{brandText("A-REIT")}</span></span>
 
   return <div className={p.stage}>
     <div ref={ref} className={p.plate} data-theme={shot} data-touched={touched || undefined} data-flipped={flipped || undefined} data-turning={turning || undefined}
@@ -128,7 +130,7 @@ export function InvitePlate({ code, link, invited, copied = false, onQr, onCopy,
               <b className={p.name} dir="auto">{name}</b>
               {level && <span className={p.rank} dir="ltr">L{level}</span>}
             </div>
-            <span className={p.role}>{t('邀请你加入 A-REIT', 'invites you to A-REIT')}</span>
+            <span className={p.role}>{t(brandText('邀请你加入 A-REIT'), brandText('invites you to A-REIT'))}</span>
             <footer className={p.foot}>
               <span className={p.footText}>
                 <small>{t('邀请码', 'INVITATION CODE')}</small>

@@ -14,6 +14,7 @@ import { createApiRateLimitMiddleware } from './common/api-rate-limit.middleware
 import { createEdgeClientMiddleware } from './common/edge-client'
 import { createApiCorsOptions } from './common/cors-options'
 import type { Server } from 'node:http'
+import { exposeApiDocs } from './config/api-docs'
 
 function parseOrigins(value: string | undefined) {
   return (value ?? 'http://localhost:3030,http://localhost:3100')
@@ -40,6 +41,7 @@ async function bootstrap() {
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))
   app.useGlobalFilters(new HttpExceptionFilter())
 
+  if (exposeApiDocs(process.env)) {
   const openApiConfig = new DocumentBuilder()
     .setTitle('A-REIT API')
     .setDescription('Versioned API contracts for the A-REIT investment application.')
@@ -48,6 +50,7 @@ async function bootstrap() {
     .build()
   const openApiDocument = SwaggerModule.createDocument(app, openApiConfig)
   SwaggerModule.setup('docs', app, openApiDocument, { useGlobalPrefix: true })
+  }
 
   const server = await app.listen(Number(process.env.PORT ?? 4000)) as Server
   server.requestTimeout = 30_000

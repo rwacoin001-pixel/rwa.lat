@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
 import { ArrowRight, Fingerprint } from 'lucide-react'
@@ -168,7 +170,7 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
   return <div className={`rwa-mobile ${styles.shell}`} data-theme={theme} data-screen="locked">
     <MaisonPage page="locked" className={styles.page}>
       <main className={styles.screen} dir={locale === 'ar' ? 'rtl' : 'ltr'} aria-labelledby={titleId}>
-        <div className={styles.top}><RwaLogoMark className={styles.logo} width={40} height={22} label="A-REIT" /></div>
+        <div className={styles.top}><RwaLogoMark className={styles.logo} width={40} height={22} label={brandText("A-REIT")} /></div>
         <div className={styles.mid}>
           <div className={styles.mark} aria-hidden="true" data-busy={busy || undefined}>
             {/* A hairline track; a teal arc turns around it while the device checks the passkey. */}

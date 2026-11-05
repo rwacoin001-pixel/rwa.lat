@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 /**
  * 二级市场转让（/secondary）：意向登记（waitlist）+ 标准转让协议下载 + 状态说明。
  * 撮合与结算能力就绪前，先提供登记与协议准备，不展示虚假流动性。
@@ -18,11 +20,11 @@ const STORAGE_KEY = 'rwa-secondary-intents'
 
 function downloadAgreement() {
   const content = [
-    'A-REIT 二级市场转让意向协议（标准模板 · 模拟）',
+    brandText('A-REIT 二级市场转让意向协议（标准模板 · 模拟）'),
     '',
     '本模板用于登记转让意向，正式协议需在撮合与合规审核通过后签署。',
     '',
-    '第一条 转让标的：用户持有的 A-REIT 平台产品权益（以持仓记录为准）。',
+    brandText('第一条 转让标的：用户持有的 A-REIT 平台产品权益（以持仓记录为准）。'),
     '第二条 转让方式：意向登记后，由平台在二级市场撮合通道开通时通知双方。',
     '第三条 价格与结算：以双方确认价格为准，结算通过平台账本完成。',
     '第四条 合规要求：受让方须通过 KYC 与资格评估（SEC Reg D / MAS 视地区）。',
@@ -33,7 +35,7 @@ function downloadAgreement() {
   const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }))
   const anchor = document.createElement('a')
   anchor.href = url
-  anchor.download = 'A-REIT-二级市场转让协议模板.txt'
+  anchor.download = brandText('A-REIT-二级市场转让协议模板.txt')
   anchor.click()
   URL.revokeObjectURL(url)
 }

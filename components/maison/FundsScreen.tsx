@@ -1,5 +1,7 @@
 'use client'
 
+import { BRAND } from '@/lib/brand/build-brand'
+
 import { AlertTriangle, ArrowRight, BookUser, Check, ChevronRight, ClipboardPaste, Copy, Plus, QrCode, Send, Share2, ShieldCheck } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import {TransferScanner} from './TransferScanner'
@@ -356,7 +358,7 @@ export function ReceiveScreen() {
           </div>
           <div className={rc.tile} role="img" aria-label={r.qr}>
             <QRCodeSVG value={link} size={216} level="H" bgColor="#ffffff" fgColor="#0b1220"
-              imageSettings={{ src: '/icons/a-reit-v1-192.png', width: 44, height: 44, excavate: true }} />
+              imageSettings={{ src: BRAND.icon192, width: 44, height: 44, excavate: true }} />
           </div>
           <p className={rc.caption}>{r.qr}</p>
           <button type="button" className={rc.id} onClick={() => void copy()} aria-label={`${r.copy} · ${userId}`}>

@@ -102,3 +102,6 @@
   .brand.markOnly .lockup { width: 104px; }
   .brand.compact.homeMotion .lockup { width: 50px; }
 }
+
+.brand.monochrome .lockup { animation: none; filter: none; }
+.brand.monochrome::before, .brand.monochrome::after { display: none; }

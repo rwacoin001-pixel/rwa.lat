@@ -1,4 +1,6 @@
 'use client'
+
+import { brandText } from '@/lib/brand/build-brand'
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react'
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform, type MotionValue } from 'motion/react'
 import { Wifi, Mic, Plus, Pencil, ArrowLeft, ArrowDownToLine, ArrowLeftRight, ArrowRight, ArrowUpFromLine, ChartColumn, ChartPie, Check, Eye, Gift, House, Languages, LoaderCircle, Moon, QrCode } from 'lucide-react'
@@ -62,12 +64,12 @@ const HOME_COPY: Partial<Record<AppLocale, { slogan: [string, string]; sub: stri
 type AiCopy = { tabs: [string, string]; hi: string; name: string; reply: string; ask: string; qs: [string, [string, string, string], string][]; pick: number[];
   own: string; skip: string; next: string; summary: string; input: string; note: string; done: string }
 const AI_COPY: Partial<Record<AppLocale, AiCopy>> = {
-  'zh-CN': { tabs: ['AI 助手', '社区'], hi: '你好', name: 'A-REIT AI', reply: '你好！我是 A-REIT AI 助手。我可以介绍平台、解释和对比产品，也能帮你理清配置思路。',
+  'zh-CN': { tabs: ['AI 助手', '社区'], hi: '你好', name: brandText('A-REIT AI'), reply: brandText('你好！我是 A-REIT AI 助手。我可以介绍平台、解释和对比产品，也能帮你理清配置思路。'),
     ask: '我有一笔钱，怎么配置？',
     qs: [['这笔资金大概打算投资多久？', ['1 年以内', '1–3 年', '3 年以上'], '投资多久？'], ['你更看重哪一点？', ['稳定收入', '长期增长', '两者兼顾'], '看重什么？'], ['能接受多大的波动？', ['较小', '中等', '较大'], '多大波动？']],
     pick: [1, 0, 0], own: '或者写下你自己的回答', skip: '跳过', next: '下一步',
     summary: '已记录：1–3 年、稳定收入、波动较小。我按这些列出可以先了解的产品，结果仅供参考。', input: '问问费用、风险或配置…', note: 'AI 可能出错，回答仅供参考，不构成投资建议。', done: '整理好了' },
-  en: { tabs: ['AI Support', 'Community'], hi: 'Hello', name: 'A-REIT AI', reply: 'Hi! I am the A-REIT AI assistant. I can introduce the platform, explain and compare products, and help you think through an allocation.',
+  en: { tabs: ['AI Support', 'Community'], hi: 'Hello', name: brandText('A-REIT AI'), reply: brandText('Hi! I am the A-REIT AI assistant. I can introduce the platform, explain and compare products, and help you think through an allocation.'),
     ask: 'How should I allocate some money?',
     qs: [['Roughly how long will you invest it?', ['Under 1 year', '1–3 years', 'Over 3 years'], 'How long?'], ['What matters more to you?', ['Steady income', 'Long-term growth', 'Both'], 'What matters?'], ['How much ups and downs can you take?', ['Little', 'Some', 'A lot'], 'How much swing?']],
     pick: [1, 0, 0], own: 'Or write your own reply', skip: 'Skip', next: 'Next',
@@ -330,7 +332,7 @@ function PrintedHome({ locale, active }: { locale: AppLocale; active: boolean })
   return <div className={styles.print}>
     <div className={styles.pStatus}><b><Clock /></b><i className={styles.pIsland} /><span><i className={styles.pSig}><i /><i /><i /><i /></i><Wifi size={15} strokeWidth={1.8} /><i className={styles.pBatt}><i /></i></span></div>
     <motion.div className={styles.pTop} {...show(0)}>
-      <RwaLogoMark width={44} height={25} label="" /><b>A-REIT</b>
+      <RwaLogoMark width={44} height={25} label="" /><b>{brandText("A-REIT")}</b>
       <span><Gift size={22} strokeWidth={1.4} /><Moon size={22} strokeWidth={1.4} /><i className={styles.pAvatar}><img src="/media/palette-a/avatars/a00.svg" alt="" draggable={false} /></i></span>
     </motion.div>
     <motion.h3 className={styles.pSlogan} {...show(1)}><span>{c.slogan[0]}</span><em>{c.slogan[1]}</em></motion.h3>

@@ -1,4 +1,6 @@
 'use client'
+
+import { brandText } from '@/lib/brand/build-brand'
 import { useEffect, useMemo, useRef, useState, type RefObject, type CSSProperties } from 'react'
 import { Download, Share2, RotateCw, Maximize2, Minimize2 } from 'lucide-react'
 import { QRCodeCanvas } from 'qrcode.react'
@@ -142,7 +144,7 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
     if (!ready || sharing || !output) return
     if (nativeCan('share')) {
       setSharing(true); setStatus('')
-      void nativeShare({ title: 'A-REIT', url: invitationUrl(code, posterLocale), image: output.file, name: output.file.name }).then(result => {
+      void nativeShare({ title: brandText('A-REIT'), url: invitationUrl(code, posterLocale), image: output.file, name: output.file.name }).then(result => {
         if (current()) { setSharing(false); if (!result.ok && result.reason === 'failed') setStatus(ui.shareHint) }
       })
       return
@@ -151,7 +153,7 @@ export function ReferralPosterComposer({ code, summary, locale, theme, inertRef,
     if (!navigator.share || !navigator.canShare?.({ files })) { setStatus(ui.shareHint); return }
     setSharing(true); setStatus('')
     // The file is prepared before the tap, preserving transient user activation on iOS.
-    void navigator.share({ files, title: 'A-REIT' }).then(() => {
+    void navigator.share({ files, title: brandText('A-REIT') }).then(() => {
       if (current()) setSharing(false)
     }).catch((reason: unknown) => {
       if (current()) { setSharing(false); if (!(reason instanceof DOMException && reason.name === 'AbortError')) setStatus(ui.shareHint) }

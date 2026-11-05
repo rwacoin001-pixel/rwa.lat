@@ -8,9 +8,10 @@ import { useQuery } from '@/lib/api/_query'
 import { trustCopy, type TrustCopy } from '@/lib/maison-trust-copy'
 import { Skeleton, StateBlock } from './maison/primitives'
 import s from './maison/published.module.css'
+import { BRAND } from '@/lib/brand/build-brand'
 
 type Profile = { legalName: string; registrationNumber: string; jurisdiction: string; address: string; supportEmail: string; description: string; allowedRegions: string[]; investorTypes: string[]; documents: { title: string; url: string; kind?: string; reportDate?: string|null; asOfDate?: string|null; issuer?: string|null }[]; officialChannels?: Array<{ kind: string; label: string; url: string; note: string }> }
-const loadProfile = () => request<Profile>('/v1/platform')
+const loadProfile = () => request<Profile>(BRAND.id === 'kimeng' ? '/v1/platform/brands/kimeng' : '/v1/platform')
 const channelHost = (url: string) => { try { return new URL(url).hostname } catch { return url } }
 // Published files are either API-served (/v1/...) or absolute https links; anything else is not rendered as a link.
 const docHref = (url: string) => url.startsWith('/v1/') ? apiUrl(url) : /^https:\/\//i.test(url) ? url : null

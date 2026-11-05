@@ -1,0 +1,20 @@
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "kimeng-frontend",
+  "main": "workers/frontend/index.mjs",
+  "compatibility_date": "2026-07-15",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    { "pattern": "kimengresearch.com", "custom_domain": true },
+    { "pattern": "www.kimengresearch.com", "custom_domain": true }
+  ],
+  "assets": { "directory": ".open-next/assets", "binding": "ASSETS", "run_worker_first": true },
+  "vars": {
+    "SITE_BRAND": "kimeng",
+    "API_INTERNAL_URL": "https://api.a-reit.com",
+    "KIMENG_RELEASE_MODE": "preview"
+  },
+  "observability": { "enabled": true }
+}

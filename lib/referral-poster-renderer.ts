@@ -1,3 +1,5 @@
+
+import { BRAND } from '@/lib/brand/build-brand'
 import type { PosterModel } from './referral-poster'
 
 const images = new Map<string, Promise<HTMLImageElement>>()
@@ -302,7 +304,7 @@ export async function drawReferralPoster(canvas: HTMLCanvasElement, model: Poste
   drawRoundedQr(ctx, qr, qrX, footerY, qrSize)
   text('codeLabel', model.codeLabel, { x: footerX, y: footerY + 1, width: footerW, height: landscape ? 23 : 30 }, landscape ? 14 : 18, 400, fMuted)
   text('code', model.code, { x: footerX, y: footerY + (landscape ? 26 : 34), width: footerW, height: landscape ? 34 : 46 }, landscape ? 24 : 32, 650, fInk, true)
-  text('link', `a-reit.com · V${model.version}`, { x: footerX, y: footerY + (landscape ? 65 : 88), width: footerW, height: 26 }, landscape ? 13 : 17, 400, fMuted, true)
+  text('link', `${new URL(BRAND.origin).hostname} · V${model.version}`, { x: footerX, y: footerY + (landscape ? 65 : 88), width: footerW, height: 26 }, landscape ? 13 : 17, 400, fMuted, true)
   text('scanLabel', model.scanLabel, { x: qrX - (landscape ? 22 : 7), y: footerY + qrSize + 5, width: qrSize + (landscape ? 44 : 14), height: landscape ? 44 : 36 }, landscape ? 12 : 13, 500, fInk, false, false, 'center')
   text('disclaimer', model.disclaimer, { x: footerX, y: footerY + (landscape ? 118 : 166), width: footerW, height: landscape ? 32 : 38 }, landscape ? 12 : 14, 400, fMuted)
   const outside = bounds.find(box => box.x < 0 || box.y < 0 || box.x + box.width > W + 1 || box.y + box.height > H - reserve + 1)

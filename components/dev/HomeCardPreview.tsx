@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Gift } from 'lucide-react'
-import { Instrument_Serif } from 'next/font/google'
+import localFont from 'next/font/local'
 import { GeistSans } from 'geist/font/sans'
 import { HomePortfolioCard, type HomePortfolioSnapshot } from '@/components/home/HomePortfolioCard'
 import { homeStateCopy } from '@/components/home/home-state-copy'
@@ -18,7 +18,7 @@ import { routePath } from '@/lib/routes-v2'
 import { PATH_EVENT, type PathNavigation } from '@/lib/maison-nav'
 import styles from '@/components/screens/P04-HomeMaison.module.css'
 
-const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--home-display-latin', display: 'swap' })
+const display = localFont({ src: [{ path: '../../public/fonts/instrumentserif/InstrumentSerif-Regular.ttf', weight: '400', style: 'normal' }, { path: '../../public/fonts/instrumentserif/InstrumentSerif-Italic.ttf', weight: '400', style: 'italic' }], variable: '--home-display-latin', display: 'swap' })
 const sampleLabels: Record<AppLocale, string> = { en: 'Sample data', 'zh-CN': '示例数据', hi: 'नमूना डेटा', es: 'Datos de ejemplo', ar: 'بيانات تجريبية', fr: 'Données fictives', pt: 'Dados de exemplo' }
 const fixtures = ['invested', 'funded', 'guest', 'email', 'kyc', 'unfunded', 'restricted', 'missing', 'locked', 'large'] as const
 type Fixture = typeof fixtures[number]

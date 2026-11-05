@@ -1,6 +1,7 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from './i18n'
 
-export const authCardCaption: Record<AppLocale, string> = {
+export const authCardCaption: Record<AppLocale, string> = mapBrandCopy({
   en: 'Connect to real assets.',
   'zh-CN': '从这里，连接真实资产。',
   hi: 'वास्तविक संपत्तियों से जुड़ें।',
@@ -8,10 +9,10 @@ export const authCardCaption: Record<AppLocale, string> = {
   ar: 'تواصل مع الأصول الحقيقية.',
   fr: 'Accédez aux actifs réels.',
   pt: 'Conecte-se a ativos reais.',
-}
+})
 
 /** The sign-in poster's two-line title; the second line takes the gold. */
-export const authPosterTitle: Record<AppLocale, [string, string]> = {
+export const authPosterTitle: Record<AppLocale, [string, string]> = mapBrandCopy({
   en: ['Real assets,', 'a freer future.'],
   'zh-CN': ['真实资产，', '自由未来。'],
   hi: ['वास्तविक संपत्तियाँ,', 'एक स्वतंत्र भविष्य।'],
@@ -19,9 +20,9 @@ export const authPosterTitle: Record<AppLocale, [string, string]> = {
   ar: ['أصول حقيقية،', 'مستقبل أكثر حرية.'],
   fr: ['Actifs réels,', 'un avenir plus libre.'],
   pt: ['Ativos reais,', 'um futuro mais livre.'],
-}
+})
 
-export const authPosterIntro: Record<AppLocale, string> = {
+export const authPosterIntro: Record<AppLocale, string> = mapBrandCopy({
   en: 'Sign in or create your account.',
   'zh-CN': '登录或创建你的账户。',
   hi: 'साइन इन करें या अपना खाता बनाएँ।',
@@ -29,7 +30,7 @@ export const authPosterIntro: Record<AppLocale, string> = {
   ar: 'سجّل الدخول أو أنشئ حسابك.',
   fr: 'Connectez-vous ou créez votre compte.',
   pt: 'Entre ou crie sua conta.',
-}
+})
 
 /** Extra strings for the Maison sign-in card; the base auth strings stay in auth-visual-copy. */
 export type AuthSheetCopy = {
@@ -43,7 +44,7 @@ export type AuthSheetCopy = {
   continue: string; checking: string; emailLede: string; account: string; newLede: string; unavailable: string
 }
 
-export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = {
+export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = mapBrandCopy({
   en: {
     kicker: 'Real-world assets, held on-chain', modes: 'Sign in or register', wallet: 'Wallet', passkeyNote: 'Saved a passkey? Tap the email field to use it.',
     loginTitle: 'Welcome back', loginLede: 'Sign in with your email and password.', registerTitle: 'Create your account', registerLede: 'Verify your email, then set a password.',
@@ -107,4 +108,4 @@ export const authSheetCopy: Record<AppLocale, AuthSheetCopy> = {
     setupTitle: 'Defina uma senha', setupLede: 'Você a usará com seu e-mail para entrar.', ruleLength: '12 a 128 caracteres', ruleMatch: 'As duas entradas coincidem', help: 'Ajuda', passwordRequired: 'Digite sua senha.',
     continue: 'Continuar', checking: 'Verificando…', emailLede: 'Digite seu e-mail. Fazemos seu login ou ajudamos a criar uma conta.', account: 'Entrando como', newLede: 'Ainda não há conta com este e-mail. Verifique-o e defina uma senha para concluir.', unavailable: 'Esta conta não pode entrar agora. Fale com o suporte.',
   },
-}
+})

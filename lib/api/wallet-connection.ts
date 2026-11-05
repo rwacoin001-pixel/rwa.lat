@@ -1,3 +1,5 @@
+
+import { BRAND } from '@/lib/brand/build-brand'
 import { isAndroidApp } from '../android-app'
 
 export type WalletProvider = { request: (args: { method: string; params?: unknown[] }) => Promise<unknown> }
@@ -40,7 +42,7 @@ const walletError = (code: string, message: string) => Object.assign(new Error(m
 export const ANDROID_APP_WALLET_RETURN = 'areit://wallet'
 
 export function buildWalletConnectMetadata(origin: string, inAndroidApp = false) {
-  const metadata = { name: 'A-REIT', description: 'Sign in to A-REIT', url: origin, icons: [`${origin}/icons/a-reit-v1-512.png`] }
+  const metadata = { name: BRAND.name, description: `Sign in to ${BRAND.name}`, url: origin, icons: [`${origin}${BRAND.icon512}`] }
   const universal = new URL('/login', origin).href
   return { ...metadata, redirect: inAndroidApp ? { native: ANDROID_APP_WALLET_RETURN, universal } : { universal } }
 }
@@ -175,7 +177,7 @@ async function getModal(): Promise<WalletModal> {
         import('@reown/appkit'), import('@reown/appkit-adapter-ethers'), import('@reown/appkit/networks'),
         import('@walletconnect/universal-provider'),
       ])
-      const metadata = { name: 'A-REIT', description: 'Sign in to A-REIT', url: location.origin, icons: [`${location.origin}/icons/a-reit-v1-512.png`] }
+      const metadata = { name: BRAND.name, description: `Sign in to ${BRAND.name}`, url: location.origin, icons: [`${location.origin}${BRAND.icon512}`] }
       // AppKit 1.8.24 rebuilds UniversalProvider metadata and omits `redirect`; provide the instance
       // ourselves so mobile wallets such as OKX know where to return after WalletConnect approval.
       const universalProvider = await UniversalProvider.init({

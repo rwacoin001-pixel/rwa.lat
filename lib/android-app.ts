@@ -1,4 +1,5 @@
 import type { AppLocale } from './i18n'
+import { BRAND } from './brand/build-brand'
 
 /**
  * The A-REIT Android client (apps/android-client, com.areit.app): a signed APK served from this site for Android
@@ -7,7 +8,7 @@ import type { AppLocale } from './i18n'
  * to public/download/; while `url` is null the install sheet offers only "Open in Chrome".
  */
 export const ANDROID_APP: { url: string | null; version: string; sha256: string } = {
-  url: 'https://dl.a-reit.com/android/a-reit-android-1.1.9.apk',
+  url: BRAND.id === 'areit' ? 'https://dl.a-reit.com/android/a-reit-android-1.1.9.apk' : null,
   version: '1.1.9',
   sha256: '98cf752aa49820be2468c8ee189f481bbda52eae9ccd2e2c688b78a284543751',
 }

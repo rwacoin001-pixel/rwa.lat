@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { StoragePicker } from '@/components/storage-picker'
 import { StorageUpload } from '@/components/storage-upload'
-import { adminApi, type InvestmentBlock, type PlatformContent, type PlatformConfiguration } from '@/lib/admin-api'
+import { adminApi, type InvestmentBlock, type PlatformContent, type PlatformConfiguration, type BrandProfile } from '@/lib/admin-api'
 
 const EMPTY: PlatformContent = { legalName: '', registrationNumber: '', jurisdiction: '', address: '', supportEmail: '', description: '', allowedRegions: [], investorTypes: [], documents: [], officialChannels: [] }
 const TYPES = [{ value: 'retail', label: '零售客户' }, { value: 'professional', label: '专业投资者' }, { value: 'institutional', label: '机构客户' }]
+const EMPTY_KIMENG: BrandProfile = { brandId: 'kimeng', status: 'draft', legalName: '', registrationNumber: '', jurisdiction: '', address: '', supportEmail: '', description: '' }
 
 export function PlatformEditor({ regions = false }: { regions?: boolean }) {
   const [configuration, setConfiguration] = useState<PlatformConfiguration | null>(null)
@@ -40,6 +41,8 @@ export function PlatformEditor({ regions = false }: { regions?: boolean }) {
   }
   useEffect(() => { void load() }, [])
   function change(patch: Partial<PlatformContent>) { setForm(current => ({ ...current, ...patch })); setDirty(true) }
+  const kimeng = form.brandProfiles?.find(profile => profile.brandId === 'kimeng') ?? EMPTY_KIMENG
+  function changeKimeng(patch: Partial<BrandProfile>) { change({ brandProfiles: [{ ...kimeng, ...patch, brandId: 'kimeng' }] }) }
   async function act(work: () => Promise<void>) {
     setBusy(true); setNotice(''); setFailed(false)
     try { await work() } catch (e) { setFailed(true); setNotice(e instanceof Error ? e.message : '操作失败') }
@@ -67,6 +70,15 @@ export function PlatformEditor({ regions = false }: { regions?: boolean }) {
     </div>
     {notice && <p role={failed ? 'alert' : 'status'} className={failed ? 'text-negative' : 'text-emerald-700'}>{notice}</p>}
     <fieldset disabled={busy || !configuration} className="space-y-5">
+      {!regions && <Card><CardHeader><CardTitle>金英品牌与主体设置</CardTitle></CardHeader><CardContent className="space-y-4">
+        <p className="text-sm text-text-secondary">KIMENG · 金英 · kimengresearch.com。与 A-REIT 共用账户和数据，各网站分别登录。这里的资料只用于金英，不覆盖下方 A-REIT 主体资料，也不修改历史合同。</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {([{ key: 'legalName', label: '金英法定主体名称', max: 200 }, { key: 'registrationNumber', label: '注册编号', max: 100 }, { key: 'jurisdiction', label: '注册地代码（如 SG）', max: 2 }, { key: 'supportEmail', label: '客服邮箱', max: 200 }, { key: 'address', label: '联系地址', max: 500 }] as const).map(({ key, label, max }) => <div key={key} className="space-y-2"><Label htmlFor={`kimeng-${key}`}>{label}</Label><Input id={`kimeng-${key}`} type={key === 'supportEmail' ? 'email' : 'text'} maxLength={max} value={kimeng[key]} onChange={e => changeKimeng({ [key]: key === 'jurisdiction' ? e.target.value.toUpperCase() : e.target.value })} /></div>)}
+        </div>
+        <div className="space-y-2"><Label htmlFor="kimeng-description">金英对外说明</Label><textarea id="kimeng-description" className="min-h-24 w-full rounded-xl border p-3" maxLength={5000} value={kimeng.description} onChange={e => changeKimeng({ description: e.target.value })} /></div>
+        <label className="flex items-start gap-2"><input type="checkbox" checked={kimeng.status === 'ready'} onChange={e => changeKimeng({ status: e.target.checked ? 'ready' : 'draft' })} /><span>主体资料已核实，随本次版本发布对外展示</span></label>
+        <p className="text-sm text-text-secondary">尚未提供资料时可以保存空白草稿。勾选对外展示后，五项主体与联系资料必须完整；仍需点击顶部“保存草稿”和“发布已保存版本”。发布资料不会自动开放金英注册、交易或提现。</p>
+      </CardContent></Card>}
       <Card><CardHeader><CardTitle>运营主体</CardTitle></CardHeader><CardContent className="grid gap-4 sm:grid-cols-2">
         {([{ key: 'legalName', label: '法定主体名称' }, { key: 'registrationNumber', label: '注册编号' }, { key: 'jurisdiction', label: '注册地代码（如 SG）' }, { key: 'supportEmail', label: '客服邮箱' }, { key: 'address', label: '联系地址' }] as const).map(({ key, label }) => <div key={key} className="space-y-2"><Label htmlFor={`platform-${key}`}>{label}</Label><Input id={`platform-${key}`} type={key === 'supportEmail' ? 'email' : 'text'} maxLength={key === 'jurisdiction' ? 2 : 500} value={form[key]} onChange={e => change({ [key]: key === 'jurisdiction' ? e.target.value.toUpperCase() : e.target.value })} /></div>)}
         <div className="space-y-2 sm:col-span-2"><Label htmlFor="platform-description">对外说明</Label><textarea id="platform-description" className="min-h-24 w-full rounded-xl border p-3" maxLength={5000} value={form.description} onChange={e => change({ description: e.target.value })} /></div>

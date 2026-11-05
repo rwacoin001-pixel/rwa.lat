@@ -1,5 +1,7 @@
 'use client'
 
+import { BRAND } from '@/lib/brand/build-brand'
+
 import { useEffect, useState } from 'react'
 import { Download, X } from 'lucide-react'
 import { useI18n } from '@/lib/i18n'
@@ -35,7 +37,7 @@ export function AndroidAppBanner() {
     setShow(false)
   }
   return <aside className={styles.banner} aria-label={copy.title}>
-    <img className={styles.icon} src="/icons/a-reit-v1-192.png" alt="" width={40} height={40} />
+    <img className={styles.icon} src={BRAND.icon192} alt="" width={40} height={40} />
     <div className={styles.text}>
       <b>{copy.title}</b>
       <small><a href={chromeHref}>{copy.chrome}</a></small>

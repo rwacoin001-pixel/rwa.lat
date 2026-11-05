@@ -1,3 +1,4 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from '@/lib/app-locales'
 
 /** Money-out copy: step-up sheet, /assets/cash/withdraw, /assets/cash/transfer, /assets/cash/address-book. `{x}` tokens go through fill(). */
@@ -314,4 +315,4 @@ const pt: FundsCopy = {
   },
 }
 
-export const fundsCopy: Record<AppLocale, FundsCopy> = { en, 'zh-CN': zh, hi, es, ar, fr, pt }
+export const fundsCopy: Record<AppLocale, FundsCopy> = mapBrandCopy({ en, 'zh-CN': zh, hi, es, ar, fr, pt })

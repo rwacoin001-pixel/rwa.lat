@@ -1,4 +1,6 @@
 'use client'
+
+import { brandText } from '@/lib/brand/build-brand'
 import { useEffect, useRef } from 'react'
 import type { AppLocale } from '@/lib/i18n'
 import type { InviteCodeState } from '../screens/InviteCodeField'
@@ -18,7 +20,7 @@ export default function Onboarding({ locale, invite, onDone }: {
   const shownAt = useRef(0)
   useEffect(() => { shownAt.current = performance.now() }, [])
   const done = () => { if (performance.now() - shownAt.current > 500) onDone() }
-  return <div className={styles.root} dir={locale === 'ar' ? 'rtl' : 'ltr'} role="region" aria-label="A-REIT">
+  return <div className={styles.root} dir={locale === 'ar' ? 'rtl' : 'ltr'} role="region" aria-label={brandText("A-REIT")}>
     <div className={styles.page}><GuideCarousel locale={locale} invite={invite} onDone={done} /></div>
   </div>
 }

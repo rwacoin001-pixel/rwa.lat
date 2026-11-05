@@ -1,3 +1,4 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from '@/lib/app-locales'
 
 /** Batch-1 copy: markets, asset detail, order review, order status. `{x}` tokens are replaced by fill(). */
@@ -279,7 +280,7 @@ const pt: MarketCopy = {
   },
 }
 
-export const marketCopy: Record<AppLocale, MarketCopy> = { en, 'zh-CN': zh, hi, es, ar, fr, pt }
+export const marketCopy: Record<AppLocale, MarketCopy> = mapBrandCopy({ en, 'zh-CN': zh, hi, es, ar, fr, pt })
 
 export const fill = (template: string, values: Record<string, string | number>) =>
   template.replace(/\{(\w+)\}/g, (match, key: string) => (key in values ? String(values[key]) : match))

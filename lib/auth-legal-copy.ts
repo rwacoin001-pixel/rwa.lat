@@ -1,3 +1,4 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from './i18n'
 
 export type AuthLegalKind = 'terms' | 'privacy' | 'licence'
@@ -18,7 +19,7 @@ export type AuthLegalCopy = {
 }
 
 // Summaries only point at what the full documents cover; the published pages stay the binding text.
-export const authLegalCopy: Record<AppLocale, AuthLegalCopy> = {
+export const authLegalCopy: Record<AppLocale, AuthLegalCopy> = mapBrandCopy({
   en: {
     licence: 'Licensing', close: 'Close', readFull: 'Read the full text', verify: 'Verify on the regulator’s site', opensIn: 'Opens in a new tab', termsTitle: 'Terms of Service', privacyTitle: 'Privacy Policy', updated: 'Updated', updatedDate: 'September 18, 2026',
     terms: { lede: 'The conditions for using A-REIT.', points: ['Eligibility: 18 or older, and not in a sanctioned or prohibited jurisdiction.', 'You keep your account secure; accounts cannot be sold, transferred or shared.', 'Digital assets carry risk, and nothing here is investment, legal or tax advice.'] },
@@ -61,4 +62,4 @@ export const authLegalCopy: Record<AppLocale, AuthLegalCopy> = {
     privacy: { lede: 'Como a A-REIT trata suas informações.', points: ['O que coletamos e como usamos, compartilhamos e guardamos.', 'Como cookies e armazenamento local são usados.', 'Os direitos que você pode exercer e como falar conosco.'] },
     licenceSheet: { lede: 'Estes dados podem ser verificados no site oficial do regulador.', entity: 'Operador', regulator: 'Regulador', type: 'Tipo de licença', number: 'N.º da licença' },
   },
-}
+})

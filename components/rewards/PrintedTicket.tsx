@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 /**
  * The daily reward ticket (v2, 2026-11-02; after the user's event-ticket reference): a vivid art band of glass capsules
  * whose colours follow the tier, two perforations with side notches, the details grid, the voucher as the one big number,
@@ -83,7 +85,7 @@ export function PrintedTicket({ draw, reveal = false }: { draw: Draw; reveal?: b
     {draw.state === 'frozen' && <span className={t.stamp}>{k.states.frozen}</span>}
     <i className={t.tear} aria-hidden="true" />
     <div className={t.body}>
-      <p className={`${t.kickerLine} ${t.mono}`}>A-REIT DAILY TICKET · NO. {serial.replace(/^AR-/, '')}</p>
+      <p className={`${t.kickerLine} ${t.mono}`}>{brandText("A-REIT")} DAILY TICKET · NO. {serial.replace(/^AR-/, '')}</p>
       <div className={t.titleRow}><h3>{k.ticketTitle}</h3><span className={t.tier}>{k.tiers[tier]}</span></div>
       <dl className={t.grid}>
         <div><dt>{k.date}</dt><dd>{fmtDate(draw.createdAt, locale)}</dd></div>

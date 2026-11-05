@@ -3,6 +3,7 @@ import { test } from 'node:test'
 import vm from 'node:vm'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import {testBrandContext} from './brand-test-context.mjs'
 
 // Same loader as the other script tests: transpile the real modules, no bundler.
 const require = createRequire(import.meta.url)
@@ -11,7 +12,7 @@ function load(relative) {
   const source = readFileSync(new URL('../' + relative, import.meta.url), 'utf8')
   const exports = {}
   const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
-  vm.runInNewContext(output, { exports, require: (name) => name.endsWith('app-locales') ? load('lib/app-locales.ts') : require(name) })
+  vm.runInNewContext(output, { exports, require: (name) => name.endsWith('brand/build-brand') ? testBrandContext() : name.endsWith('app-locales') ? load('lib/app-locales.ts') : require(name) })
   return exports
 }
 const { documentPreferencesBootstrap } = load('lib/document-preferences-bootstrap.ts')

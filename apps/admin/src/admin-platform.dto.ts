@@ -1,5 +1,5 @@
 import { Type } from 'class-transformer'
-import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDefined, IsEmail, IsIn, IsInt, IsOptional, IsString, IsUrl, IsUUID, Matches, MaxLength, Min, MinLength, ValidateNested } from 'class-validator'
+import { ArrayMaxSize, ArrayMinSize, ArrayUnique, IsArray, IsBoolean, IsDefined, IsEmail, IsIn, IsInt, IsOptional, IsString, IsUrl, IsUUID, Matches, MaxLength, Min, MinLength, ValidateIf, ValidateNested } from 'class-validator'
 
 export class PlatformDocumentDto {
   @IsString() @MinLength(1) @MaxLength(160) title!: string
@@ -18,6 +18,17 @@ export class PlatformOfficialChannelDto {
   @IsString() @MaxLength(240) note!: string
 }
 
+export class BrandProfileDto {
+  @IsIn(['kimeng']) brandId!: 'kimeng'
+  @IsIn(['draft', 'ready']) status!: 'draft' | 'ready'
+  @IsString() @MaxLength(200) legalName!: string
+  @IsString() @MaxLength(100) registrationNumber!: string
+  @ValidateIf((_, value) => value !== '') @IsString() @Matches(/^[A-Z]{2}$/) jurisdiction!: string
+  @IsString() @MaxLength(500) address!: string
+  @ValidateIf((_, value) => value !== '') @IsEmail() @MaxLength(200) supportEmail!: string
+  @IsString() @MaxLength(5000) description!: string
+}
+
 export class PlatformContentDto {
   @IsString() @MinLength(1) @MaxLength(200) legalName!: string
   @IsString() @MinLength(1) @MaxLength(100) registrationNumber!: string
@@ -29,6 +40,7 @@ export class PlatformContentDto {
   @IsArray() @ArrayMinSize(1) @ArrayMaxSize(3) @ArrayUnique() @IsIn(['retail', 'professional', 'institutional'], { each: true }) investorTypes!: string[]
   @IsArray() @ArrayMaxSize(30) @ValidateNested({ each: true }) @Type(() => PlatformDocumentDto) documents!: PlatformDocumentDto[]
   @IsOptional() @IsArray() @ArrayMaxSize(12) @ValidateNested({ each: true }) @Type(() => PlatformOfficialChannelDto) officialChannels?: PlatformOfficialChannelDto[]
+  @IsOptional() @IsArray() @ArrayMaxSize(1) @ArrayUnique((value: BrandProfileDto) => value.brandId) @ValidateNested({ each: true }) @Type(() => BrandProfileDto) brandProfiles?: BrandProfileDto[]
 }
 
 export class SavePlatformDto {

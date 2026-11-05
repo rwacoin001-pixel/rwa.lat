@@ -149,6 +149,7 @@ const dictionaries: Record<AppLocale, Dictionary> = {
   },
 }
 
+import { brandText } from './brand/build-brand'
 type I18nValue = {
   locale: AppLocale
   direction: 'ltr' | 'rtl'
@@ -199,7 +200,7 @@ export function I18nProvider({ children, initialLocale = 'en' }: { children: Rea
     direction,
     setLocale,
     t: (key, variables) => {
-      const value = dictionaries[locale][key] ?? en[key]
+      const value = brandText(dictionaries[locale][key] ?? en[key], locale)
       if (!variables) return value
       return value.replace(/\{(\w+)\}/g, (match, name: string) => variables[name] === undefined ? match : String(variables[name]))
     },

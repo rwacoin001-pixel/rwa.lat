@@ -42,6 +42,12 @@ export class AdminPlatformService implements OnModuleDestroy {
       if (!row || row.revision !== input.expectedRevision) throw new ConflictException('草稿版本已变化，请刷新后再发布')
       if (row.published_revision === row.revision) return { revision: row.revision, replay: true }
       if (!row.draft.legalName || !row.draft.allowedRegions?.length || !row.draft.investorTypes?.length) throw new ConflictException('请先保存完整的主体和地区资料')
+      for (const profile of row.draft.brandProfiles ?? []) {
+        if (profile.brandId !== 'kimeng' || !['draft', 'ready'].includes(profile.status)) throw new ConflictException('金英品牌配置无效，请重新保存')
+        if (profile.status === 'ready' && ['legalName', 'registrationNumber', 'jurisdiction', 'address', 'supportEmail'].some(key => typeof profile[key] !== 'string' || !profile[key].trim())) {
+          throw new ConflictException('请先补齐金英的主体名称、注册编号、注册地、地址和客服邮箱，或将其保留为草稿')
+        }
+      }
       await this.validateDocuments(db, row.draft.documents)
       await db.query(`INSERT INTO app.platform_configuration_versions (revision, content, published_by) VALUES ($1, $2::jsonb, $3)`, [row.revision, JSON.stringify(row.draft), adminId])
       await db.query(`UPDATE app.platform_configuration SET published = draft, published_revision = revision, published_at = now(), updated_at = now(), updated_by = $1 WHERE id = true`, [adminId])

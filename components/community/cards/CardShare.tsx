@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText, BRAND } from '@/lib/brand/build-brand'
+
 /**
  * Share a result card off-site (2026-11-01). One sheet: the poster (1080×1920 — the same ticket card drawn on canvas from
  * the same model as the in-app card, the A-REIT logo, the slogan and a QR code that is the author's invite link), two
@@ -22,8 +24,8 @@ import s from './card-share.module.css'
 
 type Copy = { title: string; save: string; share: string; saved: string; link: string; copy: string; copied: string; revoke: string; revoked: string; failed: string; slogan: string; scan: string; drawing: string }
 const copy: Partial<Record<AppLocale, Copy>> = {
-  'zh-CN': { title: '分享卡片', save: '保存图片', share: '分享', saved: '已保存', link: '分享链接', copy: '复制链接', copied: '链接已复制', revoke: '关闭链接', revoked: '链接已关闭，打开会显示「分享已关闭」', failed: '没有成功，请稍后再试。', slogan: '让资产清晰起来', scan: '扫码加入 A-REIT', drawing: '正在生成图片…' },
-  en: { title: 'Share card', save: 'Save image', share: 'Share', saved: 'Saved', link: 'Share link', copy: 'Copy link', copied: 'Link copied', revoke: 'Close link', revoked: 'Link closed. It now shows "sharing closed".', failed: 'That did not work. Please try again.', slogan: 'Bring Assets Into Focus.', scan: 'Scan to join A-REIT', drawing: 'Drawing the image…' },
+  'zh-CN': { title: '分享卡片', save: '保存图片', share: '分享', saved: '已保存', link: '分享链接', copy: '复制链接', copied: '链接已复制', revoke: '关闭链接', revoked: '链接已关闭，打开会显示「分享已关闭」', failed: '没有成功，请稍后再试。', slogan: '让资产清晰起来', scan: brandText('扫码加入 A-REIT'), drawing: '正在生成图片…' },
+  en: { title: 'Share card', save: 'Save image', share: 'Share', saved: 'Saved', link: 'Share link', copy: 'Copy link', copied: 'Link copied', revoke: 'Close link', revoked: 'Link closed. It now shows "sharing closed".', failed: 'That did not work. Please try again.', slogan: 'Bring Assets Into Focus.', scan: brandText('Scan to join A-REIT'), drawing: 'Drawing the image…' },
 }
 
 export function CardShareSheet({ post, open, onClose }: { post: CommunityPost; open: boolean; onClose: () => void }) {
@@ -60,7 +62,7 @@ export function CardShareSheet({ post, open, onClose }: { post: CommunityPost; o
   const shareImage = async () => {
     if (!image) return
     const link = share?.url ?? invite
-    if (nativeCan('share')) { await nativeShare({ title: model?.head ?? 'A-REIT', url: link, image: image.blob, name }); return }
+    if (nativeCan('share')) { await nativeShare({ title: model?.head ?? brandText('A-REIT'), url: link, image: image.blob, name }); return }
     const file = new File([image.blob], name, { type: 'image/png' })
     try { if (navigator.canShare?.({ files: [file] })) await navigator.share({ files: [file], url: link }); else if (navigator.share) await navigator.share({ url: link }); else void save() } catch { /* closed */ }
   }
@@ -155,7 +157,7 @@ async function drawPoster(m: CardModel, author: Author | null, qr: HTMLCanvasEle
   round(g, well, Y + P, inner, 124, [48, 48, 18, 18]); g.fillStyle = band; g.fill()
   g.fillStyle = bandInk; g.font = font(34, 600); g.textBaseline = 'middle'
   g.fillText(fit(g, m.head, inner - 300), well + 36, Y + P + 62)
-  g.font = font(28, 600); const pill = 'A-REIT', pw = g.measureText(pill).width + 48
+  g.font = font(28, 600); const pill = brandText('A-REIT'), pw = g.measureText(pill).width + 48
   round(g, well + inner - pw - 28, Y + P + 34, pw, 56, 28); g.fillStyle = 'rgba(255,255,255,.75)'; g.fill(); g.fillStyle = bandInk; g.fillText(pill, well + inner - pw - 4, Y + P + 63)
   // Perforation
   const py = Y + P + 124 + 18
@@ -209,7 +211,7 @@ async function drawPoster(m: CardModel, author: Author | null, qr: HTMLCanvasEle
 
   // Brand row: logo + slogan on the left, the QR on the right.
   const by = 1560
-  try { const logo = await loadImage('/brand/a-reit/logo-light.svg'); const lh = 92, lw = logo.width / logo.height * lh; g.drawImage(logo, 96, by, lw, lh) } catch { g.fillStyle = '#0b1220'; g.font = font(64, 700); g.fillText('A-REIT', 96, by + 70) }
+  try { const logo = await loadImage(`${BRAND.assets}/logo-light.svg`); const lh = 92, lw = logo.width / logo.height * lh; g.drawImage(logo, 96, by, lw, lh) } catch { g.fillStyle = '#0b1220'; g.font = font(64, 700); g.fillText(brandText('A-REIT'), 96, by + 70) }
   g.fillStyle = '#0b1220'; g.font = font(44, 600); g.fillText(k.slogan, 96, by + 176)
   g.fillStyle = '#ffffff'; round(g, W - 96 - 236, by - 20, 236, 236, 28); g.fill(); g.strokeStyle = 'rgba(11,18,32,.08)'; g.lineWidth = 2; g.stroke()
   g.drawImage(qr, W - 96 - 218, by - 2, 200, 200)

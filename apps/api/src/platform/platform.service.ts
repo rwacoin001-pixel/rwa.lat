@@ -4,7 +4,8 @@ import { DataSource } from 'typeorm'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
 
 type PublicDocument = { title: string; storageRef: string; public: boolean; kind?: string; reportDate?: string; asOfDate?: string; issuer?: string }
-type PlatformContent = { legalName: string; registrationNumber: string; jurisdiction: string; address: string; supportEmail: string; description: string; allowedRegions: string[]; investorTypes: string[]; documents: PublicDocument[] }
+type BrandProfile = { brandId: 'kimeng'; status: 'draft' | 'ready'; legalName: string; registrationNumber: string; jurisdiction: string; address: string; supportEmail: string; description: string }
+type PlatformContent = { legalName: string; registrationNumber: string; jurisdiction: string; address: string; supportEmail: string; description: string; allowedRegions: string[]; investorTypes: string[]; documents: PublicDocument[]; brandProfiles?: BrandProfile[] }
 
 @Injectable()
 export class PlatformService {
@@ -18,9 +19,22 @@ export class PlatformService {
   async publicProfile() {
     const row = await this.published()
     if (!row?.published) throw new NotFoundException({ code: 'PLATFORM_PROFILE_UNPUBLISHED', message: 'Platform information has not been published.' })
-    const { documents, ...content } = row.published
+    const { documents, brandProfiles: _brandProfiles, ...content } = row.published
     return { ...content, revision: row.revision, publishedAt: row.publishedAt,
       documents: documents.flatMap((doc, index) => doc.public ? [{ title: doc.title, kind: doc.kind ?? 'general', reportDate: doc.reportDate ?? null, asOfDate: doc.asOfDate ?? null, issuer: doc.issuer ?? null, url: this.url(`/v1/platform/documents/${row.revision}/${index}`) }] : []) }
+  }
+
+  async publicBrandProfile(brandId: string) {
+    if (brandId !== 'kimeng') throw new NotFoundException()
+    const row = await this.published()
+    const profile = row?.published?.brandProfiles?.find(value => value.brandId === brandId && value.status === 'ready')
+    if (!profile || !profile.legalName?.trim() || !profile.registrationNumber?.trim() || !profile.jurisdiction?.trim() || !profile.address?.trim() || !profile.supportEmail?.trim()) {
+      throw new NotFoundException({ code: 'BRAND_PROFILE_UNPUBLISHED', message: 'Brand information has not been published.' })
+    }
+    return { ...await this.publicProfile(), brandId, name: 'KIMENG', chineseName: '金英', origin: 'https://kimengresearch.com', sharedAccounts: true,
+      legalName: profile.legalName, registrationNumber: profile.registrationNumber, jurisdiction: profile.jurisdiction,
+      address: profile.address, supportEmail: profile.supportEmail, description: profile.description,
+      revision: row!.revision, publishedAt: row!.publishedAt }
   }
 
   async publicDocument(revision: number, index: number) {

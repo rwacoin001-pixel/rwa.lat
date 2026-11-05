@@ -1,6 +1,7 @@
 'use client'
 
 import { PASSKEY_ACCOUNT_KEY } from '@/lib/session-idle'
+import { IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { ToastTone } from '@/lib/toast-tone'
 import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
@@ -122,7 +123,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     const timer = setTimeout(() => { openConnectedWallet() }, 600)
     return () => clearTimeout(timer)
   }, [walletPhase])
-  useEffect(() => { void prefetchAuthAttribution() }, [])
+  useEffect(() => { if (!IS_BRAND_PREVIEW) void prefetchAuthAttribution() }, [])
   // Returning on this device: open on the remembered account's passkey step and ask at once. Chrome shows the sheet
   // straight away; Safari wants a tap, so there the step's one button does it.
   useEffect(() => {
@@ -197,6 +198,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   useEffect(() => {
     const supported = Boolean(window.isSecureContext && window.PublicKeyCredential && navigator.credentials)
+    if (IS_BRAND_PREVIEW) return
     setPasskeySupported(supported)
     if (supported) void PublicKeyCredential.isConditionalMediationAvailable?.().then(setAutofill, () => setAutofill(false))
     const target = safeReturnTo(new URLSearchParams(location.search).get('returnTo'))
@@ -212,7 +214,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   // Autofill listens only while the email step is idle; any other request aborts it first.
   useEffect(() => {
-    if (!autofill || step !== 'email' || walletChallenge || pending) return
+    if (IS_BRAND_PREVIEW || !autofill || step !== 'email' || walletChallenge || pending) return
     const controller = new AbortController()
     autofillController.current = controller
     const started = Date.now()
@@ -233,7 +235,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
   const needsConsent = step === 'new' || walletChallenge !== null
   useEffect(() => {
-    if (!needsConsent) return
+    if (IS_BRAND_PREVIEW || !needsConsent) return
     let active = true
     void getAuthConsentRequirements().then(result => {
       if (!active) return

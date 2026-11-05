@@ -1,3 +1,5 @@
+
+import { BRAND } from '@/lib/brand/build-brand'
 import { request, resetAuthAttribution } from './api/_http'
 import { isAppLocale } from './locale-detection'
 
@@ -29,7 +31,7 @@ export function sharerLang(): string | null {
 }
 /** The bare invitation link, /r/<code>, with the sharer's language. */
 export function invitationLink(code: string, lang: string | null = sharerLang()): string {
-  const origin = typeof window === 'undefined' ? 'https://a-reit.com' : window.location.origin
+  const origin = typeof window === 'undefined' ? BRAND.origin : window.location.origin
   return `${origin}/r/${encodeURIComponent(code.toUpperCase())}${lang && isAppLocale(lang) ? `?lang=${encodeURIComponent(lang)}` : ''}`
 }
 

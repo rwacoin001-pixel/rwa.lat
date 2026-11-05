@@ -3,7 +3,7 @@
 import RwaLogoMark from '@/components/rwa-logo'
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
-import { Instrument_Serif } from 'next/font/google'
+import localFont from 'next/font/local'
 import { gsap } from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { QRCodeSVG } from 'qrcode.react'
@@ -12,7 +12,7 @@ import { desktopCopy } from '@/lib/desktop-copy'
 import { useI18n } from '@/lib/i18n'
 import d from './desktop.module.css'
 
-const display = Instrument_Serif({ subsets: ['latin'], weight: '400', style: ['normal', 'italic'], variable: '--desk-latin', display: 'swap' })
+const display = localFont({ src: [{ path: '../../public/fonts/instrumentserif/InstrumentSerif-Regular.ttf', weight: '400', style: 'normal' }, { path: '../../public/fonts/instrumentserif/InstrumentSerif-Italic.ttf', weight: '400', style: 'italic' }], variable: '--desk-latin', display: 'swap' })
 // CJK display serif is supplied as a CSS font stack (see desktop.module.css) so builds never
 // depend on fetching a multi-megabyte CJK face from Google Fonts.
 

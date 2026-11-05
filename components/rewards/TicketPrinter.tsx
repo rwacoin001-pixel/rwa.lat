@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 /**
  * `/rewards/print` — the ticket printer page (v2, 2026-11-02; after the user's receipt-printer reference; a page with its
  * own entry buttons instead of a popup after posting, at the user's request). A dark printer body with a slot; slide to
@@ -88,7 +90,7 @@ export function PrintScreen() {
       <div className={t.window}>
         <div className={t.paper}>
           {draw ? <PrintedTicket draw={draw} reveal={phase === 'feeding' || phase === 'done'} />
-            : <div className={t.ticket} style={{ minHeight: 200 }}><p className={`${t.receipt} ${t.mono}`}>A-REIT DAILY · {new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })}</p></div>}
+            : <div className={t.ticket} style={{ minHeight: 200 }}><p className={`${t.receipt} ${t.mono}`}>{brandText("A-REIT")} DAILY · {new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Singapore' })}</p></div>}
         </div>
         {phase === 'claimed' && draw && <div className={t.done} role="status">
           <b>{k.claimed}</b>

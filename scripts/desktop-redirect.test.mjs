@@ -3,13 +3,19 @@ import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { runInNewContext } from 'node:vm'
 import ts from 'typescript'
+import { resolveBrand } from '../lib/brand/config.mjs'
 
 const source = readFileSync(new URL('../lib/desktop-redirect.ts', import.meta.url), 'utf8')
 const compiled = ts.transpileModule(source, {
   compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
 }).outputText
 const exports = {}
-runInNewContext(compiled, { exports })
+runInNewContext(compiled, { exports, require: () => ({ BRAND: resolveBrand('areit') }) })
+test('Kimeng has no desktop navigation bootstrap at any viewport width', () => {
+  const kimeng = {}
+  runInNewContext(compiled, { exports: kimeng, require: () => ({ BRAND: resolveBrand('kimeng') }) })
+  assert.equal(kimeng.desktopRedirectBootstrap, '')
+})
 const TARGET = 'https://www.capitaland-ascendasreit.com/'
 
 function browser({ width = 1280, path = '/home', search = '', hash = '', coarse = false, userAgent = 'Desktop', touchPoints = 0, framed = false, legacy = false } = {}) {

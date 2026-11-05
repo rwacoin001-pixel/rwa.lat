@@ -7,6 +7,9 @@ import { useI18n } from '@/lib/i18n'
 import { useRwaTheme } from '@/lib/rwa-theme'
 import { authLegalCopy, type AuthLegalKind } from '@/lib/auth-legal-copy'
 import styles from './P02-Login.module.css'
+import { BRAND } from '@/lib/brand/build-brand'
+import { sharedAccountNotice } from '@/lib/brand/copy'
+import BrandOperatorDisclosure from '@/components/brand-operator-disclosure'
 
 type LicenceDetails = {
   entity: string
@@ -17,6 +20,7 @@ type LicenceDetails = {
 }
 
 const readLicenceDetails = (): LicenceDetails | null => {
+  if (BRAND.id === 'kimeng') return null
   const entity = process.env.NEXT_PUBLIC_AUTH_LICENSE_ENTITY?.trim()
   const regulator = process.env.NEXT_PUBLIC_AUTH_LICENSE_REGULATOR?.trim()
   const type = process.env.NEXT_PUBLIC_AUTH_LICENSE_TYPE?.trim()
@@ -191,6 +195,8 @@ export function AuthLegalFooter({
   )
 
   return <>
+    {BRAND.id === 'kimeng' && <span style={{ flexBasis: '100%', textAlign: 'center', lineHeight: 1.6 }}>{sharedAccountNotice[locale]}</span>}
+    <BrandOperatorDisclosure />
     {button('terms', copy.termsTitle)}
     <span aria-hidden="true">·</span>
     {button('privacy', copy.privacyTitle)}

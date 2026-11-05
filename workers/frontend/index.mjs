@@ -3,10 +3,25 @@ import {proxyPublicPrediction} from '../../lib/prediction-public-proxy'
 import {proxyPredictionImage} from '../../lib/prediction-image-delivery'
 import {withClientHeaders} from '../../lib/edge-client-headers.mjs'
 import {isPublicRead,servePublicRead} from '../../lib/edge-public-cache.mjs'
+import {brandRequestGate,securePreviewResponse} from '../../lib/brand/preview-gate.mjs'
 
 // Public discovery bypasses the Next runtime entirely, keeping Worker CPU small.
 export default {
   async fetch(request,env,ctx) {
+    const gate=await brandRequestGate(request,env)
+    if(gate.response)return gate.preview ? securePreviewResponse(gate.response) : gate.response
+    request=gate.request
+    const result=await handleRequest(request,env,ctx,gate)
+    return gate.preview ? securePreviewResponse(result) : result
+  },
+}
+
+async function handleRequest(request,env,ctx,gate) {
+    if(gate.asset)return env.ASSETS.fetch(request)
+    if(gate.preview && ['GET','HEAD'].includes(request.method)) {
+      const asset=await env.ASSETS.fetch(request)
+      if(asset.status!==404)return asset
+    }
     const url=new URL(request.url)
     if(url.hostname==='www.a-reit.com'){
       url.hostname='a-reit.com'
@@ -32,7 +47,6 @@ export default {
       return forward()
     }
     return nextWorker.fetch(request,env,ctx)
-  },
 }
 
 export {DOQueueHandler,DOShardedTagCache,BucketCachePurge} from '../../.open-next/worker.js'

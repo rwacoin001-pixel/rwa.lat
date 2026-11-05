@@ -1,3 +1,6 @@
+import { resolveBrand } from './lib/brand/config.mjs'
+const buildBrand = resolveBrand(process.env.SITE_BRAND ?? process.env.NEXT_PUBLIC_SITE_BRAND)
+
 // 72 条旧路径重定向（S1 批次 4·来自 ClaudeCode-定稿方案 §3.3 迁移表）
 // 规则顺序：具体路径在前、has 规则在前，兜底在后。
 // permanent:true → 308。
@@ -160,6 +163,7 @@ const localProxy = process.env.RWA_LOCAL_PROXY === '1'
 const proxyTarget = process.env.RWA_PROXY_TARGET || 'https://api.a-reit.com'
 
 const nextConfig = {
+  env: { NEXT_PUBLIC_SITE_BRAND: buildBrand.id, NEXT_PUBLIC_BRAND_PREVIEW: buildBrand.id === 'kimeng' ? '1' : '0' },
   // OpenNext consumes the standalone server output for Cloudflare Workers builds.
   output: "standalone",
   // The local development badge overlaps the app's top-left back button.

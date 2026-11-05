@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText, BRAND } from '@/lib/brand/build-brand'
+
 /**
  * What the iPhone install gate shows (loaded only once a gate is due; ios-install-gate.tsx decides).
  *
@@ -16,7 +18,7 @@ import { localizedGateViewCopy } from '@/lib/install-gate-view-copy'
 import { safariMajor, type InstallEnv } from './home/install-env'
 import styles from './ios-install-gate-view.module.css'
 
-const APP_ICON = '/icons/a-reit-v1-apple-180.png'
+const APP_ICON = BRAND.appleIcon
 
 type Path = 'safari' | 'browser' | 'inapp'
 type Scene = 'toolbar' | 'compact' | 'share' | 'add' | 'home' | 'address' | 'more' | 'open'
@@ -49,8 +51,8 @@ const zh: GateCopy = {
   dir: 'ltr',
   ui: { share: '分享', addToHome: '添加到主屏幕', add: '添加', cancel: '取消', webApp: '作为网页 App 打开', openInSafari: '在 Safari 中打开', openInBrowser: '在浏览器打开' },
   kicker: 'iPhone 使用指引', title: '添加到主屏幕',
-  lede: '在 iPhone 上，A-REIT 以主屏幕 App 运行。添加一次，之后点图标直接进入，全屏使用。',
-  ledeInApp: '在 iPhone 上，A-REIT 以主屏幕 App 运行。需要先在 Safari 中打开本页，再添加到主屏幕。',
+  lede: brandText('在 iPhone 上，A-REIT 以主屏幕 App 运行。添加一次，之后点图标直接进入，全屏使用。'),
+  ledeInApp: brandText('在 iPhone 上，A-REIT 以主屏幕 App 运行。需要先在 Safari 中打开本页，再添加到主屏幕。'),
   meta: { safari: '4 步 · 约 20 秒 · 无需 App Store', browser: '4 步 · 约 20 秒 · 无需 App Store', inapp: '3 步 · 先用 Safari 打开' },
   from: { safari: 'Safari', browser: '当前浏览器', app: 'App' }, to: '主屏幕',
   apps: { WeChat: '微信', Alipay: '支付宝', DingTalk: '钉钉', Feishu: '飞书', Weibo: '微博', TikTok: '抖音' },
@@ -63,9 +65,9 @@ const zh: GateCopy = {
     compact: { title: '点 [···]，再点 [分享]', body: '[···] 在底部地址栏的右侧，点开后第一项就是 [分享]。', alt: '底部是完整工具栏？直接点中间的 [分享]。', scene: 'compact' },
   },
   choose: { title: '选择 [添加到主屏幕]', body: '在弹出的菜单中向下滑找到它，图标是带加号的方框。', scene: 'share' },
-  add: { title: '点右上角 [添加]', body: '名称保持 A-REIT 即可。请保持 [作为网页 App 打开] 为开启（iOS 26 及以上）。', scene: 'add' },
-  addLegacy: { title: '点右上角 [添加]', body: '名称保持 A-REIT 即可，点 [添加] 完成。', scene: 'add' },
-  open: { title: '从主屏幕打开', body: '回到主屏幕，点 A-REIT 图标。以后都从这里进入。', scene: 'home' },
+  add: { title: '点右上角 [添加]', body: brandText('名称保持 A-REIT 即可。请保持 [作为网页 App 打开] 为开启（iOS 26 及以上）。'), scene: 'add' },
+  addLegacy: { title: '点右上角 [添加]', body: brandText('名称保持 A-REIT 即可，点 [添加] 完成。'), scene: 'add' },
+  open: { title: '从主屏幕打开', body: brandText('回到主屏幕，点 A-REIT 图标。以后都从这里进入。'), scene: 'home' },
   browserShare: { title: '点 [分享]', body: '在地址栏右侧，或在浏览器的 [···] 菜单中。', scene: 'address' },
   browserChoose: { title: '选择 [添加到主屏幕]', body: '在菜单中向下滑找到它。没有这一项时，请改用 Safari。', scene: 'share' },
   inappMore: { title: '点右上角 [···]', body: '打开{app}的页面菜单。', scene: 'more' },
@@ -78,7 +80,7 @@ const zh: GateCopy = {
     items: [
       { q: '看不到工具栏或 [分享] 按钮', a: '轻点屏幕底部，工具栏会重新出现。若底部只有地址栏，点它右侧的 [···]，菜单里就有 [分享]。' },
       { q: '菜单里没有 [添加到主屏幕]', a: '无痕浏览时不会出现这一项。点 [标签页] 按钮切换回普通浏览，再打开本页。也请确认菜单已向下滑到底。' },
-      { q: '已经添加过了', a: '直接回到主屏幕点 A-REIT 图标。若打开后仍有 Safari 地址栏，长按图标删除，按上面的步骤重新添加，并保持 [作为网页 App 打开] 开启。' },
+      { q: '已经添加过了', a: brandText('直接回到主屏幕点 A-REIT 图标。若打开后仍有 Safari 地址栏，长按图标删除，按上面的步骤重新添加，并保持 [作为网页 App 打开] 开启。') },
       { q: '在用 Chrome、微信或其他 App', a: '这些环境可能无法添加。复制本页链接，在 Safari 中打开后按上面的步骤操作。', copy: true },
     ],
   },
@@ -88,9 +90,9 @@ const zh: GateCopy = {
 const en: GateCopy = {
   dir: 'ltr',
   ui: { share: 'Share', addToHome: 'Add to Home Screen', add: 'Add', cancel: 'Cancel', webApp: 'Open as Web App', openInSafari: 'Open in Safari', openInBrowser: 'Open in Browser' },
-  kicker: 'Using A-REIT on iPhone', title: 'Add to Home Screen',
-  lede: 'On iPhone, A-REIT runs as a Home Screen app. Add it once, then open it from the icon — full screen, no address bar.',
-  ledeInApp: 'On iPhone, A-REIT runs as a Home Screen app. Open this page in Safari first, then add it to your Home Screen.',
+  kicker: brandText('Using A-REIT on iPhone'), title: 'Add to Home Screen',
+  lede: brandText('On iPhone, A-REIT runs as a Home Screen app. Add it once, then open it from the icon — full screen, no address bar.'),
+  ledeInApp: brandText('On iPhone, A-REIT runs as a Home Screen app. Open this page in Safari first, then add it to your Home Screen.'),
   meta: { safari: '4 steps · about 20 seconds · no App Store', browser: '4 steps · about 20 seconds · no App Store', inapp: '3 steps · start in Safari' },
   from: { safari: 'Safari', browser: 'This browser', app: 'this app' }, to: 'Home Screen',
   notice: {
@@ -102,9 +104,9 @@ const en: GateCopy = {
     compact: { title: 'Tap [···], then [Share]', body: '[···] sits at the right of the address bar at the bottom; [Share] is the first item in its menu.', alt: 'Full toolbar at the bottom? Tap [Share] in the middle.', scene: 'compact' },
   },
   choose: { title: 'Choose [Add to Home Screen]', body: 'Scroll down the menu to find it — its icon is a square with a plus.', scene: 'share' },
-  add: { title: 'Tap [Add] at the top right', body: 'Keep the name A-REIT, and keep [Open as Web App] switched on (iOS 26 or later).', scene: 'add' },
-  addLegacy: { title: 'Tap [Add] at the top right', body: 'Keep the name A-REIT and tap [Add] to finish.', scene: 'add' },
-  open: { title: 'Open it from your Home Screen', body: 'Go to your Home Screen and tap the A-REIT icon. That’s where A-REIT opens from now on.', scene: 'home' },
+  add: { title: 'Tap [Add] at the top right', body: brandText('Keep the name A-REIT, and keep [Open as Web App] switched on (iOS 26 or later).'), scene: 'add' },
+  addLegacy: { title: 'Tap [Add] at the top right', body: brandText('Keep the name A-REIT and tap [Add] to finish.'), scene: 'add' },
+  open: { title: 'Open it from your Home Screen', body: brandText('Go to your Home Screen and tap the A-REIT icon. That’s where A-REIT opens from now on.'), scene: 'home' },
   browserShare: { title: 'Tap [Share]', body: 'It’s at the right of the address bar, or in the browser’s [···] menu.', scene: 'address' },
   browserChoose: { title: 'Choose [Add to Home Screen]', body: 'Scroll down the menu to find it. Not there? Use Safari instead.', scene: 'share' },
   inappMore: { title: 'Tap [···] at the top right', body: 'It opens the page menu in {app}.', scene: 'more' },
@@ -117,7 +119,7 @@ const en: GateCopy = {
     items: [
       { q: 'Can’t see the toolbar or [Share]', a: 'Tap the bottom edge of the screen and the toolbar comes back. If there’s only an address bar, tap [···] next to it — [Share] is in that menu.' },
       { q: 'No [Add to Home Screen] in the menu', a: 'It’s hidden in Private Browsing. Tap the [Tabs] button, switch back to regular browsing and open this page again. Also scroll the menu all the way down.' },
-      { q: 'Already added it', a: 'Just tap the A-REIT icon on your Home Screen. If it still opens with Safari’s address bar, delete the icon, add it again with the steps above and keep [Open as Web App] on.' },
+      { q: 'Already added it', a: brandText('Just tap the A-REIT icon on your Home Screen. If it still opens with Safari’s address bar, delete the icon, add it again with the steps above and keep [Open as Web App] on.') },
       { q: 'Using Chrome, WeChat or another app', a: 'These may not be able to add it. Copy this page’s link, open it in Safari and follow the steps above.', copy: true },
     ],
   },
@@ -128,8 +130,8 @@ const gateCopy: Record<AppLocale, GateCopy> = { en, 'zh-CN': zh, ...localizedGat
 /** Shown right after a sign-up / sign-in in Safari (zh-CN and en; other locales use en). */
 type WelcomeCopy = { kicker: string; title: string; lede: string; bound: string; later: string }
 const WELCOME: Partial<Record<AppLocale, WelcomeCopy>> & { en: WelcomeCopy } = {
-  'zh-CN': { kicker: '最后一步', title: '注册完成 · 把 A-REIT 放到主屏幕', lede: '打开主屏幕 App 后用同一邮箱登录一次。', bound: '邀请关系已绑定', later: '稍后' },
-  en: { kicker: 'One last step', title: 'You’re in · Put A-REIT on your Home Screen', lede: 'Open the Home Screen app and sign in once with the same email.', bound: 'Your invitation is linked', later: 'Later' },
+  'zh-CN': { kicker: '最后一步', title: brandText('注册完成 · 把 A-REIT 放到主屏幕'), lede: '打开主屏幕 App 后用同一邮箱登录一次。', bound: '邀请关系已绑定', later: '稍后' },
+  en: { kicker: 'One last step', title: brandText('You’re in · Put A-REIT on your Home Screen'), lede: 'Open the Home Screen app and sign in once with the same email.', bound: 'Your invitation is linked', later: 'Later' },
 }
 // Which bar the reader sees at the bottom of Safari; picks the first step's drawing and wording.
 const BAR_PICK: Record<AppLocale, { question: string; toolbar: string; compact: string }> = {
@@ -144,7 +146,7 @@ const BAR_PICK: Record<AppLocale, { question: string; toolbar: string; compact: 
 
 // Keeps "A-REIT" on one line inside a heading that wraps.
 function Brand({ text }: { text: string }) {
-  return <>{text.split('A-REIT').map((part, index) => <span key={index}>{index > 0 && <span className={styles.nowrap}>A-REIT</span>}{part}</span>)}</>
+  return <>{text.split(brandText('A-REIT')).map((part, index) => <span key={index}>{index > 0 && <span className={styles.nowrap}>{brandText("A-REIT")}</span>}{part}</span>)}</>
 }
 
 function Rich({ text }: { text: string }) {
@@ -283,7 +285,7 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
 function SceneArt({ scene, ui, webApp, webAppTag, openLabel }: { scene: Scene; ui: Ui; webApp: boolean; webAppTag: string; openLabel: string }) {
   const s = styles
   const lines = <span className={s.pageLines}><i /><i /><i /></span>
-  const address = <span className={s.address}><span className={s.aa}>aA</span><span className={s.host}>a-reit.com</span><RotateCw size={10} strokeWidth={2} /></span>
+  const address = <span className={s.address}><span className={s.aa}>aA</span><span className={s.host}>{new URL(BRAND.origin).hostname}</span><RotateCw size={10} strokeWidth={2} /></span>
   const skelRow = (key: number) => <span key={key} className={s.row}><i className={s.skel} /><i className={s.skelIcon} /></span>
   const body = (() => {
     switch (scene) {
@@ -315,7 +317,7 @@ function SceneArt({ scene, ui, webApp, webAppTag, openLabel }: { scene: Scene; u
         <span className={s.grip} />
         <span className={s.sheetHead}>
           <img src={APP_ICON} alt="" width={26} height={26} decoding="async" />
-          <span><b>A-REIT</b><small>a-reit.com</small></span>
+          <span><b>{brandText("A-REIT")}</b><small>{new URL(BRAND.origin).hostname}</small></span>
         </span>
         <span className={s.list}>
           {skelRow(1)}
@@ -327,7 +329,7 @@ function SceneArt({ scene, ui, webApp, webAppTag, openLabel }: { scene: Scene; u
         <span className={s.nav}><span>{ui.cancel}</span><b>{ui.addToHome}</b><span className={s.hotText}>{ui.add}</span></span>
         <span className={s.addCard}>
           <img src={APP_ICON} alt="" width={34} height={34} decoding="async" />
-          <span><b>A-REIT</b><small>https://a-reit.com</small></span>
+          <span><b>{brandText("A-REIT")}</b><small>{BRAND.origin}</small></span>
         </span>
         {webApp && <span className={s.toggleRow}><span>{ui.webApp}<em>{webAppTag}</em></span><span className={s.switch}><i /></span></span>}
       </span>
@@ -335,13 +337,13 @@ function SceneArt({ scene, ui, webApp, webAppTag, openLabel }: { scene: Scene; u
         {Array.from({ length: 8 }, (_, index) => index === 5
           ? <span key={index} className={s.homeApp}>
             <img src={APP_ICON} alt="" width={40} height={40} decoding="async" />
-            <small>A-REIT</small>
+            <small>{brandText("A-REIT")}</small>
             <i className={s.tap} />
           </span>
           : <span key={index} className={s.homeSlot}><i /><small /></span>)}
       </span>
       case 'address': return <>
-        <span className={s.topAddress}><span className={s.host}>a-reit.com</span><span className={s.hot}><Share size={14} strokeWidth={1.9} /></span></span>
+        <span className={s.topAddress}><span className={s.host}>{new URL(BRAND.origin).hostname}</span><span className={s.hot}><Share size={14} strokeWidth={1.9} /></span></span>
         {lines}
         <span className={s.toolbar}><ChevronLeft size={16} strokeWidth={1.8} /><ChevronRight size={16} strokeWidth={1.8} className={s.dim} /><PlusSquare size={15} strokeWidth={1.8} /><Copy size={15} strokeWidth={1.8} /><MoreHorizontal size={16} strokeWidth={1.8} /></span>
       </>

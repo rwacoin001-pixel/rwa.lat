@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 import { ChevronLeft, X, Moon, Sun, SlidersHorizontal, Search, Bell, Share2, Star, UserRound, Settings, MoreHorizontal, CircleHelp, Pencil, Calendar, ReceiptText, Download, Plus, UserPlus, CheckCheck, BookOpen, Info, type LucideIcon } from 'lucide-react'
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from 'react'
 import { useRwaTheme } from '@/lib/rwa-theme'
@@ -107,10 +109,10 @@ export default function RwaTopbar(props: Props) {
     // Guests have no inbox; the sign-in entry replaces it.
     if (!slot || (!custom && !props.onSlot && !hasDefaultTopbarAction(slot)) || (!custom && slot === 'bell' && !signedIn && !props.onSlot)) return null
     if (slot === 'language') return <span className="rwa-topbar__slot rwa-topbar__slot--language" data-slot={position}><LanguageMenu variant="compact" /></span>
-    if (slot === 'logo') return <button type="button" className="rwa-topbar__slot rwa-topbar__slot--logo rwa-sel" data-state="rest" data-slot={position} aria-label={copy.slots.logo} onClick={() => onSlot(slot, position)}><span className="rwa-topbar__brand">{props.logo3d ? <RwaLogo3D className="rwa-topbar__logo3d" /> : <RwaLogoMark className="rwa-topbar__logo" width="34" height="20" label="A-REIT" />}<span>A-REIT</span></span>{props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count}</span>}</button>
+    if (slot === 'logo') return <button type="button" className="rwa-topbar__slot rwa-topbar__slot--logo rwa-sel" data-state="rest" data-slot={position} aria-label={copy.slots.logo} onClick={() => onSlot(slot, position)}><span className="rwa-topbar__brand">{props.logo3d ? <RwaLogo3D className="rwa-topbar__logo3d" /> : <RwaLogoMark className="rwa-topbar__logo" width="34" height="20" label={brandText("A-REIT")} />}<span>{brandText("A-REIT")}</span></span>{props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count}</span>}</button>
     const Icon = custom && props.action?.Icon ? props.action.Icon : icons[slot]
     return <button type="button" className="rwa-topbar__slot rwa-sel" data-state="rest" data-slot={position} disabled={custom ? props.action!.disabled || props.action!.busy : undefined} aria-busy={custom ? props.action!.busy : undefined} aria-label={custom ? props.action!.label : slot === 'theme' ? copy.themeTo[theme === 'dark' ? 'light' : 'dark'] : copy.slots[slot]} onClick={(event) => onSlot(slot, position, event)}>
-      {slot === 'theme' ? theme === 'dark' ? <Sun size={22} strokeWidth={1.8} /> : <Moon size={21} strokeWidth={1.8} /> : Icon ? <Icon size={22} strokeWidth={slot === 'back' ? 2.2 : 1.8} /> : <RwaLogoMark width="32" height="22" label="A-REIT" />}
+      {slot === 'theme' ? theme === 'dark' ? <Sun size={22} strokeWidth={1.8} /> : <Moon size={21} strokeWidth={1.8} /> : Icon ? <Icon size={22} strokeWidth={slot === 'back' ? 2.2 : 1.8} /> : <RwaLogoMark width="32" height="22" label={brandText("A-REIT")} />}
       {props.badge?.slot === position && props.badge.count > 0 && <span className="rwa-topbar__count">{props.badge.count > 99 ? '99+' : props.badge.count}</span>}
     </button>
   }

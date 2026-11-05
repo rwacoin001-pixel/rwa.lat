@@ -3,11 +3,18 @@ import { test } from 'node:test'
 import vm from 'node:vm'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import {testBrandContext} from './brand-test-context.mjs'
 
 const require = createRequire(import.meta.url)
 const ts = require('typescript')
 const exports = {}
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../lib/android-app.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports, URL, encodeURIComponent })
+const compiled=ts.transpileModule(readFileSync(new URL('../lib/android-app.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+vm.runInNewContext(compiled, { exports, URL, encodeURIComponent, require:()=>testBrandContext() })
+test('Kimeng does not offer the A-REIT native APK as a Kimeng app',()=>{
+  const k={};vm.runInNewContext(compiled,{exports:k,URL,encodeURIComponent,require:()=>testBrandContext('kimeng')})
+  assert.equal(k.ANDROID_APP.url,null)
+  assert.equal(k.ANDROID_APP_CERT_SHA256,exports.ANDROID_APP_CERT_SHA256)
+})
 const { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } = exports
 
 test('"Open in Chrome" hands the same page to Chrome and falls back when Chrome is missing', () => {

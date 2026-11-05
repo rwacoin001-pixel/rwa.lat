@@ -1,4 +1,6 @@
 'use client'
+
+import { brandText } from '@/lib/brand/build-brand'
 import { useEffect, useId, useRef, useState, type CSSProperties, type FormEvent, type KeyboardEvent, type ReactNode } from 'react'
 import dynamic from 'next/dynamic'
 import { ArrowLeft, BookOpen, Check, ChevronDown, ChevronRight, CircleHelp, Copy, Delete, Gift, ImagePlus, Share2, Users } from 'lucide-react'
@@ -156,9 +158,9 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   const share = async () => {
     if (!link) return
     // The Android app's WebView has no Web Share: the app opens the system share sheet.
-    if (nativeCan('share')) { const result = await nativeShare({ title: 'A-REIT', url: link }); if (!result.ok && result.reason === 'failed') await copy(); return }
+    if (nativeCan('share')) { const result = await nativeShare({ title: brandText('A-REIT'), url: link }); if (!result.ok && result.reason === 'failed') await copy(); return }
     if (!navigator.share) return copy()
-    try { await navigator.share({ title: 'A-REIT', url: link }) } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) await copy() }
+    try { await navigator.share({ title: brandText('A-REIT'), url: link }) } catch (error) { if (!(error instanceof DOMException && error.name === 'AbortError')) await copy() }
   }
   const openEdit = () => { bumpEdit(); setEditError(''); setSheet('edit') }
   const save = async (next: string) => {

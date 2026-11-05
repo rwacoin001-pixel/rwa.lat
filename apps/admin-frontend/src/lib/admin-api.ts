@@ -181,11 +181,13 @@ export type StorageReadiness = {
   message: string
 }
 
+export type BrandProfile = { brandId: 'kimeng'; status: 'draft' | 'ready'; legalName: string; registrationNumber: string; jurisdiction: string; address: string; supportEmail: string; description: string }
 export type PlatformContent = {
   legalName: string; registrationNumber: string; jurisdiction: string; address: string;
   supportEmail: string; description: string; allowedRegions: string[]; investorTypes: string[];
   documents: Array<{ title: string; storageRef: string; public: boolean; kind?: 'general'|'reserve_audit'|'reserve_custody'; reportDate?: string; asOfDate?: string; issuer?: string }>;
   officialChannels: Array<{ kind: 'website' | 'x' | 'telegram' | 'linkedin' | 'discord' | 'other'; label: string; url: string; note: string }>;
+  brandProfiles?: BrandProfile[];
 }
 export type PlatformConfiguration = { revision: number; draft: Partial<PlatformContent>; published: PlatformContent | null; publishedRevision: number | null; publishedAt: string | null }
 export type InvestmentBlock = { userId: string; displayName: string | null; handle: string | null; reason: string | null; blockedAt: string; blockedBy: string | null }

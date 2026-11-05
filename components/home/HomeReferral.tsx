@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 import { useState, useRef } from 'react'
 import dynamic from 'next/dynamic'
 import { useQuery } from '@/lib/api/_query'
@@ -69,9 +71,9 @@ export function HomeReferral() {
   const share = () => {
     if (!code) return
     const url = invitationLink(code)
-    if (nativeCan('share')) { void nativeShare({ title: 'A-REIT', url }).then(result => { if (!result.ok && result.reason === 'failed') void copyLink() }); return }
+    if (nativeCan('share')) { void nativeShare({ title: brandText('A-REIT'), url }).then(result => { if (!result.ok && result.reason === 'failed') void copyLink() }); return }
     if (!navigator.share) { void copyLink(); return }
-    navigator.share({ title: 'A-REIT', url }).catch((error: unknown) => { if (!(error instanceof DOMException && error.name === 'AbortError')) void copyLink() })
+    navigator.share({ title: brandText('A-REIT'), url }).catch((error: unknown) => { if (!(error instanceof DOMException && error.name === 'AbortError')) void copyLink() })
   }
   if (!data || !data.payoutsEnabled) return null
   const units = (atomic: string, decimals = data.decimals) => { try { return Number(fromAtomic(atomic, decimals)) } catch { return 0 } }

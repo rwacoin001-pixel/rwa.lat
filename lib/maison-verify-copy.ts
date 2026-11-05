@@ -1,3 +1,4 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from '@/lib/app-locales'
 
 /**
@@ -868,4 +869,4 @@ const pt: VerifyCopy = {
   },
 }
 
-export const verifyCopy: Record<AppLocale, VerifyCopy> = { en, 'zh-CN': zh, hi, es, ar, fr, pt }
+export const verifyCopy: Record<AppLocale, VerifyCopy> = mapBrandCopy({ en, 'zh-CN': zh, hi, es, ar, fr, pt })

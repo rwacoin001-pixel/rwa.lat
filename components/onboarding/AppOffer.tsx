@@ -1,4 +1,6 @@
 'use client'
+
+import { brandText, BRAND } from '@/lib/brand/build-brand'
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Check, Compass, Download, ExternalLink, MoreHorizontal, PlusSquare, Share } from 'lucide-react'
@@ -40,13 +42,13 @@ export function useAppOffer(): OfferKind | null {
 
 const COPY: Partial<Record<AppLocale, Record<OfferKind, { title: string; line: string; action: string }> & { copied: string; chrome: string }>> = {
   'zh-CN': {
-    apk: { title: 'A-REIT 安卓 App', line: '比浏览器更流畅，消息不错过', action: '下载' },
+    apk: { title: brandText('A-REIT 安卓 App'), line: '比浏览器更流畅，消息不错过', action: '下载' },
     pwa: { title: '添加到主屏幕', line: '像 App 一样一键打开，全屏使用', action: '添加' },
     browser: { title: '请在浏览器中打开', line: '点右上角 ··· 选择「在浏览器打开」，再下载 App', action: '知道了' },
     copied: '邀请码 {code} 已复制，在 App 里粘贴即可', chrome: '用 Chrome 打开',
   },
   en: {
-    apk: { title: 'A-REIT for Android', line: 'Smoother than the browser, never miss a message', action: 'Get' },
+    apk: { title: brandText('A-REIT for Android'), line: 'Smoother than the browser, never miss a message', action: 'Get' },
     pwa: { title: 'Add to home screen', line: 'Opens like an app, full screen', action: 'Add' },
     browser: { title: 'Open in your browser', line: 'Tap ··· at the top right, then “Open in browser”', action: 'OK' },
     copied: 'Invitation code {code} copied, paste it in the app', chrome: 'Open in Chrome',
@@ -73,7 +75,7 @@ export function AppOffer({ kind, locale, invite, size = 'strip' }: { kind: Offer
   const Icon = kind === 'apk' ? Download : kind === 'pwa' ? PlusSquare : MoreHorizontal
 
   return <div className={styles.offer} data-size={size} data-kind={kind}>
-    <img className={styles.icon} src="/icons/a-reit-v1-192.png" alt="" width={40} height={40} />
+    <img className={styles.icon} src={BRAND.icon192} alt="" width={40} height={40} />
     <div className={styles.text}><b>{text.title}</b><small>{text.line}</small>
       {kind === 'apk' && size === 'row' && <a className={styles.alt} href={chromeIntentUrl(location.href, new URL(ANDROID_APP.url!, location.href).href)}><ExternalLink size={12} strokeWidth={1.6} aria-hidden="true" />{copy.chrome}</a>}
     </div>
@@ -133,7 +135,7 @@ export function InstallButton({ kind, locale, invite }: { kind: InstallKind; loc
   const onShare = async () => {
     const code = inviteCode(invite)
     const url = code ? `${location.origin}/r/${code}` : location.origin
-    if (navigator.share) { try { await navigator.share({ title: 'A-REIT', url }) } catch { /* closed */ } return }
+    if (navigator.share) { try { await navigator.share({ title: brandText('A-REIT'), url }) } catch { /* closed */ } return }
     try { await navigator.clipboard.writeText(url) } catch { /* nothing to copy into */ }
     flash(a.shared)
   }

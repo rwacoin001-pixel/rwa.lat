@@ -9,11 +9,13 @@ import { revealTheme } from '../maison/theme-reveal'
 import styles from './P02-Login.module.css'
 import RwaLogoMark from '../rwa-logo'
 import f from './auth-focus.module.css'
+import { BRAND, IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
+import { previewNotice } from '@/lib/brand/copy'
 import { LoginWindow } from './LoginWindow'
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
-  return <RwaLogoMark className={styles.brandMark} width={size * 1.82} height={size} label="" />
+  return <RwaLogoMark className={styles.brandMark} width={size * (BRAND.id === 'kimeng' ? 1 : 1.82)} height={size} label="" />
 }
 
 /** Shared frame for every sign-in surface: the scene film, the wordmark bar, and a centred plaque above the card. */
@@ -52,7 +54,7 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
   const focus = attrs?.['data-auth-focus'] !== 'false'
   const welcome = focus && attrs?.['data-auth-view'] === 'welcome'
   const scenePhoto = cool ? '/media/login/login-night.webp' : '/media/login/login-day.webp'
-  const brand = <><BrandMark size={22} /><span>A<i>-</i>REIT</span></>
+  const brand = <><BrandMark size={22} /><span>{BRAND.id === 'areit' ? <>A<i>-</i>REIT</> : BRAND.name}</span></>
   const keys = <div className={styles.topActions}>
     <button type="button" className={styles.iconButton} onClick={(event) => revealTheme(toggleTheme, cool ? 'light' : 'dark', event)} aria-label={visual.switchTheme} title={visual.switchTheme}>{cool ? <Sun size={19} strokeWidth={1.7} /> : <Moon size={18} strokeWidth={1.7} />}</button>
     <div className={styles.localeWrap} ref={localeWrap}>
@@ -74,7 +76,7 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
 
     <header className={styles.topbar}>
       {onBack ? <button type="button" className={styles.iconButton} onClick={onBack} aria-label={t('common.back')}><ArrowLeft size={19} strokeWidth={1.7} /></button>
-        : <a href="/login" className={styles.brand} aria-label="A-REIT">{brand}</a>}
+        : <a href="/login" className={styles.brand} aria-label={BRAND.name}>{brand}</a>}
       {keys}
     </header>
 
@@ -87,13 +89,14 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
       {welcome ? <div className={f.sheet}>
         <LoginWindow src={scenePhoto} />
         {hero && <div className={f.copy}>{hero}</div>}
-        <div className={f.actions}>{children}</div>
-      </div> : <div className={`${f.sheet} ${f.step}`}>{children}</div>}
+        {IS_BRAND_PREVIEW && <p role="status" style={{ margin: '12px 0', fontSize: 12, lineHeight: 1.6 }}>{previewNotice[locale]}</p>}
+        <div className={f.actions} inert={IS_BRAND_PREVIEW} style={IS_BRAND_PREVIEW ? { opacity: .55 } : undefined}>{children}</div>
+      </div> : <div className={`${f.sheet} ${f.step}`} inert={IS_BRAND_PREVIEW}>{IS_BRAND_PREVIEW && <p role="status">{previewNotice[locale]}</p>}{children}</div>}
       {footer && <div className={f.legal}>{footer}</div>}
     </> : <>
       {hero && <div className={styles.heroCopy}>{hero}</div>}
       <div className={styles.stage}>
-        <div className={styles.authSheet}><span className={styles.grain} aria-hidden="true" /><div className={styles.sheetInner}>{children}</div></div>
+        <div className={styles.authSheet}><span className={styles.grain} aria-hidden="true" />{IS_BRAND_PREVIEW && <p role="status">{previewNotice[locale]}</p>}<div className={styles.sheetInner} inert={IS_BRAND_PREVIEW}>{children}</div></div>
         {footer && <div className={styles.outerFooter}>{footer}</div>}
       </div>
     </>}

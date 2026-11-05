@@ -1,3 +1,4 @@
+import { mapBrandCopy } from './brand/ui-copy'
 import type { AppLocale } from './app-locales'
 import type { InstallCopy } from '@/components/home/HomeInstall'
 
@@ -7,7 +8,7 @@ type GateCopy = {
   webApp: string; privateMode: string; done: string; exit: string
 }
 
-export const localizedGateCopy: Record<AddedLocale, GateCopy> = {
+export const localizedGateCopy: Record<AddedLocale, GateCopy> = mapBrandCopy({
   hi: {
     kicker: 'iPhone', title: 'होम स्क्रीन से खोलें',
     lede: 'iPhone पर A-REIT होम स्क्रीन ऐप के रूप में चलता है। एक बार जोड़ें, फिर इसके आइकन से खोलें।',
@@ -58,9 +59,9 @@ export const localizedGateCopy: Record<AddedLocale, GateCopy> = {
     done: 'Depois de adicionar, abra o A-REIT pelo ícone na Tela de Início.',
     exit: 'Ainda não conseguiu adicionar? Continue no navegador por enquanto',
   },
-}
+})
 
-export const localizedInstallCopy: Record<AddedLocale, InstallCopy> = {
+export const localizedInstallCopy: Record<AddedLocale, InstallCopy> = mapBrandCopy({
   hi: {
     strip: 'A-REIT को होम स्क्रीन पर जोड़ें', stripSub: 'ऐप की तरह खोलें · पूरी स्क्रीन', stripInApp: '{app} में खुला है — पहले ब्राउज़र में खोलें', dismiss: '14 दिन तक न दिखाएँ',
     title: 'A-REIT इंस्टॉल करें', lede: 'ऐप स्टोर की ज़रूरत नहीं। होम स्क्रीन के आइकन से सीधे खोलें।',
@@ -181,4 +182,4 @@ export const localizedInstallCopy: Record<AddedLocale, InstallCopy> = {
       inapp: ['Abra o menu [···] no canto superior direito', 'Escolha [Abrir no navegador], ou copie o link e cole no navegador', 'Siga este guia no navegador para adicionar à Tela de Início'],
     },
   },
-}
+})

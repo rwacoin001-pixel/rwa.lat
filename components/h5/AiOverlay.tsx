@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react'
 import { AiChatScreen } from '@/components/maison/AiChatScreen'
 import { closeAi, dismissAi, syncAiWithHistory, useAiOverlay } from '@/lib/ai-overlay'
@@ -53,7 +55,7 @@ export function AiOverlay() {
   }
 
   if (!open) return null
-  return <div className={styles.layer} role="dialog" aria-modal="true" aria-label="A-REIT AI" data-active={active || undefined} onClick={followed}>
+  return <div className={styles.layer} role="dialog" aria-modal="true" aria-label={brandText("A-REIT AI")} data-active={active || undefined} onClick={followed}>
     <div className={styles.backdrop} data-ai-backdrop="" onClick={closeAi} aria-hidden="true" />
     <div ref={setScroller} className={styles.scroller}>
       <AiChatScreen overlay scroller={scroller} onClose={closeAi} onPlan={() => undefined} pageContext={context} />

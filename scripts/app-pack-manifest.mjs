@@ -5,6 +5,8 @@
 import { createHash } from 'node:crypto'
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, relative, sep } from 'node:path'
+import { resolveBrand } from '../lib/brand/config.mjs'
+const brand = resolveBrand(process.env.SITE_BRAND)
 
 const assets = process.argv[2] ?? '.open-next/assets'
 const build = readFileSync(process.argv[3] ?? '.next/BUILD_ID', 'utf8').trim()
@@ -13,7 +15,7 @@ const build = readFileSync(process.argv[3] ?? '.next/BUILD_ID', 'utf8').trim()
 const INCLUDE = [
   /^\/_next\/static\/.+\.(?:js|css|woff2?|ttf|otf|png|jpe?g|webp|avif|svg|ico|gif)$/,
   /^\/icons\/[^/]+\.(?:png|svg|ico)$/,
-  /^\/brand\/a-reit\/[^/]+\.(?:png|svg|webp)$/,
+  new RegExp(`^${brand.assets}/[^/]+\\.(?:png|svg|webp|ico)$`),
   /^\/media\/home\/[^/]+\.(?:webp|png|jpe?g|svg)$/,
   /^\/media\/home\/derived\/[^/]+\.webp$/,
   // Home 为你精选 card photos (2026-11-04: they were missing, so the first home screen fetched them).
@@ -73,7 +75,7 @@ const files = candidates
 
 const total = files.reduce((sum, file) => sum + file.s, 0)
 if (total > MAX_PACK) throw new Error(`app-pack: ${(total / 1048576).toFixed(1)} MiB exceeds the 128 MiB native update budget`)
-const manifest = { v: 1, build, generatedAt: new Date().toISOString(), files }
+const manifest = { v: 1, brand: brand.id, build, generatedAt: new Date().toISOString(), files }
 mkdirSync(join(assets, 'app-pack'), { recursive: true })
 writeFileSync(join(assets, 'app-pack', 'manifest.json'), JSON.stringify(manifest))
 console.log(`app-pack: build ${build}, ${files.length} files, ${(total / 1048576).toFixed(1)} MB`)

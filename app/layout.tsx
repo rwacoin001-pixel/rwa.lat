@@ -21,39 +21,46 @@ import SessionPrivacyGate from '@/components/session-privacy-gate'
 import { launchSplashMarkup, launchSplashScript, launchSplashStyle } from '@/lib/launch-splash'
 import { iosStartupImages } from '@/lib/ios-startup-images'
 import IosInstallGate from '@/components/ios-install-gate'
+import { BRAND } from '@/lib/brand/build-brand'
+
+const title = BRAND.id === 'areit' ? 'A-REIT｜以智能科技提升投资体验' : '金英 KIMENG｜让资产清晰起来'
+const description = BRAND.id === 'areit' ? 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。' : '金英 KIMENG 平台，与 A-REIT 共用账户及数据。一个账户，两个官方入口；各网站分别登录。'
 
 export const metadata: Metadata = {
-  title: 'A-REIT｜以智能科技提升投资体验',
-  description: 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。',
-  applicationName: 'A-REIT',
+  metadataBase: new URL(BRAND.origin),
+  ...(BRAND.noindex ? { robots: { index: false, follow: false } } : {}),
+  title,
+  description,
+  applicationName: BRAND.name,
   manifest: '/manifest.webmanifest',
-  keywords: ['A-REIT', '投资体验', 'CapitaLand Ascendas REIT（SGX: A17U）', '工业及商业地产投资'],
-  authors: [{ name: 'A-REIT' }],
+  keywords: BRAND.id === 'areit' ? ['A-REIT', '投资体验', 'CapitaLand Ascendas REIT（SGX: A17U）', '工业及商业地产投资'] : ['金英', 'KIMENG', '投资体验'],
+  authors: [{ name: BRAND.name }],
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
-    title: 'A-REIT',
+    title: BRAND.name,
     // Shown by iOS from the tap until the page paints; same icon and position as the launch screen that follows.
     startupImage: iosStartupImages,
   },
   formatDetection: { telephone: false },
   icons: {
     icon: [
-      { url: '/icons/a-reit-v1-192.png', sizes: '192x192', type: 'image/png' },
-      { url: '/icons/a-reit-v1-512.png', sizes: '512x512', type: 'image/png' },
-      { url: '/brand/a-reit/app-icon.svg', type: 'image/svg+xml' },
+      { url: BRAND.icon192, sizes: '192x192', type: 'image/png' },
+      { url: BRAND.icon512, sizes: '512x512', type: 'image/png' },
+      { url: `${BRAND.assets}/app-icon.svg`, type: 'image/svg+xml' },
     ],
-    apple: [{ url: '/icons/a-reit-v1-apple-180.png', sizes: '180x180', type: 'image/png' }],
+    apple: [{ url: BRAND.appleIcon, sizes: '180x180', type: 'image/png' }],
   },
   openGraph: {
-    title: 'A-REIT｜以智能科技提升投资体验',
-    description: 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。',
+    title,
+    description,
     type: 'website',
+    ...(BRAND.id === 'kimeng' ? { siteName: BRAND.name, images: [{ url: '/brand/kimeng/share-card.png', width: 1200, height: 630 }] } : {}),
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'A-REIT｜以智能科技提升投资体验',
-    description: 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。',
+    title,
+    description,
   },
 }
 
@@ -83,7 +90,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     acceptLanguage: requestHeaders.get('accept-language'),
   })
   return (
-    <html lang={initialLocale} dir={initialLocale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
+    <html data-brand={BRAND.id} lang={initialLocale} dir={initialLocale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: desktopRedirectBootstrap }} />
         <script dangerouslySetInnerHTML={{ __html: documentPreferencesBootstrap }} />

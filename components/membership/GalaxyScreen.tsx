@@ -1,5 +1,7 @@
 'use client'
 
+import { brandText } from '@/lib/brand/build-brand'
+
 /**
  * `/profile/galaxy` — my membership level. v4 (2026-11-05, user: "the badge and this page still are not good — think as an
  * Apple or Google designer would"): one object and plain type. The hero is my badge (a vector medal with the level numeral)
@@ -112,7 +114,7 @@ function Body({ m }: { m: Membership }) {
           return <line key={i} x1={Math.cos(a) * 6} y1={Math.sin(a) * 6} x2={Math.cos(a) * r} y2={Math.sin(a) * r} />
         })}</svg>
       </header>
-      <small className={s.edKicker}>A-REIT · {k.title} · {k.tierOf(m.level.index, m.levels.length || 7)}</small>
+      <small className={s.edKicker}>{brandText("A-REIT")} · {k.title} · {k.tierOf(m.level.index, m.levels.length || 7)}</small>
       <b className={s.edRank} dir="ltr">{nameOf(m.level)}</b>
       <p className={s.edScore}><span>{k.score}</span><b dir="ltr">{num(Math.round(counted))}</b></p>
       <p className={s.edNext}>{next ? <>{k.toGo(label(next), num(Math.max(0, to - score)))} · <b dir="ltr">{(progress * 100).toFixed(0)}%</b></> : k.top}</p>
@@ -124,7 +126,7 @@ function Body({ m }: { m: Membership }) {
         <a href="/rank" onClick={(e) => { e.preventDefault(); openPath('/rank') }}>{k.rank}</a>
       </nav>
       <footer className={s.edFoot}>
-        <small>{k.scoreNote}<br />A-REIT Membership®</small>
+        <small>{k.scoreNote}<br />{brandText("A-REIT")} Membership®</small>
         <i className={s.edOrb} style={{ ['--p' as string]: String(.25 + grown * .75) } as CSSProperties} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label={k.score} />
       </footer>
     </section>
