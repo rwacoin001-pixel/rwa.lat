@@ -262,7 +262,11 @@ export function PostRow({ post, timeAgo, openPost, openProfile, topics = [], loc
   const openLabel = communityExperienceCopy[locale].open
   const open = () => openPost(post.id)
   return (
-    <li className={`${c.post} ${c.rise}`} style={{ '--i': index } as CSSProperties}>
+    <li className={`${c.post} ${c.rise}`} style={{ '--i': index } as CSSProperties} onClick={(event) => {
+      // 2026-11-05 (user: tapping anywhere but the card opens the post). Buttons, links and the card keep their own tap.
+      if ((event.target as HTMLElement).closest('button, a, input, textarea, [role="button"], [role="dialog"], [data-card]')) return
+      open()
+    }}>
       <div className={c.avatarCol}>
         {toProfile
           ? <button type="button" className={c.avatarBtn} aria-label={author?.displayName} onClick={toProfile}><Avatar author={author} /></button>

@@ -184,7 +184,7 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
     {live && <span className={s.room} aria-hidden="true" />}
   </div>
 
-  return <article className={s.card} data-group={m.group} data-compact={compact || mini || undefined} data-mini={mini || undefined} aria-label={m.head}>
+  return <article className={s.card} data-card="" data-group={m.group} data-compact={compact || mini || undefined} data-mini={mini || undefined} aria-label={m.head}>
     <div ref={frame} className={s.frame} data-live={live || undefined} data-open={flipped || undefined}
       {...(live ? {
         role: 'button', tabIndex: 0, 'aria-expanded': flipped,
