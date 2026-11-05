@@ -97,6 +97,11 @@
 .language select { -webkit-appearance: none; appearance: none; min-height: 36px; max-width: 132px; border: 0; background: none; color: var(--g-ink); font: inherit; font-size: 15px; font-weight: 600; padding: 0 2px; }
 .language select:focus-visible { outline: none; }
 .language:focus-within { box-shadow: var(--glass-rim), 0 0 0 2px var(--g-blue); }
+/* Welcome (right after sign-up): "Later" sits beside the language pill, usable at once. */
+.topbar:has(.later) .language { margin-inline-start: auto; }
+.later { height: 36px; padding: 0 14px; border: 0; border-radius: 999px; color: var(--g-blue); background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--glass-rim), var(--glass-lift); font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.later:focus-visible { outline: 2px solid var(--g-blue); outline-offset: 2px; }
+.later:active { opacity: .6; }
 
 /* ── Hero icons: where you are → Home Screen ── */
 .journey { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 12px; max-width: 300px; width: 100%; margin: clamp(10px, 3svh, 26px) auto 0; }
@@ -118,6 +123,9 @@
 .kicker { margin: 0 0 4px; color: var(--g-muted); font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
 .title { margin: 0; font-size: clamp(31px, 9vw, 36px); font-weight: 800; line-height: 1.18; letter-spacing: -.01em; text-wrap: balance; }
 .lede { margin: 12px auto 0; max-width: 30em; padding-inline: 8px; color: var(--g-muted); font-size: 15px; line-height: 1.45; letter-spacing: -.01em; text-wrap: pretty; }
+.nowrap { white-space: nowrap; }
+.bound { display: inline-flex; align-items: center; gap: 6px; margin: 10px 0 0; color: var(--g-ink); font-size: 15px; font-weight: 600; letter-spacing: -.01em; }
+.bound svg { color: #19c7aa; }
 .meta { align-self: center; margin: 16px 0 0; padding: 6px 12px; border-radius: 999px; color: var(--g-muted); background: var(--glass); -webkit-backdrop-filter: var(--glass-blur); backdrop-filter: var(--glass-blur); box-shadow: var(--glass-rim), var(--glass-lift); font-size: 13px; font-weight: 600; text-align: center; font-variant-numeric: tabular-nums; }
 
 /* Cards: rounder, slightly translucent over the wash. */

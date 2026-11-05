@@ -8,7 +8,9 @@ export type ReferralMemberDetail=ReferralMember&{registeredAt:string;deposits:{t
 export type ReferralAward={id:string;kind:'purchase'|'fee';level:number;state:'earned'|'claimed';amountAtomic:string;baseAtomic:string;rateBps:number;currency:string;decimals:number;occurredAt:string;claimedAt:string|null;settingsVersion:number;memberLabel:string}
 export type ReferralClaim={claimId:string;amountAtomic:string;rewardCount:number;currency:string;decimals:number;claimedAt:string;replay:boolean}
 export type Page<T>={items:T[];total:number;page:number;pageSize:number}
-export const referralMe=()=>request<{code:string;payoutsEnabled:boolean}>('/v1/referral/me')
+/** inviterBound: this account has an inviter (added 2026-11-05; absent on older API builds). */
+export const referralMe=()=>request<{code:string;payoutsEnabled:boolean;inviterBound?:boolean}>('/v1/referral/me')
+export const referralMeQuiet=()=>request<{code:string;payoutsEnabled:boolean;inviterBound?:boolean}>('/v1/referral/me',{loading:'silent',timeoutMs:4000})
 export const referralSummary=()=>request<ReferralSummary>('/v1/referral/summary')
 export type ReferralTeamBatch={month:string;status:'pending'|'approved'|'paid';baseAtomic:string;amountAtomic:string;paidAt:string|null;ledgerTransactionId:string|null}
 export const referralTeamRewards=()=>request<{enabled:boolean;activatedAt:string|null;items:ReferralTeamBatch[]}>('/v1/referral/team')

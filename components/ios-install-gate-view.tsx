@@ -125,6 +125,12 @@ const en: GateCopy = {
 }
 
 const gateCopy: Record<AppLocale, GateCopy> = { en, 'zh-CN': zh, ...localizedGateViewCopy }
+/** Shown right after a sign-up / sign-in in Safari (zh-CN and en; other locales use en). */
+type WelcomeCopy = { kicker: string; title: string; lede: string; bound: string; later: string }
+const WELCOME: Partial<Record<AppLocale, WelcomeCopy>> & { en: WelcomeCopy } = {
+  'zh-CN': { kicker: '最后一步', title: '注册完成 · 把 A-REIT 放到主屏幕', lede: '打开主屏幕 App 后用同一邮箱登录一次。', bound: '邀请关系已绑定', later: '稍后' },
+  en: { kicker: 'One last step', title: 'You’re in · Put A-REIT on your Home Screen', lede: 'Open the Home Screen app and sign in once with the same email.', bound: 'Your invitation is linked', later: 'Later' },
+}
 // Which bar the reader sees at the bottom of Safari; picks the first step's drawing and wording.
 const BAR_PICK: Record<AppLocale, { question: string; toolbar: string; compact: string }> = {
   'zh-CN': { question: '你的 Safari 底部是', toolbar: '完整工具栏', compact: '只有地址栏' },
@@ -136,15 +142,23 @@ const BAR_PICK: Record<AppLocale, { question: string; toolbar: string; compact: 
   hi: { question: 'आपके Safari में नीचे', toolbar: 'पूरा टूलबार', compact: 'सिर्फ़ पता बार' },
 }
 
+// Keeps "A-REIT" on one line inside a heading that wraps.
+function Brand({ text }: { text: string }) {
+  return <>{text.split('A-REIT').map((part, index) => <span key={index}>{index > 0 && <span className={styles.nowrap}>A-REIT</span>}{part}</span>)}</>
+}
+
 function Rich({ text }: { text: string }) {
   return <>{text.split(/\[(.+?)\]/).map((part, index) => index % 2 ? <b key={index}>{part}</b> : part)}</>
 }
 
-export default function IosInstallGateView({ env, locale, theme, exitReady, onLeave, onLocaleChange }: {
+export default function IosInstallGateView({ env, locale, theme, exitReady, onLeave, onLocaleChange, welcome }: {
   env: InstallEnv; locale: AppLocale; theme: 'light' | 'dark'; exitReady: boolean; onLeave: () => void; onLocaleChange: (locale: AppLocale) => void
+  /** Right after sign-up / sign-in: welcome heading, "Later" at once; bound = the API confirmed the invite. */
+  welcome?: { bound: boolean }
 }) {
   const [copied, setCopied] = useState(false)
   const copy = gateCopy[locale]
+  const hello = welcome ? WELCOME[locale] ?? WELCOME.en : null
   const path: Path = env.kind === 'ios-safari' ? 'safari' : env.kind === 'wechat-ios' || env.kind === 'inapp' ? 'inapp' : 'browser'
   // Safari 26 defaults to the compact bar (Share sits behind ···) and adds the Web App switch; 0 = unknown, show both hints.
   // The version is only the starting guess: Safari 26 also offers the classic Top/Bottom layouts and upgraded phones often
@@ -186,6 +200,7 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
             {localeOptions.map(option => <option key={option.code} value={option.code} lang={option.code}>{option.label}</option>)}
           </select>
         </label>
+        {hello && <button type="button" className={styles.later} onClick={onLeave}>{hello.later}</button>}
       </div>
 
       <div className={styles.journey} aria-hidden="true">
@@ -204,9 +219,10 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
       </div>
 
       <header className={styles.head}>
-        <p className={styles.kicker}>{copy.kicker}</p>
-        <h1 id="ios-gate-title" className={styles.title}>{copy.title}</h1>
-        <p className={styles.lede}>{path === 'inapp' ? copy.ledeInApp : copy.lede}</p>
+        <p className={styles.kicker}>{hello?.kicker ?? copy.kicker}</p>
+        <h1 id="ios-gate-title" className={styles.title}>{hello ? <Brand text={hello.title} /> : copy.title}</h1>
+        <p className={styles.lede}>{hello?.lede ?? (path === 'inapp' ? copy.ledeInApp : copy.lede)}</p>
+        {hello && welcome?.bound && <p className={styles.bound} role="status"><Check size={15} strokeWidth={2.2} aria-hidden="true" />{hello.bound}</p>}
       </header>
       <p className={styles.meta}>{copy.meta[path]}</p>
 
@@ -235,13 +251,13 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
         </li>)}
       </ol>
 
-      <section className={styles.login}>
+      {!hello && <section className={styles.login}>
         <span className={styles.loginIcon} aria-hidden="true"><KeyRound size={17} strokeWidth={2} /></span>
         <div>
           <h2>{copy.login.title}</h2>
           <p>{copy.login.body}</p>
         </div>
-      </section>
+      </section>}
 
       <details className={styles.help}>
         <summary>
@@ -257,7 +273,7 @@ export default function IosInstallGateView({ env, locale, theme, exitReady, onLe
       </details>
 
       <div className={styles.foot}>
-        {exitReady && <button type="button" className={styles.exit} onClick={onLeave}>{copy.exit}</button>}
+        {exitReady && <button type="button" className={styles.exit} onClick={onLeave}>{hello?.later ?? copy.exit}</button>}
       </div>
     </div>
   </div>

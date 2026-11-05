@@ -72,7 +72,7 @@ export class ReferralUserFoundationController {
   @Get('invitees/:memberLabel') @Header('Cache-Control','no-store') invitee(@Req() req:AuthenticatedRequest,@Param('memberLabel') label:string) { return this.read.invitee(req.auth.userId,label) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }
   @Get('funnel') funnel(@Req() req:AuthenticatedRequest) { return this.read.funnel(req.auth.userId) }
-  @Get('me') async me(@Req() req: AuthenticatedRequest) { return {code:await this.binding.getCode(req.auth.userId),stage:1,payoutsEnabled:true} }
+  @Get('me') async me(@Req() req: AuthenticatedRequest) { const [code,inviterBound]=await Promise.all([this.binding.getCode(req.auth.userId),this.binding.hasInviter(req.auth.userId)]); return {code,stage:1,payoutsEnabled:true,inviterBound} }
   @Post('code') async code(@Req() req: AuthenticatedRequest,@Body() dto: CodeDto) { return {code:await this.binding.changeCode(req.auth.userId,dto.code)} }
   /** Claims every earned reward into available USDT. Requires an Idempotency-Key header; a replay returns the same claim. */
   @Post('claim') claim(@Req() req: AuthenticatedRequest,@Headers('idempotency-key') key?: string) { return this.claims.claim(req.auth.userId,key) }

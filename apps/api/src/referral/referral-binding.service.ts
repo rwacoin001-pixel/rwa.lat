@@ -57,6 +57,12 @@ export class ReferralBindingService {
     })
   }
 
+  /** Whether this account was bound to an inviter at sign-up (the iPhone install guide only says "bound" when true). */
+  async hasInviter(userId: string) {
+    if (!await this.installed()) return false
+    return (await this.db.query('SELECT 1 FROM app.referral_edges WHERE invitee_user_id=$1 LIMIT 1', [userId])).length > 0
+  }
+
   async changeCode(userId: string, input: string) {
     await this.requireInstalled()
     const code = input.toLowerCase()
