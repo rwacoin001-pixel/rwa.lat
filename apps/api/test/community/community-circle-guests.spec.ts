@@ -19,6 +19,7 @@ function make(answer: Answer) {
     calls.push({ sql, args })
     if (sql.includes('pg_advisory_xact_lock')) return []
     if (sql.includes('FROM app.community_profiles p JOIN app.users u')) return [{ id: 'me-profile', user_id: 'me' }]
+    if (sql.includes('FROM app.users u LEFT JOIN app.community_profiles p')) return [{ id: 'me-profile', is_active: true, status: 'active' }]
     const rows = answer(sql, args)
     if (rows === undefined) throw new Error(`Unexpected query: ${sql.slice(0, 140)}`)
     return rows

@@ -1,7 +1,7 @@
 import { Body, Controller, Delete, Get, HttpCode, Param, ParseUUIDPipe, Patch, Post, Query, UseGuards } from '@nestjs/common'
 import { CurrentAuth } from '../security/current-auth.decorator'
 import { AuthenticatedRequest, SessionAuthGuard } from '../security/session-auth.guard'
-import { CircleInnerSearchQueryDto, CircleMuteDto, CircleNameDto, CirclePageQueryDto, CirclePinDto, CircleSearchQueryDto, CircleUpdateDto } from './community-circle.dto'
+import { CircleDiscoverQueryDto, CircleInnerSearchQueryDto, CircleMuteDto, CircleNameDto, CirclePageQueryDto, CirclePinDto, CircleSearchQueryDto, CircleUpdateDto } from './community-circle.dto'
 import { CommunityCircleService } from './community-circle.service'
 import { CommunityOptionalAuthGuard } from './community-optional-auth.guard'
 import { CommunityFeedQueryDto } from './dto/community.dto'
@@ -11,7 +11,9 @@ import { CommunityFeedQueryDto } from './dto/community.dto'
 export class CommunityCircleController {
   constructor(private readonly circles: CommunityCircleService) {}
   @Get('mine') mine(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.circles.mine(a.userId) }
-  @Post() create(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: CircleNameDto) { return this.circles.create(a.userId, dto.name) }
+  @Post() create(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: CircleNameDto) { return this.circles.create(a.userId, dto.name, dto.intro) }
+  /** Popular listed circles, ten at a time (2026-11-05). */
+  @Get('discover') discover(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: CircleDiscoverQueryDto) { return this.circles.discover(a.userId, q.offset ?? 0) }
   /** Find circles to join: a 6-digit public number, or part of a name (only circles whose owner allows it). */
   @Get('search') search(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: CircleSearchQueryDto) { return this.circles.search(a.userId, q.q) }
   @Patch(':id') update(@CurrentAuth() a: AuthenticatedRequest['auth'], @Param('id', ParseUUIDPipe) id: string, @Body() dto: CircleUpdateDto) { return this.circles.update(a.userId, id, dto) }

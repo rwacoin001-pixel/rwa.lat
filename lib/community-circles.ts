@@ -9,14 +9,14 @@
 import { request } from '@/lib/api/_http'
 import type { CommunityAuthor, CommunityPost } from '@/lib/community-data'
 
-export type Circle = { id: string; name: string; owner: CommunityAuthor; memberCount: number; createdAt: string; isOwner: boolean
+export type Circle = { id: string; name: string; intro?: string | null; owner: CommunityAuthor; memberCount: number; createdAt: string; isOwner: boolean
   publicNo: number; searchable?: boolean; muted: boolean; silenced: boolean; pinnedPost: CommunityPost | null; lastPostAt: string | null
   /** Owner only. */
   inviteCode?: string | null; pendingCount?: number }
 export type CircleMembership = { owned: Circle | null; joined: Circle[]; left: Circle[] }
 export type CircleMemberRow = { profile: CommunityAuthor; identityConfigured?: boolean; depth: number; via?: 'tree' | 'link'; silenced: boolean }
 export type CircleInviteStatus = 'none' | 'pending' | 'member' | 'owner' | 'removed' | 'rejected'
-export type CircleInvite = { circle: { id: string; name: string; owner: CommunityAuthor; memberCount: number }; status: CircleInviteStatus }
+export type CircleInvite = { circle: { id: string; name: string; intro?: string | null; owner: CommunityAuthor; memberCount: number }; status: CircleInviteStatus }
 export type CirclePersonRow = { profile: CommunityAuthor; createdAt?: string; removedAt?: string }
 
 export const CIRCLE_NAME_MIN = 2
@@ -30,8 +30,9 @@ export async function getMyCircles(): Promise<CircleMembership | null> {
   if (!result.ok) { if (result.error.status === 404 || result.error.status === 405) return null; return fail(result.error.message) }
   return { owned: result.data.owned ?? null, joined: result.data.joined ?? [], left: result.data.left ?? [] }
 }
-export async function createCircle(name: string) {
-  const result = await request<Circle>('/v1/community/circles', { method: 'POST', body: JSON.stringify({ name }) })
+export const CIRCLE_INTRO_MAX = 120
+export async function createCircle(name: string, intro = '') {
+  const result = await request<Circle>('/v1/community/circles', { method: 'POST', body: JSON.stringify(intro.trim() ? { name, intro: intro.trim() } : { name }) })
   return result.ok ? result.data : fail(result.error.message)
 }
 export async function renameCircle(id: string, name: string) {
@@ -105,7 +106,13 @@ export const validCircleName = (name: string) => {
 }
 
 /** Discovery and circle controls (2026-11-01). */
-export type CircleSearchResult = { circle: Pick<Circle, 'id' | 'name' | 'owner' | 'memberCount' | 'publicNo'>; status: CircleInviteStatus }
+export type CircleSearchResult = { circle: Pick<Circle, 'id' | 'name' | 'intro' | 'owner' | 'memberCount' | 'publicNo'>; status: CircleInviteStatus }
+/** Popular circles (2026-11-05): ten at a time, with posts this week and up to three recent posters. */
+export type CircleDiscoverItem = { circle: Pick<Circle, 'id' | 'name' | 'intro' | 'owner' | 'memberCount' | 'publicNo' | 'lastPostAt'> & { postsWeek: number; faces: CommunityAuthor[] }; status: CircleInviteStatus }
+export async function discoverCircles(offset = 0) {
+  const result = await request<{ items: CircleDiscoverItem[]; nextOffset: number | null }>(`/v1/community/circles/discover?offset=${offset}`, { loading: 'silent' })
+  return result.ok ? result.data : fail(result.error.message)
+}
 export async function searchCircles(q: string) {
   const result = await request<{ items: CircleSearchResult[] }>(`/v1/community/circles/search?${new URLSearchParams({ q })}`, { loading: 'silent' })
   return result.ok ? result.data.items : fail(result.error.message)
@@ -114,7 +121,7 @@ export async function applyToCircleById(id: string) {
   const result = await request<{ status: CircleInviteStatus }>(path(id, '/apply'), { method: 'POST' })
   return result.ok ? result.data.status : fail(result.error.status === 403 ? 'CIRCLE_REMOVED' : result.error.message)
 }
-export async function updateCircle(id: string, changes: { name?: string; searchable?: boolean }) {
+export async function updateCircle(id: string, changes: { name?: string; searchable?: boolean; intro?: string }) {
   const result = await request<Circle>(path(id), { method: 'PATCH', body: JSON.stringify(changes) })
   return result.ok ? result.data : fail(result.error.message)
 }

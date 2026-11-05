@@ -84,3 +84,57 @@ button.row:focus-visible { outline-offset: -2px; }
 :global(.rwa-mobile[data-theme='dark']) :is(.search, .tag, .key:not([data-solid])) { background: var(--pa-fill, rgba(242, 244, 247, .08)); }
 :global(.rwa-mobile[data-theme='dark']) :is(.createKey, .key[data-solid]) { background: #f2f4f7; color: #0b1220; }
 @media (prefers-reduced-motion: reduce) { .mine, .createKey, .search { transition: none; } }
+
+/* Popular circles and the richer circle card (2026-11-05, user: the cards were too plain). A solid cover in one of eight
+   deep tones (fixed per circle, never a gradient) carries the name's first character large and cropped, like a
+   masthead; the owner's photo sits over the cover's edge; then name, intro, faces, figures and one key. */
+.cover { position: relative; display: block; height: 72px; overflow: hidden; background: #24343a; }
+.cover[data-tone='0'] { background: #1f3a38; }
+.cover[data-tone='1'] { background: #2b2f3a; }
+.cover[data-tone='2'] { background: #3d3326; }
+.cover[data-tone='3'] { background: #22344f; }
+.cover[data-tone='4'] { background: #432c38; }
+.cover[data-tone='5'] { background: #313d2c; }
+.cover[data-tone='6'] { background: #4d3b2b; }
+.cover[data-tone='7'] { background: #213f49; }
+.glyph { position: absolute; inset-inline-end: -6px; bottom: -34px; color: rgba(255, 255, 255, .13); font-size: 108px; font-weight: 700; line-height: 1; letter-spacing: -.04em; pointer-events: none; user-select: none; }
+.rank { position: absolute; top: 12px; inset-inline-start: 16px; color: rgba(255, 255, 255, .78); font-size: 12px; font-weight: 600; line-height: 16px; letter-spacing: .08em; font-variant-numeric: tabular-nums; }
+
+.hotList { display: grid; gap: 12px; margin: 0; padding: 0; list-style: none; }
+.hotCard { overflow: hidden; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: var(--pa-card-shadow); animation: hotIn .42s cubic-bezier(.22, 1, .36, 1) both; animation-delay: calc(var(--i, 0) * 40ms); }
+.hotBody { position: relative; display: grid; gap: 8px; padding: 0 16px 16px; }
+.hotAvatar { display: block; width: 52px; height: 52px; margin-top: -26px; border-radius: 50%; box-shadow: 0 0 0 3px var(--pa-card, #fff); }
+.hotHead { display: grid; gap: 2px; min-width: 0; }
+.hotHead b { overflow: hidden; color: var(--m-ink, #0b1220); font-size: 17px; font-weight: 600; line-height: 24px; white-space: nowrap; text-overflow: ellipsis; }
+.hotHead small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.hotIntro { display: -webkit-box; margin: 0; overflow: hidden; color: var(--m-ink, #0b1220); font-size: 15px; line-height: 22px; opacity: .82; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+.hotFoot { display: flex; align-items: center; gap: 12px; margin-top: 4px; padding-top: 12px; box-shadow: inset 0 .5px 0 var(--pa-hair, rgba(11, 18, 32, .08)); }
+.faces { display: flex; flex: none; }
+.faces > * { border-radius: 50%; box-shadow: 0 0 0 2px var(--pa-card, #fff); }
+.faces > * + * { margin-inline-start: -8px; }
+.hotMeta { display: grid; flex: 1; min-width: 0; }
+.hotMeta b { overflow: hidden; color: var(--m-ink, #0b1220); font-size: 13px; font-weight: 600; line-height: 18px; white-space: nowrap; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+.hotMeta small { overflow: hidden; color: var(--m-muted, #5b6472); font-size: 12px; line-height: 16px; white-space: nowrap; text-overflow: ellipsis; }
+.hotKey { flex: none; height: 36px; padding: 0 16px; border: 0; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .06)); color: var(--m-ink, #0b1220); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .15s, opacity .2s; }
+.hotKey[data-solid] { background: var(--btn-solid-fill, #0b0d11); color: var(--btn-solid-ink, #fff); }
+.hotKey:active { transform: scale(.96); }
+.hotKey:disabled { cursor: default; opacity: .6; }
+.hotKey[aria-busy] { opacity: .5; }
+.hotGhost .cover { background: var(--pa-fill, rgba(11, 18, 32, .06)); }
+.hotGhost .hotBody { padding-top: 16px; }
+.hotGhost .hotBody span { display: block; height: 12px; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .06)); }
+.hotGhost .hotBody span:first-child { width: 46%; }
+.hotGhost .hotBody span:last-child { width: 80%; }
+.hotGhost { animation: none; }
+.endNote { margin: 4px 0 0; color: var(--m-faint, #8a9099); font-size: 12px; line-height: 16px; text-align: center; }
+.sentinel { height: 1px; }
+
+/* My circle gets the same cover, shorter, and its intro under the head. */
+.mine { overflow: hidden; }
+.mineCover { height: 56px; }
+.mineCover .glyph { bottom: -30px; font-size: 92px; }
+.mineIntro { display: -webkit-box; margin: -8px 16px 12px; overflow: hidden; color: var(--m-muted, #5b6472); font-size: 13px; line-height: 18px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+
+@keyframes hotIn { from { opacity: 0; transform: translateY(12px); } }
+@media (prefers-reduced-motion: reduce) { .hotCard { animation: none; } }
+:global(.rwa-mobile[data-theme='dark']) .hotAvatar, :global(.rwa-mobile[data-theme='dark']) .faces > * { box-shadow: 0 0 0 3px var(--pa-card, #14171d); }

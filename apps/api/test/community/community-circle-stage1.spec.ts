@@ -35,6 +35,7 @@ function make(answer: Answer) {
     calls.push({ sql, args })
     if (sql.includes('pg_advisory_xact_lock')) return []
     if (sql.includes('FROM app.community_profiles p JOIN app.users u')) return [{ id: 'me-profile', user_id: 'me' }]
+    if (sql.includes('FROM app.users u LEFT JOIN app.community_profiles p')) return [{ id: 'me-profile', is_active: true, status: 'active' }]
     const rows = answer(sql, args)
     if (rows === undefined) throw new Error(`Unexpected query: ${sql.slice(0, 140)}`)
     return rows
@@ -147,7 +148,7 @@ describe('finding circles', () => {
   it('exactly six digits finds the circle by public number, listed or not', async () => {
     const { svc, calls } = make(first(rows, role(null), sql => sql.startsWith('SELECT reason FROM app.community_circle_optouts') || sql.startsWith('SELECT status FROM app.community_circle_guests') ? [] : undefined, base))
     const found = await svc.search(MEMBER, ' 123456 ')
-    expect(found.items).toEqual([{ circle: { id: CIRCLE, name: 'Koala', owner: { id: 'op' }, memberCount: 2, publicNo: 123456 }, status: 'none' }])
+    expect(found.items).toEqual([{ circle: { id: CIRCLE, name: 'Koala', intro: null, owner: { id: 'op' }, memberCount: 2, publicNo: 123456 }, status: 'none' }])
     const sql = calls.find(c => c.sql.includes('public_no=$1'))!
     expect(sql.args).toEqual([123456])
     expect(sql.sql).not.toContain('AND searchable') // a non-searchable circle is found by its number
@@ -197,7 +198,7 @@ describe('owner tools', () => {
     const owner = make(first(role('owner'), sql => sql.includes('UPDATE app.community_circles SET name=COALESCE') ? [circleRow] : undefined, base))
     const view = await owner.svc.update(OWNER, CIRCLE, { searchable: false })
     expect(view).toMatchObject({ isOwner: true, searchable: true }) // the row mock still says true; the point is the owner sees the field
-    expect(owner.calls.find(c => c.sql.includes('COALESCE($2,name)'))!.args).toEqual([CIRCLE, null, false])
+    expect(owner.calls.find(c => c.sql.includes('COALESCE($2,name)'))!.args).toEqual([CIRCLE, null, false, false, null])
     await expect(owner.svc.update(OWNER, CIRCLE, {})).rejects.toMatchObject({ status: 400 })
     await expect(make(first(role('member'), base)).svc.update(MEMBER, CIRCLE, { name: 'New' })).rejects.toMatchObject({ status: 403 })
   })

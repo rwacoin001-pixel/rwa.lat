@@ -6,7 +6,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { Sheet } from '@/components/maison/Sheet'
 import { MaisonPage, maison as mp } from '@/components/maison/primitives'
 import { CommunityCompose, useCommunityMe } from '@/components/community-compose'
-import { deleteCircle, getCirclePosts, getMyCircles, leaveCircle, muteCircle, pinCirclePost, rejoinCircle, renameCircle, updateCircle, type Circle, type CircleMembership } from '@/lib/community-circles'
+import { deleteCircle, getCirclePosts, getMyCircles, leaveCircle, muteCircle, pinCirclePost, rejoinCircle, updateCircle, type Circle, type CircleMembership } from '@/lib/community-circles'
 import { getCommunityTopics, type CommunityPost, type CommunityTopic } from '@/lib/community-data'
 import { useI18n } from '@/lib/i18n'
 import type { RwaScreen } from '@/lib/rwa-routes'
@@ -135,15 +135,16 @@ function CircleHeader({ current, left, onChanged, onNotify, onSearch }: { curren
       {!left && <button type="button" className={s.more} aria-label={labels.searchInside} onClick={onSearch}><Search size={20} aria-hidden="true" /></button>}
       {!left && <button type="button" className={s.more} aria-label={pending ? `${k.more} · ${k.requests(pending)}` : k.more} aria-haspopup="dialog" onClick={() => setMenu(true)}><MoreHorizontal size={20} aria-hidden="true" />{pending > 0 && <span className={s.badge}>{pending > 99 ? '99+' : pending}</span>}</button>}
     </div></div>
+    {current.intro && <p className={s.heroIntro} dir="auto">{current.intro}</p>}
     <button type="button" className={s.idPill} aria-label={`${labels.copyId} ${current.publicNo}`} onClick={copyId}><span>ID</span><b>{current.publicNo}</b><Copy size={14} strokeWidth={1.9} aria-hidden="true" /></button>
   </div>
     {left && <div className={s.leftState}><p>{k.leftNote}</p><button type="button" className={`${c.pill} ${c.pillSolid}`} disabled={busy} onClick={() => void act(async () => { await rejoinCircle(current.id); onChanged(current.id) })}>{k.rejoin}</button></div>}
     {fresh && <p className={s.note} role="status"><span dir="auto">{k.joinedNote(current.owner.displayName)}</span>
       <button type="button" aria-label={k.dismiss} onClick={() => seen.add(current.id)}><X size={16} strokeWidth={2} aria-hidden="true" /></button></p>}
 
-    <NameSheet open={naming !== null} title={k.rename} initial={current.name} busy={busy} onClose={() => setNaming(null)}
-      onSave={(name) => void act(async () => {
-        await renameCircle(current.id, name); onChanged(current.id)
+    <NameSheet open={naming !== null} title={k.edit} initial={current.name} initialIntro={current.intro ?? ''} busy={busy} onClose={() => setNaming(null)}
+      onSave={(name, intro) => void act(async () => {
+        await updateCircle(current.id, { ...(name !== current.name ? { name } : {}), intro }); onChanged(current.id)
         setNaming(null)
       })} />
 
@@ -155,7 +156,7 @@ function CircleHeader({ current, left, onChanged, onNotify, onSearch }: { curren
         {current.isOwner && <button type="button" onClick={() => { setMenu(false); setSheet('requests') }}>{k.requests(pending)}</button>}
         <button type="button" onClick={() => { setMenu(false); setMembers(true) }}>{k.viewMembers}</button>
         {current.isOwner && <button type="button" onClick={() => { setMenu(false); setSheet('removed') }}>{k.removed}</button>}
-        {current.isOwner && <button type="button" onClick={() => { setMenu(false); setNaming('rename') }}>{k.rename}</button>}
+        {current.isOwner && <button type="button" onClick={() => { setMenu(false); setNaming('rename') }}>{k.edit}</button>}
         {current.isOwner
           ? <button type="button" data-danger="" onClick={() => { setMenu(false); setConfirm('delete') }}>{k.delete}</button>
           : <button type="button" data-danger="" onClick={() => { setMenu(false); setConfirm('leave') }}>{k.leave}</button>}

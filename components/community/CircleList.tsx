@@ -8,6 +8,7 @@ import { openPath } from '@/lib/maison-nav'
 import { NameSheet, useCircleCopy } from './CircleSheets'
 import { useCircleStageCopy } from './circle-copy'
 import { useTimeAgo } from './PostCard'
+import { HotCircles } from './HotCircles'
 import s from './circles.module.css'
 import l from './circle-list.module.css'
 
@@ -83,11 +84,13 @@ export function CircleList({ onNotify }: { onNotify: (text: string) => void }) {
       <section className={l.section}>
         <h2 className={l.label}>{labels.mine}</h2>
         {owned ? <button type="button" className={l.mine} onClick={() => openCircle(owned.id)}>
+          <span className={`${l.cover} ${l.mineCover}`} data-tone={[...owned.id].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7) % 8} aria-hidden="true"><span className={l.glyph} dir="auto">{Array.from(owned.name)[0]}</span></span>
           <span className={l.mineHead}>
             <CommunityAvatar avatarUrl={owned.owner.avatarUrl} seed={owned.owner.avatarSeed} handle={owned.owner.handle} size={44} />
             <span className={l.text}><b dir="auto">{owned.name}</b><small>{labels.statLatest} {owned.lastPostAt ? <i>{timeAgo(owned.lastPostAt)}</i> : labels.none}</small></span>
             {owned.muted && <Moon size={16} aria-label={labels.muted} />}<ChevronRight size={18} aria-hidden="true" />
           </span>
+          {owned.intro && <span className={l.mineIntro} dir="auto">{owned.intro}</span>}
           <span className={l.stats}>
             <span><b>{owned.memberCount}</b><small>{labels.statMembers}</small></span>
             <span><b data-hot={(owned.pendingCount ?? 0) > 0 || undefined}>{(owned.pendingCount ?? 0) > 99 ? '99+' : owned.pendingCount ?? 0}</b><small>{labels.statPending}</small></span>
@@ -108,11 +111,12 @@ export function CircleList({ onNotify }: { onNotify: (text: string) => void }) {
           <button type="button" className={l.textKey} onClick={() => field.current?.focus()}>{labels.searchById}</button>
         </div>}
       </section>
+      <HotCircles onNotify={onNotify} />
     </>}
-    <NameSheet open={naming} title={k.foundTitle} initial="" busy={busy === 'create'} onClose={() => setNaming(false)} onSave={name => {
+    <NameSheet open={naming} title={k.foundTitle} initial="" busy={busy === 'create'} onClose={() => setNaming(false)} onSave={(name, intro) => {
       if (busy) return
       setBusy('create')
-      void createCircle(name).then(circle => { setNaming(false); load(); openCircle(circle.id) }).catch(() => onNotify(k.failed)).finally(() => setBusy(null))
+      void createCircle(name, intro).then(circle => { setNaming(false); load(); openCircle(circle.id) }).catch(() => onNotify(k.failed)).finally(() => setBusy(null))
     }} />
   </section>
 }

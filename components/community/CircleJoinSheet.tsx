@@ -78,6 +78,7 @@ export function CircleJoinSheet({ code, isGuest, onClose, onOpen, onNotify }: {
       <CommunityAvatar avatarUrl={invite.circle.owner.avatarUrl} seed={invite.circle.owner.avatarSeed} handle={invite.circle.owner.handle} size={64} />
       <b className={s.joinName} dir="auto">{invite.circle.name}</b>
       <small className={s.joinMeta}>{k.owner} <span dir="auto">{invite.circle.owner.displayName}</span> · {k.members(invite.circle.memberCount)}</small>
+      {invite.circle.intro && <p className={s.joinIntro} dir="auto">{invite.circle.intro}</p>}
       <p className={s.joinNote}>{note}</p>
       {status !== 'removed' && <button type="button" className={`${controls.primary} ${s.joinKey}`} disabled={busy || (!isGuest && status === 'pending')}
         onClick={() => inside ? onOpen(invite.circle.id) : void apply()}>

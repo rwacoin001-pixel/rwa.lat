@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react'
 import { CommunityAvatar } from '@/components/community-avatar'
 import { Sheet } from '@/components/maison/Sheet'
 import { useI18n, type AppLocale } from '@/lib/i18n'
-import { CIRCLE_NAME_MAX, circleInviteUrl, createCircle, decideCircleRequest, deleteCircle, getCircleMembers, getCircleRequests, getRemovedCircleMembers, leaveCircle, rejoinCircle, removeCircleMember, renameCircle, resetCircleInvite, restoreCircleMember, silenceCircleMember, validCircleName, type Circle, type CircleMemberRow, type CircleMembership, type CirclePersonRow } from '@/lib/community-circles'
+import { CIRCLE_INTRO_MAX, CIRCLE_NAME_MAX, circleInviteUrl, createCircle, decideCircleRequest, deleteCircle, getCircleMembers, getCircleRequests, getRemovedCircleMembers, leaveCircle, rejoinCircle, removeCircleMember, renameCircle, resetCircleInvite, restoreCircleMember, silenceCircleMember, validCircleName, type Circle, type CircleMemberRow, type CircleMembership, type CirclePersonRow } from '@/lib/community-circles'
 import controls from '@/components/ui/controls.module.css'
 import c from '../community-x.module.css'
 import s from './circles.module.css'
@@ -28,6 +28,7 @@ type Copy = {
   invite: string; inviteBody: string; copy: string; copied: string; share: string; reset: string; resetDone: string; qr: string
   requests: (n: number) => string; requestsEmpty: string; approve: string; reject: string; removed: string; removedEmpty: string
   restore: string; viaLink: string; noProfile: string; joinedNote: (owner: string) => string; dismiss: string
+  intro: string; introPlaceholder: string; introHint: string; edit: string
 }
 const copy: Partial<Record<AppLocale, Copy>> = {
   'zh-CN': {
@@ -41,6 +42,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     share: '分享', reset: '重置链接', resetDone: '旧链接已失效', qr: '圈子邀请二维码', requests: (n) => n > 0 ? `待审核（${n}）` : '待审核', requestsEmpty: '没有新的申请。',
     approve: '同意', reject: '拒绝', removed: '已移出', removedEmpty: '没有被移出的人。', restore: '撤回', viaLink: '链接加入', noProfile: '还没设置资料',
     joinedNote: (owner) => `${owner} 在你的邀请链上，所以你自动加入了这个圈子。`, dismiss: '知道了',
+    intro: '圈子简介', introPlaceholder: '一句话介绍你的圈子：聊什么、适合谁', introHint: `选填，最多 ${CIRCLE_INTRO_MAX} 个字。会显示在圈子卡片和邀请页上。`, edit: '名字和简介',
   },
   en: {
     mine: 'Mine', found: 'Start a circle', introTitle: 'Start your circle', introBody: 'Everyone you invite joins it automatically, however far down the invites go. Posts in a circle are seen only by its members.',
@@ -53,6 +55,7 @@ const copy: Partial<Record<AppLocale, Copy>> = {
     share: 'Share', reset: 'Reset link', resetDone: 'The old link no longer works', qr: 'Circle invite QR code', requests: (n) => n > 0 ? `Requests (${n})` : 'Requests', requestsEmpty: 'No new requests.',
     approve: 'Approve', reject: 'Decline', removed: 'Removed', removedEmpty: 'Nobody has been removed.', restore: 'Undo', viaLink: 'Joined by link', noProfile: 'No profile yet',
     joinedNote: (owner) => `${owner} is in your invite chain, so you joined this circle automatically.`, dismiss: 'Got it',
+    intro: 'Introduction', introPlaceholder: 'One line on what the circle is about and who it is for', introHint: `Optional, up to ${CIRCLE_INTRO_MAX} characters. Shown on the circle card and invite page.`, edit: 'Name and introduction',
   },
 }
 
@@ -62,19 +65,27 @@ export function useCircleCopy() {
 }
 
 
-export function NameSheet({ open, title, initial, busy, onClose, onSave }: { open: boolean; title: string; initial: string; busy: boolean; onClose: () => void; onSave: (name: string) => void }) {
+/** Name and intro (2026-11-05, user: a circle intro when setting up the circle). The intro is optional; empty clears it. */
+export function NameSheet({ open, title, initial, initialIntro = '', busy, onClose, onSave }: { open: boolean; title: string; initial: string; initialIntro?: string; busy: boolean; onClose: () => void; onSave: (name: string, intro: string) => void }) {
   const k = useCircleCopy()
   const [name, setName] = useState(initial)
-  useEffect(() => { if (open) setName(initial) }, [open, initial])
+  const [intro, setIntro] = useState(initialIntro)
+  useEffect(() => { if (open) { setName(initial); setIntro(initialIntro) } }, [open, initial, initialIntro])
   const ok = validCircleName(name)
   return <Sheet open={open} onClose={onClose} title={title} busy={busy}>
-    <form className={s.nameForm} onSubmit={(event) => { event.preventDefault(); if (ok && !busy) onSave(name.trim()) }}>
+    <form className={s.nameForm} onSubmit={(event) => { event.preventDefault(); if (ok && !busy) onSave(name.trim(), intro.replace(/\s+/g, ' ').trim()) }}>
       <label className={s.field}>
-        <span className={s.srOnly}>{k.name}</span>
-        <input value={name} maxLength={CIRCLE_NAME_MAX} placeholder={k.namePlaceholder} dir="auto" autoFocus enterKeyHint="done" onChange={(event) => setName(event.target.value)} />
+        <span className={s.fieldLabel}>{k.name}</span>
+        <input value={name} maxLength={CIRCLE_NAME_MAX} placeholder={k.namePlaceholder} dir="auto" autoFocus enterKeyHint="next" onChange={(event) => setName(event.target.value)} />
         <small aria-hidden="true">{name.trim().length}/{CIRCLE_NAME_MAX}</small>
       </label>
       <p className={s.hint}>{k.nameHint}</p>
+      <label className={`${s.field} ${s.introField}`}>
+        <span className={s.fieldLabel}>{k.intro}</span>
+        <textarea value={intro} maxLength={CIRCLE_INTRO_MAX} rows={3} placeholder={k.introPlaceholder} dir="auto" onChange={(event) => setIntro(event.target.value)} />
+        <small aria-hidden="true">{intro.trim().length}/{CIRCLE_INTRO_MAX}</small>
+      </label>
+      <p className={s.hint}>{k.introHint}</p>
       <button type="submit" className={`${controls.primary} ${s.save}`} disabled={!ok || busy}><span>{k.save}</span><i className={controls.arrow} aria-hidden="true"><ArrowRight size={18} /></i></button>
     </form>
   </Sheet>
