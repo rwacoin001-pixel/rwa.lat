@@ -1197,6 +1197,7 @@ html, body, button, input, select, textarea { font-variant-numeric: tabular-nums
 }
 .rwa-mobile[data-screen='home'][data-theme='dark'] .s2-home[data-home-s2='true'] > .rwa-topbar.rwa-topbar--s1 { color: #f5f0e8; background: linear-gradient(180deg, rgba(14, 24, 29, .82), rgba(14, 24, 29, .57)); }
 .rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] .rwa-topbar__logo { display: none; }
+.rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] .rwa-topbar__logo--kimeng { display: block; width: 26px; height: 26px; color: inherit; }
 .rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] .rwa-topbar__brand > span { color: inherit; font-size: 17px; font-weight: 750; letter-spacing: -.035em; }
 .rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] .rwa-topbar__slot,
 .rwa-mobile[data-screen='home'] .s2-home[data-home-s2='true'] .rwa-theme-trigger,
