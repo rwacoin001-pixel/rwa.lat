@@ -83,7 +83,8 @@ describe('referral team contract and cache',()=>{
     await app.listen(0,'127.0.0.1')
     try {
       const base=await app.getUrl()
-      for (const path of ['team-overview','invitees']) expect((await fetch(`${base}/v1/referral/${path}`)).status).toBe(401)
+      for (const path of ['team-overview','team-tree','invitees']) expect((await fetch(`${base}/v1/referral/${path}`)).status).toBe(401)
+      expect((await fetch(`${base}/v1/referral/team-tree?parent=bad`,{headers:{authorization:'Bearer test'}})).status).toBe(400)
       expect((await fetch(`${base}/v1/referral/invitees?sort=bad`,{headers:{authorization:'Bearer test'}})).status).toBe(400)
       const response=await fetch(`${base}/v1/referral/team-overview`,{headers:{authorization:'Bearer test'}})
       expect(response.status).toBe(200)

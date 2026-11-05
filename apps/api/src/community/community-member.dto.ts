@@ -1,10 +1,11 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger'
-import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, ValidateNested } from 'class-validator'
+import { ArrayMaxSize, IsArray, IsBoolean, IsIn, IsObject, IsOptional, IsString, IsUUID, Matches, MaxLength, MinLength, Validate, ValidateIf, ValidateNested, ValidationArguments, ValidatorConstraint, ValidatorConstraintInterface } from 'class-validator'
 import { Type } from 'class-transformer'
 import { CARD_FIELDS, type CardAttachment, type CardKind } from './community-card'
 
 /** X-style media limit shared by posts and replies. */
 export const MEMBER_MEDIA_MAX = 4
+export const MEMBER_AVATAR_PRESETS = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16']
 
 export class MemberPostLocationDto {
   @IsString() @MinLength(1) @MaxLength(80) city!: string
@@ -53,8 +54,23 @@ export class MemberProfileDto {
 export class CircleVisibilityDto {
   @ApiProperty() @IsBoolean() visible!: boolean
 }
+@ValidatorConstraint({ name: 'avatarChoice', async: false })
+class AvatarChoiceConstraint implements ValidatorConstraintInterface {
+  validate(_value: unknown, args: ValidationArguments) {
+    const input = args.object as MemberAvatarDto
+    return (input.objectId !== undefined) !== (input.preset !== undefined)
+  }
+  defaultMessage() { return 'Provide exactly one of objectId or preset' }
+}
 export class MemberAvatarDto {
-  @ApiProperty({ description: 'Object id from POST /community/me/media?purpose=avatar' }) @IsUUID('all') objectId!: string
+  // Validate both fields when both or neither are supplied. IsOptional would also skip explicit nulls.
+  @ApiPropertyOptional({ description: 'Object id from POST /community/me/media?purpose=avatar' })
+  @ValidateIf((o: MemberAvatarDto) => o.objectId !== undefined || o.preset === undefined)
+  @Validate(AvatarChoiceConstraint) @IsUUID('all') objectId?: string
+
+  @ApiPropertyOptional({ description: 'Two-digit profession avatar preset, mutually exclusive with objectId', enum: MEMBER_AVATAR_PRESETS })
+  @ValidateIf((o: MemberAvatarDto) => o.preset !== undefined || o.objectId === undefined)
+  @IsIn(MEMBER_AVATAR_PRESETS) preset?: string
 }
 export class MemberMediaQueryDto {
   @ApiPropertyOptional({ enum: ['post', 'avatar'] }) @IsOptional() @IsIn(['post', 'avatar']) purpose?: 'post' | 'avatar'

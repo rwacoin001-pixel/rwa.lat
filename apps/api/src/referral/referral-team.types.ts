@@ -16,6 +16,26 @@ export interface ReferralInviteesResponse {
   page: number
   pageSize: number
 }
+export interface ReferralTreeNode {
+  memberLabel: string
+  depth: 1 | 2 | 3
+  boundAt: string
+  displayName: string | null
+  avatarUrl: string | null
+  memberLevel: number
+  active30d: boolean
+  childCount: number
+  teamSize: number
+  rewardsToMeAtomic: string
+}
+export interface ReferralTeamTreeResponse {
+  parent: string | null
+  depth: 1 | 2 | 3
+  items: ReferralTreeNode[]
+  total: number
+  page: number
+  pageSize: number
+}
 export interface ReferralTeamOverview {
   members: number
   byLevel: Array<{ level: 1 | 2 | 3; count: number }>

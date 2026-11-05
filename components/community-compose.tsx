@@ -56,13 +56,30 @@ async function prepareImage(file: File, limit: number): Promise<Blob> {
   }
 }
 
+/** An avatar never shows larger than ~100px: a 640px JPEG is plenty and uploads in a moment on a phone (2026-11-05). */
+async function prepareAvatar(file: File): Promise<Blob> {
+  if (file.type === 'image/gif') return file
+  try {
+    const bitmap = await createImageBitmap(file)
+    const scale = Math.min(1, 640 / Math.min(bitmap.width, bitmap.height))
+    const canvas = document.createElement('canvas')
+    canvas.width = Math.round(bitmap.width * scale); canvas.height = Math.round(bitmap.height * scale)
+    canvas.getContext('2d')?.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
+    bitmap.close()
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/jpeg', .88))
+    return blob && blob.size < file.size ? blob : file
+  } catch {
+    return file
+  }
+}
+
 export async function uploadCommunityImage(file: File, purpose: 'post' | 'avatar'): Promise<{ ok: true; data: Uploaded } | { ok: false; error: 'type' | 'size' | ApiError }> {
   if (!IMAGE_TYPES.includes(file.type)) return { ok: false, error: 'type' }
-  const blob = await prepareImage(file, MAX_BYTES[purpose])
+  const blob = purpose === 'avatar' ? await prepareAvatar(file) : await prepareImage(file, MAX_BYTES[purpose])
   if (blob.size > MAX_BYTES[purpose]) return { ok: false, error: 'size' }
   const form = new FormData()
   form.append('file', blob, blob === file ? file.name : file.name.replace(/\.\w+$/, '') + '.jpg')
-  const result = await request<Uploaded>(`/v1/community/me/media?purpose=${purpose}`, { method: 'POST', body: form, loading: 'silent', timeoutMs: 90_000 })
+  const result = await request<Uploaded>(`/v1/community/me/media?purpose=${purpose}`, { method: 'POST', body: form, loading: 'silent', timeoutMs: purpose === 'avatar' ? 30_000 : 90_000 })
   return result.ok ? result : { ok: false, error: result.error }
 }
 
@@ -449,30 +466,37 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
     setLocating(true); setNote(null)
     try { const value=await getPostLocation(locale);setProfileLocation(value);return value } catch { setNote({tone:'error',text:locationCopy[locale][2]});return null } finally {setLocating(false)}
   }
-  useEffect(() => () => { if (preview) URL.revokeObjectURL(preview) }, [preview])
+  useEffect(() => () => { if (preview?.startsWith('blob:')) URL.revokeObjectURL(preview) }, [preview])
 
+  // Avatar (2026-11-05, user: changing it was slow and sat on "uploading"): the new picture shows at once with a ring
+  // over it; a preset is saved by name (no download and re-upload); a photo is shrunk to 640px first. The sheet stays
+  // open — the change is already live everywhere through publishCommunityMe.
+  const settleAvatar = (result: Awaited<ReturnType<typeof request<CommunityMe>>>, actor: string, shown: string | null) => {
+    setBusy(null)
+    if (!result.ok) { setPreview(null); setNote({ tone: 'error', text: k.imageFailed }); return }
+    if (!publishCommunityMe(result.data, actor)) return
+    setPreview(shown)
+    if (result.data.avatarPending) setNote({ tone: 'ok', text: k.avatarPending })
+    onSaved()
+  }
   const pickAvatar = async (file: File | undefined) => {
     if (!file || busy) return
     const actor=readSession()?.userId??null
     if(!actor)return
-    setBusy('avatar'); setNote(null)
+    const local = URL.createObjectURL(file)
+    setPreview(local); setBusy('avatar'); setNote(null)
     const uploaded = await uploadCommunityImage(file, 'avatar')
     if(actor!==readSession()?.userId){setBusy(null);return}
-    if (!uploaded.ok) { setBusy(null); setNote({ tone: 'error', text: uploadMessage(uploaded.error, k) }); return }
-    const result = await request<CommunityMe>('/v1/community/me/avatar', { method: 'PUT', body: JSON.stringify({ objectId: uploaded.data.objectId }), loading: 'silent' })
-    setBusy(null)
-    if (!result.ok) { setNote({ tone: 'error', text: k.imageFailed }); return }
-    if(!publishCommunityMe(result.data,actor))return
-    setPreview(URL.createObjectURL(file))
-    if (result.data.avatarPending) setNote({ tone: 'ok', text: k.avatarPending })
-    onSaved()
+    if (!uploaded.ok) { setBusy(null); setPreview(null); setNote({ tone: 'error', text: uploadMessage(uploaded.error, k) }); return }
+    settleAvatar(await request<CommunityMe>('/v1/community/me/avatar', { method: 'PUT', body: JSON.stringify({ objectId: uploaded.data.objectId }), loading: 'silent', timeoutMs: 20_000 }), actor, local)
   }
   const pickPreset = async (src: string) => {
     if (busy) return
-    try {
-      const blob = await (await fetch(src)).blob()
-      await pickAvatar(new File([blob], src.split('/').pop() ?? 'avatar.webp', { type: 'image/webp' }))
-    } catch { setNote({ tone: 'error', text: k.imageFailed }) }
+    const actor=readSession()?.userId??null
+    const preset = src.match(/(\d{2})\.webp$/)?.[1]
+    if(!actor||!preset)return
+    setPreview(src); setBusy('avatar'); setNote(null)
+    settleAvatar(await request<CommunityMe>('/v1/community/me/avatar', { method: 'PUT', body: JSON.stringify({ preset }), loading: 'silent', timeoutMs: 20_000 }), actor, null)
   }
   const removeAvatar = async () => {
     if (busy) return
@@ -519,14 +543,14 @@ export function CommunityProfileEditor({ open, onOpenChange, me, onSaved }: { op
             </button>
             <input ref={picker} type="file" accept={IMAGE_TYPES.join(',')} hidden onChange={event => { const file = event.target.files?.[0]; event.target.value = ''; void pickAvatar(file) }} />
             <div className={x.editAvatarActions}>
-              <button type="button" className={x.textBtn} disabled={busy !== null} onClick={() => picker.current?.click()}>{busy === 'avatar' ? k.uploading : k.changeAvatar}</button>
+              <button type="button" className={x.textBtn} disabled={busy !== null} onClick={() => picker.current?.click()}>{k.changeAvatar}</button>
               {hasAvatar && <button type="button" className={x.textBtnMuted} disabled={busy !== null} onClick={() => void removeAvatar()}>{k.removeAvatar}</button>}
             </div>
           </div>
           {/* Or one of the 16 porcelain profession avatars: uploaded through the same path as a photo. */}
           <div className={x.editPresets} role="group" aria-label={k.pickAvatar}>
             <span>{k.pickAvatar}</span>
-            <div>{PROFESSION_AVATARS.map(src => <button key={src} type="button" disabled={busy !== null} onClick={() => void pickPreset(src)}><img src={src} alt="" width={44} height={44} loading="lazy" decoding="async" /></button>)}</div>
+            <div>{PROFESSION_AVATARS.map(src => <button key={src} type="button" disabled={busy !== null} aria-pressed={preview === src || me.avatarUrl === src} onClick={() => void pickPreset(src)}><img src={src} alt="" width={44} height={44} loading="lazy" decoding="async" /></button>)}</div>
           </div>
           {(note || me.avatarPending) && <p className={x.editNote} data-tone={note?.tone ?? 'ok'} role={note?.tone === 'error' ? 'alert' : 'status'}>{note?.text ?? k.avatarPending}</p>}
           <label className={x.editField}><span>{k.displayName}</span><input value={name} maxLength={64} dir="auto" onChange={event => setName(event.target.value)} /></label>

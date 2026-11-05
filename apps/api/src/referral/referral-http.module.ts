@@ -67,6 +67,7 @@ export class ReferralUserFoundationController {
   @Get('team') teamRewards(@Req() req:AuthenticatedRequest) { return this.team.records(req.auth.userId) }
   @Get('summary') summary(@Req() req:AuthenticatedRequest) { return this.read.summary(req.auth.userId) }
   @Get('team-overview') @Header('Cache-Control','no-store') teamOverview(@Req() req:AuthenticatedRequest) { return this.read.teamOverview(req.auth.userId) }
+  @Get('team-tree') @Header('Cache-Control','no-store') teamTree(@Req() req:AuthenticatedRequest,@Query('parent') parent?:string,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.teamTree(req.auth.userId,parent,page,size) }
   @Get('invitees') @Header('Cache-Control','no-store') invitees(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string,@Query('level') level?:string,@Query('sort') sort?:string) { return this.read.invitees(req.auth.userId,page,size,level,sort) }
   @Get('invitees/:memberLabel') @Header('Cache-Control','no-store') invitee(@Req() req:AuthenticatedRequest,@Param('memberLabel') label:string) { return this.read.invitee(req.auth.userId,label) }
   @Get('rewards') rewards(@Req() req:AuthenticatedRequest,@Query('page') page?:string,@Query('pageSize') size?:string) { return this.read.rewards(req.auth.userId,page,size) }

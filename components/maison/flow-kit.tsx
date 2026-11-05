@@ -246,16 +246,15 @@ export function useRecentRecipients(owner: string | null) {
 export const codeIn = (text: string, length = 6) => text.match(new RegExp(`(?:^|\D)(\d{${length}})(?!\d)`))?.[1] ?? null
 
 /**
- * A one-time code on our keypad: six slots, Paste in the corner, and a quiet switch back to the system keyboard
- * (which keeps the platform's own code autofill). When the clipboard is readable without a prompt, a code the user
- * just copied from the email is filled in as they come back to the page.
+ * A one-time code on our keypad: six slots and Paste in the corner. No switch to the system keyboard any more
+ * (2026-11-05, user: the login code needs no system-keyboard hint). When the clipboard is readable without a prompt, a
+ * code the user just copied from the email is filled in as they come back to the page.
  */
 export function CodePad({ value, onChange, length = 6, disabled = false, invalid = false, done = false, label }: {
   value: string; done?: boolean; onChange: (value: string) => void; length?: number; disabled?: boolean; invalid?: boolean; label: string
 }) {
   const { locale } = useI18n()
   const c = flowKitCopy(locale)
-  const [system, setSystem] = useState(false)
   const [note, setNote] = useState<string | null>(null)
   const input = useRef<HTMLInputElement>(null)
   const latest = useRef(value)
@@ -280,9 +279,8 @@ export function CodePad({ value, onChange, length = 6, disabled = false, invalid
     window.addEventListener('focus', peek)
     return () => { live = false; document.removeEventListener('visibilitychange', peek); window.removeEventListener('focus', peek) }
   }, [disabled, length])
-  useEffect(() => { if (system) input.current?.focus() }, [system])
   const paste = async () => {
-    try { if (!take(await navigator.clipboard.readText())) setNote(null) } catch { setSystem(true) }
+    try { if (!take(await navigator.clipboard.readText())) setNote(null) } catch { setNote(null) }
   }
   const key = (pressed: string) => {
     if (disabled) return
@@ -292,13 +290,12 @@ export function CodePad({ value, onChange, length = 6, disabled = false, invalid
     onChange(next)
   }
   return <div className={k.code} data-invalid={invalid || undefined}>
-    <CodeSlots value={value} length={length} invalid={invalid} done={done} active={!disabled} onClick={() => { if (system) input.current?.focus() }}>
-      <input ref={input} className={k.codeInput} value={value} disabled={disabled} aria-label={label} aria-invalid={invalid} inputMode={system ? 'numeric' : 'none'} autoComplete="one-time-code"
-        pattern="[0-9]*" maxLength={length} tabIndex={system ? 0 : -1} onChange={(event) => { const raw = event.target.value; if (raw.length - latest.current.length > 1 && take(raw)) return; onChange(raw.replace(/\D/g, '').slice(0, length)) }} />
+    <CodeSlots value={value} length={length} invalid={invalid} done={done} active={!disabled}>
+      <input ref={input} className={k.codeInput} value={value} disabled={disabled} aria-label={label} aria-invalid={invalid} inputMode="none" autoComplete="off"
+        pattern="[0-9]*" maxLength={length} tabIndex={-1} onChange={(event) => { const raw = event.target.value; if (raw.length - latest.current.length > 1 && take(raw)) return; onChange(raw.replace(/\D/g, '').slice(0, length)) }} />
     </CodeSlots>
     <p className={k.codeNote} aria-live="polite">{note}</p>
-    {!system && <NumPad onKey={key} decimal={false} disabled={disabled} label={label}
-      left={<button type="button" className={k.keySmall} disabled={disabled} onClick={() => { haptic(); void paste() }}>{c.paste}</button>} />}
-    <button type="button" className={k.switch} onClick={() => setSystem((on) => !on)}>{system ? c.customKeyboard : c.systemKeyboard}</button>
+    <NumPad onKey={key} decimal={false} disabled={disabled} label={label}
+      left={<button type="button" className={k.keySmall} disabled={disabled} onClick={() => { haptic(); void paste() }}>{c.paste}</button>} />
   </div>
 }

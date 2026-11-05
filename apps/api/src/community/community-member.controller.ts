@@ -23,7 +23,7 @@ export class CommunityMemberController {
   /** Multipart `file`: JPEG/PNG/WebP/GIF, sniffed server-side. Stored pending; served only after the malware scan clears it. */
   @Post('media') @UseInterceptors(FileInterceptor('file', { limits: { fileSize: COMMUNITY_IMAGE_MAX_BYTES.post, files: 1, fields: 4 } }))
   upload(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query() q: MemberMediaQueryDto, @UploadedFile() file?: UploadedImage) { return this.member.uploadImage(a.userId, q.purpose ?? 'post', file) }
-  @Put('avatar') setAvatar(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: MemberAvatarDto) { return this.member.setAvatar(a.userId, dto.objectId) }
+  @Put('avatar') setAvatar(@CurrentAuth() a: AuthenticatedRequest['auth'], @Body() dto: MemberAvatarDto) { return this.member.setAvatar(a.userId, dto) }
   @Delete('avatar') clearAvatar(@CurrentAuth() a: AuthenticatedRequest['auth']) { return this.member.setAvatar(a.userId, null) }
   @Get('state') state(@CurrentAuth() a: AuthenticatedRequest['auth'], @Query('postId', new ParseUUIDPipe({ optional: true })) postId?: string, @Query('handle') handle?: string) { return this.member.state(a.userId, postId, handle) }
   /** My circle (2026-10-28): the people I invited and who invited me, public profiles only; and my own visibility. */

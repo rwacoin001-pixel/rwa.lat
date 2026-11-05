@@ -375,3 +375,9 @@ button.audience { width: 100%; border-width: 0 0 .5px; background: none; text-al
 .cardAttached { position: relative; margin: 8px 0; }
 .cardRemove { position: absolute; top: 14px; right: 14px; z-index: 1; display: grid; place-items: center; width: 32px; height: 32px; padding: 0; border: 0; border-radius: 50%; background: rgba(255, 255, 255, .85); color: var(--m-ink); cursor: pointer; box-shadow: 0 0 0 .5px rgba(11, 18, 32, .1); }
 .toolBtn[data-set] { color: var(--m-accent); }
+
+/* Avatar picking (2026-11-05): the chosen preset is ringed; the new picture shows at once under a thin turning ring. */
+.editPresets button[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--m-bg, #fff), 0 0 0 3.5px var(--m-ink, #0b1220); }
+.editAvatarCam[data-busy='true'] { background: rgba(12, 10, 8, .28); }
+:global(.rwa-mobile:not([data-theme='dark'])) .editAvatarCam[data-busy='true'] { background: rgba(12, 10, 8, .28); }
+.editAvatarCam[data-busy='true']::after { width: 84px; height: 84px; border-width: 2px; border-color: rgba(255, 255, 255, .25); border-top-color: #fff; }

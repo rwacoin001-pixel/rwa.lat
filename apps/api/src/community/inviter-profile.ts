@@ -11,6 +11,12 @@ export async function inviterProfiles(db: Pick<EntityManager, 'query'>, userIds:
   const rows: Array<{ user_id: string; display_name: string | null; avatar_url: string | null }> = await db.query(`
     SELECT p.user_id,p.display_name,p.avatar_url FROM app.community_profiles p
     WHERE p.user_id=ANY($1::uuid[]) AND ${inviterProfileVisible('p')}`, [userIds])
+  return shapeInviterProfiles(rows, storage)
+}
+
+/** Input rows must already be filtered by inviterProfileVisible, including joins in referral queries. */
+export async function shapeInviterProfiles(rows: Array<{ user_id: string; display_name: string | null; avatar_url: string | null }>, storage?: ObjectStorageService) {
+  const result = new Map<string, { displayName: string | null; avatarUrl: string | null }>()
   const mediaIds = rows.map(row => communityMediaId(row.avatar_url)).filter((id): id is string => !!id)
   const readable = storage && mediaIds.length
     ? await storage.readableCommunityImageIds(mediaIds).catch(() => new Set<string>()) : new Set<string>()

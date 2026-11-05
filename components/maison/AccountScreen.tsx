@@ -198,7 +198,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         </button>}
       </div>}
     {view && view.authAdapter !== 'production' && <p className={m.demo}>{p.demo}</p>}
-    {community && <CommunityProfileEditor open={editing} onOpenChange={setEditing} me={community} onSaved={() => setEditing(false)} />}
+    {community && <CommunityProfileEditor open={editing} onOpenChange={setEditing} me={community} onSaved={() => undefined} />}
 
     <section className={m.money} aria-label={me.assets}>
       <div className={m.moneyHead}>

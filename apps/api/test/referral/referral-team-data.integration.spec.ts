@@ -24,7 +24,8 @@ database('richer referral team data (throwaway PostgreSQL)', () => {
     db = new DataSource({ type:'postgres', url:url.toString() }); await db.initialize()
     // Minimal isolated fixtures for the real columns read by MONEY_CTES, community and referrals.
     await db.query(`CREATE SCHEMA app;
-      CREATE TABLE app.referral_rewards(id uuid PRIMARY KEY);
+      CREATE TABLE app.referral_rewards(id uuid PRIMARY KEY,user_id uuid,source_user_id uuid,kind text,state text,
+        amount_atomic numeric,asset_code text,asset_decimals int);
       CREATE TABLE app.referral_edges(inviter_user_id uuid,invitee_user_id uuid PRIMARY KEY,bound_at timestamptz NOT NULL);
       CREATE TABLE app.community_profiles(user_id uuid UNIQUE,kind text,identity_configured boolean,is_active boolean,
         show_to_inviter boolean,display_name text,avatar_url text);
@@ -76,6 +77,70 @@ database('richer referral team data (throwaway PostgreSQL)', () => {
   })
   const label = (key:string) => users[key].slice(0,8)
   const rows = async () => (await read.invitees(users.A)).items
+
+  it('expands only direct children inside the viewer window, with child counts and descendant sizes',async () => {
+    const root=await read.teamTree(users.A)
+    expect(root).toMatchObject({parent:null,depth:1,total:5,page:1,pageSize:50})
+    expect(root.items[0]).toMatchObject({memberLabel:label('B'),depth:1,childCount:2,teamSize:3,memberLevel:2,active30d:true})
+    expect(root.items.map(row=>row.memberLabel)).toEqual(['B','I','H','G','F'].map(label))
+    const second=await read.teamTree(users.A,label('B'))
+    expect(second).toMatchObject({parent:label('B'),depth:2,total:2})
+    // C has a child and sorts before the more recently bound J.
+    expect(second.items.map(row=>row.memberLabel)).toEqual(['C','J'].map(label))
+    expect(second.items[0]).toMatchObject({childCount:1,teamSize:1,displayName:null,avatarUrl:null})
+    const third=await read.teamTree(users.A,label('C'))
+    expect(third).toMatchObject({depth:3,total:1})
+    expect(third.items[0]).toMatchObject({memberLabel:label('D'),depth:3,childCount:0,teamSize:0})
+    // D has E as a direct invitee, but E lies outside A's three-level window.
+    for(const key of ['D','E','X','A']) await expect(read.teamTree(users.A,label(key))).rejects.toMatchObject({status:404,message:'Member not found'})
+    expect(await read.teamTree(users.A,label('F'))).toMatchObject({depth:2,total:0,items:[]})
+    expect(await read.teamTree(users.X)).toMatchObject({depth:1,total:0,items:[]})
+    expect(await read.teamTree(users.A,undefined,'99','2')).toMatchObject({depth:1,total:5,page:99,pageSize:2,items:[]})
+    expect((await read.teamTree(users.A,undefined,'2','2')).items.map(row=>row.memberLabel)).toEqual(['H','G'].map(label))
+    expect(Object.keys(root.items[0]).sort()).toEqual(['memberLabel','depth','boundAt','displayName','avatarUrl','memberLevel','active30d','childCount','teamSize','rewardsToMeAtomic'].sort())
+    expect(JSON.stringify(root)).not.toMatch(/userId|email|phone|deposit|purchase|0000-4000/)
+  })
+  it('reuses opt-in identity, passes presets through, and still withholds pending upload avatars',async () => {
+    const root=await read.teamTree(users.A)
+    expect(root.items[0]).toMatchObject({displayName:'Nick B',avatarUrl:avatar})
+    for(const key of ['G','H','I']) expect(root.items.find(row=>row.memberLabel===label(key))).toMatchObject({displayName:null,avatarUrl:null})
+    storage.readableCommunityImageIds.mockResolvedValueOnce(new Set())
+    expect((await read.teamTree(users.A)).items[0].avatarUrl).toBeNull()
+    await db.query(`UPDATE app.community_profiles SET avatar_url='/avatars/professions/16.webp' WHERE user_id=$1`,[users.B])
+    try {
+      expect((await read.teamTree(users.A)).items[0].avatarUrl).toBe('/avatars/professions/16.webp')
+      expect((await rows()).find(row=>row.memberLabel===label('B'))?.avatarUrl).toBe('/avatars/professions/16.webp')
+      await db.query('UPDATE app.community_profiles SET show_to_inviter=false WHERE user_id=$1',[users.B])
+      expect((await read.teamTree(users.A)).items[0]).toMatchObject({displayName:null,avatarUrl:null})
+    } finally { await db.query('UPDATE app.community_profiles SET show_to_inviter=true,avatar_url=$2 WHERE user_id=$1',[users.B,avatar]) }
+  })
+  it('returns only my earned and claimed purchase/fee rewards from each member without losing atomic precision',async () => {
+    const insert=async (beneficiary:string,source:string,kind:string,state:string,amount:string,asset='USDT',decimals=6) =>
+      db.query('INSERT INTO app.referral_rewards VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[randomUUID(),users[beneficiary],users[source],kind,state,amount,asset,decimals])
+    try {
+      await insert('A','B','purchase','earned','9007199254740993000001')
+      await insert('A','B','fee','claimed','2')
+      await insert('X','B','purchase','earned','100')
+      await insert('A','C','purchase','earned','7')
+      await insert('A','B','team','earned','100')
+      await insert('A','B','purchase','void','100')
+      await insert('A','B','purchase','earned','100','BTC')
+      await insert('A','B','purchase','earned','100','USDT',18)
+      const root=await read.teamTree(users.A)
+      expect(root.items[0].rewardsToMeAtomic).toBe('9007199254740993000003')
+      expect(root.items.find(row=>row.memberLabel===label('F'))?.rewardsToMeAtomic).toBe('0')
+      expect((await read.teamTree(users.A,label('B'))).items[0].rewardsToMeAtomic).toBe('7')
+    } finally { await db.query('DELETE FROM app.referral_rewards') }
+  })
+  it('rejects ambiguous short labels and cycles without leaving the viewer window',async () => {
+    const collision=users.B.slice(0,8)+'-1111-4000-8000-000000000000'
+    await db.query('INSERT INTO app.referral_edges VALUES($1,$2,now())',[users.A,collision])
+    try { await expect(read.teamTree(users.A,label('B'))).rejects.toMatchObject({status:404}) }
+    finally { await db.query('DELETE FROM app.referral_edges WHERE invitee_user_id=$1',[collision]) }
+    await db.query('INSERT INTO app.referral_edges VALUES($1,$2,now())',[users.C,users.A])
+    try { expect((await read.teamTree(users.A,label('C'))).items.map(row=>row.memberLabel)).toEqual([label('D')]) }
+    finally { await db.query('DELETE FROM app.referral_edges WHERE invitee_user_id=$1',[users.A]) }
+  })
 
   it('shows only eligible, opted-in community identity with the unchanged API-relative avatar URL',async () => {
     const items = await rows(), byLabel = new Map(items.map(row=>[row.memberLabel,row]))

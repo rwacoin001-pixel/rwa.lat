@@ -7,7 +7,8 @@ import { communityCityCode } from './community-identity'
 import { DataSource, EntityManager } from 'typeorm'
 import { CommunityComment, CommunityFollow, CommunityLike, CommunityPost, CommunityProfile, CommunityTopic } from './community.entities'
 import { normalizeCommunityLang, sanitizeTopics } from './community.util'
-import { MEMBER_MEDIA_MAX, MemberCommentDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
+import { MEMBER_AVATAR_PRESETS, MEMBER_MEDIA_MAX, MemberAvatarDto, MemberCommentDto, MemberPostDto, MemberProfileDto, ModerateMemberContentDto } from './community-member.dto'
+import { isUUID } from 'class-validator'
 import { ObjectStorageService, communityMediaPath, type CommunityImagePurpose } from '../object-storage/object-storage.service'
 import { communityMediaId } from './community.util'
 import { circleRole, isSilenced } from './community-circle.access'
@@ -33,8 +34,21 @@ export class CommunityMemberService {
       return { ...stored, url: communityMediaPath(stored.objectId) }
     })
   }
-  async setAvatar(userId: string, objectId: string | null) {
-    const [path] = objectId ? await this.media(userId, [objectId], 'avatar') : [null]
+  async setAvatar(userId: string, input: MemberAvatarDto | string | null) {
+    // Keep the internal string/null calls (including DELETE) compatible with uploaded avatars.
+    const choice = typeof input === 'string' ? { objectId: input } : input
+    let path: string | null = null
+    if (choice !== null) {
+      if (!choice || (choice.objectId !== undefined) === (choice.preset !== undefined)) throw new BadRequestException('Provide exactly one of objectId or preset')
+      if (choice.preset !== undefined) {
+        if (typeof choice.preset !== 'string' || !MEMBER_AVATAR_PRESETS.includes(choice.preset)) throw new BadRequestException('Invalid avatar preset')
+        path = `/avatars/professions/${choice.preset}.webp`
+      } else {
+        if (typeof choice.objectId !== 'string' || !isUUID(choice.objectId, 'all')) throw new BadRequestException('Invalid avatar object id')
+        const paths = await this.media(userId, [choice.objectId], 'avatar')
+        path = paths[0]
+      }
+    }
     return this.db.transaction(async m => {
       const p = await this.member(m, userId)
       p.avatar_url = path

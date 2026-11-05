@@ -1,9 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException, Optional, ServiceUnavailableException } from '@nestjs/common'
 import { DataSource } from 'typeorm'
 import { MONEY_CTES } from '../membership/membership-sql'
-import { inviterProfiles } from '../community/inviter-profile'
+import { inviterProfiles, inviterProfileVisible, shapeInviterProfiles } from '../community/inviter-profile'
 import { ObjectStorageService } from '../object-storage/object-storage.service'
-import type { ReferralInviteesResponse, ReferralInviteeRow, ReferralTeamOverview } from './referral-team.types'
+import type { ReferralInviteesResponse, ReferralInviteeRow, ReferralTeamOverview, ReferralTeamTreeResponse, ReferralTreeNode } from './referral-team.types'
 
 // Shared three-level viewer window. Paths also guard against malformed cyclic data.
 const TEAM_CTE = `team AS (
@@ -72,6 +72,54 @@ export class ReferralReadService {
         ...(profiles.get(memberId)??{displayName:null,avatarUrl:null}) }))
       return {items,total:count.total,page:p.page,pageSize:p.pageSize}
     })
+  }
+  async teamTree(userId: string,parent?: string,page?: string,pageSize='50'): Promise<ReferralTeamTreeResponse> {
+    if (parent !== undefined && (typeof parent !== 'string' || parent.length!==8 || !/^[a-f0-9]{8}$/.test(parent))) throw new BadRequestException('Invalid member label')
+    const p = this.page(page,pageSize)
+    type TreeRow = Omit<ReferralTreeNode,'boundAt'|'displayName'|'avatarUrl'> & {
+      responseDepth: 1 | 2 | 3 | null; total: number; userId: string | null; boundAt: Date
+      profileUserId: string | null; display_name: string | null; avatar_url: string | null
+    }
+    // One snapshot/query for authorization, totals, the page and opt-in identity. No lookup outside the viewer's tree.
+    const rows: TreeRow[] = await this.db.query(`WITH RECURSIVE ${TEAM_MONEY_CTES},
+      parents AS (SELECT invitee_user_id,level FROM team WHERE substr(invitee_user_id::text,1,8)=$2),
+      target AS (
+        SELECT $1::uuid AS user_id,1 AS depth WHERE $2::text IS NULL
+        UNION ALL SELECT invitee_user_id,level+1 FROM parents WHERE level<3 AND (SELECT count(*) FROM parents)=1
+      ),
+      children AS (SELECT t.* FROM team t JOIN target p ON t.level=p.depth AND t.path[t.level]=p.user_id),
+      sizes AS (SELECT ancestor,count(*)::int AS count FROM team t
+        CROSS JOIN LATERAL unnest(t.path[2:t.level]) AS ancestor GROUP BY ancestor),
+      child_counts AS (SELECT path[level] AS ancestor,count(*)::int AS count FROM team WHERE level>1 GROUP BY path[level]),
+      rewards AS (SELECT r.source_user_id,sum(r.amount_atomic)::text AS amount FROM app.referral_rewards r
+        JOIN children c ON c.invitee_user_id=r.source_user_id
+        WHERE r.user_id=$1 AND r.kind IN ('purchase','fee') AND r.state IN ('earned','claimed') AND r.asset_code='USDT' AND r.asset_decimals=6
+        GROUP BY r.source_user_id),
+      nodes AS (
+        SELECT t.invitee_user_id AS "userId",substr(t.invitee_user_id::text,1,8) AS "memberLabel",t.level AS depth,t.bound_at AS "boundAt",
+          coalesce(ml.level,1)::int AS "memberLevel",a.user_id IS NOT NULL AS "active30d",
+          CASE WHEN t.level=3 THEN 0 ELSE coalesce(cc.count,0) END::int AS "childCount",coalesce(s.count,0)::int AS "teamSize",
+          coalesce(r.amount,'0') AS "rewardsToMeAtomic",profile.user_id AS "profileUserId",profile.display_name,profile.avatar_url
+        FROM children t LEFT JOIN app.member_levels ml ON ml.user_id=t.invitee_user_id
+          LEFT JOIN active a ON a.user_id=t.invitee_user_id LEFT JOIN sizes s ON s.ancestor=t.invitee_user_id
+          LEFT JOIN child_counts cc ON cc.ancestor=t.invitee_user_id LEFT JOIN rewards r ON r.source_user_id=t.invitee_user_id
+          LEFT JOIN app.community_profiles profile ON profile.user_id=t.invitee_user_id AND ${inviterProfileVisible('profile')}
+      ),
+      paged AS (SELECT * FROM nodes ORDER BY "childCount" DESC,"boundAt" DESC,"userId" LIMIT $3 OFFSET $4)
+      SELECT (SELECT depth FROM target) AS "responseDepth",(SELECT count(*)::int FROM children) AS total,n.*
+        FROM (SELECT 1) context LEFT JOIN paged n ON true
+        ORDER BY n."childCount" DESC,n."boundAt" DESC,n."userId"`,[userId,parent??null,p.pageSize,p.offset])
+    const depth = rows[0].responseDepth
+    if (depth === null) throw new NotFoundException('Member not found')
+    const profiles = await shapeInviterProfiles(rows.filter(row=>row.profileUserId!==null).map(row=>({
+      user_id:row.profileUserId!,display_name:row.display_name,avatar_url:row.avatar_url,
+    })),this.storage)
+    const items = rows.filter(row=>row.userId!==null).map(row=>({
+      memberLabel:row.memberLabel,depth:row.depth,boundAt:row.boundAt.toISOString(),memberLevel:row.memberLevel,
+      active30d:row.active30d,childCount:row.childCount,teamSize:row.teamSize,rewardsToMeAtomic:row.rewardsToMeAtomic,
+      ...(profiles.get(row.userId!)??{displayName:null,avatarUrl:null}),
+    }))
+    return {parent:parent??null,depth,items,total:rows[0].total,page:p.page,pageSize:p.pageSize}
   }
   async teamOverview(userId: string): Promise<ReferralTeamOverview> {
     const cached=this.teamOverviewCache.get(userId)
