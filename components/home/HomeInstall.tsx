@@ -222,7 +222,7 @@ export function InstallSheet({ open, env, canPrompt, copy, onClose }: { open: bo
         </div>}
         {appOffer && <div className={styles.appOffer}>
           {ANDROID_APP.url && <a className={styles.primary} href={ANDROID_APP.url} download><Download size={16} strokeWidth={1.8} aria-hidden={true} />{app.download}</a>}
-          {ANDROID_APP.url && <small>{app.meta.replace('{v}', ANDROID_APP.version).replace('{h}', ANDROID_APP.sha256.slice(0, 12))}</small>}
+          {ANDROID_APP.url && <small>{(ANDROID_APP.sha256 ? app.meta : app.meta.split(' · ')[0]).replace('{v}', ANDROID_APP.version).replace('{h}', ANDROID_APP.sha256.slice(0, 12))}</small>}
           <a className={styles.secondary} href={chromeIntentUrl(window.location.href, ANDROID_APP.url ? new URL(ANDROID_APP.url, window.location.href).href : window.location.href)}><ExternalLink size={15} strokeWidth={1.8} aria-hidden={true} />{app.chrome}</a>
         </div>}
         <p className={styles.stepsLabel}>{appOffer ? app.shortcut : native ? copy.manual : copy.steps}</p>

@@ -3,13 +3,13 @@ import {test} from 'node:test'
 import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
 
-function worker(fetcher,stored=new Map(),{windows=[]}={}){
+function worker(fetcher,stored=new Map(),{windows=[],origin='https://rwa.lat'}={}){
   const handlers={},writes=[],deleted=[]
   const caches={match:async request=>stored.get(typeof request==='string'?request:request.url),open:async()=>({put:async(key,value)=>{const url=typeof key==='string'?key:key.url;writes.push(url);stored.set(url,value)}}),keys:async()=>['rwa-lat-offline-v11','rwa-lat-offline-v12','a-reit-offline-v3','other-app-cache'],delete:async key=>deleted.push(key)}
-  vm.runInNewContext(readFileSync('public/sw.js','utf8'),{setTimeout,self:{location:{origin:'https://rwa.lat'},addEventListener:(key,fn)=>{handlers[key]=fn},skipWaiting(){},clients:{claim(){},matchAll:async()=>windows}},caches,fetch:fetcher,URL,Promise,Response,Date})
+  vm.runInNewContext(readFileSync('public/sw.js','utf8'),{setTimeout,self:{location:{origin},addEventListener:(key,fn)=>{handlers[key]=fn},skipWaiting(){},clients:{claim(){},matchAll:async()=>windows}},caches,fetch:fetcher,URL,Promise,Response,Date})
   return {writes,deleted,async request(path,mode='navigate'){
     const tasks=[];let result
-    handlers.fetch({request:{url:'https://rwa.lat'+path,mode,method:'GET'},respondWith:value=>{result=value},waitUntil:task=>tasks.push(task)})
+    handlers.fetch({request:{url:origin+path,mode,method:'GET'},respondWith:value=>{result=value},waitUntil:task=>tasks.push(task)})
     const response=await result;await Promise.all(tasks);return response
   },async message(data){let task;handlers.message({data,waitUntil:value=>task=value});await task
   },async activate(){let task;handlers.activate({waitUntil:value=>task=value});await task}}
@@ -25,6 +25,19 @@ test('authentication callbacks and API failures always remain live and never rep
   const sw=worker(async()=>new Response('live-failure',{status:503}),stored)
   for(const path of ['/auth/callback/google','/v1/auth/session','/api/polymarket/feed'])assert.equal((await sw.request(path)).status,503)
   assert.deepEqual(sw.writes,[])
+})
+
+test('Kimeng keeps public route shells and falls back to its offline page for account routes',async()=>{
+  const origin='https://kimengresearch.com'
+  const stored=new Map([['/offline-kimeng',new Response('kimeng-offline')]])
+  let offline=false
+  const sw=worker(async()=>{if(offline)throw new Error('offline');return new Response('live-shell')},stored,{origin})
+  assert.equal(await (await sw.request('/markets')).text(),'live-shell')
+  assert.equal(await (await sw.request('/assets')).text(),'live-shell')
+  assert.deepEqual(sw.writes,[origin+'/markets'])
+  offline=true
+  assert.equal(await (await sw.request('/assets')).text(),'kimeng-offline')
+  assert.equal(await (await sw.request('/markets')).text(),'live-shell')
 })
 test('manifest loads current start URL instead of replaying an installed legacy manifest',async()=>{
   const url='https://rwa.lat/manifest.webmanifest',stored=new Map([[url,new Response('legacy')]])

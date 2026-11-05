@@ -1,7 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
-import { IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
+import { BRAND, IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
+import { isAndroidApp } from '@/lib/android-app'
 
 export default function PwaRegister() {
   useEffect(() => {
@@ -20,6 +21,22 @@ export default function PwaRegister() {
       .register('/sw.js', { updateViaCache: 'none' })
       .then((registration) => registration.update())
       .catch(() => undefined)
+
+    if (BRAND.id !== 'kimeng' || isAndroidApp()) return
+    const installed = (navigator as Navigator & { standalone?: boolean }).standalone === true ||
+      window.matchMedia('(display-mode: standalone)').matches
+    if (!installed) return
+    const warm = () => {
+      const connection = (navigator as Navigator & { connection?: { saveData?: boolean; effectiveType?: string } }).connection
+      if (connection?.saveData || /2g/.test(connection?.effectiveType ?? '')) return
+      void navigator.serviceWorker.ready.then(registration => registration.active?.postMessage({ type: 'WARM_PACK' })).catch(() => undefined)
+    }
+    const timer = window.setTimeout(warm, 6000)
+    window.addEventListener('online', warm)
+    return () => {
+      window.clearTimeout(timer)
+      window.removeEventListener('online', warm)
+    }
   }, [])
 
   return null

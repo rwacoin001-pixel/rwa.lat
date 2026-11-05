@@ -1,5 +1,7 @@
 'use client'
 
+import { BRAND } from './brand/build-brand'
+
 /**
  * Warm the screens people open next (2026-11-04, user: page changes felt like a website). Every screen is a lazy chunk,
  * so the first visit to Markets or a product waited for a download and showed a blank or loader mid-transition. After
@@ -36,7 +38,7 @@ export function prefetchScreens() {
   // The iPhone Home Screen app keeps the build's pack on the phone (public/sw.js WARM_PACK); the Android client
   // already ships it in the APK, and a browser tab is not worth 25 MB.
   const standalone = (navigator as Navigator & { standalone?: boolean }).standalone === true || window.matchMedia('(display-mode: standalone)').matches
-  if (standalone && !navigator.userAgent.includes('RwaLatAndroidTrial/') && 'serviceWorker' in navigator) {
+  if (BRAND.id === 'areit' && standalone && !navigator.userAgent.includes('RwaLatAndroidTrial/') && 'serviceWorker' in navigator) {
     window.setTimeout(() => idle(() => { void navigator.serviceWorker.ready.then((registration) => registration.active?.postMessage({ type: 'WARM_PACK' })).catch(() => {}) }), 6000)
   }
 }

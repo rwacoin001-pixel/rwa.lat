@@ -42,6 +42,7 @@ const INCLUDE = [
   // PDF reading and QR decoding: executable support files, not user documents or OCR language archives.
   /^\/ai-ocr\/pdf\.worker\.min\.mjs$/,
   /^\/vendor\/jsqr\/[^/]+\.js$/,
+  ...(brand.id === 'kimeng' ? [/^\/offline-kimeng\.html$/] : []),
 ]
 const MAX_FILE = 8 * 1024 * 1024
 // Match the native client's per-launch update budget. Fail visibly instead of silently producing an oversized pack.

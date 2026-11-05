@@ -22,6 +22,7 @@ test('only A-REIT retains its existing desktop destination', () => {
 test('manifest identity and all icons belong to the selected brand', () => {
   const k = buildManifest(resolveBrand('kimeng'))
   assert.equal(k.short_name, 'KIMENG')
+  assert.equal(k.name, 'KIMENG')
   assert.equal(k.start_url, '/home')
   assert.ok(k.icons.every(i => i.src.includes('/kimeng/')))
   assert.ok(k.shortcuts.every(s => s.icons.every(i => i.src.includes('/kimeng/'))))

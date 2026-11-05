@@ -12,7 +12,7 @@ const generate = join(root, 'scripts/app-pack-manifest.mjs')
 const bundle = join(root, 'scripts/android-bundle-pack.mjs')
 const native = readFileSync(join(root, 'apps/android-client/app/src/main/java/lat/rwa/trial/AppPack.java'), 'utf8')
 const nativePath = new RegExp(JSON.parse(native.match(/PATH = Pattern.compile\((".*?")\)/)[1]))
-const run = (script, ...args) => spawnSync(process.execPath, [script, ...args], { encoding: 'utf8' })
+const run = (script, ...args) => spawnSync(process.execPath, [script, ...args], { encoding: 'utf8', env: { ...process.env, SITE_BRAND: 'kimeng' } })
 function fixture(t) {
   const dir = mkdtempSync(join(tmpdir(), 'areit-pack-'))
   t.after(() => rmSync(dir, { recursive: true, force: true }))
@@ -33,13 +33,14 @@ test('expanded mobile resources reach the native whitelist and hash-verified APK
     '_next/static/chunks/app/[[...rwa]]/page-123.js',
     'fonts/noto-sans-sc/slice-12.woff2', 'media/referral/posters/night.webp',
     'media/products/hengxu-v2/derived/liujin-gold-720.webp',
-    'media/generated/project-assets/solar-income-ops-v1.png',
+    'offline-kimeng.html', 'brand/kimeng/mark-light.svg',
     'baskets/hengxu-liujin_cover.webp', 'baskets/hengxu-liujin.png', 'asset-icons/compute.png',
     'media/login/welcome.webp', 'media/brand/mark.svg',
     'ai-ocr/pdf.worker.min.mjs', 'vendor/jsqr/jsQR.js',
   ]
   const excluded = [
     'download/a-reit.apk', 'media/desktop/hero.webp', 'auth/loop.mp4',
+    'media/generated/project-assets/solar-income-ops-v1.png',
     'media/products/hengxu-v1/original.png', 'api/me.json',
     '_next/static/chunks/source.js.map', 'ai-ocr/lang/eng.traineddata.gz',
   ]
@@ -65,7 +66,7 @@ test('expanded mobile resources reach the native whitelist and hash-verified APK
 
 test('oversized selected files fail visibly before publishing a manifest', t => {
   const { assets, build, put } = fixture(t)
-  put('baskets/too-large.png', Buffer.alloc(8 * 1024 * 1024 + 1))
+  put('baskets/too-large.webp', Buffer.alloc(8 * 1024 * 1024 + 1))
   const result = run(generate, assets, build)
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /exceeds 8 MiB/)
@@ -75,7 +76,7 @@ test('oversized selected files fail visibly before publishing a manifest', t => 
 test('whole-pack budget matches native download budget', t => {
   assert.match(native, /MAX_UPDATE = 128L \* 1024 \* 1024/)
   const { assets, build, put } = fixture(t)
-  for (let i = 0; i < 17; i++) put(`baskets/${i}.png`, Buffer.alloc(8 * 1024 * 1024, i))
+  for (let i = 0; i < 17; i++) put(`baskets/${i}.webp`, Buffer.alloc(8 * 1024 * 1024, i))
   const result = run(generate, assets, build)
   assert.notEqual(result.status, 0)
   assert.match(result.stderr, /exceeds the 128 MiB/)

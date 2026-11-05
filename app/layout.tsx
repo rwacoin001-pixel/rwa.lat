@@ -29,7 +29,7 @@ const description = BRAND.id === 'areit' ? 'A-REIT 致力于带来更智能、�
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.origin),
   ...(BRAND.noindex ? { robots: { index: false, follow: false } } : {}),
-  title,
+  title: BRAND.id === 'kimeng' ? BRAND.name : title,
   description,
   applicationName: BRAND.name,
   manifest: '/manifest.webmanifest',

@@ -1,6 +1,7 @@
 package lat.rwa.trial;
 
 import android.Manifest;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -69,6 +70,7 @@ import java.util.Set;
 /** A-REIT Android client: the website edge to edge, with native launch, system bars, voice and files. Business state and authentication remain in the website. */
 public final class MainActivity extends Activity {
     private static final String HOME = "https://a-reit.com/home";
+    private static final String KIMENG_OFFLINE = "/offline-kimeng.html";
     private static final int MEDIA_PERMISSION = 101, GEO_PERMISSION = 102, VOICE_PERMISSION = 103, CAMERA_PERMISSION = 104, FILE_PICK = 201, CAMERA_PICK = 202, STORAGE_PERMISSION = 105;
     private WebView webView;
     private FrameLayout pageContainer;
@@ -149,6 +151,14 @@ public final class MainActivity extends Activity {
         webView.setHorizontalScrollBarEnabled(false);
         pageContainer.addView(webView, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         setContentView(pageContainer);
+        if (Build.VERSION.SDK_INT >= 31 && isKimeng()) {
+            getSplashScreen().setOnExitAnimationListener(splash -> {
+                if (!ValueAnimator.areAnimatorsEnabled()) { splash.remove(); return; }
+                View icon = splash.getIconView();
+                if (icon != null) icon.animate().scaleX(1.045f).scaleY(1.045f).setDuration(240).start();
+                splash.animate().alpha(0f).setDuration(240).withEndAction(splash::remove).start();
+            });
+        }
         holdLaunchUntilReady();
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true); settings.setDomStorageEnabled(true);
@@ -180,6 +190,7 @@ public final class MainActivity extends Activity {
         handleBrowserSignIn(intent);
     }
 
+    private boolean isKimeng() { return "com.kimeng.app".equals(getPackageName()); }
     private int dp(int value) { return Math.round(value * getResources().getDisplayMetrics().density); }
     /** Dark icons on a light page, light icons on a dark page; the bars themselves stay transparent. */
     private void setBarIcons(boolean lightPage) {
@@ -487,7 +498,15 @@ public final class MainActivity extends Activity {
         }
         @Override public void onPageCommitVisible(WebView view, String url) { pushInsets(); finishHandoffInjection(url); }
         @Override public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-            if (request.isForMainFrame()) { mainFrameFailed = true; showError("请检查网络连接，再重新加载。", request.getUrl().toString()); }
+            if (!request.isForMainFrame()) return;
+            mainFrameFailed = true;
+            int code = error.getErrorCode();
+            if (isKimeng() && !KIMENG_OFFLINE.equals(request.getUrl().getPath()) &&
+                (code == ERROR_HOST_LOOKUP || code == ERROR_CONNECT || code == ERROR_TIMEOUT || code == ERROR_IO)) {
+                view.loadUrl(UrlPolicy.ORIGIN + KIMENG_OFFLINE);
+                return;
+            }
+            showError("请检查网络连接，再重新加载。", request.getUrl().toString());
         }
         @Override public void onReceivedHttpError(WebView view, WebResourceRequest request, WebResourceResponse response) {
             if (request.isForMainFrame() && response.getStatusCode() >= 400) { mainFrameFailed = true; showError("服务器暂时不可用（" + response.getStatusCode() + "）。请稍后重试。", request.getUrl().toString()); }

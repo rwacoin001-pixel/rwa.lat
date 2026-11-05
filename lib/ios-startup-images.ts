@@ -18,6 +18,6 @@ const sizes: [number, number, number][] = [
 ]
 
 export const iosStartupImages = sizes.flatMap(([width, height, ratio]) => (['light', 'dark'] as const).map(theme => ({
-  url: `/startup/${BRAND.id === 'kimeng' ? 'kimeng' : 'a-reit'}-${width}x${height}-${ratio}x-${theme}.png`,
+  url: `/startup/${BRAND.id === 'kimeng' ? 'kimeng' : 'a-reit'}-${width}x${height}-${ratio}x-${theme}.png${BRAND.id === 'kimeng' ? '?v=2' : ''}`,
   media: `(device-width: ${width}px) and (device-height: ${height}px) and (-webkit-device-pixel-ratio: ${ratio}) and (orientation: portrait) and (prefers-color-scheme: ${theme})`,
 })))

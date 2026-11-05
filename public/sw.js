@@ -1,13 +1,15 @@
 // Bump this release cache when shipping app changes so installed PWAs cannot replay an old page shell with mismatched assets.
-const CACHE_NAME = 'a-reit-offline-v4'
+const KIMENG = self.location.origin === 'https://kimengresearch.com'
+const CACHE_NAME = KIMENG ? 'a-reit-offline-kimeng-v5' : 'a-reit-offline-v4'
+const OFFLINE_PAGE = KIMENG ? '/offline-kimeng' : '/offline'
 const SHELL_WAIT_MS = 1500
 // Installed app (Home Screen web app, Android client): the page says so once (lib/document-preferences-bootstrap.ts)
 // and the worker keeps the answer here, because the launch navigation arrives before any page code can run.
 const INSTALLED_KEY = '/__rwa/installed-app'
 // A launch shell older than this is not shown instantly; it waits for the network like any other navigation.
 const LAUNCH_SHELL_MAX_AGE_MS = 3 * 24 * 3600 * 1000
-const OFFLINE_ASSETS = [
-  '/offline',
+const OFFLINE_ASSETS = KIMENG ? [OFFLINE_PAGE, '/brand/kimeng/mark-light.svg', '/home'] : [
+  OFFLINE_PAGE,
   '/brand/a-reit/app-icon.svg',
   '/icons/a-reit-v1-192.png',
   '/icons/a-reit-v1-512.png',
@@ -53,6 +55,7 @@ const PACK_CACHE = 'a-reit-pack'
 const PACK_MAX_BYTES = 400 * 1024
 let packRun = null
 function packWanted(file) {
+  if (KIMENG) return file.p !== '/offline-kimeng.html' // The public URL is already precached.
   return file.p.startsWith('/_next/static/') || (file.s <= PACK_MAX_BYTES && !/^\/(?:ai-ocr|vendor|media\/referral)\//.test(file.p))
 }
 async function warmPack() {
@@ -63,14 +66,16 @@ async function warmPack() {
   const wanted = new Set(want.map((file) => file.p))
   const cache = await caches.open(PACK_CACHE)
   const have = new Set((await cache.keys()).map((request) => new URL(request.url).pathname))
-  await Promise.all([...have].filter((path) => !wanted.has(path)).map((path) => cache.delete(path)))
-  for (const file of want) {
-    if (have.has(file.p)) continue
+  const save = async (file) => {
+    if (have.has(file.p)) return
     try {
       const body = await fetch(file.p, { cache: 'no-cache' })
       if (body.ok && !(body.headers.get('content-type') || '').includes('text/html')) await cache.put(file.p, body)
     } catch { /* offline or evicted: the next launch resumes */ }
   }
+  const concurrency = KIMENG ? 4 : 1
+  for (let i = 0; i < want.length; i += concurrency) await Promise.all(want.slice(i, i + concurrency).map(save))
+  await Promise.all([...have].filter((path) => !wanted.has(path)).map((path) => cache.delete(path)))
 }
 
 self.addEventListener('message', (event) => {
@@ -116,7 +121,12 @@ self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     // Never replay a cached authentication page or one-time callback URL.
     if (/^\/(?:auth|login|register|verify-email|recovery)(?:\/|$)/.test(url.pathname)) {
-      event.respondWith(fetch(event.request).catch(() => caches.match('/offline')))
+      event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_PAGE)))
+      return
+    }
+    // Kimeng only saves anonymous route shells. Account pages and query-bearing links stay live.
+    if (KIMENG && (url.search || !['/', '/home', '/markets', '/community', '/quant', '/predictions'].includes(url.pathname))) {
+      event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_PAGE)))
       return
     }
     // Network first, as before, but a launch never waits on a slow network for longer than SHELL_WAIT_MS when
@@ -132,10 +142,10 @@ self.addEventListener('fetch', (event) => {
         }
         // Cloudflare failures are HTTP responses, not network exceptions.
         // Keep the installed app usable with its last valid shell on a 5xx.
-        if (response.status >= 500) return (await caches.match(event.request)) || (await caches.match('/offline')) || response
+        if (response.status >= 500) return (await caches.match(event.request)) || (await caches.match(OFFLINE_PAGE)) || response
         return response
       })
-      .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match('/offline'))
+      .catch(async () => (await caches.match(event.request)) || (await caches.match('/home')) || caches.match(OFFLINE_PAGE))
     event.waitUntil(network.catch(() => null))
     event.respondWith(instantLaunchShell(event.request).catch(() => null).then((shell) => shell || Promise.race([
       network,
