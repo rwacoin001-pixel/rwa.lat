@@ -12,6 +12,7 @@ import { RequestContextMiddleware } from './common/request-context.middleware'
 import { CORE_API_PREFIX } from './route-contract'
 import { createApiRateLimitMiddleware } from './common/api-rate-limit.middleware'
 import { createEdgeClientMiddleware } from './common/edge-client'
+import { createBrandContextMiddleware } from './common/brand-context'
 import { createApiCorsOptions } from './common/cors-options'
 import type { Server } from 'node:http'
 import { exposeApiDocs } from './config/api-docs'
@@ -36,6 +37,7 @@ async function bootstrap() {
   app.enableCors(createApiCorsOptions(parseOrigins(process.env.CORS_ORIGINS)))
   app.use(new RequestContextMiddleware().use)
   app.use(createEdgeClientMiddleware())
+  app.use(createBrandContextMiddleware())
   app.use(createApiRateLimitMiddleware())
   app.setGlobalPrefix(prefix,{exclude:[{path:'r/:code',method:RequestMethod.GET},{path:'robots.txt',method:RequestMethod.GET}]})
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true }))

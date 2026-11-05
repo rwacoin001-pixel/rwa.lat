@@ -8,6 +8,7 @@ import type { RegistrationConsentAcceptance } from './consent-policy'
 import { LoginIdentity } from './login-identity.entity'
 import { IDENTITY_ERROR_CODES } from './identity.errors'
 import { maskEmail } from '../data-governance/data-masking.util'
+import { currentBrand } from '../common/brand-context'
 
 export type AuthDevice = { fingerprint?: string; name?: string }
 type Step = 'totp' | 'email' | 'password' | 'consent'
@@ -19,6 +20,7 @@ type Payload = {
   version: number; factorIds: string[]; oauth?: OAuthSubject; emailHash?: string; sentAt?: number; sends?: number; bindingEmail?: string;
   previousEmailHash?: string | null;
   inlineBinding?: boolean;
+  brand?: 'kimeng';
 }
 export type AuthFlowView = { continuationToken: string; step: Step; expiresIn: number; retryAfter?: number; emailRequired?: boolean }
 type Row = { payload_ciphertext: Buffer; encryption_key_version: number; attempts: number; expires_at: Date; consumed_at: Date | null }
@@ -158,6 +160,7 @@ export class AuthFlowService {
   }
 
   private async insert(manager: EntityManager, payload: Payload, expiresAt = new Date(Date.now() + 600_000)): Promise<AuthFlowView> {
+    if (currentBrand() === 'kimeng') payload.brand = 'kimeng'
     const token = this.crypto.generateSessionToken()
     // email_bind flows begin without a target address; bindEmail() sends the code once one is supplied.
     const awaitingEmail = payload.steps[0] === 'email' && payload.purpose === 'email_bind' && !payload.bindingEmail
@@ -183,7 +186,7 @@ export class AuthFlowService {
     const purpose = payload.purpose === 'email_bind' || payload.purpose === 'email_change' ? payload.purpose
       : payload.purpose === 'reset' || payload.purpose === 'setup' ? 'reset' : 'login'
     await this.delivery.sendEmailCode({ email: payload.bindingEmail ?? await this.emailFor(manager, payload.userId!), code,
-      intent: 'login', purpose, locale: user?.locale || 'en', expiresAt })
+      intent: 'login', purpose, locale: user?.locale || 'en', expiresAt, brand: payload.brand ?? 'areit' })
     payload.emailHash = this.crypto.hashToken(`auth-flow:${token}:${code}`).toString('hex')
     payload.sentAt = Date.now()
     payload.sends = (payload.sends ?? 0) + 1

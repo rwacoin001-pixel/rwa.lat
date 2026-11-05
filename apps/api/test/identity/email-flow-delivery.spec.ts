@@ -10,7 +10,7 @@ describe('Auth flow email expiry propagation', () => {
   it.each(['login', 'reset', 'setup', 'email_bind', 'email_change'] as const)(
     'resends %s using its saved expiry and correct localized mail purpose', async purpose => {
       const expiresAt = new Date(Date.now() + 90_000)
-      const payload = { userId: 'test-user', steps: ['email'], purpose, version: 1, factorIds: [],
+      const payload = { userId: 'test-user', steps: ['email'], purpose, version: 1, factorIds: [], brand: 'kimeng',
         bindingEmail: 'user@example.com', sentAt: Date.now() - 61_000, sends: 1 }
       const query = jest.fn(async (sql: string) => {
         if (sql.startsWith('SELECT * FROM app.auth_flows')) return [{ payload_ciphertext: Buffer.from('stored'),
@@ -26,7 +26,7 @@ describe('Auth flow email expiry propagation', () => {
       const delivery = { sendEmailCode: jest.fn().mockResolvedValue(undefined) }
       await new AuthFlowService(db, crypto, delivery as unknown as IdentityDeliveryService).resend('continuation')
       expect(delivery.sendEmailCode).toHaveBeenCalledWith(expect.objectContaining({ locale: 'ar', expiresAt,
-        purpose: purpose === 'setup' ? 'reset' : purpose, intent: 'login', code: expect.stringMatching(/^\d{6}$/) }))
+        purpose: purpose === 'setup' ? 'reset' : purpose, intent: 'login', brand: 'kimeng', code: expect.stringMatching(/^\d{6}$/) }))
       const updates = query.mock.calls.filter(([sql]) => sql.startsWith('UPDATE app.auth_flows'))
       expect(updates).toHaveLength(1)
       expect(updates[0][0]).not.toContain('expires_at=')

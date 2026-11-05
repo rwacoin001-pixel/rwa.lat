@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config'
 import { EmailDeliveryClient } from '../common/email-delivery.client'
 import type { IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
 import { emailExpiryText, remainingEmailMinutes, renderEmailTemplate } from '../common/email-template'
+import { currentBrand } from '../common/brand-context'
 
 type EmailCodePurpose = 'login' | 'register' | 'reset' | 'email_bind' | 'email_change' | 'step_up'
 const CODE_TEMPLATES: Record<EmailCodePurpose, string> = {
@@ -38,12 +39,13 @@ export class IdentityDeliveryService implements OnModuleDestroy {
         message: 'Account email delivery is not configured.',
       })
     }
-    const link = this.oneTimeLink(input.purpose, input.token, input.siteOrigin ?? this.publicAppUrl)
+    const brand = input.siteOrigin === 'https://kimengresearch.com' || currentBrand() === 'kimeng' ? 'kimeng' : undefined
+    const link = this.oneTimeLink(input.purpose, input.token, brand ? 'https://kimengresearch.com' : this.publicAppUrl)
     try {
       const template = input.purpose === 'email_verification' ? 'verification-link'
         : input.purpose === 'email_login' ? 'magic-login-link' : 'recovery-link'
       const message = renderEmailTemplate(template, input.locale, { actionUrl: link,
-        expiryText: emailExpiryText(input.expiresAt ?? new Date(Date.now() + 3_600_000), input.locale) }, input.siteOrigin === 'https://kimengresearch.com' ? 'kimeng' : undefined)
+        expiryText: emailExpiryText(input.expiresAt ?? new Date(Date.now() + 3_600_000), input.locale) }, brand)
       await this.delivery.send({
         to: input.email,
         ...message,
@@ -56,7 +58,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     }
   }
 
-  async sendEmailCode(input: { email: string; intent: 'login' | 'register'; code: string; locale: string; purpose?: EmailCodePurpose; expiresAt?: Date; brand?: 'kimeng' }): Promise<void> {
+  async sendEmailCode(input: { email: string; intent: 'login' | 'register'; code: string; locale: string; purpose?: EmailCodePurpose; expiresAt?: Date; brand?: 'kimeng' | 'areit' }): Promise<void> {
     if (this.demoMode) {
       this.demoOutbox.set(`code:${input.purpose === 'step_up' ? 'step_up' : input.intent}:${input.email.toLowerCase()}`, input.code)
       return
@@ -66,7 +68,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     try {
       const message = renderEmailTemplate(CODE_TEMPLATES[input.purpose ?? input.intent], input.locale, {
         code: input.code, expiryMinutes: remainingEmailMinutes(input.expiresAt ?? new Date(Date.now() + 600_000)),
-      }, input.brand)
+      }, input.brand === 'areit' ? undefined : input.brand ?? currentBrand())
       phase = 'transport'
       await this.delivery.send({ to: input.email, ...message })
     } catch (error) {
