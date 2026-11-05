@@ -42,7 +42,12 @@ async function handleRequest(request,env,ctx,gate) {
     if(url.origin==='https://a-reit.com' && request.method==='GET'){
       // WebAuthn related origins retain the existing RP ID, so A-REIT credentials remain usable.
       if(path==='/.well-known/webauthn')return Response.json({origins:['https://kimengresearch.com']},{headers:{'cache-control':'public, max-age=300','x-content-type-options':'nosniff'}})
-      const relay=await kimengOAuthReturn(url,env.API_INTERNAL_URL)
+      const relay=await kimengOAuthReturn(url,env.API_INTERNAL_URL,async(target,init)=>{
+        // Use the production API rewrite for this internal check too. No user headers or
+        // OAuth code go to the lookup; the destination path is fixed by the relay.
+        const lookup=new Request(new URL(target.pathname,url.origin),{method:'POST',headers:init.headers,body:init.body})
+        return nextWorker.fetch(lookup,env,ctx)
+      })
       if(relay)return relay
     }
     // Static assets are served before the Worker runs; reaching here means the file is not in this build.
