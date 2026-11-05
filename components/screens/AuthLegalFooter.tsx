@@ -8,7 +8,6 @@ import { useRwaTheme } from '@/lib/rwa-theme'
 import { authLegalCopy, type AuthLegalKind } from '@/lib/auth-legal-copy'
 import styles from './P02-Login.module.css'
 import { BRAND } from '@/lib/brand/build-brand'
-import { sharedAccountNotice } from '@/lib/brand/copy'
 import BrandOperatorDisclosure from '@/components/brand-operator-disclosure'
 
 type LicenceDetails = {
@@ -195,8 +194,7 @@ export function AuthLegalFooter({
   )
 
   return <>
-    {BRAND.id === 'kimeng' && <span style={{ flexBasis: '100%', textAlign: 'center', lineHeight: 1.6 }}>{sharedAccountNotice[locale]}</span>}
-    <BrandOperatorDisclosure />
+    {BRAND.id !== 'kimeng' && <BrandOperatorDisclosure />}
     {button('terms', copy.termsTitle)}
     <span aria-hidden="true">·</span>
     {button('privacy', copy.privacyTitle)}
