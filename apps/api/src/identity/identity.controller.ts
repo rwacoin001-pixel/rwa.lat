@@ -101,7 +101,7 @@ export class IdentityController {
   @Post('email-code/request')
   @ApiOperation({ summary: 'Send a six-digit mobile email verification code' })
   @ApiCreatedResponse({ type: EmailCodeChallengeDto, description: 'Challenge issued; code is delivered only by email.' })
-  requestEmailCode(@Body() dto: RequestEmailCodeDto) { return this.emailCodes.request(dto) }
+  requestEmailCode(@Body() dto: RequestEmailCodeDto, @Req() request?: Request) { return this.emailCodes.request(dto, isKimengRequest(request) ? 'kimeng' : undefined) }
 
   @Post('email-code/confirm')
   @ApiOperation({ summary: 'Consume a mobile email code and open a session' })

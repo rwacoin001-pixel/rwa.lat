@@ -11,6 +11,17 @@ function sample(fields: string[]) {
 }
 
 describe('Production email template rendering', () => {
+  it('adds Kimeng branding for its verification emails while preserving the original A-REIT template', () => {
+    const input = { code: '012345', expiryMinutes: '10' }
+    const kimeng = renderEmailTemplate('registration-code', 'zh-CN', input, 'kimeng')
+    const original = renderEmailTemplate('registration-code', 'zh-CN', input)
+    expect(kimeng.subject).toContain('金英 KIMENG')
+    expect(kimeng.html).toContain('https://kimengresearch.com/brand/kimeng/logo-dark-1200.png')
+    expect(kimeng.text).toContain('https://kimengresearch.com/profile/support')
+    expect(kimeng.html).toContain('012345')
+    expect(original.subject).toContain('A-REIT')
+    expect(original.html).toContain('https://api.a-reit.com/v1/media/email-v2/logo-lockup.png')
+  })
   it.each(contracts.map(contract => [contract.id, contract.locale, contract.fields] as const))(
     'renders %s/%s with complete matching HTML and plain-text values', (id, locale, fields) => {
       const result = renderEmailTemplate(id, locale, sample(fields))

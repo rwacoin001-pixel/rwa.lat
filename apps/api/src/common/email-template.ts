@@ -40,7 +40,7 @@ export function emailExpiryText(expiresAt: Date, locale?: string): string {
 }
 
 /** Only server-owned events select a template. This function never sends mail or changes business state. */
-export function renderEmailTemplate(id: string, locale: string | undefined, data: Record<string, string | number>): {
+export function renderEmailTemplate(id: string, locale: string | undefined, data: Record<string, string | number>, brand?: 'kimeng'): {
   subject: string; html: string; text: string
 } {
   if (!contracts) {
@@ -52,7 +52,7 @@ export function renderEmailTemplate(id: string, locale: string | undefined, data
   const contract = contracts.get(key)
   if (!contract) throw new EmailTemplateInputError('Unknown email template')
   const values: Record<string, string | number> = { ...data, assetBaseUrl: EMAIL_ASSET_BASE_URL,
-    supportUrl: 'https://a-reit.com/profile/support', year: new Date().getUTCFullYear() }
+    supportUrl: brand === 'kimeng' ? 'https://kimengresearch.com/profile/support' : 'https://a-reit.com/profile/support', year: new Date().getUTCFullYear() }
   for (const field of Object.keys(data)) {
     if (COMMON_FIELDS.has(field) || !contract.fields.includes(field)) throw new EmailTemplateInputError('Unexpected email field')
   }
@@ -82,5 +82,9 @@ export function renderEmailTemplate(id: string, locale: string | undefined, data
     if (/\{\{|\}\}/.test(rendered)) throw new Error('Unresolved email variable')
     return rendered
   }
-  return { subject: contract.subject, html: replace(template.html, true), text: replace(template.text, false) }
+  const branded = (content: string) => brand === 'kimeng'
+    ? content.replaceAll('A-REIT', language === 'zh-CN' ? '金英 KIMENG' : 'KIMENG')
+      .replaceAll(EMAIL_ASSET_BASE_URL + '/logo-lockup.png', 'https://kimengresearch.com/brand/kimeng/logo-dark-1200.png')
+    : content
+  return { subject: branded(contract.subject), html: branded(replace(template.html, true)), text: branded(replace(template.text, false)) }
 }

@@ -35,7 +35,7 @@ export class EmailCodeService {
     return { account: 'existing', password: Boolean(row.has_password), passkey: Boolean(row.has_passkey) }
   }
 
-  async request(input: RequestEmailCodeDto) {
+  async request(input: RequestEmailCodeDto, brand?: 'kimeng') {
     const email = input.email.trim().toLowerCase()
     const identifierHash = this.crypto.hashIdentifier(email)
     const challengeId = randomUUID()
@@ -65,7 +65,7 @@ export class EmailCodeService {
         this.crypto.hashToken(`email-code:${challengeId}:${input.intent}:${code}`), expiresAt])
       // Unknown login emails have the identical response; no account is created.
       // A delivery failure rolls back the new challenge and preserves the old one.
-      if (userId) await this.delivery.sendEmailCode({ email, intent: input.intent, code, locale: input.locale ?? 'en', expiresAt })
+      if (userId) await this.delivery.sendEmailCode({ email, intent: input.intent, code, locale: input.locale ?? 'en', expiresAt, ...(brand ? { brand } : {}) })
     })
     return { accepted: true as const, challengeId, expiresIn: TTL_SECONDS, retryAfter: RESEND_SECONDS }
   }

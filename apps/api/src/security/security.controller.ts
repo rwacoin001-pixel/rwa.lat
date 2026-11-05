@@ -109,7 +109,7 @@ export class SecurityController {
   @Post('step-up/email/request')
   @ApiOperation({ summary: 'Email a six-digit code to the verified address for transaction-password step-up' })
   requestEmailStepUp(@CurrentAuth() actor: SecurityActor, @Req() request: AuthenticatedRequest, @Body() dto: EmailStepUpRequestDto) {
-    return this.security.requestEmailStepUp(actor, this.requestId(request), dto.locale)
+    return this.security.requestEmailStepUp(actor, this.requestId(request), dto.locale, kimengOrigin(request) ? 'kimeng' : undefined)
   }
 
   @Post('step-up/email/confirm')

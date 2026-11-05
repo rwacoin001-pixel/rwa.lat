@@ -397,7 +397,7 @@ export class SecurityService {
     return { reauthentication, expiresInSeconds: STEP_UP_TTL_MS / 1000, method: 'passkey' }
   }
 
-  async requestEmailStepUp(actor: SecurityActor, requestId: string, locale?: string) {
+  async requestEmailStepUp(actor: SecurityActor, requestId: string, locale?: string, brand?: 'kimeng') {
     // Google identifiers hold an encrypted provider profile, not a bare email address.
     const [identity] = await this.challenges.manager.query(`SELECT li.kind, li.state, li.revoked_at AS "revokedAt",
       li.identifier_hash AS "identifierHash", li.identifier_ciphertext AS "identifierCiphertext",
@@ -436,7 +436,7 @@ export class SecurityService {
         repo: manager.getRepository(SecurityChallenge),
       })
       // A delivery failure rolls back the new challenge and preserves the previous one.
-      await this.delivery.sendEmailCode({ email, intent: 'login', purpose: 'step_up', code, locale: emailLocale(locale ?? identity.locale ?? 'en'), expiresAt })
+      await this.delivery.sendEmailCode({ email, intent: 'login', purpose: 'step_up', code, locale: emailLocale(locale ?? identity.locale ?? 'en'), expiresAt, ...(brand ? { brand } : {}) })
     })
     await this.audit(actor.userId, requestId, 'security.step_up.email_requested', 'security_challenge', challengeId)
     return {
