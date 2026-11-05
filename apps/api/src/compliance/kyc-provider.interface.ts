@@ -42,7 +42,7 @@ export interface KycWebhookVerificationInput {
 export interface KycProvider {
   readonly name: string
   readonly mode: 'stub' | 'live'
-  submitCase(input: { userId: string; payload: Record<string, unknown> }): Promise<KycSubmissionResult>
+  submitCase(input: { userId: string; payload: Record<string, unknown>; site?: 'kimeng' }): Promise<KycSubmissionResult>
   getCase(ref: string): Promise<KycProviderCase>
   verifyWebhook?(input: KycWebhookVerificationInput): KycWebhookEvent
   mapStatus?(status: string): KycProviderCase

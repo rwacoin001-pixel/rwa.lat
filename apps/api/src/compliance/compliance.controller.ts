@@ -1,4 +1,6 @@
-import { Body, Controller, Delete, Get, Headers, HttpCode, HttpStatus, Param, Post, Put, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common'
+import { Body, Controller, Delete, Get, Headers, HttpCode, HttpStatus, Param, Post, Put, Req, UploadedFiles, UseGuards, UseInterceptors } from '@nestjs/common'
+import type { Request } from 'express'
+import { isKimengRequest } from '../common/site-origin'
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiTags } from '@nestjs/swagger'
 import { FileFieldsInterceptor } from '@nestjs/platform-express'
 import { NativeKycService, type CapturedFile } from './native-kyc.service'
@@ -69,8 +71,8 @@ export class ComplianceController {
   @Post('kyc/session')
   @ApiBearerAuth()
   @UseGuards(SessionAuthGuard)
-  async createHostedKycSession(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateHostedKycSessionDto) {
-    const result = await this.service.createHostedKycSession(actor.userId, { language: dto.language })
+  async createHostedKycSession(@CurrentAuth() actor: SecurityActor, @Body() dto: CreateHostedKycSessionDto, @Req() request?: Request) {
+    const result = await this.service.createHostedKycSession(actor.userId, { language: dto.language }, isKimengRequest(request) ? 'kimeng' : undefined)
     return {
       case: this.service.toPublicKycCase(result.case),
       verificationUrl: result.verificationUrl,

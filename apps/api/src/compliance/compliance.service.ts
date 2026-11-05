@@ -104,7 +104,7 @@ export class ComplianceService {
     return this.kycRepo.save(kyc)
   }
 
-  async createHostedKycSession(userId: string, payload: Record<string, unknown>) {
+  async createHostedKycSession(userId: string, payload: Record<string, unknown>, site?: 'kimeng') {
     if (this.kycProvider.mode !== 'live') {
       throw new ServiceUnavailableException('A hosted KYC provider is not configured')
     }
@@ -114,7 +114,7 @@ export class ComplianceService {
     }
     if (latest?.state === 'submitted') throw new ConflictException('KYC is under review')
 
-    const submission = await this.kycProvider.submitCase({ userId, payload })
+    const submission = await this.kycProvider.submitCase({ userId, payload, ...(site ? { site } : {}) })
     if (!submission.verificationUrl) {
       throw new ServiceUnavailableException('The KYC provider did not return a hosted verification URL')
     }

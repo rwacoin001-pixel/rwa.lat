@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common'
+import { KIMENG_ORIGIN } from '../../../common/site-origin'
 import { ConfigService } from '@nestjs/config'
 import { createHmac, timingSafeEqual } from 'node:crypto'
 import type {
@@ -63,13 +64,13 @@ export class RealDiditKycProvider implements KycProvider {
     this.config = readDiditConfig(config)
   }
 
-  async submitCase(input: { userId: string; payload: Record<string, unknown> }): Promise<KycSubmissionResult> {
+  async submitCase(input: { userId: string; payload: Record<string, unknown>; site?: 'kimeng' }): Promise<KycSubmissionResult> {
     const data = await this.request<DiditSessionResponse>('/v3/session/', {
       method: 'POST',
       body: JSON.stringify({
         workflow_id: this.config.workflowId,
         vendor_data: input.userId,
-        callback: this.config.callbackUrl,
+        callback: input.site === 'kimeng' ? `${KIMENG_ORIGIN}/profile/kyc?status=complete` : this.config.callbackUrl,
         callback_method: 'both',
         metadata: { source: 'rwa-lat' },
         language: readLanguage(input.payload.language),

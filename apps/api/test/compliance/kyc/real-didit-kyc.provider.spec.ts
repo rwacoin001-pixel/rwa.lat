@@ -75,6 +75,14 @@ describe('RealDiditKycProvider', () => {
     expect(fetchMock.mock.calls[0][0]).toBe(`https://verification.didit.me/v3/session/${sessionId}/decision/`)
   })
 
+  it('uses a fixed Kimeng return URL for a verified Kimeng request', async () => {
+    const fetchMock = jest.spyOn(global, 'fetch').mockResolvedValue(jsonResponse(201, {
+      session_id: sessionId, url: 'https://verify.didit.me/en/session/token', status: 'Not Started',
+    }))
+    await provider().submitCase({ userId: 'user-123', site: 'kimeng', payload: { callback: 'https://untrusted.example' } })
+    expect(JSON.parse(String(fetchMock.mock.calls[0][1]?.body)).callback).toBe('https://kimengresearch.com/profile/kyc?status=complete')
+  })
+
   it.each([
     ['Not Started', { state: 'not_started' }],
     ['InProgress', { state: 'in_progress' }],
