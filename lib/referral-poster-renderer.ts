@@ -15,7 +15,7 @@ function image(src: string): Promise<HTMLImageElement> {
 }
 /** Reads the module grid back from a plain QR canvas (quiet zone included), via the top-left finder pattern. */
 const grids = new WeakMap<HTMLCanvasElement, boolean[][]>()
-function qrGrid(qr: HTMLCanvasElement): boolean[][] {
+export function qrGrid(qr: HTMLCanvasElement): boolean[][] {
   const known = grids.get(qr)
   if (known) return known
   const size = qr.width, data = qr.getContext('2d')!.getImageData(0, 0, size, size).data

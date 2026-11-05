@@ -14,10 +14,13 @@ import { MaisonPage } from '@/components/maison/primitives'
 import { Sheet } from '@/components/maison/Sheet'
 import { useQuery } from '@/lib/api/_query'
 import { membershipQuery, levelKey, type LevelDef, type Membership } from '@/lib/api/membership'
-import { LEVEL_NAMES, membershipCopy, type MembershipCopy } from '@/lib/membership-copy'
+import { LEVEL_NAMES, giftsOf, membershipCopy } from '@/lib/membership-copy'
 import { useI18n } from '@/lib/i18n'
 import { backOr, openPath } from '@/lib/maison-nav'
 import { Medallion } from './Medallion'
+import { GrainGradient } from '@paper-design/shaders-react'
+import { GEM_TINT } from './gem-spec'
+import type { CSSProperties } from 'react'
 import s from './membership.module.css'
 
 /** Counts from 0 to the value once (900ms, ease-out); reduced motion shows it at once. */
@@ -36,19 +39,6 @@ function useCountUp(value: number) {
     return () => cancelAnimationFrame(frame)
   }, [value])
   return shown
-}
-
-type Gift = { name: string; live: boolean }
-function giftsOf(level: LevelDef, k: MembershipCopy): Gift[] {
-  const honors = level.perks.honors
-  return [
-    ...(honors.includes('badge') ? [{ name: k.perk.badge, live: true }] : []),
-    ...(level.perks.draws ? [{ name: k.perk.draws(level.perks.draws), live: false }] : []),
-    ...(level.perks.predictionFeeDiscountPct ? [{ name: k.perk.prediction(level.perks.predictionFeeDiscountPct), live: false }] : []),
-    ...(level.perks.quantFeeDiscountPct ? [{ name: k.perk.quant(level.perks.quantFeeDiscountPct), live: false }] : []),
-    ...(honors.includes('frame') ? [{ name: k.perk.frame, live: false }] : []),
-    ...(honors.includes('priority_support') ? [{ name: k.perk.priority_support, live: false }] : []),
-  ]
 }
 
 export function GalaxyScreen() {
@@ -91,10 +81,9 @@ function Body({ m }: { m: Membership }) {
     const node = row.current?.querySelector<HTMLElement>('[data-now]')
     if (node && row.current) row.current.scrollLeft = node.offsetLeft - (row.current.clientWidth - node.clientWidth) / 2
   }, [])
-  const R = 76, C = 2 * Math.PI * R
   const date = (iso: string) => new Intl.DateTimeFormat(locale, { month: 'short', day: 'numeric' }).format(new Date(iso))
   const nameOf = (level: { index: number; key?: string }) => names[(level.key ?? levelKey(level.index)) as keyof typeof names] ?? names[levelKey(level.index)]
-  const label = (level: { index: number; key?: string }) => `L${level.index} ${nameOf(level)}`
+  const label = (level: { index: number; key?: string }) => nameOf(level)
   const c = m.components
   const team = Number(c.team.l1) + Number(c.team.l2) + Number(c.team.l3)
   const checks: Array<{ text: string; have: number; need: number; met: boolean; left?: string }> = next ? [
@@ -110,40 +99,58 @@ function Body({ m }: { m: Membership }) {
     ...(level.requires.teamActive ? [k.reqTeam(level.requires.teamActive)] : []),
   ]
   return <>
-    <section className={s.hero} aria-label={k.title}>
-      <div className={s.ring} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label={next ? k.toGo(label(next), num(Math.max(0, to - score))) : k.top}>
-        <svg viewBox="0 0 176 176" aria-hidden="true"><circle cx="88" cy="88" r={R} className={s.ringTrack} /><circle cx="88" cy="88" r={R} className={s.ringFill} strokeDasharray={C} strokeDashoffset={C * (1 - grown)} /></svg>
-        <Medallion level={m.level.index} size={120} className={s.heroBadge} />
-      </div>
-      <small className={s.heroKicker}>{k.member} · {k.tierOf(m.level.index, m.levels.length || 7)}</small>
-      <b className={s.levelName}>{nameOf(m.level)}</b>
-      <span className={s.heroScore}><small>{k.score}</small><b dir="ltr">{num(Math.round(counted))}</b></span>
-      <p className={s.heroNext}>{next ? <>{k.toGo(label(next), num(Math.max(0, to - score)))} · <b dir="ltr">{(progress * 100).toFixed(0)}%</b></> : k.top}</p>
-      {m.graceUntil && <p className={s.heroNote}>{k.grace(date(m.graceUntil))}</p>}
+    {/* Editorial hero (2026-11-05, after the user's black "festival" reference): one ink card with fine grain; a serif
+        title stacked top-left, a fine-line starburst top-right whose rays grow with the level and turn slowly; the level in
+        very large serif; star power and what is left; an arrow list to the sections; a halftone orb bottom-right that
+        brightens as the next level nears. No four-point sparkle. Same ink card in light and dark. */}
+    <section className={s.ed} aria-label={k.title}>
+      <GrainGradient className={s.edGrain} colorBack="#0b0b0d" colors={['#1a1a1e', '#3a3a40', '#0e0e10', '#26262b']} shape="sphere" softness={1} intensity={.18} noise={.38} speed={0} minPixelRatio={1} maxPixelCount={420 * 520} />
+      <header className={s.edHead}>
+        <p className={s.edTitle}>Membership<br />Level<span>.</span></p>
+        <svg className={s.edBurst} viewBox="-50 -50 100 100" aria-hidden="true">{Array.from({ length: 8 + m.level.index * 4 }, (_, i) => {
+          const a = (i / (8 + m.level.index * 4)) * Math.PI * 2, r = i % 2 ? 30 : 44
+          return <line key={i} x1={Math.cos(a) * 6} y1={Math.sin(a) * 6} x2={Math.cos(a) * r} y2={Math.sin(a) * r} />
+        })}</svg>
+      </header>
+      <small className={s.edKicker}>A-REIT · {k.title} · {k.tierOf(m.level.index, m.levels.length || 7)}</small>
+      <b className={s.edRank} dir="ltr">{nameOf(m.level)}</b>
+      <p className={s.edScore}><span>{k.score}</span><b dir="ltr">{num(Math.round(counted))}</b></p>
+      <p className={s.edNext}>{next ? <>{k.toGo(label(next), num(Math.max(0, to - score)))} · <b dir="ltr">{(progress * 100).toFixed(0)}%</b></> : k.top}</p>
+      {m.graceUntil && <p className={s.edNext}>{k.grace(date(m.graceUntil))}</p>}
+      <nav className={s.edNav} aria-label={k.title}>
+        {next && <a href="#lv-next" onClick={(e) => { e.preventDefault(); document.getElementById('lv-next')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}>{k.reqTitle(label(next))}</a>}
+        <a href="#lv-gifts" onClick={(e) => { e.preventDefault(); document.getElementById('lv-gifts')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}>{k.gifts}</a>
+        <a href="#lv-all" onClick={(e) => { e.preventDefault(); document.getElementById('lv-all')?.scrollIntoView({ behavior: 'smooth', block: 'start' }) }}>{k.ladder}</a>
+        <a href="/rank" onClick={(e) => { e.preventDefault(); openPath('/rank') }}>{k.rank}</a>
+      </nav>
+      <footer className={s.edFoot}>
+        <small>{k.scoreNote}<br />A-REIT Membership®</small>
+        <i className={s.edOrb} style={{ ['--p' as string]: String(.25 + grown * .75) } as CSSProperties} role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(progress * 100)} aria-label={k.score} />
+      </footer>
     </section>
 
-    {next && <section className={s.group}>
+    {next && <section className={s.group} id="lv-next">
       <h2 className={s.sectionHead}>{k.reqTitle(label(next))}</h2>
       <ul className={s.list}>{checks.map((row) => <li key={row.text} className={s.check} data-met={row.met || undefined}>
         <i aria-hidden="true">{row.met && <Check size={12} strokeWidth={3} />}</i>
-        <span>{row.text}{!row.met && row.left && <small>{row.left}</small>}</span>
+        <span>{row.text}{!row.met && row.left && <small>{row.left}</small>}{row.need > 1 && <i className={s.checkBar} aria-hidden="true"><i style={{ width: `${Math.min(100, row.have / row.need * 100)}%` }} /></i>}</span>
         {row.need > 1 && <b dir="ltr"><em>{num(row.have)}</em> / {num(row.need)}</b>}
       </li>)}</ul>
     </section>}
 
-    {current && <section className={s.group}>
+    {current && <section className={s.group} id="lv-gifts">
       <h2 className={s.sectionHead}>{k.gifts}</h2>
       <ul className={s.list}>{giftsOf(current, k).map((gift) => <li key={gift.name} className={s.gift} data-live={gift.live || undefined}>
         <i aria-hidden="true">{gift.live && <Check size={12} strokeWidth={3} />}</i><span>{gift.name}</span><em>{gift.live ? k.live : k.soonPill}</em>
       </li>)}</ul>
     </section>}
 
-    <section className={s.group}>
+    <section className={s.group} id="lv-all">
       <h2 className={s.sectionHead}>{k.ladder}</h2>
       <div ref={row} className={s.tiers}>{m.levels.map((level) => {
         const gifts = giftsOf(level, k), gate = gates(level)
-        return <article key={level.key} className={s.tier} data-now={level.index === m.level.index || undefined} data-reached={level.index <= m.level.index || undefined}>
-          <header><Medallion level={level.index} size={48} /><span><b>{nameOf(level)}</b><small dir="ltr">L{level.index} · {level.threshold > 0 ? `${k.score} ${num(level.threshold)}` : k.gateFree}</small></span>{level.index === m.level.index && <em>{k.now}</em>}</header>
+        return <article key={level.key} className={s.tier} style={{ ['--tone' as string]: GEM_TINT[level.index] } as CSSProperties} data-now={level.index === m.level.index || undefined} data-reached={level.index <= m.level.index || undefined}>
+          <header><Medallion level={level.index} size={48} /><span><b>{nameOf(level)}</b><small dir="ltr">{level.threshold > 0 ? `${k.score} ${num(level.threshold)}` : k.gateFree}</small></span>{level.index === m.level.index && <em>{k.now}</em>}</header>
           {gate.length > 1 && <p className={s.tierGate}>{gate.slice(1).join(' · ')}</p>}
           <ul>{(gifts.length ? gifts : [{ name: k.noGifts, live: true }]).map((gift) => <li key={gift.name}>{gift.name}</li>)}</ul>
         </article>

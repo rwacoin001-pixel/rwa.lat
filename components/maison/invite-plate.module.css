@@ -1,159 +1,122 @@
-/* The invitation plate (2026-10-29, docs/design-system.md §7.7). A brushed platinum card in light, graphite in dark,
-   tilting under the finger. Layers, bottom to top: the metal base, the engraved level gem (shifting against
-   the tilt), a fine brush grain, one soft light band, a glare that follows the finger, the content, a 1px rim.
-   Motion: transform and opacity only; it rises once on entry; reduced motion keeps it flat. Every size is on the §3.1 scale. */
-.stage { perspective: 900px; padding: 4px 0 0; }
+/* The invitation plate v2 (2026-11-05, docs/design-system.md §7.7). A brushed platinum card in light, graphite in dark.
+   Two layers: the plate leans to the finger / phone tilt; inside it the flipper turns the card over. Each face carries its
+   own metal (base, brush grain, one soft band, a glare that follows the finger, a 1px rim) and is clipped on its own, so
+   the 3D turn is never flattened. Motion: transform and opacity only; reduced motion = a short cross-fade. */
+.stage { perspective: 1100px; padding: 4px 0 0; }
 
 .plate {
-  --rx: 0deg; --ry: 0deg; --gx: 30%; --gy: 20%; --tx: 0; --ty: 0;
-  --base: linear-gradient(160deg, #f4f4f6 0%, #e4e4e8 46%, #d7d8dd 100%);
-  --ink: #16171b; --muted: rgba(22, 23, 27, .58);
+  --rx: 0deg; --ry: 0deg; --gx: 30%; --gy: 20%; --tx: 0;
+  --base: #e9eaee;
+  --ink: rgba(22, 23, 27, .84); --muted: rgba(22, 23, 27, .52);
   --shadow: 0 28px 48px -28px rgba(24, 24, 27, .45), 0 8px 20px -12px rgba(24, 24, 27, .22);
   --rim: rgba(24, 24, 27, .1); --rim-hi: rgba(255, 255, 255, .9);
-  --reflect: .38; --reflect-blend: multiply; --glare: rgba(255, 255, 255, .7); --band: rgba(255, 255, 255, .55);
+  --glare: rgba(255, 255, 255, .7); --band: rgba(255, 255, 255, .55); --press-hi: rgba(255, 255, 255, .75); --press-lo: rgba(0, 0, 0, .12);
   position: relative;
-  display: flex;
-  flex-direction: column;
   margin: 0 auto;
-  overflow: hidden;
-  border-radius: 28px;
-  background: var(--base);
-  box-shadow: var(--shadow);
-  color: var(--ink);
   transform: rotateX(var(--rx)) rotateY(var(--ry));
   transform-style: preserve-3d;
   transition: transform 700ms cubic-bezier(.22, 1, .36, 1);
   touch-action: pan-y;
   user-select: none;
   -webkit-user-select: none;
-  isolation: isolate;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
   animation: rise 900ms cubic-bezier(.22, 1, .36, 1) backwards;
 }
 .plate[data-touched] { transition: transform 120ms linear; }
 .plate[data-theme='dark'] {
-  --base: linear-gradient(160deg, #2a2a31 0%, #1d1c22 50%, #141418 100%);
-  --ink: #f4f4f5; --muted: rgba(244, 244, 245, .6);
+  --base: #1f1f25;
+  --ink: rgba(244, 244, 245, .88); --muted: rgba(244, 244, 245, .55);
   --shadow: 0 28px 48px -24px rgba(0, 0, 0, .85), 0 8px 20px -10px rgba(0, 0, 0, .5);
   --rim: rgba(255, 255, 255, .08); --rim-hi: rgba(255, 255, 255, .14);
-  --reflect: .42; --reflect-blend: screen; --glare: rgba(255, 255, 255, .22); --band: rgba(255, 255, 255, .14);
+  --glare: rgba(255, 255, 255, .22); --band: rgba(255, 255, 255, .14); --press-hi: rgba(255, 255, 255, .08); --press-lo: rgba(0, 0, 0, .55);
 }
 
-/* Brush grain: hairlines across the plate, too fine to see as lines, enough to stop it reading as flat plastic. */
-.brush {
-  position: absolute; inset: 0; z-index: 1;
-  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .06) 0 1px, rgba(0, 0, 0, .025) 1px 2px, transparent 2px 4px);
-  mix-blend-mode: overlay;
-  pointer-events: none;
-}
+/* Height (2026-10-29): the viewport minus the tab bar, the action row, the dock and the safe areas; never scrolls. */
+.plate, .flipper, .face { height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--app-dock-height, 52px) - var(--plate-reserve, 183px)); min-height: 320px; max-height: 720px; }
 
-/* One soft band of light that crosses once on entry and then rides the tilt. */
-.band {
-  position: absolute; inset: -40% -60%; z-index: 2;
-  background: linear-gradient(115deg, transparent 42%, var(--band) 50%, transparent 58%);
-  transform: translate3d(calc(var(--tx) * 18% - 4%), 0, 0);
-  transition: transform 700ms cubic-bezier(.22, 1, .36, 1);
-  animation: sweep 1400ms 300ms cubic-bezier(.22, 1, .36, 1) backwards;
-  pointer-events: none;
-}
+/* The turn: 600 ms on a calm curve, no bounce; at the middle the card lifts 4px and grows 1% (the lift layer). */
+.flipper { position: relative; transform-style: preserve-3d; transition: transform 600ms cubic-bezier(.4, 0, .2, 1); }
+.plate[data-flipped] .flipper { transform: rotateY(180deg); }
+.plate[data-turning] .flipper { animation: lift 600ms cubic-bezier(.4, 0, .2, 1); }
+@keyframes lift { 50% { translate: 0 -4px; scale: 1.01; } }
+
+.face { position: absolute; inset: 0; display: flex; flex-direction: column; overflow: hidden; border-radius: 28px; background: var(--base); box-shadow: var(--shadow); color: var(--ink); backface-visibility: hidden; -webkit-backface-visibility: hidden; isolation: isolate; transition: box-shadow 600ms ease; }
+.plate[data-turning] .face { box-shadow: 0 40px 60px -30px rgba(24, 24, 27, .5), 0 10px 26px -14px rgba(24, 24, 27, .25); }
+.back { transform: rotateY(180deg); }
+
+.brush { position: absolute; inset: 0; z-index: 1; background: repeating-linear-gradient(90deg, rgba(255, 255, 255, .06) 0 1px, rgba(0, 0, 0, .025) 1px 2px, transparent 2px 4px); mix-blend-mode: overlay; pointer-events: none; }
+.band { position: absolute; inset: -40% -60%; z-index: 2; background: linear-gradient(115deg, transparent 42%, var(--band) 50%, transparent 58%); transform: translate3d(calc(var(--tx) * 18% - 4%), 0, 0); transition: transform 700ms cubic-bezier(.22, 1, .36, 1); animation: sweepIn 1400ms 300ms cubic-bezier(.22, 1, .36, 1) backwards; pointer-events: none; }
 .plate[data-touched] .band { transition: transform 120ms linear; }
+.glare { position: absolute; inset: 0; z-index: 3; background: radial-gradient(circle at var(--gx) var(--gy), var(--glare), transparent 55%); mix-blend-mode: soft-light; pointer-events: none; }
+/* One faint reflection crossing the face while it turns. */
+.sweep { position: absolute; inset: -20% -80%; z-index: 3; background: linear-gradient(100deg, transparent 44%, rgba(255, 255, 255, .5) 50%, transparent 56%); opacity: 0; mix-blend-mode: soft-light; pointer-events: none; }
+.plate[data-turning] .sweep { animation: sweep 600ms cubic-bezier(.4, 0, .2, 1); }
+.rim { position: absolute; inset: 0; z-index: 5; border-radius: inherit; box-shadow: inset 0 0 0 1px var(--rim), inset 0 1px 0 var(--rim-hi); pointer-events: none; }
 
-.glare {
-  position: absolute; inset: 0; z-index: 3;
-  background: radial-gradient(circle at var(--gx) var(--gy), var(--glare), transparent 55%);
-  mix-blend-mode: soft-light;
-  pointer-events: none;
-}
-
-.rim {
-  position: absolute; inset: 0; z-index: 5;
-  border-radius: inherit;
-  box-shadow: inset 0 0 0 1px var(--rim), inset 0 1px 0 var(--rim-hi);
-  pointer-events: none;
-}
-
-.content { position: relative; z-index: 4; display: flex; flex: 1 1 auto; flex-direction: column; padding: 24px; box-sizing: border-box; }
+/* Content is letterpressed into the metal: slightly translucent ink with a light edge (platinum) or dark edge (graphite). */
+.content { position: relative; z-index: 4; display: flex; flex: 1 1 auto; flex-direction: column; padding: 24px; box-sizing: border-box; color: var(--ink); text-shadow: 0 1px 0 var(--press-hi), 0 -.5px 0 var(--press-lo); }
+.plate[data-theme='dark'] .content { text-shadow: 0 -1px 0 var(--press-lo), 0 .5px 0 var(--press-hi); }
 .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
-.brand { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; line-height: 18px; letter-spacing: .04em; }
-.brand img { display: block; width: 14px; height: 16px; }
-.kind { color: var(--muted); font-size: 11px; font-weight: 500; line-height: 16px; letter-spacing: .24em; }
+.brand { display: inline-flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; line-height: 22px; letter-spacing: .04em; }
+.brand img { display: block; width: 16px; height: 18px; opacity: .88; }
+.kind { display: inline-flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; line-height: 16px; letter-spacing: .04em; }
+.kind i { width: 6px; height: 6px; border-radius: 50%; background: #19c7aa; }
 
-/* The open middle: the code alone, spaced like an engraving. */
-.codeKey.codeKey { display: grid; justify-items: center; gap: 8px; margin: auto 0; padding: 16px 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
-.codeKey small { color: var(--muted); font-size: 11px; line-height: 16px; letter-spacing: .24em; }
-.codeKey b { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 500; line-height: 28px; letter-spacing: .32em; margin-inline-end: -.32em; font-variant-numeric: tabular-nums; }
-.codeKey span { color: var(--muted); font-size: 11px; line-height: 16px; transition: color .2s ease; }
-.codeKey span[data-done] { color: var(--ink); }
-
+/* The front: the face open; name + pressed level above the foot. */
+.who { display: flex; align-items: center; gap: 10px; min-width: 0; margin-top: auto; }
+.name.name { overflow: hidden; min-width: 0; font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: -.01em; white-space: nowrap; text-overflow: ellipsis; }
+.rank { flex: none; padding: 1px 8px; border-radius: 7px; box-shadow: inset 0 1px 1.5px var(--press-lo), inset 0 -1px 0 var(--press-hi); color: var(--muted); font-size: 13px; font-weight: 700; letter-spacing: .08em; line-height: 20px; }
+.role { margin: 2px 0 20px; color: var(--muted); font-size: 15px; line-height: 22px; }
 .foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; }
-.footText { display: grid; justify-items: start; gap: 2px; min-width: 0; }
-.footText b { font-size: 13px; font-weight: 500; line-height: 18px; }
-.inline.inline { min-height: 32px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
-/* The QR is printed, not stuck on: ink modules multiplied into platinum, light modules screened into graphite. */
-.qr.qr { flex: none; padding: 0; border: 0; background: none; color: #16171b; cursor: zoom-in; }
-.qr.qr svg { display: block; width: 72px; height: 72px; mix-blend-mode: multiply; opacity: .82; }
-.plate[data-theme='dark'] .qr.qr { color: #f4f4f5; }
-.plate[data-theme='dark'] .qr.qr svg { mix-blend-mode: screen; opacity: .78; }
-.content { padding: 24px 24px 20px; }
-
-@keyframes rise { from { opacity: 0; transform: translate3d(0, 24px, 0) rotateX(14deg); } }
-@keyframes sweep { from { opacity: 0; transform: translate3d(-40%, 0, 0); } 30% { opacity: 1; } }
-
-@media (prefers-reduced-motion: reduce) {
-  .plate, .band { animation: none; }
-  .plate, .band, .engrave { transition: none; }
-}
-
-
-/* Height (2026-10-29): exactly the viewport minus the tab bar, the action row, the dock and the safe areas, so the page
-   never scrolls; short phones compress the card (down to 320px) rather than scroll. */
-.plate { height: calc(100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - var(--app-dock-height, 52px) - var(--plate-reserve, 183px)); min-height: 320px; max-height: 720px; }
-
-/* 2026-10-29 d (user: the code bottom-left; every word printed on the card). The face stays open; the footer holds the
-   code. All type is letterpressed into the metal: slightly translucent ink with a light edge below (platinum) or a
-   dark edge above (graphite), the logo the same way, so nothing reads as a sticker on top of the card. */
-.foot { margin-top: auto; }
-.footText { gap: 4px; }
-.footText > small { color: var(--muted); font-size: 11px; line-height: 16px; letter-spacing: .2em; }
+.footText { display: grid; justify-items: start; gap: 4px; min-width: 0; }
+.footText > small { color: var(--muted); font-size: 12px; line-height: 16px; letter-spacing: .2em; }
+.codeRow { display: inline-flex; align-items: baseline; gap: 12px; }
 .code.code { padding: 0; border: 0; background: none; color: inherit; font: inherit; text-align: start; cursor: pointer; -webkit-tap-highlight-color: transparent; }
 .code span { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 22px; font-weight: 600; line-height: 28px; letter-spacing: .18em; font-variant-numeric: tabular-nums; }
-.meta { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12px; line-height: 16px; }
-.meta i { font-style: normal; opacity: .6; }
-.meta [data-done] { color: var(--ink); }
-.meta .inline.inline { min-height: 24px; color: var(--muted); }
-.content { --ink: rgba(22, 23, 27, .8); color: var(--ink); text-shadow: 0 1px 0 rgba(255, 255, 255, .75), 0 -.5px 0 rgba(0, 0, 0, .12); }
-.content img { opacity: .85; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .75)); }
-.plate[data-theme='dark'] .content { --ink: rgba(244, 244, 245, .86); text-shadow: 0 -1px 0 rgba(0, 0, 0, .55), 0 .5px 0 rgba(255, 255, 255, .08); }
-.plate[data-theme='dark'] .content img { filter: drop-shadow(0 -1px 0 rgba(0, 0, 0, .55)); }
-.plate[data-theme='dark'] { --muted: rgba(244, 244, 245, .55); }
-.plate:not([data-theme='dark']) { --muted: rgba(22, 23, 27, .5); }
+.inline.inline { min-height: 28px; padding: 0; border: 0; background: none; color: var(--muted); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.meta { color: var(--muted); font-size: 13px; line-height: 18px; }
+.meta[data-done] { color: var(--ink); }
+/* The QR: an opaque light rounded plate with dark rounded modules in both themes; no metal over it. */
+.qr.qr { position: relative; z-index: 6; flex: none; padding: 0; border: 0; border-radius: 12px; background: none; box-shadow: 0 6px 14px -8px rgba(0, 0, 0, .35); cursor: zoom-in; text-shadow: none; }
+.qr span, .qr svg { display: block; border-radius: 12px; }
 
-/* 2026-10-29 e (user: too plain; slightly larger type, one or two lines more, after the ID-card reference). Top right:
-   a small live dot and "邀请有效". Bottom left: the member's name large, one line under it, then the code. */
-.brand { font-size: 15px; line-height: 22px; }
-.brand img { width: 16px; height: 18px; }
-.kind { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; letter-spacing: .04em; }
-.kind i { width: 6px; height: 6px; border-radius: 50%; background: #19c7aa; box-shadow: 0 0 0 3px rgba(25, 199, 170, .18); }
-.name.name { overflow: hidden; max-width: 100%; font-size: 28px; font-weight: 600; line-height: 36px; letter-spacing: -.01em; white-space: nowrap; text-overflow: ellipsis; }
-.role { margin-bottom: 16px; color: var(--muted); font-size: 15px; line-height: 22px; }
-.footText > small { font-size: 12px; }
-.code span { font-size: 22px; line-height: 28px; }
-.meta { font-size: 13px; line-height: 18px; }
+/* The back: my level, how far, what is missing, the perks, a way to every level. */
+.hint { display: inline-flex; align-items: center; gap: 5px; color: var(--muted); font-size: 12px; line-height: 16px; }
+.backKicker { margin-top: 28px; color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .14em; line-height: 16px; }
+.backRank { font-size: 64px; font-weight: 700; line-height: 68px; letter-spacing: -.03em; }
+.backScore { display: grid; gap: 6px; margin-top: 10px; }
+.backScore > span { display: flex; align-items: baseline; gap: 8px; }
+.backScore > span small { color: var(--muted); font-size: 13px; }
+.backScore > span b { font-size: 20px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.backScore > small { color: var(--muted); font-size: 12px; line-height: 16px; font-variant-numeric: tabular-nums; }
+.backBar { display: block; height: 4px; overflow: hidden; border-radius: 999px; background: color-mix(in srgb, var(--ink) 12%, transparent); box-shadow: inset 0 1px 1px var(--press-lo); }
+.backBar > i { display: block; height: 100%; border-radius: inherit; background: var(--ink); }
+.backList { display: grid; gap: 4px; margin: 14px 0 0; padding: 0; list-style: none; }
+.backList li { position: relative; padding-inline-start: 16px; font-size: 13px; line-height: 19px; }
+.backList li::before { content: ''; position: absolute; top: 5px; inset-inline-start: 0; width: 8px; height: 8px; border-radius: 50%; box-shadow: inset 0 0 0 1.5px var(--muted); }
+.backGifts { display: grid; gap: 6px; margin-top: auto; padding-top: 14px; border-top: .5px solid color-mix(in srgb, var(--ink) 16%, transparent); }
+.backGifts > small { color: var(--muted); font-size: 12px; font-weight: 600; letter-spacing: .14em; line-height: 16px; }
+.backGifts ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.backGifts li { font-size: 15px; font-weight: 600; line-height: 22px; }
+.backGifts p { margin: 0; color: var(--muted); font-size: 12px; line-height: 17px; }
+.allKey.allKey { display: inline-flex; align-items: center; gap: 6px; align-self: flex-start; min-height: 40px; margin-top: 10px; padding: 0; border: 0; background: none; color: var(--ink); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.backEmpty { margin: auto 0; color: var(--muted); font-size: 14px; }
 
-/* Galaxy level under the name (2026-11-04): the plate's own ink, never a tinted chip. */
-.level.level { color: inherit; opacity: .8; margin-top: 2px; }
+/* The keyboard way to turn the card: invisible until focused. */
+.turnKey { position: absolute; inset-inline-end: 16px; bottom: 12px; z-index: 7; padding: 6px 10px; border: 0; border-radius: 8px; background: var(--ink); color: var(--base); font: inherit; font-size: 12px; opacity: 0; pointer-events: none; }
+.turnKey:focus-visible { opacity: 1; pointer-events: auto; outline: 2px solid var(--ink); outline-offset: 2px; }
 
-/* The engraved level gem (2026-11-05). Four layers masked to the gem: a dark edge a hair above, a light edge a hair below
-   (so the shape reads as sunk into the metal), the sunk face in the plate's own tone with a little of the level's tint,
-   and the gem's facets showing faintly through. It moves a few pixels against the tilt. */
-.engrave { position: absolute; top: 15%; left: 50%; z-index: 1; width: 52%; aspect-ratio: 1; transform: translate3d(calc(-50% + var(--tx) * -6px), calc(var(--ty) * -6px), 0); transition: transform 700ms cubic-bezier(.22, 1, .36, 1); pointer-events: none; }
-.plate[data-touched] .engrave { transition: transform 120ms linear; }
-.engrave > i, .engrave > img { position: absolute; inset: 0; width: 100%; height: 100%; }
-.engrave > i { -webkit-mask: var(--gem) center / contain no-repeat; mask: var(--gem) center / contain no-repeat; }
-.engraveDark { background: rgba(22, 23, 27, .4); transform: translate3d(0, -1.2px, 0); }
-.engraveLight { background: #fff; transform: translate3d(0, 1.5px, 0); }
-.engraveFill { background: color-mix(in srgb, var(--tint) 24%, #d3d5db); }
-.engraveRelief { opacity: .3; mix-blend-mode: multiply; filter: grayscale(.4) contrast(1.15) brightness(1.25); }
-.plate[data-theme='dark'] .engraveDark { background: rgba(0, 0, 0, .7); }
-.plate[data-theme='dark'] .engraveLight { background: rgba(255, 255, 255, .14); }
-.plate[data-theme='dark'] .engraveFill { background: color-mix(in srgb, var(--tint) 26%, #1d1d23); }
-.plate[data-theme='dark'] .engraveRelief { opacity: .42; mix-blend-mode: overlay; }
+@keyframes rise { from { opacity: 0; transform: translate3d(0, 24px, 0) rotateX(14deg); } }
+@keyframes sweepIn { from { opacity: 0; transform: translate3d(-40%, 0, 0); } 30% { opacity: 1; } }
+@keyframes sweep { 0% { opacity: 0; transform: translate3d(-30%, 0, 0); } 40% { opacity: 1; } 100% { opacity: 0; transform: translate3d(30%, 0, 0); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .plate, .band, .sweep, .plate[data-turning] .flipper { animation: none; }
+  .plate, .band { transition: none; }
+  /* No turn: the faces cross-fade in place. */
+  .flipper, .plate[data-flipped] .flipper { transform: none; transition: none; }
+  .back { transform: none; }
+  .face { transition: opacity 200ms ease; }
+  .plate:not([data-flipped]) .back, .plate[data-flipped] .front { opacity: 0; }
+}

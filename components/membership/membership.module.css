@@ -11,7 +11,7 @@
 .ringFill { stroke: var(--m-ink, #0b1220); stroke-linecap: round; transition: stroke-dashoffset 1.2s cubic-bezier(.22, 1, .36, 1); }
 .heroBadge { position: relative; width: 120px; height: 120px; filter: drop-shadow(0 10px 16px rgba(11, 18, 32, .22)); animation: badgeIn .7s cubic-bezier(.22, 1, .36, 1) both; }
 .heroKicker { color: var(--m-muted, #5b6472); font-size: 12px; font-weight: 600; letter-spacing: .04em; line-height: 16px; }
-.levelName { margin-top: 2px; font-size: 30px; font-weight: 700; line-height: 36px; letter-spacing: -.02em; }
+.levelName { margin-top: 4px; font-size: 52px; font-weight: 700; line-height: 54px; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
 .heroScore { display: inline-flex; align-items: baseline; gap: 6px; margin-top: 10px; }
 .heroScore small { color: var(--m-muted, #5b6472); font-size: 13px; }
 .heroScore b { font-size: 22px; font-weight: 650; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
@@ -22,7 +22,7 @@
 @keyframes badgeIn { from { opacity: 0; transform: scale(.86); } }
 
 /* Every level as a card in one sideways row (2026-11-05 v4); mine is centred and ringed, the ones above are quieter. */
-.tiers { display: flex; gap: 10px; margin: 0 calc(-1 * var(--m-gutter, 20px)); padding: 2px var(--m-gutter, 20px) 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
+.tiers { display: flex; align-items: flex-start; gap: 10px; margin: 0 calc(-1 * var(--m-gutter, 20px)); padding: 2px var(--m-gutter, 20px) 8px; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; }
 .tiers::-webkit-scrollbar { display: none; }
 .tier { display: grid; flex: none; align-content: start; gap: 10px; width: 236px; padding: 14px 16px 16px; border-radius: 22px; background: var(--pa-card, #fff); box-shadow: 0 0 0 .5px rgba(11, 18, 32, .08); color: var(--m-ink, #0b1220); scroll-snap-align: center; }
 .tier[data-now] { box-shadow: 0 0 0 1.5px var(--m-ink, #0b1220), 0 14px 30px -20px rgba(11, 18, 32, .4); }
@@ -191,3 +191,81 @@
 @keyframes rise { from { transform: scaleY(0); } }
 @keyframes settle { from { opacity: 0; transform: translateY(-10px); } }
 @media (prefers-reduced-motion: reduce) { .block, .podWho { animation: none; } }
+
+/* Level page v5 (2026-11-05, user: still plain — solve it with type, cards and motion). */
+/* Hero stats: three figures in one hairline row under the next-level line. */
+.heroStats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); width: 100%; margin: 18px 0 0; padding-top: 14px; border-top: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.heroStats > div { display: grid; gap: 2px; justify-items: center; }
+.heroStats > div + div { border-inline-start: .5px solid var(--pa-hair, rgba(11, 18, 32, .08)); }
+.heroStats dt { color: var(--m-muted, #5b6472); font-size: 11px; line-height: 14px; }
+.heroStats dd { margin: 0; font-size: 20px; font-weight: 650; line-height: 26px; font-variant-numeric: tabular-nums; }
+.heroStats dd small { color: var(--m-faint, #8f97a5); font-size: 12px; font-weight: 500; }
+/* Each rule shows how far along it is. */
+.checkBar { display: block; height: 3px; margin-top: 6px; overflow: hidden; border-radius: 999px; background: var(--pa-fill, rgba(11, 18, 32, .07)); }
+.checkBar > i { display: block; height: 100%; border-radius: inherit; background: var(--m-ink, #0b1220); transform-origin: left; animation: barGrow .9s .3s cubic-bezier(.22, 1, .36, 1) both; }
+/* Level cards: a solid tone band in the level's own colour (quietly mixed into the card) with the badge on it. */
+.tier { position: relative; overflow: hidden; padding-top: 0; }
+.tier header { margin: 0 -16px; padding: 16px 16px 14px; background: color-mix(in srgb, var(--tone, #8c96a3) 14%, var(--pa-card, #fff)); }
+.tier header img { width: 52px; height: 52px; filter: drop-shadow(0 6px 8px rgba(11, 18, 32, .2)); }
+.tier header b { font-size: 22px; letter-spacing: -.02em; }
+/* Off-centre cards settle back a little as the row scrolls (where scroll-driven animation exists). */
+@supports (animation-timeline: view()) {
+  .tier { animation: tierFocus linear both; animation-timeline: view(inline); }
+  .group, .grid, .linkRow, .how { animation: reveal linear both; animation-timeline: view(); animation-range: entry 0% entry 45%; }
+}
+/* On load: the hero settles, the sections rise one after another. */
+.hero { animation: heroIn .7s cubic-bezier(.22, 1, .36, 1) both; }
+.levelName, .heroScore, .heroNext, .heroStats { animation: rise .6s cubic-bezier(.22, 1, .36, 1) both; }
+.levelName { animation-delay: .12s; } .heroScore { animation-delay: .2s; } .heroNext { animation-delay: .26s; } .heroStats { animation-delay: .32s; }
+@keyframes heroIn { from { opacity: 0; transform: translateY(10px) scale(.985); } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } }
+@keyframes reveal { from { opacity: 0; transform: translateY(18px); } }
+@keyframes tierFocus { 0%, 100% { transform: scale(.94); opacity: .7; } 40%, 60% { transform: scale(1); opacity: 1; } }
+@keyframes barGrow { from { transform: scaleX(0); } }
+:global(.rwa-mobile[data-theme='dark']) .tier header { background: color-mix(in srgb, var(--tone, #8c96a3) 22%, #15181e); }
+:global(.rwa-mobile[data-theme='dark']) .checkBar > i { background: #f2f4f7; }
+:global(.rwa-mobile[data-theme='dark']) .heroStats, :global(.rwa-mobile[data-theme='dark']) .heroStats > div + div { border-color: rgba(255, 255, 255, .08); }
+:global(.rwa-mobile) .page.page .heroStats dt { color: var(--m-muted, #5b6472); }
+:global(.rwa-mobile) .page.page .heroStats dd small { color: var(--m-faint, #8f97a5); }
+@media (prefers-reduced-motion: reduce) {
+  .hero, .levelName, .heroScore, .heroNext, .heroStats, .checkBar > i, .tier, .group, .grid, .linkRow, .how { animation: none; }
+}
+
+/* Editorial hero (2026-11-05, after the user's reference): an ink card with grain, serif display type, fine lines,
+   a halftone orb. The ink card is the page's one dark card, the same in light and dark. */
+.ed { --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Songti SC', 'STSong', 'Noto Serif SC', 'Source Han Serif SC', serif;
+  position: relative; display: flex; flex-direction: column; min-height: 520px; padding: 26px 24px 22px; overflow: hidden; border-radius: 28px; background: #0b0b0d; color: #f4f4f2;
+  box-shadow: 0 24px 48px -28px rgba(0, 0, 0, .7); animation: heroIn .7s cubic-bezier(.22, 1, .36, 1) both; }
+.edGrain { position: absolute; inset: 0; width: 100% !important; height: 100% !important; z-index: 0; }
+.ed > :not(.edGrain) { position: relative; z-index: 1; }
+.edHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.edTitle { margin: 0; font-family: var(--serif); font-size: 30px; font-weight: 400; line-height: 32px; letter-spacing: -.01em; }
+.edTitle span { color: #19c7aa; }
+.edBurst { flex: none; width: 84px; height: 84px; margin: -6px -6px 0 0; animation: burst 80s linear infinite; }
+.edBurst line { stroke: #f4f4f2; stroke-width: .7; stroke-linecap: round; }
+.edKicker { margin-top: 10px; color: rgba(244, 244, 242, .55); font-size: 9.5px; font-weight: 600; letter-spacing: .24em; line-height: 14px; text-transform: uppercase; }
+.edRank { margin-top: auto; font-family: var(--serif); font-size: 120px; font-weight: 400; line-height: 104px; letter-spacing: -.04em; animation: rise .8s .1s cubic-bezier(.22, 1, .36, 1) both; }
+.edScore { display: flex; align-items: baseline; gap: 10px; margin: 14px 0 0; }
+.edScore span { color: rgba(244, 244, 242, .6); font-size: 13px; }
+.edScore b { font-family: var(--serif); font-size: 30px; font-weight: 400; letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+.edNext { margin: 2px 0 0; color: rgba(244, 244, 242, .62); font-size: 13px; line-height: 18px; font-variant-numeric: tabular-nums; }
+.edNext b { color: #f4f4f2; font-weight: 600; }
+.edNav { display: grid; justify-items: start; gap: 2px; margin-top: 22px; }
+.edNav a { position: relative; padding-inline-start: 22px; color: #f4f4f2; font-family: var(--serif); font-size: 21px; line-height: 30px; text-decoration: none; animation: rise .6s cubic-bezier(.22, 1, .36, 1) both; }
+.edNav a::before { content: '\2192'; position: absolute; inset-inline-start: 0; top: 0; color: rgba(244, 244, 242, .7); font-family: var(--serif); font-size: 15px; }
+.edNav a:nth-child(1) { animation-delay: .18s; } .edNav a:nth-child(2) { animation-delay: .24s; } .edNav a:nth-child(3) { animation-delay: .3s; } .edNav a:nth-child(4) { animation-delay: .36s; }
+.edNav a:active, .edNav a:focus-visible { text-decoration: underline; text-underline-offset: 5px; text-decoration-thickness: 1px; outline: none; }
+.edFoot { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; margin-top: 22px; }
+.edFoot small { color: rgba(244, 244, 242, .55); font-family: var(--serif); font-size: 12px; line-height: 16px; }
+/* The halftone orb: white dots on a 5px grid, fading out from the centre; brighter (and a touch larger) as the next level nears. */
+.edOrb { flex: none; width: 76px; height: 76px; border-radius: 50%; opacity: var(--p, .5); transform: scale(calc(.8 + var(--p, .5) * .2));
+  background: radial-gradient(circle, #fff 1.3px, transparent 1.6px) 0 0 / 5px 5px;
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .9) 30%, transparent 70%); mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .9) 30%, transparent 70%);
+  transition: opacity 1.2s ease, transform 1.2s cubic-bezier(.22, 1, .36, 1); animation: orb 6s ease-in-out 1.2s infinite; }
+@keyframes burst { to { transform: rotate(360deg); } }
+@keyframes orb { 50% { filter: brightness(1.25); } }
+:global(.rwa-mobile) .page.page .edKicker { color: rgba(244, 244, 242, .55); }
+:global(.rwa-mobile) .page.page .edScore span, :global(.rwa-mobile) .page.page .edNext, :global(.rwa-mobile) .page.page .edFoot small { color: rgba(244, 244, 242, .6); }
+:global(.rwa-mobile) .page.page .ed b, :global(.rwa-mobile) .page.page .edTitle, :global(.rwa-mobile) .page.page .edNav a { color: #f4f4f2; }
+:global(.rwa-mobile[data-theme='dark']) .ed { box-shadow: 0 0 0 .5px rgba(255, 255, 255, .08), 0 24px 48px -28px rgba(0, 0, 0, .9); }
+@media (prefers-reduced-motion: reduce) { .ed, .edRank, .edNav a, .edBurst, .edOrb { animation: none; } .edOrb { transition: none; } }

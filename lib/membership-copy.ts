@@ -1,18 +1,10 @@
 import type { AppLocale } from './i18n'
-import type { LevelKey, RankBoard } from './api/membership'
+import type { LevelDef, LevelKey, RankBoard } from './api/membership'
 
-/** Galaxy level names (2026-11-04): small to large, the way a member grows — dust, planet, star, cluster, nebula,
- * galaxy, Milky Way. Every locale has its own names; the rest of the copy is zh-CN and en (others fall back to en). */
-/** 2026-11-05 (user: names felt wrong; agreed with Codex): one story, smallest to largest — 星火 · 新星 · 恒星 · 星座
- * (the team starts here) · 星团 · 星系 · 星穹 — always shown with L1–L7. Keys are internal and keep their old names. */
+/** 2026-11-05 c (user: no star names — just L1…L7): every locale shows the plain rank. Keys stay internal. */
+const PLAIN = { stardust: 'L1', planet: 'L2', star: 'L3', cluster: 'L4', nebula: 'L5', galaxy: 'L6', milkyway: 'L7' } as const
 export const LEVEL_NAMES: Record<AppLocale, Record<LevelKey, string>> = {
-  'zh-CN': { stardust: '星火', planet: '新星', star: '恒星', cluster: '星座', nebula: '星团', galaxy: '星系', milkyway: '星穹' },
-  en: { stardust: 'Spark', planet: 'Nova', star: 'Star', cluster: 'Constellation', nebula: 'Cluster', galaxy: 'Galaxy', milkyway: 'Cosmos' },
-  hi: { stardust: 'चिंगारी', planet: 'नवतारा', star: 'तारा', cluster: 'नक्षत्र', nebula: 'तारा-समूह', galaxy: 'आकाशगंगा', milkyway: 'ब्रह्मांड' },
-  es: { stardust: 'Chispa', planet: 'Nova', star: 'Estrella', cluster: 'Constelación', nebula: 'Cúmulo', galaxy: 'Galaxia', milkyway: 'Cosmos' },
-  ar: { stardust: 'شرارة', planet: 'مستعر', star: 'نجم', cluster: 'كوكبة', nebula: 'عنقود', galaxy: 'مجرة', milkyway: 'الكون' },
-  fr: { stardust: 'Étincelle', planet: 'Nova', star: 'Étoile', cluster: 'Constellation', nebula: 'Amas', galaxy: 'Galaxie', milkyway: 'Cosmos' },
-  pt: { stardust: 'Centelha', planet: 'Nova', star: 'Estrela', cluster: 'Constelação', nebula: 'Aglomerado', galaxy: 'Galáxia', milkyway: 'Cosmos' },
+  'zh-CN': PLAIN, en: PLAIN, hi: PLAIN, es: PLAIN, ar: PLAIN, fr: PLAIN, pt: PLAIN,
 }
 
 export type MembershipCopy = {
@@ -29,6 +21,7 @@ export type MembershipCopy = {
   perkNames: { draws: string; prediction: string; quant: string }
   rules: string; member: string; live: string; soonPill: string; gifts: string; levelStart: (v: string) => string; levelNeed: (name: string, v: string) => string
   gate: string; gateFree: string; giftsOf: (name: string) => string; noGifts: string; reached: string; tierOf: (n: number, total: number) => string
+  statDirect: string; statTeam: string; statPerks: string
 }
 
 const zh: MembershipCopy = {
@@ -46,7 +39,7 @@ const zh: MembershipCopy = {
   perkCol: '权益', thisLevel: '本级', soonNote: '除等级徽章外，其他权益即将开放，开放前不会生效。', members2: (d, t, a) => `直属 ${d} 人 · 团队 ${t} 人 · 近 90 天活跃 ${a} 人`, toGo: (n, v) => `距 ${n} 还差 ${v}`,
   perkNames: { draws: '每天额外抽奖', prediction: '预测下注费减免', quant: '考拉量化管理费减免' },
   rules: '规则', member: 'A-REIT 会员', live: '已启用', soonPill: '待开放', gifts: '会员礼遇', levelStart: (v) => `本级起点 ${v}`, levelNeed: (n, v) => `升级至 ${n} 需 ${v}`,
-  gate: '升级条件', gateFree: '注册即可获得', giftsOf: (n) => `${n} 礼遇`, noGifts: '等级徽章', reached: '已达成', tierOf: (n, t) => `第 ${n} 级 · 共 ${t} 级`,
+  gate: '升级条件', gateFree: '注册即可获得', giftsOf: (n) => `${n} 礼遇`, noGifts: '等级徽章', reached: '已达成', tierOf: (n, t) => `第 ${n} 级 · 共 ${t} 级`, statDirect: '直属活跃', statTeam: '团队活跃', statPerks: '已启用礼遇',
 }
 const en: MembershipCopy = {
   title: 'Membership', kicker: 'Membership', score: 'Star power', scoreNote: 'Last 12 months · updated daily', toNext: (n) => `To ${n}`, top: 'Highest level reached',
@@ -63,7 +56,7 @@ const en: MembershipCopy = {
   perkCol: 'Perk', thisLevel: 'Now', soonNote: 'Apart from the badge, perks open soon and do not apply until then.', members2: (d, t, a) => `${d} direct · ${t} in team · ${a} active (90 days)`, toGo: (n, v) => `${v} to ${n}`,
   perkNames: { draws: 'Extra daily draws', prediction: 'Prediction fee off', quant: 'Koala Quant fee off' },
   rules: 'Rules', member: 'A-REIT member', live: 'On', soonPill: 'Soon', gifts: 'Member perks', levelStart: (v) => `Level starts at ${v}`, levelNeed: (n, v) => `${n} at ${v}`,
-  gate: 'To reach it', gateFree: 'Yours on sign-up', giftsOf: (n) => `${n} perks`, noGifts: 'Level badge', reached: 'Reached', tierOf: (n, t) => `Level ${n} of ${t}`,
+  gate: 'To reach it', gateFree: 'Yours on sign-up', giftsOf: (n) => `${n} perks`, noGifts: 'Level badge', reached: 'Reached', tierOf: (n, t) => `Level ${n} of ${t}`, statDirect: 'Direct active', statTeam: 'Team active', statPerks: 'Perks on',
 }
 export const MEMBERSHIP_COPY: Partial<Record<AppLocale, MembershipCopy>> = { 'zh-CN': zh, en }
 export const membershipCopy = (locale: AppLocale) => MEMBERSHIP_COPY[locale] ?? en
@@ -75,4 +68,18 @@ export function bandLabel(band: string, locale: AppLocale, unit: string) {
   if (band.endsWith('+')) return `${show(band.slice(0, -1))}+ ${unit}`
   const [a, b] = band.split('-')
   return b ? `${show(a)}–${show(b)} ${unit}` : band
+}
+
+export type Gift = { name: string; live: boolean }
+/** A level's perks as rows: the badge is live; the rest open later (phase 1). */
+export function giftsOf(level: LevelDef, k: MembershipCopy): Gift[] {
+  const honors = level.perks.honors
+  return [
+    ...(honors.includes('badge') ? [{ name: k.perk.badge, live: true }] : []),
+    ...(level.perks.draws ? [{ name: k.perk.draws(level.perks.draws), live: false }] : []),
+    ...(level.perks.predictionFeeDiscountPct ? [{ name: k.perk.prediction(level.perks.predictionFeeDiscountPct), live: false }] : []),
+    ...(level.perks.quantFeeDiscountPct ? [{ name: k.perk.quant(level.perks.quantFeeDiscountPct), live: false }] : []),
+    ...(honors.includes('frame') ? [{ name: k.perk.frame, live: false }] : []),
+    ...(honors.includes('priority_support') ? [{ name: k.perk.priority_support, live: false }] : []),
+  ]
 }

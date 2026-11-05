@@ -4,3 +4,6 @@
   background: radial-gradient(70% 120% at 12% 20%, #14b8a6 0%, transparent 70%), radial-gradient(60% 110% at 55% 90%, #8b5cf6 0%, transparent 70%),
     radial-gradient(60% 100% at 92% 15%, #fb923c 0%, transparent 70%), #3b82f6; }
 .mesh { position: absolute; inset: 0; width: 100% !important; height: 100% !important; }
+
+/* LevelBand (2026-11-05): one solid colour per level under the shader. */
+.level.level { background: var(--base); }
