@@ -10,10 +10,16 @@ const ts = require('typescript')
 const exports = {}
 const compiled=ts.transpileModule(readFileSync(new URL('../lib/android-app.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
 vm.runInNewContext(compiled, { exports, URL, encodeURIComponent, require:()=>testBrandContext() })
-test('Kimeng does not offer the A-REIT native APK as a Kimeng app',()=>{
+test('Kimeng offers its own native APK and keeps the signing certificate',()=>{
   const k={};vm.runInNewContext(compiled,{exports:k,URL,encodeURIComponent,require:()=>testBrandContext('kimeng')})
-  assert.equal(k.ANDROID_APP.url,null)
+  assert.equal(k.ANDROID_APP.url,'/download/kimeng-android-1.0.0.apk')
   assert.equal(k.ANDROID_APP_CERT_SHA256,exports.ANDROID_APP_CERT_SHA256)
+})
+test('Kimeng download checksum matches the packaged file', async () => {
+  const k={};vm.runInNewContext(compiled,{exports:k,URL,encodeURIComponent,require:()=>testBrandContext('kimeng')})
+  const { createHash } = await import('node:crypto')
+  const bytes=readFileSync(new URL('../public'+k.ANDROID_APP.url, import.meta.url))
+  assert.equal(createHash('sha256').update(bytes).digest('hex'),k.ANDROID_APP.sha256)
 })
 const { ANDROID_APP, ANDROID_APP_UA, chromeIntentUrl } = exports
 

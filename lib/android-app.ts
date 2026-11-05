@@ -7,11 +7,9 @@ import { BRAND } from './brand/build-brand'
  * desktop" is only a bookmark). Fill this in after running apps/android-client/Build-Release.ps1 and copying the APK
  * to public/download/; while `url` is null the install sheet offers only "Open in Chrome".
  */
-export const ANDROID_APP: { url: string | null; version: string; sha256: string } = {
-  url: BRAND.id === 'areit' ? 'https://dl.a-reit.com/android/a-reit-android-1.1.9.apk' : null,
-  version: '1.1.9',
-  sha256: '98cf752aa49820be2468c8ee189f481bbda52eae9ccd2e2c688b78a284543751',
-}
+export const ANDROID_APP: { url: string | null; version: string; sha256: string } = BRAND.id === 'kimeng'
+  ? { url: '/download/kimeng-android-1.0.0.apk', version: '1.0.0', sha256: '998333017748dd76194b89bdda7b39518577215d3d76060d59a5e4feae37513c' }
+  : { url: 'https://dl.a-reit.com/android/a-reit-android-1.1.9.apk', version: '1.1.9', sha256: '98cf752aa49820be2468c8ee189f481bbda52eae9ccd2e2c688b78a284543751' }
 
 /** Signing certificate SHA-256 (apksigner verify --print-certs); every later version must show the same one. */
 export const ANDROID_APP_CERT_SHA256 = '7ef88406ea2f2076cb5b6a07cf864c9bfbc3e3caa3a6d9e098ced70bc73030ff'
@@ -37,7 +35,7 @@ export function chromeIntentUrl(href: string, fallback: string) {
 }
 
 /** Copy for the Android-app offer: the install sheet (download, meta, chrome, shortcut) and the sign-in banner. */
-export const APP_OFFER: Record<AppLocale, { download: string; meta: string; chrome: string; shortcut: string; title: string; get: string; close: string }> = {
+const BASE_APP_OFFER: Record<AppLocale, { download: string; meta: string; chrome: string; shortcut: string; title: string; get: string; close: string }> = {
   'zh-CN': { download: '下载 A-REIT 安卓 App', meta: '版本 {v} · SHA-256 {h}…', chrome: '用 Chrome 打开', shortcut: '或添加到桌面（仅为浏览器快捷方式）', title: 'A-REIT 安卓 App', get: '下载', close: '关闭' },
   en: { download: 'Download the A-REIT Android app', meta: 'Version {v} · SHA-256 {h}…', chrome: 'Open in Chrome', shortcut: 'Or add to your home screen (a browser shortcut only)', title: 'A-REIT for Android', get: 'Download', close: 'Close' },
   es: { download: 'Descargar la app de A-REIT para Android', meta: 'Versión {v} · SHA-256 {h}…', chrome: 'Abrir en Chrome', shortcut: 'O añadir a la pantalla de inicio (solo un acceso directo)', title: 'A-REIT para Android', get: 'Descargar', close: 'Cerrar' },
@@ -46,3 +44,8 @@ export const APP_OFFER: Record<AppLocale, { download: string; meta: string; chro
   ar: { download: 'تنزيل تطبيق A-REIT لأندرويد', meta: 'الإصدار {v} · SHA-256 {h}…', chrome: 'فتح في Chrome', shortcut: 'أو أضِفه إلى الشاشة الرئيسية (اختصار للمتصفح فقط)', title: 'A-REIT لأندرويد', get: 'تنزيل', close: 'إغلاق' },
   hi: { download: 'A-REIT Android ऐप डाउनलोड करें', meta: 'संस्करण {v} · SHA-256 {h}…', chrome: 'Chrome में खोलें', shortcut: 'या होम स्क्रीन पर जोड़ें (सिर्फ़ ब्राउज़र शॉर्टकट)', title: 'A-REIT Android ऐप', get: 'डाउनलोड', close: 'बंद करें' },
 }
+export const APP_OFFER = Object.fromEntries(Object.entries(BASE_APP_OFFER).map(([locale, copy]) => [locale, {
+  ...copy,
+  download: copy.download.replaceAll('A-REIT', BRAND.id === 'kimeng' ? (locale === 'zh-CN' ? '金英' : 'KIMENG') : 'A-REIT'),
+  title: copy.title.replaceAll('A-REIT', BRAND.id === 'kimeng' ? (locale === 'zh-CN' ? '金英' : 'KIMENG') : 'A-REIT'),
+}])) as typeof BASE_APP_OFFER

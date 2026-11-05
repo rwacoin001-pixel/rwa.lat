@@ -3,11 +3,13 @@ import { test } from 'node:test'
 import vm from 'node:vm'
 import { readFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { testBrandContext } from './brand-test-context.mjs'
 
 const require = createRequire(import.meta.url)
 const ts = require('typescript')
 const exports = {}
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL('../lib/app-handoff.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports, URLSearchParams, encodeURIComponent })
+const compiled = ts.transpileModule(readFileSync(new URL('../lib/app-handoff.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText
+vm.runInNewContext(compiled, { exports, URLSearchParams, encodeURIComponent, require:()=>testBrandContext() })
 const { readAppLoginParams, appReturnUrls, readInjectedHandoff, APP_HANDOFF_COPY } = exports
 // Objects built inside the vm context have its own Object prototype; compare their values.
 const plain = (value) => JSON.parse(JSON.stringify(value))
@@ -33,6 +35,14 @@ test('the return link is pinned to the app package and carries only the code and
   assert.equal(urls.intent, `intent://auth?code=${code}&state=${state}#Intent;scheme=areit;package=com.areit.app;end`)
   assert.equal(urls.scheme, `areit://auth?code=${code}&state=${state}`)
   assert.equal(appReturnUrls('bad code', state), null)
+})
+
+test('Kimeng handoff returns only to the separate Kimeng app', () => {
+  const kimeng = {}
+  vm.runInNewContext(compiled, { exports: kimeng, URLSearchParams, encodeURIComponent, require:()=>testBrandContext('kimeng') })
+  const urls = kimeng.appReturnUrls(code, state)
+  assert.equal(urls.intent, `intent://auth?code=${code}&state=${state}#Intent;scheme=kimeng;package=com.kimeng.app;end`)
+  assert.equal(urls.scheme, `kimeng://auth?code=${code}&state=${state}`)
 })
 
 test('the app page only uses an injected code and verifier of the right shape', () => {

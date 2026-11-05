@@ -39,7 +39,7 @@ function createBrowserPageLifecycle(): WalletPageLifecycle {
 const walletError = (code: string, message: string) => Object.assign(new Error(message), { code })
 
 /** Inside the Android app the wallet returns through areit://wallet (the app comes back to the front, the page waits). */
-export const ANDROID_APP_WALLET_RETURN = 'areit://wallet'
+export const ANDROID_APP_WALLET_RETURN = BRAND.id === 'kimeng' ? 'kimeng://wallet' : 'areit://wallet'
 
 export function buildWalletConnectMetadata(origin: string, inAndroidApp = false) {
   const metadata = { name: BRAND.name, description: `Sign in to ${BRAND.name}`, url: origin, icons: [`${origin}${BRAND.icon512}`] }
