@@ -33,7 +33,7 @@ Incomplete Kimeng drafts can be saved. The ready checkbox requires complete lega
 
 1. Freeze source and run brand/security/admin checks.
 2. Build sequentially with `node scripts/build-production.mjs frontend areit` and `... frontend kimeng`. Never run both against shared output paths concurrently. Preserve the finished A-REIT `.next` and `.open-next` in an ignored immutable archive before starting Kimeng.
-3. Each build verifies its real generated manifest and writes `.open-next/brand-build.json` containing source commit, brand, build ID and Worker hash.
+3. Each build verifies its real generated manifest and writes `.open-next/brand-build.json` containing source commit, brand, build ID, Worker hash and artifact tree digest. The already-bundled server handler is covered; OpenNext's copied build-only `node_modules` junction tree is excluded.
 4. Run `node scripts/check-brand-deployment.mjs kimeng`; it rejects the wrong Worker, routes, source, API or disabled preview protection.
 5. The existing merged-release guard must pass from a clean source checkout matching remote main. Use a separate clean release clone if main is occupied in another worktree; do not reset or clean that worktree.
 6. Deploy with `wrangler.kimeng.jsonc` only. Never deploy this artifact with `wrangler.jsonc`. Verify HTTPS, www redirect, anonymous gate, authenticated preview, private/write denials, identity assets and A-REIT health.
