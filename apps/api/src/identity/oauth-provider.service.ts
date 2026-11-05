@@ -4,6 +4,7 @@ import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto'
 import { DataSource } from 'typeorm'
 import { IdentityCrypto } from './identity-crypto.service'
 import { loadRegistrationConsents, validateRegistrationConsents, type RegistrationConsentAcceptance } from './consent-policy'
+import { KIMENG_ORIGIN } from '../common/site-origin'
 
 export type OAuthProviderName = 'google' | 'github' | 'x'
 
@@ -44,14 +45,16 @@ export class OAuthProviderService {
     this.timeoutMs = boundedInteger(config.get<string>('OAUTH_HTTP_TIMEOUT_MS'), 10_000, 1_000, 30_000)
   }
 
-  async begin(provider: OAuthProviderName, intent: 'login' | 'register' = 'login', consentInput?: unknown) {
+  async begin(provider: OAuthProviderName, intent: 'login' | 'register' = 'login', consentInput?: unknown, kimeng = false) {
     const consents = intent === 'register' ? validateRegistrationConsents(consentInput, await loadRegistrationConsents(this.dataSource, this.config)) : undefined
     const termsVersion = consents?.find((consent) => consent.documentType === 'terms')?.version ?? null
     const privacyVersion = consents?.find((consent) => consent.documentType === 'privacy')?.version ?? null
     const consentedAt = intent === 'register' ? new Date() : null
+    const kimengCallback = `${KIMENG_ORIGIN}/auth/callback/${provider}`
 
     if (provider === 'x') {
       const config = this.xOAuth1Config()
+      if (kimeng) config.redirectUri = kimengCallback
       const requestToken = await this.requestXOAuth1Token(config)
       const encryptedSecret = this.crypto.encrypt(requestToken.secret)
       const state = requestToken.token
@@ -73,7 +76,7 @@ export class OAuthProviderService {
     }
 
     const providerConfig = this.providerConfig(provider)
-    const state = randomBytes(32).toString('base64url')
+    const state = (kimeng ? 'km_' : '') + randomBytes(32).toString('base64url')
     const verifier = randomBytes(48).toString('base64url')
     const challenge = createHash('sha256').update(verifier).digest('base64url')
     const encrypted = this.crypto.encrypt(verifier)
@@ -85,7 +88,7 @@ export class OAuthProviderService {
        VALUES ($1, $2, $3, $4, NULL, $5, $6, $7, $8, $9, $10, $11)`,
       [
         randomUUID(), provider, this.crypto.hashToken(state), encrypted.ciphertext,
-        encrypted.keyVersion, providerConfig.redirectUri, expiresAt,
+        encrypted.keyVersion, kimeng ? kimengCallback : providerConfig.redirectUri, expiresAt,
         intent, termsVersion, privacyVersion, consentedAt,
       ],
     )
@@ -106,8 +109,8 @@ export class OAuthProviderService {
     return { provider, authorizationUrl: authorization.toString(), expiresAt, intent }
   }
 
-  async exchange(provider: OAuthProviderName, code: string, state: string, suppliedRedirectUri?: string): Promise<VerifiedOAuthProfile> {
-    const flow = await this.consumeFlow(provider, state, suppliedRedirectUri)
+  async exchange(provider: OAuthProviderName, code: string, state: string, suppliedRedirectUri?: string, kimeng = false): Promise<VerifiedOAuthProfile> {
+    const flow = await this.consumeFlow(provider, state, suppliedRedirectUri, kimeng)
     if (provider === 'x' && flow.oauth1_request_token_secret_ciphertext) {
       const config = this.xOAuth1Config()
       const requestTokenSecret = this.crypto.decrypt(flow.oauth1_request_token_secret_ciphertext, flow.encryption_key_version)
@@ -195,7 +198,18 @@ export class OAuthProviderService {
     }
   }
 
-  private async consumeFlow(provider: OAuthProviderName, state: string, suppliedRedirectUri?: string): Promise<OAuthFlowRow> {
+  async canReturnToKimeng(provider: 'google' | 'github', state: string): Promise<boolean> {
+    if (!/^km_[A-Za-z0-9_-]{43}$/.test(state)) return false
+    const rows = await this.dataSource.query(
+      `SELECT 1 FROM app.oauth_authorization_flows
+        WHERE provider = $1 AND state_hash = $2 AND redirect_uri = $3
+          AND consumed_at IS NULL AND expires_at > now()`,
+      [provider, this.crypto.hashToken(state), `${KIMENG_ORIGIN}/auth/callback/${provider}`],
+    )
+    return rows.length === 1
+  }
+
+  private async consumeFlow(provider: OAuthProviderName, state: string, suppliedRedirectUri?: string, kimeng = false): Promise<OAuthFlowRow> {
     if (!/^[A-Za-z0-9_-]{16,512}$/.test(state)) throw invalidOAuth('OAuth state is invalid or expired')
     const runner = this.dataSource.createQueryRunner()
     await runner.connect()
@@ -212,6 +226,7 @@ export class OAuthProviderService {
       const flow = rows[0]
       const now = new Date()
       if (!flow || flow.consumed_at || new Date(flow.expires_at) <= now) throw invalidOAuth('OAuth state is invalid or expired')
+      if (kimeng !== (flow.redirect_uri === `${KIMENG_ORIGIN}/auth/callback/${provider}`)) throw invalidOAuth('OAuth flow belongs to a different site')
       if (suppliedRedirectUri && suppliedRedirectUri !== flow.redirect_uri) throw invalidOAuth('OAuth redirect URI does not match the initiated flow')
       await runner.query(
         `UPDATE app.oauth_authorization_flows SET consumed_at = $2 WHERE provider = $1 AND state_hash = $3`,

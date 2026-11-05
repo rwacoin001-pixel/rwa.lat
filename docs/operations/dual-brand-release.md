@@ -34,7 +34,7 @@ Incomplete Kimeng drafts can be saved. The ready checkbox requires complete lega
 1. Freeze source and run brand/security/admin checks.
 2. Build sequentially with `node scripts/build-production.mjs frontend areit` and `... frontend kimeng`. Never run both against shared output paths concurrently. Preserve the finished A-REIT `.next` and `.open-next` in an ignored immutable archive before starting Kimeng.
 3. Each build verifies its real generated manifest and writes `.open-next/brand-build.json` containing source commit, brand, build ID, Worker hash and artifact tree digest. The already-bundled server handler is covered; OpenNext's copied build-only `node_modules` junction tree is excluded.
-4. Run `node scripts/check-brand-deployment.mjs kimeng`; it rejects the wrong Worker, routes, source, API or disabled preview protection.
+4. Run `node scripts/check-brand-deployment.mjs kimeng`; it rejects the wrong Worker, routes, source, API or mismatched compiled and runtime release modes.
 5. The existing merged-release guard must pass from a clean source checkout matching remote main. Use a separate clean release clone if main is occupied in another worktree; do not reset or clean that worktree.
 6. Deploy with `wrangler.kimeng.jsonc` only. Never deploy this artifact with `wrangler.jsonc`. Verify HTTPS, www redirect, anonymous gate, authenticated preview, private/write denials, identity assets and A-REIT health.
 
@@ -44,11 +44,17 @@ Read the current server handoff and re-check live image IDs first. Keep original
 
 If a backend overlay regresses, restore the recorded image tag. Existing JSON fields and new profile snapshots can remain stored; an old application ignores them. Do not restore an old database over newer transactions. If Kimeng regresses, return it to closed mode or roll back only its Worker version. This does not remove accounts or alter balances.
 
-## Security / acceptance still required before public account launch
+## Opening account and financial access
+
+Deploy the additive API overlay before either frontend. Deploy the A-REIT Worker before Kimeng: the original Google and GitHub provider callbacks first confirm the unconsumed server-side state and then return to Kimeng. Kimeng also requires the original browser state. X uses a direct Kimeng callback and needs a live provider allowlist check. Related Origin Requests at `https://a-reit.com/.well-known/webauthn` keep the existing passkey RP ID; clients without support can use another enrolled sign-in method.
+
+Use `public` for both the Kimeng build and Worker and provision its signed edge binding before the switch. Without that binding the Worker fails closed. Verify same-origin email, wallet and authorization requests, rejected unsigned/cross-site requests, and that financial endpoints still enforce session, step-up and operational switches. Never submit a real deposit, investment or withdrawal as a smoke test. Roll Kimeng back to the previous preview version if production checks fail; then assess the API and A-REIT rollback separately.
+
+## Remaining security work
 
 The prior audit's database runtime superuser, public-API hot-wallet key, admin authentication, persistent origin firewall policy, attachment scanning, dependency and log-redaction work are not resolved by this frontend release. Production Swagger exposure is additionally disabled in source; the earlier Caddy documentation block remains defense in depth.
 
-Trusted per-brand server context, complete dual-origin OAuth/email/wallet/Passkey flows, notification/document snapshots, supplier allowlists, shared-account negative/financial-idempotency tests, backup-restore evidence and real iPhone/Android acceptance remain required. No real-money acceptance is implied by visual checks or unit tests. No automatic cross-domain SSO is introduced.
+Notification/document snapshots, supplier allowlists, backup-restore evidence and real iPhone/Android acceptance remain separate work. No real-money acceptance is implied by visual checks or unit tests. No automatic cross-domain SSO is introduced.
 
 ## Release evidence
 

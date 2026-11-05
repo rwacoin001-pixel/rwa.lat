@@ -14,7 +14,7 @@
   "vars": {
     "SITE_BRAND": "kimeng",
     "API_INTERNAL_URL": "https://api.a-reit.com",
-    "KIMENG_RELEASE_MODE": "preview"
+    "KIMENG_RELEASE_MODE": "public"
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } }
 }

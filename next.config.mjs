@@ -163,7 +163,7 @@ const localProxy = process.env.RWA_LOCAL_PROXY === '1'
 const proxyTarget = process.env.RWA_PROXY_TARGET || 'https://api.a-reit.com'
 
 const nextConfig = {
-  env: { NEXT_PUBLIC_SITE_BRAND: buildBrand.id, NEXT_PUBLIC_BRAND_PREVIEW: buildBrand.id === 'kimeng' ? '1' : '0' },
+  env: { NEXT_PUBLIC_SITE_BRAND: buildBrand.id, NEXT_PUBLIC_BRAND_PREVIEW: buildBrand.id === 'kimeng' && process.env.KIMENG_RELEASE_MODE !== 'public' ? '1' : '0' },
   // OpenNext consumes the standalone server output for Cloudflare Workers builds.
   output: "standalone",
   // The local development badge overlaps the app's top-left back button.

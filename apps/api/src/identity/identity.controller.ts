@@ -1,4 +1,6 @@
-import { BadRequestException, Body, Controller, Get, Header, Headers, Param, Post, UnauthorizedException } from '@nestjs/common'
+import { BadRequestException, Body, Controller, Get, Header, Headers, Param, Post, Req, UnauthorizedException } from '@nestjs/common'
+import type { Request } from 'express'
+import { isKimengRequest, kimengOrigin } from '../common/site-origin'
 import { ApiCreatedResponse, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { IdentityService } from './identity.service'
 import { RegisterEmailDto } from './dto/register-email.dto'
@@ -117,8 +119,8 @@ export class IdentityController {
   @Post('register/email')
   @ApiOperation({ summary: 'Register a new account with an email address' })
   @ApiCreatedResponse({ description: 'Account created; email verification required.' })
-  async registerEmail(@Body() dto: RegisterEmailRequestDto) {
-    return this.identity.registerEmail(dto.email, dto.locale, dto.consents)
+  async registerEmail(@Body() dto: RegisterEmailRequestDto, @Req() request?: Request) {
+    return this.identity.registerEmail(dto.email, dto.locale, dto.consents, kimengOrigin(request))
   }
 
   @Post('verify-email')
@@ -131,8 +133,8 @@ export class IdentityController {
   @Post('login/email')
   @ApiOperation({ summary: 'Send a single-use email sign-in link (magic link)' })
   @ApiOkResponse({ description: 'Sign-in link dispatched if the address is registered.' })
-  async loginEmail(@Body() dto: LoginEmailDto) {
-    return this.identity.requestEmailLogin(dto.email)
+  async loginEmail(@Body() dto: LoginEmailDto, @Req() request?: Request) {
+    return this.identity.requestEmailLogin(dto.email, kimengOrigin(request))
   }
 
   @Post('login/email/confirm')
@@ -152,48 +154,55 @@ export class IdentityController {
   @Post('passkey/verify')
   @ApiOperation({ summary: 'Verify a passkey assertion and open a session' })
   @ApiOkResponse({ description: 'Passkey login completed; session issued.' })
-  async passkeyVerify(@Body() dto: PasskeyLoginVerifyDto) {
-    return this.identity.finishPasskeyLogin(dto.challengeId, dto.response, dto.device)
+  async passkeyVerify(@Body() dto: PasskeyLoginVerifyDto, @Req() request?: Request) {
+    return this.identity.finishPasskeyLogin(dto.challengeId, dto.response, dto.device, kimengOrigin(request))
   }
 
   @Post('wallet/challenge')
   @ApiOperation({ summary: 'Issue a single-use nonce for wallet signature' })
   @ApiOkResponse({ description: 'Challenge nonce issued.' })
-  async walletChallenge(@Body() dto: WalletChallengeDto) {
-    return this.identity.createWalletChallenge(dto.address, dto.chainId)
+  async walletChallenge(@Body() dto: WalletChallengeDto, @Req() request?: Request) {
+    return this.identity.createWalletChallenge(dto.address, dto.chainId, kimengOrigin(request))
   }
 
   @Post('wallet/verify')
   @ApiOperation({ summary: 'Verify wallet signature and open a session' })
   @ApiOkResponse({ description: 'Wallet authenticated; session issued.' })
-  async walletVerify(@Body() dto: WalletVerifyDto) {
-    return this.identity.verifyWalletSignature(dto.address, dto.signature, dto.nonce, dto.device, dto.consents)
+  async walletVerify(@Body() dto: WalletVerifyDto, @Req() request?: Request) {
+    return this.identity.verifyWalletSignature(dto.address, dto.signature, dto.nonce, dto.device, dto.consents, kimengOrigin(request))
   }
 
   @Post('oauth/:provider')
   @ApiOperation({ summary: 'Exchange Google OAuth 2 code or verified X OAuth 1.0a verifier' })
   @ApiOkResponse({ description: 'OAuth identity resolved after server-side provider verification.' })
-  async oauth(@Param('provider') provider: string, @Body() dto: OAuthCallbackDto) {
+  async oauth(@Param('provider') provider: string, @Body() dto: OAuthCallbackDto, @Req() request?: Request) {
     if (provider !== 'google' && provider !== 'github' && provider !== 'x') {
       throw new BadRequestException({ code: 'OAUTH_PROVIDER_UNSUPPORTED', message: 'Unsupported OAuth provider' })
     }
-    return this.identity.exchangeOAuthCode(provider, dto.code, dto.state, dto.redirectUri, dto.device)
+    return this.identity.exchangeOAuthCode(provider, dto.code, dto.state, dto.redirectUri, dto.device, isKimengRequest(request))
   }
 
   @Post('oauth/:provider/start')
   @ApiOperation({ summary: 'Create a server-bound Google OAuth 2 or X OAuth 1.0a authorization URL' })
-  async oauthStart(@Param('provider') provider: string, @Body() dto?: OAuthStartDto) {
+  async oauthStart(@Param('provider') provider: string, @Body() dto?: OAuthStartDto, @Req() request?: Request) {
     if (provider !== 'google' && provider !== 'github' && provider !== 'x') {
       throw new BadRequestException({ code: 'OAUTH_PROVIDER_UNSUPPORTED', message: 'Unsupported OAuth provider' })
     }
-    return this.identity.beginOAuth(provider, dto?.intent ?? 'login', dto?.consents)
+    return this.identity.beginOAuth(provider, dto?.intent ?? 'login', dto?.consents, isKimengRequest(request))
+  }
+
+  @Post('oauth/:provider/kimeng-return')
+  @Header('Cache-Control', 'no-store')
+  async kimengReturn(@Param('provider') provider: string, @Body('state') state: unknown) {
+    if ((provider !== 'google' && provider !== 'github') || typeof state !== 'string') return { kimeng: false }
+    return { kimeng: await this.identity.canReturnOAuthToKimeng(provider, state) }
   }
 
   @Post('recover')
   @ApiOperation({ summary: 'Request an account recovery token' })
   @ApiOkResponse({ description: 'Recovery request processed.' })
-  async recover(@Body() dto: RecoverDto) {
-    return this.identity.recover(dto.email)
+  async recover(@Body() dto: RecoverDto, @Req() request?: Request) {
+    return this.identity.recover(dto.email, kimengOrigin(request))
   }
 
   @Post('recover/confirm')

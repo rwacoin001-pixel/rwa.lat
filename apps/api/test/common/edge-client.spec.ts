@@ -59,6 +59,20 @@ describe('edge client verification', () => {
     expect(activityFromRequest(request, 200)).toMatchObject({ ip: '203.0.113.7', country: 'JP', region: '東京都', city: '新宿区' })
     expect(request.headers['x-client-sig']).toBeUndefined()
   })
+
+  it('only trusts Kimeng with a fresh brand-bound signature', () => {
+    const ip = '203.0.113.7', now = Date.now(), seconds = Math.floor(now / 1000)
+    const v1 = { ...signedHeaders(ip, 'JP', seconds), 'x-site-brand': 'kimeng' }
+    expect(verifyEdgeClient(v1, SECRET, now)).toEqual({ ip, country: 'JP' })
+    const v2 = { ...v1, 'x-client-sig': `v2.${seconds}.${edgeClientSignature(SECRET, seconds, ip, 'JP', 'kimeng')}` }
+    expect(verifyEdgeClient(v2, SECRET, now)).toEqual({ ip, country: 'JP', brand: 'kimeng' })
+    expect(verifyEdgeClient({ ...v2, 'x-site-brand': 'areit' }, SECRET, now)).toBeNull()
+    expect(verifyEdgeClient(v2, SECRET, now + 121_000)).toBeNull()
+    const { request, response } = exchange(v2)
+    createEdgeClientMiddleware(SECRET)(request, response, () => undefined)
+    expect(response.locals.edgeClient).toMatchObject({ brand: 'kimeng' })
+    expect(request.headers['x-site-brand']).toBeUndefined()
+  })
 })
 
 describe('rate limiting behind the frontend Worker', () => {

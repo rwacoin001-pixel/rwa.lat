@@ -342,7 +342,7 @@ describe('IdentityService', () => {
     expect(writes).toHaveLength(2)
     expect(writes.every(({ params }) => params[3] instanceof Date && params[3].toISOString() === '2026-09-20T12:00:00.000Z')).toBe(true)
     expect(oauthProvider.exchange).toHaveBeenCalledWith(
-      'google', 'provider-code', 'state-value-with-minimum-length', undefined,
+      'google', 'provider-code', 'state-value-with-minimum-length', undefined, false,
     )
   })
 

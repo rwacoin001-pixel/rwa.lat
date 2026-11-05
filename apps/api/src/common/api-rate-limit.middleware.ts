@@ -47,7 +47,7 @@ const RULES: RateLimitRule[] = [
     limit: 10,
     windowMs: MINUTE,
     perPath: true,
-    matches: (method, path) => method === 'POST' && /^\/v1\/auth\/(verify-email|email-code\/confirm|login\/(password|email\/confirm)|flow\/(complete|resend)|password\/manage|passkey\/(challenge|verify)|wallet\/verify|oauth\/(google|x)(?:\/start)?|recover\/confirm|demo\/login)$/.test(path),
+    matches: (method, path) => method === 'POST' && /^\/v1\/auth\/(verify-email|email-code\/confirm|login\/(password|email\/confirm)|flow\/(complete|resend)|password\/manage|passkey\/(challenge|verify)|wallet\/(challenge|verify)|oauth\/(google|github|x)(?:\/start)?|recover\/confirm|demo\/login)$/.test(path),
   },
   {
     name: 'registration',

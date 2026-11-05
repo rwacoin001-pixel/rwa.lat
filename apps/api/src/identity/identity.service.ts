@@ -174,11 +174,11 @@ export class IdentityService {
 
   async consentRequirements() { return { required: await loadRegistrationConsents(this.dataSource, this.config) } }
 
-  async registerEmail(email: string, locale = 'en', consentInput?: unknown): Promise<{ accepted: true }> {
+  async registerEmail(email: string, locale = 'en', consentInput?: unknown, siteOrigin?: string): Promise<{ accepted: true }> {
     const userId = await this.prepareEmailRegistration(email, locale, consentInput)
     const normalized = email.toLowerCase().trim()
     const issued = await this.issueOneTimeToken(userId, 'email_verification')
-    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', ...issued, locale })
+    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', ...issued, locale, siteOrigin })
     return { accepted: true }
   }
 
@@ -272,13 +272,13 @@ export class IdentityService {
     return { ...(await this.issueSession(userId, device)), verified: true }
   }
 
-  async createWalletChallenge(address: string, chainId = 1): Promise<{ address: string; nonce: string; registrationRequired: boolean }> {
+  async createWalletChallenge(address: string, chainId = 1, siteOrigin?: string): Promise<{ address: string; nonce: string; registrationRequired: boolean }> {
     const normalized = address.toLowerCase()
     const identifierHash = this.crypto.hashIdentifier(normalized)
     const existingIdentity = await this.loginIdentities.findOne({
       where: { kind: 'external_wallet', identifierHash },
     })
-    const origin = this.config.get<string>('PUBLIC_APP_URL')
+    const origin = siteOrigin ?? this.config.get<string>('PUBLIC_APP_URL')
     if (!origin) throw new ServiceUnavailableException({ code: 'WALLET_ORIGIN_UNAVAILABLE', message: 'Wallet sign-in is not configured.' })
     const issuedAt = new Date()
     const expiresAt = new Date(issuedAt.getTime() + 5 * 60 * 1000)
@@ -298,8 +298,13 @@ export class IdentityService {
     nonce: string,
     device?: { fingerprint?: string; name?: string },
     consentInput?: unknown,
+    siteOrigin?: string,
   ): Promise<AuthResult> {
     const normalized = address.toLowerCase()
+    const configured = siteOrigin ?? this.config.get<string>('PUBLIC_APP_URL')
+    if (!configured || !nonce.startsWith(`${new URL(configured).origin} wants you to sign in with your Ethereum account:\n`)) {
+      throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.NONCE_MISMATCH, message: 'Wallet challenge belongs to a different site.' })
+    }
     const [challenge] = await this.dataSource.query('SELECT address FROM app.wallet_sign_in_challenges WHERE message_hash = $1 AND address = $2 AND consumed_at IS NULL AND expires_at > now()', [this.crypto.hashToken(nonce), normalized])
     if (!challenge) throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.NONCE_MISMATCH, message: 'Wallet challenge is invalid or expired.' })
     if (!this.crypto.verifyWalletSignature(normalized, nonce, signature)) {
@@ -463,13 +468,17 @@ export class IdentityService {
     return email.userId
   }
 
-  async beginOAuth(provider: OAuthProviderName, intent: 'login' | 'register' = 'login', consentInput?: unknown) {
+  async beginOAuth(provider: OAuthProviderName, intent: 'login' | 'register' = 'login', consentInput?: unknown, kimeng = false) {
     const consents = intent === 'register' ? validateRegistrationConsents(consentInput, await loadRegistrationConsents(this.dataSource, this.config)) : undefined
-    const flow=await this.oauthProvider.begin(provider, intent, consents)
+    const flow=await this.oauthProvider.begin(provider, intent, consents, kimeng)
     const url=new URL(flow.authorizationUrl)
     const state=url.searchParams.get(provider==='x' ? 'oauth_token' : 'state')
     if (state) await this.referral?.rememberOAuth(this.crypto.hashToken(state))
     return flow
+  }
+
+  canReturnOAuthToKimeng(provider: 'google' | 'github', state: string) {
+    return this.oauthProvider.canReturnToKimeng(provider, state)
   }
 
   async exchangeOAuthCode(
@@ -478,8 +487,9 @@ export class IdentityService {
     state: string,
     redirectUri?: string,
     device?: { fingerprint?: string; name?: string },
+    kimeng = false,
   ): Promise<AuthResult> {
-    const verified = await this.oauthProvider.exchange(provider, code, state, redirectUri)
+    const verified = await this.oauthProvider.exchange(provider, code, state, redirectUri, kimeng)
     const referralAttribution=await this.referral?.oauthAttribution(this.crypto.hashToken(state))
     try {
       return await this.upsertVerifiedOAuthSubject(provider, verified.subject, {
@@ -524,7 +534,7 @@ export class IdentityService {
     }
   }
 
-  async recover(email: string): Promise<{ accepted: true }> {
+  async recover(email: string, siteOrigin?: string): Promise<{ accepted: true }> {
     const normalized = email.toLowerCase().trim()
     const hash = this.crypto.hashIdentifier(normalized)
     const identity = await this.loginIdentities.findOne({
@@ -535,7 +545,7 @@ export class IdentityService {
     }
     const issued = await this.issueOneTimeToken(identity.userId, 'account_recovery')
     const user = await this.users.findOne({ where: { id: identity.userId } })
-    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'account_recovery', ...issued, locale: user?.locale })
+    await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'account_recovery', ...issued, locale: user?.locale, siteOrigin })
     return { accepted: true }
   }
 
@@ -544,7 +554,7 @@ export class IdentityService {
    * Anti-enumeration: unregistered addresses receive the same `{ accepted: true }` response.
    * Pending (unverified) addresses receive a fresh verification link instead.
    */
-  async requestEmailLogin(email: string): Promise<{ accepted: true }> {
+  async requestEmailLogin(email: string, siteOrigin?: string): Promise<{ accepted: true }> {
     const normalized = email.toLowerCase().trim()
     const hash = this.crypto.hashIdentifier(normalized)
     const identity = await this.loginIdentities.findOne({
@@ -556,10 +566,10 @@ export class IdentityService {
     const user = await this.users.findOne({ where: { id: identity.userId } })
     if (identity.state === 'verified') {
       const issued = await this.issueOneTimeToken(identity.userId, 'email_login')
-      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_login', ...issued, locale: user?.locale })
+      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_login', ...issued, locale: user?.locale, siteOrigin })
     } else {
       const issued = await this.issueOneTimeToken(identity.userId, 'email_verification')
-      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', ...issued, locale: user?.locale })
+      await this.delivery.sendOneTimeLink({ email: normalized, purpose: 'email_verification', ...issued, locale: user?.locale, siteOrigin })
     }
     return { accepted: true }
   }
@@ -629,6 +639,7 @@ export class IdentityService {
     challengeId: string,
     response: Record<string, unknown>,
     device?: { fingerprint?: string; name?: string },
+    siteOrigin?: string,
   ): Promise<AuthResult> {
     const challenge = await this.passkeyChallenges.findOne({
       where: { id: challengeId, kind: 'passkey_login', consumedAt: IsNull() },
@@ -660,7 +671,7 @@ export class IdentityService {
       throw new UnauthorizedException({ code: IDENTITY_ERROR_CODES.INVALID_VERIFICATION, message: 'The passkey does not belong to this account.' })
     }
     const rpId = this.config.get<string>('PASSKEY_RP_ID') ?? 'localhost'
-    const origin = this.config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3030'
+    const origin = siteOrigin ?? this.config.get<string>('PASSKEY_ORIGIN') ?? 'http://localhost:3030'
     const verification = await verifyAuthenticationResponse({
       response: response as unknown as AuthenticationResponseJSON,
       expectedChallenge: binding.challenge,

@@ -3,6 +3,7 @@ import { consumeOAuthState, rememberOAuthState } from './oauth-state'
 import { authDevice } from './auth-flow'
 import type { ApiSchemas } from './types'
 import type { WalletProvider } from './wallet-connection'
+import { BRAND } from '@/lib/brand/build-brand'
 
 export type AuthSession = { token: string; sessionId?: string; userId?: string }
 export type AuthConsent = ApiSchemas['ConsentAcceptanceDto'] & { accepted: true }
@@ -72,7 +73,10 @@ export async function confirmOAuth(provider: 'google' | 'github' | 'x', code: st
   // Best-effort cross-context guard only: an installed PWA and the browser that returns from the
   // provider can hold different storage, so a missing entry must NOT block the exchange — the API
   // validates the state itself (single use, 10-minute TTL, redirect-URI binding).
-  consumeOAuthState(localStorage, provider, state)
+  const originatedHere = consumeOAuthState(localStorage, provider, state)
+  if (BRAND.id === 'kimeng' && !originatedHere) {
+    return { ok: false, error: { status: 400, code: 'OAUTH_CALLBACK_INVALID', message: '请在金英重新发起登录' } }
+  }
   const response = await request<AuthResponse>(`/v1/auth/oauth/${provider}`, { method: 'POST', body: JSON.stringify({ code, state, device: authDevice() }) })
   if (!response.ok) return response
   const mapped = mapLogin(response.data)

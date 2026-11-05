@@ -27,7 +27,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     this.delivery.close()
   }
 
-  async sendOneTimeLink(input: { email: string; purpose: IdentityOneTimeTokenPurpose; token: string; locale?: string; expiresAt?: Date }): Promise<void> {
+  async sendOneTimeLink(input: { email: string; purpose: IdentityOneTimeTokenPurpose; token: string; locale?: string; expiresAt?: Date; siteOrigin?: string }): Promise<void> {
     if (this.demoMode) {
       this.demoOutbox.set(this.key(input.email, input.purpose), input.token)
       return
@@ -38,7 +38,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
         message: 'Account email delivery is not configured.',
       })
     }
-    const link = this.oneTimeLink(input.purpose, input.token)
+    const link = this.oneTimeLink(input.purpose, input.token, input.siteOrigin ?? this.publicAppUrl)
     try {
       const template = input.purpose === 'email_verification' ? 'verification-link'
         : input.purpose === 'email_login' ? 'magic-login-link' : 'recovery-link'
@@ -92,13 +92,13 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     return `${purpose}:${email.trim().toLowerCase()}`
   }
 
-  private oneTimeLink(purpose: IdentityOneTimeTokenPurpose, token: string): string {
+  private oneTimeLink(purpose: IdentityOneTimeTokenPurpose, token: string, origin: string): string {
     const path = purpose === 'email_verification'
       ? '/verify-email'
       : purpose === 'email_login'
         ? '/auth/callback/email'
         : '/recovery'
-    const link = new URL(path, this.publicAppUrl)
+    const link = new URL(path, origin)
     link.searchParams.set('token', token)
     return link.toString()
   }

@@ -15,6 +15,7 @@ import {
 } from './dto/security.dto'
 import { SecurityService, type SecurityActor } from './security.service'
 import { SessionAuthGuard } from './session-auth.guard'
+import { kimengOrigin } from '../common/site-origin'
 
 @ApiTags('security')
 @ApiBearerAuth()
@@ -126,7 +127,7 @@ export class SecurityController {
   @Post('passkeys/registration/finish')
   @ApiOperation({ summary: 'Verify and persist a WebAuthn passkey registration' })
   finishPasskeyRegistration(@CurrentAuth() actor: SecurityActor, @Body() dto: PasskeyFinishDto, @Req() request: AuthenticatedRequest) {
-    return this.security.finishPasskeyRegistration(actor, dto.challengeId, dto.response, dto.label, this.requestId(request))
+    return this.security.finishPasskeyRegistration(actor, dto.challengeId, dto.response, dto.label, this.requestId(request), kimengOrigin(request))
   }
 
   @Post('step-up/passkey')
@@ -138,7 +139,7 @@ export class SecurityController {
   @Post('step-up/passkey/finish')
   @ApiOperation({ summary: 'Verify WebAuthn assertion and issue a five-minute reauthentication token' })
   finishPasskeyAssertion(@CurrentAuth() actor: SecurityActor, @Body() dto: PasskeyAssertionFinishDto, @Req() request: AuthenticatedRequest) {
-    return this.security.finishPasskeyAssertion(actor, dto.challengeId, dto.response, this.requestId(request))
+    return this.security.finishPasskeyAssertion(actor, dto.challengeId, dto.response, this.requestId(request), kimengOrigin(request))
   }
 
   @Post('devices/current/trust')

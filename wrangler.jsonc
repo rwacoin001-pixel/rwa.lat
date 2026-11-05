@@ -16,7 +16,5 @@
   "vars": {
     "API_INTERNAL_URL": "https://api.a-reit.com"
   },
-  "observability": {
-    "enabled": true
-  }
+  "observability": { "enabled": true, "logs": { "invocation_logs": false } }
 }

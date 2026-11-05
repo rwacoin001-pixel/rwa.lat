@@ -48,6 +48,29 @@ describe('OAuthProviderService', () => {
     jest.restoreAllMocks()
   })
 
+  it('binds a Kimeng Google flow while leaving the registered provider callback unchanged', async () => {
+    const dataSource = { query: jest.fn().mockResolvedValueOnce([]).mockResolvedValueOnce([{}]) }
+    const service = new OAuthProviderService(dataSource as never, crypto() as never, config('google') as never)
+    const url = new URL((await service.begin('google', 'login', undefined, true)).authorizationUrl)
+    const state = url.searchParams.get('state')!
+    expect(state).toMatch(/^km_[A-Za-z0-9_-]{43}$/)
+    expect(url.searchParams.get('redirect_uri')).toBe('https://app.rwa.lat/auth/callback/google')
+    expect(dataSource.query.mock.calls[0][1]).toContain('https://kimengresearch.com/auth/callback/google')
+    expect(await service.canReturnToKimeng('google', state)).toBe(true)
+    expect(dataSource.query.mock.calls[1][1]).toEqual(['google', Buffer.from(`hash:${state}`), 'https://kimengresearch.com/auth/callback/google'])
+  })
+
+  it('rejects a Kimeng flow on the legacy origin before consuming it', async () => {
+    const tx = runner({
+      redirect_uri: 'https://kimengresearch.com/auth/callback/google',
+      expires_at: new Date(Date.now() + 60_000), consumed_at: null,
+    })
+    const service = new OAuthProviderService({ createQueryRunner: () => tx } as never, crypto() as never, config('google') as never)
+    await expect(service.exchange('google', 'code', 'km_' + 'a'.repeat(43))).rejects.toThrow()
+    expect(tx.query).toHaveBeenCalledTimes(1)
+    expect(tx.rollbackTransaction).toHaveBeenCalled()
+  })
+
   it('persists a hashed state and returns a Google authorization-code URL bound to S256 PKCE', async () => {
     const dataSource = { query: jest.fn() }
     const service = new OAuthProviderService(dataSource as never, crypto() as never, config('google') as never)

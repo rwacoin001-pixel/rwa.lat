@@ -309,12 +309,13 @@ export class SecurityService {
     response: Record<string, unknown>,
     label: string | undefined,
     requestId: string,
+    siteOrigin?: string,
   ) {
     const challenge = await this.loadChallenge(actor, challengeId, 'passkey_registration')
     const verification = await verifyRegistrationResponse({
       response: response as unknown as RegistrationResponseJSON,
       expectedChallenge: this.crypto.decrypt(challenge.challengeCiphertext),
-      expectedOrigin: this.origin,
+      expectedOrigin: siteOrigin ?? this.origin,
       expectedRPID: this.rpId,
       requireUserVerification: true,
     })
@@ -362,6 +363,7 @@ export class SecurityService {
     challengeId: string,
     response: Record<string, unknown>,
     requestId: string,
+    siteOrigin?: string,
   ) {
     const challenge = await this.loadChallenge(actor, challengeId, 'passkey_assertion')
     const credentialId = typeof response.id === 'string' ? response.id : ''
@@ -370,7 +372,7 @@ export class SecurityService {
     const verification = await verifyAuthenticationResponse({
       response: response as unknown as AuthenticationResponseJSON,
       expectedChallenge: this.crypto.decrypt(challenge.challengeCiphertext),
-      expectedOrigin: this.origin,
+      expectedOrigin: siteOrigin ?? this.origin,
       expectedRPID: this.rpId,
       requireUserVerification: true,
       credential: {
