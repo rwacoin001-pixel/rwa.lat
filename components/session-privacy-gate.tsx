@@ -1,6 +1,7 @@
 'use client'
 
 import { brandText } from '@/lib/brand/build-brand'
+import { PHONE_GUIDE_PATH } from '@/lib/brand/phone-access.mjs'
 
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
@@ -56,7 +57,7 @@ export default function SessionPrivacyGate({ children }: { children: ReactNode }
     }
   }, [])
   // The desktop trust presentation is public, even when an old mobile session exists.
-  const publicAuth = pathname === '/desktop' || pathname === '/desktop/' ||
+  const publicAuth = pathname === '/desktop' || pathname === '/desktop/' || pathname === PHONE_GUIDE_PATH ||
     /^\/(?:login|register|recover|auth)(?:\/|$)/.test(pathname) || pathname === '/terms' || pathname === '/privacy'
 
   const remember = () => {

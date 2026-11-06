@@ -5,6 +5,7 @@ import {withClientHeaders} from '../../lib/edge-client-headers.mjs'
 import {isPublicRead,servePublicRead} from '../../lib/edge-public-cache.mjs'
 import {brandRequestGate,securePreviewResponse} from '../../lib/brand/preview-gate.mjs'
 import {kimengOAuthReturn} from '../../lib/brand/oauth-return.mjs'
+import {kimengPhoneRedirect} from '../../lib/brand/phone-access.mjs'
 
 // Public discovery bypasses the Next runtime entirely, keeping Worker CPU small.
 export default {
@@ -54,6 +55,10 @@ async function handleRequest(request,env,ctx,gate) {
     if(path.startsWith('/_next/static/'))return new Response('Not found',{status:404,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}})
     // Local-only preview pages: their code already calls notFound() in production, but that renders a 200 page. Answer 404 for real.
     if(path==='/design-preview'||path==='/dev'||path.startsWith('/dev/'))return new Response('Not found',{status:404,headers:{'content-type':'text/plain; charset=utf-8','cache-control':'no-store'}})
+    if (gate.kimeng) {
+      const phoneRedirect = kimengPhoneRedirect(request)
+      if (phoneRedirect) return phoneRedirect
+    }
     if(request.method==='GET'){
       const matched=/^\/api\/polymarket\/(feed|(?:event|market)\/[^/]+)$/.exec(path)
       if(matched)return proxyPublicPrediction(request,matched[1],env.API_INTERNAL_URL)

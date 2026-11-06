@@ -3,6 +3,7 @@ import {test} from 'node:test'
 import {brandRequestGate} from '../lib/brand/preview-gate.mjs'
 import {kimengOAuthReturn} from '../lib/brand/oauth-return.mjs'
 import {withClientHeaders} from '../lib/edge-client-headers.mjs'
+import {kimengPhoneRedirect, PHONE_GUIDE_PATH} from '../lib/brand/phone-access.mjs'
 
 const env = {SITE_BRAND:'kimeng', KIMENG_RELEASE_MODE:'public', EDGE_CLIENT_SIGNING_SECRET:'test-key'}
 const origin = 'https://kimengresearch.com'
@@ -40,4 +41,33 @@ test('OAuth relay verifies state and returns only to the fixed Kimeng callback',
   assert.equal(result.headers.get('location'),`${origin}/auth/callback/google?code=example&state=${state}`)
   assert.equal(result.headers.get('cache-control'),'no-store')
   assert.equal(await kimengOAuthReturn(new URL('https://a-reit.com/auth/callback/google?state='+ 'b'.repeat(43)),api),null)
+})
+
+test('desktop application documents always redirect to the phone guide without carrying query parameters', () => {
+  for (const path of ['/home', '/markets?tab=assets', '/assets/cash/deposit', '/community', '/profile', '/ai-assistant']) {
+    const response = kimengPhoneRedirect(new Request(origin + path, {
+      headers: {'user-agent': 'Mozilla/5.0 (Windows NT 10.0)', 'sec-ch-ua-mobile': '?0'},
+    }))
+    assert.equal(response.status, 307, path)
+    assert.equal(response.headers.get('location'), origin + PHONE_GUIDE_PATH)
+    assert.match(response.headers.get('cache-control'), /no-store/)
+  }
+  assert.equal(kimengPhoneRedirect(new Request(origin + '/')).headers.get('location'), origin + '/login')
+  for (const path of [PHONE_GUIDE_PATH, '/login', '/register', '/auth/callback/google', '/terms', '/privacy', '/r/ABC123', '/api/referral/invite', '/v1/ai/status']) {
+    assert.equal(kimengPhoneRedirect(new Request(origin + path)), null, path)
+  }
+})
+
+test('iPhone, Android phone and the packaged WebView retain application routing', () => {
+  for (const headers of [
+    {'user-agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) Mobile/15E148'},
+    {'user-agent': 'Mozilla/5.0 (Linux; Android 15; Pixel 9) Mobile Safari/537.36'},
+    {'user-agent': 'Mozilla/5.0 (Linux; Android 15) RwaLatAndroidTrial/1.0.1'},
+    {'user-agent': 'Mozilla/5.0 (Linux; Android 15)', 'sec-ch-ua-mobile': '?1'},
+  ]) {
+    assert.equal(kimengPhoneRedirect(new Request(origin + '/home', {headers})), null)
+  }
+  for (const userAgent of ['Mozilla/5.0 (iPad; CPU OS 18_0) Mobile/15E148', 'Mozilla/5.0 (Linux; Android 15) Safari/537.36']) {
+    assert.equal(kimengPhoneRedirect(new Request(origin + '/home', {headers: {'user-agent': userAgent}})).status, 307)
+  }
 })

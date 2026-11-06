@@ -4,8 +4,6 @@ import { useSyncExternalStore } from 'react'
 import { BRAND } from './brand/build-brand'
 
 const DESKTOP = '(min-width: 761px) and (pointer: fine) and (display-mode: browser)'
-export const DESKTOP_INSTALL_KEY = 'kimeng.desktop-install'
-
 function desktopSnapshot() {
   return BRAND.id === 'kimeng' && window.matchMedia(DESKTOP).matches &&
     !/Android|iPhone|iPad|iPod|Mobile/.test(navigator.userAgent) &&

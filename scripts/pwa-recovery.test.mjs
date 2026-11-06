@@ -3,10 +3,10 @@ import {test} from 'node:test'
 import {readFileSync} from 'node:fs'
 import vm from 'node:vm'
 
-function worker(fetcher,stored=new Map(),{windows=[],origin='https://rwa.lat'}={}){
+function worker(fetcher,stored=new Map(),{windows=[],origin='https://rwa.lat',userAgent='Mozilla/5.0 (Windows NT 10.0)'}={}){
   const handlers={},writes=[],deleted=[]
   const caches={match:async request=>stored.get(typeof request==='string'?request:request.url),open:async()=>({put:async(key,value)=>{const url=typeof key==='string'?key:key.url;writes.push(url);stored.set(url,value)}}),keys:async()=>['rwa-lat-offline-v11','rwa-lat-offline-v12','a-reit-offline-v3','other-app-cache'],delete:async key=>deleted.push(key)}
-  vm.runInNewContext(readFileSync('public/sw.js','utf8'),{setTimeout,self:{location:{origin},addEventListener:(key,fn)=>{handlers[key]=fn},skipWaiting(){},clients:{claim(){},matchAll:async()=>windows}},caches,fetch:fetcher,URL,Promise,Response,Date})
+  vm.runInNewContext(readFileSync('public/sw.js','utf8'),{setTimeout,self:{location:{origin},navigator:{userAgent},addEventListener:(key,fn)=>{handlers[key]=fn},skipWaiting(){},clients:{claim(){},matchAll:async()=>windows}},caches,fetch:fetcher,URL,Promise,Response,Date})
   return {writes,deleted,async request(path,mode='navigate'){
     const tasks=[];let result
     handlers.fetch({request:{url:origin+path,mode,method:'GET'},respondWith:value=>{result=value},waitUntil:task=>tasks.push(task)})
@@ -31,13 +31,24 @@ test('Kimeng keeps public route shells and falls back to its offline page for ac
   const origin='https://kimengresearch.com'
   const stored=new Map([['/offline-kimeng',new Response('kimeng-offline')]])
   let offline=false
-  const sw=worker(async()=>{if(offline)throw new Error('offline');return new Response('live-shell')},stored,{origin})
+  const sw=worker(async()=>{if(offline)throw new Error('offline');return new Response('live-shell')},stored,{origin,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0) Mobile/15E148'})
   assert.equal(await (await sw.request('/markets')).text(),'live-shell')
   assert.equal(await (await sw.request('/assets')).text(),'live-shell')
   assert.deepEqual(sw.writes,[origin+'/markets'])
   offline=true
   assert.equal(await (await sw.request('/assets')).text(),'kimeng-offline')
   assert.equal(await (await sw.request('/markets')).text(),'live-shell')
+})
+
+test('Kimeng desktop never replays an application shell that was cached before phone gating',async()=>{
+  const origin='https://kimengresearch.com'
+  const stored=new Map([[origin+'/home',new Response('stale-app')],['/offline-kimeng',new Response('kimeng-offline')]])
+  let offline=false
+  const sw=worker(async()=>{if(offline)throw new Error('offline');return new Response('phone-guide')},stored,{origin})
+  assert.equal(await (await sw.request('/home')).text(),'phone-guide')
+  assert.deepEqual(sw.writes,[])
+  offline=true
+  assert.equal(await (await sw.request('/home')).text(),'kimeng-offline')
 })
 test('manifest loads current start URL instead of replaying an installed legacy manifest',async()=>{
   const url='https://rwa.lat/manifest.webmanifest',stored=new Map([[url,new Response('legacy')]])

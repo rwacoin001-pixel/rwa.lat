@@ -68,7 +68,17 @@
 .legal button { min-height: 32px; }
 
 .askWrap { position: fixed; z-index: 3; inset: auto var(--desktop-gutter) var(--desktop-gutter) auto; width: min(332px,calc(100vw - 2 * var(--desktop-gutter))); }
-.composer { display: grid; grid-template-columns: 32px minmax(0,1fr) 38px; align-items: center; gap: 8px; min-height: 53px; padding: 6px 7px 6px 11px; border: 1px solid var(--desktop-rim); border-radius: 999px; background: var(--desktop-paper); backdrop-filter: blur(25px); box-shadow: 0 11px 25px -9px rgba(13,30,43,.33); }
+.composer { position: relative; display: grid; grid-template-columns: 32px minmax(0,1fr) 38px; align-items: center; gap: 8px; min-height: 53px; padding: 6px 7px 6px 11px; border: 1px solid var(--desktop-rim); border-radius: 999px; background: var(--desktop-paper); backdrop-filter: blur(25px); box-shadow: 0 11px 25px -9px rgba(13,30,43,.33); }
+@property --kimeng-composer-ring { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.composer::before {
+  content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; padding: 1px;
+  background: conic-gradient(from var(--kimeng-composer-ring),transparent 0deg,rgba(25,199,170,.9) 40deg,rgba(47,128,255,.9) 80deg,transparent 120deg);
+  mask: linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0);
+  opacity: .72; animation: composer-ring 6s linear infinite;
+}
+.composer:is(:focus-within,[data-busy])::before { opacity: 1; }
+.composer[data-busy]::before { animation-duration: 2.6s; }
+@keyframes composer-ring { to { --kimeng-composer-ring: 360deg; } }
 .composer:focus-within { border-color: var(--f-accent); }
 .composer input { width: 100%; height: 36px; padding: 0; border: 0; outline: 0; background: transparent; color: var(--f-ink); font: inherit; font-size: 14px; }
 .composer input::placeholder { color: var(--f-muted); }
@@ -129,6 +139,7 @@
   .root .sheet :global([class*='auth-focus_orLine__']) { margin-bottom: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
+  .composer::before { animation: none; --kimeng-composer-ring: 160deg; }
   .reply { animation: none; }
   .root.root[data-auth-view='welcome'] .copy h1 { animation: none; }
   .edge { display: none; }

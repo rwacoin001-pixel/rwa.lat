@@ -1,5 +1,8 @@
 // Bump this release cache when shipping app changes so installed PWAs cannot replay an old page shell with mismatched assets.
 const KIMENG = self.location.origin === 'https://kimengresearch.com'
+const userAgent = self.navigator.userAgent
+const KIMENG_PHONE = !/iPad|Tablet/i.test(userAgent) && (/iPhone|iPod|RwaLatAndroidTrial\//i.test(userAgent) ||
+  (/Android/i.test(userAgent) && (/\bMobile\b/i.test(userAgent) || self.navigator.userAgentData?.mobile === true)))
 const CACHE_NAME = KIMENG ? 'a-reit-offline-kimeng-v6' : 'a-reit-offline-v4'
 const OFFLINE_PAGE = KIMENG ? '/offline-kimeng' : '/offline'
 const SHELL_WAIT_MS = 1500
@@ -8,7 +11,7 @@ const SHELL_WAIT_MS = 1500
 const INSTALLED_KEY = '/__rwa/installed-app'
 // A launch shell older than this is not shown instantly; it waits for the network like any other navigation.
 const LAUNCH_SHELL_MAX_AGE_MS = 3 * 24 * 3600 * 1000
-const OFFLINE_ASSETS = KIMENG ? [OFFLINE_PAGE, '/brand/kimeng/mark-light.svg', '/home'] : [
+const OFFLINE_ASSETS = KIMENG ? [OFFLINE_PAGE, '/brand/kimeng/mark-light.svg', ...(KIMENG_PHONE ? ['/home'] : [])] : [
   OFFLINE_PAGE,
   '/brand/a-reit/app-icon.svg',
   '/icons/a-reit-v1-192.png',
@@ -119,6 +122,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   if (event.request.mode === 'navigate') {
+    // Desktop visitors must see the current phone handoff instead of an older cached app shell.
+    if (KIMENG && !KIMENG_PHONE) {
+      event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_PAGE)))
+      return
+    }
     // Never replay a cached authentication page or one-time callback URL.
     if (/^\/(?:auth|login|register|verify-email|recovery)(?:\/|$)/.test(url.pathname)) {
       event.respondWith(fetch(event.request).catch(() => caches.match(OFFLINE_PAGE)))

@@ -81,7 +81,7 @@ export default function KimengDesktopAsk() {
           {error && <p className={styles.hint} role="alert">{error}</p>}
         </div>
       </section>}
-      <form className={styles.composer} onSubmit={send}>
+      <form className={styles.composer} data-busy={busy || undefined} onSubmit={send}>
         <BuddyFace size={29} mood={busy ? 'thinking' : 'idle'} still={!busy} />
         <input ref={input} type="text" maxLength={400} autoComplete="off" aria-label={placeholder} placeholder={placeholder} value={draft} readOnly={busy} onChange={event => setDraft(event.target.value)} />
         <button className={styles.send} type="submit" aria-label={copy.send} disabled={busy || !draft.trim()}><ArrowUp size={18} /></button>

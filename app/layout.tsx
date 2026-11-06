@@ -21,8 +21,9 @@ import SessionPrivacyGate from '@/components/session-privacy-gate'
 import { launchSplashMarkup, launchSplashScript, launchSplashStyle } from '@/lib/launch-splash'
 import { iosStartupImages } from '@/lib/ios-startup-images'
 import IosInstallGate from '@/components/ios-install-gate'
-import KimengDesktopInstallGate from '@/components/KimengDesktopInstallGate'
+import KimengPhoneAccess from '@/components/KimengPhoneAccess'
 import { BRAND } from '@/lib/brand/build-brand'
+import { isKimengPhone } from '@/lib/brand/phone-access.mjs'
 
 const title = BRAND.id === 'areit' ? 'A-REIT｜以智能科技提升投资体验' : '金英 KIMENG｜让资产清晰起来'
 const description = BRAND.id === 'areit' ? 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。' : '让资产清晰起来。'
@@ -90,6 +91,8 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
     country,
     acceptLanguage: requestHeaders.get('accept-language'),
   })
+  const content = <SessionPrivacyGate>{children}</SessionPrivacyGate>
+  const phone = isKimengPhone(requestHeaders.get('user-agent') ?? '', requestHeaders.get('sec-ch-ua-mobile') === '?1')
   return (
     <html data-brand={BRAND.id} lang={initialLocale} dir={initialLocale === 'ar' ? 'rtl' : 'ltr'} suppressHydrationWarning>
       <head>
@@ -103,7 +106,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <PwaRegister />
         <PressFeedback />
         <PaletteMedia />
-        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate />{BRAND.id === 'kimeng' && <KimengDesktopInstallGate />}<SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
+        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate />{BRAND.id === 'kimeng' ? <KimengPhoneAccess phone={phone}>{content}</KimengPhoneAccess> : content}</I18nProvider></RwaThemeProvider>
       </body>
     </html>
   )
