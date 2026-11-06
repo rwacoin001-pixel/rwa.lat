@@ -1,25 +1,26 @@
 import type { Metadata } from 'next'
 import LegalPage, { Section } from '@/components/legal-page'
 import PublishedLegalPage from '@/components/published-legal-page'
+import { BRAND } from '@/lib/brand/build-brand'
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — A-REIT',
-  description: 'How A-REIT collects, uses, stores, and protects personal information.',
+  title: `Privacy Policy — ${BRAND.name}`,
+  description: `How ${BRAND.name} collects, uses, stores, and protects personal information.`,
 }
 
 export const dynamic = 'force-dynamic'
 
-export default async function PrivacyPolicyPage({ searchParams }: { searchParams: Promise<{ version?: string }> }) {
-  const { version } = await searchParams
+export default async function PrivacyPolicyPage({ searchParams }: { searchParams: Promise<{ version?: string; original?: string }> }) {
+  const { version, original } = await searchParams
   return (
-    <PublishedLegalPage kind="privacy" version={version}>
+    <PublishedLegalPage kind="privacy" version={version} original={original === '1'}>
     <LegalPage kind="privacy" title="Privacy Policy" updated="September 18, 2026" effectiveDate="2026-09-18">
       <div>
         <Section n="1" title="Who We Are">
           <p>
-            A-REIT (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates the A-REIT platform available at{' '}
-            <a href="https://a-reit.com">
-              https://a-reit.com
+            {BRAND.name} (&ldquo;we&rdquo;, &ldquo;us&rdquo;, or &ldquo;our&rdquo;) operates the {BRAND.name} platform available at{' '}
+            <a href={BRAND.origin}>
+              {BRAND.origin}
             </a>{' '}
             and related applications and services (the &ldquo;Service&rdquo;). This Privacy Policy explains what
             personal information we collect, how we use and share it, and the choices available to you.
@@ -83,7 +84,7 @@ export default async function PrivacyPolicyPage({ searchParams }: { searchParams
             <li>
               <span className="font-medium">Legal requirements.</span> We may disclose information if required to
               do so by law, regulation, legal process, or governmental request, or if we believe disclosure is
-              necessary to protect the rights, property, or safety of A-REIT, our users, or the public.
+              necessary to protect the rights, property, or safety of {BRAND.name}, our users, or the public.
             </li>
             <li>
               <span className="font-medium">Business transfers.</span> If we are involved in a merger, acquisition,

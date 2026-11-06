@@ -43,6 +43,8 @@
 .documentHeader time { color: var(--legal-muted); font-size: 12px; line-height: 1.5; }
 .content { color: var(--legal-muted); font-size: 15px; line-height: 1.85; overflow-wrap: anywhere; }
 .content > div { display: grid; gap: 32px; }
+.content > .publication { gap: 6px; margin-bottom: 28px; padding-bottom: 18px; border-bottom: 1px solid var(--legal-line); font-size: 12px; line-height: 1.7; }
+.publication p { margin: 0; }
 .section { scroll-margin-top: 24px; }
 .sectionTitle { display: flex; align-items: baseline; gap: 8px; margin: 0 0 12px; color: var(--legal-ink); font-size: 15px; font-weight: 550; line-height: 1.6; text-wrap: balance; }
 .sectionNumber { flex: none; color: var(--legal-accent); font-size: 12px; font-variant-numeric: tabular-nums; }

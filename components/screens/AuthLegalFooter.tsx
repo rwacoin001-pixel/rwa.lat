@@ -9,6 +9,9 @@ import { authLegalCopy, type AuthLegalKind } from '@/lib/auth-legal-copy'
 import styles from './P02-Login.module.css'
 import { BRAND } from '@/lib/brand/build-brand'
 import BrandOperatorDisclosure from '@/components/brand-operator-disclosure'
+import { request } from '@/lib/api/_http'
+import type { ApiSchemas } from '@/lib/api/types'
+import { formatLegalEffectiveDate } from '@/lib/legal-publication'
 
 type LicenceDetails = {
   entity: string
@@ -63,6 +66,24 @@ function AuthLegalDialog({
   const dialogRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const restoreFocusRef = useRef<HTMLElement | null>(null)
+  const requestedVersion = kind === 'terms' ? termsVersion : kind === 'privacy' ? privacyVersion : undefined
+  const publicationKey = `${kind}:${requestedVersion ?? ''}`
+  const [publication, setPublication] = useState<{ key: string; version: string; effectiveDate: string } | null>(null)
+
+  useEffect(() => {
+    if (kind === 'licence') return
+    const controller = new AbortController()
+    const query = requestedVersion ? `?version=${encodeURIComponent(requestedVersion)}` : ''
+    void request<ApiSchemas['PublishedLegalDocumentDto']>(`/v1/legal/${kind}${query}`, {
+      token: null, signal: controller.signal, timeoutMs: 5000, loading: 'silent',
+    }).then(result => {
+      if (controller.signal.aborted || !result.ok) return
+      const doc = result.data
+      if (doc.kind !== kind || !doc.version || (requestedVersion && doc.version !== requestedVersion) || !formatLegalEffectiveDate(doc.effectiveDate, 'en')) return
+      setPublication({ key: publicationKey, version: doc.version, effectiveDate: doc.effectiveDate })
+    })
+    return () => controller.abort()
+  }, [kind, requestedVersion, publicationKey])
 
   useEffect(() => {
     restoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
@@ -103,8 +124,10 @@ function AuthLegalDialog({
 
   const kinds: AuthLegalKind[] = licence ? ['terms', 'privacy', 'licence'] : ['terms', 'privacy']
   const label = (item: AuthLegalKind) => item === 'terms' ? copy.termsTitle : item === 'privacy' ? copy.privacyTitle : copy.licence
-  const version = kind === 'terms' ? termsVersion : kind === 'privacy' ? privacyVersion : undefined
-  const docHref = kind === 'terms' ? termsHref : privacyHref
+  const activePublication = publication?.key === publicationKey ? publication : null
+  const version = activePublication?.version ?? requestedVersion
+  const effectiveDate = formatLegalEffectiveDate(activePublication?.effectiveDate ?? '', locale)
+  const docHref = activePublication ? `/${kind}?version=${encodeURIComponent(activePublication.version)}` : kind === 'terms' ? termsHref : privacyHref
   const summary = kind === 'terms' ? copy.terms : kind === 'privacy' ? copy.privacy : undefined
   const action = (href: string, text: string, ariaLabel?: string) => <a className={styles.legalAction} href={href} target="_blank" rel="noopener noreferrer" aria-label={ariaLabel}>
     <span>{text}</span><span className={styles.legalActionIcon} aria-hidden="true"><ArrowUpRight size={18} strokeWidth={1.7} /></span>
@@ -158,7 +181,7 @@ function AuthLegalDialog({
 
         <div className={styles.legalFoot}>
           {summary && <>
-            <p className={styles.legalMeta}>{copy.updated} {copy.updatedDate}</p>
+            {effectiveDate && <p className={styles.legalMeta}>{copy.updated} {effectiveDate}</p>}
             {action(docHref, copy.readFull)}
           </>}
           {kind === 'licence' && licence && <>
