@@ -22,6 +22,7 @@ import { launchSplashMarkup, launchSplashScript, launchSplashStyle } from '@/lib
 import { iosStartupImages } from '@/lib/ios-startup-images'
 import IosInstallGate from '@/components/ios-install-gate'
 import KimengPhoneAccess from '@/components/KimengPhoneAccess'
+import TransactionGlow from '@/components/TransactionGlow'
 import { BRAND } from '@/lib/brand/build-brand'
 import { isKimengPhone } from '@/lib/brand/phone-access.mjs'
 
@@ -106,7 +107,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <PwaRegister />
         <PressFeedback />
         <PaletteMedia />
-        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate />{BRAND.id === 'kimeng' ? <KimengPhoneAccess phone={phone}>{content}</KimengPhoneAccess> : content}</I18nProvider></RwaThemeProvider>
+        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}>{BRAND.id === 'kimeng' && <TransactionGlow />}<PageChrome /><IosInstallGate />{BRAND.id === 'kimeng' ? <KimengPhoneAccess phone={phone}>{content}</KimengPhoneAccess> : content}</I18nProvider></RwaThemeProvider>
       </body>
     </html>
   )

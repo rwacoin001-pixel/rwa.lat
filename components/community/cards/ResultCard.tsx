@@ -12,6 +12,7 @@ import { brandText } from '@/lib/brand/build-brand'
 import { EyeOff } from 'lucide-react'
 import { useRef, useState } from 'react'
 import { CommunityAvatar } from '@/components/community-avatar'
+import { PrismaticBand } from '@/components/backgrounds/PrismaticBand'
 import { useI18n, type AppLocale } from '@/lib/i18n'
 import { CARD_FIELDS, asNumber, cardGroup, money, pct, tone, units, type CardKind, type CardSnapshot, type PostCard } from '@/lib/community-cards'
 import s from './result-card.module.css'
@@ -157,7 +158,7 @@ export function ResultCard({ card, author, compact = false, mini = false, still 
   const subline = question ? k.group[m.group] : m.title ?? k.group[m.group]
 
   const front = <div className={s.face} data-face="front">
-    <div className={s.photo} aria-hidden="true"><i /><i /><i /></div>
+    <div className={s.photo} aria-hidden="true"><PrismaticBand /></div>
     <span className={s.label}><b>{k.group[m.group]}</b><small>{k.snapshot}</small></span>
     {live && <div ref={paper} className={s.paper} aria-hidden={!flipped}>
       <span className={s.paperHead}><b>{f.paper}</b><small dir="auto">{kindName} · {subline}</small></span>

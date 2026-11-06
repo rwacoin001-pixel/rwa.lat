@@ -1,0 +1,10 @@
+.band { position: absolute; inset: 0; overflow: hidden; pointer-events: none; isolation: isolate; background: #43bbdf; }
+.band svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.far, .near, .front { transform-box: fill-box; transform-origin: center; animation: current 18s cubic-bezier(.45, 0, .55, 1) infinite alternate; }
+.near { animation-name: tide; animation-duration: 23s; }
+.front { animation-duration: 27s; animation-direction: alternate-reverse; }
+.sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(155deg, rgba(255,255,255,.24), transparent 36%, rgba(255,255,255,.08) 74%, transparent); }
+.band[data-paused] :is(.far, .near, .front) { animation-play-state: paused; }
+@keyframes current { from { transform: translate(-14px,-12px) rotate(-3deg) scale(1.07); } to { transform: translate(32px,12px) rotate(5deg) scale(1.15); } }
+@keyframes tide { from { transform: translate(24px,-10px) rotate(2deg) scale(1.08); } to { transform: translate(-28px,18px) rotate(-5deg) scale(1.16); } }
+@media (prefers-reduced-motion: reduce) { .far, .near, .front { animation: none; transform: none; } }

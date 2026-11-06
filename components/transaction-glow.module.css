@@ -1,0 +1,14 @@
+.root { position: fixed; z-index: 1100; inset: 0; overflow: clip; pointer-events: none; isolation: isolate; opacity: 1; animation: arrive 420ms ease-out both; }
+.veil { position: absolute; inset: 0; background: rgba(247,245,242,.12); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
+.coral, .gold, .mint { position: absolute; width: 120vmax; height: 90vmax; inset-inline-start: -30vmax; bottom: -60vmax; border-radius: 50%; background: radial-gradient(ellipse, rgba(241,157,146,.6), rgba(241,157,146,.16) 35%, transparent 66%); animation: mist 5.2s cubic-bezier(.45,0,.55,1) infinite alternate; }
+.gold { inset-inline-start: 8vmax; bottom: -65vmax; background: radial-gradient(ellipse, rgba(247,210,145,.64), rgba(247,210,145,.12) 40%, transparent 67%); animation-duration: 6.4s; animation-delay: -2.4s; }
+.mint { inset-inline-start: -48vmax; bottom: -66vmax; background: radial-gradient(ellipse, rgba(115,214,217,.5), rgba(115,214,217,.1) 42%, transparent 68%); animation-duration: 7.2s; animation-delay: -1.2s; }
+.particles { position: absolute; inset: 0; overflow: hidden; }
+.particles span { position: absolute; bottom: 0; width: 3px; height: 3px; border-radius: 50%; background: rgba(255,246,219,.8); box-shadow: 0 0 9px rgba(250,216,174,.56); opacity: 0; animation: rise 4s linear infinite; }
+.root[data-transaction-glow='settling'] { animation: leave 1000ms cubic-bezier(.22,1,.36,1) both; }
+:global(html[data-theme='dark']) .veil { background: rgba(13,17,25,.12); }
+@keyframes mist { from { transform: translate(0,0) rotate(-8deg) scale(.94); } to { transform: translate(10vmax,-20vmax) rotate(9deg) scale(1.12); } }
+@keyframes rise { 0% { opacity: 0; transform: translateY(0) scale(.5); } 20% { opacity: .65; } 80% { opacity: .28; } 100% { opacity: 0; transform: translateY(-90dvh) scale(.8); } }
+@keyframes arrive { from { opacity: 0; } }
+@keyframes leave { 0% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .root, .coral, .gold, .mint { animation: none; } .particles { display: none; } .root[data-transaction-glow='settling'] { opacity: .3; } .veil { -webkit-backdrop-filter: none; backdrop-filter: none; } }

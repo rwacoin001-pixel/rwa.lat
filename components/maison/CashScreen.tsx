@@ -3,6 +3,8 @@
 import { AlertTriangle, ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, BookUser, Check, ChevronRight, Copy, Info, QrCode } from 'lucide-react'
 import { QRCodeSVG } from 'qrcode.react'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { pulseTransactionGlow } from '@/lib/transaction-glow'
+import { captureDepositBaseline, isObservedDepositChange } from '@/lib/deposit-observation'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { useQuery } from '@/lib/api/_query'
@@ -213,6 +215,10 @@ export function DepositScreen({ query }: { query: string }) {
   const [helpOpen, setHelpOpen] = useState(false)
   const inflight = useRef(false)
   const address = network ? addresses[network.id] : undefined
+  useEffect(() => {
+    if (baseline !== null || !wallet.data || !Object.keys(addresses).length) return
+    setBaseline(captureDepositBaseline(wallet.data.recentActivity ?? []))
+  }, [baseline, wallet.data, addresses])
 
   const choose = (id: string) => {
     setPicked(id)
@@ -237,7 +243,7 @@ export function DepositScreen({ query }: { query: string }) {
     if (Number.isFinite(end)) {
       setNow(Date.now())
       setWatchEnds((current) => ({ ...current, [network.id]: end }))
-      setBaseline((current) => current ?? Object.fromEntries((wallet.data?.recentActivity ?? []).filter((item) => item.kind === 'deposit').map((item) => [item.id, item.state])))
+      setBaseline((current) => current ?? captureDepositBaseline(wallet.data ? wallet.data.recentActivity ?? [] : undefined))
     }
   }
   const check = async () => {
@@ -253,15 +259,23 @@ export function DepositScreen({ query }: { query: string }) {
   // Newest deposit that appeared or changed state since the address was revealed.
   const arrival = useMemo(() => {
     if (!baseline) return null
-    const changed = (wallet.data?.recentActivity ?? []).filter((item) => item.kind === 'deposit' && baseline[item.id] !== item.state)
+    const changed = (wallet.data?.recentActivity ?? []).filter((item) => isObservedDepositChange(baseline, item))
     const latest = changed.sort((a, b) => Date.parse(b.at) - Date.parse(a.at))[0]
     if (!latest) return null
     const text = latest.state === 'credited' ? fill(d.arrived, { v: bare(latest.atomicAmount) })
       : latest.state === 'manual_review' ? d.inReview
       : latest.state === 'rejected' ? null
       : fill(d.detected, { n: String(network?.requiredConfirmations ?? '') })
-    return text ? { state: latest.state, text } : null
+    return text ? { id: latest.id, state: latest.state, text } : null
   }, [baseline, wallet.data, d, network?.requiredConfirmations])
+  const announcedCredits = useRef(new Set<string>())
+  const arrivalId = arrival?.id
+  const arrivalState = arrival?.state
+  useEffect(() => {
+    if (arrivalState !== 'credited' || !arrivalId || announcedCredits.current.has(arrivalId)) return
+    announcedCredits.current.add(arrivalId)
+    if (document.documentElement.dataset.brand === 'kimeng') pulseTransactionGlow()
+  }, [arrivalId, arrivalState])
   const copy = async () => {
     if (!address) return
     try { await navigator.clipboard.writeText(address.address); setCopied(true); window.setTimeout(() => setCopied(false), 1600) } catch { setCopied(false) }

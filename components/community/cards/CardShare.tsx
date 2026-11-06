@@ -132,7 +132,7 @@ async function drawPoster(m: CardModel, author: Author | null, qr: HTMLCanvasEle
   const W = 1080, H = 1920, c = document.createElement('canvas')
   c.width = W; c.height = H
   const g = c.getContext('2d')!
-  const [bandA, bandB, bandInk] = BANDS[m.group]
+  const [bandA, , bandInk] = BANDS[m.group]
   // Page: white with a faint glow of the kind's colour behind the card.
   g.fillStyle = '#ffffff'; g.fillRect(0, 0, W, H)
   const glow = g.createRadialGradient(W / 2, 760, 40, W / 2, 760, 760); glow.addColorStop(0, bandA + 'aa'); glow.addColorStop(1, '#ffffff00')
@@ -153,7 +153,8 @@ async function drawPoster(m: CardModel, author: Author | null, qr: HTMLCanvasEle
   round(g, X, Y, CW, CH, 64); g.fillStyle = '#ffffff'; g.fill(); g.restore()
   round(g, X, Y, CW, CH, 64); g.strokeStyle = 'rgba(11,18,32,.07)'; g.lineWidth = 2; g.stroke()
   // Ticket head
-  const band = g.createLinearGradient(well, 0, well + inner, 0); band.addColorStop(0, bandA); band.addColorStop(1, bandB)
+  const band = g.createLinearGradient(well, 0, well + inner, 0)
+  ;['#b4e9f0', '#b7cafa', '#bfead9', '#f9e3b5', '#f4c3bd'].forEach((color, index) => band.addColorStop(index / 4, color))
   round(g, well, Y + P, inner, 124, [48, 48, 18, 18]); g.fillStyle = band; g.fill()
   g.fillStyle = bandInk; g.font = font(34, 600); g.textBaseline = 'middle'
   g.fillText(fit(g, m.head, inner - 300), well + 36, Y + P + 62)
@@ -165,7 +166,10 @@ async function drawPoster(m: CardModel, author: Author | null, qr: HTMLCanvasEle
   g.fillStyle = '#ffffff'; for (const cx of [X, X + CW]) { g.beginPath(); g.arc(cx, py, 16, 0, Math.PI * 2); g.fill() }
   // Well
   const wy = Y + P + 124 + 36
-  round(g, well, wy, inner, wellH, [18, 18, 48, 48]); g.fillStyle = '#f6f7f9'; g.fill()
+  const frosted = g.createLinearGradient(well, wy, well + inner, wy + wellH)
+  frosted.addColorStop(0, '#f8fbff'); frosted.addColorStop(1, '#e9f0f8')
+  round(g, well, wy, inner, wellH, [18, 18, 48, 48]); g.fillStyle = frosted; g.fill()
+  g.strokeStyle = 'rgba(255,255,255,.94)'; g.lineWidth = 3; g.stroke()
   let y = wy + wellPad, x = well + wellPad, ww = inner - wellPad * 2
   g.textBaseline = 'alphabetic'
   if (m.title) { g.fillStyle = '#0b1220'; g.font = font(36, 600); g.fillText(fit(g, m.title, ww), x, y + 40); y += 66 }

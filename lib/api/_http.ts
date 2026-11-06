@@ -1,5 +1,6 @@
 import { beginUiLoading } from '../ui-loading'
 import { getApiBaseUrl } from './base-url'
+import { beginTransactionGlow, isMoneyMutation } from '../transaction-glow'
 export type ApiError = { status: number; code: string; message: string; details?: Record<string, unknown>; retryAfter?: number; requestId?: string }
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError }
 export const SESSION_KEY = 'rwa.session'
@@ -127,7 +128,10 @@ export async function request<T>(path: string, options: RequestInit & { idempote
   if (init.signal?.aborted) controller.abort()
   else init.signal?.addEventListener('abort', abort, { once: true })
   const show = loading === 'overlay' || (loading !== 'silent' && (init.method ?? 'GET') !== 'GET' && path !== '/v1/auth/passkey/challenge')
-  const finish = show ? beginUiLoading() : () => {}
+  const money = typeof document !== 'undefined' && document.documentElement?.dataset?.brand === 'kimeng' && isMoneyMutation(path, init.method ?? 'GET')
+  const finishGlow = money ? beginTransactionGlow() : null
+  const finish = show && !finishGlow ? beginUiLoading() : () => {}
+  let accepted = false
   try {
     const response = await fetch(apiUrl(path), { ...init, headers, signal: controller.signal, cache: 'no-store' })
     const text = await response.text()
@@ -135,7 +139,7 @@ export async function request<T>(path: string, options: RequestInit & { idempote
     try { body = text ? JSON.parse(text) : null } catch {
       return { ok: false, error: { status: response.status, code: 'INVALID_JSON', message: '服务返回了无法解析的数据' } }
     }
-    if (response.ok) return { ok: true, data: body as T }
+    if (response.ok) { accepted = true; return { ok: true, data: body as T } }
     const error = parseApiError(response.status, body, response.headers)
     if (response.status === 401 && shouldExpireSessionOn401(path, Boolean(token), error.code)) handleSessionUnauthorized()
     if (isKycEligibilityError(error) && typeof window !== 'undefined') window.dispatchEvent(new CustomEvent('rwa:kyc-required', { detail: error }))
@@ -152,6 +156,7 @@ export async function request<T>(path: string, options: RequestInit & { idempote
     clearTimeout(timer)
     init.signal?.removeEventListener('abort', abort)
     finish()
+    finishGlow?.(accepted)
   }
 }
 

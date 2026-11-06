@@ -226,7 +226,8 @@
 .root[data-auth-theme='cool'] .ways > button, .root[data-auth-theme='cool'] .ways > button.google.google { background: rgba(255, 255, 255, .06); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .14); }
 .root[data-auth-theme='cool'] .ways img[data-mono] { filter: invert(1); }
 @media (prefers-reduced-motion: reduce) { .root[data-auth-view='welcome'] .scene img, .lens { animation: none; } }
-.ways > button.google span { overflow: hidden; text-overflow: ellipsis; }
+.ways > button.google span { overflow: hidden; text-overflow: ellipsis; line-height: 1.5; padding-block: 2px; }
+.ways > button.google img { display: block; flex: none; width: 18px; height: auto; object-fit: contain; overflow: visible; }
 /* A narrow row (small phones, long labels) says just "Google" rather than wrapping or cutting the label. */
 .ways { container-type: inline-size; }
 .short { display: none; }

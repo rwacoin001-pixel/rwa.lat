@@ -30,8 +30,7 @@ import { CommunityProfileEditor, useCommunityMe } from '@/components/community-c
 import type { CommunityProfileResponse } from '@/lib/community-data'
 import { request } from '@/lib/api/_http'
 import m from './me.module.css'
-import { ColourBand } from '@/components/backgrounds/ColourBand'
-import { LevelBand } from '@/components/backgrounds/LevelBand'
+import { PrismaticBand } from '@/components/backgrounds/PrismaticBand'
 import { useUnread } from '@/hooks/useUnread'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
 import { referralMe, referralSummary } from '@/lib/api/referral'
@@ -167,7 +166,7 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
         one ink key to the public page. The account checks follow under the card. */}
     <section className={m.pcard} aria-label={me.card}>
       <div className={m.pband}>
-        {galaxy ? <LevelBand level={galaxy.level.index} className={m.pcanvas} /> : <ColourBand className={m.pcanvas} />}
+        <PrismaticBand className={m.pcanvas} />
       </div>
       <div className={m.pmid}>
         <span className={m.pavatar}>{community ? <CommunityAvatar avatarUrl={community.avatarUrl} seed={community.avatarSeed} handle={community.handle || 'me'} size={80} /> : <span className={m.avatarEmpty} />}</span>
