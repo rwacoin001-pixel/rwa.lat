@@ -21,6 +21,7 @@ import styles from './P02-Login.module.css'
 import { authErrorMessage, isConsentError } from '@/lib/auth-error-copy'
 import { prefetchAuthAttribution, type ApiError } from '@/lib/api/_http'
 import { NEW_ACCOUNT_KEY, consumeAuthDestination, markNewAccount, markPasskeyOfferSeen, safeAuthReturnPath } from '@/lib/api/auth-navigation'
+import { useKimengDesktop } from '@/lib/kimeng-desktop'
 import { useUiLoading } from '@/lib/use-ui-loading'
 import { continueAuth } from '@/lib/api/auth-flow'
 import { authPasswordCopy } from '@/lib/auth-password-copy'
@@ -78,6 +79,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 }) {
   const { locale, t } = useI18n()
   const copy = authRouteCopy[locale]
+  const desktop = useKimengDesktop()
   // Decide the first-run guide before mounting the login form. KIMENG opens directly on the form.
   const [guide, setGuide] = useState(() => {
     if (BRAND.id === 'kimeng' || typeof window === 'undefined') return false
@@ -552,7 +554,17 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
     requestAnimationFrame(() => input.current?.focus())
   }} />
 
-  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer}>
+  const desktopHero = <>
+    <h1>{mode === 'register' ? visual.createAccount : welcomeCopy.lines.join(locale === 'zh-CN' ? '' : ' ')}</h1>
+    <p className={focusStyles.lede}>{locale === 'zh-CN'
+      ? mode === 'register' ? '使用邮箱开始注册' : '用邮箱登录'
+      : mode === 'register' ? visual.continueEmail : welcomeCopy.sub}</p>
+  </>
+  const desktopAction = mode === 'register'
+    ? <>{visual.haveAccount} <button type="button" onClick={() => go('login')}>{visual.signIn}</button></>
+    : <>{visual.newHere} <button type="button" onClick={() => go('register')}>{visual.createAccount}</button></>
+
+  return <AuthShell attrs={{ 'data-auth-mode': mode, 'data-auth-step': walletChallenge ? 'wallet' : step, 'data-auth-view': showWelcome ? 'welcome' : 'form', 'data-auth-compact': 'true', 'data-auth-focus': 'true' }} hero={posterHero} footer={footer} desktopHero={desktopHero} desktopAction={desktopAction}>
     <div className={styles.cardContent} key={walletChallenge ? 'wallet' : step}>
     {!showWelcome && heading && <header className={styles.cardHead}>
       <h1 className={styles.cardTitle}>{heading}</h1>
@@ -591,7 +603,7 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 
       {/* The code goes in on our keypad (Paste, clipboard pick-up, a switch back to the system keyboard). */}
       {step === 'code' && <div key={shake} className={styles.kitCode}>
-        <CodePad value={code} label={emailCopy.codeLabel} invalid={Boolean(error)} done={codeState === 'verified'} disabled={pending || codeState === 'verified'}
+        <CodePad value={code} label={emailCopy.codeLabel} keyboardOnly={desktop} invalid={Boolean(error)} done={codeState === 'verified'} disabled={pending || codeState === 'verified'}
           onChange={next => { const digits = normalizeEmailCode(next); setCode(digits); setError(''); if (digits.length === 6) void verifyCode(digits) }} />
       </div>}
       {step === 'code' && (pending || codeState === 'verified') && <div className={styles.codeStatus} role="status" aria-live="polite" data-tone={codeState === 'verified' ? 'ok' : undefined}>

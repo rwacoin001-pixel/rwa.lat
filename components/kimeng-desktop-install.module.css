@@ -1,0 +1,51 @@
+:global(html):has(.dialog[open]) { overflow: hidden; }
+.dialog {
+  --paper: rgba(245,248,252,.94); --ink: #0b1220; --muted: #5b6472; --accent: #087a67; --line: rgba(11,18,32,.16);
+  --rim: rgba(255,255,255,.68); --ground: url('/desktop-auth/day.webp');
+  position: fixed; inset: 0; width: 100%; height: 100dvh; max-width: none; max-height: none;
+  padding: 0; margin: 0; border: 0; overflow: hidden; background: #b8c2cb; color: var(--ink);
+  font-family: var(--pa-sans,system-ui,sans-serif);
+}
+.dialog[data-theme='dark'] {
+  --paper: rgba(22,27,35,.96); --ink: #f2f4f7; --muted: #b0b8c4; --accent: #42d6bd; --line: rgba(242,244,247,.18);
+  --rim: rgba(215,231,248,.24); --ground: url('/desktop-auth/night.webp'); background: #131c2b;
+}
+.scene { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+.scene::before { content: ''; position: absolute; inset: -33px; background: var(--ground) 59% 49%/cover; filter: blur(15px) saturate(.8); }
+.layout { position: relative; display: grid; place-items: center; height: 100%; padding: 52px clamp(22px,3.35vw,64px) 20px; }
+.logo { position: absolute; top: clamp(14px,3.1vh,33px); left: clamp(22px,3.35vw,64px); width: 129px; height: auto; }
+.card { display: grid; grid-template-columns: minmax(205px,.75fr) minmax(0,1fr); width: min(100%,854px); min-height: 418px; padding: 11px; border: 1px solid var(--rim); border-radius: 42px; background: var(--paper); box-shadow: 0 36px 68px -28px rgba(10,25,43,.54); animation: enter .52s cubic-bezier(.18,.77,.24,1) both; }
+.scan { display: grid; align-content: center; justify-items: center; gap: 12px; border-radius: 32px; padding: 24px 18px; background: linear-gradient(170deg,rgba(235,242,247,.58),rgba(228,238,247,.81)),var(--ground) 70% 55%/cover; color: #0b1220; }
+.dialog[data-theme='dark'] .scan { color: #f2f4f7; background: linear-gradient(160deg,rgba(21,32,48,.34),rgba(18,27,38,.66)),var(--ground) 64% 55%/cover; }
+.icon { width: 44px; height: 44px; border-radius: 11px; box-shadow: 0 3px 10px rgba(23,38,54,.22); }
+.qr, .qr img { display: block; width: 164px; height: 164px; border-radius: 16px; background: #fff; }
+.qr { box-shadow: 0 14px 35px -17px rgba(15,37,53,.52); }
+.caption { display: grid; text-align: center; font-size: 13px; }
+.caption a { color: inherit; font-size: 12px; text-decoration: underline; text-underline-offset: 3px; }
+.content { padding: 24px clamp(20px,3.3vw,43px) 18px; }
+.content h1 { margin: 0; font-size: clamp(24px,3.1vw,34px); line-height: 1.2; font-weight: 700; }
+.content h1:focus { outline: none; }
+.content p { margin: 8px 0 18px; color: var(--muted); font-size: 13px; }
+.platforms { display: flex; width: fit-content; gap: 2px; padding: 3px; border: 1px solid var(--line); border-radius: 999px; }
+.platforms button { display: flex; align-items: center; justify-content: center; gap: 6px; min-width: 95px; height: 34px; padding: 0 12px; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-size: 13px; font-weight: 700; }
+.platforms button[aria-pressed='true'] { background: var(--ink); color: var(--paper); }
+.steps { list-style: none; padding: 0; margin: 10px 0 0; }
+.steps li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; line-height: 1.45; }
+.steps span, .steps small { color: var(--muted); font-size: 12px; }
+.steps small { display: block; }
+.footer { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 14px; margin-top: 8px; }
+.footer a, .footer button { display: inline-flex; gap: 5px; align-items: center; min-height: 34px; padding: 0; border: 0; background: transparent; font-size: 12px; font-weight: 700; }
+.footer a { color: var(--accent); }
+.footer button { color: var(--muted); }
+.footer :is(a,button):hover { text-decoration: underline; text-underline-offset: 3px; }
+.dialog :is(a,button):focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+@keyframes enter { from { opacity: .5; transform: translateY(10px); } }
+@media (max-height:590px) {
+  .card { min-height: 0; padding: 8px; }
+  .content { padding-block: 14px 8px; }
+  .content p { margin-bottom: 9px; }
+  .steps { margin-top: 6px; }
+  .steps li { padding: 5px 0; }
+  .qr, .qr img { width: 140px; height: 140px; }
+}
+@media (prefers-reduced-motion: reduce) { .card { animation: none; } }

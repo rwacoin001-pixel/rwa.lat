@@ -12,6 +12,11 @@ import f from './auth-focus.module.css'
 import { BRAND, IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
 import { previewNotice } from '@/lib/brand/copy'
 import { LoginWindow } from './LoginWindow'
+import { useKimengDesktop } from '@/lib/kimeng-desktop'
+import dynamic from 'next/dynamic'
+import desktop from './kimeng-desktop-auth.module.css'
+
+const DesktopAsk = dynamic(() => import('./KimengDesktopAsk'), { ssr: false })
 
 /** Shared A-REIT mark for every authentication surface. */
 export function BrandMark({ size = 22 }: { size?: number }) {
@@ -19,15 +24,18 @@ export function BrandMark({ size = 22 }: { size?: number }) {
 }
 
 /** Shared frame for every sign-in surface: the scene film, the wordmark bar, and a centred plaque above the card. */
-export function AuthShell({ children, hero, footer, attrs, onBack }: {
+export function AuthShell({ children, hero, footer, attrs, onBack, desktopHero, desktopAction }: {
   children: ReactNode
   hero?: ReactNode
   footer?: ReactNode
+  desktopHero?: ReactNode
+  desktopAction?: ReactNode
   attrs?: Record<`data-${string}`, string>
   /** A back key in the brand's place (the sign-in form page returns to its welcome). */
   onBack?: () => void
 }) {
   const { locale, setLocale, t } = useI18n()
+  const isDesktop = useKimengDesktop()
   const { theme, toggleTheme } = useRwaTheme()
   const visual = authVisualCopy[locale]
   const [mediaReady, setMediaReady] = useState(false)
@@ -66,6 +74,30 @@ export function AuthShell({ children, hero, footer, attrs, onBack }: {
       </div>}
     </div>
   </div>
+  if (isDesktop && focus) {
+    const coast = `/desktop-auth/${cool ? 'night' : 'day'}.webp`
+    return <section className={`screen ${styles.root} ${f.root} ${desktop.root}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs} data-kimeng-desktop-auth="">
+      <div className={desktop.scene} aria-hidden="true"><img src={coast} alt="" fetchPriority="high" /></div>
+      <header className={`${styles.topbar} ${desktop.topbar}`}>
+        {onBack ? <button type="button" className={styles.iconButton} onClick={onBack} aria-label={t('common.back')}><ArrowLeft size={19} strokeWidth={1.7} /></button>
+          : <a href="/login" aria-label={BRAND.name}><img className={desktop.logo} src={`/brand/kimeng/logo-${cool ? 'dark' : 'light'}.svg`} alt="" width={129} height={40} /></a>}
+        {keys}
+      </header>
+      <div className={desktop.stage}>
+        <div className={`${f.sheet} ${welcome ? '' : f.step} ${desktop.sheet}`}>
+          {welcome && <div className={desktop.window} aria-hidden="true"><img src={coast} alt="" /></div>}
+          <div className={desktop.content}>
+            {welcome && <div className={`${f.copy} ${desktop.copy}`}>{desktopHero ?? hero}</div>}
+            {IS_BRAND_PREVIEW && <p role="status">{previewNotice[locale]}</p>}
+            <div className={welcome ? f.actions : undefined} inert={IS_BRAND_PREVIEW}>{children}</div>
+            {welcome && desktopAction && <div className={desktop.mode}>{desktopAction}</div>}
+            {footer && <div className={desktop.legal}>{footer}</div>}
+          </div>
+        </div>
+      </div>
+      {welcome && !IS_BRAND_PREVIEW && <DesktopAsk />}
+    </section>
+  }
   return <section className={`screen ${styles.root}${focus ? ` ${f.root}` : ''}`} data-auth-theme={media} data-auth-script={/^(zh|hi|ar)/.test(locale) ? 'wide' : 'latin'} dir={locale === 'ar' ? 'rtl' : 'ltr'} {...attrs}>
     {!focus && <><div className={styles.scene} aria-hidden="true">
       {mediaReady && <video key={media} className={styles.sceneVideo} autoPlay muted loop playsInline preload="metadata" poster={`/auth/auth-${media}-still.png`}>

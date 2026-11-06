@@ -250,8 +250,8 @@ export const codeIn = (text: string, length = 6) => text.match(new RegExp(`(?:^|
  * (2026-11-05, user: the login code needs no system-keyboard hint). When the clipboard is readable without a prompt, a
  * code the user just copied from the email is filled in as they come back to the page.
  */
-export function CodePad({ value, onChange, length = 6, disabled = false, invalid = false, done = false, label }: {
-  value: string; done?: boolean; onChange: (value: string) => void; length?: number; disabled?: boolean; invalid?: boolean; label: string
+export function CodePad({ value, onChange, length = 6, disabled = false, invalid = false, done = false, label, keyboardOnly = false }: {
+  value: string; done?: boolean; onChange: (value: string) => void; length?: number; disabled?: boolean; invalid?: boolean; label: string; keyboardOnly?: boolean
 }) {
   const { locale } = useI18n()
   const c = flowKitCopy(locale)
@@ -291,11 +291,12 @@ export function CodePad({ value, onChange, length = 6, disabled = false, invalid
   }
   return <div className={k.code} data-invalid={invalid || undefined}>
     <CodeSlots value={value} length={length} invalid={invalid} done={done} active={!disabled}>
-      <input ref={input} className={k.codeInput} value={value} disabled={disabled} aria-label={label} aria-invalid={invalid} inputMode="none" autoComplete="off"
-        pattern="[0-9]*" maxLength={length} tabIndex={-1} onChange={(event) => { const raw = event.target.value; if (raw.length - latest.current.length > 1 && take(raw)) return; onChange(raw.replace(/\D/g, '').slice(0, length)) }} />
+      <input ref={input} className={k.codeInput} value={value} disabled={disabled} aria-label={label} aria-invalid={invalid}
+        inputMode={keyboardOnly ? 'numeric' : 'none'} autoComplete={keyboardOnly ? 'one-time-code' : 'off'} autoFocus={keyboardOnly}
+        pattern="[0-9]*" maxLength={length} tabIndex={keyboardOnly ? 0 : -1} onChange={(event) => { const raw = event.target.value; if (raw.length - latest.current.length > 1 && take(raw)) return; onChange(raw.replace(/\D/g, '').slice(0, length)) }} />
     </CodeSlots>
     <p className={k.codeNote} aria-live="polite">{note}</p>
-    <NumPad onKey={key} decimal={false} disabled={disabled} label={label}
-      left={<button type="button" className={k.keySmall} disabled={disabled} onClick={() => { haptic(); void paste() }}>{c.paste}</button>} />
+    {!keyboardOnly && <NumPad onKey={key} decimal={false} disabled={disabled} label={label}
+      left={<button type="button" className={k.keySmall} disabled={disabled} onClick={() => { haptic(); void paste() }}>{c.paste}</button>} />}
   </div>
 }

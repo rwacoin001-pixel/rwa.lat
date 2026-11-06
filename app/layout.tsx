@@ -21,6 +21,7 @@ import SessionPrivacyGate from '@/components/session-privacy-gate'
 import { launchSplashMarkup, launchSplashScript, launchSplashStyle } from '@/lib/launch-splash'
 import { iosStartupImages } from '@/lib/ios-startup-images'
 import IosInstallGate from '@/components/ios-install-gate'
+import KimengDesktopInstallGate from '@/components/KimengDesktopInstallGate'
 import { BRAND } from '@/lib/brand/build-brand'
 
 const title = BRAND.id === 'areit' ? 'A-REIT｜以智能科技提升投资体验' : '金英 KIMENG｜让资产清晰起来'
@@ -102,7 +103,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
         <PwaRegister />
         <PressFeedback />
         <PaletteMedia />
-        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate /><SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
+        <RwaThemeProvider><I18nProvider initialLocale={initialLocale}><PageChrome /><IosInstallGate />{BRAND.id === 'kimeng' && <KimengDesktopInstallGate />}<SessionPrivacyGate>{children}</SessionPrivacyGate></I18nProvider></RwaThemeProvider>
       </body>
     </html>
   )
