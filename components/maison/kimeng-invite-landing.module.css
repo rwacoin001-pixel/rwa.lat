@@ -11,8 +11,8 @@
   --invite-bg: #0c1016; --invite-ink: #eaf0f5; --invite-muted: #a7b1bf; --invite-line: rgba(234, 240, 245, .13);
   --invite-edge: #596675; --invite-light: #8797a7; --invite-shadow: rgba(0, 0, 0, .48); --invite-cta: #eaf0f5; --invite-cta-ink: #121922;
 }
-:global(html[data-kimeng-invite='true']), :global(html[data-kimeng-invite='true'] body) { height: 100%; overflow: hidden; overscroll-behavior: none; }
-:global(html[data-kimeng-invite='true'] .rwa-shell) { height: 100dvh; min-height: 0; overflow: clip; }
+:global(html):has(.root), :global(body):has(.root) { height: 100%; overflow: hidden; overscroll-behavior: none; }
+:global(html):has(.root) :global(.rwa-shell) { height: 100dvh; min-height: 0; overflow: clip; }
 .root *, .root *::before, .root *::after { box-sizing: border-box; }
 .root a { color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
 .root button, .root select { font: inherit; }
