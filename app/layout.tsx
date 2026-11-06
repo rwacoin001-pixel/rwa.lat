@@ -25,7 +25,7 @@ import KimengDesktopInstallGate from '@/components/KimengDesktopInstallGate'
 import { BRAND } from '@/lib/brand/build-brand'
 
 const title = BRAND.id === 'areit' ? 'A-REIT｜以智能科技提升投资体验' : '金英 KIMENG｜让资产清晰起来'
-const description = BRAND.id === 'areit' ? 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。' : '金英 KIMENG 平台，与 A-REIT 共用账户及数据。一个账户，两个官方入口；各网站分别登录。'
+const description = BRAND.id === 'areit' ? 'A-REIT 致力于带来更智能、高效、流畅的投资体验，让信息了解更清晰、决策过程更从容，陪伴你探索更多可能。机构资料介绍：CapitaLand Ascendas REIT（SGX: A17U）｜工业及商业地产投资。' : '让资产清晰起来。'
 
 export const metadata: Metadata = {
   metadataBase: new URL(BRAND.origin),

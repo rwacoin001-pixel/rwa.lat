@@ -1,18 +1,22 @@
 :global(html):has(.root) { overflow: hidden; }
 
-.root.root.root.root {
+.root {
   --desktop-rim: rgba(255,255,255,.64);
   --desktop-glass: linear-gradient(155deg,rgba(250,253,255,.79),rgba(228,236,242,.55) 65%,rgba(232,239,246,.78));
   --desktop-paper: rgba(247,250,253,.95);
   --desktop-shadow: 0 24px 46px -19px rgba(24,42,58,.35), 0 67px 102px -38px rgba(24,42,58,.55);
   --desktop-gutter: clamp(20px,3.35vw,64px);
+}
+.root.root.root.root {
   position: fixed; inset: 0; z-index: 5; display: grid;
   grid-template: 44px minmax(0,1fr) / minmax(0,1fr);
   width: 100%; height: 100dvh; min-height: 0; max-width: none; margin: 0;
   padding: clamp(14px,3vh,33px) var(--desktop-gutter) !important;
   color: var(--f-ink); isolation: isolate;
 }
-.root[data-auth-theme='cool'] {
+.root.root.root.root[data-auth-theme='cool'] {
+  --f-muted: #bdc8d7;
+  --f-faint: #aebbd0;
   --desktop-rim: rgba(215,231,248,.23);
   --desktop-glass: linear-gradient(155deg,rgba(39,48,61,.84),rgba(20,26,36,.66) 66%,rgba(27,35,45,.87));
   --desktop-paper: rgba(24,30,40,.95);
@@ -24,12 +28,16 @@
 .root .topbar > a { display: flex; align-items: center; }
 .logo { display: block; width: 129px; height: auto; }
 .root .topbar button:not([role='menuitemradio']) {
-  border: 1px solid var(--desktop-rim); background: var(--desktop-paper); color: var(--f-ink);
+  border: 0; background: transparent; color: var(--f-ink);
 }
-.stage { grid-area: 2/1; display: grid; place-items: safe center; min-height: 0; padding: 9px 0 26px; }
+.root .topbar button:not([role='menuitemradio']):hover { color: var(--f-accent); }
+.stage {
+  grid-area: 2/1; display: grid; align-items: safe center; justify-items: start;
+  min-height: 0; padding-block: 8px 36px; padding-inline-start: clamp(36px,17vw,305px);
+}
 .root.root.root .sheet.sheet {
-  position: relative; display: block; width: min(100%,478px); max-width: none; margin: 0;
-  padding: 14px; border: 1px solid var(--desktop-rim); border-radius: 42px;
+  position: relative; display: block; width: min(100%,382px); max-width: none; margin: 0;
+  padding: 12px; border: 1px solid var(--desktop-rim); border-radius: 34px;
   background: var(--desktop-glass); box-shadow: inset 0 1px 1px rgba(255,255,255,.32), var(--desktop-shadow);
   backdrop-filter: blur(34px) saturate(1.13);
 }
@@ -37,12 +45,12 @@
   inset: 5px auto auto calc(50% - 17px); width: 34px; height: 1px;
   border-radius: 8px; background: var(--desktop-rim);
 }
-.root .sheet > .content { min-width: 0; padding: 24px 20px 5px; }
+.root .sheet > .content { min-width: 0; padding: 20px 12px 4px; }
 .root[data-auth-view='form'] .sheet > .content { padding-top: 14px; }
 .root[data-auth-view='welcome'] .sheet > .window { padding: 0; }
-.window { height: clamp(115px,20vh,184px); overflow: hidden; border-radius: 29px; box-shadow: 0 8px 16px -6px rgba(20,39,55,.43), 0 1px 2px rgba(20,39,55,.26); }
-.window img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: center 57%; }
-.root.root[data-auth-view='welcome'] .copy h1 { margin: 0; font-size: 28px; line-height: 1.2; animation: lens-in .57s cubic-bezier(.2,.65,.3,1) both; }
+.window { height: clamp(105px,19vh,170px); overflow: hidden; border-radius: 22px; box-shadow: 0 8px 16px -6px rgba(20,39,55,.43), 0 1px 2px rgba(20,39,55,.26); }
+.window img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 76% 57%; transform: scale(1.14); transform-origin: 80% 57%; }
+.root.root[data-auth-view='welcome'] .copy h1 { margin: 0; font-size: 25px; line-height: 1.2; animation: lens-in .57s cubic-bezier(.2,.65,.3,1) both; }
 .root[data-auth-script='wide'] .copy h1 { letter-spacing: normal; }
 .root .copy p, .root .sheet :global([class*='auth-focus_actions__']) { animation: none; }
 .root.root .sheet :global([class*='auth-focus_continue__']) { justify-content: center; min-height: 49px; padding: 0 40px; box-shadow: none; background: var(--f-ink); color: var(--f-bg); }
@@ -85,28 +93,40 @@
 
 @media (max-width:1210px) {
   .askWrap { width: 290px; }
-  .root:has(.reply) .stage { padding-inline-end: 294px; }
+  .stage { padding-inline-start: clamp(24px,13vw,163px); }
+}
+@media (max-width:960px) {
+  .stage { padding-inline-start: clamp(18px,6vw,55px); }
 }
 @media (max-height:770px) {
-  .stage { padding-block: 4px 27px; }
-  .window { height: clamp(73px,14vh,130px); }
-  .root.root .sheet { padding: 11px; }
+  .stage { padding-block: 4px 20px; }
+  .window { height: clamp(68px,17vh,129px); }
+  .root.root.root .sheet.sheet { padding: 10px; }
   .root .sheet > .content { padding-top: 15px; }
   .root .sheet :global([class*='auth-focus_actions__']) { padding-top: 13px; }
   .root .sheet :global([class*='auth-focus_others__']) { margin-top: 9px; }
   .root .sheet :global([class*='auth-focus_orLine__']) { margin-bottom: 8px; }
 }
 @media (max-height:620px) {
-  .stage { padding-bottom: 57px; }
-  .root.root.root[data-auth-view='welcome'] .sheet.sheet { display: grid; grid-template-columns: minmax(125px,.9fr) minmax(265px,1.5fr); width: min(100%,645px); }
-  .window { height: 100%; }
-  .window img { object-position: 74% center; }
-  .root .sheet > .content { padding: 8px 13px 0; }
-  .root.root[data-auth-view='welcome'] .copy h1 { font-size: 24px; }
+  .stage { padding-bottom: 8px; }
+  .window { height: clamp(61px,14vh,95px); }
+  .root .sheet > .content { padding: 12px 12px 0; }
+  .root.root[data-auth-view='welcome'] .copy h1 { font-size: 22px; }
+  .root .sheet :global([class*='auth-focus_actions__']) { padding-top: 9px; }
+  .root.root .sheet :global([class*='auth-focus_email__']) { --ctl-h: 42px; }
+  .root.root .sheet :global([class*='auth-focus_email__']) input { height: 40px; }
+  .root.root .sheet :global([class*='auth-focus_continue__']) { min-height: 40px; margin-top: 7px; }
+  .root .sheet :global([class*='auth-focus_ways__']) { grid-template-columns: minmax(0,1fr) 37px 37px; }
+  .root.root .sheet :global([class*='auth-focus_ways__']) > button { height: 37px; }
+  .mode { margin-top: 3px; }
+  .mode button { min-height: 29px; }
+  .legal button { min-height: 26px; }
 }
 @media (max-height:540px) {
-  .stage { padding-bottom: 20px; }
-  .root .sheet :global([class*='auth-focus_email__']) { --ctl-h: 44px; }
+  .window { height: clamp(51px,12vh,65px); }
+  .root .sheet > .content { padding-top: 10px; }
+  .root .sheet :global([class*='auth-focus_others__']) { margin-top: 6px; }
+  .root .sheet :global([class*='auth-focus_orLine__']) { margin-bottom: 6px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .reply { animation: none; }
