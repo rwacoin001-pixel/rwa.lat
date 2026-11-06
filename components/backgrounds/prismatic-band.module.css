@@ -1,10 +1,32 @@
 .band { position: absolute; inset: 0; overflow: hidden; pointer-events: none; isolation: isolate; background: #43bbdf; }
 .band svg { display: block; width: 100%; height: 100%; overflow: visible; }
-.far, .near, .front { transform-box: fill-box; transform-origin: center; animation: current 18s cubic-bezier(.45, 0, .55, 1) infinite alternate; }
-.near { animation-name: tide; animation-duration: 23s; }
-.front { animation-duration: 27s; animation-direction: alternate-reverse; }
-.sheen { position: absolute; inset: 0; pointer-events: none; background: linear-gradient(155deg, rgba(255,255,255,.24), transparent 36%, rgba(255,255,255,.08) 74%, transparent); }
-.band[data-paused] :is(.far, .near, .front) { animation-play-state: paused; }
-@keyframes current { from { transform: translate(-14px,-12px) rotate(-3deg) scale(1.07); } to { transform: translate(32px,12px) rotate(5deg) scale(1.15); } }
-@keyframes tide { from { transform: translate(24px,-10px) rotate(2deg) scale(1.08); } to { transform: translate(-28px,18px) rotate(-5deg) scale(1.16); } }
-@media (prefers-reduced-motion: reduce) { .far, .near, .front { animation: none; transform: none; } }
+.far, .near, .front {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: current 7s ease-in-out -2s infinite alternate;
+}
+.near { animation-name: tide; animation-duration: 9s; animation-delay: -4s; }
+.front { animation-duration: 11s; animation-delay: -3s; animation-direction: alternate-reverse; }
+.sheen {
+  position: absolute;
+  inset: -25% -40%;
+  pointer-events: none;
+  background: linear-gradient(118deg, transparent 34%, rgba(255,255,255,.33) 49%, rgba(239,255,251,.16) 55%, transparent 68%);
+  animation: lightSweep 8s ease-in-out -2s infinite alternate;
+}
+.band[data-paused] :is(.far, .near, .front, .sheen) { animation-play-state: paused; }
+@keyframes current {
+  from { transform: translate(-84px, -30px) rotate(-8deg) scale(1.08); }
+  to { transform: translate(84px, 34px) rotate(9deg) scale(1.2); }
+}
+@keyframes tide {
+  from { transform: translate(72px, -34px) rotate(8deg) scale(1.12); }
+  to { transform: translate(-72px, 35px) rotate(-9deg) scale(1.22); }
+}
+@keyframes lightSweep {
+  from { transform: translateX(-36%); opacity: .45; }
+  to { transform: translateX(36%); opacity: .9; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .far, .near, .front, .sheen { animation: none; transform: none; }
+}

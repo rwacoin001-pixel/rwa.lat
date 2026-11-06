@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronDown, ChevronRight, Info, RotateCw } from 'lucide-react'
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
 import { betAmounts, betStatus, betTotals, type BetStatus } from '@/lib/api/my-predictions'
@@ -23,9 +23,13 @@ const PAGE = MY_BETS_PAGE
 const FILTERS = ['all', 'open', 'won', 'lost', 'void'] as const
 type Filter = (typeof FILTERS)[number]
 const FILTER_STATUS: Record<Exclude<Filter, 'all'>, BetStatus> = { open: 'placed', won: 'won', lost: 'lost', void: 'void' }
-function BetCard({ bet, locale, t, sc, content }: { bet: PredictionBet; locale: string; t: MyPredictionsCopy; sc: MyPredictionsScreenCopy; content: (text: string) => string }) {
+function BetCard({ bet, locale, t, sc, content, selected }: { bet: PredictionBet; locale: string; t: MyPredictionsCopy; sc: MyPredictionsScreenCopy; content: (text: string) => string; selected: boolean }) {
   const id = useId()
-  const [open, setOpen] = useState(false)
+  const card = useRef<HTMLElement>(null)
+  const [open, setOpen] = useState(selected)
+  useEffect(() => {
+    if (selected) card.current?.scrollIntoView({ block: 'start' })
+  }, [selected])
   const [why, setWhy] = useState(false)
   const status = betStatus(bet.status)
   const amounts = betAmounts(bet)
@@ -56,7 +60,7 @@ function BetCard({ bet, locale, t, sc, content }: { bet: PredictionBet; locale: 
     : [sc.unknownNote]
 
   return <li>
-    <article className={mp.card} data-status={status}>
+    <article ref={card} className={mp.card} data-status={status} data-selected={selected || undefined}>
       <div className={mp.meta}>
         <span className={mp.side} data-side={side}>{sideLabel}</span>
         <span className={mp.state}>{sc.statusShort[status]}</span>
@@ -106,7 +110,7 @@ function BetCard({ bet, locale, t, sc, content }: { bet: PredictionBet; locale: 
 }
 
 /** `/assets/predictions` — every prediction bet the signed-in user placed, with its server-side result. */
-export function MyPredictionsScreen() {
+export function MyPredictionsScreen({ betId }: { betId?: string | null }) {
   const { locale } = useI18n()
   const t = myPredictionsCopy[locale]
   const sc = myPredictionsScreenCopy[locale]
@@ -194,7 +198,7 @@ export function MyPredictionsScreen() {
         {bets.length > 0 && translationSources.length > 0 && <div className={s.predFeedTranslate}><PredictionTranslationButton translation={translation} original={original} onOriginal={setOriginal} sources={translationSources} /></div>}
 
         {shown.length === 0 ? <p className={mp.foot} role="status">{t.filterEmpty}</p>
-          : <ul className={mp.list}>{shown.map((bet) => <BetCard key={bet.id} bet={bet} locale={locale} t={t} sc={sc} content={content} />)}</ul>}
+          : <ul className={mp.list}>{shown.map((bet) => <BetCard key={bet.id} bet={bet} locale={locale} t={t} sc={sc} content={content} selected={bet.id === betId} />)}</ul>}
 
         {bets.length < total && <div className={mp.more}>
           <button type="button" className={s.ghost} onClick={() => void loadMore()} disabled={loadingMore} aria-busy={loadingMore}>

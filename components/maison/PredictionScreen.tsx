@@ -43,6 +43,7 @@ import { useRewardsCopy } from '@/components/rewards/rewards-copy'
 import { usePurchasePin } from './usePurchasePin'
 import { share } from './flow-kit'
 import { PURCHASE_DONE_PATH, savePurchaseDone } from '@/lib/purchase-done'
+import { pathForScreen } from '@/lib/rwa-routes'
 
 const MARKET_ID = /^[A-Za-z0-9-]{1,120}$/
 const BET_PATH = '/v1/predictions/bets'
@@ -302,7 +303,8 @@ function BetTicket({ data, translation, initialOutcome=0, onBusyChange, onRefres
         { label: marketCopy[locale].status.orderId, value: `${bet.id.slice(0, 8).toUpperCase()}` },
       ],
       note: fill(t.doneBody, { s: Number(bet.shares).toLocaleString(locale, { maximumFractionDigits: 4 }), p: pct(Number(bet.price)) }),
-      donePath: '/assets', againPath: `${window.location.pathname}${window.location.search}`, recordsPath: '/my-predictions',
+      donePath: '/assets', againPath: `${window.location.pathname}${window.location.search}`,
+      recordsPath: `${pathForScreen('my-predictions')}?bet=${encodeURIComponent(bet.id)}`,
     })
     openPath(PURCHASE_DONE_PATH)
   }

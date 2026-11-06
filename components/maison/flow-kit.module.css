@@ -86,7 +86,7 @@ button.unit { cursor: pointer; }
 .reviewError { margin: 0 4px; color: var(--m-down); font-size: 13px; }
 
 /* Success. */
-.success { display: grid; justify-items: center; gap: 12px; padding: 28px 0 calc(env(safe-area-inset-bottom) + 16px); text-align: center; animation: rise .5s cubic-bezier(.22, 1, .36, 1) both; }
+.success { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 12px; padding: 28px 0 calc(env(safe-area-inset-bottom) + 16px); text-align: center; overflow-wrap: anywhere; animation: rise .5s cubic-bezier(.22, 1, .36, 1) both; }
 @keyframes rise { from { opacity: 0; transform: translateY(14px); } }
 .check { width: 76px; height: 76px; margin-bottom: 6px; fill: none; stroke: var(--m-up); stroke-linecap: round; stroke-linejoin: round; }
 .success[data-pending] .check { stroke: var(--m-warn, #b7791f); }
@@ -94,11 +94,14 @@ button.unit { cursor: pointer; }
 .check path { stroke-width: 4; stroke-dasharray: 1; stroke-dashoffset: 1; animation: draw .38s cubic-bezier(.65, 0, .35, 1) .55s forwards; }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 .successTitle { margin: 0; color: var(--m-ink); font-size: 22px; font-weight: 650; }
-.successAmount { display: flex; align-items: baseline; gap: 6px; margin: 0; color: var(--m-ink); font-size: 40px; font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
-.receipt { width: 100%; margin-top: 12px; text-align: start; }
+.successAmount { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 6px; max-width: 100%; margin: 0; color: var(--m-ink); font-size: clamp(28px, 9vw, 40px); font-weight: 500; letter-spacing: -.04em; font-variant-numeric: tabular-nums; }
+.successAmount bdi { min-width: 0; }
+.receipt { grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; margin-top: 12px; text-align: start; }
+.receipt > div { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 12px; padding-block: 10px; }
+.receipt dd { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
 .successNote { margin: 4px 8px 0; color: var(--m-faint); font-size: 12px; line-height: 1.5; }
 .successActions { display: grid; gap: 6px; width: 100%; margin-top: 20px; }
-.successActions > div { display: flex; align-items: center; justify-content: center; gap: 6px; color: var(--m-faint); }
+.successActions > div { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; color: var(--m-faint); }
 .textButton { min-height: 44px; padding: 0 12px; border: 0; background: none; color: var(--m-ink); font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
 
 @media (prefers-reduced-motion: reduce) {

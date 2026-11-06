@@ -131,7 +131,7 @@ export function H5Screens({ h }: { h: H5Controller }) {
         {screen === 'rebalance' && <MaisonRebalanceScreen />}
         {screen === 'statements' && <MaisonStatementsScreen query={routeQuery} />}
         {screen === 'recurring' && <MaisonRecurringScreen />}
-        {screen === 'my-predictions' && <MaisonMyPredictionsScreen />}
+        {screen === 'my-predictions' && <MaisonMyPredictionsScreen key={routeQuery} betId={new URLSearchParams(routeQuery).get('bet')} />}
         {screen === 'order-review' && <MaisonOrderReviewScreen query={queryParam(routeQuery, 'product') || !isOrderableId(selectedProduct.id) ? routeQuery : `product=${selectedProduct.id}`} />}
         {screen === 'order-processing' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}
         {screen === 'order-success' && <MaisonOrderStatusScreen variant="status" orderId={queryParam(routeQuery, 'id') ?? orderDetailId} />}

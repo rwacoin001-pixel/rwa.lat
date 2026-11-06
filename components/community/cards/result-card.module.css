@@ -3,8 +3,8 @@
    the kind on the tab, the main figure at the foot. Light theme: a white folder on a white frame; dark: graphite. Depth
    comes from layered shadows, a lit top edge, a frosted solid sheet with fine grain and a little parallax while the card
    is held; only the top band moves. A tap opens the folder. Provenance and the risk line sit under the card. */
-.card { --sheet: rgba(248, 251, 255, .72); --frame: rgba(235, 242, 250, .64); --ink: #0b1220; --muted: rgba(11, 18, 32, .7); --line: rgba(11, 18, 32, .11); --up: #087848; --down: #b32838;
-  --edge: rgba(255, 255, 255, .9); --lift-shadow: rgba(34, 58, 88, .2); --rim: rgba(255, 255, 255, .6); --well: rgba(35, 55, 80, .12); --grain: .045;
+.card { --sheet: rgba(255, 255, 255, .86); --frame: #f4f6f9; --ink: #0b1220; --muted: rgba(11, 18, 32, .56); --line: rgba(11, 18, 32, .08); --up: #0f8f5f; --down: #c23a3a;
+  --edge: rgba(255, 255, 255, .95); --lift-shadow: rgba(15, 23, 42, .18); --rim: rgba(11, 18, 32, .06); --well: rgba(15, 23, 42, .08); --grain: .5;
   --a: #0f9b84; --b: #74dcc2; --c: #9fd2ff; --d: #0b6f63;
   --tab-w: 56%; --photo-h: 132px; --lift: 96px;
   position: relative; display: grid; gap: 10px; color: var(--ink); font-variant-numeric: tabular-nums; }
@@ -19,11 +19,11 @@
 .frame:focus-visible { box-shadow: 0 0 0 2px var(--m-accent, #087a67); }
 .turn { position: relative; display: grid; transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)); transform-style: preserve-3d; transition: transform .5s var(--pa-ease-spring, cubic-bezier(.34, 1.4, .64, 1)); }
 .frame[data-held] .turn { transition: transform .12s ease-out; }
-.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); perspective: 1000px;
+.face { grid-area: 1 / 1; position: relative; display: grid; overflow: hidden; padding: 6px; border-radius: 30px; background: var(--frame); perspective: 700px;
   box-shadow: inset 0 1px 0 var(--edge), 0 0 0 .5px rgba(11, 18, 32, .08), 0 2px 4px rgba(15, 23, 42, .06), 0 14px 24px -12px rgba(15, 23, 42, .18), 0 34px 60px -30px rgba(15, 23, 42, .36); }
 
 /* Top: three soft lights in the product's colours drift slowly under a fine grain; they move against the finger. */
-.photo { position: absolute; inset: 6px; overflow: hidden; border-radius: 24px; background: linear-gradient(135deg, var(--d), var(--a) 55%, var(--b)); }
+.photo { position: absolute; inset: 6px 6px auto; height: calc(var(--lift) + 1px); overflow: hidden; border-radius: 24px 24px 0 0; background: linear-gradient(135deg, var(--d), var(--a) 55%, var(--b)); }
 .photo i { position: absolute; border-radius: 50%; filter: blur(22px); will-change: transform; }
 .photo i:nth-child(1) { top: -40%; left: -10%; width: 70%; height: 140%; background: var(--b); opacity: .9; animation: driftA 11s ease-in-out infinite alternate; }
 .photo i:nth-child(2) { top: -30%; right: -15%; width: 65%; height: 130%; background: var(--c); opacity: .8; animation: driftB 13s ease-in-out infinite alternate; }
@@ -151,8 +151,8 @@
 :global(.rwa-mobile) .card.card .label small, :global(.rwa-mobile) .card.card .label b { color: #fff; }
 :global(.rwa-mobile) .card.card .prov, :global(.rwa-mobile) .card.card .who small { color: var(--m-muted, #5b6472); }
 :global(.rwa-mobile) .card.card .risk { color: var(--m-faint, #8a9099); }
-:global(.rwa-mobile[data-theme='dark']) .card { --frame: rgba(24, 36, 53, .68); --sheet: rgba(19, 30, 46, .78); --ink: #f4f5f7; --muted: rgba(244, 245, 247, .76); --line: rgba(255, 255, 255, .15); --up: #63edb1; --down: #ff9b94;
-  --edge: rgba(255, 255, 255, .32); --lift-shadow: rgba(0, 0, 0, .5); --rim: rgba(255, 255, 255, .18); --well: rgba(0, 0, 0, .35); --grain: .035; --a: #0e7d6c; --b: #2fb89a; --c: #2c6f9e; --d: #06302b; }
+:global(.rwa-mobile[data-theme='dark']) .card { --frame: #07080a; --sheet: rgba(30, 33, 39, .86); --ink: #f4f5f7; --muted: rgba(244, 245, 247, .56); --line: rgba(255, 255, 255, .1); --up: #46d39a; --down: #ff7d70;
+  --edge: rgba(255, 255, 255, .08); --lift-shadow: rgba(0, 0, 0, .6); --rim: rgba(255, 255, 255, .06); --well: rgba(0, 0, 0, .35); --grain: .35; --a: #0e7d6c; --b: #2fb89a; --c: #2c6f9e; --d: #06302b; }
 :global(.rwa-mobile[data-theme='dark']) .card[data-group='prediction'] { --a: #2a46a8; --b: #4f7de0; --c: #6a55c9; --d: #121b45; }
 :global(.rwa-mobile[data-theme='dark']) .card[data-group='funds'] { --a: #3a424e; --b: #5b6676; --c: #2c333d; --d: #15191f; }
 :global(.rwa-mobile[data-theme='dark']) .face { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 .5px rgba(255, 255, 255, .1), 0 14px 24px -12px rgba(0, 0, 0, .6), 0 34px 60px -30px rgba(0, 0, 0, .9); }
@@ -162,24 +162,6 @@
 :global(.rwa-mobile) .card.card .paperHead small, :global(.rwa-mobile) .card.card .paper .grid dt, :global(.rwa-mobile) .card.card .paper .holdings li small { color: rgba(20, 22, 26, .56); }
 :global(.rwa-mobile) .card.card .paper { color: #14161a; }
 
-/* Android keeps the depth and light transmission without full-card backdrop recompositing. */
-:global(html[data-shell='android']) .card.card :is(.sheet, .tab) { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgba(246, 250, 255, .91); }
-:global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .card.card :is(.sheet, .tab) { background: rgba(19, 30, 46, .92); }
-
-/* A refracted back plate, two thin inserts and the frosted front form one folder. */
-.photo::after { opacity: .22; }
-.face::before, .face::after { content: ''; position: absolute; z-index: 1; top: 34px; inset-inline: 22px 34px; height: 46%; border: 1px solid rgba(255,255,255,.7); border-radius: 18px; background: rgba(244,250,255,.65); box-shadow: 0 8px 18px rgba(30,55,80,.1); transform: rotate(-5deg) translateY(10px); pointer-events: none; transition: transform .6s cubic-bezier(.22,1,.36,1); }
-.face::after { inset-inline: 34px 22px; background: rgba(224,238,250,.66); transform: rotate(4deg) translateY(22px); }
-.card.card .label { z-index: 4; padding: 6px 10px; border-radius: 12px; background: var(--sheet); color: var(--ink); text-shadow: none; -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: inset 0 1px 0 var(--edge); }
-:global(.rwa-mobile) .card.card .label :is(b, small) { color: var(--ink); }
-.card.card .sheet { z-index: 3; -webkit-backdrop-filter: blur(24px) saturate(1.18); backdrop-filter: blur(24px) saturate(1.18); }
-.card.card .paper { z-index: 2; background: #f4f8fd; border: 1px solid rgba(255,255,255,.9); }
-.frame[data-open] .face::before { transform: rotate(-8deg) translateY(-8px); }
-.frame[data-open] .face::after { transform: rotate(6deg) translateY(4px); }
-.frame[data-open] .label { opacity: 0; pointer-events: none; }
-:global(.rwa-mobile[data-theme='dark']) .face::before, :global(.rwa-mobile[data-theme='dark']) .face::after { background: rgba(87,112,146,.42); border-color: rgba(213,232,251,.36); }
-@media (hover: hover) and (pointer: fine) { .frame[data-live]:not([data-open]):hover .sheet { transform: rotateX(-4deg) translateY(2px); } }
-@media (prefers-reduced-motion: reduce) { .face::before, .face::after { transition: none; } .frame[data-held] .turn { transform: none; } }
-.card[data-mini] .label { top: 10px; right: 12px; padding: 3px 7px; border-radius: 8px; }
-.risk { font-size: 12px; }
-:global(.rwa-mobile) .card.card .risk { color: var(--m-muted, #596372); }
+/* Android WebView: no backdrop blur (it janks there); the sheet is simply solid. */
+:global(html[data-shell='android']) .sheet, :global(html[data-shell='android']) .tab { -webkit-backdrop-filter: none; backdrop-filter: none; background: #fff; }
+:global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .sheet, :global(html[data-shell='android'] .rwa-mobile[data-theme='dark']) .tab { background: #1e2127; }

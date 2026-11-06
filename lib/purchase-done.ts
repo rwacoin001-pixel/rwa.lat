@@ -1,5 +1,7 @@
 'use client'
 
+import { pathForScreen } from './rwa-routes'
+
 /**
  * The "purchase done" page's data (2026-11-05, user: after buying, land on a success page, like mature apps). The buy
  * flow writes the receipt here just before it navigates to /purchase/done; the page reads it once. Session-only, never
@@ -18,5 +20,13 @@ export function savePurchaseDone(record: Omit<PurchaseDone, 'at'>) {
   try { sessionStorage.setItem(KEY, JSON.stringify({ ...record, at: new Date().toISOString() })) } catch { /* private mode: the page falls back */ }
 }
 export function readPurchaseDone(): PurchaseDone | null {
-  try { const raw = sessionStorage.getItem(KEY); return raw ? JSON.parse(raw) as PurchaseDone : null } catch { return null }
+  try {
+    const raw = sessionStorage.getItem(KEY)
+    if (!raw) return null
+    const record = JSON.parse(raw) as PurchaseDone
+    if (record?.kind === 'prediction' && record.recordsPath === '/my-predictions') {
+      return { ...record, recordsPath: pathForScreen('my-predictions') }
+    }
+    return record
+  } catch { return null }
 }
