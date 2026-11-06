@@ -2,9 +2,9 @@
 
 .root {
   --desktop-rim: rgba(255,255,255,.64);
-  --desktop-glass: linear-gradient(155deg,rgba(250,253,255,.79),rgba(228,236,242,.55) 65%,rgba(232,239,246,.78));
+  --desktop-glass: linear-gradient(155deg,rgba(250,253,255,.8),rgba(234,241,247,.65) 65%,rgba(235,242,248,.76));
   --desktop-paper: rgba(247,250,253,.95);
-  --desktop-shadow: 0 24px 46px -19px rgba(24,42,58,.35), 0 67px 102px -38px rgba(24,42,58,.55);
+  --desktop-shadow: 0 20px 38px -18px rgba(24,42,58,.32), 0 44px 80px -32px rgba(24,42,58,.38);
   --desktop-gutter: clamp(20px,3.35vw,64px);
 }
 .root.root.root.root {
@@ -18,12 +18,12 @@
   --f-muted: #bdc8d7;
   --f-faint: #aebbd0;
   --desktop-rim: rgba(215,231,248,.23);
-  --desktop-glass: linear-gradient(155deg,rgba(39,48,61,.84),rgba(20,26,36,.66) 66%,rgba(27,35,45,.87));
+  --desktop-glass: linear-gradient(155deg,rgba(39,48,61,.84),rgba(20,26,36,.72) 66%,rgba(27,35,45,.87));
   --desktop-paper: rgba(24,30,40,.95);
-  --desktop-shadow: 0 28px 55px -17px rgba(1,6,13,.61), 0 68px 98px -35px rgba(1,6,13,.68);
+  --desktop-shadow: 0 24px 44px -18px rgba(1,6,13,.55), 0 48px 80px -32px rgba(1,6,13,.58);
 }
 .scene { position: absolute; inset: 0; z-index: -1; overflow: hidden; pointer-events: none; }
-.scene img { width: 100%; height: 100%; object-fit: cover; object-position: 59% 49%; transform: scale(1.075); filter: blur(12px) saturate(.8); }
+.scene img { width: 100%; height: 100%; object-fit: cover; object-position: 59% 49%; transform: scale(1.075); filter: blur(8px) saturate(.88); }
 .root .topbar { grid-area: 1/1; padding: 0; width: 100%; max-width: none; color: var(--f-ink); }
 .root .topbar > a { display: flex; align-items: center; }
 .logo { display: block; width: 129px; height: auto; }
@@ -36,7 +36,7 @@
   min-height: 0; padding-block: 8px 36px; padding-inline-start: clamp(36px,17vw,305px);
 }
 .root.root.root .sheet.sheet {
-  position: relative; display: block; width: min(100%,306px); max-width: none; margin: 0;
+  position: relative; display: block; width: min(100%,360px); max-width: none; margin: 0;
   padding: 12px; border: 1px solid var(--desktop-rim); border-radius: 34px;
   background: var(--desktop-glass); box-shadow: inset 0 1px 1px rgba(255,255,255,.32), var(--desktop-shadow);
   backdrop-filter: blur(34px) saturate(1.13);
@@ -48,7 +48,7 @@
 .root .sheet > .content { min-width: 0; padding: 20px 12px 4px; }
 .root[data-auth-view='form'] .sheet > .content { padding-top: 14px; }
 .root[data-auth-view='welcome'] .sheet > .window { padding: 0; }
-.window { height: clamp(105px,19vh,170px); overflow: hidden; border-radius: 22px; box-shadow: 0 8px 16px -6px rgba(20,39,55,.43), 0 1px 2px rgba(20,39,55,.26); }
+.window { height: clamp(102px,17vh,150px); overflow: hidden; border-radius: 22px; box-shadow: 0 8px 16px -6px rgba(20,39,55,.43), 0 1px 2px rgba(20,39,55,.26); }
 .window img { display: block; width: 100%; height: 100%; object-fit: cover; object-position: 76% 57%; transform: scale(1.14); transform-origin: 80% 57%; }
 .root.root[data-auth-view='welcome'] .copy h1 { margin: 0; font-size: 25px; line-height: 1.2; animation: lens-in .57s cubic-bezier(.2,.65,.3,1) both; }
 .root[data-auth-script='wide'] .copy h1 { letter-spacing: normal; }
