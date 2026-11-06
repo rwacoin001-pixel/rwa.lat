@@ -12,13 +12,14 @@ export async function GET(req:NextRequest,{params}:{params:Promise<{code:string}
     // Where the link should land (2026-10-28): a shared post or profile (`?next=`, same-site paths only), else the invitation page.
     const next=req.nextUrl.searchParams.get('next')
     const sameSite=Boolean(next)&&next!.startsWith('/')&&!next!.startsWith('//')&&!next!.includes('\\')&&!/\s/.test(next!)
-    const target=sameSite?next!:'/invite'
-    const response=NextResponse.redirect(new URL(target,req.url),303)
+    const target=new URL(sameSite?next!:'/invite',req.url)
+    const lang=req.nextUrl.searchParams.get('lang')
+    if(isAppLocale(lang)) target.searchParams.set('lang',lang)
+    const response=NextResponse.redirect(target,303)
     response.headers.set('Cache-Control','no-store')
     response.cookies.set('rwa_referral',data.attributionToken,{httpOnly:true,secure:req.nextUrl.protocol==='https:',sameSite:'lax',path:'/',expires:new Date(data.expiresAt)})
-    // The sharer's language (2026-11-02, `?lang=`): the page opens in it unless this browser already chose a language.
-    const lang=req.nextUrl.searchParams.get('lang')
-    if(isAppLocale(lang)&&!isAppLocale(req.cookies.get(LANGUAGE_COOKIE)?.value)) response.cookies.set(LANGUAGE_COOKIE,lang,{secure:req.nextUrl.protocol==='https:',sameSite:'lax',path:'/',maxAge:31536000})
+    // An explicit invitation language wins over an older recipient preference.
+    if(isAppLocale(lang)) response.cookies.set(LANGUAGE_COOKIE,lang,{secure:req.nextUrl.protocol==='https:',sameSite:'lax',path:'/',maxAge:31536000})
     return response
   } catch {return NextResponse.json({message:'Invitation service is temporarily unavailable'},{status:503,headers:{'Cache-Control':'no-store'}})}
 }

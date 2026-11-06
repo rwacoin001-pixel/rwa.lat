@@ -63,14 +63,14 @@ export function HomeReferral() {
   const [receipt, setReceipt] = useState<string | null>(null)
   const copyLink = async () => {
     if (!code) return
-    try { await navigator.clipboard.writeText(invitationLink(code)); setCopied(true); navigator.vibrate?.(8); window.setTimeout(() => setCopied(false), 1200) }
+    try { await navigator.clipboard.writeText(invitationLink(code, locale)); setCopied(true); navigator.vibrate?.(8); window.setTimeout(() => setCopied(false), 1200) }
     catch { showToast(c.copyFailed, 'error') }
   }
   // 邀请 opens the system share sheet at once (2026-11-04, user). Called inside the tap so iOS keeps the user gesture;
   // the Android app's WebView has no Web Share, so the app shares natively. Without either, the link is copied.
   const share = () => {
     if (!code) return
-    const url = invitationLink(code)
+    const url = invitationLink(code, locale)
     if (nativeCan('share')) { void nativeShare({ title: brandText('A-REIT'), url }).then(result => { if (!result.ok && result.reason === 'failed') void copyLink() }); return }
     if (!navigator.share) { void copyLink(); return }
     navigator.share({ title: brandText('A-REIT'), url }).catch((error: unknown) => { if (!(error instanceof DOMException && error.name === 'AbortError')) void copyLink() })

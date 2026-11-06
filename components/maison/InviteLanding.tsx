@@ -1,6 +1,7 @@
 'use client'
 
-import { brandText } from '@/lib/brand/build-brand'
+import { BRAND, brandText } from '@/lib/brand/build-brand'
+import KimengInviteLanding from './KimengInviteLanding'
 
 import { useEffect, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
@@ -34,6 +35,10 @@ const copy: Record<AppLocale, Copy> = {
 const signed = (value: number) => `${value > 0 ? '+' : value < 0 ? '−' : ''}${Math.abs(value).toFixed(2)}%`
 
 export function InviteLanding({ go }: { go: (screen: RwaScreen) => void }) {
+  return BRAND.id === 'kimeng' ? <KimengInviteLanding /> : <LegacyInviteLanding go={go} />
+}
+
+function LegacyInviteLanding({ go }: { go: (screen: RwaScreen) => void }) {
   const { locale } = useI18n()
   const c = copy[locale] ?? copy.en
   const [invite, setInvite] = useState<InviteAttribution | null | undefined>(undefined)

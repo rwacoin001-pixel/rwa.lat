@@ -125,7 +125,7 @@ export function ReferralScreen({ query = '', embedded = false }: { query?: strin
   }, [])
 
   const code = me.data?.code
-  const link = code && typeof window !== 'undefined' ? invitationLink(code) : ''
+  const link = code && typeof window !== 'undefined' ? invitationLink(code, locale) : ''
   const sum = summary.data
   const unit = sum?.currency || 'USDT'
   const money = (atomic?: string) => fmtAtomic(atomic, sum?.decimals ?? 6, '', 2).trim()

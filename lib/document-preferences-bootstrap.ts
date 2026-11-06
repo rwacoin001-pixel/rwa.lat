@@ -55,7 +55,10 @@ export const documentPreferencesBootstrap = `(() => {
   document.querySelectorAll('meta[name="theme-color"]').forEach(meta => { meta.content = color; meta.removeAttribute('media'); });
 
   const directions = ${localeDirections};
-  const locale = typeof savedLocale === 'string' && Object.prototype.hasOwnProperty.call(directions, savedLocale)
+  const linkLocale = location.search ? new URLSearchParams(location.search).get('lang') : null;
+  const locale = typeof linkLocale === 'string' && Object.prototype.hasOwnProperty.call(directions, linkLocale)
+    ? linkLocale
+    : typeof savedLocale === 'string' && Object.prototype.hasOwnProperty.call(directions, savedLocale)
     ? savedLocale
     : Object.prototype.hasOwnProperty.call(directions, root.lang) ? root.lang : 'en';
   root.lang = locale;

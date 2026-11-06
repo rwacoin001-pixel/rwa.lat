@@ -176,9 +176,10 @@ export function I18nProvider({ children, initialLocale = 'en' }: { children: Rea
     } catch { /* Storage is optional. */ }
     // Only an explicit saved choice is persistent. Automatic IP/device detection
     // must remain automatic on future visits instead of becoming a manual override.
-    const detected = isAppLocale(stored) ? stored : initialLocale
+    const linkLocale = window.location?.search ? new URLSearchParams(window.location.search).get('lang') : null
+    const detected = isAppLocale(linkLocale) ? linkLocale : isAppLocale(stored) ? stored : initialLocale
     setLocaleState(detected)
-    if (isAppLocale(stored)) persistLocale(stored)
+    if (isAppLocale(linkLocale) || isAppLocale(stored)) persistLocale(detected)
   }, [initialLocale])
 
   const setLocale = (next: AppLocale) => {
@@ -187,6 +188,11 @@ export function I18nProvider({ children, initialLocale = 'en' }: { children: Rea
     document.documentElement.lang = next
     document.documentElement.dir = direction
     persistLocale(next)
+    if (window.location?.search && new URLSearchParams(window.location.search).has('lang')) {
+      const url = new URL(window.location.href)
+      url.searchParams.set('lang', next)
+      window.history.replaceState(window.history.state, '', url)
+    }
   }
   const direction = localeOptions.find((item) => item.code === locale)?.direction ?? 'ltr'
 
