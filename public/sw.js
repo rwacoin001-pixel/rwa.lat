@@ -1,6 +1,6 @@
 // Bump this release cache when shipping app changes so installed PWAs cannot replay an old page shell with mismatched assets.
 const KIMENG = self.location.origin === 'https://kimengresearch.com'
-const CACHE_NAME = KIMENG ? 'a-reit-offline-kimeng-v5' : 'a-reit-offline-v4'
+const CACHE_NAME = KIMENG ? 'a-reit-offline-kimeng-v6' : 'a-reit-offline-v4'
 const OFFLINE_PAGE = KIMENG ? '/offline-kimeng' : '/offline'
 const SHELL_WAIT_MS = 1500
 // Installed app (Home Screen web app, Android client): the page says so once (lib/document-preferences-bootstrap.ts)

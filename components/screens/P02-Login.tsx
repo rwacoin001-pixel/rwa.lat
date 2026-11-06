@@ -1,7 +1,7 @@
 'use client'
 
 import { PASSKEY_ACCOUNT_KEY } from '@/lib/session-idle'
-import { IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
+import { BRAND, IS_BRAND_PREVIEW } from '@/lib/brand/build-brand'
 import { useEffect, useRef, useState, type FormEvent } from 'react'
 import type { ToastTone } from '@/lib/toast-tone'
 import { AlertCircle, ArrowRight, Check, Eye, EyeOff, Fingerprint, LoaderCircle, Mail, Pencil, UserRound } from 'lucide-react'
@@ -78,9 +78,9 @@ export function LoginScreen({ mode, go, notify, onAuthenticated }: {
 }) {
   const { locale, t } = useI18n()
   const copy = authRouteCopy[locale]
-  // First-run guide (replay with ?guide=1). Decided on the first render, so the full login never mounts underneath it.
+  // Decide the first-run guide before mounting the login form. KIMENG opens directly on the form.
   const [guide, setGuide] = useState(() => {
-    if (typeof window === 'undefined') return false
+    if (BRAND.id === 'kimeng' || typeof window === 'undefined') return false
     let seen = false
     try { seen = localStorage.getItem('rwa.onboarded.v2') === '1' } catch { /* Show it again. */ }
     return !seen || new URLSearchParams(location.search).has('guide')
