@@ -1,6 +1,6 @@
 Set your trading PIN
 
-Enter this code to confirm it is you, then you can set your trading PIN.
+Enter this code to confirm it is you, then you can set your trading PIN. Return to the verification screen and enter the six-digit code below to continue. This code is for this request only. Please use it before it expires.
 
 {{code}}
 {{expiryMinutes}} minutes remaining

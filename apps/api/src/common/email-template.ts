@@ -3,6 +3,7 @@ import { join } from 'node:path'
 
 export const EMAIL_LOCALES = ['zh-CN', 'en', 'hi', 'es', 'ar', 'fr', 'pt'] as const
 export type EmailLocale = typeof EMAIL_LOCALES[number]
+export const emailBrandName = (brand: 'kimeng' | undefined, locale?: string) => brand === 'kimeng' ? (emailLocale(locale) === 'zh-CN' ? '金英' : 'KIMENG') : 'A-REIT'
 export const EMAIL_ASSET_BASE_URL = 'https://api.a-reit.com/v1/media/email-v2'
 const RESOURCE_ROOT = join(__dirname, '..', 'assets', 'email-templates')
 const ALLOWED_HOSTS = new Set(['a-reit.com', 'www.a-reit.com', 'kimengresearch.com'])
@@ -83,8 +84,10 @@ export function renderEmailTemplate(id: string, locale: string | undefined, data
     return rendered
   }
   const branded = (content: string) => brand === 'kimeng'
-    ? content.replaceAll('A-REIT', language === 'zh-CN' ? '金英 KIMENG' : 'KIMENG')
+    ? content.replaceAll('A-REIT', emailBrandName(brand, language))
+      .replace(/<img\b[^>]*src="https:\/\/api\.a-reit\.com\/v1\/media\/email-v2\/logo-lockup\.png"[^>]*>/g, image => language === 'zh-CN'
+        ? '<img alt="金英" src="https://kimengresearch.com/brand/kimeng/mark-light-128.png" width="36" height="36" style="display:inline-block;vertical-align:middle;width:36px;height:36px"><span style="vertical-align:middle;margin-left:10px;color:#ffffff;font-size:20px;font-weight:600">金英</span>' : image)
       .replaceAll(EMAIL_ASSET_BASE_URL + '/logo-lockup.png', 'https://kimengresearch.com/brand/kimeng/logo-dark-1200.png')
     : content
-  return { subject: branded(contract.subject), html: branded(replace(template.html, true)), text: branded(replace(template.text, false)) }
+  return { subject: `${'code' in values ? `${values.code} · ` : ''}${branded(contract.subject)}`, html: branded(replace(template.html, true)), text: branded(replace(template.text, false)) }
 }

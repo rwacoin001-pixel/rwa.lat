@@ -12,17 +12,17 @@ import styles from './kimeng-desktop-install.module.css'
 const APPLE_GUIDE = 'https://support.apple.com/guide/iphone/turn-a-website-into-an-app-iph42ab2f3a7/ios'
 const copy = {
   zh: {
-    title: '在手机上打开 KIMENG',
+    title: '在手机上打开 金英',
     description: '添加到主屏幕。首次打开时，用原账户登录。',
-    scan: '用手机相机扫码', signOut: '退出登录', apple: 'Apple 官方教程', download: '下载 KIMENG APK',
+    scan: '用手机相机扫码', signOut: '退出登录', apple: 'Apple 官方教程', download: '下载 金英 APK',
     ios: [
       ['用 Safari 打开', '用相机扫码，再在 Safari 中打开链接。'],
       ['添加到主屏幕', '点「分享」，选择「添加到主屏幕」。'],
-      ['从主屏幕打开 KIMENG', '如有「作为网页 App 打开」，请开启，再点「添加」。'],
+      ['从主屏幕打开 金英', '如有「作为网页 App 打开」，请开启，再点「添加」。'],
     ],
     android: [
       ['在手机浏览器打开', '用相机扫码，再在手机浏览器打开链接。'],
-      ['下载 KIMENG 安装包', '点站内 Android 下载，打开已下载的 APK。'],
+      ['下载 金英 安装包', '点站内 Android 下载，打开已下载的 APK。'],
       ['按系统提示安装', '如系统要求授权，确认下载来源后，仅为当前浏览器授权。'],
     ],
   },

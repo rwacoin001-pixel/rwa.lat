@@ -79,7 +79,12 @@ export class PolymarketPublicAdapter implements PolymarketReadAdapter {
     // The list query (not /markets/{id}) carries the market's events, which the markets page links to.
     const url = new URL(`${this.gammaUrl}/markets`)
     url.searchParams.set('id', gammaMarketId)
-    const list = await this.fetchJson(url)
+    let list = await this.fetchJson(url)
+    // Gamma's list endpoint defaults to open markets. Known closed markets still need final-result reconciliation.
+    if (Array.isArray(list) && !list.some(item => item && typeof item === 'object' && String((item as { id?: unknown }).id) === gammaMarketId)) {
+      url.searchParams.set('closed', 'true')
+      list = await this.fetchJson(url)
+    }
     const payload = Array.isArray(list) ? list.find(item => item && typeof item === 'object' && String((item as { id?: unknown }).id) === gammaMarketId) : undefined
     const record = normalizeMarket(payload)
     if (!record || record.gammaMarketId !== gammaMarketId) {

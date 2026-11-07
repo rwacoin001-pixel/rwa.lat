@@ -1,6 +1,6 @@
 Verify your new email
 
-Use this code to confirm your new account email.
+Use this code to confirm your new account email. Return to the verification screen and enter the six-digit code below to continue. This code is for this request only. Please use it before it expires.
 
 {{code}}
 {{expiryMinutes}} minutes remaining

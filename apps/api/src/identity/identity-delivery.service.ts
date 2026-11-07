@@ -2,7 +2,7 @@ import { Injectable, OnModuleDestroy, Logger, ServiceUnavailableException } from
 import { ConfigService } from '@nestjs/config'
 import { EmailDeliveryClient } from '../common/email-delivery.client'
 import type { IdentityOneTimeTokenPurpose } from './identity-one-time-token.entity'
-import { emailExpiryText, remainingEmailMinutes, renderEmailTemplate } from '../common/email-template'
+import { emailBrandName, emailExpiryText, remainingEmailMinutes, renderEmailTemplate } from '../common/email-template'
 import { currentBrand } from '../common/brand-context'
 
 type EmailCodePurpose = 'login' | 'register' | 'reset' | 'email_bind' | 'email_change' | 'step_up'
@@ -49,6 +49,7 @@ export class IdentityDeliveryService implements OnModuleDestroy {
       await this.delivery.send({
         to: input.email,
         ...message,
+        ...(brand ? { from: `${emailBrandName(brand, input.locale)} <${this.config.get<string>('EMAIL_FROM')}>` } : {}),
       })
     } catch {
       throw new ServiceUnavailableException({
@@ -65,12 +66,13 @@ export class IdentityDeliveryService implements OnModuleDestroy {
     }
     if (!this.delivery.configured) throw new ServiceUnavailableException({ code: 'AUTH_DELIVERY_NOT_CONFIGURED', message: 'Account email delivery is not configured.' })
     let phase: 'render' | 'transport' = 'render'
+    const brand = input.brand === 'areit' ? undefined : input.brand ?? currentBrand()
     try {
       const message = renderEmailTemplate(CODE_TEMPLATES[input.purpose ?? input.intent], input.locale, {
         code: input.code, expiryMinutes: remainingEmailMinutes(input.expiresAt ?? new Date(Date.now() + 600_000)),
-      }, input.brand === 'areit' ? undefined : input.brand ?? currentBrand())
+      }, brand)
       phase = 'transport'
-      await this.delivery.send({ to: input.email, ...message })
+      await this.delivery.send({ to: input.email, ...message, ...(brand ? { from: `${emailBrandName(brand, input.locale)} <${this.config.get<string>('EMAIL_FROM')}>` } : {}) })
     } catch (error) {
       // Never log the recipient, code, credentials, provider response body or exception message.
       const status = error && typeof error === 'object' && 'providerStatus' in error ? error.providerStatus : undefined

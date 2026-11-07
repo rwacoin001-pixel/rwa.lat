@@ -3,6 +3,15 @@ import { PolymarketPublicAdapter, normalizeMarket } from '../../src/polymarket/p
 import { POLYMARKET_ERROR_CODES } from '../../src/polymarket/polymarket.errors'
 
 describe('PolymarketPublicAdapter', () => {
+  it('retrieves a closed market when Gamma omits it from the default list', async () => {
+    const mock = jest.fn().mockResolvedValueOnce(new Response('[]', { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '123', slug: 'closed-market', question: 'Closed market?', closed: true, outcomes: '["Yes","No"]', clobTokenIds: '["yes","no"]', outcomePrices: '["1","0"]' }]), { status: 200 }))
+    global.fetch = mock
+    const adapter = new PolymarketPublicAdapter(new ConfigService({ POLYMARKET_READ_ENABLED: 'true' }))
+    const market = await adapter.getMarketById('123')
+    expect(market.gammaMarketId).toBe('123')
+    expect(new URL(String(mock.mock.calls[1][0])).searchParams.get('closed')).toBe('true')
+  })
   const originalFetch = global.fetch
 
   afterEach(() => {

@@ -10,6 +10,15 @@ function service(fromName?: string) {
 }
 
 describe('Branded identity emails', () => {
+  it.each(['zh-CN', 'en', 'hi', 'es', 'ar', 'fr', 'pt'])('uses one localized Kimeng sender and a code-first subject for %s', async locale => {
+    await service().sendEmailCode({ email: 'user@example.com', intent: 'login', code: '012345', locale, brand: 'kimeng', expiresAt: new Date(Date.now()+60_000) })
+    const mail = sendMail.mock.calls.at(-1)[0]
+    const name = locale === 'zh-CN' ? '金英' : 'KIMENG'
+    expect(mail.from).toBe(`${name} <no-reply@a-reit.com>`)
+    expect(mail.subject).toMatch(/^012345 · /)
+    expect(mail.subject).toContain(name)
+    expect(mail.text).not.toContain(locale === 'zh-CN' ? 'KIMENG' : '金英')
+  })
   beforeEach(() => { sendMail.mockReset(); jest.useFakeTimers().setSystemTime(new Date('2026-10-06T06:00:00Z')) })
   afterEach(() => jest.useRealTimers())
 

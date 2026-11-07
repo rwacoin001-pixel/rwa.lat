@@ -1,6 +1,6 @@
 Vincula tu correo
 
-Usa este código para vincular este correo a tu cuenta.
+Usa este código para vincular este correo a tu cuenta. Vuelve a la pantalla de verificación e introduce el código de seis dígitos para continuar. Este código es solo para esta solicitud. Úsalo antes de que caduque.
 
 {{code}}
 {{expiryMinutes}} minutos de validez

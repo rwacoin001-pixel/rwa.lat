@@ -16,7 +16,7 @@ export default function KimengDesktopAsk() {
   const copy = aiChatCopy[locale]
   const title = aiVoiceCopy(locale).title
   const shell = aiShellCopy[locale]
-  const placeholder = locale === 'zh-CN' ? '问 KIMENG AI 助手' : locale === 'en' ? 'Ask the KIMENG AI Assistant' : shell.placeholder
+  const placeholder = locale === 'zh-CN' ? '问金英 AI 助手' : locale === 'en' ? 'Ask the KIMENG AI Assistant' : shell.placeholder
   const [draft, setDraft] = useState('')
   const [messages, setMessages] = useState<{ question: string; answer: string }[]>([])
   const [open, setOpen] = useState(false)

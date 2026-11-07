@@ -1,6 +1,6 @@
 Vérifiez votre e-mail
 
-Saisissez ce code pour vérifier l’adresse e-mail de votre compte A-REIT.
+Saisissez ce code pour vérifier l’adresse e-mail de votre compte A-REIT. Revenez à l’écran de vérification et saisissez le code à six chiffres ci-dessous pour continuer. Ce code est réservé à cette demande. Utilisez-le avant son expiration.
 
 {{code}}
 {{expiryMinutes}} minutes de validité

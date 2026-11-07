@@ -14,7 +14,7 @@ export const kimengInviteCopy: Record<AppLocale, InviteCopy> = {
   },
   'zh-CN': {
     invitation: '一份给你的邀请', headline: ['看得更清楚，', '选择更从容。'],
-    welcome: '从 KIMENG 开始，发现新的视角。', saved: '邀请码已保存，将在注册时使用。', code: '邀请码',
+    welcome: '从 金英 开始，发现新的视角。', saved: '邀请码已保存，将在注册时使用。', code: '邀请码',
     accept: '开启体验', login: '登录', risk: '投资涉及风险，本金可能损失。请充分了解后独立决策。',
     terms: '服务条款', privacy: '隐私政策', language: '语言', theme: '切换外观',
   },

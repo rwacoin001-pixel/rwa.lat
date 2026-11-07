@@ -15,8 +15,10 @@ describe('Production email template rendering', () => {
     const input = { code: '012345', expiryMinutes: '10' }
     const kimeng = renderEmailTemplate('registration-code', 'zh-CN', input, 'kimeng')
     const original = renderEmailTemplate('registration-code', 'zh-CN', input)
-    expect(kimeng.subject).toContain('金英 KIMENG')
-    expect(kimeng.html).toContain('https://kimengresearch.com/brand/kimeng/logo-dark-1200.png')
+    expect(kimeng.subject).toContain('金英')
+    expect(kimeng.subject).not.toContain('KIMENG')
+    expect(kimeng.subject).toMatch(/^012345 · /)
+    expect(kimeng.html).toContain('https://kimengresearch.com/brand/kimeng/mark-light-128.png')
     expect(kimeng.text).toContain('https://kimengresearch.com/profile/support')
     expect(kimeng.html).toContain('012345')
     expect(original.subject).toContain('A-REIT')
@@ -38,7 +40,7 @@ describe('Production email template rendering', () => {
         expect(result.html).toContain(String(sample(fields)[field] ?? 'https://a-reit.com/profile/support'))
         expect(result.text).toContain(String(sample(fields)[field] ?? 'https://a-reit.com/profile/support'))
       }
-      if (fields.includes('code')) { expect(result.html).toContain('012345'); expect(result.text).toContain('012345') }
+      if (fields.includes('code')) { expect(result.html).toContain('012345'); expect(result.text).toContain('012345'); expect(result.subject).toMatch(/^012345 · /) }
       if (fields.includes('amount')) { expect(result.html).toContain('123.45'); expect(result.text).toContain('123.45') }
       if (fields.includes('actionUrl')) expect(result.html).toContain('<v:roundrect')
       if (fields.includes('code')) expect(result.html).not.toContain('<v:roundrect')

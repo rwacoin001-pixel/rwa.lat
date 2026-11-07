@@ -1,6 +1,6 @@
 Vincule seu e-mail
 
-Use este código para vincular este e-mail à sua conta.
+Use este código para vincular este e-mail à sua conta. Volte à tela de verificação e insira o código de seis dígitos abaixo para continuar. Este código é exclusivo desta solicitação. Use-o antes de expirar.
 
 {{code}}
 {{expiryMinutes}} minutos de validade
