@@ -7,9 +7,9 @@ const SETTLEMENT_COPY: Record<AppLocale, [string, string, string]> = {
   pt: ['Aguardando resultado oficial', 'Liquidação em andamento', 'Resultado em análise'], hi: ['आधिकारिक परिणाम की प्रतीक्षा', 'निपटान जारी है', 'परिणाम की समीक्षा जारी है'],
   ar: ['بانتظار النتيجة الرسمية', 'التسوية قيد التنفيذ', 'النتيجة قيد المراجعة'],
 }
-export function predictionSettlementLabel(bet: PredictionBet, locale: AppLocale): string | null {
+export function predictionSettlementLabel(bet: PredictionBet, locale: string): string | null {
   if (bet.status !== 'placed' || !bet.settlementStatus) return null
-  const copy = SETTLEMENT_COPY[locale]
+  const copy = Object.hasOwn(SETTLEMENT_COPY, locale) ? SETTLEMENT_COPY[locale as AppLocale] : SETTLEMENT_COPY.en
   return bet.settlementStatus === 'waiting_result' ? copy[0] : bet.settlementStatus === 'review' ? copy[2] : copy[1]
 }
 
