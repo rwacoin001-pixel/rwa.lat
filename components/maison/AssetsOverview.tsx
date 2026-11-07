@@ -13,13 +13,12 @@
 import { ArrowDownToLine, ArrowRightLeft, ArrowUpFromLine, ChevronRight, Eye, EyeOff } from 'lucide-react'
 import { useMemo, type ReactNode } from 'react'
 import { useI18n, type AppLocale } from '@/lib/i18n'
-import { useQuantProducts } from '@/lib/api/quant'
-import { betAmounts, betStatus } from '@/lib/api/my-predictions'
+import { useQuery } from '@/lib/api/_query'
+import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
+import { assetValuationCopy } from '@/lib/asset-valuation-copy'
 import { fmtAtomic } from './format'
 import { openPath } from '@/lib/maison-nav'
 import { AMOUNT_MASK } from '@/lib/use-amount-mask'
-import { useQuantProduct } from './QuantPositionCard'
-import { useMyBets } from './MyPredictionsCard'
 import { useOtherIncome } from './money-records'
 import { Figure } from './motion'
 import o from './assets-overview.module.css'
@@ -34,58 +33,53 @@ const COPY: Partial<Record<AppLocale, Copy>> = {
   en: { total: 'Total assets · USDT', today: 'Today', earned: 'All-time result', deposit: 'Deposit', withdraw: 'Withdraw', transfer: 'Transfer', where: 'Where it is', cash: 'Available', quant: 'Koala Quant', quantSub: 'Settled daily · Singapore', predictions: 'Predictions', predictionsSub: 'Bets awaiting a result', baskets: 'Baskets', other: 'Other holdings', principal: 'Principal', earnedShort: 'Result', lastDay: 'Last day', inPlay: 'In play', paid: 'Paid out', open: 'Bets', startQuant: 'About Koala Quant', startPredictions: 'Browse predictions', none: 'Nothing held yet', more: 'More' },
 }
 
-export function AssetsOverview({ cash, extraValue, basketValue, masked, onMask, history, others, tools }: {
-  /** Wallet available + locked. */ cash: bigint | null
-  /** Older product holdings (shown only as "other"). */ extraValue: bigint
-  basketValue: bigint
+export function AssetsOverview({ masked, onMask, history, others, tools }: {
   masked: boolean; onMask: () => void
   history: ReactNode; others: ReactNode; tools: ReactNode
 }) {
   const { locale } = useI18n()
   const c = COPY[locale] ?? COPY.en!
-  const list = useQuantProducts()
-  const quant = useQuantProduct(list.data?.[0]?.slug)
-  const position = quant.data?.position ?? null
-  const bets = useMyBets({ loading: 'silent' })
+  const summary = useQuery('portfolio:summary', getPortfolioSummary, { staleTime: 30_000, pollInterval: 60_000 })
+  const valuation = summary.error ? undefined : summary.data
+  const valuationCopy = assetValuationCopy(locale, valuation, Boolean(summary.error))
   const income = useOtherIncome(locale)
 
-  // principalAtomic already holds every lot, including the ones still waiting to start (waitingAtomic is a part of it, not extra).
-  const quantValue = position ? big(position.principalAtomic) : ZERO
-  const betRows = useMemo(() => Array.isArray(bets.data?.items) ? bets.data.items : [], [bets.data])
-  const inPlay = useMemo(() => betRows.filter(bet => betStatus(bet.status) === 'placed'), [betRows])
-  const betsValue = useMemo(() => inPlay.reduce((sum, bet) => sum + (betAmounts(bet).stake ?? ZERO), ZERO), [inPlay])
-  const betsPaid = useMemo(() => betRows.filter(bet => betStatus(bet.status) === 'won').reduce((sum, bet) => sum + (betAmounts(bet).netPayout ?? ZERO), ZERO), [betRows])
-  const total = cash === null ? null : cash + quantValue + betsValue + basketValue + extraValue
+  const quantValue = big(valuation?.breakdown.quant)
+  const betsValue = big(valuation?.breakdown.predictions)
+  const betsPaid = big(valuation?.predictions.paidAtomic)
+  const total = valuation ? BigInt(valuation.totalAtomic) : null
 
   // Today and all time: quant's own running net plus settled bets; today from the dated income rows.
   const todayKey = new Date().toLocaleDateString('en-CA')
   const today = useMemo(() => income.rows.filter(row => row.date.slice(0, 10) === todayKey).reduce((sum, row) => sum + row.atomic, ZERO), [income.rows, todayKey])
-  const allTime = (position ? big(position.totalNetAtomic) : ZERO) + income.rows.filter(row => row.source === 'prediction').reduce((sum, row) => sum + row.atomic, ZERO)
+  const allTime = valuation ? big(valuation.quant.netAtomic) + income.rows.filter(row => row.source === 'prediction').reduce((sum, row) => sum + row.atomic, ZERO) : null
 
   const money = (atomic: bigint, sign = false) => masked ? AMOUNT_MASK : `${sign && atomic > ZERO ? '+' : ''}${fmtAtomic(atomic.toString(), 6, '', 2).trim()}`
   const tone = (atomic: bigint) => atomic > ZERO ? 'up' : atomic < ZERO ? 'down' : undefined
 
   const parts = [
-    { key: 'cash', label: c.cash, value: cash ?? ZERO, path: '/assets/cash' },
+    { key: 'cash', label: valuationCopy.cash, value: big(valuation?.breakdown.cash), path: '/assets/cash' },
+    { key: 'rewards', label: valuationCopy.rewards, value: big(valuation?.breakdown.rewards), path: '/rewards' },
     { key: 'quant', label: c.quant, value: quantValue, path: '/quant?tab=account' },
     { key: 'predictions', label: c.predictions, value: betsValue, path: '/assets/predictions' },
-    { key: 'baskets', label: c.baskets, value: basketValue, path: '/assets?tab=overview#baskets' },
-    { key: 'other', label: c.other, value: extraValue, path: '/assets?tab=overview#other' },
+    { key: 'baskets', label: c.baskets, value: big(valuation?.breakdown.baskets), path: '/assets?tab=overview#baskets' },
+    { key: 'other', label: c.other, value: big(valuation?.breakdown.other), path: '/assets?tab=overview#other' },
   ].filter(part => part.value > ZERO)
   const whole = parts.reduce((sum, part) => sum + part.value, ZERO)
 
   return <div className={o.root}>
     {/* 1 · How much */}
-    <section className={o.hero} aria-label={c.total}>
+    <section className={o.hero} aria-label={valuationCopy.label}>
       <div className={o.heroHead}>
-        <span>{c.total}</span>
+        <span>{valuationCopy.label} · USDT</span>
         <button type="button" className={o.eye} aria-pressed={masked} onClick={onMask}>{masked ? <EyeOff size={16} /> : <Eye size={16} />}</button>
       </div>
       <p className={o.figure} dir="ltr">{masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={num(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}</p>
+      {valuationCopy.note && <p className={o.valuationNote} role="status">{valuationCopy.note}</p>}
       <p className={o.line}>
         <span>{c.today} <b data-tone={masked ? undefined : tone(today)}>{money(today, true)}</b></span>
         <i aria-hidden="true" />
-        <span>{c.earned} <b data-tone={masked ? undefined : tone(allTime)}>{money(allTime, true)}</b></span>
+        <span>{c.earned} <b data-tone={masked || allTime === null ? undefined : tone(allTime)}>{allTime === null ? (masked ? AMOUNT_MASK : '—') : money(allTime, true)}</b></span>
       </p>
       <div className={o.chart}>{history}</div>
       <div className={o.capsules}>
@@ -108,17 +102,17 @@ export function AssetsOverview({ cash, extraValue, basketValue, masked, onMask, 
 
     {/* 3 · Each product */}
     <section className={o.products}>
-      <ProductCard title={c.quant} sub={c.quantSub} path={position && quantValue > ZERO ? '/quant?tab=account' : '/quant'}
-        figures={position && quantValue > ZERO ? [
+      <ProductCard title={c.quant} sub={c.quantSub} path={quantValue > ZERO ? '/quant?tab=account' : '/quant'}
+        figures={valuation && quantValue > ZERO ? [
           [c.principal, money(quantValue), undefined],
-          [c.earnedShort, money(big(position.totalNetAtomic), true), masked ? undefined : tone(big(position.totalNetAtomic))],
-          [c.lastDay, position.lastDay ? money(big(position.lastDay.netAtomic), true) : '—', masked || !position.lastDay ? undefined : tone(big(position.lastDay.netAtomic))],
+          [c.earnedShort, money(big(valuation.quant.netAtomic), true), masked ? undefined : tone(big(valuation.quant.netAtomic))],
+          [c.lastDay, valuation.quant.lastDayAtomic !== null ? money(big(valuation.quant.lastDayAtomic), true) : '—', masked ? undefined : tone(big(valuation.quant.lastDayAtomic))],
         ] : null} empty={c.startQuant} />
-      <ProductCard title={c.predictions} sub={c.predictionsSub} path={betRows.length ? '/assets/predictions' : '/markets?tab=predictions'}
-        figures={betRows.length ? [
+      <ProductCard title={c.predictions} sub={c.predictionsSub} path={valuation?.predictions.count ? '/assets/predictions' : '/markets?tab=predictions'}
+        figures={valuation?.predictions.count ? [
           [c.inPlay, money(betsValue), undefined],
           [c.paid, money(betsPaid), masked || betsPaid === ZERO ? undefined : 'up'],
-          [c.open, String(inPlay.length), undefined],
+          [c.open, String(valuation.predictions.openCount), undefined],
         ] : null} empty={c.startPredictions} />
     </section>
 

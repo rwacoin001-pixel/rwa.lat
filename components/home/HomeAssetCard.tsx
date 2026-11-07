@@ -58,6 +58,8 @@ type Props = {
   loading: boolean
   pendingUnits: number
   today: TodayChange
+  totalLabel?: string
+  valuationNote?: string
   /** Total at the end of each of the last 6 days, then now (units). */
   spark?: number[] | null
   ctaLabel: string | null
@@ -68,7 +70,7 @@ type Props = {
 }
 
 /** Signed-in asset card: one hero number, today's change (or what is available), the four money actions as porcelain tiles. */
-export function HomeAssetCard({ state, account, loading, pendingUnits, today, spark, ctaLabel, onPrimary, onPortfolio, onCashAction, emailBinding }: Props) {
+export function HomeAssetCard({ state, account, loading, pendingUnits, today, spark, totalLabel, valuationNote, ctaLabel, onPrimary, onPortfolio, onCashAction, emailBinding }: Props) {
   const { locale, t } = useI18n()
   const c = homeV2Copy(locale)
   // One app-wide switch (lib/hide-balance); unknown on the first render counts as hidden, so nothing flashes.
@@ -111,7 +113,7 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, sp
   const pct = today && today.changePct !== '' && Number.isFinite(Number(today.changePct)) ? Number(today.changePct) : null
   return <section className={styles.card}>
     <div className={styles.label}>
-      <span>{c.total} · {account?.currency ?? 'USDT'}</span>
+      <span>{totalLabel ?? c.total} · {account?.currency ?? 'USDT'}</span>
       <span className={styles.labelEnd}>
         <button type="button" onClick={toggle} aria-label={hidden ? c.show : c.hide} aria-pressed={hidden}>{hidden ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
         <button type="button" onClick={onPortfolio}>{c.detail}<ChevronRight size={14} aria-hidden="true" /></button>
@@ -129,6 +131,7 @@ export function HomeAssetCard({ state, account, loading, pendingUnits, today, sp
     <div className={`${styles.sub} ${hidden ? '' : tone}`} dir="ltr">
       {hidden ? '' : change !== null ? c.today.replace('{v}', `${signed(change, locale)}${pct === null ? '' : ` (${pct > 0 ? '+' : pct < 0 ? '−' : ''}${Math.abs(pct).toFixed(2)}%)`}`) : available !== null ? c.available.replace('{v}', fmt(available, locale)) : ''}
     </div>
+    {valuationNote && <p role="status" style={{ margin: '4px 0 0', fontSize: 12, lineHeight: 1.5, color: 'var(--m-muted)' }}>{valuationNote}</p>}
     {tiles}
     {pendingUnits > 0 && <div className={styles.pending} role="status"><span>{c.pending.replace('{v}', hidden ? MASK : fmt(pendingUnits, locale))}</span><span>{c.pendingEta}</span></div>}
     {emailBinding && <HomeEmailBinding key={emailBinding.userId} userId={emailBinding.userId} onVerified={emailBinding.onVerified} />}

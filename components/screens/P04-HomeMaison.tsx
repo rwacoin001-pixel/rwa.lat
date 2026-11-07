@@ -27,11 +27,11 @@ import { getRwaOverview } from '@/lib/api/rwa'
 import { getMarketContextView } from '@/lib/api/market-context'
 import { POLL, request, getSessionToken, SESSION_CHANGED } from '@/lib/api/_http'
 import { fmtUsd, fromAtomic } from '@/lib/money'
-import { getWallet, toUnits as walletUnits, type WalletView } from '@/lib/wallet-data'
+import { getWallet, toUnits as walletUnits } from '@/lib/wallet-data'
 import { resolveHomeState, heroCta } from '@/lib/home-lifecycle'
 import { getSessionView, getKycStatus, type SessionView, type KycStatusView } from '@/lib/session-data'
 import { routePath } from '@/lib/routes-v2'
-import { getPositions, sumPositionMarketValueAtomic } from '@/lib/portfolio-data'
+import { getPositions } from '@/lib/portfolio-data'
 import { isAuthenticated } from '@/lib/h5-data'
 import { listRewards, type Reward } from '@/lib/api/account'
 import { openPath } from '@/lib/maison-nav'
@@ -51,6 +51,7 @@ import { HomeAssetCard, HomeAskAi, HomeGreeting, type TodayChange } from '@/comp
 import { HomeReferral } from '@/components/home/HomeReferral'
 import v2 from '@/components/home/home-v2.module.css'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
+import { assetValuationCopy } from '@/lib/asset-valuation-copy'
 import { focusHomeEmailBinding } from '@/components/home/HomeEmailBinding'
 import { InstallSheet, installCopy, useHomeInstall } from '@/components/home/HomeInstall'
 import { HomeGetApp } from '@/components/home/HomeGetApp'
@@ -97,17 +98,6 @@ function toNumber(input: unknown) {
   if (input === null || input === undefined || input === '') return null
   const value = Number(input)
   return Number.isFinite(value) ? value : null
-}
-
-function walletTotalAtomic(wallet: WalletView) {
-  if ((wallet.asset.code !== 'USD' && wallet.asset.code !== 'USDT') || !Number.isInteger(wallet.asset.decimals) || wallet.asset.decimals < 0 || wallet.asset.decimals > 78) return null
-  const amounts = [wallet.balances.availableAtomic, wallet.balances.lockedAtomic, wallet.balances.pendingAtomic, wallet.balances.investedAtomic, wallet.balances.rewardPayableAtomic]
-  let total = BigInt(0)
-  for (const amount of amounts) {
-    if (!/^\d+$/.test(amount)) return null
-    try { total += BigInt(amount) } catch { return null }
-  }
-  return total.toString()
 }
 
 function FeaturedAssetPhoto({ src }: { src: string }) {
@@ -281,8 +271,8 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       const positions = positionsResult.status === 'fulfilled' ? positionsResult.value : []
       if (wallet || positionsResult.status === 'fulfilled') {
         setAccount({
-          totalAssetsAtomic: wallet ? walletTotalAtomic(wallet) : sumPositionMarketValueAtomic(positions),
-          totalAssetsDecimals: wallet ? wallet.asset.decimals : 6,
+          totalAssetsAtomic: null,
+          totalAssetsDecimals: 6,
           availableAtomic: wallet?.balances.availableAtomic ?? null,
           availableDecimals: wallet?.asset.decimals ?? 6,
           holdings: positionsResult.status === 'fulfilled' ? positions.length : null,
@@ -380,7 +370,6 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const stateLabels = homeStateCopy[locale]
   const statusLabel = !sessionSettled ? '' : state.variant ? stateLabels.variant[state.variant] : state.degraded ? stateLabels.degraded : stateLabels.lifecycle[state.lifecycle]
   const sessionUserId = sessionProbe.status === 'ok' ? sessionProbe.view?.userId : undefined
-  const portfolioAccount = state.lifecycle === 'funded' || state.lifecycle === 'invested' || sessionUserId ? account : null
   const emailBinding = sessionProbe.status === 'ok' && sessionProbe.view && !sessionProbe.view.emailVerified && sessionUserId ? { userId: sessionUserId, onVerified: refreshSessionView } : undefined
   useEffect(() => {
     if (!sessionUserId || new URLSearchParams(location.search).get('bindEmail') !== '1') return
@@ -393,6 +382,13 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
   const dateline = new Intl.DateTimeFormat(locale, { weekday: 'short', month: 'short', day: 'numeric' }).format(new Date())
   // Today's earnings: income the ledger credited since 00:00 Singapore (quant settlement, referral, settled predictions).
   const summary = useQuery(sessionProbe.status === 'ok' ? 'portfolio:summary' : null, getPortfolioSummary, { staleTime: 30_000, pollInterval: POLL.list })
+  const valuation = summary.error ? undefined : summary.data
+  const valuationCopy = assetValuationCopy(locale, valuation, Boolean(summary.error))
+  const portfolioAccount: HomePortfolioSnapshot | null = sessionUserId ? {
+    totalAssetsAtomic: valuation?.totalAtomic ?? null, totalAssetsDecimals: 6,
+    availableAtomic: valuation?.availableAtomic ?? account?.availableAtomic ?? null, availableDecimals: 6,
+    holdings: account?.holdings ?? null, currency: 'USDT',
+  } : null
   const assetSpark = summary.data?.sparkAtomic?.map(atomic => { try { return Number(fromAtomic(atomic, summary.data?.decimals ?? 6)) } catch { return NaN } }) ?? null
   const today: TodayChange = summary.data?.today ? { changeAtomic: summary.data.today.changeAtomic, changePct: summary.data.today.changePct ?? '' } : null
 
@@ -405,7 +401,7 @@ export function HomeScreen({ go }: { go: (screen: RwaScreen) => void }) {
       <div className={styles.v2Head}>
         <div className={v2.root}>
           <HomeGreeting />
-          <HomeAssetCard state={state} account={portfolioAccount ?? account} loading={sessionProbe.status === 'loading'} pendingUnits={walletSnapshot?.pending ?? 0} today={today} spark={assetSpark}
+          <HomeAssetCard state={state} account={portfolioAccount} loading={sessionProbe.status === 'loading' || (summary.loading && !valuation)} pendingUnits={walletSnapshot?.pending ?? 0} today={today} spark={assetSpark} totalLabel={valuationCopy.label} valuationNote={valuationCopy.note}
             ctaLabel={ctaLabel} onPrimary={openMainCta} onPortfolio={() => go('portfolio')} onCashAction={openPath} emailBinding={emailBinding} />
           {/* No "Ask AI" bar (2026-10-29): the AI ball is always at the bottom right; the bar repeated it and pushed the cards down. */}
           <HomeReferral />

@@ -97,8 +97,6 @@ export function PortfolioScreen({ query }: { query: string }) {
   const products = useProducts()
   const { positions, wallet, totals } = usePortfolio()
   const { query: baskets, rows: basketRows } = useBasketPositions()
-  const balances = wallet.data?.balances
-  const cash = balances ? BigInt(balances.availableAtomic) + BigInt(balances.lockedAtomic) : null
   // Only a complete total is shown as a total: products, baskets and wallet must all be loaded and priced.
   const holdings = totals && !positions.error && basketRows ? holdingsTotal(totals.value, totals.unpriced, basketRows) : null
   const retryAll = () => { positions.refetch(); wallet.refetch(); baskets.refetch() }
@@ -126,7 +124,7 @@ export function PortfolioScreen({ query }: { query: string }) {
 
     {bothFailed ? <StateBlock tone="error" title={common.errorGeneric} body={positions.error?.message} retry={retryAll} retryLabel={common.retry} />
       : tab === 'overview' && <div className={s.tabPanel} role="tabpanel">
-        <AssetsOverview cash={wallet.error ? null : cash} extraValue={totals?.value ?? BigInt(0)} basketValue={holdings !== null && totals ? holdings - totals.value : BigInt(0)}
+        <AssetsOverview
           masked={masked} onMask={toggleMask} history={historyShown ? <HistoryChart /> : null}
           others={<>
             {notes}

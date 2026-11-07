@@ -33,6 +33,7 @@ import m from './me.module.css'
 import { PrismaticBand } from '@/components/backgrounds/PrismaticBand'
 import { useUnread } from '@/hooks/useUnread'
 import { getPortfolioSummary } from '@/lib/api/portfolio-summary'
+import { assetValuationCopy } from '@/lib/asset-valuation-copy'
 import { referralMe, referralSummary } from '@/lib/api/referral'
 import { rewardWalletQuery } from '@/lib/rewards'
 import { membershipQuery } from '@/lib/api/membership'
@@ -67,7 +68,9 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
   const hideKnown = useBalancesHidden()
   const hideMoney = hideKnown !== false
   const { unread } = useUnread(!guest)
-  const portfolio = useQuery(guest ? null : 'portfolio:summary', getPortfolioSummary, { staleTime: 30_000 })
+  const portfolio = useQuery(guest ? null : 'portfolio:summary', getPortfolioSummary, { staleTime: 30_000, pollInterval: 60_000 })
+  const valuation = portfolio.error ? undefined : portfolio.data
+  const valuationCopy = assetValuationCopy(locale, valuation, Boolean(portfolio.error))
   const referral = useQuery(guest ? null : 'referral:summary', referralSummary, { staleTime: 60_000 })
   const inviteCode = useQuery(guest ? null : 'referral:v2:me', referralMe, { staleTime: 300_000 }).data?.code?.toUpperCase()
   // Stage 3 (2026-11-01): the coupons row shows only when /v1/rewards is live for this user (null otherwise).
@@ -205,11 +208,12 @@ export function ProfileScreen({ guest = false, onClose, onSignedOut }: { guest?:
     <section className={m.money} aria-label={me.assets}>
       <div className={m.moneyHead}>
         <button type="button" className={m.moneyTop} onClick={() => openPath('/assets')}>
-          <span><small>{me.assets} · USDT</small><b>{hideMoney ? MASK : portfolio.data ? fmtAtomicN(portfolio.data.totalAtomic, portfolio.data.decimals) : portfolio.error ? '—' : '…'}</b></span>
+          <span><small>{valuationCopy.label} · USDT</small><b>{hideMoney ? MASK : valuation ? fmtAtomicN(valuation.totalAtomic, valuation.decimals) : portfolio.error ? '—' : '…'}</b></span>
           <ChevronRight size={16} className={s.chev} aria-hidden="true" />
         </button>
         <button type="button" className={m.eye} onClick={() => setBalancesHidden(!hideMoney)} aria-pressed={hideMoney} aria-label={hideMoney ? me.show : me.hide}>{hideMoney ? <EyeOff size={16} aria-hidden="true" /> : <Eye size={16} aria-hidden="true" />}</button>
       </div>
+      {valuationCopy.note && <p role="status" className={s.muted} style={{ margin: '8px 0 0', fontSize: 12, lineHeight: 1.5 }}>{valuationCopy.note}</p>}
       <dl className={m.moneyFacts}>
         <div><dt>{me.today}</dt><dd data-tone={portfolio.data?.today ? (Number(portfolio.data.today.changeAtomic) > 0 ? 'up' : Number(portfolio.data.today.changeAtomic) < 0 ? 'down' : undefined) : undefined}>{hideMoney ? MASK : portfolio.data?.today ? fmtAtomicN(portfolio.data.today.changeAtomic, portfolio.data.decimals, true) : '—'}</dd></div>
         <div><dt>{me.rewards}</dt><dd>{hideMoney ? MASK : referral.data ? fmtAtomicN(referral.data.balances.available, referral.data.decimals) : '—'}</dd></div>
