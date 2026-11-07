@@ -8,7 +8,7 @@ import { BRAND } from './brand/build-brand'
  * to public/download/; while `url` is null the install sheet offers only "Open in Chrome".
  */
 export const ANDROID_APP: { url: string | null; version: string; sha256: string } = BRAND.id === 'kimeng'
-  ? { url: 'https://dl.a-reit.com/android/kimeng-android-1.0.1.apk', version: '1.0.1', sha256: '' }
+  ? { url: 'https://dl.a-reit.com/android/kimeng-android-1.0.2.apk', version: '1.0.2', sha256: '' }
   : { url: 'https://dl.a-reit.com/android/a-reit-android-1.1.9.apk', version: '1.1.9', sha256: '98cf752aa49820be2468c8ee189f481bbda52eae9ccd2e2c688b78a284543751' }
 
 /** Signing certificate SHA-256 (apksigner verify --print-certs); every later version must show the same one. */

@@ -22,7 +22,7 @@ def edit(relative, changes):
     path.write_text(original,encoding='utf-8',newline='\n')
 
 edit('app/build.gradle',[("applicationId 'com.areit.app'","applicationId 'com.kimeng.app'"),
-    ("versionCode 12","versionCode 2"),("versionName '1.1.9'","versionName '1.0.1'")])
+    ("versionCode 12","versionCode 3"),("versionName '1.1.9'","versionName '1.0.2'")])
 edit('app/src/main/AndroidManifest.xml',[('android:label="A-REIT"','android:label="KIMENG"'),
     ('android:scheme="areit"','android:scheme="kimeng"')])
 java='app/src/main/java/lat/rwa/trial/'
