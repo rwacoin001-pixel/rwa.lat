@@ -52,7 +52,8 @@
 .figures dd[data-tone='down'] { color: var(--m-down); }
 .empty { display: inline-flex; align-items: center; gap: 4px; color: var(--m-muted); font-size: 13px; line-height: 18px; }
 
-.valuationDetails { color: var(--m-muted); font-size: 12px; }
+.valuationHeading { display: flex; align-items: center; gap: 2px; }
+.valuationDetails { position: relative; color: var(--m-muted); font-size: 12px; }
 .valuationDetails summary { cursor: pointer; width: 32px; min-height: 32px; display: grid; place-items: center; list-style: none; }
 .valuationDetails summary::-webkit-details-marker { display: none; }
-.valuationDetails p { margin: 2px 0 8px; line-height: 1.5; }
+.valuationDetails p { position: absolute; z-index: 5; inset-inline-start: 0; top: 100%; width: 220px; margin: 0; padding: 12px; border-radius: 12px; background: var(--m-surface, #fff); color: var(--m-ink); box-shadow: 0 8px 24px rgba(0,0,0,.14); line-height: 1.5; }

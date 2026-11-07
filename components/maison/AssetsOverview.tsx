@@ -71,12 +71,11 @@ export function AssetsOverview({ masked, onMask, history, others, tools }: {
     {/* 1 · How much */}
     <section className={o.hero} aria-label={valuationCopy.label}>
       <div className={o.heroHead}>
-        <span>{valuationCopy.label} · USDT</span>
+        <div className={o.valuationHeading}><span>{valuationCopy.label} · USDT</span>{valuationCopy.explanation && <details className={o.valuationDetails}><summary aria-label={locale === 'zh-CN' ? '资产估值说明' : 'Asset valuation information'}>ⓘ</summary><p>{valuationCopy.explanation}</p></details>}</div>
         <button type="button" className={o.eye} aria-pressed={masked} onClick={onMask}>{masked ? <EyeOff size={16} /> : <Eye size={16} />}</button>
       </div>
       <p className={o.figure} dir="ltr">{masked ? AMOUNT_MASK : total === null ? '—' : <Figure value={num(total)} locale={locale} format={{ minimumFractionDigits: 2, maximumFractionDigits: 2 }} />}</p>
       {valuationCopy.note && <p className={o.valuationNote} role="status">{valuationCopy.note}</p>}
-      {valuationCopy.explanation && <details className={o.valuationDetails}><summary aria-label={locale === 'zh-CN' ? '资产估值说明' : 'Asset valuation information'}>ⓘ</summary><p>{valuationCopy.explanation}</p></details>}
       <p className={o.line}>
         <span>{c.today} <b data-tone={masked ? undefined : tone(today)}>{money(today, true)}</b></span>
         <i aria-hidden="true" />
