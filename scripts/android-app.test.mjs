@@ -12,7 +12,7 @@ const compiled=ts.transpileModule(readFileSync(new URL('../lib/android-app.ts', 
 vm.runInNewContext(compiled, { exports, URL, encodeURIComponent, require:()=>testBrandContext() })
 test('Kimeng offers its own native APK and keeps the signing certificate',()=>{
   const k={};vm.runInNewContext(compiled,{exports:k,URL,encodeURIComponent,require:()=>testBrandContext('kimeng')})
-  assert.equal(k.ANDROID_APP.url,'https://dl.a-reit.com/android/kimeng-android-1.0.1.apk')
+  assert.equal(k.ANDROID_APP.url,'https://dl.a-reit.com/android/kimeng-android-1.0.2.apk')
   assert.equal(k.ANDROID_APP_CERT_SHA256,exports.ANDROID_APP_CERT_SHA256)
 })
 test('Kimeng publishes the checksum beside the independently signed download', () => {
