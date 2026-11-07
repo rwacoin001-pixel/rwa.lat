@@ -2,7 +2,7 @@ import type { AppLocale } from './i18n'
 import type { AssetSummary } from './api/portfolio-summary'
 
 const COPY: Record<AppLocale, { total: string; partial: string; missing: string; cost: string; error: string; cash: string; rewards: string }> = {
-  'zh-CN': { total: '总资产', partial: '已估值资产', missing: '部分持仓估值暂不可用，当前为已估值合计。', cost: '预测持仓按扣除下注费后的投入成本计入。', error: '资产数据暂不可用，请刷新重试。', cash: '现金余额（含冻结及待处理）', rewards: '待领取奖励' },
+  'zh-CN': { total: '总资产', partial: '已估值资产', missing: '部分持仓暂未估值', cost: '预测持仓按净投入计入', error: '资产数据暂不可用，请刷新重试。', cash: '现金余额（含冻结及待处理）', rewards: '待领取奖励' },
   en: { total: 'Total assets', partial: 'Valued assets', missing: 'Some holdings cannot be valued. This is the valued subtotal.', cost: 'Open predictions are included at cost after placement fees.', error: 'Asset data is unavailable. Refresh to retry.', cash: 'Cash (including locked and pending)', rewards: 'Unclaimed rewards' },
   es: { total: 'Activos totales', partial: 'Activos valorados', missing: 'Faltan valoraciones. Se muestra el subtotal valorado.', cost: 'Las predicciones abiertas se incluyen al coste tras comisiones de entrada.', error: 'Datos de activos no disponibles. Actualiza para reintentar.', cash: 'Efectivo (incluido bloqueado y pendiente)', rewards: 'Recompensas por reclamar' },
   fr: { total: 'Total des actifs', partial: 'Actifs valorisés', missing: 'Certaines valorisations manquent. Le sous-total valorisé est affiché.', cost: 'Les prédictions ouvertes sont comptées au coût après frais de mise.', error: 'Données des actifs indisponibles. Actualisez pour réessayer.', cash: 'Liquidités (bloquées et en attente incluses)', rewards: 'Récompenses à réclamer' },

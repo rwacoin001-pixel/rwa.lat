@@ -14,7 +14,7 @@ const en: BasketPositionsCopy = {
 }
 
 const zh: BasketPositionsCopy = {
-  title: '篮子', note: '按最新净值计的净持有份额', loadError: '篮子持仓加载失败', partial: '部分估值暂不可用，合计不完整。', units: '份', nav: '净值',
+  title: '篮子', note: '按最新净值计的净持有份额', loadError: '篮子持仓加载失败', partial: '部分估值缺失', units: '份', nav: '净值',
   quality: { stale: '净值已过期', partial: '净值不完整', unavailable: '净值暂不可用' },
   productCost: '产品成本', productPnl: '产品盈亏', productYield: '产品收益',
 }
