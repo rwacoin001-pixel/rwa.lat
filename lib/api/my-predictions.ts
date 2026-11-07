@@ -1,4 +1,17 @@
 import type { PredictionBet } from '@/lib/rwa-api'
+import type { AppLocale } from '@/lib/i18n'
+
+const SETTLEMENT_COPY: Record<AppLocale, [string, string, string]> = {
+  'zh-CN': ['等待官方结果', '结算处理中', '结果核对中'], en: ['Awaiting official result', 'Settlement in progress', 'Result under review'],
+  es: ['Esperando el resultado oficial', 'Liquidación en curso', 'Resultado en revisión'], fr: ['En attente du résultat officiel', 'Règlement en cours', 'Résultat en cours de vérification'],
+  pt: ['Aguardando resultado oficial', 'Liquidação em andamento', 'Resultado em análise'], hi: ['आधिकारिक परिणाम की प्रतीक्षा', 'निपटान जारी है', 'परिणाम की समीक्षा जारी है'],
+  ar: ['بانتظار النتيجة الرسمية', 'التسوية قيد التنفيذ', 'النتيجة قيد المراجعة'],
+}
+export function predictionSettlementLabel(bet: PredictionBet, locale: AppLocale): string | null {
+  if (bet.status !== 'placed' || !bet.settlementStatus) return null
+  const copy = SETTLEMENT_COPY[locale]
+  return bet.settlementStatus === 'waiting_result' ? copy[0] : bet.settlementStatus === 'review' ? copy[2] : copy[1]
+}
 
 export type BetStatus = 'placed' | 'won' | 'lost' | 'void' | 'unknown'
 

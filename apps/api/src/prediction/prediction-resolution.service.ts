@@ -46,26 +46,32 @@ export class PredictionResolutionService {
     // Rotate past unresolved/unsupported markets so they cannot starve later results.
     this.afterId = candidates.length === batch ? candidates[candidates.length - 1].id : null
     for (const market of candidates) {
-      try {
-        const record = await this.adapter.getMarketById(market.gamma_market_id)
-        const tokens = await this.ds.query('SELECT * FROM app.polymarket_token_mappings WHERE market_mapping_id=$1 ORDER BY outcome_index', [market.id]) as Token[]
-        const result = inspectPredictionResolution(record.rawPayload, mapping(market, tokens))
-        if (result.status !== 'resolved' || this.mode === 'observe') {
-          results.push({marketId:market.id, ...result})
-          if (result.status === 'review') this.log.warn(`prediction resolution requires review market=${market.id} reason=${result.reason}`)
-          continue
-        }
-        const applied = await this.apply(market.id, record.rawPayload)
-        results.push({marketId:market.id, ...applied})
-      } catch {
-        // No external response bodies, request credentials or user data in logs.
-        this.log.warn(`prediction resolution fetch/apply failed market=${market.id}; retry next pass`)
-        results.push({marketId:market.id,status:'retry',reason:'resolution-sync-failed'})
-      }
+      results.push(await this.syncMarket(market.id))
     }
     const finalCount = results.filter(r => r.status === 'resolved' || r.status === 'applied').length
     if (finalCount) this.log.log(`prediction resolution mode=${this.mode} final=${finalCount} checked=${results.length}`)
     return results
+  }
+
+  async syncMarket(marketId: string): Promise<{ marketId: string; status: string; reason?: string }> {
+    if (!this.adapter.isEnabled()) return { marketId, status: 'retry', reason: 'result-provider-disabled' }
+    const [market] = await this.ds.query('SELECT id,gamma_market_id,condition_id,state FROM app.polymarket_market_mappings WHERE id=$1', [marketId])
+    if (!market || market.state === 'suspended') return { marketId, status: 'review', reason: 'market-suspended-or-missing' }
+    try {
+        const record = await this.adapter.getMarketById(market.gamma_market_id)
+        const tokens = await this.ds.query('SELECT * FROM app.polymarket_token_mappings WHERE market_mapping_id=$1 ORDER BY outcome_index', [market.id]) as Token[]
+        const result = inspectPredictionResolution(record.rawPayload, mapping(market, tokens))
+        if (result.status !== 'resolved' || this.mode === 'observe') {
+          if (result.status === 'review') this.log.warn(`prediction resolution requires review market=${market.id} reason=${result.reason}`)
+          return { marketId, ...result }
+        }
+        const applied = await this.apply(market.id, record.rawPayload)
+        return { marketId, ...applied }
+      } catch {
+        // No external response bodies, request credentials or user data in logs.
+        this.log.warn(`prediction resolution fetch/apply failed market=${market.id}; retry next pass`)
+        return {marketId,status:'retry',reason:'resolution-sync-failed'}
+      }
   }
 
   private async apply(marketId: string, payload: Record<string, unknown>): Promise<PredictionResolution | {status:'applied' | 'unchanged'}> {

@@ -29,6 +29,7 @@ function emptyToday(): ConsoleToday {
 }
 
 const RULES = [
+  { name: 'predictionSettlements', minutes: 5, severity: 'critical', title: '预测结果已确认，2 笔仍未结算，最早已等 5 分钟', href: '/polymarket' },
   { name: 'withdrawalReview', minutes: 30, severity: 'critical', title: '提现待审 2 笔，最早已等 30 分钟', href: '/funds/withdrawals?view=review' },
   { name: 'withdrawalExecute', minutes: 30, severity: 'critical', title: '已通过的提现 2 笔还没广播，最早已等 30 分钟', href: '/funds/withdrawals?view=approved' },
   { name: 'kyc', minutes: 720, severity: 'warning', title: 'KYC 待审 2 件，最早已等 12 小时', href: '/kyc' },
@@ -39,6 +40,25 @@ const RULES = [
   { name: 'approvals', minutes: 1440, severity: 'warning', title: '审批 2 件待处理，最早已等 24 小时', href: '/approvals' },
   { name: 'teamBatches', minutes: 4320, severity: 'warning', title: '团队月结 2 批待处理，最早已等 3 天', href: '/referral?tab=team' },
 ] as const
+
+describe('Prediction settlement operational alerts', () => {
+  it.each([
+    [{ workerHealthy: false }, 'prediction:heartbeat'],
+    [{ auditHealthy: false }, 'prediction:audit-stale'],
+    [{ reconciliationMismatches: 1 }, 'prediction:reconciliation'],
+    [{ failed: 1 }, 'prediction:failed'],
+  ] as const)('surfaces unhealthy state %j without requiring any unsettled orders', (state, key) => {
+    const today = emptyToday()
+    today.queues.predictionSettlements = { ...today.queues.predictionSettlements, ...state }
+    expect(alertIssues(today, NOW).map(issue => issue.key)).toContain(key)
+  })
+
+  it('does not expose prediction alerts to administrators without permission', () => {
+    const today = emptyToday()
+    today.queues.predictionSettlements = { count: 0, oldestAt: null, status: 'forbidden', workerHealthy: false, reconciliationMismatches: 1 }
+    expect(alertIssues(today, NOW)).toEqual([])
+  })
+})
 
 describe('Admin alert queue rules', () => {
   describe.each(RULES)('$name', (rule) => {
@@ -53,7 +73,8 @@ describe('Admin alert queue rules', () => {
     it.each(['forbidden', 'error'] as const)('ignores %s queues even with an old timestamp', (status) => {
       const today = emptyToday()
       today.queues[rule.name] = { status, count: 2, oldestAt: '2020-01-01T00:00:00Z' }
-      expect(alertIssues(today, NOW)).toEqual([])
+      expect(alertIssues(today, NOW)).toEqual(rule.name === 'predictionSettlements' && status === 'error'
+        ? [{ key: 'prediction:unavailable', severity: 'critical', title: '预测结算监控无法读取，请检查核心服务', href: '/polymarket' }] : [])
     })
 
     it('requires a positive count and a valid age', () => {
@@ -98,7 +119,7 @@ describe('Admin alert queue rules', () => {
 
   it('does not alert on queues without a rule', () => {
     const today = emptyToday()
-    for (const name of ['communityQueue', 'mail', 'predictionSettlements'] as const) {
+    for (const name of ['communityQueue', 'mail'] as const) {
       today.queues[name] = { status: 'ok', count: 99, oldestAt: '2020-01-01T00:00:00Z' }
     }
     expect(alertIssues(today, NOW)).toEqual([])
@@ -180,8 +201,8 @@ describe('Admin Today alert mapping and order', () => {
     today.queues.deadJobs.count = 1
     today.alerts = [todayAlert('hotWalletError'), todayAlert('reconciliationMismatch'), todayAlert('withdrawalExecutionPaused'), todayAlert('hotWalletLow')]
     expect(alertIssues(today, NOW).map((issue) => issue.key)).toEqual([
-      'queue:withdrawalReview', 'queue:withdrawalExecute', 'quant:2026-11-03:soon', 'alert:hotWalletLow', 'alert:reconciliation',
-      ...RULES.slice(2).map((rule) => `queue:${rule.name}`), 'queue:deadJobs', 'alert:paused', 'alert:hotWalletError',
+      'queue:withdrawalReview', 'queue:withdrawalExecute', 'queue:predictionSettlements', 'quant:2026-11-03:soon', 'alert:hotWalletLow', 'alert:reconciliation',
+      ...RULES.filter(rule => rule.severity === 'warning').map((rule) => `queue:${rule.name}`), 'queue:deadJobs', 'alert:paused', 'alert:hotWalletError',
     ])
   })
 })

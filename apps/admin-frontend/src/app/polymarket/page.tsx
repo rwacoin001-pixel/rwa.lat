@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { AdminLayout } from '@/components/layout/AdminLayout'
 import { type Col, DataTable, PageHeader, Panel, RefreshButton, StatChip, StatusPill, formatDateTime, useApi } from '@/components/console/framework'
 import { CloudDownload } from 'lucide-react'
@@ -90,10 +90,23 @@ const BET_STATUS: Record<string, string> = {
 }
 
 type TabKey = 'markets' | 'bets' | 'settlements'
+type SettlementMonitor = {
+  count: number; overdue: number; failed: number; review: number; waitingResults: number; workerHealthy: boolean; auditHealthy: boolean; reconciliationMismatches: number
+  health: { heartbeatAt?: string; lastSuccessAt?: string; auditCheckedAt?: string; audit?: { checkedOrders: number } } | null
+  auditIncidents: Array<{ id: string; checkedAt: string; payload: { orderMismatches: number; unbalancedTransactions: number; affectedOrderIds: string[] | null } }>
+  jobs: Array<{ id: string; state: string; attempts: number; lastError: string | null; nextRunAt: string; question: string; marketEndAt: string | null; confirmedAt: string | null; payload: { stage: string; lastCheckedAt?: string } }>
+}
+const settlementStage: Record<string, string> = { waiting_result: '等待官方结果', settling: '等待派彩', settled: '已完成', failed: '自动重试', review: '人工复核' }
 
 export default function PolymarketPage() {
   const stats = useApi<Stats>('/api/admin/console/polymarket/stats')
   const prediction = useApi<PredictionStats>('/api/admin/predictions/stats')
+  const monitor = useApi<SettlementMonitor>('/api/admin/predictions/monitor')
+  const [retrying, setRetrying] = useState('')
+  useEffect(() => {
+    const timer = window.setInterval(() => { if (!document.hidden) monitor.reload() }, 30_000)
+    return () => window.clearInterval(timer)
+  }, [monitor.reload])
   const [syncing, setSyncing] = useState(false)
   const [notice, setNotice] = useState('')
   const [tab, setTab] = useState<TabKey>('markets')
@@ -108,6 +121,17 @@ export default function PolymarketPage() {
   const showNotice = (text: string) => {
     setNotice(text)
     window.setTimeout(() => setNotice(''), 8000)
+  }
+
+  const retry = async (id: string) => {
+    setRetrying(id)
+    try {
+      const response = await fetch(`/api/admin/predictions/monitor/${id}/retry`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: '{}' })
+      if (!response.ok) throw new Error('重试申请失败，请刷新后再试')
+      showNotice('已重新排队，将按正式结果重新核对并处理')
+      monitor.reload()
+    } catch (error) { showNotice(error instanceof Error ? error.message : '重试失败') }
+    finally { setRetrying('') }
   }
 
   // sync / settle 失败时抛出，由 ConfirmDialog 保持打开并显示错误
@@ -188,7 +212,7 @@ export default function PolymarketPage() {
       <PageHeader
         title="预测市场"
         subtitle="内部盘（路线 A）：用户余额投注 · Polymarket 官方开奖自动结算 · 复式记账；外部交易功能保持关闭。"
-        actions={<RefreshButton onClick={() => { stats.reload(); prediction.reload(); bets.reload(); settlements.reload() }} />}
+        actions={<RefreshButton onClick={() => { stats.reload(); prediction.reload(); bets.reload(); settlements.reload(); monitor.reload() }} />}
       />
 
       {notice && (
@@ -202,6 +226,26 @@ export default function PolymarketPage() {
         <StatChip label="累计投注额" value={fmtUsdt(totals?.totalStakeAtomic)} sub={limits ? `单笔上限 ${Number(limits.maxStakeAtomic) / 1e6} USDT` : ''} />
       </div>
 
+      <div className="mb-6 rounded-xl border border-border bg-card p-4">
+        <h2 className="mb-3 text-base font-semibold">自动结算监控</h2>
+        {monitor.data && !monitor.error ? <>
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+            <StatChip label="任务状态" value={monitor.data.workerHealthy ? '运行正常' : '需要检查'} sub={`最近心跳 ${formatDateTime(monitor.data.health?.heartbeatAt)}`} />
+            <StatChip label="正式结果已确认" value={monitor.data.count} sub={`超过 5 分钟 ${monitor.data.overdue} 笔`} />
+            <StatChip label="待处理任务" value={monitor.data.failed} sub={`其中人工复核 ${monitor.data.review} 个`} />
+            <StatChip label="资金对账" value={monitor.data.auditHealthy ? (monitor.data.reconciliationMismatches ? '存在差异' : '核对一致') : '需要检查'} sub={`核对 ${monitor.data.health?.audit?.checkedOrders ?? '—'} 笔 · ${formatDateTime(monitor.data.health?.auditCheckedAt)}`} />
+          </div>
+          <p className="my-3 text-xs text-text-muted">市场截止后仍可能等待官方结果。只有正式结果通过核对，才进入派彩。任务每分钟运行，对账每 15 分钟更新。</p>
+          <div className="overflow-x-auto"><table className="w-full text-left text-sm"><thead><tr><th className="py-2">市场</th><th>处理状态</th><th>本轮尝试</th><th>结果确认</th><th>最近核对</th><th>下次执行</th><th>操作</th></tr></thead>
+            <tbody>{monitor.data.jobs.map(job => <tr key={job.id} className="border-t border-border">
+              <td className="max-w-sm py-3 pr-3">{job.question || '市场资料待核对'}<small className="block text-text-muted">截止 {formatDateTime(job.marketEndAt)}</small>{job.lastError && <small className="block text-text-muted">{job.lastError}</small>}</td>
+              <td>{job.state === 'dead' ? (job.payload.stage === 'review' ? '人工复核' : '重试已用尽') : job.state === 'running' ? '处理中' : settlementStage[job.payload.stage] ?? job.state}</td>
+              <td>{job.attempts}</td><td>{formatDateTime(job.confirmedAt)}</td><td>{formatDateTime(job.payload.lastCheckedAt)}</td><td>{job.state === 'completed' || job.state === 'dead' ? '—' : formatDateTime(job.nextRunAt)}</td>
+              <td>{job.state === 'dead' && <button className="underline" disabled={Boolean(retrying)} onClick={() => void retry(job.id)}>{retrying === job.id ? '排队中…' : '重新核对'}</button>}</td>
+            </tr>)}</tbody></table></div>
+          {monitor.data.auditIncidents.length > 0 && <details className="mt-4 text-sm"><summary>对账异常历史</summary>{monitor.data.auditIncidents.map(issue => <p className="mt-2 break-all" key={issue.id}>{formatDateTime(issue.checkedAt)} · 订单差异 {issue.payload.orderMismatches} · 账本差异 {issue.payload.unbalancedTransactions}{issue.payload.affectedOrderIds?.length ? ` · 订单 ${issue.payload.affectedOrderIds.join('、')}` : ''}</p>)}</details>}
+        </> : <p role="status" className="text-sm text-text-muted">{monitor.error ? '结算监控暂不可用，请刷新重试' : '正在读取结算任务…'}</p>}
+      </div>
       <div className="mb-4 flex gap-2">
         {([['markets', '市场数据同步'], ['bets', '投注管理'], ['settlements', '结算记录']] as Array<[TabKey, string]>).map(([key, label]) => (
           <button

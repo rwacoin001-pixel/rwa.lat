@@ -3,6 +3,15 @@ import { PolymarketPublicAdapter, normalizeMarket } from '../../src/polymarket/p
 import { POLYMARKET_ERROR_CODES } from '../../src/polymarket/polymarket.errors'
 
 describe('PolymarketPublicAdapter', () => {
+  it('falls back to the individual market endpoint without accepting a different market identity', async () => {
+    const mock = jest.fn().mockResolvedValueOnce(new Response('[]', { status: 200 }))
+      .mockResolvedValueOnce(new Response('[]', { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ id: 'wrong-market', slug: 'other', question: 'Other?', outcomes: '["Yes","No"]', clobTokenIds: '["yes","no"]' }), { status: 200 }))
+    global.fetch = mock
+    const adapter = new PolymarketPublicAdapter(new ConfigService({ POLYMARKET_READ_ENABLED: 'true' }))
+    await expect(adapter.getMarketById('123')).rejects.toThrow()
+    expect(String(mock.mock.calls[2][0])).toContain('/markets/123')
+  })
   it('retrieves a closed market when Gamma omits it from the default list', async () => {
     const mock = jest.fn().mockResolvedValueOnce(new Response('[]', { status: 200 }))
       .mockResolvedValueOnce(new Response(JSON.stringify([{ id: '123', slug: 'closed-market', question: 'Closed market?', closed: true, outcomes: '["Yes","No"]', clobTokenIds: '["yes","no"]', outcomePrices: '["1","0"]' }]), { status: 200 }))

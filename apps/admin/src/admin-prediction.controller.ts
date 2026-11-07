@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common'
+import { Controller, Get, Param, Post, Query, Req, UseGuards, ParseUUIDPipe } from '@nestjs/common'
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger'
 import { AdminPermissionGuard, RequireAdminPermissions } from './admin-permission.guard'
 import type { AdminRequest } from './admin-session.guard'
@@ -32,6 +32,14 @@ export class AdminPredictionController {
   stats(@Req() request: AdminRequest) {
     return this.prediction.stats(adminId(request))
   }
+
+  @Get('monitor')
+  @RequireAdminPermissions('polymarket.manage')
+  monitor(@Req() request: AdminRequest) { return this.prediction.monitor(adminId(request)) }
+
+  @Post('monitor/:id/retry')
+  @RequireAdminPermissions('polymarket.manage')
+  retry(@Req() request: AdminRequest, @Param('id', ParseUUIDPipe) id: string) { return this.prediction.retry(adminId(request), id) }
 
   @Get('bets')
   @RequireAdminPermissions('polymarket.manage')

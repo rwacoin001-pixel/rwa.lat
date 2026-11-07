@@ -1,4 +1,5 @@
-import { HttpException, Injectable, Logger } from '@nestjs/common'
+import { HttpException, Injectable, Logger, Optional } from '@nestjs/common'
+import { AdminPredictionService } from './admin-prediction.service'
 import type { AdminSessionActor } from './admin-auth.service'
 import { AdminCommunityOpsService } from './admin-community-ops.service'
 import { AdminCoreOpsService } from './admin-core-ops.service'
@@ -51,7 +52,7 @@ export interface TodayQueues {
   ledgerAdjustments: QueueItem
   approvals: QueueItem
   teamBatches: QueueItem
-  predictionSettlements: QueueItem
+  predictionSettlements: QueueItem & { workerHealthy?: boolean; auditHealthy?: boolean; reconciliationMismatches?: number; failed?: number; review?: number }
   deadJobs: QueueItem
 }
 
@@ -128,6 +129,7 @@ export class AdminTodayService {
     private readonly wallet: AdminWalletOpsService,
     private readonly quant: AdminQuantService,
     private readonly community: AdminCommunityOpsService,
+    @Optional() private readonly prediction?: AdminPredictionService,
   ) {}
 
   today(admin: Pick<AdminSessionActor, 'id' | 'permissions'>): Promise<ConsoleToday> {
@@ -152,7 +154,7 @@ export class AdminTodayService {
     const [
       reviews, approved, kyc, quantProducts, communityStats, reports, tickets, mail, closures,
       adjustmentsRequested, adjustmentsApproved, approvals, teamBatches, deadJobs, callbacks,
-      funds, activity, fundsSwitch, reconciliations,
+      funds, activity, fundsSwitch, reconciliations, predictionMonitor,
     ] = await Promise.all([
       read(TODAY_PERMISSIONS.withdrawals, 'withdrawal reviews', () => this.wallet.withdrawalReviews(actor, LIST_LIMIT)),
       read(TODAY_PERMISSIONS.withdrawals, 'approved withdrawals', () => this.wallet.withdrawals(actor, { state: 'approved', limit: LIST_LIMIT })),
@@ -173,6 +175,7 @@ export class AdminTodayService {
       read(TODAY_PERMISSIONS.activity, 'activity summary', () => this.core.get(actor, '/activity/summary', { days: 7 })),
       read(TODAY_PERMISSIONS.fundsSwitch, 'withdrawal execution switch', () => this.wallet.fundsStatus(actor)),
       read(TODAY_PERMISSIONS.reconciliation, 'reconciliations', () => this.core.get(actor, '/ledger/reconciliations', { limit: 20 })),
+      read(TODAY_PERMISSIONS.predictions, 'prediction settlement monitor', () => this.prediction ? this.prediction.monitor(actor) : Promise.reject(new Error('Prediction monitor unavailable'))),
     ])
 
     const flagship = quantProducts.status === 'ok' ? asArray(quantProducts.value)[0] : undefined
@@ -207,9 +210,11 @@ export class AdminTodayService {
         const rows = asArray(field(value, 'items')).filter((row) => row.status === 'pending' || row.status === 'approved')
         return { ...moneyQueue(rows, 'createdAt', undefined, 'totalAtomic'), assetCode: 'USDT' }
       }),
-      // The core exposes no "resolved but unsettled markets" read yet (the settlement worker queries it privately),
-      // so a permitted admin sees `error` rather than a misleading zero.
-      predictionSettlements: { count: 0, oldestAt: null, status: hasAll(granted, TODAY_PERMISSIONS.predictions) ? 'error' : 'forbidden' },
+      predictionSettlements: map(predictionMonitor, value => ({
+        count: value.count, oldestAt: value.oldestAt, workerHealthy: value.workerHealthy,
+        auditHealthy: value.auditHealthy, reconciliationMismatches: value.reconciliationMismatches,
+        failed: value.failed, review: value.review,
+      })),
       deadJobs: deadJobsItem,
     }
 

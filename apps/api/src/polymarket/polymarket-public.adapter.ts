@@ -85,7 +85,8 @@ export class PolymarketPublicAdapter implements PolymarketReadAdapter {
       url.searchParams.set('closed', 'true')
       list = await this.fetchJson(url)
     }
-    const payload = Array.isArray(list) ? list.find(item => item && typeof item === 'object' && String((item as { id?: unknown }).id) === gammaMarketId) : undefined
+    let payload = Array.isArray(list) ? list.find(item => item && typeof item === 'object' && String((item as { id?: unknown }).id) === gammaMarketId) : undefined
+    if (!payload && Array.isArray(list)) payload = await this.fetchJson(new URL(`${this.gammaUrl}/markets/${encodeURIComponent(gammaMarketId)}`))
     const record = normalizeMarket(payload)
     if (!record || record.gammaMarketId !== gammaMarketId) {
       throw new PolymarketUpstreamError(POLYMARKET_ERROR_CODES.UPSTREAM_INVALID_RESPONSE)

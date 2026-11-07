@@ -1,9 +1,10 @@
-import { Controller, Get, Param, Post, Query, UseGuards } from '@nestjs/common'
+import { Controller, Get, Headers, Param, Post, Query, UseGuards, ParseUUIDPipe } from '@nestjs/common'
 import { ApiOperation, ApiTags } from '@nestjs/swagger'
 import { InternalServiceGuard } from '../wallet/internal-ops.controller'
 import { PredictionService } from './prediction.service'
 import { PredictionExposureService } from './prediction-exposure.service'
 import { PredictionHedgeWorker } from './prediction-hedge.worker'
+import { PredictionSettlementMonitorService } from './prediction-settlement-monitor.service'
 
 /**
  * 预测市场内部通道（运营/管理台用）：
@@ -18,12 +19,21 @@ export class InternalPredictionController {
     private readonly prediction: PredictionService,
     private readonly exposure: PredictionExposureService,
     private readonly hedge: PredictionHedgeWorker,
+    private readonly monitor: PredictionSettlementMonitorService,
   ) {}
 
   @Get('stats')
   @ApiOperation({ summary: 'Prediction betting stats (admin console)' })
   stats() {
     return this.prediction.adminStats()
+  }
+
+  @Get('monitor')
+  monitorStatus() { return this.monitor.status() }
+
+  @Post('monitor/:id/retry')
+  retry(@Param('id', ParseUUIDPipe) id: string, @Headers('x-actor-admin-id') actor: string) {
+    return this.monitor.retry(id, actor)
   }
 
   @Get('bets')

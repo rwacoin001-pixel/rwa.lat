@@ -16,6 +16,7 @@ import { PredictionSettlementWorker } from './prediction-settlement.worker'
 import { PredictionResolutionService } from './prediction-resolution.service'
 import { PredictionExposureService } from './prediction-exposure.service'
 import { PredictionHedgeWorker } from './prediction-hedge.worker'
+import { PredictionSettlementMonitorService } from './prediction-settlement-monitor.service'
 
 @Module({
   imports: [
@@ -28,7 +29,7 @@ import { PredictionHedgeWorker } from './prediction-hedge.worker'
     ComplianceModule,
   ],
   controllers: [PredictionController, PredictionUserController, InternalPredictionController],
-  providers: [PredictionService, PredictionSettlementWorker, PredictionResolutionService, PredictionExposureService, PredictionHedgeWorker, PredictionFavoriteService],
+  providers: [PredictionService, PredictionSettlementWorker, PredictionResolutionService, PredictionSettlementMonitorService, PredictionExposureService, PredictionHedgeWorker, PredictionFavoriteService],
   exports: [PredictionService, PredictionExposureService],
 })
 export class PredictionModule {}

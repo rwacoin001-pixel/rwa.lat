@@ -4,7 +4,7 @@ import { ChevronDown, ChevronRight, Info, RotateCw } from 'lucide-react'
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import RwaTopbar from '@/components/rwa-topbar'
 import { useI18n } from '@/lib/i18n'
-import { betAmounts, betStatus, betTotals, type BetStatus } from '@/lib/api/my-predictions'
+import { betAmounts, betStatus, betTotals, predictionSettlementLabel, type BetStatus } from '@/lib/api/my-predictions'
 import { predictionApi, type PredictionBet } from '@/lib/rwa-api'
 import { fmtUsdt } from '@/lib/money'
 import { fill, marketCopy } from '@/lib/maison-market-copy'
@@ -63,7 +63,7 @@ function BetCard({ bet, locale, t, sc, content, selected }: { bet: PredictionBet
     <article ref={card} className={mp.card} data-status={status} data-selected={selected || undefined}>
       <div className={mp.meta}>
         <span className={mp.side} data-side={side}>{sideLabel}</span>
-        <span className={mp.state}>{sc.statusShort[status]}</span>
+        <span className={mp.state}>{predictionSettlementLabel(bet, locale) ?? sc.statusShort[status]}</span>
         <span className={mp.when}>{bet.settledAt
           ? <>{t.settledAt} <time dateTime={bet.settledAt}>{fmtDateTime(bet.settledAt, locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time></>
           : <>{t.placedAt} <time dateTime={bet.createdAt}>{fmtDateTime(bet.createdAt, locale, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</time>{status === 'placed' && <> · {sc.pending}</>}</>}</span>

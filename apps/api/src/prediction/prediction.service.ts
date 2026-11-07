@@ -290,10 +290,11 @@ export class PredictionService {
   async listBets(userId: string, page: number, limit: number) {
     const offset = (page - 1) * limit
     const rows = await this.dataSource.query(
-      `SELECT b.*, m.question AS market_question, m.slug AS market_slug, m.gamma_market_id AS market_gamma_id, m.raw_payload #>> '{events,0,id}' AS market_event_id, t.outcome AS token_outcome
+      `SELECT b.*, m.question AS market_question, m.slug AS market_slug, m.gamma_market_id AS market_gamma_id, m.raw_payload #>> '{events,0,id}' AS market_event_id, t.outcome AS token_outcome, j.payload->>'stage' AS settlement_stage
        FROM app.prediction_bets b
        LEFT JOIN app.polymarket_market_mappings m ON m.id = b.market_mapping_id
        LEFT JOIN app.polymarket_token_mappings t ON t.token_id = b.token_id
+       LEFT JOIN app.job_queue j ON j.dedup_key='prediction:settlement:'||b.market_mapping_id
        WHERE b.user_id = $1 ORDER BY b.created_at DESC LIMIT $2 OFFSET $3`,
       [userId, limit, offset],
     )
@@ -306,7 +307,8 @@ export class PredictionService {
 
   async getBet(userId: string, id: string) {
     const [row] = await this.dataSource.query(
-      `SELECT * FROM app.prediction_bets WHERE id = $1 AND user_id = $2`,
+      `SELECT b.*,j.payload->>'stage' AS settlement_stage FROM app.prediction_bets b
+       LEFT JOIN app.job_queue j ON j.dedup_key='prediction:settlement:'||b.market_mapping_id WHERE b.id=$1 AND b.user_id=$2`,
       [id, userId],
     )
     if (!row) throw predictionBetNotFound(id)
@@ -520,6 +522,7 @@ export class PredictionService {
       shares: String(row.shares),
       price: String(row.price),
       status: row.status,
+      settlementStatus: row.status === 'placed' && ['waiting_result', 'settling', 'review', 'failed'].includes(String(row.settlement_stage)) ? row.settlement_stage : undefined,
       marketQuestion: row.market_question ?? null,
       marketSlug: row.market_slug ?? null,
       /** The id GET /v1/polymarket/markets/:id accepts (the slug is not one). */

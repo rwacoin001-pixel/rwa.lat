@@ -24,6 +24,7 @@ const QUEUE_RULES: readonly QueueRule[] = [
   { name: 'approvals', minutes: 1440, severity: 'warning', title: (n, w) => `审批 ${n} 件待处理，最早已等 ${w}`, href: '/approvals' },
   { name: 'teamBatches', minutes: 4320, severity: 'warning', title: (n, w) => `团队月结 ${n} 批待处理，最早已等 ${w}`, href: '/referral?tab=team' },
   { name: 'deadJobs', minutes: 0, severity: 'warning', title: (n) => `失败任务 ${n} 个`, href: '/job-queue' },
+  { name: 'predictionSettlements', minutes: 5, severity: 'critical', title: (n, w) => `预测结果已确认，${n} 笔仍未结算，最早已等 ${w}`, href: '/polymarket' },
 ]
 
 function waitedText(elapsedMs: number): string {
@@ -38,6 +39,14 @@ function waitedText(elapsedMs: number): string {
 
 export function alertIssues(today: ConsoleToday, nowMs: number): AlertIssue[] {
   const issues: AlertIssue[] = []
+  const prediction = today.queues.predictionSettlements
+  if (prediction.status === 'error') issues.push({ key: 'prediction:unavailable', severity: 'critical', title: '预测结算监控无法读取，请检查核心服务', href: '/polymarket' })
+  if (prediction.status === 'ok') {
+    if (prediction.workerHealthy === false) issues.push({ key: 'prediction:heartbeat', severity: 'critical', title: '预测结算任务心跳中断或任务已关闭', href: '/polymarket' })
+    if (prediction.auditHealthy === false) issues.push({ key: 'prediction:audit-stale', severity: 'critical', title: '预测资金对账失败或结果已过期', href: '/polymarket' })
+    if ((prediction.reconciliationMismatches ?? 0) > 0) issues.push({ key: 'prediction:reconciliation', severity: 'critical', title: '预测订单与资金账本存在差异', href: '/polymarket' })
+    if ((prediction.failed ?? 0) > 0) issues.push({ key: 'prediction:failed', severity: 'warning', title: `预测结算有 ${prediction.failed} 个任务需要处理`, href: '/polymarket' })
+  }
   for (const rule of QUEUE_RULES) {
     const queue = today.queues[rule.name]
     if (queue.status !== 'ok' || queue.count <= 0) continue

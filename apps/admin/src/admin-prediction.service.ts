@@ -37,6 +37,14 @@ export class AdminPredictionService {
     return this.request('GET', '/internal/predictions/stats', actorId)
   }
 
+  monitor(actorId: string) {
+    return this.request<{ count: number; oldestAt: string | null; workerHealthy: boolean; auditHealthy: boolean; reconciliationMismatches: number; failed: number; review: number }> ('GET', '/internal/predictions/monitor', actorId)
+  }
+
+  retry(actorId: string, id: string) {
+    return this.request('POST', `/internal/predictions/monitor/${encodeURIComponent(id)}/retry`, actorId, {})
+  }
+
   bets(actorId: string, query: { page?: number; limit?: number; status?: string; marketId?: string }) {
     return this.request('GET', withQuery('/internal/predictions/bets', query), actorId)
   }

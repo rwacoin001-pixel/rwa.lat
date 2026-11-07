@@ -71,9 +71,10 @@ function upstream() {
     stats: jest.fn(async () => ({ queuePending: 6 })),
     reports: jest.fn(async () => ({ items: [{ id: 'cr1', state: 'open', createdAt: '2026-11-02T05:00:00Z' }] })),
   }
-  const service = new AdminTodayService({ get: coreGet } as never, wallet as never, quant as never, community as never)
+  const prediction = { monitor: jest.fn().mockResolvedValue({ count: 0, oldestAt: null, workerHealthy: true, auditHealthy: true, reconciliationMismatches: 0, failed: 0, review: 0 }) }
+  const service = new AdminTodayService({ get: coreGet } as never, wallet as never, quant as never, community as never, prediction as never)
   service.now = () => NOW
-  return { service, core, coreGet, wallet, quant, community }
+  return { service, core, coreGet, wallet, quant, community, prediction }
 }
 
 describe('Admin console today', () => {
@@ -93,7 +94,7 @@ describe('Admin console today', () => {
     expect(q.approvals).toMatchObject({ count: 1, status: 'ok' })
     expect(q.teamBatches).toEqual({ count: 2, oldestAt: '2026-10-01T00:00:00.000Z', amountAtomic: '10000000', assetCode: 'USDT', status: 'ok' })
     expect(q.deadJobs).toEqual({ count: 3, oldestAt: '2026-11-01T03:00:00.000Z', status: 'ok' })
-    expect(q.predictionSettlements.status).toBe('error')
+    expect(q.predictionSettlements).toMatchObject({ status: 'ok', count: 0, workerHealthy: true, auditHealthy: true })
     expect(q.quantSettlement).toEqual({
       count: 1, oldestAt: '2026-11-02T16:00:00.000Z', status: 'ok', productSlug: 'koala-flagship', tradeDate: '2026-11-02', state: 'draft',
       timezone: 'Asia/Singapore', cutoffAt: '2026-11-03T07:00:00.000Z', overdue: false,
