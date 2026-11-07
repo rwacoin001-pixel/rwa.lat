@@ -102,7 +102,6 @@ export function PortfolioScreen({ query }: { query: string }) {
   const retryAll = () => { positions.refetch(); wallet.refetch(); baskets.refetch() }
   const bothFailed = positions.error && wallet.error
   const anyFailed = Boolean(positions.error || wallet.error || baskets.error)
-  const incomplete = Boolean(totals && basketRows && holdings === null)
   // Cost, P&L and yield only exist for products; say so whenever baskets are or may be present.
   const scoped = Boolean(basketRows?.length) || Boolean(baskets.error)
   // Until the baskets have loaded we don't know the section has anything in it; showing it early and then removing
@@ -115,7 +114,7 @@ export function PortfolioScreen({ query }: { query: string }) {
   const notes = <>
     {anyFailed ? <p className={s.muted} role="alert" style={{ margin: '12px 0 0', fontSize: 12 }}>
       {baskets.error && !positions.error && !wallet.error ? bc.loadError : p.loadError} · <button type="button" className={s.link} onClick={retryAll}>{common.retry}</button>
-    </p> : incomplete && <p className={s.muted} role="status" style={{ margin: '12px 0 0', fontSize: 12 }}>{bc.partial}</p>}
+    </p> : null}
   </>
 
   return <MaisonPage page="portfolio" dock>
@@ -174,7 +173,6 @@ function BasketPositions({ index, rows, error, retry, limit, onMore, note }: { i
   const common = marketCopy[locale].common
   const [list] = useAutoAnimate<HTMLUListElement>({ duration: 240 })
   const shown = limit ? rows?.slice(0, limit) : rows
-  const hasUnknown = Boolean(rows?.some((row) => basketMarketValue(row) === null))
   return <>
     <SectionHead index={index} title={bc.title} note={note ?? bc.note}
       action={onMore && !error && rows && limit && rows.length > limit ? <button type="button" className={s.sectionMore} onClick={onMore}>{p.tabs[1]}<ChevronRight size={14} /></button> : undefined} />
@@ -182,7 +180,6 @@ function BasketPositions({ index, rows, error, retry, limit, onMore, note }: { i
       : !shown ? <Skeleton rows={2} />
       : <>
         <ul className={`${s.list} ${s.listCard}`} ref={list}>{shown.map((row) => <BasketRow key={row.portfolioId} row={row} />)}</ul>
-        {hasUnknown && <p className={bp.hint} role="status">{bc.partial}</p>}
       </>}
   </>
 }

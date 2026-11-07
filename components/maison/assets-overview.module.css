@@ -51,3 +51,8 @@
 .figures dd[data-tone='up'] { color: var(--m-up); }
 .figures dd[data-tone='down'] { color: var(--m-down); }
 .empty { display: inline-flex; align-items: center; gap: 4px; color: var(--m-muted); font-size: 13px; line-height: 18px; }
+
+.valuationDetails { color: var(--m-muted); font-size: 12px; }
+.valuationDetails summary { cursor: pointer; width: 32px; min-height: 32px; display: grid; place-items: center; list-style: none; }
+.valuationDetails summary::-webkit-details-marker { display: none; }
+.valuationDetails p { margin: 2px 0 8px; line-height: 1.5; }

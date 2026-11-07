@@ -16,6 +16,7 @@ export function assetValuationCopy(locale: AppLocale, summary: AssetSummary | un
   return {
     ...copy,
     label: summary && !summary.valuationComplete ? copy.partial : copy.total,
-    note: failed ? copy.error : [summary && !summary.valuationComplete ? copy.missing : '', summary && summary.predictions.openCount > 0 ? copy.cost : ''].filter(Boolean).join(' '),
+    note: failed ? copy.error : '',
+    explanation: [summary && !summary.valuationComplete ? copy.missing : '', summary && summary.predictions.openCount > 0 ? copy.cost : ''].filter(Boolean).join(' · '),
   }
 }
