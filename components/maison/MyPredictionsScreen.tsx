@@ -15,6 +15,8 @@ import { MaisonPage, Skeleton, StateBlock, maison as s } from './primitives'
 import { fmtAtomic, fmtDateTime } from './format'
 import { settle } from './settle'
 import { PredictionTranslationButton } from './PredictionTranslationButton'
+import { predictionCountdown } from '@/lib/prediction-availability'
+import { predictionAvailabilityText } from '@/lib/prediction-availability-copy'
 import { MY_BETS_PAGE, useMyBets } from './MyPredictionsCard'
 import mp from './my-predictions.module.css'
 import { ShareWinLine, type WinMoment } from './ShareWin'
@@ -31,6 +33,13 @@ function BetCard({ bet, locale, t, sc, content, selected }: { bet: PredictionBet
     if (selected) card.current?.scrollIntoView({ block: 'start' })
   }, [selected])
   const [why, setWhy] = useState(false)
+  const [now, setNow] = useState<number | null>(null)
+  useEffect(() => {
+    if (bet.status !== 'placed' || !bet.marketEndAt) return
+    setNow(Date.now())
+    const timer = window.setInterval(() => setNow(Date.now()), 1000)
+    return () => window.clearInterval(timer)
+  }, [bet.status, bet.marketEndAt])
   const status = betStatus(bet.status)
   const amounts = betAmounts(bet)
   const money = (value: bigint | null) => value === null ? '—' : fmtUsdt(value.toString(), { locale })
@@ -72,6 +81,20 @@ function BetCard({ bet, locale, t, sc, content, selected }: { bet: PredictionBet
         ? <button type="button" className={mp.question} aria-label={`${t.open}: ${name}`} onClick={() => openPath(target)}><span>{name}</span></button>
         : <p className={mp.question} data-unnamed={!question || undefined}><span>{name}</span></p>}
 
+      {status === 'placed' && bet.marketEndAt && now !== null && (() => {
+        if (!/T\d{2}:\d{2}.*(?:Z|[+-]\d{2}:?\d{2})$/i.test(bet.marketEndAt)) return null
+        const remaining = predictionCountdown(bet.marketEndAt, now)
+        if (!remaining) return null
+        const appLocale = locale as Parameters<typeof predictionAvailabilityText>[0]
+        const time = [remaining.hours, remaining.minutes, remaining.seconds].map(n => String(n).padStart(2, '0')).join(':')
+        const date = new Date(bet.marketEndAt)
+        const hasTime = /T\d{2}:\d{2}/.test(bet.marketEndAt)
+        const formatted = new Intl.DateTimeFormat(locale, hasTime ? { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', timeZoneName: 'shortOffset' } : { year: 'numeric', month: 'short', day: 'numeric', timeZone: 'UTC' }).format(date)
+        return <div className={mp.countdown}>
+          <span>{remaining.reached ? (predictionSettlementLabel(bet, locale) ?? sc.pending) : <>{predictionAvailabilityText(appLocale, 'Ends in')} {remaining.days > 0 && <>{remaining.days} {predictionAvailabilityText(appLocale, 'Days')} </>}{time}</>}</span>
+          <time dateTime={bet.marketEndAt}>{formatted}</time>
+        </div>
+      })()}
       <div className={mp.pair}>
         <div><span>{sc.stakeLabel}</span><b className={s.num}>{money(amounts.stake)}</b></div>
         <div><span>{result.label}</span><b className={s.num} data-tone={status === 'won' ? 'up' : status === 'lost' || status === 'unknown' ? 'muted' : undefined}>{result.value}</b></div>

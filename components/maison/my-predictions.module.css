@@ -166,3 +166,6 @@ button.question:focus-visible { outline: 2px solid var(--m-accent); outline-offs
 
 /* Palette A: the entry is a paper card from the kit. */
 :global(html[data-palette='a']) .entry { padding: var(--pa-card-pad); border: 0; background: var(--pa-card); box-shadow: var(--pa-card-shadow); }
+
+.countdown { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 10px; margin: 3px 0 8px; color: var(--m-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.countdown span { color: var(--m-accent); font-weight: 600; }

@@ -52,6 +52,7 @@ export type PredictionBet = {
   status: 'placed' | 'won' | 'lost' | 'void' | string
   settlementStatus?: 'waiting_result' | 'settling' | 'review' | 'failed'
   /** toBetView() 返回；市场映射查不到时为 null，旧后端则缺失。 */
+  marketEndAt?: string | null
   marketQuestion?: string | null
   marketSlug?: string | null
   /** Market id for /prediction/[id]; the slug is not accepted there. */
